@@ -22,7 +22,7 @@
     # any module necessary for this one to work correctly
     'depends': [
         'base', 'hr', 'care_sale', 'purchase', 'fleet', 'project', 'hr_attendance', 'hr_recruitment', 'hr_employee_shift',
-        'sp_letter_v15', 'hr_holidays',
+        'sp_letter_v15', 'hr_holidays', 'purchase_report'
     ],
 
     # always loaded

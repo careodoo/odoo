@@ -7,7 +7,7 @@
             <field name="inherit_id" ref="hr.view_department_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//widget[@name='web_ribbon']" position="before">
-                    <div name="button_box" class="oe_button_box">
+                    <div name="button_box" class="oe_button_box" invisible="not context.get('dashboard_view', False)">
                         <button class="oe_stat_button" icon="fa-circle" type="object" name="button_show_employees"
                                 attrs="{'invisible': [('show_employees', '=', False)]}">
                             <field widget="statinfo" name="employee_count" string="Employees"/>
@@ -64,18 +64,22 @@
                 </xpath>
                 <xpath expr="//field[@name='parent_id']" position="after">
                     <field name="project_id"/>
+                    <field name="has_higher_manager" invisible="1"/>
+                    <field name="is_modifier" invisible="1"/>
+                    <field name="higher_manager_access" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
+                    <field name="allowed_user_ids" widget="many2many_tags" invisible="1"/>
                 </xpath>
                 <xpath expr="//group[2]" position="replace">
-                    <notebook>
+                    <notebook invisible="not context.get('dashboard_view', False)">
                         <page name="approvers" string="Shift Approvers">
                             <group>
-                                <field name="employee_shift_approval_1"/>
-                                <field name="employee_shift_approval_2"/>
-                                <field name="employee_shift_approval_3"/>
+                                <field name="employee_shift_approval_1" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
+                                <field name="employee_shift_approval_2" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
+                                <field name="employee_shift_approval_3" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
                                 <field name="working_hours_modifier"/>
                             </group>
                         </page>
-                        <page name="options" string="Options">
+                        <page name="options" string="Options" attrs="{'invisible': [('is_modifier', '=', False)]}">
                             <group>
                                 <field name="show_employees"/>
                                 <field name="show_vehicles"/>
@@ -87,6 +91,22 @@
                                 <field name="show_leaves"/>
                                 <field name="show_shifts"/>
                                 <field name="show_applicants"/>
+                            </group>
+                        </page>
+                        <page name="attachment" string="Attachments"  attrs="{'readonly': [('is_modifier', '=', False)]}">
+                            <group>
+                                <field name="attachment_ids" widget="many2many_binary"/>
+                            </group>
+                        </page>
+                        <page name="project" string="Project">
+                            <group>
+                                <field name="project_id" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
+                                <field name="project_start_date" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
+                                <field name="project_end_date" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
+                                <field name="project_amount" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
+                                <field name="project_social_file" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
+                                <field name="project_period" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
+                                <field name="project_estimated_months" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
                             </group>
                         </page>
                     </notebook>
@@ -110,6 +130,8 @@
             <field name="res_model">hr.department</field>
             <field name="view_mode">kanban,tree,form</field>
             <field name="search_view_id" ref="hr.view_department_filter"/>
+            <field name="context">{'dashboard_view': True}</field>
+            <field name="domain">[('allowed_user_ids', 'in', [uid])]</field>
             <field name="help" type="html">
               <p class="o_view_nocontent_smiling_face">
                 Create a new department
