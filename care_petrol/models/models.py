@@ -1,0 +1,287 @@
+# -*- coding: utf-8 -*-
+
+from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
+
+
+class TankStage(models.Model):
+    _name = 'petrol.tank.stage'
+    _description = 'Petrol Tank Stage'
+    _order = 'id desc'
+
+    name = fields.Char(string="Stage Name", required=True)
+    company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
+
+
+class PetrolTank(models.Model):
+    _name = 'petrol.tank'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _description = 'Petrol Tank'
+    _order = 'id desc'
+
+    name = fields.Char(required=True)
+    capacity = fields.Float()
+    used = fields.Float(compute='compute_used', store=True)
+    charged = fields.Float(compute='compute_charged', store=True)
+    positive_transferred = fields.Float(compute='compute_transferred', store=True, string='Incoming Transfer')
+    negative_transferred = fields.Float(compute='compute_transferred', store=True, string='Outgoing Transfer')
+    transferred = fields.Float(compute='compute_transferred', store=True)
+    balance = fields.Float(compute='compute_balance', store=True)
+    balance_progress = fields.Float(compute='compute_balance')
+    last_charge = fields.Date(compute='compute_last_charge', store=True)
+    stage_id = fields.Many2one('petrol.tank.stage')
+    charge_ids = fields.One2many('petrol.tank.charge', 'tank_id')
+    use_ids = fields.One2many('petrol.tank.use', 'tank_id')
+    transfer_ids = fields.One2many('petrol.tank.transfer', 'tank_id')
+    first_charge_balance = fields.Float(compute='compute_first_charge_balance', store=True)
+    company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
+
+    @api.depends('used', 'charge_ids.quantity')
+    def compute_first_charge_balance(self):
+        for rec in self:
+            if rec.used and rec.charge_ids:
+                first_charge = sum([rec.quantity for rec in rec.charge_ids[0]])
+                rec.first_charge_balance = rec.used - first_charge
+            else:
+                rec.first_charge_balance = 0
+
+    @api.depends('use_ids.quantity')
+    def compute_used(self):
+        for rec in self:
+            rec.used = 0
+            if rec.use_ids:
+                rec.used = sum([rec.quantity for rec in rec.use_ids])
+
+    @api.depends('transfer_ids.quantity', 'transfer_ids.state')
+    def compute_transferred(self):
+        for rec in self:
+            rec.negative_transferred = 0
+            rec.positive_transferred = 0
+            if rec.transfer_ids:
+                # when tank_id is the from_tank means -ve
+                rec.negative_transferred = sum([
+                    rec.quantity for rec in rec.transfer_ids.filtered(
+                        lambda t: t.state == 'done' and t.from_tank_id.id == t.tank_id.id
+                    )
+                ])
+                # when tank_id is the to_tank means +ve
+                rec.positive_transferred = sum([
+                    rec.quantity for rec in rec.transfer_ids.filtered(
+                        lambda t: t.state == 'done' and t.to_tank_id.id == t.tank_id.id
+                    )
+                ])
+
+    @api.depends('charge_ids.quantity')
+    def compute_charged(self):
+        for rec in self:
+            rec.charged = 0
+            if rec.charge_ids:
+                rec.charged = sum([rec.quantity for rec in rec.charge_ids])
+
+    @api.depends('used', 'charged', 'positive_transferred', 'negative_transferred')
+    def compute_balance(self):
+        for rec in self:
+            rec.balance = rec.charged + rec.positive_transferred - rec.negative_transferred - rec.used
+            if rec.charged and rec.used:
+                rec.balance_progress = rec.balance * 100 / rec.charged
+            else:
+                rec.balance_progress = 100
+
+    @api.depends('charge_ids.charge_date')
+    def compute_last_charge(self):
+        for rec in self:
+            if rec.charge_ids:
+                dates = []
+                for charge in rec.charge_ids:
+                    if charge.charge_date:
+                        dates.append(charge.charge_date)
+                if dates:
+                    rec.last_charge = max(dates)
+            else:
+                rec.last_charge = False
+
+
+class TankCharge(models.Model):
+    _name = 'petrol.tank.charge'
+    _description = 'Petrol Tank Charge'
+    _order = 'id desc'
+
+    name = fields.Char(required=True, copy=False, readonly=True, index=True, default=lambda self: _('New'))
+    tank_id = fields.Many2one('petrol.tank')
+    charge_date = fields.Date()
+    quantity = fields.Float()
+    cost = fields.Float()
+    company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
+
+    @api.model
+    def create(self, vals):
+        if vals.get('name', _('New')) == _('New'):
+            tank = self.env['petrol.tank'].browse(vals.get('tank_id'))
+            if tank:
+                vals['name'] = tank.name + ' ' + self.env['ir.sequence'].next_by_code('petrol.tank.charge') or _('New')
+            else:
+                vals['name'] = self.env['ir.sequence'].next_by_code('petrol.tank.charge') or _('New')
+        res = super(TankCharge, self).create(vals)
+        return res
+
+
+class TankUse(models.Model):
+    _name = 'petrol.tank.use'
+    _description = 'Petrol Tank Use'
+    _order = 'id desc'
+
+    name = fields.Char(required=True, copy=False, readonly=True, index=True, default=lambda self: _('New'))
+    tank_id = fields.Many2one('petrol.tank', string="Source of Record")
+    vehicle_id = fields.Many2one('fleet.vehicle')
+    odometer = fields.Many2one('fleet.vehicle.odometer')
+    odometer_value = fields.Float(string="Current Odometer")
+    current_quantity = fields.Float()
+    quantity = fields.Float()
+    use_quantity = fields.Float(compute='compute_use_quantity', store=True)
+    datetime = fields.Datetime(string="Date & Time")
+    last_odometer = fields.Float(compute='compute_last_odometer', store=True)
+    last_quantity = fields.Float(compute='compute_last_odometer', store=True)
+    liter_per_km_rate = fields.Float(compute='compute_liter_per_km_rate', store=True)
+    used_odometer = fields.Float(compute='compute_used_odometer', store=True)
+    used_quantity = fields.Float(compute='compute_used_quantity', store=True)
+    company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
+
+    @api.depends('odometer_value', 'last_odometer')
+    def compute_used_odometer(self):
+        for rec in self:
+            rec.used_odometer = rec.odometer_value - rec.last_odometer
+
+    @api.depends('current_quantity', 'last_quantity')
+    def compute_used_quantity(self):
+        for rec in self:
+            if (rec.current_quantity and rec.last_quantity) and (rec.current_quantity < rec.last_quantity):
+                rec.used_quantity = rec.last_quantity - rec.current_quantity
+            else:
+                rec.used_quantity = 0
+
+    @api.depends('current_quantity', 'quantity')
+    def compute_use_quantity(self):
+        for rec in self:
+            rec.use_quantity = rec.quantity + rec.current_quantity
+
+    @api.depends('vehicle_id')
+    def compute_last_odometer(self):
+        for rec in self:
+            if rec.vehicle_id:
+                last_odometers = self.env['fleet.vehicle.odometer'].search([
+                    ('vehicle_id', '=', rec.vehicle_id.id), ('use_id', '!=', False),
+                    ('create_date', '<', rec.create_date),
+                ], order='id')
+                if last_odometers:
+                    print("last_odometers>>", last_odometers)
+                    last_odometers.mapped('date')
+                    print(last_odometers.mapped('date'))
+                    rec.last_odometer = last_odometers[-1].value
+                    rec.last_quantity = last_odometers[-1].use_id.use_quantity
+
+    @api.depends('odometer_value', 'last_odometer', 'current_quantity', 'last_quantity')
+    def compute_liter_per_km_rate(self):
+        for rec in self:
+            if rec.odometer_value and rec.last_odometer and rec.current_quantity and rec.last_quantity:
+                if rec.last_quantity - rec.quantity != 0:
+                    rec.liter_per_km_rate = round((rec.odometer_value - rec.last_odometer) / (rec.last_quantity - rec.current_quantity), 2)
+                else:
+                    rec.liter_per_km_rate = 0
+
+    @api.model
+    def create(self, vals):
+        if vals.get('name', _('New')) == _('New'):
+            vehicle = self.env['fleet.vehicle'].browse(vals.get('vehicle_id'))
+            vals['name'] = vehicle.name + ' ' + self.env['ir.sequence'].next_by_code('petrol.tank.use') or _('New')
+        res = super(TankUse, self).create(vals)
+        if vals.get('vehicle_id', False) and vals.get('datetime', False) and vals.get('odometer_value', False):
+            new_odometer = self.env['fleet.vehicle.odometer'].create({
+                'vehicle_id': res.vehicle_id.id,
+                'date': res.datetime,
+                'use_id': res.id,
+                'value': res.odometer_value,
+            })
+            res.odometer = new_odometer.id
+        return res
+
+
+class Odometer(models.Model):
+    _inherit = 'fleet.vehicle.odometer'
+
+    use_id = fields.Many2one('petrol.tank.use')
+
+
+class TankTransfer(models.Model):
+    _name = 'petrol.tank.transfer'
+    _description = 'Petrol Tank Transfer'
+    _order = 'id desc'
+
+    tank_id = fields.Many2one('petrol.tank')
+    from_tank_id = fields.Many2one('petrol.tank', string='From Tank')
+    to_tank_id = fields.Many2one('petrol.tank', string='To Tank', required=True)
+    quantity = fields.Float(required=True)
+    date = fields.Date(string='Transfer Date', default=fields.Date.context_today)
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('done', 'Done')], default='draft',
+        string='Status', required=True, readonly=True)
+    create_from = fields.Selection([
+        ('tank', 'tank'),
+        ('transfer', 'transfer')], default='tank')
+    company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
+
+    def unlink(self):
+        if self.state == 'done':
+            raise ValidationError("you can't delete done transfer!")
+        return super(TankTransfer, self).unlink()
+
+    @api.constrains('quantity')
+    def check_quantity(self):
+        for rec in self:
+            if rec.tank_id:
+                if not self.env.context.get('ignore_check_validity') and not (0 < rec.quantity <= rec.tank_id.balance):
+                    raise ValidationError('Not enough balance!')
+
+    @api.constrains('to_tank_id')
+    def check_to_tank_id(self):
+        for rec in self:
+            if not self.env.context.get('ignore_check_validity') and rec.tank_id.id == rec.to_tank_id.id:
+                raise ValidationError("transfer must be between different tanks!")
+
+    @api.model
+    def create(self, vals):
+        res = super(TankTransfer, self).create(vals)
+        if vals.get('create_from') == 'tank':
+            res['from_tank_id'] = vals['tank_id']
+        return res
+
+    def button_transfer(self):
+        if self.tank_id:
+            if self.tank_id.balance < self.quantity:
+                raise ValidationError('Not enough balance!')
+        if self.create_from == 'tank':
+            # create new transfer record for the dest. tank
+            self.env['petrol.tank.transfer'].with_context(ignore_check_validity=True).create({
+                'tank_id': self.to_tank_id.id,
+                'from_tank_id': self.tank_id.id,
+                'to_tank_id': self.to_tank_id.id,
+                'date': self.date,
+                'quantity': self.quantity,
+                'state': 'done'
+            })
+        elif self.create_from == 'transfer':
+            # create new transfer record for the dest. tank
+            self.tank_id = self.from_tank_id.id
+            if self.tank_id.balance < self.quantity:
+                raise ValidationError('Not enough balance!')
+
+            self.env['petrol.tank.transfer'].with_context(ignore_check_validity=True).create({
+                'tank_id': self.to_tank_id.id,
+                'from_tank_id': self.tank_id.id,
+                'to_tank_id': self.to_tank_id.id,
+                'date': self.date,
+                'quantity': self.quantity,
+                'state': 'done'
+            })
+
+        self.write({'state': 'done'})

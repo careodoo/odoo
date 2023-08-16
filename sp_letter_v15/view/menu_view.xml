@@ -1,0 +1,11 @@
+<odoo>
+    	<menuitem name="Letters" id="letter_file_parent"/>
+	<menuitem name="Outgoing" id="letter_file_child"
+			parent="letter_file_parent" action="action_letter_file_id" sequence="9"/>
+        <menuitem name="Configurations" id="configuration_letter_file" parent="letter_file_parent" sequence="10"/>
+	<menuitem name="Outgoing Tags" id="outgoing_tag_id"
+			parent="configuration_letter_file" action="outgoing_tag_action" />
+	<menuitem name="Outgoing Stages" id="outgoing_stage_id"
+			parent="configuration_letter_file" action="outgoing_stage_action" />
+
+</odoo>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="mail_act_tender_create" model="mail.activity.type">
+            <field name="name">Tender</field>
+            <field name="icon">fa-sun-o</field>
+            <field name="res_model">purchase.tender</field>
+        </record>
+    </data>
+</odoo>

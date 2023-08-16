@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_department_form_approver" model="ir.ui.view">
+            <field name="name">hr.department.form.approver</field>
+            <field name="model">hr.department</field>
+            <field name="inherit_id" ref="hr.view_department_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//group" position="after">
+                    <group string="Shift Approvers">
+                        <field name="employee_shift_approval_1"/>
+                        <field name="employee_shift_approval_2"/>
+                        <field name="employee_shift_approval_3"/>
+                        <field name="working_hours_modifier"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

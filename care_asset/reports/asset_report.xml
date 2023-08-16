@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.actions.report" id="action_asset_report">
+            <field name="name">Asset Report</field>
+            <field name="model">account.asset</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">care_asset.asset_report</field>
+            <field name="report_file">care_asset.asset_report</field>
+            <field name="binding_model_id" ref="model_account_asset"/>
+			<field name="binding_type">report</field>
+			<field name="binding_view_types">form</field>
+            <field name="paperformat_id" ref="purchase_report.paperformat_no_margin_receipt"/>
+        </record>
+		<template id="asset_report">
+			<t t-call="web.html_container">
+				<t t-call="purchase_report.custom_internal_layout">
+					<div class="page" style="font-family:Arial,Helvetica,sans-serif !important;">
+                        <div class="row">
+                            <img src="/purchase_report/static/src/img/header.png" atl="header.png" class="w-100"/>
+                        </div>
+                        <style>
+                            table.GeneratedTable {
+                                width: 100%;
+                                background-color: #ffffff;
+                                border-collapse: collapse;
+                                border-width: 1px;
+                                border-color: #000000;
+                                border-style: solid;
+                                font-size: 14px;
+                                color: #000000;
+                            }
+
+                            table.Contact {
+                                width: 50%;
+                            }
+
+                            table.GeneratedTable td, table.GeneratedTable th {
+                                border-width: 1px;
+                                border-color: #000000;
+                                border-style: solid;
+                                padding: 2px;
+                            }
+
+                            table.GeneratedTable thead {
+                                background-color: #a3a3a3;
+                            }
+                        </style>
+						<t t-foreach="docs" t-as="doc">
+                            <br/>
+                            <br/>
+                            <div class="row">
+                                <div class="col-4">
+                                    <center>
+                                        <img t-if="doc.barcode" t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('Code128',doc.barcode,180,50)" />
+                                        <div t-esc="doc.barcode"/>
+                                    </center>
+                                    <br/>
+                                </div>
+                                <div class="col-4"><h3 class="text-center">Asset <t t-esc="doc.name"/></h3></div>
+                                <div class="col-4">
+                                    <center>
+                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:60px;height:60px;"/>
+                                    </center>
+                                    <br/>
+                                </div>
+                            </div>
+                            <div style="border:1px solid black;padding-left:10px;padding-right:10px;">
+                                <!--1-->
+                                <div class="row">
+                                    <div class="col-3">
+                                        <strong>Asset Category</strong>
+                                    </div>
+                                    <div class="col-3">
+                                        <span t-field="doc.category_id"/>
+                                    </div>
+                                    <div class="col-3">
+                                        <strong>Purchase Order</strong>
+                                    </div>
+                                    <div class="col-3">
+                                        <span t-field="doc.purchase_order_id"/>
+                                    </div>
+                                </div>
+                                <!--2-->
+                                <div class="row">
+                                    <div class="col-3">
+                                        <strong>Date</strong>
+                                    </div>
+                                    <div class="col-3">
+                                        <span t-field="doc.acquisition_date"/>
+                                    </div>
+                                    <div class="col-3">
+                                        <strong>Department</strong>
+                                    </div>
+                                    <div class="col-3">
+                                        <span t-field="doc.department_id"/>
+                                    </div>
+                                </div>
+                                <!--3-->
+                                <div class="row">
+                                    <div class="col-3">
+                                        <strong>Original Value</strong>
+                                    </div>
+                                    <div class="col-3">
+                                        <span t-field="doc.original_value"/>
+                                    </div>
+                                    <div class="col-3">
+                                        <strong>Not Depreciable Value</strong>
+                                    </div>
+                                    <div class="col-3">
+                                        <span t-field="doc.salvage_value"/>
+                                    </div>
+                                </div>
+                                <!--4-->
+                                <div class="row">
+                                    <div class="col-3">
+                                        <strong>Depreciable Value</strong>
+                                    </div>
+                                    <div class="col-3">
+                                        <span t-field="doc.value_residual"/>
+                                    </div>
+                                    <div class="col-3">
+                                        <strong>Book Value</strong>
+                                    </div>
+                                    <div class="col-3">
+                                        <span t-field="doc.book_value"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <br/>
+                            <h3>Depreciation Information</h3>
+                            <div style="border:1px solid black;padding-left:10px;padding-right:10px;">
+                                <!--1-->
+                                <div class="row">
+                                    <div class="col-3">
+                                        <strong>Computation Method</strong>
+                                    </div>
+                                    <div class="col-3">
+                                        <span t-field="doc.method"/>
+                                    </div>
+                                    <div class="col-3">
+                                        <strong>Start Depreciating</strong>
+                                    </div>
+                                    <div class="col-3">
+                                        <span t-field="doc.first_depreciation_date"/>
+                                    </div>
+                                </div>
+                                <!--2-->
+                                <div class="row">
+                                    <div class="col-3">
+                                        <strong>Duration</strong>
+                                    </div>
+                                    <div class="col-3">
+                                        <span t-field="doc.method_number"/> <span t-field="doc.method_period"/>
+                                    </div>
+                                    <div class="col-3">
+                                        <strong></strong>
+                                    </div>
+                                    <div class="col-3">
+                                    </div>
+                                </div>
+                            </div>
+                            <br/>
+                            <h3>Depreciation Board</h3>
+                            <t t-if="doc.depreciation_move_ids">
+                                <table class="GeneratedTable m-2">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center">#</th>
+                                            <th class="text-center">Reference</th>
+                                            <th class="text-center">Depreciation Date</th>
+                                            <th class="text-center">Depreciation</th>
+                                            <th class="text-center">Cumulative Depreciation</th>
+                                            <th class="text-center">Depreciable Value</th>
+                                            <th class="text-center">Entry</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-set="sequence" t-value="0"/>
+                                        <t t-foreach="doc.depreciation_move_ids" t-as="line">
+                                            <t t-set="sequence" t-value="sequence + 1"/>
+                                            <tr>
+                                                <td class="text-center">
+                                                    <t t-esc="sequence"/>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span t-field="line.ref"/>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span t-field="line.date"/>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span t-field="line.amount_total"/>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span t-field="line.asset_depreciated_value"/>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span t-field="line.asset_remaining_value"/>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span t-field="line.name"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </t>
+                            <br/>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>

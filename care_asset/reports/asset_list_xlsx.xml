@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.actions.report" id="action_asset_list_xlsx_report">
+            <field name="name">Export Asset List</field>
+            <field name="model">account.asset.report</field>
+            <field name="report_type">xlsx</field>
+            <field name="report_name">care_asset.asset_list_xlsx_report</field>
+            <field name="report_file">care_asset.asset_list_xlsx_report</field>
+        </record>
+    </data>
+</odoo>

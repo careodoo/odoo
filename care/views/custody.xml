@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="custody_view_tree" model="ir.ui.view">
+        <field name="name">custody_view_tree</field>
+        <field name="model">custody</field>
+        <field name="arch" type="xml">
+            <tree string="custody_tree">
+                <field name="name"/>
+                <field name="date_time"/>
+                <field name="partner_id"/>
+                <field name="amount"/>
+                <field name="total_cost"/>
+                <field name="estimated"/>
+                <field name="company_id" invisible="1"/>
+                <field name="is_active" widget="toggle_button"/>
+            </tree>
+        </field>
+    </record>
+    
+    <record id="custody_view_form" model="ir.ui.view">
+        <field name="name">custody_view_form</field>
+        <field name="model">custody</field>
+        <field name="arch" type="xml">
+            <form string="custody_form">
+<!--                <header>-->
+<!--                    <button name="action_is_active" string="Make IT Active"  class="oe_highlight" type="object" attrs="{'invisible': [('is_active', '=', True)]}"/>-->
+<!--                    <button name="action_is_active" string="Make IT Disable" class="oe_highlight" type="object" attrs="{'invisible': [('is_active', '=', False)]}"/>-->
+<!--                </header>-->
+                <sheet>
+                    <div name="button_box" class="oe_button_box">
+                      <button class="oe_stat_button" icon="fa-shopping-basket" type="object" name="purchasing_custody_action">
+                        <field widget="statinfo" name="purchase_count" string="Purchasing"/>
+                      </button>
+                      <button class="oe_stat_button" icon="fa-retweet" type="object" name="service_custody_action">
+                        <field widget="statinfo" name="service_count" string="Services"/>
+                      </button>
+                    </div>
+                    <field name="is_active" invisible="1"/>
+                    <field name="name" invisible="1"/>
+                    <widget name="web_ribbon" title="Active"  bg_color="bg-success" attrs="{'invisible': [('is_active', '=', False)]}"/>
+                    <widget name="web_ribbon" title="Disable" bg_color="bg-danger"  attrs="{'invisible': [('is_active', '=', True)]}"/>
+                    <div class="oe_title mb24">
+                        <h1>
+                            <field name="custody_name" class="o_text_overflow" default_focus="1" placeholder="Custody Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                            <field name="date_time"/>
+                        </group>
+                        <group>
+                            <field name="amount"/>
+                            <field name="total_cost"/>
+                            <field name="purchase_cost"/>
+                            <field name="estimated"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page name="services" string="Services">
+                            <field name="service_line">
+                                <tree editable="top">
+                                    <field name="date"/>
+                                    <field name="description"/>
+                                    <field name="service_type_id"/>
+                                    <field name="vehicle_id" widget="many2one_avatar"/>
+                                    <field name="purchaser_id" widget="many2one_avatar"/>
+                                    <field name="vendor_id" widget="many2one_avatar"/>
+                                    <field name="total_cost" sum="total_service" widget="monetary"/>
+                                    <field name="amount" sum="amount" widget="monetary"/>
+                                    <field name="state" widget="badge" decoration-success="state == 'done'" decoration-warning="state == 'new'" decoration-info="state == 'running'"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="purchase" string="Purchasing">
+                            <field name="purchase_ids" widget="many2many"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="custody_action" model="ir.actions.act_window">
+        <field name="name">Custody</field>
+        <field name="res_model">custody</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="custody_menu" name="Custody" parent="fleet.menu_root" action="custody_action" sequence="99"/>
+</odoo>

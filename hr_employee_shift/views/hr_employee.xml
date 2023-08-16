@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="direct_shift_view_employee_form" model="ir.ui.view">
+            <field name="name">direct.shift.view.employee.form</field>
+            <field name="model">hr.employee</field>
+            <field name="inherit_id" ref="hr.view_employee_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//notebook" position="inside">
+                    <page name="employee_shift_request_history" string="Employee Shift Request History"
+                    groups="hr_employee_shift.group_shift_request_manager">
+                        <field name="shift_request_records" readonly="1">
+                            <tree
+                                    decoration-success="state in ('approval_1', 'approval_2', 'approval_3', 'done')"
+                                    decoration-danger="state in ('refuse_1', 'refuse_2', 'refuse_3')"
+                            >
+                                <field name="create_date"/>
+                                <field name="old_department"/>
+                                <field name="new_department"/>
+                                <field name="state"/>
+                                <field name="approver"/>
+                            </tree>
+                        </field>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

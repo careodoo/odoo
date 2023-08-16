@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.rule" id="custody_comp_rule">
+            <field name="name">Custody multi-company</field>
+            <field name="model_id" ref="model_custody"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <!--fleet-->
+        <record model="ir.rule" id="fleet_v_l_s_c_comp_rule">
+            <field name="name">Fleet Vehicle Log Services Checks multi-company</field>
+            <field name="model_id" ref="model_fleet_vehicle_log_services_checks"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="fleet_v_l_s_damage_comp_rule">
+            <field name="name">Fleet Vehicle Log Services Damage multi-company</field>
+            <field name="model_id" ref="model_fleet_vehicle_log_services_damage"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="services_checks_comp_rule">
+            <field name="name">services checks multi-company</field>
+            <field name="model_id" ref="model_services_checks"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <!--    hostel    -->
+        <record model="ir.rule" id="hostel_comp_rule">
+            <field name="name">hostel multi-company</field>
+            <field name="model_id" ref="model_hostel"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="hostel_bed_comp_rule">
+            <field name="name">hostel bed multi-company</field>
+            <field name="model_id" ref="model_hostel_bed"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="hostel_flat_comp_rule">
+            <field name="name">hostel flat multi-company</field>
+            <field name="model_id" ref="model_hostel_flat"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="hostel_floor_comp_rule">
+            <field name="name">hostel floor multi-company</field>
+            <field name="model_id" ref="model_hostel_floor"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="hostel_maintenance_comp_rule">
+            <field name="name">hostel maintenance multi-company</field>
+            <field name="model_id" ref="model_hostel_maintenance"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="hostel_room_comp_rule">
+            <field name="name">hostel room multi-company</field>
+            <field name="model_id" ref="model_hostel_room"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <!--    Social Contracts    -->
+        <record model="ir.rule" id="hr_social_contracts_comp_rule">
+            <field name="name">HR Social Contracts multi-company</field>
+            <field name="model_id" ref="model_hr_social_contracts"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="social_contracts_authorized_persons_line_comp_rule">
+            <field name="name">Social Contracts Authorized Persons Line multi-company</field>
+            <field name="model_id" ref="model_social_contracts_authorized_persons_line"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="social_contracts_date_line_comp_rule">
+            <field name="name">Social Contracts Date Line multi-company</field>
+            <field name="model_id" ref="model_social_contracts_date_line"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="social_contracts_date_types_comp_rule">
+            <field name="name">Social Contracts Date Types multi-company</field>
+            <field name="model_id" ref="model_social_contracts_date_types"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="social_contracts_authorized_persons_comp_rule">
+            <field name="name">Social Contracts Authorized Persons multi-company</field>
+            <field name="model_id" ref="model_social_contracts_authorized_persons"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+    </data>
+</odoo>

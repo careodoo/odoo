@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="arrival_resident_view_form" model="ir.ui.view">
+            <field name="name">arrival_resident_view_form</field>
+            <field name="model">arrival.resident.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <field name="employee_ids" nolabel="1" style="text-align: right !important;" invisible="1"/>
+                        <label for="state" string="المحافظة"/>
+                        <field name="state"/>
+                        <field name="order_type" widget="radio" options="{'horizontal': True}"  nolabel="1"/>
+                        <div class="row">
+                            <div colspan="4" class="mr-3">
+                                <field name="order_reason"/>
+                            </div>
+                            <div colspan="4" class="mr-3">
+                                <field name="order_reason2"/>
+                            </div>
+                            <div colspan="4" class="mr-3">
+                                <field name="order_reason3"/>
+                            </div>
+                        </div>
+                        <label for="order_type2" string="نوع الإجراء"/>
+                        <field name="order_type2"/>
+                    </sheet>
+                    <footer>
+                        <button name="action_print_report" type="object" string="Print" class="oe_highlight"/>
+                        <button string="Cancel" class="oe_secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_asset_transfer,asset_transfer,model_asset_transfer,,1,1,1,1
+account_asset_category,account_asset_category,model_account_asset_category,,1,1,1,1
+access_asset_transfer_approver,asset_transfer_approver,model_asset_transfer_approver,,1,1,1,1
+account_asset_report,account_asset_report,model_account_asset_report,,1,1,1,1
+account_asset_report_line,account_asset_report_line,model_account_asset_report_line,,1,1,1,1

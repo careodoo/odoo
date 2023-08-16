@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!--    Custody    -->
+        <record model="ir.module.category" id="module_custody">
+            <field name="name">Custody</field>
+        </record>
+
+        <record id="group_custody_user" model="res.groups">
+            <field name="name">User</field>
+            <field name="category_id" ref="module_custody"/>
+        </record>
+
+        <record id="group_custody_manager" model="res.groups">
+            <field name="name">Manager</field>
+            <field name="category_id" ref="module_custody"/>
+            <field name="implied_ids" eval="[(4, ref('care.group_custody_user'))]"/>
+        </record>
+
+        <record id="custody_rule_user_own" model="ir.rule">
+            <field name="name">User own custody</field>
+            <field ref="care.model_custody" name="model_id"/>
+            <field name="domain_force">[('create_uid','=',user.id)]</field>
+            <field name="groups" eval="[(4, ref('care.group_custody_user'))]"/>
+        </record>
+
+        <record id="custody_rule_manager" model="ir.rule">
+            <field name="name">All custody</field>
+            <field ref="care.model_custody" name="model_id"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="groups" eval="[(4, ref('care.group_custody_manager'))]"/>
+        </record>
+        <!--    Hostel    -->
+        <record model="ir.module.category" id="module_hostel">
+            <field name="name">Hostel</field>
+        </record>
+
+        <record id="group_hostel_user" model="res.groups">
+            <field name="name">User</field>
+            <field name="category_id" ref="module_hostel"/>
+        </record>
+
+        <record id="group_hostel_manager" model="res.groups">
+            <field name="name">Manager</field>
+            <field name="category_id" ref="module_hostel"/>
+            <field name="implied_ids" eval="[(4, ref('care.group_hostel_user'))]"/>
+        </record>
+
+        <record id="hostel_rule_user_own" model="ir.rule">
+            <field name="name">User own hostel</field>
+            <field ref="care.model_hostel" name="model_id"/>
+            <field name="domain_force">[('create_uid','=',user.id)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hostel_user'))]"/>
+        </record>
+        <record id="hostel_floor_rule_user_own" model="ir.rule">
+            <field name="name">User own hostel floor</field>
+            <field ref="care.model_hostel_floor" name="model_id"/>
+            <field name="domain_force">[('create_uid','=',user.id)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hostel_user'))]"/>
+        </record>
+        <record id="hostel_flat_rule_user_own" model="ir.rule">
+            <field name="name">User own hostel flat</field>
+            <field ref="care.model_hostel_flat" name="model_id"/>
+            <field name="domain_force">[('create_uid','=',user.id)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hostel_user'))]"/>
+        </record>
+        <record id="hostel_bed_rule_user_own" model="ir.rule">
+            <field name="name">User own hostel bed</field>
+            <field ref="care.model_hostel_bed" name="model_id"/>
+            <field name="domain_force">[('create_uid','=',user.id)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hostel_user'))]"/>
+        </record>
+        <record id="hostel_room_rule_user_own" model="ir.rule">
+            <field name="name">User own hostel room</field>
+            <field ref="care.model_hostel_room" name="model_id"/>
+            <field name="domain_force">[('create_uid','=',user.id)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hostel_user'))]"/>
+        </record>
+        <record id="hostel_maintenance_rule_user_own" model="ir.rule">
+            <field name="name">User own hostel maintenance</field>
+            <field ref="care.model_hostel_maintenance" name="model_id"/>
+            <field name="domain_force">[('create_uid','=',user.id)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hostel_user'))]"/>
+        </record>
+
+        <record id="hostel_rule_manager" model="ir.rule">
+            <field name="name">All hostels</field>
+            <field ref="care.model_hostel" name="model_id"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hostel_manager'))]"/>
+        </record>
+        <record id="hostel_floor_rule_manager" model="ir.rule">
+            <field name="name">All hostels floor</field>
+            <field ref="care.model_hostel_floor" name="model_id"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hostel_manager'))]"/>
+        </record>
+        <record id="hostel_flat_rule_manager" model="ir.rule">
+            <field name="name">All hostels flat</field>
+            <field ref="care.model_hostel_flat" name="model_id"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hostel_manager'))]"/>
+        </record>
+        <record id="hostel_room_rule_manager" model="ir.rule">
+            <field name="name">All hostels room</field>
+            <field ref="care.model_hostel_room" name="model_id"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hostel_manager'))]"/>
+        </record>
+        <record id="hostel_bed_rule_manager" model="ir.rule">
+            <field name="name">All hostels bed</field>
+            <field ref="care.model_hostel_bed" name="model_id"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hostel_manager'))]"/>
+        </record>
+        <record id="hostel_maintenance_rule_manager" model="ir.rule">
+            <field name="name">All hostels maintenance</field>
+            <field ref="care.model_hostel_maintenance" name="model_id"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hostel_manager'))]"/>
+        </record>
+        <!--    social contract    -->
+        <record model="ir.module.category" id="module_hr_social_contracts">
+            <field name="name">HR Social Contracts</field>
+        </record>
+
+        <record id="group_hr_social_contracts_user" model="res.groups">
+            <field name="name">User</field>
+            <field name="category_id" ref="module_hr_social_contracts"/>
+        </record>
+
+        <record id="group_hr_social_contracts_manager" model="res.groups">
+            <field name="name">Manager</field>
+            <field name="category_id" ref="module_hr_social_contracts"/>
+            <field name="implied_ids" eval="[(4, ref('care.group_hr_social_contracts_user'))]"/>
+        </record>
+
+        <record id="hr_social_contracts_rule_user_own" model="ir.rule">
+            <field name="name">User own HR Social Contracts</field>
+            <field ref="care.model_hr_social_contracts" name="model_id"/>
+            <field name="domain_force">[('create_uid','=',user.id)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hr_social_contracts_user'))]"/>
+        </record>
+        <record id="social_contracts_authorized_persons_rule_user_own" model="ir.rule">
+            <field name="name">User own authorized persons</field>
+            <field ref="care.model_social_contracts_authorized_persons" name="model_id"/>
+            <field name="domain_force">[('create_uid','=',user.id)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hr_social_contracts_user'))]"/>
+        </record>
+        <record id="social_contracts_authorized_persons_line_rule_user_own" model="ir.rule">
+            <field name="name">User own authorized persons line</field>
+            <field ref="care.model_social_contracts_authorized_persons_line" name="model_id"/>
+            <field name="domain_force">[('create_uid','=',user.id)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hr_social_contracts_user'))]"/>
+        </record>
+        <record id="social_contracts_date_line_rule_user_own" model="ir.rule">
+            <field name="name">User own social contracts date line</field>
+            <field ref="care.model_social_contracts_date_line" name="model_id"/>
+            <field name="domain_force">[('create_uid','=',user.id)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hr_social_contracts_user'))]"/>
+        </record>
+        <record id="social_contracts_date_types_rule_user_own" model="ir.rule">
+            <field name="name">User own model social contracts date types</field>
+            <field ref="care.model_social_contracts_date_types" name="model_id"/>
+            <field name="domain_force">[('create_uid','=',user.id)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hr_social_contracts_user'))]"/>
+        </record>
+
+        <record id="hr_social_contracts_rule_manager" model="ir.rule">
+            <field name="name">All HR Social Contracts</field>
+            <field ref="care.model_hr_social_contracts" name="model_id"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hr_social_contracts_manager'))]"/>
+        </record>
+        <record id="social_contracts_authorized_persons_rule_manager" model="ir.rule">
+            <field name="name">All authorized persons</field>
+            <field ref="care.model_social_contracts_authorized_persons" name="model_id"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hr_social_contracts_manager'))]"/>
+        </record>
+        <record id="social_contracts_authorized_persons_line_rule_manager" model="ir.rule">
+            <field name="name">All authorized persons line</field>
+            <field ref="care.model_social_contracts_authorized_persons_line" name="model_id"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hr_social_contracts_manager'))]"/>
+        </record>
+        <record id="social_contracts_date_line_rule_manager" model="ir.rule">
+            <field name="name">All social contracts date line</field>
+            <field ref="care.model_social_contracts_date_line" name="model_id"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hr_social_contracts_manager'))]"/>
+        </record>
+        <record id="social_contracts_date_types_rule_manager" model="ir.rule">
+            <field name="name">All social contracts date types</field>
+            <field ref="care.model_social_contracts_date_types" name="model_id"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hr_social_contracts_manager'))]"/>
+        </record>
+        <!--  fleet  -->
+        <record id="fleet_vehicle_log_services_checks_user_own" model="ir.rule">
+            <field name="name">User own fleet vehicle log services checks</field>
+            <field ref="care.model_fleet_vehicle_log_services_checks" name="model_id"/>
+            <field name="domain_force">[('create_uid','=',user.id)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hr_social_contracts_user'))]"/>
+        </record>
+
+        <record id="fleet_vehicle_log_services_checks_manager" model="ir.rule">
+            <field name="name">All fleet vehicle log services checks</field>
+            <field ref="care.model_fleet_vehicle_log_services_checks" name="model_id"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hr_social_contracts_manager'))]"/>
+        </record>
+
+        <record id="fleet_vehicle_log_services_damage_user_own" model="ir.rule">
+            <field name="name">User own fleet vehicle log services damage</field>
+            <field ref="care.model_fleet_vehicle_log_services_damage" name="model_id"/>
+            <field name="domain_force">[('create_uid','=',user.id)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hr_social_contracts_user'))]"/>
+        </record>
+
+        <record id="fleet_vehicle_log_services_damage_manager" model="ir.rule">
+            <field name="name">All fleet vehicle log services damage</field>
+            <field ref="care.model_fleet_vehicle_log_services_damage" name="model_id"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hr_social_contracts_manager'))]"/>
+        </record>
+
+        <record id="services_checks_user" model="ir.rule">
+            <field name="name">User own services checks</field>
+            <field ref="care.model_services_checks" name="model_id"/>
+            <field name="domain_force">[('create_uid','=',user.id)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hr_social_contracts_user'))]"/>
+        </record>
+        <record id="services_checks_manager" model="ir.rule">
+            <field name="name">All services checks</field>
+            <field ref="care.model_services_checks" name="model_id"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="groups" eval="[(4, ref('care.group_hr_social_contracts_manager'))]"/>
+        </record>
+
+    </data>
+</odoo>

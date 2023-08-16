@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="hostel_maintenance_search" model="ir.ui.view">
+       <field name="name">hostel.maintenance.search</field>
+       <field name="model">hostel.maintenance</field>
+        <field name="arch" type="xml">
+            <search string="hostel maintenance">
+              <field name="name" string="Name"/>
+              <filter domain="[('active','=', True)]" string="Active" name="active"/>
+              <filter domain="[('active','=', False)]" string="Archived" name="archived"/>
+
+            </search>
+       </field>
+    </record>
+    <record id="hostel_maintenance_view_tree" model="ir.ui.view">
+        <field name="name">hostel_maintenance_view_tree</field>
+        <field name="model">hostel.maintenance</field>
+        <field name="arch" type="xml">
+            <tree string="hostel_maintenance_tree">
+                <field name="name"/>
+                <field name="hostel_id"/>
+                <field name="floor_id"/>
+                <field name="flat_id"/>
+                <field name="room_id"/>
+                <field name="expected_cost"/>
+                <field name="actually_cost"/>
+                <field name="is_active" widget="toggle_button"/>
+                <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="hostel_maintenance_view_form" model="ir.ui.view">
+        <field name="name">hostel_maintenance_view_form</field>
+        <field name="model">hostel.maintenance</field>
+        <field name="arch" type="xml">
+            <form string="hostel_maintenance_form">
+                <sheet>
+                    <field name="is_active" invisible="1"/>
+                    <field name="active" invisible="1"/>
+                    <div class="oe_button_box" name="button_box">
+                        <button type="object" icon="fa-archive" name="toggle_active" string="Archive" attrs="{'invisible': [('active', '=', False)]}"/>
+                        <button type="object" icon="fa-archive" name="toggle_active" string="Restore" attrs="{'invisible': [('active', '=', True)]}"/>
+                    </div>
+                    <widget name="web_ribbon" title="Active"  bg_color="bg-success" attrs="{'invisible': [('active', '=', False)]}"/>
+                    <widget name="web_ribbon" title="Disable" bg_color="bg-danger"  attrs="{'invisible': [('active', '=', True)]}"/>
+                    <div class="oe_title mb24">
+                        <h1>
+                            <field name="name" class="o_text_overflow" default_focus="1" placeholder="Maintenance Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="hostel_id"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                            <field name="flat_id"/>
+                            <field name="expected_cost"/>
+                        </group>
+                        <group>
+                            <field name="floor_id"/>
+                            <field name="room_id"/>
+                            <field name="actually_cost"/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="hostel_maintenance_action" model="ir.actions.act_window">
+        <field name="name">Hostel Maintenance</field>
+        <field name="res_model">hostel.maintenance</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="hostel_maintenance_search"/>
+    </record>
+
+    <menuitem id="hostel_maintenance_menu" name="Hostel Maintenance" parent="care.menu_root" action="hostel_maintenance_action" sequence="6"/>
+
+</odoo>

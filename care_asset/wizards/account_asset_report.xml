@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="account_asset_report_view_form" model="ir.ui.view">
+            <field name="name">account_asset_report_view_form</field>
+            <field name="model">account.asset.report</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="department_ids" widget="many2many_tags"/>
+                                <field name="type"/>
+                                <button name="button_search" type="object" string="Search" class="oe_highlight" icon="fa-search"/>
+                            </group>
+                            <group>
+                                <field name="category_ids" widget="many2many_tags"/>
+                                <field name="state"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page name="results" string="Results">
+                                <field name="line_ids">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="acquisition_date"/>
+                                        <field name="original_value"/>
+                                        <field name="method"/>
+                                        <field name="first_depreciation_date"/>
+                                        <field name="value_residual"/>
+                                        <field name="department_id"/>
+                                        <field name="category_id"/>
+                                        <field name="type"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                        <footer>
+                            <button name="print_report" type="object" string="Print" class="oe_highlight" icon="fa-file-pdf-o"/>
+                            <button name="print_report_xlsx" type="object" string="Export" class="oe_highlight" icon="fa-file-excel-o"/>
+                            <button name="process" type="object" string="Print Labels" class="oe_highlight"/>
+                            <button string="Cancel" class="btn-secondary" special="cancel"/>
+                        </footer>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="account_asset_report_action" model="ir.actions.act_window">
+            <field name="name">Asset Report</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">account.asset.report</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+        <menuitem id="account_asset_report_root_menu" name="Reporting" parent="care_asset.asset_root_menu" sequence="98"/>
+        <menuitem id="account_asset_report_menu" name="Asset Report" parent="account_asset_report_root_menu"
+                  action="account_asset_report_action" sequence="1"/>
+    </data>
+</odoo>

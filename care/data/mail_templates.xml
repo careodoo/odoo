@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="notify_next_service_date_template" model="mail.template">
+            <field name="name">Notify Next Service Date</field>
+            <field name="model_id" ref="care.model_fleet_vehicle_log_services"/>
+        </record>
+    </data>
+</odoo>

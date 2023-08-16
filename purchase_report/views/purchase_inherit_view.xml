@@ -1,0 +1,125 @@
+<?xml version="1.0" ?>
+<odoo>
+    <data>
+        <record id="purchase_order_kpis_tree_delay" model="ir.ui.view">
+            <field name="name">purchase.order.inherit.purchase.order.tree.delay</field>
+            <field name="model">purchase.order</field>
+            <field name="inherit_id" ref="purchase.purchase_order_kpis_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//tree" position="attributes">
+                    <attribute name="decoration-warning">state in ('delayed','hold', 'revised')</attribute>
+                    <attribute name="decoration-success">state == 'confirmed'</attribute>
+                    <attribute name="decoration-info">state in ['draft', 'sent', 'payment']</attribute>
+                </xpath>
+                <xpath expr="//field[@name='state']" position="attributes">
+                    <attribute name="decoration-warning">state in ('to approve', 'delayed','hold', 'revised')</attribute>
+                    <attribute name="decoration-success">state == 'confirmed'</attribute>
+                    <attribute name="decoration-info">state in ['draft', 'sent', 'payment']</attribute>
+                </xpath>
+            </field>
+        </record>
+        <record id="purchase_form_view_inherit" model="ir.ui.view">
+            <field name="name">purchase form view inherit</field>
+            <field name="model">purchase.order</field>
+            <field name="inherit_id" ref="purchase.purchase_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//button[@name='button_confirm']" position="after">
+                    <button name="button_hold" type="object" string="Hold" states="draft,sent,cancel,delayed,revised,payment,confirmed"/>
+                    <button name="button_delay" type="object" string="Delay" states="draft,sent,cancel,hold,revised,payment,confirmed"/>
+                    <button name="button_revised" type="object" string="Revised" states="draft,sent,cancel,hold,payment,confirmed"/>
+                    <button name="button_payment" type="object" string="Payment" states="draft,sent,cancel,hold,revised,confirmed"/>
+                    <button name="button_confirmed_state" type="object" string="Confirmed State" states="draft,sent,cancel,hold,revised,payment"/>
+                </xpath>
+                <xpath expr="//button[@name='button_draft']" position="attributes">
+                    <attribute name="states">cancel,hold,delayed,revised,</attribute>
+                </xpath>
+                <field name="currency_id" position="after">
+                    <field name="department_id"/>
+                    <field name="cost_center_id"/>
+                </field>
+                <xpath expr="//page[@name='purchase_delivery_invoice']" position="before">
+                    <page string="Signatures" name="signatures">
+                        <field name="signature_lines">
+                            <tree editable="bottom">
+                                <field name="employee_id"/>
+                                <field name="employee_title"/>
+                                <field name="confirm" invisible="1"/>
+                                <field name="signature"/>
+                                <button name="send_sign_request" type="object" string="Request For Sign" class="oe_highlight"/>
+                            </tree>
+                        </field>
+                    </page>
+                    <page string="Print Options" name="print_options">
+                        <group>
+                            <field name="show_signature"/>
+                            <field name="show_terms"/>
+                            <field name="show_requestor"/>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+        <record id="purchase_sign_view_form" model="ir.ui.view">
+            <field name="name">purchase_sign_view_form</field>
+            <field name="model">purchase.sign</field>
+            <field name="arch" type="xml">
+                <form string="purchase_sign_form">
+                    <sheet>
+                        <group>
+                            <field name="purchase_order_id" readonly="1" attrs="{'invisible': [('purchase_order_id', '=', False)]}"/>
+                            <field name="request_id" readonly="1" attrs="{'invisible': [('request_id', '=', False)]}"/>
+                            <field name="employee_id" readonly="1"/>
+                            <field name="employee_title" readonly="1"/>
+                            <field name="signature"/>
+                        </group>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+        <record id="purchase_sign_view_kanban" model="ir.ui.view">
+         <field name="name">tank.view.kanban</field>
+          <field name="model">purchase.sign</field>
+            <field name="arch" type="xml">
+                <kanban>
+                    <field name="request_id"/>
+                    <field name="purchase_order_id"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                          <div class="o_kanban_record oe_kanban_global_click o_kanban_record_has_image_fill">
+                            <div class="o_kanban_record_details">
+                              <div class="o_kanban_record_top" name="studio_auto_kanban_top">
+                                <div class="o_kanban_record_headings" name="studio_auto_kanban_headings">
+                                  <strong class="o_kanban_record_title" name="studio_auto_kanban_title">
+                                      <t t-if="record.request_id.raw_value">
+                                        <field name="request_id" widget="badge"/>
+                                      </t>
+                                      <t t-else="">
+                                        <field name="purchase_order_id" widget="badge"/>
+                                      </t>
+                                    <field name="employee_id" display="full"/>
+                                  </strong>
+                                </div>
+                                <div class="o_dropdown_kanban dropdown">
+                                  <a role="button" class="dropdown-toggle o-no-caret btn" data-toggle="dropdown" data-display="static" href="#" aria-label="Dropdown Menu" title="Dropdown Menu">
+                                    <span class="fa fa-ellipsis-v"/>
+                                  </a>
+                                  <div class="dropdown-menu" role="menu">
+                                    <a t-if="widget.editable" role="menuitem" type="edit" class="dropdown-item">Edit</a>
+                                    <a t-if="widget.deletable" role="menuitem" type="delete" class="dropdown-item">Delete</a>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </t>
+                      </templates>
+                </kanban>
+            </field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="default_cost_center_sign_view_tree" model="ir.ui.view">
+            <field name="name">default_cost_center_sign_view_tree</field>
+            <field name="model">default.cost.center.sign</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom">
+                    <field name="user_id"/>
+                </tree>
+            </field>
+        </record>
+        <record id="default_cost_center_sign_action" model="ir.actions.act_window">
+            <field name="name">Default Cost Center Sign Employee</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">default.cost.center.sign</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem id="default_cost_center_sign_menu" name="Default Cost Center Sign Employee"
+                  parent="purchase.menu_purchase_config" action="default_cost_center_sign_action" sequence="10"/>
+    </data>
+</odoo>

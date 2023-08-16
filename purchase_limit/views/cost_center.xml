@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="cost_center_view_form_limit" model="ir.ui.view">
+            <field name="name">cost.center.limit</field>
+            <field name="model">cost.center</field>
+            <field name="inherit_id" ref="purchase_report.cost_center_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//sheet" position="before">
+                    <header>
+                        <button name="generate_monthly_budget" type="object" string="Generate Monthly Budget"/>
+                        <button name="add_extra_budget" type="object" string="Add Extra Budget"/>
+                        <button name="transfer_budget" type="object" string="Transfer Budget"/>
+                    </header>
+                </xpath>
+                <xpath expr="//group" position="inside">
+                    <field name="department_id"/>
+                    <field name="purchase_limit" groups="purchase_limit.group_set_purchase_limit"/>
+                    <field name="annual_budget"/>
+                    <field name="remaining_annual_budget"/>
+                    <field name="budget_start_date"/>
+                </xpath>
+                <xpath expr="//sheet" position="inside">
+                    <notebook>
+                        <page name="monthly_budget" string="Monthly Budget">
+                            <field name="month_ids">
+                                <tree editable="bottom">
+                                    <field name="sequence"/>
+                                    <field name="date_string"/>
+                                    <field name="date" invisible="1"/>
+                                    <field name="budget"/>
+                                    <field name="extra_budget"/>
+                                    <field name="transfer_budget"/>
+                                    <field name="total_budget"/>
+                                    <field name="used_budget"/>
+                                    <field name="remaining_budget"/>
+                                    <field name="extra_budget_ids" widget="many2many_tags"/>
+                                    <field name="purchase_order_ids" widget="many2many_tags"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="extra" string="Extra Budget">
+                            <field name="extra_budget_ids">
+                                <tree create="0" edit="0" delete="0">
+                                    <field name="month_id"/>
+                                    <field name="extra"/>
+                                    <field name="create_date"/>
+                                    <field name="create_uid"/>
+                                    <field name="state" widget="badge" decoration-success="state == 'confirm'"
+                                        decoration-info="state in ['draft', 'sent']"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </xpath>
+            </field>
+        </record>
+        <record id="budget_extra_view_form" model="ir.ui.view">
+            <field name="name">budget_transfer_extra_form</field>
+            <field name="model">cost.center.extra.budget</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="cost_center_id" invisible="1"/>
+                                <field name="month_id"/>
+                                <field name="signature_users" widget="many2many_tags" readonly="1"/>
+                                <field name="create_date"/>
+                            </group>
+                            <group>
+                                <field name="extra"/>
+                                <field name="create_uid"/>
+                                <field name="user_confirmed" invisible="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Signatures">
+                                <field name="signature_lines" readonly="1">
+                                    <tree editable="bottom" create="0" edit="0" delete="0">
+                                        <field name="employee_id"/>
+                                        <field name="employee_title"/>
+                                        <field name="signature"/>
+                                        <field name="confirm" readonly="1" force_save="1"/>
+                                        <field name="date_confirm" readonly="1" force_save="1"/>
+                                        <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <footer>
+                        <button name="button_request_approval" type="object" string="Request for Approvals"
+                                class="oe_highlight" states="draft"/>
+                        <button name="button_confirm" type="object" string="Confirm" class="oe_highlight"
+                                attrs="{'invisible': &quot;['|','|', ('signature_users', 'not in', [uid]), ('state', '!=', 'sent'), ('user_confirmed', '=', True)]&quot;}"/>
+                        <button string="Cancel" class="oe_secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+        <record id="budget_transfer_view_form" model="ir.ui.view">
+            <field name="name">budget_transfer_view_form</field>
+            <field name="model">cost.center.transfer.budget</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="cost_center_id" invisible="1"/>
+                                <field name="from_month"/>
+                                <field name="amount"/>
+                            </group>
+                            <group>
+                                <field name="to_month"/>
+                                <field name="comment"/>
+                            </group>
+                        </group>
+                    </sheet>
+                    <footer>
+                        <button name="button_transfer" type="object" string="Transfer" class="oe_highlight" />
+                        <button string="Cancel" class="btn-default" special="cancel" />
+                    </footer>
+                </form>
+            </field>
+        </record>
+        <menuitem id="purchase_report.cost_center_menu"
+                  name="Cost Center"
+                  parent="purchase.menu_purchase_root"
+                  sequence="55" action="purchase_report.cost_center_action"
+                  groups="purchase_limit.group_cost_center_user"
+        />
+    </data>
+</odoo>

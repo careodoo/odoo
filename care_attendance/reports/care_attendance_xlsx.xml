@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!--  action print  -->
+  <record model="ir.actions.report" id="action_approval_print_xlsx_report">
+    <field name="name">Export Care Attendance</field>
+    <field name="model">hr.attendance.xlsx</field>
+    <field name="report_type">xlsx</field>
+    <field name="report_name">care_attendance.care_attendance_xlsx_report</field>
+    <field name="report_file">care_attendance.care_attendance_xlsx_report</field>
+  </record>
+</odoo>

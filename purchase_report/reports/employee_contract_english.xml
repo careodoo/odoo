@@ -1,0 +1,530 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_employee_print_arabic_english_contract" model="ir.actions.report">
+        <field name="name">Arabic/English Contract(new)</field>
+        <field name="model">hr.employee</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">purchase_report.print_employee_arabic_english_contract</field>
+        <field name="report_file">purchase_report.print_employee_arabic_english_contract</field>
+        <field name="print_report_name">'Print Contract - %s' % (object.name).replace('/', '')</field>
+        <field name="binding_model_id" ref="hr.model_hr_employee"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="print_employee_arabic_english_contract">
+        <t t-foreach="docs" t-as="employee">
+            <t t-call="web.basic_layout">
+                <div class="page">
+                    <div class="header">
+                        <div class="row">
+                            <div class="col-5">
+                                <div class="text-right pt-5">(عقد نموذج (2</div>
+                            </div>
+                            <div class="col-3">
+                                <img class="text-left" src="/purchase_report/static/src/img/Emblem_of_Kuwait.svg.png"
+                                     atl="Emblem_of_Kuwait.png"
+                                     style="width: 100px; height: 100px;display: block;margin-left: 0px;margin-right: auto;"/>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-left pt-5"><span><t t-esc="employee.barcode"/></span></div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="text-center">الهيئة العامة للقوى العاملة</div>
+                                <div class="text-center fw-bold"
+                                     style="font-family:Simplified Arabic Fixed;font-size:24px;">
+                                    The Public Authority For Manpower
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <title>نموذج عقد عمل بالقطاع الأهلي</title>
+                    <style>
+                        table {
+                        width:100%;
+                        border:1px solid #b3adad;
+                        border-collapse:collapse;
+                        padding:5px;
+                        font-family:Arial !important;
+                        font-weight: bold;
+                        }
+                        table th {
+                        width: 50%;
+                        border-left:1px solid #b3adad;
+                        border-right:1px solid #b3adad;
+                        padding:2px;
+                        background: #f0f0f0;
+                        color: #313030;
+                        }
+                        table td {
+                        width: 50%;
+                        border-left:1px solid #b3adad;
+                        border-right:1px solid #b3adad;
+                        text-align:center;
+                        padding:2px;
+                        background: #ffffff;
+                        color: #313030;
+                        }
+                    </style>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <th class="text-center fw-bold" style="font-size:18px;">
+                                    <u>Sample Form of an Employment Contract in the Civil Sector</u>
+                                </th>
+                                <th class="text-center fw-bold" style="font-size:18px;">
+                                    <u>نمـوذج عقـد عمل في القطاع الأهلى</u>
+                                </th>
+                            </tr>
+                            <tr>
+                                <td class="text-left" style="font-size:11px;">
+                                    <dt>State of Kuwait,</dt>
+                                    <dt>Public Authority for Manpower/ in Gov Sector. <span t-esc="employee.work_department_eng"/></dt>
+                                    <dt>On
+                                        <span t-esc="datetime.datetime.today().strftime('%A')"/>
+                                        corresponding to
+                                        <span t-esc="datetime.datetime.today().strftime('%Y-%m-%d')"/>
+                                        the present
+                                        contract was concluded by and between:
+                                    </dt>
+                                </td>
+                                <td class="text-right" style="font-size:11px;">
+                                    <dt>دولة الكـويت</dt>
+                                    <dt>-: الهيئة العامة للقوي العاملة ادارة عمل محافظة <span t-esc="employee.work_department"/></dt>
+                                    <dt>-: إنه في يوم
+                                        <span t-field="employee.day_translated"/>
+                                        الموافق
+                                        <span t-esc="datetime.datetime.today().strftime('%Y-%m-%d')"/>
+                                        تحرر هذا
+                                        العقد بين كل من
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-left" style="font-size:11px;">
+                                    <dt>1- Company/Institution:
+                                        <span t-esc="employee.company_id.company_english_name"/>
+                                    </dt>
+                                    <dt>Name:
+                                        <t t-esc="employee.authorized_persons_id.name"/>
+                                    </dt>
+                                    <dt>Civil Card:
+                                        <t t-esc="employee.authorized_persons_id.identification_id"/>
+                                    </dt>
+                                    <dt>(First party)</dt>
+                                    <br/>
+                                    <dt>2- Name:
+                                        <t t-esc="employee.english_name"/>
+                                    </dt>
+                                    <dt>Nationality:
+                                        <t t-esc="employee.country_id.name"/>
+                                    </dt>
+                                    <dt>Civil card:
+                                        <t t-esc="employee.civil_code"/>
+                                    </dt>
+                                    <dt>Residence:
+                                        <t t-esc="employee.moi_number"/>
+                                    </dt>
+                                    <dt>( Second party )</dt>
+                                </td>
+                                <td class="text-right" style="font-size:11px;">
+                                    <dt>١- شركة /
+                                        <span t-esc="employee.company_id.name"/>
+                                        ويمثلها فى التوقيع على
+                                        العقد
+                                    </dt>
+                                    <dt>الاسـم :
+                                        <t t-esc="employee.authorized_persons_id.name"/>
+                                    </dt>
+                                    <dt>رقم مدني :
+                                        <t t-esc="employee.authorized_persons_id.identification_id"/>
+                                    </dt>
+                                    <dt>" طرف أول "</dt>
+                                    <br/>
+                                    <dt>٢- الاسـم :
+                                        <t t-esc="employee.name"/>
+                                    </dt>
+                                    <dt>الجنسية :
+                                        <t t-esc="employee.country_id_translated"/>
+                                    </dt>
+                                    <dt>رقم المدني :
+                                        <t t-esc="employee.civil_code"/>
+                                    </dt>
+                                    <dt>الإقامة :
+                                        <t t-esc="employee.moi_number"/>
+                                    </dt>
+                                    <dt>" طرف ثاني "</dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">Preamble</dt>
+                                    <dt class="text-left">The first party owns the facility entitled
+                                        <span t-esc="employee.company_id.company_english_name"/>
+                                        working in the field of as per
+                                        <t t-if="employee.social_affairs_title_eng">
+                                            <span t-esc="employee.social_affairs_title_eng"/>
+                                        </t>
+                                        <t t-else="">
+                                            demand latter
+                                        </t>
+                                         ; whereas it wishes to conclude a contract with the second party
+                                        to work for it in the profession OF<span
+                                                t-esc="employee.social_affairs_title_eng"/>; whereas the parties
+                                        acknowledged
+                                        their capacity to conclude this contract, they agreed upon the following:
+                                    </dt>
+                                </td>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">تهميد</dt>
+                                    <dt class="text-right">يمتلك الطرف الأول منشأة بإسم شركة الرعاية لمقاولات تنظيف
+                                        المبانى والمدن تعمل فـي مجال التنظيف ويرغب فـى التعـاقـد مـع الطــرف الثـانـي
+                                        للعمــل لديـه بمهنــة
+                                        <span t-esc="employee.social_affairs_title"/>
+                                        و بعد أن أقر الطرفان بأهليتهما في إبرام هذا العقد تم الإتفاق علي ما يلي
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">Article One</dt>
+                                    <dt class="text-left">The preamble above shall constitute an integral part of the
+                                        present contract.
+                                    </dt>
+                                </td>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">البنـد الأول</dt>
+                                    <dt class="text-right">يعتبـر التمهـيد السابق جزء لا يتجزأ من هذا العقـد</dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">Article Two</dt>
+                                    <dt class="text-center">“Nature of the Work”</dt>
+                                    <dt class="text-left">The first part concluded a contract with the second party to
+                                        work for it in the profession OF as per demand latter eanine contrzats in the
+                                        state of Kuwait.
+                                    </dt>
+                                </td>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">البنـد الثـانـي</dt>
+                                    <dt class="text-center">"طبيـعـة العمـل"</dt>
+                                    <dt class="text-right">تعـاقـد الطـرف الأول مـع الطـرف الثـانـي للعمــل لديـه
+                                        <span t-esc="employee.social_affairs_title"/>
+                                        داخل دولـة الكــويـت
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">Article Three</dt>
+                                    <dt class="text-center">“Probation Period”</dt>
+                                    <dt class="text-left">The second party shall be subject to a probation period for a
+                                        term not exceeding 100 work days. Each party shall have the right to terminate
+                                        the contract during the said term without notification.
+                                    </dt>
+                                </td>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">البنـد الثـالث</dt>
+                                    <dt class="text-center">"فترة التجربة"</dt>
+                                    <dt class="text-right">يخضع الطرف الثاني لفترة تجربة لمدة لا تزيد عن 100 يوم عمل ،
+                                        ويحق لكل طرف إنهاء العقد خلال تلك الفترة دون إخطار
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">Article Four</dt>
+                                    <dt class="text-center">“Lease Value”</dt>
+                                    <dt class="text-left">For executing the present contract, the second party shall
+                                        receive the wage of
+                                        <span t-esc="int(employee.affairs_salary)"/>
+                                        dinars t o be paid at the end of every month. The first
+                                        party may not decrease the wage during the term of the contract. It may not
+                                        transfer the second party to daily wage without his approval.
+                                    </dt>
+                                </td>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">البنـد الـرابـع</dt>
+                                    <dt class="text-center">"قيمـة الأجـر"</dt>
+                                    <dt class="text-right">يتقـاضـي الطــرف الثـانـي عـن تنفيـذ هـذا العقـد أجـراً
+                                        مقـداره
+                                        <span t-esc="int(employee.affairs_salary)"/>
+                                        دينـارا يـدفع فـي نهـاية كل شهر ولا يجـوز للطـرف الأول تخفيض الأجـر
+                                        أثنـاء سـريان هذا العقد
+                                    </dt>
+                                    <dt class="text-right">و لا يجـوز نقـل الطـرف الثـانـي إلـى الأجـر اليـومـى دون
+                                        موافقـة
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">Article Five</dt>
+                                    <dt class="text-center">“Contract Term”</dt>
+                                    <dt class="text-left">The contract shall come into force on
+                                        <span t-esc="datetime.datetime.today().strftime('%Y-%m-%d')"/>
+                                        The second party shall execute his work during
+                                        the entire execution term therefore.
+                                    </dt>
+                                </td>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">البنـد الـخامس</dt>
+                                    <dt class="text-center">"نفاذ العقـد"</dt>
+                                    <dt class="text-right">يبدأ نفـاذ العقـد إعتبـارا من
+                                        <span t-esc="datetime.datetime.today().strftime('%Y-%m-%d')"/>
+                                        ويلتـزم الطـرف
+                                        الثـانـى بالقيـام بأداء عملـه طوال مدة نفاذه
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">Article Six</dt>
+                                    <dt class="text-center">“Contract Term”</dt>
+                                    <dt class="text-left">The present contract has a define term. It shall come into
+                                        force date of arrival a term of The contract may be renewed with the approval of
+                                        the parties for similar terms not exceeding five years.
+                                    </dt>
+                                </td>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">البند السادس</dt>
+                                    <dt class="text-center">"مدة العقـد"</dt>
+                                    <dt class="text-right">هـذا العقد غير محدد المـدة ويبدا إعتبـارة
+                                        **************
+                                        ولمده ************** ويجوز تجـديـد العقـد بمـوافقـة الطرفيـن لمـدد مماثلة بحد
+                                        أقصـى خمس سنوات ميلاديـة
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">Article Seven</dt>
+                                    <dt class="text-center">“Annual Leave”"</dt>
+                                    <dt class="text-left">The second party shall have the right to a paid annual leave
+                                        with a term of 30 days. It shall not be due on the first year save after the
+                                        expiration of nine months to be calculated from the date of the contract coming
+                                        into force.
+                                    </dt>
+                                </td>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">البنـد السابع</dt>
+                                    <dt class="text-center">"الأجازة السنوية"</dt>
+                                    <dt class="text-right">للطـرف الثـانـي الحق فـي أجازة سنوية مدفوعة الأجـر مـدتها 30
+                                        يومـا، ولا يستحقهـا عن السنة الأولـى إلا بعـد انقضـاء مـدة تسعة أشهر تحسب من
+                                        تاريخ نفاذ العقـد
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">Article Eight</dt>
+                                    <dt class="text-center">“Number of Work Hours”</dt>
+                                    <dt class="text-left">The first party may not require that the second party work for
+                                        a term exceeding eight daily work hours with rest period not less than one hour,
+                                        except for the cases set forth in the law.
+                                    </dt>
+                                </td>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">البنـد الثامـن</dt>
+                                    <dt class="text-center">"عـدد ساعات العمــل"</dt>
+                                    <dt class="text-right">لا يجوز للطـرف الأول تشغيـل الطـرف الثـانـي لمـدة تزيد عن
+                                        ثمـانـي ساعات عمـل يوميـا تتخللهـا فترة راحـة لا تقل عن ساعة باستثنـاء الحـالات
+                                        المقـررة قـانـونـًا
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">Article Nine</dt>
+                                    <dt class="text-center">“Ticket Value”</dt>
+                                    <dt class="text-left">The first party shall bear the expanses of the return of the
+                                        second party to his country after the expiration of the work relationship and
+                                        his final departure from the country.
+                                    </dt>
+                                </td>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">البنـد التاسـع</dt>
+                                    <dt class="text-center">"قيمـة تـذكـرة السـفــر"</dt>
+                                    <dt class="text-right">يتحمـل الطـرف الأول مصـاريف عـودة الطـرف الثـانـي إلـي بلده
+                                        عند إنتهاء علاقة العمـل ومغادرته نهائيا للبلاد
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">Article Ten</dt>
+                                    <dt class="text-center">“Insurance against Injuries and Work Maladies”</dt>
+                                    <dt class="text-left">The first party shall insure the second party against injuries
+                                        and work maladies. It shall also commit to the health insurance value in
+                                        accordance with the law
+                                        No. (1) of the year 1999.
+                                    </dt>
+                                </td>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">البنـد العــاشـــر</dt>
+                                    <dt class="text-center">"التأمين ضـد إصابات وأمراض العمـل"</dt>
+                                    <dt class="text-right">يلتـزم الطـرف الأول بالتأمين علـى الطـرف الثانـى ضـد إصابات
+                                        وأمـراض العمـل، كمـا يلتـزم بقيمـة التأمين الصحـى طبقـا للقـانون رقم (1) لسنة
+                                        1999
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">Article Eleven</dt>
+                                    <dt class="text-center">“End of Service Benefit”</dt>
+                                    <dt class="text-left">The second party shall be due the end of the service benefit
+                                        as set forth in the regulating laws.
+                                    </dt>
+                                </td>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">البنـد الحادى عشـر</dt>
+                                    <dt class="text-center">"مكـافأة نهاية الخدمـة"</dt>
+                                    <dt class="text-right">يستحق الطـرف الثـانـي مكافأة نهاية الخـدمة المنصـوص عليها
+                                        بالقوانين المنظمة
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">Article Twelve</dt>
+                                    <dt class="text-center">“Applicable Law”</dt>
+                                    <dt class="text-left">The provisions of the Labour code in the civil sector No. 6 of
+                                        2010 and the decisions executing the same shall apply for all matters not
+                                        provided for in the present contract. Shall be considered null every condition
+                                        agreed upon in violation of the provisions of the law, unless the sane has a
+                                        better benefit for the worker.
+                                    </dt>
+                                </td>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">البنـد الثانـى عشـر</dt>
+                                    <dt class="text-center">"القانون الواجب التطبيق"</dt>
+                                    <dt class="text-right">تسـري أحكـام قانون العمـل فى القطـاع الأهلـى رقم 6 لسنة 2010
+                                        والقرارات المنفـذة له فيما لم يرد بشأنه نص فى هـذا العقـد، ويقع باطلاً كل شرط تم
+                                        الإتفاق عليه بالمخالفة لأحكام القانون ، ما لم يكن فيه ميـزة أفضـل للعـامـــل
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">Article Thirteen</dt>
+                                    <dt class="text-center">“Special Conditions”</dt>
+                                    <dt class="text-left">1- .....................</dt>
+                                    <dt class="text-left">2- .....................</dt>
+                                    <dt class="text-left">3- .....................</dt>
+                                </td>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">البنـد الثالث عشـر</dt>
+                                    <dt class="text-center">"شـروط خـاصـة"</dt>
+                                    <dt class="text-right">١- لا يوجد</dt>
+                                    <dt class="text-right">٢- لا يوجد</dt>
+                                    <dt class="text-right">٣- لا يوجد</dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">Article Fourteen</dt>
+                                    <dt class="text-center">“Specialized Court”</dt>
+                                    <dt class="text-left">The court of first instance and its labour departments, in
+                                        accordance with the provisions of the law No. 46 of the year 1987, shall be
+                                        competent to peruse any conflicts resulting from the execution or interpretation
+                                        Of the present contract.
+                                    </dt>
+                                </td>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">البنـد الـرابع عشـر</dt>
+                                    <dt class="text-center">"المحكمـة المختصـة"</dt>
+                                    <dt class="text-right">تختص المحكمـة الكلية ودوائرها العمـالية طبقا لأحكام القانون
+                                        رقم 46 لسنة 1987، بنظـر كافة المنازعات الناشئة عن تطبيق أو تفسيـر هـذا العقـد
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">Article Fifteen</dt>
+                                    <dt class="text-center">“Contract Language”</dt>
+                                    <dt class="text-left">The present contract was made in Arabic and English. The
+                                        Arabic texts shall prevail in the case of any conflict between them.
+                                    </dt>
+                                </td>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">البنـد الخامس عشـر</dt>
+                                    <dt class="text-center">"لغـة العقــد"</dt>
+                                    <dt class="text-right">حـرر هـذا العقـد باللغتين العربية والأنجليزية ، ويعتد بنصـوص
+                                        اللغـة العـربية عند وقوع أى تعارض بينهـمــا
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr style="font-weight: bold">
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">Article Sixteen</dt>
+                                    <dt class="text-center">“Contract Copies”</dt>
+                                    <dt class="text-left">The present contract was made in three copies, one for each
+                                        party to work in accordance therewith. The third copy shall be deposited at the
+                                        Public Authority for the Manpower.
+                                    </dt>
+                                </td>
+                                <td style="font-size:11px;">
+                                    <dt class="text-center">البنـد السادس عشـر</dt>
+                                    <dt class="text-center">"نسـخ العقـــد"</dt>
+                                    <dt class="text-right">حـرر هذا العقـد من ثلاث نسخ بيد كل طرف نسخة للعمل بموجبها
+                                        والثالثة تودع لدي الهيئة العامة للقـوي العاملة
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <dt class="text-center">Second Party:</dt>
+                                            <br/>
+                                            <br/>
+                                            <br/>
+                                        </div>
+                                        <div class="col-6">
+                                            <dt class="text-center">الطرف الثاني</dt>
+                                            <br/>
+                                            <br/>
+                                            <br/>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <dt class="text-center">First Party:</dt>
+                                            <br/>
+                                            <br/>
+                                            <br/>
+                                        </div>
+                                        <div class="col-6">
+                                            <dt class="text-center">الطرف الأول</dt>
+                                            <br/>
+                                            <br/>
+                                            <br/>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="footer">
+                        <div class="row">
+                            <div class="col-12 mt-3">
+                                <p class="text-right border-top" style="font-size: 12px;">ملاحظة/هذا النموذج بعد نموذجا
+                                    إسترشاد بالشروط وأحكام عقد المعطل في القطاع الأهلي وبحق لكل إعداد نموذج مماثلا له
+                                    على
+                                    المطيةعات لخاصة بها شرط أن يطمن كافة الأحكام والشروط الواردة بهذا النموذج
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

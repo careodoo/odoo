@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+	<data>
+
+		<record model="ir.ui.view" id="outgoing_stage_form">
+			<field name="name">outgoing stage</field>
+			<field name="model">outgoing.stage</field>
+			<field name="arch" type="xml">
+				<form>
+					<field name="name"/>
+				</form>
+			</field>
+		</record>
+
+		<record model="ir.ui.view" id="outgoing_stage_tree">
+			<field name="name">outgoing stage</field>
+			<field name="model">outgoing.stage</field>
+			<field name="arch" type="xml">
+				<tree editable="bottom">
+					<field name="name"/>
+				</tree>
+			</field>
+		</record>
+
+		<record model="ir.actions.act_window" id="outgoing_stage_action">
+			<field name="name">outgoing stage</field>
+			<field name="res_model">outgoing.stage</field>
+			<field name="view_mode">tree,form</field>
+		</record>
+
+	</data>
+</odoo>

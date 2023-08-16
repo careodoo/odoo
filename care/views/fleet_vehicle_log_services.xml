@@ -1,0 +1,62 @@
+<odoo>
+    <record id="fleet_vehicle_log_services_inherit" model="ir.ui.view">
+        <field name="name">fleet.vehicle.log.services.inherit</field>
+        <field name="model">fleet.vehicle.log.services</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_log_services_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/widget[@name='web_ribbon']" position="after">
+                <field name="is_attachment" invisible="1"/>
+                <div class="alert alert-info" role="alert" attrs="{'invisible': [('is_attachment', '=', False)]}">
+                    We Found (Files / Images) In Attachment, Please Check It.
+                </div>
+                <div class="alert alert-danger" role="alert" attrs="{'invisible': [('is_attachment', '=', True)]}">
+                    We Not Found (Files / Images) In Attachment, Please Add It.
+                </div>
+            </xpath>
+            <xpath expr="//sheet/group/group[1]/field[@name='amount']" position="attributes">
+                <attribute name="string">The Expected Cost</attribute>
+            </xpath>
+            <xpath expr="//sheet/group/group[1]/field[@name='vendor_id']" position="after">
+                <field name="type"/>
+            </xpath>
+            <xpath expr="//sheet/group/group[2]/field[@name='purchaser_id']" position="after">
+                <field name="custody_id"/>
+                <field name="total_cost"/>
+                <field name="next_service_date"/>
+            </xpath>
+            <xpath expr="//sheet/group[2]" position="replace">
+                <notebook>
+                    <page name="damages" string="Damages">
+                        <field name="damage_line">
+                            <tree editable="top">
+                                <field name="name"/>
+                                <field name="description"/>
+                                <field name="source"/>
+                                <field name="purchase_id" optional="show"
+                                       attrs="{'readonly': [('source', 'not in', ['purchase', 'purchase_scrap'])], 'required': [('source', 'in', ['purchase', 'purchase_scrap'])]}"/>
+                                <field name="currency_id" invisible="1"/>
+                                <field name="purchase_amount_total" sum="Purchase Total" optional="show"/>
+                                <field name="cost" sum="cost"/>
+                                <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                            </tree>
+                        </field>
+                    </page>
+                    <page name="check_list" string="Check List">
+                        <field name="checks_line">
+                            <tree editable="top">
+                                <field name="name"/>
+                                <field name="state"/>
+                                <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                            </tree>
+                        </field>
+                    </page>
+                    <page name="notes" string="Notes">
+                        <group>
+                            <field nolabel="1" name="notes" placeholder="Write here any other information related to the service completed."/>
+                        </group>
+                    </page>
+                </notebook>
+            </xpath>
+        </field>
+    </record>
+</odoo>

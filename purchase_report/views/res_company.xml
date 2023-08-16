@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="identification_view_company_form" model="ir.ui.view">
+            <field name="name">identification.view.company.form</field>
+            <field name="model">res.company</field>
+            <field name="inherit_id" ref="base.view_company_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='vat']" position="after">
+                    <field name="company_identification_id"/>
+                    <field name="company_english_name"/>
+                    <field name="company_ref"/>
+                    <field name="auto_number"/>
+                </xpath>
+                <xpath expr="//field[@name='street2']" position="after">
+                    <field name="address_zone" placeholder="المنطقة"/>
+                    <field name="address_block" placeholder="القطعة"/>
+                    <field name="address_building" placeholder="المبنى"/>
+                </xpath>
+
+            </field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+	<data>
+        <record model="ir.actions.report" id="action_tender_bid_result_report">
+            <field name="name">Tender Bid Results</field>
+            <field name="model">purchase.tender</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">purchase_tender.tender_bid_result_report</field>
+            <field name="report_file">purchase_tender.tender_bid_result_report</field>
+            <field name="binding_model_id" ref="model_purchase_tender"/>
+            <field name="binding_type">report</field>
+        </record>
+		<template id="tender_bid_result_report">
+			<t t-call="web.html_container">
+				<t t-foreach="docs" t-as="doc">
+					<t t-call="web.external_layout">
+						<t t-set="sequence" t-value="0"/>
+						<div class="page" style="font-family:Arial,Helvetica,sans-serif !important;">
+							<img t-if="doc.image" t-att-src="image_data_uri(doc.image)" class="float-right" alt="Logo"
+							style="width:80px;height:80px"/>
+							<h4 style="text-align:center;display:block !important; margin-bottom: 20px;">
+                        		Tender Bid Results
+                    		</h4>
+							<table class="table table-bordered">
+								<thead>
+									<tr>
+									  <th>Name of Tender</th>
+									  <th colspan="3">
+										  <t t-if="doc.tender_no">
+											<t t-esc="doc.tender_no"/>
+										  /
+										  </t>
+										   <t t-esc="doc.name"/>
+										  <t t-if="doc.organization">
+										  	/ <t t-esc="doc.organization.name"/>
+										  </t>
+									  </th>
+									</tr>
+								  </thead>
+								  <tbody>
+									<tr>
+									  <td>Organization</td>
+									  <td><t t-esc="doc.organization.name"/></td>
+									  <td>Manpower</td>
+									  <td><t t-esc="doc.manpower"/></td>
+									</tr>
+									<tr>
+									  <td>Closing Date</td>
+									  <td><t t-esc="doc.closing_date"/></td>
+									  <td>Period</td>
+									  <td><t t-esc="doc.period"/></td>
+									</tr>
+									<tr>
+									  <td>Current Co.</td>
+									  <td><t t-esc="doc.current_co.name"/></td>
+									  <td>Care Rank</td>
+									  <td><t t-esc="doc.care_rank"/></td>
+									</tr>
+									<tr>
+									  <td>Winner</td>
+									  <td><t t-esc="doc.winner.name"/></td>
+									  <td>To Win</td>
+									  <td><t t-esc="doc.to_win"/></td>
+									</tr>
+									<tr>
+									  <td>Winner Total Price</td>
+									  <td><t t-esc="doc.winner_price"/></td>
+									  <td>Winner Rate</td>
+									  <td><t t-esc="round(doc.winner_rate_price, 3)"/></td>
+									</tr>
+								  </tbody>
+							</table>
+							<h4 style="text-align:center;display:block !important; margin-bottom: 20px;">
+                        		Prices Analysis
+                    		</h4>
+							<table class="table table-bordered">
+								<colgroup>
+									<col width='20%'/>
+									<col width='20%'/>
+									<col width='20%'/>
+									<col width='20%'/>
+									<col width='20%'/>
+								  </colgroup>
+								<thead>
+									<th class="text-center">Rank</th>
+									<th class="text-center">Company Name</th>
+									<th class="text-center">Price</th>
+									<th class="text-center" style="border-right-color:blue;">Rate</th>
+									<th class="text-center" style="color:blue;border-color:blue;">Description</th>
+								</thead>
+								<tbody>
+									<tr t-foreach="doc.price_analysis_ids" t-as="line">
+											<td align="center">
+												<t t-esc="line.rank"/>
+											</td>
+											<td align="center">
+												<t t-esc="line.contact.name"/>
+											</td>
+											<td align="center">
+												<t t-esc="line.price"/>
+											</td>
+											<td align="center" style="border-right-color:blue;">
+												<t t-esc="round(line.rate, 3)"/>
+											</td>
+											<td align="center" style="color:blue;border-color:blue;">
+												<t t-esc="line.name"/>
+											</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</t>
+				</t>
+			</t>
+		</template>
+	</data>
+</odoo>

@@ -1,0 +1,69 @@
+<odoo>
+    <data>
+        <!--        Inherit Form View to Modify it-->
+        <record id="hr_contract_view_search_inherit" model="ir.ui.view">
+            <field name="name">hr.contract.search</field>
+            <field name="model">hr.contract</field>
+            <field name="inherit_id" ref="hr_contract.hr_contract_view_search"/>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="personal_id" string="Personal ID"/>
+                    <filter string="Personal ID" domain="[('personal_id','&gt;',0)]" name="personal_id"/>
+                </search>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="hr_contract_inherit_form_view_insurance">
+            <field name="name">hr.contract.form.insurance</field>
+            <field name="model">hr.contract</field>
+            <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//notebook/page[2]" position="after">
+                    <page name="allowances_and_deductions" string="البدلات والخصومات">
+                        <group string="Allowances" name="allowances">
+                            <group>
+                                <field name="house_allowances"/>
+                                <field name="transport_allowances"/>
+                                <field name="living_allowances"/>
+                                <field name="treatment_allowance"/>
+                                <field name="nature_of_work_allowances"/>
+                                <field name="overtime_allowance"/>
+                            </group>
+                            <group>
+                                <field name="telephone_allowance"/>
+                                <field name="Regular_bonus_for_managers"/>
+                                <field name="Regular_regularity_equivalent"/>
+                                <field name="Incentive_bonus"/>
+                                <field name="motivation"/>
+                                <field name="profit_account"/>
+                            </group>
+                        </group>
+                        <group string="Deductions" name="deductions">
+                            <group>
+                                <field name="general_deductions"/>
+                                <field name="social_insurance_deductions"/>
+                                <field name="medical_insurance_deductions"/>
+                                <field name="fingerprint_deductions"/>
+                                <field name="profit_tax_percent"/>
+                            </group>
+                            <group>
+                                <field name="administrative_deductions"/>
+                                <field name="absence_without_permission_deductions"/>
+                                <field name="absence_discount_without_credit_deductions"/>
+                            </group>
+
+                        </group>
+                    </page>
+                </xpath>
+
+                <xpath expr='//group[@name="salary"]' position='inside'>
+                    <field name="insurance_salary" invisible="0"/>
+                    <field name="company_percent" invisible="0"/>
+                    <field name="incremental_insurance_salary" string="Incremental Insurance Salary" readonly="1"/>
+                </xpath>
+
+            </field>
+        </record>
+
+    </data>
+</odoo>

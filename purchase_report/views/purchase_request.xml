@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="purchase_request_view_form" model="ir.ui.view">
+            <field name="name">purchase_request_view_form</field>
+            <field name="model">purchase.request</field>
+            <field name="arch" type="xml">
+                <form string="purchase_request_form">
+                    <header>
+                        <field name="user_confirmed" invisible="1"/>
+                        <button name="button_confirm" type="object" string="Confirm" class="oe_highlight"
+                                attrs="{'invisible': &quot;['|','|', ('signature_users', 'not in', [uid]), ('state', '!=', 'draft'), ('user_confirmed', '=', True)]&quot;}"/>
+                        <button name="button_revise" type="object" string="Revise" class="oe_highlight"
+                                attrs="{'invisible': &quot;['|','|', ('signature_users', 'not in', [uid]), ('state', '!=', 'draft'), ('user_confirmed', '=', False)]&quot;}"/>
+                        <button name="show_results" type="object" string="Search" class="oe_highlight"/>
+                        <button name="print_report" type="object" string="Print" class="oe_highlight"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name"/>
+                                <field name="suggested_supplier" widget="many2many_tags"/>
+                                <field name="phone"/>
+                                <field name="address"/>
+                                <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                                <field name="country"/>
+                            </group>
+                            <group>
+                                <field name="department_id" required="1"/>
+                                <field name="suggested_po" widget="many2many_tags"/>
+                                <field name="cost_center"/>
+                                <field name="pr_date"/>
+                                <field name="currency_id"/>
+                                <field name="signature_users" widget="many2many_tags" invisible="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Purchase Orders">
+                                <field name="lines">
+                                    <tree editable="bottom">
+                                        <field name="reference"/>
+                                        <field name="confirmation_date"/>
+                                        <field name="partner_id"/>
+                                        <field name="company_id"/>
+                                        <field name="receipt_date"/>
+                                        <field name="user_id"/>
+                                        <field name="amount_total"/>
+                                        <field name="state"/>
+                                        <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Signatures">
+                                <field name="signature_lines">
+                                    <tree editable="bottom">
+                                        <field name="employee_id"/>
+                                        <field name="employee_title"/>
+                                        <field name="signature"/>
+                                        <field name="confirm" readonly="1" force_save="1"/>
+                                        <field name="date_confirm" readonly="1" force_save="1"/>
+                                        <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                                        <button name="send_sign_request" type="object" string="Request For Sign" class="oe_highlight"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Terms &amp; Conditions">
+                                <field name="terms"/>
+                            </page>
+                            <page string="Notes">
+                                <field name="notes"/>
+                            </page>
+                            <page string="Print Options" name="print_options">
+                                <group>
+                                    <field name="show_signature"/>
+                                    <field name="show_terms"/>
+                                    <field name="show_notes"/>
+                                    <field name="show_budget"/>
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="purchase_request_action" model="ir.actions.act_window">
+            <field name="name">Purchase Request</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">purchase.request</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <!-- This Menu Item Must have a parent -->
+        <menuitem id="purchase_request_menu" name="Purchase Request" parent="purchase.menu_purchase_root" sequence="10" action="purchase_request_action"/>
+    </data>
+</odoo>

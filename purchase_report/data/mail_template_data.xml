@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="mail_act_purchase_sign_create" model="mail.activity.type">
+            <field name="name">Sign</field>
+            <field name="icon">fa-sun-o</field>
+            <field name="res_model">purchase.sign</field>
+        </record>
+
+        <record id="purchase.email_template_edi_purchase_done" model="mail.template">
+            <field name="report_template" ref="purchase_report.action_report_purchase_order"/>
+        </record>
+        <record id="purchase.email_template_edi_purchase_reminder" model="mail.template">
+            <field name="report_template" ref="purchase_report.action_report_purchase_order"/>
+        </record>
+        <record id="purchase_sign_template_po" model="mail.template">
+            <field name="name">Ask To Sign PO</field>
+            <field name="model_id" ref="purchase_report.model_purchase_sign"/>
+            <field name="model">purchase.sign</field>
+            <field name="subject">Ask To Sign PO {{object.purchase_order_id.name}}</field>
+            <field name="auto_delete" eval="0" />
+            <field name="email_from">{{ user.email_formatted }}</field>
+            <field name="email_to">{{object.employee_id.work_email}}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Dear <t t-out="object.employee_id.name"></t><br/><br/>
+                        Kindly Sign <t t-out="object.purchase_order_id.name"/>.<br/>
+                        Do not hesitate to contact us if you have any questions.
+                        <br/><br/>
+                        Best regards,
+                        <t t-if="user.signature">
+                            <br/>
+                            <t t-out="user.signature">--<br/></t>
+                        </t>
+                    </p>
+                </div>
+            </field>
+        </record>
+        <record id="purchase_sign_template_pr" model="mail.template">
+            <field name="name">Ask To Sign PR</field>
+            <field name="model_id" ref="purchase_report.model_purchase_sign"/>
+            <field name="model">purchase.sign</field>
+            <field name="subject">Ask To Sign PR {{object.request_id.name}}</field>
+            <field name="auto_delete" eval="0" />
+            <field name="email_from">{{ user.email_formatted }}</field>
+            <field name="email_to">{{object.employee_id.work_email}}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Dear <t t-out="object.employee_id.name"></t><br/><br/>
+                        Kindly Sign <t t-out="object.request_id.name"/>.<br/>
+                        Do not hesitate to contact us if you have any questions.
+                        <br/><br/>
+                        Best regards,
+                        <t t-if="user.signature">
+                            <br/>
+                            <t t-out="user.signature">--<br/></t>
+                        </t>
+                    </p>
+                </div>
+            </field>
+        </record>
+    </data>
+</odoo>

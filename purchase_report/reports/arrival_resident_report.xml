@@ -1,0 +1,410 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="purchase_report_paperformat" model="report.paperformat">
+            <field name="name">Purchase Report A4</field>
+            <field name="default" eval="True"/>
+            <field name="format">A4</field>
+            <field name="page_height">0</field>
+            <field name="page_width">0</field>
+            <field name="orientation">Portrait</field>
+            <field name="margin_top">7</field>
+            <field name="margin_bottom">13</field>
+            <field name="margin_left">7</field>
+            <field name="margin_right">7</field>
+            <field name="header_line" eval="False"/>
+            <field name="header_spacing">15</field>
+            <field name="dpi">90</field>
+        </record>
+
+        <record id="action_report_arrival_resident" model="ir.actions.report">
+            <field name="name">Arrival Resident</field>
+            <field name="model">arrival.resident.wizard</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">purchase_report.report_arrival_resident</field>
+            <field name="report_file">purchase_report.report_arrival_resident</field>
+            <field name="paperformat_id" ref="purchase_report_paperformat"/>
+        </record>
+
+        <template id="report_arrival_resident">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <t t-foreach="o.employee_ids" t-as="employee">
+                        <t t-call="purchase_report.report_arrival_resident_document"/>
+                    </t>
+                </t>
+            </t>
+        </template>
+
+        <template id="report_arrival_resident_document">
+            <t t-call="web.basic_layout">
+                <div class="page">
+                    <div class="row">
+                        <div class="col-3">
+                            <img src="/purchase_report/static/src/img/kuwait_police.png" atl="Emblem_of_Kuwait.png" style="width: 150px; height: 150px;"/>
+                        </div>
+                        <div class="col-6">
+                            <style>
+                        .GeneratedTable {
+                            width: 100%;
+                            background-color: #ffffff;
+                            font-family:Arial !important;
+                            border-collapse: collapse;
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-size: 15px;
+                            color: #000000;
+                        }
+
+                        .GeneratedTable td, GeneratedTable th {
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            padding: 2px;
+                        }
+
+                        .GeneratedTable thead {
+                            background-color: #a3a3a3;
+                        }
+                        .grey-background {
+                            background-color: #c8c8ca;
+                        }
+                        .bold-weight {font-weight: bold;font-size:14px;}
+                    </style>
+                            <table class="GeneratedTable" style="text-align: right !important;direction: rtl !important;">
+                              <tbody>
+                                <tr>
+                                    <td rowspan="4" class="grey-background">
+                                        <p style="display:block; text-align:center; margin:0 auto;"><strong style="text-align: center !important;">نموذج</strong></p>
+                                        <p style="display:block; text-align:center; margin:0 auto;"><strong style="text-align: center !important;">طلب</strong></p>
+                                    </td>
+                                    <td colspan="6"><span t-field="o.state"/></td>
+                                </tr>
+                                <tr>
+                                  <td colspan="1" class="text-center">سمة دخول</td>
+                                  <td colspan="1">
+                                    <span style="display:block; text-align:center; margin:0 auto;" t-att-class="'fa fa-2x fa-dot-circle-o' if o.order_type == 'enter' else 'fa fa-2x fa-circle-o'"/>
+                                  </td>
+                                  <td colspan="1" class="text-center">إقامة</td>
+                                  <td colspan="1">
+                                    <span style="display:block; text-align:center; margin:0 auto;" t-att-class="'fa fa-2x fa-dot-circle-o' if o.order_type == 'residence' else 'fa fa-2x fa-circle-o'"/>
+                                  </td>
+                                  <td colspan="1" class="text-center">إذن غياب</td>
+                                  <td colspan="1">
+                                    <span style="display:block; text-align:center; margin:0 auto;" t-att-class="'fa fa-2x fa-dot-circle-o' if o.order_type == 'absence' else 'fa fa-2x fa-circle-o'"/>
+                                  </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">
+                                      <span t-field="o.order_reason"/>
+                                    </td>
+                                    <td colspan="2">
+                                      <span t-field="o.order_reason2"/>
+                                    </td>
+                                    <td colspan="2">
+                                      <span t-field="o.order_reason3"/>
+                                  </td>
+                                </tr>
+                                <tr>
+                                  <td colspan="6"><span t-field="o.order_type2"/></td>
+                                </tr>
+                              </tbody>
+                            </table>
+                        </div>
+                        <div class="col-3">
+                            <img src="/purchase_report/static/src/img/Emblem_of_Kuwait.svg.png" atl="Emblem_of_Kuwait.png" style="width: 150px; height: 150px;"/>
+                        </div>
+                    </div>
+                    <div class="oe_structure"/>
+                    <div class="text-center"><span><t t-esc="employee.barcode"/></span></div>
+                    <br/>
+                    <!-- Information Table-->
+                    <table class="GeneratedTable" style="text-align: right !important;direction: rtl !important;">
+                      <tbody>
+                        <tr>
+                            <td colspan="6" style="font-weight: bold" class="text-center grey-background">
+                                <h4 class="grey-background">بيانات القادم / المقيم</h4>
+                            </td>
+                            <td rowspan="8" style="height: 227px;width: 152px;" class="text-center">
+                              <span>صورة</span>
+                              <br/>
+                              <span>6 x 4</span>
+                              <br/>
+                              <span>خلفية زرقاء</span>
+                          </td>
+                        </tr>
+                        <tr>
+                            <td class="grey-background text-center bold-weight">الرقم المدني</td>
+                            <td colspan="3"><t t-esc="employee.civil_code"/></td>
+                            <td class="grey-background text-center bold-weight">تاريخ الميلاد</td>
+                            <td><t t-esc="employee.birthday"/></td>
+                        </tr>
+                        <tr>
+                            <td class="grey-background text-center bold-weight">رقم المرجع</td>
+                            <td style="width:100px;"><t t-esc="employee.moi_number"/></td>
+                            <td class="grey-background text-center bold-weight">الجنس</td>
+                            <td><t t-esc="employee.gender_translated"/></td>
+                            <td class="grey-background text-center bold-weight">مكان الميلاد</td>
+                            <td><t t-esc="employee.place_of_birth"/></td>
+                        </tr>
+                        <tr>
+                          <td class="grey-background text-center bold-weight">الإسم بالكامل</td>
+                            <td colspan="5"><t t-esc="employee.name"/></td>
+                        </tr>
+                        <tr style="text-align: left !important;direction: ltr !important;">
+                            <td style="text-align: left !important;direction: ltr !important;" colspan="5"><t t-esc="employee.english_name"/></td>
+                            <td style="text-align: left !important;direction: ltr !important;">Full Name</td>
+                        </tr>
+                        <tr>
+                            <td class="grey-background text-center bold-weight">رقم جواز السفر</td>
+                            <td colspan="2"><t t-esc="employee.passport_no"/></td>
+                            <td class="grey-background text-center bold-weight">نوع الجواز</td>
+                            <td colspan="2"><t t-esc="employee.passport_type_translated"/></td>
+                        </tr>
+                        <tr>
+                            <td class="grey-background text-center bold-weight">تاريخ اصدار جواز السفر</td>
+                            <td colspan="2"><t t-esc="employee.release_date"/></td>
+                            <td class="grey-background text-center bold-weight">تاريخ انتهاء الجواز</td>
+                            <td colspan="2"><t t-esc="employee.end_date"/></td>
+                        </tr>
+                        <tr>
+                            <td class="grey-background text-center bold-weight">الجنسية</td>
+                            <td><t t-esc="employee.country_id_translated"/></td>
+                            <td class="grey-background text-center bold-weight">العلاقة بالكفيل</td>
+                            <td class="text-center">عمل</td>
+                            <td class="grey-background text-center bold-weight">المهنة</td>
+                            <td><t t-esc="employee.social_affairs_title"/></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <table class="GeneratedTable" style="text-align: right !important;direction: rtl !important;">
+                      <tbody>
+                        <tr>
+                          <td colspan="12" style="font-weight: bold" class="text-center grey-background">
+                              <h4>بيانات صاحب العمل - العائل</h4>
+                          </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="grey-background text-center bold-weight">الرقم المدني</td>
+                            <td colspan="6"><t t-esc="employee.authorized_persons_id.identification_id"/></td>
+                            <td colspan="2" class="grey-background text-center bold-weight">رقم المرجع/الشخصية الإعتبارية</td>
+                            <td colspan="2"><t t-esc="employee.company_id.company_ref"/></td>
+                        </tr>
+                        <tr>
+                            <td class="grey-background text-center bold-weight" colspan="4">الإسم-الجهة الحكومية-الشركة</td>
+                            <td colspan="10"><t t-esc="employee.company_id.name"/></td>
+                        </tr>
+                        <tr>
+                            <td class="grey-background text-center bold-weight" colspan="2">الإيميل</td>
+                            <td colspan="5"><t t-esc="employee.company_id.email"/></td>
+                            <td class="grey-background text-center bold-weight" colspan="2">الرقم اﻵلي للعنوان</td>
+                            <td colspan="3"><t t-esc="employee.company_id.auto_number"/></td>
+                        </tr>
+                        <tr>
+                            <td  class="grey-background text-center bold-weight">الجنسية</td>
+                            <td colspan="2"><t t-esc="employee.company_country_id_translated"/></td>
+                            <td class="grey-background text-center bold-weight">المهنة</td>
+                            <td colspan="2"></td>
+                            <td class="grey-background text-center bold-weight">الراتب</td>
+                            <td colspan="2"></td>
+                            <td class="grey-background text-center bold-weight">المحافظة</td>
+                            <td colspan="2"><t t-esc="employee.company_id.state_id.name"/></td>
+                        </tr>
+                        <tr>
+                            <td class="grey-background text-center bold-weight">المنطقة</td>
+                            <td colspan="2"><t t-esc="employee.company_id.address_zone"/></td>
+                            <td class="grey-background text-center bold-weight">القطعة</td>
+                            <td><t t-esc="employee.company_id.address_block"/></td>
+                            <td class="grey-background text-center bold-weight">الشارع</td>
+                            <td colspan="2"><t t-esc="employee.company_id.street"/></td>
+                            <td class="grey-background text-center bold-weight">المبنى</td>
+                            <td><t t-esc="employee.company_id.address_building"/></td>
+                            <td class="grey-background text-center bold-weight">الهاتف</td>
+                            <td><t t-esc="employee.company_id.phone"/></td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <table class="GeneratedTable" style="text-align: right !important;direction: rtl !important;">
+                        <tbody>
+                            <tr>
+                                <td style="width:400px;">
+                                    <h5 class="text-center">إقرار و تعهد</h5>
+                                    <ul>
+                                        <li style="margin-bottom: 15px !important;">
+                                            <p class="bold-weight" style="margin-bottom: 15px !important;">
+                                              إن البيانات المدرجة بهذا الطلب صحيحة و ألتزم بتنفيذ ما جاء بأحكام القانون.
+                                            </p>
+                                        </li>
+                                        <li>
+                                            <p class="bold-weight">
+                                                أتعهد بأنه يعمل لدى و مسئول عنه أثناء مدة إقامته و أتعهد بأن أعيده إلى بلده الأصلي على نفقتي الخاصة عند إنتهاء / إنهاء إقامته.
+                                            </p>
+                                        </li>
+                                        <li>
+                                            <p class="bold-weight">
+                                                أنه غير مطلوب و خال من السوابق و إذا ثبت بعد دخوله غير ذلك أو ثبت بأنه غير لائق صحيا، ألتزم بإعادته على نفقتي الخاصة إلى بلده.
+                                            </p>
+                                        </li>
+                                        <li>
+                                            <p class="bold-weight">
+                                                أن ألتزم بقانون إقامة الأجانب و اللوائح التنفيذية له و التعليمات الصادرة المبينة خلف سمة الدخول
+                                            </p>
+                                        </li>
+                                    </ul>
+                                    <table border="0" cellpadding="0" cellspacing="0" class="w-100" style="background-color: white; padding: 0px 8px 0px 8px; border-collapse:separate;">
+                                        <tbody>
+                                            <tr>
+                                                <th class="text-center">إسم و توقيع مقدم الطلب</th>
+                                                <th class="text-center">ختم صاحب العمل</th>
+                                            </tr>
+                                            <br/><br/><br/>
+                                            <tr>
+                                                <td style="height:20px;border: none"></td>
+                                            </tr>
+                                            <tr>
+                                                <td style="border: none">.................................</td>
+                                                <td style="border: none">..................................</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                                <td style="text-align: left !important;direction: ltr !important;">
+                                    <h5 class="text-center">Declaration and Undertaking</h5>
+                                    <ul>
+                                        <li>
+                                            <p class="bold-weight">
+                                               Data declared in this application is correct and that I abide
+                                                by the policies and provisions of the law.
+                                            </p>
+                                        </li>
+                                        <li>
+                                            <p class="bold-weight">
+                                                I assume full responsibility for the employee during his stay and will return him to his home country on my own expense.upon expiration or termination of his residency .
+                                            </p>
+                                        </li>
+                                        <li>
+                                            <p class="bold-weight">
+                                                 The employee has a clean criminal record with no violations  against him and is in good health , I shall return him to his home country at my own expense if the above is discovered not to be true.
+                                            </p>
+                                        </li>
+                                        <li>
+                                            <p class="bold-weight">
+                                                To abide by the residency laws and regulations mentioned on the back of the entry visa form.
+                                            </p>
+                                        </li>
+                                    </ul>
+                                    <table border="0" cellpadding="0" cellspacing="0" class="w-100" style="background-color: white; padding: 0px 8px 0px 8px; border-collapse:separate;">
+                                        <tbody>
+                                            <tr>
+                                                <th>Signature of Applicant</th>
+                                                <th> Employer Seal</th>
+                                            </tr>
+                                            <tr>
+                                                <td style="height:15px;border: none"></td>
+                                            </tr>
+                                            <tr>
+                                                <td style="border: none">..........................................</td>
+                                                <td style="border: none">..........................................</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <table class="GeneratedTable" style="text-align: right !important;direction: rtl !important;">
+                      <tbody>
+                        <tr>
+                          <td colspan="12" style="font-weight: bold" class="text-center grey-background">
+                              <h4>بيانات المتنازل</h4>
+                          </td>
+                        </tr>
+                        <tr>
+                            <td class="grey-background text-center bold-weight" style="width:100px;">الرقم المدني</td>
+                            <td colspan="7"></td>
+                            <td  class="grey-background text-center bold-weight" rowspan="2" style="width:100px;">التوقيع  و الختم</td>
+                            <td rowspan="2" colspan="3"></td>
+                        </tr>
+                        <tr>
+                          <td class="grey-background text-center bold-weight" colspan="3" style="width:100px;">الإسم-الجهة الحكومية- الشركة</td>
+                            <td colspan="5"></td>
+                        </tr>
+                        <tr>
+                            <td colspan="6" style="text-align: right">
+                                <p style="text-align: right">موظف الإستقبال: .............................................................</p>
+                                <p style="text-align: right">التوقيع: ...............................................................................</p>
+                                <p style="text-align: right">الختم: ...................................................................................</p>
+                            </td>
+                            <td colspan="6" style="text-align: right">
+                                الملاحظات:
+                            </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <div style="page-break-before: always;"/>
+                    <table class="GeneratedTable" style="text-align: right !important;direction: rtl !important;">
+                      <tbody>
+                        <tr>
+                          <td colspan="12" style="font-weight: bold" class="text-center grey-background">
+                              <h4>بيانات المرافقين</h4>
+                          </td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: right; direction: rtl" class="text-center">م</td>
+                            <td style="text-align: right; direction: rtl" class="text-center">الإسم</td>
+                            <td style="text-align: right; direction: rtl" class="text-center">الجنس</td>
+                            <td style="text-align: right; direction: rtl" class="text-center">صلة القرابة</td>
+                            <td style="text-align: right; direction: rtl" class="text-center">تاريخ الميلاد</td>
+                            <td style="text-align: right; direction: rtl" class="text-center">ملاحظات</td>
+                        </tr>
+                        <t t-set="sequence" t-value="0"/>
+                        <t t-foreach="range(1, 11)" t-as="row">
+                            <t t-set="sequence" t-value="sequence + 1"/>
+                            <tr style="text-align: right; direction: rtl">
+                              <td style="text-align: right; direction: rtl;text-align: right;"><t t-esc="sequence"/></td>
+                              <td style="text-align: right; direction: rtl"></td>
+                              <td style="text-align: right; direction: rtl"></td>
+                              <td style="text-align: right; direction: rtl"></td>
+                              <td style="text-align: right; direction: rtl"></td>
+                              <td style="text-align: right; direction: rtl"></td>
+                            </tr>
+                        </t>
+                      </tbody>
+                    </table>
+                    <table class="GeneratedTable" style="text-align: right !important;direction: rtl !important;">
+                      <tbody style="text-align: right !important;direction: rtl !important;">
+                        <tr>
+                          <td colspan="12" style="font-weight: bold" class="text-center grey-background">
+                              <h4>للإستعمال الرسمي</h4>
+                          </td>
+                        </tr>
+                        <tr style="text-align: right; direction: rtl">
+                          <td colspan="9" style="height: 200px;text-align: right; direction: rtl;">
+                              <span style="margin-top: 5px !important;">موظف / خدمة المواطن / خدمة المراجعين</span>
+                          </td>
+                          <td rowspan="2" style="height: 200px;text-align: right; direction: rtl;margin-top: 5px;">موظف التدقيق</td>
+                        </tr>
+                        <tr style="text-align: right; direction: rtl">
+                          <td style="height: 20px;text-align: right; direction: rtl;width:70px;margin-top: 5px;" class="grey-background">رقم التأشيرة</td>
+                          <td style="height: 20px;text-align: right; direction: rtl"></td>
+                          <td style="height: 20px;text-align: right; direction: rtl"></td>
+                          <td style="height: 20px;text-align: right; direction: rtl"></td>
+                          <td style="height: 20px;text-align: right; direction: rtl"></td>
+                          <td style="height: 20px;text-align: right; direction: rtl"></td>
+                          <td style="height: 20px;text-align: right; direction: rtl"></td>
+                          <td style="height: 20px;text-align: right; direction: rtl"></td>
+                          <td style="height: 20px;text-align: right; direction: rtl"></td>
+                        </tr>
+                        <tr style="text-align: right; direction: rtl">
+                          <td colspan="9" style="height: 200px;text-align: right; direction: rtl">موظف الإرشيف</td>
+                          <td colspan="1" style="height: 200px;text-align: right; direction: rtl">الإستعمال الرسمي</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                </div>
+            </t>
+        </template>
+    </data>
+</odoo>

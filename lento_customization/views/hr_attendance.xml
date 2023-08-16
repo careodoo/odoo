@@ -1,0 +1,19 @@
+<odoo>
+    <data>
+        <!--        Inherit Form View to Modify it-->
+        <record id="hr_attendance_view_filter_inherit" model="ir.ui.view">
+            <field name="name">hr.attendance.search</field>
+            <field name="model">hr.attendance</field>
+            <field name="inherit_id" ref="hr_attendance.hr_attendance_view_filter"/>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="personal_id" string="Personal ID"/>
+                    <filter string="Personal ID" domain="[('personal_id','&gt;',0)]" name="personal_id"/>
+                </search>
+            </field>
+        </record>
+
+
+
+    </data>
+</odoo>

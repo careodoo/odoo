@@ -1,0 +1,15 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_petrol_tank_stage,petrol.tank.stage,model_petrol_tank_stage,group_tank_user,1,0,0,0
+access_petrol_tank_stage,petrol.tank.stage,model_petrol_tank_stage,care_petrol.group_tank_manager,1,1,1,1
+
+access_petrol_tank_u,petrol.tank.u,model_petrol_tank,care_petrol.group_tank_user,1,0,0,0
+access_petrol_tank_m,petrol.tank.m,model_petrol_tank,care_petrol.group_tank_manager,1,1,1,1
+
+access_petrol_tank_charge,petrol.tank.charge,model_petrol_tank_charge,group_tank_user,1,0,0,0
+access_petrol_tank_charge,petrol.tank.charge,model_petrol_tank_charge,care_petrol.group_tank_manager,1,1,1,1
+
+access_petrol_tank_transfer,petrol.tank.transfer,model_petrol_tank_transfer,group_tank_user,1,0,0,0
+access_petrol_tank_transfer,petrol.tank.transfer,model_petrol_tank_transfer,care_petrol.group_tank_manager,1,1,1,1
+
+access_petrol_tank_use,petrol.tank.use,model_petrol_tank_use,group_tank_user,1,0,0,0
+access_petrol_tank_use,petrol.tank.use,model_petrol_tank_use,care_petrol.group_tank_manager,1,1,1,1

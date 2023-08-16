@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="work_department_hr_social_contracts_view_form" model="ir.ui.view">
+            <field name="name">work.department.hr.social.contracts</field>
+            <field name="model">hr.social.contracts</field>
+            <field name="inherit_id" ref="care.hr_social_contracts_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='available_places']" position="after">
+                    <field name="work_department" string="Work Department"/>
+                    <field name="work_department_eng" string="Work Department(eng)"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

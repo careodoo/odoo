@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="purchase_sign_template_asset_transfer" model="mail.template">
+            <field name="name">Ask To Sign Asset Transfer</field>
+            <field name="model_id" ref="purchase_report.model_purchase_sign"/>
+            <field name="model">purchase.sign</field>
+            <field name="subject">Ask To Sign Asset Transfer</field>
+            <field name="auto_delete" eval="0" />
+            <field name="email_from">{{ user.email_formatted }}</field>
+            <field name="email_to">{{object.employee_id.work_email}}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Dear <t t-out="object.employee_id.name"></t><br/><br/>
+                        Kindly Sign Asset Transfer for <t t-out="object.asset_transfer_id.asset_id.name"/>.<br/>
+                        from <t t-out="object.asset_transfer_id.old_department_id.name"/>
+                        to <t t-out="object.asset_transfer_id.new_department_id.name"/>.<br/>
+                        Do not hesitate to contact us if you have any questions.
+                        <br/><br/>
+                        Best regards,
+                        <t t-if="user.signature">
+                            <br/>
+                            <t t-out="user.signature">--<br/></t>
+                        </t>
+                    </p>
+                </div>
+            </field>
+        </record>
+    </data>
+</odoo>

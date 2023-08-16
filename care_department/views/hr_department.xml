@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="care_view_department_form" model="ir.ui.view">
+            <field name="name">care_view_department_form</field>
+            <field name="model">hr.department</field>
+            <field name="inherit_id" ref="hr.view_department_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//widget[@name='web_ribbon']" position="before">
+                    <div name="button_box" class="oe_button_box">
+                        <button class="oe_stat_button" icon="fa-circle" type="object" name="button_show_employees"
+                                attrs="{'invisible': [('show_employees', '=', False)]}">
+                            <field widget="statinfo" name="employee_count" string="Employees"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-rocket" type="object" name="button_show_vehicles"
+                                attrs="{'invisible': [('show_vehicles', '=', False)]}">
+                            <field widget="statinfo" name="vehicle_count" string="Vehicles"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-calendar" type="object" name="button_show_tasks"
+                                attrs="{'invisible': [('show_tasks', '=', False)]}">
+                            <field widget="statinfo" name="task_count" string="Tasks"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-shopping-basket" type="object" name="button_show_purchase_orders"
+                                attrs="{'invisible': [('show_purchase_orders', '=', False)]}">
+                            <field widget="statinfo" name="purchase_order_count" string="Purchase Orders"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-globe" type="object" name="button_show_sale_orders"
+                                attrs="{'invisible': [('show_sale_orders', '=', False)]}">
+                            <field widget="statinfo" name="sale_order_count" string="Sale Orders"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-briefcase" type="object" name="button_show_attendances"
+                                attrs="{'invisible': [('show_attendances', '=', False)]}">
+                            <field widget="statinfo" name="attendance_count" string="Attendances"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-file-o" type="object" name="button_show_letters"
+                                attrs="{'invisible': [('show_letters', '=', False)]}">
+                            <field widget="statinfo" name="letter_count" string="Letters"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-retweet" type="object" name="button_show_leaves"
+                                attrs="{'invisible': [('show_leaves', '=', False)]}">
+                            <field widget="statinfo" name="leave_count" string="Time Off"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-flag" type="object" name="button_show_shifts"
+                                attrs="{'invisible': [('show_shifts', '=', False)]}">
+                            <field widget="statinfo" name="shift_count" string="Shifts"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-magic" type="object" name="button_show_applicants"
+                                attrs="{'invisible': [('show_applicants', '=', False)]}">
+                            <field widget="statinfo" name="applicant_count" string="Applicants"/>
+                        </button>
+                    </div>
+                </xpath>
+                <xpath expr="//field[@name='name']" position="replace"/>
+                <xpath expr="//group" position="before">
+                    <field name="logo" widget="image" class="oe_avatar"/>
+                    <div class="oe_title">
+                        <label for="name" string="Department Name"/>
+                        <h1>
+                            <div class="d-flex">
+                                <field class="o_text_overflow" name="name" placeholder="e.g. HR"/>
+                            </div>
+                        </h1>
+                    </div>
+                </xpath>
+                <xpath expr="//field[@name='parent_id']" position="after">
+                    <field name="project_id"/>
+                </xpath>
+                <xpath expr="//group[2]" position="replace">
+                    <notebook>
+                        <page name="approvers" string="Shift Approvers">
+                            <group>
+                                <field name="employee_shift_approval_1"/>
+                                <field name="employee_shift_approval_2"/>
+                                <field name="employee_shift_approval_3"/>
+                                <field name="working_hours_modifier"/>
+                            </group>
+                        </page>
+                        <page name="options" string="Options">
+                            <group>
+                                <field name="show_employees"/>
+                                <field name="show_vehicles"/>
+                                <field name="show_tasks"/>
+                                <field name="show_purchase_orders"/>
+                                <field name="show_sale_orders"/>
+                                <field name="show_attendances"/>
+                                <field name="show_letters"/>
+                                <field name="show_leaves"/>
+                                <field name="show_shifts"/>
+                                <field name="show_applicants"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </xpath>
+            </field>
+        </record>
+        <record id="care_hr_department_view_kanban" model="ir.ui.view">
+            <field name="name">care.hr.department.kanban.inherit</field>
+            <field name="model">hr.department</field>
+            <field name="inherit_id" ref="hr.hr_department_view_kanban"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="//div[hasclass('o_kanban_card_header_title')]" position="after">
+                        <field name="logo" display="right" options="{&quot;size&quot;:[0,90]}" widget="image"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        <record id="care_hr_department_kanban_action" model="ir.actions.act_window">
+            <field name="name">Care Projects</field>
+            <field name="res_model">hr.department</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="search_view_id" ref="hr.view_department_filter"/>
+            <field name="help" type="html">
+              <p class="o_view_nocontent_smiling_face">
+                Create a new department
+              </p><p>
+                Odoo's department structure is used to manage all documents
+                related to employees by departments: expenses, timesheets,
+                time off, recruitments, etc.
+              </p>
+            </field>
+        </record>
+        <menuitem
+                id="care_menu_hr_department_kanban"
+                name="Care Projects"
+                action="care_hr_department_kanban_action"
+                groups="hr.group_hr_user"/>
+    </data>
+</odoo>

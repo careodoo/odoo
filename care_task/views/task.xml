@@ -1,0 +1,24 @@
+<odoo>
+    <data>
+        <record id="action_view_my_task" model="ir.actions.act_window">
+            <field name="name">My Tasks</field>
+            <field name="res_model">project.task</field>
+            <field name="view_mode">kanban,tree,form,calendar,pivot,graph,activity</field>
+            <field name="context">{'all_task': 0}</field>
+            <field name="domain">[('user_ids', 'in', uid)]</field>
+            <field name="search_view_id" ref="project.view_task_search_form_extended"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No tasks found. Let's create one!
+                </p><p>
+                     To get things done, use activities and status on tasks.<br/>
+                    Chat in real-time or by email to collaborate efficiently.
+                </p>
+            </field>
+        </record>
+
+        <menuitem id="my_tasks_root" name="My Tasks" sequence="15" groups="project.group_project_user" web_icon="fa fa-calendar,#FFFFFF,#BC4242"/>
+        <menuitem id="my_tasks_menu" name="My Tasks" sequence="1" parent="my_tasks_root" groups="project.group_project_user"
+            action="action_view_my_task"/>
+    </data>
+</odoo>

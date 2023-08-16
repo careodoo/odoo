@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_fleet_damage,access_fleet_damage,model_fleet_damage,,1,1,1,1

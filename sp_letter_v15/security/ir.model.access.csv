@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_letter_file,access.letter.file,model_letter_file,base.group_user,1,1,1,1
+access_multi_tag,access.multi.tag,model_multi_tag,base.group_user,1,1,1,1
+access_outgoing_stage,access.outgoing.stage,model_outgoing_stage,base.group_user,1,1,1,1

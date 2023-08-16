@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.rule" id="petrol_tank_stage_comp_rule">
+            <field name="name">Tank Stage multi-company</field>
+            <field name="model_id" ref="model_petrol_tank_stage"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="petrol_tank_comp_rule">
+            <field name="name">Petrol Tank multi-company</field>
+            <field name="model_id" ref="model_petrol_tank"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="petrol_tank_charge_comp_rule">
+            <field name="name">Petrol Tank Charge multi-company</field>
+            <field name="model_id" ref="model_petrol_tank_charge"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="petrol_tank_use_comp_rule">
+            <field name="name">Petrol Tank Use multi-company</field>
+            <field name="model_id" ref="model_petrol_tank_use"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="petrol_tank_transfer_comp_rule">
+            <field name="name">Petrol Tank Transfer multi-company</field>
+            <field name="model_id" ref="model_petrol_tank_transfer"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+    </data>
+</odoo>

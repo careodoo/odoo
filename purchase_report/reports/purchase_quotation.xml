@@ -1,0 +1,205 @@
+<?xml version="1.0" ?>
+<odoo>
+    <record id="purchase.report_purchase_quotation" model="ir.actions.report">
+        <field name="paperformat_id" ref="purchase_report.paperformat_no_margin_receipt"/>
+    </record>
+    <template id="purchase_report" inherit_id="purchase.report_purchasequotation_document"
+              customize_show="True">
+        <xpath expr="//t[@t-call='web.external_layout']" position="replace">
+            <t t-call="purchase_report.custom_internal_layout">
+                <t t-set="o" t-value="o.with_context(lang=o.partner_id.lang)"/>
+
+                <div class="page">
+                    <div class="row">
+                        <img src="/purchase_report/static/src/img/header.png" atl="header.png" class="w-100"/>
+                        <img t-att-src="image_data_uri(o.qr_image)"
+                                             style="position: absolute;
+                                             right: 40px;
+                                             top: 0px;
+                                             z-index: 1;
+                                             width: 130px;
+                                             height: 150px;
+                                             display: block;
+                                             margin-left: 0px;
+                                             margin-right: auto;
+                                             padding-top:20px"  alt="Logo"/>
+                    </div>
+                    <style>
+                        table.GeneratedTable {
+                            width: 100%;
+                            background-color: #ffffff;
+                            border-collapse: collapse;
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-size: 14px;
+                            color: #000000;
+                        }
+
+                        table.Contact {
+                            width: 50%;
+                        }
+
+                        table.GeneratedTable td, table.GeneratedTable th {
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            padding: 2px;
+                        }
+
+                        table.GeneratedTable thead {
+                            background-color: #a3a3a3;
+                        }
+                    </style>
+
+                    <div class="oe_structure"/>
+                    <h2 class="text-capitalize text-center" style="font-weight: bold;">Request for Quotation</h2>
+                    <br/>
+                    <!-- Information Table-->
+                    <table class="GeneratedTable m-2">
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <span class="font-weight-bold">RFQ Number:</span>
+                                    <span t-esc="o.name"/>
+                                </td>
+                                <td>
+                                    <!-- to do -->
+                                    <span class="font-weight-bold">Payment Term:</span>
+                                    <span t-esc="o.payment_term_id.name"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="font-weight-bold">Supplier:</span>
+                                    <span t-esc="o.partner_id.name"/>
+                                </td>
+                                <td>
+                                    <span class="font-weight-bold">Cost Center:</span>
+                                    <span t-field="o.cost_center_id"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="font-weight-bold">Phone:</span>
+                                    <span t-esc="o.partner_id.phone"/>
+                                </td>
+                                <td>
+                                    <span class="font-weight-bold">RFQ Date:</span>
+                                    <span t-esc="o.date_approve"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="font-weight-bold">Address:</span>
+                                    <span t-esc="o.partner_id.street"/>
+                                </td>
+                                <td>
+                                    <span class="font-weight-bold">Currency:</span>
+                                    <span t-esc="o.currency_id.name"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="font-weight-bold">Country:</span>
+                                    <span t-esc="o.partner_id.country_id.name"/>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <br/>
+                    <!-- Order Lines Table-->
+                    <t t-if="o.order_line">
+                        <table class="GeneratedTable m-2">
+                            <thead>
+                                <tr>
+                                    <th class="text-center">SN</th>
+                                    <th class="text-center">Item</th>
+                                    <th class="text-center">Base Unit</th>
+                                    <th class="text-center">Quantity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-set="sequence" t-value="0"/>
+                                <t t-foreach="o.order_line" t-as="line">
+                                    <t t-set="sequence" t-value="sequence + 1"/>
+                                    <tr>
+                                        <td class="text-center">
+                                            <t t-esc="sequence"/>
+                                        </td>
+                                        <td class="text-center">
+                                            <t t-esc="line.product_id.name"/>
+                                        </td>
+                                        <td class="text-center">
+                                            <t t-esc="line.product_uom.name"/>
+                                        </td>
+                                        <td class="text-center">
+                                            <t t-esc="line.product_qty"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                        <br/>
+                    </t>
+                    <br/>
+
+                    <!-- Terms and conditions Table-->
+                    <table class="GeneratedTable m-2" t-if="o.show_terms">
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <h5 class="text-capitalize text-center text-decoration-underline">Terms &amp; Conditions</h5>
+                                    <p t-field="o.notes"/>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <br/>
+                    <br/>
+
+                    <!-- Contact Person Table-->
+                    <table class="GeneratedTable Contact m-2">
+                        <thead>
+                            <tr>
+                                <th>Contact Person</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <span t-esc="o.user_id.name"/> - <t t-esc="o.user_id.employee_id.job_title"/>
+                                    <br/>
+                                    <span class="font-weight-bold">Email: <t t-esc="o.user_id.email"/></span>
+                                    <br/>
+                                    <span class="font-weight-bold">Mobile: <t t-esc="o.user_id.mobile"/></span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <table class="GeneratedTable Contact m-2" t-if="o.show_signature">
+                    <thead>
+                        <tr>
+                            <t t-if="o.show_signature"><th>Requestor</th></t>
+                            <t t-else=""><th></th></t>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="o.signature_lines" t-as="sign">
+                            <tr>
+                                <td>
+                                    <span t-esc="sign.employee_id.name"/> - <t t-esc="sign.employee_title"/>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+
+                </div>
+            </t>
+        </xpath>
+
+
+    </template>
+</odoo>

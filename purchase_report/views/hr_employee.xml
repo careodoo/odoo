@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="resident_view_employee_form" model="ir.ui.view">
+            <field name="name">resident.view.employee.form</field>
+            <field name="model">hr.employee</field>
+            <field name="inherit_id" ref="hr.view_employee_form"/>
+            <field name="arch" type="xml">
+<!--                <xpath expr="//header" position="inside">-->
+<!--                    <button name="action_open_resident_wizard" type="object" string="Print Report" class="btn-secondary"/>-->
+<!--                </xpath>-->
+                <xpath expr="//sheet/notebook/page/group/group/field[@name='social_affairs_title']" position="after">
+                    <field name="social_affairs_title_eng"/>
+                </xpath>
+
+                <xpath expr="//sheet/notebook/page/group/group/field[@name='social_contract_id']" position="after">
+                    <field name="day_translated" invisible="1"/>
+                    <field name="country_id_translated" invisible="1"/>
+                    <field name="company_country_id_translated" invisible="1"/>
+                    <field name="passport_type_translated" invisible="1"/>
+                    <field name="gender_translated" invisible="1"/>
+                    <field name="work_department" string="Work Department"/>
+                    <field name="work_department_eng" string="Work Department(eng)"/>
+                </xpath>
+            </field>
+        </record>
+        
+        <record id="code_view_department_form" model="ir.ui.view">
+            <field name="name">code.view.department.form</field>
+            <field name="model">hr.department</field>
+            <field name="inherit_id" ref="hr.view_department_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//group" position="inside">
+                    <field name="short_code" required="1"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="action_arrival_resident_report" model="ir.actions.act_window">
+            <field name="name">Print Arrival Resident Report</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">arrival.resident.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="arrival_resident_view_form"/>
+            <field name="context">{}</field>
+            <field name="target">new</field>
+            <field name="binding_model_id" ref="hr.model_hr_employee" />
+            <field name="binding_view_types">list</field>
+        </record>
+    </data>
+</odoo>

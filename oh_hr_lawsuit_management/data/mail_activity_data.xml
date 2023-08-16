@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="mail_act_legal_case_reminder" model="mail.activity.type">
+            <field name="name">Legal Case Remainder</field>
+            <field name="icon">fa-sun-o</field>
+            <field name="res_model">hr.lawsuit</field>
+        </record>
+    </data>
+</odoo>

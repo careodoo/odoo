@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="social_contracts_authorized_persons_view_tree" model="ir.ui.view">
+        <field name="name">social.contracts.authorized.persons</field>
+        <field name="model">social.contracts.authorized.persons</field>
+        <field name="arch" type="xml">
+            <tree string="hr_social_contracts_tree" editable="top">
+                <field name="employee_id"/>
+                <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                <field name="identification_id"/>
+                <field name="country_id"/>
+                <field name="parent_id"/>
+                <field name="department_id"/>
+                <field name="contract_ids" widget="many2many_tags"/>
+                <field name="pin"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="social_contracts_authorized_persons_view_form" model="ir.ui.view">
+        <field name="name">social_contracts_authorized_persons_view_form</field>
+        <field name="model">social.contracts.authorized.persons</field>
+        <field name="arch" type="xml">
+            <form string="social_contracts_authorized_persons_form">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                            <field name="name"/>
+                            <field name="parent_id"/>
+                            <field name="department_id"/>
+                        </group>
+                        <group>
+                            <field name="pin"/>
+                            <field name="identification_id"/>
+                            <field name="country_id"/>
+                            <field name="contract_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="social_contracts_authorized_persons_action" model="ir.actions.act_window">
+        <field name="name">Social Contracts Authorized Persons</field>
+        <field name="res_model">social.contracts.authorized.persons</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="social_contracts_authorized_persons_menu" name="Authorized Persons" parent="hr.menu_hr_root" action="social_contracts_authorized_persons_action" sequence="101"/>
+</odoo>

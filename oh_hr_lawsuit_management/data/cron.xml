@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="ir_cron_hrlawsuit" model="ir.cron">
+            <field name="name">Legal Case: Next Appointment</field>
+            <field eval="True" name="active"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field ref="model_hr_lawsuit" name="model_id"/>
+            <field name="state">code</field>
+            <field eval="'model.cron_notify_next_appointment()'" name="code"/>
+        </record>
+    </data>
+</odoo>

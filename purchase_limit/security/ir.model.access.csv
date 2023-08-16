@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_cost_center_month,cost_center_month,model_cost_center_month,,1,1,1,1
+access_cost_center_extra_budget,cost_center_extra_budget,model_cost_center_extra_budget,,1,1,1,1
+access_cost_center_transfer_budget,cost_center_transfer_budget,model_cost_center_transfer_budget,,1,1,1,1
+access_default_cost_center_sign,default_cost_center_sign,model_default_cost_center_sign,,1,1,1,1
+purchase_report.access_cost_center,access.cost.center,model_cost_center,purchase_limit.group_cost_center_manager,1,1,1,1
+access_cost_center_user,access.cost.center user,model_cost_center,purchase_limit.group_cost_center_user,1,0,0,0

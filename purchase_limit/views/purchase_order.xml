@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="purchase_order_form_purchase_limit" model="ir.ui.view">
+            <field name="name">purchase.order.purchase.limit</field>
+            <field name="model">purchase.order</field>
+            <field name="inherit_id" ref="purchase.purchase_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='partner_id']" position="after">
+                    <field name="signature_users" widget="many2many_tags"/>
+                </xpath>
+                <xpath expr="//button[@id='bid_confirm']" position="attributes">
+                    <attribute name="states"></attribute>
+                    <attribute name="attrs">{'invisible': &quot;['|', ('signature_users', 'not in', [uid]), ('state', '!=', 'sent')]&quot;}</attribute>
+                </xpath>
+                <xpath expr="//button[@id='draft_confirm']" position="attributes">
+                    <attribute name="states"></attribute>
+                    <attribute name="attrs">{'invisible': &quot;['|', ('signature_users', 'not in', [uid]), ('state', '!=', 'draft')]&quot;}</attribute>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

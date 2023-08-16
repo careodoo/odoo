@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="hr_social_contracts_view_tree" model="ir.ui.view">
+        <field name="name">hr_social_contracts</field>
+        <field name="model">hr.social.contracts</field>
+        <field name="arch" type="xml">
+            <tree string="hr_social_contracts_tree">
+                <field name="partner_id"/>
+                <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                <field name="contract_id"/>
+                <field name="contract_no"/>
+                <field name="contract_type"/>
+                <field name="period"/>
+            </tree>
+        </field>
+    </record>
+    
+    <record id="hr_social_contracts_view_form" model="ir.ui.view">
+        <field name="name">hr_social_contracts_view_form</field>
+        <field name="model">hr.social.contracts</field>
+        <field name="arch" type="xml">
+            <form string="hr_social_contracts_form">
+                <sheet>
+                    <div class="oe_title mb24">
+                        <h1>
+                            <field name="name" class="o_text_overflow" default_focus="1" placeholder="Social Contracts Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                            <field name="contract_id"/>
+                            <field name="contract_no"/>
+                            <field name="contract_type"/>
+                            <field name="period"/>
+                            <field name="finance_letter"/>
+                        </group>
+                        <group>
+                            <field name="bank_guarantee"/>
+                            <field name="social_bank_guarantee"/>
+                            <field name="capacity"/>
+                            <field name="registered_labor"/>
+                            <field name="available_places"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page name="authorized_persons" string="Authorized Persons">
+                            <field name="authorized_persons_line">
+                                <tree editable="top">
+                                    <field name="name"/>
+                                    <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="social_contracts_date_line" string="Dates Line">
+                            <field name="social_contracts_date_line">
+                                <tree editable="top">
+                                    <field name="name"/>
+                                    <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                                    <field name="start_date"/>
+                                    <field name="end_date"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="hr_social_contracts_action" model="ir.actions.act_window">
+        <field name="name">Social Contracts</field>
+        <field name="res_model">hr.social.contracts</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="hr_social_contracts_menu" name="Social Contracts" parent="hr.menu_hr_root" action="hr_social_contracts_action" sequence="100"/>
+
+</odoo>

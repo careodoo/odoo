@@ -1,0 +1,79 @@
+<odoo>
+    <data>
+        <!--        Inherit Form View to Modify it-->
+        <record id="view_employee_form_inherit" model="ir.ui.view">
+            <field name="name">hr.employee.form.inherit</field>
+            <field name="model">hr.employee</field>
+            <field name="inherit_id" ref="hr.view_employee_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form/sheet/notebook/page[2]" position="inside">
+                    <group string="Military Service">
+                        <field name="military_service_position"/>
+                        <field name="postponed_date"
+                               attrs="{'invisible': [('military_service_position', '!=', 'Postponed')]}"/>
+                    </group>
+                    <group string="Insurance">
+                        <field name="insurance_start_date"/>
+                        <field name="insurance_type"/>
+                        <field name="insurance_status"/>
+                        <field name="insurance_salary" attrs="{'invisible': [('insurance_status', '!=', 'insured')]}"/>
+                    </group>
+                </xpath>
+
+                <xpath expr="//form/sheet/notebook/page[3]" position="after">
+                    <page name="attachments" string="Attachments">
+                        <group>
+                            <group string="Personal Photo">
+                                <field name="personal_photo" widget="many2many_binary" class="oe_inline"/>
+                            </group>
+                            <group string="Id Photo">
+                                <field name="id_photo" widget="many2many_binary" class="oe_inline"/>
+                            </group>
+                            <group string="Passport Attachment">
+                                <field name="passport_attachment" widget="many2many_binary" class="oe_inline"/>
+                            </group>
+                            <group string="Graduation Certificate">
+                                <field name="graduation_certificate" widget="many2many_binary" class="oe_inline"/>
+                            </group>
+                            <group string="Military Service Certificate">
+                                <field name="military_service_certificate" widget="many2many_binary" class="oe_inline"/>
+                            </group>
+                            <group string="Certificate Of Police Record">
+                                <field name="certificate_of_police_record" widget="many2many_binary" class="oe_inline"/>
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+
+
+                <xpath expr="//field[@name='certificate']" position="after">
+                    <!-- Add your fields or attributes here -->
+                    <field name="graduation_date"/>
+                </xpath>
+
+                <xpath expr="//field[@name='coach_id']" position="after">
+                    <!-- Add your fields or attributes here -->
+                    <field name="personal_id"/>
+                </xpath>
+                <xpath expr="//field[@name='marital']" position="after">
+                    <!-- Add your fields or attributes here -->
+                    <field name="pension"/>
+                </xpath>
+
+            </field>
+        </record>
+
+        <record id="view_employee_filter_inherit" model="ir.ui.view">
+            <field name="name">hr.employee.search</field>
+            <field name="model">hr.employee</field>
+            <field name="inherit_id" ref="hr.view_employee_filter"/>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="personal_id" string="Personal ID"/>
+                    <filter string="Personal ID" domain="[('personal_id','&gt;',0)]" name="personal_id"/>
+                </search>
+            </field>
+        </record>
+
+    </data>
+</odoo>

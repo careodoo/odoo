@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="fleet_vehicle_view_form_damage" model="ir.ui.view">
+            <field name="name">fleet.vehicle.form.damage</field>
+            <field name="model">fleet.vehicle</field>
+            <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
+                    <button name="open_damages"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-history">
+                        <field name="damage_count" widget="statinfo" string="Damages"/>
+                    </button>
+                </xpath>
+                <xpath expr="//field[@name='driver_id']" position="before">
+                    <field name="driver_type" widget="radio" options="{'horizontal': true}"/>
+                    <field name="driver_employee_id" force_save="1" attrs="{'invisible': [('driver_type', '!=', 'employee')]}"/>
+                </xpath>
+                <xpath expr="//field[@name='driver_id']" position="attributes">
+                    <attribute name="attrs">{'invisible': [('driver_type', '!=', 'contact')]}</attribute>
+                    <attribute name="string">Driver (Contact)</attribute>
+                    <attribute name="force_save">1</attribute>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

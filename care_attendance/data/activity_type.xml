@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="mail_act_bulk_attendance_create" model="mail.activity.type">
+            <field name="name">Bulk Attendance</field>
+            <field name="icon">fa-sun-o</field>
+            <field name="res_model">bulk.attendance</field>
+        </record>
+    </data>
+</odoo>

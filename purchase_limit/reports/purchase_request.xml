@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="report_purchase_request_document" inherit_id="purchase_report.report_purchase_request_document">
+            <xpath expr="//table[@id='sign_table']" position="replace">
+                <br/>
+                <div class="row" style="margin-left:-5px;margin-right:-5px;">
+                    <div class="col-6" style="float: left;padding: 5px;">
+                        <table class="GeneratedTable m-2" t-if="doc.show_signature" id="sign_table">
+                            <thead>
+                                <tr>
+                                    <th>Approvals</th>
+                                    <th class="text-center">Signature</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="doc.signature_lines" t-as="sign">
+                                    <tr>
+                                        <td>
+                                            <p t-esc="sign.employee_id.name"/>
+                                            <p t-esc="sign.employee_title"/>
+                                            <p t-if="sign.date_confirm">Approved on system at <span t-esc="sign.date_confirm"/></p>
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-6" style="float: left;padding: 5px;">
+                        <table class="GeneratedTable m-2" t-if="doc.cost_center and doc.show_budget" id="cost_center_table">
+                            <tbody>
+                                <tr>
+                                    <td class="text-center">
+                                        <span class="font-weight-bold">Annual Budget</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span t-esc="doc.cost_center.annual_budget"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">
+                                        <span class="font-weight-bold">Monthly Budget</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span t-esc="doc.cost_center.get_monthly_budget(doc.pr_date)"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">
+                                        <span class="font-weight-bold">Remaining Annual Budget</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span t-esc="doc.cost_center.remaining_annual_budget"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">
+                                        <span class="font-weight-bold">Remaining Monthly Budget</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span t-esc="doc.cost_center.get_remaining_monthly_budget(doc.pr_date)"/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </xpath>
+        </template>
+    </data>
+</odoo>

@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_bulk_attendance,bulk_attendance,model_bulk_attendance,,1,1,1,1
+access_hr_employee_extra_department,hr_employee_extra_department,model_hr_employee_extra_department,,1,1,1,1
+access_attendance_refuse_reason,attendance_refuse_reason,model_attendance_refuse_reason,,1,1,1,1
+access_hr_attendance_xlsx,hr_attendance_xlsx,model_hr_attendance_xlsx,,1,1,1,1

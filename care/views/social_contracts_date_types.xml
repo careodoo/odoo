@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="social_contracts_date_types_view_tree" model="ir.ui.view">
+        <field name="name">social_contracts_date_types_view_tree</field>
+        <field name="model">social.contracts.date.types</field>
+        <field name="arch" type="xml">
+            <tree string="social_contracts_date_types_tree" editable="top">
+                <field name="name"/>
+                <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="social_contracts_date_types_action" model="ir.actions.act_window">
+        <field name="name">Dates Types</field>
+        <field name="res_model">social.contracts.date.types</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="social_contracts_date_types_menu" name="Dates Types" parent="hr.menu_hr_root" action="social_contracts_date_types_action" sequence="99"/>
+</odoo>

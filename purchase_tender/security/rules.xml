@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.rule" id="bid_type_comp_rule">
+            <field name="name">Bid Type multi-company</field>
+            <field name="model_id" ref="model_bid_type"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="purchase_tender_follower_comp_rule">
+            <field name="name">Tender Follower multi-company</field>
+            <field name="model_id" ref="model_purchase_tender_follower"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="purchase_tender_comp_rule">
+            <field name="name">Purchase Tender multi-company</field>
+            <field name="model_id" ref="model_purchase_tender"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="purchase_tender_price_analysis_comp_rule">
+            <field name="name">Tender Price Analysis multi-company</field>
+            <field name="model_id" ref="model_purchase_tender_price_analysis"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="purchase_tender_manpower_analysis_comp_rule">
+            <field name="name">Purchase Tender Manpower Analysis multi-company</field>
+            <field name="model_id" ref="model_purchase_tender_manpower_analysis"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="purchase_tender_vehicle_analysis_comp_rule">
+            <field name="name">Purchase Tender Vehicle Analysis multi-company</field>
+            <field name="model_id" ref="model_purchase_tender_vehicle_analysis"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="purchase_tender_material_info_comp_rule">
+            <field name="name">Purchase Tender Material Info multi-company</field>
+            <field name="model_id" ref="model_purchase_tender_material_info"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="purchase_tender_equipment_analysis_comp_rule">
+            <field name="name">Purchase Tender Equipment Analysis multi-company</field>
+            <field name="model_id" ref="model_purchase_tender_equipment_analysis"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="purchase_tender_initial_meeting_comp_rule">
+            <field name="name">Purchase Tender Initial Meeting multi-company</field>
+            <field name="model_id" ref="model_purchase_tender_initial_meeting"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record model="ir.rule" id="purchase_tender_record_comp_rule">
+            <field name="name">Purchase Tender Record multi-company</field>
+            <field name="model_id" ref="model_purchase_tender_record"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+    </data>
+</odoo>

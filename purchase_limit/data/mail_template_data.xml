@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="purchase_sign_template_extra_budget" model="mail.template">
+            <field name="name">Ask To Sign Extra Budget</field>
+            <field name="model_id" ref="purchase_report.model_purchase_sign"/>
+            <field name="model">purchase.sign</field>
+            <field name="subject">Ask To Sign Extra Budget</field>
+            <field name="auto_delete" eval="0" />
+            <field name="email_from">{{ user.email_formatted }}</field>
+            <field name="email_to">{{object.employee_id.work_email}}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Dear <t t-out="object.employee_id.name"></t><br/><br/>
+                        Kindly Sign Extra Budget for <t t-out="object.extra_budget_id.cost_center_id.name"/> for <t t-out="object.extra_budget_id.month_id.date_string"/>.<br/>
+                        Do not hesitate to contact us if you have any questions.
+                        <br/><br/>
+                        Best regards,
+                        <t t-if="user.signature">
+                            <br/>
+                            <t t-out="user.signature">--<br/></t>
+                        </t>
+                    </p>
+                </div>
+            </field>
+        </record>
+    </data>
+</odoo>

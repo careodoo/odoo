@@ -1,0 +1,84 @@
+<odoo>
+    <record id="hr_employee_form_view_inherit" model="ir.ui.view">
+        <field name="name">hr.employee.form.view.inherit</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/notebook/page[@name='personal_information']" position="after">
+                <page name="residency_info" string="Residency Info">
+                    <group>
+                        <group>
+                            <field name="english_name"/>
+                            <field name="civil_code"/>
+                            <field name="moi_number"/>
+                            <field name="enter_date"/>
+                            <field name="residency_type"/>
+                            <field name="residency_start_date"/>
+                        </group>
+                        <group>
+                            <field name="residency_end_date"/>
+                            <field name="passport_no"/>
+                            <field name="passport_type"/>
+                            <field name="release_place"/>
+                            <field name="release_date"/>
+                            <field name="end_date"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="social_affairs_title"/>
+                            <field name="affairs_permit_start_date"/>
+                            <field name="affairs_permit_end_date"/>
+                            <field name="affairs_salary"/>
+                        </group>
+                        <group>
+                            <field name="social_contract_id"/>
+                            <field name="social_contract_no"/>
+                            <field name="authorized_persons_id"/>
+                        </group>
+                    </group>
+                </page>
+                <page name="hostel_info" string="Hostel Info">
+                    <group>
+                        <field name="is_company_accommodation"/>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="hostel_id" attrs="{'invisible' : [('is_company_accommodation', '=', False)]}"/>
+                            <field name="floor_id" attrs="{'invisible' : [('is_company_accommodation', '=', False)]}" domain="[('hostel_id', '=', hostel_id)]"/>
+                            <field name="flat_id" attrs="{'invisible' : [('is_company_accommodation', '=', False)]}" domain="[('hostel_id', '=', hostel_id), ('floor_id', '=', floor_id)]"/>
+                        </group>
+                        <group>
+                            <field name="room_id" attrs="{'invisible' : [('is_company_accommodation', '=', False)]}" domain="[('hostel_id', '=', hostel_id), ('floor_id', '=', floor_id), ('flat_id', '=', flat_id)]"/>
+                            <field name="bed_id" attrs="{'invisible' : [('is_company_accommodation', '=', False)]}" domain="[('hostel_id', '=', hostel_id), ('floor_id', '=', floor_id), ('flat_id', '=', flat_id), ('room_id', '=', room_id)]"/>
+                            <div class="col-md-12 inline btn" style="width:100%">
+                                <button name="submit_employee_to_hostel" icon="fa-cloud-upload" type="object" string="Submit" class="float-right btn-primary col-6"/>
+                                <button name="remove_employee_to_hostel" icon="fa-cloud-download" type="object" string="Remove" class="float-right btn-primary col-6" attrs="{'invisible' : [('bed_id', '=', False)]}"/>
+                            </div>
+                        </group>
+                    </group>
+                </page>
+                <page name="abstention_info" string="Abstention Info">
+                    <group>
+                        <group>
+                            <field name="request_no"/>
+                            <field name="social_start_date"/>
+                            <field name="due_date"/>
+                            <field name="requested_by"/>
+                            <field name="arrested"/>
+                            <field name="request_image" widget='image'/>
+                        </group>
+                        <group>
+                            <field name="police_request_no"/>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                            <field name="type"/>
+                            <field name="type"/>
+                            <field name="police_request_image" widget='image'/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

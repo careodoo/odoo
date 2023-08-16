@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.cron" id="bulk_check_out_cron">
+            <field name="name">Bulk Attendance: check out</field>
+            <field name="model_id" ref="care_attendance.model_bulk_attendance"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_bulk_check_out()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="nextcall" eval="(datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="doall" eval="False"/>
+        </record>
+    </data>
+</odoo>

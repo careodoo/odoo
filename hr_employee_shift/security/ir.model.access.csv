@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_employee_shift_request,employee_shift_request,model_employee_shift_request,,1,1,1,1
+access_employee_shift_request_record,employee_shift_request_record,model_employee_shift_request_record,,1,1,1,1
+access_request_refuse_reason,request_refuse_reason,model_request_refuse_reason,,1,1,1,1

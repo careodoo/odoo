@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="purchase_sign_view_kanban_extra" model="ir.ui.view">
+            <field name="name">purchase_sign_view_kanban_extra</field>
+            <field name="model">purchase.sign</field>
+            <field name="inherit_id" ref="purchase_report.purchase_sign_view_kanban"/>
+            <field name="arch" type="xml">
+                <xpath expr="//t[@t-if='record.request_id.raw_value']" position="after">
+                    <t t-if="record.extra_budget_id.raw_value">
+                        <field name="extra_budget_id" widget="badge"/>
+                    </t>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

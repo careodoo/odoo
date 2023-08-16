@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="action_report_asset_label" model="ir.actions.report">
+            <field name="name">Asset Label (PDF)</field>
+            <field name="model">account.asset</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">care_asset.report_asset_label</field>
+            <field name="report_file">care_asset.report_asset_label</field>
+            <field name="paperformat_id" ref="product.paperformat_label_sheet"/>
+            <field name="print_report_name">'Assets Labels'</field>
+            <field name="binding_model_id" eval="False"/>
+            <field name="binding_type">report</field>
+        </record>
+        <template id="report_asset_label">
+            <t t-call="web.basic_layout">
+                <div class="page">
+                    <t t-call="care_asset.report_asset_label2">
+                        <t t-set="assets" t-value="assets"/>
+                    </t>
+                </div>
+            </t>
+        </template>
+        <template id="report_asset_label2">
+            <t t-call="web.html_container">
+                <t t-if="columns and rows">
+                    <t t-set="padding_page" t-value="'padding: 14mm 3mm'"/>
+                    <t t-set="report_to_call" t-value="'care_asset.asset_report_simple_label2x7'"/>
+                    <t t-foreach="range(page_numbers)" t-as="page">
+                        <div class="o_label_sheet" t-att-style="padding_page">
+                            <table class="my-0 table table-sm table-borderless">
+                                <t t-foreach="range(1)" t-as="row">
+                                    <tr>
+                                        <t t-foreach="range(1)" t-as="column">
+                                            <t t-if="not current_quantity and quantity">
+                                                <t t-set="current_data" t-value="quantity.popitem()"/>
+                                                <t t-set="product" t-value="current_data[0]"/>
+                                                <t t-set="barcode_and_qty" t-value="current_data[1].pop()"/>
+                                                <t t-set="barcode" t-value="barcode_and_qty[0]"/>
+                                                <t t-set="current_quantity" t-value="barcode_and_qty[1]"/>
+                                            </t>
+                                            <t t-if="current_quantity">
+                                                <t t-set="make_invisible" t-value="False"/>
+                                                <t t-set="current_quantity" t-value="current_quantity - 1"/>
+                                            </t>
+                                            <t t-elif="current_data and current_data[1]">
+                                                <t t-set="barcode_and_qty" t-value="current_data[1].pop()"/>
+                                                <t t-set="barcode" t-value="barcode_and_qty[0]"/>
+                                                <t t-set="current_quantity" t-value="barcode_and_qty[1] - 1"/>
+                                            </t>
+                                            <t t-else="">
+                                                <t t-set="make_invisible" t-value="True"/>
+                                            </t>
+                                            <t t-set="table_style" t-value="'border: 1px solid %s;' % (product.env.user.company_id.primary_color or 'black')"/>
+                                            <t t-call="{{report_to_call}}"/>
+                                        </t>
+                                    </tr>
+                                </t>
+                            </table>
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </template>
+        <template id="asset_report_simple_label2x7">
+            <t t-set="barcode_size" t-value="'width:70mm;height:14mm'"/>
+            <t t-set="table_style" t-value="'width:97mm;height:37.1mm;' + table_style"/>
+            <td t-att-style="make_invisible and 'visibility:hidden;'" >
+                <div class="o_label_full" t-att-style="table_style">
+                    <div class="o_label_name">
+                        <center>
+                            <small t-field="product.display_name" style="font-family: arial, sans-serif;"/>
+                            <br/>
+                            <small t-field="product.company_id" style="font-family: arial, sans-serif;"/>
+                        </center>
+                    </div>
+                    <div class="o_label_data">
+                        <div class="row">
+                            <div class="col-7 text-center">
+                                <t t-if="barcode">
+                                    <div t-out="barcode" t-options="{'widget': 'barcode', 'symbology': 'auto', 'img_style': barcode_size}"/>
+                                    <span style="margin-left:30px;" t-out="barcode"/>
+                                </t>
+                            </div>
+                            <div class="text-right col-5" style="margin-right:15px;padding-right:15px;">
+                                <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', product.qr_url + str(product.id), 300, 40)" style="width:70px;height:70px;"/>
+                            </div>
+                        </div>
+                        <div class="o_label_clear"></div>
+                    </div>
+                </div>
+            </td>
+        </template>
+    </data>
+</odoo>

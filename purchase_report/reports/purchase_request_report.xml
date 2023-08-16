@@ -1,0 +1,249 @@
+<?xml version="1.0" ?>
+<odoo>
+    <record id="paperformat_no_margin_receipt" model="report.paperformat">
+            <field name="name">A4 zero margin Receipt</field>
+            <field name="default" eval="True" />
+            <field name="format">A4</field>
+            <field name="page_height">0</field>
+            <field name="page_width">0</field>
+            <field name="orientation">Portrait</field>
+            <field name="margin_top">5</field>
+            <field name="margin_bottom">20</field>
+            <field name="margin_left">0</field>
+            <field name="margin_right">2</field>
+            <field name="disable_shrinking" eval="False"/>
+            <field name="header_line" eval="False" />
+            <field name="header_spacing">15</field>
+            <field name="dpi">96</field>
+        </record>
+    <record id="action_report_purchase_request" model="ir.actions.report">
+        <field name="name">Purchase Request</field>
+        <field name="model">purchase.request</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">purchase_report.report_purchase_request</field>
+        <field name="report_file">purchase_report.report_purchase_request</field>
+<!--        <field name="binding_model_id" ref="model_purchase_order"/>-->
+<!--        <field name="binding_type">report</field>-->
+<!--        <field name="binding_view_types">list</field>-->
+        <field name="paperformat_id" ref="paperformat_no_margin_receipt"/>
+    </record>
+    <template id="custom_internal_layout">
+        <t t-if="not o" t-set="o" t-value="doc"/>
+        <div class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
+          <t t-raw="0"/>
+        </div>
+        <div t-attf-class="footer o_standard_footer">
+            <div class="row">
+                <img src="/purchase_report/static/src/img/footer.png" atl="header.png" class="w-100"/>
+            </div>
+        </div>
+    </template>
+    <template id="report_purchase_request">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="purchase_report.report_purchase_request_document"/>
+            </t>
+        </t>
+    </template>
+    <template id="report_purchase_request_document">
+        <t t-call="purchase_report.custom_internal_layout">
+            <div class="page">
+                <div class="row">
+                    <img src="/purchase_report/static/src/img/header.png" atl="header.png" class="w-100"/>
+                </div>
+                <h3 class="text-center" style="font-weight:bold;margin-top:40px !important;">Purchase Request</h3>
+                <style>
+                    table.GeneratedTable {
+                        width: 100%;
+                        background-color: #ffffff;
+                        border-collapse: collapse;
+                        border-width: 1px;
+                        border-color: #000000;
+                        border-style: solid;
+                        font-size: 14px;
+                        color: #000000;
+                    }
+
+                    table.Contact {
+                        width: 50%;
+                    }
+
+                    table.GeneratedTable td, table.GeneratedTable th {
+                        border-width: 1px;
+                        border-color: #000000;
+                        border-style: solid;
+                        padding: 2px;
+                    }
+
+                    table.GeneratedTable thead {
+                        background-color: #a3a3a3;
+                    }
+                </style>
+
+                <div class="oe_structure"/>
+                <br/>
+                <!-- Information Table-->
+                <table class="GeneratedTable m-2">
+                    <tbody>
+                        <tr>
+                            <td>
+                                <span class="font-weight-bold">PR Number: <t t-esc="doc.name"/></span>
+                            </td>
+                            <td>
+                                <span class="font-weight-bold">Project Name: <t t-esc="doc.department_id.name"/></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="font-weight-bold">Suggested Supplier: <span t-field="doc.suggested_supplier"/></span>
+                            </td>
+                            <td>
+                                <span class="font-weight-bold">Cost Center: <t t-esc="doc.cost_center.name"/></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="font-weight-bold">Phone: <t t-esc="doc.phone"/></span>
+                            </td>
+                            <td>
+                                <span class="font-weight-bold">PR Date: <t t-esc="doc.pr_date"/></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="font-weight-bold">Address: <t t-esc="doc.address"/></span>
+                            </td>
+                            <td>
+                                <span class="font-weight-bold">Currency: <t t-esc="doc.currency_id.name"/></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="font-weight-bold">Country: <t t-esc="doc.country.name"/></span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <br/>
+                <!-- Order Lines Table-->
+                    <table class="GeneratedTable m-2">
+                        <thead>
+                            <tr>
+                                <th class="text-center">SN</th>
+                                <th class="text-center">Supplier Name</th>
+                                <th class="text-center">Item</th>
+                                <th class="text-center">Base Unit</th>
+                                <th class="text-center">Quantity</th>
+                                <th class="text-center">Unit Price</th>
+                                <th class="text-center">Total Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-set="sequence" t-value="0"/>
+                            <t t-set="amount_total" t-value="0"/>
+                            <t t-foreach="doc.lines" t-as="o">
+                                    <t t-set="amount_total" t-value="amount_total + o.amount_total"/>
+                                    <t t-foreach="o.purchase_id.order_line" t-as="line">
+                                    <t t-set="sequence" t-value="sequence + 1"/>
+                                    <tr>
+                                        <td class="text-center">
+                                            <t t-esc="sequence"/>
+                                        </td>
+                                        <td class="text-center">
+                                            <t t-esc="o.partner_id.name"/>
+                                        </td>
+                                        <td class="text-center">
+                                            <t t-esc="line.product_id.name"/>
+                                        </td>
+                                        <td class="text-center">
+                                            <t t-esc="line.product_uom.name"/>
+                                        </td>
+                                        <td class="text-center">
+                                            <t t-esc="line.product_qty"/>
+                                        </td>
+                                        <td class="text-center">
+                                            <t t-esc="line.price_unit"/>
+                                        </td>
+                                        <td class="text-center">
+                                            <t t-esc="line.price_subtotal"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </t>
+                        </tbody>
+                    </table>
+                    <!-- Total Summary-->
+                    <div id="total" class="row justify-content-end">
+                        <div class="col-4">
+                            <table class="GeneratedTable m-2">
+                                <!-- TO DO : Special Discount -->
+                                <tr>
+                                    <td class="text-center">
+                                        <span class="font-weight-bold">Special Discount</span>
+                                    </td>
+                                    <td>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">
+                                        <span class="font-weight-bold">Final Total/Net to Pay</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="font-weight-bold" t-esc="round(amount_total, 3)"/>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                <!-- Contact Person Table-->
+                <table class="GeneratedTable Contact m-2" t-if="doc.show_signature" id="sign_table">
+                    <thead>
+                        <tr>
+                            <th>Approvals</th>
+                            <th class="text-center">Signature</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="doc.signature_lines" t-as="sign">
+                            <tr>
+                                <td>
+                                    <span t-esc="sign.employee_id.name"/> - <t t-esc="sign.employee_title"/>
+                                </td>
+                                <td style="width:200px;height:75px;"></td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+                <br/><br/>
+                                    <!-- Terms and conditions Table-->
+                    <table class="GeneratedTable m-2" t-if="doc.show_terms">
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <h5 class="text-capitalize text-center text-decoration-underline">Terms &amp; Conditions</h5>
+                                    <div style="font-size: 14px;">
+                                        <t t-esc="doc.terms"/>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <br/><br/>
+                    <!-- Terms and conditions Table-->
+                    <table class="GeneratedTable m-2" t-if="doc.show_notes">
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <h5 class="text-capitalize text-center text-decoration-underline">Notes</h5>
+                                    <div style="font-size: 14px;">
+                                        <t t-esc="doc.notes"/>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+            </div>
+        </t>
+    </template>
+</odoo>

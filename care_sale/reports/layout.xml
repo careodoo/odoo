@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="sale_internal_layout">
+            <t t-if="not o" t-set="o" t-value="doc"/>
+            <div class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
+              <t t-raw="0"/>
+            </div>
+            <div t-attf-class="footer o_standard_footer">
+                <div class="row">
+                    <img src="/care_sale/static/src/img/footer.png" atl="header.png" class="w-100"/>
+                </div>
+            </div>
+        </template>
+    </data>
+</odoo>

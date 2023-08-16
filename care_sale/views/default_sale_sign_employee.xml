@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="default_sale_sign_employee_view_tree" model="ir.ui.view">
+            <field name="name">default_sale_sign_employee_view_tree</field>
+            <field name="model">default.sale.sign.employee</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom">
+                    <field name="employee_id"/>
+                </tree>
+            </field>
+        </record>
+        <record id="default_sale_sign_employee_action" model="ir.actions.act_window">
+            <field name="name">Default Sign Employee</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">default.sale.sign.employee</field>
+            <field name="view_mode">tree</field>
+        </record>
+        <menuitem id="default_sale_sign_employee_menu"
+                  name="Default Sign Employee"
+                  parent="sale.menu_sale_config"
+                  action="default_sale_sign_employee_action"
+                  sequence="10"/>
+    </data>
+</odoo>

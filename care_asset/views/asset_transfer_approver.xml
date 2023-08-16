@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="asset_transfer_approver_view_tree" model="ir.ui.view">
+            <field name="name">asset_transfer_approver_view_tree</field>
+            <field name="model">asset.transfer.approver</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom">
+                    <field name="user_id"/>
+                </tree>
+            </field>
+        </record>
+        <record id="asset_transfer_approver_action" model="ir.actions.act_window">
+            <field name="name">Asset Transfer Approver</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">asset.transfer.approver</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem id="asset_transfer_approver_menu" name="Asset Transfer Approver"
+                  parent="care_asset.asset_config_menu" action="asset_transfer_approver_action" sequence="2"
+                  groups="account.group_account_manager"/>
+    </data>
+</odoo>

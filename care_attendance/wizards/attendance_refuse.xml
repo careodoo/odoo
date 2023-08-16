@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="attendance_refuse_reason_view_form" model="ir.ui.view">
+            <field name="name">attendance_refuse_reason_view_form</field>
+            <field name="model">attendance.refuse.reason</field>
+            <field name="arch" type="xml">
+                <form string="request_refuse_reason_form">
+                    <sheet>
+                        <group>
+                            <field name="reason"/>
+                        </group>
+                        <footer>
+                            <button name="action_refuse" type="object" string="Refuse" class="btn-danger"/>
+                            <button string="Cancel" class="btn-default" special="cancel"/>
+                        </footer>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

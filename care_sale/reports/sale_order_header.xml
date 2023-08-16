@@ -1,0 +1,253 @@
+<?xml version="1.0" ?>
+<odoo>
+    <record id="action_report_sale_order_header" model="ir.actions.report">
+        <field name="name">Sale Order with Header</field>
+        <field name="model">sale.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_sale.report_saleorder_header</field>
+        <field name="report_file">care_sale.report_saleorder_header</field>
+        <field name="print_report_name">
+            (object.state in ('draft', 'sent') and 'Quotation - %s' % (object.name) or
+            'Sale Order - %s' % (object.name))</field>
+        <field name="binding_model_id" ref="model_sale_order"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="care_sale.paperformat_no_margin_sale_order"/>
+    </record>
+
+    <template id="report_saleorder_header">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="care_sale.report_saleorder_header_document" t-lang="o.partner_id.lang"/>
+            </t>
+        </t>
+    </template>
+    <template id="report_saleorder_header_document">
+        <t t-call="care_sale.sale_internal_layout">
+            <t t-set="o" t-value="o.with_context(lang=o.partner_id.lang)"/>
+
+            <div class="page">
+                <div class="row">
+                    <img src="/care_sale/static/src/img/header.png" atl="header.png" class="w-100"/>
+                    <img t-att-src="image_data_uri(o.qr_image)"
+                         style="position: absolute;right: 40px;top: 0px;z-index: 1;
+                         width: 130px;height: 150px;display: block;margin-left: 0px;
+                         margin-right: auto;padding-top:20px"  alt="Logo"/>
+                </div>
+                <style>
+                    table.GeneratedTable {
+                        width: 100%;
+                        background-color: #ffffff;
+                        border-collapse: collapse;
+                        border-width: 1px;
+                        border-color: #000000;
+                        border-style: solid;
+                        font-size: 14px;
+                        color: #000000;
+                    }
+
+                    table.Contact {
+                        width: 50%;
+                    }
+
+                    table.GeneratedTable td, table.GeneratedTable th {
+                        border-width: 1px;
+                        border-color: #000000;
+                        border-style: solid;
+                        padding: 2px;
+                    }
+
+                    table.GeneratedTable thead {
+                        background-color: #a3a3a3;
+                    }
+                </style>
+
+                <div class="oe_structure"/>
+                <h2 class="text-capitalize text-center" style="margin-top:40px !important;font-weight: bold;">Sale Order</h2>
+                <br/>
+                <!-- Information Table-->
+                <table class="GeneratedTable m-2">
+                    <tbody>
+                        <tr>
+                            <td>
+                                <span class="font-weight-bold">SO Number:</span>
+                                <span t-esc="o.name"/>
+                            </td>
+                            <td>
+                                <!-- to do -->
+                                <span class="font-weight-bold">Payment Term:</span>
+                                <span t-esc="o.payment_term_id.name"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="font-weight-bold">Customer:</span>
+                                <span t-esc="o.partner_id.name"/>
+                            </td>
+                            <td>
+                                <span class="font-weight-bold">SO Date:</span>
+                                <span t-esc="o.date_order"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="font-weight-bold">Phone:</span>
+                                <span t-esc="o.partner_id.phone"/>
+                            </td>
+                            <td>
+                                <span class="font-weight-bold">Currency:</span>
+                                <span t-esc="o.currency_id.name"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="font-weight-bold">Address:</span>
+                                <span t-esc="o.partner_id.street"/>
+                            </td>
+                            <td>
+                                <span class="font-weight-bold">Country:</span>
+                                <span t-esc="o.partner_id.country_id.name"/>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <br/>
+                <!-- Order Lines Table-->
+                <t t-if="o.order_line">
+                    <table class="GeneratedTable m-2">
+                        <thead>
+                            <tr>
+                                <th class="text-center">SN</th>
+                                <th class="text-center">Item</th>
+                                <th class="text-center">Base Unit</th>
+                                <th class="text-center">Quantity</th>
+                                <th class="text-center">Unit Price</th>
+                                <th class="text-center">Total Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-set="sequence" t-value="0"/>
+                            <t t-foreach="o.order_line" t-as="line">
+                                <t t-set="sequence" t-value="sequence + 1"/>
+                                <tr>
+                                    <td class="text-center">
+                                        <t t-esc="sequence"/>
+                                    </td>
+                                    <td class="text-center">
+                                        <t t-esc="line.product_id.name"/>
+                                    </td>
+                                    <td class="text-center">
+                                        <t t-esc="line.product_uom.name"/>
+                                    </td>
+                                    <td class="text-center">
+                                        <t t-esc="int(line.product_uom_qty)"/>
+                                    </td>
+                                    <td class="text-center">
+                                        <span t-field="line.price_unit"/>
+                                    </td>
+                                    <td class="text-center">
+                                        <span t-field="line.price_subtotal"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                    <br/>
+                    <!-- Total Summary-->
+                    <div id="total" class="row justify-content-end">
+                        <div class="col-4">
+                            <table class="GeneratedTable m-2">
+                                <!-- TO DO : Special Discount -->
+                                <tr>
+                                    <td class="text-center">
+                                        <span class="font-weight-bold">Special Discount</span>
+                                    </td>
+                                    <td>
+
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">
+                                        <span class="font-weight-bold">Final Total/Net to Pay</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span t-field="o.amount_total"/>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </t>
+                <br/>
+                <br/>
+
+                <!-- Terms and conditions Table-->
+                <table class="GeneratedTable m-2" t-if="o.show_terms">
+                    <tbody>
+                        <tr>
+                            <td>
+                                <h5 class="text-capitalize text-center text-decoration-underline">Terms &amp; Conditions</h5>
+                                <div style="font-size: 14px;line-height: 0.5">
+                                    <span t-field="o.note"/>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <br/>
+                <br/>
+
+                <div class="row">
+                    <div class="col-6">
+                        <!-- Contact Person Table-->
+                        <table class="GeneratedTable m-2">
+                            <thead>
+                                <tr>
+                                    <th>Contact Person</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <span t-esc="o.user_id.name"/> - <t t-esc="o.user_id.employee_id.job_title"/>
+                                        <br/>
+                                        <span class="font-weight-bold">Email: <t t-esc="o.user_id.email"/></span>
+                                        <br/>
+                                        <span class="font-weight-bold">Mobile: <t t-esc="o.user_id.mobile"/></span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <t t-if="o.show_signature">
+                            <table class="GeneratedTable m-2">
+                                <thead>
+                                    <tr>
+                                        <th>Requestor</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="o.signature_lines" t-as="sign">
+                                        <tr>
+                                            <td>
+                                                <span t-esc="sign.employee_id.name"/> - <t t-esc="sign.employee_title"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+                    </div>
+                    <div class="col-3"/>
+                    <div class="col-3">
+                        <img src="/care_sale/static/src/img/stamp.png"
+                             style="position: absolute;
+                             right: 40px;top: 0px;
+                             width: 130px;height: 130px;
+                             display: block;margin-left: 0px;
+                             margin-right: auto;padding-top:0px"  alt="Logo"/>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

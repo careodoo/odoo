@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record model="ir.sequence" id="seq_bonus_request">
+            <field name="name">Bonus Request Sequence</field>
+            <field name="code">bonus.request</field>
+            <field name="padding">5</field>
+            <field name="prefix">bonus/request/</field>
+        </record>
+    </data>
+</odoo>

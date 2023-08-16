@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="services_checks_view_tree" model="ir.ui.view">
+        <field name="name">services_checks_view_tree</field>
+        <field name="model">services.checks</field>
+        <field name="arch" type="xml">
+            <tree string="services_checks_tree" editable="top">
+                <field name="name"/>
+                <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="services_checks_action" model="ir.actions.act_window">
+        <field name="name">Services Checks</field>
+        <field name="res_model">services.checks</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="services_checks_menu" name="Services Checks" parent="fleet.fleet_configuration" action="services_checks_action" sequence="99"/>
+
+</odoo>

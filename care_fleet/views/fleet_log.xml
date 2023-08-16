@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="fleet_vehicle_assignation_log_view_list_damage" model="ir.ui.view">
+            <field name="name">fleet.vehicle.assignation.log.view.tree.damage</field>
+            <field name="model">fleet.vehicle.assignation.log</field>
+            <field name="inherit_id" ref="fleet.fleet_vehicle_assignation_log_view_list"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='date_end']" position="after">
+                    <field name="damage_ids" widget="many2many_tags"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

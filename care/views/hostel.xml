@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="hostel_view_tree" model="ir.ui.view">
+        <field name="name">hostel_view_tree</field>
+        <field name="model">hostel</field>
+        <field name="arch" type="xml">
+            <tree string="hostel_tree">
+                <field name="name"/>
+                <field name="address"/>
+                <field name="price"/>
+                <field name="labor_cost"/>
+                <field name="floor_count"/>
+                <field name="flat_count"/>
+                <field name="room_count"/>
+                <field name="bed_count"/>
+                <field name="total_capacity"/>
+                <field name="used_places"/>
+                <field name="availability"/>
+                <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+            </tree>
+        </field>
+    </record>
+    
+    <record id="hostel_view_form" model="ir.ui.view">
+        <field name="name">hostel_view_form</field>
+        <field name="model">hostel</field>
+        <field name="arch" type="xml">
+            <form string="hostel_form">
+                <sheet>
+                    <div name="button_box" class="oe_button_box">
+                        <button class="oe_stat_button" icon="fa-tasks" type="object" name="action_floor_show">
+                            <field widget="statinfo" name="floor_count" string="Floor Count"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-home" type="object" name="action_flat_show">
+                            <field widget="statinfo" name="flat_count" string="Flat Count"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-bed" type="object" name="action_room_show">
+                            <field widget="statinfo" name="room_count" string="Room Count"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-bed" type="object" name="action_bed_show">
+                            <field widget="statinfo" name="bed_count" string="Bed Count / Capacity"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-database" type="object" name="action_used_place_show">
+                            <field widget="statinfo" name="used_places" string="Used Places"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-cubes" type="object" name="action_availability_show">
+                            <field widget="statinfo" name="availability" string="Availability"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-bolt" type="object" name="action_maintenance_show">
+                            <field widget="statinfo" name="maintenance" string="Maintenance"/>
+                        </button>
+                    </div>
+                    <div class="oe_title mb24">
+                        <h1>
+                            <field name="name" class="o_text_overflow" default_focus="1" placeholder="Hostel Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                            <field name="address"/>
+                            <field name="labor_cost"/>
+                        </group>
+                        <group>
+                            <field name="price"/>
+                            <field name="total_capacity"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page name="employees" string="Employees">
+                            <field name="employee_line">
+                                <tree editable="top">
+                                    <field name="employee_id"/>
+                                    <field name="hostel_id"/>
+                                    <field name="floor_id"/>
+                                    <field name="flat_id"/>
+                                    <field name="room_id"/>
+                                    <field name="name"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="hostel_action" model="ir.actions.act_window">
+        <field name="name">Hostel</field>
+        <field name="res_model">hostel</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_root" name="Hostel"/>
+
+    <menuitem id="hostel_menu" name="Hostel" parent="care.menu_root" action="hostel_action" sequence="1"/>
+
+</odoo>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+	<record id="res_config_settings_view_form_purchase_report" model="ir.ui.view">
+		<field name="name">res.config.settings.view.form.inherit.purchase.report</field>
+		<field name="model">res.config.settings</field>
+		<field name="priority" eval="26"/>
+		<field name="inherit_id" ref="purchase.res_config_settings_view_form_purchase"/>
+		<field name="arch" type="xml">
+			<xpath expr="//div[@data-key='purchase']" position="inside">
+				<h2>Default Signature Employees</h2>
+				<div class="row mt16 o_settings_container" id="default_accounts">
+					<div class="col-12 col-lg-6 o_setting_box">
+						<div class="o_setting_left_pane"/>
+						<div class="o_setting_right_pane">
+							<div class="content-group">
+								<div>
+									<span class="o_form_label">Default Signature Employees</span>
+								</div>
+								<div class="row mt8">
+									<label for="sign_employee_1" class="col-lg-4 o_light_label" string="Sign Employee 1"/>
+									<field name="sign_employee_1"/>
+								</div>
+								<div class="row mt8">
+									<label for="sign_employee_2" class="col-lg-4 o_light_label" string="Sign Employee 2"/>
+									<field name="sign_employee_2"/>
+								</div>
+								<div class="row mt8">
+									<label for="sign_employee_3" class="col-lg-4 o_light_label" string="Sign Employee 3"/>
+									<field name="sign_employee_3"/>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</xpath>
+		</field>
+	</record>
+</odoo>

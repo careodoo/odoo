@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="care_view_order_form" model="ir.ui.view">
+            <field name="name">care_view_order_form</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='partner_id']" position="after">
+                    <field name="department_id"/>
+                </xpath>
+                <xpath expr="//page[@name='other_information']" position="after">
+                    <page string="Signatures" name="signatures">
+                        <field name="signature_lines" readonly="1">
+                            <tree editable="bottom">
+                                <field name="employee_id"/>
+                                <field name="employee_title"/>
+                                <field name="confirm" invisible="0"/>
+                                <field name="signature"/>
+                                <button name="send_sign_request" type="object" string="Request For Sign" class="oe_highlight"/>
+                            </tree>
+                        </field>
+                    </page>
+                    <page string="Print Options" name="print_options">
+                        <group>
+                            <field name="show_signature"/>
+                            <field name="show_terms"/>
+                            <field name="show_requestor"/>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

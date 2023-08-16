@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.actions.report" id="action_asset_list_report">
+            <field name="name">Asset List Report</field>
+            <field name="model">account.asset.report</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">care_asset.asset_list_report</field>
+            <field name="report_file">care_asset.asset_list_report</field>
+            <field name="binding_model_id" ref="model_account_asset_report"/>
+			<field name="binding_type">report</field>
+			<field name="binding_view_types">form</field>
+        </record>
+		<template id="asset_list_report">
+			<t t-call="web.html_container">
+				<t t-call="web.external_layout">
+					<div class="page" style="font-family:Arial,Helvetica,sans-serif !important;">
+                    <style>
+                        table.GeneratedTable {
+                            width: 100%;
+                            background-color: #ffffff;
+                            border-collapse: collapse;
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-size: 14px;
+                            color: #000000;
+                        }
+
+                        table.Contact {
+                            width: 50%;
+                        }
+
+                        table.GeneratedTable td, table.GeneratedTable th {
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            padding: 2px;
+                        }
+
+                        table.GeneratedTable thead {
+                            background-color: #a3a3a3;
+                        }
+                    </style>
+                        <t t-foreach="docs" t-as="doc">
+                            <h5 class="text-center">List of Assets for
+                                <t t-if="doc.department_ids">
+                                    Departments: <span t-field="doc.department_ids"/>
+                                </t>
+                                <t t-if="doc.category_ids">
+                                    Categories: <span t-field="doc.category_ids"/>
+                                </t>
+                            </h5>
+                            <table class="GeneratedTable m-2">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center">#</th>
+                                        <th class="text-center">Asset Name</th>
+                                        <th class="text-center">Asset Barcode</th>
+                                        <th class="text-center">Asset Category</th>
+                                        <th class="text-center">Department</th>
+                                        <th class="text-center">Original Value</th>
+                                        <th class="text-center">Book Value</th>
+                                        <th class="text-center">Duration</th>
+                                        <th class="text-center">Start Depreciation</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-set="sequence" t-value="0"/>
+                                    <t t-foreach="doc.line_ids" t-as="line">
+                                        <t t-set="sequence" t-value="sequence + 1"/>
+                                        <tr>
+                                            <td class="text-center">
+                                                <t t-esc="sequence"/>
+                                            </td>
+                                            <td class="text-center">
+                                                <span t-field="line.name"/>
+                                            </td>
+                                            <td class="text-center">
+                                                <span t-field="line.asset_id.barcode"/>
+                                            </td>
+                                            <td class="text-center">
+                                                <span t-field="line.category_id"/>
+                                            </td>
+                                            <td class="text-center">
+                                                <span t-field="line.department_id"/>
+                                            </td>
+                                            <td class="text-center">
+                                                <span t-field="line.original_value"/>
+                                            </td>
+                                            <td class="text-center">
+                                                <span t-field="line.asset_id.book_value"/>
+                                            </td>
+                                            <td class="text-center">
+                                                <span t-field="line.asset_id.method_number"/> <span t-field="line.asset_id.method_period"/>
+                                            </td>
+                                            <td class="text-center">
+                                                <span t-field="line.first_depreciation_date"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>

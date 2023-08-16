@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_purchase_request,access.purchase.request,model_purchase_request,,1,1,1,1
+access_purchase_request_line,access.purchase.request.line,model_purchase_request_line,,1,1,1,1
+access_cost_center,access.cost.center,model_cost_center,,1,1,1,1
+access_purchase_sign,access.purchase_sign,model_purchase_sign,,1,1,1,1
+access_arrival_resident_wizard,arrival.resident.wizard,model_arrival_resident_wizard,,1,1,1,1
+access_default_sign_employee,default_sign_employee,model_default_sign_employee,,1,1,1,1

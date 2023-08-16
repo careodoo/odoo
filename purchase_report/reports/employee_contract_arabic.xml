@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_employee_print_arabic_contract" model="ir.actions.report">
+        <field name="name">Arabic Contract</field>
+        <field name="model">hr.employee</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">purchase_report.print_employee_arabic_contract</field>
+        <field name="report_file">purchase_report.print_employee_arabic_contract</field>
+        <field name="print_report_name">'Print Contract - %s' % (object.name).replace('/', '')</field>
+        <field name="binding_model_id" ref="hr.model_hr_employee"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="print_employee_arabic_contract">
+        <t t-foreach="docs" t-as="employee">
+            <t t-call="web.basic_layout">
+                <div class="page">
+                    <div class="header">
+                        <div class="row">
+                            <div class="col-5">
+                                <div class="text-right pt-5">(عقد نموذج (2</div>
+                            </div>
+                            <div class="col-3">
+                                <img class="text-left" src="/purchase_report/static/src/img/Emblem_of_Kuwait.svg.png"
+                                     atl="Emblem_of_Kuwait.png"
+                                     style="width: 100px; height: 100px;display: block;margin-left: 0px;margin-right: auto;"/>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-left pt-5"><span><t t-esc="employee.barcode"/></span></div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="text-center">الهيئة العامة للقوى العاملة</div>
+                                <div class="text-center fw-bold"
+                                     style="font-family:Simplified Arabic Fixed;font-size:24px;">The Public Authority
+                                    For Manpower
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <title>نموذج عقد عمل بالقطاع الأهلي</title>
+                    <style>
+                        table {
+                        width:100%;
+                        margin-top:15px;
+                        border:1px solid #b3adad;
+                        border-collapse:collapse;
+                        padding:5px;
+                        font-family:Arial !important;
+                        font-weight: bold;
+                        }
+                        table th {
+
+                        padding:5px;
+                        background: #f0f0f0;
+                        color: #313030;
+                        }
+                        table td {
+                        text-align:center;
+                        padding:9px;
+                        background: #ffffff;
+                        color: #313030;
+                        }
+                    </style>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <th class="text-center fw-bold" style="font-size:18px;">
+                                    <u>نمـوذج عقـد عمل في القطاع الأهلى</u>
+                                </th>
+                            </tr>
+                            <tr>
+                                <td class="text-right" style="font-size:13px;">
+                                    <dt>دولة الكـويت</dt>
+                                    <dt>-: الهيئة العامة للقوي العاملة ادارة عمل محافظة <span t-esc="employee.work_department"/></dt>
+                                    <dt>-: إنه في يوم
+                                        <span t-esc="employee.day_translated"/>
+                                        الموافق
+                                        <span t-esc="datetime.datetime.today().strftime('%Y-%m-%d')"/>
+                                        تحرر هذا
+                                        العقد بين كل من
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-right" style="font-size:13px;">
+                                    <dt>١- شركة /
+                                        <span t-esc="employee.company_id.name"/>
+                                        ويمثلها فى التوقيع على
+                                        العقد
+                                    </dt>
+                                    <dt>الاسـم :
+                                        <t t-esc="employee.authorized_persons_id.name"/>
+                                    </dt>
+                                    <dt>رقم مدني :
+                                        <t t-esc="employee.authorized_persons_id.identification_id"/>
+                                    </dt>
+                                    <dt>" طرف أول "</dt>
+                                    <br/>
+                                    <dt>٢- الاسـم :
+                                        <t t-esc="employee.name"/>
+                                    </dt>
+                                    <dt>الجنسية :
+                                        <t t-esc="employee.country_id_translated"/>
+                                    </dt>
+                                    <dt>رقم المدني :
+                                        <t t-esc="employee.identification_id"/>
+                                    </dt>
+                                    <dt>الإقامة :
+                                        <t t-esc="employee.moi_number"/>
+                                    </dt>
+                                    <dt>" طرف ثاني "</dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:13px;">
+                                    <dt class="text-center">تهميد</dt>
+                                    <dt class="text-right">يمتلك الطرف الأول منشأة بإسم شركة الرعاية لمقاولات تنظيف
+                                        المبانى والمدن تعمل فـي مجال التنظيف ويرغب فـى التعـاقـد مـع الطــرف الثـانـي
+                                        للعمــل لديـه بمهنــة
+                                        <span t-esc="employee.social_affairs_title"/>
+                                        و بعد أن أقر الطرفان بأهليتهما في إبرام هذا العقد تم الإتفاق علي ما يلي
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:13px;">
+                                    <dt class="text-center">البنـد الأول</dt>
+                                    <dt class="text-right">يعتبـر التمهـيد السابق جزء لا يتجزأ من هذا العقـد</dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:13px;">
+                                    <dt class="text-center">البنـد الثـانـي</dt>
+                                    <dt class="text-center">"طبيـعـة العمـل"</dt>
+                                    <dt class="text-right">تعـاقـد الطـرف الأول مـع الطـرف الثـانـي للعمــل لديـه
+                                        <span t-esc="employee.social_affairs_title"/>
+                                        داخل دولـة الكــويـت
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:13px;">
+                                    <dt class="text-center">البنـد الثـالث</dt>
+                                    <dt class="text-center">"فترة التجربة"</dt>
+                                    <dt class="text-right">يخضع الطرف الثاني لفترة تجربة لمدة لا تزيد عن 100 يوم عمل ،
+                                        ويحق لكل طرف إنهاء العقد خلال تلك الفترة دون إخطار
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:13px;">
+                                    <dt class="text-center">البنـد الـرابـع</dt>
+                                    <dt class="text-center">"قيمـة الأجـر"</dt>
+                                    <dt class="text-right">يتقـاضـي الطــرف الثـانـي عـن تنفيـذ هـذا العقـد أجـراً
+                                        مقـداره
+                                        <span t-esc="int(employee.affairs_salary)"/>
+                                        دينـارا يـدفع فـي نهـاية كل شهر ولا يجـوز للطـرف الأول تخفيض الأجـر
+                                        أثنـاء سـريان هذا العقد
+                                    </dt>
+                                    <dt class="text-right">و لا يجـوز نقـل الطـرف الثـانـي إلـى الأجـر اليـومـى دون
+                                        موافقـة
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:13px;">
+                                    <dt class="text-center">البنـد الـخامس</dt>
+                                    <dt class="text-center">"نفاذ العقـد"</dt>
+                                    <dt class="text-right">يبدأ نفـاذ العقـد إعتبـارا من
+                                        <span t-esc="datetime.datetime.today().strftime('%Y-%m-%d')"/>
+                                        ويلتـزم الطـرف
+                                        الثـانـى بالقيـام بأداء عملـه طوال مدة نفاذه
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:13px;">
+                                    <dt class="text-center">البند السادس</dt>
+                                    <dt class="text-center">"مدة العقـد"</dt>
+                                    <dt class="text-right">هـذا العقد غير محدد المـدة ويبدا إعتبـارة من
+                                        **********
+                                        ولمده ********* ويجوز تجـديـد العقـد بمـوافقـة الطرفيـن لمـدد مماثلة بحد
+                                        أقصـى خمس سنوات ميلاديـة
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:13px;">
+                                    <dt class="text-center">البنـد السابع</dt>
+                                    <dt class="text-center">"الأجازة السنوية"</dt>
+                                    <dt class="text-right">للطـرف الثـانـي الحق فـي أجازة سنوية مدفوعة الأجـر مـدتها 30
+                                        يومـا، ولا يستحقهـا عن السنة الأولـى إلا بعـد انقضـاء مـدة تسعة أشهر تحسب من
+                                        تاريخ نفاذ العقـد
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:13px;">
+                                    <dt class="text-center">البنـد الثامـن</dt>
+                                    <dt class="text-center">"عـدد ساعات العمــل"</dt>
+                                    <dt class="text-right">لا يجوز للطـرف الأول تشغيـل الطـرف الثـانـي لمـدة تزيد عن
+                                        ثمـانـي ساعات عمـل يوميـا تتخللهـا فترة راحـة لا تقل عن ساعة باستثنـاء الحـالات
+                                        المقـررة قـانـونـًا
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:13px;">
+                                    <dt class="text-center">البنـد التاسـع</dt>
+                                    <dt class="text-center">"قيمـة تـذكـرة السـفــر"</dt>
+                                    <dt class="text-right">يتحمـل الطـرف الأول مصـاريف عـودة الطـرف الثـانـي إلـي بلده
+                                        عند إنتهاء علاقة العمـل ومغادرته نهائيا للبلاد
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:13px;">
+                                    <dt class="text-center">البنـد العــاشـــر</dt>
+                                    <dt class="text-center">"التأمين ضـد إصابات وأمراض العمـل"</dt>
+                                    <dt class="text-right">يلتـزم الطـرف الأول بالتأمين علـى الطـرف الثانـى ضـد إصابات
+                                        وأمـراض العمـل، كمـا يلتـزم بقيمـة التأمين الصحـى طبقـا للقـانون رقم (1) لسنة
+                                        1999
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:13px;">
+                                    <dt class="text-center">البنـد الحادى عشـر</dt>
+                                    <dt class="text-center">"مكـافأة نهاية الخدمـة"</dt>
+                                    <dt class="text-right">يستحق الطـرف الثـانـي مكافأة نهاية الخـدمة المنصـوص عليها
+                                        بالقوانين المنظمة
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:13px;">
+                                    <dt class="text-center">البنـد الثانـى عشـر</dt>
+                                    <dt class="text-center">"القانون الواجب التطبيق"</dt>
+                                    <dt class="text-right">تسـري أحكـام قانون العمـل فى القطـاع الأهلـى رقم 6 لسنة 2010
+                                        والقرارات المنفـذة له فيما لم يرد بشأنه نص فى هـذا العقـد، ويقع باطلاً كل شرط تم
+                                        الإتفاق عليه بالمخالفة لأحكام القانون ، ما لم يكن فيه ميـزة أفضـل للعـامـــل
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:13px;">
+                                    <dt class="text-center">البنـد الثالث عشـر</dt>
+                                    <dt class="text-center">"شـروط خـاصـة"</dt>
+                                    <dt class="text-right">١- لا يوجد</dt>
+                                    <dt class="text-right">٢- لا يوجد</dt>
+                                    <dt class="text-right">٣- لا يوجد</dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:13px;">
+                                    <dt class="text-center">البنـد الـرابع عشـر</dt>
+                                    <dt class="text-center">"المحكمـة المختصـة"</dt>
+                                    <dt class="text-right">تختص المحكمـة الكلية ودوائرها العمـالية طبقا لأحكام القانون
+                                        رقم 46 لسنة 1987، بنظـر كافة المنازعات الناشئة عن تطبيق أو تفسيـر هـذا العقـد
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:13px;">
+                                    <dt class="text-center">البنـد الخامس عشـر</dt>
+                                    <dt class="text-center">"لغـة العقــد"</dt>
+                                    <dt class="text-right">حـرر هـذا العقـد باللغتين العربية والأنجليزية ، ويعتد بنصـوص
+                                        اللغـة العـربية عند وقوع أى تعارض بينهـمــا
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:13px;">
+                                    <dt class="text-center">البنـد السادس عشـر</dt>
+                                    <dt class="text-center">"نسـخ العقـــد"</dt>
+                                    <dt class="text-right">حـرر هذا العقـد من ثلاث نسخ بيد كل طرف نسخة للعمل بموجبها
+                                        والثالثة تودع لدي الهيئة العامة للقـوي العاملة
+                                    </dt>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <dt class="text-center">الطرف الثاني</dt>
+                                            <br/>
+                                            <br/>
+                                        </div>
+                                        <div class="col-6">
+                                            <dt class="text-center">الطرف الأول</dt>
+                                            <br/>
+                                            <br/>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="footer">
+                        <div class="row">
+                            <div class="col-12 mt-3">
+                                <p class="text-right border-top" style="font-size: 13px;">ملاحظة/هذا النموذج بعد نموذجا
+                                    إسترشاد بالشروط وأحكام عقد المعطل في القطاع الأهلي وبحق لكل إعداد نموذج مماثلا له
+                                    على
+                                    المطيةعات لخاصة بها شرط أن يطمن كافة الأحكام والشروط الواردة بهذا النموذج
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

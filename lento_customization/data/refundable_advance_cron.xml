@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding='UTF-8'?>
+<odoo>
+    <record model="ir.cron" id="contract_ending_cron">
+        <field name="name">Update : updates refundable advance cron</field>
+        <field name="model_id" ref="model_hr_contract"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_update_insurance_salary()</field>
+        <field name="interval_number">12</field>
+        <field name="interval_type">months</field>
+        <field name="numbercall">-1</field>
+        <field name="doall" eval="False"/>
+    </record>
+</odoo>

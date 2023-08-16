@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+	<data>
+	<record model="ir.ui.view" id="outgoing_tag_form">
+			<field name="name">outgoing tag</field>
+			<field name="model">multi.tag</field>
+			<field name="arch" type="xml">
+				<form>
+								<field name="name"/>
+								<field name="color" widget="color_picker"/>
+				</form>
+			</field>
+		</record>
+
+		<record model="ir.ui.view" id="outgoing_tag_tree">
+			<field name="name">outgoing tag</field>
+			<field name="model">multi.tag</field>
+			<field name="arch" type="xml">
+				<tree editable="bottom">
+								<field name="name"/>
+								<field name="color" widget="color_picker"/>
+				</tree>
+			</field>
+		</record>
+
+		<record model="ir.actions.act_window" id="outgoing_tag_action">
+			<field name="name">outgoing tag</field>
+			<field name="res_model">multi.tag</field>
+			<field name="view_mode">tree,form</field>
+		</record>
+
+	</data>
+</odoo>

@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="dept_shift_send_to_manager_template" model="mail.template">
+            <field name="name">Ask To Submit Department Shift Request</field>
+            <field name="model_id" ref="model_employee_shift_request"/>
+            <field name="model">employee.shift.request</field>
+            <field name="subject">Ask To Submit Department Shift Request</field>
+            <field name="auto_delete" eval="0" />
+            <field name="email_from">{{ user.email_formatted }}</field>
+            <field name="email_to">{{object.old_department_manager.email}}</field>
+            <field name="body_html" type="html">
+            <table style="border-collapse: separate; padding-top: 16px; background-color: rgb(241, 241, 241); font-family: Verdana, Arial, sans-serif; color: rgb(69, 71, 72); width: 1069px;" cellspacing="0" cellpadding="0" border="0">
+               <tbody>
+                  <tr>
+                     <td align="center">
+                        <table style="border-collapse: separate; padding: 16px; background-color: white;" width="590" cellspacing="0" cellpadding="0" border="0">
+                           <tbody>
+                              <tr>
+                                 <td style="min-width: 590px;" align="center">
+                                    <table style="border-collapse: separate; min-width: 590px; padding: 0px 8px;" width="590" cellspacing="0" cellpadding="0" border="0">
+                                       <tbody>
+                                          <tr>
+                                             <td valign="middle"><span style="font-size: 10px;"></span><br/><span style="font-size: 20px; font-weight: bold;text-align:center;">  Ask To Submit Department Shift Request</span></td>
+                                             <td valign="middle" align="right">
+                                                 <img t-attf-src="/logo.png?company={{ object.company_id.id }}" style="padding: 0px; margin: 0px; height: 48px;" t-att-alt="object.company_id.name"/>
+                                             </td>
+                                          </tr>
+                                          <tr>
+                                             <td colspan="2" style="text-align: center;">
+                                                <hr style="border-style:solid none none none;border-image-width:1;border-image-source:none;border-image-slice:100%;border-image-repeat:stretch;border-image-outset:0;border-left-color:currentcolor;border-bottom-color:currentcolor;border-right-color:currentcolor;margin: 16px 0px; border-width: medium; border-style: none; border-top-color: initial; background-color: rgb(204, 204, 204); clear: both; font-size: 0px; min-height: 1px; line-height: 0;" width="100%"/>
+                                             </td>
+                                          </tr>
+                                          <tr>
+                                 <td style="min-width: 590px;" align="center">
+                                    <table style="border-collapse: separate; min-width: 590px; padding: 0px 8px;" width="590" cellspacing="0" cellpadding="0" border="0">
+                                       <tbody>
+                                          <tr>
+                                             <td style="font-size: 13px;" valign="top">
+                                                <span style="font-weight: bold;"><t t-out="object.employee_id.name"/> is requesting to shift from <t t-out="object.current_department.name"/> department to <t t-out="object.new_department.name"/> department</span>
+                                                <br/>
+                                             </td>
+                                          </tr>
+                                       </tbody>
+                                    </table>
+                                 </td>
+                              </tr>
+
+                           </tbody>
+                        </table>
+                     </td>
+                  </tr>
+                  <tr>
+                     <td style="min-width: 590px;" align="center">
+                        <table style="border-collapse: separate; min-width: 590px; padding: 8px;" width="590" cellspacing="0" cellpadding="0" border="0">
+                           <tbody>
+                              <tr>
+                              </tr>
+                           </tbody>
+                        </table>
+                     </td>
+                  </tr>
+               </tbody>
+            </table>
+         </td>
+      </tr>
+   </tbody>
+            </table>
+            </field>
+    </record>
+        <record id="dept_shift_send_to_1_approve_template" model="mail.template">
+            <field name="name">Ask To Approve Department Shift Request</field>
+            <field name="model_id" ref="model_employee_shift_request"/>
+            <field name="model">employee.shift.request</field>
+            <field name="subject">Ask To Approve Department Shift Request</field>
+            <field name="auto_delete" eval="0" />
+            <field name="email_from">{{ user.email_formatted }}</field>
+            <field name="email_to">{{object.approver_1.email}}</field>
+            <field name="body_html" type="html">
+            <table style="border-collapse: separate; padding-top: 16px; background-color: rgb(241, 241, 241); font-family: Verdana, Arial, sans-serif; color: rgb(69, 71, 72); width: 1069px;" cellspacing="0" cellpadding="0" border="0">
+               <tbody>
+                  <tr>
+                     <td align="center">
+                        <table style="border-collapse: separate; padding: 16px; background-color: white;" width="590" cellspacing="0" cellpadding="0" border="0">
+                           <tbody>
+                              <tr>
+                                 <td style="min-width: 590px;" align="center">
+                                    <table style="border-collapse: separate; min-width: 590px; padding: 0px 8px;" width="590" cellspacing="0" cellpadding="0" border="0">
+                                       <tbody>
+                                          <tr>
+                                             <td valign="middle"><span style="font-size: 10px;"></span><br/><span style="font-size: 20px; font-weight: bold;text-align:center;">Ask To Approve Department Shift Request</span></td>
+                                             <td valign="middle" align="right">
+                                                 <img t-attf-src="/logo.png?company={{ object.company_id.id }}" style="padding: 0px; margin: 0px; height: 48px;" t-att-alt="object.company_id.name"/>
+                                             </td>
+                                          </tr>
+                                          <tr>
+                                             <td colspan="2" style="text-align: center;">
+                                                <hr style="border-style:solid none none none;border-image-width:1;border-image-source:none;border-image-slice:100%;border-image-repeat:stretch;border-image-outset:0;border-left-color:currentcolor;border-bottom-color:currentcolor;border-right-color:currentcolor;margin: 16px 0px; border-width: medium; border-style: none; border-top-color: initial; background-color: rgb(204, 204, 204); clear: both; font-size: 0px; min-height: 1px; line-height: 0;" width="100%"/>
+                                             </td>
+                                          </tr>
+                                          <tr>
+                                 <td style="min-width: 590px;" align="center">
+                                    <table style="border-collapse: separate; min-width: 590px; padding: 0px 8px;" width="590" cellspacing="0" cellpadding="0" border="0">
+                                       <tbody>
+                                          <tr>
+                                             <td style="font-size: 13px;" valign="top">
+                                                <span style="font-weight: bold;"><t t-out="object.employee_id.name"/> is requesting to shift from <t t-out="object.current_department.name"/> department to <t t-out="object.new_department.name"/> department</span>
+                                                <br/>
+                                             </td>
+                                          </tr>
+                                       </tbody>
+                                    </table>
+                                 </td>
+                              </tr>
+
+                           </tbody>
+                        </table>
+                     </td>
+                  </tr>
+                  <tr>
+                     <td style="min-width: 590px;" align="center">
+                        <table style="border-collapse: separate; min-width: 590px; padding: 8px;" width="590" cellspacing="0" cellpadding="0" border="0">
+                           <tbody>
+                              <tr>
+                              </tr>
+                           </tbody>
+                        </table>
+                     </td>
+                  </tr>
+               </tbody>
+            </table>
+         </td>
+      </tr>
+   </tbody>
+            </table>
+            </field>
+    </record>
+        <record id="dept_shift_send_to_2_approve_template" model="mail.template">
+            <field name="name">Ask To Second Approve Department Shift Request</field>
+            <field name="model_id" ref="model_employee_shift_request"/>
+            <field name="model">employee.shift.request</field>
+            <field name="subject">Ask To Second Approve Department Shift Request</field>
+            <field name="auto_delete" eval="0" />
+            <field name="email_from">{{ user.email_formatted }}</field>
+            <field name="email_to">{{object.approver_2.email}}</field>
+            <field name="body_html" type="html">
+            <table style="border-collapse: separate; padding-top: 16px; background-color: rgb(241, 241, 241); font-family: Verdana, Arial, sans-serif; color: rgb(69, 71, 72); width: 1069px;" cellspacing="0" cellpadding="0" border="0">
+               <tbody>
+                  <tr>
+                     <td align="center">
+                        <table style="border-collapse: separate; padding: 16px; background-color: white;" width="590" cellspacing="0" cellpadding="0" border="0">
+                           <tbody>
+                              <tr>
+                                 <td style="min-width: 590px;" align="center">
+                                    <table style="border-collapse: separate; min-width: 590px; padding: 0px 8px;" width="590" cellspacing="0" cellpadding="0" border="0">
+                                       <tbody>
+                                          <tr>
+                                             <td valign="middle"><span style="font-size: 10px;"></span><br/><span style="font-size: 20px; font-weight: bold;text-align:center;">  Ask To Second Approve Department Shift Request</span></td>
+                                             <td valign="middle" align="right">
+                                                 <img t-attf-src="/logo.png?company={{ object.company_id.id }}" style="padding: 0px; margin: 0px; height: 48px;" t-att-alt="object.company_id.name"/>
+                                             </td>
+                                          </tr>
+                                          <tr>
+                                             <td colspan="2" style="text-align: center;">
+                                                <hr style="border-style:solid none none none;border-image-width:1;border-image-source:none;border-image-slice:100%;border-image-repeat:stretch;border-image-outset:0;border-left-color:currentcolor;border-bottom-color:currentcolor;border-right-color:currentcolor;margin: 16px 0px; border-width: medium; border-style: none; border-top-color: initial; background-color: rgb(204, 204, 204); clear: both; font-size: 0px; min-height: 1px; line-height: 0;" width="100%"/>
+                                             </td>
+                                          </tr>
+                                          <tr>
+                                 <td style="min-width: 590px;" align="center">
+                                    <table style="border-collapse: separate; min-width: 590px; padding: 0px 8px;" width="590" cellspacing="0" cellpadding="0" border="0">
+                                       <tbody>
+                                          <tr>
+                                             <td style="font-size: 13px;" valign="top">
+                                                <span style="font-weight: bold;"><t t-out="object.employee_id.name"/> is requesting to shift from <t t-out="object.current_department.name"/> department to <t t-out="object.new_department.name"/> department</span>
+                                                <br/>
+                                             </td>
+                                          </tr>
+                                       </tbody>
+                                    </table>
+                                 </td>
+                              </tr>
+
+                           </tbody>
+                        </table>
+                     </td>
+                  </tr>
+                  <tr>
+                     <td style="min-width: 590px;" align="center">
+                        <table style="border-collapse: separate; min-width: 590px; padding: 8px;" width="590" cellspacing="0" cellpadding="0" border="0">
+                           <tbody>
+                              <tr>
+                              </tr>
+                           </tbody>
+                        </table>
+                     </td>
+                  </tr>
+               </tbody>
+            </table>
+         </td>
+      </tr>
+   </tbody>
+            </table>
+            </field>
+    </record>
+        <record id="dept_shift_send_to_3_approve_template" model="mail.template">
+            <field name="name">Ask To Third Approve Department Shift Request</field>
+            <field name="model_id" ref="model_employee_shift_request"/>
+            <field name="model">employee.shift.request</field>
+            <field name="subject">Ask To Third Approve Department Shift Request</field>
+            <field name="auto_delete" eval="0" />
+            <field name="email_from">{{ user.email_formatted }}</field>
+            <field name="email_to">{{object.approver_3.email}}</field>
+            <field name="body_html" type="html">
+            <table style="border-collapse: separate; padding-top: 16px; background-color: rgb(241, 241, 241); font-family: Verdana, Arial, sans-serif; color: rgb(69, 71, 72); width: 1069px;" cellspacing="0" cellpadding="0" border="0">
+               <tbody>
+                  <tr>
+                     <td align="center">
+                        <table style="border-collapse: separate; padding: 16px; background-color: white;" width="590" cellspacing="0" cellpadding="0" border="0">
+                           <tbody>
+                              <tr>
+                                 <td style="min-width: 590px;" align="center">
+                                    <table style="border-collapse: separate; min-width: 590px; padding: 0px 8px;" width="590" cellspacing="0" cellpadding="0" border="0">
+                                       <tbody>
+                                          <tr>
+                                             <td valign="middle"><span style="font-size: 10px;"></span><br/><span style="font-size: 20px; font-weight: bold;text-align:center;">  Ask To Third Approve Department Shift Request</span></td>
+                                             <td valign="middle" align="right">
+                                                 <img t-attf-src="/logo.png?company={{ object.company_id.id }}" style="padding: 0px; margin: 0px; height: 48px;" t-att-alt="object.company_id.name"/>
+                                             </td>
+                                          </tr>
+                                          <tr>
+                                             <td colspan="2" style="text-align: center;">
+                                                <hr style="border-style:solid none none none;border-image-width:1;border-image-source:none;border-image-slice:100%;border-image-repeat:stretch;border-image-outset:0;border-left-color:currentcolor;border-bottom-color:currentcolor;border-right-color:currentcolor;margin: 16px 0px; border-width: medium; border-style: none; border-top-color: initial; background-color: rgb(204, 204, 204); clear: both; font-size: 0px; min-height: 1px; line-height: 0;" width="100%"/>
+                                             </td>
+                                          </tr>
+                                          <tr>
+                                 <td style="min-width: 590px;" align="center">
+                                    <table style="border-collapse: separate; min-width: 590px; padding: 0px 8px;" width="590" cellspacing="0" cellpadding="0" border="0">
+                                       <tbody>
+                                          <tr>
+                                             <td style="font-size: 13px;" valign="top">
+                                                <span style="font-weight: bold;"><t t-out="object.employee_id.name"/> is requesting to shift from <t t-out="object.current_department.name"/> department to <t t-out="object.new_department.name"/> department</span>
+                                                <br/>
+                                             </td>
+                                          </tr>
+                                       </tbody>
+                                    </table>
+                                 </td>
+                              </tr>
+
+                           </tbody>
+                        </table>
+                     </td>
+                  </tr>
+                  <tr>
+                     <td style="min-width: 590px;" align="center">
+                        <table style="border-collapse: separate; min-width: 590px; padding: 8px;" width="590" cellspacing="0" cellpadding="0" border="0">
+                           <tbody>
+                              <tr>
+                              </tr>
+                           </tbody>
+                        </table>
+                     </td>
+                  </tr>
+               </tbody>
+            </table>
+         </td>
+      </tr>
+   </tbody>
+            </table>
+            </field>
+    </record>
+        <record id="dept_shift_send_to_new_dept_approve_template" model="mail.template">
+            <field name="name">Ask for Final Approve Department Shift Request</field>
+            <field name="model_id" ref="model_employee_shift_request"/>
+            <field name="model">employee.shift.request</field>
+            <field name="subject">Ask for Final Approve Department Shift Request</field>
+            <field name="auto_delete" eval="0" />
+            <field name="email_from">{{ user.email_formatted }}</field>
+            <field name="email_to">{{object.new_department_manager.email}}</field>
+            <field name="body_html" type="html">
+            <table style="border-collapse: separate; padding-top: 16px; background-color: rgb(241, 241, 241); font-family: Verdana, Arial, sans-serif; color: rgb(69, 71, 72); width: 1069px;" cellspacing="0" cellpadding="0" border="0">
+               <tbody>
+                  <tr>
+                     <td align="center">
+                        <table style="border-collapse: separate; padding: 16px; background-color: white;" width="590" cellspacing="0" cellpadding="0" border="0">
+                           <tbody>
+                              <tr>
+                                 <td style="min-width: 590px;" align="center">
+                                    <table style="border-collapse: separate; min-width: 590px; padding: 0px 8px;" width="590" cellspacing="0" cellpadding="0" border="0">
+                                       <tbody>
+                                          <tr>
+                                             <td valign="middle"><span style="font-size: 10px;"></span><br/><span style="font-size: 20px; font-weight: bold;text-align:center;">  Ask for Final Approve Department Shift Request</span></td>
+                                             <td valign="middle" align="right">
+                                                 <img t-attf-src="/logo.png?company={{ object.company_id.id }}" style="padding: 0px; margin: 0px; height: 48px;" t-att-alt="object.company_id.name"/>
+                                             </td>
+                                          </tr>
+                                          <tr>
+                                             <td colspan="2" style="text-align: center;">
+                                                <hr style="border-style:solid none none none;border-image-width:1;border-image-source:none;border-image-slice:100%;border-image-repeat:stretch;border-image-outset:0;border-left-color:currentcolor;border-bottom-color:currentcolor;border-right-color:currentcolor;margin: 16px 0px; border-width: medium; border-style: none; border-top-color: initial; background-color: rgb(204, 204, 204); clear: both; font-size: 0px; min-height: 1px; line-height: 0;" width="100%"/>
+                                             </td>
+                                          </tr>
+                                          <tr>
+                                 <td style="min-width: 590px;" align="center">
+                                    <table style="border-collapse: separate; min-width: 590px; padding: 0px 8px;" width="590" cellspacing="0" cellpadding="0" border="0">
+                                       <tbody>
+                                          <tr>
+                                             <td style="font-size: 13px;" valign="top">
+                                                <span style="font-weight: bold;"><t t-out="object.employee_id.name"/> is requesting to shift from <t t-out="object.current_department.name"/> department to <t t-out="object.new_department.name"/> department</span>
+                                                <br/>
+                                             </td>
+                                          </tr>
+                                       </tbody>
+                                    </table>
+                                 </td>
+                              </tr>
+
+                           </tbody>
+                        </table>
+                     </td>
+                  </tr>
+                  <tr>
+                     <td style="min-width: 590px;" align="center">
+                        <table style="border-collapse: separate; min-width: 590px; padding: 8px;" width="590" cellspacing="0" cellpadding="0" border="0">
+                           <tbody>
+                              <tr>
+                              </tr>
+                           </tbody>
+                        </table>
+                     </td>
+                  </tr>
+               </tbody>
+            </table>
+         </td>
+      </tr>
+   </tbody>
+            </table>
+            </field>
+    </record>
+    </data>
+</odoo>
