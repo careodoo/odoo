@@ -7,10 +7,17 @@ class HrEmployee(models.Model):
 
     extra_department_ids = fields.One2many('hr.employee.extra.department', 'employee_id')
 
+    @api.model
+    def create(self, vals):
+        if not self.env.user.has_group('care_attendance.group_create_employee_user'):
+            raise UserError("You are not allowed to create an employee!")
+        return super(HrEmployee, self).create(vals)
+
     def unlink(self):
         if not self.env.user.has_group('care_attendance.group_delete_employee_user'):
             raise UserError("You are not allowed to delete an employee!")
         return super(HrEmployee, self).unlink()
+
 
 class HrEmployeeExtraDepartment(models.Model):
     _name = 'hr.employee.extra.department'
