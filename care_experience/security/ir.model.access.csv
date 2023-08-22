@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_care_experience,care_experience,model_care_experience,base.group_user,1,1,1,1
+access_care_experience_line,care_experience_line,model_care_experience_line,base.group_user,1,1,1,1
