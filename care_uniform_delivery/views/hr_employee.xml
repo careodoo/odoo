@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="uniform_view_employee_form" model="ir.ui.view">
+            <field name="name">uniform_view_employee_form</field>
+            <field name="model">hr.employee</field>
+            <field name="inherit_id" ref="hr.view_employee_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button class="oe_stat_button" icon="fa-black-tie" type="object" name="button_show_uniform_delivery">
+                        <field widget="statinfo" name="uniform_delivery_count" string="Uniform Delivery"/>
+                    </button>
+                    <button class="oe_stat_button" icon="fa-black-tie" type="object" name="button_show_bulk_uniform_delivery">
+                        <field widget="statinfo" name="bulk_uniform_delivery_count" string="Bulk Uniform Delivery"/>
+                    </button>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

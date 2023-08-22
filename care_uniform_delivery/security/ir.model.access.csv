@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_uniform_delivery,uniform_delivery,model_uniform_delivery,base.group_user,1,1,1,1
+access_uniform_type,uniform_type,model_uniform_type,base.group_user,1,1,1,1
