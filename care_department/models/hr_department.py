@@ -8,7 +8,7 @@ class Department(models.Model):
                                     domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]")
     logo = fields.Binary()
     attachment_ids = fields.Many2many('ir.attachment', string='Attachments')
-    allowed_user_ids = fields.Many2many('res.users', compute='compute_allowed_user_ids', store=True)
+    allowed_user_ids = fields.Many2many('res.users')
     has_higher_manager = fields.Boolean(compute='compute_has_higher_manager', store=True)
     higher_manager_access = fields.Boolean()
     is_modifier = fields.Boolean(compute='compute_is_modifier')
@@ -54,7 +54,7 @@ class Department(models.Model):
         for rec in self:
             rec.has_higher_manager = bool(rec.manager_id.parent_id)
 
-    @api.depends('manager_id', 'higher_manager_access')
+    @api.onchange('manager_id', 'higher_manager_access')
     def compute_allowed_user_ids(self):
         for rec in self:
             allowed_users = []
@@ -142,15 +142,16 @@ class Department(models.Model):
 
     def compute_attendance_count(self):
         for rec in self:
-            rec.attendance_count = self.env['hr.attendance'].search_count([('department_id', '=', rec.id)])
+            rec.attendance_count = len(self.env['bulk.attendance'].search([]).filtered(lambda a: rec.id in a.department_ids.ids))
 
     def button_show_attendances(self):
+        attendances = self.env['bulk.attendance'].search([]).filtered(lambda a: self.id in a.department_ids.ids)
         return {
             'type': 'ir.actions.act_window',
             'name': _('Attendances'),
-            'res_model': 'hr.attendance',
+            'res_model': 'bulk.attendance',
             'view_mode': 'tree',
-            'domain': [('department_id', '=', self.id)],
+            'domain': [('id', 'in', attendances.ids)],
         }
 
     def compute_letter_count(self):

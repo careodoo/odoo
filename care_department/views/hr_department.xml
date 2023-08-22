@@ -67,7 +67,6 @@
                     <field name="has_higher_manager" invisible="1"/>
                     <field name="is_modifier" invisible="1"/>
                     <field name="higher_manager_access" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
-                    <field name="allowed_user_ids" widget="many2many_tags" invisible="1"/>
                 </xpath>
                 <xpath expr="//group[2]" position="replace">
                     <notebook invisible="not context.get('dashboard_view', False)">
@@ -91,6 +90,7 @@
                                 <field name="show_leaves"/>
                                 <field name="show_shifts"/>
                                 <field name="show_applicants"/>
+                                <field name="allowed_user_ids" widget="many2many_tags"/>
                             </group>
                         </page>
                         <page name="attachment" string="Attachments"  attrs="{'readonly': [('is_modifier', '=', False)]}">
