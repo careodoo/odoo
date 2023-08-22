@@ -26,6 +26,9 @@ class HrLawsuit(models.Model):
     def process(self):
         self.state = 'running'
 
+    def delay(self):
+        self.state = 'delay'
+
     @api.depends('party2', 'employee_id')
     def set_party2(self):
         for each in self:
@@ -73,8 +76,9 @@ class HrLawsuit(models.Model):
                                help='More details of the case')
     state = fields.Selection([('draft', 'Draft'),
                               ('running', 'Running'),
+                              ('delay', 'Delay'),
                               ('cancel', 'Cancelled'),
-                              ('fail', 'Failed'),
+                              ('fail', 'Loss'),
                               ('won', 'Won')], string='Status',
                              default='draft', track_visibility='always', copy=False,
                              help='Status')
@@ -83,7 +87,9 @@ class HrLawsuit(models.Model):
 
     @api.model
     def cron_notify_next_appointment(self):
-        lawsuits = self.env['hr.lawsuit'].search([]).filtered(lambda l: l.next_appointment.date() == fields.Date.today())
+        lawsuits = self.env['hr.lawsuit'].search([
+            ('next_appointment', '!=', False)
+        ]).filtered(lambda l: l.next_appointment.date() == fields.Date.today())
         for lawsuit in lawsuits:
             for follower in lawsuit.message_partner_ids:
                 user_id = follower.user_id.id

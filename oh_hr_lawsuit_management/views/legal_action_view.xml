@@ -15,10 +15,11 @@
                 <form string="Legal Actions">
                     <header>
                         <button name="process" string="Process" type="object" states="draft"/>
+                        <button name="delay" string="Delay" type="object" states="draft,running"/>
                         <button name="won" string="Won" type="object" states="running"/>
                         <button name="loss" string="Loss" type="object" states="running"/>
                         <button name="cancel" string="Cancel" type="object" states="running,draft"/>
-                        <field name="state" widget="statusbar" statusbar_visible="draft,running,won"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,running,delay,fail,won"/>
                     </header>
                     <sheet>
                         <label for="name" class="oe_edit_only"/>
@@ -86,7 +87,11 @@
                     <field name="judge"/>
                     <field name="lawyer"/>
                     <field name="requested_date"/>
-                    <field name="state"/>
+                    <field name="state" widget="badge" decoration-success="state == 'won'"
+                           decoration-warning="state == 'delay'"
+                           decoration-danger="state == 'fail'"
+                           decoration-muted="state == 'cancel'"
+                           decoration-info="state in ['draft', 'running']"/>
                 </tree>
             </field>
         </record>
