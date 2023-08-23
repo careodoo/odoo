@@ -116,7 +116,7 @@ class Department(models.Model):
 
     def compute_purchase_order_count(self):
         for rec in self:
-            rec.purchase_order_count = self.env['purchase.order'].search_count([('department_id', '=', rec.id)])
+            rec.purchase_order_count = self.env['purchase.order'].search_count([('department_id', '=', rec.id)]) if rec.show_purchase_orders else 0
 
     def button_show_purchase_orders(self):
         return {
