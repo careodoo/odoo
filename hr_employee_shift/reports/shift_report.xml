@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.actions.report" id="request_for_shift_report">
+            <field name="name">Request for Shift Report</field>
+            <field name="model">employee.shift.request</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">hr_employee_shift.shift_report</field>
+            <field name="report_file">hr_employee_shift.shift_report</field>
+            <field name="binding_model_id" ref="model_employee_shift_request"/>
+			<field name="binding_type">report</field>
+			<field name="binding_view_types">form</field>
+        </record>
+
+		<template id="shift_report">
+			<t t-call="web.html_container">
+				<t t-call="web.basic_layout">
+                    <div class="page" style="font-family:Arial,Helvetica,sans-serif !important;">
+                        <style>
+                        table.GeneratedTable {
+                            width: 100%;
+                            background-color: #ffffff;
+                            border-collapse: collapse;
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-size: 14px;
+                            color: #000000;
+                        }
+
+                        table.GeneratedTable td, table.GeneratedTable th {
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            padding: 2px;
+                        }
+
+                        table.GeneratedTable thead {
+                            background-color: #a3a3a3;
+                        }
+                        .bordered-row{
+                            border-bottom:1px solid black;padding-left:10px;padding-right:10px;
+                        }
+                        .rtl-row{
+                            text-align: right !important;direction: rtl !important;
+                        }
+                    </style>
+                        <t t-foreach="docs" t-as="doc">
+                            <div class="header">
+                                <center>
+                                    <img src="/hr_employee_shift/static/src/img/logo.jpeg" atl="header.jpeg" style="width: 200px; height: 150px;"/>
+                                </center>
+                            </div>
+                            <h4 class="text-center">
+                                <span>Human Resources Department </span>
+                                <span class="rtl-row">إدارة المـوارد البشريـة </span>
+                            </h4>
+                            <br/>
+                            <h4 class="text-center" style="color: blue;">
+                                <span>Transfer Form Temp / Perm - </span>
+                                <span class="rtl-row">طلــب نقـــل مؤقت / دائم </span>
+                            </h4>
+                            <!--#1-->
+                            <div style="border:1px solid black;padding-left:10px;padding-right:10px;">
+                                <!--1-->
+                                <div class="row">
+                                    <div class="col-3">
+                                        <span>Employee Name:</span>
+                                    </div>
+                                    <div class="col-3">
+                                        <span t-field="doc.employee_id.english_name"/>
+                                    </div>
+                                    <div class="col-3 rtl-row">
+                                        <span t-field="doc.employee_id"/>
+                                    </div>
+                                    <div class="col-3 rtl-row">
+                                        <span>الاسم: </span>
+                                    </div>
+                                </div>
+                                <!--2-->
+                                <div class="row" style="margin-top:10px;">
+                                    <div class="col-3">
+                                        <span>Employee ID: </span>
+                                    </div>
+                                    <div class="col-3">
+                                        <span t-field="doc.employee_id.barcode"/>
+                                    </div>
+                                    <div class="col-3 rtl-row">
+                                        <span t-field="doc.employee_id.barcode"/>
+                                    </div>
+                                    <div class="col-3 rtl-row">
+                                        <span>الرقم الوظيفي:</span>
+                                    </div>
+                                </div>
+                                <!--3-->
+                                <div class="row" style="margin-top:10px;">
+                                    <div class="col-4">
+                                        <span>Location transferred from:</span>
+                                    </div>
+                                    <div class="col-2">
+                                        <span t-field="doc.current_department"/>
+                                    </div>
+                                    <div class="col-3 rtl-row">
+                                        <span t-field="doc.current_department"/>
+                                    </div>
+                                    <div class="col-3 rtl-row">
+                                        <span>الموقع المنقول منه :</span>
+                                    </div>
+                                </div>
+                                <!--4-->
+                                <div class="row" style="margin-top:10px;">
+                                    <div class="col-3">
+                                        <span>Position:</span>
+                                    </div>
+                                    <div class="col-3">
+                                        <span t-field="doc.employee_id.job_title"/>
+                                    </div>
+                                    <div class="col-3 rtl-row">
+                                        <span t-field="doc.employee_id.job_title"/>
+                                    </div>
+                                    <div class="col-3 rtl-row">
+                                        <span>الوظيفة:</span>
+                                    </div>
+                                </div>
+                                <!--5-->
+                                <div class="row" style="margin-top:10px;">
+                                    <div class="col-3">
+                                        <span>Location transferred to:</span>
+                                    </div>
+                                    <div class="col-3">
+                                        <span t-field="doc.new_department"/>
+                                    </div>
+                                    <div class="col-3 rtl-row">
+                                        <span t-field="doc.new_department"/>
+                                    </div>
+                                    <div class="col-3 rtl-row">
+                                        <span>الموقع المنقول إليه:</span>
+                                    </div>
+                                </div>
+                                <!--6-->
+                                <div class="row" style="margin-top:10px;">
+                                    <div class="col-3">
+                                        <span>Position:</span>
+                                    </div>
+                                    <div class="col-3">
+                                        <span t-field="doc.employee_id.job_title"/>
+                                    </div>
+                                    <div class="col-3 rtl-row">
+                                        <span t-field="doc.employee_id.job_title"/>
+                                    </div>
+                                    <div class="col-3 rtl-row">
+                                        <span>الوظيفة:</span>
+                                    </div>
+                                </div>
+                                <!--7-->
+                                <div class="row" style="margin-top:10px;">
+                                    <div class="col-3">
+                                        <span>Transfer period: </span>
+                                    </div>
+                                    <div class="col-3"/>
+                                    <div class="col-3"/>
+                                    <div class="col-3 rtl-row">
+                                        <span>فترة النقل المطلوبة: </span>
+                                    </div>
+                                </div>
+                                <!--8-->
+                                <div class="row" style="margin-top:10px;">
+                                    <div class="col-2"/>
+                                    <div class="col-3 text-center">
+                                        <h5>Date of transfer: </h5>
+                                    </div>
+                                    <div class="col-3 text-center">
+                                        <h5 t-field="doc.date"/>
+                                    </div>
+                                    <div class="col-2 rtl-row text-center">
+                                        <h5>تاريخ النقل:</h5>
+                                    </div>
+                                    <div class="col-2"/>
+                                </div>
+                            </div>
+                            <!--#2-->
+                            <div style="border:1px solid black;padding-left:10px;padding-right:10px;">
+                                <!--1-->
+                                <div class="row" style="margin-top:15px;">
+                                    <div class="col-6">
+                                        <span>Current Location Manager signature (from):</span>
+                                    </div>
+                                    <div class="col-2"/>
+                                    <div class="col-4 rtl-row">
+                                        <span>توقيع مسئول الموقع الحالي :</span>
+                                    </div>
+                                </div>
+                                <!--2-->
+                                <div class="row" style="margin-bottom:15px;">
+                                    <div class="col-4">
+                                        <span>Date:</span>
+                                    </div>
+                                    <div class="col-4"/>
+                                    <div class="col-4 rtl-row">
+                                        <span>التاريخ:</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--#3-->
+                            <div style="border:1px solid black;padding-left:10px;padding-right:10px;">
+                                <!--1-->
+                                <div class="row" style="margin-top:15px;">
+                                    <div class="col-6">
+                                        <span>New location Manager signature (to):</span>
+                                    </div>
+                                    <div class="col-2"/>
+                                    <div class="col-4 rtl-row">
+                                        <span>توقيع مسئول الموقع المنقول إليه: </span>
+                                    </div>
+                                </div>
+                                <!--2-->
+                                <div class="row" style="margin-bottom:20px;">
+                                    <div class="col-4">
+                                        <span>Date:</span>
+                                    </div>
+                                    <div class="col-4"/>
+                                    <div class="col-4 rtl-row">
+                                        <span>التاريخ:</span>
+                                    </div>
+                                </div>
+                                <!--3-->
+                                <div class="row" style="margin-bottom:5px;">
+                                    <div class="col-6"/>
+                                    <div class="col-2"/>
+                                    <div class="col-4 rtl-row">
+                                        <span>اعتماد مدير العمليات بالموافقة:</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--#4-->
+                            <div style="border:1px solid black;padding-left:10px;padding-right:10px;">
+                                <!--1-->
+                                <div class="row" style="margin-top:15px;">
+                                    <div class="col-4">
+                                        <span>Personnel Supervisor Notes</span>
+                                    </div>
+                                    <div class="col-2"/>
+                                    <div class="col-2"/>
+                                    <div class="col-4 rtl-row">
+                                        <span>ملاحظات مسئول شؤون العاملين:</span>
+                                    </div>
+                                </div>
+                                <!--2-->
+                                <div class="row" style="margin-bottom:20px;">
+                                    <div class="col-6">.......................................................................................</div>
+                                    <div class="col-6 rtl-row">.......................................................................................</div>
+                                </div>
+                                <!--3-->
+                                <div class="row" style="margin-bottom:20px;">
+                                    <div class="col-6">.......................................................................................</div>
+                                    <div class="col-6 rtl-row">.......................................................................................</div>
+                                </div>
+                                <!--4-->
+                                <div class="row" style="margin-bottom:20px;">
+                                    <div class="col-4">
+                                        <span>Date:</span>
+                                    </div>
+                                    <div class="col-4"/>
+                                    <div class="col-4 rtl-row">
+                                        <span>التاريخ:</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--#5-->
+                            <div style="border:1px solid black;padding-left:10px;padding-right:10px;">
+                                <!--1-->
+                                <div class="row" style="margin-top:15px;">
+                                    <div class="col-4">
+                                        <span>Human Resources Manager:</span>
+                                    </div>
+                                    <div class="col-2"/>
+                                    <div class="col-2"/>
+                                    <div class="col-4 rtl-row">
+                                        <span>مدير إدارة الموارد البشرية:</span>
+                                    </div>
+                                </div>
+                                <!--2-->
+                                <div class="row" style="margin-bottom:20px;">
+                                    <div class="col-6">.......................................................................................</div>
+                                    <div class="col-6 rtl-row">.......................................................................................</div>
+                                </div>
+                                <!--3-->
+                                <div class="row" style="margin-bottom:20px;">
+                                    <div class="col-6">.......................................................................................</div>
+                                    <div class="col-6 rtl-row">.......................................................................................</div>
+                                </div>
+                                <!--4-->
+                                <div class="row" style="margin-bottom:20px;">
+                                    <div class="col-4">
+                                        <span>Date:</span>
+                                    </div>
+                                    <div class="col-4"/>
+                                    <div class="col-4 rtl-row">
+                                        <span>التاريخ:</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                        <div class="footer">
+                            <center>
+                                REF.: HR-FORMS 007
+                            </center>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </template>
+
+    </data>
+</odoo>

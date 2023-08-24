@@ -20,7 +20,7 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'hr'],
+    'depends': ['base', 'hr', 'hr_holidays'],
 
     # always loaded
     'data': [
@@ -34,5 +34,8 @@
         'views/hr_employee.xml',
         'views/hr_department.xml',
         'wizards/request_refuse_reason.xml',
+        'reports/shift_report.xml',
+        'reports/joining_report.xml',
+        'reports/leave_request_report.xml',
     ],
 }

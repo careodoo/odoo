@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.actions.report" id="action_joining_report">
+            <field name="name">Joining Report</field>
+            <field name="model">hr.employee</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">hr_employee_shift.joining_report</field>
+            <field name="report_file">hr_employee_shift.joining_report</field>
+            <field name="binding_model_id" ref="model_hr_employee"/>
+			<field name="binding_type">report</field>
+			<field name="binding_view_types">form</field>
+        </record>
+		<template id="joining_report">
+			<t t-call="web.html_container">
+				<t t-call="web.basic_layout">
+                    <div class="page" style="font-family:Arial,Helvetica,sans-serif !important;">
+                        <style>
+                        table.GeneratedTable {
+                            width: 100%;
+                            background-color: #ffffff;
+                            border-collapse: collapse;
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-size: 14px;
+                            color: #000000;
+                        }
+
+                        table.GeneratedTable td, table.GeneratedTable th {
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            padding: 10px;
+                            font-weight: bold;
+                            margin:10px;
+                        }
+
+                        table.GeneratedTable thead {
+                            background-color: #a3a3a3;
+                        }
+                        .bordered-row{
+                            border-bottom:1px solid black;padding-left:10px;padding-right:10px;
+                        }
+                        .rtl-row{
+                            text-align: right !important;direction: rtl !important;
+                        }
+                    </style>
+                        <t t-foreach="docs" t-as="doc">
+                            <div class="header">
+                                <img src="/hr_employee_shift/static/src/img/logo.jpeg" atl="header.jpeg" style="width: 150px; height: 120px;"/>
+                            </div>
+                            <h5 class="text-center">
+                                <strong>Joining Report</strong>
+                                <strong class="rtl-row">إشعار مباشرة العمل</strong>
+                            </h5>
+                            <!--table#1-->
+                            <p class="text-center">
+                                <span>Emp. Data </span>
+                                <span class="rtl-row">بيانات الموظف  </span>
+                            </p>
+                            <table class="GeneratedTable rtl-row">
+                                <colgroup>
+                                    <col width='50%'/>
+                                    <col width='50%'/>
+                                </colgroup>
+                                <tbody>
+                                    <tr>
+                                        <td><h5>الاسم: <span t-field="doc.name"/> </h5></td>
+                                        <td><h5>الوظيفة:  </h5></td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>تاريخ مباشرة العمل : <span t-field="doc.first_contract_date"/> </h5></td>
+                                        <td><h5>مكان العمل :  </h5></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2"><h5>رقم الموظف : <span t-field="doc.barcode"/> </h5></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <!--table#2-->
+                            <p class="text-center">
+                                <span>Department / Project</span>
+                                <span class="rtl-row">الإدارة / المشروع </span>
+                            </p>
+                            <div style="border:1px solid black;padding-left:10px;padding-right:10px;">
+                                <h5 class="text-center">
+                                    <span>To: Personnel Department ..</span>
+                                    <span class="rtl-row">إلى شؤون الموظفين </span>
+                                </h5>
+                                <!--1-->
+                                <div class="row">
+                                    <div class="col-6">
+                                        <span>Please be advised that, the EMPLOYEE :</span>
+                                    </div>
+                                    <div class="col-2"/>
+                                    <div class="col-4 rtl-row">
+                                        <span>نـأمل اعتـــماد مبـاشرة العمل  للموظف: </span>
+                                    </div>
+                                </div>
+                                <!--2-->
+                                <div class="row">
+                                    <div class="col-6">
+                                        <span> □ Started the work for the first time. . :</span>
+                                    </div>
+                                    <div class="col-2"/>
+                                    <div class="col-4 rtl-row">
+                                        <span>□ التحق بالعمل لأول مرة</span>
+                                    </div>
+                                </div>
+                                <!--3-->
+                                <div class="row">
+                                    <div class="col-6">
+                                        <span>□ Joining back to work after vacation. </span>
+                                    </div>
+                                    <div class="col-2"/>
+                                    <div class="col-4 rtl-row">
+                                        <span>□ التحق بالعمل بعد الاجازة</span>
+                                    </div>
+                                </div>
+                                <!--4-->
+                                <div class="row">
+                                    <div class="col-4"/>
+                                    <div class="col-4 text-center">
+                                        <span>مدير العمليات / المشروع </span>
+                                    </div>
+                                    <div class="col-4"/>
+                                </div>
+                                <!--5-->
+                                <div class="row">
+                                    <div class="col-4"/>
+                                    <div class="col-4 text-center">
+                                        <span>Dept. Manager </span>
+                                    </div>
+                                    <div class="col-4"/>
+                                </div>
+                                <h5 class="text-center">
+                                    <span>Name: </span>
+                                    <span>................................................</span>
+                                    <span class="rtl-row">الاسم </span>
+                                </h5>
+                                <h5 class="text-center">
+                                    <span>Signature: </span>
+                                    <span>................................................</span>
+                                    <span class="rtl-row">التوقيع </span>
+                                </h5>
+                                <h5 class="text-center">
+                                    <span>Date: </span>
+                                    <span>................................................</span>
+                                    <span class="rtl-row">التاريخ </span>
+                                </h5>
+                            </div>
+                            <!--table#3-->
+                            <p class="text-center">
+                                <span>Personnel use only</span>
+                                <span class="rtl-row">فقط الموارد البشرية الستخدام </span>
+                            </p>
+                            <div style="border:1px solid black;padding-left:10px;padding-right:10px;">
+                                <h5 class="rtl-row">
+                                     □ المذكور باشر في التاريخ المحدد ويدرج اسمه بكشوفات الرواتب اعتبارا من: __/__/_______
+                                </h5>
+                                <h5 class="rtl-row">
+                                     □ المذكور باشر العمل متأخراً ___________ يوم ويدرج اسمه بكشوفات الرواتب اعتبارا من: __/__/_______
+                                </h5>
+                                <!--1-->
+                                <div class="row">
+                                    <div class="col-5">
+                                        <ul style="list-style-type: none;padding: 3px;margin: 0;">
+                                            <li class="text-center">
+                                                يعتمــد السيد / المــدير التنفيذي
+                                            </li>
+                                            <li class="text-center">
+                                                Executive Manager Signature
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-2"/>
+                                    <div class="col-5 rtl-row">
+                                        <ul style="list-style-type: none;padding: 3px;margin: 0;">
+                                            <li class="text-center">
+                                                مدير الموارد البشرية
+                                            </li>
+                                            <li class="text-center">
+                                                HR &amp; Admin. Manager
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <!--2-->
+                                <div class="row">
+                                    <div class="col-5 rtl-row">
+                                        <span>التوقيــــــــــع :.......................................Signature</span>
+                                    </div>
+                                    <div class="col-2"></div>
+                                    <div class="col-5 rtl-row">
+                                        <span>التوقيــــــــــع :.......................................Signature</span>
+                                    </div>
+                                </div>
+                                <!--3-->
+                                <div class="row">
+                                    <div class="col-5 rtl-row">
+                                        <span>التاريخ : __/__/_______  </span>
+                                    </div>
+                                    <div class="col-2"></div>
+                                    <div class="col-5 rtl-row">
+                                        <span>التاريخ : __/__/_______ </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <h5 class="rtl-row">
+                                 محاسب الرواتب الاسم : ............................ التوقيع : ............................ التاريخ : __/__/_______
+                            </h5>
+                            <div class="row">
+                                <div class="col-6 rtl-row">
+                                    <span>* الأصل لملف الموظف</span>
+                                </div>
+                                <div class="col-6 rtl-row">
+                                    <span> * صورة للادارة المالية</span>
+                                </div>
+                            </div>
+                            <div style="border:1px dashed blue;padding-left:10px;padding-right:10px;">
+                                <p class="rtl-row">ملحوظـة :</p>
+                                <p class="rtl-row">في حال عدم اجتياز الموظف فترة 7 ايام من تاريخ التحاقه بالعمل سواء بناءا على رغبتة بترك العمل و / او عدم كفاءتة المبدئية للعمل فلا يستحق له اية رواتب عن هذه الفترة.</p>
+                                <p>NOTE:</p>
+                                <p>If the employee didn’t pass the period of 7 days from the date of join either he decided to go or requested to leave, will not deserve any salaries for this period.</p>
+                            </div>
+                        </t>
+                        <div class="footer">
+                            <center>
+                                REF.: HR-FORMS 003
+                            </center>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>
