@@ -66,6 +66,7 @@ class ArrivalResident(models.Model):
         ('7', 'نقل كفالة'),
         ('8', 'نقل معلومات'),
         ('9', 'تمديد'),
+        ('10', 'تمديد + نقل معلومات'),
     ], default='1')
 
     def action_print_report(self):

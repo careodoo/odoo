@@ -107,7 +107,7 @@
                                   </td>
                                 </tr>
                                 <tr>
-                                  <td colspan="6"><span t-field="o.order_type2"/></td>
+                                  <td colspan="6" class="text-center"><span t-field="o.order_type2"/></td>
                                 </tr>
                               </tbody>
                             </table>
