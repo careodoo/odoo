@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+		<record id="paperformat_clearance_landscape" model="report.paperformat">
+			<field name="name">PDF Clearance Landscape</field>
+			<field name="default" eval="True"/>
+			<field name="format">A4</field>
+			<field name="page_height">0</field>
+			<field name="page_width">0</field>
+			<field name="orientation">Landscape</field>
+			<field name="margin_top">20</field>
+			<field name="margin_bottom">23</field>
+			<field name="margin_left">7</field>
+			<field name="margin_right">7</field>
+			<field name="header_line" eval="False"/>
+			<field name="header_spacing">20</field>
+			<field name="dpi">90</field>
+		</record>
+        <record model="ir.actions.report" id="action_clearance_report">
+            <field name="name">Clearance Report</field>
+            <field name="model">hr.action.clearance</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">care_hr.clearance_report</field>
+            <field name="report_file">care_hr.clearance_report</field>
+            <field name="paperformat_id" ref="paperformat_clearance_landscape"/>
+            <field name="binding_model_id" ref="model_hr_action_clearance"/>
+			<field name="binding_type">report</field>
+			<field name="binding_view_types">form</field>
+        </record>
+        <record model="ir.actions.report" id="action_clearance_header_report">
+            <field name="name">Clearance with Header</field>
+            <field name="model">hr.action.clearance</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">care_hr.clearance_header_report</field>
+            <field name="report_file">care_hr.clearance_header_report</field>
+            <field name="paperformat_id" ref="paperformat_clearance_landscape"/>
+            <field name="binding_model_id" ref="model_hr_action_clearance"/>
+			<field name="binding_type">report</field>
+			<field name="binding_view_types">form</field>
+        </record>
+		<template id="clearance_report">
+			<t t-call="web.html_container">
+				<t t-call="web.basic_layout">
+                    <div class="page" style="font-family:Arial,Helvetica,sans-serif !important;">
+                        <style>
+                        table.GeneratedTable {
+                            width: 100%;
+                            background-color: #ffffff;
+                            border-collapse: collapse;
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-size: 14px;
+                            color: #000000;
+                        }
+
+                        table.GeneratedTable td, table.GeneratedTable th {
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            padding: 10px;
+                            font-weight: bold;
+                            margin:10px;
+                        }
+
+                        table.GeneratedTable thead {
+                            background-color: #a3a3a3;
+                        }
+                        .bordered-row{
+                            border-bottom:1px solid black;padding-left:10px;padding-right:10px;
+                        }
+                        .rtl-row{
+                            text-align: right !important;direction: rtl !important;
+                        }
+                    </style>
+                        <t t-foreach="docs" t-as="doc">
+                            <br/>
+                            <br/>
+                            <br/>
+                            <br/>
+                            <div class="row">
+                                <div class="col-4">
+                                    <center>
+                                        <img t-if="doc.barcode" t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('Code128',doc.barcode,180,50)" />
+                                        <div t-esc="doc.barcode"/>
+                                    </center>
+                                </div>
+                                <div class="col-4">
+                                    <center>
+                                        <strong style="background-color: #d9d9d9">Clearance Form</strong>
+                                    </center>
+                                </div>
+                                <div class="col-4">
+                                    <center>
+                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:60px;height:60px;"/>
+                                    </center>
+                                </div>
+                            </div>
+                            <br/>
+                            <table class="GeneratedTable">
+                                <colgroup>
+                                    <col width='10%'/>
+                                    <col width='40%'/>
+                                    <col width='10%'/>
+                                    <col width='20%'/>
+                                    <col width='20%'/>
+                                </colgroup>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="2"><h5>Department</h5></td>
+                                        <td><h5>Remarks</h5></td>
+                                        <td><h5>HOD</h5></td>
+                                        <td><h5>Signature and Date</h5></td>
+                                    </tr>
+                                    <tr>
+                                        <td rowspan="7"><h5>Operations</h5></td>
+                                        <td>Cash</td>
+                                        <td><span t-esc="doc.line_ids.filtered(lambda l: l.sequence == 1).remarks"/></td>
+                                        <td rowspan="5" style="vertical-align : middle;text-align:center;"><center>Finance Manager</center></td>
+                                        <td rowspan="5"><h5></h5></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Stocks Products Balance - On hand</td>
+                                        <td><span t-esc="doc.line_ids.filtered(lambda l: l.sequence == 2).remarks"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Custody if any</td>
+                                        <td><span t-esc="doc.line_ids.filtered(lambda l: l.sequence == 3).remarks"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Staff Diabetes</td>
+                                        <td><span t-esc="doc.line_ids.filtered(lambda l: l.sequence == 4).remarks"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Any petty cash</td>
+                                        <td><span t-esc="doc.line_ids.filtered(lambda l: l.sequence == 5).remarks"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Disciplinary Action Pending</td>
+                                        <td><span t-esc="doc.line_ids.filtered(lambda l: l.sequence == 6).remarks"/></td>
+                                        <td rowspan="3" style="vertical-align : middle;text-align:center;">HR Manager</td>
+                                        <td rowspan="3"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>ID / Email...ETC</td>
+                                        <td><span t-esc="doc.line_ids.filtered(lambda l: l.sequence == 7).remarks"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5></h5></td>
+                                        <td>Insurance Card if any</td>
+                                        <td><span t-esc="doc.line_ids.filtered(lambda l: l.sequence == 8).remarks"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <br/>
+                            <h5>- Employee Name : <span t-field="doc.employee_id"/> </h5>
+                            <h5>- Employee ID : <span t-field="doc.employee_barcode"/></h5>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </template>
+		<template id="clearance_header_report">
+			<t t-call="web.html_container">
+				<t t-call="care_hr.employee_internal_layout">
+                    <div class="page" style="font-family:Arial,Helvetica,sans-serif !important;">
+                        <style>
+                        table.GeneratedTable {
+                            width: 100%;
+                            background-color: #ffffff;
+                            border-collapse: collapse;
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-size: 14px;
+                            color: #000000;
+                        }
+
+                        table.GeneratedTable td, table.GeneratedTable th {
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            padding: 10px;
+                            font-weight: bold;
+                            margin:10px;
+                        }
+
+                        table.GeneratedTable thead {
+                            background-color: #a3a3a3;
+                        }
+                        .bordered-row{
+                            border-bottom:1px solid black;padding-left:10px;padding-right:10px;
+                        }
+                        .rtl-row{
+                            text-align: right !important;direction: rtl !important;
+                        }
+                    </style>
+                        <t t-foreach="docs" t-as="doc">
+                            <br/>
+                            <br/>
+                            <br/>
+                            <br/>
+                            <div class="row">
+                                <div class="col-4">
+                                    <center>
+                                        <img t-if="doc.barcode" t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('Code128',doc.barcode,180,50)" />
+                                        <div t-esc="doc.barcode"/>
+                                    </center>
+                                </div>
+                                <div class="col-4">
+                                    <center>
+                                        <strong style="background-color: #d9d9d9">Clearance Form</strong>
+                                    </center>
+                                </div>
+                                <div class="col-4">
+                                    <center>
+                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:60px;height:60px;"/>
+                                    </center>
+                                </div>
+                            </div>
+                            <br/>
+                            <table class="GeneratedTable">
+                                <colgroup>
+                                    <col width='10%'/>
+                                    <col width='40%'/>
+                                    <col width='10%'/>
+                                    <col width='20%'/>
+                                    <col width='20%'/>
+                                </colgroup>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="2"><h5>Department</h5></td>
+                                        <td><h5>Remarks</h5></td>
+                                        <td><h5>HOD</h5></td>
+                                        <td><h5>Signature and Date</h5></td>
+                                    </tr>
+                                    <tr>
+                                        <td rowspan="7"><h5>Operations</h5></td>
+                                        <td>Cash</td>
+                                        <td><span t-esc="doc.line_ids.filtered(lambda l: l.sequence == 1).remarks"/></td>
+                                        <td rowspan="5" style="vertical-align : middle;text-align:center;"><center>Finance Manager</center></td>
+                                        <td rowspan="5"><h5></h5></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Stocks Products Balance - On hand</td>
+                                        <td><span t-esc="doc.line_ids.filtered(lambda l: l.sequence == 2).remarks"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Custody if any</td>
+                                        <td><span t-esc="doc.line_ids.filtered(lambda l: l.sequence == 3).remarks"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Staff Diabetes</td>
+                                        <td><span t-esc="doc.line_ids.filtered(lambda l: l.sequence == 4).remarks"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Any petty cash</td>
+                                        <td><span t-esc="doc.line_ids.filtered(lambda l: l.sequence == 5).remarks"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Disciplinary Action Pending</td>
+                                        <td><span t-esc="doc.line_ids.filtered(lambda l: l.sequence == 6).remarks"/></td>
+                                        <td rowspan="3" style="vertical-align : middle;text-align:center;">HR Manager</td>
+                                        <td rowspan="3"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>ID / Email...ETC</td>
+                                        <td><span t-esc="doc.line_ids.filtered(lambda l: l.sequence == 7).remarks"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5></h5></td>
+                                        <td>Insurance Card if any</td>
+                                        <td><span t-esc="doc.line_ids.filtered(lambda l: l.sequence == 8).remarks"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <br/>
+                            <h5>- Employee Name : <span t-field="doc.employee_id"/> </h5>
+                            <h5>- Employee ID : <span t-field="doc.employee_barcode"/></h5>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>

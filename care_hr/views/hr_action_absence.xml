@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="absence_view_form" model="ir.ui.view">
+            <field name="name">absence_view_form</field>
+            <field name="model">hr.action.absence</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="button_submit" type="object" string="Submit" class="oe_highlight"/>
+                        <button name="button_approve" type="object" string="Approve" class="oe_highlight"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <field name="qr_image" widget="image" class="oe_avatar"/>
+                        <div class="oe_title">
+                            <label for="employee_id" name="model_name_label"/>
+                            <h1>
+                                <field name="employee_id" required="1" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <field name="barcode"/>
+                            <field name="employee_barcode"/>
+                            <field name="civil_code"/>
+                            <field name="job_title"/>
+                            <field name="department_id"/>
+                            <field name="last_work_date"/>
+                            <field name="absence_reason"/>
+                        </group>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+        <record id="absence_reason_view_tree" model="ir.ui.view">
+            <field name="name">absence_view_tree</field>
+            <field name="model">hr.action.absence</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="employee_id"/>
+                    <field name="barcode"/>
+                    <field name="employee_barcode"/>
+                    <field name="civil_code"/>
+                    <field name="job_title"/>
+                    <field name="department_id"/>
+                    <field name="last_work_date"/>
+                    <field name="absence_reason"/>
+                    <field name="state" widget="badge"
+                        decoration-muted="state == 'draft'"
+                        decoration-warning="state == 'submit'"
+                        decoration-success="state == 'approved'"/>
+                </tree>
+            </field>
+        </record>
+        <record id="absence_action" model="ir.actions.act_window">
+            <field name="name">Absence</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">hr.action.absence</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem id="absence_root" name="Absence" sequence="70"/>
+        <menuitem id="absence_menu" name="Absence" parent="absence_root" action="absence_action" sequence="1"/>
+    </data>
+</odoo>

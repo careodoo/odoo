@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.actions.report" id="action_leave_return_report">
+            <field name="name">عودة من الاجازة</field>
+            <field name="model">hr.action.leave.return</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">care_hr.leave_return_report</field>
+            <field name="report_file">care_hr.leave_return_report</field>
+            <field name="binding_model_id" ref="model_hr_action_leave_return"/>
+			<field name="binding_type">report</field>
+			<field name="binding_view_types">form</field>
+        </record>
+        <record model="ir.actions.report" id="action_leave_return_header_report">
+            <field name="name">عودة من الاجازة header</field>
+            <field name="model">hr.action.leave.return</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">care_hr.leave_return_header_report</field>
+            <field name="report_file">care_hr.leave_return_header_report</field>
+            <field name="binding_model_id" ref="model_hr_action_leave_return"/>
+			<field name="binding_type">report</field>
+			<field name="binding_view_types">form</field>
+        </record>
+		<template id="leave_return_report">
+			<t t-call="web.html_container">
+				<t t-call="web.basic_layout">
+                    <div class="page" style="font-family:Arial,Helvetica,sans-serif !important;">
+                        <style>
+                        table.GeneratedTable {
+                            width: 100%;
+                            background-color: #ffffff;
+                            border-collapse: collapse;
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-size: 14px;
+                            color: #000000;
+                        }
+
+                        table.GeneratedTable td, table.GeneratedTable th {
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            padding: 10px;
+                            font-weight: bold;
+                            margin:10px;
+                        }
+
+                        table.GeneratedTable thead {
+                            background-color: #a3a3a3;
+                        }
+                        .bordered-row{
+                            border-bottom:1px solid black;padding-left:10px;padding-right:10px;
+                        }
+                        .rtl-row{
+                            text-align: right !important;direction: rtl !important;
+                        }
+                    </style>
+                        <t t-foreach="docs" t-as="doc">
+                            <div class="row">
+                                <div class="col-4">
+                                    <center>
+                                        <img t-if="doc.barcode" t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('Code128',doc.barcode,180,50)" />
+                                        <div t-esc="doc.barcode"/>
+                                    </center>
+                                </div>
+                                <div class="col-4">
+                                    <span class="text-center">
+                                        <strong style="background-color: #d9d9d9;font-weight: bold;">نموذج مباشرة عمل</strong>
+                                    </span>
+                                </div>
+                                <div class="col-4">
+                                    <center>
+                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:60px;height:60px;"/>
+                                    </center>
+                                </div>
+                            </div>
+                            <br/>
+                            <table class="GeneratedTable rtl-row">
+                                <colgroup>
+                                    <col width='30%'/>
+                                    <col width='20%'/>
+                                    <col width='20%'/>
+                                    <col width='30%'/>
+                                </colgroup>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="4" class="text-center"><h5>بيانات الموظف</h5></td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>الاسم</h5></td>
+                                        <td colspan="3"><span t-field="doc.employee_id"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>الرقم الوظيفي / المدنى</h5></td>
+                                        <td><span t-field="doc.employee_barcode"/></td>
+                                        <td><h5>المسمى الوظيفي</h5></td>
+                                        <td><span t-field="doc.job_title"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>الإدارة</h5></td>
+                                        <td><span t-field="doc.department_id"/></td>
+                                        <td><h5>القسم / المشروع</h5></td>
+                                        <td><h5></h5></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" class="text-center"><h5>بيانات اخر اجازة</h5></td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>من تاريخ</h5></td>
+                                        <td><span t-field="doc.last_leave_from"/></td>
+                                        <td><h5>الي تاريخ</h5></td>
+                                        <td><span t-field="doc.last_leave_to"/></td>
+                                    </tr>
+                                    <tr style="background-color: #d9d9d9">
+                                        <td colspan="4" class="text-center"><h5>العودة من الاجازة</h5></td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>تاريخ العودة من الاجازة</h5></td>
+                                        <td><span t-field="doc.leave_return_date"/></td>
+                                        <td><h5>تاريخ مباشرة العمل</h5></td>
+                                        <td><span t-field="doc.start_work_date"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>عدد ايام الاجازة المطلوبة</h5></td>
+                                        <td><span t-field="doc.leave_request_days"/></td>
+                                        <td><h5>العدد الفعلي  للاجازة</h5></td>
+                                        <td><span t-field="doc.actual_leave_days"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>عدد ايام التأخير</h5></td>
+                                        <td><span t-field="doc.late_days"/></td>
+                                        <td><h5>غرامة التأخير</h5></td>
+                                        <td><span t-field="doc.late_fees"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>ملاحظات</h5></td>
+                                        <td colspan="3"><span t-field="doc.notes"/></td>
+                                    </tr>
+                                    <tr style="background-color: #d9d9d9">
+                                        <td colspan="4" class="text-center" style="font-weight: bold;"><h4>الاعتماد</h4></td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>توقيع الموظف</h5></td>
+                                        <td>الاسم: </td>
+                                        <td colspan="2">التوقيغ: </td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>توقيع مدير الموقع/المسئول المباشر</h5></td>
+                                        <td>الاسم: </td>
+                                        <td colspan="2">التوقيغ: </td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>توقيع إدارة الموارد البشرية</h5></td>
+                                        <td>الاسم: </td>
+                                        <td colspan="2">التوقيغ: </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <h5>اعتماد الرئيس التنفيذى</h5>
+                                            <p>للعاملين في الإدارة و مدراء المشاريع</p>
+                                        </td>
+                                        <td>الاسم: </td>
+                                        <td colspan="2">التوقيغ: </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </template>
+		<template id="leave_return_header_report">
+			<t t-call="web.html_container">
+				<t t-call="care_hr.employee_internal_layout">
+                    <div class="page" style="font-family:Arial,Helvetica,sans-serif !important;">
+                        <style>
+                        table.GeneratedTable {
+                            width: 100%;
+                            background-color: #ffffff;
+                            border-collapse: collapse;
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-size: 14px;
+                            color: #000000;
+                        }
+
+                        table.GeneratedTable td, table.GeneratedTable th {
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            padding: 10px;
+                            font-weight: bold;
+                            margin:10px;
+                        }
+
+                        table.GeneratedTable thead {
+                            background-color: #a3a3a3;
+                        }
+                        .bordered-row{
+                            border-bottom:1px solid black;padding-left:10px;padding-right:10px;
+                        }
+                        .rtl-row{
+                            text-align: right !important;direction: rtl !important;
+                        }
+                    </style>
+                        <t t-foreach="docs" t-as="doc">
+                            <div class="row">
+                                <div class="col-4">
+                                    <center>
+                                        <img t-if="doc.barcode" t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('Code128',doc.barcode,180,50)" />
+                                        <div t-esc="doc.barcode"/>
+                                    </center>
+                                </div>
+                                <div class="col-4">
+                                    <span class="text-center">
+                                        <strong style="background-color: #d9d9d9;font-weight: bold;">نموذج مباشرة عمل</strong>
+                                    </span>
+                                </div>
+                                <div class="col-4">
+                                    <center>
+                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:60px;height:60px;"/>
+                                    </center>
+                                </div>
+                            </div>
+                            <br/>
+                            <table class="GeneratedTable rtl-row">
+                                <colgroup>
+                                    <col width='30%'/>
+                                    <col width='20%'/>
+                                    <col width='20%'/>
+                                    <col width='30%'/>
+                                </colgroup>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="4" class="text-center"><h5>بيانات الموظف</h5></td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>الاسم</h5></td>
+                                        <td colspan="3"><span t-field="doc.employee_id"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>الرقم الوظيفي / المدنى</h5></td>
+                                        <td><span t-field="doc.employee_barcode"/></td>
+                                        <td><h5>المسمى الوظيفي</h5></td>
+                                        <td><span t-field="doc.job_title"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>الإدارة</h5></td>
+                                        <td><span t-field="doc.department_id"/></td>
+                                        <td><h5>القسم / المشروع</h5></td>
+                                        <td><h5></h5></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" class="text-center"><h5>بيانات اخر اجازة</h5></td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>من تاريخ</h5></td>
+                                        <td><span t-field="doc.last_leave_from"/></td>
+                                        <td><h5>الي تاريخ</h5></td>
+                                        <td><span t-field="doc.last_leave_to"/></td>
+                                    </tr>
+                                    <tr style="background-color: #d9d9d9">
+                                        <td colspan="4" class="text-center"><h5>العودة من الاجازة</h5></td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>تاريخ العودة من الاجازة</h5></td>
+                                        <td><span t-field="doc.leave_return_date"/></td>
+                                        <td><h5>تاريخ مباشرة العمل</h5></td>
+                                        <td><span t-field="doc.start_work_date"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>عدد ايام الاجازة المطلوبة</h5></td>
+                                        <td><span t-field="doc.leave_request_days"/></td>
+                                        <td><h5>العدد الفعلي  للاجازة</h5></td>
+                                        <td><span t-field="doc.actual_leave_days"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>عدد ايام التأخير</h5></td>
+                                        <td><span t-field="doc.late_days"/></td>
+                                        <td><h5>غرامة التأخير</h5></td>
+                                        <td><span t-field="doc.late_fees"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>ملاحظات</h5></td>
+                                        <td colspan="3"><span t-field="doc.notes"/></td>
+                                    </tr>
+                                    <tr style="background-color: #d9d9d9">
+                                        <td colspan="4" class="text-center" style="font-weight: bold;"><h4>الاعتماد</h4></td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>توقيع الموظف</h5></td>
+                                        <td>الاسم: </td>
+                                        <td colspan="2">التوقيغ: </td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>توقيع مدير الموقع/المسئول المباشر</h5></td>
+                                        <td>الاسم: </td>
+                                        <td colspan="2">التوقيغ: </td>
+                                    </tr>
+                                    <tr>
+                                        <td><h5>توقيع إدارة الموارد البشرية</h5></td>
+                                        <td>الاسم: </td>
+                                        <td colspan="2">التوقيغ: </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <h5>اعتماد الرئيس التنفيذى</h5>
+                                            <p>للعاملين في الإدارة و مدراء المشاريع</p>
+                                        </td>
+                                        <td>الاسم: </td>
+                                        <td colspan="2">التوقيغ: </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>

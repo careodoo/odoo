@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="leave_return_view_form" model="ir.ui.view">
+            <field name="name">leave_return_view_form</field>
+            <field name="model">hr.action.leave.return</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="button_submit" type="object" string="Submit" class="oe_highlight"/>
+                        <button name="button_approve" type="object" string="Approve" class="oe_highlight"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <field name="qr_image" widget="image" class="oe_avatar"/>
+                        <div class="oe_title">
+                            <label for="employee_id" name="model_name_label"/>
+                            <h1>
+                                <field name="employee_id" required="1" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="barcode"/>
+                                <field name="department_id"/>
+                                <field name="last_leave_from"/>
+                                <field name="leave_return_date"/>
+                                <field name="leave_request_days"/>
+                                <field name="late_days"/>
+                                <field name="notes"/>
+                            </group>
+                            <group>
+                                <field name="job_title"/>
+                                <field name="employee_barcode"/>
+                                <field name="last_leave_to"/>
+                                <field name="start_work_date"/>
+                                <field name="actual_leave_days"/>
+                                <field name="late_fees"/>
+                            </group>
+                        </group>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+        <record id="leave_return_view_tree" model="ir.ui.view">
+            <field name="name">leave_return_view_tree</field>
+            <field name="model">hr.action.leave.return</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="employee_id"/>
+                    <field name="barcode"/>
+                    <field name="job_title"/>
+                    <field name="employee_barcode"/>
+                    <field name="department_id"/>
+                    <field name="last_leave_from"/>
+                    <field name="last_leave_to"/>
+                    <field name="leave_return_date"/>
+                    <field name="start_work_date"/>
+                    <field name="late_days"/>
+                    <field name="late_fees"/>
+                    <field name="state" widget="badge"
+                        decoration-muted="state == 'draft'"
+                        decoration-warning="state == 'submit'"
+                        decoration-success="state == 'approved'"/>
+                </tree>
+            </field>
+        </record>
+        <record id="leave_return_action" model="ir.actions.act_window">
+            <field name="name">Leave Return</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">hr.action.leave.return</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem id="leave_return_root" name="Leave Return" sequence="73"/>
+        <menuitem id="leave_return_menu" name="Leave Return" parent="leave_return_root" action="leave_return_action" sequence="1"/>
+    </data>
+</odoo>

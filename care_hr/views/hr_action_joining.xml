@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="joining_view_form" model="ir.ui.view">
+            <field name="name">joining_view_form</field>
+            <field name="model">hr.action.joining</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="button_submit" type="object" string="Submit" class="oe_highlight"/>
+                        <button name="button_approve" type="object" string="Approve" class="oe_highlight"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <field name="qr_image" widget="image" class="oe_avatar"/>
+                        <div class="oe_title">
+                            <label for="employee_id" name="model_name_label"/>
+                            <h1>
+                                <field name="employee_id" required="1" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <field name="barcode"/>
+                            <field name="job_title"/>
+                            <field name="employee_barcode"/>
+                            <field name="join_date"/>
+                            <field name="work_location"/>
+                        </group>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+        <record id="joining_view_tree" model="ir.ui.view">
+            <field name="name">joining_view_tree</field>
+            <field name="model">hr.action.joining</field>
+            <field name="arch" type="xml">
+                <tree string="joining_tree">
+                    <field name="employee_id"/>
+                    <field name="job_title"/>
+                    <field name="barcode"/>
+                    <field name="join_date"/>
+                    <field name="work_location"/>
+                    <field name="state" widget="badge"
+                        decoration-muted="state == 'draft'"
+                        decoration-warning="state == 'submit'"
+                        decoration-success="state == 'approved'"/>
+                </tree>
+            </field>
+        </record>
+        <record id="joining_action" model="ir.actions.act_window">
+            <field name="name">Joining</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">hr.action.joining</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem id="joining_root" name="Joining" sequence="70"/>
+        <menuitem id="joining_menu" name="Joining" parent="joining_root" action="joining_action" sequence="1"/>
+    </data>
+</odoo>

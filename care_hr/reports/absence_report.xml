@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.actions.report" id="action_absence_report">
+            <field name="name">Absence Report</field>
+            <field name="model">hr.action.absence</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">care_hr.absence_report</field>
+            <field name="report_file">care_hr.absence_report</field>
+            <field name="binding_model_id" ref="model_hr_action_absence"/>
+			<field name="binding_type">report</field>
+			<field name="binding_view_types">form</field>
+        </record>
+        <record model="ir.actions.report" id="action_absence_header_report">
+            <field name="name">Absence with Header</field>
+            <field name="model">hr.action.absence</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">care_hr.absence_header_report</field>
+            <field name="report_file">care_hr.absence_header_report</field>
+            <field name="binding_model_id" ref="model_hr_action_absence"/>
+			<field name="binding_type">report</field>
+			<field name="binding_view_types">form</field>
+        </record>
+		<template id="absence_report">
+			<t t-call="web.html_container">
+				<t t-call="web.basic_layout">
+                    <div class="page rtl-row" style="font-family:Arial,Helvetica,sans-serif !important;">
+                        <style>
+                        table.GeneratedTable {
+                            width: 100%;
+                            background-color: #ffffff;
+                            border-collapse: collapse;
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-size: 14px;
+                            color: #000000;
+                        }
+
+                        table.GeneratedTable td, table.GeneratedTable th {
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            padding: 10px;
+                            font-weight: bold;
+                            margin:10px;
+                        }
+
+                        table.GeneratedTable thead {
+                            background-color: #a3a3a3;
+                        }
+                        .bordered-row{
+                            border-bottom:1px solid black;padding-left:10px;padding-right:10px;
+                        }
+                        .rtl-row{
+                            text-align: right !important;direction: rtl !important;
+                        }
+                    </style>
+                        <t t-foreach="docs" t-as="doc">
+                            <div class="row">
+                                <div class="col-4">
+                                    <center>
+                                        <img t-if="doc.barcode" t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('Code128',doc.barcode,180,50)" />
+                                        <div t-esc="doc.barcode"/>
+                                    </center>
+                                </div>
+                                <div class="col-4"></div>
+                                <div class="col-4">
+                                    <center>
+                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:60px;height:60px;"/>
+                                    </center>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-4"><h5>السادة / دائرة الموارد البشرية</h5></div>
+                                <div class="col-4"></div>
+                                <div class="col-4"><h5>المحترمين</h5></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-4"><h5>تحية طيبة و بعد ،،،</h5></div>
+                                <div class="col-4"></div>
+                                <div class="col-4"></div>
+                            </div>
+                            <h4 class="text-center" style="text-decoration: underline;">
+                                <strong>الموضوع : عمل تغيب</strong>
+                            </h4>
+                            <h4>بالإشارة إلى الموضوع أعلاه ، يرجى التكرم بعمل تغيب على الموظف التالي بياناته: </h4>
+                            <br/>
+                            <div class="row">
+                                <div class="col-3"><h5>الاسم:</h5></div>
+                                <div class="col-4"><h5><span t-field="doc.employee_id"/></h5></div>
+                                <div class="col-5"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3"><h5>الرقم الوظيفي: </h5></div>
+                                <div class="col-4"><h5><span t-field="doc.employee_barcode"/></h5></div>
+                                <div class="col-5"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3"><h5>الرقم المدني: </h5></div>
+                                <div class="col-4"><h5><span t-field="doc.civil_code"/></h5></div>
+                                <div class="col-5"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3"><h5>المسمى الوظيفي: </h5></div>
+                                <div class="col-4"><h5><span t-field="doc.job_title"/></h5></div>
+                                <div class="col-4"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3"><h5>الدائرة / المشروع: </h5></div>
+                                <div class="col-4"><h5><span t-field="doc.department_id"/></h5></div>
+                                <div class="col-5"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3"><h5>تاريخ اخر يوم عمل: </h5></div>
+                                <div class="col-4"><h5><span t-field="doc.last_work_date"/></h5></div>
+                                <div class="col-5"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3"><h5>سبب التغيب: </h5></div>
+                                <div class="col-4"><h5><span t-field="doc.absence_reason"/></h5></div>
+                            </div>
+                            <br/>
+                            <h5 class="text-center">و تفضلوا بقبول فائق الاحترام و التقدير ،،،</h5>
+                            <br/>
+                            <br/>
+                            <div class="row">
+                                <div class="col-4"><h5>توقيع المدير المباشر: </h5></div>
+                                <div class="col-4">......................................................</div>
+                                <div class="col-4"></div>
+                            </div>
+                            <br/>
+                            <br/>
+                            <div class="row">
+                                <div class="col-4"><h5>موافقة مدير الإدارة: </h5></div>
+                                <div class="col-4">......................................................</div>
+                                <div class="col-4"></div>
+                            </div>
+                            <br/>
+                            <br/>
+                            <div class="row">
+                                <div class="col-4"><h5>توقيع مدير الموارد البشرية: </h5></div>
+                                <div class="col-4">......................................................</div>
+                                <div class="col-4"></div>
+                            </div>
+                            <br/>
+                            <br/>
+                            <div class="row">
+                                <div class="col-4"><h5>نسخة للرواتب: </h5></div>
+                                <div class="col-4"></div>
+                                <div class="col-4"><h5>نسخة للعلاقات الحكومية</h5></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-4"><h5>توقيع / ............................</h5></div>
+                                <div class="col-4"></div>
+                                <div class="col-4"><h5>توقيع / ............................</h5></div>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </template>
+		<template id="absence_header_report">
+			<t t-call="web.html_container">
+				<t t-call="care_hr.employee_internal_layout">
+                    <div class="page rtl-row" style="font-family:Arial,Helvetica,sans-serif !important;">
+                        <style>
+                        table.GeneratedTable {
+                            width: 100%;
+                            background-color: #ffffff;
+                            border-collapse: collapse;
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-size: 14px;
+                            color: #000000;
+                        }
+
+                        table.GeneratedTable td, table.GeneratedTable th {
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            padding: 10px;
+                            font-weight: bold;
+                            margin:10px;
+                        }
+
+                        table.GeneratedTable thead {
+                            background-color: #a3a3a3;
+                        }
+                        .bordered-row{
+                            border-bottom:1px solid black;padding-left:10px;padding-right:10px;
+                        }
+                        .rtl-row{
+                            text-align: right !important;direction: rtl !important;
+                        }
+                    </style>
+                        <t t-foreach="docs" t-as="doc">
+                            <div class="row">
+                                <div class="col-4">
+                                    <center>
+                                        <img t-if="doc.barcode" t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('Code128',doc.barcode,180,50)" />
+                                        <div t-esc="doc.barcode"/>
+                                    </center>
+                                </div>
+                                <div class="col-4"></div>
+                                <div class="col-4">
+                                    <center>
+                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:60px;height:60px;"/>
+                                    </center>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-4"><h5>السادة / دائرة الموارد البشرية</h5></div>
+                                <div class="col-4"></div>
+                                <div class="col-4"><h5>المحترمين</h5></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-4"><h5>تحية طيبة و بعد ،،،</h5></div>
+                                <div class="col-4"></div>
+                                <div class="col-4"></div>
+                            </div>
+                            <h4 class="text-center" style="text-decoration: underline;">
+                                <strong>الموضوع : عمل تغيب</strong>
+                            </h4>
+                            <h4>بالإشارة إلى الموضوع أعلاه ، يرجى التكرم بعمل تغيب على الموظف التالي بياناته: </h4>
+                            <br/>
+                            <div class="row">
+                                <div class="col-3"><h5>الاسم:</h5></div>
+                                <div class="col-4"><h5><span t-field="doc.employee_id"/></h5></div>
+                                <div class="col-5"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3"><h5>الرقم الوظيفي: </h5></div>
+                                <div class="col-4"><h5><span t-field="doc.employee_barcode"/></h5></div>
+                                <div class="col-5"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3"><h5>الرقم المدني: </h5></div>
+                                <div class="col-4"><h5><span t-field="doc.civil_code"/></h5></div>
+                                <div class="col-5"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3"><h5>المسمى الوظيفي: </h5></div>
+                                <div class="col-4"><h5><span t-field="doc.job_title"/></h5></div>
+                                <div class="col-4"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3"><h5>الدائرة / المشروع: </h5></div>
+                                <div class="col-4"><h5><span t-field="doc.department_id"/></h5></div>
+                                <div class="col-5"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3"><h5>تاريخ اخر يوم عمل: </h5></div>
+                                <div class="col-4"><h5><span t-field="doc.last_work_date"/></h5></div>
+                                <div class="col-5"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3"><h5>سبب التغيب: </h5></div>
+                                <div class="col-4"><h5><span t-field="doc.absence_reason"/></h5></div>
+                            </div>
+                            <br/>
+                            <h5 class="text-center">و تفضلوا بقبول فائق الاحترام و التقدير ،،،</h5>
+                            <br/>
+                            <br/>
+                            <div class="row">
+                                <div class="col-4"><h5>توقيع المدير المباشر: </h5></div>
+                                <div class="col-4">......................................................</div>
+                                <div class="col-4"></div>
+                            </div>
+                            <br/>
+                            <br/>
+                            <div class="row">
+                                <div class="col-4"><h5>موافقة مدير الإدارة: </h5></div>
+                                <div class="col-4">......................................................</div>
+                                <div class="col-4"></div>
+                            </div>
+                            <br/>
+                            <br/>
+                            <div class="row">
+                                <div class="col-4"><h5>توقيع مدير الموارد البشرية: </h5></div>
+                                <div class="col-4">......................................................</div>
+                                <div class="col-4"></div>
+                            </div>
+                            <br/>
+                            <br/>
+                            <div class="row">
+                                <div class="col-4"><h5>نسخة للرواتب: </h5></div>
+                                <div class="col-4"></div>
+                                <div class="col-4"><h5>نسخة للعلاقات الحكومية</h5></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-4"><h5>توقيع / ............................</h5></div>
+                                <div class="col-4"></div>
+                                <div class="col-4"><h5>توقيع / ............................</h5></div>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>
