@@ -35,7 +35,5 @@
         'views/hr_department.xml',
         'wizards/request_refuse_reason.xml',
         'reports/shift_report.xml',
-        'reports/joining_report.xml',
-        'reports/leave_request_report.xml',
     ],
 }
