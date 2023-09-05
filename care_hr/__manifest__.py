@@ -33,5 +33,6 @@
         'reports/clearance_report.xml',
         'reports/absence_report.xml',
         'reports/leave_return_report.xml',
+        'reports/leave_request_report.xml',
     ],
 }
