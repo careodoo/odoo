@@ -5,8 +5,8 @@
             <field name="name">Leave Request Report</field>
             <field name="model">hr.leave</field>
             <field name="report_type">qweb-pdf</field>
-            <field name="report_name">hr_employee_shift.leave_request_report</field>
-            <field name="report_file">hr_employee_shift.leave_request_report</field>
+            <field name="report_name">care_hr.leave_request_report</field>
+            <field name="report_file">care_hr.leave_request_report</field>
             <field name="binding_model_id" ref="hr_holidays.model_hr_leave"/>
 			<field name="binding_type">report</field>
 			<field name="binding_view_types">form</field>
@@ -48,7 +48,7 @@
                         <t t-foreach="docs" t-as="doc">
                             <div class="header">
                                 <center>
-                                    <img src="/hr_employee_shift/static/src/img/logo.jpeg" atl="header.jpeg" style="width: 100px; height: 100px;"/>
+                                    <img src="/care_hr/static/src/img/logo.jpeg" atl="header.jpeg" style="width: 100px; height: 100px;"/>
                                 </center>
                             </div>
                             <h5 class="text-center">
