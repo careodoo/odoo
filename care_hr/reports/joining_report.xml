@@ -86,7 +86,7 @@
                                 </div>
                                 <div class="col-4">
                                     <center>
-                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:60px;height:60px;"/>
+                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:100px;height:60px;"/>
                                     </center>
                                 </div>
                             </div>
@@ -107,10 +107,10 @@
                                     </tr>
                                     <tr>
                                         <td><h5>تاريخ مباشرة العمل : <span t-field="doc.join_date"/> </h5></td>
-                                        <td><h5>مكان العمل : <span t-field="doc.work_location"/> </h5></td>
+                                        <td><h5>مكان العمل : <span t-field="doc.department_id"/> </h5></td>
                                     </tr>
                                     <tr>
-                                        <td colspan="2"><h5>رقم الموظف : <span t-field="doc.barcode"/> </h5></td>
+                                        <td colspan="2"><h5>رقم الموظف : <span t-field="doc.employee_barcode"/> </h5></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -193,10 +193,10 @@
                             </p>
                             <div style="border:1px solid black;padding-left:10px;padding-right:10px;">
                                 <h5 class="rtl-row">
-                                     □ المذكور باشر في التاريخ المحدد ويدرج اسمه بكشوفات الرواتب اعتبارا من: __/__/_______
+                                     □ المذكور باشر في التاريخ المحدد ويدرج اسمه بكشوفات الرواتب اعتبارا من: <span t-field="doc.join_date"/>
                                 </h5>
                                 <h5 class="rtl-row">
-                                     □ المذكور باشر العمل متأخراً ___________ يوم ويدرج اسمه بكشوفات الرواتب اعتبارا من: __/__/_______
+                                     □ المذكور باشر العمل متأخراً <span t-field="doc.delay"/> يوم ويدرج اسمه بكشوفات الرواتب اعتبارا من: <span t-field="doc.salary_date"/>
                                 </h5>
                                 <!--1-->
                                 <div class="row">
@@ -316,7 +316,7 @@
                                 </div>
                                 <div class="col-4">
                                     <center>
-                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:60px;height:60px;"/>
+                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:100px;height:60px;"/>
                                     </center>
                                 </div>
                             </div>
@@ -337,10 +337,10 @@
                                     </tr>
                                     <tr>
                                         <td><h5>تاريخ مباشرة العمل : <span t-field="doc.join_date"/> </h5></td>
-                                        <td><h5>مكان العمل : <span t-field="doc.work_location"/> </h5></td>
+                                        <td><h5>مكان العمل : <span t-field="doc.department_id"/> </h5></td>
                                     </tr>
                                     <tr>
-                                        <td colspan="2"><h5>رقم الموظف : <span t-field="doc.barcode"/> </h5></td>
+                                        <td colspan="2"><h5>رقم الموظف : <span t-field="doc.employee_barcode"/> </h5></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -423,10 +423,10 @@
                             </p>
                             <div style="border:1px solid black;padding-left:10px;padding-right:10px;">
                                 <h5 class="rtl-row">
-                                     □ المذكور باشر في التاريخ المحدد ويدرج اسمه بكشوفات الرواتب اعتبارا من: __/__/_______
+                                     □ المذكور باشر في التاريخ المحدد ويدرج اسمه بكشوفات الرواتب اعتبارا من: <span t-field="doc.join_date"/>
                                 </h5>
                                 <h5 class="rtl-row">
-                                     □ المذكور باشر العمل متأخراً ___________ يوم ويدرج اسمه بكشوفات الرواتب اعتبارا من: __/__/_______
+                                     □ المذكور باشر العمل متأخراً <span t-field="doc.delay"/> يوم ويدرج اسمه بكشوفات الرواتب اعتبارا من: <span t-field="doc.salary_date"/>
                                 </h5>
                                 <!--1-->
                                 <div class="row">

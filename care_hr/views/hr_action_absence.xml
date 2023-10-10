@@ -13,6 +13,7 @@
                     </header>
                     <sheet>
                         <field name="qr_image" widget="image" class="oe_avatar"/>
+                        <field name="image_1920" widget="image" class="oe_avatar" style="margin-right:20px;"/>
                         <div class="oe_title">
                             <label for="employee_id" name="model_name_label"/>
                             <h1>

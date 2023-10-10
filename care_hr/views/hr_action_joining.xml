@@ -13,6 +13,7 @@
                     </header>
                     <sheet>
                         <field name="qr_image" widget="image" class="oe_avatar"/>
+                        <field name="image_1920" widget="image" class="oe_avatar" style="margin-right:20px;"/>
                         <div class="oe_title">
                             <label for="employee_id" name="model_name_label"/>
                             <h1>
@@ -24,7 +25,9 @@
                             <field name="job_title"/>
                             <field name="employee_barcode"/>
                             <field name="join_date"/>
-                            <field name="work_location"/>
+                            <field name="department_id"/>
+                            <field name="delay"/>
+                            <field name="salary_date"/>
                         </group>
                     </sheet>
                     <div class="oe_chatter">
@@ -44,7 +47,7 @@
                     <field name="job_title"/>
                     <field name="barcode"/>
                     <field name="join_date"/>
-                    <field name="work_location"/>
+                    <field name="department_id"/>
                     <field name="state" widget="badge"
                         decoration-muted="state == 'draft'"
                         decoration-warning="state == 'submit'"

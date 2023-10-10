@@ -10,25 +10,59 @@ class HrActionLeaveReturn(models.Model):
     _description = 'Hr Action Leave Return'
     _rec_name = 'employee_id'
 
+    def generate_barcode(self):
+        return str(int(datetime.now().timestamp()))
+
     employee_id = fields.Many2one('hr.employee', required=True)
+    image_1920 = fields.Image(related='employee_id.image_1920', store=True)
+    barcode = fields.Char(default=generate_barcode)
     job_title = fields.Char(related='employee_id.job_title', store=True)
     employee_barcode = fields.Char(related='employee_id.barcode', store=True)
     department_id = fields.Many2one('hr.department', related='employee_id.department_id', store=True)
-    last_leave_from = fields.Date()
-    last_leave_to = fields.Date()
-    leave_return_date = fields.Date()
+    last_leave_from = fields.Date(compute='compute_last_leave_dates', store=True)
+    last_leave_to = fields.Date(compute='compute_last_leave_dates', store=True)
+    leave_return_date = fields.Date(compute='compute_last_leave_dates', store=True)
     start_work_date = fields.Date()
-    leave_request_days = fields.Integer()
-    actual_leave_days = fields.Integer()
-    late_days = fields.Integer()
+    leave_request_days = fields.Integer(compute='compute_last_leave_dates', store=True)
+    actual_leave_days = fields.Integer(compute='compute_actual_leave_days', store=True)
+    late_days = fields.Integer(compute='compute_late_days', store=True)
     late_fees = fields.Float()
     notes = fields.Text()
     state = fields.Selection(selection=[
         ('draft', 'Draft'), ('submit', 'Submitted'), ('approved', 'Approved'),
     ], default='draft')
-    barcode = fields.Char()
     qr_image = fields.Binary("QR Code", compute='_generate_qr_code')
     qr_url = fields.Char("QR Code", compute='_generate_qr_code')
+
+    @api.depends('employee_id')
+    def compute_last_leave_dates(self):
+        for rec in self:
+            rec.last_leave_from = False
+            rec.last_leave_to = False
+            rec.leave_request_days = False
+            if rec.employee_id:
+                all_leaves = self.env['hr.leave'].search([('employee_id', '=', rec.employee_id.id)]).sorted(lambda x: x.request_date_from, reverse=True)
+                if all_leaves:
+                    rec.last_leave_from = all_leaves[0].request_date_from
+                    rec.last_leave_to = all_leaves[0].request_date_to
+                    rec.leave_return_date = all_leaves[0].request_date_to
+                    rec.leave_request_days = all_leaves[0].number_of_days
+
+    @api.depends('start_work_date', 'last_leave_from')
+    def compute_actual_leave_days(self):
+        for rec in self:
+            rec.actual_leave_days = 0
+            if rec.last_leave_from and rec.start_work_date:
+                if rec.last_leave_from < rec.start_work_date:
+                    rec.actual_leave_days = (rec.start_work_date - rec.last_leave_from).days
+
+    @api.depends('leave_return_date', 'start_work_date')
+    def compute_late_days(self):
+        for rec in self:
+            rec.late_days = 0
+            if rec.leave_return_date and rec.start_work_date:
+                if rec.leave_return_date < rec.start_work_date:
+                    rec.late_days = (rec.start_work_date - rec.leave_return_date).days
 
     def button_submit(self):
         self.state = 'submit'

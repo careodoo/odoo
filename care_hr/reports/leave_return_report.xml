@@ -2,7 +2,7 @@
 <odoo>
     <data>
         <record model="ir.actions.report" id="action_leave_return_report">
-            <field name="name">عودة من الاجازة</field>
+            <field name="name">Leave Return</field>
             <field name="model">hr.action.leave.return</field>
             <field name="report_type">qweb-pdf</field>
             <field name="report_name">care_hr.leave_return_report</field>
@@ -12,7 +12,7 @@
 			<field name="binding_view_types">form</field>
         </record>
         <record model="ir.actions.report" id="action_leave_return_header_report">
-            <field name="name">عودة من الاجازة header</field>
+            <field name="name">Leave Return with Header</field>
             <field name="model">hr.action.leave.return</field>
             <field name="report_type">qweb-pdf</field>
             <field name="report_name">care_hr.leave_return_header_report</field>
@@ -65,13 +65,15 @@
                                     </center>
                                 </div>
                                 <div class="col-4">
-                                    <span class="text-center">
-                                        <strong style="background-color: #d9d9d9;font-weight: bold;">نموذج مباشرة عمل</strong>
-                                    </span>
+                                    <center>
+                                        <span class="text-center">
+                                            <strong style="background-color: #d9d9d9;font-weight: bold;">نموذج مباشرة عمل</strong>
+                                        </span>
+                                    </center>
                                 </div>
                                 <div class="col-4">
                                     <center>
-                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:60px;height:60px;"/>
+                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:100px;height:60px;"/>
                                     </center>
                                 </div>
                             </div>
@@ -101,7 +103,7 @@
                                         <td><h5>الإدارة</h5></td>
                                         <td><span t-field="doc.department_id"/></td>
                                         <td><h5>القسم / المشروع</h5></td>
-                                        <td><h5></h5></td>
+                                        <td><span t-field="doc.department_id"/></td>
                                     </tr>
                                     <tr>
                                         <td colspan="4" class="text-center"><h5>بيانات اخر اجازة</h5></td>
@@ -214,13 +216,15 @@
                                     </center>
                                 </div>
                                 <div class="col-4">
-                                    <span class="text-center">
-                                        <strong style="background-color: #d9d9d9;font-weight: bold;">نموذج مباشرة عمل</strong>
-                                    </span>
+                                    <center>
+                                        <span class="text-center">
+                                            <strong style="background-color: #d9d9d9;font-weight: bold;">نموذج مباشرة عمل</strong>
+                                        </span>
+                                    </center>
                                 </div>
                                 <div class="col-4">
                                     <center>
-                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:60px;height:60px;"/>
+                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:100px;height:60px;"/>
                                     </center>
                                 </div>
                             </div>
@@ -250,7 +254,7 @@
                                         <td><h5>الإدارة</h5></td>
                                         <td><span t-field="doc.department_id"/></td>
                                         <td><h5>القسم / المشروع</h5></td>
-                                        <td><h5></h5></td>
+                                        <td><span t-field="doc.department_id"/></td>
                                     </tr>
                                     <tr>
                                         <td colspan="4" class="text-center"><h5>بيانات اخر اجازة</h5></td>

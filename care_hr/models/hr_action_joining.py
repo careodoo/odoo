@@ -10,14 +10,20 @@ class HrActionJoining(models.Model):
     _description = 'Hr Action Joining'
     _rec_name = 'employee_id'
 
+    def generate_barcode(self):
+        return str(int(datetime.now().timestamp()))
+
     employee_id = fields.Many2one('hr.employee', required=True)
-    barcode = fields.Char()
+    image_1920 = fields.Image(related='employee_id.image_1920', store=True)
+    barcode = fields.Char(default=generate_barcode)
     qr_image = fields.Binary("QR Code", compute='_generate_qr_code')
     qr_url = fields.Char("QR Code", compute='_generate_qr_code')
     job_title = fields.Char(related='employee_id.job_title', store=True)
     employee_barcode = fields.Char(related='employee_id.barcode', store=True)
     join_date = fields.Date(required=True)
-    work_location = fields.Char()
+    delay = fields.Integer()
+    salary_date = fields.Date()
+    department_id = fields.Many2one('hr.department', related='employee_id.department_id')
     state = fields.Selection(selection=[
         ('draft', 'Draft'), ('submit', 'Submitted'), ('approved', 'Approved'),
     ], default='draft')

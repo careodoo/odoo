@@ -67,12 +67,12 @@
                                 <div class="col-4"></div>
                                 <div class="col-4">
                                     <center>
-                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:60px;height:60px;"/>
+                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:100px;height:60px;"/>
                                     </center>
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-4"><h5>السادة / دائرة الموارد البشرية</h5></div>
+                                <div class="col-4"><h5>السادة / إدارة الموارد البشرية</h5></div>
                                 <div class="col-4"></div>
                                 <div class="col-4"><h5>المحترمين</h5></div>
                             </div>
@@ -148,7 +148,7 @@
                             <div class="row">
                                 <div class="col-4"><h5>نسخة للرواتب: </h5></div>
                                 <div class="col-4"></div>
-                                <div class="col-4"><h5>نسخة للعلاقات الحكومية</h5></div>
+                                <div class="col-4"><h5>نسخة لإدارة العمليات</h5></div>
                             </div>
                             <div class="row">
                                 <div class="col-4"><h5>توقيع / ............................</h5></div>
@@ -206,12 +206,12 @@
                                 <div class="col-4"></div>
                                 <div class="col-4">
                                     <center>
-                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:60px;height:60px;"/>
+                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:100px;height:60px;"/>
                                     </center>
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-4"><h5>السادة / دائرة الموارد البشرية</h5></div>
+                                <div class="col-4"><h5>السادة / إدارة الموارد البشرية</h5></div>
                                 <div class="col-4"></div>
                                 <div class="col-4"><h5>المحترمين</h5></div>
                             </div>
@@ -287,7 +287,7 @@
                             <div class="row">
                                 <div class="col-4"><h5>نسخة للرواتب: </h5></div>
                                 <div class="col-4"></div>
-                                <div class="col-4"><h5>نسخة للعلاقات الحكومية</h5></div>
+                                <div class="col-4"><h5>نسخة لإدارة العمليات</h5></div>
                             </div>
                             <div class="row">
                                 <div class="col-4"><h5>توقيع / ............................</h5></div>

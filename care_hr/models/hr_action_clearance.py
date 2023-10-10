@@ -22,8 +22,13 @@ class HrActionClearance(models.Model):
             (0, 0, {'sequence': 8, 'name': 'Insurance Card if any'}),
         ]
 
+    def generate_barcode(self):
+        return str(int(datetime.now().timestamp()))
+
     employee_id = fields.Many2one('hr.employee', required=True)
-    barcode = fields.Char()
+    department_id = fields.Many2one('hr.department', related='employee_id.department_id', store=True)
+    image_1920 = fields.Image(related='employee_id.image_1920', store=True)
+    barcode = fields.Char(default=generate_barcode)
     qr_image = fields.Binary("QR Code", compute='_generate_qr_code')
     qr_url = fields.Char("QR Code", compute='_generate_qr_code')
     employee_barcode = fields.Char(related='employee_id.barcode', store=True)
