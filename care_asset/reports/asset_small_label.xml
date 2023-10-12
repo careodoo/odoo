@@ -1,0 +1,44 @@
+<odoo>
+    <template id="report_asset_small_label">
+        <t t-foreach="docs" t-as="o">
+            <div class="page">
+                <t t-call="web.html_container">
+                    <center>
+                        <div t-out="o.barcode" t-options="{'widget': 'barcode', 'symbology': 'auto', 'img_style': 'width:70mm;height:14mm'}"/>
+                        <span t-out="o.display_name" style="font-size:10px;font-family: arial, sans-serif;"/> /
+                        <span t-out="o.barcode" style="font-size:10px"/> /
+                        <span style="font-size:10px;font-family: arial, sans-serif;">CARE</span>
+                    </center>
+                </t>
+            </div>
+        </t>
+    </template>
+
+     <record id="small_label_report_paperformat_id" model="report.paperformat">
+        <field name="name">Small Label Paperformat</field>
+        <field name="default" eval="True"/>
+        <field name="format">custom</field>
+         <field name="page_height">20</field>
+        <field name="page_width">62</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">3</field>
+        <field name="margin_bottom">0</field>
+        <field name="margin_left">3</field>
+        <field name="margin_right">3</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="asset_small_label_report" model="ir.actions.report">
+        <field name="name">Asset Small Label</field>
+        <field name="model">account.asset</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_asset.report_asset_small_label</field>
+        <field name="report_file">care_asset.report_asset_small_label</field>
+        <field name="paperformat_id" ref="care_asset.small_label_report_paperformat_id"/>
+        <field name="binding_model_id" ref="account_asset.model_account_asset"/>
+        <field name="binding_type">report</field>
+    </record>
+
+</odoo>

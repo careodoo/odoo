@@ -34,6 +34,7 @@
         'reports/asset_list.xml',
         'reports/asset_list_xlsx.xml',
         'reports/asset_label.xml',
+        'reports/asset_small_label.xml',
         'wizards/account_asset_report.xml',
     ],
 }
