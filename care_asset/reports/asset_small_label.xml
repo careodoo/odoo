@@ -1,16 +1,18 @@
 <odoo>
     <template id="report_asset_small_label">
         <t t-foreach="docs" t-as="o">
-            <div class="page">
-                <t t-call="web.html_container">
-                    <center>
-                        <div t-out="o.barcode" t-options="{'widget': 'barcode', 'symbology': 'auto', 'img_style': 'width:70mm;height:14mm'}"/>
-                        <span t-out="o.display_name" style="font-size:10px;font-family: arial, sans-serif;"/> /
-                        <span t-out="o.barcode" style="font-size:10px"/> /
-                        <span style="font-size:10px;font-family: arial, sans-serif;">CARE</span>
-                    </center>
-                </t>
-            </div>
+            <t t-call="web.basic_layout">
+                <div class="page">
+                    <t t-call="web.html_container">
+                        <center>
+                            <div t-out="o.barcode" t-options="{'widget': 'barcode', 'symbology': 'auto', 'img_style': 'width:70mm;height:14mm'}"/>
+                            <span t-field="o.display_name" style="font-size:10px;font-family: arial, sans-serif;"/> /
+                            <span t-out="o.barcode" style="font-size:10px"/> /
+                            <span style="font-size:10px;font-family: arial, sans-serif;">CARE</span>
+                        </center>
+                    </t>
+                </div>
+            </t>
         </t>
     </template>
 
