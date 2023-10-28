@@ -56,14 +56,31 @@ class SmsTemplate(models.Model):
     auto_delete = fields.Boolean("Auto Delete")
     globally_access = fields.Boolean(
         string="Global", help="if enable then it will consider normal(global) template.You can use it while sending the bulk message. If not enable the you have to select condition on which the template applies.")
+    model_id = fields.Many2one(
+        'ir.model', 'Applies to', compute="onchange_condition", help="The kind of document with this template can be used. Note if not selected then it will consider normal(global) template.", store=True)
     condition = fields.Selection([('order_placed', 'Order Placed'),
                                   ('order_confirm', 'Order Confirmed'),
                                   ('order_delivered', 'Order Delivered'),
                                   ('invoice_vaildate', 'Invoice Validate'),
                                   ('invoice_paid', 'Invoice Paid'),
-                                  ('order_cancel', 'Order Cancelled')], string="Conditions", help="Condition on which the template has been applied.")
-    model_id = fields.Many2one(
-        'ir.model', 'Applies to', compute="onchange_condition", help="The kind of document with this template can be used. Note if not selected then it will consider normal(global) template.", store=True)
+                                  ('order_cancel', 'Order Cancelled'),
+                                  ('sale_mail', 'Sales Mail'),
+                                  ('purchase_mail', 'Purchase Mail'),
+                                  ('rfq_mail', 'RFQ Mail'),
+                                  ('sale_invoice_mail', 'Sales Invoice Mail'),
+                                  ('crm', 'CRM'),
+                                  ('tender_create', 'Create Tender'),
+                                  ('tender_cancel', 'Create Cancel'),
+                                  ('tender_postponed', 'Create Postponed'),
+                                  ('time_off', 'Time Off'),
+                                  ('project', 'Project'),
+                                  ('project_cron', 'Project Remainder'),
+                                  ('job_submit', 'Recruitment Submit'),
+                                  ('job_meet', 'Recruitment Appointment'),
+                                  ('job_meet2', 'Recruitment Second Interview'),
+                                  ('employee_birthday', 'Employee Birthday'),
+                                  ('fleet', 'Fleet Contract'),
+                                  ], string="Conditions", help="Condition on which the template has been applied.")
     model = fields.Char(related="model_id.model", string='Related Document Model',
                         store=True, readonly=True)
     sms_body_html = fields.Text('Body', translate=True, sanitize=False,
@@ -91,11 +108,52 @@ class SmsTemplate(models.Model):
     def onchange_condition(self):
         for obj in self:
             if obj.condition:
-                if obj.condition in ['order_placed', 'order_confirm', 'order_cancel']:
+                if obj.condition in ['order_placed', 'order_confirm', 'order_cancel', 'sale_invoice_mail']:
                     model_id = self.env['ir.model'].search(
                         [('model', '=', 'sale.order')])
                     obj.model_id = model_id.id if model_id else False
                     obj.lang = '${object.partner_id.lang}'
+                elif obj.condition in ['rfq_mail', 'purchase_mail']:
+                    model_id = self.env['ir.model'].search(
+                        [('model', '=', 'purchase.order')])
+                    obj.model_id = model_id.id if model_id else False
+                    obj.lang = '${object.partner_id.lang}'
+                elif obj.condition in ['crm']:
+                    model_id = self.env['ir.model'].search(
+                        [('model', '=', 'crm.lead')])
+                    obj.model_id = model_id.id if model_id else False
+                    obj.lang = '${object.partner_id.lang}'
+                elif obj.condition in ['tender_create', 'tender_cancel', 'tender_postponed']:
+                    model_id = self.env['ir.model'].search(
+                        [('model', '=', 'purchase.tender')])
+                    obj.model_id = model_id.id if model_id else False
+                    obj.lang = '${object.partner_id.lang}'
+                elif obj.condition in ['time_off']:
+                    model_id = self.env['ir.model'].search(
+                        [('model', '=', 'hr.leave')])
+                    obj.model_id = model_id.id if model_id else False
+                    obj.lang = '${object.partner_id.lang}'
+                elif obj.condition in ['project', 'project_cron']:
+                    model_id = self.env['ir.model'].search(
+                        [('model', '=', 'project.task')])
+                    obj.model_id = model_id.id if model_id else False
+                    obj.lang = '${object.partner_id.lang}'
+                elif obj.condition in ['employee_birthday']:
+                    model_id = self.env['ir.model'].search(
+                        [('model', '=', 'hr.employee')])
+                    obj.model_id = model_id.id if model_id else False
+                    obj.lang = '${object.partner_id.lang}'
+                elif obj.condition in ['fleet']:
+                    model_id = self.env['ir.model'].search(
+                        [('model', '=', 'fleet.vehicle.log.contract')])
+                    obj.model_id = model_id.id if model_id else False
+                    obj.lang = '${object.partner_id.lang}'
+                elif obj.condition in ['job_meet', 'job_meet2', 'job_submit']:
+                    model_id = self.env['ir.model'].search(
+                        [('model', '=', 'hr.applicant')])
+                    obj.model_id = model_id.id if model_id else False
+                    obj.lang = '${object.partner_id.lang}'
+
                 elif obj.condition in ['order_delivered']:
                     model_id = self.env['ir.model'].search(
                         [('model', '=', 'stock.picking')])
@@ -172,6 +230,50 @@ class SmsTemplate(models.Model):
                 'group_type': 'individual',
                 'auto_delete': sms_tmpl.auto_delete,
                 'msg': sms_tmpl.with_context(ctx).get_body_data(obj, obj.partner_id) if obj else sms_tmpl.sms_body_html,
+                'template_id': False
+            })
+            return sms_sms_obj.send_sms_via_gateway(
+                sms_sms_obj.msg, [sms_sms_obj.to], from_mob=None, sms_gateway=gateway_id)
+        return False
+
+    @api.model
+    def send_task_sms_using_template(self, mob_no, sms_tmpl, sms_gateway=None, obj=None, partner=None):
+        if not sms_gateway:
+            gateway_id = self.env["sms.mail.server"].search(
+                [], order='sequence asc', limit=1)
+        else:
+            gateway_id = sms_gateway
+        if mob_no and sms_tmpl:
+            ctx = dict(self._context or {})
+            sms_sms_obj = self.env["wk.sms.sms"].create({
+                'sms_gateway_config_id': gateway_id.id,
+                'partner_id': partner.id if partner else False,
+                'to': mob_no,
+                'group_type': 'individual',
+                'auto_delete': sms_tmpl.auto_delete,
+                'msg': sms_tmpl.with_context(ctx).get_body_data(obj, partner) if obj and partner else sms_tmpl.sms_body_html,
+                'template_id': False
+            })
+            return sms_sms_obj.send_sms_via_gateway(
+                sms_sms_obj.msg, [sms_sms_obj.to], from_mob=None, sms_gateway=gateway_id)
+        return False
+
+    @api.model
+    def send_birthday_sms_using_template(self, mob_no, sms_tmpl, sms_gateway=None, obj=None):
+        if not sms_gateway:
+            gateway_id = self.env["sms.mail.server"].search(
+                [], order='sequence asc', limit=1)
+        else:
+            gateway_id = sms_gateway
+        if mob_no and sms_tmpl:
+            ctx = dict(self._context or {})
+            sms_sms_obj = self.env["wk.sms.sms"].create({
+                'sms_gateway_config_id': gateway_id.id,
+                'partner_id': False,
+                'to': mob_no,
+                'group_type': 'individual',
+                'auto_delete': sms_tmpl.auto_delete,
+                'msg': sms_tmpl.with_context(ctx).get_body_data(obj) if obj else sms_tmpl.sms_body_html,
                 'template_id': False
             })
             return sms_sms_obj.send_sms_via_gateway(

@@ -16,7 +16,3 @@
 
 from . import models
 from . import wizard
-
-
-def pre_init_check(cr):
-    return True

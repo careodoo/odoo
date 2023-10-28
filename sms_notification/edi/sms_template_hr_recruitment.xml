@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="sms_template_applicant_form" model="wk.sms.template">
+            <field name="name">SMS applicant form</field>
+            <field name="condition">job_submit</field>
+            <field name="auto_delete" eval="True"/>
+            <field name="sms_body_html"><![CDATA[
+              Dear {{object.partner_name}},
+              Thank you for submitting your application, we will contact you soon.
+            ]]>
+            </field>
+        </record>
+        <record id="sms_template_applicant_meet1" model="wk.sms.template">
+            <field name="name">SMS applicant form</field>
+            <field name="condition">job_meet</field>
+            <field name="auto_delete" eval="True"/>
+            <field name="sms_body_html"><![CDATA[
+              Dear {{object.partner_name}},
+              We would like to invite you to attend interview for the {{ object.job_id.name }} on {{ object.next_meeting_date }} at {{ object.company_id.partner_id.contact_address_complete }}.
+            ]]>
+            </field>
+        </record>
+        <record id="sms_template_applicant_meet2" model="wk.sms.template">
+            <field name="name">SMS applicant form second interview</field>
+            <field name="condition">job_meet2</field>
+            <field name="auto_delete" eval="True"/>
+            <field name="sms_body_html"><![CDATA[
+              Dear {{object.partner_name}},
+              Congratulation you are go forward for next interview step of position {{ object.job_id.name }}.
+            ]]>
+            </field>
+        </record>
+    </data>
+</odoo>

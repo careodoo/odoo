@@ -14,3 +14,11 @@ from . import res_config
 from . import sms_group
 from . import sms_report
 from . import messaging
+from . import res_partner
+from . import hr_employee
+from . import crm
+from . import purchase_tender
+from . import hr_leave
+from . import project
+from . import fleet
+from . import hr_recruitment
