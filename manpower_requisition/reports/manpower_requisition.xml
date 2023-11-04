@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="internal_layout">
+            <t t-if="not o" t-set="o" t-value="doc"/>
+                <div class="header">
+                    <img src="/manpower_requisition/static/src/img/header.png" atl="header.png" class="w-100"/>
+                </div>
+            <div class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
+              <t t-raw="0"/>
+            </div>
+            <div t-attf-class="footer o_standard_footer">
+                <div class="row">
+                    <img src="/manpower_requisition/static/src/img/footer.png" atl="header.png" class="w-100"/>
+                </div>
+            </div>
+        </template>
+        <record model="ir.actions.report" id="action_manpower_requisition_header_report">
+            <field name="name">Manpower Requisition with Header</field>
+            <field name="model">manpower.requisition</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">manpower_requisition.manpower_requisition_header_report</field>
+            <field name="report_file">manpower_requisition.manpower_requisition_header_report</field>
+            <field name="binding_model_id" ref="model_manpower_requisition"/>
+			<field name="binding_type">report</field>
+			<field name="binding_view_types">form</field>
+        </record>
+        <record model="ir.actions.report" id="action_manpower_requisition_report">
+            <field name="name">Manpower Requisition</field>
+            <field name="model">manpower.requisition</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">manpower_requisition.manpower_requisition_report</field>
+            <field name="report_file">manpower_requisition.manpower_requisition_report</field>
+            <field name="binding_model_id" ref="model_manpower_requisition"/>
+			<field name="binding_type">report</field>
+			<field name="binding_view_types">form</field>
+        </record>
+        <template id="manpower_requisition_header_report">
+			<t t-call="web.html_container">
+				<t t-call="manpower_requisition.internal_layout">
+                    <div class="page" style="font-family:Arial,Helvetica,sans-serif !important;">
+                        <style>
+                        table.GeneratedTable {
+                            width: 100%;
+                            background-color: #ffffff;
+                            border-collapse: collapse;
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-size: 12px;
+                            color: #000000;
+                        }
+
+                        table.GeneratedTable td, table.GeneratedTable th {
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            padding: 3px;
+                            font-weight: bold;
+                            margin:3px;
+                        }
+
+                        table.GeneratedTable thead {
+                            background-color: #a3a3a3;
+                        }
+                        .bordered-row{
+                            border-bottom:1px solid black;padding-left:10px;padding-right:10px;
+                        }
+                        .rtl-row{
+                            text-align: right !important;direction: rtl !important;
+                        }
+                    </style>
+                        <t t-foreach="docs" t-as="doc">
+                            <h5 class="text-center">MANPOWER REQUISITION FORM</h5>
+                            <p class="text-center">Turnaround time for Overseas position 75 days and for local positions 40 days</p>
+                            <p class="text-right">
+                                Date of Request: <span t-field="doc.request_date"/>
+                            </p>
+                            <table class="GeneratedTable">
+                                <colgroup>
+                                    <col width='25%'/>
+                                    <col width='50%'/>
+                                    <col width='25%'/>
+                                </colgroup>
+                                <tbody>
+                                    <tr>
+                                        <td><p>Requesting Manager</p>(Name and Designation)</td>
+                                        <td><p class="text-center"><span t-field="doc.manager_id"/> </p></td>
+                                        <td><p>Location:  </p></td>
+                                    </tr>
+                                    <tr>
+                                        <td><p>Title of position required</p></td>
+                                        <td><p></p></td>
+                                        <td><p>No of Requirements:</p></td>
+                                    </tr>
+                                    <tr>
+                                        <td><p> Overseas / Local </p></td>
+                                        <td><p class="text-center"><span t-field="doc.type"/> </p></td>
+                                        <td><p></p></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <br/>
+                            <table class="GeneratedTable">
+                                <colgroup>
+                                    <col width='25%'/>
+                                    <col width='25%'/>
+                                    <col width='25%'/>
+                                    <col width='25%'/>
+                                </colgroup>
+                                <tbody>
+                                    <tr>
+                                        <td><p>Resignation/Termination</p></td>
+                                        <td><p>Transfer:  </p></td>
+                                        <td><p>New Project:  </p></td>
+                                        <td><p>Additional Manpower:  </p></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            Employee Leaving:
+                                            <p><span t-field="doc.leaving_employee_id"/></p>
+                                            Resignation submitted on:
+                                            <p><span t-field="doc.resignation_date"/></p>
+                                        </td>
+                                        <td>
+                                            Employee being transferred:
+                                            <p><span t-field="doc.transferred_employee_id"/></p>
+                                            From: <p><span t-field="doc.transfer_from"/></p>
+                                            To: <p><span t-field="doc.transfer_to"/></p>
+                                            Reason: <p><span t-field="doc.transfer_reason"/></p>
+                                        </td>
+                                        <td>
+                                            Project Name:
+                                            <p><span t-field="doc.project_id"/></p>
+                                            Actual headcount:
+                                            <p><span t-field="doc.actual_headcount"/></p>
+                                        </td>
+                                        <td>
+                                            Reason for requirement:
+                                            <p><span t-field="doc.requirement_reason"/></p>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4">
+                                            Nationality/other Job specific requirements :
+                                            <p><span t-field="doc.specific_requirements"/></p>
+                                            <p class="text-center">
+                                                Business Development signature for new projects :
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <br/>
+                            <table class="GeneratedTable">
+                                <colgroup>
+                                    <col width='25%'/>
+                                    <col width='25%'/>
+                                    <col width='25%'/>
+                                    <col width='25%'/>
+                                </colgroup>
+                                <tbody>
+                                    <tr>
+                                        <td><p>Assigned salary for this requirements </p></td>
+                                        <td><p><span t-field="doc.salary"/></p></td>
+                                        <td><p>Working hours:  </p></td>
+                                        <td><p><span t-field="doc.working_hours"/></p></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p>AUTHORISATION</p>
+                            <div class="row">
+                                <div class="col-4">
+                                    Requisitioned by
+                                </div>
+                                <div class="col-4">
+                                    Approved by(operations Manager)
+                                </div>
+                                <div class="col-4">
+                                    Approved by(HR Manager)
+                                </div>
+                            </div>
+                            <br/>
+                            <div class="row">
+                                <div class="col-5">
+                                    Approval for placing with Recruitment Agency
+                                </div>
+                                <div class="col-2">
+                                    <span class="fa fa-2x fa-square-o"/> Yes
+                                </div>
+                                <div class="col-2">
+                                    <span class="fa fa-2x fa-square-o"/> No
+                                </div>
+                                <div class="col-3">
+                                    Signature
+                                </div>
+                            </div>
+                            <br/>
+                            <div class="row">
+                                <div class="col-5">
+                                    Executive Manager approval:
+                                </div>
+                                <div class="col-2">
+                                    <span class="fa fa-2x fa-square-o"/> Yes
+                                </div>
+                                <div class="col-2">
+                                    <span class="fa fa-2x fa-square-o"/> No
+                                </div>
+                                <div class="col-3">
+                                    Signature
+                                </div>
+                            </div>
+                            <br/>
+                            <p>MRF received by: </p>
+                            <p>HR on: </p>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </template>
+        <template id="manpower_requisition_report">
+			<t t-call="web.html_container">
+				<t t-call="web.basic_layout">
+                    <div class="page" style="font-family:Arial,Helvetica,sans-serif !important;">
+                        <style>
+                        table.GeneratedTable {
+                            width: 100%;
+                            background-color: #ffffff;
+                            border-collapse: collapse;
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-size: 12px;
+                            color: #000000;
+                        }
+
+                        table.GeneratedTable td, table.GeneratedTable th {
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            padding: 3px;
+                            font-weight: bold;
+                            margin:3px;
+                        }
+
+                        table.GeneratedTable thead {
+                            background-color: #a3a3a3;
+                        }
+                        .bordered-row{
+                            border-bottom:1px solid black;padding-left:10px;padding-right:10px;
+                        }
+                        .rtl-row{
+                            text-align: right !important;direction: rtl !important;
+                        }
+                    </style>
+                        <t t-foreach="docs" t-as="doc">
+                            <h5 class="text-center">MANPOWER REQUISITION FORM</h5>
+                            <p class="text-center">Turnaround time for Overseas position 75 days and for local positions 40 days</p>
+                            <p class="text-right">
+                                Date of Request: <span t-field="doc.request_date"/>
+                            </p>
+                            <table class="GeneratedTable">
+                                <colgroup>
+                                    <col width='25%'/>
+                                    <col width='50%'/>
+                                    <col width='25%'/>
+                                </colgroup>
+                                <tbody>
+                                    <tr>
+                                        <td><p>Requesting Manager</p>(Name and Designation)</td>
+                                        <td><p class="text-center"><span t-field="doc.manager_id"/> </p></td>
+                                        <td><p>Location:  </p></td>
+                                    </tr>
+                                    <tr>
+                                        <td><p>Title of position required</p></td>
+                                        <td><p></p></td>
+                                        <td><p>No of Requirements:</p></td>
+                                    </tr>
+                                    <tr>
+                                        <td><p> Overseas / Local </p></td>
+                                        <td><p class="text-center"><span t-field="doc.type"/> </p></td>
+                                        <td><p></p></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <br/>
+                            <table class="GeneratedTable">
+                                <colgroup>
+                                    <col width='25%'/>
+                                    <col width='25%'/>
+                                    <col width='25%'/>
+                                    <col width='25%'/>
+                                </colgroup>
+                                <tbody>
+                                    <tr>
+                                        <td><p>Resignation/Termination</p></td>
+                                        <td><p>Transfer:  </p></td>
+                                        <td><p>New Project:  </p></td>
+                                        <td><p>Additional Manpower:  </p></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            Employee Leaving:
+                                            <p><span t-field="doc.leaving_employee_id"/></p>
+                                            Resignation submitted on:
+                                            <p><span t-field="doc.resignation_date"/></p>
+                                        </td>
+                                        <td>
+                                            Employee being transferred:
+                                            <p><span t-field="doc.transferred_employee_id"/></p>
+                                            From: <p><span t-field="doc.transfer_from"/></p>
+                                            To: <p><span t-field="doc.transfer_to"/></p>
+                                            Reason: <p><span t-field="doc.transfer_reason"/></p>
+                                        </td>
+                                        <td>
+                                            Project Name:
+                                            <p><span t-field="doc.project_id"/></p>
+                                            Actual headcount:
+                                            <p><span t-field="doc.actual_headcount"/></p>
+                                        </td>
+                                        <td>
+                                            Reason for requirement:
+                                            <p><span t-field="doc.requirement_reason"/></p>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4">
+                                            Nationality/other Job specific requirements :
+                                            <p><span t-field="doc.specific_requirements"/></p>
+                                            <p class="text-center">
+                                                Business Development signature for new projects :
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <br/>
+                            <table class="GeneratedTable">
+                                <colgroup>
+                                    <col width='25%'/>
+                                    <col width='25%'/>
+                                    <col width='25%'/>
+                                    <col width='25%'/>
+                                </colgroup>
+                                <tbody>
+                                    <tr>
+                                        <td><p>Assigned salary for this requirements </p></td>
+                                        <td><p><span t-field="doc.salary"/></p></td>
+                                        <td><p>Working hours:  </p></td>
+                                        <td><p><span t-field="doc.working_hours"/></p></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p>AUTHORISATION</p>
+                            <div class="row">
+                                <div class="col-4">
+                                    Requisitioned by
+                                </div>
+                                <div class="col-4">
+                                    Approved by(operations Manager)
+                                </div>
+                                <div class="col-4">
+                                    Approved by(HR Manager)
+                                </div>
+                            </div>
+                            <br/>
+                            <div class="row">
+                                <div class="col-5">
+                                    Approval for placing with Recruitment Agency
+                                </div>
+                                <div class="col-2">
+                                    <span class="fa fa-2x fa-square-o"/> Yes
+                                </div>
+                                <div class="col-2">
+                                    <span class="fa fa-2x fa-square-o"/> No
+                                </div>
+                                <div class="col-3">
+                                    Signature
+                                </div>
+                            </div>
+                            <br/>
+                            <div class="row">
+                                <div class="col-5">
+                                    Executive Manager approval:
+                                </div>
+                                <div class="col-2">
+                                    <span class="fa fa-2x fa-square-o"/> Yes
+                                </div>
+                                <div class="col-2">
+                                    <span class="fa fa-2x fa-square-o"/> No
+                                </div>
+                                <div class="col-3">
+                                    Signature
+                                </div>
+                            </div>
+                            <br/>
+                            <p>MRF received by: </p>
+                            <p>HR on: </p>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>
