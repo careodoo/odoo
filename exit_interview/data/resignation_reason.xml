@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="resignation_reason_marriage" model="resignation.reason">
+            <field name="name">Marriage</field>
+        </record>
+        <record id="resignation_reason_maternity" model="resignation.reason">
+            <field name="name">Maternity</field>
+        </record>
+        <record id="resignation_reason_better_opportunity" model="resignation.reason">
+            <field name="name">Better Opportunity</field>
+        </record>
+        <record id="resignation_reason_husbandtransfer" model="resignation.reason">
+            <field name="name">Husband’s Transfer</field>
+        </record>
+        <record id="resignation_reason_relocation" model="resignation.reason">
+            <field name="name">Relocation</field>
+        </record>
+        <record id="resignation_reason_family_problem" model="resignation.reason">
+            <field name="name">Family Problem</field>
+        </record>
+        <record id="resignation_reason_health_problems" model="resignation.reason">
+            <field name="name">Health Problems</field>
+        </record>
+        <record id="resignation_reason_higher_studies" model="resignation.reason">
+            <field name="name">Higher Studies </field>
+        </record>
+        <record id="resignation_reason_starting_new_business" model="resignation.reason">
+            <field name="name">Starting New Business</field>
+        </record>
+    </data>
+</odoo>

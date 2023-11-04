@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_exit_interview,exit_interview,model_exit_interview,base.group_user,1,1,1,1
+access_resignation_reason,resignation_reason,model_resignation_reason,base.group_user,1,1,1,1
+access_organization_rate,organization_rate,model_organization_rate,base.group_user,1,1,1,1
+access_exit_interview_organization_rate,exit_interview_organization_rate,model_exit_interview_organization_rate,base.group_user,1,1,1,1
+access_supervisor_rate,supervisor_rate,model_supervisor_rate,base.group_user,1,1,1,1
+access_exit_interview_supervisor_rate,exit_interview_supervisor_rate,model_exit_interview_supervisor_rate,base.group_user,1,1,1,1
+access_interview_question,interview_question,model_interview_question,base.group_user,1,1,1,1
+access_exit_interview_question,exit_interview_question,model_exit_interview_question,base.group_user,1,1,1,1

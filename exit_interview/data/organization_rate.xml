@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="organization_rate_1" model="organization.rate">
+            <field name="name">Care Working Conditions</field>
+        </record>
+        <record id="organization_rate_2" model="organization.rate">
+            <field name="name">Training opportunities</field>
+        </record>
+        <record id="organization_rate_3" model="organization.rate">
+            <field name="name">Career development opportunities</field>
+        </record>
+        <record id="organization_rate_4" model="organization.rate">
+            <field name="name">Employee morale/Treatment with Employees in Centre</field>
+        </record>
+    </data>
+</odoo>

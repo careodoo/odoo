@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="organization_rate_view_tree" model="ir.ui.view">
+            <field name="name">organization_rate_view_tree</field>
+            <field name="model">organization.rate</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom">
+                    <field name="name"/>
+                </tree>
+            </field>
+        </record>
+        <record id="organization_rate_action" model="ir.actions.act_window">
+            <field name="name">Organization Rate</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">organization.rate</field>
+            <field name="view_mode">tree</field>
+        </record>
+        <menuitem id="organization_rate_menu" name="Organization Rate" parent="exit_interview_config" action="organization_rate_action" sequence="2"/>
+    </data>
+</odoo>

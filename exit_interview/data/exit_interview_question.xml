@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="interview_question_1" model="interview.question">
+            <field name="name">Relationship with your Manager / Supervisor (supportive / feedback etc)</field>
+        </record>
+        <record id="interview_question_2" model="interview.question">
+            <field name="name">Relationship with your colleagues</field>
+        </record>
+        <record id="interview_question_3" model="interview.question">
+            <field name="name">What did you liked most about the job?</field>
+        </record>
+        <record id="interview_question_4" model="interview.question">
+            <field name="name">What you liked least about the job?</field>
+        </record>
+        <record id="interview_question_5" model="interview.question">
+            <field name="name">Suggestions / General Comments</field>
+        </record>
+        <record id="interview_question_6" model="interview.question">
+            <field name="name">Would you like to consider returning to Care for employment?</field>
+            <field name="yes_no" eval="True"/>
+        </record>
+    </data>
+</odoo>

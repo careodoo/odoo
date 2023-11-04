@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="exit_interview_view_tree" model="ir.ui.view">
+            <field name="name">exit_interview_view_tree</field>
+            <field name="model">exit.interview</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="employee_id"/>
+                    <field name="employee_code"/>
+                    <field name="date"/>
+                    <field name="join_date"/>
+                    <field name="current_designation"/>
+                    <field name="supervisor_id"/>
+                    <field name="resignation_date"/>
+                    <field name="last_working_day"/>
+                    <field name="contact_number"/>
+                    <field name="email"/>
+                </tree>
+            </field>
+        </record>
+        <record id="exit_interview_view_form" model="ir.ui.view">
+            <field name="name">exit_interview_view_form</field>
+            <field name="model">exit.interview</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="employee_code"/>
+                            <field name="date"/>
+                            <field name="join_date"/>
+                            <field name="current_designation"/>
+                            <field name="supervisor_id"/>
+                            <field name="resignation_date"/>
+                            <field name="last_working_day"/>
+                            <field name="contact_number"/>
+                            <field name="email"/>
+                        </group>
+                        <notebook>
+                            <page name="reason" string="Reason for Resignation">
+                                <group>
+                                    <field name="reason_ids" widget="many2many_checkboxes"/>
+                                </group>
+                            </page>
+                            <page name="organization" string="Please rate the following aspects of the organization overall.Use the 1 – 5 scale below.">
+                                <field name="organization_rate_ids">
+                                    <tree editable="bottom">
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="name"/>
+                                        <field name="rate" widget="priority"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page name="supervisor" string="Please rate your supervisor on the following factors. Use the 1 – 5 scale below.">
+                                <field name="supervisor_rate_ids">
+                                    <tree editable="bottom">
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="name"/>
+                                        <field name="rate" widget="priority"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page name="questions" string="Kindly Specify in Details:">
+                                <field name="question_ids">
+                                    <tree editable="bottom">
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="name"/>
+                                        <field name="yes_no"/>
+                                        <field name="answer"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="exit_interview_action" model="ir.actions.act_window">
+            <field name="name">Exit Interview</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">exit.interview</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem id="exit_interview_root" name="Exit Interview" sequence="50"/>
+        <menuitem id="exit_interview_menu" name="Exit Interview" parent="exit_interview_root"
+                  action="exit_interview_action" sequence="1"/>
+        <menuitem id="exit_interview_config" name="Configurations"
+                  parent="exit_interview_root" sequence="99"/>
+    </data>
+</odoo>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="supervisor_rate_1" model="supervisor.rate">
+            <field name="name">Gave usable performance feedback</field>
+        </record>
+        <record id="supervisor_rate_2" model="supervisor.rate">
+            <field name="name">Recognized accomplishments</field>
+        </record>
+        <record id="supervisor_rate_3" model="supervisor.rate">
+            <field name="name">Clearly communicated expectations</field>
+        </record>
+        <record id="supervisor_rate_4" model="supervisor.rate">
+            <field name="name">Treated you fairly and respectfully</field>
+        </record>
+        <record id="supervisor_rate_5" model="supervisor.rate">
+            <field name="name">Coached, trained, &amp; developed you</field>
+        </record>
+        <record id="supervisor_rate_6" model="supervisor.rate">
+            <field name="name">Provided leadership</field>
+        </record>
+        <record id="supervisor_rate_7" model="supervisor.rate">
+            <field name="name">Encouraged teamwork &amp; cooperation</field>
+        </record>
+        <record id="supervisor_rate_8" model="supervisor.rate">
+            <field name="name">Resolved concerns promptly</field>
+        </record>
+        <record id="supervisor_rate_9" model="supervisor.rate">
+            <field name="name">Listened to suggestions &amp; feedback</field>
+        </record>
+        <record id="supervisor_rate_10" model="supervisor.rate">
+            <field name="name">Kept employees informed</field>
+        </record>
+        <record id="supervisor_rate_11" model="supervisor.rate">
+            <field name="name">Supported work-life balance</field>
+        </record>
+        <record id="supervisor_rate_12" model="supervisor.rate">
+            <field name="name">Provided appropriate &amp; challenging assignments</field>
+        </record>
+    </data>
+</odoo>

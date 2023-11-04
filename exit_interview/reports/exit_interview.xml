@@ -1,0 +1,579 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="internal_layout">
+            <t t-if="not o" t-set="o" t-value="doc"/>
+                <div class="header">
+                    <img src="/exit_interview/static/src/img/header.png" atl="header.png" class="w-100"/>
+                </div>
+            <div class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
+              <t t-raw="0"/>
+            </div>
+            <div t-attf-class="footer o_standard_footer">
+                <div class="row">
+                    <img src="/exit_interview/static/src/img/footer.png" atl="header.png" class="w-100"/>
+                </div>
+            </div>
+        </template>
+        <record model="ir.actions.report" id="action_exit_interview_report">
+            <field name="name">Exit Interview</field>
+            <field name="model">exit.interview</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">exit_interview.exit_interview_report</field>
+            <field name="report_file">exit_interview.exit_interview_report</field>
+            <field name="binding_model_id" ref="model_exit_interview"/>
+			<field name="binding_type">report</field>
+			<field name="binding_view_types">form</field>
+        </record>
+        <record model="ir.actions.report" id="action_exit_interview_header_report">
+            <field name="name">Exit Interview with Header</field>
+            <field name="model">exit.interview</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">exit_interview.exit_interview_header_report</field>
+            <field name="report_file">exit_interview.exit_interview_header_report</field>
+            <field name="binding_model_id" ref="model_exit_interview"/>
+			<field name="binding_type">report</field>
+			<field name="binding_view_types">form</field>
+        </record>
+        <template id="exit_interview_header_report">
+			<t t-call="web.html_container">
+				<t t-call="exit_interview.internal_layout">
+                    <div class="page" style="font-family:Arial,Helvetica,sans-serif !important;">
+                        <style>
+                        table.GeneratedTable {
+                            width: 100%;
+                            background-color: #ffffff;
+                            border-collapse: collapse;
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-size: 12px;
+                            color: #000000;
+                        }
+
+                        table.GeneratedTable td, table.GeneratedTable th {
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-weight: bold;
+                            margin:3px;
+                            padding: 3px;
+                        }
+
+                        table.GeneratedTable thead {
+                            background-color: #a3a3a3;
+                        }
+                        .bordered-row{
+                            border-bottom:1px solid black;padding-left:10px;padding-right:10px;
+                        }
+                        .rtl-row{
+                            text-align: right !important;direction: rtl !important;
+                        }
+                    </style>
+                        <t t-foreach="docs" t-as="doc">
+                            <h5 class="text-center">EXIT INTERVIEW FORM</h5>
+                            <table class="GeneratedTable">
+                                <colgroup>
+                                    <col width='25%'/>
+                                    <col width='75%'/>
+                                </colgroup>
+                                <tbody>
+                                    <tr>
+                                        <td>Name</td>
+                                        <td><span t-field="doc.employee_id"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Employee Code</td>
+                                        <td><span t-field="doc.employee_code"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Date</td>
+                                        <td><span t-field="doc.date"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>DOJ</td>
+                                        <td><span t-field="doc.join_date"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Current Designation</td>
+                                        <td><span t-field="doc.current_designation"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Name of the Supervisor</td>
+                                        <td><span t-field="doc.supervisor_id"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Date of Resignation</td>
+                                        <td><span t-field="doc.resignation_date"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Last Working Day</td>
+                                        <td><span t-field="doc.last_working_day"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Contact Number</td>
+                                        <td><span t-field="doc.contact_number"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Email Address</td>
+                                        <td><span t-field="doc.email"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <br/>
+                            <table class="GeneratedTable">
+                                <colgroup>
+                                    <col width='35%'/>
+                                    <col width='15%'/>
+                                    <col width='35%'/>
+                                    <col width='15%'/>
+                                </colgroup>
+                                <tbody>
+                                    <t t-set="all_reasons" t-value="[x for x in doc.env['resignation.reason'].search([])]"/>
+                                    <t t-set="reasons" t-value="[x.id for x in doc.reason_ids]"/>
+                                    <t t-set="center" t-value="ceil(len(all_reasons)/2)"/>
+                                    <tr>
+                                        <td colspan="4">Reason for Resignation</td>
+                                    </tr>
+                                    <t t-foreach="range(0, center)" t-as="num">
+                                        <tr>
+                                            <td><span t-esc="all_reasons[num].name"/></td>
+                                            <td>
+                                                <t t-if="all_reasons[num].id in reasons">
+                                                    <span class="fa fa-check"/>
+                                                </t>
+                                            </td>
+                                            <t t-if="(num+center) &lt; len(all_reasons)">
+                                                <td><span t-esc="all_reasons[num+center].name"/></td>
+                                                <td>
+                                                    <t t-if="all_reasons[num+center].id in reasons">
+                                                        <span class="fa fa-check"/>
+                                                    </t>
+                                                </td>
+                                            </t>
+                                            <t t-else="">
+                                                <td>Any Other (Specify)</td>
+                                                <td></td>
+                                            </t>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                            <br/>
+                            <table class="GeneratedTable">
+                                <colgroup>
+                                    <col width='10%'/>
+                                    <col width='40%'/>
+                                    <col width='10%'/>
+                                    <col width='10%'/>
+                                    <col width='10%'/>
+                                    <col width='10%'/>
+                                    <col width='10%'/>
+                                </colgroup>
+                                <t t-set="sequence" t-value="0"/>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="7">
+                                            Please rate the following aspects of the organization overall.
+                                            Use the 1 – 5 scale below.
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center">SR No.</td>
+                                        <td class="text-center"></td>
+                                        <td class="text-center">1 Poor</td>
+                                        <td class="text-center">2</td>
+                                        <td class="text-center">3 Average</td>
+                                        <td class="text-center">4</td>
+                                        <td class="text-center">5 Excellent</td>
+                                    </tr>
+                                    <t t-foreach="doc.organization_rate_ids" t-as="rate">
+                                        <t t-set="sequence" t-value="sequence + 1"/>
+                                        <tr>
+                                            <td class="text-center"><t t-esc="sequence"/></td>
+                                            <td class="text-center"><span t-field="rate.name"/></td>
+                                            <td class="text-center">
+                                                <t t-if="rate.rate == '1'">
+                                                    <span class="fa fa-check"/>
+                                                </t>
+                                            </td>
+                                            <td class="text-center">
+                                                <t t-if="rate.rate == '2'">
+                                                    <span class="fa fa-check"/>
+                                                </t>
+                                            </td>
+                                            <td class="text-center">
+                                                <t t-if="rate.rate == '3'">
+                                                    <span class="fa fa-check"/>
+                                                </t>
+                                            </td>
+                                            <td class="text-center">
+                                                <t t-if="rate.rate == '4'">
+                                                    <span class="fa fa-check"/>
+                                                </t>
+                                            </td>
+                                            <td class="text-center">
+                                                <t t-if="rate.rate == '5'">
+                                                    <span class="fa fa-check"/>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                            <br/>
+                            <table class="GeneratedTable">
+                                <colgroup>
+                                    <col width='10%'/>
+                                    <col width='40%'/>
+                                    <col width='10%'/>
+                                    <col width='10%'/>
+                                    <col width='10%'/>
+                                    <col width='10%'/>
+                                    <col width='10%'/>
+                                </colgroup>
+                                <t t-set="sequence" t-value="0"/>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="7">
+                                            Please rate your supervisor on the following factors. Use the 1 – 5 scale below.
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center">SR No.</td>
+                                        <td class="text-center"></td>
+                                        <td class="text-center">1 Poor</td>
+                                        <td class="text-center">2</td>
+                                        <td class="text-center">3 Average</td>
+                                        <td class="text-center">4</td>
+                                        <td class="text-center">5 Excellent</td>
+                                    </tr>
+                                    <t t-foreach="doc.supervisor_rate_ids" t-as="rate">
+                                        <t t-set="sequence" t-value="sequence + 1"/>
+                                        <tr>
+                                            <td class="text-center"><t t-esc="sequence"/></td>
+                                            <td class="text-center"><span t-field="rate.name"/></td>
+                                            <td class="text-center">
+                                                <t t-if="rate.rate == '1'">
+                                                    <span class="fa fa-check"/>
+                                                </t>
+                                            </td>
+                                            <td class="text-center">
+                                                <t t-if="rate.rate == '2'">
+                                                    <span class="fa fa-check"/>
+                                                </t>
+                                            </td>
+                                            <td class="text-center">
+                                                <t t-if="rate.rate == '3'">
+                                                    <span class="fa fa-check"/>
+                                                </t>
+                                            </td>
+                                            <td class="text-center">
+                                                <t t-if="rate.rate == '4'">
+                                                    <span class="fa fa-check"/>
+                                                </t>
+                                            </td>
+                                            <td class="text-center">
+                                                <t t-if="rate.rate == '5'">
+                                                    <span class="fa fa-check"/>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                            <br/>
+                            <p>Kindly Specify in Details:</p>
+                            <t t-foreach="doc.question_ids" t-as="question">
+                                <p><span t-field="question.name"/></p>
+                                <p><span t-field="question.answer"/></p>
+                            </t>
+                            <br/>
+                            <div class="row">
+                                <div class="col-4">
+                                    <p class="text-center">Signature of Employee</p>
+                                    <p class="text-center">Date</p>
+                                </div>
+                                <div class="col-4"></div>
+                                <div class="col-4">
+                                    <p class="text-center">Signature of Manager / HR</p>
+                                    <p class="text-center">Date</p>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </template>
+        <template id="exit_interview_report">
+			<t t-call="web.html_container">
+				<t t-call="web.basic_layout">
+                    <div class="page" style="font-family:Arial,Helvetica,sans-serif !important;">
+                        <style>
+                        table.GeneratedTable {
+                            width: 100%;
+                            background-color: #ffffff;
+                            border-collapse: collapse;
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-size: 12px;
+                            color: #000000;
+                        }
+
+                        table.GeneratedTable td, table.GeneratedTable th {
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-weight: bold;
+                            margin:3px;
+                            padding: 3px;
+                        }
+
+                        table.GeneratedTable thead {
+                            background-color: #a3a3a3;
+                        }
+                        .bordered-row{
+                            border-bottom:1px solid black;padding-left:10px;padding-right:10px;
+                        }
+                        .rtl-row{
+                            text-align: right !important;direction: rtl !important;
+                        }
+                    </style>
+                        <t t-foreach="docs" t-as="doc">
+                            <h5 class="text-center">EXIT INTERVIEW FORM</h5>
+                            <table class="GeneratedTable">
+                                <colgroup>
+                                    <col width='25%'/>
+                                    <col width='75%'/>
+                                </colgroup>
+                                <tbody>
+                                    <tr>
+                                        <td>Name</td>
+                                        <td><span t-field="doc.employee_id"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Employee Code</td>
+                                        <td><span t-field="doc.employee_code"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Date</td>
+                                        <td><span t-field="doc.date"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>DOJ</td>
+                                        <td><span t-field="doc.join_date"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Current Designation</td>
+                                        <td><span t-field="doc.current_designation"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Name of the Supervisor</td>
+                                        <td><span t-field="doc.supervisor_id"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Date of Resignation</td>
+                                        <td><span t-field="doc.resignation_date"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Last Working Day</td>
+                                        <td><span t-field="doc.last_working_day"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Contact Number</td>
+                                        <td><span t-field="doc.contact_number"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Email Address</td>
+                                        <td><span t-field="doc.email"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <br/>
+                            <table class="GeneratedTable">
+                                <colgroup>
+                                    <col width='35%'/>
+                                    <col width='15%'/>
+                                    <col width='35%'/>
+                                    <col width='15%'/>
+                                </colgroup>
+                                <tbody>
+                                    <t t-set="all_reasons" t-value="[x for x in doc.env['resignation.reason'].search([])]"/>
+                                    <t t-set="reasons" t-value="[x.id for x in doc.reason_ids]"/>
+                                    <t t-set="center" t-value="ceil(len(all_reasons)/2)"/>
+                                    <tr>
+                                        <td colspan="4">Reason for Resignation</td>
+                                    </tr>
+                                    <t t-foreach="range(0, center)" t-as="num">
+                                        <tr>
+                                            <td><span t-esc="all_reasons[num].name"/></td>
+                                            <td>
+                                                <t t-if="all_reasons[num].id in reasons">
+                                                    <span class="fa fa-check"/>
+                                                </t>
+                                            </td>
+                                            <t t-if="(num+center) &lt; len(all_reasons)">
+                                                <td><span t-esc="all_reasons[num+center].name"/></td>
+                                                <td>
+                                                    <t t-if="all_reasons[num+center].id in reasons">
+                                                        <span class="fa fa-check"/>
+                                                    </t>
+                                                </td>
+                                            </t>
+                                            <t t-else="">
+                                                <td>Any Other (Specify)</td>
+                                                <td></td>
+                                            </t>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                            <br/>
+                            <table class="GeneratedTable">
+                                <colgroup>
+                                    <col width='10%'/>
+                                    <col width='40%'/>
+                                    <col width='10%'/>
+                                    <col width='10%'/>
+                                    <col width='10%'/>
+                                    <col width='10%'/>
+                                    <col width='10%'/>
+                                </colgroup>
+                                <t t-set="sequence" t-value="0"/>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="7">
+                                            Please rate the following aspects of the organization overall.
+                                            Use the 1 – 5 scale below.
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center">SR No.</td>
+                                        <td class="text-center"></td>
+                                        <td class="text-center">1 Poor</td>
+                                        <td class="text-center">2</td>
+                                        <td class="text-center">3 Average</td>
+                                        <td class="text-center">4</td>
+                                        <td class="text-center">5 Excellent</td>
+                                    </tr>
+                                    <t t-foreach="doc.organization_rate_ids" t-as="rate">
+                                        <t t-set="sequence" t-value="sequence + 1"/>
+                                        <tr>
+                                            <td class="text-center"><t t-esc="sequence"/></td>
+                                            <td class="text-center"><span t-field="rate.name"/></td>
+                                            <td class="text-center">
+                                                <t t-if="rate.rate == '1'">
+                                                    <span class="fa fa-check"/>
+                                                </t>
+                                            </td>
+                                            <td class="text-center">
+                                                <t t-if="rate.rate == '2'">
+                                                    <span class="fa fa-check"/>
+                                                </t>
+                                            </td>
+                                            <td class="text-center">
+                                                <t t-if="rate.rate == '3'">
+                                                    <span class="fa fa-check"/>
+                                                </t>
+                                            </td>
+                                            <td class="text-center">
+                                                <t t-if="rate.rate == '4'">
+                                                    <span class="fa fa-check"/>
+                                                </t>
+                                            </td>
+                                            <td class="text-center">
+                                                <t t-if="rate.rate == '5'">
+                                                    <span class="fa fa-check"/>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                            <br/>
+                            <table class="GeneratedTable">
+                                <colgroup>
+                                    <col width='10%'/>
+                                    <col width='40%'/>
+                                    <col width='10%'/>
+                                    <col width='10%'/>
+                                    <col width='10%'/>
+                                    <col width='10%'/>
+                                    <col width='10%'/>
+                                </colgroup>
+                                <t t-set="sequence" t-value="0"/>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="7">
+                                            Please rate your supervisor on the following factors. Use the 1 – 5 scale below.
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center">SR No.</td>
+                                        <td class="text-center"></td>
+                                        <td class="text-center">1 Poor</td>
+                                        <td class="text-center">2</td>
+                                        <td class="text-center">3 Average</td>
+                                        <td class="text-center">4</td>
+                                        <td class="text-center">5 Excellent</td>
+                                    </tr>
+                                    <t t-foreach="doc.supervisor_rate_ids" t-as="rate">
+                                        <t t-set="sequence" t-value="sequence + 1"/>
+                                        <tr>
+                                            <td class="text-center"><t t-esc="sequence"/></td>
+                                            <td class="text-center"><span t-field="rate.name"/></td>
+                                            <td class="text-center">
+                                                <t t-if="rate.rate == '1'">
+                                                    <span class="fa fa-check"/>
+                                                </t>
+                                            </td>
+                                            <td class="text-center">
+                                                <t t-if="rate.rate == '2'">
+                                                    <span class="fa fa-check"/>
+                                                </t>
+                                            </td>
+                                            <td class="text-center">
+                                                <t t-if="rate.rate == '3'">
+                                                    <span class="fa fa-check"/>
+                                                </t>
+                                            </td>
+                                            <td class="text-center">
+                                                <t t-if="rate.rate == '4'">
+                                                    <span class="fa fa-check"/>
+                                                </t>
+                                            </td>
+                                            <td class="text-center">
+                                                <t t-if="rate.rate == '5'">
+                                                    <span class="fa fa-check"/>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                            <br/>
+                            <p>Kindly Specify in Details:</p>
+                            <t t-foreach="doc.question_ids" t-as="question">
+                                <p><span t-field="question.name"/></p>
+                                <p><span t-field="question.answer"/></p>
+                            </t>
+                            <br/>
+                            <div class="row">
+                                <div class="col-4">
+                                    <p class="text-center">Signature of Employee</p>
+                                    <p class="text-center">Date</p>
+                                </div>
+                                <div class="col-4"></div>
+                                <div class="col-4">
+                                    <p class="text-center">Signature of Manager / HR</p>
+                                    <p class="text-center">Date</p>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>
