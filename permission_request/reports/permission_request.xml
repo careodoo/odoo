@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="internal_layout">
+            <t t-if="not o" t-set="o" t-value="doc"/>
+                <div class="header">
+                    <img src="/permission_request/static/src/img/header.png" atl="header.png" class="w-100"/>
+                </div>
+            <div class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
+              <t t-raw="0"/>
+            </div>
+            <div t-attf-class="footer o_standard_footer">
+                <div class="row">
+                    <img src="/permission_request/static/src/img/footer.png" atl="header.png" class="w-100"/>
+                </div>
+            </div>
+        </template>
+        <record model="ir.actions.report" id="action_permission_request_header_report">
+            <field name="name">Permission Request with Header</field>
+            <field name="model">permission.request</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">permission_request.permission_request_header_report</field>
+            <field name="report_file">permission_request.permission_request_header_report</field>
+            <field name="binding_model_id" ref="model_permission_request"/>
+			<field name="binding_type">report</field>
+			<field name="binding_view_types">form</field>
+        </record>
+        <record model="ir.actions.report" id="action_permission_request_report">
+            <field name="name">Permission Request</field>
+            <field name="model">permission.request</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">permission_request.permission_request_report</field>
+            <field name="report_file">permission_request.permission_request_report</field>
+            <field name="binding_model_id" ref="model_permission_request"/>
+			<field name="binding_type">report</field>
+			<field name="binding_view_types">form</field>
+        </record>
+        <template id="permission_request_header_report">
+			<t t-call="web.html_container">
+				<t t-call="permission_request.internal_layout">
+                    <div class="page" style="font-family:Arial,Helvetica,sans-serif !important;">
+                        <style>
+                        table.GeneratedTable {
+                            width: 100%;
+                            background-color: #ffffff;
+                            border-collapse: collapse;
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-size: 12px;
+                            color: #000000;
+                        }
+
+                        table.GeneratedTable td, table.GeneratedTable th {
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-weight: bold;
+                            margin:3px;
+                            padding: 3px;
+                        }
+
+                        table.GeneratedTable thead {
+                            background-color: #a3a3a3;
+                        }
+                        .bordered-row{
+                            border-bottom:1px solid black;padding-left:10px;padding-right:10px;
+                        }
+                        .rtl-row{
+                            text-align: right !important;direction: rtl !important;
+                        }
+                    </style>
+                        <t t-foreach="docs" t-as="doc">
+                            <h4 class="text-center">Permission Request Form</h4>
+                            <br/>
+                            <div class="row">
+                                <div class="col-3">
+                                    <h5 class="text-center">Name of Employee</h5>
+                                    <p class="text-center"><span t-field="doc.employee_id"/></p>
+                                </div>
+                                <div class="col-3">
+                                    <h5 class="text-center">Employee ID</h5>
+                                    <p class="text-center"><span t-field="doc.employee_barcode"/></p>
+                                </div>
+                                <div class="col-3">
+                                    <h5 class="text-center">Position</h5>
+                                    <p class="text-center"><span t-field="doc.position"/></p>
+                                </div>
+                                <div class="col-3">
+                                    <h5 class="text-center">Department</h5>
+                                    <p class="text-center"><span t-field="doc.department_id"/></p>
+                                </div>
+                            </div>
+                            <br/>
+                            <div class="row">
+                                <div class="col-2">
+                                </div>
+                                <div class="col-4">
+                                    <t t-if="doc.type == 'official'">
+                                        <h5 class="text-center"><span class="fa fa-check-square-o"/> Permission Official</h5>
+                                    </t>
+                                    <t t-else="">
+                                        <h5 class="text-center"><span class="fa fa-square-o"/> Permission Official</h5>
+                                    </t>
+                                </div>
+                                <div class="col-4">
+                                    <t t-if="doc.type == 'personal'">
+                                        <h5 class="text-center"><span class="fa fa-check-square-o"/> Permission Personal</h5>
+                                    </t>
+                                    <t t-else="">
+                                        <h5 class="text-center"><span class="fa fa-square-o"/> Permission Personal</h5>
+                                    </t>
+                                </div>
+                                <div class="col-2">
+                                </div>
+                            </div>
+                            <br/>
+                            <h5>Permission From: <span t-field="doc.permission_from"/> </h5>
+                            <h5>Permission To: <span t-field="doc.permission_to"/> </h5>
+                            <br/>
+                            <h5>Reason of Permission: <span t-field="doc.reason"/> </h5>
+                            <br/>
+                            <div class="row">
+                                <div class="col-3">
+                                    <h5 class="text-center">Employee Signature</h5>
+                                </div>
+                                <div class="col-3">
+                                    <h5 class="text-center">DIRECT MANAGER</h5>
+                                </div>
+                                <div class="col-3">
+                                    <h5 class="text-center">HR MANAGER</h5>
+                                </div>
+                                <div class="col-3">
+                                    <h5 class="text-center">CHIEF EXECUTIVE OFFICER</h5>
+                                </div>
+                            </div>
+                            <br/><br/><br/>
+                            <div style="border: 1px solid black;">
+                                <p>Notes: </p>
+                                <p class="text-center">
+                                    يجب تقديم طلب إذن مسبق والتأكد من الحصول على موافقة نهائية من الادارات المعنية قبل المغادرة
+                                </p>
+                                <p class="text-center">
+                                    You must submit a request for permission prior &amp; assure to get final approval from concerned manager before you leave
+                                </p>
+                                <p class="text-center">
+                                    فقط 4 ساعات اذن رسمي خلال فترة الشهر ما فوق ذلك يخصم من الراتب
+                                </p>
+                                <p class="text-center">
+                                    Only 4 hours approved permission with in month circle more than it to be deducted.
+                                </p>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </template>
+        <template id="permission_request_report">
+			<t t-call="web.html_container">
+				<t t-call="web.basic_layout">
+                    <div class="page" style="font-family:Arial,Helvetica,sans-serif !important;">
+                        <style>
+                        table.GeneratedTable {
+                            width: 100%;
+                            background-color: #ffffff;
+                            border-collapse: collapse;
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-size: 12px;
+                            color: #000000;
+                        }
+
+                        table.GeneratedTable td, table.GeneratedTable th {
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-weight: bold;
+                            margin:3px;
+                            padding: 3px;
+                        }
+
+                        table.GeneratedTable thead {
+                            background-color: #a3a3a3;
+                        }
+                        .bordered-row{
+                            border-bottom:1px solid black;padding-left:10px;padding-right:10px;
+                        }
+                        .rtl-row{
+                            text-align: right !important;direction: rtl !important;
+                        }
+                    </style>
+                        <t t-foreach="docs" t-as="doc">
+                            <h4 class="text-center">Permission Request Form</h4>
+                            <br/>
+                            <div class="row">
+                                <div class="col-3">
+                                    <h5 class="text-center">Name of Employee</h5>
+                                    <p class="text-center"><span t-field="doc.employee_id"/></p>
+                                </div>
+                                <div class="col-3">
+                                    <h5 class="text-center">Employee ID</h5>
+                                    <p class="text-center"><span t-field="doc.employee_barcode"/></p>
+                                </div>
+                                <div class="col-3">
+                                    <h5 class="text-center">Position</h5>
+                                    <p class="text-center"><span t-field="doc.position"/></p>
+                                </div>
+                                <div class="col-3">
+                                    <h5 class="text-center">Department</h5>
+                                    <p class="text-center"><span t-field="doc.department_id"/></p>
+                                </div>
+                            </div>
+                            <br/>
+                            <div class="row">
+                                <div class="col-2">
+                                </div>
+                                <div class="col-4">
+                                    <t t-if="doc.type == 'official'">
+                                        <h5 class="text-center"><span class="fa fa-check-square-o"/> Permission Official</h5>
+                                    </t>
+                                    <t t-else="">
+                                        <h5 class="text-center"><span class="fa fa-square-o"/> Permission Official</h5>
+                                    </t>
+                                </div>
+                                <div class="col-4">
+                                    <t t-if="doc.type == 'personal'">
+                                        <h5 class="text-center"><span class="fa fa-check-square-o"/> Permission Personal</h5>
+                                    </t>
+                                    <t t-else="">
+                                        <h5 class="text-center"><span class="fa fa-square-o"/> Permission Personal</h5>
+                                    </t>
+                                </div>
+                                <div class="col-2">
+                                </div>
+                            </div>
+                            <br/>
+                            <h5>Permission From: <span t-field="doc.permission_from"/> </h5>
+                            <h5>Permission To: <span t-field="doc.permission_to"/> </h5>
+                            <br/>
+                            <h5>Reason of Permission: <span t-field="doc.reason"/> </h5>
+                            <br/>
+                            <div class="row">
+                                <div class="col-3">
+                                    <h5 class="text-center">Employee Signature</h5>
+                                </div>
+                                <div class="col-3">
+                                    <h5 class="text-center">DIRECT MANAGER</h5>
+                                </div>
+                                <div class="col-3">
+                                    <h5 class="text-center">HR MANAGER</h5>
+                                </div>
+                                <div class="col-3">
+                                    <h5 class="text-center">CHIEF EXECUTIVE OFFICER</h5>
+                                </div>
+                            </div>
+                            <br/><br/><br/>
+                            <div style="border: 1px solid black;">
+                                <p>Notes: </p>
+                                <p class="text-center">
+                                    يجب تقديم طلب إذن مسبق والتأكد من الحصول على موافقة نهائية من الادارات المعنية قبل المغادرة
+                                </p>
+                                <p class="text-center">
+                                    You must submit a request for permission prior &amp; assure to get final approval from concerned manager before you leave
+                                </p>
+                                <p class="text-center">
+                                    فقط 4 ساعات اذن رسمي خلال فترة الشهر ما فوق ذلك يخصم من الراتب
+                                </p>
+                                <p class="text-center">
+                                    Only 4 hours approved permission with in month circle more than it to be deducted.
+                                </p>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>
