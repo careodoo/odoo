@@ -71,7 +71,24 @@
                         }
                     </style>
                         <t t-foreach="docs" t-as="doc">
-                            <h5 class="text-center">MANPOWER REQUISITION FORM</h5>
+                            <div class="row">
+                                <div class="col-4">
+                                    <center>
+                                        <img t-if="doc.barcode" t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('Code128',doc.barcode,180,50)" />
+                                        <div t-esc="doc.barcode"/>
+                                    </center>
+                                </div>
+                                <div class="col-4">
+                                    <center>
+                                        <strong>MANPOWER REQUISITION FORM</strong>
+                                    </center>
+                                </div>
+                                <div class="col-4">
+                                    <center>
+                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:100px;height:60px;"/>
+                                    </center>
+                                </div>
+                            </div>
                             <p class="text-center">Turnaround time for Overseas position 75 days and for local positions 40 days</p>
                             <p class="text-right">
                                 Date of Request: <span t-field="doc.request_date"/>
@@ -210,9 +227,9 @@
                                     Signature
                                 </div>
                             </div>
+                            <small>MRF received by: </small>
                             <br/>
-                            <p>MRF received by: </p>
-                            <p>HR on: </p>
+                            <small>HR on: </small>
                         </t>
                     </div>
                 </t>
@@ -254,7 +271,24 @@
                         }
                     </style>
                         <t t-foreach="docs" t-as="doc">
-                            <h5 class="text-center">MANPOWER REQUISITION FORM</h5>
+                            <div class="row">
+                                <div class="col-4">
+                                    <center>
+                                        <img t-if="doc.barcode" t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('Code128',doc.barcode,180,50)" />
+                                        <div t-esc="doc.barcode"/>
+                                    </center>
+                                </div>
+                                <div class="col-4">
+                                    <center>
+                                        <strong>MANPOWER REQUISITION FORM</strong>
+                                    </center>
+                                </div>
+                                <div class="col-4">
+                                    <center>
+                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:100px;height:60px;"/>
+                                    </center>
+                                </div>
+                            </div>
                             <p class="text-center">Turnaround time for Overseas position 75 days and for local positions 40 days</p>
                             <p class="text-right">
                                 Date of Request: <span t-field="doc.request_date"/>
@@ -393,9 +427,9 @@
                                     Signature
                                 </div>
                             </div>
+                            <small>MRF received by: </small>
                             <br/>
-                            <p>MRF received by: </p>
-                            <p>HR on: </p>
+                            <small>HR on: </small>
                         </t>
                     </div>
                 </t>

@@ -22,8 +22,15 @@
             <field name="arch" type="xml">
                 <form>
                     <sheet>
+                        <field name="qr_image" widget="image" class="oe_avatar"/>
+                        <div class="oe_title">
+                            <label for="employee_id" name="model_name_label"/>
+                            <h1>
+                                <field name="employee_id" required="1"/>
+                            </h1>
+                        </div>
                         <group>
-                            <field name="employee_id"/>
+                            <field name="barcode"/>
                             <field name="employee_barcode"/>
                             <field name="department_id"/>
                             <field name="position"/>

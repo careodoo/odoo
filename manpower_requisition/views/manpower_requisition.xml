@@ -21,8 +21,10 @@
             <field name="arch" type="xml">
                 <form>
                     <sheet>
+                        <field name="qr_image" widget="image" class="oe_avatar"/>
                         <group>
                             <group>
+                                <field name="barcode"/>
                                 <field name="request_date"/>
                                 <field name="location"/>
                                 <field name="requirement_number"/>

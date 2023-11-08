@@ -1,9 +1,15 @@
 from odoo import fields, models, api
+from .qr_generator import generateQrCode
+from odoo.http import request
+from datetime import datetime
 
 
 class ExitInterview(models.Model):
     _name = 'exit.interview'
     _description = 'Exit Interview'
+
+    def generate_barcode(self):
+        return str(int(datetime.now().timestamp()))
 
     employee_id = fields.Many2one('hr.employee', required=True)
     employee_code = fields.Char()
@@ -22,6 +28,18 @@ class ExitInterview(models.Model):
                                           default=lambda self: self.get_default_supervisor_rate())
     question_ids = fields.One2many('exit.interview.question', 'interview_id',
                                    default=lambda self: self.get_default_question())
+    barcode = fields.Char(default=generate_barcode)
+    qr_image = fields.Binary("QR Code", compute='_generate_qr_code')
+    qr_url = fields.Char("QR Code", compute='_generate_qr_code')
+
+    def _generate_qr_code(self):
+        for rec in self:
+            qr_info = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
+            action_id = self.env.ref('exit_interview.exit_interview_view_form').id
+            menu_id = self.env.ref('exit_interview.exit_interview_menu').id
+            qr_info += '/web#id=%s&action=%s&model=%s&view_type=form&cids=&menu_id=%s' % (rec.id, action_id, 'exit.interview', menu_id)
+            rec.qr_url = qr_info
+            rec.qr_image = generateQrCode.generate_qr_code(qr_info)
 
     def get_default_organization_rate(self):
         vals = []
