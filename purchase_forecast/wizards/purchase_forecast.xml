@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="purchase_forecast_view_form" model="ir.ui.view">
+            <field name="name">purchase_forecast_view_form</field>
+            <field name="model">purchase.forecast</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="date_start"/>
+                                <field name="product_ids" widget="many2many_tags" options="{'no_open': True, 'no_create': True, 'no_edit': True}"/>
+                                <field name="state_ids" widget="many2many_tags" options="{'no_open': True, 'no_create': True, 'no_edit': True}"/>
+                            </group>
+                            <group>
+                                <field name="date_end"/>
+                                <field name="category_ids" widget="many2many_tags" options="{'no_open': True, 'no_create': True, 'no_edit': True}"/>
+                                <field name="type"/>
+                            </group>
+                        </group>
+                        <div class="row">
+                            <div class="col-5"/>
+                            <div class="col-7">
+                                <button name="button_search" type="object" string="Search" class="oe_highlight" icon="fa-search"/>
+                            </div>
+                        </div>
+                        <field name="line_ids">
+                            <tree create="0" edit="0" delete="0" editable="bottom">
+                                <field name="product_id" options="{'no_open': True}"/>
+                                <field name="date"/>
+                                <field name="total"/>
+                            </tree>
+                        </field>
+                    </sheet>
+                    <footer>
+                        <button name="print_xlsx" type="object" string="Export" icon="fa-file-excel-o"/>
+                        <button string="Cancel" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+        <record id="purchase_forecast_action" model="ir.actions.act_window">
+            <field name="name">Purchase Forecast</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">purchase.forecast</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+        <menuitem id="purchase_forecast_menu" name="Purchase Forecast" parent="purchase.purchase_report_main"
+                  action="purchase_forecast_action" sequence="1"/>
+    </data>
+</odoo>

@@ -1,0 +1,12 @@
+"id","name","type"
+purchase_forecast_state_draft,RFQ,draft
+purchase_forecast_state_sent,RFQ Sent,sent
+purchase_forecast_state_to_approve,To Approve,to approve
+purchase_forecast_state_purchase,Purchase Order,purchase
+purchase_forecast_state_done,Locked,done
+purchase_forecast_state_cancel,Cancelled,cancel
+purchase_forecast_state_hold,Hold,hold
+purchase_forecast_state_delayed,Delayed,delayed
+purchase_forecast_state_revised,Revised,revised
+purchase_forecast_state_payment,Payment,payment
+purchase_forecast_state_confirmed,Confirmed,confirmed

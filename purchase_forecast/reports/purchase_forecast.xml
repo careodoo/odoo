@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.actions.report" id="action_purchase_forecast_xlsx_report">
+            <field name="name">Purchase Forecast XLSX</field>
+            <field name="model">purchase.forecast</field>
+            <field name="report_type">xlsx</field>
+            <field name="report_name">purchase_forecast.purchase_forecast_xlsx_report</field>
+            <field name="report_file">purchase_forecast.purchase_forecast_xlsx_report</field>
+            <field name="binding_model_id" ref="model_purchase_forecast"/>
+        </record>
+    </data>
+</odoo>
