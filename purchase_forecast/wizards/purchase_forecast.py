@@ -46,7 +46,7 @@ class PurchaseForecast(models.TransientModel):
                 lines_tuple = tuple([lines_tuple[0], lines_tuple[0]])
             if self.type == 'day':
                 query = f'''
-                    SELECT forecast_date, product_id, count(id) AS count 
+                    SELECT forecast_date, product_id, sum(product_qty) AS count 
                     FROM purchase_order_line
                     WHERE id IN {lines_tuple} 
                     GROUP BY forecast_date, product_id; 
@@ -60,7 +60,7 @@ class PurchaseForecast(models.TransientModel):
                 }) for line in lines]
             else:
                 query = f'''
-                    SELECT date_trunc('month', forecast_date) AS forecast_month, product_id, count(id) AS count 
+                    SELECT date_trunc('month', forecast_date) AS forecast_month, product_id, sum(product_qty) AS count 
                     FROM purchase_order_line
                     WHERE id IN {lines_tuple} 
                     GROUP BY forecast_month, product_id; 
