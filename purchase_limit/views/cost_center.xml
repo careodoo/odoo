@@ -9,6 +9,7 @@
                 <xpath expr="//sheet" position="before">
                     <header>
                         <button name="generate_monthly_budget" type="object" string="Generate Monthly Budget"/>
+                        <button name="generate_missing_months" type="object" string="Generate Missing Months"/>
                         <button name="add_extra_budget" type="object" string="Add Extra Budget"/>
                         <button name="transfer_budget" type="object" string="Transfer Budget"/>
                     </header>
@@ -19,6 +20,7 @@
                     <field name="annual_budget"/>
                     <field name="remaining_annual_budget"/>
                     <field name="budget_start_date"/>
+                    <field name="budget_end_date"/>
                 </xpath>
                 <xpath expr="//sheet" position="inside">
                     <notebook>

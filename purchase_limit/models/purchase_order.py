@@ -34,8 +34,10 @@ class PurchaseOrder(models.Model):
         res = super(PurchaseOrder, self).button_confirm()
         if self.cost_center_id and self.date_order and self.cost_center_id.month_ids and self.state in ['purchase', 'done']:
             month = self.cost_center_id.month_ids.filtered(
-                lambda m: m.date.month == self.date_order.month
+                lambda m: m.date.month == self.date_order.month and m.date.year == self.date_order.year
             )
+            if not month:
+                raise ValidationError(f"Cost Center is not covering {self.date_order}!")
             if (month.used_budget + self.amount_total) > month.total_budget:
                 raise ValidationError("Used budget can't exceed total budget for {}!".format(month.date_string))
             month.used_budget += self.amount_total

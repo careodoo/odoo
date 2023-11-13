@@ -26,6 +26,7 @@
     'data': [
         'security/groups.xml',
         'security/ir.model.access.csv',
+        'data/server_action.xml',
         'data/mail_template_data.xml',
         'views/cost_center.xml',
         'views/purchase_order.xml',

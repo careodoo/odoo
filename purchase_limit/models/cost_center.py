@@ -1,7 +1,7 @@
 from odoo import fields, models, api
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from dateutil.relativedelta import relativedelta
-from datetime import date
+from datetime import datetime
 
 
 class CostCenter(models.Model):
@@ -11,8 +11,19 @@ class CostCenter(models.Model):
     annual_budget = fields.Float()
     remaining_annual_budget = fields.Float(compute='compute_remaining_annual_budget', store=True)
     budget_start_date = fields.Date()
+    budget_end_date = fields.Date()
     month_ids = fields.One2many('cost.center.month', 'cost_center_id')
     extra_budget_ids = fields.One2many('cost.center.extra.budget', 'cost_center_id')
+
+    @api.constrains('budget_start_date', 'budget_end_date')
+    def check_dates(self):
+        for rec in self:
+            if rec.budget_start_date and rec.budget_end_date:
+                if rec.budget_start_date > rec.budget_end_date:
+                    raise ValidationError("Start Date must be before End Date!")
+
+    def diff_month(self, d1, d2):
+        return (d1.year - d2.year) * 12 + d1.month - d2.month
 
     @api.depends('month_ids.remaining_budget')
     def compute_remaining_annual_budget(self):
@@ -36,17 +47,62 @@ class CostCenter(models.Model):
         return budget
 
     def generate_monthly_budget(self):
-        if self.annual_budget <= 0 or not self.budget_start_date:
-            raise UserError("please add Budget and Start Sate")
+        if self.annual_budget <= 0:
+            raise UserError("please add Budget")
+        if not self.budget_start_date or not self.budget_end_date:
+            raise UserError("please add Start Date and End Date")
         self.month_ids = [(5, 0, 0)]
-        for i in range(12):
-            self.env['cost.center.month'].create({
-                'cost_center_id': self.id,
-                'sequence': i + 1,
-                'date': (self.budget_start_date + relativedelta(months=i)),
-                'date_string': (self.budget_start_date + relativedelta(months=i)).strftime('%B %Y'),
-                'budget': self.annual_budget / 12,
-            })
+        count = self.diff_month(self.budget_end_date, self.budget_start_date)
+        if count:
+            for i in range(count):
+                self.env['cost.center.month'].create({
+                    'cost_center_id': self.id,
+                    'sequence': i + 1,
+                    'date': (self.budget_start_date + relativedelta(months=i)),
+                    'date_string': (self.budget_start_date + relativedelta(months=i)).strftime('%B %Y'),
+                    'budget': self.annual_budget / count,
+                })
+
+    def generate_missing_months(self):
+        if self.annual_budget <= 0:
+            raise UserError("please add Budget")
+        if not self.budget_start_date or not self.budget_end_date:
+            raise UserError("please add Start Date and End Date")
+        count = self.diff_month(self.budget_end_date, self.budget_start_date)
+        if count:
+            existing_months = [m.date_string for m in self.month_ids]
+            for i in range(count):
+                date_string = (self.budget_start_date + relativedelta(months=i)).strftime('%B %Y')
+                if date_string not in existing_months:
+                    self.env['cost.center.month'].create({
+                        'cost_center_id': self.id,
+                        'sequence': i + 1,
+                        'date': (self.budget_start_date + relativedelta(months=i)),
+                        'date_string': date_string,
+                        'budget': self.annual_budget / count,
+                    })
+                else:
+                    month_line = self.month_ids.filtered(lambda m: m.date_string == date_string)
+                    month_line.write({
+                        'budget': self.annual_budget / count,
+                    })
+
+    def correct_wrong_budget(self):
+        cost_centers = self.env['cost.center'].browse(self.env.context.get('active_ids') or self.ids)
+        for center in cost_centers:
+            for month_line in center.month_ids.filtered(lambda m: m.purchase_order_ids):
+                for po in month_line.purchase_order_ids:
+                    if month_line.date.month != po.date_order.month or month_line.date.year != po.date_order.year:
+                        # remove po from wrong line
+                        month_line.purchase_order_ids = [(3, po.id)]
+                        month_line.used_budget -= po.amount_total
+                        # add po to correct line
+                        correct_line = center.month_ids.filtered(
+                            lambda m: m.date.month == po.date_order.month and m.date.year == po.date_order.year
+                        )
+                        if correct_line:
+                            correct_line.purchase_order_ids = [(4, po.id)]
+                            correct_line.used_budget += po.amount_total
 
     def transfer_budget(self):
         return {
