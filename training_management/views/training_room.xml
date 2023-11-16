@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="training_room_view_tree" model="ir.ui.view">
+            <field name="name">training_room_view_tree</field>
+            <field name="model">training.room</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="center_id"/>
+                </tree>
+            </field>
+        </record>
+        <record id="training_room_view_form" model="ir.ui.view">
+            <field name="name">training_room_view_form</field>
+            <field name="model">training.room</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" placeholder="Room Name..."/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="code"/>
+                            </group>
+                            <group>
+                                <field name="center_id"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="training_room_action" model="ir.actions.act_window">
+            <field name="name">Training Class Rooms</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">training.room</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem id="training_room_menu" name="Class Rooms" parent="course_menu"
+                  action="training_room_action" sequence="2"/>
+    </data>
+</odoo>

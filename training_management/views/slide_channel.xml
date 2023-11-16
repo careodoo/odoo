@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+    <record id="slide_channel_action_overview" model="ir.actions.act_window">
+            <field name="name">eLearning Overview</field>
+            <field name="res_model">slide.channel</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="view_id" ref="website_slides.slide_channel_view_kanban"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a course
+                </p>
+            </field>
+        </record>
+        <menuitem id="slide_channel_menu" name="Courses" parent="course_menu"
+                  action="slide_channel_action_overview" sequence="4"/>
+    </data>
+</odoo>

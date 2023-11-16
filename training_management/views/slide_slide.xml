@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="slide_slide_action" model="ir.actions.act_window">
+            <field name="name">Contents</field>
+            <field name="res_model">slide.slide</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="domain">[('is_category', '=', False)]</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Add a new content
+                </p>
+            </field>
+        </record>
+        <menuitem id="slide_slide_menu" name="Contents" parent="course_menu"
+                  action="slide_slide_action" sequence="3"/>
+    </data>
+</odoo>

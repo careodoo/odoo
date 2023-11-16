@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_training_application,training_application,model_training_application,base.group_user,1,1,1,1
+access_training_application_line,training_application_line,model_training_application_line,base.group_user,1,1,1,1
+access_application_stage,application_stage,model_application_stage,base.group_user,1,1,1,1
+access_training_stage,training_stage,model_training_stage,base.group_user,1,1,1,1
+access_training_center,training_center,model_training_center,base.group_user,1,1,1,1
+access_training_room,training_room,model_training_room,base.group_user,1,1,1,1

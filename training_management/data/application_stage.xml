@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="application_stage_new" model="application.stage">
+            <field name="name">New</field>
+            <field name="is_default" eval="True"/>
+            <field name="is_draft" eval="True"/>
+        </record>
+        <record id="application_stage_confirmed" model="application.stage">
+            <field name="name">Confirmed</field>
+            <field name="is_draft" eval="True"/>
+        </record>
+        <record id="application_stage_approved" model="application.stage">
+            <field name="name">Approved</field>
+            <field name="is_approved" eval="True"/>
+        </record>
+        <record id="application_stage_training_initiated" model="application.stage">
+            <field name="name">Training Initiated</field>
+        </record>
+        <record id="application_stage_progress" model="application.stage">
+            <field name="name">In Progress</field>
+        </record>
+        <record id="application_stage_completed" model="application.stage">
+            <field name="name">Completed</field>
+        </record>
+        <record id="application_stage_cancelled" model="application.stage">
+            <field name="name">Cancelled</field>
+            <field name="is_cancelled" eval="True"/>
+        </record>
+    </data>
+</odoo>

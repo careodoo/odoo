@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.actions.report" id="action_training_application_line_report">
+            <field name="name">Employee Training</field>
+            <field name="model">training.application.line</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">training_management.training_application_line_report</field>
+            <field name="report_file">training_management.training_application_line_report</field>
+            <field name="binding_model_id" ref="model_training_application_line"/>
+        </record>
+		<template id="training_application_line_report">
+			<t t-call="web.html_container">
+				<t t-call="web.external_layout">
+					<div class="page" style="font-family:Arial,Helvetica,sans-serif !important;">
+                    <style>
+                        table.GeneratedTable {
+                            width: 100%;
+                            background-color: #ffffff;
+                            border-collapse: collapse;
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-size: 14px;
+                            color: #000000;
+                        }
+
+                        table.Contact {
+                            width: 50%;
+                        }
+
+                        table.GeneratedTable td, table.GeneratedTable th {
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            padding: 2px;
+                        }
+
+                        table.GeneratedTable thead {
+                            background-color: #a3a3a3;
+                        }
+                        .bold_txt{font-weight:bold}
+                    </style>
+                        <t t-foreach="docs" t-as="doc">
+                            <h3>Employee Trainings</h3>
+                            <h4 class="text-center"><span t-field="doc.application_id"/></h4>
+                            <table class="GeneratedTable m-2">
+                                <colgroup>
+                                    <col width="15%"/>
+                                    <col width="35%"/>
+                                    <col width="15%"/>
+                                    <col width="35%"/>
+                                </colgroup>
+                                <tbody>
+                                    <tr>
+                                        <td class="bold_txt">Employee</td>
+                                        <td class="text-center"><span t-field="doc.employee_id"/></td>
+                                        <td class="bold_txt">Responsible</td>
+                                        <td class="text-center"><span t-field="doc.responsible_id"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="bold_txt">Training Center</td>
+                                        <td class="text-center"><span t-field="doc.training_center_id"/></td>
+                                        <td class="bold_txt">Class Room</td>
+                                        <td class="text-center"><span t-field="doc.training_room_id"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="bold_txt">Create Date</td>
+                                        <td class="text-center"><span t-field="doc.application_id.date"/></td>
+                                        <td class="bold_txt">Start Date</td>
+                                        <td class="text-center"><span t-field="doc.date_start"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="bold_txt">Project</td>
+                                        <td class="text-center"><span t-field="doc.project_id"/></td>
+                                        <td class="bold_txt">End Date</td>
+                                        <td class="text-center"><span t-field="doc.date_end"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="bold_txt">Description</td>
+                                        <td class="text-center"><span t-field="doc.description"/></td>
+                                        <td class="bold_txt">Stage</td>
+                                        <td class="text-center"><span t-field="doc.application_id.stage_id"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <br/>
+                            <div style="page-break-before: always;"/>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>
