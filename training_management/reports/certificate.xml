@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="paperformat_training_certification" model="report.paperformat">
+            <field name="name">Certification</field>
+            <field name="default" eval="True"/>
+            <field name="format">A4</field>
+            <field name="orientation">Landscape</field>
+            <field name="margin_top">0</field>
+            <field name="margin_bottom">0</field>
+            <field name="margin_left">0</field>
+            <field name="margin_right">0</field>
+            <field name="header_line" eval="False"/>
+            <field name="header_spacing">0</field>
+            <field name="disable_shrinking" eval="True"/>
+            <field name="dpi">96</field>
+        </record>
+        <record id="training_certification_report" model="ir.actions.report">
+            <field name="name">Training Certifications</field>
+            <field name="model">training.application</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">training_management.training_certificate_report</field>
+            <field name="report_file">training_management.training_certificate_report</field>
+            <field name="print_report_name">'Certification - %s' % (object.display_name)</field>
+            <field name="attachment">'certification.pdf'</field>
+            <field name="binding_model_id" ref="model_training_application"/>
+            <field name="binding_type">report</field>
+            <field name="paperformat_id" ref="paperformat_training_certification"/>
+        </record>
+
+        <template id="training_certificate_report">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="doc">
+                    <div id="o_survey_certification" t-att-data-oe-model="doc._name" t-att-data-oe-id="doc.id"  class="article certification-wrapper modern gold">
+                        <div class="certification">
+                            <div class="certification-seal"/>
+                            <div class="certification-top">
+                                <h1><b>Certificate</b>
+                                    <br/><span>of achievement</span>
+                                </h1>
+                            </div>
+
+                            <div class="certification-content">
+                                <div>
+                                    <p>This certificate is presented to
+                                        <br/>
+                                        <t t-set="certif_style" t-value="''"/>
+                                        <t t-set="certified_name" t-value="doc.employee_id.name or doc.employee_id.email"/>
+                                        <t t-if="certified_name.isupper()">
+                                            <t t-set="certif_style" t-value="certif_style + 'font-family: certification-serif;'"/>
+                                        </t>
+                                        <t t-if="len(certified_name) > 20">
+                                            <t t-set="certif_style" t-value="certif_style + 'font-size: 40px; line-height: 4;'"/>
+                                        </t>
+                                        <span t-att-style="certif_style" class="user-name" t-esc="certified_name"/>
+
+                                        <br/>by <span class="certification-company" t-field="doc.env.company.display_name"/> for successfully completing
+                                        <br/><b><span class="certification-name" t-field="doc.training_name"/></b>
+                                     </p>
+                                </div>
+                            </div>
+
+                            <div class="certification-bottom">
+                                <div class="certification-date-wrapper">
+                                    <div class="certification-date" t-field="doc.date_end" t-options='{"widget": "date"}'/>
+                                    <span>Date</span>
+                                </div>
+                                <div class="certification-company">
+                                    <span class="certification-company-logo" t-field="doc.env.company.logo" t-options="{'widget': 'image'}" role="img"/>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>

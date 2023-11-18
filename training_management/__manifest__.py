@@ -38,5 +38,6 @@
         'views/slide_channel.xml',
         'reports/training_application.xml',
         'reports/training_application_line.xml',
+        'reports/certificate.xml',
     ],
 }
