@@ -23,6 +23,7 @@ class TrainingApplication(models.Model):
     description = fields.Text()
     stage_id = fields.Many2one('application.stage', default=lambda self: self.get_default_stage())
     is_approved = fields.Boolean(related='stage_id.is_approved', store=True)
+    sign = fields.Binary()
     company_id = fields.Many2one('res.company', default=lambda self: self.env.company, required=True)
 
     @api.constrains('date_start', 'date_end')

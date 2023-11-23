@@ -33,9 +33,14 @@
                 <t t-foreach="docs" t-as="doc">
                     <div id="o_survey_certification" t-att-data-oe-model="doc._name" t-att-data-oe-id="doc.id"  class="article certification-wrapper modern gold">
                         <div class="certification">
+                            <div>
+                                <center>
+                                    <img src="/training_management/static/img/logo_cert.png" atl="header.png" style="width: 150px; height: 100px;"/>
+                                </center>
+                            </div>
                             <div class="certification-seal"/>
-                            <div class="certification-top">
-                                <h1><b>Certificate</b>
+                            <div class="certification-top" style="padding-top: 15mm;">
+                                <h1 style="font-size: 55pt !important;line-height: 24pt !important;"><b>Certificate</b>
                                     <br/><span>of achievement</span>
                                 </h1>
                             </div>
@@ -45,7 +50,7 @@
                                     <p>This certificate is presented to
                                         <br/>
                                         <t t-set="certif_style" t-value="''"/>
-                                        <t t-set="certified_name" t-value="doc.employee_id.name or doc.employee_id.email"/>
+                                        <t t-set="certified_name" t-value="doc.employee_id.english_name or doc.employee_id.name"/>
                                         <t t-if="certified_name.isupper()">
                                             <t t-set="certif_style" t-value="certif_style + 'font-family: certification-serif;'"/>
                                         </t>
@@ -54,19 +59,19 @@
                                         </t>
                                         <span t-att-style="certif_style" class="user-name" t-esc="certified_name"/>
 
-                                        <br/>by <span class="certification-company" t-field="doc.env.company.display_name"/> for successfully completing
+                                        <br/>by <span class="certification-company" t-field="doc.env.company.company_english_name"/> for successfully completing
                                         <br/><b><span class="certification-name" t-field="doc.training_name"/></b>
                                      </p>
                                 </div>
                             </div>
 
                             <div class="certification-bottom">
-                                <div class="certification-date-wrapper">
+                                <div class="certification-date-wrapper" style="margin-left: 5mm;">
                                     <div class="certification-date" t-field="doc.date_end" t-options='{"widget": "date"}'/>
                                     <span>Date</span>
                                 </div>
-                                <div class="certification-company">
-                                    <span class="certification-company-logo" t-field="doc.env.company.logo" t-options="{'widget': 'image'}" role="img"/>
+                                <div class="certification-company" style="right:5mm">
+                                    <span class="certification-company-logo" t-field="doc.sign" t-options="{'widget': 'image'}" role="img"/>
                                 </div>
 
                             </div>
