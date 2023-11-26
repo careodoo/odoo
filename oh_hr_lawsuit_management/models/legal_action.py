@@ -83,7 +83,14 @@ class HrLawsuit(models.Model):
                              default='draft', track_visibility='always', copy=False,
                              help='Status')
     update_ids = fields.One2many('hr.lawsuit.update', 'lawsuit_id', string='Updates')
-    next_appointment = fields.Datetime()
+    next_appointment = fields.Datetime(compute='compute_next_appointment', store=True)
+
+    @api.depends('update_ids.datetime')
+    def compute_next_appointment(self):
+        for rec in self:
+            rec.next_appointment = False
+            if rec.update_ids:
+                rec.next_appointment = rec.update_ids.sorted(key='datetime', reverse=True)[0].datetime
 
     @api.model
     def cron_notify_next_appointment(self):
@@ -125,10 +132,11 @@ class HrLegalEmployeeMaster(models.Model):
 
 class HrLawsuitUpdate(models.Model):
     _name = 'hr.lawsuit.update'
+    _order = 'datetime desc, id desc'
     _description = 'Hr Lawsuit Update'
 
     lawsuit_id = fields.Many2one('hr.lawsuit')
     name = fields.Char(required=True)
     partner_id = fields.Many2one('res.partner')
     details = fields.Text()
-    datetime = fields.Datetime()
+    datetime = fields.Datetime(required=True)
