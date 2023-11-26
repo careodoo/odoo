@@ -8,7 +8,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//sheet" position="before">
                     <header>
-                        <button name="generate_monthly_budget" type="object" string="Generate Monthly Budget"/>
+                        <button name="generate_budget" type="object" string="Generate Budget"/>
                         <button name="generate_missing_months" type="object" string="Generate Missing Months"/>
                         <button name="add_extra_budget" type="object" string="Add Extra Budget"/>
                         <button name="transfer_budget" type="object" string="Transfer Budget"/>
@@ -17,7 +17,9 @@
                 <xpath expr="//group" position="inside">
                     <field name="department_id"/>
                     <field name="purchase_limit" groups="purchase_limit.group_set_purchase_limit"/>
-                    <field name="annual_budget"/>
+                    <field name="type" widget="radio" options="{'horizontal': true}"/>
+                    <field name="total_budget"/>
+                    <field name="annual_budget" attrs="{'invisible': [('type', 'in', ['month', 'total'])]}"/>
                     <field name="remaining_annual_budget"/>
                     <field name="budget_start_date"/>
                     <field name="budget_end_date"/>

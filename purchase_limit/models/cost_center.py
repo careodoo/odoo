@@ -1,7 +1,8 @@
+from collections import Counter
 from odoo import fields, models, api
 from odoo.exceptions import UserError, ValidationError
 from dateutil.relativedelta import relativedelta
-from datetime import datetime
+from datetime import datetime, date
 
 
 class CostCenter(models.Model):
@@ -9,11 +10,16 @@ class CostCenter(models.Model):
 
     purchase_limit = fields.Float()
     annual_budget = fields.Float()
-    remaining_annual_budget = fields.Float(compute='compute_remaining_annual_budget', store=True)
+    total_budget = fields.Float()
+    remaining_annual_budget = fields.Float(compute='compute_remaining_budget', store=True,
+                                           string='Remaining Budget')
     budget_start_date = fields.Date()
     budget_end_date = fields.Date()
     month_ids = fields.One2many('cost.center.month', 'cost_center_id')
     extra_budget_ids = fields.One2many('cost.center.extra.budget', 'cost_center_id')
+    type = fields.Selection(selection=[
+        ('month', 'Monthly'), ('annual', 'Annually'), ('total', 'Total')
+    ], default='month', required=True)
 
     @api.constrains('budget_start_date', 'budget_end_date')
     def check_dates(self):
@@ -22,11 +28,14 @@ class CostCenter(models.Model):
                 if rec.budget_start_date > rec.budget_end_date:
                     raise ValidationError("Start Date must be before End Date!")
 
-    def diff_month(self, d1, d2):
-        return (d1.year - d2.year) * 12 + d1.month - d2.month
+    def diff_month(self, end, start):
+        return (end.year - start.year) * 12 + end.month - start.month
+
+    def diff_year(self, start, end):
+        return end.year - start.year - ((end.month, end.day) < (start.month, start.day))
 
     @api.depends('month_ids.remaining_budget')
-    def compute_remaining_annual_budget(self):
+    def compute_remaining_budget(self):
         for rec in self:
             rec.remaining_annual_budget = sum(rec.month_ids.mapped('remaining_budget')) if rec.month_ids else False
 
@@ -46,9 +55,54 @@ class CostCenter(models.Model):
                 budget = month[0].remaining_budget
         return budget
 
+    def generate_budget(self):
+        if self.type == 'month':
+            self.generate_monthly_budget()
+        elif self.type == 'annual':
+            self.generate_annually_budget()
+        else:
+            self.generate_total_budget()
+
+    def generate_total_budget(self):
+        if self.total_budget <= 0:
+            raise UserError("please add Total Budget")
+        if not self.budget_start_date or not self.budget_end_date:
+            raise UserError("please add Start Date and End Date")
+        self.month_ids = [(5, 0, 0)]
+        self.env['cost.center.month'].create({
+            'cost_center_id': self.id,
+            'sequence': 1,
+            'date': self.budget_start_date,
+            'date_string': self.budget_start_date.strftime('%B %Y'),
+            'budget': self.total_budget,
+        })
+
+    def generate_annually_budget(self):
+        if self.total_budget <= 0:
+            raise UserError("please add Total Budget")
+        if not self.budget_start_date or not self.budget_end_date:
+            raise UserError("please add Start Date and End Date")
+        self.month_ids = [(5, 0, 0)]
+        count = self.diff_month(self.budget_end_date, self.budget_start_date)
+        if count:
+            month_budget = self.total_budget / count
+            dates = [(self.budget_start_date + relativedelta(months=i)).year for i in range(count)]
+            counter = Counter(dates)
+            counter = dict(sorted(counter.items()))
+            i = 0
+            for key, value in counter.items():
+                self.env['cost.center.month'].create({
+                    'cost_center_id': self.id,
+                    'sequence': i + 1,
+                    'date': (self.budget_start_date + relativedelta(years=i)),
+                    'date_string': (self.budget_start_date + relativedelta(years=i)).strftime('%Y'),
+                    'budget': month_budget * value,
+                })
+                i += 1
+
     def generate_monthly_budget(self):
-        if self.annual_budget <= 0:
-            raise UserError("please add Budget")
+        if self.total_budget <= 0:
+            raise UserError("please add Total Budget")
         if not self.budget_start_date or not self.budget_end_date:
             raise UserError("please add Start Date and End Date")
         self.month_ids = [(5, 0, 0)]
@@ -60,7 +114,7 @@ class CostCenter(models.Model):
                     'sequence': i + 1,
                     'date': (self.budget_start_date + relativedelta(months=i)),
                     'date_string': (self.budget_start_date + relativedelta(months=i)).strftime('%B %Y'),
-                    'budget': self.annual_budget / count,
+                    'budget': self.total_budget / count,
                 })
 
     def generate_missing_months(self):
