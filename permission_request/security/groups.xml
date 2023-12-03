@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.module.category" id="module_hr_permission_request">
+            <field name="name">HR Permission Request</field>
+        </record>
+
+        <record id="group_hr_permission_request_user" model="res.groups">
+            <field name="name">User</field>
+            <field name="category_id" ref="module_hr_permission_request"/>
+        </record>
+        <record id="group_hr_permission_request_approver" model="res.groups">
+            <field name="name">Manager</field>
+            <field name="category_id" ref="module_hr_permission_request"/>
+        </record>
+
+        <record id="hr_permission_request_rule_user_own" model="ir.rule">
+            <field name="name">User own Permission Request</field>
+            <field ref="permission_request.model_permission_request" name="model_id"/>
+            <field name="domain_force">[('create_uid','=',user.id)]</field>
+            <field name="groups" eval="[(4, ref('group_hr_permission_request_user'))]"/>
+        </record>
+        <record id="hr_permission_request_rule_manager" model="ir.rule">
+            <field name="name">All Permission Request</field>
+            <field ref="permission_request.model_permission_request" name="model_id"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="groups" eval="[(4, ref('group_hr_permission_request_approver'))]"/>
+        </record>
+    </data>
+</odoo>
