@@ -35,7 +35,7 @@
                                         <span class="font-weight-bold">Annual Budget</span>
                                     </td>
                                     <td class="text-center">
-                                        <span t-esc="doc.cost_center.annual_budget"/>
+                                        <span t-esc="round(doc.cost_center.annual_budget, 3)"/>
                                     </td>
                                 </tr>
                                 <tr>
@@ -43,7 +43,7 @@
                                         <span class="font-weight-bold">Monthly Budget</span>
                                     </td>
                                     <td class="text-center">
-                                        <span t-esc="doc.cost_center.get_monthly_budget(doc.pr_date)"/>
+                                        <span t-esc="round(doc.cost_center.get_monthly_budget(doc.pr_date), 3)"/>
                                     </td>
                                 </tr>
                                 <tr>
@@ -51,7 +51,7 @@
                                         <span class="font-weight-bold">Remaining Annual Budget</span>
                                     </td>
                                     <td class="text-center">
-                                        <span t-esc="doc.cost_center.remaining_annual_budget"/>
+                                        <span t-esc="round(doc.cost_center.remaining_annual_budget, 3)"/>
                                     </td>
                                 </tr>
                                 <tr>
@@ -59,7 +59,7 @@
                                         <span class="font-weight-bold">Remaining Monthly Budget</span>
                                     </td>
                                     <td class="text-center">
-                                        <span t-esc="doc.cost_center.get_remaining_monthly_budget(doc.pr_date)"/>
+                                        <span t-esc="round(doc.cost_center.get_remaining_monthly_budget(doc.pr_date), 3)"/>
                                     </td>
                                 </tr>
                             </tbody>
