@@ -24,6 +24,7 @@
 
     # always loaded
     'data': [
+        'security/groups.xml',
         'security/ir.model.access.csv',
         'views/hr_action_joining.xml',
         'views/hr_action_clearance.xml',

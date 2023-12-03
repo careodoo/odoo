@@ -1,6 +1,12 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-hr_action_joining,hr_action_joining,model_hr_action_joining,base.group_user,1,1,1,1
+hr_action_joining_user,hr_action_joining_user,model_hr_action_joining,care_hr.group_hr_joining_user,1,1,1,1
+hr_action_joining_approver,hr_action_joining_approver,model_hr_action_joining,care_hr.group_hr_joining_approver,1,1,1,1
+
 hr_action_clearance,hr_action_clearance,model_hr_action_clearance,base.group_user,1,1,1,1
 hr_action_clearance_line,hr_action_clearance_line,model_hr_action_clearance_line,base.group_user,1,1,1,1
-hr_action_absence,hr_action_absence,model_hr_action_absence,base.group_user,1,1,1,1
-hr_action_leave_return,hr_action_leave_return,model_hr_action_leave_return,base.group_user,1,1,1,1
+
+hr_action_absence_user,hr_action_absence_user,model_hr_action_absence,care_hr.group_hr_absence_user,1,1,1,1
+hr_action_absence_approver,hr_action_absence_approver,model_hr_action_absence,care_hr.group_hr_absence_approver,1,1,1,1
+
+hr_action_leave_return_user,hr_action_leave_return_user,model_hr_action_leave_return,care_hr.group_hr_leave_return_user,1,1,1,1
+hr_action_leave_return_approver,hr_action_leave_return_approver,model_hr_action_leave_return,care_hr.group_hr_leave_return_approver,1,1,1,1

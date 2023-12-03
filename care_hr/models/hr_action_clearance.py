@@ -37,6 +37,12 @@ class HrActionClearance(models.Model):
         ('draft', 'Draft'), ('submit', 'Submitted'), ('approved', 'Approved'),
     ], default='draft')
 
+    def button_print_report(self):
+        return self.env.ref('care_hr.action_clearance_report').report_action(self)
+
+    def button_print_report_header(self):
+        return self.env.ref('care_hr.action_clearance_header_report').report_action(self)
+
     def button_submit(self):
         self.state = 'submit'
         self.barcode = str(int(datetime.now().timestamp()))

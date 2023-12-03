@@ -30,6 +30,12 @@ class HrActionAbsence(models.Model):
     qr_image = fields.Binary("QR Code", compute='_generate_qr_code')
     qr_url = fields.Char("QR Code", compute='_generate_qr_code')
 
+    def button_print_report(self):
+        return self.env.ref('care_hr.action_absence_report').report_action(self)
+
+    def button_print_report_header(self):
+        return self.env.ref('care_hr.action_absence_header_report').report_action(self)
+
     @api.depends('employee_id')
     def compute_last_work_date(self):
         for rec in self:

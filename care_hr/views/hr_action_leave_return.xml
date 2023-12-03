@@ -7,8 +7,11 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
-                        <button name="button_submit" type="object" string="Submit" class="oe_highlight"/>
-                        <button name="button_approve" type="object" string="Approve" class="oe_highlight"/>
+                        <button name="button_submit" type="object" string="Submit" class="oe_highlight" states="draft"/>
+                        <button name="button_approve" type="object" string="Approve" class="oe_highlight"
+                                groups="care_hr.group_hr_joining_approver" states="submit"/>
+                        <button name="button_print_report" type="object" string="Print" class="oe_highlight" states="approved"/>
+                        <button name="button_print_report_header" type="object" string="Print with Header" class="oe_highlight" states="approved"/>
                         <field name="state" widget="statusbar"/>
                     </header>
                     <sheet>
