@@ -1,2 +1,3 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_manpower_requisition,manpower_requisition,model_manpower_requisition,base.group_user,1,1,1,1
+access_manpower_requisition_user,manpower_requisition_user,model_manpower_requisition,manpower_requisition.group_hr_manpower_user,1,1,1,1
+access_manpower_requisition_approver,manpower_requisition_approver,model_manpower_requisition,manpower_requisition.group_hr_manpower_approver,1,1,1,1

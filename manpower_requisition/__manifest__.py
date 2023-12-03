@@ -24,6 +24,7 @@
 
     # always loaded
     'data': [
+        'security/groups.xml',
         'security/ir.model.access.csv',
         'views/manpower_requisition.xml',
         'reports/manpower_requisition.xml',
