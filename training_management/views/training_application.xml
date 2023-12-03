@@ -45,8 +45,11 @@
                 <form>
                     <header>
                         <field name="is_approved" invisible="1"/>
+                        <field name="is_completed" invisible="1"/>
                         <button name="button_create_tasks" type="object" string="Create Tasks" class="oe_highlight"
                             attrs="{'invisible': [('is_approved', '=', False)]}"/>
+                        <button name="print_certificate" type="object" string="Print Certificate" class="oe_highlight"
+                                attrs="{'invisible': [('is_completed', '=', False)]}"/>
                         <field name="stage_id" widget="statusbar" options="{'clickable': '1'}"/>
                     </header>
                     <sheet>

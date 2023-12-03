@@ -23,8 +23,12 @@ class TrainingApplication(models.Model):
     description = fields.Text()
     stage_id = fields.Many2one('application.stage', default=lambda self: self.get_default_stage())
     is_approved = fields.Boolean(related='stage_id.is_approved', store=True)
+    is_completed = fields.Boolean(related='stage_id.is_completed', store=True)
     sign = fields.Binary()
     company_id = fields.Many2one('res.company', default=lambda self: self.env.company, required=True)
+
+    def print_certificate(self):
+        return self.env.ref('training_management.training_certification_report').report_action(self)
 
     @api.constrains('date_start', 'date_end')
     def check_dates(self):

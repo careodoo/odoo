@@ -9,4 +9,5 @@ class ApplicationStage(models.Model):
     is_default = fields.Boolean(string='Default Stage')
     is_draft = fields.Boolean(string='Is Draft?')
     is_approved = fields.Boolean(string='Is Approved?')
+    is_completed = fields.Boolean(string='Is Completed?')
     is_cancelled = fields.Boolean(string='Is Cancelled?')

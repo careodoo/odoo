@@ -22,6 +22,7 @@
         </record>
         <record id="application_stage_completed" model="application.stage">
             <field name="name">Completed</field>
+            <field name="is_completed" eval="True"/>
         </record>
         <record id="application_stage_cancelled" model="application.stage">
             <field name="name">Cancelled</field>
