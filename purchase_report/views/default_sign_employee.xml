@@ -7,6 +7,8 @@
             <field name="arch" type="xml">
                 <tree editable="bottom">
                     <field name="employee_id"/>
+                    <field name="option_online"/>
+                    <field name="option_print"/>
                 </tree>
             </field>
         </record>

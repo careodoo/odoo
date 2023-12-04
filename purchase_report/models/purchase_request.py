@@ -8,7 +8,11 @@ class PurchaseRequest(models.Model):
     _order = 'id desc'
 
     def get_default_sign_lines(self):
-        return [(0, 0, {'employee_id': rec.employee_id.id}) for rec in self.env['default.sign.employee'].search([])]
+        return [
+            (0, 0, {'employee_id': rec.employee_id.id}) for rec in self.env['default.sign.employee'].search([
+                ('option_online', '=', True)
+            ])
+        ]
 
     lines = fields.One2many('purchase.request.line', 'request_id')
     signature_lines = fields.One2many('purchase.sign', 'request_id', default=get_default_sign_lines)
@@ -36,6 +40,23 @@ class PurchaseRequest(models.Model):
     ], default='draft')
     signature_users = fields.Many2many('res.users', compute='compute_signature_users', store=True)
     user_confirmed = fields.Boolean(compute='compute_user_confirmed')
+
+    def check_print_option(self, employee):
+        return self.env['default.sign.employee'].search([
+            ('employee_id', '=', employee.id), ('option_print', '=', True)
+        ])
+
+    def get_sign_lines(self):
+        lines = [[l.employee_id, l.date_confirm] for l in self.signature_lines if self.check_print_option(l.employee_id)]
+
+        print_employees = self.env['default.sign.employee'].search([('option_print', '=', True)]).mapped('employee_id').mapped('id')
+        sign_employees = [l.employee_id.id for l in self.signature_lines if self.check_print_option(l.employee_id)]
+        delta = list(set(print_employees) - set(sign_employees))
+        if delta:
+            employees = self.env['hr.employee'].browse(delta)
+            for emp in employees:
+                lines.append([emp, False])
+        return lines
 
     def compute_user_confirmed(self):
         for rec in self:
@@ -102,6 +123,8 @@ class PurchaseRequest(models.Model):
             if order.signature_lines.filtered(lambda l: not l.confirm):
                 return
             order.write({'state': 'confirm'})
+            for line in self.lines:
+                line.purchase_id.button_confirm()
 
     def button_revise(self):
         for order in self.filtered(lambda o: o.state != 'confirm'):

@@ -14,12 +14,12 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <t t-foreach="doc.signature_lines" t-as="sign">
+                                <t t-foreach="doc.get_sign_lines()" t-as="line">
                                     <tr>
                                         <td>
-                                            <p t-esc="sign.employee_id.name"/>
-                                            <p t-esc="sign.employee_title"/>
-                                            <p t-if="sign.date_confirm">Approved on system at <span t-esc="sign.date_confirm"/></p>
+                                            <p t-esc="line[0].name"/>
+                                            <p t-esc="line[0].job_title"/>
+                                            <p t-if="line[1]">Approved on system at <span t-esc="line[1]"/></p>
                                         </td>
                                         <td></td>
                                     </tr>
