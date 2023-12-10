@@ -128,7 +128,7 @@
                                         <td><span t-esc="doc.line_ids.filtered(lambda l: l.sequence == 3).remarks"/></td>
                                     </tr>
                                     <tr>
-                                        <td>Staff Diabetes</td>
+                                        <td>Staff Debts</td>
                                         <td><span t-esc="doc.line_ids.filtered(lambda l: l.sequence == 4).remarks"/></td>
                                     </tr>
                                     <tr>
@@ -250,7 +250,7 @@
                                         <td><span t-esc="doc.line_ids.filtered(lambda l: l.sequence == 3).remarks"/></td>
                                     </tr>
                                     <tr>
-                                        <td>Staff Diabetes</td>
+                                        <td>Staff Debts</td>
                                         <td><span t-esc="doc.line_ids.filtered(lambda l: l.sequence == 4).remarks"/></td>
                                     </tr>
                                     <tr>
