@@ -9,6 +9,7 @@
     'license': 'LGPL-3',
     'depends': ['base', 'purchase', 'hr', 'care', 'project'],
     'data': [
+        'security/groups.xml',
         'security/ir.model.access.csv',
         'security/rules.xml',
         'data/sequence.xml',
