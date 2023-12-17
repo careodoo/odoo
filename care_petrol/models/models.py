@@ -36,6 +36,12 @@ class PetrolTank(models.Model):
     first_charge_balance = fields.Float(compute='compute_first_charge_balance', store=True)
     company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
 
+    @api.constrains('capacity', 'balance')
+    def check_capacity_balance(self):
+        for rec in self:
+            if rec.capacity < rec.balance:
+                raise ValidationError(f"{rec.name} Balance can't exceed Capacity {rec.capacity}!")
+
     @api.depends('used', 'charge_ids.quantity')
     def compute_first_charge_balance(self):
         for rec in self:
