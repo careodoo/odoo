@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_care_timesheet_u,care_timesheet_u,model_care_timesheet,care_timesheet.group_care_timesheet_user,1,1,1,1
+access_care_timesheet_a,care_timesheet_a,model_care_timesheet,care_timesheet.group_care_timesheet_user,1,1,1,1
+
+access_care_timesheet_line_u,care_timesheet_line_u,model_care_timesheet_line,care_timesheet.group_care_timesheet_user,1,1,1,1
+access_care_timesheet_line_a,care_timesheet_line_a,model_care_timesheet_line,care_timesheet.group_care_timesheet_approver,1,1,1,1

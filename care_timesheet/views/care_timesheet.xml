@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="care_timesheet_view_tree" model="ir.ui.view">
+            <field name="name">care_timesheet_view_tree</field>
+            <field name="model">care.timesheet</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="date_from"/>
+                    <field name="date_to"/>
+                    <field name="department_id"/>
+                    <field name="state" widget="badge"
+                           decoration-success="state == 'approved'"
+                           decoration-warning="state == 'submit'"/>
+                </tree>
+            </field>
+        </record>
+        <record id="care_timesheet_view_form" model="ir.ui.view">
+            <field name="name">care_timesheet_view_form</field>
+            <field name="model">care.timesheet</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="button_submit" type="object" string="Submit" class="oe_highlight" states="draft"/>
+                        <button name="button_approve" type="object" string="Approve" class="oe_highlight" states="submit"/>
+                        <button name="button_generate_timesheet" type="object" string="Generate Timesheet" class="oe_highlight"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="date_from"/>
+                                <field name="department_id"/>
+                            </group>
+                            <group>
+                                <field name="date_to"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page name="lines" string="Lines">
+                                <field name="line_ids">
+                                    <tree editable="bottom">
+                                        <field name="employee_id" readonly="1" force_save="1"/>
+                                        <field name="actual" readonly="1" force_save="1"/>
+                                        <field name="count"/>
+                                        <field name="diff"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="care_timesheet_action" model="ir.actions.act_window">
+            <field name="name">Timesheet</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">care.timesheet</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem id="care_timesheet_root" name="Timesheet" sequence="50"
+                  groups="care_timesheet.group_care_timesheet_user"/>
+        <menuitem id="care_timesheet_menu" name="Timesheet" parent="care_timesheet_root"
+                  action="care_timesheet_action" sequence="1"/>
+    </data>
+</odoo>
