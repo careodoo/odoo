@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_face_recognition" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.hr.attendance.face.recognition</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="99"/>
+        <field name="inherit_id" ref="hr_attendance.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@data-key='hr_attendance']" position="inside">
+                <div class="row mt16 o_settings_container">
+                    <div class="col-12 col-lg-6 o_setting_box" title="Check in/out user only when webcam create snapshot">
+                        <div class="o_setting_left_pane">
+                            <field name="face_recognition_pro_access"/>
+                        </div>
+                        <div class="o_setting_right_pane">
+                            <span class="o_form_label">Face recognition access</span>
+                            <div class="text-muted">
+                                        Use face recognition for access to check in/out
+                            </div>
+                        </div>
+
+                        <div class="o_setting_left_pane" attrs="{'invisible': [('face_recognition_pro_access', '=', False)]}">
+                            <field name="face_recognition_pro_scale_recognition"/>
+                        </div>
+                        <div class="o_setting_right_pane" attrs="{'invisible': [('face_recognition_pro_access', '=', False)]}">
+                            <span class="o_form_label">Scale of similafity face</span>
+                            <div class="text-muted">
+                                        0-100, 55 - standart value more 55 most stricter match
+                            </div>
+                        </div>
+                        <div class="o_setting_left_pane" attrs="{'invisible': [('face_recognition_pro_access', '=', False)]}">
+                            <field name="face_recognition_pro_store"/>
+                        </div>
+                        <div class="o_setting_right_pane" attrs="{'invisible': [('face_recognition_pro_access', '=', False)]}">
+                            <span class="o_form_label">Face control</span>
+                            <div class="text-muted">
+                                        Store snapshot and descriptor of employee when he check in/out in DB for visual control, takes up a lot of server space
+                            </div>
+                        </div>
+
+                        <div class="o_setting_left_pane" attrs="{'invisible': [('face_recognition_pro_access', '=', False)]}">
+                            <field name="face_recognition_pro_kiosk_auto"/>
+                        </div>
+                        <div class="o_setting_right_pane" attrs="{'invisible': [('face_recognition_pro_access', '=', False)]}">
+                            <span class="o_form_label">Face kiosk auto</span>
+                            <div class="text-muted">
+                                        Check in/out click auto when users face finded in kiosk mode
+                            </div>
+                        </div>
+
+                        <div class="o_setting_left_pane" attrs="{'invisible': [('face_recognition_pro_access', '=', False)]}">
+                            <field name="face_recognition_pro_photo_check"/>
+                        </div>
+                        <div class="o_setting_right_pane" attrs="{'invisible': [('face_recognition_pro_access', '=', False)]}">
+                            <span class="o_form_label">Face security from photo</span>
+                            <div class="text-muted">
+                                        Check in/out only real person, not photo
+                            </div>
+                        </div>
+                        <div class="o_setting_left_pane" attrs="{'invisible': ['|',('face_recognition_pro_access', '=', False),('face_recognition_pro_photo_check', '=', False)]}">
+                            <field name="face_recognition_pro_scale_spoofing"/>
+                        </div>
+                        <div class="o_setting_right_pane" attrs="{'invisible': ['|',('face_recognition_pro_access', '=', False),('face_recognition_pro_photo_check', '=', False)]}">
+                            <span class="o_form_label">Scale of anti-spoofing</span>
+                            <div class="text-muted">
+                                        0-100, 100 - 100% person, 0 - disable
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

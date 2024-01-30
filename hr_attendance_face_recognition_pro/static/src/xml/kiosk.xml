@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<template xml:space="preserve">
+    <t t-name="HrAttendanceKioskMode">
+        <div class="o_hr_attendance_kiosk_mode_container o_home_menu_background">
+            <span class="o_hr_attendance_kiosk_backdrop"/>
+            <div class="o_hr_attendance_clock text-center"/>
+            <div class="o_hr_attendance_kiosk_mode">
+                <h1><small>Welcome to</small> <t t-esc="widget.company_name"/></h1>
+                <img t-attf-src="{{widget.company_image_url}}" alt="Company Logo" class="o_hr_attendance_kiosk_company_image"/>
+                <div class="row o_hr_attendance_kiosk_welcome_row">
+                    <div class="col-sm-12">
+                        <button class="o_hr_attendance_button_employees btn btn-primary mb16">
+                            <div class="mb16 mt16">Select Employee</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</template>

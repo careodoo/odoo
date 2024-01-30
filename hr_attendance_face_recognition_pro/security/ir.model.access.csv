@@ -1,0 +1,11 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_hr_attendance_user_face,hr.attendance.user.face,model_res_users_image,hr_attendance.group_hr_attendance_manager,1,1,1,1
+access_hr_attendance_employee_face,hr.attendance.employee.face,model_hr_employee_image,hr_attendance.group_hr_attendance_manager,1,1,1,1
+access_hr_attendance_system_user_face,hr.attendance.system.user.face,model_res_users_image,hr_attendance.group_hr_attendance_user,1,1,1,0
+access_hr_attendance_system_employee_face,hr.attendance.system.employee.face,model_hr_employee_image,hr_attendance.group_hr_attendance_user,1,1,1,0
+access_hr_attendance_admin_image_pro,hr.attendance.admin.image.pro,model_res_users_image,hr_attendance_base.group_hr_attendance_admin_pro,1,1,1,1
+access_hr_attendance_manager_image_pro,hr.attendance.manager.image.pro,model_res_users_image,hr_attendance_base.group_hr_attendance_manager_pro,1,1,1,0
+access_hr_attendance_user_image_pro,hr.attendance.user.image.pro,model_res_users_image,hr_attendance_base.group_hr_attendance_user_pro,1,0,0,0
+access_hr_attendance_admin_employee_image_pro,hr.attendance.admin.employee.image.pro,model_hr_employee_image,hr_attendance_base.group_hr_attendance_admin_pro,1,1,1,1
+access_hr_attendance_manager_employee_image_pro,hr.attendance.manager.employee.image.pro,model_hr_employee_image,hr_attendance_base.group_hr_attendance_manager_pro,1,1,1,0
+access_hr_attendance_user_employee_image_pro,hr.attendance.user.employee.image.pro,model_hr_employee_image,hr_attendance_base.group_hr_attendance_user_pro,1,0,0,0
