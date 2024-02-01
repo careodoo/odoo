@@ -33,9 +33,10 @@ from odoo import models, fields, api, exceptions, _
 
 class HrEmployee(models.Model):
     _inherit = "hr.employee"
-# class HrEmployee(models.AbstractModel):
-#     _inherit = "hr.employee.base"
-    #_description = "Employee"
+
+    def attendance_manual(self, next_action, entered_pin=None):
+        self.ensure_one()
+        return self._attendance_action(next_action)
 
     # def name_get(self):
     #     result = []
