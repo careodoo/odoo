@@ -6,3 +6,5 @@ from . import hr_action_clearance
 from . import hr_action_absence
 from . import hr_action_leave_return
 from . import hr_leave
+from . import hr_skills
+from . import hr_employee
