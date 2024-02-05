@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import fields, models, api, _
+from odoo.exceptions import ValidationError
 
 class HREmployee(models.Model):
     _inherit = 'hr.employee'
@@ -43,6 +44,29 @@ class HREmployee(models.Model):
     requested_by = fields.Many2one('hr.employee', string='Requested By')
     type = fields.Selection([('break', 'Break from work'), ('escape', 'Escape'), ('abstention', 'Abstention From Work'), ('rioter', 'Rioter'), ('another', 'Another')], string='Type')
 
+    @api.constrains('moi_number')
+    def check_moi_number(self):
+        for rec in self:
+            if rec.moi_number:
+                count = self.search_count([('moi_number', '=', rec.moi_number)])
+                if count > 1:
+                    raise ValidationError("The Moi Number must be unique, this one is already assigned to another employee.")
+
+    @api.constrains('civil_code')
+    def check_civil_code(self):
+        for rec in self:
+            if rec.civil_code:
+                count = self.search_count([('civil_code', '=', rec.civil_code)])
+                if count > 1:
+                    raise ValidationError("The Civil Code must be unique, this one is already assigned to another employee.")
+
+    @api.constrains('identification_id')
+    def check_identification_id(self):
+        for rec in self:
+            if rec.identification_id:
+                count = self.search_count([('identification_id', '=', rec.identification_id)])
+                if count > 1:
+                    raise ValidationError("The Identification No. must be unique, this one is already assigned to another employee.")
 
     def submit_employee_to_hostel(self):
         if self.bed_id:
