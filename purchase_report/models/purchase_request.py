@@ -158,6 +158,7 @@ class CostCenter(models.Model):
     name = fields.Char()
     company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
     department_id = fields.Many2one('hr.department')
+    active = fields.Boolean(default=True)
 
 
 class PurchaseSign(models.Model):

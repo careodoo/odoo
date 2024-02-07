@@ -8,6 +8,7 @@
                 <form string="cost_center_form">
                     <sheet>
                         <group>
+                            <field name="active" invisible="1"/>
                             <field name="name"/>
                             <field name="company_id"/>
                         </group>
