@@ -84,6 +84,7 @@ class HrLawsuit(models.Model):
                              help='Status')
     update_ids = fields.One2many('hr.lawsuit.update', 'lawsuit_id', string='Updates')
     next_appointment = fields.Datetime(compute='compute_next_appointment', store=True)
+    active = fields.Boolean(default=True)
 
     @api.depends('update_ids.datetime')
     def compute_next_appointment(self):
@@ -98,13 +99,11 @@ class HrLawsuit(models.Model):
             ('next_appointment', '!=', False)
         ]).filtered(lambda l: l.next_appointment.date() == fields.Date.today())
         for lawsuit in lawsuits:
-            for follower in lawsuit.message_partner_ids:
-                user_id = follower.user_id.id
-                lawsuit.sudo().activity_schedule(
-                    'oh_hr_lawsuit_management.mail_act_legal_case_reminder',
-                    summary='Legal Case Reminder',
-                    note='Next Appointment Reminder for Legal Case {}'.format(lawsuit.name),
-                    user_id=user_id)
+            lawsuit.sudo().activity_schedule(
+                'oh_hr_lawsuit_management.mail_act_legal_case_reminder',
+                summary='Legal Case Reminder',
+                note='Next Appointment Reminder for Legal Case {}'.format(lawsuit.name),
+                user_id=lawsuit.create_uid.id)
 
 
 class HrLegalEmployeeMaster(models.Model):
