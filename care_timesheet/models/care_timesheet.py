@@ -17,6 +17,7 @@ class CareTimesheet(models.Model):
     state = fields.Selection(selection=[
         ('draft', 'Draft'), ('submit', 'Submitted'), ('approved', 'Approved'),
     ], default='draft')
+    active = fields.Boolean(default=True)
 
     @api.constrains('date_from', 'date_to')
     def check_dates(self):

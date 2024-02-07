@@ -3,14 +3,14 @@
     'name': "Care Timesheet",
 
     'summary': """
-        Short (1 phrase/line) summary of the module's purpose, used as
-        subtitle on modules listing or apps.openerp.com""",
+        compare employee attendance within time interval and create new attendance records based on it
+        """,
 
     'description': """
-        Long description of module's purpose
+        compare employee attendance within time interval and create new attendance records based on it
     """,
 
-    'author': "My Company",
+    'author': "Ahmed Gaber",
     'website': "http://www.yourcompany.com",
 
     # Categories can be used to filter modules in modules listing
