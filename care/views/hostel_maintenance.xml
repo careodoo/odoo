@@ -17,6 +17,7 @@
         <field name="model">hostel.maintenance</field>
         <field name="arch" type="xml">
             <tree string="hostel_maintenance_tree">
+                <field name="active" invisible="1"/>
                 <field name="name"/>
                 <field name="hostel_id"/>
                 <field name="floor_id"/>

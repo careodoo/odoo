@@ -19,6 +19,7 @@ class Custody(models.Model):
     purchase_ids = fields.One2many('purchase.order', 'custody')
     purchase_count = fields.Integer(compute='compute_purchase_count')
     service_count = fields.Integer(compute='compute_service_count')
+    active = fields.Boolean(default=True)
     company_id = fields.Many2one('res.company', default=lambda self: self.env.company, required=True)
 
     @api.depends('purchase_ids')

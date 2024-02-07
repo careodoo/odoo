@@ -5,6 +5,7 @@
         <field name="model">services.checks</field>
         <field name="arch" type="xml">
             <tree string="services_checks_tree" editable="top">
+                <field name="active" invisible="1"/>
                 <field name="name"/>
                 <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
             </tree>

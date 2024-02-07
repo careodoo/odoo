@@ -5,6 +5,7 @@
         <field name="model">hostel.floor</field>
         <field name="arch" type="xml">
             <tree string="hostel_floor_tree">
+                <field name="active" invisible="1"/>
                 <field name="name"/>
                 <field name="hostel_id"/>
                 <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
@@ -25,6 +26,7 @@
                     </div>
                     <group>
                         <group>
+                            <field name="active" invisible="1"/>
                             <field name="hostel_id"/>
                             <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
                         </group>

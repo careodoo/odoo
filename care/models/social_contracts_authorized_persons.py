@@ -16,6 +16,7 @@ class SocialContractsAuthorizedPersons(models.Model):
     country_id = fields.Many2one('res.country', string='Nationality (Country)')
     contract_ids = fields.Many2many('hr.social.contracts', compute='compute_contracts', string='Contracts')
     company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
+    active = fields.Boolean(default=True)
 
     def compute_contracts(self):
         for record in self:

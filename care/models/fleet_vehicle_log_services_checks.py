@@ -9,6 +9,8 @@ class FleetVehicleLogServicesChecks(models.Model):
     service_id  = fields.Many2one('fleet.vehicle.log.services', string="Service")
     state = fields.Boolean(string="State")
     company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
+    active = fields.Boolean(default=True)
+
 
 class ServicesChecks(models.Model):
     _name = 'services.checks'
@@ -16,3 +18,4 @@ class ServicesChecks(models.Model):
 
     name  = fields.Char(string="Name", required=True)
     company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
+    active = fields.Boolean(default=True)

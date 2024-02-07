@@ -5,6 +5,7 @@
         <field name="model">hostel.bed</field>
         <field name="arch" type="xml">
             <tree string="hostel_bed_tree">
+                <field name="active" invisible="1"/>
                 <field name="name"/>
                 <field name="employee_id"/>
                 <field name="hostel_id"/>
@@ -32,6 +33,7 @@
                     </div>
                     <group>
                         <group>
+                            <field name="active" invisible="1"/>
                             <field name="is_available" invisible="1" force_save="1"/>
                             <field name="employee_id" readonly="1" force_save="1"/>
                             <field name="hostel_id"/>

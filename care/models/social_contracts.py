@@ -21,7 +21,7 @@ class HRSocialContracts(models.Model):
     authorized_persons_line = fields.One2many('social.contracts.authorized.persons.line', 'social_contract_id', string='Authorized Persons Line')
     social_contracts_date_line = fields.One2many('social.contracts.date.line', 'social_contract_id', string='Dates Line')
     company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
-
+    active = fields.Boolean(default=True)
 
     def compute_registered_labor(self):
         for record in self:
@@ -49,6 +49,8 @@ class SocialContractsDateLine(models.Model):
     end_date = fields.Date(string='End Date', required=True)
     social_contract_id = fields.Many2one('hr.social.contracts', string='Contract Name')
     company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
+    active = fields.Boolean(default=True)
+
 
 class SocialContractsDateTypes(models.Model):
     _name = 'social.contracts.date.types'
@@ -56,3 +58,4 @@ class SocialContractsDateTypes(models.Model):
 
     name = fields.Char(string='Name', required=True)
     company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
+    active = fields.Boolean(default=True)

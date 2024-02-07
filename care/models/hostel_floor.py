@@ -10,3 +10,4 @@ class HostelFloor(models.Model):
     hostel_id = fields.Many2one('hostel' , string='Hostel', track_visibility='onchange', required=True)
     employee_line = fields.One2many('hostel.bed', 'floor_id', string="Employee Line", readonly=True)
     company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
+    active = fields.Boolean(default=True)

@@ -5,6 +5,7 @@
         <field name="model">custody</field>
         <field name="arch" type="xml">
             <tree string="custody_tree">
+                <field name="active" invisible="1"/>
                 <field name="name"/>
                 <field name="date_time"/>
                 <field name="partner_id"/>
@@ -36,6 +37,7 @@
                       </button>
                     </div>
                     <field name="is_active" invisible="1"/>
+                    <field name="active" invisible="1"/>
                     <field name="name" invisible="1"/>
                     <widget name="web_ribbon" title="Active"  bg_color="bg-success" attrs="{'invisible': [('is_active', '=', False)]}"/>
                     <widget name="web_ribbon" title="Disable" bg_color="bg-danger"  attrs="{'invisible': [('is_active', '=', True)]}"/>

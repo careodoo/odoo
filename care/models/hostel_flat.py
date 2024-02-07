@@ -11,6 +11,7 @@ class HostelFlat(models.Model):
     floor_id  = fields.Many2one('hostel.floor', string='Floor', track_visibility='onchange', required=True)
     employee_line = fields.One2many('hostel.bed', 'flat_id', string="Employee Line", readonly=True)
     company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
+    active = fields.Boolean(default=True)
 
     @api.onchange('floor_id')
     def action_floor_id(self):

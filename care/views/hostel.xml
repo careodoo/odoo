@@ -5,6 +5,7 @@
         <field name="model">hostel</field>
         <field name="arch" type="xml">
             <tree string="hostel_tree">
+                <field name="active" invisible="1"/>
                 <field name="name"/>
                 <field name="address"/>
                 <field name="price"/>
@@ -57,6 +58,7 @@
                     </div>
                     <group>
                         <group>
+                            <field name="active" invisible="1"/>
                             <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
                             <field name="address"/>
                             <field name="labor_cost"/>

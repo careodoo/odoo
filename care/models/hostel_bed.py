@@ -17,6 +17,7 @@ class HostelBed(models.Model):
     end_date     = fields.Date(string='End Date')
     is_available = fields.Boolean(string='Available', compute='compute_is_available')
     company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
+    active = fields.Boolean(default=True)
 
     def compute_is_available(self):
         for record in self:
