@@ -50,5 +50,10 @@
           </xpath>
         </field>
     </record>
+    <record model="ir.ui.menu" id="hr_attendance.menu_hr_attendance_kiosk_no_user_mode">
+        <field name="parent_id" eval="False"/>
+        <field name="groups_id" eval="[(6,0,[ref('hr_attendance_base.group_kiosk_attendance_user')])]" />
+    </record>
+
   </data>
 </odoo>

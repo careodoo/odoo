@@ -31,8 +31,8 @@
 
     # always loaded
     'data': [
-        'views/views.xml',
         'security/hr_attendance_security.xml',
+        'views/views.xml',
     ],
 
     # 'qweb': [
