@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_product_update_request_u,product_update_request_u,model_product_update_request,care_stock.group_product_update_request_user,1,1,1,1
+access_product_update_request_m,product_update_request_m,model_product_update_request,care_stock.group_product_update_request_approver,1,1,1,1

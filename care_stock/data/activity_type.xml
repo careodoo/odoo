@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="mail_act_product_update_request" model="mail.activity.type">
+            <field name="name">Product Update Request</field>
+            <field name="icon">fa-sun-o</field>
+            <field name="res_model">product.update.request</field>
+        </record>
+    </data>
+</odoo>

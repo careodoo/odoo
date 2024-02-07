@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="product_update_request_view_tree" model="ir.ui.view">
+            <field name="name">product_update_request_view_tree</field>
+            <field name="model">product.update.request</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="product_id"/>
+                    <field name="cost"/>
+                    <field name="new_cost"/>
+                    <field name="notes"/>
+                    <field name="state" widget="badge" decoration-success="state == 'approved'" decoration-warning="state == 'submitted'" decoration-danger="state == 'rejected'"/>
+                </tree>
+            </field>
+        </record>
+        <record id="product_update_request_view_form" model="ir.ui.view">
+            <field name="name">product_update_request_view_form</field>
+            <field name="model">product.update.request</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="button_submit" type="object" string="Submit" class="oe_highlight" states="draft"/>
+                        <button name="button_approve" type="object" string="Approve" class="oe_highlight" states="submitted" groups="care_stock.group_product_update_request_approver"/>
+                        <button name="button_reject" type="object" string="Reject" states="submitted" groups="care_stock.group_product_update_request_approver"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <field name="product_id" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="cost" readonly="1" force_save="1"/>
+                            <field name="new_cost" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="notes" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        </group>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+        <record id="product_update_request_action" model="ir.actions.act_window">
+            <field name="name">Product Update Request</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">product.update.request</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem id="product_update_request_menu" name="Product Update Request"
+                  action="product_update_request_action" sequence="55"/>
+    </data>
+</odoo>
