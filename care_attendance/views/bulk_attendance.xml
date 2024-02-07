@@ -57,6 +57,7 @@
             <field name="priority" eval="1"/>
             <field name="arch" type="xml">
                 <tree string="bulk_attendance_tree">
+                    <field name="active" invisible="1"/>
                     <field name="name"/>
                     <field name="department_ids" widget="many2many_tags"/>
                     <field name="bulk_date"/>
@@ -72,6 +73,7 @@
             <field name="priority" eval="2"/>
             <field name="arch" type="xml">
                 <tree string="absence_tree">
+                    <field name="active" invisible="1"/>
                     <field name="name"/>
                     <field name="department_ids" widget="many2many_tags"/>
                     <field name="bulk_date"/>
@@ -108,6 +110,7 @@
                             </h1>
                         </div>
                         <group>
+                            <field name="active" invisible="1"/>
                             <field name="type" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="radio" options="{'horizontal': True}"/>
                             <field name="approver" invisible="1"/>
                             <field name="department_manager" invisible="1"/>

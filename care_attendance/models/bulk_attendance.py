@@ -65,6 +65,7 @@ class BulkAttendance(models.Model):
     refuse_reason = fields.Char()
     extra_department_ids = fields.Many2many('hr.employee.extra.department',
                                             domain="[('department_id', 'in', department_ids)]")
+    active = fields.Boolean(default=True)
 
     def button_confirm(self):
         # if (not self.employee_ids and self.type == 'attendance') and (not self.absent_employee_ids and self.type == 'absence') and not self.extra_department_ids:
