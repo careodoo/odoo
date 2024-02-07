@@ -24,6 +24,7 @@
             <field name="model">training.application</field>
             <field name="arch" type="xml">
                 <tree>
+                    <field name="active" invisible="1"/>
                     <field name="name"/>
                     <field name="employee_id"/>
                     <field name="application_name"/>
@@ -44,6 +45,7 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
+                        <field name="active" invisible="1"/>
                         <field name="is_approved" invisible="1"/>
                         <field name="is_completed" invisible="1"/>
                         <button name="button_create_tasks" type="object" string="Create Tasks" class="oe_highlight"

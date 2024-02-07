@@ -26,6 +26,7 @@ class TrainingApplication(models.Model):
     is_completed = fields.Boolean(related='stage_id.is_completed', store=True)
     sign = fields.Binary()
     company_id = fields.Many2one('res.company', default=lambda self: self.env.company, required=True)
+    active = fields.Boolean(default=True)
 
     def print_certificate(self):
         return self.env.ref('training_management.training_certification_report').report_action(self)
