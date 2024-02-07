@@ -33,6 +33,7 @@ class HrActionLeaveReturn(models.Model):
     ], default='draft')
     qr_image = fields.Binary("QR Code", compute='_generate_qr_code')
     qr_url = fields.Char("QR Code", compute='_generate_qr_code')
+    active = fields.Boolean(default=True)
 
     def button_print_report(self):
         return self.env.ref('care_hr.action_leave_return_report').report_action(self)

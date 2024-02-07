@@ -27,6 +27,7 @@ class HrActionJoining(models.Model):
     state = fields.Selection(selection=[
         ('draft', 'Draft'), ('submit', 'Submitted'), ('approved', 'Approved'),
     ], default='draft')
+    active = fields.Boolean(default=True)
 
     def button_print_report(self):
         return self.env.ref('care_hr.action_joining_report').report_action(self)

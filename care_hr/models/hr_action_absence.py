@@ -29,6 +29,7 @@ class HrActionAbsence(models.Model):
     barcode = fields.Char(default=generate_barcode)
     qr_image = fields.Binary("QR Code", compute='_generate_qr_code')
     qr_url = fields.Char("QR Code", compute='_generate_qr_code')
+    active = fields.Boolean(default=True)
 
     def button_print_report(self):
         return self.env.ref('care_hr.action_absence_report').report_action(self)
