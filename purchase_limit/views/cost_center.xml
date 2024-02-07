@@ -15,6 +15,7 @@
                     </header>
                 </xpath>
                 <xpath expr="//group" position="inside">
+                    <field name="active" invisible="1"/>
                     <field name="department_id"/>
                     <field name="purchase_limit" groups="purchase_limit.group_set_purchase_limit"/>
                     <field name="type" widget="radio" options="{'horizontal': true}"/>
