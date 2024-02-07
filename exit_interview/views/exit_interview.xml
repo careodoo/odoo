@@ -6,6 +6,7 @@
             <field name="model">exit.interview</field>
             <field name="arch" type="xml">
                 <tree>
+                    <field name="active" invisible="1"/>
                     <field name="employee_id"/>
                     <field name="employee_code"/>
                     <field name="date"/>
@@ -33,6 +34,7 @@
                             </h1>
                         </div>
                         <group>
+                            <field name="active" invisible="1"/>
                             <field name="barcode"/>
                             <field name="employee_code"/>
                             <field name="date"/>

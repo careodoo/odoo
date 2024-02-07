@@ -31,6 +31,7 @@ class ExitInterview(models.Model):
     barcode = fields.Char(default=generate_barcode)
     qr_image = fields.Binary("QR Code", compute='_generate_qr_code')
     qr_url = fields.Char("QR Code", compute='_generate_qr_code')
+    active = fields.Boolean(default=True)
 
     def _generate_qr_code(self):
         for rec in self:
