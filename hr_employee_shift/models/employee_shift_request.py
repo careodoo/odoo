@@ -60,6 +60,7 @@ class EmployeeShiftRequest(models.Model):
     working_hours_modifier = fields.Many2one('res.users', related='current_department.working_hours_modifier', store=True)
     working_hours = fields.Many2one('resource.calendar', related='employee_id.resource_calendar_id',
                                     store=True, readonly=False)
+    active = fields.Boolean(default=True)
 
     @api.model
     def create(self, vals):

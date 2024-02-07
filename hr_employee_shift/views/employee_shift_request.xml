@@ -76,6 +76,7 @@
                     </header>
                     <sheet>
                         <group>
+                            <field name="active" invisible="1"/>
                             <field name="employee_id" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
                             <field name="current_department" readonly="1" force_save="1"/>
@@ -104,6 +105,7 @@
             <field name="model">employee.shift.request</field>
             <field name="arch" type="xml">
                 <tree string="employee_shift_request_tree">
+                    <field name="active" invisible="1"/>
                     <field name="date"/>
                     <field name="employee_id"/>
                     <field name="current_department"/>
