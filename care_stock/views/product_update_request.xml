@@ -7,9 +7,6 @@
             <field name="arch" type="xml">
                 <tree>
                     <field name="name"/>
-                    <field name="product_id"/>
-                    <field name="cost"/>
-                    <field name="new_cost"/>
                     <field name="notes"/>
                     <field name="state" widget="badge" decoration-success="state == 'approved'" decoration-warning="state == 'submitted'" decoration-danger="state == 'rejected'"/>
                 </tree>
@@ -33,11 +30,20 @@
                             </h1>
                         </div>
                         <group>
-                            <field name="product_id" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="cost" readonly="1" force_save="1"/>
-                            <field name="new_cost" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="notes" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                         </group>
+                        <notebook>
+                            <page name="lines" string="Lines">
+                                <field name="line_ids" attrs="{'readonly': [('state', '!=', 'draft')]}">
+                                    <tree editable="bottom">
+                                        <field name="product_id"/>
+                                        <field name="cost" readonly="1" force_save="1"/>
+                                        <field name="new_cost"/>
+                                        <field name="notes"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
                     </sheet>
                     <div class="oe_chatter">
                         <field name="message_follower_ids"/>
