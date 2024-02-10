@@ -31,5 +31,6 @@
         'views/product_update_request.xml',
         'views/stock_warehouse.xml',
         'reports/report_stockpicking_operations.xml',
+        'reports/report_deliveryslip.xml',
     ],
 }
