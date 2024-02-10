@@ -28,7 +28,7 @@
                             </div>
                         </div>
                         <br/>
-                        <table class="table table-bordered table-sm table-striped text-center">
+                        <table class="table table-bordered table-sm table-striped">
                             <tbody>
                                 <tr t-if="o.move_ids_without_package and o.move_ids_without_package[0].partner_id and o.move_ids_without_package[0].partner_id.id != o.partner_id.id">
                                     <td>

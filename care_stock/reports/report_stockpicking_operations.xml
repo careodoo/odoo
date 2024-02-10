@@ -15,6 +15,14 @@
             </div>
             <div t-attf-class="footer o_standard_footer">
                 <div class="row">
+                    <div class="col-6 text-center">
+                        <p>Print Date: <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d %H:%M')"/></p>
+                    </div>
+                    <div class="col-6 text-center">
+                        <p>User: <span t-esc="user.name"/></p>
+                    </div>
+                </div>
+                <div class="row">
                     <img src="/care_stock/static/src/img/footer.png" atl="header.png" class="w-100"/>
                 </div>
             </div>
@@ -45,7 +53,7 @@
                             </div>
                         </div>
                         <br/>
-                        <table class="table table-bordered table-sm table-striped text-center">
+                        <table class="table table-bordered table-sm table-striped">
                             <tbody>
                                 <tr t-if="o.move_ids_without_package and o.move_ids_without_package[0].partner_id and o.move_ids_without_package[0].partner_id.id != o.partner_id.id">
                                     <td>
@@ -238,14 +246,6 @@
                         </div>
                         <br/><br/>
                         <p t-field="o.note"/>
-                        <div class="row">
-                            <div class="col-6 text-center">
-                                <p>Print Date: <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d %H:%M')"/></p>
-                            </div>
-                            <div class="col-6 text-center">
-                                <p>User: <span t-esc="user.name"/></p>
-                            </div>
-                        </div>
                     </div>
                 </t>
             </xpath>
