@@ -47,7 +47,7 @@
                         <br/>
                         <table class="table table-bordered table-sm table-striped text-center">
                             <tbody>
-                                <tr t-if="o.should_print_delivery_address()">
+                                <tr t-if="o.move_ids_without_package and o.move_ids_without_package[0].partner_id and o.move_ids_without_package[0].partner_id.id != o.partner_id.id">
                                     <td>
                                         <span><strong>Delivery Address: </strong></span>
                                         <span t-field="o.move_lines[0].partner_id"
