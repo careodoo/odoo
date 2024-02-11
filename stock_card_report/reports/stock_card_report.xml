@@ -1,23 +1,27 @@
 <odoo>
 
     <template id="stock_card_report.internal_layout">
+        <div class="header">
+            <img src="/stock_card_report/static/src/img/header.png" atl="header.png" class="w-100"/>
+        </div>
         <div class="article">
-            <link
-                href="/stock_card_report/static/src/css/report.css"
-                rel="stylesheet"
-            />
+            <link href="/stock_card_report/static/src/css/report.css" rel="stylesheet"/>
             <t t-out="0" />
         </div>
         <div class="footer">
             <div class="row">
-                <div class="col-6 custom_footer">
-                    <span
-                        t-out="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d')"
-                    />
+                <div class="col-4 text-center">
+                    <p>Print Date: <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d %H:%M')"/></p>
                 </div>
-                <div class="col-6 text-right custom_footer">
-                    <span class="page" />/<span class="topage" />
+                <div class="col-4 text-center">
+                    <p>User: <span t-esc="user.name"/></p>
                 </div>
+                <div class="col-4 text-center">
+                    Page: <span class="page"/> / <span class="topage"/>
+                </div>
+            </div>
+            <div class="row">
+                <img src="/stock_card_report/static/src/img/footer.png" atl="header.png" class="w-100"/>
             </div>
         </div>
     </template>
@@ -53,10 +57,29 @@
     <template id="stock_card_report.report_stock_card_report_base">
         <t t-foreach="o.product_ids" t-as="product">
             <div class="page">
-                <div class="row">
-                    <t t-set="title">Stock Card - <t t-out="product.name" /></t>
-                    <h4 class="mt0" t-out="title" style="text-align: center;" />
-                </div>
+                <br/>
+                <table class="table table-bordered table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Product Name</th>
+                            <th class="text-center">Internal Reference</th>
+                            <th class="text-center">Barcode</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-center">
+                                <span t-field="product.name"/>
+                            </td>
+                            <td class="text-center">
+                                <span t-field="product.default_code"/>
+                            </td>
+                            <td class="text-center">
+                                <span t-field="product.barcode"/>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
                 <!-- Display filters -->
                 <t t-call="stock_card_report.report_stock_card_report_filters" />
                 <!-- Display stock card table -->
@@ -71,7 +94,7 @@
                     <div class="act_as_row lines">
                         <div class="act_as_cell" />
                         <div class="act_as_cell">
-                            Initial
+                            Opening Balance
                         </div>
                         <div class="act_as_cell" />
                         <div class="act_as_cell" />
@@ -81,18 +104,11 @@
                     </div>
                     <!-- Display each lines -->
                     <t t-set="product_balance" t-value="initial" />
-                    <t
-                        t-foreach="o.results.filtered(lambda l: l.product_id == product and not l.is_initial)"
-                        t-as="product_line"
-                    >
-                        <t
-                            t-set="product_balance"
-                            t-value="product_balance + product_line.product_in - product_line.product_out"
-                        />
+                    <t t-foreach="o.results.filtered(lambda l: l.product_id == product and not l.is_initial)" t-as="product_line">
+                        <t t-set="product_balance" t-value="product_balance + product_line.product_in - product_line.product_out"/>
                         <t t-call="stock_card_report.report_stock_card_lines" />
                     </t>
                 </div>
-                <p style="page-break-before:always;" />
             </div>
         </t>
     </template>

@@ -15,11 +15,14 @@
             </div>
             <div t-attf-class="footer o_standard_footer">
                 <div class="row">
-                    <div class="col-6 text-center">
+                    <div class="col-4 text-center">
                         <p>Print Date: <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d %H:%M')"/></p>
                     </div>
-                    <div class="col-6 text-center">
+                    <div class="col-4 text-center">
                         <p>User: <span t-esc="user.name"/></p>
+                    </div>
+                    <div class="col-4 text-center">
+                        Page: <span class="page"/> / <span class="topage"/>
                     </div>
                 </div>
                 <div class="row">
@@ -114,11 +117,14 @@
                                 </tr>
                             </tbody>
                         </table>
-                        <table class="table table-bordered table-sm table-striped text-center" t-if="o.move_line_ids and o.move_ids_without_package">
+                        <table class="table table-bordered table-sm table-striped" t-if="o.move_line_ids and o.move_ids_without_package">
                             <t t-set="has_barcode" t-value="any(move_line.product_id and move_line.product_id.sudo().barcode or move_line.package_id for move_line in o.move_line_ids)"/>
                             <t t-set="has_serial_number" t-value="any(move_line.lot_id or move_line.lot_name for move_line in o.move_line_ids)" groups="stock.group_production_lot"/>
                             <thead>
                                 <tr>
+                                    <th name="th_product">
+                                        <strong>#</strong>
+                                    </th>
                                     <th name="th_product">
                                         <strong>Product</strong>
                                     </th>
@@ -140,9 +146,14 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                <t t-set="sequence" t-value="0"/>
                                 <!-- In case you come across duplicated lines, ask NIM or LAP -->
                                 <t t-foreach="o.move_line_ids_without_package" t-as="ml">
+                                    <t t-set="sequence" t-value="sequence + 1"/>
                                     <tr>
+                                        <td>
+                                            <span t-esc="sequence"/>
+                                        </td>
                                         <td>
                                             <span t-field="ml.product_id.display_name"/><br/>
                                             <span t-field="ml.product_id.description_picking"/>
