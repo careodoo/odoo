@@ -58,12 +58,15 @@
         <t t-foreach="o.product_ids" t-as="product">
             <div class="page">
                 <br/>
+                <h3 class="text-center">Stock Card Report</h3>
                 <table class="table table-bordered table-sm table-striped">
                     <thead>
                         <tr>
                             <th class="text-center">Product Name</th>
                             <th class="text-center">Internal Reference</th>
+                            <th class="text-center">Category</th>
                             <th class="text-center">Barcode</th>
+                            <th class="text-center">Opening Balance Date</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -75,7 +78,13 @@
                                 <span t-field="product.default_code"/>
                             </td>
                             <td class="text-center">
+                                <span t-field="product.categ_id.name"/>
+                            </td>
+                            <td class="text-center">
                                 <span t-field="product.barcode"/>
+                            </td>
+                            <td class="text-center">
+                                <span t-field="product.opening_balance_date"/>
                             </td>
                         </tr>
                     </tbody>
