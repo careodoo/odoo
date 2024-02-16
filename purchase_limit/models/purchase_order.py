@@ -56,7 +56,21 @@ class PurchaseOrder(models.Model):
 
     def button_cancel(self):
         if self.state in ['purchase', 'done'] and self.date_order and self.cost_center_id.month_ids:
-            month = self.cost_center_id.month_ids.filtered(lambda m: m.date.month == self.date_order.month)
+            month = False
+            if self.cost_center_id.type == 'total' and self.cost_center_id.month_ids:
+                if self.cost_center_id.budget_start_date and self.cost_center_id.budget_end_date:
+                    if self.cost_center_id.budget_start_date <= self.date_order.date() <= self.cost_center_id.budget_end_date:
+                        month = self.cost_center_id.month_ids[0]
+            elif self.cost_center_id.type == 'month':
+                month = self.cost_center_id.month_ids.filtered(
+                    lambda m: m.date.month == self.date_order.month and m.date.year == self.date_order.year
+                )
+            elif self.cost_center_id.type == 'annual':
+                month = self.cost_center_id.month_ids.filtered(
+                    lambda m: m.date.year == self.date_order.year
+                )
+            if not month:
+                raise ValidationError(f"Cost Center is not covering {self.date_order}!")
             month.used_budget -= self.amount_total
             month.purchase_order_ids = [(3, self.id)]
         res = super(PurchaseOrder, self).button_cancel()
