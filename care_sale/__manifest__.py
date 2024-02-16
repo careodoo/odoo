@@ -20,7 +20,7 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'sale', 'hr'],
+    'depends': ['base', 'sale', 'hr', 'purchase_limit'],
 
     # always loaded
     'data': [
@@ -30,6 +30,7 @@
         'views/sale_order.xml',
         'views/default_sale_sign_employee.xml',
         'views/sale_sign.xml',
+        'views/cost_center.xml',
         'reports/paperformat.xml',
         'reports/layout.xml',
         'reports/sale_order_header.xml',

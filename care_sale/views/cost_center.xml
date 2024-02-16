@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="sale_cost_center_view_form_limit" model="ir.ui.view">
+            <field name="name">sale_cost_center_view_form_limit</field>
+            <field name="model">cost.center</field>
+            <field name="inherit_id" ref="purchase_limit.cost_center_view_form_limit"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='month_ids']//field[@name='purchase_order_ids']" position="after">
+                    <field name="sale_order_ids" widget="many2many_tags"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
