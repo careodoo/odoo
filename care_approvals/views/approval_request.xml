@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="care_approval_request_view_form" model="ir.ui.view">
+            <field name="name">care_approval_request_view_form</field>
+            <field name="model">approval.request</field>
+            <field name="inherit_id" ref="approvals.approval_request_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//header" position="inside">
+                    <button name="print_report" type="object" string="Print Report" class="oe_highlight" attrs="{'invisible': [('has_report', '!=', 'required')]}"/>
+                </xpath>
+                <xpath expr="//notebook" position="inside">
+                    <page string="Barcode">
+                        <group>
+                            <field name="has_report" invisible="1"/>
+                            <field name="barcode" attrs="{'invisible': [('has_report', '!=', 'required')]}"/>
+                            <field name="qr_image" widget="image" class="oe_avatar" attrs="{'invisible': [('has_report', '!=', 'required')]}"/>
+                            <field name="qr_url" attrs="{'invisible': [('has_report', '!=', 'required')]}"/>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

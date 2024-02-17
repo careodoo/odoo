@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="care_approval_category_view_form" model="ir.ui.view">
+            <field name="name">care_approval_category_view_form</field>
+            <field name="model">approval.category</field>
+            <field name="inherit_id" ref="approvals.approval_category_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='has_date']" position="after">
+                    <field name="has_report" string="Report" widget="radio" options="{'horizontal': true}"/>
+                </xpath>
+                <xpath expr="//field[@name='company_id']" position="before">
+                    <field name="is_request_item"/>
+                </xpath>
+            </field>
+        </record>
+        <record id="request_item_action" model="ir.actions.act_window">
+            <field name="name">Request Items</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">approval.request</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="domain">[('category_id.is_request_item','=',True)]</field>
+        </record>
+        <menuitem id="request_item_menu" name="Request Items" action="request_item_action" sequence="55"/>
+    </data>
+</odoo>

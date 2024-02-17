@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.actions.report" id="action_approval_request_report">
+            <field name="name">Approval Request</field>
+            <field name="model">approval.request</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">care_approvals.approval_request_report</field>
+            <field name="report_file">care_approvals.approval_request_report</field>
+        </record>
+        <template id="care_approvals_internal_layout">
+            <t t-if="not o" t-set="o" t-value="doc"/>
+                <div class="header">
+                    <img src="/care_approvals/static/src/img/header.png" atl="header.png" class="w-100"/>
+                </div>
+            <div class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
+              <t t-raw="0"/>
+            </div>
+            <div t-attf-class="footer o_standard_footer">
+                <div class="row">
+                    <div class="col-4 text-center">
+                        <p>Print Date: <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d %H:%M')"/></p>
+                    </div>
+                    <div class="col-4 text-center">
+                        <p>User: <span t-esc="user.name"/></p>
+                    </div>
+                    <div class="col-4 text-center">
+                        Page: <span class="page"/> / <span class="topage"/>
+                    </div>
+                </div>
+                <div class="row">
+                    <img src="/care_approvals/static/src/img/footer.png" atl="header.png" class="w-100"/>
+                </div>
+            </div>
+        </template>
+		<template id="approval_request_report">
+			<t t-call="web.html_container">
+				<t t-call="care_approvals.care_approvals_internal_layout">
+                    <div class="page" style="font-family:Arial,Helvetica,sans-serif !important;">
+                        <t t-foreach="docs" t-as="doc">
+                            <div class="row">
+                                <div class="col-4">
+                                    <center>
+                                        <img t-if="doc.barcode" t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('Code128',doc.barcode,180,50)" />
+                                        <div t-esc="doc.barcode"/>
+                                    </center>
+                                </div>
+                                <div class="col-4">
+                                    <center>
+                                        <h3>
+                                            Request Items
+                                        </h3>
+                                    </center>
+                                </div>
+                                <div class="col-4">
+                                    <center>
+                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:100px;height:60px;"/>
+                                    </center>
+                                </div>
+                            </div>
+                            <br/>
+                            <table class="table table-bordered table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Requester</th>
+                                        <th>Date</th>
+                                        <th>Date Confirmed</th>
+                                        <th>Department</th>
+                                        <th>For Month</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <span t-field="doc.request_owner_id"/>
+                                        </td>
+                                        <td>
+                                            <span t-field="doc.date"/>
+                                        </td>
+                                        <td>
+                                            <span t-field="doc.date_confirmed"/>
+                                        </td>
+                                        <td>
+                                            <span t-field="doc.department_id"/>
+                                        </td>
+                                        <td>
+                                            <span t-esc="doc.date.strftime('%B %Y')"/>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <br/>
+                            <h5>List of Materials</h5>
+                            <table class="table table-bordered table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Product</th>
+                                        <th>Description</th>
+                                        <th>Quantity</th>
+                                        <th>UOM</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-set="sequence" t-value="0"/>
+                                    <tr t-foreach="doc.product_line_ids" t-as="line">
+                                        <t t-set="sequence" t-value="sequence + 1"/>
+                                        <td>
+                                            <span t-esc="sequence"/>
+                                        </td>
+                                        <td>
+                                            <span t-field="line.product_id"/>
+                                        </td>
+                                        <td>
+                                            <span t-field="line.description"/>
+                                        </td>
+                                        <td>
+                                            <span t-field="line.quantity"/>
+                                        </td>
+                                        <td>
+                                            <span t-field="line.product_uom_id"/>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <br/>
+                            <div class="row">
+                                <div class="col-6 text-center">
+                                    <ul class="list-unstyled">
+                                        <li><h5 t-field="doc.request_owner_id"/></li>
+                                        <li><h5>Requestor Sign</h5></li>
+                                    </ul>
+                                </div>
+                                <div class="col-6 text-center">
+                                    <ul class="list-unstyled">
+                                        <li><h5 style="visibility: hidden;">DUMMY</h5></li>
+                                        <li><h5>Approver Sign</h5></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>
