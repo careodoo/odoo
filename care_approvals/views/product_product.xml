@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="care_product_product_tree_view" model="ir.ui.view">
+            <field name="name">care_product_product_tree_view</field>
+            <field name="model">product.product</field>
+            <field name="inherit_id" ref="product.product_product_tree_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='priority']" position="after">
+                    <field name="image_1920" widget="image"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

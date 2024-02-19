@@ -1,2 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_care_approvals_care_approvals,care_approvals.care_approvals,model_care_approvals_care_approvals,base.group_user,1,1,1,1
+access_hr_department_product,hr_department_product,model_hr_department_product,base.group_user,1,1,1,1
+access_approval_request_order,approval_request_order,model_approval_request_order,base.group_user,1,1,1,1
+access_approval_request_order_line,approval_request_order_line,model_approval_request_order_line,base.group_user,1,1,1,1

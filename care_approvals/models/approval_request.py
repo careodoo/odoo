@@ -15,6 +15,21 @@ class ApprovalRequest(models.Model):
     qr_image = fields.Binary("QR Code", compute='_generate_qr_code')
     qr_url = fields.Char("QR Code", compute='_generate_qr_code')
     department_id = fields.Many2one('hr.department', compute='compute_department_id')
+    is_request_item = fields.Boolean()
+    sale_order_ids = fields.One2many('sale.order', 'approval_request_id')
+    so_count = fields.Integer(compute='compute_so_count')
+    purchase_order_ids = fields.One2many('purchase.order', 'approval_request_id')
+    po_count = fields.Integer(compute='compute_po_count')
+
+    @api.model
+    def default_get(self, fields):
+        res = super(ApprovalRequest, self).default_get(fields)
+        if self.env.context.get('default_is_request_item', False):
+            category_id = self.env['approval.category'].search([('is_request_item', '=', True)], limit=1)
+            if category_id:
+                res['category_id'] = category_id.id
+                res['request_owner_id'] = self.env.uid
+        return res
 
     @api.depends('request_owner_id')
     def compute_department_id(self):
@@ -33,5 +48,76 @@ class ApprovalRequest(models.Model):
             rec.qr_url = qr_info
             rec.qr_image = generateQrCode.generate_qr_code(qr_info)
 
+    def button_create_po(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': "Create Purchase Order",
+            'res_model': 'approval.request.order',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_request_id': self.id,
+                'default_type': 'po',
+            }
+        }
+
+    def button_create_so(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': "Create Sale Order",
+            'res_model': 'approval.request.order',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_request_id': self.id,
+                'default_type': 'so',
+            }
+        }
+
+    @api.depends('sale_order_ids')
+    def compute_so_count(self):
+        for rec in self:
+            rec.so_count = len(rec.sale_order_ids) if rec.sale_order_ids else 0
+
+    def action_open_so(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': "Sale Orders",
+            'res_model': 'sale.order',
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'domain': [('id', 'in', self.sale_order_ids.ids)]
+        }
+
+    @api.depends('purchase_order_ids')
+    def compute_po_count(self):
+        for rec in self:
+            rec.po_count = len(rec.purchase_order_ids) if rec.purchase_order_ids else 0
+
+    def action_open_po(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': "Purchase Orders",
+            'res_model': 'purchase.order',
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'domain': [('id', 'in', self.purchase_order_ids.ids)]
+        }
+
     def print_report(self):
         return self.env.ref("care_approvals.action_approval_request_report").report_action(self)
+
+
+class ApprovalProductLine(models.Model):
+    _inherit = 'approval.product.line'
+
+    department_product_ids = fields.Many2many('product.product', compute='compute_department_product_ids', store=True)
+    product_id = fields.Many2one('product.product', domain="[('id', 'in', department_product_ids)]")
+
+    @api.depends('approval_request_id.department_id')
+    def compute_department_product_ids(self):
+        for rec in self:
+            rec.department_product_ids = False
+            if rec.approval_request_id.department_id:
+                products = rec.approval_request_id.department_id.product_ids.mapped('product_id').mapped('id')
+                rec.department_product_ids = [(6, 0, products)]

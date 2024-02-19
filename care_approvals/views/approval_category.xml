@@ -20,6 +20,7 @@
             <field name="res_model">approval.request</field>
             <field name="view_mode">kanban,tree,form</field>
             <field name="domain">[('category_id.is_request_item','=',True)]</field>
+            <field name="context">{'default_is_request_item': True}</field>
         </record>
         <menuitem id="request_item_menu" name="Request Items" action="request_item_action" sequence="55"/>
     </data>

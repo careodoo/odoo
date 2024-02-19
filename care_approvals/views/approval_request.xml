@@ -7,7 +7,20 @@
             <field name="inherit_id" ref="approvals.approval_request_view_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//header" position="inside">
+                    <button name="button_create_po" type="object" string="Create Purchase Order" class="oe_highlight"/>
+                    <button name="button_create_so" type="object" string="Create Sale Order" class="oe_highlight"/>
                     <button name="print_report" type="object" string="Print Report" class="oe_highlight" attrs="{'invisible': [('has_report', '!=', 'required')]}"/>
+                </xpath>
+            <xpath expr="//button[@name='action_get_attachment_view']" position="after">
+                <button name="action_open_so" type="object" class="oe_stat_button" icon="fa-usd" attrs="{'invisible': [('so_count', '=', 0)]}">
+                    <field name="so_count" string="Sale Orders" widget="statinfo"/>
+                </button>
+                <button name="action_open_po" type="object" class="oe_stat_button" icon="fa-credit-card" attrs="{'invisible': [('po_count', '=', 0)]}">
+                    <field name="po_count" string="Purchase Orders" widget="statinfo"/>
+                </button>
+            </xpath>
+                <xpath expr="//field[@name='request_owner_id']" position="after">
+                    <field name="department_id"/>
                 </xpath>
                 <xpath expr="//notebook" position="inside">
                     <page string="Barcode">
@@ -18,6 +31,39 @@
                             <field name="qr_url" attrs="{'invisible': [('has_report', '!=', 'required')]}"/>
                         </group>
                     </page>
+                </xpath>
+            </field>
+        </record>
+        <record id="care_approval_request_view_tree" model="ir.ui.view">
+            <field name="name">care_approval_request_view_tree</field>
+            <field name="model">approval.request</field>
+            <field name="inherit_id" ref="approvals.approval_request_view_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//tree" position="attributes">
+                    <attribute name="create">1</attribute>
+                </xpath>
+            </field>
+        </record>
+        <record id="care_approval_request_view_kanban" model="ir.ui.view">
+            <field name="name">care_approval_request_view_kanban</field>
+            <field name="model">approval.request</field>
+            <field name="inherit_id" ref="approvals.approval_request_view_kanban"/>
+            <field name="arch" type="xml">
+                <xpath expr="//kanban" position="attributes">
+                    <attribute name="create">1</attribute>
+                </xpath>
+            </field>
+        </record>
+        <record id="care_approval_product_line_view_tree" model="ir.ui.view">
+            <field name="name">care_approval_product_line_view_tree</field>
+            <field name="model">approval.product.line</field>
+            <field name="inherit_id" ref="approvals.approval_product_line_view_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='product_id']" position="before">
+                    <field name="department_product_ids" invisible="1"/>
+                </xpath>
+                <xpath expr="//field[@name='product_id']" position="attributes">
+                    <attribute name="options">{'limit': 0}</attribute>
                 </xpath>
             </field>
         </record>

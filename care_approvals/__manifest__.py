@@ -20,12 +20,16 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'approvals'],
+    'depends': ['base', 'approvals', 'hr', 'sale', 'purchase', 'care_sale', 'web_m2x_options'],
 
     # always loaded
     'data': [
+        'security/ir.model.access.csv',
         'views/approval_category.xml',
         'views/approval_request.xml',
+        'views/product_product.xml',
+        'views/hr_department.xml',
+        'wizards/approval_request_order.xml',
         'reports/approval_report.xml',
     ],
 }

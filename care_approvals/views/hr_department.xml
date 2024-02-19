@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="care_view_department_form" model="ir.ui.view">
+            <field name="name">care_view_department_form</field>
+            <field name="model">hr.department</field>
+            <field name="inherit_id" ref="hr.view_department_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//sheet" position="inside">
+                    <notebook>
+                        <page name="products" string="List of Materials">
+                            <field name="product_ids">
+                                <tree editable="bottom">
+                                    <field name="product_id"/>
+                                    <field name="limit"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
