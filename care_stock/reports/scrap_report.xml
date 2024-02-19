@@ -28,6 +28,7 @@
                                         <th>Product</th>
                                         <th>Quantity</th>
                                         <th>Location</th>
+                                        <th>Reason</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -52,6 +53,9 @@
                                         </td>
                                         <td>
                                             <span t-field="order.location_id"/>
+                                        </td>
+                                        <td>
+                                            <span t-field="order.reason_id"/>
                                         </td>
                                     </tr>
                                 </tbody>

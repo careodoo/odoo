@@ -30,6 +30,7 @@
         'data/sequence.xml',
         'views/product_update_request.xml',
         'views/stock_warehouse.xml',
+        'views/stock_scrap.xml',
         'wizards/scrap_report.xml',
         'reports/report_stockpicking_operations.xml',
         'reports/report_deliveryslip.xml',

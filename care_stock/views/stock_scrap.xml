@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="care_stock_scrap_form_view" model="ir.ui.view">
+            <field name="name">care_stock_scrap_form_view</field>
+            <field name="model">stock.scrap</field>
+            <field name="inherit_id" ref="stock.stock_scrap_form_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='company_id']" position="before">
+                    <field name="reason_id"/>
+                </xpath>
+            </field>
+        </record>
+        <record id="stock_scrap_reason_view_tree" model="ir.ui.view">
+            <field name="name">stock_scrap_reason_view_tree</field>
+            <field name="model">stock.scrap.reason</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom">
+                    <field name="name"/>
+                </tree>
+            </field>
+        </record>
+        <record id="stock_scrap_reason_action" model="ir.actions.act_window">
+            <field name="name">Scrap Reasons</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">stock.scrap.reason</field>
+            <field name="view_mode">tree</field>
+        </record>
+        <menuitem id="stock_scrap_reason_menu" name="Scrap Reasons" parent="stock.menu_stock_config_settings"
+                  action="stock_scrap_reason_action" sequence="10"/>
+    </data>
+</odoo>

@@ -6,3 +6,4 @@ access_product_update_request_line_u,product_update_request_line_u,model_product
 access_product_update_request_line_m,product_update_request_line_m,model_product_update_request_line,care_stock.group_product_update_request_approver,1,1,1,1
 
 access_scrap_report,scrap_report,model_scrap_report,base.group_user,1,1,1,1
+access_stock_scrap_reason,stock_scrap_reason,model_stock_scrap_reason,base.group_user,1,1,1,1
