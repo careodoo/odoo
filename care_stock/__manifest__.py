@@ -28,6 +28,7 @@
         'security/ir.model.access.csv',
         'data/activity_type.xml',
         'data/sequence.xml',
+        'data/server_action.xml',
         'views/product_update_request.xml',
         'views/stock_warehouse.xml',
         'views/stock_scrap.xml',
