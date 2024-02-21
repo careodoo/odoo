@@ -20,7 +20,7 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'sale', 'hr', 'purchase_limit'],
+    'depends': ['base', 'sale', 'hr', 'purchase_limit', 'eg_sale_line_qoh'],
 
     # always loaded
     'data': [
