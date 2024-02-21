@@ -10,16 +10,23 @@
                         <group>
                             <field name="request_id" invisible="1"/>
                             <field name="type" invisible="1"/>
+                            <field name="partner_id"/>
+                            <field name="department_id"/>
                         </group>
                         <notebook>
-                            <page name="lines" string="Lines">
-                                <field name="line_ids">
-                                    <tree editable="bottom" create="0">
-                                        <field name="product_line_id" invisible="1"/>
-                                        <field name="product_id"/>
-                                        <field name="description"/>
-                                        <field name="quantity"/>
-                                        <field name="product_uom_id"/>
+                            <page name="products" string="Products">
+                                <field name="product_ids">
+                                    <tree editable="bottom">
+                                        <field name="company_id" invisible="1"/>
+                                        <field name="department_product_ids" invisible="1"/>
+                                        <field name="product_id" readonly="1"/>
+                                        <field name="description" readonly="1"/>
+                                        <field name="qoh_available" readonly="1"/>
+                                        <field name="foh_available" readonly="1"/>
+                                        <field name="quantity" readonly="1"/>
+                                        <field name="product_uom_id" groups="uom.group_uom" options="{'no_create': True, 'no_open': True}" readonly="1"/>
+                                        <field name="request_uom_id" groups="uom.group_uom"/>
+                                        <field name="product_uom_category_id" invisible="1"/>
                                     </tree>
                                 </field>
                             </page>

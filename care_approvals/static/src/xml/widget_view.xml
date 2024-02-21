@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+	<t t-name="One2manyApproval">
+		<div>
+			<button t-if="!widget.get('effective_readonly')" style="margin-bottom: 1%;display:none;"
+				class="button_delete_order_lines"
+				id="button-create-sale-order"
+				href="javascript:void(0)">
+				<span>Create Sale Order</span>
+			</button>
+			<button t-if="!widget.get('effective_readonly')" style="margin-bottom: 1%;display:none;"
+				class="button_delete_order_lines"
+				id="button-create-purchase-order"
+				href="javascript:void(0)">
+				<span>Create Purchase Order</span>
+			</button>
+            <button t-if="!widget.get('effective_readonly')" style="margin-bottom: 1%;display:none;"
+                    class="button_select_order_lines"
+                    href="javascript:void(0)">
+					<span class="fa fa-check"/>
+				</button>
+            <t t-if="widget.get('effective_readonly')">
+				<span class="oe_form_char_content"></span>
+			</t>
+		</div>
+    </t>
+</templates>

@@ -1,4 +1,4 @@
-from odoo import fields, models, api
+from odoo import fields, models, api, _
 from datetime import datetime
 from .qr_generator import generateQrCode
 from odoo.http import request
@@ -29,6 +29,8 @@ class ApprovalRequest(models.Model):
             if category_id:
                 res['category_id'] = category_id.id
                 res['request_owner_id'] = self.env.uid
+                if category_id.automated_sequence:
+                    res['name'] = _('New')
         return res
 
     @api.depends('request_owner_id')
@@ -113,6 +115,15 @@ class ApprovalProductLine(models.Model):
 
     department_product_ids = fields.Many2many('product.product', compute='compute_department_product_ids', store=True)
     product_id = fields.Many2one('product.product', domain="[('id', 'in', department_product_ids)]")
+    qoh_available = fields.Float(string="On Hand", compute='_compute_po_qoh')
+    foh_available = fields.Float(string="Forecasted")
+    request_uom_id = fields.Many2one('uom.uom')
+
+    @api.depends('product_id')
+    def _compute_po_qoh(self):
+        for rec in self:
+            rec.qoh_available = rec.product_id.qty_available
+            rec.foh_available = rec.product_id.virtual_available
 
     @api.depends('approval_request_id.department_id')
     def compute_department_product_ids(self):
