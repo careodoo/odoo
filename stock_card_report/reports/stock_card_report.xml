@@ -150,6 +150,7 @@
                 <div class="act_as_cell">Reference</div>
                 <div class="act_as_cell">In</div>
                 <div class="act_as_cell">Out</div>
+                <div class="act_as_cell">Department</div>
                 <div class="act_as_cell">Balance</div>
             </div>
         </div>
@@ -168,6 +169,14 @@
             </div>
             <div class="act_as_cell right">
                 <t t-out="'{0:,.3f}'.format(product_line.product_out)" />
+            </div>
+            <div class="act_as_cell right">
+                <t t-if="product_line.sale_line_id">
+                    <t t-esc="product_line.sale_line_id.order_id.department_id.name" />
+                </t>
+                <t t-elif="product_line.purchase_line_id">
+                    <t t-esc="product_line.purchase_line_id.order_id.department_id.name" />
+                </t>
             </div>
             <div class="act_as_cell right">
                 <t t-out="'{0:,.3f}'.format(product_balance)" />

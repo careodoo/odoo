@@ -9,7 +9,7 @@
     "website": "https://github.com/OCA/stock-logistics-reporting",
     "author": "Ecosoft, Odoo Community Association (OCA)",
     "license": "AGPL-3",
-    "depends": ["stock", "date_range", "report_xlsx_helper", 'deltatech_stock_inventory'],
+    "depends": ["stock", "care_sale", "purchase_report", "date_range", "report_xlsx_helper", 'deltatech_stock_inventory'],
     "data": [
         "security/ir.model.access.csv",
         "data/paper_format.xml",
