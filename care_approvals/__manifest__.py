@@ -30,6 +30,8 @@
         'views/approval_request.xml',
         'views/product_product.xml',
         'views/hr_department.xml',
+        'views/sale_order.xml',
+        'views/purchase_order.xml',
         'wizards/approval_request_order.xml',
         'reports/approval_report.xml',
     ],
