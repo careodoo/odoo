@@ -2,6 +2,7 @@ from odoo import fields, models, api, _
 from datetime import datetime
 from .qr_generator import generateQrCode
 from odoo.http import request
+from odoo.exceptions import ValidationError
 
 
 class ApprovalRequest(models.Model):
@@ -29,9 +30,18 @@ class ApprovalRequest(models.Model):
             if category_id:
                 res['category_id'] = category_id.id
                 res['request_owner_id'] = self.env.uid
-                if category_id.automated_sequence:
-                    res['name'] = _('New')
+                res['name'] = _('New')
         return res
+
+    @api.model
+    def create(self, vals):
+        if vals.get('category_id', False):
+            category_id = self.env['approval.category'].browse(vals['category_id'])
+            if category_id.is_request_item:
+                vals['name'] = self.env['ir.sequence'].next_by_code('request.item') or _('New')
+        res = super(ApprovalRequest, self).create(vals)
+        return res
+
 
     @api.depends('request_owner_id')
     def compute_department_id(self):
@@ -118,6 +128,18 @@ class ApprovalProductLine(models.Model):
     qoh_available = fields.Float(string="On Hand", compute='_compute_po_qoh')
     foh_available = fields.Float(string="Forecasted")
     request_uom_id = fields.Many2one('uom.uom')
+
+    @api.constrains('quantity')
+    def validate_quantity(self):
+        for rec in self:
+            if rec.quantity and rec.approval_request_id.department_id:
+                lines = rec.approval_request_id.department_id.product_ids.filtered(lambda p: p.product_id.id == rec.product_id.id)
+                if lines:
+                    limit = lines[0].limit
+                    if limit:
+                        all_qty = sum(rec.approval_request_id.product_line_ids.filtered(lambda p: p.product_id.id == rec.product_id.id).mapped('quantity'))
+                        if limit < all_qty:
+                            raise ValidationError(f"you have exceeded limit for {rec.product_id.name} ({limit})!")
 
     @api.depends('product_id')
     def _compute_po_qoh(self):

@@ -25,6 +25,7 @@
     # always loaded
     'data': [
         'security/ir.model.access.csv',
+        'data/sequence.xml',
         'views/approval_category.xml',
         'views/approval_request.xml',
         'views/product_product.xml',
