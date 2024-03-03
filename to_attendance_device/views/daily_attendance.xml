@@ -1,0 +1,58 @@
+<odoo>
+
+    <record id="view_daily_attendance_form" model="ir.ui.view">
+        <field name="name">daily.user.attendance.form</field>
+        <field name="model">daily.user.attendance</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button string="Check" type="object" name="action_create_daily_attendance"/>
+                    <button string="Auto Check Out" type="object" name="action_auto_check_out"/>
+<!--                    <button string="Create Attendance" type="object" name="action_create_attendance"/>-->
+                </header>
+                <sheet>
+                    <group col="4">
+                        <field name="check_in" />
+                        <field name="check_out" />
+                        <field name="employee_id" />
+                        <field name="company_id" />
+                        <field name="user_id"/>
+                        <field name="check"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_daily_attendance_tree" model="ir.ui.view">
+        <field name="name">daily.user.attendance.tree</field>
+        <field name="model">daily.user.attendance</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="employee_id" />
+                <field name="user_id"/>
+                <field name="check_in" />
+                <field name="check_out" />
+                <field name="company_id" />
+                <field name="check"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_daily_attendance_tree_view" model="ir.actions.act_window">
+        <field name="name">Daily Attendance</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">daily.user.attendance</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="to_attendance_device.view_daily_attendance_tree"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No Messages Found. Let's Create One!
+            </p>
+        </field>
+    </record>
+
+
+    <menuitem name="Daily Attendance" parent="to_attendance_device.attendace_device_menu"
+              id="hr_daily_attendance" action="to_attendance_device.action_daily_attendance_tree_view" />
+</odoo>
