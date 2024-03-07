@@ -5,6 +5,15 @@ class Employee(models.Model):
     _inherit = 'hr.employee'
 
     category_ids = fields.Many2many('hr.employee.category', tracking=True)
+    joining_ids = fields.One2many('hr.action.joining', 'employee_id')
+    joining_date = fields.Date(compute='compute_joining_date', store=True)
+
+    @api.depends('joining_ids')
+    def compute_joining_date(self):
+        for rec in self:
+            rec.joining_date = False
+            if rec.joining_ids:
+                rec.joining_date = rec.joining_ids.sorted(key='join_date', reverse=True)[0].join_date
 
     def _mail_track(self, tracked_fields, initial_values):
         changes, tracking_value_ids = super()._mail_track(tracked_fields, initial_values)

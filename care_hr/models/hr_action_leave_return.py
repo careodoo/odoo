@@ -19,6 +19,7 @@ class HrActionLeaveReturn(models.Model):
     job_title = fields.Char(related='employee_id.job_title', store=True)
     employee_barcode = fields.Char(related='employee_id.barcode', store=True)
     department_id = fields.Many2one('hr.department', related='employee_id.department_id', store=True)
+    last_leave_id = fields.Many2one('hr.leave', compute='compute_last_leave_dates', store=True)
     last_leave_from = fields.Date(compute='compute_last_leave_dates', store=True)
     last_leave_to = fields.Date(compute='compute_last_leave_dates', store=True)
     leave_return_date = fields.Date(compute='compute_last_leave_dates', store=True)
@@ -44,12 +45,14 @@ class HrActionLeaveReturn(models.Model):
     @api.depends('employee_id')
     def compute_last_leave_dates(self):
         for rec in self:
+            rec.last_leave_id = False
             rec.last_leave_from = False
             rec.last_leave_to = False
             rec.leave_request_days = False
             if rec.employee_id:
                 all_leaves = self.env['hr.leave'].search([('employee_id', '=', rec.employee_id.id)]).sorted(lambda x: x.request_date_from, reverse=True)
                 if all_leaves:
+                    rec.last_leave_id = all_leaves[0].id
                     rec.last_leave_from = all_leaves[0].request_date_from
                     rec.last_leave_to = all_leaves[0].request_date_to
                     rec.leave_return_date = all_leaves[0].request_date_to
@@ -77,6 +80,15 @@ class HrActionLeaveReturn(models.Model):
 
     def button_approve(self):
         self.state = 'approved'
+        if self.start_work_date and self.leave_return_date:
+            if self.start_work_date < self.leave_return_date:
+                original_date = self.last_leave_id.request_date_to
+                holiday = self.last_leave_id
+                holiday.write({
+                    'original_return_date': original_date,
+                    'request_date_to': self.start_work_date,
+                    'number_of_days': self.actual_leave_days
+                })
 
     def _generate_qr_code(self):
         for rec in self:

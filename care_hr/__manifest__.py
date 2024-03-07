@@ -32,6 +32,7 @@
         'views/hr_action_leave_return.xml',
         'views/hr_leave.xml',
         'views/hr_skills.xml',
+        'views/hr_employee.xml',
         'reports/joining_report.xml',
         'reports/clearance_report.xml',
         'reports/absence_report.xml',
