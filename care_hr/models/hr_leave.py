@@ -15,6 +15,8 @@ class Leave(models.Model):
     qr_image = fields.Binary("QR Code", compute='_generate_qr_code')
     qr_url = fields.Char("QR Code", compute='_generate_qr_code')
     original_return_date = fields.Date()
+    hr_department_id = fields.Many2one('hr.department', string='Department')
+    hr_employee_id = fields.Many2one('hr.employee', string='Employee', domain="[('department_id', '=', hr_department_id)]")
 
     @api.constrains('date_from', 'date_to', 'employee_id')
     def _check_date_state(self):
@@ -32,3 +34,8 @@ class Leave(models.Model):
             qr_info += '/web#id=%s&action=%s&model=%s&view_type=form&cids=&menu_id=%s' % (rec.id, action_id, 'hr.leave', menu_id)
             rec.qr_url = qr_info
             rec.qr_image = generateQrCode.generate_qr_code(qr_info)
+
+    @api.onchange('hr_employee_id')
+    def onchange_hr_employee_id(self):
+        self.employee_id = self.hr_employee_id.id
+        self.employee_ids = [(6, 0, self.hr_employee_id.ids)]
