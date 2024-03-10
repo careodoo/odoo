@@ -24,7 +24,9 @@
 
     # always loaded
     'data': [
-        # 'security/ir.model.access.csv',
+        'security/security.xml',
+        'security/ir.model.access.csv',
         'views/task.xml',
+        'views/project_task_forward.xml',
     ],
 }
