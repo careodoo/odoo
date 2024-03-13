@@ -33,7 +33,7 @@
                             border-width: 1px;
                             border-color: #000000;
                             border-style: solid;
-                            font-size: 14px;
+                            font-size: 13px;
                             color: #000000;
                         }
 
@@ -311,7 +311,7 @@
                             border-width: 1px;
                             border-color: #000000;
                             border-style: solid;
-                            font-size: 14px;
+                            font-size: 13px;
                             color: #000000;
                         }
 
