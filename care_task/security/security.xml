@@ -17,7 +17,7 @@
         <record id="task_forward_rule_user_own" model="ir.rule">
             <field name="name">User own Task Forward</field>
             <field ref="care_task.model_project_task_forward" name="model_id"/>
-            <field name="domain_force">[('user_id','=',user.id)]</field>
+            <field name="domain_force">['|', ('user_id','=',user.id), ('task_id.user_ids','in', [user.id])]</field>
             <field name="groups" eval="[(4, ref('group_task_forward_user'))]"/>
         </record>
         <record id="task_forward_rule_manager" model="ir.rule">
