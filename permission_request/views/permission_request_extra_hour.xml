@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="permission_request_extra_hour_view_tree" model="ir.ui.view">
+            <field name="name">permission_request_extra_hour_view_tree</field>
+            <field name="model">permission.request.extra.hour</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="employee_id"/>
+                    <field name="hours"/>
+                    <field name="date"/>
+                    <field name="approver_ids" widget="many2many_tags"/>
+                    <field name="state" widget="badge"
+                        decoration-muted="state == 'draft'"
+                        decoration-warning="state == 'submitted'"
+                        decoration-danger="state == 'rejected'"
+                        decoration-success="state == 'approved'"/>
+                </tree>
+            </field>
+        </record>
+        <record id="permission_request_extra_hour_view_form" model="ir.ui.view">
+            <field name="name">permission_request_extra_hour_view_form</field>
+            <field name="model">permission.request.extra.hour</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="button_submit" type="object" string="Submit" states="draft" class="oe_highlight"/>
+                        <button name="button_approve" type="object" string="Approve" class="oe_highlight" attrs="{'invisible': &quot;['|', ('approver_ids', 'not in', [uid]), ('state', '!=', 'submitted')]&quot;}"/>
+                        <button name="button_reject" type="object" string="Reject" class="btn-danger" attrs="{'invisible': &quot;['|', ('approver_ids', 'not in', [uid]), ('state', '!=', 'submitted')]&quot;}"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <field name="employee_id" readonly="1" force_save="1"/>
+                            <field name="hours"/>
+                            <field name="date" readonly="1" force_save="1"/>
+                            <field name="approver_ids" widget="many2many_tags" readonly="1" force_save="1"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="permission_request_extra_hour_action" model="ir.actions.act_window">
+            <field name="name">Extra Hours Request</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">permission.request.extra.hour</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem id="permission_request_extra_hour_menu" name="Extra Hours Request" parent="permission_request.permission_request_root"
+                  action="permission_request_extra_hour_action" sequence="2"/>
+    </data>
+</odoo>

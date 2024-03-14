@@ -26,5 +26,17 @@
             <field name="domain_force">[(1,'=',1)]</field>
             <field name="groups" eval="[(4, ref('group_hr_permission_request_approver'))]"/>
         </record>
+        <record id="hr_permission_request_extra_rule_user_own" model="ir.rule">
+            <field name="name">User own Permission Request Extra Hours</field>
+            <field ref="permission_request.model_permission_request_extra_hour" name="model_id"/>
+            <field name="domain_force">[('create_uid','=',user.id)]</field>
+            <field name="groups" eval="[(4, ref('group_hr_permission_request_user'))]"/>
+        </record>
+        <record id="hr_permission_request_extra_rule_manager" model="ir.rule">
+            <field name="name">All Permission Request Extra Hours</field>
+            <field ref="permission_request.model_permission_request_extra_hour" name="model_id"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="groups" eval="[(4, ref('group_hr_permission_request_approver'))]"/>
+        </record>
     </data>
 </odoo>

@@ -26,7 +26,10 @@
     'data': [
         'security/groups.xml',
         'security/ir.model.access.csv',
+        'data/activity_type.xml',
         'views/permission_request.xml',
+        'views/permission_request_extra_hour.xml',
+        'views/res_config_settings.xml',
         'reports/permission_request.xml',
     ],
 }
