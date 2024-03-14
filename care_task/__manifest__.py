@@ -26,6 +26,7 @@
     'data': [
         'security/security.xml',
         'security/ir.model.access.csv',
+        'data/activity_type.xml',
         'views/task.xml',
         'views/project_task_forward.xml',
     ],

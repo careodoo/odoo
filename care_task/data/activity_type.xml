@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="mail_act_task_forward_create" model="mail.activity.type">
+            <field name="name">Task Forward</field>
+            <field name="icon">fa-sun-o</field>
+            <field name="res_model">project.task.forward</field>
+        </record>
+    </data>
+</odoo>
