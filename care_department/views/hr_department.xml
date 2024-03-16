@@ -75,6 +75,8 @@
                                 <field name="employee_shift_approval_1" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
                                 <field name="employee_shift_approval_2" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
                                 <field name="employee_shift_approval_3" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
+                                <field name="old_manager_approval"/>
+                                <field name="new_manager_approval"/>
                                 <field name="working_hours_modifier"/>
                             </group>
                         </page>
