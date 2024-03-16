@@ -17,6 +17,34 @@ class Leave(models.Model):
     original_return_date = fields.Date()
     hr_department_id = fields.Many2one('hr.department', string='Department')
     hr_employee_id = fields.Many2one('hr.employee', string='Employee', domain="[('department_id', '=', hr_department_id)]")
+    leave_return_ids = fields.One2many('hr.action.leave.return', 'last_leave_id')
+    leave_return_count = fields.Integer(compute='compute_leave_return_count', store=True)
+    returned = fields.Selection(selection=[('1', 'Returned'), ('0', 'Not Returned')], compute='has_returned', store=True)
+
+    @api.depends('leave_return_ids.state')
+    def has_returned(self):
+        for rec in self:
+            rec.returned = '0'
+            if rec.leave_return_ids:
+                if rec.leave_return_ids[0].state == 'approved':
+                    rec.returned = '1'
+
+    @api.depends('leave_return_ids')
+    def compute_leave_return_count(self):
+        for rec in self:
+            rec.leave_return_count = len(rec.leave_return_ids or [])
+
+    def action_view_leave_return(self):
+        return {
+            'name': _('Leave Return'),
+            'type': 'ir.actions.act_window',
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'res_model': 'hr.action.leave.return',
+            'domain': [('last_leave_id', '=', self.id)],
+            'target': 'current',
+        }
+
 
     @api.constrains('date_from', 'date_to', 'employee_id')
     def _check_date_state(self):
