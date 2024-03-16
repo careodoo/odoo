@@ -7,5 +7,7 @@ class Department(models.Model):
     employee_shift_approval_1 = fields.Many2one('res.users', string='Approver#1')
     employee_shift_approval_2 = fields.Many2one('res.users', string='Approver#2')
     employee_shift_approval_3 = fields.Many2one('res.users', string='Approver#3')
+    old_manager_approval = fields.Boolean(string='Required Old Manager Approval')
+    new_manager_approval = fields.Boolean(string='Required New Manager Approval')
     working_hours_modifier = fields.Many2one('res.users',
                                              domain="[('id', 'in', [employee_shift_approval_1, employee_shift_approval_2, employee_shift_approval_3])]")

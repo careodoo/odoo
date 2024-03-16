@@ -11,6 +11,8 @@
                         <field name="employee_shift_approval_1"/>
                         <field name="employee_shift_approval_2"/>
                         <field name="employee_shift_approval_3"/>
+                        <field name="old_manager_approval"/>
+                        <field name="new_manager_approval"/>
                         <field name="working_hours_modifier"/>
                     </group>
                 </xpath>

@@ -61,6 +61,7 @@ class EmployeeShiftRequest(models.Model):
     working_hours = fields.Many2one('resource.calendar', related='employee_id.resource_calendar_id',
                                     store=True, readonly=False)
     active = fields.Boolean(default=True)
+    show_shift_department = fields.Boolean()
 
     @api.model
     def create(self, vals):
@@ -117,14 +118,17 @@ class EmployeeShiftRequest(models.Model):
 
     # department manager must have access to his department request
     def send_to_manager(self):
-        self.write({'state': 'sent'})
-        template = self.env.ref('hr_employee_shift.dept_shift_send_to_manager_template')
-        self.env['mail.template'].browse(template.id).send_mail(self.id, force_send=True)
-        self.sudo().activity_schedule(
-            'hr_employee_shift.mail_act_shift_create',
-            summary='Department Shift Request',
-            note='Ask To Submit Department Shift Request',
-            user_id=self.old_department_manager.id)
+        if not self.current_department.old_manager_approval:
+            self.shift_confirm()
+        else:
+            self.write({'state': 'sent'})
+            template = self.env.ref('hr_employee_shift.dept_shift_send_to_manager_template')
+            self.env['mail.template'].browse(template.id).send_mail(self.id, force_send=True)
+            self.sudo().activity_schedule(
+                'hr_employee_shift.mail_act_shift_create',
+                summary='Department Shift Request',
+                note='Ask To Submit Department Shift Request',
+                user_id=self.old_department_manager.id)
 
     def shift_confirm(self):
         self.write({'state': 'confirm'})
@@ -147,17 +151,33 @@ class EmployeeShiftRequest(models.Model):
         return followers
 
     def first_approve(self):
-        self.shift_department()
-        followers = self.get_request_followers()
-        for follower in followers:
+        if self.approver_2:
+            self.write({'state': 'approval_1'})
+            record = self._prepare_request_record(self.approver_1)
+            self.env['employee.shift.request.record'].create(record)
+            template = self.env.ref('hr_employee_shift.dept_shift_send_to_2_approve_template')
+            self.env['mail.template'].browse(template.id).send_mail(self.id, force_send=True)
             self.sudo().activity_schedule(
                 'hr_employee_shift.mail_act_shift_create',
-                summary='Department Shift Completed',
-                note='Employee {} shifted from {} to {}'.format(
-                    self.employee_id.name, self.current_department.name, self.new_department.name
-                ),
-                user_id=follower
-            )
+                summary='Department Shift Request',
+                note='Ask To Second Approve Department Shift Request',
+                user_id=self.approver_2.id)
+        elif self.current_department.new_manager_approval:
+            self.write({
+                'state': 'approval_1',
+                'show_shift_department': True,
+            })
+            record = self._prepare_request_record(self.approver_1)
+            self.env['employee.shift.request.record'].create(record)
+            template = self.env.ref('hr_employee_shift.dept_shift_send_to_new_dept_approve_template')
+            self.env['mail.template'].browse(template.id).send_mail(self.id, force_send=True)
+            self.sudo().activity_schedule(
+                'hr_employee_shift.mail_act_shift_create',
+                summary='Department Shift Request',
+                note='Ask To New Manager Approve Department Shift Request',
+                user_id=self.new_department_manager.id)
+        else:
+            self.shift_department()
 
     def first_refuse(self):
         return {
@@ -168,8 +188,68 @@ class EmployeeShiftRequest(models.Model):
             'target': 'new',
         }
 
+    def second_approve(self):
+        if self.approver_3:
+            self.write({'state': 'approval_2'})
+            record = self._prepare_request_record(self.approver_2)
+            self.env['employee.shift.request.record'].create(record)
+            template = self.env.ref('hr_employee_shift.dept_shift_send_to_3_approve_template')
+            self.env['mail.template'].browse(template.id).send_mail(self.id, force_send=True)
+            self.sudo().activity_schedule(
+                'hr_employee_shift.mail_act_shift_create',
+                summary='Department Shift Request',
+                note='Ask To Third Approve Department Shift Request',
+                user_id=self.approver_3.id)
+        elif self.current_department.new_manager_approval:
+            self.write({
+                'state': 'approval_2',
+                'show_shift_department': True,
+            })
+            record = self._prepare_request_record(self.approver_2)
+            self.env['employee.shift.request.record'].create(record)
+            template = self.env.ref('hr_employee_shift.dept_shift_send_to_new_dept_approve_template')
+            self.env['mail.template'].browse(template.id).send_mail(self.id, force_send=True)
+            self.sudo().activity_schedule(
+                'hr_employee_shift.mail_act_shift_create',
+                summary='Department Shift Request',
+                note='Ask To New Manager Approve Department Shift Request',
+                user_id=self.new_department_manager.id)
+        else:
+            self.shift_department()
+
+    def third_approve(self):
+        if self.current_department.new_manager_approval:
+            self.write({
+                'state': 'approval_3',
+                'show_shift_department': True,
+            })
+            record = self._prepare_request_record(self.approver_3)
+            self.env['employee.shift.request.record'].create(record)
+            template = self.env.ref('hr_employee_shift.dept_shift_send_to_new_dept_approve_template')
+            self.env['mail.template'].browse(template.id).send_mail(self.id, force_send=True)
+            self.sudo().activity_schedule(
+                'hr_employee_shift.mail_act_shift_create',
+                summary='Department Shift Request',
+                note='Ask To New Manager Approve Department Shift Request',
+                user_id=self.new_department_manager.id)
+        else:
+            self.shift_department()
+
     def shift_department(self):
         self.employee_id.with_context(shift_request=True).write({'department_id': self.new_department.id})
-        self.write({'state': 'done'})
+        self.write({
+            'state': 'done',
+            'show_shift_department': False
+        })
         record = self._prepare_request_record(self.env.user)
         self.env['employee.shift.request.record'].create(record)
+        followers = self.get_request_followers()
+        for follower in followers:
+            self.sudo().activity_schedule(
+                'hr_employee_shift.mail_act_shift_create',
+                summary='Department Shift Completed',
+                note='Employee {} shifted from {} to {}'.format(
+                    self.employee_id.name, self.current_department.name, self.new_department.name
+                ),
+                user_id=follower
+            )
