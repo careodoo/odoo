@@ -5,21 +5,37 @@ from odoo.http import request
 from odoo.exceptions import ValidationError
 
 
+class Department(models.Model):
+    _inherit = 'hr.department'
+
+    allowed_user_ids = fields.Many2many('res.users')
+
+
 class Leave(models.Model):
     _inherit = 'hr.leave'
 
     def generate_barcode(self):
         return str(int(datetime.now().timestamp()))
 
+    def _default_available_department_ids(self):
+        return self.env['hr.department'].search([('allowed_user_ids', 'in', self.env.user.ids)]).ids
+
     barcode = fields.Char(default=generate_barcode)
     qr_image = fields.Binary("QR Code", compute='_generate_qr_code')
     qr_url = fields.Char("QR Code", compute='_generate_qr_code')
     original_return_date = fields.Date()
-    hr_department_id = fields.Many2one('hr.department', string='Department')
+    available_department_ids = fields.Many2many('hr.department', default=_default_available_department_ids)
+    hr_department_id = fields.Many2one('hr.department', string='Department', domain="[('id', 'in', available_department_ids)]")
     hr_employee_id = fields.Many2one('hr.employee', string='Employee', domain="[('department_id', '=', hr_department_id)]")
     leave_return_ids = fields.One2many('hr.action.leave.return', 'last_leave_id')
     leave_return_count = fields.Integer(compute='compute_leave_return_count', store=True)
     returned = fields.Selection(selection=[('1', 'Returned'), ('0', 'Not Returned')], compute='has_returned', store=True)
+    self_time_off = fields.Boolean()
+
+    @api.onchange('self_time_off')
+    def onchange_self_time_off(self):
+        if self.self_time_off:
+            self.hr_employee_id = self.env['hr.employee'].search([('user_id', '=', self.env.user.id)])
 
     @api.depends('leave_return_ids.state')
     def has_returned(self):

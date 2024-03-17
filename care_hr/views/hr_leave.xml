@@ -51,13 +51,15 @@
                     </header>
                     <sheet>
                         <group>
-                            <field name="hr_department_id" required="1"/>
-                            <field name="hr_employee_id" required="1" attrs="{'readonly': [('hr_department_id', '=', False)]}"/>
-                            <field name="holiday_status_id" attrs="{'readonly': [('hr_department_id', '=', False)]}"/>
+                            <field name="available_department_ids" widget="many2many_tags" invisible="1"/>
+                            <field name="self_time_off"/>
+                            <field name="hr_department_id" attrs="{'invisible': [('self_time_off', '=', True)],'required': [('self_time_off', '=', False)]}"/>
+                            <field name="hr_employee_id" required="1" attrs="{'readonly': ['|', ('hr_department_id', '=', False), ('self_time_off', '=', True)]}"/>
+                            <field name="holiday_status_id" attrs="{'readonly': [('hr_department_id', '=', False), ('self_time_off', '=', False)]}"/>
                             <field name="employee_ids" widget="many2many_tags" invisible="1"/>
                             <field name="employee_id" invisible="1"/>
-                            <field name="request_date_from" string="From" required="1" attrs="{'readonly': [('hr_department_id', '=', False)]}"/>
-                            <field name="request_date_to" string="To" required="1" attrs="{'readonly': [('hr_department_id', '=', False)]}"/>
+                            <field name="request_date_from" string="From" required="1" attrs="{'readonly': [('hr_department_id', '=', False), ('self_time_off', '=', False)]}"/>
+                            <field name="request_date_to" string="To" required="1" attrs="{'readonly': [('hr_department_id', '=', False), ('self_time_off', '=', False)]}"/>
                             <field name="number_of_days" attrs="{'readonly': [('hr_department_id', '=', False)]}"/>
                             <field name="name"/>
                         </group>
@@ -75,6 +77,11 @@
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">hr.leave</field>
             <field name="view_mode">tree,form</field>
+            <field name="view_ids"
+                   eval="[(5, 0, 0),
+                          (0, 0, {'view_mode': 'tree', 'view_id': ref('hr_holidays.hr_leave_view_tree_my')}),
+                          (0, 0, {'view_mode': 'form', 'view_id': ref('care_hr.quick_hr_leave_view_form')}),
+                          ]"/>
         </record>
         <menuitem id="care_hr_leave_menu" name="Quick Time Off" action="care_hr_leave_action"
                   sequence="55" groups="care_hr.group_quick_hr_leave_user"/>
