@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="hr_employee_suspend_view_form" model="ir.ui.view">
+            <field name="name">hr_employee_suspend_view_form</field>
+            <field name="model">hr.employee.suspend</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="unsuspend" invisible="1"/>
+                            <field name="employee_id" readonly="1" force_save="1"/>
+                            <field name="date" attrs="{'required': [('unsuspend', '=', False)], 'invisible': [('unsuspend', '=', True)]}"/>
+                            <field name="can_print_reports" attrs="{'required': [('unsuspend', '=', False)], 'invisible': [('unsuspend', '=', True)]}"/>
+                            <field name="can_edit" attrs="{'required': [('unsuspend', '=', False)], 'invisible': [('unsuspend', '=', True)]}"/>
+                            <field name="reason" attrs="{'required': [('unsuspend', '=', False)], 'invisible': [('unsuspend', '=', True)]}"/>
+                        </group>
+                    </sheet>
+                    <footer>
+                        <button name="button_suspend" type="object" string="Suspend" class="oe_highlight" attrs="{'invisible': [('unsuspend', '=', True)]}"/>
+                        <button name="button_suspend" type="object" string="Unuspend" class="oe_highlight" attrs="{'invisible': [('unsuspend', '=', False)]}"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel" data-hotkey="z"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

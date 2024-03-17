@@ -114,5 +114,13 @@
             <field name="name">User</field>
             <field name="category_id" ref="module_quick_hr_leave"/>
         </record>
+        <record model="ir.module.category" id="module_hr_suspend">
+            <field name="name">HR Suspend</field>
+        </record>
+
+        <record id="group_hr_suspend_user" model="res.groups">
+            <field name="name">User</field>
+            <field name="category_id" ref="module_hr_suspend"/>
+        </record>
     </data>
 </odoo>

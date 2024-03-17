@@ -10,3 +10,5 @@ hr_action_absence_approver,hr_action_absence_approver,model_hr_action_absence,ca
 
 hr_action_leave_return_user,hr_action_leave_return_user,model_hr_action_leave_return,care_hr.group_hr_leave_return_user,1,1,1,1
 hr_action_leave_return_approver,hr_action_leave_return_approver,model_hr_action_leave_return,care_hr.group_hr_leave_return_approver,1,1,1,1
+
+hr_employee_suspend,hr_employee_suspend,model_hr_employee_suspend,care_hr.group_hr_suspend_user,1,1,1,1

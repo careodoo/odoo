@@ -20,7 +20,7 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'hr', 'hr_holidays', 'hr_skills', 'care'],
+    'depends': ['base', 'hr', 'hr_holidays', 'hr_skills', 'care', 'purchase_report'],
 
     # always loaded
     'data': [
@@ -33,10 +33,11 @@
         'views/hr_leave.xml',
         'views/hr_skills.xml',
         'views/hr_employee.xml',
+        'wizards/hr_employee_suspend.xml',
         'reports/joining_report.xml',
         'reports/clearance_report.xml',
         'reports/absence_report.xml',
         'reports/leave_return_report.xml',
         'reports/leave_request_report.xml',
     ],
-}
+    }
