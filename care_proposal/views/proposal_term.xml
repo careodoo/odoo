@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="proposal_term_view_tree" model="ir.ui.view">
+            <field name="name">proposal_term_view_tree</field>
+            <field name="model">proposal.term</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                </tree>
+            </field>
+        </record>
+        <record id="proposal_term_view_form" model="ir.ui.view">
+            <field name="name">proposal_term_view_form</field>
+            <field name="model">proposal.term</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <div class="oe_title">
+                            <label for="name"/>
+                            <h1><field name="name"/></h1>
+                        </div>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+        <record id="proposal_term_action" model="ir.actions.act_window">
+            <field name="name">Terms</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">proposal.term</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem id="proposal_term_menu" name="Terms" parent="proposal_root_menu"
+                  action="proposal_term_action" sequence="6"/>
+    </data>
+</odoo>

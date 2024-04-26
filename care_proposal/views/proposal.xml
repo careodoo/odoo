@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="proposal_view_tree" model="ir.ui.view">
+            <field name="name">proposal_view_tree</field>
+            <field name="model">proposal.proposal</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="company_id"/>
+                    <field name="ref"/>
+                    <field name="partner_id"/>
+                    <field name="country_id" optional="show"/>
+                    <field name="city" optional="show"/>
+                    <field name="phone" optional="show"/>
+                    <field name="proposal_date" optional="show"/>
+                    <field name="expire_date" optional="show"/>
+                    <field name="total_amount" optional="show"/>
+                    <field name="margin_amount" optional="show"/>
+                    <field name="margin_percentage" optional="show"/>
+                    <field name="service_type" optional="show"/>
+                    <field name="service_site" optional="show"/>
+                    <field name="mobilization_date" optional="show"/>
+                    <field name="proposal_period" optional="show"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+        <record id="proposal_view_form" model="ir.ui.view">
+            <field name="name">proposal_view_form</field>
+            <field name="model">proposal.proposal</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="generate_pricing" type="object" string="Generate Pricing" class="oe_highlight"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <label for="name"/>
+                            <h1><field name="name"/></h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="company_id"/>
+                                <field name="ref"/>
+                                <field name="partner_id"/>
+                                <field name="proposal_date"/>
+                                <field name="expire_date"/>
+                                <field name="total_amount"/>
+                                <field name="margin_amount"/>
+                                <field name="margin_percentage"/>
+                            </group>
+                            <group>
+                                <field name="service_type"/>
+                                <field name="country_id"/>
+                                <field name="city"/>
+                                <field name="phone"/>
+                                <field name="service_site"/>
+                                <field name="mobilization_date"/>
+                                <field name="proposal_period"/>
+                            </group>
+                        </group>
+                        <field name="notes" placeholder="Type down your notes here..."/>
+                        <notebook>
+                            <page name="summary" string="Summary">
+                                <group>
+                                    <group>
+                                        <field name="service_quantity"/>
+                                        <field name="manpower_quantity"/>
+                                        <field name="material_amount"/>
+                                        <field name="equipment_amount"/>
+                                    </group>
+                                    <group>
+                                        <field name="transportation_amount"/>
+                                        <field name="salary_amount"/>
+                                        <field name="total_cost"/>
+                                    </group>
+                                </group>
+                            </page>
+                            <page name="pricing" string="Pricing">
+                                <field name="pricing_ids">
+                                    <tree editable="bottom">
+                                        <field name="name"/>
+                                        <field name="cost" sum="total cost"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page name="services" string="Services">
+                                <field name="service_ids">
+                                    <tree editable="bottom">
+                                        <field name="proposal_service_id"/>
+                                        <field name="daily_hours"/>
+                                        <field name="weekly_days"/>
+                                        <field name="monthly_days"/>
+                                        <field name="total_cost" sum="total cost"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page name="scopes" string="Scopes">
+                                <field name="scope_ids">
+                                    <tree editable="bottom">
+                                        <field name="proposal_scope_id"/>
+                                        <field name="schedule"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page name="manpower" string="Manpower">
+                                <field name="manpower_ids">
+                                    <tree editable="bottom">
+                                        <field name="proposal_manpower_id"/>
+                                        <field name="nationality"/>
+                                        <field name="gender"/>
+                                        <field name="quantity"/>
+                                        <field name="service_ids" widget="many2many_tags" invisible="1"/>
+                                        <field name="service_id"/>
+                                        <field name="salary"/>
+                                        <field name="total_salary"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page name="material" string="Material">
+                                <field name="material_ids">
+                                    <tree editable="bottom">
+                                        <field name="product_id"/>
+                                        <field name="cost" sum="total cost"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page name="equipments" string="Equipments">
+                                <field name="equipment_ids">
+                                    <tree editable="bottom">
+                                        <field name="product_id"/>
+                                        <field name="cost" sum="total cost"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page name="transportation" string="Transportation">
+                                <field name="transportation_ids">
+                                    <tree editable="bottom">
+                                        <field name="transportation_id"/>
+                                        <field name="cost" sum="total cost"/>
+                                        <field name="period"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page name="terms" string="Terms">
+                                <field name="term_ids">
+                                    <tree editable="bottom">
+                                        <field name="term_id"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+        <record id="proposal_action" model="ir.actions.act_window">
+            <field name="name">Proposals</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">proposal.proposal</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem id="proposal_root_menu" name="Proposals" sequence="55"/>
+        <menuitem id="proposal_menu" name="Proposals" parent="proposal_root_menu"
+                  action="proposal_action" sequence="1"/>
+    </data>
+</odoo>

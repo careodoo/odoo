@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="proposal_manpower_view_tree" model="ir.ui.view">
+            <field name="name">proposal_manpower_view_tree</field>
+            <field name="model">proposal.manpower</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="nationality"/>
+                    <field name="gender"/>
+                </tree>
+            </field>
+        </record>
+        <record id="proposal_manpower_view_form" model="ir.ui.view">
+            <field name="name">proposal_manpower_view_form</field>
+            <field name="model">proposal.manpower</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <div class="oe_title">
+                            <label for="name"/>
+                            <h1><field name="name"/></h1>
+                        </div>
+                        <group>
+                            <field name="nationality"/>
+                            <field name="gender"/>
+                        </group>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+        <record id="proposal_manpower_action" model="ir.actions.act_window">
+            <field name="name">Manpower</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">proposal.manpower</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem id="proposal_manpower_menu" name="Manpower" parent="proposal_root_menu"
+                  action="proposal_manpower_action" sequence="3"/>
+    </data>
+</odoo>
