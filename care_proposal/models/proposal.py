@@ -7,15 +7,13 @@ class Proposal(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Proposal'
 
-    name = fields.Char(required=True)
+    name = fields.Char(compute='compute_name', store=True)
     company_id = fields.Many2one('res.company', required=True, default=lambda self: self.env.company)
-    ref = fields.Char()
+    ref = fields.Char(required=True, copy=False, readonly=True, index=True, default=lambda self: _('New'))
     partner_id = fields.Many2one('res.partner')
     proposal_date = fields.Date()
     expire_date = fields.Date()
-    total_amount = fields.Float()
-    margin_amount = fields.Float()
-    margin_percentage = fields.Float()
+    total_amount = fields.Float(compute='compute_total_amount', store=True)
     service_type = fields.Selection(selection=[
         ('cleaning_services', 'Cleaning Services'),
         ('security_services', 'Security Services'),
@@ -46,6 +44,26 @@ class Proposal(models.Model):
     transportation_amount = fields.Float(compute='compute_transportation_amount', store=True)
     salary_amount = fields.Float(compute='compute_salary_amount', store=True)
     total_cost = fields.Float(compute='compute_total_cost', store=True)
+    total_pricing_cost = fields.Float(compute='compute_total_pricing_cost', store=True)
+    margin_amount = fields.Float(compute='compute_margin', store=True)
+    margin_percentage = fields.Float(compute='compute_margin', store=True, string='Margin %')
+    lead_ids = fields.One2many('crm.lead', 'proposal_id')
+
+    @api.depends('service_type', 'ref', 'partner_id')
+    def compute_name(self):
+        for rec in self:
+            name = 'Proposal'
+            if rec.service_type == 'cleaning_services':
+                name += ' | Cleaning Services'
+            elif rec.service_type == 'security_services':
+                name += ' | Security Services'
+            elif rec.service_type == 'housekeeping_services':
+                name += ' | Housekeeping Services'
+            if rec.partner_id:
+                name += ' | ' + rec.partner_id.name
+            if rec.ref:
+                name += ' | ' + rec.ref
+            rec.name = name
 
     @api.depends('service_ids')
     def compute_service_quantity(self):
@@ -57,15 +75,15 @@ class Proposal(models.Model):
         for rec in self:
             rec.manpower_quantity = sum(rec.manpower_ids.mapped('quantity') or [])
 
-    @api.depends('material_ids.cost')
+    @api.depends('material_ids.total_amount')
     def compute_material_amount(self):
         for rec in self:
-            rec.material_amount = sum(rec.material_ids.mapped('cost') or [])
+            rec.material_amount = sum(rec.material_ids.mapped('total_amount') or [])
 
-    @api.depends('equipment_ids.cost')
+    @api.depends('equipment_ids.total_amount')
     def compute_equipment_amount(self):
         for rec in self:
-            rec.equipment_amount = sum(rec.equipment_ids.mapped('cost') or [])
+            rec.equipment_amount = sum(rec.equipment_ids.mapped('total_amount') or [])
 
     @api.depends('transportation_ids.cost')
     def compute_transportation_amount(self):
@@ -82,38 +100,67 @@ class Proposal(models.Model):
         for rec in self:
             rec.total_cost = rec.material_amount + rec.equipment_amount + rec.transportation_amount + rec.salary_amount
 
+    @api.depends('pricing_ids.sales_price')
+    def compute_total_amount(self):
+        for rec in self:
+            rec.total_amount = sum(rec.pricing_ids.mapped('sales_price') or [])
+
+    @api.depends('pricing_ids.cost')
+    def compute_total_pricing_cost(self):
+        for rec in self:
+            rec.total_pricing_cost = sum(rec.pricing_ids.mapped('cost') or [])
+
+    @api.depends('total_amount', 'total_pricing_cost')
+    def compute_margin(self):
+        for rec in self:
+            rec.margin_amount = rec.total_amount - rec.total_pricing_cost
+            rec.margin_percentage = 0
+            if rec.margin_amount and rec.total_amount:
+                rec.margin_percentage = (rec.margin_amount / rec.total_amount) * 100
+
     @api.constrains('proposal_date', 'expire_date')
     def check_dates(self):
         for rec in self:
-            if rec.proposal_date < rec.expire_date:
+            if rec.expire_date < rec.proposal_date:
                 raise ValidationError(_('Expire date cannot be earlier than proposal date!'))
 
     def generate_pricing(self):
         self.pricing_ids = [(5, 0, 0)]
         vals = []
-        for line in self.service_ids:
+        total = sum([line.total_cost for line in self.service_ids])
+        if total:
             vals.append((0, 0, {
-                'name': line.proposal_service_id.name,
-                'cost': line.total_cost
+                'name': 'service',
+                'cost': total
             }))
-        for line in self.material_ids:
+        total = sum([line.total_amount for line in self.material_ids])
+        if total:
             vals.append((0, 0, {
-                'name': line.product_id.name,
-                'cost': line.cost
+                'name': 'material',
+                'cost': total
             }))
-        for line in self.equipment_ids:
+        total = sum([line.total_amount for line in self.equipment_ids])
+        if total:
             vals.append((0, 0, {
-                'name': line.product_id.name,
-                'cost': line.cost
+                'name': 'equipment',
+                'cost': total
             }))
-        for line in self.transportation_ids:
+        total = sum([line.cost for line in self.transportation_ids])
+        if total:
             vals.append((0, 0, {
-                'name': line.transportation_id.name,
-                'cost': line.cost
+                'name': 'transportation',
+                'cost': total
             }))
         self.write({
             'pricing_ids': vals
         })
+
+    @api.model
+    def create(self, vals):
+        if vals.get('ref', _('New')) == _('New'):
+            vals['ref'] = self.env['ir.sequence'].next_by_code('proposal.proposal') or _('New')
+        result = super(Proposal, self).create(vals)
+        return result
 
 
 class ProposalServiceLine(models.Model):
@@ -183,12 +230,19 @@ class ProposalMaterialLine(models.Model):
 
     proposal_id = fields.Many2one('proposal.proposal')
     product_id = fields.Many2one('product.product', required=True, string='Material')
+    quantity = fields.Float(default=1)
     cost = fields.Float(required=True)
+    total_amount = fields.Float(compute='compute_total_amount', store=True, string='Total')
 
     @api.onchange('product_id')
     def onchange_product_id(self):
         if self.product_id:
             self.cost = self.product_id.standard_price
+
+    @api.depends('cost', 'quantity')
+    def compute_total_amount(self):
+        for rec in self:
+            rec.total_amount = rec.cost * rec.quantity
 
 
 class ProposalEquipmentLine(models.Model):
@@ -197,12 +251,19 @@ class ProposalEquipmentLine(models.Model):
 
     proposal_id = fields.Many2one('proposal.proposal')
     product_id = fields.Many2one('product.product', required=True, string='Equipment')
+    quantity = fields.Float(default=1)
     cost = fields.Float(required=True)
+    total_amount = fields.Float(compute='compute_total_amount', store=True, string='Total')
 
     @api.onchange('product_id')
     def onchange_product_id(self):
         if self.product_id:
             self.cost = self.product_id.standard_price
+
+    @api.depends('cost', 'quantity')
+    def compute_total_amount(self):
+        for rec in self:
+            rec.total_amount = rec.cost * rec.quantity
 
 
 class ProposalTransportationLine(models.Model):
@@ -230,5 +291,15 @@ class ProposalPricingLine(models.Model):
     _description = 'Proposal Pricing Line'
 
     proposal_id = fields.Many2one('proposal.proposal')
-    name = fields.Char(required=True)
+    name = fields.Selection(selection=[
+        ('service', 'Services'), ('material', 'Materials'),
+        ('equipment', 'Equipments'), ('transportation', 'Transportations'),
+    ], required=True)
+    profit_percentage = fields.Float(string='Profit %')
     cost = fields.Float(required=True)
+    sales_price = fields.Float(compute='compute_sales_price', store=True)
+
+    @api.depends('profit_percentage', 'cost')
+    def compute_sales_price(self):
+        for rec in self:
+            rec.sales_price = rec.cost + (rec.cost * (rec.profit_percentage / 100))

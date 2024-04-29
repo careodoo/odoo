@@ -20,16 +20,18 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'mail', 'product'],
+    'depends': ['base', 'mail', 'product', 'crm'],
 
     # always loaded
     'data': [
         'security/ir.model.access.csv',
+        'data/sequence.xml',
         'views/proposal.xml',
         'views/proposal_service.xml',
         'views/proposal_transportation.xml',
         'views/proposal_manpower.xml',
         'views/proposal_scope.xml',
         'views/proposal_term.xml',
+        'views/crm_lead.xml',
     ],
 }
