@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="email_template_proposal" model="mail.template">
+            <field name="name">Sales Proposal: Send By Email</field>
+            <field name="model_id" ref="care_proposal.model_proposal_proposal"/>
+            <field name="subject">Sale Proposal (Ref {{ object.name or 'n/a' }})</field>
+            <field name="partner_to">{{ object.partner_id.id }}</field>
+            <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px;">
+    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+        Dear <t t-out="object.partner_id.name or ''">Brandon Freeman</t>
+        <t t-if="object.partner_id.parent_id">
+            (<t t-out="object.partner_id.parent_id.name or ''">Azure Interior</t>)
+        </t>
+        <br/><br/>
+        We have attached a sale proposal document.
+        <br/><br/>
+        If you have any questions or concerns regarding this sale proposal, please don't hesitate to contact us.
+    </p>
+</div></field>
+<!--            <field name="report_template" ref="action_report_purchase_order"/>-->
+<!--            <field name="report_name">PO_{{ (object.name or '').replace('/','_') }}</field>-->
+            <field name="lang">{{ object.partner_id.lang }}</field>
+<!--            <field name="auto_delete" eval="True"/>-->
+        </record>
+    </data>
+</odoo>

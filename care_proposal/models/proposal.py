@@ -7,6 +7,14 @@ class Proposal(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Proposal'
 
+    def _default_approver(self):
+        IPC = self.env['ir.config_parameter'].sudo()
+        approver = False
+        approver_str = IPC.get_param('care_proposal.proposal_approver_id')
+        if approver_str:
+            approver = self.env['res.users'].browse(int(approver_str))
+        return approver.id if approver else False
+
     name = fields.Char(compute='compute_name', store=True)
     company_id = fields.Many2one('res.company', required=True, default=lambda self: self.env.company)
     ref = fields.Char(required=True, copy=False, readonly=True, index=True, default=lambda self: _('New'))
@@ -27,8 +35,9 @@ class Proposal(models.Model):
     proposal_period = fields.Integer()
     notes = fields.Text()
     state = fields.Selection(selection=[
-        ('draft', 'New'), ('progress', 'In Progress'), ('done', 'Done'),
-    ], default='draft')
+        ('draft', 'New'), ('submit', 'Submitted'),
+        ('approve', 'Approved'), ('reject', 'Rejected')
+    ], default='draft', tracking=True)
     service_ids = fields.One2many('proposal.service.line', 'proposal_id')
     scope_ids = fields.One2many('proposal.scope.line', 'proposal_id')
     manpower_ids = fields.One2many('proposal.manpower.line', 'proposal_id')
@@ -48,6 +57,7 @@ class Proposal(models.Model):
     margin_amount = fields.Float(compute='compute_margin', store=True)
     margin_percentage = fields.Float(compute='compute_margin', store=True, string='Margin %')
     lead_ids = fields.One2many('crm.lead', 'proposal_id')
+    approver_id = fields.Many2one('res.users', default=_default_approver)
 
     @api.depends('service_type', 'ref', 'partner_id')
     def compute_name(self):
@@ -161,6 +171,63 @@ class Proposal(models.Model):
             vals['ref'] = self.env['ir.sequence'].next_by_code('proposal.proposal') or _('New')
         result = super(Proposal, self).create(vals)
         return result
+
+    def button_submit(self):
+        self.state = 'submit'
+        self.sudo().activity_schedule(
+            'care_proposal.mail_act_proposal_submit',
+            summary='Proposal',
+            note='Ask To Confirm Proposal',
+            user_id=self.approver_id.id)
+
+    def button_approve(self):
+        self.state = 'approve'
+
+    def button_reject(self):
+        self.state = 'reject'
+
+    def action_send_email(self):
+        self.ensure_one()
+        ir_model_data = self.env['ir.model.data']
+        try:
+            template_id = ir_model_data._xmlid_lookup('care_proposal.email_template_proposal')[2]
+        except ValueError:
+            template_id = False
+        try:
+            compose_form_id = ir_model_data._xmlid_lookup('mail.email_compose_message_wizard_form')[2]
+        except ValueError:
+            compose_form_id = False
+        ctx = dict(self.env.context or {})
+        ctx.update({
+            'default_model': 'proposal.proposal',
+            'active_model': 'proposal.proposal',
+            'model_description': 'Proposal',
+            'active_id': self.ids[0],
+            'default_res_id': self.ids[0],
+            'default_use_template': bool(template_id),
+            'default_template_id': template_id,
+            'default_composition_mode': 'comment',
+            'custom_layout': "mail.mail_notification_paynow",
+            'force_email': True,
+            'mark_rfq_as_sent': True,
+        })
+
+        lang = self.env.context.get('lang')
+        if {'default_template_id', 'default_model', 'default_res_id'} <= ctx.keys():
+            template = self.env['mail.template'].browse(ctx['default_template_id'])
+            if template and template.lang:
+                lang = template._render_lang([ctx['default_res_id']])[ctx['default_res_id']]
+
+        return {
+            'name': _('Compose Email'),
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'res_model': 'mail.compose.message',
+            'views': [(compose_form_id, 'form')],
+            'view_id': compose_form_id,
+            'target': 'new',
+            'context': ctx,
+        }
 
 
 class ProposalServiceLine(models.Model):

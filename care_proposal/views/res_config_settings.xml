@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="proposal_res_config_settings_view_form" model="ir.ui.view">
+            <field name="name">proposal_res_config_settings_view_form</field>
+            <field name="model">res.config.settings</field>
+            <field name="priority" eval="11"/>
+            <field name="inherit_id" ref="base.res_config_settings_view_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//div[hasclass('settings')]" position="inside">
+                    <div class="app_settings_block" data-string="proposal" string="Proposal" data-key="proposal">
+                        <h2>Proposal</h2>
+                        <div class="row mt16 o_settings_container" name="proposal_setting_container">
+                            <div class="col-12 col-lg-6 o_setting_box" id="proposal">
+                                <div class="o_setting_left_pane"/>
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">Proposal Approver</span>
+                                    <div class="text-muted">
+                                        <field name="proposal_approver_id"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+        <record id="action_proposal_config_settings" model="ir.actions.act_window">
+        <field name="name">Settings</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_id" ref="proposal_res_config_settings_view_form"/>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module' : 'proposal'}</field>
+    </record>
+
+    <menuitem id="proposal_config" name="Configurations" parent="proposal_root_menu" sequence="99"/>
+
+    <menuitem id="menu_permission_general_settings"
+        name="Settings"
+        parent="proposal_config"
+        sequence="1"
+        action="action_proposal_config_settings"
+        groups="base.group_system"/>
+    </data>
+</odoo>

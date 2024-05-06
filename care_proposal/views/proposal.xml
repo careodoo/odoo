@@ -32,7 +32,16 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
+                        <field name="approver_id" invisible="1" force_save="1"/>
+                        <button name="action_send_email" string="Send by Email" type="object" class="oe_highlight"/>
+                        <button name="button_submit" type="object" string="Submit" class="oe_highlight" states="draft"/>
+                        <button name="button_approve" type="object" string="Approve" class="oe_highlight"
+                            attrs="{'invisible': &quot;['|', ('approver_id', '!=', uid), ('state', '!=', 'submit')]&quot;}"/>
+                        <button name="button_reject" type="object" string="Reject" class="btn btn-danger"
+                                confirm="Are you sure you want to reject this proposal?"
+                            attrs="{'invisible': &quot;['|', ('approver_id', '!=', uid), ('state', '!=', 'submit')]&quot;}"/>
                         <button name="generate_pricing" type="object" string="Generate Pricing" class="oe_highlight"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,submit,approve"/>
                     </header>
                     <sheet>
                         <div class="oe_title" style="width: 100%">
@@ -41,24 +50,24 @@
                         </div>
                         <group>
                             <group>
-                                <field name="company_id"/>
-                                <field name="ref"/>
-                                <field name="partner_id"/>
-                                <field name="proposal_date"/>
-                                <field name="expire_date"/>
-                                <field name="total_amount"/>
-                                <field name="total_pricing_cost"/>
-                                <field name="margin_amount"/>
-                                <field name="margin_percentage"/>
+                                <field name="company_id" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="ref" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="partner_id" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="proposal_date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="expire_date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="total_amount" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="total_pricing_cost" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="margin_amount" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="margin_percentage" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             </group>
                             <group>
-                                <field name="service_type"/>
-                                <field name="country_id"/>
-                                <field name="city"/>
-                                <field name="phone"/>
-                                <field name="service_site"/>
-                                <field name="mobilization_date"/>
-                                <field name="proposal_period"/>
+                                <field name="service_type" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="country_id" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="city" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="phone" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="service_site" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="mobilization_date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="proposal_period" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             </group>
                         </group>
                         <field name="notes" placeholder="Type down your notes here..."/>
@@ -79,7 +88,7 @@
                                 </group>
                             </page>
                             <page name="pricing" string="Pricing">
-                                <field name="pricing_ids">
+                                <field name="pricing_ids" attrs="{'readonly': [('state', '!=', 'draft')]}">
                                     <tree editable="bottom">
                                         <field name="name"/>
                                         <field name="cost" sum="total cost"/>
@@ -89,7 +98,7 @@
                                 </field>
                             </page>
                             <page name="services" string="Services">
-                                <field name="service_ids">
+                                <field name="service_ids" attrs="{'readonly': [('state', '!=', 'draft')]}">
                                     <tree editable="bottom">
                                         <field name="proposal_service_id"/>
                                         <field name="daily_hours"/>
@@ -100,7 +109,7 @@
                                 </field>
                             </page>
                             <page name="scopes" string="Scopes">
-                                <field name="scope_ids">
+                                <field name="scope_ids" attrs="{'readonly': [('state', '!=', 'draft')]}">
                                     <tree editable="bottom">
                                         <field name="proposal_scope_id"/>
                                         <field name="schedule"/>
@@ -108,7 +117,7 @@
                                 </field>
                             </page>
                             <page name="manpower" string="Manpower">
-                                <field name="manpower_ids">
+                                <field name="manpower_ids" attrs="{'readonly': [('state', '!=', 'draft')]}">
                                     <tree editable="bottom">
                                         <field name="proposal_manpower_id"/>
                                         <field name="nationality"/>
@@ -122,7 +131,7 @@
                                 </field>
                             </page>
                             <page name="material" string="Material">
-                                <field name="material_ids">
+                                <field name="material_ids" attrs="{'readonly': [('state', '!=', 'draft')]}">
                                     <tree editable="bottom">
                                         <field name="product_id"/>
                                         <field name="quantity"/>
@@ -132,7 +141,7 @@
                                 </field>
                             </page>
                             <page name="equipments" string="Equipments">
-                                <field name="equipment_ids">
+                                <field name="equipment_ids" attrs="{'readonly': [('state', '!=', 'draft')]}">
                                     <tree editable="bottom">
                                         <field name="product_id"/>
                                         <field name="quantity"/>
@@ -142,7 +151,7 @@
                                 </field>
                             </page>
                             <page name="transportation" string="Transportation">
-                                <field name="transportation_ids">
+                                <field name="transportation_ids" attrs="{'readonly': [('state', '!=', 'draft')]}">
                                     <tree editable="bottom">
                                         <field name="transportation_id"/>
                                         <field name="cost" sum="total cost"/>
@@ -151,7 +160,7 @@
                                 </field>
                             </page>
                             <page name="terms" string="Terms">
-                                <field name="term_ids">
+                                <field name="term_ids" attrs="{'readonly': [('state', '!=', 'draft')]}">
                                     <tree editable="bottom">
                                         <field name="term_id"/>
                                     </tree>

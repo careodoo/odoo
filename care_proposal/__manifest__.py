@@ -20,12 +20,14 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'mail', 'product', 'crm'],
+    'depends': ['base', 'mail', 'product', 'crm', 'report_xlsx', 'report_xlsx_helper'],
 
     # always loaded
     'data': [
         'security/ir.model.access.csv',
         'data/sequence.xml',
+        'data/activity_type.xml',
+        'data/mail_template.xml',
         'views/proposal.xml',
         'views/proposal_service.xml',
         'views/proposal_transportation.xml',
@@ -33,5 +35,7 @@
         'views/proposal_scope.xml',
         'views/proposal_term.xml',
         'views/crm_lead.xml',
+        'views/res_config_settings.xml',
+        'reports/proposal_sheet_xlsx.xml'
     ],
 }
