@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.actions.report" id="action_proposal_transportation_xlsx_report">
+            <field name="name">Export Transportation</field>
+            <field name="model">proposal.proposal</field>
+            <field name="report_type">xlsx</field>
+            <field name="report_name">care_proposal.proposal_transportation_xlsx_report</field>
+            <field name="report_file">care_proposal.proposal_transportation_xlsx_report</field>
+            <field name="binding_model_id" ref="model_proposal_proposal"/>
+        </record>
+    </data>
+</odoo>
