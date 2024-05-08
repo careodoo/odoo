@@ -54,7 +54,7 @@ class HrActionClearance(models.Model):
     def _generate_qr_code(self):
         for rec in self:
             qr_info = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
-            action_id = self.env.ref('care_hr.clearance_view_form').id
+            action_id = self.env.ref('care_hr.clearance_action').id
             menu_id = self.env.ref('care_hr.clearance_menu').id
             qr_info += '/web#id=%s&action=%s&model=%s&view_type=form&cids=&menu_id=%s' % (rec.id, action_id, 'hr.action.clearance', menu_id)
             rec.qr_url = qr_info

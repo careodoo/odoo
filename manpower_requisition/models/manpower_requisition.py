@@ -41,7 +41,7 @@ class ManpowerRequisition(models.Model):
     def _generate_qr_code(self):
         for rec in self:
             qr_info = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
-            action_id = self.env.ref('manpower_requisition.manpower_requisition_view_form').id
+            action_id = self.env.ref('manpower_requisition.manpower_requisition_action').id
             menu_id = self.env.ref('manpower_requisition.manpower_requisition_menu').id
             qr_info += '/web#id=%s&action=%s&model=%s&view_type=form&cids=&menu_id=%s' % (rec.id, action_id, 'manpower.requisition', menu_id)
             rec.qr_url = qr_info
