@@ -6,6 +6,7 @@
             <field name="model">proposal.proposal</field>
             <field name="arch" type="xml">
                 <tree>
+                    <field name="active" invisible="1"/>
                     <field name="name"/>
                     <field name="company_id"/>
                     <field name="ref"/>
@@ -44,6 +45,8 @@
                         <field name="state" widget="statusbar" statusbar_visible="draft,submit,approve"/>
                     </header>
                     <sheet>
+                        <field name="qr_image" widget="image" class="oe_avatar" invisible="1"/>
+                        <field name="logo" widget="image" class="oe_avatar"/>
                         <div class="oe_title" style="width: 100%">
                             <label for="name"/>
                             <h1><field name="name"/></h1>
@@ -61,6 +64,9 @@
                                 <field name="margin_percentage" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             </group>
                             <group>
+                                <field name="barcode"/>
+                                <field name="qr_url" invisible="1"/>
+                                <field name="active" invisible="1"/>
                                 <field name="service_type" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                                 <field name="country_id" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                                 <field name="city" attrs="{'readonly': [('state', '!=', 'draft')]}"/>

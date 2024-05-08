@@ -1,4 +1,7 @@
 from odoo import fields, models, api, _
+from .qr_generator import generateQrCode
+from odoo.http import request
+from datetime import datetime
 from odoo.exceptions import ValidationError
 
 
@@ -14,6 +17,9 @@ class Proposal(models.Model):
         if approver_str:
             approver = self.env['res.users'].browse(int(approver_str))
         return approver.id if approver else False
+
+    def generate_barcode(self):
+        return str(int(datetime.now().timestamp()))
 
     name = fields.Char(compute='compute_name', store=True)
     company_id = fields.Many2one('res.company', required=True, default=lambda self: self.env.company)
@@ -58,6 +64,11 @@ class Proposal(models.Model):
     margin_percentage = fields.Float(compute='compute_margin', store=True, string='Margin %')
     lead_ids = fields.One2many('crm.lead', 'proposal_id')
     approver_id = fields.Many2one('res.users', default=_default_approver)
+    barcode = fields.Char(default=generate_barcode)
+    logo = fields.Binary()
+    qr_image = fields.Binary("QR Code", compute='_generate_qr_code')
+    qr_url = fields.Char("QR Code", compute='_generate_qr_code')
+    active = fields.Boolean(default=True)
 
     @api.depends('service_type', 'ref', 'partner_id')
     def compute_name(self):
@@ -229,6 +240,15 @@ class Proposal(models.Model):
             'context': ctx,
         }
 
+    def _generate_qr_code(self):
+        for rec in self:
+            qr_info = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
+            action_id = self.env.ref('care_proposal.proposal_action').id
+            menu_id = self.env.ref('care_proposal.proposal_menu').id
+            qr_info += '/web#id=%s&action=%s&model=%s&view_type=form&cids=&menu_id=%s' % (rec.id, action_id, 'proposal.proposal', menu_id)
+            rec.qr_url = qr_info
+            rec.qr_image = generateQrCode.generate_qr_code(qr_info)
+
 
 class ProposalServiceLine(models.Model):
     _name = 'proposal.service.line'
@@ -241,6 +261,7 @@ class ProposalServiceLine(models.Model):
     weekly_days = fields.Integer(related='proposal_service_id.weekly_days')
     monthly_days = fields.Integer(related='proposal_service_id.monthly_days')
     total_cost = fields.Float(related='proposal_service_id.total_cost', store=True)
+
 
 
 class ProposalScopeLine(models.Model):

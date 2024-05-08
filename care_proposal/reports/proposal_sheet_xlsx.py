@@ -1,4 +1,7 @@
+import io
+import base64
 from odoo import models
+from datetime import date
 
 
 class ProposalSheetReportXlsx(models.AbstractModel):
@@ -24,8 +27,27 @@ class ProposalSheetReportXlsx(models.AbstractModel):
         header_style5 = workbook.add_format({
             'font_name': 'Times', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'left', 'bg_color': '#c5e0b4'
         })
+        header_style6 = workbook.add_format({
+            'font_name': 'Times', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'left', 'font_size': 20, 'valign': 'vcenter'
+        })
         sheet = workbook.add_worksheet('Proposal Sheet Report')
         proposal = objs[0]
+        # header
+        sheet.set_row(0, 100)
+        if proposal.logo:
+            proposal_logo = io.BytesIO(base64.b64decode(proposal.logo))
+            sheet.insert_image(0, 0, "proposal_logo.png", {'image_data': proposal_logo, 'x_scale': 0.5, 'y_scale': 0.5})
+        if proposal.barcode:
+            barcode = self.env['ir.actions.report'].barcode(barcode_type='auto', value=proposal.barcode, width=300, height=100)
+            barcode = base64.b64encode(barcode)
+            proposal_barcode = io.BytesIO(base64.b64decode(barcode))
+            sheet.insert_image(0, 1, "proposal_barcode.png", {'image_data': proposal_barcode, 'x_scale': 0.48, 'y_scale': 0.6})
+        sheet.write(0, 2, 'Service Pricing', header_style6)
+        if proposal.qr_image:
+            proposal_qr = io.BytesIO(base64.b64decode(proposal.qr_image))
+            sheet.insert_image(0, 3, "proposal_qr.png", {'image_data': proposal_qr, 'x_scale': 0.15, 'y_scale': 0.15})
+        sheet.write(0, 4, str(date.today()), header_style6)
+
         sheet.merge_range('A2:G2', f'Pricing for Provide Cleaning Services For {proposal.partner_id.name}', header_style2)
         # services
         sheet.merge_range('A4:G4', 'Services', header_style3)

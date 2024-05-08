@@ -13,6 +13,11 @@ class ProposalService(models.Model):
     total_cost = fields.Float(compute='compute_total_cost', store=True)
     line_ids = fields.One2many('proposal.service.item', 'proposal_service_id')
 
+    def get_service_item_cost(self, type):
+        item = self.line_ids.filtered(lambda l: l.type == type)
+        return item.cost if item else ''
+
+
     @api.depends('line_ids.cost')
     def compute_total_cost(self):
         for rec in self:

@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.actions.report" id="action_proposal_report">
+            <field name="name">Proposal</field>
+            <field name="model">proposal.proposal</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">care_proposal.proposal_report</field>
+            <field name="report_file">care_proposal.proposal_report</field>
+            <field name="binding_model_id" ref="model_proposal_proposal"/>
+			<field name="binding_type">report</field>
+			<field name="binding_view_types">form</field>
+        </record>
+        <template id="proposal_report">
+			<t t-call="web.html_container">
+				<t t-call="web.basic_layout">
+                    <div class="page" style="font-family:Arial,Helvetica,sans-serif !important;">
+                        <style>
+                        table.GeneratedTable {
+                            width: 100%;
+                            background-color: #ffffff;
+                            border-collapse: collapse;
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            font-size: 12px;
+                            color: #000000;
+                        }
+
+                        table.GeneratedTable td, table.GeneratedTable th {
+                            border-width: 1px;
+                            border-color: #000000;
+                            border-style: solid;
+                            padding: 3px;
+                            font-weight: bold;
+                            margin:3px;
+                        }
+
+                        table.GeneratedTable thead {
+                            background-color: #a3a3a3;
+                        }
+                        .bordered-row{
+                            border-bottom:1px solid black;padding-left:10px;padding-right:10px;
+                        }
+                        .rtl-row{
+                            text-align: right !important;direction: rtl !important;
+                        }
+                    </style>
+                        <t t-foreach="docs" t-as="doc">
+                            <div class="row">
+                                <div class="col-2">
+							        <img t-if="doc.logo" t-att-src="image_data_uri(doc.logo)" class="float-left" alt="Logo" style="width:80px;height:80px"/>
+                                </div>
+                                <div class="col-3">
+                                    <center>
+                                        <img t-if="doc.barcode" t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('Code128',doc.barcode,180,50)" />
+                                        <div t-esc="doc.barcode"/>
+                                    </center>
+                                </div>
+                                <div class="col-2">
+                                    <center>
+                                        <strong>Service Pricing</strong>
+                                    </center>
+                                </div>
+                                <div class="col-3">
+                                    <center>
+                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:100px;height:60px;"/>
+                                    </center>
+                                </div>
+                                <div class="col-2">
+                                    <center>
+                                        <strong><span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d')"/></strong>
+                                    </center>
+                                </div>
+                            </div>
+                            <p class="text-center">Pricing for Provide Cleaning Services For <span t-field="doc.partner_id"/></p>
+                            <br/>
+                            <p class="text-center">Services</p>
+
+                            <table class="GeneratedTable">
+                                <thead>
+                                    <th>Name</th>
+                                    <th>Salary</th>
+                                    <th>Residency</th>
+                                    <th>Accommodation</th>
+                                    <th>Uniform</th>
+                                    <th>Leave &amp; Indemnity</th>
+                                    <th>Staff Insurance</th>
+                                    <th>Bank Charge</th>
+                                    <th>Medical Certificate</th>
+                                    <th>Faced Cleaning</th>
+                                    <th>Commission</th>
+                                    <th>Other</th>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="doc.service_ids" t-as="service_line">
+                                        <t t-set="service" t-value="service_line.proposal_service_id"/>
+                                        <td><p t-esc="service.name"/></td>
+                                        <td><p t-esc="service.get_service_item_cost('salary')"/></td>
+                                        <td><p t-esc="service.get_service_item_cost('residency')"/></td>
+                                        <td><p t-esc="service.get_service_item_cost('accommodation')"/></td>
+                                        <td><p t-esc="service.get_service_item_cost('uniform')"/></td>
+                                        <td><p t-esc="service.get_service_item_cost('leave')"/></td>
+                                        <td><p t-esc="service.get_service_item_cost('insurance')"/></td>
+                                        <td><p t-esc="service.get_service_item_cost('bank_charge')"/></td>
+                                        <td><p t-esc="service.get_service_item_cost('medical')"/></td>
+                                        <td><p t-esc="service.get_service_item_cost('cleaning')"/></td>
+                                        <td><p t-esc="service.get_service_item_cost('commission')"/></td>
+                                        <td><p t-esc="service.get_service_item_cost('other')"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <br/>
+                            <p class="text-center">Pricing</p>
+                            <table class="GeneratedTable">
+                                <thead>
+                                    <th>Name</th>
+                                    <th>Cost</th>
+                                    <th>Profit%</th>
+                                    <th>Sales Price</th>
+                                    <th>Net Profit</th>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="doc.pricing_ids" t-as="line">
+                                        <td><p t-field="line.name"/></td>
+                                        <td><p t-field="line.cost"/></td>
+                                        <td><p t-field="line.profit_percentage"/></td>
+                                        <td><p t-field="line.sales_price"/></td>
+                                        <td><p t-esc="line.sales_price - line.cost"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <br/>
+                            <p class="text-center">Summary</p>
+                            <table class="GeneratedTable">
+                                <thead>
+                                    <th>Manpower Quantity</th>
+                                    <th>Material Amount</th>
+                                    <th>Equipment Amount</th>
+                                    <th>Transportation Amount</th>
+                                    <th>Salary Amount</th>
+                                    <th>Total Cost</th>
+                                    <th>Total Sales</th>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><p t-field="doc.manpower_quantity"/></td>
+                                        <td><p t-field="doc.material_amount"/></td>
+                                        <td><p t-field="doc.equipment_amount"/></td>
+                                        <td><p t-field="doc.transportation_amount"/></td>
+                                        <td><p t-field="doc.salary_amount"/></td>
+                                        <td><p t-field="doc.total_cost"/></td>
+                                        <td><p t-esc="sum(doc.pricing_ids.mapped('sales_price'))"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <br/>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>
