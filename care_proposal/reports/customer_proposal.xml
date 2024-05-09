@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+
+        <record model="ir.actions.report" id="action_proposal_report">
+            <field name="name">Customer Proposal</field>
+            <field name="model">proposal.proposal</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">care_proposal.customer_proposal_report</field>
+            <field name="report_file">care_proposal.customer_proposal</field>
+            <field name="binding_model_id" ref="model_proposal_proposal"/>
+			<field name="binding_type">report</field>
+			<field name="binding_view_types">form</field>
+        </record>
+
+
+        <template id="customer_proposal_report">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="doc">
+                    <t t-call="web.basic_layout">
+                        <style>
+
+
+                        </style>
+                            <div class="header">
+                                <div class="row" style="margin-top: 20px;">
+                                    <div class="col-6">
+                                        <img src="/care_proposal/static/src/img/care_header_logo_1.png" atl="header.png" class="w-100"/>
+                                    </div>
+                                    <div class="col-6">
+                                        <img src="/care_proposal/static/src/img/care_header_logo_2.png" atl="header.png" class="w-100"/>
+                                    </div>
+                                </div>
+                            </div>
+                        <div class="page">
+
+                        </div>
+
+                    </t>
+                </t>
+            </t>
+        </template>
+
+    </data>
+</odoo>

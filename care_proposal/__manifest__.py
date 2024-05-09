@@ -44,5 +44,6 @@
         'reports/proposal_equipment_xlsx.xml',
         'reports/proposal_transportation_xlsx.xml',
         'reports/proposal_term_xlsx.xml',
+        'reports/customer_proposal.xml',
     ],
 }
