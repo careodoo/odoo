@@ -172,6 +172,21 @@
                                     </tree>
                                 </field>
                             </page>
+                            <page name="print" string="Print Options">
+                                <group>
+                                    <group>
+                                        <field name="print_cover"/>
+                                        <field name="print_about"/>
+                                        <field name="print_scope"/>
+                                        <field name="print_quotation"/>
+                                    </group>
+                                    <group>
+                                        <field name="print_list"/>
+                                        <field name="print_terms"/>
+                                        <field name="print_acceptance"/>
+                                    </group>
+                                </group>
+                            </page>
                         </notebook>
                     </sheet>
                     <div class="oe_chatter">

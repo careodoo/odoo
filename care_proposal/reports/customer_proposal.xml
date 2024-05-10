@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data>
-
         <record model="ir.actions.report" id="action_proposal_report">
             <field name="name">Customer Proposal</field>
             <field name="model">proposal.proposal</field>
@@ -12,30 +11,429 @@
 			<field name="binding_type">report</field>
 			<field name="binding_view_types">form</field>
         </record>
-
-
         <template id="customer_proposal_report">
             <t t-call="web.html_container">
                 <t t-foreach="docs" t-as="doc">
                     <t t-call="web.basic_layout">
-                        <style>
-
-
-                        </style>
-                            <div class="header">
-                                <div class="row" style="margin-top: 20px;">
+                        <div class="header">
+                            <div class="row" style="margin-top: 20px;">
+                                <div class="col-6">
+                                    <img src="/care_proposal/static/src/img/care_header_logo_1.png" atl="header.png" class="w-100"/>
+                                </div>
+                                <div class="col-6">
+                                    <img src="/care_proposal/static/src/img/care_header_logo_2.png" atl="header.png" class="w-100"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="page">
+                            <t t-if="doc.print_cover">
+                                <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+                                <div>
+                                     <div class="row">
+                                         <div class="col-4" style="background-color:#ff0014;color:white;padding-top:20px;padding-bottom:20px;">
+                                             <h2 class="text-center"><strong>SERVICE</strong></h2>
+                                             <h2 class="text-center"><strong>PROPOSAL</strong></h2>
+                                         </div>
+                                         <div class="col-8" style="background-color:#e4e2e2;padding-top:20px;padding-bottom:20px;">
+                                             <h2><strong>PROPOSAL # <span t-field="doc.ref"/></strong></h2>
+                                             <h2><strong>PROVIDE CLEANING SERVICES</strong></h2>
+                                         </div>
+                                     </div>
+                                     <br/>
+                                     <div class="row">
+                                         <div class="col-7">
+                                             <h5><strong>Prepared for: </strong></h5>
+                                             <ul class="list-unstyled">
+                                                <li><h5><i class="fa fa-building"/><strong> Co. Name: </strong><span t-field="doc.partner_id.name"/></h5></li>
+                                                <li><h5><i class="fa fa-address-card"/><strong> Address: </strong><span t-field="doc.partner_id.contact_address"/></h5></li>
+                                                <li><h5><i class="fa fa-user"/><strong> Contact: </strong><span t-field="doc.partner_id.name"/></h5></li>
+                                                <li><h5><i class="fa fa-phone-square"/><strong> Telephone: </strong><span t-esc="doc.partner_id.phone or doc.partner_id.mobile"/></h5></li>
+                                                <li><h5><i class="fa fa-envelope"/><strong> Email: </strong><span t-field="doc.partner_id.email"/></h5></li>
+                                             </ul>
+                                         </div>
+                                         <div class="col-5">
+                                             <ul class="list-unstyled">
+                                                <li><h5><strong> Proposal Issued: </strong><span t-field="doc.proposal_date"/></h5></li>
+                                                <li><h5><strong> Valid To: </strong><span t-field="doc.expire_date"/></h5></li>
+                                             </ul>
+                                         </div>
+                                     </div>
+                                     <br/><br/><br/><br/><br/>
+                                     <div class="row">
+                                         <div class="col-4">
+                                             <h4><strong>STATEMENT OF</strong></h4>
+                                             <h4><strong>CONFIDENTIALITY</strong></h4>
+                                         </div>
+                                         <div class="col-8">
+                                             <p>This proposal and supporting materials contain confidential and proprietary business information of CARE Company. These materials may be printed or photocopied for use in evaluating the proposed project but are not to be shared with other parties.</p>
+                                         </div>
+                                     </div>
+                                </div>
+                                <p style="page-break-after:always !important;"/>
+                            </t>
+                            <t t-if="doc.print_about">
+                                <br/>
+                                <h3 class="text-center"><strong> About Us</strong></h3>
+                                <br/>
+                                <p><strong>Care for Buildings &amp; Cities Cleaning Contracting Co. “Care Cleaning Co.” is one of the leading premier cleaning companies in Kuwait. Established in 1991, Care Cleaning Co. has achieved vigorous triumph in building a reputable portfolio highlighting 3 decades of experience, innovation, and quality.</strong></p>
+                                <div class="row">
                                     <div class="col-6">
-                                        <img src="/care_proposal/static/src/img/care_header_logo_1.png" atl="header.png" class="w-100"/>
+                                        <p>Care Cleaning Co. was able to gain a large number of tenders and execute hundreds of projects and it is listed and approved by the Municipality of Kuwait and the Central Tender Committee. Care Cleaning focuses on standards, quality, and client satisfaction. The Company is accredited by the Central Agency for Public Tenders, BICS (The British Institute of Cleaning Science), ISO 9001 (Quality Management System), and ISSA (International Sanitary Supply Association). These Certificates gave us the honor to serve our customers with the cooperation of both the Private and Governmental sectors.</p>
                                     </div>
                                     <div class="col-6">
-                                        <img src="/care_proposal/static/src/img/care_header_logo_2.png" atl="header.png" class="w-100"/>
+                                        <p>During the last 30 years, Care Cleaning has strengthened its presence and services in the cleaning of cities, roads, buildings, ministries, and airports. Our services range anywhere from housekeeping, general cleaning, handling, waste management, etc. Recently, Care Cleaning Co. has expanded its operations to offer additional services such as ground operations, landscaping, and pest control.</p>
+                                    </div>
+                                </div>
+                                <br/>
+                                <div class="row">
+                                    <div class="col-1"><i class="fa fa-2x fa-quote-left"/></div>
+                                    <div class="col-11">
+                                        <p class="font-italic"><strong>Our ethical commitment and strong relations with our stakeholder are our prior and core values, while always seeking to provide healthy &amp; safe working conditions, transparent communication, as well as efficient and accountable operations.</strong></p>
+                                    </div>
+                                </div>
+                                <br/>
+                                <table class="table table-bordered">
+                                    <colgroup>
+                                        <col width='50%'/>
+                                        <col width='50%'/>
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center" style="background-color:#ff0014;color:white;">WHO WE ARE</th>
+                                            <th class="text-center" style="background-color:#ff0014;color:white;">WHAT WE DO</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Care Cleaning Co. holds a large and honorable portfolio with over 30 years in the industry. Our clients vary from private entities and companies to large governmental facilities and ground operations at the Airport. Our clients include major entities both from the public and private sectors in Kuwait, such as, but not limited.</td>
+                                            <td>At Care, a well-trained staff alongside our specialized equipment’s and products are the key to our success which inevitably leads to customer satisfaction and loyalty. Our general cleaning, security, other services, and janitorial staff undergo extensive training and development to ensure the quality criteria.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <p style="page-break-after:always !important;"/>
+                            </t>
+                            <t t-if="doc.print_scope">
+                                <br/>
+                                <h2 class="text-center">SCOPE OF WORK</h2>
+                                <p class="text-center">After our site visit for the work locations we suggest the below scope</p>
+                                <table class="table table-bordered">
+                                    <colgroup>
+                                        <col width='80%'/>
+                                        <col width='20%'/>
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th style="background-color:#ff0014;color:white;">Scope</th>
+                                            <th style="background-color:#ff0014;color:white;">Schedule</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="doc.scope_ids" t-as="scope">
+                                            <td>
+                                                <span t-field="scope.proposal_scope_id"/>
+                                            </td>
+                                            <td>
+                                                <span t-field="scope.schedule"/>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <p style="page-break-after:always !important;"/>
+                            </t>
+                            <t t-if="doc.print_quotation">
+                                <br/>
+                                <h2 class="text-center">Project Prices</h2>
+                                <p>We visited the site of <span t-field="doc.partner_id"/></p>
+                                <p>and after a discussion with the site directors, we determined the site requirements, and we will mention them in the following Proposal in detail.</p>
+                                <table class="table table-bordered">
+                                    <colgroup>
+                                        <col width='5%'/>
+                                        <col width='10%'/>
+                                        <col width='20%'/>
+                                        <col width='10%'/>
+                                        <col width='10%'/>
+                                        <col width='10%'/>
+                                        <col width='10%'/>
+                                        <col width='10%'/>
+                                        <col width='15%'/>
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th style="background-color:#ff0014;color:white;">#</th>
+                                            <th style="background-color:#ff0014;color:white;">Location</th>
+                                            <th style="background-color:#ff0014;color:white;">Service</th>
+                                            <th style="background-color:#ff0014;color:white;">Day/Week</th>
+                                            <th style="background-color:#ff0014;color:white;">Hours/Day</th>
+                                            <th style="background-color:#ff0014;color:white;">Unit</th>
+                                            <th style="background-color:#ff0014;color:white;">Quantity</th>
+                                            <th style="background-color:#ff0014;color:white;">Price</th>
+                                            <th style="background-color:#ff0014;color:white;">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-set="sequence" t-value="0"/>
+                                        <tr t-foreach="doc.service_ids" t-as="service">
+                                            <t t-set="sequence" t-value="sequence + 1"/>
+                                            <td><span t-esc="sequence"/></td>
+                                            <td>Overall</td>
+                                            <td><span t-field="service.proposal_service_id"/></td>
+                                            <td><span t-field="service.weekly_days"/></td>
+                                            <td><span t-field="service.daily_hours"/></td>
+                                            <td><span t-esc="service.get_manpower_unit()"/></td>
+                                            <td><span t-esc="service.get_manpower_unit()"/></td>
+                                            <td><span t-esc="service.get_manpower_unit()"/></td>
+                                            <td><span t-esc="service.get_manpower_unit()"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <br/>
+                                <h3 class="w-100" style="background-color:#ff0014;color:white;">Our Offer</h3>
+                                <div class="row" style="background-color:#e4e2e2">
+                                    <div class="col-4">
+                                        <p><strong>Mode</strong> Monthly</p>
+                                    </div>
+                                    <div class="col-3">
+                                        <p><strong>Monthly Invoice</strong></p>
+                                        <h1 style="font-weight:bold;font-size:50px"><strong>12345</strong></h1>
+                                        <h5 class="text-right" style="font-weight:bold"><strong>KD</strong></h5>
+                                    </div>
+                                    <div class="col-4">
+                                        <table class="table table-bordered">
+                                            <tbody>
+                                                <tr>
+                                                    <div><td rowspan="2" style="vertical-align : bottom;text-align:center;transform: rotate(270deg); -webkit-transform: rotate(270deg);">Quantity</td></div>
+                                                    <td>Staff</td>
+                                                    <td>148</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Supervisor</td>
+                                                    <td>0</td>
+                                                </tr>
+                                                <tr>
+                                                    <div><td rowspan="2" style="vertical-align : bottom;text-align:center;transform: rotate(270deg); -webkit-transform: rotate(270deg);">Duty</td></div>
+                                                    <td>Weekly</td>
+                                                    <td>Daily</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>6 Days</td>
+                                                    <td>8 Hours</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="col-1"/>
+                                </div>
+                                <br/>
+                                <div class="row">
+                                    <div class="col-1"><i class="fa fa-2x fa-quote-left"/></div>
+                                    <div class="col-11">
+                                        <p class="font-italic"><strong>We present to you our total price offer, which Proposal Totals is from a study of the tender documents and for your needs, as well as the number of manpower at the site, in addition to the costs of uniform, accomodation and transportation for every manpower.</strong></p>
+                                    </div>
+                                </div>
+                                <br/>
+                                <t t-if="doc.term_ids">
+                                    <h5><strong>Terms: </strong></h5>
+                                    <t t-set="terms" t-value="doc.term_ids[:3]"/>
+                                    <ol>
+                                        <li t-foreach="terms" t-as="term">
+                                            <p t-field="term.term_id"/>
+                                        </li>
+                                     </ol>
+                                </t>
+                                <p style="page-break-after:always !important;"/>
+
+                            </t>
+                            <t t-if="doc.print_list">
+                                <br/>
+                                <h3 class="text-center"><strong> List Of Material, Equipments and Machines</strong></h3>
+                                <br/>
+                                <p class="text-center">Our Price dosn't include the materials or equipments or any machineries, we will provide you with list of most used items for the cleaning services with prices for each one to choose which one you will add to your contract to be able customize the price and contract.</p>
+                                <br/>
+                                <table class="table table-bordered">
+                                    <colgroup>
+                                        <col width='5%'/>
+                                        <col width='45%'/>
+                                        <col width='15%'/>
+                                        <col width='15%'/>
+                                        <col width='10%'/>
+                                        <col width='10%'/>
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center" style="background-color:#ff0014;color:white;">#</th>
+                                            <th class="text-center" style="background-color:#ff0014;color:white;">item name</th>
+                                            <th class="text-center" style="background-color:#ff0014;color:white;">Unit</th>
+                                            <th class="text-center" style="background-color:#ff0014;color:white;">Quantity</th>
+                                            <th class="text-center" style="background-color:#ff0014;color:white;">Price</th>
+                                            <th class="text-center" style="background-color:#ff0014;color:white;">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-set="sequence" t-value="0"/>
+                                        <tr t-foreach="doc.material_ids" t-as="material">
+                                            <t t-set="sequence" t-value="sequence + 1"/>
+                                            <td><span t-esc="sequence"/></td>
+                                            <td><span t-field="material.product_id"/></td>
+                                            <td><span t-field="material.product_id.uom_id"/></td>
+                                            <td><span t-field="material.quantity"/></td>
+                                            <td><span t-field="material.cost"/></td>
+                                            <td><span t-field="material.total_amount"/></td>
+                                        </tr>
+                                        <tr t-foreach="doc.equipment_ids" t-as="equipment">
+                                            <t t-set="sequence" t-value="sequence + 1"/>
+                                            <td><span t-esc="sequence"/></td>
+                                            <td><span t-field="equipment.product_id"/></td>
+                                            <td><span t-field="equipment.product_id.uom_id"/></td>
+                                            <td><span t-field="equipment.quantity"/></td>
+                                            <td><span t-field="equipment.cost"/></td>
+                                            <td><span t-field="equipment.total_amount"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <br/>
+                                <div class="row">
+                                    <div class="col-1"><i class="fa fa-2x fa-quote-left"/></div>
+                                    <div class="col-11">
+                                        <p class="font-italic"><strong>Feel free and control your payment, what you need what you pay</strong></p>
+                                    </div>
+                                </div>
+                                <p style="page-break-after:always !important;"/>
+                            </t>
+                            <t t-if="doc.print_terms">
+                                <br/>
+                                <h3 class="text-center"><strong> TERMS AND POLICY</strong></h3>
+                                <br/>
+                                <h5 class="text-center">Our Price doesn't include materials or equipments and machiners. We provided you with list of the most used items for the cleaning services with individual unit price allowing you to choose your preferred items and customize your cost</h5>
+                                <br/>
+                                <table class="table table-bordered">
+                                    <colgroup>
+                                        <col width='5%'/>
+                                        <col width='95%'/>
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center" style="background-color:#ff0014;color:white;">#</th>
+                                            <th class="text-center" style="background-color:#ff0014;color:white;">Term</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-set="sequence" t-value="0"/>
+                                        <tr t-foreach="doc.term_ids" t-as="term">
+                                            <t t-set="sequence" t-value="sequence + 1"/>
+                                            <td><span t-esc="sequence"/></td>
+                                            <td><span t-field="term.term_id"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <br/>
+                                <div class="row">
+                                    <div class="col-1"><i class="fa fa-2x fa-quote-left"/></div>
+                                    <div class="col-11">
+                                        <p class="font-italic"><strong>Feel free and control your payment, what you need what you pay</strong></p>
+                                    </div>
+                                </div>
+                                <p style="page-break-after:always !important;"/>
+                            </t>
+                            <t t-if="doc.print_acceptance">
+                                <br/>
+                                <h3 class="text-center"><strong>Acceptance of Quote</strong></h3>
+                                <br/>
+                                <h4 class="w-100 text-center" style="background-color:#ff0014;color:white;padding-top:10px;padding-bottom:10px;"><strong>PROPOSAL # <span t-field="doc.ref"/> Provide Handling Services</strong></h4>
+                                <div class="row" style="background-color:#e4e2e2">
+                                    <div class="col-7">
+                                        <ul class="list-unstyled">
+                                            <li><h5><i class="fa fa-building"/><strong> Company Name: </strong><span t-field="doc.partner_id.name"/></h5></li>
+                                            <li><h5><i class="fa fa-address-card"/><strong> Address: </strong><span t-field="doc.partner_id.contact_address"/></h5></li>
+                                            <li><h5><i class="fa fa-user"/><strong> Contact: </strong><span t-field="doc.partner_id.name"/></h5></li>
+                                            <li><h5><i class="fa fa-phone-square"/><strong> Telephone: </strong><span t-esc="doc.partner_id.phone or doc.partner_id.mobile"/></h5></li>
+                                            <li><h5><i class="fa fa-envelope"/><strong> Email: </strong><span t-field="doc.partner_id.email"/></h5></li>
+                                         </ul>
+                                    </div>
+                                    <div class="col-5">
+                                        <ul class="list-unstyled">
+                                            <li><h5><strong> Project Due: </strong><span t-esc="(doc.expire_date - doc.proposal_date).days"/> Days</h5></li>
+                                            <li><h5><strong> Proposal Date: </strong><span t-field="doc.proposal_date"/></h5></li>
+                                        </ul>
+                                    </div>
+                                 </div>
+                                <br/>
+                                <div class="row" style="background-color:#e4e2e2">
+                                    <div class="col-3"/>
+                                    <div class="col-4">
+                                        <ul class="list-unstyled">
+                                            <li><h5><strong>Service Type: </strong></h5></li>
+                                            <li><h5><strong>Cleaner Service Per Month</strong></h5></li>
+                                            <li><h5><strong>Cleaning Supervision Per Month</strong></h5></li>
+                                         </ul>
+                                    </div>
+                                    <div class="col-2">
+                                        <ul class="list-unstyled">
+                                            <li><h5><strong>Total Price: </strong></h5></li>
+                                            <li><h5><strong>12345</strong></h5></li>
+                                            <li><h5><strong>0</strong></h5></li>
+                                            <li><h5><strong>Total: 0</strong></h5></li>
+                                         </ul>
+                                    </div>
+                                    <div class="col-3"/>
+                                 </div>
+                                <br/>
+                                <table class="table table-bordered">
+                                    <colgroup>
+                                        <col width='25%'/>
+                                        <col width='75%'/>
+                                    </colgroup>
+                                    <tbody>
+                                        <tr>
+                                            <td style="background-color:#e4e2e2"><h5><strong>Print name</strong></h5></td>
+                                            <td/>
+                                        </tr>
+                                        <tr>
+                                            <td style="background-color:#e4e2e2"><h5><strong>Position</strong></h5></td>
+                                            <td/>
+                                        </tr>
+                                        <tr>
+                                            <td style="background-color:#e4e2e2"><h5><strong>Approval Sign</strong></h5></td>
+                                            <td/>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <br/>
+                                <table class="table table-bordered">
+                                    <colgroup>
+                                        <col width='50%'/>
+                                        <col width='50%'/>
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center" style="background-color:#ff0014;color:white;">Payment Information</th>
+                                            <th class="text-center" style="background-color:#ff0014;color:white;">Terms</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <ul class="list-unstyled">
+                                                    <li>Payment Should Done By Maximum 10 days after receiving the invoice</li>
+                                                    <li>Payment Method : Bank Transferring / Cheque</li>
+                                                    <li>Bank Account : Attached with the invoice</li>
+                                                </ul>
+                                            </td>
+                                            <td>We accept the proposal above and I have read and understand the Terms and Conditions of Service provided by CARE, and agree to abide by them. I include with this acceptance the bank guarantee or registered cheque.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </t>
+                            <div class="footer">
+                                <div class="row">
+                                    <div class="col-10">
+                                        <p class="text-center">CARE For Buildings And Cities Cleaning Contracting company</p>
+                                    </div>
+                                    <div class="col-2">
+                                        Page: <span class="page"/> / <span class="topage"/>
                                     </div>
                                 </div>
                             </div>
-                        <div class="page">
-
                         </div>
-
                     </t>
                 </t>
             </t>

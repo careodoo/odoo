@@ -19,8 +19,8 @@
         If you have any questions or concerns regarding this sale proposal, please don't hesitate to contact us.
     </p>
 </div></field>
-<!--            <field name="report_template" ref="action_report_purchase_order"/>-->
-<!--            <field name="report_name">PO_{{ (object.name or '').replace('/','_') }}</field>-->
+            <field name="report_template" ref="care_proposal.action_proposal_report"/>
+            <field name="report_name">{{ (object.name or '').replace('/','_') }}</field>
             <field name="lang">{{ object.partner_id.lang }}</field>
 <!--            <field name="auto_delete" eval="True"/>-->
         </record>

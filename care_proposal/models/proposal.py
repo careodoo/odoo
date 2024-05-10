@@ -69,6 +69,14 @@ class Proposal(models.Model):
     qr_image = fields.Binary("QR Code", compute='_generate_qr_code')
     qr_url = fields.Char("QR Code", compute='_generate_qr_code')
     active = fields.Boolean(default=True)
+    # print options
+    print_cover = fields.Boolean(default=True)
+    print_about = fields.Boolean(default=True)
+    print_scope = fields.Boolean(default=True)
+    print_quotation = fields.Boolean(default=True)
+    print_list = fields.Boolean(default=True, string='Print List Material&Equipment')
+    print_terms = fields.Boolean(default=True)
+    print_acceptance = fields.Boolean(default=True)
 
     @api.depends('service_type', 'ref', 'partner_id')
     def compute_name(self):
@@ -220,7 +228,6 @@ class Proposal(models.Model):
             'default_composition_mode': 'comment',
             'custom_layout': "mail.mail_notification_paynow",
             'force_email': True,
-            'mark_rfq_as_sent': True,
         })
 
         lang = self.env.context.get('lang')
@@ -262,6 +269,9 @@ class ProposalServiceLine(models.Model):
     monthly_days = fields.Integer(related='proposal_service_id.monthly_days')
     total_cost = fields.Float(related='proposal_service_id.total_cost', store=True)
 
+    def get_manpower_unit(self):
+        manpower = self.proposal_id.manpower_ids.filtered(lambda m: m.service_id.id == self.id)
+        return manpower[0].gender if manpower else ''
 
 
 class ProposalScopeLine(models.Model):
