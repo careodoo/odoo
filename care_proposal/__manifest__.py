@@ -27,7 +27,6 @@
         'security/ir.model.access.csv',
         'data/sequence.xml',
         'data/activity_type.xml',
-        'data/mail_template.xml',
         'views/proposal.xml',
         'views/proposal_service.xml',
         'views/proposal_transportation.xml',
@@ -45,5 +44,6 @@
         'reports/proposal_transportation_xlsx.xml',
         'reports/proposal_term_xlsx.xml',
         'reports/customer_proposal.xml',
+        'data/mail_template.xml',
     ],
 }
