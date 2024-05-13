@@ -8,3 +8,4 @@ from . import proposal_scope
 from . import proposal_term
 from . import crm_lead
 from . import res_config_settings
+from . import proposal_service_type

@@ -17,7 +17,6 @@ class ProposalService(models.Model):
         item = self.line_ids.filtered(lambda l: l.type == type)
         return item.cost if item else ''
 
-
     @api.depends('line_ids.cost')
     def compute_total_cost(self):
         for rec in self:

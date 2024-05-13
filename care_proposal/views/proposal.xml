@@ -19,11 +19,11 @@
                     <field name="total_amount" optional="show"/>
                     <field name="margin_amount" optional="show"/>
                     <field name="margin_percentage" optional="show"/>
-                    <field name="service_type" optional="show"/>
+                    <field name="service_type_id" optional="show"/>
                     <field name="service_site" optional="show"/>
                     <field name="mobilization_date" optional="show"/>
                     <field name="proposal_period" optional="show"/>
-                    <field name="state"/>
+                    <field name="state" widget="badge" decoration-danger="state == 'reject'" decoration-success="state == 'approve'" decoration-warning="state == 'submit'"/>
                 </tree>
             </field>
         </record>
@@ -67,10 +67,10 @@
                                 <field name="barcode"/>
                                 <field name="qr_url" invisible="1"/>
                                 <field name="active" invisible="1"/>
-                                <field name="service_type" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                                <field name="country_id" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                                <field name="city" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                                <field name="phone" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="service_type_id" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="country_id"/>
+                                <field name="city"/>
+                                <field name="phone"/>
                                 <field name="service_site" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                                 <field name="mobilization_date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                                 <field name="proposal_period" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
@@ -110,7 +110,9 @@
                                         <field name="daily_hours"/>
                                         <field name="weekly_days"/>
                                         <field name="monthly_days"/>
-                                        <field name="total_cost" sum="total cost"/>
+                                        <field name="quantity"/>
+                                        <field name="total_cost" sum="subtotal"/>
+                                        <field name="total" sum="total"/>
                                     </tree>
                                 </field>
                             </page>

@@ -35,6 +35,7 @@
         'views/proposal_term.xml',
         'views/crm_lead.xml',
         'views/res_config_settings.xml',
+        'views/proposal_service_type.xml',
         'reports/proposal_report.xml',
         'reports/proposal_sheet_xlsx.xml',
         'reports/proposal_scope_xlsx.xml',

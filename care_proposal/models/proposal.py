@@ -25,14 +25,10 @@ class Proposal(models.Model):
     company_id = fields.Many2one('res.company', required=True, default=lambda self: self.env.company)
     ref = fields.Char(required=True, copy=False, readonly=True, index=True, default=lambda self: _('New'))
     partner_id = fields.Many2one('res.partner')
-    proposal_date = fields.Date()
-    expire_date = fields.Date()
+    proposal_date = fields.Date(required=True)
+    expire_date = fields.Date(required=True)
     total_amount = fields.Float(compute='compute_total_amount', store=True)
-    service_type = fields.Selection(selection=[
-        ('cleaning_services', 'Cleaning Services'),
-        ('security_services', 'Security Services'),
-        ('housekeeping_services', 'Housekeeping Services'),
-    ])
+    service_type_id = fields.Many2one('proposal.service.type')
     country_id = fields.Many2one('res.country', related='partner_id.country_id', store=True)
     city = fields.Char(related='partner_id.city', store=True)
     phone = fields.Char(related='partner_id.phone', store=True)
@@ -78,16 +74,12 @@ class Proposal(models.Model):
     print_terms = fields.Boolean(default=True)
     print_acceptance = fields.Boolean(default=True)
 
-    @api.depends('service_type', 'ref', 'partner_id')
+    @api.depends('service_type_id', 'ref', 'partner_id')
     def compute_name(self):
         for rec in self:
             name = 'Proposal'
-            if rec.service_type == 'cleaning_services':
-                name += ' | Cleaning Services'
-            elif rec.service_type == 'security_services':
-                name += ' | Security Services'
-            elif rec.service_type == 'housekeeping_services':
-                name += ' | Housekeeping Services'
+            if rec.service_type_id:
+                name += f' | {rec.service_type_id.name}'
             if rec.partner_id:
                 name += ' | ' + rec.partner_id.name
             if rec.ref:
@@ -154,32 +146,49 @@ class Proposal(models.Model):
                 raise ValidationError(_('Expire date cannot be earlier than proposal date!'))
 
     def generate_pricing(self):
-        self.pricing_ids = [(5, 0, 0)]
         vals = []
-        total = sum([line.total_cost for line in self.service_ids])
-        if total:
-            vals.append((0, 0, {
-                'name': 'service',
-                'cost': total
-            }))
-        total = sum([line.total_amount for line in self.material_ids])
-        if total:
-            vals.append((0, 0, {
-                'name': 'material',
-                'cost': total
-            }))
-        total = sum([line.total_amount for line in self.equipment_ids])
-        if total:
-            vals.append((0, 0, {
-                'name': 'equipment',
-                'cost': total
-            }))
-        total = sum([line.cost for line in self.transportation_ids])
-        if total:
-            vals.append((0, 0, {
-                'name': 'transportation',
-                'cost': total
-            }))
+        total_services = sum([line.total for line in self.service_ids])
+        total_materials = sum([line.total_amount for line in self.material_ids])
+        total_equipments = sum([line.total_amount for line in self.equipment_ids])
+        total_transportations = sum([line.cost for line in self.transportation_ids])
+
+        service_line = self.pricing_ids.filtered(lambda p: p.name == 'service')
+        material_line = self.pricing_ids.filtered(lambda p: p.name == 'material')
+        equipment_line = self.pricing_ids.filtered(lambda p: p.name == 'equipment')
+        transportation_line = self.pricing_ids.filtered(lambda p: p.name == 'transportation')
+
+        if service_line:
+            service_line.write({'cost': total_services})
+        else:
+            if total_services:
+                vals.append((0, 0, {
+                    'name': 'service',
+                    'cost': total_services
+                }))
+        if material_line:
+            service_line.write({'cost': total_materials})
+        else:
+            if total_materials:
+                vals.append((0, 0, {
+                    'name': 'material',
+                    'cost': total_materials
+                }))
+        if equipment_line:
+            equipment_line.write({'cost': total_equipments})
+        else:
+            if total_equipments:
+                vals.append((0, 0, {
+                    'name': 'equipment',
+                    'cost': total_equipments
+                }))
+        if transportation_line:
+            transportation_line.write({'cost': total_transportations})
+        else:
+            if total_transportations:
+                vals.append((0, 0, {
+                    'name': 'transportation',
+                    'cost': total_transportations
+                }))
         self.write({
             'pricing_ids': vals
         })
@@ -267,7 +276,14 @@ class ProposalServiceLine(models.Model):
     daily_hours = fields.Integer(related='proposal_service_id.daily_hours')
     weekly_days = fields.Integer(related='proposal_service_id.weekly_days')
     monthly_days = fields.Integer(related='proposal_service_id.monthly_days')
-    total_cost = fields.Float(related='proposal_service_id.total_cost', store=True)
+    quantity = fields.Float(default=1)
+    total_cost = fields.Float(related='proposal_service_id.total_cost', store=True, string='Subtotal')
+    total = fields.Float(compute='compute_total', store=True)
+
+    @api.depends('quantity', 'total_cost')
+    def compute_total(self):
+        for rec in self:
+            rec.total = rec.quantity * rec.total_cost
 
     def get_manpower_unit(self):
         manpower = self.proposal_id.manpower_ids.filtered(lambda m: m.service_id.id == self.id)

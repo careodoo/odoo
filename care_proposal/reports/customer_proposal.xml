@@ -180,9 +180,9 @@
                                             <td><span t-field="service.weekly_days"/></td>
                                             <td><span t-field="service.daily_hours"/></td>
                                             <td><span t-esc="service.get_manpower_unit()"/></td>
-                                            <td><span t-esc="service.get_manpower_unit()"/></td>
-                                            <td><span t-esc="service.get_manpower_unit()"/></td>
-                                            <td><span t-esc="service.get_manpower_unit()"/></td>
+                                            <td><span t-field="service.quantity"/></td>
+                                            <td><span t-field="service.total_cost"/></td>
+                                            <td><span t-field="service.total"/></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -194,7 +194,7 @@
                                     </div>
                                     <div class="col-3">
                                         <p><strong>Monthly Invoice</strong></p>
-                                        <h1 style="font-weight:bold;font-size:50px"><strong>12345</strong></h1>
+                                        <h1 style="font-weight:bold;font-size:50px"><strong><span t-esc="sum(doc.service_ids.mapped('total'))"/></strong></h1>
                                         <h5 class="text-right" style="font-weight:bold"><strong>KD</strong></h5>
                                     </div>
                                     <div class="col-4">
@@ -369,7 +369,7 @@
                                     <div class="col-2">
                                         <ul class="list-unstyled">
                                             <li><h5><strong>Total Price: </strong></h5></li>
-                                            <li><h5><strong>12345</strong></h5></li>
+                                            <li><h5><strong><span t-esc="sum(doc.service_ids.mapped('total'))"/></strong></h5></li>
                                             <li><h5><strong>0</strong></h5></li>
                                             <li><h5><strong>Total: 0</strong></h5></li>
                                          </ul>

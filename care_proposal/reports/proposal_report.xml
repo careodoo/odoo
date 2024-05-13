@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <record model="ir.actions.report" id="action_proposal_report">
+        <record model="ir.actions.report" id="action_proposal_pdf_report">
             <field name="name">Proposal</field>
             <field name="model">proposal.proposal</field>
             <field name="report_type">qweb-pdf</field>
-            <field name="report_name">care_proposal.proposal_report</field>
-            <field name="report_file">care_proposal.proposal_report</field>
+            <field name="report_name">care_proposal.proposal_pdf_report</field>
+            <field name="report_file">care_proposal.proposal_pdf_report</field>
             <field name="binding_model_id" ref="model_proposal_proposal"/>
 			<field name="binding_type">report</field>
 			<field name="binding_view_types">form</field>
         </record>
-        <template id="proposal_report">
+        <template id="proposal_pdf_report">
 			<t t-call="web.html_container">
 				<t t-call="web.basic_layout">
                     <div class="page" style="font-family:Arial,Helvetica,sans-serif !important;">
