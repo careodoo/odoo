@@ -7,6 +7,7 @@
             <field name="arch" type="xml">
                 <tree>
                     <field name="name"/>
+                    <field name="short_code"/>
                     <field name="daily_hours"/>
                     <field name="weekly_days"/>
                     <field name="monthly_days"/>
@@ -25,6 +26,7 @@
                             <h1><field name="name"/></h1>
                         </div>
                         <group>
+                            <field name="short_code"/>
                             <field name="daily_hours"/>
                             <field name="weekly_days"/>
                             <field name="monthly_days"/>

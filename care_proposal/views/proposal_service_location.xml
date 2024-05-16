@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="proposal_service_location_view_tree" model="ir.ui.view">
+            <field name="name">proposal_service_location_view_tree</field>
+            <field name="model">proposal.service.location</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom">
+                    <field name="name"/>
+                </tree>
+            </field>
+        </record>
+        <record id="proposal_service_location_action" model="ir.actions.act_window">
+            <field name="name">Service Locations</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">proposal.service.location</field>
+            <field name="view_mode">tree</field>
+        </record>
+        <menuitem id="proposal_service_location_menu" name="Service Locations" parent="proposal_config"
+                  action="proposal_service_location_action" sequence="3"/>
+    </data>
+</odoo>

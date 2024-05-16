@@ -7,6 +7,7 @@ class ProposalService(models.Model):
     _description = 'Proposal Service'
 
     name = fields.Char(required=True)
+    short_code = fields.Char(required=True)
     daily_hours = fields.Integer()
     weekly_days = fields.Integer()
     monthly_days = fields.Integer()

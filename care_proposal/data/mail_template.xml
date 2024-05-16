@@ -9,14 +9,18 @@
             <field name="body_html" type="html">
 <div style="margin: 0px; padding: 0px;">
     <p style="margin: 0px; padding: 0px; font-size: 13px;">
-        Dear <t t-out="object.partner_id.name or ''">Brandon Freeman</t>
+        Dear <t t-out="object.partner_id.name or ''">....</t>
         <t t-if="object.partner_id.parent_id">
             (<t t-out="object.partner_id.parent_id.name or ''">Azure Interior</t>)
         </t>
         <br/><br/>
-        We have attached a sale proposal document.
-        <br/><br/>
-        If you have any questions or concerns regarding this sale proposal, please don't hesitate to contact us.
+        <p>It's great to send you today, we hope you will be our valued customer.</p>
+        <p>We are so grateful for the pleasure of serving you and. and hope we meet your expectations.</p>
+        <br/>
+        <p>Care for Buildings &amp; Cities Cleaning Contracting Co. “Care Cleaning Co.” is one of the leading premier cleaning companies in Kuwait. Established in 1991, Care Cleaning Co. has achieved vigorous triumph in building a reputable portfolio highlighting 3 decades of experience, innovation, and quality.</p>
+        <p>During the last 30 years, Care Company has strengthened its presence and services in the cleaning of cities, roads, buildings, ministries, and airports. Our services range anywhere from housekeeping, general cleaning, handling, waste management, facility management etc.</p>
+        <p>Proposal attached.</p>
+        <p>Hope to hear from you soon.</p>
     </p>
 </div></field>
             <field name="report_template" ref="care_proposal.action_proposal_report"/>

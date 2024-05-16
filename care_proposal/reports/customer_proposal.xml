@@ -1,6 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data>
+        <record id="proposal_paperformat" model="report.paperformat">
+            <field name="name">ProposalA4</field>
+            <field name="default" eval="True"/>
+            <field name="format">A4</field>
+            <field name="page_height">0</field>
+            <field name="page_width">0</field>
+            <field name="orientation">Portrait</field>
+            <field name="margin_top">40</field>
+            <field name="margin_bottom">13</field>
+            <field name="margin_left">7</field>
+            <field name="margin_right">7</field>
+            <field name="header_line" eval="False"/>
+            <field name="header_spacing">35</field>
+            <field name="dpi">90</field>
+        </record>
+
         <record model="ir.actions.report" id="action_proposal_report">
             <field name="name">Customer Proposal</field>
             <field name="model">proposal.proposal</field>
@@ -10,6 +26,7 @@
             <field name="binding_model_id" ref="model_proposal_proposal"/>
 			<field name="binding_type">report</field>
 			<field name="binding_view_types">form</field>
+            <field name="paperformat_id" ref="proposal_paperformat"/>
         </record>
         <template id="customer_proposal_report">
             <t t-call="web.html_container">
@@ -21,7 +38,7 @@
                                     <img src="/care_proposal/static/src/img/care_header_logo_1.png" atl="header.png" class="w-100"/>
                                 </div>
                                 <div class="col-6">
-                                    <img src="/care_proposal/static/src/img/care_header_logo_2.png" atl="header.png" class="w-100"/>
+                                    <img src="/care_proposal/static/src/img/care_header_logo_2.png" atl="header.png" class="w-100" style="padding-top:30px"/>
                                 </div>
                             </div>
                         </div>
@@ -31,38 +48,38 @@
                                 <div>
                                      <div class="row">
                                          <div class="col-4" style="background-color:#ff0014;color:white;padding-top:20px;padding-bottom:20px;">
-                                             <h2 class="text-center"><strong>SERVICE</strong></h2>
-                                             <h2 class="text-center"><strong>PROPOSAL</strong></h2>
+                                             <h3 class="text-center"><strong>SERVICE</strong></h3>
+                                             <h3 class="text-center"><strong>PROPOSAL</strong></h3>
                                          </div>
                                          <div class="col-8" style="background-color:#e4e2e2;padding-top:20px;padding-bottom:20px;">
-                                             <h2><strong>PROPOSAL # <span t-field="doc.ref"/></strong></h2>
-                                             <h2><strong>PROVIDE CLEANING SERVICES</strong></h2>
+                                             <h3>PROPOSAL # <span t-field="doc.ref"/></h3>
+                                             <h3>PROVIDE CLEANING SERVICES</h3>
                                          </div>
                                      </div>
                                      <br/>
                                      <div class="row">
                                          <div class="col-7">
-                                             <h5><strong>Prepared for: </strong></h5>
-                                             <ul class="list-unstyled">
-                                                <li><h5><i class="fa fa-building"/><strong> Co. Name: </strong><span t-field="doc.partner_id.name"/></h5></li>
-                                                <li><h5><i class="fa fa-address-card"/><strong> Address: </strong><span t-field="doc.partner_id.contact_address"/></h5></li>
-                                                <li><h5><i class="fa fa-user"/><strong> Contact: </strong><span t-field="doc.partner_id.name"/></h5></li>
-                                                <li><h5><i class="fa fa-phone-square"/><strong> Telephone: </strong><span t-esc="doc.partner_id.phone or doc.partner_id.mobile"/></h5></li>
-                                                <li><h5><i class="fa fa-envelope"/><strong> Email: </strong><span t-field="doc.partner_id.email"/></h5></li>
+                                             <h5>Prepared for: </h5>
+                                             <ul class="list-unstyled" style="margin-left:80px">
+                                                <li><h6><i class="fa fa-building"/> Co. Name: <span t-field="doc.partner_id.name"/></h6></li>
+                                                <li><h6><i class="fa fa-address-card"/> Address: <span t-field="doc.partner_id.contact_address"/></h6></li>
+                                                <li><h6><i class="fa fa-user"/> Contact: <span t-field="doc.partner_id.name"/></h6></li>
+                                                <li><h6><i class="fa fa-phone-square"/> Telephone: <span t-esc="doc.partner_id.phone or doc.partner_id.mobile"/></h6></li>
+                                                <li><h6><i class="fa fa-envelope"/> Email: <span t-field="doc.partner_id.email"/></h6></li>
                                              </ul>
                                          </div>
                                          <div class="col-5">
                                              <ul class="list-unstyled">
-                                                <li><h5><strong> Proposal Issued: </strong><span t-field="doc.proposal_date"/></h5></li>
-                                                <li><h5><strong> Valid To: </strong><span t-field="doc.expire_date"/></h5></li>
+                                                <li><h6> Proposal Issued: <span t-field="doc.proposal_date"/></h6></li>
+                                                <li><h6> Valid To: <span t-field="doc.expire_date"/></h6></li>
                                              </ul>
                                          </div>
                                      </div>
                                      <br/><br/><br/><br/><br/>
                                      <div class="row">
                                          <div class="col-4">
-                                             <h4><strong>STATEMENT OF</strong></h4>
-                                             <h4><strong>CONFIDENTIALITY</strong></h4>
+                                             <h5>STATEMENT OF</h5>
+                                             <h5>CONFIDENTIALITY</h5>
                                          </div>
                                          <div class="col-8">
                                              <p>This proposal and supporting materials contain confidential and proprietary business information of CARE Company. These materials may be printed or photocopied for use in evaluating the proposed project but are not to be shared with other parties.</p>
@@ -99,8 +116,8 @@
                                     </colgroup>
                                     <thead>
                                         <tr>
-                                            <th class="text-center" style="background-color:#ff0014;color:white;">WHO WE ARE</th>
-                                            <th class="text-center" style="background-color:#ff0014;color:white;">WHAT WE DO</th>
+                                            <th class="text-center" style="background-color:#ff0014;color:white;"><strong>WHO WE ARE</strong></th>
+                                            <th class="text-center" style="background-color:#ff0014;color:white;"><strong>WHAT WE DO</strong></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -114,7 +131,7 @@
                             </t>
                             <t t-if="doc.print_scope">
                                 <br/>
-                                <h2 class="text-center">SCOPE OF WORK</h2>
+                                <h2 class="text-center" style="font-weight:bold">SCOPE OF WORK</h2>
                                 <p class="text-center">After our site visit for the work locations we suggest the below scope</p>
                                 <table class="table table-bordered">
                                     <colgroup>
@@ -123,8 +140,8 @@
                                     </colgroup>
                                     <thead>
                                         <tr>
-                                            <th style="background-color:#ff0014;color:white;">Scope</th>
-                                            <th style="background-color:#ff0014;color:white;">Schedule</th>
+                                            <th style="background-color:#ff0014;color:white;"><strong>Scope</strong></th>
+                                            <th style="background-color:#ff0014;color:white;"><strong>Schedule</strong></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -159,15 +176,15 @@
                                     </colgroup>
                                     <thead>
                                         <tr>
-                                            <th style="background-color:#ff0014;color:white;">#</th>
-                                            <th style="background-color:#ff0014;color:white;">Location</th>
-                                            <th style="background-color:#ff0014;color:white;">Service</th>
-                                            <th style="background-color:#ff0014;color:white;">Day/Week</th>
-                                            <th style="background-color:#ff0014;color:white;">Hours/Day</th>
-                                            <th style="background-color:#ff0014;color:white;">Unit</th>
-                                            <th style="background-color:#ff0014;color:white;">Quantity</th>
-                                            <th style="background-color:#ff0014;color:white;">Price</th>
-                                            <th style="background-color:#ff0014;color:white;">Total</th>
+                                            <th style="background-color:#d4d4d4;">#</th>
+                                            <th style="background-color:#d4d4d4;">Location</th>
+                                            <th style="background-color:#d4d4d4;">Service</th>
+                                            <th style="background-color:#d4d4d4;">Hours/Day</th>
+                                            <th style="background-color:#d4d4d4;">Day/Week</th>
+                                            <th style="background-color:#d4d4d4;">Unit</th>
+                                            <th style="background-color:#d4d4d4;">Quantity</th>
+                                            <th style="background-color:#d4d4d4;">Price</th>
+                                            <th style="background-color:#d4d4d4;">Total</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -175,11 +192,11 @@
                                         <tr t-foreach="doc.service_ids" t-as="service">
                                             <t t-set="sequence" t-value="sequence + 1"/>
                                             <td><span t-esc="sequence"/></td>
-                                            <td>Overall</td>
-                                            <td><span t-field="service.proposal_service_id"/></td>
-                                            <td><span t-field="service.weekly_days"/></td>
+                                            <td><span t-field="service.location_id"/></td>
+                                            <td><span t-field="service.proposal_service_id.short_code"/></td>
                                             <td><span t-field="service.daily_hours"/></td>
-                                            <td><span t-esc="service.get_manpower_unit()"/></td>
+                                            <td><span t-field="service.weekly_days"/></td>
+                                            <td><span t-field="service.unit_id"/></td>
                                             <td><span t-field="service.quantity"/></td>
                                             <td><span t-field="service.total_cost"/></td>
                                             <td><span t-field="service.total"/></td>
@@ -188,35 +205,36 @@
                                 </table>
                                 <br/>
                                 <h3 class="w-100" style="background-color:#ff0014;color:white;">Our Offer</h3>
-                                <div class="row" style="background-color:#e4e2e2">
+                                <br/>
+                                <div class="row" style="background-color:#d4d4d4;margin-left:0px !important;margin-right:0px !important">
                                     <div class="col-4">
-                                        <p><strong>Mode</strong> Monthly</p>
+                                        <p><span style="border: 1px solid #939393;padding:10px;padding-top:0px;padding-bottom:0px;border-right:none"><strong>Mode</strong></span><span style="border: 1px solid #939393;padding:10px;padding-top:0px;padding-bottom:0px;" t-field="doc.mode"/></p>
                                     </div>
                                     <div class="col-3">
-                                        <p><strong>Monthly Invoice</strong></p>
+                                        <p><strong><span t-field="doc.mode"/> Invoice</strong></p>
                                         <h1 style="font-weight:bold;font-size:50px"><strong><span t-esc="sum(doc.service_ids.mapped('total'))"/></strong></h1>
                                         <h5 class="text-right" style="font-weight:bold"><strong>KD</strong></h5>
                                     </div>
                                     <div class="col-4">
-                                        <table class="table table-bordered">
+                                        <table class="table table-bordered" style="border-color:#939393">
                                             <tbody>
                                                 <tr>
-                                                    <div><td rowspan="2" style="vertical-align : bottom;text-align:center;transform: rotate(270deg); -webkit-transform: rotate(270deg);">Quantity</td></div>
-                                                    <td>Staff</td>
-                                                    <td>148</td>
+                                                    <div><td rowspan="2" style="border-color:#939393;vertical-align : bottom;text-align:center;transform: rotate(270deg); -webkit-transform: rotate(270deg);">Quantity</td></div>
+                                                    <td style="border-color:#939393;">Staff</td>
+                                                    <td style="border-color:#939393;">148</td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Supervisor</td>
-                                                    <td>0</td>
+                                                    <td style="border-color:#939393;">Supervisor</td>
+                                                    <td style="border-color:#939393;">0</td>
                                                 </tr>
                                                 <tr>
-                                                    <div><td rowspan="2" style="vertical-align : bottom;text-align:center;transform: rotate(270deg); -webkit-transform: rotate(270deg);">Duty</td></div>
-                                                    <td>Weekly</td>
-                                                    <td>Daily</td>
+                                                    <div><td rowspan="2" style="border-color:#939393;vertical-align : bottom;text-align:center;transform: rotate(270deg); -webkit-transform: rotate(270deg);">Duty</td></div>
+                                                    <td style="border-color:#939393;">Weekly</td>
+                                                    <td style="border-color:#939393;">Daily</td>
                                                 </tr>
                                                 <tr>
-                                                    <td>6 Days</td>
-                                                    <td>8 Hours</td>
+                                                    <td style="border-color:#939393;">6 Days</td>
+                                                    <td style="border-color:#939393;">8 Hours</td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -247,7 +265,7 @@
                                 <br/>
                                 <h3 class="text-center"><strong> List Of Material, Equipments and Machines</strong></h3>
                                 <br/>
-                                <p class="text-center">Our Price dosn't include the materials or equipments or any machineries, we will provide you with list of most used items for the cleaning services with prices for each one to choose which one you will add to your contract to be able customize the price and contract.</p>
+                                <p class="text-center" t-field="doc.list_text"/>
                                 <br/>
                                 <table class="table table-bordered">
                                     <colgroup>
@@ -264,8 +282,8 @@
                                             <th class="text-center" style="background-color:#ff0014;color:white;">item name</th>
                                             <th class="text-center" style="background-color:#ff0014;color:white;">Unit</th>
                                             <th class="text-center" style="background-color:#ff0014;color:white;">Quantity</th>
-                                            <th class="text-center" style="background-color:#ff0014;color:white;">Price</th>
-                                            <th class="text-center" style="background-color:#ff0014;color:white;">Total</th>
+                                            <th t-if="not doc.include_material" class="text-center" style="background-color:#ff0014;color:white;">Price</th>
+                                            <th t-if="not doc.include_material" class="text-center" style="background-color:#ff0014;color:white;">Total</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -276,8 +294,8 @@
                                             <td><span t-field="material.product_id"/></td>
                                             <td><span t-field="material.product_id.uom_id"/></td>
                                             <td><span t-field="material.quantity"/></td>
-                                            <td><span t-field="material.cost"/></td>
-                                            <td><span t-field="material.total_amount"/></td>
+                                            <td t-if="not doc.include_material"><span t-field="material.cost"/></td>
+                                            <td t-if="not doc.include_material"><span t-field="material.total_amount"/></td>
                                         </tr>
                                         <tr t-foreach="doc.equipment_ids" t-as="equipment">
                                             <t t-set="sequence" t-value="sequence + 1"/>
@@ -285,8 +303,8 @@
                                             <td><span t-field="equipment.product_id"/></td>
                                             <td><span t-field="equipment.product_id.uom_id"/></td>
                                             <td><span t-field="equipment.quantity"/></td>
-                                            <td><span t-field="equipment.cost"/></td>
-                                            <td><span t-field="equipment.total_amount"/></td>
+                                            <td t-if="not doc.include_material"><span t-field="equipment.cost"/></td>
+                                            <td t-if="not doc.include_material"><span t-field="equipment.total_amount"/></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -294,7 +312,7 @@
                                 <div class="row">
                                     <div class="col-1"><i class="fa fa-2x fa-quote-left"/></div>
                                     <div class="col-11">
-                                        <p class="font-italic"><strong>Feel free and control your payment, what you need what you pay</strong></p>
+                                        <p class="font-italic"><strong><span t-field="doc.list_footer"/></strong></p>
                                     </div>
                                 </div>
                                 <p style="page-break-after:always !important;"/>
@@ -303,7 +321,7 @@
                                 <br/>
                                 <h3 class="text-center"><strong> TERMS AND POLICY</strong></h3>
                                 <br/>
-                                <h5 class="text-center">Our Price doesn't include materials or equipments and machiners. We provided you with list of the most used items for the cleaning services with individual unit price allowing you to choose your preferred items and customize your cost</h5>
+                                <h5 class="text-center" t-field="doc.term_text"/>
                                 <br/>
                                 <table class="table table-bordered">
                                     <colgroup>
@@ -338,26 +356,26 @@
                                 <br/>
                                 <h3 class="text-center"><strong>Acceptance of Quote</strong></h3>
                                 <br/>
-                                <h4 class="w-100 text-center" style="background-color:#ff0014;color:white;padding-top:10px;padding-bottom:10px;"><strong>PROPOSAL # <span t-field="doc.ref"/> Provide Handling Services</strong></h4>
-                                <div class="row" style="background-color:#e4e2e2">
+                                <h4 class="w-100 text-center" style="background-color:#ff0014;color:white;padding-top:10px;padding-bottom:10px;margin-bottom:0px !important;"><strong>PROPOSAL # <span t-field="doc.ref"/> Provide Handling Services</strong></h4>
+                                <div class="row" style="background-color:#e4e2e2;margin-left:0px !important;margin-right:0px !important;padding-top:10px;padding-bottom:10px;">
                                     <div class="col-7">
                                         <ul class="list-unstyled">
-                                            <li><h5><i class="fa fa-building"/><strong> Company Name: </strong><span t-field="doc.partner_id.name"/></h5></li>
-                                            <li><h5><i class="fa fa-address-card"/><strong> Address: </strong><span t-field="doc.partner_id.contact_address"/></h5></li>
-                                            <li><h5><i class="fa fa-user"/><strong> Contact: </strong><span t-field="doc.partner_id.name"/></h5></li>
-                                            <li><h5><i class="fa fa-phone-square"/><strong> Telephone: </strong><span t-esc="doc.partner_id.phone or doc.partner_id.mobile"/></h5></li>
-                                            <li><h5><i class="fa fa-envelope"/><strong> Email: </strong><span t-field="doc.partner_id.email"/></h5></li>
+                                            <li><h6><i class="fa fa-building"/> Company Name: <span t-field="doc.partner_id.name"/></h6></li>
+                                            <li><h6><i class="fa fa-address-card"/> Address: <span t-field="doc.partner_id.contact_address"/></h6></li>
+                                            <li><h6><i class="fa fa-user"/> Contact: <span t-field="doc.partner_id.name"/></h6></li>
+                                            <li><h6><i class="fa fa-phone-square"/> Telephone: <span t-esc="doc.partner_id.phone or doc.partner_id.mobile"/></h6></li>
+                                            <li><h6><i class="fa fa-envelope"/> Email: <span t-field="doc.partner_id.email"/></h6></li>
                                          </ul>
                                     </div>
                                     <div class="col-5">
                                         <ul class="list-unstyled">
-                                            <li><h5><strong> Project Due: </strong><span t-esc="(doc.expire_date - doc.proposal_date).days"/> Days</h5></li>
-                                            <li><h5><strong> Proposal Date: </strong><span t-field="doc.proposal_date"/></h5></li>
+                                            <li><h6> Project Due: <span t-esc="(doc.expire_date - doc.proposal_date).days"/> Days</h6></li>
+                                            <li><h6> Proposal Date: <span t-field="doc.proposal_date"/></h6></li>
                                         </ul>
                                     </div>
                                  </div>
                                 <br/>
-                                <div class="row" style="background-color:#e4e2e2">
+                                <div class="row" style="background-color:#e4e2e2;margin-left:0px !important;margin-right:0px !important;">
                                     <div class="col-3"/>
                                     <div class="col-4">
                                         <ul class="list-unstyled">
@@ -377,7 +395,7 @@
                                     <div class="col-3"/>
                                  </div>
                                 <br/>
-                                <table class="table table-bordered">
+                                <table class="table table-bordered w-75" style="margin-left: auto;margin-right: auto;">
                                     <colgroup>
                                         <col width='25%'/>
                                         <col width='75%'/>
@@ -424,12 +442,16 @@
                                 </table>
                             </t>
                             <div class="footer">
-                                <div class="row">
-                                    <div class="col-10">
-                                        <p class="text-center">CARE For Buildings And Cities Cleaning Contracting company</p>
+                                <div class="row" style="background-color:#e4e2e2">
+                                    <div class="col-11">
+                                        <p class="text-center" style="padding:5px">
+                                            CARE For Buildings And Cities Cleaning Contracting company
+                                        </p>
                                     </div>
-                                    <div class="col-2">
-                                        Page: <span class="page"/> / <span class="topage"/>
+                                    <div class="col-1">
+                                        <p style="padding:5px">
+                                            <span class="page"/>
+                                        </p>
                                     </div>
                                 </div>
                             </div>

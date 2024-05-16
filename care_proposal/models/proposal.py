@@ -38,7 +38,7 @@ class Proposal(models.Model):
     notes = fields.Text()
     state = fields.Selection(selection=[
         ('draft', 'New'), ('submit', 'Submitted'),
-        ('approve', 'Approved'), ('reject', 'Rejected')
+        ('approve', 'Approved'), ('reject', 'Rejected'), ('cancel', 'Cancel')
     ], default='draft', tracking=True)
     service_ids = fields.One2many('proposal.service.line', 'proposal_id')
     scope_ids = fields.One2many('proposal.scope.line', 'proposal_id')
@@ -65,6 +65,10 @@ class Proposal(models.Model):
     qr_image = fields.Binary("QR Code", compute='_generate_qr_code')
     qr_url = fields.Char("QR Code", compute='_generate_qr_code')
     active = fields.Boolean(default=True)
+    mode = fields.Selection(selection=[
+        ('hourly', 'Hourly'), ('daily', 'Daily'), ('weekly', 'Weekly'),
+        ('monthly', 'Monthly'), ('annually', 'Annually'),
+    ], required=True)
     # print options
     print_cover = fields.Boolean(default=True)
     print_about = fields.Boolean(default=True)
@@ -73,6 +77,10 @@ class Proposal(models.Model):
     print_list = fields.Boolean(default=True, string='Print List Material&Equipment')
     print_terms = fields.Boolean(default=True)
     print_acceptance = fields.Boolean(default=True)
+    include_material = fields.Boolean(default=True)
+    list_text = fields.Text(default="Our Price dosn't include the materials or equipments or any machineries, we will provide you with list of most used items for the cleaning services with prices for each one to choose which one you will add to your contract to be able customize the price and contract.")
+    list_footer = fields.Text(default="Feel free and control your payment, what you need what you pay")
+    term_text = fields.Text(default="Our Price doesn't include materials or equipments and machiners. We provided you with list of the most used items for the cleaning services with individual unit price allowing you to choose your preferred items and customize your cost")
 
     @api.depends('service_type_id', 'ref', 'partner_id')
     def compute_name(self):
@@ -214,6 +222,12 @@ class Proposal(models.Model):
     def button_reject(self):
         self.state = 'reject'
 
+    def button_cancel(self):
+        self.state = 'cancel'
+
+    def button_draft(self):
+        self.state = 'draft'
+
     def action_send_email(self):
         self.ensure_one()
         ir_model_data = self.env['ir.model.data']
@@ -273,10 +287,12 @@ class ProposalServiceLine(models.Model):
 
     proposal_id = fields.Many2one('proposal.proposal')
     proposal_service_id = fields.Many2one('proposal.service', required=True, string='Service')
+    location_id = fields.Many2one('proposal.service.location')
+    unit_id = fields.Many2one('proposal.service.unit')
     daily_hours = fields.Integer(related='proposal_service_id.daily_hours')
     weekly_days = fields.Integer(related='proposal_service_id.weekly_days')
     monthly_days = fields.Integer(related='proposal_service_id.monthly_days')
-    quantity = fields.Float(default=1)
+    quantity = fields.Integer(default=1)
     total_cost = fields.Float(related='proposal_service_id.total_cost', store=True, string='Subtotal')
     total = fields.Float(compute='compute_total', store=True)
 
@@ -284,10 +300,6 @@ class ProposalServiceLine(models.Model):
     def compute_total(self):
         for rec in self:
             rec.total = rec.quantity * rec.total_cost
-
-    def get_manpower_unit(self):
-        manpower = self.proposal_id.manpower_ids.filtered(lambda m: m.service_id.id == self.id)
-        return manpower[0].gender if manpower else ''
 
 
 class ProposalScopeLine(models.Model):
