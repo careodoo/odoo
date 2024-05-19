@@ -54,7 +54,11 @@ class Proposal(models.Model):
     equipment_amount = fields.Float(compute='compute_equipment_amount', store=True)
     transportation_amount = fields.Float(compute='compute_transportation_amount', store=True)
     salary_amount = fields.Float(compute='compute_salary_amount', store=True)
+    uniform_amount = fields.Float(compute='compute_uniform_amount', store=True)
     total_cost = fields.Float(compute='compute_total_cost', store=True)
+    individual_cost = fields.Float(compute='compute_individual_cost', store=True)
+    total_sales = fields.Float(compute='compute_total_sales', store=True)
+    individual_sales = fields.Float(compute='compute_individual_sales', store=True)
     total_pricing_cost = fields.Float(compute='compute_total_pricing_cost', store=True)
     margin_amount = fields.Float(compute='compute_margin', store=True)
     margin_percentage = fields.Float(compute='compute_margin', store=True, string='Margin %')
@@ -81,6 +85,23 @@ class Proposal(models.Model):
     list_text = fields.Text(default="Our Price dosn't include the materials or equipments or any machineries, we will provide you with list of most used items for the cleaning services with prices for each one to choose which one you will add to your contract to be able customize the price and contract.")
     list_footer = fields.Text(default="Feel free and control your payment, what you need what you pay")
     term_text = fields.Text(default="Our Price doesn't include materials or equipments and machiners. We provided you with list of the most used items for the cleaning services with individual unit price allowing you to choose your preferred items and customize your cost")
+    # commission
+    commission = fields.Selection(selection=[
+        ('total_sales', 'Total Sales'), ('ind_sales', 'Individual Sales'),
+        ('total_cost', 'Total Cost'), ('ind_cost', 'Individual Cost'),
+    ])
+    commission_type = fields.Selection([
+        ('percentage', 'Percentage'), ('fixed', 'Fixed'),
+    ])
+    commission_rate = fields.Float()
+    commission_amount = fields.Float(compute='compute_commission_amount', store=True)
+
+    @api.constrains('commission_rate')
+    def validate_commission_rate(self):
+        for rec in self:
+            if rec.commission_type == 'percentage':
+                if rec.commission_rate > 100:
+                    raise ValidationError("Percentage can't be more than 100%")
 
     @api.depends('service_type_id', 'ref', 'partner_id')
     def compute_name(self):
@@ -124,10 +145,38 @@ class Proposal(models.Model):
         for rec in self:
             rec.salary_amount = sum(rec.manpower_ids.mapped('total_salary') or [])
 
+    @api.depends('service_ids', 'service_ids.proposal_service_id')
+    def compute_uniform_amount(self):
+        for rec in self:
+            rec.uniform_amount = 0
+            total_uniform = 0
+            for service_line in rec.service_ids:
+                total_uniform += sum(service_line.proposal_service_id.line_ids.filtered(lambda l: l.type == 'uniform').mapped('cost') or [])
+            rec.uniform_amount = total_uniform
+
     @api.depends('material_amount', 'equipment_amount', 'transportation_amount', 'salary_amount')
     def compute_total_cost(self):
         for rec in self:
             rec.total_cost = rec.material_amount + rec.equipment_amount + rec.transportation_amount + rec.salary_amount
+
+    @api.depends('total_cost', 'manpower_quantity')
+    def compute_individual_cost(self):
+        for rec in self:
+            rec.individual_cost = 0
+            if rec.manpower_quantity:
+                rec.individual_cost = rec.total_cost / rec.manpower_quantity
+
+    @api.depends('total_sales', 'manpower_quantity')
+    def compute_individual_sales(self):
+        for rec in self:
+            rec.individual_sales = 0
+            if rec.manpower_quantity:
+                rec.individual_sales = rec.total_sales / rec.manpower_quantity
+
+    @api.depends('pricing_ids', 'pricing_ids.sales_price')
+    def compute_total_sales(self):
+        for rec in self:
+            rec.total_sales = sum(rec.pricing_ids.mapped('sales_price') or [])
 
     @api.depends('pricing_ids.sales_price')
     def compute_total_amount(self):
@@ -278,6 +327,24 @@ class Proposal(models.Model):
             qr_info += '/web#id=%s&action=%s&model=%s&view_type=form&cids=&menu_id=%s' % (rec.id, action_id, 'proposal.proposal', menu_id)
             rec.qr_url = qr_info
             rec.qr_image = generateQrCode.generate_qr_code(qr_info)
+
+    @api.depends('commission', 'commission_type', 'commission_rate')
+    def compute_commission_amount(self):
+        for rec in self:
+            rec.commission_amount = 0
+            if rec.commission and rec.commission_type and rec.commission_rate:
+                if rec.commission == 'total_sales':
+                    amount = rec.total_sales
+                elif rec.commission == 'ind_sales':
+                    amount = rec.individual_sales
+                elif rec.commission == 'total_cost':
+                    amount = rec.total_cost
+                else:
+                    amount = rec.individual_cost
+                if rec.commission_type == 'percentage':
+                    rec.commission_amount = amount + (amount * (rec.commission_rate / 100))
+                else:
+                    rec.commission_amount = amount + rec.commission_rate
 
 
 class ProposalServiceLine(models.Model):

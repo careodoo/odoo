@@ -10,45 +10,34 @@ class ProposalSheetReportXlsx(models.AbstractModel):
 
     def generate_xlsx_report(self, workbook, data, objs):
         header_style = workbook.add_format({
-            'font_name': 'Times', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'center'
+            'font_name': 'Arial', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'center'
         })
         header_style1 = workbook.add_format({
-            'font_name': 'Times', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'left'
+            'font_name': 'Arial', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'left'
         })
         header_style2 = workbook.add_format({
-            'font_name': 'Times', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'center', 'bg_color': '#d9d9d9'
+            'font_name': 'Arial', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'center', 'bg_color': '#d9d9d9'
         })
         header_style3 = workbook.add_format({
-            'font_name': 'Times', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'center', 'bg_color': '#fbe5d6'
+            'font_name': 'Arial', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'center', 'bg_color': '#fbe5d6'
         })
         header_style4 = workbook.add_format({
-            'font_name': 'Times', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'center', 'bg_color': '#c5e0b4'
+            'font_name': 'Arial', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'center', 'bg_color': '#c5e0b4'
         })
         header_style5 = workbook.add_format({
-            'font_name': 'Times', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'left', 'bg_color': '#c5e0b4'
+            'font_name': 'Arial', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'left', 'bg_color': '#c5e0b4'
         })
         header_style6 = workbook.add_format({
-            'font_name': 'Times', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'left', 'font_size': 20, 'valign': 'vcenter'
+            'font_name': 'Arial', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'left', 'font_size': 20, 'valign': 'vcenter'
         })
         sheet = workbook.add_worksheet('Proposal Sheet Report')
         proposal = objs[0]
         # header
         sheet.set_row(0, 100)
-        if proposal.logo:
-            proposal_logo = io.BytesIO(base64.b64decode(proposal.logo))
-            sheet.insert_image(0, 0, "proposal_logo.png", {'image_data': proposal_logo, 'x_scale': 0.5, 'y_scale': 0.5})
-        if proposal.barcode:
-            barcode = self.env['ir.actions.report'].barcode(barcode_type='auto', value=proposal.barcode, width=300, height=100)
-            barcode = base64.b64encode(barcode)
-            proposal_barcode = io.BytesIO(base64.b64decode(barcode))
-            sheet.insert_image(0, 1, "proposal_barcode.png", {'image_data': proposal_barcode, 'x_scale': 0.48, 'y_scale': 0.6})
-        sheet.write(0, 2, 'Service Pricing', header_style6)
-        if proposal.qr_image:
-            proposal_qr = io.BytesIO(base64.b64decode(proposal.qr_image))
-            sheet.insert_image(0, 3, "proposal_qr.png", {'image_data': proposal_qr, 'x_scale': 0.15, 'y_scale': 0.15})
-        sheet.write(0, 4, str(date.today()), header_style6)
+        sheet.write(0, 3, 'Service Pricing', header_style6)
 
         sheet.merge_range('A2:G2', f'Pricing for Provide Cleaning Services For {proposal.partner_id.name}', header_style2)
+        sheet.write(2, 6, str(date.today()), header_style)
         # services
         sheet.merge_range('A4:G4', 'Services', header_style3)
 
@@ -69,7 +58,7 @@ class ProposalSheetReportXlsx(models.AbstractModel):
         col = 1
         for service_line in proposal.service_ids:
             service = service_line.proposal_service_id
-            sheet.write(5, col, service.name, header_style4)
+            sheet.write(5, col, service.short_code, header_style4)
             sheet.write(6, col, self.get_service_item_cost(service, 'salary'), header_style)
             sheet.write(7, col, self.get_service_item_cost(service, 'residency'), header_style)
             sheet.write(8, col, self.get_service_item_cost(service, 'accommodation'), header_style)
@@ -116,22 +105,39 @@ class ProposalSheetReportXlsx(models.AbstractModel):
         row += 1
         sheet.merge_range(row, 0, row, 6, 'Summary', header_style3)
         row += 1
-        sheet.write(row, 0, 'Manpower Quantity', header_style4)
-        sheet.write(row, 1, 'Material Amount', header_style4)
-        sheet.write(row, 2, 'Equipment Amount', header_style4)
+        sheet.write(row, 0, 'Uniform', header_style4)
+        sheet.write(row, 1, 'Accommodation', header_style4)
+        sheet.write(row, 2, 'Residency', header_style4)
         sheet.write(row, 3, 'Transportation Amount', header_style4)
-        sheet.write(row, 4, 'Salary Amount', header_style4)
-        sheet.write(row, 5, 'Total Cost', header_style4)
-        sheet.write(row, 6, 'Total Sales', header_style4)
+        sheet.write(row, 4, 'Manpower Quantity', header_style4)
+        sheet.write(row, 5, 'Material Amount', header_style4)
+        sheet.write(row, 6, 'Equipment Amount', header_style4)
 
         row += 1
-        sheet.write(row, 0, proposal.manpower_quantity, header_style)
+        sheet.write(row, 0, proposal.uniform_amount, header_style)
         sheet.write(row, 1, proposal.material_amount, header_style)
         sheet.write(row, 2, proposal.equipment_amount, header_style)
         sheet.write(row, 3, proposal.transportation_amount, header_style)
         sheet.write(row, 4, proposal.salary_amount, header_style)
         sheet.write(row, 5, proposal.total_cost, header_style)
         sheet.write(row, 6, sum(proposal.pricing_ids.mapped('sales_price')), header_style)
+
+        # sheet.write(row, 0, 'Manpower Quantity', header_style4)
+        # sheet.write(row, 1, 'Material Amount', header_style4)
+        # sheet.write(row, 2, 'Equipment Amount', header_style4)
+        # sheet.write(row, 3, 'Transportation Amount', header_style4)
+        # sheet.write(row, 4, 'Salary Amount', header_style4)
+        # sheet.write(row, 5, 'Total Cost', header_style4)
+        # sheet.write(row, 6, 'Total Sales', header_style4)
+
+        # row += 1
+        # sheet.write(row, 0, proposal.manpower_quantity, header_style)
+        # sheet.write(row, 1, proposal.material_amount, header_style)
+        # sheet.write(row, 2, proposal.equipment_amount, header_style)
+        # sheet.write(row, 3, proposal.transportation_amount, header_style)
+        # sheet.write(row, 4, proposal.salary_amount, header_style)
+        # sheet.write(row, 5, proposal.total_cost, header_style)
+        # sheet.write(row, 6, sum(proposal.pricing_ids.mapped('sales_price')), header_style)
 
         sheet.set_column(0, 6, 20)
 

@@ -94,6 +94,9 @@
                                         <field name="transportation_amount"/>
                                         <field name="salary_amount"/>
                                         <field name="total_cost"/>
+                                        <field name="individual_cost"/>
+                                        <field name="total_sales"/>
+                                        <field name="individual_sales"/>
                                     </group>
                                 </group>
                             </page>
@@ -179,6 +182,14 @@
                                         <field name="term_id"/>
                                     </tree>
                                 </field>
+                            </page>
+                            <page name="commission" string="Commission">
+                                <group>
+                                    <field name="commission"/>
+                                    <field name="commission_type"/>
+                                    <field name="commission_rate"/>
+                                    <field name="commission_amount"/>
+                                </group>
                             </page>
                             <page name="print" string="Print Options">
                                 <group>
