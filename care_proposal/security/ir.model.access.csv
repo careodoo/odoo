@@ -17,3 +17,5 @@ access_proposal_pricing_line,proposal_pricing_line,model_proposal_pricing_line,,
 access_proposal_service_type,proposal_service_type,model_proposal_service_type,,1,1,1,1
 access_proposal_service_location,proposal_service_location,model_proposal_service_location,,1,1,1,1
 access_proposal_service_unit,proposal_service_unit,model_proposal_service_unit,,1,1,1,1
+access_proposal_approver,proposal_approver,model_proposal_approver,,1,1,1,1
+access_proposal_approval,proposal_approval,model_proposal_approval,,1,1,1,1

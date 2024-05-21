@@ -10,16 +10,13 @@ class Proposal(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Proposal'
 
-    def _default_approver(self):
-        IPC = self.env['ir.config_parameter'].sudo()
-        approver = False
-        approver_str = IPC.get_param('care_proposal.proposal_approver_id')
-        if approver_str:
-            approver = self.env['res.users'].browse(int(approver_str))
-        return approver.id if approver else False
-
     def generate_barcode(self):
         return str(int(datetime.now().timestamp()))
+
+    def get_default_approvers(self):
+        return [
+            (0, 0, {'sequence': rec.sequence, 'user_id': rec.user_id.id}) for rec in self.env['proposal.approver'].search([])
+        ]
 
     name = fields.Char(compute='compute_name', store=True)
     company_id = fields.Many2one('res.company', required=True, default=lambda self: self.env.company)
@@ -37,7 +34,7 @@ class Proposal(models.Model):
     proposal_period = fields.Integer()
     notes = fields.Text()
     state = fields.Selection(selection=[
-        ('draft', 'New'), ('submit', 'Submitted'),
+        ('draft', 'New'), ('submit', 'Submitted'), ('waiting', 'Waiting Approval'),
         ('approve', 'Approved'), ('reject', 'Rejected'), ('cancel', 'Cancel')
     ], default='draft', tracking=True)
     service_ids = fields.One2many('proposal.service.line', 'proposal_id')
@@ -54,16 +51,18 @@ class Proposal(models.Model):
     equipment_amount = fields.Float(compute='compute_equipment_amount', store=True)
     transportation_amount = fields.Float(compute='compute_transportation_amount', store=True)
     salary_amount = fields.Float(compute='compute_salary_amount', store=True)
-    uniform_amount = fields.Float(compute='compute_uniform_amount', store=True)
+    uniform_amount = fields.Float(compute='compute_service_amounts', store=True)
+    accommodation_amount = fields.Float(compute='compute_service_amounts', store=True)
+    residency_amount = fields.Float(compute='compute_service_amounts', store=True)
     total_cost = fields.Float(compute='compute_total_cost', store=True)
     individual_cost = fields.Float(compute='compute_individual_cost', store=True)
     total_sales = fields.Float(compute='compute_total_sales', store=True)
     individual_sales = fields.Float(compute='compute_individual_sales', store=True)
     total_pricing_cost = fields.Float(compute='compute_total_pricing_cost', store=True)
     margin_amount = fields.Float(compute='compute_margin', store=True)
-    margin_percentage = fields.Float(compute='compute_margin', store=True, string='Margin %')
+    margin_percentage = fields.Float(compute='compute_margin', store=True, string='Net Profit %')
     lead_ids = fields.One2many('crm.lead', 'proposal_id')
-    approver_id = fields.Many2one('res.users', default=_default_approver)
+    approver_id = fields.Many2one('res.users', compute='compute_approver', store=True)
     barcode = fields.Char(default=generate_barcode)
     logo = fields.Binary()
     qr_image = fields.Binary("QR Code", compute='_generate_qr_code')
@@ -95,6 +94,15 @@ class Proposal(models.Model):
     ])
     commission_rate = fields.Float()
     commission_amount = fields.Float(compute='compute_commission_amount', store=True)
+    approval_ids = fields.One2many('proposal.approval', 'proposal_id', default=get_default_approvers)
+
+    @api.depends('approval_ids', 'approval_ids.approved')
+    def compute_approver(self):
+        for rec in self:
+            rec.approver_id = False
+            approvers = rec.approval_ids.filtered(lambda a: not a.approved)
+            if approvers:
+                rec.approver_id = approvers[0].user_id.id
 
     @api.constrains('commission_rate')
     def validate_commission_rate(self):
@@ -146,13 +154,24 @@ class Proposal(models.Model):
             rec.salary_amount = sum(rec.manpower_ids.mapped('total_salary') or [])
 
     @api.depends('service_ids', 'service_ids.proposal_service_id')
-    def compute_uniform_amount(self):
+    def compute_service_amounts(self):
         for rec in self:
             rec.uniform_amount = 0
+            rec.accommodation_amount = 0
+            rec.residency_amount = 0
+
             total_uniform = 0
+            total_accommodation = 0
+            total_residency = 0
             for service_line in rec.service_ids:
-                total_uniform += sum(service_line.proposal_service_id.line_ids.filtered(lambda l: l.type == 'uniform').mapped('cost') or [])
+                lines = service_line.proposal_service_id.line_ids
+                total_uniform += sum(lines.filtered(lambda l: l.type == 'uniform').mapped('cost') or [])
+                total_accommodation += sum(lines.filtered(lambda l: l.type == 'accommodation').mapped('cost') or [])
+                total_residency += sum(lines.filtered(lambda l: l.type == 'residency').mapped('cost') or [])
+
             rec.uniform_amount = total_uniform
+            rec.accommodation_amount = total_accommodation
+            rec.residency_amount = total_residency
 
     @api.depends('material_amount', 'equipment_amount', 'transportation_amount', 'salary_amount')
     def compute_total_cost(self):
@@ -266,7 +285,19 @@ class Proposal(models.Model):
             user_id=self.approver_id.id)
 
     def button_approve(self):
-        self.state = 'approve'
+        self.approval_ids.filtered(lambda l: l.user_id.id == self.env.uid).write({
+            'approved': True,
+            'date_approved': fields.Datetime.now(),
+        })
+        if self.approval_ids.filtered(lambda l: not l.approved):
+            self.write({'state': 'waiting'})
+            self.sudo().activity_schedule(
+                'care_proposal.mail_act_proposal_submit',
+                summary='Proposal',
+                note='Ask To Confirm Proposal',
+                user_id=self.approver_id.id)
+            return
+        self.write({'state': 'approve'})
 
     def button_reject(self):
         self.state = 'reject'
@@ -342,9 +373,17 @@ class Proposal(models.Model):
                 else:
                     amount = rec.individual_cost
                 if rec.commission_type == 'percentage':
-                    rec.commission_amount = amount + (amount * (rec.commission_rate / 100))
+                    rec.commission_amount = amount * (rec.commission_rate / 100)
                 else:
-                    rec.commission_amount = amount + rec.commission_rate
+                    rec.commission_amount = rec.commission_rate
+
+    def get_days_text(self):
+        service_days = set([str(day) for day in self.service_ids.mapped('weekly_days')])
+        return ','.join(service_days)
+
+    def get_hours_text(self):
+        service_hours = set([str(hour) for hour in self.service_ids.mapped('daily_hours')])
+        return ','.join(service_hours)
 
 
 class ProposalServiceLine(models.Model):
@@ -496,3 +535,15 @@ class ProposalPricingLine(models.Model):
     def compute_sales_price(self):
         for rec in self:
             rec.sales_price = rec.cost + (rec.cost * (rec.profit_percentage / 100))
+
+
+class ProposalApproval(models.Model):
+    _name = 'proposal.approval'
+    _description = 'Proposal Approval'
+    _order = 'sequence'
+
+    proposal_id = fields.Many2one('proposal.proposal')
+    sequence = fields.Integer()
+    user_id = fields.Many2one('res.users')
+    approved = fields.Boolean()
+    date_approved = fields.Datetime(string='Approved Date')

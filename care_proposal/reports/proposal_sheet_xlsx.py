@@ -10,30 +10,33 @@ class ProposalSheetReportXlsx(models.AbstractModel):
 
     def generate_xlsx_report(self, workbook, data, objs):
         header_style = workbook.add_format({
-            'font_name': 'Arial', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'center'
+            'font_name': 'Arial', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'center', 'valign': 'vcenter'
         })
         header_style1 = workbook.add_format({
-            'font_name': 'Arial', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'left'
+            'font_name': 'Arial', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'left', 'valign': 'vcenter'
         })
         header_style2 = workbook.add_format({
-            'font_name': 'Arial', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'center', 'bg_color': '#d9d9d9'
+            'font_name': 'Arial', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'center', 'bg_color': '#d9d9d9', 'valign': 'vcenter'
         })
         header_style3 = workbook.add_format({
-            'font_name': 'Arial', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'center', 'bg_color': '#fbe5d6'
+            'font_name': 'Arial', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'center', 'bg_color': '#fbe5d6', 'valign': 'vcenter'
         })
         header_style4 = workbook.add_format({
-            'font_name': 'Arial', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'center', 'bg_color': '#c5e0b4'
+            'font_name': 'Arial', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'center', 'bg_color': '#c5e0b4', 'valign': 'vcenter'
         })
         header_style5 = workbook.add_format({
-            'font_name': 'Arial', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'left', 'bg_color': '#c5e0b4'
+            'font_name': 'Arial', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'left', 'bg_color': '#c5e0b4', 'valign': 'vcenter'
         })
         header_style6 = workbook.add_format({
-            'font_name': 'Arial', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'left', 'font_size': 20, 'valign': 'vcenter'
+            'font_name': 'Arial', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'center', 'font_size': 15, 'valign': 'vcenter'
+        })
+        header_style7 = workbook.add_format({
+            'font_name': 'Arial', 'bold': True, 'left': 1, 'bottom': 1, 'right': 1, 'top': 1, 'align': 'center', 'bg_color': '#f6b83f', 'valign': 'vcenter'
         })
         sheet = workbook.add_worksheet('Proposal Sheet Report')
         proposal = objs[0]
         # header
-        sheet.set_row(0, 100)
+        sheet.set_row(0, 50)
         sheet.write(0, 3, 'Service Pricing', header_style6)
 
         sheet.merge_range('A2:G2', f'Pricing for Provide Cleaning Services For {proposal.partner_id.name}', header_style2)
@@ -105,6 +108,7 @@ class ProposalSheetReportXlsx(models.AbstractModel):
         row += 1
         sheet.merge_range(row, 0, row, 6, 'Summary', header_style3)
         row += 1
+        sheet.set_row(row, 25)
         sheet.write(row, 0, 'Uniform', header_style4)
         sheet.write(row, 1, 'Accommodation', header_style4)
         sheet.write(row, 2, 'Residency', header_style4)
@@ -115,29 +119,46 @@ class ProposalSheetReportXlsx(models.AbstractModel):
 
         row += 1
         sheet.write(row, 0, proposal.uniform_amount, header_style)
-        sheet.write(row, 1, proposal.material_amount, header_style)
-        sheet.write(row, 2, proposal.equipment_amount, header_style)
+        sheet.write(row, 1, proposal.accommodation_amount, header_style)
+        sheet.write(row, 2, proposal.residency_amount, header_style)
         sheet.write(row, 3, proposal.transportation_amount, header_style)
-        sheet.write(row, 4, proposal.salary_amount, header_style)
-        sheet.write(row, 5, proposal.total_cost, header_style)
-        sheet.write(row, 6, sum(proposal.pricing_ids.mapped('sales_price')), header_style)
+        sheet.write(row, 4, proposal.manpower_quantity, header_style)
+        sheet.write(row, 5, proposal.material_amount, header_style)
+        sheet.write(row, 6, proposal.equipment_amount, header_style)
 
-        # sheet.write(row, 0, 'Manpower Quantity', header_style4)
-        # sheet.write(row, 1, 'Material Amount', header_style4)
-        # sheet.write(row, 2, 'Equipment Amount', header_style4)
-        # sheet.write(row, 3, 'Transportation Amount', header_style4)
-        # sheet.write(row, 4, 'Salary Amount', header_style4)
-        # sheet.write(row, 5, 'Total Cost', header_style4)
-        # sheet.write(row, 6, 'Total Sales', header_style4)
+        row += 1
+        sheet.set_row(row, 25)
+        sheet.write(row, 0, 'Individual Cost', header_style7)
+        sheet.write(row, 1, 'Individual Sales', header_style7)
+        sheet.write(row, 2, 'Commission', header_style7)
+        sheet.write(row, 3, 'Average Profit%', header_style7)
+        sheet.write(row, 4, 'Net Profit%', header_style7)
+        sheet.write(row, 5, 'Total Cost', header_style7)
+        sheet.write(row, 6, 'Total Sales', header_style7)
 
-        # row += 1
-        # sheet.write(row, 0, proposal.manpower_quantity, header_style)
-        # sheet.write(row, 1, proposal.material_amount, header_style)
-        # sheet.write(row, 2, proposal.equipment_amount, header_style)
-        # sheet.write(row, 3, proposal.transportation_amount, header_style)
-        # sheet.write(row, 4, proposal.salary_amount, header_style)
-        # sheet.write(row, 5, proposal.total_cost, header_style)
-        # sheet.write(row, 6, sum(proposal.pricing_ids.mapped('sales_price')), header_style)
+        row += 1
+
+        if proposal.commission_type == 'percentage':
+            commission = f"{proposal.commission_rate}%"
+        else:
+            commission = f"{proposal.commission_rate}"
+        if len(proposal.pricing_ids):
+            avg_profit = sum(proposal.pricing_ids.mapped('profit_percentage')) / len(proposal.pricing_ids)
+        else:
+            avg_profit = 0
+
+        sheet.write(row, 0, proposal.individual_cost, header_style)
+        sheet.write(row, 1, proposal.individual_sales, header_style)
+        sheet.write(row, 2, commission, header_style)
+        sheet.write(row, 3, avg_profit, header_style)
+        sheet.write(row, 4, f"{proposal.margin_percentage}%", header_style)
+        sheet.write(row, 5, proposal.total_cost + proposal.commission_amount, header_style)
+        sheet.write(row, 6, proposal.total_sales + proposal.commission_amount, header_style)
+
+        row += 2
+        sheet.write(row, 3, 'Created By: ', header_style7)
+        sheet.write(row, 4, f"{proposal.create_uid.name}", header_style7)
+        sheet.write(row, 6, 'CEO Approval', header_style7)
 
         sheet.set_column(0, 6, 20)
 

@@ -11,3 +11,4 @@ from . import res_config_settings
 from . import proposal_service_type
 from . import proposal_service_location
 from . import proposal_service_unit
+from . import proposal_approver

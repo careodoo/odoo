@@ -233,8 +233,8 @@
                                                     <td style="border-color:#939393;">Daily</td>
                                                 </tr>
                                                 <tr>
-                                                    <td style="border-color:#939393;">6 Days</td>
-                                                    <td style="border-color:#939393;">8 Hours</td>
+                                                    <td style="border-color:#939393;"><span t-esc="doc.get_days_text()"/> Days</td>
+                                                    <td style="border-color:#939393;"><span t-esc="doc.get_hours_text()"/> Hours</td>
                                                 </tr>
                                             </tbody>
                                         </table>

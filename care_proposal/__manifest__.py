@@ -34,7 +34,7 @@
         'views/proposal_scope.xml',
         'views/proposal_term.xml',
         'views/crm_lead.xml',
-        'views/res_config_settings.xml',
+        'views/proposal_approver.xml',
         'views/proposal_service_type.xml',
         'views/proposal_service_location.xml',
         'views/proposal_service_unit.xml',
