@@ -7,6 +7,10 @@ class ProposalService(models.Model):
     _description = 'Proposal Service'
 
     name = fields.Char(required=True)
+    type = fields.Selection(selection=[
+        ('manpower', 'Manpower'),
+        ('service', 'Service'),
+    ], required=True, default='manpower')
     short_code = fields.Char(required=True)
     daily_hours = fields.Integer()
     weekly_days = fields.Integer()
@@ -37,7 +41,8 @@ class ProposalServiceLine(models.Model):
         ('accommodation', 'Accommodation'), ('uniform', 'Uniform'),
         ('leave', 'Leave & Indemnity'), ('insurance', 'Staff Insurance'),
         ('bank_charge', 'Bank Charge'), ('medical', 'Medical Certificate'),
-        ('cleaning', 'Faced Cleaning'), ('commission', 'Commission'), ('other', 'Other'),
+        ('gate_pass', 'Gate Pass'), ('commission', 'Commission'), ('other', 'Other'),
     ], required=True)
+    other_cost = fields.Char()
     cost = fields.Float()
     description = fields.Char()

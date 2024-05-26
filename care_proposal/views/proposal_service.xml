@@ -7,6 +7,7 @@
             <field name="arch" type="xml">
                 <tree>
                     <field name="name"/>
+                    <field name="type"/>
                     <field name="short_code"/>
                     <field name="daily_hours"/>
                     <field name="weekly_days"/>
@@ -27,9 +28,10 @@
                         </div>
                         <group>
                             <field name="short_code"/>
-                            <field name="daily_hours"/>
-                            <field name="weekly_days"/>
-                            <field name="monthly_days"/>
+                            <field name="type" widget="radio" options="{'horizontal': True}"/>
+                            <field name="daily_hours" attrs="{'invisible': [('type', '=', 'service')]}"/>
+                            <field name="weekly_days" attrs="{'invisible': [('type', '=', 'service')]}"/>
+                            <field name="monthly_days" attrs="{'invisible': [('type', '=', 'service')]}"/>
                             <field name="total_cost"/>
                         </group>
                         <notebook>
@@ -38,6 +40,7 @@
                                     <tree editable="bottom">
                                         <field name="sequence" widget="handle"/>
                                         <field name="type"/>
+                                        <field name="other_cost" attrs="{'readonly': [('type', '!=', 'other')], 'required': [('type', '=', 'other')]}"/>
                                         <field name="cost" sum="total cost"/>
                                         <field name="description"/>
                                     </tree>

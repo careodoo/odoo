@@ -19,3 +19,4 @@ access_proposal_service_location,proposal_service_location,model_proposal_servic
 access_proposal_service_unit,proposal_service_unit,model_proposal_service_unit,,1,1,1,1
 access_proposal_approver,proposal_approver,model_proposal_approver,,1,1,1,1
 access_proposal_approval,proposal_approval,model_proposal_approval,,1,1,1,1
+access_proposal_commission_line,proposal_commission_line,model_proposal_commission_line,,1,1,1,1

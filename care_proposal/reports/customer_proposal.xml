@@ -52,8 +52,7 @@
                                              <h3 class="text-center"><strong>PROPOSAL</strong></h3>
                                          </div>
                                          <div class="col-8" style="background-color:#e4e2e2;padding-top:20px;padding-bottom:20px;">
-                                             <h3>PROPOSAL # <span t-field="doc.ref"/></h3>
-                                             <h3>PROVIDE CLEANING SERVICES</h3>
+                                             <h3 t-esc="doc.name.upper()"/>
                                          </div>
                                      </div>
                                      <br/>
@@ -75,7 +74,7 @@
                                              </ul>
                                          </div>
                                      </div>
-                                     <br/><br/><br/><br/><br/>
+                                     <br/><br/><br/><br/><br/><br/><br/>
                                      <div class="row">
                                          <div class="col-4">
                                              <h5>STATEMENT OF</h5>
@@ -101,14 +100,14 @@
                                         <p>During the last 30 years, Care Cleaning has strengthened its presence and services in the cleaning of cities, roads, buildings, ministries, and airports. Our services range anywhere from housekeeping, general cleaning, handling, waste management, etc. Recently, Care Cleaning Co. has expanded its operations to offer additional services such as ground operations, landscaping, and pest control.</p>
                                     </div>
                                 </div>
-                                <br/>
+                                <br/><br/><br/><br/>
                                 <div class="row">
                                     <div class="col-1"><i class="fa fa-2x fa-quote-left"/></div>
                                     <div class="col-11">
                                         <p class="font-italic"><strong>Our ethical commitment and strong relations with our stakeholder are our prior and core values, while always seeking to provide healthy &amp; safe working conditions, transparent communication, as well as efficient and accountable operations.</strong></p>
                                     </div>
                                 </div>
-                                <br/>
+                                <br/><br/><br/><br/>
                                 <table class="table table-bordered">
                                     <colgroup>
                                         <col width='50%'/>
@@ -176,30 +175,31 @@
                                     </colgroup>
                                     <thead>
                                         <tr>
-                                            <th style="background-color:#d4d4d4;">#</th>
-                                            <th style="background-color:#d4d4d4;">Location</th>
-                                            <th style="background-color:#d4d4d4;">Service</th>
-                                            <th style="background-color:#d4d4d4;">Hours/Day</th>
-                                            <th style="background-color:#d4d4d4;">Day/Week</th>
-                                            <th style="background-color:#d4d4d4;">Unit</th>
-                                            <th style="background-color:#d4d4d4;">Quantity</th>
-                                            <th style="background-color:#d4d4d4;">Price</th>
-                                            <th style="background-color:#d4d4d4;">Total</th>
+                                            <th class="text-center" style="background-color:#d4d4d4;">#</th>
+                                            <th class="text-center" style="background-color:#d4d4d4;">Location</th>
+                                            <th class="text-center" style="background-color:#d4d4d4;">Service</th>
+                                            <th class="text-center" style="background-color:#d4d4d4;">Hours/Day</th>
+                                            <th class="text-center" style="background-color:#d4d4d4;">Day/Week</th>
+                                            <th class="text-center" style="background-color:#d4d4d4;">Unit</th>
+                                            <th class="text-center" style="background-color:#d4d4d4;">Quantity</th>
+                                            <th class="text-center" style="background-color:#d4d4d4;">Price</th>
+                                            <th class="text-center" style="background-color:#d4d4d4;">Total</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <t t-set="sequence" t-value="0"/>
-                                        <tr t-foreach="doc.service_ids" t-as="service">
+                                        <tr t-foreach="doc.pricing_ids" t-as="pricing">
                                             <t t-set="sequence" t-value="sequence + 1"/>
-                                            <td><span t-esc="sequence"/></td>
-                                            <td><span t-field="service.location_id"/></td>
-                                            <td><span t-field="service.proposal_service_id.short_code"/></td>
-                                            <td><span t-field="service.daily_hours"/></td>
-                                            <td><span t-field="service.weekly_days"/></td>
-                                            <td><span t-field="service.unit_id"/></td>
-                                            <td><span t-field="service.quantity"/></td>
-                                            <td><span t-field="service.total_cost"/></td>
-                                            <td><span t-field="service.total"/></td>
+                                            <t t-set="service" t-value="pricing.service_id"/>
+                                            <td class="text-center" style="font-weight:bold"><span t-esc="sequence"/></td>
+                                            <td class="text-center" style="font-weight:bold"><span t-field="service.location_id"/></td>
+                                            <td class="text-center" style="font-weight:bold"><span t-field="service.proposal_service_id.short_code"/></td>
+                                            <td class="text-center" style="font-weight:bold"><span t-field="service.daily_hours"/></td>
+                                            <td class="text-center" style="font-weight:bold"><span t-field="service.weekly_days"/></td>
+                                            <td class="text-center" style="font-weight:bold"><span t-field="service.unit_id"/></td>
+                                            <td class="text-center" style="font-weight:bold"><span t-field="service.quantity"/></td>
+                                            <td class="text-center" style="font-weight:bold"><span t-esc="round(pricing.individual_sales_price, 2)"/></td>
+                                            <td class="text-center" style="font-weight:bold"><span t-esc="int(pricing.sales_price)"/></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -212,20 +212,20 @@
                                     </div>
                                     <div class="col-3">
                                         <p><strong><span t-field="doc.mode"/> Invoice</strong></p>
-                                        <h1 style="font-weight:bold;font-size:50px"><strong><span t-esc="sum(doc.service_ids.mapped('total'))"/></strong></h1>
+                                        <h1 style="font-weight:bold;font-size:50px"><strong><span t-esc="round(doc.total_amount)"/></strong></h1>
                                         <h5 class="text-right" style="font-weight:bold"><strong>KD</strong></h5>
                                     </div>
                                     <div class="col-4">
-                                        <table class="table table-bordered" style="border-color:#939393">
+                                        <table class="table table-bordered" style="border-color:#939393;">
                                             <tbody>
                                                 <tr>
                                                     <div><td rowspan="2" style="border-color:#939393;vertical-align : bottom;text-align:center;transform: rotate(270deg); -webkit-transform: rotate(270deg);">Quantity</td></div>
                                                     <td style="border-color:#939393;">Staff</td>
-                                                    <td style="border-color:#939393;">148</td>
+                                                    <td style="border-color:#939393;"><span t-esc="doc.get_staff()"/></td>
                                                 </tr>
                                                 <tr>
-                                                    <td style="border-color:#939393;">Supervisor</td>
-                                                    <td style="border-color:#939393;">0</td>
+                                                    <td style="border-color:#939393;">Type</td>
+                                                    <td style="border-color:#939393;"></td>
                                                 </tr>
                                                 <tr>
                                                     <div><td rowspan="2" style="border-color:#939393;vertical-align : bottom;text-align:center;transform: rotate(270deg); -webkit-transform: rotate(270deg);">Duty</td></div>
@@ -356,7 +356,7 @@
                                 <br/>
                                 <h3 class="text-center"><strong>Acceptance of Quote</strong></h3>
                                 <br/>
-                                <h4 class="w-100 text-center" style="background-color:#ff0014;color:white;padding-top:10px;padding-bottom:10px;margin-bottom:0px !important;"><strong>PROPOSAL # <span t-field="doc.ref"/> Provide Handling Services</strong></h4>
+                                <h4 class="w-100 text-center" style="background-color:#ff0014;color:white;padding-top:10px;padding-bottom:10px;margin-bottom:0px !important;"><strong><span t-esc="doc.name.upper()"/></strong></h4>
                                 <div class="row" style="background-color:#e4e2e2;margin-left:0px !important;margin-right:0px !important;padding-top:10px;padding-bottom:10px;">
                                     <div class="col-7">
                                         <ul class="list-unstyled">
@@ -375,25 +375,29 @@
                                     </div>
                                  </div>
                                 <br/>
-                                <div class="row" style="background-color:#e4e2e2;margin-left:0px !important;margin-right:0px !important;">
-                                    <div class="col-3"/>
-                                    <div class="col-4">
-                                        <ul class="list-unstyled">
-                                            <li><h5><strong>Service Type: </strong></h5></li>
-                                            <li><h5><strong>Cleaner Service Per Month</strong></h5></li>
-                                            <li><h5><strong>Cleaning Supervision Per Month</strong></h5></li>
-                                         </ul>
-                                    </div>
-                                    <div class="col-2">
-                                        <ul class="list-unstyled">
-                                            <li><h5><strong>Total Price: </strong></h5></li>
-                                            <li><h5><strong><span t-esc="sum(doc.service_ids.mapped('total'))"/></strong></h5></li>
-                                            <li><h5><strong>0</strong></h5></li>
-                                            <li><h5><strong>Total: 0</strong></h5></li>
-                                         </ul>
-                                    </div>
-                                    <div class="col-3"/>
-                                 </div>
+                                <table class="table table-bordered">
+                                    <colgroup>
+                                        <col width='50%'/>
+                                        <col width='50%'/>
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center" style="background-color:#d4d4d4;font-weight:bold"><strong>Service Type</strong></th>
+                                            <th class="text-center" style="background-color:#d4d4d4;font-weight:bold"><strong>Price</strong></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="doc.pricing_ids" t-as="pricing">
+                                            <td class="text-center" style="font-weight:bold"><strong><span t-field="pricing.service_id"/></strong></td>
+                                            <td class="text-center" style="font-weight:bold"><strong><span t-esc="int(pricing.sales_price)"/></strong></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-center" style="font-weight:bold;background-color:#d4d4d4"><strong>Total</strong></td>
+                                            <td class="text-center" style="font-weight:bold;background-color:#d4d4d4"><strong><span t-esc="int(doc.total_amount)"/></strong></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
                                 <br/>
                                 <table class="table table-bordered w-75" style="margin-left: auto;margin-right: auto;">
                                     <colgroup>

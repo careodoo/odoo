@@ -24,7 +24,7 @@ class Proposal(models.Model):
     partner_id = fields.Many2one('res.partner')
     proposal_date = fields.Date(required=True)
     expire_date = fields.Date(required=True)
-    total_amount = fields.Float(compute='compute_total_amount', store=True)
+    total_amount = fields.Float(compute='compute_total_amount', store=True, string='Total Sales')
     service_type_id = fields.Many2one('proposal.service.type')
     country_id = fields.Many2one('res.country', related='partner_id.country_id', store=True)
     city = fields.Char(related='partner_id.city', store=True)
@@ -58,8 +58,8 @@ class Proposal(models.Model):
     individual_cost = fields.Float(compute='compute_individual_cost', store=True)
     total_sales = fields.Float(compute='compute_total_sales', store=True)
     individual_sales = fields.Float(compute='compute_individual_sales', store=True)
-    total_pricing_cost = fields.Float(compute='compute_total_pricing_cost', store=True)
-    margin_amount = fields.Float(compute='compute_margin', store=True)
+    total_pricing_cost = fields.Float(compute='compute_total_pricing_cost', store=True, string='Total Cost')
+    margin_amount = fields.Float(compute='compute_margin', store=True, string='Net Profit')
     margin_percentage = fields.Float(compute='compute_margin', store=True, string='Net Profit %')
     lead_ids = fields.One2many('crm.lead', 'proposal_id')
     approver_id = fields.Many2one('res.users', compute='compute_approver', store=True)
@@ -85,16 +85,13 @@ class Proposal(models.Model):
     list_footer = fields.Text(default="Feel free and control your payment, what you need what you pay")
     term_text = fields.Text(default="Our Price doesn't include materials or equipments and machiners. We provided you with list of the most used items for the cleaning services with individual unit price allowing you to choose your preferred items and customize your cost")
     # commission
-    commission = fields.Selection(selection=[
-        ('total_sales', 'Total Sales'), ('ind_sales', 'Individual Sales'),
-        ('total_cost', 'Total Cost'), ('ind_cost', 'Individual Cost'),
-    ])
-    commission_type = fields.Selection([
-        ('percentage', 'Percentage'), ('fixed', 'Fixed'),
-    ])
+    commission_ids = fields.One2many('proposal.commission.line', 'proposal_id')
     commission_rate = fields.Float()
-    commission_amount = fields.Float(compute='compute_commission_amount', store=True)
+    commission_amount = fields.Float()
     approval_ids = fields.One2many('proposal.approval', 'proposal_id', default=get_default_approvers)
+    material_service_ids = fields.Many2many('proposal.service.line', domain="[('id', 'in', service_ids)]")
+    equipment_service_ids = fields.Many2many('proposal.service.line', relation="equipment_service_rel",
+                                             column1="equipment_id", column2="service_id", domain="[('id', 'in', service_ids)]")
 
     @api.depends('approval_ids', 'approval_ids.approved')
     def compute_approver(self):
@@ -143,10 +140,13 @@ class Proposal(models.Model):
         for rec in self:
             rec.equipment_amount = sum(rec.equipment_ids.mapped('total_amount') or [])
 
-    @api.depends('transportation_ids.cost')
+    @api.depends('pricing_ids.transportation_cost', 'pricing_ids.service_quantity')
     def compute_transportation_amount(self):
         for rec in self:
-            rec.transportation_amount = sum(rec.transportation_ids.mapped('cost') or [])
+            amount = 0
+            for line in rec.pricing_ids:
+                amount += line.service_quantity * line.transportation_cost
+            rec.transportation_amount = amount
 
     @api.depends('manpower_ids.total_salary')
     def compute_salary_amount(self):
@@ -222,52 +222,72 @@ class Proposal(models.Model):
                 raise ValidationError(_('Expire date cannot be earlier than proposal date!'))
 
     def generate_pricing(self):
+        self.pricing_ids = [(5, 0, 0)]
         vals = []
-        total_services = sum([line.total for line in self.service_ids])
-        total_materials = sum([line.total_amount for line in self.material_ids])
-        total_equipments = sum([line.total_amount for line in self.equipment_ids])
-        total_transportations = sum([line.cost for line in self.transportation_ids])
+        total_material_service_qty = sum(self.material_service_ids.mapped('quantity'))
+        total_equipment_service_qty = sum(self.equipment_service_ids.mapped('quantity'))
+        for service_line in self.service_ids:
+            material_cost = 0
+            equipment_cost = 0
+            transportation_cost = 0
+            commission_amount = 0
+            if service_line.id in self.material_service_ids.ids and total_material_service_qty:
+                material_cost = self.material_amount / total_material_service_qty
+            if service_line.id in self.equipment_service_ids.ids and total_equipment_service_qty and self.proposal_period:
+                equipment_cost = self.equipment_amount / total_equipment_service_qty / self.proposal_period
+            # transportation
+            tl = self.transportation_ids.filtered(lambda t: service_line.id in t.service_ids.ids)
+            if tl:
+                tl = tl[0]
+                if tl.type == 'group':
+                    total_transportation_service_qty = sum(tl.service_ids.mapped('quantity'))
+                    if total_transportation_service_qty and tl.type == 'group':
+                        transportation_cost = tl.cost / total_transportation_service_qty
+                else:
+                    transportation_cost = tl.cost
+            individual_cost = service_line.total_cost + material_cost + equipment_cost + transportation_cost
+            # commission
+            cl = self.commission_ids.filtered(lambda c: service_line.id in c.service_ids.ids)
+            if cl:
+                cl = cl[0]
+                commission_amount = self.get_commission_amount(cl.commission, cl.commission_type, cl.commission_rate, individual_cost,
+                                           service_line.quantity, individual_cost)
 
-        service_line = self.pricing_ids.filtered(lambda p: p.name == 'service')
-        material_line = self.pricing_ids.filtered(lambda p: p.name == 'material')
-        equipment_line = self.pricing_ids.filtered(lambda p: p.name == 'equipment')
-        transportation_line = self.pricing_ids.filtered(lambda p: p.name == 'transportation')
-
-        if service_line:
-            service_line.write({'cost': total_services})
-        else:
-            if total_services:
-                vals.append((0, 0, {
-                    'name': 'service',
-                    'cost': total_services
-                }))
-        if material_line:
-            service_line.write({'cost': total_materials})
-        else:
-            if total_materials:
-                vals.append((0, 0, {
-                    'name': 'material',
-                    'cost': total_materials
-                }))
-        if equipment_line:
-            equipment_line.write({'cost': total_equipments})
-        else:
-            if total_equipments:
-                vals.append((0, 0, {
-                    'name': 'equipment',
-                    'cost': total_equipments
-                }))
-        if transportation_line:
-            transportation_line.write({'cost': total_transportations})
-        else:
-            if total_transportations:
-                vals.append((0, 0, {
-                    'name': 'transportation',
-                    'cost': total_transportations
-                }))
+            vals.append((0, 0, {
+                'name': 'service',
+                'service_id': service_line.id,
+                'service_quantity': service_line.quantity,
+                'service_individual_cost': service_line.total_cost,
+                'service_total_cost': service_line.total,
+                'material_cost': material_cost,
+                'equipment_cost': equipment_cost,
+                'transportation_cost': transportation_cost,
+                'individual_cost': individual_cost,
+                'commission_amount': commission_amount,
+                'individual_sales_price': individual_cost,
+                'cost': individual_cost * service_line.quantity,
+            }))
         self.write({
             'pricing_ids': vals
         })
+
+    def get_commission_amount(self, commission, commission_type, commission_rate, individual_sales_price, service_quantity, individual_cost):
+        commission_amount = 0
+        if commission and commission_type and commission_rate:
+            if commission == 'total_sales':
+                amount = individual_sales_price * service_quantity
+            elif commission == 'ind_sales':
+                amount = individual_sales_price
+            elif commission == 'total_cost':
+                amount = individual_cost * service_quantity
+            else:
+                amount = individual_cost
+            if commission_type == 'percentage':
+                commission_amount = amount * (commission_rate / 100)
+            else:
+                commission_amount = commission_rate
+        return commission_amount
+
 
     @api.model
     def create(self, vals):
@@ -359,30 +379,15 @@ class Proposal(models.Model):
             rec.qr_url = qr_info
             rec.qr_image = generateQrCode.generate_qr_code(qr_info)
 
-    @api.depends('commission', 'commission_type', 'commission_rate')
-    def compute_commission_amount(self):
-        for rec in self:
-            rec.commission_amount = 0
-            if rec.commission and rec.commission_type and rec.commission_rate:
-                if rec.commission == 'total_sales':
-                    amount = rec.total_sales
-                elif rec.commission == 'ind_sales':
-                    amount = rec.individual_sales
-                elif rec.commission == 'total_cost':
-                    amount = rec.total_cost
-                else:
-                    amount = rec.individual_cost
-                if rec.commission_type == 'percentage':
-                    rec.commission_amount = amount * (rec.commission_rate / 100)
-                else:
-                    rec.commission_amount = rec.commission_rate
+    def get_staff(self):
+        return int(sum(self.pricing_ids.filtered(lambda p: p.service_id.proposal_service_id.type == 'manpower').mapped('service_quantity')))
 
     def get_days_text(self):
-        service_days = set([str(day) for day in self.service_ids.mapped('weekly_days')])
+        service_days = set([str(day) for day in self.service_ids.filtered(lambda s: s.proposal_service_id.type == 'manpower').mapped('weekly_days')])
         return ','.join(service_days)
 
     def get_hours_text(self):
-        service_hours = set([str(hour) for hour in self.service_ids.mapped('daily_hours')])
+        service_hours = set([str(hour) for hour in self.service_ids.filtered(lambda s: s.proposal_service_id.type == 'manpower').mapped('daily_hours')])
         return ','.join(service_hours)
 
 
@@ -504,10 +509,18 @@ class ProposalTransportationLine(models.Model):
 
     proposal_id = fields.Many2one('proposal.proposal')
     transportation_id = fields.Many2one('proposal.transportation', required=True)
+    service_ids = fields.Many2many('proposal.service.line', domain="[('proposal_id', '=', proposal_id)]", required=True)
     cost = fields.Float(related='transportation_id.cost', store=True)
+    type = fields.Selection(selection=[
+        ('individual', 'Individual'), ('group', 'Group'),
+    ], related='transportation_id.type', store=True)
     period = fields.Selection(selection=[
         ('monthly', 'Monthly'), ('daily', 'Daily'),
     ], related='transportation_id.period')
+
+    @api.onchange('transportation_id')
+    def onchange_transportation_id(self):
+        return {'domain': {'service_ids': [('id', 'in', self.proposal_id.service_ids.ids)]}}
 
 
 class ProposalTermLine(models.Model):
@@ -523,18 +536,39 @@ class ProposalPricingLine(models.Model):
     _description = 'Proposal Pricing Line'
 
     proposal_id = fields.Many2one('proposal.proposal')
+    service_id = fields.Many2one('proposal.service.line')
+    service_total_cost = fields.Float()
+    service_individual_cost = fields.Float()
+    service_quantity = fields.Float()
+    material_cost = fields.Float()
+    equipment_cost = fields.Float()
+    transportation_cost = fields.Float()
     name = fields.Selection(selection=[
         ('service', 'Services'), ('material', 'Materials'),
         ('equipment', 'Equipments'), ('transportation', 'Transportations'),
     ], required=True)
-    profit_percentage = fields.Float(string='Profit %')
+    profit_percentage = fields.Float(string='Gross Profit %', compute='compute_profit', store=True)
+    individual_profit_amount = fields.Float(string='Gross Profit', compute='compute_profit', store=True)
+    profit_amount = fields.Float(string='Gross Profit', compute='compute_profit', store=True)
+    commission_amount = fields.Float()
+    individual_cost = fields.Float(required=True)
     cost = fields.Float(required=True)
+    individual_sales_price = fields.Float()
     sales_price = fields.Float(compute='compute_sales_price', store=True)
 
-    @api.depends('profit_percentage', 'cost')
+    @api.depends('individual_sales_price', 'individual_cost', 'service_quantity')
+    def compute_profit(self):
+        for rec in self:
+            if rec.individual_sales_price and rec.individual_cost:
+                rec.profit_percentage = ((rec.individual_sales_price - rec.individual_cost) / rec.individual_cost) * 100
+                rec.individual_profit_amount = rec.individual_sales_price - rec.individual_cost
+                rec.profit_amount = rec.individual_profit_amount * rec.service_quantity
+
+    @api.depends('individual_sales_price', 'service_quantity')
     def compute_sales_price(self):
         for rec in self:
-            rec.sales_price = rec.cost + (rec.cost * (rec.profit_percentage / 100))
+            # rec.sales_price = rec.cost + (rec.cost * (rec.profit_percentage / 100))
+            rec.sales_price = rec.individual_sales_price * rec.service_quantity
 
 
 class ProposalApproval(models.Model):
@@ -547,3 +581,23 @@ class ProposalApproval(models.Model):
     user_id = fields.Many2one('res.users')
     approved = fields.Boolean()
     date_approved = fields.Datetime(string='Approved Date')
+
+
+class ProposalCommission(models.Model):
+    _name = 'proposal.commission.line'
+    _description = 'Proposal Commission'
+
+    proposal_id = fields.Many2one('proposal.proposal')
+    service_ids = fields.Many2many('proposal.service.line', domain="[('proposal_id', '=', proposal_id)]", required=True)
+    commission = fields.Selection(selection=[
+        ('total_sales', 'Total Sales'), ('ind_sales', 'Individual Sales'),
+        ('total_cost', 'Total Cost'), ('ind_cost', 'Individual Cost'),
+    ], required=True)
+    commission_type = fields.Selection([
+        ('percentage', 'Percentage'), ('fixed', 'Fixed'),
+    ], required=True)
+    commission_rate = fields.Float()
+
+    @api.onchange('commission')
+    def onchange_commission(self):
+        return {'domain': {'service_ids': [('id', 'in', self.proposal_id.service_ids.ids)]}}

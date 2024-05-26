@@ -8,6 +8,9 @@ class ProposalTransportation(models.Model):
 
     name = fields.Char(required=True)
     cost = fields.Float()
+    type = fields.Selection(selection=[
+        ('individual', 'Individual'), ('group', 'Group'),
+    ], required=True)
     period = fields.Selection(selection=[
         ('monthly', 'Monthly'), ('daily', 'Daily'),
     ], required=True)

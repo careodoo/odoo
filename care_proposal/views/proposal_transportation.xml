@@ -8,6 +8,7 @@
                 <tree>
                     <field name="name"/>
                     <field name="cost"/>
+                    <field name="type"/>
                     <field name="period"/>
                 </tree>
             </field>
@@ -24,6 +25,7 @@
                         </div>
                         <group>
                             <field name="cost"/>
+                            <field name="type"/>
                             <field name="period"/>
                         </group>
                     </sheet>
