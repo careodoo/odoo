@@ -54,6 +54,11 @@ class Proposal(models.Model):
     uniform_amount = fields.Float(compute='compute_service_amounts', store=True)
     accommodation_amount = fields.Float(compute='compute_service_amounts', store=True)
     residency_amount = fields.Float(compute='compute_service_amounts', store=True)
+    leave_amount = fields.Float(compute='compute_service_amounts', store=True)
+    insurance_amount = fields.Float(compute='compute_service_amounts', store=True)
+    fee_amount = fields.Float(compute='compute_service_amounts', store=True)
+    other_amount = fields.Float(compute='compute_service_amounts', store=True)
+    medical_amount = fields.Float(compute='compute_service_amounts', store=True)
     total_cost = fields.Float(compute='compute_total_cost', store=True)
     individual_cost = fields.Float(compute='compute_individual_cost', store=True)
     total_sales = fields.Float(compute='compute_total_sales', store=True)
@@ -159,19 +164,39 @@ class Proposal(models.Model):
             rec.uniform_amount = 0
             rec.accommodation_amount = 0
             rec.residency_amount = 0
+            rec.leave_amount = 0
+            rec.insurance_amount = 0
+            rec.fee_amount = 0
+            rec.medical_amount = 0
+            rec.other_amount = 0
 
             total_uniform = 0
             total_accommodation = 0
             total_residency = 0
+            total_leave = 0
+            total_insurance = 0
+            total_fee = 0
+            total_medical = 0
+            total_other = 0
             for service_line in rec.service_ids:
                 lines = service_line.proposal_service_id.line_ids
                 total_uniform += sum(lines.filtered(lambda l: l.type == 'uniform').mapped('cost') or [])
                 total_accommodation += sum(lines.filtered(lambda l: l.type == 'accommodation').mapped('cost') or [])
                 total_residency += sum(lines.filtered(lambda l: l.type == 'residency').mapped('cost') or [])
+                total_leave += sum(lines.filtered(lambda l: l.type == 'leave').mapped('cost') or [])
+                total_insurance += sum(lines.filtered(lambda l: l.type == 'insurance').mapped('cost') or [])
+                total_fee += sum(lines.filtered(lambda l: l.type == 'bank_charge').mapped('cost') or [])
+                total_medical += sum(lines.filtered(lambda l: l.type == 'medical').mapped('cost') or [])
+                total_other += sum(lines.filtered(lambda l: l.type == 'other').mapped('cost') or [])
 
             rec.uniform_amount = total_uniform
             rec.accommodation_amount = total_accommodation
             rec.residency_amount = total_residency
+            rec.leave_amount = total_leave
+            rec.insurance_amount = total_insurance
+            rec.fee_amount = total_fee
+            rec.medical_amount = total_medical
+            rec.other_amount = total_other
 
     @api.depends('material_amount', 'equipment_amount', 'transportation_amount', 'salary_amount')
     def compute_total_cost(self):
@@ -411,6 +436,24 @@ class ProposalServiceLine(models.Model):
     def compute_total(self):
         for rec in self:
             rec.total = rec.quantity * rec.total_cost
+
+    def get_service_cost(self, type):
+        cost = 0
+        lines = self.proposal_id.pricing_ids.filtered(lambda p: p.service_id.id == self.id)
+        if lines:
+            if type == 'material':
+                cost = lines[0].material_cost
+            elif type == 'equipment':
+                cost = lines[0].equipment_cost
+            elif type == 'transportation':
+                cost = lines[0].transportation_cost
+            elif type == 'cost':
+                cost = lines[0].cost
+            elif type == 'sales':
+                cost = lines[0].sales_price
+            else:
+                cost = lines[0].profit_percentage
+        return cost
 
 
 class ProposalScopeLine(models.Model):

@@ -75,86 +75,264 @@
                             </div>
                             <p class="text-center">Pricing for Provide Cleaning Services For <span t-field="doc.partner_id"/></p>
                             <br/>
-                            <p class="text-center">Services</p>
+                            <h4 class="text-center">Services</h4>
+                            <t t-foreach="doc.service_ids" t-as="service_line">
+                                <table class="GeneratedTable">
+                                    <colgroup>
+                                        <col width='9%'/>
+                                        <col width='9%'/>
+                                        <col width='9%'/>
+                                        <col width='9%'/>
+                                        <col width='9%'/>
+                                        <col width='9%'/>
+                                        <col width='9%'/>
+                                        <col width='9%'/>
+                                        <col width='9%'/>
+                                        <col width='9%'/>
+                                        <col width='10%'/>
+                                    </colgroup>
 
-                            <table class="GeneratedTable">
-                                <thead>
-                                    <th>Name</th>
-                                    <th>Salary</th>
-                                    <th>Residency</th>
-                                    <th>Accommodation</th>
-                                    <th>Uniform</th>
-                                    <th>Leave &amp; Indemnity</th>
-                                    <th>Staff Insurance</th>
-                                    <th>Bank Charge</th>
-                                    <th>Medical Certificate</th>
-                                    <th>Faced Cleaning</th>
-                                    <th>Commission</th>
-                                    <th>Other</th>
-                                </thead>
-                                <tbody>
-                                    <tr t-foreach="doc.service_ids" t-as="service_line">
-                                        <t t-set="service" t-value="service_line.proposal_service_id"/>
-                                        <td><p t-esc="service.name"/></td>
-                                        <td><p t-esc="service.get_service_item_cost('salary')"/></td>
-                                        <td><p t-esc="service.get_service_item_cost('residency')"/></td>
-                                        <td><p t-esc="service.get_service_item_cost('accommodation')"/></td>
-                                        <td><p t-esc="service.get_service_item_cost('uniform')"/></td>
-                                        <td><p t-esc="service.get_service_item_cost('leave')"/></td>
-                                        <td><p t-esc="service.get_service_item_cost('insurance')"/></td>
-                                        <td><p t-esc="service.get_service_item_cost('bank_charge')"/></td>
-                                        <td><p t-esc="service.get_service_item_cost('medical')"/></td>
-                                        <td><p t-esc="service.get_service_item_cost('cleaning')"/></td>
-                                        <td><p t-esc="service.get_service_item_cost('commission')"/></td>
-                                        <td><p t-esc="service.get_service_item_cost('other')"/></td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="11" class="text-center" style="background-color:#d4d4d4">
+                                                <span t-field="service_line.proposal_service_id"/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-center">Service Type</td>
+                                            <td class="text-center"><span t-field="service_line.proposal_service_id.type"/></td>
+                                            <td class="text-center">Daily Hours</td>
+                                            <td class="text-center"><span t-field="service_line.daily_hours"/></td>
+                                            <td class="text-center">Weekly Days</td>
+                                            <td class="text-center"><span t-field="service_line.weekly_days"/></td>
+                                            <td class="text-center">Monthly Days</td>
+                                            <td class="text-center"><span t-field="service_line.monthly_days"/></td>
+                                            <td class="text-center">Unit</td>
+                                            <td class="text-center"><span t-field="service_line.unit_id"/></td>
+                                            <td class="text-center"></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-center" style="background-color:#d4d4d4">QTY</td>
+                                            <td class="text-center" style="background-color:#d4d4d4">Salary</td>
+                                            <td class="text-center" style="background-color:#d4d4d4">Residency</td>
+                                            <td class="text-center" style="background-color:#d4d4d4">Host</td>
+                                            <td class="text-center" style="background-color:#d4d4d4">Uniform</td>
+                                            <td class="text-center" style="background-color:#d4d4d4">L &amp; I</td>
+                                            <td class="text-center" style="background-color:#d4d4d4">Insurance</td>
+                                            <td class="text-center" style="background-color:#d4d4d4">Bank Fees</td>
+                                            <td class="text-center" style="background-color:#d4d4d4">Cost</td>
+                                            <td class="text-center" style="background-color:#d4d4d4">Sales</td>
+                                            <td class="text-center" style="background-color:#d4d4d4">Profit</td>
+                                        </tr>
+                                        <tr>
+                                            <t t-set="service" t-value="service_line.proposal_service_id"/>
+                                            <td class="text-center"><span t-field="service_line.quantity"/></td>
+                                            <td class="text-center"><span t-esc="service.get_service_item_cost('salary')"/></td>
+                                            <td class="text-center"><span t-esc="service.get_service_item_cost('residency')"/></td>
+                                            <td class="text-center"><span t-esc="service.get_service_item_cost('accommodation')"/></td>
+                                            <td class="text-center"><span t-esc="service.get_service_item_cost('uniform')"/></td>
+                                            <td class="text-center"><span t-esc="service.get_service_item_cost('leave')"/></td>
+                                            <td class="text-center"><span t-esc="service.get_service_item_cost('insurance')"/></td>
+                                            <td class="text-center"><span t-esc="service.get_service_item_cost('bank_charge')"/></td>
+                                            <td class="text-center" rowspan="3" style="vertical-align : middle;text-align:center;"><span t-esc="service_line.get_service_cost('cost')"/></td>
+                                            <td class="text-center" rowspan="3" style="vertical-align : middle;text-align:center;"><span t-esc="service_line.get_service_cost('sales')"/></td>
+                                            <td class="text-center" rowspan="3" style="vertical-align : middle;text-align:center;"><span t-esc="service_line.get_service_cost('profit')"/>%</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-center" style="background-color:#d4d4d4">Material</td>
+                                            <td class="text-center" style="background-color:#d4d4d4">Equipment</td>
+                                            <td class="text-center" colspan="2" style="background-color:#d4d4d4">Transportation</td>
+                                            <td class="text-center" colspan="2" style="background-color:#d4d4d4">Medical Certificate</td>
+                                            <td class="text-center" style="background-color:#d4d4d4">Location</td>
+                                            <td class="text-center" style="background-color:#d4d4d4">Other</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-center"><span t-esc="service_line.get_service_cost('material')"/></td>
+                                            <td class="text-center"><span t-esc="service_line.get_service_cost('equipment')"/></td>
+                                            <td class="text-center" colspan="2"><span t-esc="service_line.get_service_cost('transportation')"/></td>
+                                            <td class="text-center" colspan="2"><span t-esc="service.get_service_item_cost('medical')"/></td>
+                                            <td class="text-center"><span t-field="service_line.location_id"/></td>
+                                            <td class="text-center"><span t-esc="service.get_service_item_cost('other')"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </t>
                             <br/>
-                            <p class="text-center">Pricing</p>
-                            <table class="GeneratedTable">
-                                <thead>
-                                    <th>Name</th>
-                                    <th>Cost</th>
-                                    <th>Profit%</th>
-                                    <th>Sales Price</th>
-                                    <th>Net Profit</th>
-                                </thead>
-                                <tbody>
-                                    <tr t-foreach="doc.pricing_ids" t-as="line">
-                                        <td><p t-field="line.name"/></td>
-                                        <td><p t-field="line.cost"/></td>
-                                        <td><p t-field="line.profit_percentage"/></td>
-                                        <td><p t-field="line.sales_price"/></td>
-                                        <td><p t-esc="line.sales_price - line.cost"/></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <br/>
-                            <p class="text-center">Summary</p>
-                            <table class="GeneratedTable">
-                                <thead>
-                                    <th>Manpower Quantity</th>
-                                    <th>Material Amount</th>
-                                    <th>Equipment Amount</th>
-                                    <th>Transportation Amount</th>
-                                    <th>Salary Amount</th>
-                                    <th>Total Cost</th>
-                                    <th>Total Sales</th>
-                                </thead>
+                            <table class="GeneratedTable" style="page-break-inside: avoid;">
+                                <colgroup>
+                                    <col width='9%'/>
+                                    <col width='9%'/>
+                                    <col width='9%'/>
+                                    <col width='9%'/>
+                                    <col width='9%'/>
+                                    <col width='9%'/>
+                                    <col width='9%'/>
+                                    <col width='9%'/>
+                                    <col width='9%'/>
+                                    <col width='9%'/>
+                                    <col width='10%'/>
+                                </colgroup>
                                 <tbody>
                                     <tr>
-                                        <td><p t-field="doc.manpower_quantity"/></td>
-                                        <td><p t-field="doc.material_amount"/></td>
-                                        <td><p t-field="doc.equipment_amount"/></td>
-                                        <td><p t-field="doc.transportation_amount"/></td>
-                                        <td><p t-field="doc.salary_amount"/></td>
-                                        <td><p t-field="doc.total_cost"/></td>
-                                        <td><p t-esc="sum(doc.pricing_ids.mapped('sales_price'))"/></td>
+                                        <td colspan="11" class="text-center" style="background-color:#d4d4d4">Pricing</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center" style="background-color:#d4d4d4">#</td>
+                                        <td class="text-center" colspan="2" style="background-color:#d4d4d4">Service Name</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Cost</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Total Cost</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Sales</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Total Sales</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Gross %</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Gross</td>
+                                        <td class="text-center" style="background-color:#d4d4d4"> Profit %</td>
+                                        <td class="text-center" style="background-color:#d4d4d4"> Profit</td>
+                                    </tr>
+                                    <t t-set="sequence" t-value="0"/>
+                                    <tr t-foreach="doc.pricing_ids" t-as="pricing_line">
+                                        <t t-set="sequence" t-value="sequence + 1"/>
+                                        <td class="text-center"><span t-esc="sequence"/></td>
+                                        <td class="text-center" colspan="2"><span t-field="pricing_line.service_id"/></td>
+                                        <td class="text-center"><span t-field="pricing_line.individual_cost"/></td>
+                                        <td class="text-center"><span t-field="pricing_line.cost"/></td>
+                                        <td class="text-center"><span t-field="pricing_line.individual_sales_price"/></td>
+                                        <td class="text-center"><span t-field="pricing_line.sales_price"/></td>
+                                        <td class="text-center"><span t-field="pricing_line.profit_percentage"/></td>
+                                        <td class="text-center"><span t-field="pricing_line.individual_profit_amount"/></td>
+                                        <td class="text-center"><span t-field="pricing_line.profit_amount"/></td>
+                                        <td class="text-center"><span t-field="pricing_line.profit_amount"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center" style="background-color:#d4d4d4">Totals</td>
+                                        <td class="text-center" colspan="2" style="background-color:#d4d4d4"></td>
+                                        <td class="text-center" style="background-color:#d4d4d4"><span t-esc="sum(doc.pricing_ids.mapped('individual_cost'))"/></td>
+                                        <td class="text-center" style="background-color:#d4d4d4"><span t-esc="sum(doc.pricing_ids.mapped('cost'))"/></td>
+                                        <td class="text-center" style="background-color:#d4d4d4"><span t-esc="sum(doc.pricing_ids.mapped('individual_sales_price'))"/></td>
+                                        <td class="text-center" style="background-color:#d4d4d4"><span t-esc="sum(doc.pricing_ids.mapped('sales_price'))"/></td>
+                                        <td class="text-center" style="background-color:#d4d4d4"></td>
+                                        <td class="text-center" style="background-color:#d4d4d4"><span t-esc="sum(doc.pricing_ids.mapped('individual_profit_amount'))"/></td>
+                                        <td class="text-center" style="background-color:#d4d4d4"><span t-esc="sum(doc.pricing_ids.mapped('profit_amount'))"/></td>
+                                        <td class="text-center" style="background-color:#d4d4d4"><span t-esc="sum(doc.pricing_ids.mapped('profit_amount'))"/></td>
                                     </tr>
                                 </tbody>
                             </table>
                             <br/>
+                            <table class="GeneratedTable" style="page-break-inside: avoid;">
+                                <colgroup>
+                                    <col width='9%'/>
+                                    <col width='9%'/>
+                                    <col width='9%'/>
+                                    <col width='9%'/>
+                                    <col width='9%'/>
+                                    <col width='9%'/>
+                                    <col width='9%'/>
+                                    <col width='9%'/>
+                                    <col width='9%'/>
+                                    <col width='9%'/>
+                                    <col width='10%'/>
+                                </colgroup>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="11" class="text-center" style="background-color:#d4d4d4">Summary</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center" style="background-color:#d4d4d4">Manpower</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Salary</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Residency</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Host</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Uniform</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">L&amp;I</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Insurance</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Bank Fees</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Material</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Equipment</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Transportation</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center"><span t-field="doc.manpower_quantity"/></td>
+                                        <td class="text-center"><span t-field="doc.salary_amount"/></td>
+                                        <td class="text-center"><span t-field="doc.residency_amount"/></td>
+                                        <td class="text-center"><span t-field="doc.accommodation_amount"/></td>
+                                        <td class="text-center"><span t-field="doc.uniform_amount"/></td>
+                                        <td class="text-center"><span t-field="doc.leave_amount"/></td>
+                                        <td class="text-center"><span t-field="doc.insurance_amount"/></td>
+                                        <td class="text-center"><span t-field="doc.fee_amount"/></td>
+                                        <td class="text-center"><span t-field="doc.material_amount"/></td>
+                                        <td class="text-center"><span t-field="doc.equipment_amount"/></td>
+                                        <td class="text-center"><span t-field="doc.transportation_amount"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center" style="background-color:#d4d4d4">Medical Cert.</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Commission</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Period</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Mode</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Other</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">AV. Gross %</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Gross</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">AV. Profit %</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Net Profit</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Total Cost</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Total Sales</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center"><span t-field="doc.medical_amount"/></td>
+                                        <td class="text-center"></td>
+                                        <td class="text-center"><span t-field="doc.proposal_period"/></td>
+                                        <td class="text-center"><span t-field="doc.mode"/></td>
+                                        <td class="text-center"><span t-field="doc.other_amount"/></td>
+                                        <td class="text-center"></td>
+                                        <td class="text-center"></td>
+                                        <td class="text-center"><span t-field="doc.margin_percentage"/></td>
+                                        <td class="text-center"><span t-field="doc.margin_amount"/></td>
+                                        <td class="text-center"><span t-field="doc.total_pricing_cost"/></td>
+                                        <td class="text-center"><span t-field="doc.total_amount"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <br/>
+                            <div class="row">
+                                <div class="col-4">
+                                    <table class="GeneratedTable" style="page-break-inside: avoid;">
+                                        <tbody>
+                                            <tr>
+                                                <td class="text-center">Notes</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-center">
+                                                    <t t-if="doc.notes">
+                                                        <span t-field="doc.notes"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <span>&#160;</span>
+                                                    </t>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="col-2"></div>
+                                <div class="col-6">
+                                    <table class="GeneratedTable" style="page-break-inside: avoid;">
+                                        <colgroup>
+                                            <col width='33%'/>
+                                            <col width='33%'/>
+                                            <col width='34%'/>
+                                        </colgroup>
+                                        <tbody>
+                                            <tr>
+                                                <td class="text-center">Prepared By</td>
+                                                <td class="text-center">Approved By</td>
+                                                <td class="text-center">CEO Approval</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-center"><span t-field="doc.create_uid"/></td>
+                                                <td class="text-center"><span t-esc="','.join(doc.approval_ids.filtered(lambda l: l.approved).mapped('user_id').mapped('name'))"/></td>
+                                                <td class="text-center"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </t>
                     </div>
                 </t>
