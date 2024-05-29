@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="mail_act_manpower_submit" model="mail.activity.type">
+            <field name="name">Manpower Requisition</field>
+            <field name="icon">fa-sun-o</field>
+            <field name="res_model">manpower.requisition</field>
+        </record>
+    </data>
+</odoo>

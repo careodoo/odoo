@@ -103,12 +103,16 @@
                                     <tr>
                                         <td><p>Requesting Manager</p>(Name and Designation)</td>
                                         <td><p class="text-center"><span t-field="doc.manager_id"/> </p></td>
-                                        <td><p>Location:  </p></td>
+                                        <td>
+                                            <p>Location:  <span t-field="doc.location"/> </p>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <td><p>Title of position required</p></td>
-                                        <td><p></p></td>
-                                        <td><p>No of Requirements:</p></td>
+                                        <td><p class="text-center"><span t-field="doc.required_title"/> </p></td>
+                                        <td>
+                                            <p>No of Requirements: <span t-field="doc.requirement_number"/></p>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <td><p> Overseas / Local </p></td>
@@ -303,12 +307,16 @@
                                     <tr>
                                         <td><p>Requesting Manager</p>(Name and Designation)</td>
                                         <td><p class="text-center"><span t-field="doc.manager_id"/> </p></td>
-                                        <td><p>Location:  </p></td>
+                                        <td>
+                                            <p>Location:  <span t-field="doc.location"/> </p>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <td><p>Title of position required</p></td>
-                                        <td><p></p></td>
-                                        <td><p>No of Requirements:</p></td>
+                                        <td><p class="text-center"><span t-field="doc.required_title"/> </p></td>
+                                        <td>
+                                            <p>No of Requirements: <span t-field="doc.requirement_number"/></p>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <td><p> Overseas / Local </p></td>
