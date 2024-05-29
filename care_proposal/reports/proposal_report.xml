@@ -74,9 +74,43 @@
                                 </div>
                             </div>
                             <p class="text-center">Pricing for Provide Cleaning Services For <span t-field="doc.partner_id"/></p>
-                            <br/>
                             <h4 class="text-center">Services</h4>
                             <t t-foreach="doc.service_ids" t-as="service_line">
+                                <table class="GeneratedTable">
+                                    <colgroup>
+                                        <col width='9%'/>
+                                        <col width='9%'/>
+                                        <col width='9%'/>
+                                        <col width='9%'/>
+                                        <col width='9%'/>
+                                        <col width='9%'/>
+                                        <col width='9%'/>
+                                        <col width='9%'/>
+                                        <col width='9%'/>
+                                        <col width='9%'/>
+                                        <col width='10%'/>
+                                    </colgroup>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="11" class="text-center" style="background-color:#d4d4d4">
+                                                <span t-field="service_line.proposal_service_id"/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-center" style="background-color:#d9d9d9">Type</td>
+                                            <td class="text-center"><span t-field="service_line.proposal_service_id.type"/></td>
+                                            <td class="text-center" style="background-color:#d9d9d9">Daily Hours</td>
+                                            <td class="text-center"><span t-field="service_line.daily_hours"/></td>
+                                            <td class="text-center" style="background-color:#d9d9d9">Weekly D</td>
+                                            <td class="text-center"><span t-field="service_line.weekly_days"/></td>
+                                            <td class="text-center" style="background-color:#d9d9d9">Monthly D</td>
+                                            <td class="text-center"><span t-field="service_line.monthly_days"/></td>
+                                            <td class="text-center" style="background-color:#d9d9d9">Unit</td>
+                                            <td class="text-center"><span t-field="service_line.unit_id"/></td>
+                                            <td class="text-center"></td>
+                                        </tr></tbody>
+                                </table>
+                                <br/>
                                 <table class="GeneratedTable">
                                     <colgroup>
                                         <col width='9%'/>
@@ -94,24 +128,6 @@
 
                                     <tbody>
                                         <tr>
-                                            <td colspan="11" class="text-center" style="background-color:#d4d4d4">
-                                                <span t-field="service_line.proposal_service_id"/>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-center">Service Type</td>
-                                            <td class="text-center"><span t-field="service_line.proposal_service_id.type"/></td>
-                                            <td class="text-center">Daily Hours</td>
-                                            <td class="text-center"><span t-field="service_line.daily_hours"/></td>
-                                            <td class="text-center">Weekly Days</td>
-                                            <td class="text-center"><span t-field="service_line.weekly_days"/></td>
-                                            <td class="text-center">Monthly Days</td>
-                                            <td class="text-center"><span t-field="service_line.monthly_days"/></td>
-                                            <td class="text-center">Unit</td>
-                                            <td class="text-center"><span t-field="service_line.unit_id"/></td>
-                                            <td class="text-center"></td>
-                                        </tr>
-                                        <tr>
                                             <td class="text-center" style="background-color:#d4d4d4">QTY</td>
                                             <td class="text-center" style="background-color:#d4d4d4">Salary</td>
                                             <td class="text-center" style="background-color:#d4d4d4">Residency</td>
@@ -120,9 +136,9 @@
                                             <td class="text-center" style="background-color:#d4d4d4">L &amp; I</td>
                                             <td class="text-center" style="background-color:#d4d4d4">Insurance</td>
                                             <td class="text-center" style="background-color:#d4d4d4">Bank Fees</td>
-                                            <td class="text-center" style="background-color:#d4d4d4">Cost</td>
-                                            <td class="text-center" style="background-color:#d4d4d4">Sales</td>
-                                            <td class="text-center" style="background-color:#d4d4d4">Profit</td>
+                                            <td class="text-center" style="background-color:#96F97B">Cost</td>
+                                            <td class="text-center" style="background-color:#96F97B">Sales</td>
+                                            <td class="text-center" style="background-color:#96F97B">Profit</td>
                                         </tr>
                                         <tr>
                                             <t t-set="service" t-value="service_line.proposal_service_id"/>
@@ -136,23 +152,23 @@
                                             <td class="text-center"><span t-esc="service.get_service_item_cost('bank_charge')"/></td>
                                             <td class="text-center" rowspan="3" style="vertical-align : middle;text-align:center;"><span t-esc="service_line.get_service_cost('cost')"/></td>
                                             <td class="text-center" rowspan="3" style="vertical-align : middle;text-align:center;"><span t-esc="service_line.get_service_cost('sales')"/></td>
-                                            <td class="text-center" rowspan="3" style="vertical-align : middle;text-align:center;"><span t-esc="service_line.get_service_cost('profit')"/>%</td>
+                                            <td class="text-center" rowspan="3" style="vertical-align : middle;text-align:center;"><span t-esc="round(service_line.get_service_cost('profit'), 2)"/>%</td>
                                         </tr>
                                         <tr>
                                             <td class="text-center" style="background-color:#d4d4d4">Material</td>
                                             <td class="text-center" style="background-color:#d4d4d4">Equipment</td>
                                             <td class="text-center" colspan="2" style="background-color:#d4d4d4">Transportation</td>
                                             <td class="text-center" colspan="2" style="background-color:#d4d4d4">Medical Certificate</td>
-                                            <td class="text-center" style="background-color:#d4d4d4">Location</td>
                                             <td class="text-center" style="background-color:#d4d4d4">Other</td>
+                                            <td class="text-center" style="background-color:#d4d4d4">Location</td>
                                         </tr>
                                         <tr>
                                             <td class="text-center"><span t-esc="service_line.get_service_cost('material')"/></td>
                                             <td class="text-center"><span t-esc="service_line.get_service_cost('equipment')"/></td>
                                             <td class="text-center" colspan="2"><span t-esc="service_line.get_service_cost('transportation')"/></td>
                                             <td class="text-center" colspan="2"><span t-esc="service.get_service_item_cost('medical')"/></td>
-                                            <td class="text-center"><span t-field="service_line.location_id"/></td>
                                             <td class="text-center"><span t-esc="service.get_service_item_cost('other')"/></td>
+                                            <td class="text-center"><span t-field="service_line.location_id"/></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -197,14 +213,13 @@
                                         <td class="text-center"><span t-field="pricing_line.cost"/></td>
                                         <td class="text-center"><span t-field="pricing_line.individual_sales_price"/></td>
                                         <td class="text-center"><span t-field="pricing_line.sales_price"/></td>
-                                        <td class="text-center"><span t-field="pricing_line.profit_percentage"/></td>
+                                        <td class="text-center"><span t-esc="round(pricing_line.profit_percentage, 2)"/></td>
                                         <td class="text-center"><span t-field="pricing_line.individual_profit_amount"/></td>
                                         <td class="text-center"><span t-field="pricing_line.profit_amount"/></td>
                                         <td class="text-center"><span t-field="pricing_line.profit_amount"/></td>
                                     </tr>
                                     <tr>
-                                        <td class="text-center" style="background-color:#d4d4d4">Totals</td>
-                                        <td class="text-center" colspan="2" style="background-color:#d4d4d4"></td>
+                                        <td class="text-center" colspan="3" style="background-color:#d4d4d4">Totals</td>
                                         <td class="text-center" style="background-color:#d4d4d4"><span t-esc="sum(doc.pricing_ids.mapped('individual_cost'))"/></td>
                                         <td class="text-center" style="background-color:#d4d4d4"><span t-esc="sum(doc.pricing_ids.mapped('cost'))"/></td>
                                         <td class="text-center" style="background-color:#d4d4d4"><span t-esc="sum(doc.pricing_ids.mapped('individual_sales_price'))"/></td>
@@ -265,14 +280,14 @@
                                         <td class="text-center" style="background-color:#d4d4d4">Medical Cert.</td>
                                         <td class="text-center" style="background-color:#d4d4d4">Commission</td>
                                         <td class="text-center" style="background-color:#d4d4d4">Period</td>
-                                        <td class="text-center" style="background-color:#d4d4d4">Mode</td>
                                         <td class="text-center" style="background-color:#d4d4d4">Other</td>
-                                        <td class="text-center" style="background-color:#d4d4d4">AV. Gross %</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Mode</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Gross %</td>
                                         <td class="text-center" style="background-color:#d4d4d4">Gross</td>
-                                        <td class="text-center" style="background-color:#d4d4d4">AV. Profit %</td>
-                                        <td class="text-center" style="background-color:#d4d4d4">Net Profit</td>
-                                        <td class="text-center" style="background-color:#d4d4d4">Total Cost</td>
-                                        <td class="text-center" style="background-color:#d4d4d4">Total Sales</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Profit %</td>
+                                        <td class="text-center" style="background-color:#96F97B">Net Profit</td>
+                                        <td class="text-center" style="background-color:#96F97B">Total Cost</td>
+                                        <td class="text-center" style="background-color:#96F97B">Total Sales</td>
                                     </tr>
                                     <tr>
                                         <td class="text-center"><span t-field="doc.medical_amount"/></td>

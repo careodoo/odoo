@@ -180,14 +180,14 @@ class Proposal(models.Model):
             total_other = 0
             for service_line in rec.service_ids:
                 lines = service_line.proposal_service_id.line_ids
-                total_uniform += sum(lines.filtered(lambda l: l.type == 'uniform').mapped('cost') or [])
-                total_accommodation += sum(lines.filtered(lambda l: l.type == 'accommodation').mapped('cost') or [])
-                total_residency += sum(lines.filtered(lambda l: l.type == 'residency').mapped('cost') or [])
-                total_leave += sum(lines.filtered(lambda l: l.type == 'leave').mapped('cost') or [])
-                total_insurance += sum(lines.filtered(lambda l: l.type == 'insurance').mapped('cost') or [])
-                total_fee += sum(lines.filtered(lambda l: l.type == 'bank_charge').mapped('cost') or [])
-                total_medical += sum(lines.filtered(lambda l: l.type == 'medical').mapped('cost') or [])
-                total_other += sum(lines.filtered(lambda l: l.type == 'other').mapped('cost') or [])
+                total_uniform += sum(lines.filtered(lambda l: l.type == 'uniform').mapped('cost') or []) * service_line.quantity
+                total_accommodation += sum(lines.filtered(lambda l: l.type == 'accommodation').mapped('cost') or []) * service_line.quantity
+                total_residency += sum(lines.filtered(lambda l: l.type == 'residency').mapped('cost') or []) * service_line.quantity
+                total_leave += sum(lines.filtered(lambda l: l.type == 'leave').mapped('cost') or []) * service_line.quantity
+                total_insurance += sum(lines.filtered(lambda l: l.type == 'insurance').mapped('cost') or []) * service_line.quantity
+                total_fee += sum(lines.filtered(lambda l: l.type == 'bank_charge').mapped('cost') or []) * service_line.quantity
+                total_medical += sum(lines.filtered(lambda l: l.type == 'medical').mapped('cost') or []) * service_line.quantity
+                total_other += sum(lines.filtered(lambda l: l.type == 'other').mapped('cost') or []) * service_line.quantity
 
             rec.uniform_amount = total_uniform
             rec.accommodation_amount = total_accommodation
