@@ -2,7 +2,7 @@
 <odoo>
     <data>
         <record model="ir.actions.report" id="action_proposal_pdf_report">
-            <field name="name">Proposal</field>
+            <field name="name">Pricing</field>
             <field name="model">proposal.proposal</field>
             <field name="report_type">qweb-pdf</field>
             <field name="report_name">care_proposal.proposal_pdf_report</field>
@@ -110,8 +110,8 @@
                                             <td class="text-center"></td>
                                         </tr></tbody>
                                 </table>
-                                <br/>
-                                <table class="GeneratedTable">
+
+                                <table class="GeneratedTable" style="margin-top:10px">
                                     <colgroup>
                                         <col width='9%'/>
                                         <col width='9%'/>
@@ -152,7 +152,7 @@
                                             <td class="text-center"><span t-esc="service.get_service_item_cost('bank_charge')"/></td>
                                             <td class="text-center" rowspan="3" style="vertical-align : middle;text-align:center;"><span t-esc="service_line.get_service_cost('cost')"/></td>
                                             <td class="text-center" rowspan="3" style="vertical-align : middle;text-align:center;"><span t-esc="service_line.get_service_cost('sales')"/></td>
-                                            <td class="text-center" rowspan="3" style="vertical-align : middle;text-align:center;"><span t-esc="round(service_line.get_service_cost('profit'), 2)"/>%</td>
+                                            <td class="text-center" rowspan="3" style="vertical-align : middle;text-align:center;"><span t-esc="service_line.get_service_cost('sales') - service_line.get_service_cost('cost')"/></td>
                                         </tr>
                                         <tr>
                                             <td class="text-center" style="background-color:#d4d4d4">Material</td>
@@ -160,7 +160,7 @@
                                             <td class="text-center" colspan="2" style="background-color:#d4d4d4">Transportation</td>
                                             <td class="text-center" colspan="2" style="background-color:#d4d4d4">Medical Certificate</td>
                                             <td class="text-center" style="background-color:#d4d4d4">Other</td>
-                                            <td class="text-center" style="background-color:#d4d4d4">Location</td>
+                                            <td class="text-center" style="background-color:#d4d4d4">Commission</td>
                                         </tr>
                                         <tr>
                                             <td class="text-center"><span t-esc="service_line.get_service_cost('material')"/></td>
@@ -168,10 +168,11 @@
                                             <td class="text-center" colspan="2"><span t-esc="service_line.get_service_cost('transportation')"/></td>
                                             <td class="text-center" colspan="2"><span t-esc="service.get_service_item_cost('medical')"/></td>
                                             <td class="text-center"><span t-esc="service.get_service_item_cost('other')"/></td>
-                                            <td class="text-center"><span t-field="service_line.location_id"/></td>
+                                            <td class="text-center"><span t-esc="service.get_service_item_cost('other')"/></td>
                                         </tr>
                                     </tbody>
                                 </table>
+                                <br/>
                             </t>
                             <br/>
                             <table class="GeneratedTable" style="page-break-inside: avoid;">
@@ -194,29 +195,27 @@
                                     </tr>
                                     <tr>
                                         <td class="text-center" style="background-color:#d4d4d4">#</td>
-                                        <td class="text-center" colspan="2" style="background-color:#d4d4d4">Service Name</td>
+                                        <td class="text-center" colspan="3" style="background-color:#d4d4d4">Service Name</td>
                                         <td class="text-center" style="background-color:#d4d4d4">Cost</td>
                                         <td class="text-center" style="background-color:#d4d4d4">Total Cost</td>
                                         <td class="text-center" style="background-color:#d4d4d4">Sales</td>
                                         <td class="text-center" style="background-color:#d4d4d4">Total Sales</td>
-                                        <td class="text-center" style="background-color:#d4d4d4">Gross %</td>
-                                        <td class="text-center" style="background-color:#d4d4d4">Gross</td>
-                                        <td class="text-center" style="background-color:#d4d4d4"> Profit %</td>
-                                        <td class="text-center" style="background-color:#d4d4d4"> Profit</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Profit</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Total Profit</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Profit %</td>
                                     </tr>
                                     <t t-set="sequence" t-value="0"/>
                                     <tr t-foreach="doc.pricing_ids" t-as="pricing_line">
                                         <t t-set="sequence" t-value="sequence + 1"/>
                                         <td class="text-center"><span t-esc="sequence"/></td>
-                                        <td class="text-center" colspan="2"><span t-field="pricing_line.service_id"/></td>
-                                        <td class="text-center"><span t-field="pricing_line.individual_cost"/></td>
+                                        <td class="text-center" colspan="3"><span t-field="pricing_line.service_id.proposal_service_id.short_code"/></td>
+                                        <td class="text-center"><span t-esc="round(pricing_line.individual_cost, 2)"/></td>
                                         <td class="text-center"><span t-field="pricing_line.cost"/></td>
                                         <td class="text-center"><span t-field="pricing_line.individual_sales_price"/></td>
                                         <td class="text-center"><span t-field="pricing_line.sales_price"/></td>
-                                        <td class="text-center"><span t-esc="round(pricing_line.profit_percentage, 2)"/></td>
                                         <td class="text-center"><span t-field="pricing_line.individual_profit_amount"/></td>
                                         <td class="text-center"><span t-field="pricing_line.profit_amount"/></td>
-                                        <td class="text-center"><span t-field="pricing_line.profit_amount"/></td>
+                                        <td class="text-center"><span t-esc="(pricing_line.individual_profit_amount / pricing_line.sales_price)*100"/>%</td>
                                     </tr>
                                     <tr>
                                         <td class="text-center" colspan="3" style="background-color:#d4d4d4">Totals</td>
@@ -277,13 +276,12 @@
                                         <td class="text-center"><span t-field="doc.transportation_amount"/></td>
                                     </tr>
                                     <tr>
-                                        <td class="text-center" style="background-color:#d4d4d4">Medical Cert.</td>
+                                        <td class="text-center" colspan="2" style="background-color:#d4d4d4">Medical Cert.</td>
                                         <td class="text-center" style="background-color:#d4d4d4">Commission</td>
                                         <td class="text-center" style="background-color:#d4d4d4">Period</td>
                                         <td class="text-center" style="background-color:#d4d4d4">Other</td>
                                         <td class="text-center" style="background-color:#d4d4d4">Mode</td>
-                                        <td class="text-center" style="background-color:#d4d4d4">Gross %</td>
-                                        <td class="text-center" style="background-color:#d4d4d4">Gross</td>
+                                        <td class="text-center" style="background-color:#d4d4d4">Services Qty</td>
                                         <td class="text-center" style="background-color:#d4d4d4">Profit %</td>
                                         <td class="text-center" style="background-color:#96F97B">Net Profit</td>
                                         <td class="text-center" style="background-color:#96F97B">Total Cost</td>
@@ -291,12 +289,11 @@
                                     </tr>
                                     <tr>
                                         <td class="text-center"><span t-field="doc.medical_amount"/></td>
-                                        <td class="text-center"></td>
+                                        <td class="text-center"><span t-esc="round(sum(doc.pricing_ids.mapped('commission_amount')), 2)"/></td>
                                         <td class="text-center"><span t-field="doc.proposal_period"/></td>
-                                        <td class="text-center"><span t-field="doc.mode"/></td>
                                         <td class="text-center"><span t-field="doc.other_amount"/></td>
-                                        <td class="text-center"></td>
-                                        <td class="text-center"></td>
+                                        <td class="text-center"><span t-field="doc.mode"/></td>
+                                        <td class="text-center"><span t-field="doc.service_quantity"/></td>
                                         <td class="text-center"><span t-field="doc.margin_percentage"/></td>
                                         <td class="text-center"><span t-field="doc.margin_amount"/></td>
                                         <td class="text-center"><span t-field="doc.total_pricing_cost"/></td>
