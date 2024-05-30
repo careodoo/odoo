@@ -11,7 +11,7 @@
                     <field name="location"/>
                     <field name="requirement_number"/>
                     <field name="manager_id"/>
-                    <field name="required_title"/>
+                    <field name="required_title" widget="many2many_tags"/>
                     <field name="type"/>
                     <field name="state" widget="badge" decoration-warning="state == 'submit'" decoration-success="state == 'approve'" decoration-danger="state == 'reject'"/>
                 </tree>
@@ -49,7 +49,7 @@
                             </group>
                             <group>
                                 <field name="manager_id"/>
-                                <field name="required_title"/>
+                                <field name="required_title" widget="many2many_tags"/>
                                 <field name="type"/>
                                 <field name="specific_requirements"/>
                                 <field name="working_hours"/>

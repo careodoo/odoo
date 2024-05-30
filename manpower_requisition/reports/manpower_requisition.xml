@@ -101,21 +101,21 @@
                                 </colgroup>
                                 <tbody>
                                     <tr>
-                                        <td><p>Requesting Manager</p>(Name and Designation)</td>
-                                        <td><p class="text-center"><span t-field="doc.manager_id"/> </p></td>
-                                        <td>
+                                        <td class="text-center" style="background-color:#d4d4d4;"><p>Requesting Manager</p>(Name and Designation)</td>
+                                        <td class="text-center"><p class="text-center"><span t-field="doc.manager_id"/> </p></td>
+                                        <td class="text-center">
                                             <p>Location:  <span t-field="doc.location"/> </p>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td><p>Title of position required</p></td>
+                                        <td class="text-center" style="background-color:#d4d4d4;"><p>Title of position required</p></td>
                                         <td><p class="text-center"><span t-field="doc.required_title"/> </p></td>
-                                        <td>
+                                        <td class="text-center">
                                             <p>No of Requirements: <span t-field="doc.requirement_number"/></p>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td><p> Overseas / Local </p></td>
+                                        <td class="text-center" style="background-color:#d4d4d4;"><p> Overseas / Local </p></td>
                                         <td><p class="text-center"><span t-field="doc.type"/> </p></td>
                                         <td><p></p></td>
                                     </tr>
@@ -131,32 +131,32 @@
                                 </colgroup>
                                 <tbody>
                                     <tr>
-                                        <td><p>Resignation/Termination</p></td>
-                                        <td><p>Transfer:  </p></td>
-                                        <td><p>New Project:  </p></td>
-                                        <td><p>Additional Manpower:  </p></td>
+                                        <td class="text-center" style="background-color:#d4d4d4;"><p>Resignation/Termination</p></td>
+                                        <td class="text-center" style="background-color:#d4d4d4;"><p>Transfer:  </p></td>
+                                        <td class="text-center" style="background-color:#d4d4d4;"><p>New Project:  </p></td>
+                                        <td class="text-center" style="background-color:#d4d4d4;"><p>Additional Manpower:  </p></td>
                                     </tr>
                                     <tr>
-                                        <td>
+                                        <td class="text-center">
                                             Employee Leaving:
                                             <p><span t-field="doc.leaving_employee_id"/></p>
                                             Resignation submitted on:
                                             <p><span t-field="doc.resignation_date"/></p>
                                         </td>
-                                        <td>
+                                        <td class="text-center">
                                             Employee being transferred:
                                             <p><span t-field="doc.transferred_employee_id"/></p>
                                             From: <p><span t-field="doc.transfer_from"/></p>
                                             To: <p><span t-field="doc.transfer_to"/></p>
                                             Reason: <p><span t-field="doc.transfer_reason"/></p>
                                         </td>
-                                        <td>
+                                        <td class="text-center">
                                             Project Name:
                                             <p><span t-field="doc.project_id"/></p>
                                             Actual headcount:
                                             <p><span t-field="doc.actual_headcount"/></p>
                                         </td>
-                                        <td>
+                                        <td class="text-center">
                                             Reason for requirement:
                                             <p><span t-field="doc.requirement_reason"/></p>
                                         </td>
@@ -182,10 +182,10 @@
                                 </colgroup>
                                 <tbody>
                                     <tr>
-                                        <td><p>Assigned salary for this requirements </p></td>
-                                        <td><p><span t-field="doc.salary"/></p></td>
-                                        <td><p>Working hours:  </p></td>
-                                        <td><p><span t-field="doc.working_hours"/></p></td>
+                                        <td class="text-center" style="background-color:#d4d4d4;"><p>Assigned salary for this requirements </p></td>
+                                        <td class="text-center"><p><span t-field="doc.salary"/></p></td>
+                                        <td class="text-center" style="background-color:#d4d4d4;"><p>Working hours:  </p></td>
+                                        <td class="text-center"><p><span t-field="doc.working_hours"/></p></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -305,21 +305,21 @@
                                 </colgroup>
                                 <tbody>
                                     <tr>
-                                        <td><p>Requesting Manager</p>(Name and Designation)</td>
+                                        <td class="text-center" style="background-color:#d4d4d4;"><p>Requesting Manager</p>(Name and Designation)</td>
                                         <td><p class="text-center"><span t-field="doc.manager_id"/> </p></td>
-                                        <td>
+                                        <td class="text-center">
                                             <p>Location:  <span t-field="doc.location"/> </p>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td><p>Title of position required</p></td>
+                                        <td class="text-center" style="background-color:#d4d4d4;"><p>Title of position required</p></td>
                                         <td><p class="text-center"><span t-field="doc.required_title"/> </p></td>
-                                        <td>
+                                        <td class="text-center">
                                             <p>No of Requirements: <span t-field="doc.requirement_number"/></p>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td><p> Overseas / Local </p></td>
+                                        <td class="text-center" style="background-color:#d4d4d4;"><p> Overseas / Local </p></td>
                                         <td><p class="text-center"><span t-field="doc.type"/> </p></td>
                                         <td><p></p></td>
                                     </tr>
@@ -335,38 +335,38 @@
                                 </colgroup>
                                 <tbody>
                                     <tr>
-                                        <td><p>Resignation/Termination</p></td>
-                                        <td><p>Transfer:  </p></td>
-                                        <td><p>New Project:  </p></td>
-                                        <td><p>Additional Manpower:  </p></td>
+                                        <td class="text-center" style="background-color:#d4d4d4;"><p>Resignation/Termination</p></td>
+                                        <td class="text-center" style="background-color:#d4d4d4;"><p>Transfer:  </p></td>
+                                        <td class="text-center" style="background-color:#d4d4d4;"><p>New Project:  </p></td>
+                                        <td class="text-center" style="background-color:#d4d4d4;"><p>Additional Manpower:  </p></td>
                                     </tr>
                                     <tr>
-                                        <td>
+                                        <td class="text-center">
                                             Employee Leaving:
                                             <p><span t-field="doc.leaving_employee_id"/></p>
                                             Resignation submitted on:
                                             <p><span t-field="doc.resignation_date"/></p>
                                         </td>
-                                        <td>
+                                        <td class="text-center">
                                             Employee being transferred:
                                             <p><span t-field="doc.transferred_employee_id"/></p>
                                             From: <p><span t-field="doc.transfer_from"/></p>
                                             To: <p><span t-field="doc.transfer_to"/></p>
                                             Reason: <p><span t-field="doc.transfer_reason"/></p>
                                         </td>
-                                        <td>
+                                        <td class="text-center">
                                             Project Name:
                                             <p><span t-field="doc.project_id"/></p>
                                             Actual headcount:
                                             <p><span t-field="doc.actual_headcount"/></p>
                                         </td>
-                                        <td>
+                                        <td class="text-center">
                                             Reason for requirement:
                                             <p><span t-field="doc.requirement_reason"/></p>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td colspan="4">
+                                        <td colspan="4" class="text-center">
                                             Nationality/other Job specific requirements :
                                             <p><span t-field="doc.specific_requirements"/></p>
                                             <p class="text-center">
@@ -386,10 +386,10 @@
                                 </colgroup>
                                 <tbody>
                                     <tr>
-                                        <td><p>Assigned salary for this requirements </p></td>
-                                        <td><p><span t-field="doc.salary"/></p></td>
-                                        <td><p>Working hours:  </p></td>
-                                        <td><p><span t-field="doc.working_hours"/></p></td>
+                                        <td class="text-center" style="background-color:#d4d4d4;"><p>Assigned salary for this requirements </p></td>
+                                        <td class="text-center"><p><span t-field="doc.salary"/></p></td>
+                                        <td class="text-center" style="background-color:#d4d4d4;"><p>Working hours:  </p></td>
+                                        <td class="text-center"><p><span t-field="doc.working_hours"/></p></td>
                                     </tr>
                                 </tbody>
                             </table>

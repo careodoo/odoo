@@ -18,7 +18,7 @@ class ManpowerRequisition(models.Model):
     request_date = fields.Date(string='Date of Request')
     manager_id = fields.Many2one('hr.employee', string='Requesting Manager')
     location = fields.Char()
-    required_title = fields.Many2one('hr.job', string='Title of position required')
+    required_title = fields.Many2many('hr.job', string='Title of position required')
     requirement_number = fields.Integer(string='No of Requirements')
     type = fields.Selection(selection=[
         ('overseas', 'Overseas'), ('local', 'Local')
