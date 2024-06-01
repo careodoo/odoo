@@ -62,8 +62,12 @@
                                 <field name="expire_date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                                 <field name="total_amount" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                                 <field name="total_pricing_cost" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                                <field name="margin_amount" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                                <field name="margin_percentage" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="margin_amount"/>
+                                <field name="margin_percentage"/>
+                                <field name="apply_commission" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="commission_type" attrs="{'readonly': [('state', '!=', 'draft')], 'invisible': [('apply_commission', '=', False)], 'required': [('apply_commission', '=', True)]}"/>
+                                <field name="commission_rate" attrs="{'readonly': [('state', '!=', 'draft')], 'invisible': [('apply_commission', '=', False)]}"/>
+                                <field name="commission_amount" attrs="{'invisible': [('apply_commission', '=', False)]}"/>
                             </group>
                             <group>
                                 <field name="barcode"/>
@@ -109,9 +113,10 @@
                                         <field name="material_cost" optional="show" readonly="1" force_save="1"/>
                                         <field name="equipment_cost" optional="show" readonly="1" force_save="1"/>
                                         <field name="transportation_cost" optional="show" readonly="1" force_save="1"/>
+                                        <field name="individual_cost_after_commission"/>
                                         <field name="individual_cost" sum="total individual cost" optional="show" readonly="1" force_save="1"/>
-                                        <field name="cost" sum="total cost" optional="show" readonly="1" force_save="1"/>
                                         <field name="commission_amount" optional="show" readonly="1" force_save="1"/>
+                                        <field name="cost" sum="total cost" optional="show" readonly="1" force_save="1"/>
                                         <field name="individual_sales_price" optional="show"/>
                                         <field name="profit_percentage" optional="show"/>
                                         <field name="individual_profit_amount" optional="show"/>
