@@ -7,6 +7,7 @@
             <field name="arch" type="xml">
                 <tree>
                     <field name="active" invisible="1"/>
+                    <field name="name"/>
                     <field name="request_date"/>
                     <field name="location"/>
                     <field name="requirement_number"/>
@@ -41,6 +42,7 @@
                         <group>
                             <group>
                                 <field name="active" invisible="1"/>
+                                <field name="name"/>
                                 <field name="barcode"/>
                                 <field name="request_date"/>
                                 <field name="location"/>
@@ -55,20 +57,26 @@
                                 <field name="working_hours"/>
                             </group>
                         </group>
-                        <group name="reason" string="REASONS FOR REQUEST">
-                            <separator name="resignation" string="Resignation/Termination"/>
-                            <field name="leaving_employee_id"/>
-                            <field name="resignation_date"/>
-                            <separator name="transfer" string="Transfer"/>
-                            <field name="transferred_employee_id"/>
-                            <field name="transfer_from"/>
-                            <field name="transfer_to"/>
-                            <field name="transfer_reason"/>
-                            <separator name="new_project" string="New Project"/>
-                            <field name="project_id"/>
-                            <field name="actual_headcount"/>
-                            <separator name="additional" string="Additional Manpower"/>
-                            <field name="requirement_reason"/>
+                        <group>
+                            <group name="transfer" string="Transfer">
+                                <field name="transferred_employee_id"/>
+                                <field name="transfer_from"/>
+                                <field name="transfer_to"/>
+                                <field name="transfer_reason"/>
+                            </group>
+                            <group name="resignation" string="Resignation/Termination">
+                                <field name="leaving_employee_id"/>
+                                <field name="resignation_date"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group name="new_project" string="New Project">
+                                <field name="project_id"/>
+                                <field name="actual_headcount"/>
+                            </group>
+                            <group name="additional" string="Additional Manpower">
+                                <field name="requirement_reason"/>
+                            </group>
                         </group>
                         <group>
                             <group>
@@ -80,9 +88,9 @@
                                 <field name="need_hr_approve"/>
                                 <field name="need_manager_approve"/>
                                 <field name="need_parent_approve" attrs="{'invisible': [('parent_department_id', '=', False)]}"/>
-                                <field name="department_manager_id" invisible="0"/>
-                                <field name="parent_manager_id" invisible="0"/>
-                                <field name="hr_user_ids" widget="many2many_tags" invisible="0"/>
+                                <field name="department_manager_id" invisible="1"/>
+                                <field name="parent_manager_id" invisible="1"/>
+                                <field name="hr_user_ids" widget="many2many_tags" invisible="1"/>
                                 <field name="hr_approve" readonly="1" force_save="1"/>
                                 <field name="manager_approve" readonly="1" force_save="1"/>
                             </group>

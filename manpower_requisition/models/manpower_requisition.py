@@ -15,6 +15,7 @@ class ManpowerRequisition(models.Model):
     def _get_hr_users(self):
         return self.env.ref("hr.group_hr_manager").users.ids
 
+    name = fields.Char(compute='compute_name', store=True)
     request_date = fields.Date(string='Date of Request')
     manager_id = fields.Many2one('hr.employee', string='Requesting Manager')
     location = fields.Char()
@@ -55,6 +56,20 @@ class ManpowerRequisition(models.Model):
         ('draft', 'Draft'), ('submit', 'Submitted'),
         ('approve', 'Approved'), ('reject', 'Reject')
     ], default='draft', tracking=True)
+
+    @api.depends('requirement_number', 'required_title', 'location')
+    def compute_name(self):
+        for rec in self:
+            rec.name = 'Request Manpower '
+            if rec.requirement_number:
+                rec.name += str(rec.requirement_number)
+                rec.name += ' '
+            if rec.required_title:
+                rec.name += ','.join(rec.required_title.mapped('name'))
+                rec.name += ' '
+            if rec.location:
+                rec.name += 'for '
+                rec.name += rec.location
 
     def _generate_qr_code(self):
         for rec in self:
