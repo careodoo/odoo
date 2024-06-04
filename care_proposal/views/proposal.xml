@@ -81,6 +81,7 @@
                                 <field name="mobilization_date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                                 <field name="proposal_period" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                                 <field name="mode" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="lead_id" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                                 <field name="approver_id" invisible="0" force_save="1"/>
                             </group>
                         </group>
@@ -93,10 +94,19 @@
                                         <field name="manpower_quantity"/>
                                         <field name="material_amount"/>
                                         <field name="equipment_amount"/>
-                                    </group>
-                                    <group>
                                         <field name="transportation_amount"/>
                                         <field name="salary_amount"/>
+                                        <field name="uniform_amount"/>
+                                        <field name="accommodation_amount"/>
+                                        <field name="residency_amount"/>
+                                    </group>
+                                    <group>
+                                        <field name="leave_amount"/>
+                                        <field name="insurance_amount"/>
+                                        <field name="fee_amount"/>
+                                        <field name="gate_amount"/>
+                                        <field name="gate_amount"/>
+                                        <field name="medical_amount"/>
                                         <field name="total_pricing_cost"/>
                                         <field name="total_sales"/>
                                     </group>
@@ -113,9 +123,9 @@
                                         <field name="material_cost" optional="show" readonly="1" force_save="1"/>
                                         <field name="equipment_cost" optional="show" readonly="1" force_save="1"/>
                                         <field name="transportation_cost" optional="show" readonly="1" force_save="1"/>
-                                        <field name="individual_cost_after_commission"/>
                                         <field name="individual_cost" sum="total individual cost" optional="show" readonly="1" force_save="1"/>
                                         <field name="commission_amount" optional="show" readonly="1" force_save="1"/>
+                                        <field name="individual_cost_after_commission"/>
                                         <field name="cost" sum="total cost" optional="show" readonly="1" force_save="1"/>
                                         <field name="individual_sales_price" optional="show"/>
                                         <field name="profit_percentage" optional="show"/>

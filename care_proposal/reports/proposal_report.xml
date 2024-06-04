@@ -157,32 +157,34 @@
                                         <tr>
                                             <t t-set="service" t-value="service_line.proposal_service_id"/>
                                             <td class="text-center"><span t-field="service_line.quantity"/></td>
-                                            <td class="text-center"><span t-esc="service.get_service_item_cost('salary')"/></td>
-                                            <td class="text-center"><span t-esc="service.get_service_item_cost('residency')"/></td>
-                                            <td class="text-center"><span t-esc="service.get_service_item_cost('accommodation')"/></td>
-                                            <td class="text-center"><span t-esc="service.get_service_item_cost('uniform')"/></td>
-                                            <td class="text-center"><span t-esc="service.get_service_item_cost('leave')"/></td>
-                                            <td class="text-center"><span t-esc="service.get_service_item_cost('insurance')"/></td>
-                                            <td class="text-center"><span t-esc="service.get_service_item_cost('bank_charge')"/></td>
-                                            <td class="text-center" rowspan="3" style="vertical-align : middle;text-align:center;"><span t-esc="service_line.get_service_cost('cost')"/></td>
-                                            <td class="text-center" rowspan="3" style="vertical-align : middle;text-align:center;"><span t-esc="service_line.get_service_cost('sales')"/></td>
-                                            <td class="text-center" rowspan="3" style="vertical-align : middle;text-align:center;"><span t-esc="service_line.get_service_cost('sales') - service_line.get_service_cost('cost')"/></td>
+                                            <td class="text-center"><span t-esc="round(service.get_service_item_cost('salary'), 2)"/></td>
+                                            <td class="text-center"><span t-esc="round(service.get_service_item_cost('residency'), 2)"/></td>
+                                            <td class="text-center"><span t-esc="round(service.get_service_item_cost('accommodation'), 2)"/></td>
+                                            <td class="text-center"><span t-esc="round(service.get_service_item_cost('uniform'), 2)"/></td>
+                                            <td class="text-center"><span t-esc="round(service.get_service_item_cost('leave'), 2)"/></td>
+                                            <td class="text-center"><span t-esc="round(service.get_service_item_cost('insurance'), 2)"/></td>
+                                            <td class="text-center"><span t-esc="round(service.get_service_item_cost('bank_charge'), 2)"/></td>
+                                            <td class="text-center" rowspan="3" style="vertical-align : middle;text-align:center;"><span t-esc="round(service_line.get_service_cost('cost'), 2)"/></td>
+                                            <td class="text-center" rowspan="3" style="vertical-align : middle;text-align:center;"><span t-esc="round(service_line.get_service_cost('sales'), 2)"/></td>
+                                            <td class="text-center" rowspan="3" style="vertical-align : middle;text-align:center;"><span t-esc="round((service_line.get_service_cost('sales') - service_line.get_service_cost('cost')), 2)"/></td>
                                         </tr>
                                         <tr>
                                             <td class="text-center" style="background-color:#d4d4d4">Material</td>
                                             <td class="text-center" style="background-color:#d4d4d4">Equipment</td>
-                                            <td class="text-center" colspan="2" style="background-color:#d4d4d4">Transportation</td>
+                                            <td class="text-center" style="background-color:#d4d4d4">Transportation</td>
+                                            <td class="text-center" style="background-color:#d4d4d4">Gate Pass</td>
                                             <td class="text-center" colspan="2" style="background-color:#d4d4d4">Medical Certificate</td>
                                             <td class="text-center" style="background-color:#d4d4d4">Other</td>
                                             <td class="text-center" style="background-color:#d4d4d4">Commission</td>
                                         </tr>
                                         <tr>
-                                            <td class="text-center"><span t-esc="service_line.get_service_cost('material')"/></td>
-                                            <td class="text-center"><span t-esc="service_line.get_service_cost('equipment')"/></td>
-                                            <td class="text-center" colspan="2"><span t-esc="service_line.get_service_cost('transportation')"/></td>
-                                            <td class="text-center" colspan="2"><span t-esc="service.get_service_item_cost('medical')"/></td>
-                                            <td class="text-center"><span t-esc="service.get_service_item_cost('other')"/></td>
-                                            <td class="text-center"><span t-esc="service.get_service_item_cost('other')"/></td>
+                                            <td class="text-center"><span t-esc="round(service_line.get_service_cost('material'), 2)"/></td>
+                                            <td class="text-center"><span t-esc="round(service_line.get_service_cost('equipment'), 2)"/></td>
+                                            <td class="text-center"><span t-esc="round(service_line.get_service_cost('transportation'), 2)"/></td>
+                                            <td class="text-center"><span t-esc="round(service.get_service_item_cost('gate_pass'), 2)"/></td>
+                                            <td class="text-center" colspan="2"><span t-esc="round(service.get_service_item_cost('medical'), 2)"/></td>
+                                            <td class="text-center"><span t-esc="round(service.get_service_item_cost('other'), 2)"/></td>
+                                            <td class="text-center"><span t-esc="round(service_line.get_commission_amount(), 2)"/></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -224,21 +226,21 @@
                                         <td class="text-center"><span t-esc="sequence"/></td>
                                         <td class="text-center" colspan="3"><span t-field="pricing_line.service_id.proposal_service_id.short_code"/></td>
                                         <td class="text-center"><span t-esc="round(pricing_line.individual_cost, 2)"/></td>
-                                        <td class="text-center"><span t-field="pricing_line.cost"/></td>
-                                        <td class="text-center"><span t-field="pricing_line.individual_sales_price"/></td>
-                                        <td class="text-center"><span t-field="pricing_line.sales_price"/></td>
-                                        <td class="text-center"><span t-field="pricing_line.individual_profit_amount"/></td>
-                                        <td class="text-center"><span t-field="pricing_line.profit_amount"/></td>
+                                        <td class="text-center"><span t-esc="round(pricing_line.cost, 2)"/></td>
+                                        <td class="text-center"><span t-esc="round(pricing_line.individual_sales_price, 2)"/></td>
+                                        <td class="text-center"><span t-esc="round(pricing_line.sales_price, 2)"/></td>
+                                        <td class="text-center"><span t-esc="round(pricing_line.individual_profit_amount, 2)"/></td>
+                                        <td class="text-center"><span t-esc="round(pricing_line.profit_amount, )"/></td>
                                         <td class="text-center"><span t-esc="round(pricing_line.profit_percentage, 2)"/>%</td>
                                     </tr>
                                     <tr>
                                         <td class="text-center" colspan="4" style="background-color:#d4d4d4">Totals</td>
-                                        <td class="text-center" style="background-color:#d4d4d4"><span t-esc="sum(doc.pricing_ids.mapped('individual_cost'))"/></td>
-                                        <td class="text-center" style="background-color:#d4d4d4"><span t-esc="sum(doc.pricing_ids.mapped('cost'))"/></td>
-                                        <td class="text-center" style="background-color:#d4d4d4"><span t-esc="sum(doc.pricing_ids.mapped('individual_sales_price'))"/></td>
-                                        <td class="text-center" style="background-color:#d4d4d4"><span t-esc="sum(doc.pricing_ids.mapped('sales_price'))"/></td>
-                                        <td class="text-center" style="background-color:#d4d4d4"><span t-esc="sum(doc.pricing_ids.mapped('individual_profit_amount'))"/></td>
-                                        <td class="text-center" style="background-color:#d4d4d4"><span t-esc="sum(doc.pricing_ids.mapped('profit_amount'))"/></td>
+                                        <td class="text-center" style="background-color:#d4d4d4"><span t-esc="round(sum(doc.pricing_ids.mapped('individual_cost')), 2)"/></td>
+                                        <td class="text-center" style="background-color:#d4d4d4"><span t-esc="round(sum(doc.pricing_ids.mapped('cost')), 2)"/></td>
+                                        <td class="text-center" style="background-color:#d4d4d4"><span t-esc="round(sum(doc.pricing_ids.mapped('individual_sales_price')), 2)"/></td>
+                                        <td class="text-center" style="background-color:#d4d4d4"><span t-esc="round(sum(doc.pricing_ids.mapped('sales_price')), 2)"/></td>
+                                        <td class="text-center" style="background-color:#d4d4d4"><span t-esc="round(sum(doc.pricing_ids.mapped('individual_profit_amount')), 2)"/></td>
+                                        <td class="text-center" style="background-color:#d4d4d4"><span t-esc="round(sum(doc.pricing_ids.mapped('profit_amount')), 2)"/></td>
                                         <td class="text-center" style="background-color:#d4d4d4"><span t-esc="round(sum(doc.pricing_ids.mapped('profit_percentage'))/len(doc.pricing_ids), 2)"/>%</td>
                                     </tr>
                                 </tbody>
@@ -280,13 +282,13 @@
                                         <td class="text-center"><span t-field="doc.mode"/></td>
                                         <td class="text-center"><span t-field="doc.proposal_period"/></td>
                                         <td class="text-center"><span t-field="doc.manpower_quantity"/></td>
-                                        <td class="text-center"><span t-field="doc.salary_amount"/></td>
-                                        <td class="text-center"><span t-field="doc.residency_amount"/></td>
-                                        <td class="text-center"><span t-field="doc.accommodation_amount"/></td>
-                                        <td class="text-center"><span t-field="doc.uniform_amount"/></td>
-                                        <td class="text-center"><span t-field="doc.leave_amount"/></td>
-                                        <td class="text-center"><span t-field="doc.insurance_amount"/></td>
-                                        <td class="text-center"><span t-field="doc.transportation_amount"/></td>
+                                        <td class="text-center"><span t-esc="round(doc.salary_amount, 2)"/></td>
+                                        <td class="text-center"><span t-esc="round(doc.residency_amount, 2)"/></td>
+                                        <td class="text-center"><span t-esc="round(doc.accommodation_amount, 2)"/></td>
+                                        <td class="text-center"><span t-esc="round(doc.uniform_amount, 2)"/></td>
+                                        <td class="text-center"><span t-esc="round(doc.leave_amount, 2)"/></td>
+                                        <td class="text-center"><span t-esc="round(doc.insurance_amount, 2)"/></td>
+                                        <td class="text-center"><span t-esc="round(doc.transportation_amount, 2)"/></td>
                                     </tr>
                                     <tr>
                                         <td class="text-center" style="background-color:#d4d4d4">Bank Fees</td>
@@ -301,16 +303,16 @@
                                         <td class="text-center" style="background-color:#c2fcc3">Total Sales</td>
                                     </tr>
                                     <tr>
-                                        <td class="text-center"><span t-field="doc.fee_amount"/></td>
-                                        <td class="text-center"><span t-field="doc.material_amount"/></td>
-                                        <td class="text-center"><span t-field="doc.equipment_amount"/></td>
-                                        <td class="text-center" colspan="2"><span t-field="doc.medical_amount"/></td>
+                                        <td class="text-center"><span t-esc="round(doc.fee_amount, 2)"/></td>
+                                        <td class="text-center"><span t-esc="round(doc.material_amount, 2)"/></td>
+                                        <td class="text-center"><span t-esc="round(doc.equipment_amount, 2)"/></td>
+                                        <td class="text-center" colspan="2"><span t-esc="round(doc.medical_amount, 2)"/></td>
                                         <td class="text-center"><span t-esc="round(sum(doc.pricing_ids.mapped('commission_amount')), 2)"/></td>
-                                        <td class="text-center"><span t-field="doc.other_amount"/></td>
+                                        <td class="text-center"><span t-esc="round(doc.other_amount, 2)"/></td>
                                         <td class="text-center"><span t-esc="round(doc.margin_percentage, 2)"/>%</td>
-                                        <td class="text-center"><span t-field="doc.margin_amount"/></td>
-                                        <td class="text-center"><span t-field="doc.total_pricing_cost"/></td>
-                                        <td class="text-center"><span t-field="doc.total_amount"/></td>
+                                        <td class="text-center"><span t-esc="round(doc.margin_amount, 2)"/></td>
+                                        <td class="text-center"><span t-esc="round(doc.total_pricing_cost, 2)"/></td>
+                                        <td class="text-center"><span t-esc="round(doc.total_amount, 2)"/></td>
                                     </tr>
                                 </tbody>
                             </table>

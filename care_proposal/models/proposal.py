@@ -58,6 +58,7 @@ class Proposal(models.Model):
     insurance_amount = fields.Float(compute='compute_service_amounts', store=True)
     fee_amount = fields.Float(compute='compute_service_amounts', store=True)
     other_amount = fields.Float(compute='compute_service_amounts', store=True)
+    gate_amount = fields.Float(compute='compute_service_amounts', store=True)
     medical_amount = fields.Float(compute='compute_service_amounts', store=True)
     total_cost = fields.Float(compute='compute_total_cost', store=True)
     individual_cost = fields.Float(compute='compute_individual_cost', store=True)
@@ -66,7 +67,7 @@ class Proposal(models.Model):
     total_pricing_cost = fields.Float(compute='compute_total_pricing_cost', store=True, string='Total Cost')
     margin_amount = fields.Float(compute='compute_margin', store=True, string='Net Profit')
     margin_percentage = fields.Float(compute='compute_margin', store=True, string='Net Profit %')
-    lead_ids = fields.One2many('crm.lead', 'proposal_id')
+    lead_id = fields.Many2one('crm.lead')
     approver_id = fields.Many2one('res.users', compute='compute_approver', store=True)
     barcode = fields.Char(default=generate_barcode)
     logo = fields.Binary()
@@ -183,6 +184,7 @@ class Proposal(models.Model):
             rec.fee_amount = 0
             rec.medical_amount = 0
             rec.other_amount = 0
+            rec.gate_amount = 0
 
             total_uniform = 0
             total_accommodation = 0
@@ -192,6 +194,7 @@ class Proposal(models.Model):
             total_fee = 0
             total_medical = 0
             total_other = 0
+            total_gate = 0
             for service_line in rec.service_ids:
                 lines = service_line.proposal_service_id.line_ids
                 total_uniform += sum(lines.filtered(lambda l: l.type == 'uniform').mapped('cost') or []) * service_line.quantity
@@ -202,6 +205,7 @@ class Proposal(models.Model):
                 total_fee += sum(lines.filtered(lambda l: l.type == 'bank_charge').mapped('cost') or []) * service_line.quantity
                 total_medical += sum(lines.filtered(lambda l: l.type == 'medical').mapped('cost') or []) * service_line.quantity
                 total_other += sum(lines.filtered(lambda l: l.type == 'other').mapped('cost') or []) * service_line.quantity
+                total_gate += sum(lines.filtered(lambda l: l.type == 'gate_pass').mapped('cost') or []) * service_line.quantity
 
             rec.uniform_amount = total_uniform
             rec.accommodation_amount = total_accommodation
@@ -211,6 +215,7 @@ class Proposal(models.Model):
             rec.fee_amount = total_fee
             rec.medical_amount = total_medical
             rec.other_amount = total_other
+            rec.gate_amount = total_gate
 
     @api.depends('material_amount', 'equipment_amount', 'transportation_amount', 'salary_amount')
     def compute_total_cost(self):
@@ -459,6 +464,10 @@ class ProposalServiceLine(models.Model):
             else:
                 cost = lines[0].profit_percentage
         return cost
+
+    def get_commission_amount(self):
+        pricing_line = self.proposal_id.pricing_ids.filtered(lambda p: p.service_id.id == self.id)
+        return pricing_line.commission_amount if pricing_line else 0
 
 
 class ProposalScopeLine(models.Model):

@@ -49,4 +49,12 @@
         'reports/customer_proposal.xml',
         'data/mail_template.xml',
     ],
+    'assets': {
+        'web.assets_common': [
+            'care_proposal/static/src/scss/droidfont.scss',
+        ],
+        'web.report_assets_common': [
+            'care_proposal/static/src/scss/droidfont.scss',
+        ],
+    }
 }

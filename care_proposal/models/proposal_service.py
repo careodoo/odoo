@@ -20,7 +20,7 @@ class ProposalService(models.Model):
 
     def get_service_item_cost(self, type):
         item = self.line_ids.filtered(lambda l: l.type == type)
-        return item.cost if item else ''
+        return item.cost if item else 0
 
     @api.depends('line_ids.cost')
     def compute_total_cost(self):
@@ -41,7 +41,7 @@ class ProposalServiceLine(models.Model):
         ('accommodation', 'Accommodation'), ('uniform', 'Uniform'),
         ('leave', 'Leave & Indemnity'), ('insurance', 'Staff Insurance'),
         ('bank_charge', 'Bank Charge'), ('medical', 'Medical Certificate'),
-        ('gate_pass', 'Gate Pass'), ('commission', 'Commission'), ('other', 'Other'),
+        ('gate_pass', 'Gate Pass'), ('other', 'Other'),
     ], required=True)
     other_cost = fields.Char()
     cost = fields.Float()
