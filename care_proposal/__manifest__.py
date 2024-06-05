@@ -51,10 +51,10 @@
     ],
     'assets': {
         'web.assets_common': [
-            'care_proposal/static/src/scss/droidfont.scss',
+            'care_proposal/static/src/scss/cairofont.scss',
         ],
         'web.report_assets_common': [
-            'care_proposal/static/src/scss/droidfont.scss',
+            'care_proposal/static/src/scss/cairofont.scss',
         ],
     }
 }

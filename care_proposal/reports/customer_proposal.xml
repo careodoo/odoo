@@ -42,7 +42,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="page" style="font-family:Droid !important;">
+                        <div class="page" style="font-family:Cairo !important;">
                             <t t-if="doc.print_cover">
                                 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
                                 <div>

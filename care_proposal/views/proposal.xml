@@ -23,7 +23,7 @@
                     <field name="service_site" optional="show"/>
                     <field name="mobilization_date" optional="show"/>
                     <field name="proposal_period" optional="show"/>
-                    <field name="state" widget="badge" decoration-danger="state == 'reject'" decoration-success="state == 'approve'" decoration-warning="state == 'submit'"/>
+                    <field name="state" widget="badge" decoration-danger="state in ['reject', 'cancel']" decoration-success="state == 'approve'" decoration-warning="state == 'submit'" decoration-primary="state == 'waiting'"/>
                 </tree>
             </field>
         </record>
@@ -42,7 +42,7 @@
                             attrs="{'invisible': &quot;['|', ('approver_id', '!=', uid), ('state', 'not in', ['submit', 'waiting'])]&quot;}"/>
                         <button name="button_reject" type="object" string="Reject" class="btn btn-danger"
                                 confirm="Are you sure you want to reject this proposal?"
-                            attrs="{'invisible': &quot;['|', ('approver_id', '!=', uid), ('state', '!=', 'submit')]&quot;}"/>
+                            attrs="{'invisible': &quot;['|', ('approver_id', '!=', uid), ('state', 'not in', ['submit', 'waiting'])]&quot;}"/>
                         <button name="generate_pricing" type="object" string="Generate Pricing" class="oe_highlight"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,submit,approve"/>
                     </header>
@@ -105,7 +105,7 @@
                                         <field name="insurance_amount"/>
                                         <field name="fee_amount"/>
                                         <field name="gate_amount"/>
-                                        <field name="gate_amount"/>
+                                        <field name="total_commission_amount"/>
                                         <field name="medical_amount"/>
                                         <field name="total_pricing_cost"/>
                                         <field name="total_sales"/>

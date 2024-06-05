@@ -70,7 +70,7 @@ class Proposal(models.Model):
     lead_id = fields.Many2one('crm.lead')
     approver_id = fields.Many2one('res.users', compute='compute_approver', store=True)
     barcode = fields.Char(default=generate_barcode)
-    logo = fields.Binary()
+    logo = fields.Binary(related='partner_id.image_1920', store=True, readonly=False)
     qr_image = fields.Binary("QR Code", compute='_generate_qr_code')
     qr_url = fields.Char("QR Code", compute='_generate_qr_code')
     active = fields.Boolean(default=True)
@@ -98,6 +98,7 @@ class Proposal(models.Model):
     ])
     commission_rate = fields.Float()
     commission_amount = fields.Float(compute='compute_commission_amount', store=True)
+    total_commission_amount = fields.Float(string='Total Commission')
     approval_ids = fields.One2many('proposal.approval', 'proposal_id', default=get_default_approvers)
     material_service_ids = fields.Many2many('proposal.service.line', domain="[('id', 'in', service_ids)]")
     equipment_service_ids = fields.Many2many('proposal.service.line', relation="equipment_service_rel",
@@ -113,7 +114,7 @@ class Proposal(models.Model):
                 else:
                     rec.commission_amount = (rec.commission_rate * rec.margin_amount) / 100
 
-    @api.depends('approval_ids', 'approval_ids.approved')
+    @api.depends('approval_ids', 'approval_ids.approved', 'state')
     def compute_approver(self):
         for rec in self:
             rec.approver_id = False
@@ -270,6 +271,7 @@ class Proposal(models.Model):
         vals = []
         total_material_service_qty = sum(self.material_service_ids.mapped('quantity'))
         total_equipment_service_qty = sum(self.equipment_service_ids.mapped('quantity'))
+        total_commission = 0
         for service_line in self.service_ids:
             material_cost = 0
             equipment_cost = 0
@@ -295,6 +297,7 @@ class Proposal(models.Model):
             if cl:
                 cl = cl[0]
                 commission_amount = self.get_commission_amount(cl.commission, cl.commission_type, cl.commission_rate, individual_cost)
+                total_commission += commission_amount * service_line.quantity
 
             vals.append((0, 0, {
                 'name': 'service',
@@ -311,7 +314,8 @@ class Proposal(models.Model):
                 'cost': (individual_cost + commission_amount) * service_line.quantity,
             }))
         self.write({
-            'pricing_ids': vals
+            'pricing_ids': vals,
+            'total_commission_amount': total_commission
         })
 
     def get_commission_amount(self, commission, commission_type, commission_rate, individual_cost):
@@ -362,6 +366,10 @@ class Proposal(models.Model):
 
     def button_draft(self):
         self.state = 'draft'
+        self.approval_ids = [(5, 0, 0)]
+        self.write({
+            'approval_ids': self.get_default_approvers()
+        })
 
     def action_send_email(self):
         self.ensure_one()

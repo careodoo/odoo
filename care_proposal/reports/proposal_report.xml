@@ -307,7 +307,7 @@
                                         <td class="text-center"><span t-esc="round(doc.material_amount, 2)"/></td>
                                         <td class="text-center"><span t-esc="round(doc.equipment_amount, 2)"/></td>
                                         <td class="text-center" colspan="2"><span t-esc="round(doc.medical_amount, 2)"/></td>
-                                        <td class="text-center"><span t-esc="round(sum(doc.pricing_ids.mapped('commission_amount')), 2)"/></td>
+                                        <td class="text-center"><span t-esc="round(doc.total_commission_amount, 2)"/></td>
                                         <td class="text-center"><span t-esc="round(doc.other_amount, 2)"/></td>
                                         <td class="text-center"><span t-esc="round(doc.margin_percentage, 2)"/>%</td>
                                         <td class="text-center"><span t-esc="round(doc.margin_amount, 2)"/></td>
