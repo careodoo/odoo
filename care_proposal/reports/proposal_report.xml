@@ -87,7 +87,7 @@
                                     </center>
                                 </div>
                             </div>
-                            <p class="text-center">Pricing for Provide Cleaning Services For <span t-field="doc.partner_id"/></p>
+                            <p class="text-center"><span t-field="doc.name"/></p>
                             <h4 class="text-center">Services</h4>
                             <t t-foreach="doc.service_ids" t-as="service_line">
                                 <table class="GeneratedTable">

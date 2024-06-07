@@ -28,5 +28,71 @@
             <field name="lang">{{ object.partner_id.lang }}</field>
 <!--            <field name="auto_delete" eval="True"/>-->
         </record>
+
+        <record id="email_template_proposal_won" model="mail.template">
+            <field name="name">Sales Proposal: Won</field>
+            <field name="model_id" ref="care_proposal.model_proposal_proposal"/>
+            <field name="subject">Sale Proposal (Ref {{ object.name or 'n/a' }})</field>
+            <field name="email_to">{{ object.receiver_users_str }}</field>
+            <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px;">
+    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+        Dear ...
+        <br/><br/>
+        <p>Can you please find the attached file for your kind review and approval.</p>
+        <br/><br/>
+        <table class="table table-bordered">
+            <tr>
+                <td>Client Name</td>
+                <td><t t-out="object.partner_id.name or ''"></t></td>
+            </tr>
+            <tr>
+                <td>Type of Contract</td>
+                <td><t t-out="object.partner_id.name or ''"></t></td>
+            </tr>
+            <tr>
+                <td>Type of Service</td>
+                <td><t t-out="object.service_type_id.name or ''"></t></td>
+            </tr>
+            <tr>
+                <td>Labor Quantity</td>
+                <td><t t-out="object.manpower_quantity or ''"></t></td>
+            </tr>
+            <tr>
+                <td>Contract Period</td>
+                <td><t t-out="object.proposal_period or ''"></t></td>
+            </tr>
+            <tr>
+                <td>Payment Terms</td>
+                <td><t t-out="object.mode or ''"></t></td>
+            </tr>
+            <tr>
+                <td>Days to Start</td>
+<!--                <td><t t-out="object.partner_id.name or ''"></t></td>-->
+            </tr>
+            <tr>
+                <td>Contract Value</td>
+                <td><t t-out="object.total_sales or ''"></t></td>
+            </tr>
+            <tr>
+                <td>Net Profit %</td>
+                <td><t t-out="object.margin_percentage or ''"></t></td>
+            </tr>
+            <tr>
+                <td>Monthly Profit</td>
+                <td><t t-out="object.margin_amount or ''"></t></td>
+            </tr>
+            <tr>
+                <td>Referred By</td>
+                <td><t t-out="object.create_uid.name or ''"></t></td>
+            </tr>
+        </table>
+    </p>
+</div></field>
+<!--            <field name="report_template" ref="care_proposal.action_proposal_report"/>-->
+<!--            <field name="report_name">{{ (object.name or '').replace('/','_') }}</field>-->
+<!--            <field name="lang">{{ object.partner_id.lang }}</field>-->
+<!--            <field name="auto_delete" eval="True"/>-->
+        </record>
     </data>
 </odoo>

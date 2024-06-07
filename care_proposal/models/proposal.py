@@ -35,7 +35,7 @@ class Proposal(models.Model):
     notes = fields.Text()
     state = fields.Selection(selection=[
         ('draft', 'New'), ('submit', 'Submitted'), ('waiting', 'Waiting Approval'),
-        ('approve', 'Approved'), ('reject', 'Rejected'), ('cancel', 'Cancel')
+        ('approve', 'Approved'), ('reject', 'Rejected'), ('cancel', 'Cancel'), ('won', 'Won')
     ], default='draft', tracking=True)
     service_ids = fields.One2many('proposal.service.line', 'proposal_id')
     scope_ids = fields.One2many('proposal.scope.line', 'proposal_id')
@@ -69,6 +69,10 @@ class Proposal(models.Model):
     margin_percentage = fields.Float(compute='compute_margin', store=True, string='Net Profit %')
     lead_id = fields.Many2one('crm.lead')
     approver_id = fields.Many2one('res.users', compute='compute_approver', store=True)
+    approver_users = fields.Many2many('res.users', compute='compute_approver_users', store=True)
+    receiver_users = fields.Many2many('res.users', 'approved_users_proposal_rel', 'proposal_id', 'user_id')
+    receiver_users_str = fields.Char(compute='compute_receiver_users_str', store=True)
+    user_confirmed = fields.Boolean(compute='compute_user_confirmed')
     barcode = fields.Char(default=generate_barcode)
     logo = fields.Binary(related='partner_id.image_1920', store=True, readonly=False)
     qr_image = fields.Binary("QR Code", compute='_generate_qr_code')
@@ -121,6 +125,21 @@ class Proposal(models.Model):
             approvers = rec.approval_ids.filtered(lambda a: not a.approved)
             if approvers:
                 rec.approver_id = approvers[0].user_id.id
+
+    @api.depends('approval_ids', 'approval_ids.user_id')
+    def compute_approver_users(self):
+        for rec in self:
+            rec.approver_users = False
+            if rec.approval_ids:
+                rec.approver_users = [(6, 0, [u.id for u in rec.approval_ids.mapped('user_id')])]
+
+    def compute_user_confirmed(self):
+        for rec in self:
+            rec.user_confirmed = False
+            if rec.approval_ids and rec.approver_users:
+                if self.env.uid in rec.approver_users.ids:
+                    if rec.approval_ids.filtered(lambda l: l.user_id.id == self.env.uid and l.approved):
+                        rec.user_confirmed = True
 
     @api.constrains('commission_rate')
     def validate_commission_rate(self):
@@ -337,11 +356,11 @@ class Proposal(models.Model):
 
     def button_submit(self):
         self.state = 'submit'
-        self.sudo().activity_schedule(
-            'care_proposal.mail_act_proposal_submit',
-            summary='Proposal',
-            note='Ask To Confirm Proposal',
-            user_id=self.approver_id.id)
+        # self.sudo().activity_schedule(
+        #     'care_proposal.mail_act_proposal_submit',
+        #     summary='Proposal',
+        #     note='Ask To Confirm Proposal',
+        #     user_id=self.approver_id.id)
 
     def button_approve(self):
         self.approval_ids.filtered(lambda l: l.user_id.id == self.env.uid).write({
@@ -350,13 +369,23 @@ class Proposal(models.Model):
         })
         if self.approval_ids.filtered(lambda l: not l.approved):
             self.write({'state': 'waiting'})
-            self.sudo().activity_schedule(
-                'care_proposal.mail_act_proposal_submit',
-                summary='Proposal',
-                note='Ask To Confirm Proposal',
-                user_id=self.approver_id.id)
+            # self.sudo().activity_schedule(
+            #     'care_proposal.mail_act_proposal_submit',
+            #     summary='Proposal',
+            #     note='Ask To Confirm Proposal',
+            #     user_id=self.approver_id.id)
             return
-        self.write({'state': 'approve'})
+        self.write({
+            'state': 'approve',
+            'receiver_users': self.env['proposal.receiver'].sudo().search([]).ids,
+        })
+
+    @api.depends('receiver_users')
+    def compute_receiver_users_str(self):
+        for rec in self:
+            rec.receiver_users_str = ''
+            if rec.receiver_users:
+                rec.receiver_users_str = ','.join(rec.receiver_users.mapped('email'))
 
     def button_reject(self):
         self.state = 'reject'
@@ -370,6 +399,11 @@ class Proposal(models.Model):
         self.write({
             'approval_ids': self.get_default_approvers()
         })
+
+    def button_won(self):
+        template = self.env.ref('care_proposal.email_template_proposal_won')
+        self.env['mail.template'].browse(template.id).send_mail(self.id, force_send=True)
+        self.state = 'won'
 
     def action_send_email(self):
         self.ensure_one()
@@ -652,6 +686,16 @@ class ProposalApproval(models.Model):
     user_id = fields.Many2one('res.users')
     approved = fields.Boolean()
     date_approved = fields.Datetime(string='Approved Date')
+
+    def send_approve_request(self):
+        template = self.env.ref('care_proposal.email_template_proposal')
+        self.env['mail.template'].browse(template.id).send_mail(self.proposal_id.id, force_send=True,
+                                                                notif_layout='mail.mail_notification_light')
+        self.proposal_id.sudo().activity_schedule(
+            'care_proposal.mail_act_proposal_submit',
+            summary='Proposal',
+            note='Ask To Confirm Proposal',
+            user_id=self.user_id.id)
 
 
 class ProposalCommission(models.Model):
