@@ -54,7 +54,7 @@ class Proposal(models.Model):
     uniform_amount = fields.Float(compute='compute_service_amounts', store=True)
     accommodation_amount = fields.Float(compute='compute_service_amounts', store=True)
     residency_amount = fields.Float(compute='compute_service_amounts', store=True)
-    leave_amount = fields.Float(compute='compute_service_amounts', store=True)
+    leave_amount = fields.Float(compute='compute_service_amounts', store=True, string='L&A Amount')
     insurance_amount = fields.Float(compute='compute_service_amounts', store=True)
     fee_amount = fields.Float(compute='compute_service_amounts', store=True)
     other_amount = fields.Float(compute='compute_service_amounts', store=True)
@@ -81,7 +81,7 @@ class Proposal(models.Model):
     mode = fields.Selection(selection=[
         ('hourly', 'Hourly'), ('daily', 'Daily'), ('weekly', 'Weekly'),
         ('monthly', 'Monthly'), ('annually', 'Annually'),
-    ], required=True)
+    ])
     # print options
     print_cover = fields.Boolean(default=True)
     print_about = fields.Boolean(default=True)
@@ -665,8 +665,8 @@ class ProposalPricingLine(models.Model):
     def compute_profit(self):
         for rec in self:
             if rec.individual_sales_price and rec.individual_cost:
-                rec.profit_percentage = ((rec.individual_sales_price - rec.individual_cost) / rec.individual_cost) * 100
-                rec.individual_profit_amount = rec.individual_sales_price - rec.individual_cost
+                rec.profit_percentage = ((rec.individual_sales_price - rec.individual_cost_after_commission) / rec.individual_cost_after_commission) * 100
+                rec.individual_profit_amount = rec.individual_sales_price - rec.individual_cost_after_commission
                 rec.profit_amount = rec.individual_profit_amount * rec.service_quantity
 
     @api.depends('individual_sales_price', 'service_quantity')
