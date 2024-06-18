@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="custom_proposal_view_form" model="ir.ui.view">
+            <field name="name">custom_proposal_view_form</field>
+            <field name="model">proposal.proposal</field>
+            <field name="inherit_id" ref="care_proposal.proposal_view_form"/>
+            <field name="arch" type="xml">
+<!--                <xpath expr="//div[@name='name']" position="">-->
+
+<!--                </xpath>-->
+                <xpath expr="//header" position="inside">
+                    <button name="button_create_contract" type="object" string="Create Contract" class="oe_highlight"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

@@ -86,8 +86,8 @@
                                 <field name="proposal_period" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                                 <field name="mode" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                                 <field name="lead_id" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                                <field name="approver_users" widget="many2many_tags" invisible="0" force_save="1"/>
-                                <field name="receiver_users" widget="many2many_tags" invisible="0" force_save="1"/>
+                                <field name="approver_users" widget="many2many_tags" invisible="1" force_save="1"/>
+                                <field name="receiver_users" widget="many2many_tags" invisible="1" force_save="1"/>
                                 <field name="receiver_users_str" invisible="0"/>
                             </group>
                         </group>

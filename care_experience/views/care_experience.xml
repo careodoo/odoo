@@ -7,7 +7,13 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
-                        <field name="state" widget="statusbar" clickable="1"/>
+                        <button name="button_submit" type="object" string="Submit" class="oe_highlight"
+                                attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                        <button name="button_valid" type="object" string="Valid" class="oe_highlight"
+                                attrs="{'invisible': [('state', '!=', 'submit')]}"/>
+                        <button name="button_expired" type="object" string="Expire" class="btn-danger"
+                                attrs="{'invisible': [('state', '!=', 'submit')]}"/>
+                        <field name="state" widget="statusbar"/>
                     </header>
                     <sheet string="Experience">
                         <field name="kanban_state" widget="state_selection"/>
@@ -20,15 +26,18 @@
                         </div>
                         <group>
                             <group>
+                                <field name="ref"/>
                                 <field name="partner_id"/>
                                 <field name="contract_amount"/>
                                 <field name="period"/>
                                 <field name="labor_quantity"/>
                             </group>
                             <group>
+                                <field name="proposal_id"/>
                                 <field name="start_date"/>
                                 <field name="expire_date"/>
                                 <field name="contract_type"/>
+                                <field name="contract_copy" widget="many2many_binary"/>
                             </group>
                         </group>
                         <field name="line_ids">
@@ -70,11 +79,11 @@
             </field>
         </record>
         <record id="care_experience_action" model="ir.actions.act_window">
-            <field name="name">Experiences</field>
+            <field name="name">Project Contracts</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">care.experience</field>
             <field name="view_mode">tree,form</field>
         </record>
-        <menuitem id="care_experience_menu" name="Experiences" action="care_experience_action" sequence="55"/>
+        <menuitem id="care_experience_menu" name="Project Contracts" action="care_experience_action" sequence="55"/>
     </data>
 </odoo>
