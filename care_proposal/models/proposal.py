@@ -22,8 +22,8 @@ class Proposal(models.Model):
     company_id = fields.Many2one('res.company', required=True, default=lambda self: self.env.company)
     ref = fields.Char(required=True, copy=False, readonly=True, index=True, default=lambda self: _('New'))
     partner_id = fields.Many2one('res.partner')
-    proposal_date = fields.Date(required=True)
-    expire_date = fields.Date(required=True)
+    proposal_date = fields.Date()
+    expire_date = fields.Date()
     total_amount = fields.Float(compute='compute_total_amount', store=True, string='Total Sales')
     service_type_id = fields.Many2one('proposal.service.type')
     country_id = fields.Many2one('res.country', related='partner_id.country_id', store=True)
@@ -282,8 +282,9 @@ class Proposal(models.Model):
     @api.constrains('proposal_date', 'expire_date')
     def check_dates(self):
         for rec in self:
-            if rec.expire_date < rec.proposal_date:
-                raise ValidationError(_('Expire date cannot be earlier than proposal date!'))
+            if rec.expire_date and rec.proposal_date:
+                if rec.expire_date < rec.proposal_date:
+                    raise ValidationError(_('Expire date cannot be earlier than proposal date!'))
 
     def generate_pricing(self):
         self.pricing_ids = [(5, 0, 0)]
@@ -356,11 +357,6 @@ class Proposal(models.Model):
 
     def button_submit(self):
         self.state = 'submit'
-        # self.sudo().activity_schedule(
-        #     'care_proposal.mail_act_proposal_submit',
-        #     summary='Proposal',
-        #     note='Ask To Confirm Proposal',
-        #     user_id=self.approver_id.id)
 
     def button_approve(self):
         self.approval_ids.filtered(lambda l: l.user_id.id == self.env.uid).write({
@@ -369,15 +365,10 @@ class Proposal(models.Model):
         })
         if self.approval_ids.filtered(lambda l: not l.approved):
             self.write({'state': 'waiting'})
-            # self.sudo().activity_schedule(
-            #     'care_proposal.mail_act_proposal_submit',
-            #     summary='Proposal',
-            #     note='Ask To Confirm Proposal',
-            #     user_id=self.approver_id.id)
             return
         self.write({
             'state': 'approve',
-            'receiver_users': self.env['proposal.receiver'].sudo().search([]).ids,
+            'receiver_users': self.env['proposal.receiver'].sudo().search([]).mapped('user_id').mapped('id'),
         })
 
     @api.depends('receiver_users')
@@ -402,7 +393,8 @@ class Proposal(models.Model):
 
     def button_won(self):
         template = self.env.ref('care_proposal.email_template_proposal_won')
-        self.env['mail.template'].browse(template.id).send_mail(self.id, force_send=True)
+        email_values = {'email_from': self.env.user.email}
+        self.env['mail.template'].browse(template.id).send_mail(self.id, email_values=email_values, force_send=True)
         self.state = 'won'
 
     def action_send_email(self):
@@ -567,6 +559,7 @@ class ProposalMaterialLine(models.Model):
     proposal_id = fields.Many2one('proposal.proposal')
     product_id = fields.Many2one('product.product', required=True, string='Material')
     quantity = fields.Float(default=1)
+    uom_id = fields.Many2one('uom.uom', string='Unit of Measure')
     cost = fields.Float(required=True)
     total_amount = fields.Float(compute='compute_total_amount', store=True, string='Total')
 
@@ -574,6 +567,7 @@ class ProposalMaterialLine(models.Model):
     def onchange_product_id(self):
         if self.product_id:
             self.cost = self.product_id.standard_price
+            self.uom_id = self.product_id.uom_id.id
 
     @api.depends('cost', 'quantity')
     def compute_total_amount(self):
@@ -588,6 +582,7 @@ class ProposalEquipmentLine(models.Model):
     proposal_id = fields.Many2one('proposal.proposal')
     product_id = fields.Many2one('product.product', required=True, string='Equipment')
     quantity = fields.Float(default=1)
+    uom_id = fields.Many2one('uom.uom', string='Unit of Measure')
     cost = fields.Float(required=True)
     total_amount = fields.Float(compute='compute_total_amount', store=True, string='Total')
 
@@ -595,6 +590,7 @@ class ProposalEquipmentLine(models.Model):
     def onchange_product_id(self):
         if self.product_id:
             self.cost = self.product_id.standard_price
+            self.uom_id = self.product_id.uom_id.id
 
     @api.depends('cost', 'quantity')
     def compute_total_amount(self):
@@ -688,14 +684,10 @@ class ProposalApproval(models.Model):
     date_approved = fields.Datetime(string='Approved Date')
 
     def send_approve_request(self):
-        template = self.env.ref('care_proposal.email_template_proposal')
-        self.env['mail.template'].browse(template.id).send_mail(self.proposal_id.id, force_send=True,
+        template = self.env.ref('care_proposal.email_template_proposal_won')
+        email_values = {'email_to': self.user_id.email}
+        self.env['mail.template'].browse(template.id).send_mail(self.proposal_id.id, email_values=email_values, force_send=True,
                                                                 notif_layout='mail.mail_notification_light')
-        self.proposal_id.sudo().activity_schedule(
-            'care_proposal.mail_act_proposal_submit',
-            summary='Proposal',
-            note='Ask To Confirm Proposal',
-            user_id=self.user_id.id)
 
 
 class ProposalCommission(models.Model):

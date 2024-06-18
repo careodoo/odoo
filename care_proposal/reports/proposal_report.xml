@@ -21,6 +21,7 @@
             <field name="report_type">qweb-pdf</field>
             <field name="report_name">care_proposal.proposal_pdf_report</field>
             <field name="report_file">care_proposal.proposal_pdf_report</field>
+            <field name="print_report_name">'%s' % (object.name)</field>
             <field name="binding_model_id" ref="model_proposal_proposal"/>
 			<field name="binding_type">report</field>
 			<field name="binding_view_types">form</field>

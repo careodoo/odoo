@@ -23,6 +23,7 @@
             <field name="report_type">qweb-pdf</field>
             <field name="report_name">care_proposal.customer_proposal_report</field>
             <field name="report_file">care_proposal.customer_proposal</field>
+            <field name="print_report_name">'%s' % (object.name)</field>
             <field name="binding_model_id" ref="model_proposal_proposal"/>
 			<field name="binding_type">report</field>
 			<field name="binding_view_types">form</field>
@@ -61,8 +62,12 @@
                                              <h5>Prepared for: </h5>
                                              <ul class="list-unstyled" style="margin-left:80px">
                                                 <li><h6><i class="fa fa-building"/> Co. Name: <span t-field="doc.partner_id.name"/></h6></li>
-                                                <li><h6><i class="fa fa-address-card"/> Address: <span t-field="doc.partner_id.contact_address"/></h6></li>
-                                                <li><h6><i class="fa fa-user"/> Contact: <span t-field="doc.partner_id.name"/></h6></li>
+                                                <li><h6><i class="fa fa-address-card"/> Address: <span t-field="doc.partner_id.street"/> <span t-field="doc.partner_id.city"/> <span t-field="doc.partner_id.country_id"/></h6></li>
+                                                <li><h6><i class="fa fa-user"/> Contact:
+                                                    <t t-if="doc.partner_id.child_ids">
+                                                        <span t-esc="doc.partner_id.child_ids[0].name"/>
+                                                    </t>
+                                                </h6></li>
                                                 <li><h6><i class="fa fa-phone-square"/> Telephone: <span t-esc="doc.partner_id.phone or doc.partner_id.mobile"/></h6></li>
                                                 <li><h6><i class="fa fa-envelope"/> Email: <span t-field="doc.partner_id.email"/></h6></li>
                                              </ul>
@@ -89,9 +94,9 @@
                             </t>
                             <t t-if="doc.print_about">
                                 <br/>
-                                <h3 class="text-center"><strong> About Us</strong></h3>
+                                <h3 class="text-center" style="font-weight: bold"> About Us</h3>
                                 <br/>
-                                <p><strong>Care for Buildings &amp; Cities Cleaning Contracting Co. “Care Cleaning Co.” is one of the leading premier cleaning companies in Kuwait. Established in 1991, Care Cleaning Co. has achieved vigorous triumph in building a reputable portfolio highlighting 3 decades of experience, innovation, and quality.</strong></p>
+                                <p style="font-weight: bold">Care for Buildings &amp; Cities Cleaning Contracting Co. “Care Cleaning Co.” is one of the leading premier cleaning companies in Kuwait. Established in 1991, Care Cleaning Co. has achieved vigorous triumph in building a reputable portfolio highlighting 3 decades of experience, innovation, and quality.</p>
                                 <div class="row">
                                     <div class="col-6">
                                         <p>Care Cleaning Co. was able to gain a large number of tenders and execute hundreds of projects and it is listed and approved by the Municipality of Kuwait and the Central Tender Committee. Care Cleaning focuses on standards, quality, and client satisfaction. The Company is accredited by the Central Agency for Public Tenders, BICS (The British Institute of Cleaning Science), ISO 9001 (Quality Management System), and ISSA (International Sanitary Supply Association). These Certificates gave us the honor to serve our customers with the cooperation of both the Private and Governmental sectors.</p>
@@ -208,12 +213,12 @@
                                 <br/>
                                 <div class="row" style="background-color:#d4d4d4;margin-left:0px !important;margin-right:0px !important">
                                     <div class="col-4">
-                                        <p><span style="border: 1px solid #939393;padding:10px;padding-top:0px;padding-bottom:0px;border-right:none"><strong>Mode</strong></span><span style="border: 1px solid #939393;padding:10px;padding-top:0px;padding-bottom:0px;" t-field="doc.mode"/></p>
+                                        <p><span style="border: 1px solid #939393;padding:10px;padding-top:0px;padding-bottom:0px;border-right:none;font-weight:bold">Mode</span><span style="border: 1px solid #939393;padding:10px;padding-top:0px;padding-bottom:0px;" t-field="doc.mode"/></p>
                                     </div>
                                     <div class="col-3">
-                                        <p><strong><span t-field="doc.mode"/> Invoice</strong></p>
-                                        <h1 style="font-weight:bold;font-size:50px"><strong><span t-esc="round(doc.total_amount)"/></strong></h1>
-                                        <h5 class="text-right" style="font-weight:bold"><strong>KD</strong></h5>
+                                        <p style="font-weight: bold"><span t-field="doc.mode"/> Invoice</p>
+                                        <h1 style="font-weight:bold;font-size:50px"><span t-esc="round(doc.total_amount)"/></h1>
+                                        <h5 class="text-right" style="font-weight:bold">KD</h5>
                                     </div>
                                     <div class="col-4">
                                         <table class="table table-bordered" style="border-color:#939393;">
@@ -250,7 +255,7 @@
                                 </div>
                                 <br/>
                                 <t t-if="doc.term_ids">
-                                    <h5><strong>Terms: </strong></h5>
+                                    <h5 style="font-weight: bold">Terms: </h5>
                                     <t t-set="terms" t-value="doc.term_ids[:3]"/>
                                     <ol>
                                         <li t-foreach="terms" t-as="term">
@@ -319,7 +324,7 @@
                             </t>
                             <t t-if="doc.print_terms">
                                 <br/>
-                                <h3 class="text-center"><strong> TERMS AND POLICY</strong></h3>
+                                <h3 class="text-center" style="font-weight: bold"> TERMS AND POLICY</h3>
                                 <br/>
                                 <h5 class="text-center" t-field="doc.term_text"/>
                                 <br/>
@@ -354,15 +359,19 @@
                             </t>
                             <t t-if="doc.print_acceptance">
                                 <br/>
-                                <h3 class="text-center"><strong>Acceptance of Quote</strong></h3>
+                                <h3 class="text-center" style="font-weight: bold">Acceptance of Quote</h3>
                                 <br/>
                                 <h4 class="w-100 text-center" style="background-color:#ff0014;color:white;padding-top:10px;padding-bottom:10px;margin-bottom:0px !important;"><strong><span t-esc="doc.name.upper()"/></strong></h4>
                                 <div class="row" style="background-color:#e4e2e2;margin-left:0px !important;margin-right:0px !important;padding-top:10px;padding-bottom:10px;">
                                     <div class="col-7">
                                         <ul class="list-unstyled">
                                             <li><h6><i class="fa fa-building"/> Company Name: <span t-field="doc.partner_id.name"/></h6></li>
-                                            <li><h6><i class="fa fa-address-card"/> Address: <span t-field="doc.partner_id.contact_address"/></h6></li>
-                                            <li><h6><i class="fa fa-user"/> Contact: <span t-field="doc.partner_id.name"/></h6></li>
+                                            <li><h6><i class="fa fa-address-card"/> Address: <span t-field="doc.partner_id.street"/> <span t-field="doc.partner_id.city"/> <span t-field="doc.partner_id.country_id"/></h6></li>
+                                            <li><h6><i class="fa fa-user"/> Contact:
+                                                <t t-if="doc.partner_id.child_ids">
+                                                    <span t-esc="doc.partner_id.child_ids[0].name"/>
+                                                </t>
+                                            </h6></li>
                                             <li><h6><i class="fa fa-phone-square"/> Telephone: <span t-esc="doc.partner_id.phone or doc.partner_id.mobile"/></h6></li>
                                             <li><h6><i class="fa fa-envelope"/> Email: <span t-field="doc.partner_id.email"/></h6></li>
                                          </ul>
@@ -382,18 +391,18 @@
                                     </colgroup>
                                     <thead>
                                         <tr>
-                                            <th class="text-center" style="background-color:#d4d4d4;font-weight:bold"><strong>Service Type</strong></th>
-                                            <th class="text-center" style="background-color:#d4d4d4;font-weight:bold"><strong>Price</strong></th>
+                                            <th class="text-center" style="background-color:#d4d4d4;font-weight:bold">Service Type</th>
+                                            <th class="text-center" style="background-color:#d4d4d4;font-weight:bold">Price</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr t-foreach="doc.pricing_ids" t-as="pricing">
-                                            <td class="text-center" style="font-weight:bold"><strong><span t-field="pricing.service_id"/></strong></td>
-                                            <td class="text-center" style="font-weight:bold"><strong><span t-esc="int(pricing.sales_price)"/></strong></td>
+                                            <td class="text-center" style="font-weight:bold"><span t-field="pricing.service_id"/></td>
+                                            <td class="text-center" style="font-weight:bold"><span t-esc="int(pricing.sales_price)"/></td>
                                         </tr>
                                         <tr>
-                                            <td class="text-center" style="font-weight:bold;background-color:#d4d4d4"><strong>Total</strong></td>
-                                            <td class="text-center" style="font-weight:bold;background-color:#d4d4d4"><strong><span t-esc="int(doc.total_amount)"/></strong></td>
+                                            <td class="text-center" style="font-weight:bold;background-color:#d4d4d4">Total</td>
+                                            <td class="text-center" style="font-weight:bold;background-color:#d4d4d4"><span t-esc="int(doc.total_amount)"/></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -406,15 +415,15 @@
                                     </colgroup>
                                     <tbody>
                                         <tr>
-                                            <td style="background-color:#e4e2e2"><h5><strong>Print name</strong></h5></td>
+                                            <td style="background-color:#e4e2e2"><h5 style="font-weight: bold">Print name</h5></td>
                                             <td/>
                                         </tr>
                                         <tr>
-                                            <td style="background-color:#e4e2e2"><h5><strong>Position</strong></h5></td>
+                                            <td style="background-color:#e4e2e2"><h5 style="font-weight: bold">Position</h5></td>
                                             <td/>
                                         </tr>
                                         <tr>
-                                            <td style="background-color:#e4e2e2"><h5><strong>Approval Sign</strong></h5></td>
+                                            <td style="background-color:#e4e2e2"><h5 style="font-weight: bold">Approval Sign</h5></td>
                                             <td/>
                                         </tr>
                                     </tbody>

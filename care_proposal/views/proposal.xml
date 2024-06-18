@@ -46,7 +46,8 @@
                                 confirm="Are you sure you want to reject this proposal?"
                             attrs="{'invisible': &quot;['|','|', ('approver_users', 'not in', [uid]), ('user_confirmed', '=', True), ('state', 'not in', ['submit', 'waiting'])]&quot;}"/>
                         <button name="generate_pricing" type="object" string="Generate Pricing" class="oe_highlight"/>
-                        <button name="button_won" type="object" string="Won" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'approve')]}"/>
+                        <button name="button_won" type="object" string="Won" class="oe_highlight"
+                                attrs="{'invisible': &quot;['|', ('approver_users', 'not in', [uid]), ('state', '!=', 'approve')]&quot;}"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,submit,approve"/>
                     </header>
                     <sheet>
@@ -86,6 +87,8 @@
                                 <field name="mode" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                                 <field name="lead_id" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                                 <field name="approver_users" widget="many2many_tags" invisible="0" force_save="1"/>
+                                <field name="receiver_users" widget="many2many_tags" invisible="0" force_save="1"/>
+                                <field name="receiver_users_str" invisible="0"/>
                             </group>
                         </group>
                         <field name="notes" placeholder="Type down your notes here..."/>
@@ -180,6 +183,7 @@
                                     <tree editable="bottom">
                                         <field name="product_id"/>
                                         <field name="quantity"/>
+                                        <field name="uom_id" options="{'no_edit': True, 'no_create': True}"/>
                                         <field name="cost" sum="total cost"/>
                                         <field name="total_amount" sum="total amount"/>
                                     </tree>
@@ -193,6 +197,7 @@
                                     <tree editable="bottom">
                                         <field name="product_id"/>
                                         <field name="quantity"/>
+                                        <field name="uom_id" options="{'no_edit': True, 'no_create': True}"/>
                                         <field name="cost" sum="total cost"/>
                                         <field name="total_amount" sum="total amount"/>
                                     </tree>
