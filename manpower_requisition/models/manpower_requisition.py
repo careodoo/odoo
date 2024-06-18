@@ -13,7 +13,7 @@ class ManpowerRequisition(models.Model):
         return str(int(datetime.now().timestamp()))
 
     def _get_hr_users(self):
-        return self.env.ref("hr.group_hr_manager").users.ids
+        return self.env.ref("manpower_requisition.group_hr_manpower_hr").users.ids
 
     name = fields.Char(compute='compute_name', store=True)
     request_date = fields.Date(string='Date of Request')
@@ -25,7 +25,7 @@ class ManpowerRequisition(models.Model):
         ('overseas', 'Overseas'), ('local', 'Local')
     ], required=True, string='Overseas / Local')
     # reasons
-    leaving_employee_id = fields.Many2one('hr.employee', string='Employee Leaving')
+    leaving_employee_id = fields.Many2many('hr.employee', 'manpower_employee_leaving_rel', 'manpower_id', 'emp_id', string='Employee Leaving')
     resignation_date = fields.Date(string='Resignation submitted on')
     transferred_employee_id = fields.Many2one('hr.employee', string='Employee being transferred')
     transfer_from = fields.Many2one('hr.department')

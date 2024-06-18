@@ -65,7 +65,7 @@
                                 <field name="transfer_reason"/>
                             </group>
                             <group name="resignation" string="Resignation/Termination">
-                                <field name="leaving_employee_id"/>
+                                <field name="leaving_employee_id" widget="many2many_tags"/>
                                 <field name="resignation_date"/>
                             </group>
                         </group>
