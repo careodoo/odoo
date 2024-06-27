@@ -37,7 +37,7 @@
             <field name="body_html" type="html">
 <div style="margin: 0px; padding: 0px;">
     <p style="margin: 0px; padding: 0px; font-size: 13px;">
-        Dear ...
+        Dear  Mr. <t t-out="ctx.get('name_to')"/>,
         <br/><br/>
         <p>Can you please find the attached file for your kind review and approval.</p>
         <br/><br/>
@@ -76,11 +76,11 @@
             </tr>
             <tr>
                 <td>Net Profit %</td>
-                <td><t t-out="object.margin_percentage or ''"></t></td>
+                <td><t t-out="round(object.margin_percentage, 2) or ''"></t></td>
             </tr>
             <tr>
                 <td>Monthly Profit</td>
-                <td><t t-out="object.margin_amount or ''"></t></td>
+                <td><t t-out="round(object.margin_amount, 2) or ''"></t></td>
             </tr>
             <tr>
                 <td>Referred By</td>
@@ -89,7 +89,7 @@
         </table>
     </p>
 </div></field>
-            <field name="report_template" ref="care_proposal.action_proposal_report"/>
+            <field name="report_template" ref="care_proposal.action_proposal_pdf_report"/>
             <field name="report_name">{{ (object.name or '').replace('/','_') }}</field>
 <!--            <field name="lang">{{ object.partner_id.lang }}</field>-->
 <!--            <field name="auto_delete" eval="True"/>-->

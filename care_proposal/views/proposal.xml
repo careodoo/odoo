@@ -23,7 +23,7 @@
                     <field name="service_site" optional="show"/>
                     <field name="mobilization_date" optional="show"/>
                     <field name="proposal_period" optional="show"/>
-                    <field name="state" widget="badge" decoration-danger="state in ['reject', 'cancel']" decoration-success="state == 'approve'" decoration-warning="state == 'submit'" decoration-primary="state == 'waiting'"/>
+                    <field name="state" widget="badge" decoration-danger="state in ['reject', 'cancel']" decoration-success="state in ['approve', 'won', 'contracted']" decoration-warning="state == 'submit'" decoration-primary="state == 'waiting'"/>
                 </tree>
             </field>
         </record>

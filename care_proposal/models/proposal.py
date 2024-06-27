@@ -35,7 +35,8 @@ class Proposal(models.Model):
     notes = fields.Text()
     state = fields.Selection(selection=[
         ('draft', 'New'), ('submit', 'Submitted'), ('waiting', 'Waiting Approval'),
-        ('approve', 'Approved'), ('reject', 'Rejected'), ('cancel', 'Cancel'), ('won', 'Won')
+        ('approve', 'Approved'), ('reject', 'Rejected'), ('cancel', 'Cancel'), ('won', 'Won'),
+        ('contracted', 'Contracted')
     ], default='draft', tracking=True)
     service_ids = fields.One2many('proposal.service.line', 'proposal_id')
     scope_ids = fields.One2many('proposal.scope.line', 'proposal_id')
@@ -394,7 +395,8 @@ class Proposal(models.Model):
     def button_won(self):
         template = self.env.ref('care_proposal.email_template_proposal_won')
         email_values = {'email_from': self.env.user.email}
-        self.env['mail.template'].browse(template.id).send_mail(self.id, email_values=email_values, force_send=True)
+        name_to = ','.join(self.receiver_users.mapped('name'))
+        self.env['mail.template'].with_context(name_to=name_to).browse(template.id).send_mail(self.id, email_values=email_values, force_send=True)
         self.state = 'won'
 
     def action_send_email(self):
@@ -686,7 +688,7 @@ class ProposalApproval(models.Model):
     def send_approve_request(self):
         template = self.env.ref('care_proposal.email_template_proposal_won')
         email_values = {'email_to': self.user_id.email}
-        self.env['mail.template'].browse(template.id).send_mail(self.proposal_id.id, email_values=email_values, force_send=True,
+        self.env['mail.template'].browse(template.id).with_context(name_to=self.user_id.name).send_mail(self.proposal_id.id, email_values=email_values, force_send=True,
                                                                 notif_layout='mail.mail_notification_light')
 
 
