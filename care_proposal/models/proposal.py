@@ -394,7 +394,10 @@ class Proposal(models.Model):
 
     def button_won(self):
         template = self.env.ref('care_proposal.email_template_proposal_won')
-        email_values = {'email_from': self.env.user.email}
+        email_values = {}
+        if self.approval_ids:
+            last_approver = self.approval_ids.sorted('date_approved', reverse=True)[0]
+            email_values = {'email_from': last_approver.user_id.email}
         name_to = ','.join(self.receiver_users.mapped('name'))
         self.env['mail.template'].with_context({
             'name_to': name_to,
