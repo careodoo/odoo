@@ -6,6 +6,12 @@ class Proposal(models.Model):
     _inherit = 'proposal.proposal'
 
     contract_ids = fields.One2many('care.experience', 'proposal_id')
+    contract_count = fields.Integer(compute='compute_contract_count', store=True)
+
+    @api.depends('contract_ids')
+    def compute_contract_count(self):
+        for rec in self:
+            rec.contract_count = len(rec.contract_ids or [])
 
     def button_create_contract(self):
         sequence = self.env['ir.sequence'].next_by_code('project.contract')
@@ -25,6 +31,17 @@ class Proposal(models.Model):
             'view_type': 'form',
             'res_model': 'care.experience',
             'res_id': contract.id,
+            'target': 'current'
+        }
+
+    def action_view_contract(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Project Contract'),
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'res_model': 'care.experience',
+            'domain': [('proposal_id', '=', self.id)],
             'target': 'current'
         }
 
