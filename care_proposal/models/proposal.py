@@ -402,7 +402,7 @@ class Proposal(models.Model):
         self.env['mail.template'].with_context({
             'name_to': name_to,
             'won_email': True,
-        }).browse(template.id).send_mail(self.id, email_values=email_values, force_send=True)
+        }).browse(template.id).send_mail(self.id, email_values=email_values, force_send=True, notif_layout='mail.mail_notification_light')
         self.state = 'won'
 
     def action_send_email(self):
