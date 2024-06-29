@@ -45,12 +45,14 @@
                         <button name="button_reject" type="object" string="Reject" class="btn btn-danger"
                                 confirm="Are you sure you want to reject this proposal?"
                             attrs="{'invisible': &quot;['|','|', ('approver_users', 'not in', [uid]), ('user_confirmed', '=', True), ('state', 'not in', ['submit', 'waiting'])]&quot;}"/>
-                        <button name="generate_pricing" type="object" string="Generate Pricing" class="oe_highlight"/>
+                        <button name="generate_pricing" type="object" string="Generate Pricing" class="oe_highlight"
+                            states="draft,submit"/>
                         <button name="button_won" type="object" string="Won" class="oe_highlight"
                                 attrs="{'invisible': &quot;['|', ('approver_users', 'not in', [uid]), ('state', '!=', 'approve')]&quot;}"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,submit,approve"/>
                     </header>
                     <sheet>
+                        <div class="oe_button_box" name="button_box"/>
                         <field name="qr_image" widget="image" class="oe_avatar" invisible="1"/>
                         <field name="logo" widget="image" class="oe_avatar"/>
                         <div class="oe_title" style="width: 100%">

@@ -26,7 +26,7 @@
             <field name="report_template" ref="care_proposal.action_proposal_report"/>
             <field name="report_name">{{ (object.name or '').replace('/','_') }}</field>
             <field name="lang">{{ object.partner_id.lang }}</field>
-<!--            <field name="auto_delete" eval="True"/>-->
+            <field name="auto_delete" eval="False"/>
         </record>
 
         <record id="email_template_proposal_won" model="mail.template">
@@ -39,7 +39,11 @@
     <p style="margin: 0px; padding: 0px; font-size: 13px;">
         Dear  Mr. <t t-out="ctx.get('name_to')"/>,
         <br/><br/>
-        <p>Can you please find the attached file for your kind review and approval.</p>
+        <p t-if="ctx.get('won_email', False)">
+            I am pleased to inform you that the proposal has been approved. Please proceed with the necessary actions to implement the approved proposal.
+            Thank you for your attention to this matter.
+        </p>
+        <p t-else="">Can you please find the attached file for your kind review and approval.</p>
         <br/><br/>
         <table class="table table-bordered">
             <tr>
@@ -67,8 +71,8 @@
                 <td><t t-out="object.mode or ''"></t></td>
             </tr>
             <tr>
-                <td>Days to Start</td>
-<!--                <td><t t-out="object.partner_id.name or ''"></t></td>-->
+                <td>Start Date</td>
+                <td><t t-out="object.mobilization_date or ''"></t></td>
             </tr>
             <tr>
                 <td>Contract Value</td>
@@ -84,15 +88,20 @@
             </tr>
             <tr>
                 <td>Referred By</td>
-                <td><t t-out="object.create_uid.name or ''"></t></td>
+                <td><t t-out="object.lead_id.user_id.name or ''"></t></td>
             </tr>
         </table>
     </p>
+    <div t-if="object.qr_url and not ctx.get('won_email', False)" style="padding: 16px 8px 16px 8px;">
+        <center>
+            <a t-att-href="object.qr_url"
+                style="background-color: #875a7b; text-decoration: none; color: #fff; padding: 8px 16px 8px 16px; border-radius: 5px;">Proposal Approval</a>
+        </center>
+    </div>
 </div></field>
             <field name="report_template" ref="care_proposal.action_proposal_pdf_report"/>
             <field name="report_name">{{ (object.name or '').replace('/','_') }}</field>
-<!--            <field name="lang">{{ object.partner_id.lang }}</field>-->
-<!--            <field name="auto_delete" eval="True"/>-->
+            <field name="auto_delete" eval="False"/>
         </record>
     </data>
 </odoo>

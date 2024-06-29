@@ -396,7 +396,10 @@ class Proposal(models.Model):
         template = self.env.ref('care_proposal.email_template_proposal_won')
         email_values = {'email_from': self.env.user.email}
         name_to = ','.join(self.receiver_users.mapped('name'))
-        self.env['mail.template'].with_context(name_to=name_to).browse(template.id).send_mail(self.id, email_values=email_values, force_send=True)
+        self.env['mail.template'].with_context({
+            'name_to': name_to,
+            'won_email': True,
+        }).browse(template.id).send_mail(self.id, email_values=email_values, force_send=True)
         self.state = 'won'
 
     def action_send_email(self):
