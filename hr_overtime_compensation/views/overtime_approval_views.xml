@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="overtime_approval_view_tree" model="ir.ui.view">
+        <field name="name">overtime.approval.view.tree</field>
+        <field name="model">overtime.approver</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="user_id"/>
+            </tree>
+        </field>
+    </record>
+    <record id="overtime_approver_action" model="ir.actions.act_window">
+        <field name="name">Overtime Approvers</field>
+        <field name="res_model">overtime.approver</field>
+        <field name="view_mode">tree</field>
+    </record>
+</odoo>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="mail_act_overtime_request_approval" model="mail.activity.type">
+            <field name="name">Overtime Sign</field>
+            <field name="icon">fa-sun-o</field>
+            <field name="res_model">overtime.request.approval</field>
+        </record>
+
+        <record id="email_template_approve_request_approval" model="mail.template">
+            <field name="name">Ask To Approve Overtime Request</field>
+            <field name="model_id" ref="hr_overtime_compensation.model_overtime_request_approval"/>
+            <field name="model">overtime.request.approval</field>
+            <field name="subject">Ask To Approve Overtime Request {{object.overtime_request_id.project_id.name}}</field>
+            <field name="auto_delete" eval="0" />
+            <field name="email_from">{{ user.email_formatted }}</field>
+            <field name="email_to">{{object.user_id.employee_id.work_email}}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Dear <t t-out="object.user_id.name"></t><br/><br/>
+                        Kindly Approve <t t-out="object.overtime_request_id.project_id.name"/>.<br/>
+                        Do not hesitate to contact us if you have any questions.
+                        <br/><br/>
+                        Best regards,
+                    </p>
+                </div>
+            </field>
+        </record>
+    </data>
+</odoo>

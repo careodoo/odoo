@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data>
+        <template id="overtime_internal_layout">
+            <t t-if="not o" t-set="o" t-value="doc"/>
+                <div class="header">
+                    <img src="/hr_overtime_compensation/static/img/header.png" atl="header.png" class="w-100"/>
+                </div>
+            <div class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
+              <t t-raw="0"/>
+            </div>
+            <div t-attf-class="footer o_standard_footer">
+                <div class="row">
+                    <img src="/hr_overtime_compensation/static/img/footer.png" atl="header.png" class="w-100"/>
+                </div>
+            </div>
+        </template>
+        <template id="report_overtime_request">
+            <t t-call="web.html_container">
+                <t t-call="hr_overtime_compensation.overtime_internal_layout">
+                    <t t-foreach="docs" t-as="o">
+                        <div class="row">
+                            <div class="col-4">
+                                <center>
+                                    <img t-if="o.barcode" t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('Code128',o.barcode,180,50)" />
+                                    <div t-esc="o.barcode"/>
+                                </center>
+                            </div>
+                            <div class="col-4"/>
+                            <div class="col-4">
+                                <center>
+                                    <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', o.qr_url + str(o.id), 600, 50)" style="width:75px;height:75px;"/>
+                                </center>
+                            </div>
+                        </div>
+                        <t t-set="o" t-value="o.with_context(lang='ar_001')"/>
+                        <div class="page" dir="rtl" style="font-family:Arial,Helvetica,sans-serif !important;">
+                            <style>
+                                table.GeneratedTable {
+                                    width: 100%;
+                                    background-color: #ffffff;
+                                    border-collapse: collapse;
+                                    border-width: 1px;
+                                    border-color: #000000;
+                                    border-style: solid;
+                                    font-size: 12px;
+                                    color: #000000;
+                                }
+
+                                table.GeneratedTable td, table.GeneratedTable th {
+                                    border-width: 1px;
+                                    border-color: #000000;
+                                    border-style: solid;
+                                    padding: 3px;
+                                    font-weight: bold;
+                                    margin:3px;
+                                }
+
+                                table.GeneratedTable thead {
+                                    background-color: #a3a3a3;
+                                }
+                                .bordered-row{
+                                    border-bottom:1px solid black;padding-left:10px;padding-right:10px;
+                                }
+                                .rtl-row{
+                                    text-align: right !important;direction: rtl !important;
+                                }
+                            </style>
+                            <div class="oe_title">
+                                <div class="text-right">
+                                    <strong>التاريخ:</strong>
+                                    <span t-field="o.request_date"/>
+                                </div>
+                                <div class="text-center">
+                                    <h1 style="text-decoration: underline;">طلب صرف تعويض عن عمل اضافي</h1>
+                                </div>
+                            </div>
+                            <div class="oe_title text-right">
+                                <strong>
+                                    <div>إلى/ السادة اﻹدارة التنفيذية المحترمين</div>
+                                    <div>
+                                        من/ إدارة مشروع
+                                        <span t-field="o.project_id"/>
+                                    </div>
+                                    <div>
+                                        مدير المشروع/
+                                        <span t-field="o.project_manager_id"/>
+                                    </div>
+                                    <hr style="height:2px;border-width:0;color:black;background-color:black"/>
+                                </strong>
+                            </div>
+                            <div>
+                                <div class="oe_title text-right">
+                                    <div>
+                                        <strong>تحية طيبة وبعد,</strong>
+                                    </div>
+                                    <div>
+                                        برجاء التكرم بالموافقة علي احتساب تعويض عن العمل وقت اضافي للعاملين المذكورين
+                                        ادناه وذلك للاسباب المبينه في الجدول ادناه.
+                                    </div>
+                                    <div>
+                                        <table class="GeneratedTable">
+                                            <thead style="border: 1px solid black !important">
+                                                <tr>
+                                                    <th class="text-center">الرقم الوظيفي</th>
+                                                    <th class="text-center">اسم العامل</th>
+                                                    <th class="text-center">الوظيفة</th>
+                                                    <th class="text-center">
+                                                        عدد الساعات
+                                                        <br/>
+                                                        <small>(العمل الاضافي فقط)</small>
+                                                    </th>
+                                                    <th class="text-center">
+                                                        قيمة التعويض
+                                                        <br/>
+                                                        <small>(يملأ بمعرفة الموارد البشرية)</small>
+                                                    </th>
+                                                    <th class="text-center">
+                                                        سبب العمل الاضافي
+                                                        <br/>
+                                                        <small>(مع ذكر شهريا او لمرة واحدة)</small>
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody style="border: 1px solid black !important">
+                                                <t t-set="total_hours" t-value="0"/>
+                                                <t t-set="total_compensation" t-value="0"/>
+                                                <t t-foreach="o.request_line_ids" t-as="line">
+                                                    <t t-set="total_hours" t-value="total_hours + line.num_hours"/>
+                                                    <t
+                                                            t-set="total_compensation"
+                                                            t-value="total_compensation + line.compensation_value"
+                                                    />
+                                                    <tr>
+                                                        <td class="text-center">
+                                                            <span t-field="line.barcode"/>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <span t-field="line.employee_id"/>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <span t-field="line.job_title"/>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <span t-field="line.num_hours"/>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <span t-field="line.compensation_value"/>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <span t-field="line.overtime_reason"/>
+                                                        </td>
+                                                    </tr>
+                                                </t>
+                                                <tr>
+                                                    <td class="text-center" colspan="3">
+                                                        <strong>اﻹجمالي</strong>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <t t-out="total_hours"/>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <t t-out="total_compensation"/>
+                                                    </td>
+                                                    <td/>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div>
+                                        <strong>يعتمد,</strong>
+                                        <table class="GeneratedTable">
+                                            <thead>
+                                                <th class="text-center">الوظيفة</th>
+                                                <th class="text-center">قبول</th>
+                                                <th class="text-center">رفض</th>
+                                                <th class="text-center">التوقيع</th>
+                                                <th class="text-center">اسباب الرفض(ان وجد)</th>
+                                            </thead>
+                                            <tbody>
+                                                <tr t-foreach="o.approval_ids" t-as="approval">
+                                                    <td class="text-center">
+                                                        <span t-esc="approval.user_id.employee_id.job_id.name"/>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <t t-if="approval.approved">
+                                                            <i class="fa fa-check"></i>
+                                                        </t>
+                                                    </td>
+                                                    <td class="text-center"/>
+                                                    <td class="text-center">
+                                                        <span t-esc="approval.user_id.name"/>
+                                                    </td>
+                                                    <td class="text-center"/>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </template>
+
+        <record id="action_report_overtime_request" model="ir.actions.report">
+            <field name="name">Print Overtime Request</field>
+            <field name="model">overtime.request</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">hr_overtime_compensation.report_overtime_request</field>
+            <field name="report_file">hr_overtime_compensation.report_overtime_request</field>
+            <field name="binding_model_id" ref="hr_overtime_compensation.model_overtime_request"/>
+            <field name="binding_type">report</field>
+        </record>
+    </data>
+</odoo>
