@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <record id="mail_act_proposal_submit" model="mail.activity.type">
+        <record id="mail_act_hr_overtime" model="mail.activity.type">
             <field name="name">Overtime</field>
             <field name="icon">fa-sun-o</field>
             <field name="res_model">overtime.request</field>

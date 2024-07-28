@@ -11,12 +11,13 @@
                 sequence="1"
                 action="action_overtime_request"
         />
-        <menuitem id="overtime_configuration" name="Configuration" sequence="2">
+        <menuitem id="overtime_configuration" name="Configuration" sequence="2" groups="hr_overtime_compensation.group_hr_overtime_manager">
             <menuitem
                     id="overtime_approval_menu"
                     name="Overtime Compensation Approvers"
                     action="overtime_approver_action"
                     sequence="10"
+                    groups="hr_overtime_compensation.group_hr_overtime_manager"
             />
         </menuitem>
     </menuitem>

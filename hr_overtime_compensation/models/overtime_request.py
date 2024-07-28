@@ -6,6 +6,7 @@ from .qr_generator import generateQrCode
 
 class OvertimeRequest(models.Model):
     _name = 'overtime.request'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Overtime Request'
 
     def get_default_approvers(self):
@@ -121,6 +122,7 @@ class OvertimeRequestApproval(models.Model):
     _description = 'Overtime Request Approval'
     _order = 'sequence'
 
+    name = fields.Char(default='Ask To Approve Overtime Request')
     overtime_request_id = fields.Many2one('overtime.request')
     sequence = fields.Integer(default=10)
     user_id = fields.Many2one('res.users')
@@ -131,9 +133,10 @@ class OvertimeRequestApproval(models.Model):
         template = self.env.ref('hr_overtime_compensation.email_template_approve_request_approval')
         self.env['mail.template'].browse(template.id).send_mail(self.id, force_send=True, notif_layout='mail.mail_notification_light')
         project = self.overtime_request_id.project_id.name
-        self.sudo().activity_schedule(
-            'hr_overtime_compensation.mail_act_overtime_request_approval',
+        self.overtime_request_id.sudo().activity_schedule(
+            'hr_overtime_compensation.mail_act_hr_overtime',
             summary='Overtime{} Approve'.format(project),
             note='Overtime {} Approve'.format(project),
-            user_id=self.user_id.id)
+            user_id=self.user_id.id
+        )
 

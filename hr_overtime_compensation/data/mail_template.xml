@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <record id="mail_act_overtime_request_approval" model="mail.activity.type">
-            <field name="name">Overtime Sign</field>
-            <field name="icon">fa-sun-o</field>
-            <field name="res_model">overtime.request.approval</field>
-        </record>
-
         <record id="email_template_approve_request_approval" model="mail.template">
             <field name="name">Ask To Approve Overtime Request</field>
             <field name="model_id" ref="hr_overtime_compensation.model_overtime_request_approval"/>
@@ -24,6 +18,13 @@
                         <br/><br/>
                         Best regards,
                     </p>
+                    <br/>
+                    <div t-if="object.overtime_request_id.qr_url" style="padding: 16px 8px 16px 8px;">
+                        <center>
+                            <a t-att-href="object.overtime_request_id.qr_url"
+                                style="background-color: #875a7b; text-decoration: none; color: #fff; padding: 8px 16px 8px 16px; border-radius: 5px;">Overtime Approval</a>
+                        </center>
+                    </div>
                 </div>
             </field>
         </record>

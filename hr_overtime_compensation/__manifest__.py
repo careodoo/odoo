@@ -7,6 +7,7 @@
     'depends': ['hr', 'project', 'mail'],
     'data': [
         'security/ir.model.access.csv',
+        'security/security.xml',
         'data/mail_template.xml',
         'views/overtime_request_views.xml',
         'views/overtime_approval_views.xml',
