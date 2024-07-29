@@ -197,9 +197,17 @@
                                                             <i class="fa fa-check"/>
                                                         </t>
                                                     </td>
+                                                    <td class="text-center">
+                                                        <t t-if="approval.rejected">
+                                                            <i class="fa fa-check"/>
+                                                        </t>
+                                                    </td>
                                                     <td class="text-center"/>
-                                                    <td class="text-center"/>
-                                                    <td class="text-center"/>
+                                                    <td class="text-center">
+                                                        <t t-if="approval.reject_reason">
+                                                            <span t-esc="approval.reject_reason"/>
+                                                        </t>
+                                                    </td>
                                                 </tr>
                                             </tbody>
                                         </table>

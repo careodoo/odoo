@@ -11,6 +11,7 @@
                 <field name="state" widget="badge"
                        decoration-muted="state == 'draft'"
                        decoration-info="state == 'submit'"
+                       decoration-warning="state == 'waiting'"
                        decoration-success="state == 'approve'"
                        decoration-danger="state == 'reject'"
                 />
@@ -33,7 +34,6 @@
                     <button name="button_approve" type="object" string="Approve" class="oe_highlight"
                             attrs="{'invisible': &quot;['|','|', ('approver_users', 'not in', [uid]), ('user_confirmed', '=', True), ('state', 'not in', ['submit', 'waiting'])]&quot;}"/>
                     <button name="button_reject" type="object" string="Reject" class="btn btn-danger"
-                            confirm="Are you sure you want to reject?"
                             attrs="{'invisible': &quot;['|','|', ('approver_users', 'not in', [uid]), ('user_confirmed', '=', True), ('state', 'not in', ['submit', 'waiting'])]&quot;}"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,submit,approve"/>
                 </header>
@@ -65,6 +65,9 @@
                                     <field name="user_id" readonly="1" force_save="1"/>
                                     <field name="approved" readonly="1" force_save="1"/>
                                     <field name="date_approved" readonly="1" force_save="1"/>
+                                    <field name="rejected" readonly="1" force_save="1"/>
+                                    <field name="date_rejected" readonly="1" force_save="1"/>
+                                    <field name="reject_reason" readonly="1" force_save="1"/>
                                     <button name="send_approve_request" type="object" string="Request For Approve"
                                             class="oe_highlight" attrs="{'invisible': [('approved', '=', True)]}"/>
                                 </tree>

@@ -75,7 +75,14 @@ class OvertimeRequest(models.Model):
         })
 
     def button_reject(self):
-        self.state = 'reject'
+        return {
+            'name': 'Overtime Reject',
+            'view_mode': 'form',
+            'res_model': 'overtime.reject',
+            'type': 'ir.actions.act_window',
+            'context': {'default_overtime_request_id': self.id},
+            'target': 'new'
+        }
 
     def button_cancel(self):
         self.state = 'cancel'
@@ -128,6 +135,9 @@ class OvertimeRequestApproval(models.Model):
     user_id = fields.Many2one('res.users')
     approved = fields.Boolean()
     date_approved = fields.Datetime(string='Approved Date')
+    rejected = fields.Boolean()
+    date_rejected = fields.Datetime(string='Rejected Date')
+    reject_reason = fields.Char()
 
     def send_approve_request(self):
         template = self.env.ref('hr_overtime_compensation.email_template_approve_request_approval')

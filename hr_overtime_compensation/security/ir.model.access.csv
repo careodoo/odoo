@@ -3,3 +3,4 @@ access_overtime_request,access_overtime_request,model_overtime_request,base.grou
 access_overtime_request_line,access_overtime_request_line,model_overtime_request_line,base.group_user,1,1,1,1
 access_overtime_request_approval,access_overtime_request_approval,model_overtime_request_approval,base.group_user,1,1,1,1
 access_overtime_approver,access_overtime_approver,model_overtime_approver,base.group_user,1,1,1,1
+access_overtime_reject,access_overtime_reject,model_overtime_reject,base.group_user,1,1,1,1

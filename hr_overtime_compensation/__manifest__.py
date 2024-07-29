@@ -12,6 +12,7 @@
         'views/overtime_request_views.xml',
         'views/overtime_approval_views.xml',
         'views/overtime_menuitem.xml',
+        'wizards/overtime_reject.xml',
         'report/overtime_request_printout.xml',
     ],
 }

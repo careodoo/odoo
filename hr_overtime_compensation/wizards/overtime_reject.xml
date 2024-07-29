@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="overtime_reject_view_form" model="ir.ui.view">
+            <field name="name">overtime_reject_view_form</field>
+            <field name="model">overtime.reject</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="overtime_request_id" invisible="0"/>
+                            <field name="reason"/>
+                        </group>
+                    </sheet>
+                    <footer>
+                        <button name="button_reject" type="object" string="Reject" class="btn-danger"/>
+                        <button string="Cancel" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>
