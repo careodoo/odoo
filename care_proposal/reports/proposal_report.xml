@@ -63,29 +63,19 @@
                     </style>
                         <t t-foreach="docs" t-as="doc">
                             <div class="row">
-                                <div class="col-2">
-							        <img t-if="doc.logo" t-att-src="image_data_uri(doc.logo)" class="float-left" alt="Logo" style="width:80px;height:80px"/>
-                                </div>
-                                <div class="col-3">
+                                <div class="col-4">
                                     <center>
                                         <img t-if="doc.barcode" t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('Code128',doc.barcode,180,50)" />
                                         <div t-esc="doc.barcode"/>
                                     </center>
+                                    <br/>
                                 </div>
-                                <div class="col-2">
-                                    <center>
-                                        <strong>Service Pricing</strong>
-                                    </center>
-                                </div>
-                                <div class="col-3">
+                                <div class="col-4"><h3 class="text-center">Asset <t t-esc="doc.name"/></h3></div>
+                                <div class="col-4">
                                     <center>
                                         <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:60px;height:60px;"/>
                                     </center>
-                                </div>
-                                <div class="col-2">
-                                    <center>
-                                        <strong><span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d')"/></strong>
-                                    </center>
+                                    <br/>
                                 </div>
                             </div>
                             <p class="text-center"><span t-field="doc.name"/></p>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="hr_allowance_type_tree_view" model="ir.ui.view">
+        <field name="name">hr.allowance.type.view.tree</field>
+        <field name="model">hr.allowance.type</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="package_ids" widget="many2many_tags"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="hr_allowance_type_form_view" model="ir.ui.view">
+        <field name="name">hr.allowance.type.view.form</field>
+        <field name="model">hr.allowance.type</field>
+        <field name="arch" type="xml">
+            <form string="Allowance Type">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page name="allowance_package" string="Allowance Package">
+                            <field name="package_ids">
+                                <tree editable="bottom">
+                                    <field name="name"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="hr_allowance_type_action" model="ir.actions.act_window">
+        <field name="name">Allowance Type</field>
+        <field name="res_model">hr.allowance.type</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem
+            id="menu_hr_allowance_type"
+            action="hr_allowance_type_action"
+            parent="hr.menu_human_resources_configuration"
+            sequence="5"
+    />
+</odoo>

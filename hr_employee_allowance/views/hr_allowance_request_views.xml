@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="hr_allowance_request_tree_view" model="ir.ui.view">
+        <field name="name">hr.allowance.request.view.tree</field>
+        <field name="model">hr.allowance.request</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="employee_id"/>
+                <field name="allowance_type_id"/>
+                <field name="allowance_package_id"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="hr_allowance_request_form_view" model="ir.ui.view">
+        <field name="name">hr.allowance.request.view.form</field>
+        <field name="model">hr.allowance.request</field>
+        <field name="arch" type="xml">
+            <form string="Allowance Request">
+                <sheet>
+                    <group>
+                        <field name="employee_id"/>
+                        <field name="allowance_type_id"/>
+                        <field name="allowance_package_id"/>
+                        <label for="start_date" string="period"/>
+                        <div class="o_row">
+                            <field
+                                    name="start_date"
+                                    widget="daterange"
+                                    options="{'related_end_date': 'end_date'}"
+                            />
+                            <i class="fa fa-long-arrow-right mx-2" aria-label="Arrow icon" title="Arrow"/>
+                            <field
+                                    name="end_date"
+                                    widget="daterange"
+                                    options="{'related_start_date': 'start_date'}"
+                            />
+                        </div>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="hr_allowance_request_action" model="ir.actions.act_window">
+        <field name="name">Allowance Requests</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">hr.allowance.request</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem
+            id="menu_hr_allowance_request"
+            action="hr_allowance_request_action"
+            parent="hr.menu_hr_root"
+            sequence="5"
+    />
+</odoo>
