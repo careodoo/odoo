@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- service trip form view  -->
+  <record id="view_service_trip_form" model="ir.ui.view">
+    <field name="name">service.trip.form</field>
+    <field name="model">service.trip</field>
+    <field name="arch" type="xml">
+      <form string="Service Trip">
+        <sheet>
+          <group>
+            <field name="sequence" />
+            <field name="reference" />
+            <field name="pickup_location_id" />
+            <field name="center_id" />
+            <field name="type_id" />
+            <field name="trip_tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
+            <field name="project_id" />
+            <field name="pickuped_datetime" />
+            <field name="contact_id" />
+            <field name="trip_line_ids">
+              <tree>
+                <field name="item_id" editable="bottom" />
+                <field name="width" />
+                <field name="height" />
+                <field name="weight" />
+              </tree>
+            </field>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <!-- service trip tree view  -->
+  <record id="view_service_trip_tree" model="ir.ui.view">
+    <field name="name">service.trip.tree</field>
+    <field name="model">service.trip</field>
+    <field name="arch" type="xml">
+      <tree string="Service Trips">
+        <field name="sequence" />
+        <field name="reference" />
+        <field name="pickup_location_id" />
+        <field name="center_id" />
+        <field name="type_id" />
+        <field name="trip_tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
+        <field name="project_id" />
+        <field name="pickuped_datetime" />
+        <field name="contact_id" />
+      </tree>
+    </field>
+  </record>
+
+  <!-- service trip action -->
+  <record id="action_service_trip" model="ir.actions.act_window">
+    <field name="name">Service Trips</field>
+    <field name="res_model">service.trip</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- service trip menu -->
+  <menuitem id="menu_service_trip" name="Service Trips"
+    parent="service_order.menu_service_order"
+    sequence="2"
+    action="action_service_trip" />
+
+
+</odoo>

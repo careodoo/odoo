@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- module main menu -->
+  <menuitem id="menu_service_order" name="Service Order" />
+
+  <!-- configuration menu -->
+  <menuitem id="menu_service_order_config" name="Configuration" sequence="100"
+    parent="menu_service_order" />
+
+</odoo>

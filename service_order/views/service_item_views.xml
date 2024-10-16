@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- service item form  view-->
+   <record id="view_service_item_form" model="ir.ui.view">
+      <field name="name">service.item.form</field>
+      <field name="model">service.item</field>
+      <field name="arch" type="xml">
+        <form string="Service Item">
+          <sheet>
+            <group>
+              <field name="name" />
+              <field name="image" widget="image" />
+              <field name="company_id" />
+              <field name="type_id" />
+              <field name="notes" />
+              <field name="width" />
+              <field name="height" />
+              <field name="weight" />
+              <field name="item_tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+  <!-- service item tree view -->
+  <record id="view_service_item_tree" model="ir.ui.view">
+    <field name="name">service.item.tree</field>
+    <field name="model">service.item</field>
+    <field name="arch" type="xml">
+      <tree string="Service Item">
+        <field name="name" />
+        <field name="company_id" />
+        <field name="type_id" />
+        <field name="width" />
+        <field name="height" />
+        <field name="weight" />
+        <field name="item_tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
+      </tree>
+    </field>
+  </record>
+
+  <!-- service item action -->
+  <record id="action_service_item" model="ir.actions.act_window">
+    <field name="name">Service Item</field>
+    <field name="res_model">service.item</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- service item menu -->
+  <menuitem id="menu_service_item" name="Service Item"
+    parent="service_order.menu_service_order"
+    action="action_service_item" />
+    
+
+</odoo>

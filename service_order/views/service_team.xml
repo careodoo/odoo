@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- service team form view -->
+  <record id="view_service_team_form" model="ir.ui.view">
+    <field name="name">service.team.form</field>
+    <field name="model">service.team</field>
+    <field name="arch" type="xml">
+      <form string="Service Team">
+        <sheet>
+          <group>
+            <field name="company_id" />
+            <field name="name" />
+            <field name="employee_ids" widget="many2many_tags" />
+            <field name="project_id" />
+            <field name="working_mode" />
+            <field name="notes" />
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <!-- service team tree view -->
+  <record id="view_service_team_tree" model="ir.ui.view">
+    <field name="name">service.team.tree</field>
+    <field name="model">service.team</field>
+    <field name="arch" type="xml">
+      <tree string="Service Team">
+        <field name="name" />
+        <field name="company_id" />
+        <field name="employee_ids" widget="many2many_tags" />
+        <field name="project_id" />
+        <field name="working_mode" />
+        <field name="notes" />
+      </tree>
+    </field>
+  </record>
+
+  <!-- service team action -->
+  <record id="action_service_team" model="ir.actions.act_window">
+    <field name="name">Service Team</field>
+    <field name="res_model">service.team</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- service team menu -->
+  <menuitem id="menu_service_team" name="Service Team"
+    parent="service_order.menu_service_order"
+    action="action_service_team" />
+
+</odoo>

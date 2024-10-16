@@ -1,0 +1,16 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_service_item_tag,access_service_item_tag,model_service_item_tag,,1,1,1,1
+access_service_project_tag,access_service_project_tag,model_service_project_tag,,1,1,1,1
+access_service_trip_tag,access_service_trip_tag,model_service_trip_tag,,1,1,1,1
+access_service_pickup_location_tag,access_service_pickup_location_tag,model_service_pickup_location_tag,,1,1,1,1
+access_service_center_tag,access_service_center_tag,model_service_center_tag,,1,1,1,1
+access_service_center,access_service_center,model_service_center,,1,1,1,1
+access_service_order_tag,access_service_order_tag,model_service_order_tag,,1,1,1,1
+access_service_project,access_service_project,model_service_project,,1,1,1,1
+access_service_item,access_service_item,model_service_item,,1,1,1,1
+access_service_type,access_service_type,model_service_type,,1,1,1,1
+access_service_team,access_service_team,model_service_team,,1,1,1,1
+access_service_pickup_location,access_service_pickup_location,model_service_pickup_location,,1,1,1,1
+access_service_order,access_service_order,model_service_order,,1,1,1,1
+access_service_trip,access_service_trip,model_service_trip,,1,1,1,1
+access_service_trip_line,access_service_trip_line,model_service_trip_line,,1,1,1,1

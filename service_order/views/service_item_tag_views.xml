@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <record id="view_service_item_tag_form" model="ir.ui.view">
+    <field name="name">service.item.tag.form</field>
+    <field name="model">service.item.tag</field>
+    <field name="arch" type="xml">
+      <form string="Service item Tag">
+        <sheet>
+          <group>
+            <field name="name" />
+            <field name="color" widget="color_picker" />
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="view_service_item_tag_tree" model="ir.ui.view">
+    <field name="name">service.item.tag.tree</field>
+    <field name="model">service.item.tag</field>
+    <field name="arch" type="xml">
+      <tree string="Service item Tag">
+        <field name="name" />
+        <field name="color" widget="color_picker" />
+      </tree>
+    </field>
+  </record>
+
+  <record id="action_service_item_tag" model="ir.actions.act_window">
+    <field name="name">Service item Tag</field>
+    <field name="res_model">service.item.tag</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <menuitem id="menu_service_item_tag" name="Item Tag"
+    parent="service_order.menu_service_order_config"
+    action="action_service_item_tag" />
+
+</odoo>

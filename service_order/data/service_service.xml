@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- sequence for servcie trip -->
+  <record id="sequence_service_trip" model="ir.sequence">
+    <field name="name">Service Trip</field>
+    <field name="code">service.trip</field>
+    <field name="prefix">ST</field>
+    <field name="padding">4</field>
+  </record>
+
+  <!-- sequence for service project -->
+  <record id="sequence_service_project" model="ir.sequence">
+    <field name="name">Service Project</field>
+    <field name="code">service.project</field>
+    <field name="prefix">SP</field>
+    <field name="padding">4</field>
+  </record>
+
+  <!-- sequence for service order -->
+  <record id="sequence_service_order" model="ir.sequence">
+    <field name="name">Service Order</field>
+    <field name="code">service.order</field>
+    <field name="prefix">SOR</field>
+    <field name="padding">4</field>
+  </record>
+
+</odoo>

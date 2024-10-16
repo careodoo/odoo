@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <record id="view_service_trip_tag_form" model="ir.ui.view">
+    <field name="name">service.trip.tag.form</field>
+    <field name="model">service.trip.tag</field>
+    <field name="arch" type="xml">
+      <form string="Service trip Tag">
+        <sheet>
+          <group>
+            <field name="name" />
+            <field name="color" widget="color_picker" />
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="view_service_trip_tag_tree" model="ir.ui.view">
+    <field name="name">service.trip.tag.tree</field>
+    <field name="model">service.trip.tag</field>
+    <field name="arch" type="xml">
+      <tree string="Service trip Tag">
+        <field name="name" />
+        <field name="color" widget="color_picker" />
+      </tree>
+    </field>
+  </record>
+
+  <record id="action_service_trip_tag" model="ir.actions.act_window">
+    <field name="name">Service trip Tag</field>
+    <field name="res_model">service.trip.tag</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <menuitem id="menu_service_trip_tag" name="Trip Tag"
+     parent="service_order.menu_service_order_config"
+    action="action_service_trip_tag" />
+
+</odoo>
