@@ -8,8 +8,11 @@ class ServiceTrip(models.Model):
   _order = 'id desc'
   _rec_name = 'sequence'
 
-  sequence = fields.Char(string='Serial')
-  reference = fields.Char(string='Reference',compute='_compute_reference')
+  sequence = fields.Char(
+      string='Serial',
+      readonly=True,
+  )
+  reference = fields.Char(string='Reference', compute='_compute_reference')
   pickup_location_id = fields.Many2one(
       'service.pickup.location',
       string='Pickup Location',
@@ -17,7 +20,7 @@ class ServiceTrip(models.Model):
 
   center_id = fields.Many2one(
       'service.center',
-      string='Service Center',
+      string='Center',
   )
 
   type_id = fields.Many2one(
@@ -68,6 +71,20 @@ class ServiceTrip(models.Model):
       default='draft',
   )
 
+  team_id = fields.Many2one(
+      'service.team',
+      string='Team',
+  )
+
+  total_weight = fields.Float(
+      string='Total Weight',
+      compute='_compute_total_weight',
+  )
+
+  def _compute_total_weight(self):
+    for trip in self:
+      trip.total_weight = sum(trip.trip_line_ids.mapped('weight'))
+
   @api.model_create_multi
   def create(self, vals_list):
     for vals in vals_list:
@@ -77,3 +94,25 @@ class ServiceTrip(models.Model):
   def _compute_reference(self):
     for trip in self:
       trip.reference = f"{trip.sequence} - {trip.project_id.sequence}"
+
+  # trip lifecycle
+  def action_to_pickuped(self):
+    self.write({'states': 'pickuped'})
+
+  def action_to_arrived(self):
+    self.write({'states': 'arrived'})
+
+  def action_to_processing(self):
+    self.write({'states': 'processing'})
+
+  def action_to_delivered(self):
+    self.write({'states': 'delivered'})
+
+  def action_to_completed(self):
+    self.write({'states': 'completed'})
+
+  def action_to_cancelled(self):
+    self.write({'states': 'cancelled'})
+
+  def action_to_draft(self):
+    self.write({'states': 'draft'})

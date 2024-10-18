@@ -1,4 +1,4 @@
-from odoo import  fields, models, api
+from odoo import fields, models, api
 
 
 class ServiceOrder(models.Model):
@@ -8,7 +8,7 @@ class ServiceOrder(models.Model):
   _order = 'id desc'
   _rec_name = 'serial'
 
-  serial = fields.Char(string='Serial')
+  serial = fields.Char(string='Serial',readonly=True,)
   project_id = fields.Many2one(
       'service.project',
       string='Project',
@@ -30,8 +30,8 @@ class ServiceOrder(models.Model):
 
   states = fields.Selection(
       [
-          ('scheduled', 'Scheduled'),
           ('draft', 'Draft'),
+          ('scheduled', 'Scheduled'),
           ('pickuped', 'Pickuped'),
           ('arrived', 'Arrived'),
           ('processing', 'Processing'),
@@ -42,6 +42,11 @@ class ServiceOrder(models.Model):
       string='State',
       default='draft',
   )
+  order_line_ids = fields.One2many(
+      'service.order.line',
+      'order_id',
+      string='Items',
+  )
 
   @api.model_create_multi
   def create(self, vals_list):
@@ -49,4 +54,19 @@ class ServiceOrder(models.Model):
       vals['serial'] = self.env['ir.sequence'].next_by_code('service.order') or '/'
     return super().create(vals_list)
 
+  def action_to_schedule(self):
+    self.write({'states': 'scheduled'})
 
+  def convert_to_trip(self):
+    self.env['service.trip'].create({
+        'project_id': self.project_id.id,
+        'type_id': self.type_id.id,
+        'pickup_location_id': self.pickup_location_id.id,
+        'pickuped_datetime': self.order_datetime,
+        'states': 'draft',
+        'trip_line_ids': [(0, 0, {
+            'item_id': line.item_id.id,
+            'quantity': line.quantity,
+        }) for line in self.order_line_ids],
+    })
+    self.action_to_schedule()

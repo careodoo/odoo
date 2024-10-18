@@ -17,3 +17,5 @@ class ServiceTripLine(models.Model):
   width = fields.Float(related = 'item_id.width', string='Width')
   height = fields.Float(related = 'item_id.height', string='Height')
   weight = fields.Float(related = 'item_id.weight', string='Weight')
+  quantity = fields.Float(string='Quantity')
+

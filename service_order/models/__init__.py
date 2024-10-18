@@ -11,5 +11,6 @@ from . import service_trip_tag
 from . import service_type
 from . import service_team
 from . import service_order
+from . import service_order_line
 from . import service_trip
 from . import service_trip_line

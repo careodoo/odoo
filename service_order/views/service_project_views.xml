@@ -17,6 +17,28 @@
           <field name="state" widget="statusbar" statusbar_visible="draft,valid,expired" />
         </header>
         <sheet>
+          <div class="oe_button_box" name="button_box">
+            <button name="open_locations" type="object"
+              string="Locations"
+              class="oe_stat_button" icon="fa-bars">
+              <field name="pickup_location_ids_count" />
+
+            </button>
+            <!-- ========================== -->
+            <button name="open_teams" type="object"
+              string="Teams"
+              class="oe_stat_button" icon="fa-bars">
+              <field name="team_ids_count" />
+            </button>
+            <!-- ========================== -->
+            <button name="open_trips" type="object"
+              string="Trips"
+              class="oe_stat_button" icon="fa-bars">
+              <field name="trip_ids_count" />
+            </button>
+
+
+          </div>
           <group>
             <field name="sequence" />
             <field name="name" />
@@ -25,7 +47,7 @@
             <field name="company_id" />
             <field name="start_date" />
             <field name="end_date" />
-            <field name="image" widget="image"/>
+            <field name="image" widget="image" />
             <field name="notes" />
           </group>
         </sheet>

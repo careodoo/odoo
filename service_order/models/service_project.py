@@ -38,7 +38,53 @@ class ServiceProject(models.Model):
   image = fields.Binary(string='Image',)
   notes = fields.Html(string='Notes',)
 
-  def open_location(self):
+  pickup_location_ids = fields.One2many(
+      'service.pickup.location',
+      'project_id',
+      string='Pickup Locations',
+  )
+
+  team_ids = fields.One2many(
+      'service.team',
+      'project_id',
+      string='Teams',
+  )
+
+  trip_ids = fields.One2many(
+      'service.trip',
+      'project_id',
+      string='Trips',
+  )
+
+  pickup_location_ids_count = fields.Integer(
+      string='Pickup Locations Count',
+      compute='_compute_pickup_location_ids_count',
+  )
+
+  team_ids_count = fields.Integer(
+      string='Teams Count',
+      compute='_compute_team_ids_count',
+  )
+
+  trip_ids_count = fields.Integer(
+      string='Trips Count',
+      compute='_compute_trip_ids_count',
+  )
+
+  def _compute_pickup_location_ids_count(self):
+    for record in self:
+      record.pickup_location_ids_count = len(record.pickup_location_ids)
+
+  def _compute_team_ids_count(self):
+    for record in self:
+      record.team_ids_count = len(record.team_ids)
+
+  def _compute_trip_ids_count(self):
+    for record in self:
+      record.trip_ids_count = len(record.trip_ids)
+
+
+  def open_locations(self):
     pass
 
   def open_teams(self):
