@@ -4,7 +4,7 @@ from odoo import fields, models, api
 class ServiceOrder(models.Model):
   _name = 'service.order'
   _description = 'Service Order'
-  _inherit = ['mail.thread', 'mail.activity.mixin']
+  _inherit = ['mail.thread', 'mail.activity.mixin','portal.mixin']
   _order = 'id desc'
   _rec_name = 'serial'
 
@@ -41,11 +41,16 @@ class ServiceOrder(models.Model):
       ],
       string='State',
       default='draft',
+      copy=False,
   )
   order_line_ids = fields.One2many(
       'service.order.line',
       'order_id',
       string='Items',
+  )
+  trip_id = fields.Many2one(
+      'service.trip',
+      string='Trip',
   )
 
   @api.model_create_multi
@@ -58,7 +63,7 @@ class ServiceOrder(models.Model):
     self.write({'states': 'scheduled'})
 
   def convert_to_trip(self):
-    self.env['service.trip'].create({
+    trip = self.env['service.trip'].create({
         'project_id': self.project_id.id,
         'type_id': self.type_id.id,
         'pickup_location_id': self.pickup_location_id.id,
@@ -68,5 +73,16 @@ class ServiceOrder(models.Model):
             'item_id': line.item_id.id,
             'quantity': line.quantity,
         }) for line in self.order_line_ids],
+        'order_id': self.id,
     })
+    self.write({'trip_id': trip.id})
     self.action_to_schedule()
+
+  def _compute_access_url(self):
+    super()._compute_access_url()
+    for order in self:
+        order.access_url = '/service_order/%s' % (order.id)
+
+  def _get_report_base_filename(self):
+    self.ensure_one()
+    return '%s' % (self.trip_id.reference)

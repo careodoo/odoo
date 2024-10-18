@@ -85,6 +85,10 @@ class ServiceTrip(models.Model):
       string='Total Quantity',
       compute='_compute_total_quantity',
   )
+  order_id = fields.Many2one(
+      'service.order',
+      string='Order',
+  )
 
   def _compute_total_quantity(self):
     for trip in self:
@@ -131,3 +135,7 @@ class ServiceTrip(models.Model):
 
   def action_print_trip_pdf(self):
     pass
+
+  def _get_report_base_filename(self):
+    self.ensure_one()
+    return '%s' % (self.reference)

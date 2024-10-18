@@ -1,6 +1,4 @@
-from odoo import _, api, fields, models
-import toolz as T
-import toolz.curried as TC
+from odoo import  api, models
 
 
 class ServiceTripXlsxReport(models.AbstractModel):

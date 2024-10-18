@@ -24,6 +24,10 @@
         "views/service_trip_views.xml",
         "views/portal/service_service_portal.xml",
         "views/portal/service_order_portal.xml",
+        "views/portal/portal_service_order_list.xml",
+        "views/portal/portal_service_order_create.xml",
+        "views/portal/portal_service_order_details.xml",
+        "views/portal/portal_service_order_update.xml",
         "reports/service_trip_report.xml",
     ],
     "depends": [
@@ -33,7 +37,4 @@
         "portal",
         "report_xlsx_dynamic",
     ],
-    "external_dependencies": {
-        "python": ["toolz"],
-    },
 }

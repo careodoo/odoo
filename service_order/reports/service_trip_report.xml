@@ -134,4 +134,25 @@
     </t>
   </template>
 
+  <record id="action_report_service_trip_xlsx" model="ir.actions.report">
+    <field name="name">Print Trip xlsx</field>
+    <field name="model">service.trip</field>
+    <field name="report_type">xlsx</field>
+    <field name="report_name">service_order.service_trip_xlsx_report</field>
+    <field name="report_file">service_order.service_trip_xlsx_report</field>
+    <field name="print_report_name">'%s' % object.reference</field>
+    <field name="binding_model_id" ref="service_order.model_service_trip" />
+    <field name="binding_type">report</field>
+  </record>
+  <record id="action_report_service_trip_pdf" model="ir.actions.report">
+    <field name="name">Print Trip pdf</field>
+    <field name="model">service.trip</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">service_order.service_trip_report</field>
+    <field name="report_file">service_order.service_trip_report</field>
+    <field name="print_report_name">'%s' % object.reference</field>
+    <field name="binding_model_id" ref="service_order.model_service_trip" />
+    <field name="binding_type">report</field>
+  </record>
+
 </odoo>

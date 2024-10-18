@@ -1,0 +1,79 @@
+<odoo>
+  <!-- service order list -->
+  <template id="portal_service_orders" name="Service Orders">
+    <t t-call="portal.portal_layout">
+      <t t-set="pager" t-value="pager" />
+      <t t-set="breadcrumbs_searchbar" t-value="True" />
+      <t t-call="portal.portal_searchbar">
+        <t t-set="title">Service Orders</t>
+      </t>
+      <t t-set="wrapwrap_classes" t-value="'o_portal_bg_dark'" />
+        <div class="o_download_pdf btn-toolbar flex-sm-nowrap">
+          <div class="btn-group  flex-grow-1 me-1 mb-1">
+            <a class="btn btn-secondary btn-block o_download_btn" href="/service_order/create"
+              title="Service Order">
+              <i class="fa fa-plus" /> Create order </a>
+          </div>
+        </div>
+        <t t-if="service_orders" t-call="portal.portal_table">
+          <thead>
+            <tr>
+              <th>Serial</th>
+              <th>Project</th>
+              <th>Type</th>
+              <th>Pickup Location</th>
+              <th>Order Date</th>
+              <th>Notes</th>
+              <th>State</th>
+              <th>Edit</th>
+              <th>Cancle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <t t-foreach="service_orders" t-as="order">
+              <tr>
+                <td>
+                  <a t-attf-href="/service_order/{{order.id}}">
+                    <t t-esc="order.serial" />
+                  </a>
+                </td>
+                <td>
+                  <t t-esc="order.project_id.name" />
+                </td>
+                <td>
+                  <t t-esc="order.type_id.name" />
+                </td>
+                <td>
+                  <t t-esc="order.pickup_location_id.name" />
+                </td>
+                <td>
+                  <t t-esc="order.order_datetime" />
+                </td>
+                <td>
+                  <t t-esc="order.notes" />
+                </td>
+                <td>
+                  <t t-esc="order.states" />
+                </td>
+                <td>
+                  <a t-attf-href="/service_order/{{order.id}}/update">
+                    <i class="fa fa-edit
+                      text-primary" />
+                  </a>
+                </td>
+                <td>
+                  <a t-attf-href="/service_order/{{order.id}}/cancel">
+                    <i class="fa fa-trash text-danger" />
+                  </a>
+                </td>
+              </tr>
+            </t>
+          </tbody>
+        </t>
+        <div>
+          <t t-call="portal.pager" />
+        </div>
+    </t>
+  </template>
+
+</odoo>

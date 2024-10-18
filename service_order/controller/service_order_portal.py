@@ -1,7 +1,8 @@
 from odoo import http, _
 from odoo.addons.portal.controllers.portal import pager as portal_pager, CustomerPortal
-
-ITEMS_PER_PAGE = 3
+from odoo.exceptions import AccessError, MissingError
+from odoo.tools import html2plaintext
+ITEMS_PER_PAGE = 10
 
 
 class ServiceOrderPortal(CustomerPortal):
@@ -89,3 +90,63 @@ class ServiceOrderPortal(CustomerPortal):
   def portal_service_order_submit(self, **kw):
     http.request.env['service.order'].sudo().create(kw)
     return http.request.redirect('/service_orders')
+
+  # view order
+  @http.route(
+      ['/service_order/<int:order_id>/'],
+      type='http',
+      auth="user",
+      website=True,
+  )
+  def portal_service_order_details(
+      self,
+      order_id,
+      report_type=None,
+      access_token=None,
+      download=None,
+      **kw,
+  ):
+    order = http.request.env['service.order'].browse(order_id)
+    try:
+      order_sudo = self._document_check_access(
+          'service.order',
+          order_id,
+          access_token=access_token,
+      )
+    except (AccessError, MissingError):
+      return http.request.redirect('/service_orders')
+
+    if report_type in ('html', 'pdf', 'text'):
+      return self._show_report(
+          model=order_sudo.trip_id,
+          report_type=report_type,
+          report_ref='service_order.action_report_service_trip_pdf',
+          download=download,
+      )
+    return http.request.render(
+        'service_order.portal_service_order_details',
+        {
+            "service_order": order,
+            "page_name": 'order_details',
+        },
+    )
+
+  # update order
+  @http.route(
+      ['/service_order/<int:order_id>/update'],
+      type='http',
+      auth="user",
+      website=True,
+  )
+  def portal_service_order_update(self, order_id, **kw):
+    order = http.request.env['service.order'].browse(order_id)
+    return http.request.render(
+        'service_order.portal_service_order_update',
+        {
+            "service_order": order,
+            "order_notes": html2plaintext(order.notes),
+            "projects": http.request.env['service.project'].search([]).name_get(),
+            "types": http.request.env['service.type'].search([]).name_get(),
+            "pickup_locations": http.request.env['service.pickup.location'].search([]).name_get(),
+        },
+    )

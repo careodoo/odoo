@@ -1,0 +1,154 @@
+<odoo>
+
+  <!-- service order details -->
+  <template id="portal_service_order_details" name="Service Order Details">
+    <t t-call="portal.portal_layout">
+      <t t-set="breadcrumbs_searchbar" t-value="True" />
+
+      <t t-call="portal.portal_searchbar">
+        <t t-set="title">Sales Orders</t>
+      </t>
+      <div class="row mt16 o_portal_sale_sidebar">
+        <!-- Sidebar -->
+        <t t-call="portal.portal_record_sidebar">
+          <t t-set="classes" t-value="'col-lg-auto d-print-none'" />
+
+          <t t-set="title">
+            <h2 class="mb-0">
+              <b t-field="service_order.serial" />
+            </h2>
+          </t>
+          <t t-set="entries">
+            <ul class="list-group list-group-flush flex-wrap flex-row flex-lg-column">
+              <li class="list-group-item flex-grow-1">
+                <div class="o_download_pdf btn-toolbar flex-sm-nowrap">
+                  <div class="btn-group flex-grow-1 mr-1 mb-1">
+                    <a class="btn btn-secondary   btn-block o_download_btn"
+                      title="Download"
+                      t-att-href="service_order.get_portal_url(report_type='pdf', download=True)"
+                    >
+                      <i class="fa fa-download" /> Download</a>
+                  </div>
+                  <div class="btn-group flex-grow-1 mb-1">
+                    <a
+                      class="btn btn-secondary  btn-block o_print_btn o_portal_invoice_print"
+                      title="Print"
+                      t-att-href="service_order.get_portal_url(report_type='pdf')"
+                      target="_blank">
+                      <i class="fa fa-print" /> Print</a>
+                  </div>
+                </div>
+              </li>
+
+              <li class="navspy list-group-item pl-0 flex-grow-1" t-ignore="true"
+                role="complementary">
+                <ul class="nav flex-column bs-sidenav"></ul>
+              </li>
+            </ul>
+          </t>
+        </t>
+        <!-- main content -->
+        <div id="service_order_content" class="col-12 col-lg justify-content-end">
+          <div t-attf-class="card pb-5"
+            id="portal_sale_content">
+            <div id="introduction" t-attf-class="pb-2 pt-3 card-header bg-white">
+              <h2 class="my-0">
+                <t t-esc="service_order.serial" />
+              </h2>
+            </div>
+            <!-- ======================== -->
+            <div t-attf-class="card-body">
+              <!-- Informations -->
+              <div id="informations">
+                <div class="row" id="service_order_date">
+                  <div class="mb-3 col-6">
+                    <strong>Order Date:</strong>
+                    <span t-field="service_order.order_datetime" t-options='{"widget": "datetmie"}' />
+                  </div>
+                </div>
+                <!-- ================================== -->
+                <div class="row" id="service_order_state">
+                  <div class="mb-3 col-6">
+                    <strong>Order State:</strong>
+                    <span t-field="service_order.states" />
+                  </div>
+                </div>
+                <!-- ================================== -->
+                <div class="row" id="service_order_project">
+                  <div class="mb-3 col-6">
+                    <strong>Project:</strong>
+                    <span t-field="service_order.project_id.name" />
+                  </div>
+                </div>
+                <!-- ================================== -->
+                <div class="row" id="service_order_type">
+                  <div class="mb-3 col-6">
+                    <strong>Type:</strong>
+                    <span t-field="service_order.type_id.name" />
+                  </div>
+                </div>
+                <!-- ================================== -->
+              </div>
+              <!-- ================================== -->
+              <section id="details" style="page-break-inside: auto;" class="mt32">
+                <h3 id="details">Items</h3>
+                <div class="table-responsive">
+                  <table t-att-data-order-id="service_order.id"
+                    t-att-data-token="service_order.access_token" class="table table-sm"
+                    id="service_order_table">
+                    <thead class="bg-100">
+                      <tr>
+                        <th>Image</th>
+                        <th>Item</th>
+                        <th>Quantity</th>
+                        <th>Width</th>
+                        <th>Height</th>
+                        <th>Weight</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <t t-foreach="service_order.order_line_ids" t-as="line">
+                        <tr>
+                          <td>
+                            <img t-att-src="image_data_uri(line.item_id.image)"
+                              style="max-height: 6rem; max-width: 30%;" />
+                          </td>
+                          <td>
+                            <t t-esc="line.item_id.name" />
+                          </td>
+                          <td>
+                            <t t-esc="line.quantity" />
+                          </td>
+                          <td>
+                            <t t-esc="line.width" />
+                          </td>
+                          <td>
+                            <t t-esc="line.height" />
+                          </td>
+                          <td>
+                            <t t-esc="line.weight" />
+                          </td>
+                        </tr>
+                      </t>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+            </div>
+          </div>
+          <!-- chatter -->
+          <div id="service_order_communication" class="mt-4">
+            <h2>History</h2>
+            <t t-call="portal.message_thread">
+              <t t-set="object" t-value="service_order" />
+            </t>
+          </div>
+        </div>
+      </div>
+
+
+    </t>
+  </template>
+
+</odoo>

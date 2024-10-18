@@ -1,114 +1,17 @@
 <odoo>
-
-  <!-- service order list -->
-  <template id="portal_service_orders" name="Service Orders">
-    <t t-call="portal.portal_layout">
-      <t t-set="pager" t-value="pager" />
-      <t t-set="breadcrumbs_searchbar" t-value="True" />
-      <t t-call="portal.portal_searchbar">
-        <t t-set="title">Service Orders</t>
-      </t>
-      <t t-set="wrapwrap_classes" t-value="'o_portal_bg_dark'" />
-      <div class="row mt16 o_project_portal_sidebar">
-        <div class="o_download_pdf btn-toolbar flex-sm-nowrap">
-          <div class="btn-group  flex-grow-1 me-1 mb-1">
-            <a class="btn btn-secondary btn-block o_download_btn" href="/service_order/create"
-              title="Service Order">
-              <i class="fa fa-plus" /> Create order </a>
-          </div>
-        </div>
-        <table class="table table-striped rounded mb-0 bg-white">
-          <thead>
-            <tr>
-              <th>Serial</th>
-              <th>Project</th>
-              <th>Type</th>
-              <th>Pickup Location</th>
-              <th>Order Date</th>
-              <th>Notes</th>
-              <th>States</th>
-            </tr>
-          </thead>
-          <tbody>
-            <t t-foreach="service_orders" t-as="order">
-              <tr>
-                <td>
-                  <a t-attf-href="/my/service_orders/{{order.id}}">
-                    <t t-esc="order.serial" />
-                  </a>
-                </td>
-                <td>
-                  <t t-esc="order.project_id.name" />
-                </td>
-                <td>
-                  <t t-esc="order.type_id.name" />
-                </td>
-                <td>
-                  <t t-esc="order.pickup_location_id.name" />
-                </td>
-                <td>
-                  <t t-esc="order.order_datetime" />
-                </td>
-                <td>
-                  <t t-esc="order.notes" />
-                </td>
-                <td>
-                  <t t-esc="order.states" />
-                </td>
-              </tr>
-            </t>
-          </tbody>
-        </table>
-        <div>
-          <t t-call="portal.pager" />
-        </div>
-      </div>
-    </t>
+  <template id="portal_my_service_order" name="Portal layout : service orders"
+    inherit_id="portal.portal_breadcrumbs" priority="20">
+    <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
+      <li t-if="page_name == 'service_orders' or service_order "
+        t-attf-class="breadcrumb-item active">
+        <a t-if="service_order" t-attf-href="/service_orders?{{ keep_query() }}">Service Orders</a>
+        <t t-else="">Service Orders</t>
+      </li>
+      <li t-if="service_order" class="breadcrumb-item active">
+        <span t-field="service_order.serial" />
+        <t t-esc="service_order.serial" />
+      </li>
+    </xpath>
   </template>
 
-  <!-- service order detail -->
-  <template id="portal_service_order_create" name="Create Service Order">
-    <t t-call="portal.portal_layout">
-      <t t-set="wrapwrap_classes" t-value="'o_portal_bg_dark'" />
-      <div class="o_portal_html_view shadow p-3">
-        <!-- form -->
-        <form class="o_portal_form" method="post" action="/service_order/submit">
-          <div class="form-group">
-            <label for="project_id">Project</label>
-            <select class="form-control" id="project_id" name="project_id">
-              <t t-foreach="projects" t-as="project">
-                <option name="project" t-att-value="project[0]" t-esc="project[1]" />
-              </t>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="type_id">Type</label>
-            <select class="form-control" id="type_id" name="type_id">
-              <t t-foreach="types" t-as="type">
-                <option name="type" t-att-value="type[0]" t-esc="type[1]" />
-              </t>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="pickup_location_id">Pickup Location</label>
-            <select class="form-control" id="pickup_location_id" name="pickup_location_id">
-              <t t-foreach="pickup_locations" t-as="pickup_location">
-                <option name="pickup_location" t-att-value="pickup_location[0]"
-                  t-esc="pickup_location[1]" />
-              </t>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="order_datetime">Order Date</label>
-            <input type="date" class="form-control" id="order_datetime" name="order_datetime" required="True"/>
-          </div>
-          <div class="form-group">
-            <label for="notes">Notes</label>
-            <textarea class="form-control" id="notes" name="notes"></textarea>
-          </div>
-          <button type="submit" class="btn btn-primary">Create</button>
-        </form>
-      </div>
-    </t>
-  </template>
 </odoo>
