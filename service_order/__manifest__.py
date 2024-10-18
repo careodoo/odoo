@@ -33,7 +33,4 @@
         "portal",
         "report_xlsx_dynamic",
     ],
-    "external_dependencies": {
-        "python": ["toolz"],
-    },
 }
