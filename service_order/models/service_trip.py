@@ -81,6 +81,15 @@ class ServiceTrip(models.Model):
       compute='_compute_total_weight',
   )
 
+  total_quantity = fields.Float(
+      string='Total Quantity',
+      compute='_compute_total_quantity',
+  )
+
+  def _compute_total_quantity(self):
+    for trip in self:
+      trip.total_quantity = sum(trip.trip_line_ids.mapped('quantity'))
+
   def _compute_total_weight(self):
     for trip in self:
       trip.total_weight = sum(trip.trip_line_ids.mapped('weight'))
@@ -116,3 +125,9 @@ class ServiceTrip(models.Model):
 
   def action_to_draft(self):
     self.write({'states': 'draft'})
+
+  def action_print_trip_xlsx(self):
+    pass
+
+  def action_print_trip_pdf(self):
+    pass

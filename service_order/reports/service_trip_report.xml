@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <template id="service_trip_report" name="service_trip_report">
+
+    <t t-call="web.html_container">
+      <t t-call="web.external_layout">
+        <t t-foreach="docs" t-as="doc">
+          <div class="page">
+            <h2>Service Trip Report</h2>
+            <div class="row">
+              <div class="col-6">
+                <table class="table table-sm">
+                  <tr>
+                    <td>Reference</td>
+                    <td>
+                      <t t-esc="doc.reference" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Sequence</td>
+                    <td>
+                      <t t-esc="doc.sequence" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Pickup Location</td>
+                    <td>
+                      <t t-esc="doc.pickup_location_id.name" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Center</td>
+                    <td>
+                      <t t-esc="doc.center_id.name" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Team</td>
+                    <td>
+                      <t t-esc="doc.team_id.name" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>State</td>
+                    <td>
+                      <t t-esc="doc.states" />
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              <div class="col-6">
+                <table class="table table-sm">
+                  <tr>
+                    <td>Type</td>
+                    <td>
+                      <t t-esc="doc.type_id.name" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Project</td>
+                    <td>
+                      <t t-esc="doc.project_id.name" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Pickuped Date</td>
+                    <td>
+                      <t t-esc="doc.pickuped_datetime" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Contact</td>
+                    <td>
+                      <t t-esc="doc.contact_id.name" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Trip Date</td>
+                    <td>
+                      <t t-esc="doc.trip_date" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Total Weight</td>
+                    <td>
+                      <t t-esc="doc.total_weight" />
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            <!-- trip lines -->
+            <div class="mt-5">
+              <table class="table  table-striped">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                    <th>Width</th>
+                    <th>Height</th>
+                    <th>Weight</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <t t-foreach="doc.trip_line_ids" t-as="line">
+                    <tr>
+                      <td>
+                        <t t-esc="line.item_id.name" />
+                      </td>
+                      <td>
+                        <t t-esc="line.quantity" />
+                      </td>
+                      <td>
+                        <t t-esc="line.width" />
+                      </td>
+                      <td>
+                        <t t-esc="line.height" />
+                      </td>
+                      <td>
+                        <t t-esc="line.weight" />
+                      </td>
+                    </tr>
+                  </t>
+                </tbody>
+              </table>
+
+            </div>
+          </div>
+
+        </t>
+      </t>
+    </t>
+  </template>
+
+</odoo>

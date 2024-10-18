@@ -15,16 +15,16 @@
           <button name="action_to_completed" string="Complete" type="object" class="oe_highlight" />
           <button name="action_to_cancelled" string="Cancel" type="object" class="oe_highlight" />
           <button name="action_to_draft" string="Reset to Draft" type="object" class="oe_highlight" />
-          <field name="states" widget="statusbar"/>
+          <field name="states" widget="statusbar" />
         </header>
         <sheet>
           <group>
             <group>
               <field name="sequence" />
               <field name="reference" />
-              <field name="pickup_location_id" domain="[('project_ids','in',[project_id])]"/>
+              <field name="pickup_location_id" domain="[('project_ids','in',[project_id])]" />
               <field name="center_id" />
-              <field name="trip_tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
+              <field name="trip_tag_ids" widget="many2many_tags" options="{'color_field': 'color'}" />
             </group>
             <group>
               <field name="type_id" />
@@ -39,7 +39,7 @@
           <notebook>
             <page name="items" string="Items">
               <field name="trip_line_ids">
-                <tree editable="bottom" >
+                <tree editable="bottom">
                   <field name="item_id" />
                   <field name="quantity" />
                   <field name="width" />
@@ -65,7 +65,7 @@
         <field name="pickup_location_id" />
         <field name="center_id" />
         <field name="type_id" />
-        <field name="trip_tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
+        <field name="trip_tag_ids" widget="many2many_tags" options="{'color_field': 'color'}" />
         <field name="project_id" />
         <field name="pickuped_datetime" />
         <field name="contact_id" />
@@ -86,5 +86,27 @@
     sequence="2"
     action="action_service_trip" />
 
+
+
+  <record id="action_report_hr_payslip_report_xlsx" model="ir.actions.report">
+    <field name="name">Print Trip xlsx</field>
+    <field name="model">service.trip</field>
+    <field name="report_type">xlsx</field>
+    <field name="report_name">service_order.service_trip_xlsx_report</field>
+    <field name="report_file">service_order.service_trip_xlsx_report</field>
+    <field name="print_report_name">'%s' % object.reference</field>
+    <field name="binding_model_id" ref="service_order.model_service_trip" />
+    <field name="binding_type">report</field>
+  </record>
+  <record id="action_report_hr_payslip_report_pdf" model="ir.actions.report">
+    <field name="name">Print Trip pdf</field>
+    <field name="model">service.trip</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">service_order.service_trip_report</field>
+    <field name="report_file">service_order.service_trip_report</field>
+    <field name="print_report_name">'%s' % object.reference</field>
+    <field name="binding_model_id" ref="service_order.model_service_trip" />
+    <field name="binding_type">report</field>
+  </record>
 
 </odoo>

@@ -24,11 +24,16 @@
         "views/service_trip_views.xml",
         "views/portal/service_service_portal.xml",
         "views/portal/service_order_portal.xml",
+        "reports/service_trip_report.xml",
     ],
     "depends": [
         "base",
         "mail",
         "hr",
         "portal",
+        "report_xlsx_dynamic",
     ],
+    "external_dependencies": {
+        "python": ["toolz"],
+    },
 }
