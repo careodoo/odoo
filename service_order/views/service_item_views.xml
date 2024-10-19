@@ -7,8 +7,18 @@
       <field name="model">service.item</field>
       <field name="arch" type="xml">
         <form string="Service Item">
+
           <sheet>
+            <!-- smart button -->
+            <div class="oe_button_box" name="button_box">
+              <button name="open_trips_action" type="object"
+                string="Trips"
+                class="oe_stat_button" icon="fa-bars">
+                <field name="trips_counter" />
+              </button>
+            </div>
             <group>
+              <field name="active" invisible="1"/>
               <field name="name" />
               <field name="image" widget="image" />
               <field name="company_id" />

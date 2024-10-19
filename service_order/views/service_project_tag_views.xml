@@ -8,6 +8,7 @@
       <form string="Service project Tag">
         <sheet>
           <group>
+            <field name="active" invisible="1"/>
             <field name="name" />
             <field name="color" widget="color_picker" />
           </group>

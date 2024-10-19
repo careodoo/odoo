@@ -9,6 +9,7 @@
       <form string="Service Type">
         <sheet>
           <group>
+            <field name="active" invisible="1"/>
             <field name="name" />
           </group>
         </sheet>

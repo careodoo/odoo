@@ -9,6 +9,7 @@
       <form string="Service Center">
         <sheet>
           <group>
+            <field name="active" invisible="1"/>
             <field name="company_id" />
             <field name="center_tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
             <field name="name" />

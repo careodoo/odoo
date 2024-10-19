@@ -9,6 +9,7 @@
       <form string="Service Team">
         <sheet>
           <group>
+            <field name="active" invisible="1"/>
             <field name="company_id" />
             <field name="name" />
             <field name="employee_ids" widget="many2many_tags" />

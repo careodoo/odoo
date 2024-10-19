@@ -10,7 +10,7 @@ class ServiceTeam(models.Model):
       'res.company',
       string='Company',
   )
-
+  active = fields.Boolean(default=True)
   project_id = fields.Many2one(
       'service.project',
       string='Service Project',

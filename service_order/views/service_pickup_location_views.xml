@@ -9,6 +9,7 @@
       <form string="Service Pickup Location">
         <sheet>
           <group>
+            <field name="active" invisible="1"/>
             <field name="name" />
             <field name="address" />
             <field name="state" />

@@ -4,4 +4,5 @@
     'author': "hassan510-cmd",
     'version': '15.0.0.0.0',
     'depends': ['report_xlsx',],
+    'license': 'LGPL-3',
 }

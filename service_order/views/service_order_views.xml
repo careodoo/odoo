@@ -7,16 +7,18 @@
     <field name="arch" type="xml">
       <form string="Service Order">
         <header>
-          <button attrs="{'invisible':[('states','=','scheduled')]}" name="convert_to_trip" string="Convert to trip" type="object" class="oe_highlight" />
+          <button attrs="{'invisible':[('states','!=','draft')]}" name="convert_to_trip" string="Convert to trip" type="object" class="oe_highlight" />
           <field name="states" widget="statusbar"/>
         </header>
         <sheet>
           <group>
+            <field name="active" invisible="1"/>
             <field name="serial" />
             <field name="project_id" />
             <field name="type_id" />
             <field name="pickup_location_id" />
             <field name="order_datetime" />
+            <field name="trip_id" />
             <field name="notes" />
           </group>
           <notebook>
@@ -50,12 +52,20 @@
     <field name="model">service.order</field>
     <field name="arch" type="xml">
       <tree string="Service Orders">
+
         <field name="serial" />
         <field name="project_id" />
         <field name="type_id" />
         <field name="pickup_location_id" />
         <field name="order_datetime" />
         <field name="notes" />
+        <field name="states" 
+        widget="badge" 
+        decoration-muted="states == 'draft'"
+        decoration-info="states in ['pickuped','scheduled']"
+        decoration-warning="states in ['arrived','processing','delivered']"
+        decoration-danger="states == 'cancelled'"
+        decoration-success="states == 'completed'"/>
       </tree>
     </field>
   </record>
@@ -66,7 +76,9 @@
     <field name="view_mode">tree,form</field>
   </record>
 
-  <menuitem id="service_order_menu" name="Service Orders" parent="service_order.menu_service_order"
+  <menuitem id="service_order_menu" name="Service Orders"
+   parent="service_order.menu_service_order"
+    sequence="3"
     action="service_order_action" />
 
 </odoo>

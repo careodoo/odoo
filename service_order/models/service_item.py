@@ -30,3 +30,26 @@ class ServiceItem(models.Model):
       'service.item.tag',
       string='Tags',
   )
+
+  trips_counter = fields.Integer(
+      string='Trips Counter',
+      compute='_compute_trips_counter',
+  )
+  active = fields.Boolean(default=True)
+
+  def _compute_trips_counter(self):
+    for item in self:
+      item.trips_counter = self.env['service.trip'].search_count([(
+          'trip_line_ids.item_id',
+          'in',
+          item.ids,
+      )])
+
+  def open_trips_action(self):
+    return {
+        'name': _('Trips'),
+        'type': 'ir.actions.act_window',
+        'res_model': 'service.trip',
+        'view_mode': 'tree,form',
+        'domain': [('trip_line_ids.item_id', 'in', self.ids)],
+    }

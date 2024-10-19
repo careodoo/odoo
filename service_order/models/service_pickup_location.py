@@ -10,7 +10,7 @@ class ServicePickupLocation(models.Model):
       'service.pickup.location.tag',
       string='Tags',
   )
-
+  active = fields.Boolean(default=True)
   address = fields.Char(string='Address')
   project_id = fields.Many2one(
       'service.project',

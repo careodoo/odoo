@@ -6,3 +6,4 @@ class ServiceType(models.Model):
   _description = 'Service Type'
 
   name = fields.Char(required=True)
+  active = fields.Boolean(default=True)

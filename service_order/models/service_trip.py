@@ -85,10 +85,20 @@ class ServiceTrip(models.Model):
       string='Total Quantity',
       compute='_compute_total_quantity',
   )
+  total_qty_weight = fields.Float(
+      string='Total Quantity Weight',
+      compute='_compute_total_qty_weight',
+  )
+
   order_id = fields.Many2one(
       'service.order',
       string='Order',
   )
+  active = fields.Boolean(default=True)
+
+  def _compute_total_qty_weight(self):
+    for trip in self:
+      trip.total_qty_weight = sum([line.quantity * line.weight for line in trip.trip_line_ids])
 
   def _compute_total_quantity(self):
     for trip in self:
@@ -111,30 +121,31 @@ class ServiceTrip(models.Model):
   # trip lifecycle
   def action_to_pickuped(self):
     self.write({'states': 'pickuped'})
+    self.order_id.states = 'pickuped'
 
   def action_to_arrived(self):
     self.write({'states': 'arrived'})
+    self.order_id.states = 'arrived'
 
   def action_to_processing(self):
     self.write({'states': 'processing'})
+    self.order_id.states = 'processing'
 
   def action_to_delivered(self):
     self.write({'states': 'delivered'})
+    self.order_id.states = 'delivered'
 
   def action_to_completed(self):
     self.write({'states': 'completed'})
+    self.order_id.states = 'completed'
 
   def action_to_cancelled(self):
     self.write({'states': 'cancelled'})
+    self.order_id.states = 'cancelled'
 
   def action_to_draft(self):
     self.write({'states': 'draft'})
-
-  def action_print_trip_xlsx(self):
-    pass
-
-  def action_print_trip_pdf(self):
-    pass
+    self.order_id.states = 'draft'
 
   def _get_report_base_filename(self):
     self.ensure_one()

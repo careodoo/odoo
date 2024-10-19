@@ -15,3 +15,4 @@ class ServiceCenter(models.Model):
       'res.company',
       string='Company',
   )
+  active = fields.Boolean(default=True)

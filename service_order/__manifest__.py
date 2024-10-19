@@ -37,4 +37,7 @@
         "portal",
         "report_xlsx_dynamic",
     ],
+    'assets': {
+        'web.assets_backend': ['service_order/static/src/css/service_trip_style.css',],
+    }
 }

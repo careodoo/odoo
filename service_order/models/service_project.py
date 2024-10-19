@@ -5,8 +5,10 @@ class ServiceProject(models.Model):
   _name = 'service.project'
   _description = 'Service Project'
   _inherit = ['mail.thread', 'mail.activity.mixin']
+  _rec_name = 'name'
 
   name = fields.Char(required=True)
+  active = fields.Boolean(default=True)
   sequence = fields.Char(string='Serial Number', readonly=True)
   state = fields.Selection(
       [
@@ -16,44 +18,63 @@ class ServiceProject(models.Model):
       ],
       default='draft',
       string='Status',
+      tracking=True,
   )
   contact_id = fields.Many2one(
       'res.partner',
       string='Contact',
+      tracking=True,
   )
   assign_user_id = fields.Many2one(
       'res.users',
       string='Assign User',
+      tracking=True,
   )
 
   company_id = fields.Many2one(
       'res.company',
       string='Company',
+      tracking=True,
   )
 
-  start_date = fields.Date(string='Start Date',)
+  start_date = fields.Date(
+      string='Start Date',
+      tracking=True,
+  )
 
-  end_date = fields.Date(string='End Date',)
+  end_date = fields.Date(
+      string='End Date',
+      tracking=True,
+  )
 
-  image = fields.Binary(string='Image',)
-  notes = fields.Html(string='Notes',)
+  image = fields.Binary(
+      string='Image',
+      tracking=True,
+  )
+  notes = fields.Html(
+      string='Notes',
+      tracking=True,
+  )
 
   pickup_location_ids = fields.One2many(
       'service.pickup.location',
       'project_id',
       string='Pickup Locations',
+      tracking=True,
   )
 
   team_ids = fields.One2many(
       'service.team',
       'project_id',
       string='Teams',
+      tracking=True,
   )
 
   trip_ids = fields.One2many(
       'service.trip',
       'project_id',
       string='Trips',
+      tracking=True,
   )
 
   pickup_location_ids_count = fields.Integer(
@@ -83,25 +104,44 @@ class ServiceProject(models.Model):
     for record in self:
       record.trip_ids_count = len(record.trip_ids)
 
-
   def open_locations(self):
-    pass
+    return {
+        'name': _('Pickup Locations'),
+        'view_mode': 'tree,form',
+        'res_model': 'service.pickup.location',
+        'view_id': False,
+        'type': 'ir.actions.act_window',
+        'domain': [('project_id', '=', self.id)],
+    }
 
   def open_teams(self):
-    pass
+    return {
+        'name': _('Teams'),
+        'view_mode': 'tree,form',
+        'res_model': 'service.team',
+        'view_id': False,
+        'type': 'ir.actions.act_window',
+        'domain': [('project_id', '=', self.id)],
+    }
 
   def open_trips(self):
-    pass
+    return {
+        'name': _('Trips'),
+        'view_mode': 'tree,form',
+        'res_model': 'service.trip',
+        'view_id': False,
+        'type': 'ir.actions.act_window',
+        'domain': [('project_id', '=', self.id)],
+    }
 
   def project_to_draft(self):
-    pass
+    self.write({'state': 'draft'})
 
   def project_to_valid(self):
-    pass
+    self.write({'state': 'valid'})
 
   def project_to_expired(self):
-    pass
-
+    self.write({'state': 'expired'})
 
   @api.model_create_multi
   def create(self, vals_list):

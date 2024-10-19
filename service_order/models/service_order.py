@@ -9,6 +9,7 @@ class ServiceOrder(models.Model):
   _rec_name = 'serial'
 
   serial = fields.Char(string='Serial',readonly=True,)
+  active = fields.Boolean(default=True)
   project_id = fields.Many2one(
       'service.project',
       string='Project',

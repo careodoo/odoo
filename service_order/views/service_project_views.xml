@@ -12,7 +12,7 @@
           />
           <button name="project_to_valid" string="Valid" type="object" class="btn btn-secondary"
           />
-          <button name="project_to_expired" string="Cancel" type="object"
+          <button name="project_to_expired" string="Expire" type="object"
           />
           <field name="state" widget="statusbar" statusbar_visible="draft,valid,expired" />
         </header>
@@ -73,7 +73,11 @@
         <field name="company_id" />
         <field name="start_date" />
         <field name="end_date" />
-        <field name="state" />
+        <field name="state" 
+          widget="badge" 
+          decoration-info="state == 'draft'"
+          decoration-danger="state == 'expired'"
+          decoration-success="state == 'valid'" />
       </tree>
     </field>
   </record>
