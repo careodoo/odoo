@@ -22,7 +22,6 @@
         "views/service_pickup_location_views.xml",
         "views/service_order_views.xml",
         "views/service_trip_views.xml",
-        "views/portal/service_service_portal.xml",
         "views/portal/service_order_portal.xml",
         "views/portal/portal_service_order_list.xml",
         "views/portal/portal_service_order_create.xml",
@@ -36,8 +35,10 @@
         "hr",
         "portal",
         "report_xlsx_dynamic",
+        "website",
     ],
     'assets': {
-        'web.assets_backend': ['service_order/static/src/css/service_trip_style.css',],
+        'web.report_assets_common': ['service_order/static/src/css/service_trip_style.css',],
+        'web.assets_frontend': ['service_order/static/src/css/service_trip_style.css',],
     }
 }

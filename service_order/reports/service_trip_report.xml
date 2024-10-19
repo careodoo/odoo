@@ -5,7 +5,6 @@
     <!-- add css file -->
     <t t-call="web.html_container">
       <t t-call="web.external_layout">
-        <link rel="stylesheet" href="/service_order/static/src/css/service_trip_style.css" />
         <t t-foreach="docs" t-as="doc">
           <div class="page">
             <h2>Service Report</h2>
@@ -109,6 +108,11 @@
             <div class="row mb-5">
               <div class="col-4">
                 PHOTOS AND VIDEOS
+                <div t-if="doc.order_id" class="col-3 mt-1">
+                  <a t-att-href="'service_order/%s/' % doc.order_id.id">
+                  <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('QR', doc.order_id.qr_url, 500, 500)" style="max-height: 155px"/>
+                  </a>
+                </div>
               </div>
               <div class="col-4"></div>
               <div class="col-4">

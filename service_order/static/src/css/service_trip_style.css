@@ -32,3 +32,6 @@
 .cancelled-state{
     color: red;
 }
+.scheduled-state{
+    color: purple;
+}

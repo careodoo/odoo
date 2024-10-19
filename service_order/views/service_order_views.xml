@@ -15,6 +15,7 @@
             <field name="active" invisible="1"/>
             <field name="serial" />
             <field name="project_id" />
+            <field name="qr_url" invisible="1" />
             <field name="type_id" />
             <field name="pickup_location_id" />
             <field name="order_datetime" />

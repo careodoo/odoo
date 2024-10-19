@@ -1,4 +1,29 @@
 <odoo>
+  <!-- popup template -->
+  <template id="cancel_order" name="Cancel Order">
+    <div class="row">
+      <div class="modal fade" t-att-id="'cancel_order_%s' % order.id" role="dialog">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title">Cancel order <t t-esc="order.serial"/></h3>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">×</button>
+            </div>
+            <div class="modal-body">
+              <div class="alert alert-danger">
+                <strong>Are you sure from cancel this order?</strong>
+                <br />
+              </div>
+              <a t-att-href="'service_order/%s/cancel' % order.id">
+                <button class="btn btn-danger">yes, cancel this order</button>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
   <!-- service order list -->
   <template id="portal_service_orders" name="Service Orders">
     <t t-call="portal.portal_layout">
@@ -8,71 +33,77 @@
         <t t-set="title">Service Orders</t>
       </t>
       <t t-set="wrapwrap_classes" t-value="'o_portal_bg_dark'" />
-        <div class="o_download_pdf btn-toolbar flex-sm-nowrap">
-          <div class="btn-group  flex-grow-1 me-1 mb-1">
-            <a class="btn btn-secondary btn-block o_download_btn" href="/service_order/create"
-              title="Service Order">
-              <i class="fa fa-plus" /> Create order </a>
-          </div>
+      <div class="o_download_pdf btn-toolbar flex-sm-nowrap">
+        <div class="btn-group  flex-grow-1 me-1 mb-1">
+          <a class="btn btn-secondary btn-block o_download_btn" href="/service_order/create"
+          title="Service Order">
+          <i class="fa fa-plus" /> Create order </a>
         </div>
-        <t t-if="service_orders" t-call="portal.portal_table">
-          <thead>
+      </div>
+      <t t-if="service_orders" t-call="portal.portal_table">
+        <thead>
+          <tr>
+            <th>Serial</th>
+            <th>Project</th>
+            <th>Type</th>
+            <th>Pickup Location</th>
+            <th>Order Date</th>
+            <th>Notes</th>
+            <th>State</th>
+            <th>Edit</th>
+            <th>Cancle</th>
+          </tr>
+        </thead>
+        <tbody>
+          <t t-foreach="service_orders" t-as="order">
+            <t t-set="order" t-value="order" />
+            <t t-call="service_order.cancel_order" />
             <tr>
-              <th>Serial</th>
-              <th>Project</th>
-              <th>Type</th>
-              <th>Pickup Location</th>
-              <th>Order Date</th>
-              <th>Notes</th>
-              <th>State</th>
-              <th>Edit</th>
-              <th>Cancle</th>
+              <td>
+                <a t-attf-href="/service_order/{{order.id}}">
+                  <t t-esc="order.serial" />
+                </a>
+              </td>
+              <td>
+                <t t-esc="order.project_id.name" />
+              </td>
+              <td>
+                <t t-esc="order.type_id.name" />
+              </td>
+              <td>
+                <t t-esc="order.pickup_location_id.name" />
+              </td>
+              <td>
+                <t t-esc="order.order_datetime" />
+              </td>
+              <td>
+                <t t-esc="order.notes" />
+              </td>
+              <td t-attf-class="#{order.states}-state">
+                <t t-esc="order.states" />
+              </td>
+              <td>
+                <a t-attf-href="/service_order/{{order.id}}/update">
+                  <button class="btn btn-info fa fa-edit">
+                  </button>
+                </a>
+              </td>
+              <td>
+                <a>
+                  <button id="cancel_order_btn"
+                    data-toggle="modal"
+                    t-att-data-target="'#cancel_order_%s' % order.id"
+                    class="btn btn-danger fa fa-trash">
+                  </button>
+                </a>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            <t t-foreach="service_orders" t-as="order">
-              <tr>
-                <td>
-                  <a t-attf-href="/service_order/{{order.id}}">
-                    <t t-esc="order.serial" />
-                  </a>
-                </td>
-                <td>
-                  <t t-esc="order.project_id.name" />
-                </td>
-                <td>
-                  <t t-esc="order.type_id.name" />
-                </td>
-                <td>
-                  <t t-esc="order.pickup_location_id.name" />
-                </td>
-                <td>
-                  <t t-esc="order.order_datetime" />
-                </td>
-                <td>
-                  <t t-esc="order.notes" />
-                </td>
-                <td>
-                  <t t-esc="order.states" />
-                </td>
-                <td>
-                  <a t-attf-href="/service_order/{{order.id}}/update">
-                    <i class="fa fa-edit
-                      text-primary" />
-                  </a>
-                </td>
-                <td>
-                  <a t-attf-href="/service_order/{{order.id}}/cancel">
-                    <i class="fa fa-trash text-danger" />
-                  </a>
-                </td>
-              </tr>
-            </t>
-          </tbody>
-        </t>
-        <div>
-          <t t-call="portal.pager" />
-        </div>
+          </t>
+        </tbody>
+      </t>
+      <div>
+        <t t-call="portal.pager" />
+      </div>
     </t>
   </template>
 

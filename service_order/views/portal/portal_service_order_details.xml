@@ -70,7 +70,7 @@
                 <div class="row" id="service_order_state">
                   <div class="mb-3 col-6">
                     <strong>Order State:</strong>
-                    <span t-field="service_order.states" />
+                    <span t-attf-class="#{service_order.states}-state" t-field="service_order.states" />
                   </div>
                 </div>
                 <!-- ================================== -->
@@ -85,6 +85,13 @@
                   <div class="mb-3 col-6">
                     <strong>Type:</strong>
                     <span t-field="service_order.type_id.name" />
+                  </div>
+                </div>
+                <!-- ================================== -->
+                <div class="row" id="service_order_type">
+                  <div class="mb-3 col-6">
+                    <strong>Location:</strong>
+                    <span t-field="service_order.pickup_location_id.name" />
                   </div>
                 </div>
                 <!-- ================================== -->

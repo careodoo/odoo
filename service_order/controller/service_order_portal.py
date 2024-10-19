@@ -1,3 +1,4 @@
+from datetime import datetime
 from odoo import http, _
 from odoo.addons.portal.controllers.portal import pager as portal_pager, CustomerPortal
 from odoo.exceptions import AccessError, MissingError
@@ -80,16 +81,35 @@ class ServiceOrderPortal(CustomerPortal):
 
   # submit order
   @http.route(
-      ['/service_order/submit'],
+      ['/service_order/submit', '/service_order/submit/<int:order_id>'],
       type='http',
       auth="user",
       website=True,
       methods=['POST'],
       csrf=False,
   )
-  def portal_service_order_submit(self, **kw):
-    http.request.env['service.order'].sudo().create(kw)
-    return http.request.redirect('/service_orders')
+  def portal_service_order_submit(self ,order_id=None,**kw):
+    if order_id:
+      order = http.request.env['service.order'].browse(order_id)
+      try:
+        order_datetime = datetime.strptime(kw.get('order_datetime'), '%Y-%m-%dT%H:%M:%S')
+      except:
+        order_datetime = datetime.strptime(kw.get('order_datetime'), '%Y-%m-%dT%H:%M')
+      order.sudo().write({
+          'project_id': int(kw.get('project_id')),
+          'type_id': int(kw.get('type_id')),
+          'pickup_location_id': int(kw.get('pickup_location_id')),
+          'order_datetime': order_datetime,
+          'notes': kw.get('notes'),
+      })
+      # notify user
+      order.sudo().message_post(
+          body=_('Order updated by customer'),
+          message_type='comment',)
+
+    else:
+      http.request.env['service.order'].sudo().create(kw)
+    return http.request.redirect(f'/service_order/{order_id}')
 
   # view order
   @http.route(
@@ -150,3 +170,15 @@ class ServiceOrderPortal(CustomerPortal):
             "pickup_locations": http.request.env['service.pickup.location'].search([]).name_get(),
         },
     )
+
+  # cancel order
+  @http.route(
+      ['/service_order/<int:order_id>/cancel'],
+      type='http',
+      auth="user",
+      website=True,
+  )
+  def portal_service_order_cancel(self, order_id, **kw):
+    order = http.request.env['service.order'].browse(order_id)
+    order.sudo().action_to_cancel()
+    return http.request.redirect(f'/service_order/{order_id}')

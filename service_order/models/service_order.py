@@ -4,11 +4,14 @@ from odoo import fields, models, api
 class ServiceOrder(models.Model):
   _name = 'service.order'
   _description = 'Service Order'
-  _inherit = ['mail.thread', 'mail.activity.mixin','portal.mixin']
+  _inherit = ['mail.thread', 'mail.activity.mixin', 'portal.mixin']
   _order = 'id desc'
   _rec_name = 'serial'
 
-  serial = fields.Char(string='Serial',readonly=True,)
+  serial = fields.Char(
+      string='Serial',
+      readonly=True,
+  )
   active = fields.Boolean(default=True)
   project_id = fields.Many2one(
       'service.project',
@@ -53,6 +56,10 @@ class ServiceOrder(models.Model):
       'service.trip',
       string='Trip',
   )
+  qr_url = fields.Char(
+      string='QR Code URL',
+      compute='_compute_qr_url',
+  )
 
   @api.model_create_multi
   def create(self, vals_list):
@@ -62,6 +69,9 @@ class ServiceOrder(models.Model):
 
   def action_to_schedule(self):
     self.write({'states': 'scheduled'})
+
+  def action_to_cancel(self):
+    self.write({'states': 'cancelled'})
 
   def convert_to_trip(self):
     trip = self.env['service.trip'].create({
@@ -82,7 +92,11 @@ class ServiceOrder(models.Model):
   def _compute_access_url(self):
     super()._compute_access_url()
     for order in self:
-        order.access_url = '/service_order/%s' % (order.id)
+      order.access_url = '/service_order/%s' % (order.id)
+
+  def _compute_qr_url(self):
+    for order in self:
+      order.qr_url = self.get_base_url() + order.access_url
 
   def _get_report_base_filename(self):
     self.ensure_one()
