@@ -10,7 +10,7 @@
   </template>
 
   <template id="portal_my_service_order" name="Portal layout : service orders"
-    inherit_id="portal.portal_breadcrumbs" priority="20">
+    inherit_id="portal.portal_breadcrumbs" priority="100">
     <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
       <li t-if="page_name == 'service_orders' or service_order "
         t-attf-class="breadcrumb-item active">

@@ -19,7 +19,8 @@
             </h2>
           </t>
           <t t-set="entries">
-            <ul class="list-group list-group-flush flex-wrap flex-row flex-lg-column">
+            <ul t-if="service_order.trip_id"
+              class="list-group list-group-flush flex-wrap flex-row flex-lg-column">
               <li class="list-group-item flex-grow-1">
                 <div class="o_download_pdf btn-toolbar flex-sm-nowrap">
                   <div class="btn-group flex-grow-1 mr-1 mb-1">
@@ -49,52 +50,94 @@
         </t>
         <!-- main content -->
         <div id="service_order_content" class="col-12 col-lg justify-content-end">
-          <div t-attf-class="card pb-5"
+          <div class="card pb-5"
             id="portal_sale_content">
-            <div id="introduction" t-attf-class="pb-2 pt-3 card-header bg-white">
+            <div id="introduction" class="pb-2 pt-3 card-header bg-white">
               <h2 class="my-0">
                 <t t-esc="service_order.serial" />
               </h2>
             </div>
             <!-- ======================== -->
-            <div t-attf-class="card-body">
+            <div class="card-body">
               <!-- Informations -->
-              <div id="informations">
-                <div class="row" id="service_order_date">
-                  <div class="mb-3 col-6">
-                    <strong>Order Date:</strong>
-                    <span t-field="service_order.order_datetime" t-options='{"widget": "datetmie"}' />
+              <div class="d-flex">
+                <div id="informations" class="w-100">
+                  <div class="row" id="service_order_date">
+                    <div class="mb-3 col-6">
+                      <strong>Order Date:</strong>
+                      <span t-field="service_order.order_datetime"
+                        t-options='{"widget": "datetmie"}' />
+                    </div>
+                  </div>
+                  <!-- ================================== -->
+                  <div class="row" id="service_order_state">
+                    <div class="mb-3 col-6">
+                      <strong>Order State:</strong>
+                      <span t-attf-class="#{service_order.states}-state">
+                        <span t-field="service_order.states" />
+                      </span>
+                    </div>
+                  </div>
+                  <!-- ================================== -->
+                  <div class="row" id="service_order_project">
+                    <div class="mb-3 col-6">
+                      <strong>Project:</strong>
+                      <span t-field="service_order.project_id.name" />
+                    </div>
+                  </div>
+                  <!-- ================================== -->
+                  <div class="row" id="service_order_type">
+                    <div class="mb-3 col-6">
+                      <strong>Type:</strong>
+                      <span t-field="service_order.type_id.name" />
+                    </div>
+                  </div>
+                  <!-- ================================== -->
+                  <div class="row" id="service_order_location">
+                    <div class="mb-3 col-6">
+                      <strong>Location:</strong>
+                      <span t-field="service_order.pickup_location_id.name" />
+                    </div>
+                  </div>
+                  <!-- ================================== -->
+                </div>
+                <div t-if="service_order.trip_id" id="trip_informations" class="w-50">
+
+                  <div class="row" id="trip_no">
+                    <div class="mb-3">
+                      <strong>Trip No:</strong>
+                      <span t-field="service_order.trip_id.sequence" />
+                    </div>
+                  </div>
+                  <!-- ================================== -->
+                  <div class="row" id="trip_reference">
+                    <div class="mb-3">
+                      <strong>Trip Reference:</strong>
+                      <span t-field="service_order.trip_id.reference" />
+                    </div>
+                  </div>
+                  <!-- ================================== -->
+                  <div class="row" id="trip_total_weight">
+                    <div class="mb-3">
+                      <strong>Trip Total Weight:</strong>
+                      <span t-field="service_order.trip_id.total_weight" />
+                    </div>
+                  </div>
+                  <!-- ================================== -->
+                  <div class="row" id="trip_total_quantity">
+                    <div class="mb-3">
+                      <strong>Trip Total quantity:</strong>
+                      <span t-field="service_order.trip_id.total_quantity" />
+                    </div>
+                  </div>
+                  <!-- ================================== -->
+                  <div class="row" id="trip_total_qty_weight">
+                    <div class="mb-3">
+                      <strong>Trip Total qty weight:</strong>
+                      <span t-field="service_order.trip_id.total_qty_weight" />
+                    </div>
                   </div>
                 </div>
-                <!-- ================================== -->
-                <div class="row" id="service_order_state">
-                  <div class="mb-3 col-6">
-                    <strong>Order State:</strong>
-                    <span t-attf-class="#{service_order.states}-state" t-field="service_order.states" />
-                  </div>
-                </div>
-                <!-- ================================== -->
-                <div class="row" id="service_order_project">
-                  <div class="mb-3 col-6">
-                    <strong>Project:</strong>
-                    <span t-field="service_order.project_id.name" />
-                  </div>
-                </div>
-                <!-- ================================== -->
-                <div class="row" id="service_order_type">
-                  <div class="mb-3 col-6">
-                    <strong>Type:</strong>
-                    <span t-field="service_order.type_id.name" />
-                  </div>
-                </div>
-                <!-- ================================== -->
-                <div class="row" id="service_order_type">
-                  <div class="mb-3 col-6">
-                    <strong>Location:</strong>
-                    <span t-field="service_order.pickup_location_id.name" />
-                  </div>
-                </div>
-                <!-- ================================== -->
               </div>
               <!-- ================================== -->
               <section id="details" style="page-break-inside: auto;" class="mt32">

@@ -2,45 +2,88 @@
   <!-- service order create -->
   <template id="portal_service_order_create" name="Create Service Order">
     <t t-call="portal.portal_layout">
-      <t t-set="wrapwrap_classes" t-value="'o_portal_bg_dark'" />
+      <!-- <t t-set="wrapwrap_classes" t-value="'o_portal_bg_dark'" /> -->
       <div class="o_portal_html_view shadow p-3">
         <!-- form -->
         <form class="o_portal_form" method="post" action="/service_order/submit">
-          <div class="form-group">
-            <label for="project_id">Project</label>
-            <select class="form-control" id="project_id" name="project_id">
-              <t t-foreach="projects" t-as="project">
-                <option name="project" t-att-value="project[0]" t-esc="project[1]" />
-              </t>
-            </select>
+          <div id="servie_order_lines">
+            <div class="form-group">
+              <label for="project_id">Project</label>
+              <select class="form-control" id="project_id" name="project_id">
+                <t t-foreach="projects" t-as="project_id">
+                  <option name="project_id" t-att-value="project_id[0]" t-esc="project_id[1]" />
+                </t>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="type_id">Type</label>
+              <select class="form-control" id="type_id" name="type_id">
+                <t t-foreach="types" t-as="type">
+                  <option name="type" t-att-value="type[0]" t-esc="type[1]" />
+                </t>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="pickup_location_id">Pickup Location</label>
+              <select class="form-control" id="pickup_location_id" name="pickup_location_id">
+                <t t-foreach="pickup_locations" t-as="pickup_location">
+                  <option name="pickup_location" t-att-value="pickup_location[0]"
+                    t-esc="pickup_location[1]" />
+                </t>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="order_datetime">Order Date</label>
+              <input type="datetime-local" class="form-control" id="order_datetime" name="order_datetime"
+                required="True" />
+            </div>
+            <div class="form-group">
+              <label for="notes">Notes</label>
+              <textarea class="form-control" id="notes" name="notes"></textarea>
+            </div>
+            <!-- <div class="form-group">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                    <th>Width</th>
+                    <th>Height</th>
+                    <th>Weight</th>
+                    <th>Remove</th>
+                  </tr>
+                  <tbody id="servie_order_lines_body">
+                    <tr class="order_line_row d-none">
+                      <td>
+                        <select class="form-control" id="item_id" name="item_id">
+                          <t t-foreach="items" t-as="item">
+                            <option name="item" t-att-value="item[0]" t-esc="item[1]" />
+                          </t>
+                        </select>
+                      </td>
+                      <td>
+                       <input class="form-control" type="number"/>
+                      </td>
+                      <td>
+                        <button class="btn btn-danger">Remove</button>
+                      </td>
+                      <td>
+                        <button class="btn btn-danger">Remove</button>
+                      </td>
+                      <td>
+                        <button class="btn btn-danger">Remove</button>
+                      </td>
+                      <td>
+                        <button class="btn fa fa-trash"/>
+                      </td>
+                    </tr>
+                  </tbody>
+                </thead>
+              </table>
+              <button type="button" id="add_line" class="btn btn-success fa fa-plus"> add line</button>
+            </div> -->
+            <button type="submit" class="btn btn-primary">Create</button>
           </div>
-          <div class="form-group">
-            <label for="type_id">Type</label>
-            <select class="form-control" id="type_id" name="type_id">
-              <t t-foreach="types" t-as="type">
-                <option name="type" t-att-value="type[0]" t-esc="type[1]" />
-              </t>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="pickup_location_id">Pickup Location</label>
-            <select class="form-control" id="pickup_location_id" name="pickup_location_id">
-              <t t-foreach="pickup_locations" t-as="pickup_location">
-                <option name="pickup_location" t-att-value="pickup_location[0]"
-                  t-esc="pickup_location[1]" />
-              </t>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="order_datetime">Order Date</label>
-            <input type="date" class="form-control" id="order_datetime" name="order_datetime"
-              required="True" />
-          </div>
-          <div class="form-group">
-            <label for="notes">Notes</label>
-            <textarea class="form-control" id="notes" name="notes"></textarea>
-          </div>
-          <button type="submit" class="btn btn-primary">Create</button>
         </form>
       </div>
     </t>

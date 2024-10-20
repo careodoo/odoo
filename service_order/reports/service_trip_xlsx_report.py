@@ -34,7 +34,7 @@ class ServiceTripXlsxReport(models.AbstractModel):
         ],
         [
             prepare_custom_cell("Contract No", style={"bg_color": primary_color}),
-            docids.project_id.name,
+            docids.project_id.experience_id.x_studio_contract_no,
             None,
             None,
             prepare_custom_cell("Total Weight (KG)", style={"bg_color": primary_color}),

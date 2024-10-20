@@ -16,41 +16,54 @@ class ServiceTrip(models.Model):
   pickup_location_id = fields.Many2one(
       'service.pickup.location',
       string='Pickup Location',
+      tracking=True,
   )
 
   center_id = fields.Many2one(
       'service.center',
       string='Center',
+      tracking=True,
   )
 
   type_id = fields.Many2one(
       'service.type',
       string='Type',
+      tracking=True,
   )
 
   trip_tag_ids = fields.Many2many(
       'service.trip.tag',
       string='Tags',
+      tracking=True,
   )
 
   company_id = fields.Many2one(
       'res.company',
       string='Company',
+      tracking=True,
   )
 
   project_id = fields.Many2one(
       'service.project',
       string='Project',
+      tracking=True,
   )
 
-  pickuped_datetime = fields.Datetime(string='Pickuped Date & Time')
+  pickuped_datetime = fields.Datetime(
+      string='Pickuped Date & Time',
+      tracking=True,
+  )
 
   contact_id = fields.Many2one(
       'res.partner',
       string='Contact',
+      tracking=True,
   )
 
-  trip_date = fields.Date(string='Trip Date')
+  trip_date = fields.Date(
+      string='Trip Date',
+      tracking=True,
+  )
 
   trip_line_ids = fields.One2many(
       'service.trip.line',
@@ -69,11 +82,13 @@ class ServiceTrip(models.Model):
       ],
       string='State',
       default='draft',
+      tracking=True,
   )
 
   team_id = fields.Many2one(
       'service.team',
       string='Team',
+      tracking=True,
   )
 
   total_weight = fields.Float(

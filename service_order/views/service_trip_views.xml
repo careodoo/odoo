@@ -8,13 +8,30 @@
     <field name="arch" type="xml">
       <form string="Service Trip">
         <header>
-          <button name="action_to_pickuped" string="Pickuped" type="object" class="oe_highlight" />
-          <button name="action_to_arrived" string="Arrived" type="object" class="oe_highlight" />
-          <button name="action_to_processing" string="Process" type="object" class="oe_highlight" />
-          <button name="action_to_delivered" string="Delivered" type="object" class="oe_highlight" />
-          <button name="action_to_completed" string="Complete" type="object" class="oe_highlight" />
-          <button name="action_to_cancelled" string="Cancel" type="object" class="oe_highlight" />
-          <button name="action_to_draft" string="Reset to Draft" type="object" class="oe_highlight" />
+          <button groups="service_order.service_trip_to_pickuped" name="action_to_pickuped"
+            string="Pickuped" type="object" class="oe_highlight" />
+
+          <button groups="service_order.service_trip_to_arrived" name="action_to_arrived"
+            string="Arrived" type="object" class="oe_highlight" />
+
+          <button groups="service_order.service_trip_to_processing" name="action_to_processing"
+            string="Process" type="object" class="oe_highlight" />
+
+          <button groups="service_order.service_trip_to_delivered" name="action_to_delivered"
+            string="Delivered" type="object" class="oe_highlight" />
+
+          <button groups="service_order.service_trip_to_completed" name="action_to_completed"
+            string="Complete" type="object"
+            class="oe_highlight" />
+
+          <button groups="service_order.service_trip_to_cancel" name="action_to_cancelled"
+            string="Cancel" type="object"
+            class="oe_highlight" />
+
+          <button groups="service_order.service_trip_to_draft" name="action_to_draft"
+            string="Reset to Draft" type="object"
+            class="oe_highlight" />
+
           <field name="states" widget="statusbar" />
         </header>
         <sheet>
@@ -22,18 +39,20 @@
             <group>
               <field name="sequence" />
               <field name="reference" />
-              <field name="pickup_location_id" domain="[('project_ids','in',[project_id])]" />
-              <field name="center_id" />
-              <field name="trip_tag_ids" widget="many2many_tags" options="{'color_field': 'color'}" />
-              <field name="order_id" />
+              <field name="pickup_location_id" domain="[('project_ids','in',[project_id])]"
+                attrs="{'readonly':[('states','=','completed')]}" />
+              <field name="center_id" attrs="{'readonly':[('states','=','completed')]}" />
+              <field name="trip_tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"
+                attrs="{'readonly':[('states','=','completed')]}" />
+              <field name="order_id" attrs="{'readonly':[('states','=','completed')]}" />
             </group>
             <group>
-              <field name="type_id" />
-              <field name="project_id" />
-              <field name="pickuped_datetime" />
-              <field name="contact_id" />
-              <field name="team_id" />
-              <field name="trip_date" />
+              <field name="type_id" attrs="{'readonly':[('states','=','completed')]}" />
+              <field name="project_id" attrs="{'readonly':[('states','=','completed')]}" />
+              <field name="pickuped_datetime" attrs="{'readonly':[('states','=','completed')]}" />
+              <field name="contact_id" attrs="{'readonly':[('states','=','completed')]}" />
+              <field name="team_id" attrs="{'readonly':[('states','=','completed')]}" />
+              <field name="trip_date" attrs="{'readonly':[('states','=','completed')]}" />
             </group>
             <group string="Totals">
               <field name="total_weight" />
@@ -43,7 +62,7 @@
           </group>
           <notebook>
             <page name="items" string="Items">
-              <field name="trip_line_ids">
+              <field name="trip_line_ids"  attrs="{'readonly':[('states','=','completed')]}">
                 <tree editable="bottom">
                   <field name="item_id" />
                   <field name="quantity" />

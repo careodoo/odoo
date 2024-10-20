@@ -10,14 +10,14 @@
           <div class="form-group">
             <label for="project_id">Project</label>
             <select class="form-control" id="project_id" name="project_id">
-              <t t-foreach="projects" t-as="project">
-                <t t-if="service_order.project_id.name == project[1]">
-                  <option name="project" selected="selected"
+              <t t-foreach="projects" t-as="project_id">
+                <t t-if="service_order.project_id.name == project_id[1]">
+                  <option name="project_id" selected="selected"
                     t-att-value="service_order.project_id.id"
                     t-esc="service_order.project_id.name" />
                 </t>
                 <t t-else="">
-                  <option name="project" t-att-value="project[0]" t-esc="project[1]" />
+                  <option name="project_id" t-att-value="project_id[0]" t-esc="project_id[1]" />
                 </t>
               </t>
             </select>

@@ -70,8 +70,11 @@ class ServiceOrder(models.Model):
   def action_to_schedule(self):
     self.write({'states': 'scheduled'})
 
-  def action_to_cancel(self):
+  def action_to_cancelled(self):
     self.write({'states': 'cancelled'})
+
+  def action_to_draft(self):
+    self.write({'states': 'draft'})
 
   def convert_to_trip(self):
     trip = self.env['service.trip'].create({

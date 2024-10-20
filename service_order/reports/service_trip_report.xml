@@ -1,18 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
+  <template id="service_report_layout">
+    <t t-if="not o" t-set="o" t-value="doc" />
+    <div class="header">
+      <img src="/service_order/static/src/img/header.png" atl="header.png" class="w-100" />
+    </div>
+    <div class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id"
+      t-att-data-oe-lang="o and o.env.context.get('lang')">
+      <t t-raw="0" />
+    </div>
+    <div t-attf-class="footer o_standard_footer">
+      <div class="row">
+        <img src="/service_order/static/src/img/footer.png" atl="header.png" class="w-100" />
+      </div>
+    </div>
+  </template>
   <template id="service_trip_report" name="service_trip_report">
     <!-- add css file -->
     <t t-call="web.html_container">
-      <t t-call="web.external_layout">
+      <t t-call="service_order.service_report_layout">
         <t t-foreach="docs" t-as="doc">
           <div class="page">
-            <h2>Service Report</h2>
+            <h2 class="text-center">Service Report</h2>
             <div class="row">
               <div class="col-6">
                 <table class="table table-sm table-bordered service_trip_table">
                   <tr>
-                    <td>Contact</td>
+                    <td>Client Name</td>
                     <td>
                       <t t-esc="doc.contact_id.name" />
                     </td>
@@ -20,7 +34,7 @@
                   <tr>
                     <td>Contract No</td>
                     <td>
-                      <t t-esc="doc.project_id.name" />
+                      <t t-esc="doc.project_id.experience_id.x_studio_contract_no" />
                     </td>
                   </tr>
                   <tr>
@@ -60,28 +74,29 @@
                   <tr>
                     <td>State</td>
                     <td t-attf-class="#{doc.states}-state">
-                      <t t-esc="doc.states" />
+                      <span>
+                        <t t-esc="doc.states" />
+                      </span>
                     </td>
                   </tr>
 
                 </table>
               </div>
             </div>
-            <h3 class="text-center mt-5">Disposable Equipment's Report</h3>
+            <h3 class="text-center mt-5">Details</h3>
 
             <!-- trip lines -->
             <div class="mt-5">
               <table class="table service_trip_table">
-                <thead>
-                  <tr>
-                    <th>Item</th>
-                    <th>Quantity</th>
-                    <th>Width</th>
-                    <th>Height</th>
-                    <th>Weight</th>
-                  </tr>
-                </thead>
                 <tbody>
+                  <tr style="background-color:lightgray">
+                    <th>Type</th>
+                    <th>Quantity</th>
+                    <th>AV/Weight</th>
+                    <th>Total Weight</th>
+                    <th>Total Pickup</th>
+                    <th>Remarks</th>
+                  </tr>
                   <t t-foreach="doc.trip_line_ids" t-as="line">
                     <tr>
                       <td>
@@ -91,13 +106,15 @@
                         <t t-esc="line.quantity" />
                       </td>
                       <td>
-                        <t t-esc="line.width" />
-                      </td>
-                      <td>
-                        <t t-esc="line.height" />
-                      </td>
-                      <td>
                         <t t-esc="line.weight" />
+                      </td>
+                      <td>
+                        <t t-esc="line.quantity * line.weight" />
+                      </td>
+                      <td>
+                        <t t-esc="line.quantity * line.weight" />
+                      </td>
+                      <td>
                       </td>
                     </tr>
                   </t>
@@ -106,11 +123,11 @@
 
             </div>
             <div class="row mb-5">
-              <div class="col-4">
-                PHOTOS AND VIDEOS
-                <div t-if="doc.order_id" class="col-3 mt-1">
+              <div class="col-4"> PHOTOS AND VIDEOS <div t-if="doc.order_id" class="col-3 mt-1">
                   <a t-att-href="'service_order/%s/' % doc.order_id.id">
-                  <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('QR', doc.order_id.qr_url, 500, 500)" style="max-height: 155px"/>
+                    <img
+                      t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('QR', doc.order_id.qr_url, 500, 500)"
+                      style="max-height: 155px" />
                   </a>
                 </div>
               </div>
@@ -120,12 +137,14 @@
               </div>
             </div>
             <div name="notes" class="mt-5">
-              All above Items collected from Talabat Company has been terminated by CARE Company and
+              All above Items collected from Talabat Company has been terminated by CARE Company
+              and
               delivered to the government waste incinerators.
             </div>
           </div>
 
         </t>
+
       </t>
     </t>
   </template>

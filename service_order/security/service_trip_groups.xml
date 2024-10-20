@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <record model="ir.module.category" id="module_service_service_trip">
+    <field name="name">Service Order Module</field>
+    <field name="description">Control Trip Actions</field>
+    <field name="sequence">7</field>
+  </record>
+
+
+  <!-- service_trip_group_service_trip -->
+  <record id="service_trip_to_pickuped" model="res.groups">
+    <field name="name">Service Trip Action To Pickuped</field>
+    <field name="category_id" ref="module_service_service_trip" />
+
+  </record>
+
+  <!-- service_trip_to_pickuped -->
+  <record id="service_trip_to_arrived" model="res.groups">
+    <field name="name">Service Trip Action To Arrived</field>
+    <field name="category_id" ref="module_service_service_trip" />
+
+  </record>
+
+  <!-- service_trip_to_arrived -->
+  <record id="service_trip_to_processing" model="res.groups">
+    <field name="name">Service Trip Action To Processing</field>
+    <field name="category_id" ref="module_service_service_trip" />
+
+  </record>
+
+  <!-- service_trip_to_processing -->
+  <record id="service_trip_to_delivered" model="res.groups">
+    <field name="name">Service Trip Action To Delivered</field>
+    <field name="category_id" ref="module_service_service_trip" />
+
+  </record>
+
+  <!-- service_trip_to_delivered -->
+  <record id="service_trip_to_completed" model="res.groups">
+    <field name="name">Service Trip Action To Completed</field>
+    <field name="category_id" ref="module_service_service_trip" />
+  </record>
+
+  <!-- service_trip_to_completed -->
+  <record id="service_trip_to_cancel" model="res.groups">
+    <field name="name">Service Trip Action To Cancel</field>
+    <field name="category_id" ref="module_service_service_trip" />
+  </record>
+
+  <!-- service_trip_to_draft -->
+  <record id="service_trip_to_draft" model="res.groups">
+    <field name="name">Service Trip Action To Draft</field>
+    <field name="category_id" ref="module_service_service_trip" />
+  </record>
+
+
+
+</odoo>

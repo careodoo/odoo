@@ -3,6 +3,7 @@ from odoo import http, _
 from odoo.addons.portal.controllers.portal import pager as portal_pager, CustomerPortal
 from odoo.exceptions import AccessError, MissingError
 from odoo.tools import html2plaintext
+
 ITEMS_PER_PAGE = 10
 
 
@@ -76,6 +77,7 @@ class ServiceOrderPortal(CustomerPortal):
             "projects": http.request.env['service.project'].search([]).name_get(),
             "types": http.request.env['service.type'].search([]).name_get(),
             "pickup_locations": http.request.env['service.pickup.location'].search([]).name_get(),
+            "items": http.request.env['service.item'].search([]).name_get(),
         },
     )
 
@@ -88,13 +90,13 @@ class ServiceOrderPortal(CustomerPortal):
       methods=['POST'],
       csrf=False,
   )
-  def portal_service_order_submit(self ,order_id=None,**kw):
+  def portal_service_order_submit(self, order_id=None, **kw):
+    try:
+      order_datetime = datetime.strptime(kw.get('order_datetime'), '%Y-%m-%dT%H:%M:%S')
+    except:
+      order_datetime = datetime.strptime(kw.get('order_datetime'), '%Y-%m-%dT%H:%M')
     if order_id:
       order = http.request.env['service.order'].browse(order_id)
-      try:
-        order_datetime = datetime.strptime(kw.get('order_datetime'), '%Y-%m-%dT%H:%M:%S')
-      except:
-        order_datetime = datetime.strptime(kw.get('order_datetime'), '%Y-%m-%dT%H:%M')
       order.sudo().write({
           'project_id': int(kw.get('project_id')),
           'type_id': int(kw.get('type_id')),
@@ -107,9 +109,21 @@ class ServiceOrderPortal(CustomerPortal):
           body=_('Order updated by customer'),
           message_type='comment',)
 
+      return http.request.redirect(f'/service_order/{order_id}')
     else:
-      http.request.env['service.order'].sudo().create(kw)
-    return http.request.redirect(f'/service_order/{order_id}')
+      http.request.env['service.order'].sudo().create({**kw, 'order_datetime': order_datetime})
+      # send notification
+      http.request.env['mail.activity'].sudo().create({
+          'res_id':
+              order_id,
+          'res_model_id':
+              http.request.env['ir.model'].sudo().search([('model', '=', 'service.order')]).id,
+          'activity_type_id':
+              http.request.env['mail.activity.type'].sudo().search([('name', '=', 'To Do')]).id,
+          'summary':
+              'New order created',
+      })
+      return http.request.redirect('/service_orders')
 
   # view order
   @http.route(
@@ -180,5 +194,8 @@ class ServiceOrderPortal(CustomerPortal):
   )
   def portal_service_order_cancel(self, order_id, **kw):
     order = http.request.env['service.order'].browse(order_id)
-    order.sudo().action_to_cancel()
+    if order.trip_id:
+      order.sudo().trip_id.action_to_cancelled()
+    else:
+      order.sudo().action_to_cancelled()
     return http.request.redirect(f'/service_order/{order_id}')

@@ -20,12 +20,16 @@ class ServiceProject(models.Model):
       string='Status',
       tracking=True,
   )
+  experience_id = fields.Many2one(
+      'care.experience',
+      string='Experience',
+  )
   contact_id = fields.Many2one(
       'res.partner',
       string='Contact',
       tracking=True,
   )
-  assign_user_id = fields.Many2one(
+  assign_user_ids = fields.Many2many(
       'res.users',
       string='Assign User',
       tracking=True,

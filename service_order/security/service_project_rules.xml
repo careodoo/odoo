@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- craete record rule for portal user only
+    service.project to allow only user in assign_user_ids to see ther own docs -->
+  <record id="service_project_portal_user_rule" model="ir.rule">
+    <field name="name">Service Project Portal User Rule</field>
+    <field name="model_id" ref="model_service_project" />
+    <field name="domain_force">[('assign_user_ids', 'in', [user.id])]</field>
+    <field name="perm_read" eval="True" />
+    <field name="perm_write" eval="True" />
+    <field name="perm_create" eval="True" />
+    <field name="perm_unlink" eval="True" />
+    <field name="groups" eval="[(4, ref('base.group_portal'))]" />
+  </record>
+
+  <!-- service order -->
+  <record id="service_order_portal_user_rule" model="ir.rule">
+    <field name="name">Service Order Portal User Rule</field>
+    <field name="model_id" ref="model_service_order" />
+    <field name="domain_force">[('project_id.assign_user_ids', 'in', [user.id])]</field>
+    <field name="perm_read" eval="True" />
+    <field name="perm_write" eval="True" />
+    <field name="perm_create" eval="True" />
+    <field name="perm_unlink" eval="True" />
+    <field name="groups" eval="[(4, ref('base.group_portal'))]" />
+  </record>
+
+
+</odoo>

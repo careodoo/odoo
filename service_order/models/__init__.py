@@ -14,3 +14,5 @@ from . import service_order
 from . import service_order_line
 from . import service_trip
 from . import service_trip_line
+
+from . import care_experience

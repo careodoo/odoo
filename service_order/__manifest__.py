@@ -6,6 +6,8 @@
     "license": "LGPL-3",
     "data": [
         "security/ir.model.access.csv",
+        "security/service_project_rules.xml",
+        "security/service_trip_groups.xml",
         "data/service_service.xml",
         "views/service_service_views.xml",
         "views/service_center_tag_views.xml",
@@ -36,9 +38,15 @@
         "portal",
         "report_xlsx_dynamic",
         "website",
+        "care_experience",
     ],
     'assets': {
         'web.report_assets_common': ['service_order/static/src/css/service_trip_style.css',],
-        'web.assets_frontend': ['service_order/static/src/css/service_trip_style.css',],
+        'web.assets_frontend': [
+            'service_order/static/src/xml/serviceOrderLine.xml',
+            'service_order/static/src/css/service_trip_style.css',
+            'service_order/static/src/js/serviceOrderLine.js',
+        ],
+        'web.assets_backend': ['service_order/static/src/js/serviceOrderLine.js',],
     }
 }

@@ -7,24 +7,27 @@
     <field name="arch" type="xml">
       <form string="Service Order">
         <header>
-          <button attrs="{'invisible':[('states','!=','draft')]}" name="convert_to_trip" string="Convert to trip" type="object" class="oe_highlight" />
-          <field name="states" widget="statusbar"/>
+          <button attrs="{'invisible':[('states','!=','draft')]}" name="convert_to_trip"
+            string="Convert to trip" type="object" class="oe_highlight" />
+          <button attrs="{'invisible':[('states','!=','completed')]}" name="action_to_draft"
+            string="Reset to Draft" type="object" class="oe_highlight" />
+          <field name="states" widget="statusbar" />
         </header>
         <sheet>
           <group>
-            <field name="active" invisible="1"/>
-            <field name="serial" />
-            <field name="project_id" />
+            <field name="active" invisible="1" />
             <field name="qr_url" invisible="1" />
-            <field name="type_id" />
-            <field name="pickup_location_id" />
-            <field name="order_datetime" />
-            <field name="trip_id" />
-            <field name="notes" />
+            <field name="serial" attrs="{'readonly':[('states','=','completed')]}" />
+            <field name="project_id" attrs="{'readonly':[('states','=','completed')]}" />
+            <field name="type_id" attrs="{'readonly':[('states','=','completed')]}" />
+            <field name="pickup_location_id" attrs="{'readonly':[('states','=','completed')]}" />
+            <field name="order_datetime" attrs="{'readonly':[('states','=','completed')]}" />
+            <field name="trip_id" attrs="{'readonly':[('states','=','completed')]}" />
+            <field name="notes" attrs="{'readonly':[('states','=','completed')]}" />
           </group>
           <notebook>
             <page name="lines" string="Lines">
-              <field name="order_line_ids">
+              <field name="order_line_ids" attrs="{'readonly':[('states','=','completed')]}">
                 <tree editable="bottom">
                   <field name="item_id" />
                   <field name="quantity" />
@@ -37,15 +40,14 @@
           </notebook>
         </sheet>
         <!-- chatetr -->
-         <div class="oe_chatter">
-            <field name="message_follower_ids" widget="mail_followers" groups="base.group_user"/>
-            <field name="message_ids" widget="mail_thread"/>
+        <div class="oe_chatter">
+          <field name="message_follower_ids" widget="mail_followers" groups="base.group_user" />
+          <field name="message_ids" widget="mail_thread" />
         </div>
       </form>
 
     </field>
   </record>
-
 
 
   <record id="service_order_tree_view" model="ir.ui.view">
@@ -60,13 +62,13 @@
         <field name="pickup_location_id" />
         <field name="order_datetime" />
         <field name="notes" />
-        <field name="states" 
-        widget="badge" 
-        decoration-muted="states == 'draft'"
-        decoration-info="states in ['pickuped','scheduled']"
-        decoration-warning="states in ['arrived','processing','delivered']"
-        decoration-danger="states == 'cancelled'"
-        decoration-success="states == 'completed'"/>
+        <field name="states"
+          widget="badge"
+          decoration-muted="states == 'draft'"
+          decoration-info="states in ['pickuped','scheduled']"
+          decoration-warning="states in ['arrived','processing','delivered']"
+          decoration-danger="states == 'cancelled'"
+          decoration-success="states == 'completed'" />
       </tree>
     </field>
   </record>
@@ -78,7 +80,7 @@
   </record>
 
   <menuitem id="service_order_menu" name="Service Orders"
-   parent="service_order.menu_service_order"
+    parent="service_order.menu_service_order"
     sequence="3"
     action="service_order_action" />
 

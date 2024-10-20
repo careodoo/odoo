@@ -1,7 +1,4 @@
-/* color first td from every tr */
-.service_trip_table tr td:first-child {
-    background-color: rgb(211, 211, 211);
-}
+
 
 /* add border for table */
 .service_trip_table tr td, .service_trip_table tr th {
@@ -11,27 +8,45 @@
 }
 
 
-.draft-state{
-    color: gray;
+.draft-state span{
+    background-color: rgb(163, 163, 163);
+    border-radius: 50px;
+    padding: 5px;
 }
-.pickuped-state{
-    color: cyan;
+.pickuped-state span{
+    background-color: cyan;
+    border-radius: 50px;
+    padding: 5px;
 }
-.arrived-state{
-    color: yellow;
+.arrived-state span{
+     background-color: rgb(255, 255, 119);
+    border-radius: 50px;
+    padding: 5px;
+
 }
-.processing-state{
-    color: orange;
+.processing-state span{
+  background-color: yellow;
+  border-radius: 50px;
+  padding: 5px;
+
 }
-.delivered-state{
-    color: blue;
+.delivered-state span{
+  background-color: blue;
+    border-radius: 50px;
+    padding: 5px;
 }
-.completed-state{
-    color:green;
+.completed-state span{
+  background-color:green;
+    border-radius: 50px;
+    padding: 5px;
 }
-.cancelled-state{
-    color: red;
+.cancelled-state span{
+  background-color: rgb(250, 153, 153);
+    border-radius: 50px;
+    padding: 5px;
 }
-.scheduled-state{
-    color: purple;
+.scheduled-state span{
+  background-color: rgb(197, 117, 197);
+    border-radius: 50px;
+    padding: 5px;
 }

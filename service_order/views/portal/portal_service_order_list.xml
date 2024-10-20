@@ -33,8 +33,8 @@
         <t t-set="title">Service Orders</t>
       </t>
       <t t-set="wrapwrap_classes" t-value="'o_portal_bg_dark'" />
-      <div class="o_download_pdf btn-toolbar flex-sm-nowrap">
-        <div class="btn-group  flex-grow-1 me-1 mb-1">
+      <div class="row o_download_pdf btn-toolbar flex-sm-nowrap">
+        <div class="col-2 btn-group  flex-grow-1 me-1 mb-1">
           <a class="btn btn-secondary btn-block o_download_btn" href="/service_order/create"
           title="Service Order">
           <i class="fa fa-plus" /> Create order </a>
@@ -45,10 +45,10 @@
           <tr>
             <th>Serial</th>
             <th>Project</th>
-            <th>Type</th>
             <th>Pickup Location</th>
+            <th>Trip Reference</th>
+            <th>Trip Date</th>
             <th>Order Date</th>
-            <th>Notes</th>
             <th>State</th>
             <th>Edit</th>
             <th>Cancle</th>
@@ -68,23 +68,25 @@
                 <t t-esc="order.project_id.name" />
               </td>
               <td>
-                <t t-esc="order.type_id.name" />
-              </td>
-              <td>
                 <t t-esc="order.pickup_location_id.name" />
               </td>
               <td>
+                <t t-esc="order.trip_id.reference" />
+              </td>
+              <td class="text-wrap">
+                <t t-esc="order.trip_id.pickuped_datetime" />
+              </td>
+              <td class="text-wrap">
                 <t t-esc="order.order_datetime" />
               </td>
-              <td>
-                <t t-esc="order.notes" />
-              </td>
               <td t-attf-class="#{order.states}-state">
-                <t t-esc="order.states" />
+                <span>
+                  <t t-esc="order.states" />
+                </span>
               </td>
               <td>
                 <a t-attf-href="/service_order/{{order.id}}/update">
-                  <button class="btn btn-info fa fa-edit">
+                  <button t-attf-class="btn btn-info fa fa-edit #{'d-none' if order.states != 'draft' else ''}">
                   </button>
                 </a>
               </td>
@@ -92,8 +94,9 @@
                 <a>
                   <button id="cancel_order_btn"
                     data-toggle="modal"
+                    t-attf-class="btn btn-danger fa fa-trash #{'d-none' if order.states  not in ['draft', 'scheduled'] else ''}"
                     t-att-data-target="'#cancel_order_%s' % order.id"
-                    class="btn btn-danger fa fa-trash">
+                >
                   </button>
                 </a>
               </td>
@@ -101,9 +104,9 @@
           </t>
         </tbody>
       </t>
-      <div>
+      <!-- <div>
         <t t-call="portal.pager" />
-      </div>
+      </div> -->
     </t>
   </template>
 
