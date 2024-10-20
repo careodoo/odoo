@@ -9,6 +9,7 @@
         "security/service_project_rules.xml",
         "security/service_trip_groups.xml",
         "data/service_service.xml",
+        "data/mail_template_data.xml",
         "views/service_service_views.xml",
         "views/service_center_tag_views.xml",
         "views/service_item_tag_views.xml",

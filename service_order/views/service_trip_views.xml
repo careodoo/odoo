@@ -31,6 +31,9 @@
           <button groups="service_order.service_trip_to_draft" name="action_to_draft"
             string="Reset to Draft" type="object"
             class="oe_highlight" />
+          <button name="action_send_email"
+            string="Send Email" type="object"
+          />
 
           <field name="states" widget="statusbar" />
         </header>
@@ -62,7 +65,7 @@
           </group>
           <notebook>
             <page name="items" string="Items">
-              <field name="trip_line_ids"  attrs="{'readonly':[('states','=','completed')]}">
+              <field name="trip_line_ids" attrs="{'readonly':[('states','=','completed')]}">
                 <tree editable="bottom">
                   <field name="item_id" />
                   <field name="quantity" />

@@ -165,3 +165,9 @@ class ServiceTrip(models.Model):
   def _get_report_base_filename(self):
     self.ensure_one()
     return '%s' % (self.reference)
+
+  # send email to contact person including report
+  def action_send_email(self):
+    template = self.env.ref('service_order.mail_template_trip_report')
+    template.send_mail(self.id, force_send=True)
+
