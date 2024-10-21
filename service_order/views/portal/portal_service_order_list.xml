@@ -50,7 +50,7 @@
             <th>Order Date</th>
             <th>State</th>
             <th>Edit</th>
-            <th>Cancle</th>
+            <th>Cancel</th>
           </tr>
         </thead>
         <tbody>

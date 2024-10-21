@@ -25,28 +25,28 @@
 }
 
 .draft-state {
-    background-color: rgb(163, 163, 163);
+    background-color: #d1d1d1;
 
 }
 .pickuped-state {
-    background-color: cyan;
+    background-color: #cd6c0d;
 }
 .arrived-state {
-     background-color: rgb(255, 255, 119);
+    background-color: #317f69;
 
 }
 .processing-state {
-  background-color: rgb(110, 139, 2);
+    background-color: #0a599f;
 
 }
 .delivered-state {
-  background-color: blue;
+    background-color: #3c775f;
 }
 .completed-state {
   background-color:green;
 }
 .cancelled-state {
-  background-color: rgb(250, 153, 153);
+    background-color: #bf2904;
 }
 .scheduled-state {
   background-color: rgb(197, 117, 197);
