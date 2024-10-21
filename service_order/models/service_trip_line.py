@@ -9,7 +9,10 @@ class ServiceTripLine(models.Model):
       'service.trip',
       string='Service Trip',
   )
-
+  order_id = fields.Many2one(
+      'service.order',
+      string='Service Order',
+  )
   item_id = fields.Many2one(
       'service.item',
       string='Service Item',

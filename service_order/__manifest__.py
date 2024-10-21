@@ -5,9 +5,9 @@
     "category": "Other",
     "license": "LGPL-3",
     "data": [
+        "security/service_security_groups.xml",
         "security/ir.model.access.csv",
         "security/service_project_rules.xml",
-        "security/service_trip_groups.xml",
         "data/service_service.xml",
         "data/mail_template_data.xml",
         "views/service_service_views.xml",

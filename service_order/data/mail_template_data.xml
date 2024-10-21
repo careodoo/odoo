@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-  <data noupdate="1">
+  <data noupdate="0">
     <record id="mail_template_trip_report" model="mail.template">
       <field name="name">Service Trip Mail</field>
       <field name="model_id" ref="service_order.model_service_trip"/>
       <field name="subject">{{ object.reference }}</field>
       <field name="email_from">{{ object.project_id.company_id.email }}</field>
-      <field name="email_to">{{ object.contact_id.email }}</field>
+      <field name="email_to">	{{ ','.join(object.project_id.assign_user_ids.partner_id.mapped('email')) }}</field>
       <field name="body_html" type="html">
 <div style="margin: 0px; padding: 0px;">
   Hello,

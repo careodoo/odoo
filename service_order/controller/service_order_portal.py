@@ -3,11 +3,23 @@ from odoo import http, _
 from odoo.addons.portal.controllers.portal import pager as portal_pager, CustomerPortal
 from odoo.exceptions import AccessError, MissingError
 from odoo.tools import html2plaintext
+from odoo.osv.expression import AND, OR
 
 ITEMS_PER_PAGE = 10
 
 
 class ServiceOrderPortal(CustomerPortal):
+
+  def _get_order_search_domain(self, search_in, search):
+    search_domain = []
+    if search_in in ('all', 'serial'):
+      search_domain = OR([search_domain, [('serial', 'ilike', search)]])
+    if search_in in ('all', 'notes'):
+      search_domain = OR([search_domain, [('notes', 'ilike', search)]])
+    return search_domain
+
+  def _get_portal_default_domain(self):
+    return []
 
   def _prepare_home_portal_values(self, counters):
     """ Add subscription details to main account page """
@@ -31,8 +43,52 @@ class ServiceOrderPortal(CustomerPortal):
       filterby=None,
       search=None,
       search_in='content',
+      groupby='none',
       **kw,
   ):
+    domain = self._get_portal_default_domain()
+    searchbar_filters = {
+        'all': {'label': _('All'), 'domain': []},
+        'draft': {'label': _('Draft'), 'domain': [('states', '=', 'draft')]},
+        'scheduled': {'label': _('Scheduled'), 'domain': [('states', '=', 'scheduled')]},
+        'cancelled': {'label': _('Cancelled'), 'domain': [('states', '=', 'cancelled')]},
+        'completed': {'label': _('Completed'), 'domain': [('states', '=', 'completed')]},
+        'delivered': {'label': _('Delivered'), 'domain': [('states', '=', 'delivered')]},
+        'processing': {'label': _('Processing'), 'domain': [('states', '=', 'processing')]},
+        'arrived': {'label': _('Arrived'), 'domain': [('states', '=', 'arrived')]},
+        'pickuped': {'label': _('Pickuped'), 'domain': [('states', '=', 'pickuped')]},
+
+    }
+    searchbar_inputs = {
+        'all': {'label': _('Search in All'), 'input': 'all'},
+        'serial': {'label': _('Search in serial'), 'input': 'serial'},
+        'notes': {'label': _('Search in Notes'), 'input': 'notes'},
+    }
+    searchbar_sortings = {
+        'date': {'label': _('Date'), 'order': 'order_datetime'},
+        'name': {'label': _('Serial'), 'order': 'serial'},
+        'id': {'label': _('ID'), 'order': 'id'},
+    }
+    searchbar_groupby = {
+        'none': {'input': 'none', 'label': _('None'), 'order': 1},
+        'project_id': {'input': 'project_id', 'label': _('Project'), 'order': 2},
+    }
+
+    if not sortby:
+      sortby = 'id'
+    order = searchbar_sortings[sortby]['order']
+
+    # ========================= filter by =========================
+    if not filterby:
+      filterby = 'all'
+    domain = AND([domain, searchbar_filters[filterby]['domain']])
+    # ========================= search =========================
+    if search and search_in:
+      domain = AND([domain, self._get_order_search_domain(search_in, search)])
+    # ========================= group by =========================
+    if not groupby:
+      groupby = 'none'
+
     service_orders_counter = http.request.env['service.order'].search_count([])
     pager = portal_pager(
         url="/service_orders",
@@ -40,16 +96,20 @@ class ServiceOrderPortal(CustomerPortal):
             'date_begin': date_begin,
             'date_end': date_end,
             'sortby': sortby,
-            'filterby': filterby
+            'filterby': filterby,
+            'search_in': search_in,
+            'search': search,
+            'groupby': groupby,
         },
         total=service_orders_counter,
         page=page,
         step=ITEMS_PER_PAGE,
     )
     service_orders = http.request.env['service.order'].search(
-        [],
+        domain,
         limit=ITEMS_PER_PAGE,
         offset=pager['offset'],
+        order=order,
     )
     sortby = 'name'
     return http.request.render(
@@ -60,6 +120,14 @@ class ServiceOrderPortal(CustomerPortal):
             "page_name": 'service_orders',
             "default_url": '/service_orders',
             'sortby': sortby,
+            'searchbar_filters': searchbar_filters,
+            'searchbar_inputs': searchbar_inputs,
+            'searchbar_sortings': searchbar_sortings,
+            # 'searchbar_groupby': searchbar_groupby,
+            # 'groupby': groupby,
+            'filterby': filterby,
+            'search_in': search_in,
+            'search': search,
         },
     )
 
@@ -78,6 +146,7 @@ class ServiceOrderPortal(CustomerPortal):
             "types": http.request.env['service.type'].search([]).name_get(),
             "pickup_locations": http.request.env['service.pickup.location'].search([]).name_get(),
             "items": http.request.env['service.item'].search([]).name_get(),
+            "page_name": 'order_create',
         },
     )
 

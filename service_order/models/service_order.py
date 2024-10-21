@@ -12,23 +12,30 @@ class ServiceOrder(models.Model):
       string='Serial',
       readonly=True,
   )
+
   active = fields.Boolean(default=True)
   project_id = fields.Many2one(
       'service.project',
       string='Project',
+      tracking=True,
   )
 
   type_id = fields.Many2one(
       'service.type',
       string='Type',
+      tracking=True,
   )
 
   pickup_location_id = fields.Many2one(
       'service.pickup.location',
       string='Pickup Location',
+      tracking=True,
   )
 
-  order_datetime = fields.Datetime(string='Order Date & Time')
+  order_datetime = fields.Datetime(
+      string='Order Date & Time',
+      tracking=True,
+  )
 
   notes = fields.Html(string='Notes')
 
@@ -46,15 +53,24 @@ class ServiceOrder(models.Model):
       string='State',
       default='draft',
       copy=False,
+      tracking=True,
   )
   order_line_ids = fields.One2many(
       'service.order.line',
       'order_id',
       string='Items',
   )
+  trip_line_ids = fields.One2many(
+      'service.trip.line',
+      'order_id',
+      related='trip_id.trip_line_ids',
+      string='Items',
+      tracking=True,
+  )
   trip_id = fields.Many2one(
       'service.trip',
       string='Trip',
+      tracking=True,
   )
   qr_url = fields.Char(
       string='QR Code URL',
@@ -65,7 +81,16 @@ class ServiceOrder(models.Model):
   def create(self, vals_list):
     for vals in vals_list:
       vals['serial'] = self.env['ir.sequence'].next_by_code('service.order') or '/'
-    return super().create(vals_list)
+    # send activity
+    resutl = super().create(vals_list)
+    self.env['mail.activity'].sudo().create({
+        'res_id': resutl.id,
+        'res_model_id': self.env['ir.model']._get('service.order').id,
+        'summary': 'New Service Order',
+        'note': 'New Service Order',
+        'activity_type_id': self.env.ref('mail.mail_activity_data_todo').id,
+    })
+    return resutl
 
   def action_to_schedule(self):
     self.write({'states': 'scheduled'})

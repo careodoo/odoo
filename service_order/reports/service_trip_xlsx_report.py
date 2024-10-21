@@ -80,7 +80,7 @@ class ServiceTripXlsxReport(models.AbstractModel):
             line.weight,
             docids.total_weight,
             docids.total_weight,
-            "Remarks",
+            None,
         ] for line in docids.trip_line_ids],
         ["Totals", docids.total_quantity, None, docids.total_weight, None, None],
         [None],

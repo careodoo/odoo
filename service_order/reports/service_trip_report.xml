@@ -21,7 +21,7 @@
       <t t-call="service_order.service_report_layout">
         <t t-foreach="docs" t-as="doc">
           <div class="page">
-            <h2 class="text-center">Service Report</h2>
+            <h2 class="text-center mb-5">Service Report</h2>
             <div class="row">
               <div class="col-6">
                 <table class="table table-sm table-bordered service_trip_table">
@@ -73,21 +73,27 @@
                   </tr>
                   <tr>
                     <td>State</td>
-                    <td t-attf-class="#{doc.states}-state">
-                      <span>
-                        <t t-esc="doc.states" />
+                    <td>
+                        <span t-attf-class="#{doc.states}-state" 
+                        style="
+                        font-weight: bold;
+                        height: 10px;
+                        color: white;
+                        padding: 5px;
+                        border-radius: 5px;
+                        ">
+                          <t t-esc="doc.states" />
                       </span>
                     </td>
                   </tr>
-
                 </table>
               </div>
             </div>
-            <h3 class="text-center mt-5">Details</h3>
+            <h3 class="text-center mt-3">Details</h3>
 
             <!-- trip lines -->
-            <div class="mt-5">
-              <table class="table service_trip_table">
+            <div class="mt-3">
+              <table class="table table-sm service_trip_table">
                 <tbody>
                   <tr style="background-color:lightgray">
                     <th>Type</th>
@@ -98,8 +104,8 @@
                     <th>Remarks</th>
                   </tr>
                   <t t-foreach="doc.trip_line_ids" t-as="line">
-                    <tr>
-                      <td>
+                    <tr class="text-center">
+                      <td class="text-left" style="background-color:lightgray">
                         <t t-esc="line.item_id.name" />
                       </td>
                       <td>
@@ -118,12 +124,31 @@
                       </td>
                     </tr>
                   </t>
+                  <tr style="background-color:lightgray">
+                    <td >
+                      <strong>Total</strong>
+                    </td>
+                    <td>
+                      <t t-esc="doc.total_quantity" />
+                    </td>
+                    <td>
+                    </td>
+                    <td>
+                      <t t-esc="doc.total_weight" />
+                    </td>
+                    <td>
+                      <t t-esc="doc.total_weight" />
+                    </td>
+                    <td></td>
+                  </tr>
                 </tbody>
               </table>
 
             </div>
             <div class="row mb-5">
-              <div class="col-4"> PHOTOS AND VIDEOS <div t-if="doc.order_id" class="col-3 mt-1">
+              <div class="col-4 text-center">  
+                <span>PHOTOS AND VIDEOS</span>
+                <div t-if="doc.order_id" >
                   <a t-att-href="'service_order/%s/' % doc.order_id.id">
                     <img
                       t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('QR', doc.order_id.qr_url, 500, 500)"
@@ -132,7 +157,7 @@
                 </div>
               </div>
               <div class="col-4"></div>
-              <div class="col-4">
+              <div class="col-4 text-center">
                 CARE STAMP
               </div>
             </div>

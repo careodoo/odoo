@@ -1,4 +1,7 @@
-
+/* color first td for each tr */
+.service_trip_table tr td:first-child {
+   background-color: lightgray;
+}
 
 /* add border for table */
 .service_trip_table tr td, .service_trip_table tr th {
@@ -7,46 +10,44 @@
     border-color: #000;
 }
 
-
-.draft-state span{
-    background-color: rgb(163, 163, 163);
-    border-radius: 50px;
-    padding: 5px;
-}
-.pickuped-state span{
-    background-color: cyan;
-    border-radius: 50px;
-    padding: 5px;
-}
-.arrived-state span{
-     background-color: rgb(255, 255, 119);
-    border-radius: 50px;
-    padding: 5px;
-
-}
-.processing-state span{
-  background-color: yellow;
+.state-badge  {
   border-radius: 50px;
-  padding: 5px;
+  padding: 10px;
+  font-size: small;
+  font-weight: bold;
+  display: block;
+  width: fit-content;
+  height: 20px;
+  color: white;
+  line-height: 0;
+  text-align: center;
 
 }
-.delivered-state span{
+
+.draft-state {
+    background-color: rgb(163, 163, 163);
+
+}
+.pickuped-state {
+    background-color: cyan;
+}
+.arrived-state {
+     background-color: rgb(255, 255, 119);
+
+}
+.processing-state {
+  background-color: rgb(110, 139, 2);
+
+}
+.delivered-state {
   background-color: blue;
-    border-radius: 50px;
-    padding: 5px;
 }
-.completed-state span{
+.completed-state {
   background-color:green;
-    border-radius: 50px;
-    padding: 5px;
 }
-.cancelled-state span{
+.cancelled-state {
   background-color: rgb(250, 153, 153);
-    border-radius: 50px;
-    padding: 5px;
 }
-.scheduled-state span{
+.scheduled-state {
   background-color: rgb(197, 117, 197);
-    border-radius: 50px;
-    padding: 5px;
 }

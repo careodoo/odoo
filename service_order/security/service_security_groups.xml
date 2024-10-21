@@ -12,7 +12,6 @@
   <record id="service_trip_to_pickuped" model="res.groups">
     <field name="name">Service Trip Action To Pickuped</field>
     <field name="category_id" ref="module_service_service_trip" />
-
   </record>
 
   <!-- service_trip_to_pickuped -->
@@ -54,6 +53,10 @@
     <field name="category_id" ref="module_service_service_trip" />
   </record>
 
+  <record id="service_order_module" model="res.groups">
+    <field name="name">Access Service Order Module</field>
+    <field name="category_id" ref="module_service_service_trip" />
+  </record>
 
 
 </odoo>

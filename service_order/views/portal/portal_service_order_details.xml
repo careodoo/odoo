@@ -73,7 +73,7 @@
                   <div class="row" id="service_order_state">
                     <div class="mb-3 col-6">
                       <strong>Order State:</strong>
-                      <span t-attf-class="#{service_order.states}-state">
+                      <span t-attf-class="state-badge #{service_order.states}-state">
                         <span t-field="service_order.states" />
                       </span>
                     </div>
@@ -149,18 +149,19 @@
                     <thead class="bg-100">
                       <tr>
                         <th>Image</th>
-                        <th>Item</th>
+                        <th>Type</th>
                         <th>Quantity</th>
-                        <th>Width</th>
-                        <th>Height</th>
-                        <th>Weight</th>
+                        <th>AV/Weight </th>
+                        <th>Total Weight </th>
+                        <th>Total Pickup</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <t t-foreach="service_order.order_line_ids" t-as="line">
+                      <t t-foreach="service_order.trip_line_ids" t-as="line">
                         <tr>
                           <td>
-                            <img t-att-src="image_data_uri(line.item_id.image)"
+                            <img t-if="line.item_id.image" t-att-src="image_data_uri(line.item_id.image)"
+                          alt="Product Image"
                               style="max-height: 6rem; max-width: 30%;" />
                           </td>
                           <td>
@@ -170,13 +171,13 @@
                             <t t-esc="line.quantity" />
                           </td>
                           <td>
-                            <t t-esc="line.width" />
-                          </td>
-                          <td>
-                            <t t-esc="line.height" />
-                          </td>
-                          <td>
                             <t t-esc="line.weight" />
+                          </td>
+                          <td>
+                            <t t-esc="line.quantity * line.weight" />
+                          </td>
+                          <td>
+                            <t t-esc="line.quantity * line.weight" />
                           </td>
                         </tr>
                       </t>

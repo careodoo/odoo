@@ -17,7 +17,7 @@
           <group>
             <field name="active" invisible="1" />
             <field name="qr_url" invisible="1" />
-            <field name="serial" attrs="{'readonly':[('states','=','completed')]}" />
+            <field name="serial" />
             <field name="project_id" attrs="{'readonly':[('states','=','completed')]}" />
             <field name="type_id" attrs="{'readonly':[('states','=','completed')]}" />
             <field name="pickup_location_id" attrs="{'readonly':[('states','=','completed')]}" />
@@ -27,8 +27,8 @@
           </group>
           <notebook>
             <page name="lines" string="Lines">
-              <field name="order_line_ids" attrs="{'readonly':[('states','=','completed')]}">
-                <tree editable="bottom">
+              <field name="trip_line_ids">
+                <tree >
                   <field name="item_id" />
                   <field name="quantity" />
                   <field name="width" />

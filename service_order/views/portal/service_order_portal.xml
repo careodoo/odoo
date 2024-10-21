@@ -17,6 +17,10 @@
         <a t-if="service_order" t-attf-href="/service_orders?{{ keep_query() }}">Service Orders</a>
         <t t-else="">Service Orders</t>
       </li>
+      <li t-if="page_name == 'order_create'"
+        class="breadcrumb-item active">
+        <a t-attf-href="/service_orders?{{ keep_query() }}">Service Orders</a>
+      </li>
       <li t-if="service_order" class="breadcrumb-item active">
         <span t-field="service_order.serial" />
       </li>
@@ -26,7 +30,7 @@
   <record id="menu_service_orders" model="website.menu">
     <field name="name">Service Orders</field>
     <field name="url">/service_orders</field>
-    <field name="parent_id" ref="website.main_menu"/>
+    <field name="parent_id" ref="website.main_menu" />
     <field name="sequence" type="int">8</field>
   </record>
 

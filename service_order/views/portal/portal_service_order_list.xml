@@ -44,9 +44,8 @@
         <thead>
           <tr>
             <th>Serial</th>
-            <th>Project</th>
             <th>Pickup Location</th>
-            <th>Trip Reference</th>
+            <th> Reference</th>
             <th>Trip Date</th>
             <th>Order Date</th>
             <th>State</th>
@@ -65,13 +64,10 @@
                 </a>
               </td>
               <td>
-                <t t-esc="order.project_id.name" />
-              </td>
-              <td>
                 <t t-esc="order.pickup_location_id.name" />
               </td>
               <td>
-                <t t-esc="order.trip_id.reference" />
+                <t t-esc="order.trip_id.sequence" />
               </td>
               <td class="text-wrap">
                 <t t-esc="order.trip_id.pickuped_datetime" />
@@ -79,14 +75,14 @@
               <td class="text-wrap">
                 <t t-esc="order.order_datetime" />
               </td>
-              <td t-attf-class="#{order.states}-state">
-                <span>
+              <td >
+                <span t-attf-class="state-badge #{order.states}-state">
                   <t t-esc="order.states" />
                 </span>
               </td>
               <td>
                 <a t-attf-href="/service_order/{{order.id}}/update">
-                  <button t-attf-class="btn btn-info fa fa-edit #{'d-none' if order.states != 'draft' else ''}">
+                  <button t-attf-class="btn btn-info fa fa-edit #{'d-none' if order.states not in ['draft', 'scheduled'] else ''}">
                   </button>
                 </a>
               </td>
