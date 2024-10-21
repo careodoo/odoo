@@ -34,10 +34,10 @@
       </t>
       <t t-set="wrapwrap_classes" t-value="'o_portal_bg_dark'" />
       <div class="row o_download_pdf btn-toolbar flex-sm-nowrap">
-        <div class="col-2 btn-group  flex-grow-1 me-1 mb-1">
-          <a class="btn btn-secondary btn-block o_download_btn" href="/service_order/create"
+        <div class="col-5 btn-group  flex-grow-1 me-1 mb-1">
+          <a  style="max-width:150px;min-width:70px" class=" btn btn-secondary btn-block o_download_btn" href="/service_order/create"
           title="Service Order">
-          <i class="fa fa-plus" /> Create order </a>
+          <i   class="fa fa-plus" /> Create order </a>
         </div>
       </div>
       <t t-if="service_orders" t-call="portal.portal_table">
