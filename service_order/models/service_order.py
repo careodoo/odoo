@@ -85,7 +85,7 @@ class ServiceOrder(models.Model):
     for vals in vals_list:
       vals['serial'] = self.env['ir.sequence'].next_by_code('service.order') or '/'
     result = super().create(vals_list)
-    self.create_service_order_activity()
+    result.create_service_order_activity()
     return result
 
   def create_service_order_activity(self,summary='New Service Order',):
