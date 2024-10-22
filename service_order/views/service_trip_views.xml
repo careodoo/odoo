@@ -32,7 +32,7 @@
             string="Reset to Draft" type="object"
             class="oe_highlight" />
           <button name="action_send_email"
-            string="Send Email" type="object"
+            string="SEND BY EMAIL" type="object"
           />
 
           <field name="states" widget="statusbar" />
@@ -53,12 +53,13 @@
               <field name="type_id" attrs="{'readonly':[('states','=','completed')]}" />
               <field name="project_id" attrs="{'readonly':[('states','=','completed')]}" />
               <field name="pickuped_datetime" attrs="{'readonly':[('states','=','completed')]}" />
+              <field name="create_date" attrs="{'readonly':[('states','=','completed')]}" />
               <field name="contact_id" attrs="{'readonly':[('states','=','completed')]}" />
               <field name="team_id" attrs="{'readonly':[('states','=','completed')]}" />
               <field name="trip_date" attrs="{'readonly':[('states','=','completed')]}" />
             </group>
             <group string="Totals">
-              <field name="total_weight" />
+              <!-- <field name="total_weight" /> -->
               <field name="total_quantity" />
               <field name="total_qty_weight" />
             </group>

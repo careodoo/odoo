@@ -2,10 +2,10 @@
 <odoo>
   <template id="service_report_layout">
     <t t-if="not o" t-set="o" t-value="doc" />
-    <div class="header">
+    <div class="header" >
       <img src="/service_order/static/src/img/header.png" atl="header.png" class="w-100" />
     </div>
-    <div class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id"
+    <div  class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id"
       t-att-data-oe-lang="o and o.env.context.get('lang')">
       <t t-raw="0" />
     </div>
@@ -21,7 +21,7 @@
       <t t-call="service_order.service_report_layout">
         <t t-foreach="docs" t-as="doc">
           <div class="page">
-            <h2 class="text-center mb-5">Service Report</h2>
+            <h2 class="text-center mb-3">Service Report</h2>
             <div class="row">
               <div class="col-6">
                 <table class="table table-sm table-bordered service_trip_table">
@@ -62,7 +62,7 @@
                   <tr>
                     <td>Total Weight (KG)</td>
                     <td>
-                      <t t-esc="doc.total_weight" />
+                      <t t-esc="doc.total_qty_weight" />
                     </td>
                   </tr>
                   <tr>
@@ -74,7 +74,7 @@
                   <tr>
                     <td>State</td>
                     <td>
-                        <span t-attf-class="#{doc.states}-state" 
+                      <span t-attf-class="#{doc.states}-state"
                         style="
                         font-weight: bold;
                         height: 10px;
@@ -82,7 +82,7 @@
                         padding: 5px;
                         border-radius: 5px;
                         ">
-                          <t t-esc="doc.states" />
+                        <t t-esc="doc.states" />
                       </span>
                     </td>
                   </tr>
@@ -96,7 +96,7 @@
               <table class="table table-sm service_trip_table">
                 <tbody>
                   <tr style="background-color:lightgray">
-                    <th>Type</th>
+                    <th class="text-left">Type</th>
                     <th>Quantity</th>
                     <th>AV/Weight</th>
                     <th>Total Weight</th>
@@ -105,7 +105,7 @@
                   </tr>
                   <t t-foreach="doc.trip_line_ids" t-as="line">
                     <tr class="text-center">
-                      <td class="text-left" style="background-color:lightgray">
+                      <td  style="background-color:lightgray">
                         <t t-esc="line.item_id.name" />
                       </td>
                       <td>
@@ -125,46 +125,48 @@
                     </tr>
                   </t>
                   <tr style="background-color:lightgray">
-                    <td >
+                    <td>
                       <strong>Total</strong>
                     </td>
                     <td>
-                      <t t-esc="doc.total_quantity" />
+                      <t t-esc="sum(doc.trip_line_ids.mapped('quantity'))" />
                     </td>
                     <td>
+                      <t t-esc="sum(doc.trip_line_ids.mapped('weight'))" />
                     </td>
                     <td>
-                      <t t-esc="doc.total_weight" />
+                      <t t-esc="doc.total_qty_weight" />
                     </td>
                     <td>
-                      <t t-esc="doc.total_weight" />
+                      <t t-esc="doc.total_qty_weight" />
                     </td>
                     <td></td>
                   </tr>
                 </tbody>
               </table>
-
-            </div>
-            <div class="row mb-5">
-              <div class="col-4 text-center">  
-                <span>PHOTOS AND VIDEOS</span>
-                <div t-if="doc.order_id" >
-                  <a t-att-href="'service_order/%s/' % doc.order_id.id">
-                    <img
-                      t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('QR', doc.order_id.qr_url, 500, 500)"
-                      style="max-height: 155px" />
-                  </a>
+              <div class="row">
+                <div class="col-2" >
+                  <span>For more details</span>
+                  <div t-if="doc.order_id">
+                    <a t-att-href="'service_order/%s/' % doc.order_id.id">
+                      <img
+                        t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('QR', doc.order_id.qr_url, 500, 500)"
+                        style="height: 100px;width:100px" />
+                    </a>
+                  </div>
+                </div>
+                <div class="col-8" />
+                <div class="col-2" style="text-align:left">
+                  Care Stamp
                 </div>
               </div>
-              <div class="col-4"></div>
-              <div class="col-4 text-center">
-                CARE STAMP
-              </div>
             </div>
-            <div name="notes" class="mt-5">
-              All above Items collected from Talabat Company has been terminated by CARE Company
-              and
-              delivered to the government waste incinerators.
+            <div name="notes" class="mt-5 d-block">
+              <h6>
+                All above Items collected from Talabat Company has been terminated by CARE Company
+                and
+                delivered to the government waste incinerators.
+              </h6>
             </div>
           </div>
 

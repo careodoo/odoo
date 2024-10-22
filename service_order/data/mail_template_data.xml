@@ -3,19 +3,23 @@
   <data noupdate="0">
     <record id="mail_template_trip_report" model="mail.template">
       <field name="name">Service Trip Mail</field>
-      <field name="model_id" ref="service_order.model_service_trip"/>
-      <field name="subject">{{ object.reference }}</field>
+      <field name="model_id" ref="service_order.model_service_trip" />
+      <field name="subject">{{ object.sequence }} Order No. {{object.states}}</field>
       <field name="email_from">{{ object.project_id.company_id.email }}</field>
-      <field name="email_to">	{{ ','.join(object.project_id.assign_user_ids.partner_id.mapped('email')) }}</field>
+      <field name="email_to"> {{ ','.join(object.project_id.assign_user_ids.partner_id.mapped('email')) }}</field>
       <field name="body_html" type="html">
 <div style="margin: 0px; padding: 0px;">
-  Hello,
+          Dear <t t-out="object.contact_id.name"/>,<br/>
+          <br/>
+          We’re excited to inform you that your order No.  <t t-out="object.sequence"/> has been completed!
+          <br/>
+          We hope you enjoy our service. If you have any questions or concerns, please let us know.
 </div>
       </field>
-      <field name="report_template" ref="service_order.action_report_service_trip_pdf"/>
+      <field name="report_template" ref="service_order.action_report_service_trip_pdf" />
       <field name="report_name">{{ object.reference }}</field>
       <field name="lang">{{ object.contact_id.lang }}</field>
-      <field name="auto_delete" eval="True"/>
-  </record>
+      <field name="auto_delete" eval="True" />
+    </record>
   </data>
 </odoo>

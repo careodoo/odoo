@@ -38,7 +38,7 @@ class ServiceTripXlsxReport(models.AbstractModel):
             None,
             None,
             prepare_custom_cell("Total Weight (KG)", style={"bg_color": primary_color}),
-            docids.total_weight,
+            docids.total_qty_weight,
         ],
         [
             prepare_custom_cell("Trip No", style={"bg_color": primary_color}),
@@ -78,11 +78,11 @@ class ServiceTripXlsxReport(models.AbstractModel):
             line.item_id.name,
             line.quantity,
             line.weight,
-            docids.total_weight,
-            docids.total_weight,
+            line.quantity * line.weight,
+            line.quantity * line.weight,
             None,
         ] for line in docids.trip_line_ids],
-        ["Totals", docids.total_quantity, None, docids.total_weight, None, None],
+        ["Totals", docids.total_quantity, None, docids.total_qty_weight, docids.total_qty_weight, None],
         [None],
         [None],
         [

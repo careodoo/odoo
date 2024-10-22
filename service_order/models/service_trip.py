@@ -73,6 +73,7 @@ class ServiceTrip(models.Model):
   states = fields.Selection(
       [
           ('draft', 'Draft'),
+          ('scheduled', 'Scheduled'),
           ('pickuped', 'Pickuped'),
           ('arrived', 'Arrived'),
           ('processing', 'Processing'),
@@ -92,7 +93,7 @@ class ServiceTrip(models.Model):
   )
 
   total_weight = fields.Float(
-      string='Total Weight',
+      string='Total Weight not used',
       compute='_compute_total_weight',
   )
 
@@ -101,7 +102,7 @@ class ServiceTrip(models.Model):
       compute='_compute_total_quantity',
   )
   total_qty_weight = fields.Float(
-      string='Total Quantity Weight',
+      string='Total Weight',
       compute='_compute_total_qty_weight',
   )
 
@@ -162,12 +163,38 @@ class ServiceTrip(models.Model):
     self.write({'states': 'draft'})
     self.order_id.states = 'draft'
 
+  def action_to_scheduled(self):
+    self.write({'states': 'scheduled'})
+
   def _get_report_base_filename(self):
     self.ensure_one()
     return '%s' % (self.reference)
 
   # send email to contact person including report
   def action_send_email(self):
-    template = self.env.ref('service_order.mail_template_trip_report')
-    template.send_mail(self.id, force_send=True)
-
+    self.ensure_one()
+    template_id = self.env.ref('service_order.mail_template_trip_report').id
+    lang = self.env.context.get('lang')
+    template = self.env['mail.template'].browse(template_id)
+    if template.lang:
+      lang = template._render_lang(self.ids)[self.id]
+    ctx = {
+        'default_model': 'service.trip',
+        'default_res_id': self.ids[0],
+        'default_use_template': bool(template_id),
+        'default_template_id': template_id,
+        'default_composition_mode': 'comment',
+        'custom_layout': "mail.mail_notification_paynow",
+        'proforma': self.env.context.get('proforma', False),
+        'force_email': True,
+        'model_description': self.with_context(lang=lang).sequence,
+    }
+    return {
+        'type': 'ir.actions.act_window',
+        'view_mode': 'form',
+        'res_model': 'mail.compose.message',
+        'views': [(False, 'form')],
+        'view_id': False,
+        'target': 'new',
+        'context': ctx,
+    }

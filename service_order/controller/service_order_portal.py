@@ -66,16 +66,13 @@ class ServiceOrderPortal(CustomerPortal):
     }
     searchbar_sortings = {
         'date': {'label': _('Date'), 'order': 'order_datetime'},
+        'serial desc': {'label': _('Serial Desc'), 'order': 'serial desc'},
         'name': {'label': _('Serial'), 'order': 'serial'},
         'id': {'label': _('ID'), 'order': 'id'},
     }
-    searchbar_groupby = {
-        'none': {'input': 'none', 'label': _('None'), 'order': 1},
-        'project_id': {'input': 'project_id', 'label': _('Project'), 'order': 2},
-    }
 
     if not sortby:
-      sortby = 'id'
+      sortby = 'serial desc'
     order = searchbar_sortings[sortby]['order']
 
     # ========================= filter by =========================
@@ -123,8 +120,6 @@ class ServiceOrderPortal(CustomerPortal):
             'searchbar_filters': searchbar_filters,
             'searchbar_inputs': searchbar_inputs,
             'searchbar_sortings': searchbar_sortings,
-            # 'searchbar_groupby': searchbar_groupby,
-            # 'groupby': groupby,
             'filterby': filterby,
             'search_in': search_in,
             'search': search,

@@ -1,6 +1,14 @@
+/* center all tr in td except first one */
+.service_trip_table{
+    text-align: center;
+}
+
+
+
 /* color first td for each tr */
 .service_trip_table tr td:first-child {
    background-color: lightgray;
+   text-align: left;
 }
 
 /* add border for table */

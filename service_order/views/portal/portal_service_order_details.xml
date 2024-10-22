@@ -65,7 +65,7 @@
                   <div class="row" id="service_order_date">
                     <div class="mb-3 col-6">
                       <strong>Order Date:</strong>
-                      <span t-field="service_order.order_datetime"
+                      <span t-field="service_order.create_date"
                         t-options='{"widget": "datetmie"}' />
                     </div>
                   </div>
@@ -103,6 +103,12 @@
                 </div>
                 <div t-if="service_order.trip_id" id="trip_informations" class="w-50">
 
+                  <div class="row" id="pickup-time">
+                    <div class="mb-3">
+                      <strong>Pickup time:</strong>
+                      <span t-field="service_order.trip_id.pickuped_datetime" />
+                    </div>
+                  </div>
                   <div class="row" id="trip_no">
                     <div class="mb-3">
                       <strong>Trip No:</strong>
@@ -112,29 +118,22 @@
                   <!-- ================================== -->
                   <div class="row" id="trip_reference">
                     <div class="mb-3">
-                      <strong>Trip Reference:</strong>
+                      <strong>Reference:</strong>
                       <span t-field="service_order.trip_id.reference" />
-                    </div>
-                  </div>
-                  <!-- ================================== -->
-                  <div class="row" id="trip_total_weight">
-                    <div class="mb-3">
-                      <strong>Trip Total Weight:</strong>
-                      <span t-field="service_order.trip_id.total_weight" />
-                    </div>
-                  </div>
-                  <!-- ================================== -->
-                  <div class="row" id="trip_total_quantity">
-                    <div class="mb-3">
-                      <strong>Trip Total quantity:</strong>
-                      <span t-field="service_order.trip_id.total_quantity" />
                     </div>
                   </div>
                   <!-- ================================== -->
                   <div class="row" id="trip_total_qty_weight">
                     <div class="mb-3">
-                      <strong>Trip Total qty weight:</strong>
+                      <strong>Total Weight:</strong>
                       <span t-field="service_order.trip_id.total_qty_weight" />
+                    </div>
+                  </div>
+                  <!-- ================================== -->
+                  <div class="row" id="trip_total_quantity">
+                    <div class="mb-3">
+                      <strong>Total quantity:</strong>
+                      <span t-field="service_order.trip_id.total_quantity" />
                     </div>
                   </div>
                 </div>

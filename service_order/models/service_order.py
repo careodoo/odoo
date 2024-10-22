@@ -33,9 +33,12 @@ class ServiceOrder(models.Model):
   )
 
   order_datetime = fields.Datetime(
-      string='Order Date & Time',
+      string='Pickuped Date & Time',
       tracking=True,
+      related='trip_id.pickuped_datetime',
+      readonly=False,
   )
+
 
   notes = fields.Html(string='Notes')
 
@@ -81,16 +84,19 @@ class ServiceOrder(models.Model):
   def create(self, vals_list):
     for vals in vals_list:
       vals['serial'] = self.env['ir.sequence'].next_by_code('service.order') or '/'
-    # send activity
-    resutl = super().create(vals_list)
-    self.env['mail.activity'].sudo().create({
-        'res_id': resutl.id,
+    result = super().create(vals_list)
+    self.create_service_order_activity()
+    return result
+
+  def create_service_order_activity(self,summary='New Service Order',):
+    self.ensure_one()
+    self.env['mail.activity'].create({
+        'res_id': self.id,
         'res_model_id': self.env['ir.model']._get('service.order').id,
-        'summary': 'New Service Order',
+        'summary': summary,
         'note': 'New Service Order',
         'activity_type_id': self.env.ref('mail.mail_activity_data_todo').id,
     })
-    return resutl
 
   def action_to_schedule(self):
     self.write({'states': 'scheduled'})
@@ -99,7 +105,8 @@ class ServiceOrder(models.Model):
     self.write({'states': 'cancelled'})
 
   def action_to_draft(self):
-    self.write({'states': 'draft'})
+    if self.trip_id:
+      self.trip_id.action_to_draft()
 
   def convert_to_trip(self):
     trip = self.env['service.trip'].create({
@@ -116,6 +123,7 @@ class ServiceOrder(models.Model):
     })
     self.write({'trip_id': trip.id})
     self.action_to_schedule()
+    self.trip_id.action_to_scheduled()
 
   def _compute_access_url(self):
     super()._compute_access_url()
