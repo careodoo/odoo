@@ -70,10 +70,10 @@
                 <t t-esc="order.trip_id.sequence" />
               </td>
               <td class="text-wrap">
-                <t t-esc="order.trip_id.pickuped_datetime" />
+                <t t-esc="order.trip_id.pickuped_datetime + relativedelta(hours=timzone_offset) if order.trip_id.pickuped_datetime else ''" />
               </td>
               <td class="text-wrap">
-                <t t-esc="order.order_datetime" />
+                <t  t-options="{'widget': 'datetime', 'format': 'Y-M-d hh:mm:ss'}" t-esc="order.create_date + relativedelta(hours=timzone_offset) " />
               </td>
               <td >
                 <span t-attf-class="state-badge #{order.states}-state">

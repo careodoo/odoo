@@ -4,11 +4,29 @@ from odoo.addons.portal.controllers.portal import pager as portal_pager, Custome
 from odoo.exceptions import AccessError, MissingError
 from odoo.tools import html2plaintext
 from odoo.osv.expression import AND, OR
+import pytz
+from dateutil.relativedelta import relativedelta
 
 ITEMS_PER_PAGE = 10
 
 
 class ServiceOrderPortal(CustomerPortal):
+
+  def get_timezone_offset(self):
+    tz = http.request.env.user.tz
+    offset = 2
+    if tz:
+      timezone = pytz.timezone(tz)
+      aware1 = timezone.localize(datetime.now())
+      offset = aware1.utcoffset().seconds / 3600
+    return offset
+
+  def convert_input_datetime(self, time):
+    offset = self.get_timezone_offset()
+    try:
+      return datetime.strptime(time, '%Y-%m-%dT%H:%M:%S') - relativedelta(hours=offset)
+    except:
+      return datetime.strptime(time, '%Y-%m-%dT%H:%M') - relativedelta(hours=offset)
 
   def _get_order_search_domain(self, search_in, search):
     search_domain = []
@@ -65,7 +83,6 @@ class ServiceOrderPortal(CustomerPortal):
         'notes': {'label': _('Search in Notes'), 'input': 'notes'},
     }
     searchbar_sortings = {
-        'date': {'label': _('Date'), 'order': 'order_datetime'},
         'serial desc': {'label': _('Serial Desc'), 'order': 'serial desc'},
         'name': {'label': _('Serial'), 'order': 'serial'},
         'id': {'label': _('ID'), 'order': 'id'},
@@ -123,6 +140,7 @@ class ServiceOrderPortal(CustomerPortal):
             'filterby': filterby,
             'search_in': search_in,
             'search': search,
+            'timzone_offset': self.get_timezone_offset(),
         },
     )
 
@@ -155,17 +173,14 @@ class ServiceOrderPortal(CustomerPortal):
       csrf=False,
   )
   def portal_service_order_submit(self, order_id=None, **kw):
-    try:
-      order_datetime = datetime.strptime(kw.get('order_datetime'), '%Y-%m-%dT%H:%M:%S')
-    except:
-      order_datetime = datetime.strptime(kw.get('order_datetime'), '%Y-%m-%dT%H:%M')
+    datetime_converted = self.convert_input_datetime(kw.get('order_datetime'))
     if order_id:
       order = http.request.env['service.order'].browse(order_id)
       order.sudo().write({
           'project_id': int(kw.get('project_id')),
           'type_id': int(kw.get('type_id')),
           'pickup_location_id': int(kw.get('pickup_location_id')),
-          'order_datetime': order_datetime,
+          'order_datetime': datetime_converted,
           'notes': kw.get('notes'),
       })
       # notify user
@@ -175,7 +190,7 @@ class ServiceOrderPortal(CustomerPortal):
 
       return http.request.redirect(f'/service_order/{order_id}')
     else:
-      http.request.env['service.order'].sudo().create({**kw, 'order_datetime': order_datetime})
+      http.request.env['service.order'].sudo().create({**kw, 'order_datetime': datetime_converted})
       # send notification
       http.request.env['mail.activity'].sudo().create({
           'res_id':
@@ -226,6 +241,7 @@ class ServiceOrderPortal(CustomerPortal):
         {
             "service_order": order,
             "page_name": 'order_details',
+            "timzone_offset": self.get_timezone_offset(),
         },
     )
 

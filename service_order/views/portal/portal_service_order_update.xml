@@ -57,6 +57,7 @@
             <label for="order_datetime">Order Date</label>
             <input t-att-value="service_order.order_datetime" type="datetime-local"
               class="form-control"
+              step="1"
               id="order_datetime" name="order_datetime"
               required="True" />
           </div>
