@@ -62,7 +62,7 @@
                   <tr>
                     <td>Total Weight (KG)</td>
                     <td>
-                      <t t-esc="doc.total_qty_weight" />
+                      <t t-field="doc.total_qty_weight" />
                     </td>
                   </tr>
                   <tr>
@@ -132,13 +132,13 @@
                       <t t-esc="sum(doc.trip_line_ids.mapped('quantity'))" />
                     </td>
                     <td>
-                      <t t-esc="sum(doc.trip_line_ids.mapped('weight'))" />
+                      <t t-esc="round((sum(doc.trip_line_ids.mapped('weight'))), 2)" />
                     </td>
                     <td>
-                      <t t-esc="doc.total_qty_weight" />
+                      <t t-field="doc.total_qty_weight" />
                     </td>
                     <td>
-                      <t t-esc="doc.total_qty_weight" />
+                      <t t-field="doc.total_qty_weight" />
                     </td>
                     <td></td>
                   </tr>
