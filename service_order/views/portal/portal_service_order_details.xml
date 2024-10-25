@@ -173,10 +173,10 @@
                             <t t-esc="line.weight" />
                           </td>
                           <td>
-                            <t t-esc="line.quantity * line.weight" />
+                            <t t-esc="round((line.quantity * line.weight), 2)"/>
                           </td>
                           <td>
-                            <t t-esc="line.quantity * line.weight" />
+                            <t t-esc="round((line.quantity * line.weight), 2)" />
                           </td>
                         </tr>
                       </t>
