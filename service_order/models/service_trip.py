@@ -138,48 +138,40 @@ class ServiceTrip(models.Model):
   def action_to_pickuped(self):
     self.write({'states': 'pickuped'})
     self.order_id.states = 'pickuped'
-    self.send_mail_onchange_states()
     self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Pickuped')
 
   def action_to_arrived(self):
     self.write({'states': 'arrived'})
     self.order_id.states = 'arrived'
-    self.send_mail_onchange_states()
     self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Arrived')
 
   def action_to_processing(self):
     self.write({'states': 'processing'})
     self.order_id.states = 'processing'
-    self.send_mail_onchange_states()
     self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Processing')
 
   def action_to_delivered(self):
     self.write({'states': 'delivered'})
     self.order_id.states = 'delivered'
-    self.send_mail_onchange_states()
     self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Delivered')
 
   def action_to_completed(self):
     self.write({'states': 'completed'})
     self.order_id.states = 'completed'
-    self.send_mail_onchange_states()
     self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Completed')
 
   def action_to_cancelled(self):
     self.write({'states': 'cancelled'})
     self.order_id.states = 'cancelled'
-    self.send_mail_onchange_states()
     self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Cancelled')
 
   def action_to_draft(self):
     self.write({'states': 'draft'})
     self.order_id.states = 'draft'
-    self.send_mail_onchange_states()
     self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Draft')
 
   def action_to_scheduled(self):
     self.write({'states': 'scheduled'})
-    self.send_mail_onchange_states()
     self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Scheduled')
 
   def _get_report_base_filename(self):
