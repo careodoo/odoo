@@ -69,15 +69,14 @@
               </td>
               <td class="text-wrap">
                 <t t-options="{'widget': 'datetime', 'format': 'Y-M-d hh:mm:ss'}"
-                t-esc="order.request_datetime  " />
+                  t-esc="order.request_datetime  " />
               </td>
               <td>
                 <t t-esc="order.trip_id.sequence" />
               </td>
               <td class="text-wrap">
                 <span
-                  t-esc="order.order_datetime "
-                  t-options="{'widget': 'datetime', 'format': 'Y-M-d hh:mm:ss'}" />
+                  t-esc="order.order_datetime + relativedelta(hours=timzone_offset) if order.order_datetime else ''" />
 
               </td>
               <td>
