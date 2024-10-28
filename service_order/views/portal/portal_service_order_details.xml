@@ -65,8 +65,11 @@
                   <div class="row" id="service_order_date">
                     <div class="mb-3 col-6">
                       <strong>Order Date:</strong>
-                      <span t-esc="service_order.create_date + relativedelta(hours=timzone_offset)"
-                      t-options="{'widget': 'datetime', 'format': 'Y-M-d hh:mm:ss'}" />
+                        <span
+                          t-esc="service_order.request_datetime "
+                          t-options="{'widget': 'datetime', 'format': 'Y-M-d hh:mm:ss'}" />
+
+
                     </div>
                   </div>
                   <!-- ================================== -->
@@ -106,7 +109,8 @@
                   <div class="row" id="pickup-time">
                     <div class="mb-3">
                       <strong>Pickup time:</strong>
-                      <span t-esc="service_order.trip_id.pickuped_datetime + relativedelta(hours=timzone_offset)" />
+                      <span
+                        t-esc="service_order.order_datetime + relativedelta(hours=timzone_offset)" />
                     </div>
                   </div>
                   <div class="row" id="trip_no">
@@ -159,8 +163,9 @@
                       <t t-foreach="service_order.trip_line_ids" t-as="line">
                         <tr>
                           <td>
-                            <img t-if="line.item_id.image" t-att-src="image_data_uri(line.item_id.image)"
-                          alt="Product Image"
+                            <img t-if="line.item_id.image"
+                              t-att-src="image_data_uri(line.item_id.image)"
+                              alt="Product Image"
                               style="max-height: 6rem; max-width: 30%;" />
                           </td>
                           <td>
@@ -173,7 +178,7 @@
                             <t t-esc="line.weight" />
                           </td>
                           <td>
-                            <t t-esc="round((line.quantity * line.weight), 2)"/>
+                            <t t-esc="round((line.quantity * line.weight), 2)" />
                           </td>
                           <td>
                             <t t-esc="round((line.quantity * line.weight), 2)" />

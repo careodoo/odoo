@@ -38,7 +38,9 @@ class ServiceOrder(models.Model):
       related='trip_id.pickuped_datetime',
       readonly=False,
   )
-
+  request_datetime = fields.Datetime(
+      string='Request Date & Time',
+  )
 
   notes = fields.Html(string='Notes')
 
@@ -95,7 +97,6 @@ class ServiceOrder(models.Model):
         'res_model_id': self.env['ir.model']._get('service.order').id,
         'summary': summary,
         'note': 'New Service Order',
-        'activity_type_id': self.env.ref('mail.mail_activity_data_todo').id,
     })
 
   def action_to_schedule(self):

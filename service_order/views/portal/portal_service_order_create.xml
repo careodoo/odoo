@@ -33,8 +33,8 @@
               </select>
             </div>
             <div class="form-group">
-              <label for="order_datetime">Order Date</label>
-              <input type="datetime-local" class="form-control" id="order_datetime" name="order_datetime"
+              <label for="request_datetime">Order Date</label>
+              <input type="datetime-local" class="form-control" id="request_datetime" name="request_datetime"
                 required="True" />
             </div>
             <div class="form-group">

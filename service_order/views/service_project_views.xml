@@ -70,7 +70,7 @@
         <field name="sequence" />
         <field name="name" />
         <field name="contact_id" />
-        <field name="assign_user_ids" />
+        <field name="assign_user_ids" widget="many2many_tags"/>
         <field name="company_id" />
         <field name="start_date" />
         <field name="end_date" />

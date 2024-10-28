@@ -55,7 +55,7 @@
           </div>
           <div class="form-group">
             <label for="order_datetime">Order Date</label>
-            <input t-att-value="service_order.order_datetime" type="datetime-local"
+            <input t-att-value="service_order.order_datetime + relativedelta(hours=timzone_offset)" type="datetime-local"
               class="form-control"
               step="1"
               id="order_datetime" name="order_datetime"

@@ -139,40 +139,48 @@ class ServiceTrip(models.Model):
     self.write({'states': 'pickuped'})
     self.order_id.states = 'pickuped'
     self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Pickuped')
+    self.send_mail_onchange_states()
 
   def action_to_arrived(self):
     self.write({'states': 'arrived'})
     self.order_id.states = 'arrived'
     self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Arrived')
+    self.send_mail_onchange_states()
 
   def action_to_processing(self):
     self.write({'states': 'processing'})
     self.order_id.states = 'processing'
     self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Processing')
+    self.send_mail_onchange_states()
 
   def action_to_delivered(self):
     self.write({'states': 'delivered'})
     self.order_id.states = 'delivered'
     self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Delivered')
+    self.send_mail_onchange_states()
 
   def action_to_completed(self):
     self.write({'states': 'completed'})
     self.order_id.states = 'completed'
     self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Completed')
+    self.send_mail_onchange_states()
 
   def action_to_cancelled(self):
     self.write({'states': 'cancelled'})
     self.order_id.states = 'cancelled'
     self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Cancelled')
+    self.send_mail_onchange_states()
 
   def action_to_draft(self):
     self.write({'states': 'draft'})
     self.order_id.states = 'draft'
     self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Draft')
+    self.send_mail_onchange_states()
 
   def action_to_scheduled(self):
     self.write({'states': 'scheduled'})
     self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Scheduled')
+    self.send_mail_onchange_states()
 
   def _get_report_base_filename(self):
     self.ensure_one()
@@ -209,7 +217,7 @@ class ServiceTrip(models.Model):
 
   def send_mail_onchange_states(self):
     template_id = self.env.ref('service_order.mail_template_trip_upadte_state')
-    template_id.send_mail(self.id, force_send=True)
+    template_id.send_mail(self.id, force_send=True,notif_layout='mail.mail_notification_light')
     self.with_context(force_send=True).message_post_with_template(
         template_id.id,
         email_layout_xmlid='mail.mail_notification_light',

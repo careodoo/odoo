@@ -173,8 +173,8 @@ class ServiceOrderPortal(CustomerPortal):
       csrf=False,
   )
   def portal_service_order_submit(self, order_id=None, **kw):
-    datetime_converted = self.convert_input_datetime(kw.get('order_datetime'))
     if order_id:
+      datetime_converted = self.convert_input_datetime(kw.get('order_datetime'))
       order = http.request.env['service.order'].browse(order_id)
       order.sudo().write({
           'project_id': int(kw.get('project_id')),
@@ -190,7 +190,11 @@ class ServiceOrderPortal(CustomerPortal):
 
       return http.request.redirect(f'/service_order/{order_id}')
     else:
-      http.request.env['service.order'].sudo().create({**kw, 'order_datetime': datetime_converted})
+      datetime_converted = self.convert_input_datetime(kw.get('request_datetime'))
+      http.request.env['service.order'].sudo().create({
+          **kw,
+          'request_datetime': datetime_converted,
+      })
       # send notification
       http.request.env['mail.activity'].sudo().create({
           'res_id':
@@ -262,6 +266,7 @@ class ServiceOrderPortal(CustomerPortal):
             "projects": http.request.env['service.project'].search([]).name_get(),
             "types": http.request.env['service.type'].search([]).name_get(),
             "pickup_locations": http.request.env['service.pickup.location'].search([]).name_get(),
+            'timzone_offset': self.get_timezone_offset(),
         },
     )
 

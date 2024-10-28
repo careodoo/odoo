@@ -53,7 +53,7 @@
               <field name="type_id" attrs="{'readonly':[('states','=','completed')]}" />
               <field name="project_id" attrs="{'readonly':[('states','=','completed')]}" />
               <field name="pickuped_datetime" attrs="{'readonly':[('states','=','completed')]}" />
-              <field name="create_date" attrs="{'readonly':[('states','=','completed')]}" />
+              <!-- <field name="create_date" attrs="{'readonly':[('states','=','completed')]}" /> -->
               <field name="contact_id" attrs="{'readonly':[('states','=','completed')]}" />
               <field name="team_id" attrs="{'readonly':[('states','=','completed')]}" />
               <field name="trip_date" attrs="{'readonly':[('states','=','completed')]}" />

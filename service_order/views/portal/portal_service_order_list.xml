@@ -6,7 +6,7 @@
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <h3 class="modal-title">Cancel order <t t-esc="order.serial"/></h3>
+              <h3 class="modal-title">Cancel order <t t-esc="order.serial" /></h3>
               <button type="button" class="close" data-dismiss="modal" aria-label="Close">×</button>
             </div>
             <div class="modal-body">
@@ -35,9 +35,10 @@
       <t t-set="wrapwrap_classes" t-value="'o_portal_bg_dark'" />
       <div class="row o_download_pdf btn-toolbar flex-sm-nowrap">
         <div class="col-5 btn-group  flex-grow-1 me-1 mb-1">
-          <a  style="max-width:150px;min-width:70px" class=" btn btn-secondary btn-block o_download_btn" href="/service_order/create"
-          title="Service Order">
-          <i   class="fa fa-plus" /> Create order </a>
+          <a style="max-width:150px;min-width:70px"
+            class=" btn btn-secondary btn-block o_download_btn" href="/service_order/create"
+            title="Service Order">
+            <i class="fa fa-plus" /> Create order </a>
         </div>
       </div>
       <t t-if="service_orders" t-call="portal.portal_table">
@@ -45,9 +46,9 @@
           <tr>
             <th>Serial</th>
             <th>Pickup Location</th>
+            <th>Order Date</th>
             <th> Reference</th>
             <th>Trip Date</th>
-            <th>Order Date</th>
             <th>State</th>
             <th>Edit</th>
             <th>Cancel</th>
@@ -66,23 +67,28 @@
               <td>
                 <t t-esc="order.pickup_location_id.name" />
               </td>
+              <td class="text-wrap">
+                <t t-options="{'widget': 'datetime', 'format': 'Y-M-d hh:mm:ss'}"
+                t-esc="order.request_datetime  " />
+              </td>
               <td>
                 <t t-esc="order.trip_id.sequence" />
               </td>
               <td class="text-wrap">
-                <t t-esc="order.trip_id.pickuped_datetime + relativedelta(hours=timzone_offset) if order.trip_id.pickuped_datetime else ''" />
+                <span
+                  t-esc="order.order_datetime "
+                  t-options="{'widget': 'datetime', 'format': 'Y-M-d hh:mm:ss'}" />
+
               </td>
-              <td class="text-wrap">
-                <t  t-options="{'widget': 'datetime', 'format': 'Y-M-d hh:mm:ss'}" t-esc="order.create_date + relativedelta(hours=timzone_offset) " />
-              </td>
-              <td >
+              <td>
                 <span t-attf-class="state-badge #{order.states}-state">
                   <t t-esc="order.states" />
                 </span>
               </td>
               <td>
                 <a t-attf-href="/service_order/{{order.id}}/update">
-                  <button t-attf-class="btn btn-info fa fa-edit #{'d-none' if order.states not in ['draft', 'scheduled'] else ''}">
+                  <button
+                    t-attf-class="btn btn-info fa fa-edit #{'d-none' if order.states not in ['draft', 'scheduled'] else ''}">
                   </button>
                 </a>
               </td>
@@ -92,7 +98,7 @@
                     data-toggle="modal"
                     t-attf-class="btn btn-danger fa fa-trash #{'d-none' if order.states  not in ['draft', 'scheduled'] else ''}"
                     t-att-data-target="'#cancel_order_%s' % order.id"
-                >
+                  >
                   </button>
                 </a>
               </td>
