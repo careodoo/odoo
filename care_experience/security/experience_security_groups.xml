@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <record model="ir.module.category" id="module_experience">
+    <field name="name">Experience Module</field>
+    <field name="description">Control Experience Actions</field>
+    <field name="sequence">7</field>
+  </record>
+
+
+
+  <record id="reset_experience_to_draft" model="res.groups">
+    <field name="name">Access Experience Draft Button</field>
+    <field name="category_id" ref="module_experience" />
+  </record>
+
+
+</odoo>

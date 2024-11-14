@@ -7,7 +7,7 @@ from odoo.osv.expression import AND, OR
 import pytz
 from dateutil.relativedelta import relativedelta
 
-ITEMS_PER_PAGE = 10
+ITEMS_PER_PAGE = 100
 
 
 class ServiceOrderPortal(CustomerPortal):
@@ -85,6 +85,7 @@ class ServiceOrderPortal(CustomerPortal):
     searchbar_sortings = {
         'serial desc': {'label': _('Serial Desc'), 'order': 'serial desc'},
         'name': {'label': _('Serial'), 'order': 'serial'},
+        'request_datetime': {'label': _('Order Date'), 'order': 'request_datetime'},
         'id': {'label': _('ID'), 'order': 'id'},
     }
 

@@ -14,6 +14,8 @@
     'depends': ['base', 'mail', 'care_proposal'],
     'data': [
         'security/ir.model.access.csv',
+        'security/experience_security_groups.xml',
+        'data/cron.xml',
         'data/sequence.xml',
         'views/care_experience.xml',
         'views/proposal.xml',

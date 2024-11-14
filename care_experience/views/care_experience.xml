@@ -13,6 +13,8 @@
                                 attrs="{'invisible': [('state', '!=', 'submit')]}"/>
                         <button name="button_expired" type="object" string="Expire" class="btn-danger"
                                 attrs="{'invisible': [('state', '!=', 'submit')]}"/>
+                        <button name="button_draft" groups="care_experience.reset_experience_to_draft" type="object" string="Reset to draft" class="oe_highlight"
+                                attrs="{'invisible': [('state', '=', 'draft')]}"/>
                         <field name="state" widget="statusbar"/>
                     </header>
                     <sheet string="Experience">

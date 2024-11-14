@@ -68,6 +68,14 @@ class Experience(models.Model):
             raise ValidationError("Please add contract copy!")
         self.state = 'expired'
 
+    def button_draft(self):
+        self.state = 'draft'
+
+    def check_experience_expiration(self):
+        experience_ids = self.env['care.experience'].search([])
+        for rec in experience_ids:
+            if rec.expire_date and rec.expire_date < datetime.now().date():
+                rec.state = 'expired'
 
 class ExperienceLine(models.Model):
     _name = 'care.experience.line'
