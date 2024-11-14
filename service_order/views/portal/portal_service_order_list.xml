@@ -33,13 +33,37 @@
         <t t-set="title">Service Orders</t>
       </t>
       <t t-set="wrapwrap_classes" t-value="'o_portal_bg_dark'" />
-      <div class="row o_download_pdf btn-toolbar flex-sm-nowrap">
-        <div class="col-5 btn-group  flex-grow-1 me-1 mb-1">
+      <div class="row " id="print_list_report">
+        <div class="col-8 btn-group  flex-grow-1 me-1 mb-1">
           <a style="max-width:150px;min-width:70px"
             class=" btn btn-secondary btn-block o_download_btn" href="/service_order/create"
             title="Service Order">
             <i class="fa fa-plus" /> Create order </a>
+          <div  class="d-flex">
+            <button  
+              id="print_report_btn"
+              style="max-width:150px;min-width:125px"
+              type="button"
+              class=" btn btn-primary btn-block o_download_btn mx-2"
+              title="Service Order">
+              <i class="fa fa-print" /> Print report
+            </button>
+              <label class="mx-2" for="order_datetime">From:</label>
+              <input type="date"
+              class="form-control mx-2"
+              step="1"
+              id="date_from" name="date_from"
+              required="True" />
+              <label for="order_datetime">To:</label>
+              <input type="date"
+              class="form-control mx-2"
+              step="1"
+              id="date_to" name="date_to"
+              required="True" />
+          </div>
         </div>
+        <!-- ===================================== -->
+        <!-- ===================================== -->
       </div>
       <t t-if="service_orders" t-call="portal.portal_table">
         <thead>
@@ -49,6 +73,8 @@
             <th>Order Date</th>
             <th> Reference</th>
             <th>Trip Date</th>
+            <th>Weight</th>
+            <th>Qty</th>
             <th>State</th>
             <th>Edit</th>
             <th>Cancel</th>
@@ -78,6 +104,12 @@
                 <span
                   t-esc="order.order_datetime + relativedelta(hours=timzone_offset) if order.order_datetime else ''" />
 
+              </td>
+              <td>
+                  <span t-field="order.trip_id.total_qty_weight" />
+              </td>
+              <td>
+                  <span t-field="order.trip_id.total_quantity" />
               </td>
               <td>
                 <span t-attf-class="state-badge #{order.states}-state">

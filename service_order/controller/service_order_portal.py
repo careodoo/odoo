@@ -1,10 +1,11 @@
 from datetime import datetime
-from odoo import http, _
+from odoo import http, _, SUPERUSER_ID,fields
 from odoo.addons.portal.controllers.portal import pager as portal_pager, CustomerPortal
 from odoo.exceptions import AccessError, MissingError
 from odoo.tools import html2plaintext
 from odoo.osv.expression import AND, OR
 import pytz
+import re
 from dateutil.relativedelta import relativedelta
 
 ITEMS_PER_PAGE = 100
@@ -285,3 +286,35 @@ class ServiceOrderPortal(CustomerPortal):
     else:
       order.sudo().action_to_cancelled()
     return http.request.redirect(f'/service_order/{order_id}')
+
+  # print list of orders
+  @http.route(
+      ['/service_order/print'],
+      type='http',
+      auth="user",
+      website=True,
+  )
+  def portal_service_order_print(
+      self,
+      date_from=None,
+      date_to=None,
+      **kw,
+  ):
+    date_start = fields.Datetime.from_string(date_from)
+    date_end = fields.Datetime.from_string(date_to)
+    orders = http.request.env['service.order'].search([('request_datetime', '>=', date_start),( 'request_datetime', '<=', date_end)])
+    report_sudo = http.request.env.ref('service_order.action_report_service_order_pdf').with_user(
+        SUPERUSER_ID)
+    report = getattr(report_sudo, '_render_qweb_pdf')(orders.ids, data={'report_type': 'pdf'})[0]
+    reporthttpheaders = [
+        ('Content-Type', 'application/pdf'),
+        ('Content-Length', len(report)),
+    ]
+    filename = "%s.pdf" % (re.sub(
+        r'\W+',
+        '-',
+        http.request.env['service.order']._get_report_base_filename(),
+    ))
+    reporthttpheaders.append(('Content-Disposition', http.content_disposition(filename)))
+    return http.request.make_response(report, headers=reporthttpheaders)
+

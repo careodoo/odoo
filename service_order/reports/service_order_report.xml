@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <template id="service_report_layout">
+    <t t-if="not o" t-set="o" t-value="doc" />
+    <div class="header">
+      <img src="/service_order/static/src/img/header.png" atl="header.png" class="w-100" />
+    </div>
+    <div class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id"
+      t-att-data-oe-lang="o and o.env.context.get('lang')">
+      <t t-raw="0" />
+    </div>
+    <div t-attf-class="footer o_standard_footer">
+      <div class="row">
+        <img src="/service_order/static/src/img/footer.png" atl="header.png" class="w-100" />
+      </div>
+    </div>
+  </template>
+  <template id="service_order_report" name="service_order_report">
+    <!-- add css file -->
+    <t t-call="web.html_container">
+      <t t-call="service_order.service_report_layout">
+        <div class="page">
+          <h2 class="text-center mb-3">Disposable Report</h2>
+          <table class="table table-sm table-bordered service_trip_table">
+            <thead>
+              <tr>
+                <th>Serial</th>
+                <th>Pickup Location</th>
+                <th>Order Date</th>
+                <th> Reference</th>
+                <th> Trip Date</th>
+                <th>Weight</th>
+                <th>Qty</th>
+                <th>State</th>
+              </tr>
+            </thead>
+            <tbody>
+              <t t-foreach="docs" t-as="doc">
+                <tr>
+                  <td>
+                    <t t-esc="doc.serial" />
+                  </td>
+                  <td>
+                    <t t-esc="doc.pickup_location_id.name" />
+                  </td>
+                  <td>
+                    <t t-esc="doc.request_datetime" />
+                  </td>
+                  <td>
+                    <t t-esc="doc.trip_id.sequence" />
+                  </td>
+                  <td>
+                    <t t-esc="doc.order_datetime" />
+                  </td>
+                  <td>
+                    <t t-esc="doc.trip_id.total_qty_weight" />
+                  </td>
+                  <td>
+                    <t t-esc="doc.trip_id.total_quantity" />
+                  </td>
+                  <td>
+                    <span t-attf-class="#{doc.states}-state"
+                      style="
+                          font-weight: bold;
+                          height: 10px;
+                          color: white;
+                          padding: 5px;
+                          border-radius: 5px;
+                          ">
+                      <t t-esc="doc.states" />
+                    </span>
+                  </td>
+                </tr>
+              </t>
+            </tbody>
+          </table>
+        </div>
+
+
+      </t>
+    </t>
+  </template>
+
+  <record id="action_report_service_order_pdf" model="ir.actions.report">
+    <field name="name">Print order pdf</field>
+    <field name="model">service.order</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">service_order.service_order_report</field>
+    <field name="report_file">service_order.service_order_report</field>
+    <field name="print_report_name">'%s' % object.serial</field>
+    <field name="binding_model_id" ref="service_order.model_service_order" />
+    <field name="binding_type">report</field>
+  </record>
+
+</odoo>

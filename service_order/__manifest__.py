@@ -31,6 +31,7 @@
         "views/portal/portal_service_order_details.xml",
         "views/portal/portal_service_order_update.xml",
         "reports/service_trip_report.xml",
+        "reports/service_order_report.xml",
     ],
     "depends": [
         "base",
