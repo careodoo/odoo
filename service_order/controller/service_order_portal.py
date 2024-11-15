@@ -313,7 +313,7 @@ class ServiceOrderPortal(CustomerPortal):
     filename = "%s.pdf" % (re.sub(
         r'\W+',
         '-',
-        http.request.env['service.order']._get_report_base_filename(),
+       'Disposable Report from %s to %s' % (date_start.date(), date_end.date()),
     ))
     reporthttpheaders.append(('Content-Disposition', http.content_disposition(filename)))
     return http.request.make_response(report, headers=reporthttpheaders)
