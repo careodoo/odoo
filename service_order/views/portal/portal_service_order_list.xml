@@ -152,10 +152,10 @@
           <tr>
             <td class="font-weight-bold" colspan="5">Total</td>
             <td class="font-weight-bold">
-              <t t-esc="total_weight" />
+              <t t-esc="round(total_weight, 4)" />
             </td>
             <td class="font-weight-bold">
-              <t t-esc="total_qty" />
+              <t t-esc="round(total_qty, 2)" />
             </td>
             <td></td>
             <td></td>
