@@ -21,14 +21,20 @@
       <t t-call="service_order.service_report_layout">
         <div class="page">
           <h2 class="text-center mb-3">Disposable Report</h2>
+          <h3 class="text-center mb-3">Period from
+            <span class="font-weight-bold mx-3">
+              <t t-esc="date_from" />
+            </span> to
+            <span class="font-weight-bold mx-3">
+              <t t-esc="date_to" />
+            </span>
+          </h3>
           <table class="table table-sm table-bordered service_trip_table">
             <thead>
               <tr>
-                <th>Serial</th>
-                <th>Pickup Location</th>
-                <th>Order Date</th>
                 <th> Reference</th>
                 <th> Trip Date</th>
+                <th>Pickup Location</th>
                 <th>Weight</th>
                 <th>Qty</th>
                 <th>State</th>
@@ -38,25 +44,19 @@
               <t t-foreach="docs" t-as="doc">
                 <tr>
                   <td>
-                    <t t-esc="doc.serial" />
+                    <t t-esc="doc.trip_id.sequence" />
+                  </td>
+                  <td>
+                    <t t-esc="(doc.order_datetime + relativedelta(hours=timzone_offset)).date() if doc.order_datetime else ''" />
                   </td>
                   <td>
                     <t t-esc="doc.pickup_location_id.name" />
                   </td>
                   <td>
-                    <t t-esc="doc.request_datetime" />
+                    <t t-esc="round(doc.trip_id.total_qty_weight,4)" />
                   </td>
                   <td>
-                    <t t-esc="doc.trip_id.sequence" />
-                  </td>
-                  <td>
-                    <t t-esc="doc.order_datetime" />
-                  </td>
-                  <td>
-                    <t t-esc="doc.trip_id.total_qty_weight" />
-                  </td>
-                  <td>
-                    <t t-esc="doc.trip_id.total_quantity" />
+                    <t t-esc="int(doc.trip_id.total_quantity)" />
                   </td>
                   <td>
                     <span t-attf-class="#{doc.states}-state"
@@ -74,6 +74,13 @@
               </t>
             </tbody>
           </table>
+        </div>
+        <!-- print datetime -->
+        <div class="text-right">
+          <span class="font-weight-bold">Printed on:</span>
+          <span>
+            <t t-esc="(datetime.datetime.now()+ relativedelta(hours=timzone_offset)).strftime('%Y-%m-%d %H:%M:%S')" />
+          </span>
         </div>
 
 

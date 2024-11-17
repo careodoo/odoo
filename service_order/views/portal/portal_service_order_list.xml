@@ -42,7 +42,7 @@
           <div  class="d-flex">
             <button  
               id="print_report_btn"
-              style="max-width:150px;min-width:125px"
+              style="max-width:150px;min-width:130px"
               type="button"
               class=" btn btn-primary btn-block o_download_btn mx-2"
               title="Service Order">
@@ -81,7 +81,11 @@
           </tr>
         </thead>
         <tbody>
+          <t t-set="total_qty" t-value="0" />
+          <t t-set="total_weight" t-value="0" />
           <t t-foreach="service_orders" t-as="order">
+            <t t-set="total_qty" t-value="total_qty + order.trip_id.total_quantity" />
+            <t t-set="total_weight" t-value="total_weight + order.trip_id.total_qty_weight" />
             <t t-set="order" t-value="order" />
             <t t-call="service_order.cancel_order" />
             <tr>
@@ -133,8 +137,29 @@
                   </button>
                 </a>
               </td>
+              <td>
+                <a>
+                  <button id="cancel_order_btn"
+                    data-toggle="modal"
+                    t-attf-class="btn btn-danger fa fa-trash #{'d-none' if order.states  not in ['draft', 'scheduled'] else ''}"
+                    t-att-data-target="'#cancel_order_%s' % order.id"
+                  >
+                  </button>
+                </a>
+              </td>
             </tr>
           </t>
+          <tr>
+            <td class="font-weight-bold" colspan="5">Total</td>
+            <td class="font-weight-bold">
+              <t t-esc="total_weight" />
+            </td>
+            <td class="font-weight-bold">
+              <t t-esc="total_qty" />
+            </td>
+            <td></td>
+            <td></td>
+          </tr>
         </tbody>
       </t>
       <!-- <div>

@@ -1,5 +1,5 @@
 from datetime import datetime
-from odoo import http, _, SUPERUSER_ID,fields
+from odoo import http, _, SUPERUSER_ID, fields
 from odoo.addons.portal.controllers.portal import pager as portal_pager, CustomerPortal
 from odoo.exceptions import AccessError, MissingError
 from odoo.tools import html2plaintext
@@ -8,7 +8,7 @@ import pytz
 import re
 from dateutil.relativedelta import relativedelta
 
-ITEMS_PER_PAGE = 100
+ITEMS_PER_PAGE = 10
 
 
 class ServiceOrderPortal(CustomerPortal):
@@ -302,10 +302,21 @@ class ServiceOrderPortal(CustomerPortal):
   ):
     date_start = fields.Datetime.from_string(date_from)
     date_end = fields.Datetime.from_string(date_to)
-    orders = http.request.env['service.order'].search([('request_datetime', '>=', date_start),( 'request_datetime', '<=', date_end)])
+    orders = http.request.env['service.order'].search([
+        ('order_datetime', '>=', date_start),
+        ('order_datetime', '<=', date_end),
+    ])
     report_sudo = http.request.env.ref('service_order.action_report_service_order_pdf').with_user(
         SUPERUSER_ID)
-    report = getattr(report_sudo, '_render_qweb_pdf')(orders.ids, data={'report_type': 'pdf'})[0]
+    report = getattr(report_sudo, '_render_qweb_pdf')(
+        orders.ids,
+        data={
+            'report_type': 'pdf',
+            'date_from': date_start.date(),
+            'date_to': date_end.date(),
+            'timzone_offset': self.get_timezone_offset(),
+        },
+    )[0]
     reporthttpheaders = [
         ('Content-Type', 'application/pdf'),
         ('Content-Length', len(report)),
@@ -313,8 +324,7 @@ class ServiceOrderPortal(CustomerPortal):
     filename = "%s.pdf" % (re.sub(
         r'\W+',
         '-',
-       'Disposable Report from %s to %s' % (date_start.date(), date_end.date()),
+        'Disposable Report from %s to %s' % (date_start.date(), date_end.date()),
     ))
     reporthttpheaders.append(('Content-Disposition', http.content_disposition(filename)))
     return http.request.make_response(report, headers=reporthttpheaders)
-
