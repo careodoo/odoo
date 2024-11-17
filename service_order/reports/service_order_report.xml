@@ -21,17 +21,16 @@
       <t t-call="service_order.service_report_layout">
         <div class="page">
           <h2 class="text-center mb-3">Disposable Report</h2>
-          <h3 class="text-center mb-3">Period from
-            <span class="font-weight-bold mx-3">
+          <h3 class="text-center mb-3">Period from <span class="font-weight-bold mx-3">
               <t t-esc="date_from" />
-            </span> to
-            <span class="font-weight-bold mx-3">
+            </span> to <span class="font-weight-bold mx-3">
               <t t-esc="date_to" />
             </span>
           </h3>
           <table class="table table-sm table-bordered service_trip_table">
             <thead>
               <tr>
+                <th> #</th>
                 <th> Reference</th>
                 <th> Trip Date</th>
                 <th>Pickup Location</th>
@@ -41,13 +40,23 @@
               </tr>
             </thead>
             <tbody>
+              <t t-set="total_qty" t-value="0" />
+              <t t-set="total_weight" t-value="0" />
+              <t t-set="count" t-value="0" />
               <t t-foreach="docs" t-as="doc">
+                <t t-set="total_qty" t-value="total_qty + doc.trip_id.total_quantity" />
+                <t t-set="total_weight" t-value="total_weight + doc.trip_id.total_qty_weight" />
+                <t t-set="count" t-value="count + 1" />
                 <tr>
+                  <td>
+                    <t t-esc="count" />
+                  </td>
                   <td>
                     <t t-esc="doc.trip_id.sequence" />
                   </td>
                   <td>
-                    <t t-esc="(doc.order_datetime + relativedelta(hours=timzone_offset)).date() if doc.order_datetime else ''" />
+                    <t
+                      t-esc="(doc.order_datetime + relativedelta(hours=timzone_offset)).date() if doc.order_datetime else ''" />
                   </td>
                   <td>
                     <t t-esc="doc.pickup_location_id.name" />
@@ -72,6 +81,16 @@
                   </td>
                 </tr>
               </t>
+              <tr>
+                <td class="font-weight-bold" colspan="4">Total</td>
+                <td class="font-weight-bold">
+                  <t t-esc="total_weight" />
+                </td>
+                <td class="font-weight-bold">
+                  <t t-esc="total_qty" />
+                </td>
+                <td></td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -79,7 +98,8 @@
         <div class="text-right">
           <span class="font-weight-bold">Printed on:</span>
           <span>
-            <t t-esc="(datetime.datetime.now()+ relativedelta(hours=timzone_offset)).strftime('%Y-%m-%d %H:%M:%S')" />
+            <t
+              t-esc="(datetime.datetime.now()+ relativedelta(hours=timzone_offset)).strftime('%Y-%m-%d %H:%M:%S')" />
           </span>
         </div>
 
