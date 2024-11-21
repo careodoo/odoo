@@ -15,7 +15,8 @@ class ApprovalRequest(models.Model):
     barcode = fields.Char(default=generate_barcode)
     qr_image = fields.Binary("QR Code", compute='_generate_qr_code')
     qr_url = fields.Char("QR Code", compute='_generate_qr_code')
-    department_id = fields.Many2one('hr.department', compute='compute_department_id')
+    department_id = fields.Many2one('hr.department')
+    valid_department_ids = fields.Many2many('hr.department', compute='get_valid_department_ids')
     is_request_item = fields.Boolean()
     sale_order_ids = fields.One2many('sale.order', 'approval_request_id')
     so_count = fields.Integer(compute='compute_so_count')
@@ -119,7 +120,17 @@ class ApprovalRequest(models.Model):
     def print_report(self):
         return self.env.ref("care_approvals.action_approval_request_report").report_action(self)
 
-
+    @api.depends('request_owner_id')
+    def get_valid_department_ids(self):
+      for approval in self:
+        approval.valid_department_ids = False
+        if approval.request_owner_id:
+          valid_department_ids =  self.env['hr.department'].search([]).filtered(lambda dep: self.request_owner_id in dep.allowed_user_ids).mapped("parent_id")
+          sub_department_ids = self.env['hr.department'].search([('parent_id','in',valid_department_ids.ids)])
+          if valid_department_ids:
+              approval.valid_department_ids =  (valid_department_ids | sub_department_ids).sorted(lambda dep:dep.display_name).ids
+          else:
+            approval.valid_department_ids =  self.request_owner_id.employee_ids.filtered(lambda e: e.department_id).mapped('department_id').ids
 class ApprovalProductLine(models.Model):
     _inherit = 'approval.product.line'
 

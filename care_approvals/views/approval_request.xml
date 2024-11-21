@@ -20,7 +20,8 @@
                     </button>
                 </xpath>
                 <xpath expr="//field[@name='request_owner_id']" position="after">
-                    <field name="department_id"/>
+                    <field name="valid_department_ids" invisible="1"/>
+                    <field name="department_id" domain="[('id','in',valid_department_ids)]"/>
                 </xpath>
                 <xpath expr="//notebook" position="inside">
                     <page string="Barcode">
