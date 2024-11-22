@@ -7,6 +7,7 @@ odoo.define('care_approvals.form_widgets', function (require) {
 	var ListRenderer = require('web.ListRenderer');
 	var rpc = require('web.rpc');
 	var FieldOne2Many = require('web.relational_fields').FieldOne2Many;
+	var One2ManyKanbanRenderer = require('web.relational_fields').One2ManyKanbanRenderer;
 	var _t = core._t;
 
 	ListRenderer.include({
