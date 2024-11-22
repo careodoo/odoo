@@ -137,16 +137,6 @@
                   </button>
                 </a>
               </td>
-              <td>
-                <a>
-                  <button id="cancel_order_btn"
-                    data-toggle="modal"
-                    t-attf-class="btn btn-danger fa fa-trash #{'d-none' if order.states  not in ['draft', 'scheduled'] else ''}"
-                    t-att-data-target="'#cancel_order_%s' % order.id"
-                  >
-                  </button>
-                </a>
-              </td>
             </tr>
           </t>
           <tr>
@@ -155,7 +145,7 @@
               <t t-esc="round(total_weight, 4)" />
             </td>
             <td class="font-weight-bold">
-              <t t-esc="round(total_qty, 2)" />
+              <t t-esc="int(total_qty)" />
             </td>
             <td></td>
             <td></td>
