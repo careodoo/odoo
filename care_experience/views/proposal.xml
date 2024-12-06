@@ -1,20 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data>
-        <record id="custom_proposal_view_form" model="ir.ui.view">
-            <field name="name">custom_proposal_view_form</field>
-            <field name="model">proposal.proposal</field>
-            <field name="inherit_id" ref="care_proposal.proposal_view_form"/>
-            <field name="arch" type="xml">
-                <xpath expr="//div[@name='button_box']" position="inside">
-                    <button name="action_view_contract" type="object" class="oe_stat_button" icon="fa-pencil-square-o" attrs="{'invisible': [('contract_count', '=', 0)]}">
-                        <field name="contract_count" widget="statinfo" string="Contracts"/>
-                    </button>
-                </xpath>
-                <xpath expr="//header" position="inside">
-                    <button name="button_create_contract" type="object" string="Create Contract" class="oe_highlight"/>
-                </xpath>
-            </field>
-        </record>
-    </data>
+  <data>
+    <record id="custom_proposal_view_form" model="ir.ui.view">
+      <field name="name">custom_proposal_view_form</field>
+      <field name="model">proposal.proposal</field>
+      <field name="inherit_id" ref="care_proposal.proposal_view_form" />
+      <field name="arch" type="xml">
+        <xpath expr="//div[@name='button_box']" position="inside">
+          <button name="action_view_contract" type="object" class="oe_stat_button"
+            icon="fa-pencil-square-o"
+            invisible="contract_count == 0">
+            <field name="contract_count" widget="statinfo" string="Contracts" />
+          </button>
+        </xpath>
+        <xpath expr="//header" position="inside">
+          <button name="button_create_contract" type="object" string="Create Contract"
+            class="oe_highlight" />
+        </xpath>
+      </field>
+    </record>
+  </data>
 </odoo>

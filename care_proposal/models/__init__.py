@@ -1,14 +1,24 @@
-# -*- coding: utf-8 -*-
-
 from . import proposal
 from . import proposal_service
 from . import proposal_transportation
 from . import proposal_manpower
 from . import proposal_scope
+from . import proposal_scope_line
 from . import proposal_term
 from . import crm_lead
 from . import res_config_settings
 from . import proposal_service_type
 from . import proposal_service_location
 from . import proposal_service_unit
+from . import proposal_service_item
 from . import proposal_approver
+from . import proposal_service_line
+from . import proposal_manpower_line
+from . import proposal_material_line
+from . import proposal_equipment_line
+from . import proposal_transportation_line
+from . import proposal_term_line
+from . import proposal_pricing_line
+from . import proposal_approval
+from . import proposal_commission
+from . import proposal_receiver

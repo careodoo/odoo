@@ -3,6 +3,7 @@ from odoo import models
 
 class ProposalManpowerReportXlsx(models.AbstractModel):
     _name = 'report.care_proposal.proposal_manpower_xlsx_report'
+    _description = 'Proposal Manpower Report'
     _inherit = 'report.report_xlsx.abstract'
 
     def generate_xlsx_report(self, workbook, data, objs):

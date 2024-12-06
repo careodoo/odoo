@@ -8,7 +8,6 @@
   </record>
 
 
-
   <record id="reset_experience_to_draft" model="res.groups">
     <field name="name">Access Experience Draft Button</field>
     <field name="category_id" ref="module_experience" />

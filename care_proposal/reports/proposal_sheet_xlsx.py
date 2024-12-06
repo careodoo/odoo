@@ -6,6 +6,7 @@ from datetime import date
 
 class ProposalSheetReportXlsx(models.AbstractModel):
     _name = 'report.care_proposal.proposal_sheet_xlsx_report'
+    _description = 'Proposal Sheet Report'
     _inherit = 'report.report_xlsx.abstract'
 
     def generate_xlsx_report(self, workbook, data, objs):

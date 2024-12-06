@@ -1,68 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data>
-        <record id="proposal_service_view_tree" model="ir.ui.view">
-            <field name="name">proposal_service_view_tree</field>
-            <field name="model">proposal.service</field>
-            <field name="arch" type="xml">
-                <tree>
-                    <field name="name"/>
-                    <field name="type"/>
-                    <field name="short_code"/>
-                    <field name="daily_hours"/>
-                    <field name="weekly_days"/>
-                    <field name="monthly_days"/>
-                    <field name="total_cost"/>
-                </tree>
-            </field>
-        </record>
-        <record id="proposal_service_view_form" model="ir.ui.view">
-            <field name="name">proposal_service_view_form</field>
-            <field name="model">proposal.service</field>
-            <field name="arch" type="xml">
-                <form>
-                    <sheet>
-                        <div class="oe_title">
-                            <label for="name"/>
-                            <h1><field name="name"/></h1>
-                        </div>
-                        <group>
-                            <field name="short_code"/>
-                            <field name="type" widget="radio" options="{'horizontal': True}"/>
-                            <field name="daily_hours" attrs="{'invisible': [('type', '=', 'service')]}"/>
-                            <field name="weekly_days" attrs="{'invisible': [('type', '=', 'service')]}"/>
-                            <field name="monthly_days" attrs="{'invisible': [('type', '=', 'service')]}"/>
-                            <field name="total_cost"/>
-                        </group>
-                        <notebook>
-                            <page name="details" string="Details">
-                                <field name="line_ids">
-                                    <tree editable="bottom">
-                                        <field name="sequence" widget="handle"/>
-                                        <field name="type"/>
-                                        <field name="other_cost" attrs="{'readonly': [('type', '!=', 'other')], 'required': [('type', '=', 'other')]}"/>
-                                        <field name="cost" sum="total cost"/>
-                                        <field name="description"/>
-                                    </tree>
-                                </field>
-                            </page>
-                        </notebook>
-                    </sheet>
-                    <div class="oe_chatter">
-                        <field name="message_follower_ids"/>
-                        <field name="activity_ids"/>
-                        <field name="message_ids"/>
-                    </div>
-                </form>
-            </field>
-        </record>
-        <record id="proposal_service_action" model="ir.actions.act_window">
-            <field name="name">Services</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">proposal.service</field>
-            <field name="view_mode">tree,form</field>
-        </record>
-        <menuitem id="proposal_service_menu" name="Services" parent="proposal_root_menu"
-                  action="proposal_service_action" sequence="2"/>
-    </data>
+  <data>
+    <record id="proposal_service_view_tree" model="ir.ui.view">
+      <field name="name">proposal_service_view_tree</field>
+      <field name="model">proposal.service</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="name" />
+          <field name="type" />
+          <field name="short_code" />
+          <field name="daily_hours" />
+          <field name="weekly_days" />
+          <field name="monthly_days" />
+          <field name="total_cost" />
+        </tree>
+      </field>
+    </record>
+    <record id="proposal_service_view_form" model="ir.ui.view">
+      <field name="name">proposal_service_view_form</field>
+      <field name="model">proposal.service</field>
+      <field name="arch" type="xml">
+        <form>
+          <sheet>
+            <div class="oe_title">
+              <label for="name" />
+              <h1>
+                <field name="name" />
+              </h1>
+            </div>
+            <group>
+              <field name="short_code" />
+              <field name="type" widget="radio" options="{'horizontal': True}" />
+              <field name="daily_hours" invisible="type == 'service'" />
+              <field name="weekly_days" invisible="type == 'service'" />
+              <field name="monthly_days" invisible="type == 'service'" />
+
+              <field name="total_cost" />
+            </group>
+            <notebook>
+              <page name="details" string="Details">
+                <field name="line_ids">
+                  <tree editable="bottom">
+                    <field name="sequence" widget="handle" />
+                    <field name="type" />
+                    <field name="other_cost" readonly="type != 'other'" required="type == 'other'" />
+                    <field name="cost" sum="total cost" />
+                    <field name="description" />
+                  </tree>
+                </field>
+              </page>
+            </notebook>
+          </sheet>
+          <div class="oe_chatter">
+            <field name="message_follower_ids" />
+            <field name="activity_ids" />
+            <field name="message_ids" />
+          </div>
+        </form>
+      </field>
+    </record>
+    <record id="proposal_service_action" model="ir.actions.act_window">
+      <field name="name">Services</field>
+      <field name="type">ir.actions.act_window</field>
+      <field name="res_model">proposal.service</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+    <menuitem id="proposal_service_menu" name="Services" parent="proposal_root_menu"
+      action="proposal_service_action" sequence="2" />
+  </data>
 </odoo>

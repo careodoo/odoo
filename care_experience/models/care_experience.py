@@ -18,21 +18,30 @@ class Experience(models.Model):
     start_date = fields.Date()
     expire_date = fields.Date()
     contract_type = fields.Selection(selection=[
-        ('government', 'Government'), ('commercials', 'Commercials')
+        ('government', 'Government'),
+        ('commercials', 'Commercials'),
     ])
     kanban_state = fields.Selection(selection=[
-        ('normal', 'Normal'), ('done', 'Done'), ('blocked', 'Blocked')
+        ('normal', 'Normal'),
+        ('done', 'Done'),
+        ('blocked', 'Blocked'),
     ])
     notes = fields.Text()
     active = fields.Boolean(default=True)
-    state = fields.Selection(selection=[
-        ('draft', 'Draft'), ('submit', 'Submit'),
-        ('valid', 'Valid'), ('expired', 'Expired')
-    ], default="draft", tracking=True)
+    state = fields.Selection(
+        selection=[('draft', 'Draft'), ('submit', 'Submit'), ('valid', 'Valid'),
+                   ('expired', 'Expired')],
+        default="draft",
+        tracking=True,
+    )
     # proposal
     proposal_id = fields.Many2one('proposal.proposal')
     sequence = fields.Char()
-    ref = fields.Char(compute='compute_ref', store=True, string='Contract ID')
+    ref = fields.Char(
+        compute='compute_ref',
+        store=True,
+        string='Contract ID',
+    )
     contract_copy = fields.Many2many("ir.attachment")
 
     @api.depends('contract_type', 'sequence')
@@ -76,16 +85,3 @@ class Experience(models.Model):
         for rec in experience_ids:
             if rec.expire_date and rec.expire_date < datetime.now().date():
                 rec.state = 'expired'
-
-class ExperienceLine(models.Model):
-    _name = 'care.experience.line'
-    _description = 'Experience Line'
-
-    experience_id = fields.Many2one('care.experience')
-    name = fields.Char(required=True)
-    start_date = fields.Date()
-    expire_date = fields.Date()
-    period = fields.Integer(string='Period in Months')
-    state = fields.Selection(selection=[
-        ('valid', 'Valid'), ('expired', 'Expired')
-    ])

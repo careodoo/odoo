@@ -9,9 +9,3 @@ class ProposalApprover(models.Model):
     sequence = fields.Integer(default=10)
     user_id = fields.Many2one('res.users', required=True)
 
-
-class ProposalReceiver(models.Model):
-    _name = 'proposal.receiver'
-    _description = 'Proposal Receiver'
-
-    user_id = fields.Many2one('res.users', required=True)

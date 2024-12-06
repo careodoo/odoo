@@ -5,13 +5,14 @@ from io import BytesIO
 
 
 class generateQrCode():
+
     def generate_qr_code(url):
         qr = qrcode.QRCode(
-                version=4,
-                error_correction=qrcode.constants.ERROR_CORRECT_L,
-                box_size=20,
-                border=4,
-                )
+            version=4,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=20,
+            border=4,
+        )
         qr.add_data(url)
         qr.make(fit=True)
         img = qr.make_image()

@@ -7,16 +7,20 @@ class ProposalService(models.Model):
     _description = 'Proposal Service'
 
     name = fields.Char(required=True)
-    type = fields.Selection(selection=[
-        ('manpower', 'Manpower'),
-        ('service', 'Service'),
-    ], required=True, default='manpower')
+    type = fields.Selection(
+        selection=[
+            ('manpower', 'Manpower'),
+            ('service', 'Service'),
+        ],
+        required=True,
+        default='manpower',
+    )
     short_code = fields.Char(required=True)
     daily_hours = fields.Integer()
     weekly_days = fields.Integer()
     monthly_days = fields.Integer()
-    total_cost = fields.Float(compute='compute_total_cost', store=True)
-    line_ids = fields.One2many('proposal.service.item', 'proposal_service_id')
+    total_cost = fields.Float(compute='compute_total_cost', store=True,)
+    line_ids = fields.One2many('proposal.service.item', 'proposal_service_id',)
 
     def get_service_item_cost(self, type):
         item = self.line_ids.filtered(lambda l: l.type == type)
@@ -30,19 +34,3 @@ class ProposalService(models.Model):
                 rec.total_cost = sum(rec.line_ids.mapped('cost'))
 
 
-class ProposalServiceLine(models.Model):
-    _name = 'proposal.service.item'
-    _description = 'Proposal Service Detail'
-
-    proposal_service_id = fields.Many2one('proposal.service')
-    sequence = fields.Integer(default=10)
-    type = fields.Selection(selection=[
-        ('salary', 'Salary'), ('residency', 'Residency'),
-        ('accommodation', 'Accommodation'), ('uniform', 'Uniform'),
-        ('leave', 'Leave & Indemnity'), ('insurance', 'Staff Insurance'),
-        ('bank_charge', 'Bank Charge'), ('medical', 'Medical Certificate'),
-        ('gate_pass', 'Gate Pass'), ('other', 'Other'),
-    ], required=True)
-    other_cost = fields.Char()
-    cost = fields.Float()
-    description = fields.Char()

@@ -23,8 +23,7 @@
         <p>Hope to hear from you soon.</p>
     </p>
 </div></field>
-            <field name="report_template" ref="care_proposal.action_proposal_report"/>
-            <field name="report_name">{{ (object.name or '').replace('/','_') }}</field>
+            <field name="report_template_ids" eval="[(4, ref('care_proposal.action_proposal_report'))]"/>
             <field name="lang">{{ object.partner_id.lang }}</field>
             <field name="auto_delete" eval="False"/>
         </record>
@@ -99,8 +98,7 @@
         </center>
     </div>
 </div></field>
-            <field name="report_template" ref="care_proposal.action_proposal_pdf_report"/>
-            <field name="report_name">{{ (object.name or '').replace('/','_') }}</field>
+            <field name="report_template_ids" eval="[(4, ref('care_proposal.action_proposal_pdf_report'))]"/>
             <field name="auto_delete" eval="False"/>
         </record>
     </data>

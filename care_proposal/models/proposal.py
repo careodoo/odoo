@@ -14,30 +14,48 @@ class Proposal(models.Model):
         return str(int(datetime.now().timestamp()))
 
     def get_default_approvers(self):
-        return [
-            (0, 0, {'sequence': rec.sequence, 'user_id': rec.user_id.id}) for rec in self.env['proposal.approver'].search([])
-        ]
+        return [(0, 0, {
+            'sequence': rec.sequence,
+            'user_id': rec.user_id.id
+        }) for rec in self.env['proposal.approver'].search([])]
 
-    name = fields.Char(compute='compute_name', store=True)
-    company_id = fields.Many2one('res.company', required=True, default=lambda self: self.env.company)
-    ref = fields.Char(required=True, copy=False, readonly=True, index=True, default=lambda self: _('New'))
+    name = fields.Char(
+        compute='compute_name',
+        store=True,
+    )
+    company_id = fields.Many2one(
+        'res.company',
+        required=True,
+        default=lambda self: self.env.company,
+    )
+    ref = fields.Char(required=True, copy=False, readonly=True, index=True, default=lambda self: _('New'),)
     partner_id = fields.Many2one('res.partner')
     proposal_date = fields.Date()
     expire_date = fields.Date()
-    total_amount = fields.Float(compute='compute_total_amount', store=True, string='Total Sales')
+    total_amount = fields.Float(
+        compute='compute_total_amount',
+        store=True,
+        string='Total Amount',
+    )
     service_type_id = fields.Many2one('proposal.service.type')
-    country_id = fields.Many2one('res.country', related='partner_id.country_id', store=True)
+    country_id = fields.Many2one(
+        'res.country',
+        related='partner_id.country_id',
+        store=True,
+    )
     city = fields.Char(related='partner_id.city', store=True)
     phone = fields.Char(related='partner_id.phone', store=True)
     service_site = fields.Char(string='Site of Service')
     mobilization_date = fields.Date()
     proposal_period = fields.Integer()
     notes = fields.Text()
-    state = fields.Selection(selection=[
-        ('draft', 'New'), ('submit', 'Submitted'), ('waiting', 'Waiting Approval'),
-        ('approve', 'Approved'), ('reject', 'Rejected'), ('cancel', 'Cancel'), ('won', 'Won'),
-        ('contracted', 'Contracted')
-    ], default='draft', tracking=True)
+    state = fields.Selection(
+        selection=[('draft', 'New'), ('submit', 'Submitted'), ('waiting', 'Waiting Approval'),
+                   ('approve', 'Approved'), ('reject', 'Rejected'), ('cancel', 'Cancel'),
+                   ('won', 'Won'), ('contracted', 'Contracted')],
+        default='draft',
+        tracking=True,
+    )
     service_ids = fields.One2many('proposal.service.line', 'proposal_id')
     scope_ids = fields.One2many('proposal.scope.line', 'proposal_id')
     manpower_ids = fields.One2many('proposal.manpower.line', 'proposal_id')
@@ -65,23 +83,35 @@ class Proposal(models.Model):
     individual_cost = fields.Float(compute='compute_individual_cost', store=True)
     total_sales = fields.Float(compute='compute_total_sales', store=True)
     individual_sales = fields.Float(compute='compute_individual_sales', store=True)
-    total_pricing_cost = fields.Float(compute='compute_total_pricing_cost', store=True, string='Total Cost')
+    total_pricing_cost = fields.Float(
+        compute='compute_total_pricing_cost',
+        store=True,
+        string='Total Pricing Cost',
+    )
     margin_amount = fields.Float(compute='compute_margin', store=True, string='Net Profit')
     margin_percentage = fields.Float(compute='compute_margin', store=True, string='Net Profit %')
     lead_id = fields.Many2one('crm.lead')
     approver_id = fields.Many2one('res.users', compute='compute_approver', store=True)
     approver_users = fields.Many2many('res.users', compute='compute_approver_users', store=True)
-    receiver_users = fields.Many2many('res.users', 'approved_users_proposal_rel', 'proposal_id', 'user_id')
+    receiver_users = fields.Many2many(
+        'res.users',
+        'approved_users_proposal_rel',
+        'proposal_id',
+        'user_id',
+    )
     receiver_users_str = fields.Char(compute='compute_receiver_users_str', store=True)
     user_confirmed = fields.Boolean(compute='compute_user_confirmed')
     barcode = fields.Char(default=generate_barcode)
     logo = fields.Binary(related='partner_id.image_1920', store=True, readonly=False)
-    qr_image = fields.Binary("QR Code", compute='_generate_qr_code')
-    qr_url = fields.Char("QR Code", compute='_generate_qr_code')
+    qr_image = fields.Binary("QR Image", compute='_generate_qr_code')
+    qr_url = fields.Char("QR URL", compute='_generate_qr_code')
     active = fields.Boolean(default=True)
     mode = fields.Selection(selection=[
-        ('hourly', 'Hourly'), ('daily', 'Daily'), ('weekly', 'Weekly'),
-        ('monthly', 'Monthly'), ('annually', 'Annually'),
+        ('hourly', 'Hourly'),
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+        ('monthly', 'Monthly'),
+        ('annually', 'Annually'),
     ])
     # print options
     print_cover = fields.Boolean(default=True)
@@ -92,22 +122,42 @@ class Proposal(models.Model):
     print_terms = fields.Boolean(default=True)
     print_acceptance = fields.Boolean(default=True)
     include_material = fields.Boolean(default=True)
-    list_text = fields.Text(default="Our Price dosn't include the materials or equipments or any machineries, we will provide you with list of most used items for the cleaning services with prices for each one to choose which one you will add to your contract to be able customize the price and contract.")
-    list_footer = fields.Text(default="Feel free and control your payment, what you need what you pay")
-    term_text = fields.Text(default="Our Price doesn't include materials or equipments and machiners. We provided you with list of the most used items for the cleaning services with individual unit price allowing you to choose your preferred items and customize your cost")
+    list_text = fields.Text(
+        default=
+        "Our Price dosn't include the materials or equipments or any machineries, we will provide you with list of most used items for the cleaning services with prices for each one to choose which one you will add to your contract to be able customize the price and contract.",
+    )
+    list_footer = fields.Text(
+        default="Feel free and control your payment, what you need what you pay")
+    term_text = fields.Text(
+        default=
+        "Our Price doesn't include materials or equipments and machiners. We provided you with list of the most used items for the cleaning services with individual unit price allowing you to choose your preferred items and customize your cost",
+    )
     # commission
     commission_ids = fields.One2many('proposal.commission.line', 'proposal_id')
     apply_commission = fields.Boolean(string='Apply Profit Commission')
     commission_type = fields.Selection([
-        ('percentage', 'Percentage'), ('fixed', 'Fixed'),
+        ('percentage', 'Percentage'),
+        ('fixed', 'Fixed'),
     ])
     commission_rate = fields.Float()
     commission_amount = fields.Float(compute='compute_commission_amount', store=True)
     total_commission_amount = fields.Float(string='Total Commission')
-    approval_ids = fields.One2many('proposal.approval', 'proposal_id', default=get_default_approvers)
-    material_service_ids = fields.Many2many('proposal.service.line', domain="[('id', 'in', service_ids)]")
-    equipment_service_ids = fields.Many2many('proposal.service.line', relation="equipment_service_rel",
-                                             column1="equipment_id", column2="service_id", domain="[('id', 'in', service_ids)]")
+    approval_ids = fields.One2many(
+        'proposal.approval',
+        'proposal_id',
+        default=get_default_approvers,
+    )
+    material_service_ids = fields.Many2many(
+        'proposal.service.line',
+        domain="[('id', 'in', service_ids)]",
+    )
+    equipment_service_ids = fields.Many2many(
+        'proposal.service.line',
+        relation="equipment_service_rel",
+        column1="equipment_id",
+        column2="service_id",
+        domain="[('id', 'in', service_ids)]",
+    )
 
     @api.depends('apply_commission', 'commission_rate', 'commission_type', 'margin_amount')
     def compute_commission_amount(self):
@@ -139,7 +189,8 @@ class Proposal(models.Model):
             rec.user_confirmed = False
             if rec.approval_ids and rec.approver_users:
                 if self.env.uid in rec.approver_users.ids:
-                    if rec.approval_ids.filtered(lambda l: l.user_id.id == self.env.uid and l.approved):
+                    if rec.approval_ids.filtered(
+                            lambda l: l.user_id.id == self.env.uid and l.approved):
                         rec.user_confirmed = True
 
     @api.constrains('commission_rate')
@@ -218,15 +269,33 @@ class Proposal(models.Model):
             total_gate = 0
             for service_line in rec.service_ids:
                 lines = service_line.proposal_service_id.line_ids
-                total_uniform += sum(lines.filtered(lambda l: l.type == 'uniform').mapped('cost') or []) * service_line.quantity
-                total_accommodation += sum(lines.filtered(lambda l: l.type == 'accommodation').mapped('cost') or []) * service_line.quantity
-                total_residency += sum(lines.filtered(lambda l: l.type == 'residency').mapped('cost') or []) * service_line.quantity
-                total_leave += sum(lines.filtered(lambda l: l.type == 'leave').mapped('cost') or []) * service_line.quantity
-                total_insurance += sum(lines.filtered(lambda l: l.type == 'insurance').mapped('cost') or []) * service_line.quantity
-                total_fee += sum(lines.filtered(lambda l: l.type == 'bank_charge').mapped('cost') or []) * service_line.quantity
-                total_medical += sum(lines.filtered(lambda l: l.type == 'medical').mapped('cost') or []) * service_line.quantity
-                total_other += sum(lines.filtered(lambda l: l.type == 'other').mapped('cost') or []) * service_line.quantity
-                total_gate += sum(lines.filtered(lambda l: l.type == 'gate_pass').mapped('cost') or []) * service_line.quantity
+                total_uniform += sum(
+                    lines.filtered(lambda l: l.type == 'uniform').mapped('cost') or
+                    []) * service_line.quantity
+                total_accommodation += sum(
+                    lines.filtered(lambda l: l.type == 'accommodation').mapped('cost') or
+                    []) * service_line.quantity
+                total_residency += sum(
+                    lines.filtered(lambda l: l.type == 'residency').mapped('cost') or
+                    []) * service_line.quantity
+                total_leave += sum(
+                    lines.filtered(lambda l: l.type == 'leave').mapped('cost') or
+                    []) * service_line.quantity
+                total_insurance += sum(
+                    lines.filtered(lambda l: l.type == 'insurance').mapped('cost') or
+                    []) * service_line.quantity
+                total_fee += sum(
+                    lines.filtered(lambda l: l.type == 'bank_charge').mapped('cost') or
+                    []) * service_line.quantity
+                total_medical += sum(
+                    lines.filtered(lambda l: l.type == 'medical').mapped('cost') or
+                    []) * service_line.quantity
+                total_other += sum(
+                    lines.filtered(lambda l: l.type == 'other').mapped('cost') or
+                    []) * service_line.quantity
+                total_gate += sum(
+                    lines.filtered(lambda l: l.type == 'gate_pass').mapped('cost') or
+                    []) * service_line.quantity
 
             rec.uniform_amount = total_uniform
             rec.accommodation_amount = total_accommodation
@@ -317,7 +386,8 @@ class Proposal(models.Model):
             cl = self.commission_ids.filtered(lambda c: service_line.id in c.service_ids.ids)
             if cl:
                 cl = cl[0]
-                commission_amount = self.get_commission_amount(cl.commission, cl.commission_type, cl.commission_rate, individual_cost)
+                commission_amount = self.get_commission_amount(cl.commission, cl.commission_type,
+                                                               cl.commission_rate, individual_cost)
                 total_commission += commission_amount * service_line.quantity
 
             vals.append((0, 0, {
@@ -334,10 +404,7 @@ class Proposal(models.Model):
                 'individual_sales_price': individual_cost,
                 'cost': (individual_cost + commission_amount) * service_line.quantity,
             }))
-        self.write({
-            'pricing_ids': vals,
-            'total_commission_amount': total_commission
-        })
+        self.write({'pricing_ids': vals, 'total_commission_amount': total_commission})
 
     def get_commission_amount(self, commission, commission_type, commission_rate, individual_cost):
         commission_amount = 0
@@ -347,7 +414,6 @@ class Proposal(models.Model):
             else:
                 commission_amount = commission_rate
         return commission_amount
-
 
     @api.model
     def create(self, vals):
@@ -368,8 +434,10 @@ class Proposal(models.Model):
             self.write({'state': 'waiting'})
             return
         self.write({
-            'state': 'approve',
-            'receiver_users': self.env['proposal.receiver'].sudo().search([]).mapped('user_id').mapped('id'),
+            'state':
+                'approve',
+            'receiver_users':
+                self.env['proposal.receiver'].sudo().search([]).mapped('user_id').mapped('id'),
         })
 
     @api.depends('receiver_users')
@@ -388,9 +456,7 @@ class Proposal(models.Model):
     def button_draft(self):
         self.state = 'draft'
         self.approval_ids = [(5, 0, 0)]
-        self.write({
-            'approval_ids': self.get_default_approvers()
-        })
+        self.write({'approval_ids': self.get_default_approvers()})
 
     def button_won(self):
         template = self.env.ref('care_proposal.email_template_proposal_won')
@@ -402,7 +468,12 @@ class Proposal(models.Model):
         self.env['mail.template'].with_context({
             'name_to': name_to,
             'won_email': True,
-        }).browse(template.id).send_mail(self.id, email_values=email_values, force_send=True, notif_layout='mail.mail_notification_light')
+        }).browse(template.id).send_mail(
+            self.id,
+            email_values=email_values,
+            force_send=True,
+            notif_layout='mail.mail_notification_light',
+        )
         self.state = 'won'
 
     def action_send_email(self):
@@ -413,7 +484,8 @@ class Proposal(models.Model):
         except ValueError:
             template_id = False
         try:
-            compose_form_id = ir_model_data._xmlid_lookup('mail.email_compose_message_wizard_form')[2]
+            compose_form_id = ir_model_data._xmlid_lookup(
+                'mail.email_compose_message_wizard_form')[2]
         except ValueError:
             compose_form_id = False
         ctx = dict(self.env.context or {})
@@ -452,264 +524,28 @@ class Proposal(models.Model):
             qr_info = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
             action_id = self.env.ref('care_proposal.proposal_action').id
             menu_id = self.env.ref('care_proposal.proposal_menu').id
-            qr_info += '/web#id=%s&action=%s&model=%s&view_type=form&cids=&menu_id=%s' % (rec.id, action_id, 'proposal.proposal', menu_id)
+            qr_info += '/web#id=%s&action=%s&model=%s&view_type=form&cids=&menu_id=%s' % (
+                rec.id, action_id, 'proposal.proposal', menu_id)
             rec.qr_url = qr_info
             rec.qr_image = generateQrCode.generate_qr_code(qr_info)
 
     def get_staff(self):
-        return int(sum(self.pricing_ids.filtered(lambda p: p.service_id.proposal_service_id.type == 'manpower').mapped('service_quantity')))
+        return int(
+            sum(
+                self.pricing_ids.filtered(lambda p: p.service_id.proposal_service_id.type ==
+                                          'manpower').mapped('service_quantity')))
 
     def get_days_text(self):
-        service_days = set([str(day) for day in self.service_ids.filtered(lambda s: s.proposal_service_id.type == 'manpower').mapped('weekly_days')])
+        service_days = set([
+            str(day) for day in self.service_ids.filtered(
+                lambda s: s.proposal_service_id.type == 'manpower').mapped('weekly_days')
+        ])
         return ','.join(service_days)
 
     def get_hours_text(self):
-        service_hours = set([str(hour) for hour in self.service_ids.filtered(lambda s: s.proposal_service_id.type == 'manpower').mapped('daily_hours')])
+        service_hours = set([
+            str(hour) for hour in self.service_ids.filtered(
+                lambda s: s.proposal_service_id.type == 'manpower').mapped('daily_hours')
+        ])
         return ','.join(service_hours)
 
-
-class ProposalServiceLine(models.Model):
-    _name = 'proposal.service.line'
-    _rec_name = 'proposal_service_id'
-    _description = 'Proposal Service Line'
-
-    proposal_id = fields.Many2one('proposal.proposal')
-    proposal_service_id = fields.Many2one('proposal.service', required=True, string='Service')
-    location_id = fields.Many2one('proposal.service.location')
-    unit_id = fields.Many2one('proposal.service.unit')
-    daily_hours = fields.Integer(related='proposal_service_id.daily_hours')
-    weekly_days = fields.Integer(related='proposal_service_id.weekly_days')
-    monthly_days = fields.Integer(related='proposal_service_id.monthly_days')
-    quantity = fields.Integer(default=1)
-    total_cost = fields.Float(related='proposal_service_id.total_cost', store=True, string='Subtotal')
-    total = fields.Float(compute='compute_total', store=True)
-
-    @api.depends('quantity', 'total_cost')
-    def compute_total(self):
-        for rec in self:
-            rec.total = rec.quantity * rec.total_cost
-
-    def get_service_cost(self, type):
-        cost = 0
-        lines = self.proposal_id.pricing_ids.filtered(lambda p: p.service_id.id == self.id)
-        if lines:
-            if type == 'material':
-                cost = lines[0].material_cost
-            elif type == 'equipment':
-                cost = lines[0].equipment_cost
-            elif type == 'transportation':
-                cost = lines[0].transportation_cost
-            elif type == 'cost':
-                cost = lines[0].cost
-            elif type == 'sales':
-                cost = lines[0].sales_price
-            else:
-                cost = lines[0].profit_percentage
-        return cost
-
-    def get_commission_amount(self):
-        pricing_line = self.proposal_id.pricing_ids.filtered(lambda p: p.service_id.id == self.id)
-        return pricing_line.commission_amount if pricing_line else 0
-
-
-class ProposalScopeLine(models.Model):
-    _name = 'proposal.scope.line'
-    _description = 'Proposal Scope Line'
-
-    proposal_id = fields.Many2one('proposal.proposal')
-    proposal_scope_id = fields.Many2one('proposal.scope', required=True, string='Scope')
-    schedule = fields.Selection(selection=[
-        ('daily', 'Daily'), ('weekly', 'Weekly'),
-        ('monthly', 'Monthly'), ('custom', 'As Per Request'), ('other', 'Other'),
-    ], related='proposal_scope_id.schedule')
-
-
-class ProposalManpowerLine(models.Model):
-    _name = 'proposal.manpower.line'
-    _description = 'Proposal Manpower Line'
-
-    proposal_id = fields.Many2one('proposal.proposal')
-    proposal_manpower_id = fields.Many2one('proposal.manpower', required=True, string='Manpower')
-    nationality = fields.Many2one('res.country', related='proposal_manpower_id.nationality')
-    gender = fields.Selection(selection=[
-        ('male', 'Male'), ('female', 'Female'),
-    ], related='proposal_manpower_id.gender')
-    quantity = fields.Integer(default=1)
-    service_ids = fields.Many2many('proposal.service.line', compute='compute_service_ids', store=True)
-    service_id = fields.Many2one('proposal.service.line', domain="[('id', 'in', service_ids)]")
-    salary = fields.Float(compute='compute_salary', store=True)
-    total_salary = fields.Float(compute='compute_total_salary', store=True)
-
-    @api.depends('proposal_id.service_ids')
-    def compute_service_ids(self):
-        for rec in self:
-            rec.service_ids = False
-            if rec.proposal_id.service_ids:
-                rec.service_ids = [(6, 0, rec.proposal_id.service_ids.ids)]
-
-    @api.depends('service_id.proposal_service_id')
-    def compute_salary(self):
-        for rec in self:
-            rec.salary = 0
-            if rec.service_id.proposal_service_id:
-                rec.salary = sum(rec.service_id.proposal_service_id.line_ids.filtered(lambda l: l.type == 'salary').mapped('cost'))
-
-    @api.depends('quantity', 'salary')
-    def compute_total_salary(self):
-        for rec in self:
-            rec.total_salary = rec.quantity * rec.salary
-
-
-class ProposalMaterialLine(models.Model):
-    _name = 'proposal.material.line'
-    _description = 'Proposal Material Line'
-
-    proposal_id = fields.Many2one('proposal.proposal')
-    product_id = fields.Many2one('product.product', required=True, string='Material')
-    quantity = fields.Float(default=1)
-    uom_id = fields.Many2one('uom.uom', string='Unit of Measure')
-    cost = fields.Float(required=True)
-    total_amount = fields.Float(compute='compute_total_amount', store=True, string='Total')
-
-    @api.onchange('product_id')
-    def onchange_product_id(self):
-        if self.product_id:
-            self.cost = self.product_id.standard_price
-            self.uom_id = self.product_id.uom_id.id
-
-    @api.depends('cost', 'quantity')
-    def compute_total_amount(self):
-        for rec in self:
-            rec.total_amount = rec.cost * rec.quantity
-
-
-class ProposalEquipmentLine(models.Model):
-    _name = 'proposal.equipment.line'
-    _description = 'Proposal Equipment Line'
-
-    proposal_id = fields.Many2one('proposal.proposal')
-    product_id = fields.Many2one('product.product', required=True, string='Equipment')
-    quantity = fields.Float(default=1)
-    uom_id = fields.Many2one('uom.uom', string='Unit of Measure')
-    cost = fields.Float(required=True)
-    total_amount = fields.Float(compute='compute_total_amount', store=True, string='Total')
-
-    @api.onchange('product_id')
-    def onchange_product_id(self):
-        if self.product_id:
-            self.cost = self.product_id.standard_price
-            self.uom_id = self.product_id.uom_id.id
-
-    @api.depends('cost', 'quantity')
-    def compute_total_amount(self):
-        for rec in self:
-            rec.total_amount = rec.cost * rec.quantity
-
-
-class ProposalTransportationLine(models.Model):
-    _name = 'proposal.transportation.line'
-    _description = 'Proposal Transportation Line'
-
-    proposal_id = fields.Many2one('proposal.proposal')
-    transportation_id = fields.Many2one('proposal.transportation', required=True)
-    service_ids = fields.Many2many('proposal.service.line', domain="[('proposal_id', '=', proposal_id)]", required=True)
-    cost = fields.Float(related='transportation_id.cost', store=True)
-    type = fields.Selection(selection=[
-        ('individual', 'Individual'), ('group', 'Group'),
-    ], related='transportation_id.type', store=True)
-    period = fields.Selection(selection=[
-        ('monthly', 'Monthly'), ('daily', 'Daily'),
-    ], related='transportation_id.period')
-
-    @api.onchange('transportation_id')
-    def onchange_transportation_id(self):
-        return {'domain': {'service_ids': [('id', 'in', self.proposal_id.service_ids.ids)]}}
-
-
-class ProposalTermLine(models.Model):
-    _name = 'proposal.term.line'
-    _description = 'Proposal Term Line'
-
-    proposal_id = fields.Many2one('proposal.proposal')
-    term_id = fields.Many2one('proposal.term', required=True)
-
-
-class ProposalPricingLine(models.Model):
-    _name = 'proposal.pricing.line'
-    _description = 'Proposal Pricing Line'
-
-    proposal_id = fields.Many2one('proposal.proposal')
-    service_id = fields.Many2one('proposal.service.line')
-    service_total_cost = fields.Float(string='S. Total Cost')
-    service_individual_cost = fields.Float(string='S. Ind. Cost')
-    service_quantity = fields.Float(string='S. Qty')
-    material_cost = fields.Float(string='Material')
-    equipment_cost = fields.Float(string='Equipment')
-    transportation_cost = fields.Float(string='Trans.')
-    name = fields.Selection(selection=[
-        ('service', 'Services'), ('material', 'Materials'),
-        ('equipment', 'Equipments'), ('transportation', 'Transportations'),
-    ], required=True)
-    profit_percentage = fields.Float(string='Profit %', compute='compute_profit', store=True)
-    individual_profit_amount = fields.Float(string='Ind. Profit', compute='compute_profit', store=True)
-    profit_amount = fields.Float(string='Total Profit', compute='compute_profit', store=True)
-    commission_amount = fields.Float(string='Commission')
-    individual_cost = fields.Float(required=True, string='Ind. Cost')
-    individual_cost_after_commission = fields.Float(string='Ind. Cost+CO.', compute='compute_individual_cost_after_commission', store=True)
-    cost = fields.Float(required=True)
-    individual_sales_price = fields.Float(string='Ind. Sales')
-    sales_price = fields.Float(compute='compute_sales_price', store=True, string='Sales')
-
-    @api.depends('commission_amount', 'individual_cost')
-    def compute_individual_cost_after_commission(self):
-        for rec in self:
-            rec.individual_cost_after_commission = rec.individual_cost + rec.commission_amount
-
-    @api.depends('individual_sales_price', 'individual_cost', 'service_quantity')
-    def compute_profit(self):
-        for rec in self:
-            if rec.individual_sales_price and rec.individual_cost:
-                rec.profit_percentage = ((rec.individual_sales_price - rec.individual_cost_after_commission) / rec.individual_cost_after_commission) * 100
-                rec.individual_profit_amount = rec.individual_sales_price - rec.individual_cost_after_commission
-                rec.profit_amount = rec.individual_profit_amount * rec.service_quantity
-
-    @api.depends('individual_sales_price', 'service_quantity')
-    def compute_sales_price(self):
-        for rec in self:
-            # rec.sales_price = rec.cost + (rec.cost * (rec.profit_percentage / 100))
-            rec.sales_price = rec.individual_sales_price * rec.service_quantity
-
-
-class ProposalApproval(models.Model):
-    _name = 'proposal.approval'
-    _description = 'Proposal Approval'
-    _order = 'sequence'
-
-    proposal_id = fields.Many2one('proposal.proposal')
-    sequence = fields.Integer()
-    user_id = fields.Many2one('res.users')
-    approved = fields.Boolean()
-    date_approved = fields.Datetime(string='Approved Date')
-
-    def send_approve_request(self):
-        template = self.env.ref('care_proposal.email_template_proposal_won')
-        email_values = {'email_to': self.user_id.email}
-        self.env['mail.template'].browse(template.id).with_context(name_to=self.user_id.name).send_mail(self.proposal_id.id, email_values=email_values, force_send=True,
-                                                                notif_layout='mail.mail_notification_light')
-
-
-class ProposalCommission(models.Model):
-    _name = 'proposal.commission.line'
-    _description = 'Proposal Commission'
-
-    proposal_id = fields.Many2one('proposal.proposal')
-    service_ids = fields.Many2many('proposal.service.line', domain="[('proposal_id', '=', proposal_id)]", required=True)
-    commission = fields.Selection(selection=[('ind_cost', 'Individual Cost'),], default='ind_cost', required=True)
-    commission_type = fields.Selection([
-        ('percentage', 'Percentage'), ('fixed', 'Fixed'),
-    ], required=True)
-    commission_rate = fields.Float()
-
-    @api.onchange('commission')
-    def onchange_commission(self):
-        return {'domain': {'service_ids': [('id', 'in', self.proposal_id.service_ids.ids)]}}
