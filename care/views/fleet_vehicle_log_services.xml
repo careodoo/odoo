@@ -6,10 +6,10 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet/widget[@name='web_ribbon']" position="after">
                 <field name="is_attachment" invisible="1"/>
-                <div class="alert alert-info" role="alert" attrs="{'invisible': [('is_attachment', '=', False)]}">
+                <div class="alert alert-info" role="alert" invisible="not is_attachment">
                     We Found (Files / Images) In Attachment, Please Check It.
                 </div>
-                <div class="alert alert-danger" role="alert" attrs="{'invisible': [('is_attachment', '=', True)]}">
+                <div class="alert alert-danger" role="alert" invisible="is_attachment">
                     We Not Found (Files / Images) In Attachment, Please Add It.
                 </div>
             </xpath>
@@ -24,7 +24,7 @@
                 <field name="total_cost"/>
                 <field name="next_service_date"/>
             </xpath>
-            <xpath expr="//sheet/group[2]" position="replace">
+            <xpath expr="//sheet/group" position="after">
                 <notebook>
                     <page name="damages" string="Damages">
                         <field name="damage_line">
@@ -33,7 +33,7 @@
                                 <field name="description"/>
                                 <field name="source"/>
                                 <field name="purchase_id" optional="show"
-                                       attrs="{'readonly': [('source', 'not in', ['purchase', 'purchase_scrap'])], 'required': [('source', 'in', ['purchase', 'purchase_scrap'])]}"/>
+                                       readonly="source not in ['purchase', 'purchase_scrap']" required="source in ['purchase', 'purchase_scrap']"/>
                                 <field name="currency_id" invisible="1"/>
                                 <field name="purchase_amount_total" sum="Purchase Total" optional="show"/>
                                 <field name="cost" sum="cost"/>

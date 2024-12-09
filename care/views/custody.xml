@@ -39,8 +39,8 @@
                     <field name="is_active" invisible="1"/>
                     <field name="active" invisible="1"/>
                     <field name="name" invisible="1"/>
-                    <widget name="web_ribbon" title="Active"  bg_color="bg-success" attrs="{'invisible': [('is_active', '=', False)]}"/>
-                    <widget name="web_ribbon" title="Disable" bg_color="bg-danger"  attrs="{'invisible': [('is_active', '=', True)]}"/>
+                    <widget name="web_ribbon" title="Active"  bg_color="bg-success" invisible="not is_active"/>
+                    <widget name="web_ribbon" title="Disable" bg_color="bg-danger" invisible="is_active"/>
                     <div class="oe_title mb24">
                         <h1>
                             <field name="custody_name" class="o_text_overflow" default_focus="1" placeholder="Custody Name"/>

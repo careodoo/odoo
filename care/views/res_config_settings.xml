@@ -5,7 +5,7 @@
         <field name="model">res.config.settings</field>
         <field name="inherit_id" ref="fleet.res_config_settings_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//div[@id='end_contract_setting']" position="after">
+            <xpath expr="//block[@id='end_contract_setting']" position="after">
                 <h2>Next Service Date Reminder Days</h2>
                 <div class="row mt16 o_settings_container" id="services_next_service_date_notify_reminder">
                     <div class="col-12 col-lg-6 o_setting_box" name="services_next_service_date_notify_reminder">

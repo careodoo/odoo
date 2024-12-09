@@ -40,11 +40,11 @@
                     <field name="is_active" invisible="1"/>
                     <field name="active" invisible="1"/>
                     <div class="oe_button_box" name="button_box">
-                        <button type="object" icon="fa-archive" name="toggle_active" string="Archive" attrs="{'invisible': [('active', '=', False)]}"/>
-                        <button type="object" icon="fa-archive" name="toggle_active" string="Restore" attrs="{'invisible': [('active', '=', True)]}"/>
+                        <button type="object" icon="fa-archive" name="toggle_active" string="Archive" invisible="not active"/>
+                        <button type="object" icon="fa-archive" name="toggle_active" string="Restore" invisible="active"/>
                     </div>
-                    <widget name="web_ribbon" title="Active"  bg_color="bg-success" attrs="{'invisible': [('active', '=', False)]}"/>
-                    <widget name="web_ribbon" title="Disable" bg_color="bg-danger"  attrs="{'invisible': [('active', '=', True)]}"/>
+                    <widget name="web_ribbon" title="Active"  bg_color="bg-success" invisible="not active"/>
+                    <widget name="web_ribbon" title="Disable" bg_color="bg-danger"  invisible="active"/>
                     <div class="oe_title mb24">
                         <h1>
                             <field name="name" class="o_text_overflow" default_focus="1" placeholder="Maintenance Name"/>

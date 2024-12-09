@@ -8,8 +8,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='partner_ref']" position="after">
                     <field name="from_custody"/>
-                    <field name="custody"
-                           attrs="{'invisible': [('from_custody', '=', False)], 'required': [('from_custody', '=', True)]}"/>
+                    <field name="custody" invisible="not from_custody" required="from_custody"/>
                 </xpath>
             </field>
         </record>

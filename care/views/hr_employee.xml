@@ -44,16 +44,16 @@
                     </group>
                     <group>
                         <group>
-                            <field name="hostel_id" attrs="{'invisible' : [('is_company_accommodation', '=', False)]}"/>
-                            <field name="floor_id" attrs="{'invisible' : [('is_company_accommodation', '=', False)]}" domain="[('hostel_id', '=', hostel_id)]"/>
-                            <field name="flat_id" attrs="{'invisible' : [('is_company_accommodation', '=', False)]}" domain="[('hostel_id', '=', hostel_id), ('floor_id', '=', floor_id)]"/>
+                            <field name="hostel_id" invisible="not is_company_accommodation"/>
+                            <field name="floor_id" invisible="not is_company_accommodation" domain="[('hostel_id', '=', hostel_id)]"/>
+                            <field name="flat_id" invisible="not is_company_accommodation" domain="[('hostel_id', '=', hostel_id), ('floor_id', '=', floor_id)]"/>
                         </group>
                         <group>
-                            <field name="room_id" attrs="{'invisible' : [('is_company_accommodation', '=', False)]}" domain="[('hostel_id', '=', hostel_id), ('floor_id', '=', floor_id), ('flat_id', '=', flat_id)]"/>
-                            <field name="bed_id" attrs="{'invisible' : [('is_company_accommodation', '=', False)]}" domain="[('hostel_id', '=', hostel_id), ('floor_id', '=', floor_id), ('flat_id', '=', flat_id), ('room_id', '=', room_id)]"/>
+                            <field name="room_id" invisible="not is_company_accommodation" domain="[('hostel_id', '=', hostel_id), ('floor_id', '=', floor_id), ('flat_id', '=', flat_id)]"/>
+                            <field name="bed_id" invisible="not is_company_accommodation" domain="[('hostel_id', '=', hostel_id), ('floor_id', '=', floor_id), ('flat_id', '=', flat_id), ('room_id', '=', room_id)]"/>
                             <div class="col-md-12 inline btn" style="width:100%">
                                 <button name="submit_employee_to_hostel" icon="fa-cloud-upload" type="object" string="Submit" class="float-right btn-primary col-6"/>
-                                <button name="remove_employee_to_hostel" icon="fa-cloud-download" type="object" string="Remove" class="float-right btn-primary col-6" attrs="{'invisible' : [('bed_id', '=', False)]}"/>
+                                <button name="remove_employee_to_hostel" icon="fa-cloud-download" type="object" string="Remove" class="float-right btn-primary col-6" invisible="bed_id == False"/>
                             </div>
                         </group>
                     </group>
