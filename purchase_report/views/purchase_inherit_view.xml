@@ -24,14 +24,14 @@
             <field name="inherit_id" ref="purchase.purchase_order_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//button[@name='button_confirm']" position="after">
-                    <button name="button_hold" type="object" string="Hold" states="draft,sent,cancel,delayed,revised,payment,confirmed"/>
-                    <button name="button_delay" type="object" string="Delay" states="draft,sent,cancel,hold,revised,payment,confirmed"/>
-                    <button name="button_revised" type="object" string="Revised" states="draft,sent,cancel,hold,payment,confirmed"/>
-                    <button name="button_payment" type="object" string="Payment" states="draft,sent,cancel,hold,revised,confirmed"/>
-                    <button name="button_confirmed_state" type="object" string="Confirmed State" states="draft,sent,cancel,hold,revised,payment"/>
+                    <button name="button_hold" type="object" string="Hold" invisible="state not in ('draft','sent','cancel','delayed','revised','payment','confirmed')"/>
+                    <button name="button_delay" type="object" string="Delay" invisible="state not in ('draft','sent','cancel','hold','revised','payment','confirmed')"/>
+                    <button name="button_revised" type="object" string="Revised" invisible="state not in ('draft','sent','cancel','hold','payment','confirmed')"/>
+                    <button name="button_payment" type="object" string="Payment" invisible="state not in ('draft','sent','cancel','hold','revised','confirmed')"/>
+                    <button name="button_confirmed_state" type="object" string="Confirmed State" invisible="state not in ('draft','sent','cancel','hold','revised','payment')"/>
                 </xpath>
                 <xpath expr="//button[@name='button_draft']" position="attributes">
-                    <attribute name="states">cancel,hold,delayed,revised,</attribute>
+                    <attribute name="invisible">state not in ('cancel','hold','delayed','revised')</attribute>
                 </xpath>
                 <field name="currency_id" position="after">
                     <field name="department_id"/>
@@ -66,8 +66,8 @@
                 <form string="purchase_sign_form">
                     <sheet>
                         <group>
-                            <field name="purchase_order_id" readonly="1" attrs="{'invisible': [('purchase_order_id', '=', False)]}"/>
-                            <field name="request_id" readonly="1" attrs="{'invisible': [('request_id', '=', False)]}"/>
+                            <field name="purchase_order_id" readonly="1" invisible="purchase_order_id != False"/>
+                            <field name="request_id" readonly="1" invisible="request_id != False"/>
                             <field name="employee_id" readonly="1"/>
                             <field name="employee_title" readonly="1"/>
                             <field name="signature"/>

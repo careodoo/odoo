@@ -8,10 +8,10 @@
         </record>
 
         <record id="purchase.email_template_edi_purchase_done" model="mail.template">
-            <field name="report_template" ref="purchase_report.action_report_purchase_order"/>
+            <field name="report_template_ids" eval="[(4, ref('purchase_report.action_report_purchase_order'))]"/>
         </record>
         <record id="purchase.email_template_edi_purchase_reminder" model="mail.template">
-            <field name="report_template" ref="purchase_report.action_report_purchase_order"/>
+            <field name="report_template_ids" eval="[(4, ref('purchase_report.action_report_purchase_order'))]"/>
         </record>
         <record id="purchase_sign_template_po" model="mail.template">
             <field name="name">Ask To Sign PO</field>

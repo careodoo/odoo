@@ -9,9 +9,9 @@
                     <header>
                         <field name="user_confirmed" invisible="1"/>
                         <button name="button_confirm" type="object" string="Confirm" class="oe_highlight"
-                                attrs="{'invisible': &quot;['|','|', ('signature_users', 'not in', [uid]), ('state', '!=', 'draft'), ('user_confirmed', '=', True)]&quot;}"/>
+                                invisible="signature_users not in [uid] or state != 'draft' or user_confirmed"/>
                         <button name="button_revise" type="object" string="Revise" class="oe_highlight"
-                                attrs="{'invisible': &quot;['|','|', ('signature_users', 'not in', [uid]), ('state', '!=', 'draft'), ('user_confirmed', '=', False)]&quot;}"/>
+                                invisible="signature_users not in [uid] or state != 'draft' or not user_confirmed"/>
                         <button name="show_results" type="object" string="Search" class="oe_highlight"/>
                         <button name="print_report" type="object" string="Print" class="oe_highlight"/>
                         <field name="state" widget="statusbar"/>
