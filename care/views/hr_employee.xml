@@ -51,7 +51,7 @@
                         <group>
                             <field name="room_id" invisible="not is_company_accommodation" domain="[('hostel_id', '=', hostel_id), ('floor_id', '=', floor_id), ('flat_id', '=', flat_id)]"/>
                             <field name="bed_id" invisible="not is_company_accommodation" domain="[('hostel_id', '=', hostel_id), ('floor_id', '=', floor_id), ('flat_id', '=', flat_id), ('room_id', '=', room_id)]"/>
-                            <div class="col-md-12 inline btn" style="width:100%">
+                            <div class="col-md-12 inline btn btn-group" style="width:100%">
                                 <button name="submit_employee_to_hostel" icon="fa-cloud-upload" type="object" string="Submit" class="float-right btn-primary col-6"/>
                                 <button name="remove_employee_to_hostel" icon="fa-cloud-download" type="object" string="Remove" class="float-right btn-primary col-6" invisible="bed_id == False"/>
                             </div>
