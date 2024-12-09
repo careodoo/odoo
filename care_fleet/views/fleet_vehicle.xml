@@ -16,10 +16,10 @@
                 </xpath>
                 <xpath expr="//field[@name='driver_id']" position="before">
                     <field name="driver_type" widget="radio" options="{'horizontal': true}"/>
-                    <field name="driver_employee_id" force_save="1" attrs="{'invisible': [('driver_type', '!=', 'employee')]}"/>
+                    <field name="driver_employee_id" force_save="1" invisible="driver_type != 'employee'"/>
                 </xpath>
                 <xpath expr="//field[@name='driver_id']" position="attributes">
-                    <attribute name="attrs">{'invisible': [('driver_type', '!=', 'contact')]}</attribute>
+                    <attribute name="invisible">driver_type != 'contact'</attribute>
                     <attribute name="string">Driver (Contact)</attribute>
                     <attribute name="force_save">1</attribute>
                 </xpath>
