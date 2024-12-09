@@ -7,11 +7,11 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
-                        <button name="button_submit" type="object" string="Submit" class="oe_highlight" states="draft"/>
-                        <button name="button_approve" type="object" string="Approve" class="oe_highlight" states="submit"
+                        <button name="button_submit" type="object" string="Submit" class="oe_highlight" invisble="state != 'draft'"/>
+                        <button name="button_approve" type="object" string="Approve" class="oe_highlight" invisble="state != 'submit'"
                                 groups="care_hr.group_hr_absence_approver"/>
-                        <button name="button_print_report" type="object" string="Print" class="oe_highlight" states="approved"/>
-                        <button name="button_print_report_header" type="object" string="Print with Header" class="oe_highlight" states="approved"/>
+                        <button name="button_print_report" type="object" string="Print" class="oe_highlight" invisble="state != 'approved'"/>
+                        <button name="button_print_report_header" type="object" string="Print with Header" class="oe_highlight" invisble="state != 'approved'"/>
                         <field name="state" widget="statusbar"/>
                     </header>
                     <sheet>
@@ -20,7 +20,7 @@
                         <div class="oe_title">
                             <label for="employee_id" name="model_name_label"/>
                             <h1>
-                                <field name="employee_id" required="1" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="employee_id" required="1" readonly="state != 'draft'"/>
                             </h1>
                         </div>
                         <group>

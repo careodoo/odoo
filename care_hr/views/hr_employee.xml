@@ -10,8 +10,8 @@
                     <field name="joining_date"/>
                 </xpath>
                 <xpath expr="//header" position="inside">
-                    <button name="button_suspend" type="object" string="Suspend" attrs="{'invisible': [('suspend_date', '!=', False)]}" groups="care_hr.group_hr_suspend_user"/>
-                    <button name="button_unsuspend" type="object" string="Unsuspend" attrs="{'invisible': [('suspend_date', '=', False)]}" groups="care_hr.group_hr_suspend_user"/>
+                    <button name="button_suspend" type="object" string="Suspend" invisible="suspend_date != False" groups="care_hr.group_hr_suspend_user"/>
+                    <button name="button_unsuspend" type="object" string="Unsuspend" invisible="suspend_date == False" groups="care_hr.group_hr_suspend_user"/>
                 </xpath>
                 <xpath expr="//notebook" position="inside">
                     <page name="suspend" string="Suspend">
@@ -25,7 +25,7 @@
                     </page>
                 </xpath>
                 <xpath expr="//widget[@name='web_ribbon']" position="after">
-                    <widget name="web_ribbon" title="Suspended" bg_color="bg-danger" attrs="{'invisible': [('suspend_date', '=', False)]}"/>
+                    <widget name="web_ribbon" title="Suspended" bg_color="bg-danger" invisible="suspend_date == False"/>
                 </xpath>
             </field>
         </record>
@@ -36,7 +36,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//kanban/templates/t/div" position="inside">
                     <field name="suspend_date" invisible="1"/>
-                    <widget name="web_ribbon" title="Suspended" bg_color="bg-danger" attrs="{'invisible': [('suspend_date', '=', False)]}"/>
+                    <widget name="web_ribbon" title="Suspended" bg_color="bg-danger" invisible="suspend_date == False"/>
                 </xpath>
             </field>
         </record>

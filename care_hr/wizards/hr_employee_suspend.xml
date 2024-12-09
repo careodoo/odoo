@@ -10,15 +10,15 @@
                         <group>
                             <field name="unsuspend" invisible="1"/>
                             <field name="employee_id" readonly="1" force_save="1"/>
-                            <field name="date" attrs="{'required': [('unsuspend', '=', False)], 'invisible': [('unsuspend', '=', True)]}"/>
-                            <field name="can_print_reports" attrs="{'required': [('unsuspend', '=', False)], 'invisible': [('unsuspend', '=', True)]}"/>
-                            <field name="can_edit" attrs="{'required': [('unsuspend', '=', False)], 'invisible': [('unsuspend', '=', True)]}"/>
-                            <field name="reason" attrs="{'required': [('unsuspend', '=', False)], 'invisible': [('unsuspend', '=', True)]}"/>
+                            <field name="date" required="not unsuspend" invisible="unsuspend"/>
+                            <field name="can_print_reports" required="not unsuspend" invisible="unsuspend"/>
+                            <field name="can_edit" required="not unsuspend" invisible="unsuspend"/>
+                            <field name="reason" required="not unsuspend" invisible="unsuspend"/>
                         </group>
                     </sheet>
                     <footer>
-                        <button name="button_suspend" type="object" string="Suspend" class="oe_highlight" attrs="{'invisible': [('unsuspend', '=', True)]}"/>
-                        <button name="button_suspend" type="object" string="Unuspend" class="oe_highlight" attrs="{'invisible': [('unsuspend', '=', False)]}"/>
+                        <button name="button_suspend" type="object" string="Suspend" class="oe_highlight" invisible="unsuspend"/>
+                        <button name="button_suspend" type="object" string="Unuspend" class="oe_highlight" invisible="not unsuspend"/>
                         <button string="Cancel" class="btn-secondary" special="cancel" data-hotkey="z"/>
                     </footer>
                 </form>

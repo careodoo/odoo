@@ -18,7 +18,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//sheet/div[1]" position="before">
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_view_leave_return" type="object" class="oe_stat_button" icon="fa-pencil-square-o" attrs="{'invisible': [('leave_return_count', '=', 0)]}">
+                        <button name="action_view_leave_return" type="object" class="oe_stat_button" icon="fa-pencil-square-o" invisible="leave_return_count == 0">
                             <field name="leave_return_count" widget="statinfo" string="Leave Return"/>
                         </button>
                     </div>
@@ -30,7 +30,7 @@
             <field name="model">hr.leave</field>
             <field name="inherit_id" ref="hr_holidays.hr_leave_view_form_manager"/>
             <field name="arch" type="xml">
-                <xpath expr="//label[@for='number_of_days']" position="before">
+                <xpath expr="//label[@for='number_of_days_display']" position="before">
                     <field name="original_return_date" readonly="1" force_save="1"/>
                 </xpath>
                 <xpath expr="//div[@name='title']" position="before">
@@ -53,15 +53,16 @@
                         <group>
                             <field name="available_department_ids" widget="many2many_tags" invisible="1"/>
                             <field name="self_time_off"/>
-                            <field name="hr_department_id" attrs="{'invisible': [('self_time_off', '=', True)],'required': [('self_time_off', '=', False)]}"/>
-                            <field name="hr_employee_id" required="1" attrs="{'readonly': ['|', ('hr_department_id', '=', False), ('self_time_off', '=', True)]}"/>
-                            <field name="holiday_status_id" attrs="{'readonly': [('hr_department_id', '=', False), ('self_time_off', '=', False)]}"/>
+                            <field name="hr_department_id" invisible="self_time_off" required="not self_time_off"/>
+                            <field name="hr_employee_id" required="1" readonly="hr_department_id == False or self_time_off"/>
+                            <field name="holiday_status_id" readonly="hr_department_id == False or not self_time_off"/>
                             <field name="employee_ids" widget="many2many_tags" invisible="1"/>
                             <field name="employee_id" invisible="1"/>
-                            <field name="request_date_from" string="From" required="1" attrs="{'readonly': [('hr_department_id', '=', False), ('self_time_off', '=', False)]}"/>
-                            <field name="request_date_to" string="To" required="1" attrs="{'readonly': [('hr_department_id', '=', False), ('self_time_off', '=', False)]}"/>
-                            <field name="number_of_days" attrs="{'readonly': [('hr_department_id', '=', False)]}"/>
+                            <field name="request_date_from" string="From" required="1" readonly="hr_department_id == False and not self_time_off"/>
+                            <field name="request_date_to" string="To" required="1" readonly="hr_department_id == False and not self_time_off"/>
+                            <field name="number_of_days" readonly="hr_department_id == False"/>
                             <field name="name"/>
+                            <field name="employee_company_id" invisible="1"/>
                         </group>
                     </sheet>
                     <div class="oe_chatter">
