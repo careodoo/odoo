@@ -1,7 +1,7 @@
 {
     "name": "On hand Qty on Sale Order",
     "summary": "Display On hand quantity and forecasted qty in sale order line.",
-    "version": "15.0.1.0.0",
+    "version": "17.0",
     "category": "Sales",
     "description": "Display On hand quantity and forecasted qty in sale order line.",
     "author": "INKERP",

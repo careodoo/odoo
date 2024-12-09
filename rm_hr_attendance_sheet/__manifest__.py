@@ -13,7 +13,7 @@
     'currency': 'EUR',
 
     'category': 'hr',
-    'version': '14.001',
+    'version': '17.0',
     'images': ['static/description/bannar.jpg'],
 
     'depends': ['base',

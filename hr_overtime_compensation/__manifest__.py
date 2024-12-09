@@ -2,7 +2,7 @@
     'name': "HR Overtime Compensation",
     'summary': """HR Overtime Compensation""",
     'category': 'Uncategorized',
-    'version': '15.0',
+    'version': '17.0',
     'license': 'Other proprietary',
     'depends': ['hr', 'project', 'mail'],
     'data': [

@@ -18,7 +18,7 @@ filters pictures filters image editor photos editor resizer \
 
     # Categories can be used to filter modules in modules listing
     'category': "Extra Tools",
-    'version': '14.1.1.3',
+    'version': '17.0',
     # any module necessary for this one to work correctly
     'depends': ['web', 'field_image_preview'],
     "license": "OPL-1",

@@ -15,7 +15,7 @@
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'Human Resources',
-    'version': '15.4.1.3',
+    'version': '17.0',
     "license": "OPL-1",
     'price': 9,
     'currency': 'EUR',

@@ -1,6 +1,6 @@
 {
     'name': 'Purchase Custom Report',
-    'version': '15.1.0.0',
+    'version': '17.0',
     'sequence': '1',
     'summary': 'Purchase Custom Report',
     'description': 'Purchase Custom Report',

@@ -7,7 +7,7 @@
     [TAGS] web camera web foto web photo web images camera 
     image snapshot web snapshot webcam snapshot picture web contact
     image web product image online mobile web image produt mobile""",
-    "version": "15.1.1.0",
+    "version": "17.0",
     "category": "web",
     "website": "https://www.eurodoo.com",
     "author": "Shurshilov Artem",

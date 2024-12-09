@@ -22,7 +22,7 @@
 ###################################################################################
 {
     'name': 'Open HRMS Legal Actions',
-    'version': '15.0.1.0.0',
+    'version': '17.0',
     'summary': """Managing Legal Actions""",
     'description': 'This module manages legal actions.',
     'category': 'Generic Modules/Human Resources',

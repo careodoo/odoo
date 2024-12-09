@@ -1,7 +1,7 @@
 {
     "name": "Service Order",
     "summary": "Service Order",
-    "version": "15.0.0.0.0",
+    "version": "17.0",
     "category": "Other",
     "license": "LGPL-3",
     "data": [

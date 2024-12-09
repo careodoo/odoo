@@ -2,7 +2,7 @@
 {
     'name': 'Care Company',
 
-    'version': '15.0.1',
+    'version': '17.0',
 
     'author': 'Mohab Ahmed Hamed',
 

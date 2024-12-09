@@ -8,7 +8,7 @@
     'category':
         'Uncategorized',
     'version':
-        '15.0.0.0.1',
+        '17.0',
     'license':
         'Other proprietary',
     'depends': ['hr',],

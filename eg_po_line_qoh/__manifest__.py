@@ -1,7 +1,7 @@
 {
     "name": "On Hand Quantity in Purchase Order",
     "summary": "Display on hand quantity and forecasted qty in purchase order line.",
-    "version": "15.0.1.0.0",
+    "version": "17.0",
     "category": 'Purchase',
     'author': 'INKERP',
     'website': "https://www.INKERP.com",

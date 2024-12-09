@@ -30,7 +30,7 @@
     'author': "Geo Technosoft",
     'website': "http://www.geotechnosoft.com/",
     'category': 'Warehouse Management',
-    'version': '15.0.0.1',
+    'version': '17.0',
     'sequence': 1,
     'depends': ['stock', 'stock_account'],
     'data': [

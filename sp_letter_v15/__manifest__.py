@@ -1,6 +1,6 @@
 {
     'name': 'Letter Management',
-    'version': '15.0',
+    'version': '17.0',
     'depends': [
                'base','hr',
                 ],
