@@ -6,7 +6,7 @@ class Hostel(models.Model):
     _inherit = ['mail.thread']
     _order = 'id desc'
 
-    name          = fields.Char(string='Name', track_visibility='onchange', required=True)
+    name          = fields.Char(string='Name', tracking=True, required=True)
     floor_count   = fields.Integer(string='Floor Count', compute="compute_hostel_info")
     flat_count    = fields.Integer(string='Flat Count', compute="compute_hostel_info")
     room_count    = fields.Integer(string='Room Count', compute="compute_hostel_info")
@@ -14,9 +14,9 @@ class Hostel(models.Model):
     used_places   = fields.Integer(string='Used Places' , compute="compute_hostel_info")
     availability  = fields.Integer(string='Availability', compute="compute_hostel_info")
     maintenance   = fields.Integer(string='Maintenance' , compute="compute_hostel_info")
-    address       = fields.Char(string='Address', track_visibility='onchange', required=True)
-    price         = fields.Float(string="Price" , track_visibility='onchange', required=True)
-    labor_cost    = fields.Float(string="Labor Cost", track_visibility='onchange', required=True, compute="compute_labor_cost")
+    address       = fields.Char(string='Address', tracking=True, required=True)
+    price         = fields.Float(string="Price" , tracking=True, required=True)
+    labor_cost    = fields.Float(string="Labor Cost", tracking=True, required=True, compute="compute_labor_cost")
     employee_line = fields.One2many('hostel.bed', 'hostel_id', string="Employee Line", readonly=True)
     total_capacity= fields.Integer(string="Total Capacity")
     company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)

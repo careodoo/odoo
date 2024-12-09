@@ -6,12 +6,12 @@ class HostelBed(models.Model):
     _inherit = ['mail.thread']
     _order = 'id desc'
 
-    name         = fields.Char(string='Bed' , track_visibility='onchange', required=True)
-    hostel_id    = fields.Many2one('hostel' , string='Hostel', track_visibility='onchange', required=True)
-    floor_id     = fields.Many2one('hostel.floor', string='Floor', track_visibility='onchange', required=True)
-    flat_id      = fields.Many2one('hostel.flat' , string='Flat' , track_visibility='onchange', required=True)
-    room_id      = fields.Many2one('hostel.room' , string='Room' , track_visibility='onchange', required=True)
-    employee_id  = fields.Many2one('hr.employee' , string='Employee', track_visibility='onchange')
+    name         = fields.Char(string='Bed' , tracking=True, required=True)
+    hostel_id    = fields.Many2one('hostel' , string='Hostel', tracking=True, required=True)
+    floor_id     = fields.Many2one('hostel.floor', string='Floor', tracking=True, required=True)
+    flat_id      = fields.Many2one('hostel.flat' , string='Flat' , tracking=True, required=True)
+    room_id      = fields.Many2one('hostel.room' , string='Room' , tracking=True, required=True)
+    employee_id  = fields.Many2one('hr.employee' , string='Employee', tracking=True)
     vacation     = fields.Selection([('VA', 'Vacation / Available'), ('V', 'Vacation')], string='Vacation')
     start_date   = fields.Date(string='Start Date')
     end_date     = fields.Date(string='End Date')

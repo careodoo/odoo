@@ -6,13 +6,13 @@ class HostelMaintenance(models.Model):
     _inherit = ['mail.thread']
     _order = 'id desc'
 
-    name      = fields.Char(string='Name', track_visibility='onchange', required=True)
-    hostel_id = fields.Many2one('hostel' , string='Hostel', track_visibility='onchange', required=True)
-    floor_id  = fields.Many2one('hostel.floor', string='Floor', track_visibility='onchange', required=True)
-    flat_id   = fields.Many2one('hostel.flat' , string='Flat' , track_visibility='onchange', required=True)
-    room_id   = fields.Many2one('hostel.room' , string='Room' , track_visibility='onchange', required=True)
-    expected_cost = fields.Float(string='Expected Cost' , track_visibility='onchange', required=True)
-    actually_cost = fields.Float(string='Actually Cost' , track_visibility='onchange', required=True)
+    name      = fields.Char(string='Name', tracking=True, required=True)
+    hostel_id = fields.Many2one('hostel' , string='Hostel', tracking=True, required=True)
+    floor_id  = fields.Many2one('hostel.floor', string='Floor', tracking=True, required=True)
+    flat_id   = fields.Many2one('hostel.flat' , string='Flat' , tracking=True, required=True)
+    room_id   = fields.Many2one('hostel.room' , string='Room' , tracking=True, required=True)
+    expected_cost = fields.Float(string='Expected Cost' , tracking=True, required=True)
+    actually_cost = fields.Float(string='Actually Cost' , tracking=True, required=True)
     is_active     = fields.Boolean(string='Active', default=True)
     active = fields.Boolean(string='Active', default=True)
     company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)

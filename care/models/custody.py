@@ -6,16 +6,16 @@ class Custody(models.Model):
     _inherit = ['mail.thread']
     _order = 'id desc'
 
-    name         = fields.Char(string='Name', track_visibility='onchange', compute='compute_name')
+    name         = fields.Char(string='Name', tracking=True, compute='compute_name')
     custody_name = fields.Char(string='Name', required=True)
-    partner_id   = fields.Many2one('res.partner', string='Contact', required=True, track_visibility='onchange')
-    date_time    = fields.Datetime(string='Date & Time', required=True, track_visibility='onchange')
-    amount       = fields.Float(string='Amount', required=True, track_visibility='onchange')
+    partner_id   = fields.Many2one('res.partner', string='Contact', required=True, tracking=True)
+    date_time    = fields.Datetime(string='Date & Time', required=True, tracking=True)
+    amount       = fields.Float(string='Amount', required=True, tracking=True)
     total_cost   = fields.Float(string='Service Cost', compute='compute_total_cost', store=True)
     purchase_cost   = fields.Float(compute='compute_purchase_cost', store=True)
     estimated    = fields.Float(string='Estimated', compute='compute_estimated', store=True)
     is_active    = fields.Boolean(string='Active', default=True, compute='compute_is_active', store=True)
-    service_line = fields.One2many('fleet.vehicle.log.services', 'custody_id', string="Service Line", track_visibility='onchange', readonly=True)
+    service_line = fields.One2many('fleet.vehicle.log.services', 'custody_id', string="Service Line", tracking=True, readonly=True)
     purchase_ids = fields.One2many('purchase.order', 'custody')
     purchase_count = fields.Integer(compute='compute_purchase_count')
     service_count = fields.Integer(compute='compute_service_count')

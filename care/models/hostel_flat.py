@@ -6,9 +6,9 @@ class HostelFlat(models.Model):
     _inherit = ['mail.thread']
     _order = 'id desc'
 
-    name      = fields.Char(string='Name', track_visibility='onchange', required=True)
-    hostel_id = fields.Many2one('hostel' , string='Hostel', track_visibility='onchange', required=True)
-    floor_id  = fields.Many2one('hostel.floor', string='Floor', track_visibility='onchange', required=True)
+    name      = fields.Char(string='Name', tracking=True, required=True)
+    hostel_id = fields.Many2one('hostel' , string='Hostel', tracking=True, required=True)
+    floor_id  = fields.Many2one('hostel.floor', string='Floor', tracking=True, required=True)
     employee_line = fields.One2many('hostel.bed', 'flat_id', string="Employee Line", readonly=True)
     company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
     active = fields.Boolean(default=True)

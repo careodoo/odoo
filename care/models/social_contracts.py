@@ -6,12 +6,12 @@ class HRSocialContracts(models.Model):
     _inherit = ['mail.thread']
     _order = 'id desc'
 
-    name        = fields.Char(string='Name', track_visibility='onchange', required=True)
-    contract_id = fields.Char(string='Contract Name', track_visibility='onchange', required=True)
-    contract_no = fields.Char(string='Contract No', track_visibility='onchange', required=True)
-    partner_id  = fields.Char(string='Contact', track_visibility='onchange', required=True)
-    period      = fields.Integer(string='Period', track_visibility='onchange', required=True)
-    contract_type  = fields.Selection([('family', 'Family Contract'), ('government', 'Government Contract')], string='Contract Type', track_visibility='onchange', required=True)
+    name        = fields.Char(string='Name', tracking=True, required=True)
+    contract_id = fields.Char(string='Contract Name', tracking=True, required=True)
+    contract_no = fields.Char(string='Contract No', tracking=True, required=True)
+    partner_id  = fields.Char(string='Contact', tracking=True, required=True)
+    period      = fields.Integer(string='Period', tracking=True, required=True)
+    contract_type  = fields.Selection([('family', 'Family Contract'), ('government', 'Government Contract')], string='Contract Type', tracking=True, required=True)
     bank_guarantee = fields.Float(string='Bank Guarantee')
     social_bank_guarantee = fields.Float(string='Social Bank Guarantee')
     capacity = fields.Integer(string='Capacity')
