@@ -94,9 +94,9 @@
                                             <td class="text-center">
                                                 <span t-field="line.asset_id.method_number"/> <span t-field="line.asset_id.method_period"/>
                                             </td>
-                                            <td class="text-center">
-                                                <span t-field="line.first_depreciation_date"/>
-                                            </td>
+<!--                                            <td class="text-center">-->
+<!--                                                <span t-field="line.first_depreciation_date"/>-->
+<!--                                            </td>-->
                                         </tr>
                                     </t>
                                 </tbody>

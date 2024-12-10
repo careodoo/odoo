@@ -8,11 +8,11 @@ class AccountAssetReport(models.TransientModel):
     line_ids = fields.One2many('account.asset.report.line', 'asset_report_id')
     department_ids = fields.Many2many('hr.department', string='Departments')
     category_ids = fields.Many2many('account.asset.category', string='Categories')
-    type = fields.Selection(selection=[
-        ('sale', 'Sale: Revenue Recognition'),
-        ('purchase', 'Purchase: Asset'),
-        ('expense', 'Deferred Expense'),
-    ])
+    # type = fields.Selection(selection=[
+    #     ('sale', 'Sale: Revenue Recognition'),
+    #     ('purchase', 'Purchase: Asset'),
+    #     ('expense', 'Deferred Expense'),
+    # ])
     state = fields.Selection(selection=[
         ('draft', 'Draft'), ('open', 'Open'),
         ('paused', 'On Hold'), ('close', 'Closed'),
@@ -49,8 +49,8 @@ class AccountAssetReport(models.TransientModel):
             domain.append(('department_id', 'in', self.department_ids.ids))
         if self.category_ids:
             domain.append(('category_id', 'in', self.category_ids.ids))
-        if self.type:
-            domain.append(('asset_type', '=', self.type))
+        # if self.type:
+        #     domain.append(('asset_type', '=', self.type))
         if self.state:
             domain.append(('state', '=', self.state))
         assets = self.env['account.asset'].search(domain)
@@ -88,9 +88,8 @@ class AccountAssetReportLine(models.TransientModel):
     acquisition_date = fields.Date(related='asset_id.acquisition_date')
     original_value = fields.Monetary(related='asset_id.original_value')
     method = fields.Selection(related='asset_id.method')
-    first_depreciation_date = fields.Date(related='asset_id.first_depreciation_date')
     value_residual = fields.Monetary(related='asset_id.value_residual')
     state = fields.Selection(related='asset_id.state')
     department_id = fields.Many2one('hr.department', related='asset_id.department_id')
     category_id = fields.Many2one('account.asset.category', related='asset_id.category_id')
-    type = fields.Selection(related='asset_id.asset_type')
+    # type = fields.Selection(related='asset_id.asset_type')

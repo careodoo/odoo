@@ -138,12 +138,12 @@
                                     <div class="col-3">
                                         <span t-field="doc.method"/>
                                     </div>
-                                    <div class="col-3">
-                                        <strong>Start Depreciating</strong>
-                                    </div>
-                                    <div class="col-3">
-                                        <span t-field="doc.first_depreciation_date"/>
-                                    </div>
+<!--                                    <div class="col-3">-->
+<!--                                        <strong>Start Depreciating</strong>-->
+<!--                                    </div>-->
+<!--                                    <div class="col-3">-->
+<!--                                        <span t-field="doc.first_depreciation_date"/>-->
+<!--                                    </div>-->
                                 </div>
                                 <!--2-->
                                 <div class="row">

@@ -19,7 +19,7 @@
                                 <field name="create_date"/>
                             </group>
                             <group>
-                                <field name="new_department_id" required="1" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="new_department_id" required="1" readonly="state != 'draft'"/>
                                 <field name="create_uid"/>
                             </group>
                         </group>
@@ -43,8 +43,8 @@
                     </sheet>
                     <footer>
                         <button string="Confirm" type="object" class="oe_highlight" name="button_confirm"
-                                attrs="{'invisible': &quot;['|','|', ('signature_users', 'not in', [uid]), ('state', '!=', 'sent'), ('user_confirmed', '=', True)]&quot;}"/>
-                        <button string="Request for Approvals" type="object" class="oe_highlight" name="button_request_approval" states="draft"/>
+                                invisible="signature_users not in [uid] or state != 'sent' or user_confirmed"/>
+                        <button string="Request for Approvals" type="object" class="oe_highlight" name="button_request_approval" readonly="state != 'draft'"/>
                         <button string="Close" class="btn-secondary" special="cancel"/>
                     </footer>
                 </form>

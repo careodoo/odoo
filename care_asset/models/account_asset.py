@@ -17,7 +17,7 @@ class AccountAsset(models.Model):
     image = fields.Binary()
 
     def validate(self):
-        res = super(AccountAsset, self).validate()
+        res = super().validate()
         self.barcode = str(int(datetime.now().timestamp()))
         return res
 

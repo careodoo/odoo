@@ -36,7 +36,7 @@ class AssetListReportXlsx(models.AbstractModel):
         sheet.write('E2:E2', 'Original Value', header_style)
         sheet.write('F2:F2', 'Book Value', header_style)
         sheet.write('G2:G2', 'Duration', header_style)
-        sheet.write('H2:H2', 'Start Depreciation', header_style)
+        # sheet.write('H2:H2', 'Start Depreciation', header_style)
 
         row = 2
         for line in asset_wizard.line_ids:
@@ -47,7 +47,7 @@ class AssetListReportXlsx(models.AbstractModel):
             sheet.write(row, 4, line.original_value or '', header_style)
             sheet.write(row, 5, line.asset_id.book_value or '', header_style)
             sheet.write(row, 6, line.asset_id.method_number or '', header_style)
-            sheet.write(row, 7, str(line.first_depreciation_date) or '', header_style)
+            # sheet.write(row, 7, str(line.first_depreciation_date) or '', header_style)
             # sheet.write(1, column, d.strftime('%a'), header_style)
             row += 1
         sheet.set_column(0, 7, 15)
