@@ -138,48 +138,56 @@ class ServiceTrip(models.Model):
   def action_to_pickuped(self):
     self.write({'states': 'pickuped'})
     self.order_id.states = 'pickuped'
-    self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Pickuped')
+    allowed_users = self.env['service.notify.manager'].search([('state', '=', 'pickuped')]).mapped('user_ids')
+    self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Pickuped', allowed_users=allowed_users)
     self.send_mail_onchange_states()
 
   def action_to_arrived(self):
     self.write({'states': 'arrived'})
     self.order_id.states = 'arrived'
-    self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Arrived')
+    allowed_users = self.env['service.notify.manager'].search([('state', '=', 'arrived')]).mapped('user_ids')
+    self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Arrived', allowed_users=allowed_users)
     self.send_mail_onchange_states()
 
   def action_to_processing(self):
     self.write({'states': 'processing'})
     self.order_id.states = 'processing'
-    self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Processing')
+    allowed_users = self.env['service.notify.manager'].search([('state', '=', 'processing')]).mapped('user_ids')
+    self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Processing', allowed_users=allowed_users)
     self.send_mail_onchange_states()
 
   def action_to_delivered(self):
     self.write({'states': 'delivered'})
     self.order_id.states = 'delivered'
-    self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Delivered')
+    allowed_users = self.env['service.notify.manager'].search([('state', '=', 'delivered')]).mapped('user_ids')
+    self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Delivered',allowed_users=allowed_users)
     self.send_mail_onchange_states()
 
   def action_to_completed(self):
     self.write({'states': 'completed'})
     self.order_id.states = 'completed'
-    self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Completed')
+    allowed_users = self.env['service.notify.manager'].search([('state', '=', 'completed')]).mapped('user_ids')
+    self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Completed', allowed_users=allowed_users)
     self.send_mail_onchange_states()
 
   def action_to_cancelled(self):
     self.write({'states': 'cancelled'})
     self.order_id.states = 'cancelled'
-    self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Cancelled')
+    allowed_users = self.env['service.notify.manager'].search([('state', '=', 'cancelled')]).mapped('user_ids')
+    self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Cancelled', allowed_users=allowed_users)
     self.send_mail_onchange_states()
 
   def action_to_draft(self):
     self.write({'states': 'draft'})
     self.order_id.states = 'draft'
-    self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Draft')
+    allowed_users = self.env['service.notify.manager'].search([('state', '=', 'draft')]).mapped('user_ids')
+    self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Draft', allowed_users=allowed_users)
     self.send_mail_onchange_states()
 
   def action_to_scheduled(self):
     self.write({'states': 'scheduled'})
-    self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Scheduled')
+    allwed_users = self.env['service.notify.manager'].search([('state', '=', 'scheduled')]).mapped('user_ids')
+    self.order_id.create_service_order_activity(f'Order {self.order_id.serial} Scheduled', allowed_users=allwed_users)
     self.send_mail_onchange_states()
 
   def _get_report_base_filename(self):

@@ -58,5 +58,11 @@
     <field name="category_id" ref="module_service_service_trip" />
   </record>
 
+  <!-- receive creation mail -->
+  <record id="service_order_receive_mail" model="res.groups">
+    <field name="name">Receive Service Order Mail</field>
+    <field name="category_id" ref="module_service_service_trip" />
+  </record>
+
 
 </odoo>

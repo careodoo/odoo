@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- module tree view -->
+  <record id="view_service_notify_manager_tree" model="ir.ui.view">
+    <field name="name">service.notify.manager.tree</field>
+    <field name="model">service.notify.manager</field>
+    <field name="arch" type="xml">
+      <tree string="Service Order" editable="bottom">
+        <field name="user_ids" widget="many2many_tags"/>
+        <field name="state" />
+      </tree>
+    </field>
+  </record>
+
+  <!-- action  -->
+  <record id="action_service_notify_manager" model="ir.actions.act_window">
+    <field name="name">Service Notify Manager</field>
+    <field name="res_model">service.notify.manager</field>
+    <field name="view_mode">tree</field>
+  </record>
+
+  <!-- menu -->
+  <menuitem id="menu_service_notify_manager" name="Service Notify Manager" parent="service_order.menu_service_order_config" action="action_service_notify_manager" sequence="100" />
+
+</odoo>

@@ -110,7 +110,7 @@
                     <div class="mb-3">
                       <strong>Pickup time:</strong>
                       <span
-                        t-esc="service_order.order_datetime + relativedelta(hours=timzone_offset)" />
+                        t-esc="service_order.order_datetime + relativedelta(hours=timzone_offset) if service_order.order_datetime else ''" />
                     </div>
                   </div>
                   <div class="row" id="trip_no">

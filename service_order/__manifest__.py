@@ -1,7 +1,7 @@
 {
     "name": "Service Order",
     "summary": "Service Order",
-    "version": "17.0",
+    "version": "17.0.0.0.0",
     "category": "Other",
     "license": "LGPL-3",
     "data": [
@@ -30,6 +30,7 @@
         "views/portal/portal_service_order_create.xml",
         "views/portal/portal_service_order_details.xml",
         "views/portal/portal_service_order_update.xml",
+        "views/service_notify_manager.xml",
         "reports/service_trip_report.xml",
         "reports/service_order_report.xml",
     ],

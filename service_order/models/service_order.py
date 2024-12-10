@@ -87,17 +87,22 @@ class ServiceOrder(models.Model):
     for vals in vals_list:
       vals['serial'] = self.env['ir.sequence'].next_by_code('service.order') or '/'
     result = super().create(vals_list)
-    result.create_service_order_activity()
+    users = self.env.ref('service_order.service_order_receive_mail').users
+    template_id = self.env.ref('service_order.mail_template_service_order')
+    if users:
+      template_id.send_mail(result.id, force_send=True, email_values={'recipient_ids': users.mapped('partner_id').ids})
     return result
 
-  def create_service_order_activity(self,summary='New Service Order',):
+  def create_service_order_activity(self,summary='New Service Order',allowed_users=[]):
     self.ensure_one()
-    self.env['mail.activity'].create({
-        'res_id': self.id,
-        'res_model_id': self.env['ir.model']._get('service.order').id,
-        'summary': summary,
-        'note': 'New Service Order',
-    })
+    for user in allowed_users:
+      self.env['mail.activity'].create({
+          'res_id': self.id,
+          'res_model_id': self.env['ir.model']._get('service.order').id,
+          'summary': summary,
+          'note': 'New Service Order',
+          'user_id': user.id,
+      })
 
   def action_to_schedule(self):
     self.write({'states': 'scheduled'})

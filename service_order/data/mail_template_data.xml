@@ -38,5 +38,18 @@
       <field name="lang">{{ object.contact_id.lang }}</field>
       <field name="auto_delete" eval="True" />
     </record>
+
+    <!-- new service oorder created -->
+    <record id="mail_template_service_order" model="mail.template">
+      <field name="name">Service Order</field>
+      <field name="model_id" ref="service_order.model_service_order" />
+      <field name="subject">Service Order No. {{object.serial}}</field>
+      <field name="email_from">{{ object.project_id.company_id.email }}</field>
+      <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px;">
+          New order created [ <t t-out="object.serial"/> ] .
+</div>
+      </field>
+    </record>
   </data>
 </odoo>
