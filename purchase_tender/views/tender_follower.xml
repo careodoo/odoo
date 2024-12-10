@@ -1,35 +1,38 @@
 <odoo>
-    <data>
-        <record id="tender_follower_view_tree" model="ir.ui.view">
-            <field name="name">tender.follower.view.tree</field>
-            <field name="model">purchase.tender.follower</field>
-            <field name="arch" type="xml">
-                <tree>
-                    <field name="followers" widget="many2many_tags"/>
-                    <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
-                </tree>
-            </field>
-        </record>
-        <record id="tender_follower_view_form" model="ir.ui.view">
-            <field name="name">tender.follower.view.form</field>
-            <field name="model">purchase.tender.follower</field>
-            <field name="arch" type="xml">
-                <form>
-                    <sheet>
-                        <group>
-                            <field name="followers" widget="many2many_tags"/>
-                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
-                        </group>
-                    </sheet>
-                </form>
-            </field>
-        </record>
-        <record id="tender_follower_action" model="ir.actions.act_window">
-            <field name="name">Tender Followers</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">purchase.tender.follower</field>
-            <field name="view_mode">tree,form</field>
-        </record>
-        <menuitem id="tender_follower_menu" name="Tender Followers" parent="purchase_tender.purchase_tender_config_menu" sequence="2" action="tender_follower_action"/>
-    </data>
+  <data>
+    <record id="tender_follower_view_tree" model="ir.ui.view">
+      <field name="name">tender.follower.view.tree</field>
+      <field name="model">purchase.tender.follower</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="followers" widget="many2many_tags" />
+          <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}" />
+        </tree>
+      </field>
+    </record>
+    <record id="tender_follower_view_form" model="ir.ui.view">
+      <field name="name">tender.follower.view.form</field>
+      <field name="model">purchase.tender.follower</field>
+      <field name="arch" type="xml">
+        <form>
+          <sheet>
+            <group>
+              <field name="followers" widget="many2many_tags" />
+              <field name="company_id" groups="base.group_multi_company"
+                options="{'no_create': True}" />
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+    <record id="tender_follower_action" model="ir.actions.act_window">
+      <field name="name">Tender Followers</field>
+      <field name="type">ir.actions.act_window</field>
+      <field name="res_model">purchase.tender.follower</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+    <menuitem id="tender_follower_menu" name="Tender Followers"
+      parent="purchase_tender.purchase_tender_config_menu" sequence="2"
+      action="tender_follower_action" />
+  </data>
 </odoo>

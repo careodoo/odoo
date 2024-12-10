@@ -1,4 +1,10 @@
-# -*- coding: utf-8 -*-
-
+from . import bid_type
+from . import tender_follower
 from . import purchase_tender
+from . import tender_price_analysis
+from . import tender_manpower_analysis
+from . import tender_vehicle_analysis
+from . import tender_material_info
+from . import tender_equipment_analysis
+from . import tender_initial_meeting
 from . import tender_record

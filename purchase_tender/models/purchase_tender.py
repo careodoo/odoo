@@ -3,22 +3,6 @@
 from odoo import models, fields, api
 
 
-class BidType(models.Model):
-    _name = 'bid.type'
-    _description = 'Bid Type'
-    _order = 'id desc'
-
-    name = fields.Char()
-    company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
-
-
-class TenderFollower(models.Model):
-    _name = 'purchase.tender.follower'
-    _description = 'Tender Follower'
-    _order = 'id desc'
-
-    followers = fields.Many2many('res.users')
-    company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
 
 
 class PurchaseTender(models.Model):
@@ -175,104 +159,12 @@ class PurchaseTender(models.Model):
         return result
 
 
-class TenderPriceAnalysis(models.Model):
-    _name = 'purchase.tender.price.analysis'
-    _description = 'Purchase Tender Price Analysis'
-    _order = 'id desc'
-
-    name = fields.Char(string="Description")
-    sequence = fields.Integer(default=10)
-    rank = fields.Integer(compute='compute_rank', store=True)
-    contact = fields.Many2one('res.partner')
-    price = fields.Float()
-    rate = fields.Float(compute='compute_rate', store=True)
-    tender_id = fields.Many2one('purchase.tender')
-    state = fields.Selection(selection=[
-        ('accepted', 'Accepted'),
-        ('excepted', 'Excepted'),
-    ], string='Status', default='accepted')
-    company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
-
-    @api.depends('tender_id.manpower', 'tender_id.period', 'price')
-    def compute_rate(self):
-        for rec in self:
-            if rec.tender_id.manpower and rec.tender_id.period and rec.price:
-                rec.rate = rec.price / rec.tender_id.period / rec.tender_id.manpower
-            else:
-                rec.rate = 0
-
-    @api.depends('price', 'tender_id.price_analysis_ids', 'state')
-    def compute_rank(self):
-        for rec in self:
-            rec.rank = 0
-            if rec.price and rec.tender_id.price_analysis_ids and rec.state != 'excepted':
-                prices = rec.tender_id.price_analysis_ids.filtered(lambda p: p.state != 'excepted').mapped('price')
-                prices.sort()
-                lst = [i for i, x in enumerate(prices) if x == rec.price]
-                if len(lst):
-                    rec.rank = lst[0] + 1
-                    rec.sequence = rec.rank
-            else:
-                rec.rank = 0
-                rec.sequence = 100
 
 
-class TenderManpowerAnalysis(models.Model):
-    _name = 'purchase.tender.manpower.analysis'
-    _description = 'Purchase Tender Manpower Analysis'
-    _order = 'id desc'
-
-    name = fields.Char(required=True, string="Description")
-    sequence = fields.Integer(default=10)
-    qty = fields.Float()
-    tender_id = fields.Many2one('purchase.tender')
-    company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
 
 
-class TenderVehicleAnalysis(models.Model):
-    _name = 'purchase.tender.vehicle.analysis'
-    _description = 'Purchase Tender Vehicle Analysis'
-    _order = 'id desc'
-
-    name = fields.Char(required=True, string="Description")
-    sequence = fields.Integer(default=10)
-    qty = fields.Float()
-    tender_id = fields.Many2one('purchase.tender')
-    company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
 
 
-class TenderMaterialInfo(models.Model):
-    _name = 'purchase.tender.material.info'
-    _description = 'Purchase Tender Material Info'
-    _order = 'id desc'
-
-    name = fields.Char(required=True, string="Description")
-    sequence = fields.Integer(default=10)
-    action = fields.Char()
-    tender_id = fields.Many2one('purchase.tender')
-    company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
 
 
-class TenderEquipmentAnalysis(models.Model):
-    _name = 'purchase.tender.equipment.analysis'
-    _description = 'Purchase Tender Equipment Analysis'
-    _order = 'id desc'
 
-    name = fields.Char(required=True, string="Description")
-    sequence = fields.Integer(default=10)
-    qty = fields.Float()
-    tender_id = fields.Many2one('purchase.tender')
-    company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
-
-
-class TenderInitialMeeting(models.Model):
-    _name = 'purchase.tender.initial.meeting'
-    _description = 'Purchase Tender Initial Meeting'
-    _order = 'id desc'
-
-    name = fields.Char(required=True, string="Description")
-    sequence = fields.Integer(default=10)
-    date = fields.Date()
-    file = fields.Binary()
-    tender_id = fields.Many2one('purchase.tender')
-    company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)

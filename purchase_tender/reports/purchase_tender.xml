@@ -1,101 +1,119 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-	<data>
-		<record id="paperformat_purchase_tender_landscape" model="report.paperformat">
-			<field name="name">PDF Purchase Tender Landscape</field>
-			<field name="default" eval="True"/>
-			<field name="format">A4</field>
-			<field name="page_height">0</field>
-			<field name="page_width">0</field>
-			<field name="orientation">Landscape</field>
-			<field name="margin_top">10</field>
-			<field name="margin_bottom">15</field>
-			<field name="margin_left">7</field>
-			<field name="margin_right">7</field>
-			<field name="header_line" eval="False"/>
-			<field name="header_spacing">3</field>
-			<field name="dpi">90</field>
-		</record>
+  <data>
+    <record id="paperformat_purchase_tender_landscape" model="report.paperformat">
+      <field name="name">PDF Purchase Tender Landscape</field>
+      <field name="default" eval="True" />
+      <field name="format">A4</field>
+      <field name="page_height">0</field>
+      <field name="page_width">0</field>
+      <field name="orientation">Landscape</field>
+      <field name="margin_top">10</field>
+      <field name="margin_bottom">15</field>
+      <field name="margin_left">7</field>
+      <field name="margin_right">7</field>
+      <field name="header_line" eval="False" />
+      <field name="header_spacing">3</field>
+      <field name="dpi">90</field>
+    </record>
 
-        <record model="ir.actions.report" id="action_purchase_tender_report">
-            <field name="name">Purchase Tender</field>
-            <field name="model">purchase.tender</field>
-            <field name="report_type">qweb-pdf</field>
-            <field name="report_name">purchase_tender.purchase_tender_report</field>
-            <field name="report_file">purchase_tender.purchase_tender_report</field>
-            <field name="binding_model_id" ref="model_purchase_tender"/>
-			<field name="paperformat_id" ref="paperformat_purchase_tender_landscape"/>
-            <field name="binding_type">report</field>
-			<field name="binding_view_types">list</field>
-        </record>
-		<template id="purchase_tender_report">
-			<t t-call="web.html_container">
-				<t t-call="web.external_layout">
-						<t t-set="sequence" t-value="0"/>
-						<div class="page" style="font-family:Arial,Helvetica,sans-serif !important;">
-							<br/>
-							<br/>
-							<br/>
-							<br/>
-							<br/>
-							<h4>
-                        		Date: <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d')"/>
-                    		</h4>
-							<h4 style="display:block !important; margin-bottom: 20px;margin-top: 20px;">
-                        		Tenders Report
-                    		</h4>
-							<table class="table table-bordered">
-								<colgroup>
-									<col width='5%'/>
-									<col width='25%'/>
-									<col width='10%'/>
-									<col width='10%'/>
-									<col width='10%'/>
-									<col width='10%'/>
-									<col width='10%'/>
-									<col width='10%'/>
-									<col width='5%'/>
-									<col width='5%'/>
-							    </colgroup>
-								<thead>
-									<tr>
-									  <th>No.</th>
-									  <th>Name</th>
-									  <th>State</th>
-									  <th>Organization</th>
-									  <th>Issue Date</th>
-									  <th>Initial Meeting Date</th>
-									  <th>Closing Date</th>
-									  <th>Guarantee</th>
-									  <th>Price</th>
-									  <th>Manpower</th>
-									</tr>
-								  </thead>
-								  <tbody>
-									  <t t-foreach="docs" t-as="doc">
-										  <t t-set="sequence" t-value="sequence + 1"/>
-									    <tr>
-										  <td><t t-esc="sequence"/></td>
-										  <td>
-											  <t t-if="doc.tender_no"><t t-esc="doc.tender_no"/>/</t><t t-esc="doc.name"/>
-											  <t t-if="doc.organization">/ <t t-esc="doc.organization.name"/>
-										  </t>
-											</td>
-										  <td><t t-esc="doc.state"/></td>
-										  <td><t t-esc="doc.organization.name"/></td>
-										  <td><t t-esc="doc.issue_date"/></td>
-										  <td><t t-esc="doc.initial_meeting_date"/></td>
-										  <td><t t-esc="doc.closing_date"/></td>
-										  <td><t t-esc="doc.guarantee"/></td>
-										  <td><t t-esc="doc.winner_price"/></td>
-										  <td><t t-esc="doc.manpower"/></td>
-										</tr>
-									  </t>
-								  </tbody>
-							</table>
-						</div>
-					</t>
-			</t>
-		</template>
-	</data>
+    <record model="ir.actions.report" id="action_purchase_tender_report">
+      <field name="name">Purchase Tender</field>
+      <field name="model">purchase.tender</field>
+      <field name="report_type">qweb-pdf</field>
+      <field name="report_name">purchase_tender.purchase_tender_report</field>
+      <field name="report_file">purchase_tender.purchase_tender_report</field>
+      <field name="binding_model_id" ref="model_purchase_tender" />
+      <field name="paperformat_id" ref="paperformat_purchase_tender_landscape" />
+      <field name="binding_type">report</field>
+      <field name="binding_view_types">list</field>
+    </record>
+    <template id="purchase_tender_report">
+      <t t-call="web.html_container">
+        <t t-call="web.external_layout">
+          <t t-set="sequence" t-value="0" />
+          <div class="page" style="font-family:Arial,Helvetica,sans-serif !important;">
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <h4> Date: <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d')" />
+            </h4>
+            <h4 style="display:block !important; margin-bottom: 20px;margin-top: 20px;">
+              Tenders Report
+            </h4>
+            <table class="table table-bordered">
+              <colgroup>
+                <col width='5%' />
+                <col width='25%' />
+                <col width='10%' />
+                <col width='10%' />
+                <col width='10%' />
+                <col width='10%' />
+                <col width='10%' />
+                <col width='10%' />
+                <col width='5%' />
+                <col width='5%' />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>Name</th>
+                  <th>State</th>
+                  <th>Organization</th>
+                  <th>Issue Date</th>
+                  <th>Initial Meeting Date</th>
+                  <th>Closing Date</th>
+                  <th>Guarantee</th>
+                  <th>Price</th>
+                  <th>Manpower</th>
+                </tr>
+              </thead>
+              <tbody>
+                <t t-foreach="docs" t-as="doc">
+                  <t t-set="sequence" t-value="sequence + 1" />
+                  <tr>
+                    <td>
+                      <t t-esc="sequence" />
+                    </td>
+                    <td>
+                      <t t-if="doc.tender_no"><t t-esc="doc.tender_no" />/</t>
+                      <t t-esc="doc.name" />
+                      <t t-if="doc.organization">/ <t t-esc="doc.organization.name" />
+                      </t>
+                    </td>
+                    <td>
+                      <t t-esc="doc.state" />
+                    </td>
+                    <td>
+                      <t t-esc="doc.organization.name" />
+                    </td>
+                    <td>
+                      <t t-esc="doc.issue_date" />
+                    </td>
+                    <td>
+                      <t t-esc="doc.initial_meeting_date" />
+                    </td>
+                    <td>
+                      <t t-esc="doc.closing_date" />
+                    </td>
+                    <td>
+                      <t t-esc="doc.guarantee" />
+                    </td>
+                    <td>
+                      <t t-esc="doc.winner_price" />
+                    </td>
+                    <td>
+                      <t t-esc="doc.manpower" />
+                    </td>
+                  </tr>
+                </t>
+              </tbody>
+            </table>
+          </div>
+        </t>
+      </t>
+    </template>
+  </data>
 </odoo>
