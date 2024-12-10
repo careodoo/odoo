@@ -20,7 +20,7 @@
                     <field name="purchase_limit" groups="purchase_limit.group_set_purchase_limit"/>
                     <field name="type" widget="radio" options="{'horizontal': true}"/>
                     <field name="total_budget"/>
-                    <field name="annual_budget" attrs="{'invisible': [('type', 'in', ['month', 'total'])]}"/>
+                    <field name="annual_budget" invisible="type in ['month', 'total']"/>
                     <field name="remaining_annual_budget"/>
                     <field name="budget_start_date"/>
                     <field name="budget_end_date"/>
@@ -99,9 +99,9 @@
                     </sheet>
                     <footer>
                         <button name="button_request_approval" type="object" string="Request for Approvals"
-                                class="oe_highlight" states="draft"/>
+                                class="oe_highlight" invisible="state != 'draft'"/>
                         <button name="button_confirm" type="object" string="Confirm" class="oe_highlight"
-                                attrs="{'invisible': &quot;['|','|', ('signature_users', 'not in', [uid]), ('state', '!=', 'sent'), ('user_confirmed', '=', True)]&quot;}"/>
+                                invisible="signature_users not in [uid,] or state != 'sent' or user_confirmed"/>
                         <button string="Cancel" class="oe_secondary" special="cancel"/>
                     </footer>
                 </form>

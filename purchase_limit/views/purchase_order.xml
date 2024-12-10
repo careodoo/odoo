@@ -10,12 +10,12 @@
                     <field name="signature_users" widget="many2many_tags"/>
                 </xpath>
                 <xpath expr="//button[@id='bid_confirm']" position="attributes">
-                    <attribute name="states"></attribute>
-                    <attribute name="attrs">{'invisible': &quot;['|', ('signature_users', 'not in', [uid]), ('state', '!=', 'sent')]&quot;}</attribute>
+<!--                    <attribute name="states"></attribute>-->
+                    <attribute name="invisible">signature_users not in [uid,] or state != 'sent'</attribute>
                 </xpath>
                 <xpath expr="//button[@id='draft_confirm']" position="attributes">
-                    <attribute name="states"></attribute>
-                    <attribute name="attrs">{'invisible': &quot;['|', ('signature_users', 'not in', [uid]), ('state', '!=', 'draft')]&quot;}</attribute>
+<!--                    <attribute name="states"></attribute>-->
+                    <attribute name="invisible">signature_users not in [uid,] or state != 'draft'</attribute>
                 </xpath>
             </field>
         </record>
