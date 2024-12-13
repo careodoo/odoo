@@ -21,8 +21,8 @@
                                         <field name="department_product_ids" invisible="1"/>
                                         <field name="product_id" readonly="1"/>
                                         <field name="description" readonly="1"/>
-                                        <field name="qoh_available" readonly="1"/>
-                                        <field name="foh_available" readonly="1"/>
+<!--                                        <field name="qoh_available" readonly="1"/>-->
+<!--                                        <field name="foh_available" readonly="1"/>-->
                                         <field name="quantity" readonly="1"/>
                                         <field name="product_uom_id" groups="uom.group_uom" options="{'no_create': True, 'no_open': True}" readonly="1"/>
                                         <field name="request_uom_id" groups="uom.group_uom"/>
@@ -33,8 +33,8 @@
                         </notebook>
                     </sheet>
                     <footer>
-                        <button name="button_create_so" type="object" string="Create Sale Order" class="oe_highlight" attrs="{'invisible': [('type', '!=', 'so')]}"/>
-                        <button name="button_create_po" type="object" string="Create Purchase Order" class="oe_highlight" attrs="{'invisible': [('type', '!=', 'po')]}"/>
+                        <button name="button_create_so" type="object" string="Create Sale Order" class="oe_highlight" invisible="type != 'so'"/>
+                        <button name="button_create_po" type="object" string="Create Purchase Order" class="oe_highlight" invisible="type != 'po'"/>
                         <button string="Cancel" class="btn-secondary" special="cancel"/>
                     </footer>
                 </form>

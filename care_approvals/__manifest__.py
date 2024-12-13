@@ -37,10 +37,10 @@
     ],
     'assets': {
         'web.assets_backend': [
-            'care_approvals/static/src/js/widget.js',
+            # 'care_approvals/static/src/js/widget.js',
         ],
         'web.assets_qweb': [
-            'care_approvals/static/src/xml/widget_view.xml',
+            # 'care_approvals/static/src/xml/widget_view.xml',
         ],
     },
 }
