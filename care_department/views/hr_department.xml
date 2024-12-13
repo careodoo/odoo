@@ -9,43 +9,43 @@
                 <xpath expr="//widget[@name='web_ribbon']" position="before">
                     <div name="button_box" class="oe_button_box" invisible="not context.get('dashboard_view', False)">
                         <button class="oe_stat_button" icon="fa-circle" type="object" name="button_show_employees"
-                                attrs="{'invisible': [('show_employees', '=', False)]}">
+                                invisible="not show_employees">
                             <field widget="statinfo" name="employee_count" string="Employees"/>
                         </button>
                         <button class="oe_stat_button" icon="fa-rocket" type="object" name="button_show_vehicles"
-                                attrs="{'invisible': [('show_vehicles', '=', False)]}">
+                                invisible="not show_vehicles">
                             <field widget="statinfo" name="vehicle_count" string="Vehicles"/>
                         </button>
                         <button class="oe_stat_button" icon="fa-calendar" type="object" name="button_show_tasks"
-                                attrs="{'invisible': [('show_tasks', '=', False)]}">
+                                invisible="not show_tasks">
                             <field widget="statinfo" name="task_count" string="Tasks"/>
                         </button>
                         <button class="oe_stat_button" icon="fa-shopping-basket" type="object" name="button_show_purchase_orders"
-                                attrs="{'invisible': [('show_purchase_orders', '=', False)]}">
+                                invisible="not show_purchase_orders">
                             <field widget="statinfo" name="purchase_order_count" string="Purchase Orders"/>
                         </button>
                         <button class="oe_stat_button" icon="fa-globe" type="object" name="button_show_sale_orders"
-                                attrs="{'invisible': [('show_sale_orders', '=', False)]}">
+                                invisible="not show_sale_orders">
                             <field widget="statinfo" name="sale_order_count" string="Sale Orders"/>
                         </button>
                         <button class="oe_stat_button" icon="fa-briefcase" type="object" name="button_show_attendances"
-                                attrs="{'invisible': [('show_attendances', '=', False)]}">
+                                invisible="not show_attendances">
                             <field widget="statinfo" name="attendance_count" string="Attendances"/>
                         </button>
                         <button class="oe_stat_button" icon="fa-file-o" type="object" name="button_show_letters"
-                                attrs="{'invisible': [('show_letters', '=', False)]}">
+                                invisible="not show_letters">
                             <field widget="statinfo" name="letter_count" string="Letters"/>
                         </button>
                         <button class="oe_stat_button" icon="fa-retweet" type="object" name="button_show_leaves"
-                                attrs="{'invisible': [('show_leaves', '=', False)]}">
+                                invisible="not show_leaves">
                             <field widget="statinfo" name="leave_count" string="Time Off"/>
                         </button>
                         <button class="oe_stat_button" icon="fa-flag" type="object" name="button_show_shifts"
-                                attrs="{'invisible': [('show_shifts', '=', False)]}">
+                                invisible="not show_shifts">
                             <field widget="statinfo" name="shift_count" string="Shifts"/>
                         </button>
                         <button class="oe_stat_button" icon="fa-magic" type="object" name="button_show_applicants"
-                                attrs="{'invisible': [('show_applicants', '=', False)]}">
+                                invisible="not show_applicants">
                             <field widget="statinfo" name="applicant_count" string="Applicants"/>
                         </button>
                     </div>
@@ -66,21 +66,21 @@
                     <field name="project_id"/>
                     <field name="has_higher_manager" invisible="1"/>
                     <field name="is_modifier" invisible="1"/>
-                    <field name="higher_manager_access" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
+                    <field name="higher_manager_access" readonly="not is_modifier"/>
                 </xpath>
                 <xpath expr="//group[2]" position="replace">
-                    <notebook invisible="not context.get('dashboard_view', False)">
+                    <notebook>
                         <page name="approvers" string="Shift Approvers">
                             <group>
-                                <field name="employee_shift_approval_1" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
-                                <field name="employee_shift_approval_2" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
-                                <field name="employee_shift_approval_3" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
+                                <field name="employee_shift_approval_1" readonly="not is_modifier"/>
+                                <field name="employee_shift_approval_2" readonly="not is_modifier"/>
+                                <field name="employee_shift_approval_3" readonly="not is_modifier"/>
                                 <field name="old_manager_approval"/>
                                 <field name="new_manager_approval"/>
                                 <field name="working_hours_modifier"/>
                             </group>
                         </page>
-                        <page name="options" string="Options" attrs="{'invisible': [('is_modifier', '=', False)]}">
+                        <page name="options" string="Options" invisible="not is_modifier">
                             <group>
                                 <field name="show_employees"/>
                                 <field name="show_vehicles"/>
@@ -95,20 +95,20 @@
                                 <field name="allowed_user_ids" widget="many2many_tags"/>
                             </group>
                         </page>
-                        <page name="attachment" string="Attachments"  attrs="{'readonly': [('is_modifier', '=', False)]}">
+                        <page name="attachment" string="Attachments" readonly="not is_modifier">
                             <group>
                                 <field name="attachment_ids" widget="many2many_binary"/>
                             </group>
                         </page>
                         <page name="project" string="Project">
                             <group>
-                                <field name="project_id" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
-                                <field name="project_start_date" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
-                                <field name="project_end_date" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
-                                <field name="project_amount" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
-                                <field name="project_social_file" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
-                                <field name="project_period" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
-                                <field name="project_estimated_months" attrs="{'readonly': [('is_modifier', '=', False)]}"/>
+                                <field name="project_id" readonly="not is_modifier"/>
+                                <field name="project_start_date" readonly="not is_modifier"/>
+                                <field name="project_end_date" readonly="not is_modifier"/>
+                                <field name="project_amount" readonly="not is_modifier"/>
+                                <field name="project_social_file" readonly="not is_modifier"/>
+                                <field name="project_period" readonly="not is_modifier"/>
+                                <field name="project_estimated_months" readonly="not is_modifier"/>
                             </group>
                         </page>
                     </notebook>
