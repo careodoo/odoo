@@ -91,16 +91,14 @@
                 <form string="bulk_attendance_tree">
                     <header>
                         <button name="button_confirm" type="object" string="Submit" class="oe_highlight"
-                            attrs="{'invisible': &quot;['|', ('department_manager', '!=', uid), ('state', '!=', 'draft')]&quot;}"
+                            invisible="department_manager != uid or state != 'draft'"
                             groups="care_attendance.group_bulk_attendance_user"/>
-
                         <button name="button_approve" type="object" string="Approve" class="oe_highlight"
-                            attrs="{'invisible': &quot;['|', ('approver', '!=', uid), ('state', 'not in', ['draft', 'confirm'])]&quot;}"/>
-
+                            invisible="approver != uid or state not in ['draft', 'confirm']"/>
                         <button name="button_refuse" type="object" string="Refuse" class="btn btn-danger"
-                            attrs="{'invisible': &quot;['|', ('approver', '!=', uid), ('state', 'not in', ['draft', 'confirm'])]&quot;}"/>
+                            invisible="approver != uid or state not in ['draft', 'confirm']"/>
                         <button name="button_draft" type="object" string="Reset to Draft"
-                            attrs="{'invisible': &quot;['|', ('approver', '!=', uid), ('state', '!=', 'confirm')]&quot;}"/>
+                            invisible="approver != uid or state != 'confirm'"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,approved"/>
                     </header>
                     <sheet>
@@ -111,23 +109,23 @@
                         </div>
                         <group>
                             <field name="active" invisible="1"/>
-                            <field name="type" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="radio" options="{'horizontal': True}"/>
+                            <field name="type" readonly="state != 'draft'"/>
                             <field name="approver" invisible="1"/>
                             <field name="department_manager" invisible="1"/>
                             <field name="original_department_ids" widget="many2many_tags" invisible="1"/>
-                            <field name="department_ids" widget="many2many_tags" options="{'no_create': True, 'no_open': True}" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="bulk_date" attrs="{'readonly': [('state', '!=', 'draft')]}" invisible="0"/>
-                            <field name="refuse_reason" states="refuse" readonly="1" force_save="1"/>
+                            <field name="department_ids" widget="many2many_tags" options="{'no_create': True, 'no_open': True}" readonly="state != 'draft'"/>
+                            <field name="bulk_date" readonly="state != 'draft'" invisible="0"/>
+                            <field name="refuse_reason" invisible="state != 'refuse'" readonly="1" force_save="1"/>
                         </group>
                         <notebook>
-                            <page name="attend" string="Attendance" attrs="{'invisible': [('type', '!=', 'attendance')]}">
-                                <field name="employee_ids" widget="many2many" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <page name="attend" string="Attendance" invisible="type != 'attendance'">
+                                <field name="employee_ids" widget="many2many" readonly="state != 'draft'"/>
                             </page>
-                            <page name="absent" string="Absence" attrs="{'invisible': [('type', '!=', 'absence')]}">
-                                <field name="absent_employee_ids" widget="many2many" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <page name="absent" string="Absence" invisible="type != 'absence'">
+                                <field name="absent_employee_ids" widget="many2many" readonly="state != 'draft'"/>
                             </page>
                             <page string="Extra Departments">
-                                <field name="extra_department_ids" widget="many2many" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="extra_department_ids" widget="many2many" readonly="state != 'draft'"/>
                             </page>
                         </notebook>
                     </sheet>
