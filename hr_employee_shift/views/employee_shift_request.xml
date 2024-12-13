@@ -64,41 +64,41 @@
                 <form string="employee_shift_request_form">
                     <header>
                         <button name="send_to_manager" type="object" string="Send to Manager" class="oe_highlight"
-                            attrs="{'invisible': [('state', '!=', 'draft')]}" groups="hr_employee_shift.group_shift_request_user,hr_employee_shift.group_shift_request_manager,hr_employee_shift.group_shift_request_approver"/>
+                                invisible="state != 'draft'" groups="hr_employee_shift.group_shift_request_user,hr_employee_shift.group_shift_request_manager,hr_employee_shift.group_shift_request_approver"/>
                         <button name="shift_confirm" type="object" string="Submit" class="oe_highlight"
-                            attrs="{'invisible': &quot;['|', ('old_department_manager', '!=', uid), ('state', '!=', 'sent')]&quot;}"
-                            groups="hr_employee_shift.group_shift_request_user,hr_employee_shift.group_shift_request_manager,hr_employee_shift.group_shift_request_approver"/>
+                                invisible="old_department_manager != uid or state != 'sent'" groups="hr_employee_shift.group_shift_request_user,hr_employee_shift.group_shift_request_manager,hr_employee_shift.group_shift_request_approver"/>
                         <button name="first_approve" type="object" string="Approve" class="oe_highlight"
-                            attrs="{'invisible': &quot;['|', ('approver_1', '!=', uid), ('state', '!=', 'confirm')]&quot;}"/>
+                                invisible="approver_1 != uid or state != 'confirm'"/>
                         <button name="second_approve" type="object" string="Approve" class="oe_highlight"
-                            attrs="{'invisible': &quot;['|', ('approver_2', '!=', uid), ('state', '!=', 'approval_1')]&quot;}"/>
+                                invisible="approver_2 != uid or state != 'approval_1'"/>
                         <button name="third_approve" type="object" string="Approve" class="oe_highlight"
-                            attrs="{'invisible': &quot;['|', ('approver_3', '!=', uid), ('state', '!=', 'approval_2')]&quot;}"/>
+                                invisible="approver_3 != uid or state != 'approval_2'"/>
                         <button name="shift_department" type="object" string="Shift" class="oe_highlight"
-                            attrs="{'invisible': &quot;['|', ('new_department_manager', '!=', uid), ('show_shift_department', '=', False)]&quot;}"/>
+                                invisible="new_department_manager != uid or not show_shift_department"/>
                         <button name="first_refuse" type="object" string="Refuse" class="btn btn-danger"
-                            attrs="{'invisible': &quot;['|', ('approver_1', '!=', uid), ('state', 'not in', ('confirm'))]&quot;}"/>
+                                invisible="approver_1 != uid or state != 'confirm'"/>
                         <button name="first_refuse" type="object" string="Refuse" class="btn btn-danger"
-                            attrs="{'invisible': &quot;['|', ('approver_2', '!=', uid), ('state', 'not in', ('approval_1'))]&quot;}"/>
+                                invisible="approver_2 != uid or state != 'approval_1'"/>
                         <button name="first_refuse" type="object" string="Refuse" class="btn btn-danger"
-                            attrs="{'invisible': &quot;['|', ('approver_3', '!=', uid), ('state', 'not in', ('approval_2'))]&quot;}"/>
+                                invisible="approver_3 != uid or state != 'approval_2'"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,done"/>
                     </header>
                     <sheet>
                         <group>
                             <field name="active" invisible="1"/>
                             <field name="show_shift_department" invisible="1"/>
-                            <field name="employee_id" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="employee_id" readonly="state != 'draft'"/>
                             <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
                             <field name="current_department" readonly="1" force_save="1"/>
-                            <field name="new_department" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="date" attrs="{'readonly': [('state', 'not in', ['draft', 'sent'])]}"/>
-                            <field name="refuse_reason" states="refuse_1,refuse_2,refuse_3" readonly="1" force_save="1"/>
-                            <field name="working_hours" attrs="{'invisible': &quot;['|', ('working_hours_modifier', '!=', uid), ('state', '!=', 'confirm')]&quot;}"/>
+                            <field name="new_department" readonly="state != 'draft'"/>
+                            <field name="date" readonly="state not in ['draft', 'sent']"/>
+                            <field name="refuse_reason" invisible="state not in ['refuse_1','refuse_2','refuse_3']" readonly="1" force_save="1"/>
+                            <field name="working_hours" invisible="working_hours_modifier != uid or state != 'confirm'"/>
                             <field name="approver_1" invisible="0"/>
                             <field name="approver_2" invisible="0"/>
                             <field name="approver_3" invisible="0"/>
                             <field name="working_hours_modifier" invisible="1"/>
+                            <field name="company_id" invisible="1"/>
                             <field name="old_department_manager" invisible="0"/>
                             <field name="new_department_manager" invisible="0"/>
                         </group>
