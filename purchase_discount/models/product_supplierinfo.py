@@ -8,14 +8,19 @@ from odoo import api, fields, models
 class ProductSupplierInfo(models.Model):
     _inherit = "product.supplierinfo"
 
-    discount = fields.Float(string="Discount (%)", digits="Discount")
-    reference = fields.Char()
+    discount = fields.Float(
+        string="Discount (%)",
+        digits="Discount",
+        compute="_compute_discount",
+        store=True,
+        readonly=False,
+    )
 
-    @api.onchange("name")
-    def onchange_name(self):
-        """ Apply the default supplier discount of the selected supplier """
-        for supplierinfo in self.filtered("name"):
-            supplierinfo.discount = supplierinfo.name.default_supplierinfo_discount
+    @api.depends("partner_id")
+    def _compute_discount(self):
+        """Apply the default supplier discount of the selected supplier"""
+        for record in self:
+            record.discount = record.partner_id.default_supplierinfo_discount
 
     @api.model
     def _get_po_to_supplierinfo_synced_fields(self):
@@ -26,8 +31,8 @@ class ProductSupplierInfo(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        """ Insert discount (or others) from context from purchase.order's
-        _add_supplier_to_product method """
+        """Insert discount (or others) from context from purchase.order's
+        _add_supplier_to_product method"""
         for vals in vals_list:
             product_tmpl_id = vals.get("product_tmpl_id")
             po_line_map = self.env.context.get("po_line_map", {})
