@@ -7,9 +7,9 @@
     <field name="arch" type="xml">
       <form string="Service Order">
         <header>
-          <button attrs="{'invisible':[('states','!=','draft')]}" name="convert_to_trip"
+          <button invisible="states != 'draft'" name="convert_to_trip"
             string="Convert to trip" type="object" class="oe_highlight" />
-          <button attrs="{'invisible':[('states','!=','completed')]}" name="action_to_draft"
+          <button invisible="states != 'completed'" name="action_to_draft"
             string="Reset to Draft" type="object" class="oe_highlight" />
           <field name="states" widget="statusbar" />
         </header>
@@ -18,13 +18,13 @@
             <field name="active" invisible="1" />
             <field name="qr_url" invisible="1" />
             <field name="serial" />
-            <field name="project_id" attrs="{'readonly':[('states','=','completed')]}" />
-            <field name="type_id" attrs="{'readonly':[('states','=','completed')]}" />
-            <field name="pickup_location_id" attrs="{'readonly':[('states','=','completed')]}" />
-            <field name="request_datetime" attrs="{'readonly':[('states','=','completed')]}" />
-            <field name="order_datetime" attrs="{'readonly':[('states','=','completed')]}" />
-            <field name="trip_id" attrs="{'readonly':[('states','=','completed')]}" />
-            <field name="notes" attrs="{'readonly':[('states','=','completed')]}" />
+            <field name="project_id" readonly="states == 'completed'" />
+            <field name="type_id" readonly="states == 'completed'" />
+            <field name="pickup_location_id" readonly="states == 'completed'" />
+            <field name="request_datetime" readonly="states == 'completed'" />
+            <field name="order_datetime" readonly="states == 'completed'" />
+            <field name="trip_id" readonly="states == 'completed'" />
+            <field name="notes" readonly="states == 'completed'" />
           </group>
           <notebook>
             <page name="lines" string="Lines">
@@ -42,8 +42,8 @@
         </sheet>
         <!-- chatetr -->
         <div class="oe_chatter">
-          <field name="message_follower_ids" widget="mail_followers" groups="base.group_user" />
-          <field name="message_ids" widget="mail_thread" />
+          <field name="message_follower_ids" groups="base.group_user" />
+          <field name="message_ids"/>
         </div>
       </form>
 

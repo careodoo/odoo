@@ -16,8 +16,7 @@
           We hope you enjoy our service. If you have any questions or concerns, please let us know.
 </div>
       </field>
-      <field name="report_template" ref="service_order.action_report_service_trip_pdf" />
-      <field name="report_name">{{ object.reference }}</field>
+      <field name="report_template_ids" eval="[(4, ref('service_order.action_report_service_trip_pdf'))]"/>
       <field name="lang">{{ object.contact_id.lang }}</field>
       <field name="auto_delete" eval="True" />
     </record>

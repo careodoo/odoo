@@ -8,6 +8,8 @@
         "security/service_security_groups.xml",
         "security/ir.model.access.csv",
         "security/service_project_rules.xml",
+        "reports/service_trip_report.xml",
+        "reports/service_order_report.xml",
         "data/service_service.xml",
         "data/mail_template_data.xml",
         "views/service_service_views.xml",
@@ -31,8 +33,6 @@
         "views/portal/portal_service_order_details.xml",
         "views/portal/portal_service_order_update.xml",
         "views/service_notify_manager.xml",
-        "reports/service_trip_report.xml",
-        "reports/service_order_report.xml",
     ],
     "depends": [
         "base",
@@ -50,6 +50,6 @@
             'service_order/static/src/css/service_trip_style.css',
             'service_order/static/src/js/serviceOrderLine.js',
         ],
-        'web.assets_backend': ['service_order/static/src/js/serviceOrderLine.js',],
+        # 'web.assets_backend': ['service_order/static/src/js/serviceOrderLine.js',],
     }
 }
