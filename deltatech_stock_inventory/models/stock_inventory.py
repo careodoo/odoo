@@ -17,10 +17,8 @@ class Inventory(models.Model):
 
     name = fields.Char(
         "Inventory Reference",
-        readonly=True,
         required=True,
         default=lambda self: _("New"),
-        states={"draft": [("readonly", False)]},
     )
     date = fields.Datetime(
         "Inventory Date",
@@ -36,15 +34,16 @@ class Inventory(models.Model):
         "inventory_id",
         string="Inventories",
         copy=False,
-        readonly=False,
-        states={"done": [("readonly", True)]},
     )
-    move_ids = fields.One2many(
-        "stock.move", "inventory_id", string="Created Moves", states={"done": [("readonly", True)]}
-    )
+    move_ids = fields.One2many("stock.move", "inventory_id", string="Created Moves")
     state = fields.Selection(
         string="Status",
-        selection=[("draft", "Draft"), ("cancel", "Cancelled"), ("confirm", "In Progress"), ("done", "Validated")],
+        selection=[
+            ("draft", "Draft"),
+            ("cancel", "Cancelled"),
+            ("confirm", "In Progress"),
+            ("done", "Validated"),
+        ],
         copy=False,
         index=True,
         readonly=True,
@@ -54,18 +53,14 @@ class Inventory(models.Model):
     company_id = fields.Many2one(
         "res.company",
         "Company",
-        readonly=True,
         index=True,
         required=True,
-        states={"draft": [("readonly", False)]},
         default=lambda self: self.env.company,
     )
     location_ids = fields.Many2many(
         "stock.location",
         string="Locations",
-        readonly=True,
         check_company=True,
-        states={"draft": [("readonly", False)]},
         domain="[('company_id', '=', company_id), ('usage', 'in', ['internal', 'transit'])]",
     )
     product_ids = fields.Many2many(
@@ -73,8 +68,6 @@ class Inventory(models.Model):
         string="Products",
         check_company=True,
         domain="[('type', '=', 'product'), '|', ('company_id', '=', False), ('company_id', '=', company_id)]",
-        readonly=True,
-        states={"draft": [("readonly", False)]},
         help="Specify Products to focus your inventory on particular Products.",
     )
     start_empty = fields.Boolean("Empty Inventory", help="Allows to start with an empty inventory.")
@@ -83,12 +76,13 @@ class Inventory(models.Model):
         help="Allows to start with a pre-filled counted quantity for each lines or "
         "with all counted quantities set to zero.",
         default="counted",
-        selection=[("counted", "Default to stock on hand"), ("zero", "Default to zero")],
+        selection=[
+            ("counted", "Default to stock on hand"),
+            ("zero", "Default to zero"),
+        ],
     )
     exhausted = fields.Boolean(
         "Include Exhausted Products",
-        readonly=True,
-        states={"draft": [("readonly", False)]},
         help="Include also products with quantity of 0",
     )
 
@@ -104,18 +98,22 @@ class Inventory(models.Model):
     def copy_data(self, default=None):
         name = _("%s (copy)") % (self.name)
         default = dict(default or {}, name=name)
-        return super(Inventory, self).copy_data(default)
+        return super().copy_data(default)
 
     def unlink(self):
         for inventory in self:
-            if inventory.state not in ("draft", "cancel") and not self.env.context.get(MODULE_UNINSTALL_FLAG, False):
+            if (
+                inventory.state not in ("draft", "cancel")
+                and not self.env.context.get(MODULE_UNINSTALL_FLAG, False)
+                and not self.env.context.get("merge_inventory", False)
+            ):
                 raise UserError(
                     _(
                         "You can only delete a draft inventory adjustment. "
                         "If the inventory adjustment is not done, you can cancel it."
                     )
                 )
-        return super(Inventory, self).unlink()
+        return super().unlink()
 
     def action_validate(self):
         if not self.exists():
@@ -173,10 +171,9 @@ class Inventory(models.Model):
         if negative:
             raise UserError(
                 _(
-                    "You cannot set a negative product quantity in an inventory line:\n\t%s - qty: %s",
-                    negative.product_id.display_name,
-                    negative.product_qty,
+                    "You cannot set a negative product quantity in an inventory line:\n\t%(product_name)s - qty: %(product_qty)s",
                 )
+                % {"product_name": negative.product_id.display_name, "product_qty": negative.product_qty}
             )
         self.action_check()
         self.write({"state": "done", "date": fields.Datetime.now()})
@@ -219,7 +216,7 @@ class Inventory(models.Model):
         for inventory in self:
             if inventory.state != "draft":
                 continue
-            vals = {"state": "confirm", "date": fields.Datetime.now()}
+            vals = {"state": "confirm", "date": inventory.date}
             if not inventory.line_ids and not inventory.start_empty:
                 self.env["stock.inventory.line"].create(inventory._get_inventory_lines_values())
             inventory.write(vals)
@@ -262,7 +259,10 @@ class Inventory(models.Model):
         if self.state == "done":
             context["default_is_editable"] = False
         # Define domains and context
-        domain = [("inventory_id", "=", self.id), ("location_id.usage", "in", ["internal", "transit"])]
+        domain = [
+            ("inventory_id", "=", self.id),
+            ("location_id.usage", "in", ["internal", "transit"]),
+        ]
         if self.location_ids:
             context["default_location_id"] = self.location_ids[0].id
             if len(self.location_ids) == 1:
@@ -308,7 +308,10 @@ class Inventory(models.Model):
         if self.location_ids:
             domain_loc = [("id", "child_of", self.location_ids.ids)]
         else:
-            domain_loc = [("company_id", "=", self.company_id.id), ("usage", "in", ["internal", "transit"])]
+            domain_loc = [
+                ("company_id", "=", self.company_id.id),
+                ("usage", "in", ["internal", "transit"]),
+            ]
         locations_ids = [loc["id"] for loc in self.env["stock.location"].search_read(domain_loc, ["id"])]
 
         domain = [
@@ -322,7 +325,14 @@ class Inventory(models.Model):
         if self.product_ids:
             domain = expression.AND([domain, [("product_id", "in", self.product_ids.ids)]])
 
-        fields = ["product_id", "location_id", "lot_id", "package_id", "owner_id", "quantity:sum"]
+        fields = [
+            "product_id",
+            "location_id",
+            "lot_id",
+            "package_id",
+            "owner_id",
+            "quantity:sum",
+        ]
         group_by = ["product_id", "location_id", "lot_id", "package_id", "owner_id"]
 
         quants = self.env["stock.quant"].read_group(domain, fields, group_by, lazy=False)
@@ -393,7 +403,13 @@ class Inventory(models.Model):
         quants_groups = self._get_quantities()
         vals = []
         product_ids = OrderedSet()
-        for (product_id, location_id, lot_id, package_id, owner_id), quantity in quants_groups.items():
+        for (
+            product_id,
+            location_id,
+            lot_id,
+            package_id,
+            owner_id,
+        ), quantity in quants_groups.items():
             line_values = {
                 "inventory_id": self.id,
                 "product_qty": 0 if self.prefill_counted_quantity == "zero" else quantity,
@@ -424,10 +440,7 @@ class InventoryLine(models.Model):
         if self.env.context.get("active_model") == "stock.inventory":
             inventory = self.env["stock.inventory"].browse(self.env.context.get("active_id"))
             if inventory.exists() and inventory.location_ids:
-                return (
-                    "[('company_id', '=', company_id), ('usage', 'in', ['internal', 'transit']), ('id', 'child_of', %s)]"
-                    % inventory.location_ids.ids
-                )
+                return f"[('company_id', '=', company_id), ('usage', 'in', ['internal', 'transit']), ('id', 'child_of', {inventory.location_ids.ids})]"
         return "[('company_id', '=', company_id), ('usage', 'in', ['internal', 'transit'])]"
 
     @api.model
@@ -435,14 +448,17 @@ class InventoryLine(models.Model):
         if self.env.context.get("active_model") == "stock.inventory":
             inventory = self.env["stock.inventory"].browse(self.env.context.get("active_id"))
             if inventory.exists() and len(inventory.product_ids) > 1:
-                return (
-                    "[('type', '=', 'product'), '|', ('company_id', '=', False), ('company_id', '=', company_id), ('id', 'in', %s)]"
-                    % inventory.product_ids.ids
-                )
+                return f"[('type', '=', 'product'), '|', ('company_id', '=', False), ('company_id', '=', company_id), ('id', 'in', {inventory.product_ids.ids})]"
         return "[('type', '=', 'product'), '|', ('company_id', '=', False), ('company_id', '=', company_id)]"
 
     is_editable = fields.Boolean(help="Technical field to restrict editing.")
-    inventory_id = fields.Many2one("stock.inventory", "Inventory", check_company=True, index=True, ondelete="cascade")
+    inventory_id = fields.Many2one(
+        "stock.inventory",
+        "Inventory",
+        check_company=True,
+        index=True,
+        ondelete="cascade",
+    )
     partner_id = fields.Many2one("res.partner", "Owner", check_company=True)
     product_id = fields.Many2one(
         "product.product",
@@ -455,8 +471,6 @@ class InventoryLine(models.Model):
     product_uom_id = fields.Many2one("uom.uom", "Product Unit of Measure", required=True, readonly=True)
     product_qty = fields.Float(
         "Counted Quantity",
-        readonly=True,
-        states={"confirm": [("readonly", False)]},
         digits="Product Unit of Measure",
         default=0,
     )
@@ -477,13 +491,18 @@ class InventoryLine(models.Model):
         domain="[('location_id', '=', location_id)]",
     )
     prod_lot_id = fields.Many2one(
-        "stock.production.lot",
+        "stock.lot",
         "Lot/Serial Number",
         check_company=True,
         domain="[('product_id','=',product_id), ('company_id', '=', company_id)]",
     )
     company_id = fields.Many2one(
-        "res.company", "Company", related="inventory_id.company_id", index=True, readonly=True, store=True
+        "res.company",
+        "Company",
+        related="inventory_id.company_id",
+        index=True,
+        readonly=True,
+        store=True,
     )
     state = fields.Selection(string="Status", related="inventory_id.state", store=True)
     theoretical_qty = fields.Float("Theoretical Quantity", digits="Product Unit of Measure", readonly=True)
@@ -501,7 +520,11 @@ class InventoryLine(models.Model):
         default=fields.Datetime.now,
         help="Last date at which the On Hand Quantity has been computed.",
     )
-    outdated = fields.Boolean(string="Quantity outdated", compute="_compute_outdated", search="_search_outdated")
+    outdated = fields.Boolean(
+        string="Quantity outdated",
+        compute="_compute_outdated",
+        search="_search_outdated",
+    )
     product_tracking = fields.Selection(string="Tracking", related="product_id.tracking", readonly=True)
     quant_id = fields.Many2one("stock.quant")
 
@@ -510,7 +533,12 @@ class InventoryLine(models.Model):
         for line in self:
             line.difference_qty = line.product_qty - line.theoretical_qty
 
-    @api.depends("inventory_date", "product_id.stock_move_ids", "theoretical_qty", "product_uom_id.rounding")
+    @api.depends(
+        "inventory_date",
+        "product_id.stock_move_ids",
+        "theoretical_qty",
+        "product_uom_id.rounding",
+    )
     def _compute_outdated(self):
         quants_by_inventory = {inventory: inventory._get_quantities() for inventory in self.inventory_id}
         for line in self:
@@ -519,15 +547,35 @@ class InventoryLine(models.Model):
                 line.outdated = False
                 continue
             qty = quants.get(
-                (line.product_id.id, line.location_id.id, line.prod_lot_id.id, line.package_id.id, line.partner_id.id),
+                (
+                    line.product_id.id,
+                    line.location_id.id,
+                    line.prod_lot_id.id,
+                    line.package_id.id,
+                    line.partner_id.id,
+                ),
                 0,
             )
-            if float_compare(qty, line.theoretical_qty, precision_rounding=line.product_uom_id.rounding) != 0:
+            if (
+                float_compare(
+                    qty,
+                    line.theoretical_qty,
+                    precision_rounding=line.product_uom_id.rounding,
+                )
+                != 0
+            ):
                 line.outdated = True
             else:
                 line.outdated = False
 
-    @api.onchange("product_id", "location_id", "product_uom_id", "prod_lot_id", "partner_id", "package_id")
+    @api.onchange(
+        "product_id",
+        "location_id",
+        "product_uom_id",
+        "prod_lot_id",
+        "partner_id",
+        "package_id",
+    )
     def _onchange_quantity_context(self):
         if self.product_id:
             self.product_uom_id = self.product_id.uom_id
@@ -557,7 +605,11 @@ class InventoryLine(models.Model):
             self.product_qty = 1
         elif (
             self.product_id
-            and float_compare(self.product_qty, self.theoretical_qty, precision_rounding=self.product_uom_id.rounding)
+            and float_compare(
+                self.product_qty,
+                self.theoretical_qty,
+                precision_rounding=self.product_uom_id.rounding,
+            )
             == 0
         ):
             # We update `product_qty` only if it equals to `theoretical_qty` to
@@ -590,12 +642,12 @@ class InventoryLine(models.Model):
                 values["theoretical_qty"] = theoretical_qty
             if "product_id" in values and "product_uom_id" not in values:
                 values["product_uom_id"] = product.product_tmpl_id.uom_id.id
-        res = super(InventoryLine, self).create(vals_list)
+        res = super().create(vals_list)
         res._check_no_duplicate_line()
         return res
 
     def write(self, vals):
-        res = super(InventoryLine, self).write(vals)
+        res = super().write(vals)
         if "product_qty" in vals:
             for line in self:
                 quants = line.get_quants()
@@ -622,7 +674,14 @@ class InventoryLine(models.Model):
             ("inventory_id", "in", self.inventory_id.ids),
             ("inventory_id", "=", None),
         ]
-        groupby_fields = ["product_id", "location_id", "partner_id", "package_id", "prod_lot_id", "inventory_id"]
+        groupby_fields = [
+            "product_id",
+            "location_id",
+            "partner_id",
+            "package_id",
+            "prod_lot_id",
+            "inventory_id",
+        ]
         lines_count = {}
         for group in self.read_group(domain, ["product_id"], groupby_fields, lazy=False):
             key = tuple(group[field] and group[field][0] for field in groupby_fields)
@@ -653,7 +712,7 @@ class InventoryLine(models.Model):
             if line.product_id.type != "product":
                 raise ValidationError(
                     _("You can only adjust storable products.")
-                    + "\n\n{} -> {}".format(line.product_id.display_name, line.product_id.type)
+                    + f"\n\n{line.product_id.display_name} -> {line.product_id.type}"
                 )
 
     def _get_move_values(self, qty, location_id, location_dest_id, out):
@@ -678,9 +737,9 @@ class InventoryLine(models.Model):
                     {
                         "product_id": self.product_id.id,
                         "lot_id": self.prod_lot_id.id,
-                        "product_uom_qty": 0,  # bypass reservation here
+                        # "product_uom_qty": 0,  # bypass reservation here
                         "product_uom_id": self.product_uom_id.id,
-                        "qty_done": qty,
+                        "quantity": qty,
                         "package_id": out and self.package_id.id or False,
                         "result_package_id": (not out) and self.package_id.id or False,
                         "location_id": location_id,
@@ -704,7 +763,12 @@ class InventoryLine(models.Model):
             if line.difference_qty > 0:  # found more than expected
                 vals = line._get_move_values(line.difference_qty, virtual_location.id, line.location_id.id, False)
             else:
-                vals = line._get_move_values(abs(line.difference_qty), line.location_id.id, virtual_location.id, True)
+                vals = line._get_move_values(
+                    abs(line.difference_qty),
+                    line.location_id.id,
+                    virtual_location.id,
+                    True,
+                )
             vals_list.append(vals)
         return self.env["stock.move"].create(vals_list)
 
@@ -736,7 +800,6 @@ class InventoryLine(models.Model):
         filtered_lines = self.filtered(lambda l: l.state != "done")
         for line in filtered_lines:
             if line.outdated:
-
                 quants = line.get_quants()
                 if quants.exists():
                     quantity = sum(quants.mapped("quantity"))
@@ -764,7 +827,10 @@ class InventoryLine(models.Model):
             raise NotImplementedError()
         if not self.env.context.get("default_inventory_id"):
             raise NotImplementedError(
-                _("Unsupported search on %s outside of an Inventory Adjustment", "difference_qty")
+                _(
+                    "Unsupported search on %s outside of an Inventory Adjustment",
+                    "difference_qty",
+                )
             )
         lines = self.search([("inventory_id", "=", self.env.context.get("default_inventory_id"))])
         line_ids = lines.filtered(
@@ -780,7 +846,12 @@ class InventoryLine(models.Model):
             else:
                 raise NotImplementedError()
         if not self.env.context.get("default_inventory_id"):
-            raise NotImplementedError(_("Unsupported search on %s outside of an Inventory Adjustment", "outdated"))
+            raise NotImplementedError(
+                _(
+                    "Unsupported search on %s outside of an Inventory Adjustment",
+                    "outdated",
+                )
+            )
         lines = self.search([("inventory_id", "=", self.env.context.get("default_inventory_id"))])
         line_ids = lines.filtered(lambda line: line.outdated == value).ids
         return [("id", "in", line_ids)]

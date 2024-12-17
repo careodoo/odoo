@@ -1,18 +1,13 @@
 <?xml version="1.0" ?>
 <odoo>
-    <data>
+
         <record id="view_template_property_form" model="ir.ui.view">
             <field name="name">product.template.stock.property.form.inherit</field>
             <field name="model">product.template</field>
             <field name="inherit_id" ref="stock.view_template_property_form" />
             <field name="arch" type="xml">
                 <group name="group_lots_and_weight" position="after">
-                    <group
-                        string='Stock'
-                        name="store"
-                        invisible="not context.get('warehouse')"
-                        attrs="{'invisible':[('type','=','service')]}"
-                    >
+                    <group string='Stock' name="store" invisible="not context.get('warehouse') or type == 'service'">
                         <label for="loc_rack" string="Location" />
                         <div class="o_row">
                             <field name="loc_rack" placeholder="Rack" />
@@ -22,10 +17,10 @@
                         </div>
                     </group>
                     <group
-                        string='Stock'
-                        groups="stock.group_stock_multi_warehouses"
-                        invisible="context.get('warehouse')"
-                    >
+                    string='Stock'
+                    groups="stock.group_stock_multi_warehouses"
+                    invisible="context.get('warehouse')"
+                >
                         <field name="warehouse_loc_ids" nolabel="1">
                             <tree editable="bottom">
                                 <field name="warehouse_id" />
@@ -49,23 +44,23 @@
                 <form>
                     <header>
                         <button
-                            icon="fa-check-circle-o"
-                            string="Confirm Stock"
-                            name="confirm_actual_inventory"
-                            type="object"
-                        />
+                        icon="fa-check-circle-o"
+                        string="Confirm Stock"
+                        name="%(deltatech_stock_inventory.action_stock_confirm_inventory)d"
+                        type="action"
+                    />
                        <button string="Update Stock" name="action_update_quantity_on_hand" type="object" />
 
                     </header>
                     <sheet>
                         <div class="oe_button_box" name="button_box">
                             <button
-                                type="object"
-                                name="action_open_quants"
-                                attrs="{'invisible':[('type', '!=', 'product')]}"
-                                class="oe_stat_button"
-                                icon="fa-building-o"
-                            >
+                            type="object"
+                            name="action_open_quants"
+                            invisible="type != 'product'"
+                            class="oe_stat_button"
+                            icon="fa-building-o"
+                        >
                                 <div class="o_field_widget o_stat_info">
                                     <span class="o_stat_value" widget="statinfo">
                                         <field name="qty_available" widget="statinfo" nolabel="1" class="mr4" />
@@ -91,11 +86,10 @@
                                         <field name="qty_available" />
                                     </group>
                                     <group
-                                        string='Stock'
-                                        name="store"
-                                        invisible="not context.get('warehouse')"
-                                        attrs="{'invisible':[('type','=','service')]}"
-                                    >
+                                    string='Stock'
+                                    name="store"
+                                    invisible="not context.get('warehouse') or type == 'service'"
+                                >
                                         <label for="loc_rack" string="Location" />
                                         <div class="o_row">
                                             <field name="loc_rack" placeholder="Rack" />
@@ -105,10 +99,10 @@
                                         </div>
                                     </group>
                                     <group
-                                        string='Stock'
-                                        groups="stock.group_stock_multi_warehouses"
-                                        invisible="context.get('warehouse')"
-                                    >
+                                    string='Stock'
+                                    groups="stock.group_stock_multi_warehouses"
+                                    invisible="context.get('warehouse')"
+                                >
                                         <field name="warehouse_loc_ids" nolabel="1">
                                             <tree editable="bottom">
                                                 <field name="warehouse_id" />
@@ -139,6 +133,20 @@
                 </tree>
             </field>
         </record>
+<!--        <record id="product_template_form_view" model="ir.ui.view">
+            <field name="name">product.template.common.form.inherit</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_form_view" />
+            <field name="arch" type="xml">
+                <div name="options" position="inside">
+                    <span class="d-inline-block">
+                        <field name="is_inventory_ok" />
+                        <label for="is_inventory_ok" string="Inventory OK" />
+                    </span>
+                </div>
+            </field>
+        </record>-->
+
 
 
         <record id="action_product_template_warehouse" model="ir.actions.act_window">
@@ -148,21 +156,21 @@
             <field name="view_mode">kanban,tree,form</field>
             <field name="search_view_id" ref="stock.product_template_search_form_view_stock" />
             <field
-                name="view_ids"
-                eval="[(5, 0, 0),
+            name="view_ids"
+            eval="[(5, 0, 0),
                 (0, 0, {'view_mode': 'tree', 'view_id': ref('view_product_template_warehouse_tree')}),
                 (0, 0, {'view_mode': 'kanban'}),
                 (0, 0, {'view_mode': 'form', 'view_id': ref('view_product_template_warehouse_form')}) ]"
-            />
+        />
             <field name="context">{ 'default_type': 'product'}</field>
         </record>
 
         <menuitem
-            id="menu_product_template_warehouse"
-            name="Warehouse Products"
-            action="action_product_template_warehouse"
-            parent="stock.menu_stock_inventory_control"
-            sequence="1"
-        />
-    </data>
+        id="menu_product_template_warehouse"
+        name="Warehouse Products"
+        action="action_product_template_warehouse"
+        parent="stock.menu_stock_inventory_control"
+        sequence="1"
+    />
+
 </odoo>

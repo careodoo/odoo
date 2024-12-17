@@ -8,63 +8,47 @@
             <tree
                 default_order="location_id,product_id"
                 editable="top"
-                string="Inventory Details"
                 js_class="inventory_validate_button"
                 decoration-danger="product_qty != theoretical_qty"
                 decoration-muted="product_qty == theoretical_qty"
                 decoration-bf="is_editable"
             >
-                <field name="company_id" invisible="1" />
-                <field name="product_tracking" invisible="1" />
-                <field name="is_editable" invisible="1" />
-                <field name="outdated" invisible="1" />
+                <field name="company_id" column_invisible="1" />
+                <field name="product_tracking" column_invisible="1" />
+                <field name="is_editable" column_invisible="1" />
+                <field name="outdated" column_invisible="1" />
                 <field
                     name="product_id"
                     width="1.6"
                     context="{'default_type': 'product'}"
-                    readonly="context.get('default_product_id', False)"
-                    attrs="{'readonly': ['|',
-                            ('is_editable', '=', False),
-                            ('state', '!=', 'confirm')]}"
+                    readonly="context.get('default_product_id', False) or not is_editable or state != 'confirm'"
                 />
                 <field
                     name="location_id"
-                    groups="stock.group_stock_multi_locations"
                     options="{'no_create': True}"
                     invisible="context.get('readonly_location_id', False)"
-                    readonly="context.get('readonly_location_id', False)"
-                    attrs="{'readonly': ['|',
-                            ('is_editable', '=', False),
-                            ('state', '!=', 'confirm')]}"
+                    readonly="context.get('readonly_location_id', False) or not is_editable or state != 'confirm'"
                 />
                 <field name="inventory_date" optional="hide" width="0.8" />
                 <field
                     name="prod_lot_id"
-                    groups="stock.group_production_lot"
                     width="0.8"
-                    attrs="{'readonly': ['|', '|',
-                            ('product_tracking', '=', 'none'),
-                            ('is_editable', '=', False),
-                            ('state', '!=', 'confirm')]}"
+                    readonly="not product_tracking or not is_editable or state != 'confirm'"
                     context="{'default_product_id': product_id, 'default_company_id': company_id}"
                     optional="show"
                 />
                 <field
                     name="package_id"
-                    groups="stock.group_tracking_lot"
+                    groups="stock.group_tracking_lot,stock.group_stock_multi_locations"
                     width="0.8"
-                    attrs="{'readonly': ['|',
-                            ('is_editable', '=', False),
-                            ('state', '!=', 'confirm')]}"
+                    readonly="not is_editable or state != 'confirm'"
                     string="Package"
                     optional="show"
                 />
                 <field
                     name="partner_id"
                     groups="stock.group_tracking_owner"
-                    attrs="{'readonly': ['|',
-                            ('is_editable', '=', False),
-                            ('state', '!=', 'confirm')]}"
+                    readonly="not is_editable or state != 'confirm'"
                 />
                 <field
                     name="theoretical_qty"
@@ -79,27 +63,17 @@
                     title="Refresh quantity"
                     icon="fa-refresh"
                     type="object"
-                    attrs="{'invisible': [('outdated', '=', False)]}"
+                    invisible="not outdated"
                 />
-                <field name="product_qty" width="0.5" string="Counted" />
+                <field name="product_qty" width="0.5" string="Counted" readonly="state!='confirm'" />
 
 
                 <field name="difference_qty" optional="show" width="0.5" />
                 <field name="product_uom_id" string="UoM" groups="uom.group_uom" width="0.3" force_save="1" />
-                <field name="inventory_id" invisible="1" />
-                <field name="state" invisible="1" />
-                <field
-                    name="standard_price"
-                    attrs="{'readonly': ['|',
-                            ('is_editable', '=', False),
-                            ('state', '!=', 'confirm')]}"
-                />
-                <field
-                    name="is_ok"
-                    attrs="{'readonly': ['|',
-                            ('is_editable', '=', False),
-                            ('state', '!=', 'confirm')]}"
-                />
+                <field name="inventory_id" column_invisible="1" />
+                <field name="state" column_invisible="1" />
+                <field name="standard_price" readonly="not is_editable or state != 'confirm'" />
+                <field name="is_ok" readonly="not is_editable or state != 'confirm'" />
             </tree>
         </field>
     </record>
@@ -182,15 +156,12 @@
         <field name="name">stock.inventory.tree</field>
         <field name="model">stock.inventory</field>
         <field name="arch" type="xml">
-            <tree string="Lot/Serial Number Inventory" sample="1">
+            <tree sample="1">
                 <field name="date" />
                 <field name="name" />
-                <field
-                    name="location_ids"
-                    widget="many2many_tags"
-                    optional="hide"
-                    groups="stock.group_stock_multi_locations"
-                />
+                <field name="location_ids" widget="many2many_tags" optional="hide" readonly="0" />
+<!--                    groups="stock.group_stock_multi_locations"-->
+<!--                />-->
                 <field name="product_ids" widget="many2many_tags" optional="hide" />
                 <field name="company_id" groups="base.group_multi_company" optional="show" />
                 <field
@@ -249,7 +220,7 @@
                 <header>
                     <button
                         name="action_start"
-                        states="draft"
+                        invisible="state != 'draft'"
                         string="Start Inventory"
                         type="object"
                         class="oe_highlight"
@@ -257,7 +228,7 @@
                     />
                     <button
                         name="action_open_inventory_lines"
-                        states="confirm"
+                        invisible="state != 'confirm'"
                         string="Continue Inventory"
                         type="object"
                         class="oe_highlight"
@@ -265,24 +236,18 @@
                     />
                      <button
                         name="action_open_inventory_lines"
-                        states="done"
+                        invisible="state != 'done'"
                         string="Show Lines"
                         type="object"
                         class="oe_highlight"
                         groups="stock.group_stock_user"
                     />
+
                     <button
                         name="action_validate"
                         string="Validate Inventory"
                         type="object"
-                        attrs="{'invisible': ['|', ('state', '!=', 'confirm'), ('line_ids', '!=', [])]}"
-                        groups="stock.group_stock_manager"
-                    />
-                    <button
-                        name="action_validate"
-                        string="Validate Inventory"
-                        type="object"
-                        attrs="{'invisible': ['|', ('state', '!=', 'confirm'), ('line_ids', '=', [])]}"
+                        invisible="state != 'confirm'"
                         class="oe_highlight"
                         groups="stock.group_stock_manager"
                     />
@@ -290,22 +255,32 @@
                         name="action_print"
                         string="Print Count Sheet"
                         type="object"
-                        attrs="{'invisible': [('state', '=', 'draft')]}"
+                        invisible="state == 'draft'"
                         groups="stock.group_stock_user"
                     />
-                    <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" />
                     <button
                         name="action_cancel_draft"
-                        states="confirm"
+                        invisible="state !='cancel'"
+                        string="Set to Draft"
+                        type="object"
+                    />
+                    <button
+                        name="action_cancel_draft"
+                        invisible="state != 'confirm'"
                         string="Cancel Inventory"
                         type="object"
                         confirm="If you cancel this inventory adjustment, all its inventory adjustment lines will be lost. Are you sure you want to discard it ?"
                     />
 
-                    <button name="action_remove_not_ok" states="confirm" string="Remove Not Ok" type="object" />
+                    <button
+                        name="action_remove_not_ok"
+                        invisible="state !='confirm'"
+                        string="Remove Not Ok"
+                        type="object"
+                    />
                     <button
                         name="action_new_for_not_ok"
-                        states="confirm"
+                        invisible="state != 'confirm'"
                         string="New inventory for Not Ok"
                         type="object"
                     />
@@ -321,14 +296,14 @@
                             name="action_view_related_move_lines"
                             class="oe_stat_button"
                             icon="fa-exchange"
-                            attrs="{'invisible': [('state', '!=', 'done')]}"
+                            invisible="state != 'done'"
                             context="{'no_reference': True}"
                         />
                     </div>
                     <div class="oe_title">
                         <label for="name" class="oe_edit_only" />
                         <h1>
-                            <field name="name" placeholder="e.g. Annual inventory" />
+                            <field name="name" placeholder="e.g. Annual inventory" readonly="state!='draft'" />
                         </h1>
                     </div>
                     <group>
@@ -338,23 +313,26 @@
                                 options="{'no_create': True}"
                                 widget="many2many_tags"
                                 force_save="1"
-                                groups="stock.group_stock_multi_locations"
+                                readonly="state!='draft'"
+                                groups="base.group_multi_company,stock.group_stock_multi_locations"
                             />
-                            <field name="product_ids" context="{'default_type': 'product'}" widget="many2many_tags" />
-                            <field name="exhausted" />
+                            <field
+                                name="product_ids"
+                                context="{'default_type': 'product'}"
+                                widget="many2many_tags"
+                                readonly="state!='draft'"
+                            />
+                            <field name="exhausted" readonly="state!='draft'" />
                         </group>
                         <group>
-                            <field name="date" />
+                            <field name="date" readonly="state!='draft'" />
                             <field name="create_uid" string="Created by" widget="many2one_avatar_user" />
-                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}" />
-                            <field
-                                name="prefill_counted_quantity"
-                                widget="radio"
-                                attrs="{'invisible': [('state', '!=', 'draft')]}"
-                            />
+
+                            <field name="company_id" options="{'no_create': True}" readonly="state!='draft'" />
+                            <field name="prefill_counted_quantity" widget="radio" invisible="state != 'draft'" />
                         </group>
                     </group>
-                    <field name="line_ids" />
+                    <field name="line_ids" readonly="state=='done'" />
                 </sheet>
                 <div class="oe_chatter">
                     <field name="message_follower_ids" widget="mail_followers" />
@@ -409,7 +387,7 @@
     <menuitem
         action="action_inventory_form"
         id="menu_action_inventory_form"
-        parent="stock.menu_stock_warehouse_mgmt"
+        parent="stock.menu_stock_adjustments"
         sequence="30"
     />
 </odoo>

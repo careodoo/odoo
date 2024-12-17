@@ -3,7 +3,7 @@
 # See README.rst file on addons root folder for license details
 
 
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class ProductWarehouseLocation(models.Model):
@@ -18,7 +18,11 @@ class ProductWarehouseLocation(models.Model):
     loc_case = fields.Char("Case", size=16)
 
     _sql_constraints = [
-        ("product_product_uniq", "unique(product_id, warehouse_id)", "Warehouse must be unique per product!"),
+        (
+            "product_product_uniq",
+            "unique(product_id, warehouse_id)",
+            "Warehouse must be unique per product!",
+        ),
     ]
 
 
@@ -31,7 +35,27 @@ class ProductTemplate(models.Model):
     loc_case = fields.Char("Case", size=16, compute="_compute_loc", inverse="_inverse_loc")
 
     warehouse_loc_ids = fields.One2many("product.warehouse.location", "product_id")
+    is_inventory_ok = fields.Boolean("Inventory OK", tracking=True)
+    warehouse_stock = fields.Text(string="Stock/WH", compute="_compute_warehouse_stocks")
 
+    def _compute_warehouse_stocks(self):
+        warehouses = self.env["stock.warehouse"].search([])
+        if len(warehouses) == 1:
+            self.warehouse_stock = False
+            return
+
+        for product in self:
+            warehouse_stock_lines = []
+            for warehouse in warehouses:
+                if warehouse.lot_stock_id.usage == "internal":
+                    qty = product.with_context(warehouse=warehouse.id)._compute_quantities_dict()
+                    quantity_in_warehouse = qty[product.id]["qty_available"]
+                    if quantity_in_warehouse:
+                        line = f"{warehouse.code}: {quantity_in_warehouse}"
+                        warehouse_stock_lines.append(line)
+            product.warehouse_stock = "\n".join(warehouse_stock_lines)
+
+    @api.depends_context("warehouse", "location")
     def _compute_loc(self):
         warehouse_id = self.env.context.get("warehouse", False)
         location_id = self.env.context.get("location", False)
@@ -43,7 +67,10 @@ class ProductTemplate(models.Model):
             warehouse_id = self.env.ref("stock.warehouse0").id
 
         for product in self:
-            domain = [("product_id", "=", product.id), ("warehouse_id", "=", warehouse_id)]
+            domain = [
+                ("product_id", "=", product.id),
+                ("warehouse_id", "=", warehouse_id),
+            ]
             loc = self.env["product.warehouse.location"].sudo().search(domain, limit=1)
             product.loc_rack = loc.loc_rack
             product.loc_row = loc.loc_row
@@ -51,12 +78,14 @@ class ProductTemplate(models.Model):
             product.loc_case = loc.loc_case
 
     def _inverse_loc(self):
-
         warehouse_id = self.env.context.get("warehouse", False)
         if not warehouse_id:
             warehouse_id = self.env.ref("stock.warehouse0").id
         for product in self:
-            domain = [("product_id", "=", product.id), ("warehouse_id", "=", warehouse_id)]
+            domain = [
+                ("product_id", "=", product.id),
+                ("warehouse_id", "=", warehouse_id),
+            ]
             loc = self.env["product.warehouse.location"].sudo().search(domain)
             values = {
                 "loc_rack": product.loc_rack,
@@ -71,36 +100,42 @@ class ProductTemplate(models.Model):
             else:
                 self.env["product.warehouse.location"].sudo().create(values)
 
-    def confirm_actual_inventory(self):
-        products = self.env["product.product"]
-        for template in self:
-            products |= template.product_variant_ids
-
-        products.confirm_actual_inventory()
-
 
 class ProductProduct(models.Model):
     _inherit = "product.product"
 
-    def confirm_actual_inventory(self):
-        products = self
-        inventory_values = {"state": "confirm", "line_ids": []}
-        quants = self.env["stock.quant"].search([("product_id", "in", products.ids)])
-        for quant in quants:
-            if quant.location_id.usage == "internal" and (
-                not quant.product_id.last_inventory_date
-                or (quant.product_id.last_inventory_date and quant.product_id.last_inventory_date < fields.Date.today())
-            ):
-                values = {
-                    "product_id": quant.product_id.id,
-                    "product_uom_id": quant.product_id.uom_id.id,
-                    "location_id": quant.location_id.id,
-                    "theoretical_qty": quant.quantity,
-                    "product_qty": quant.quantity,
-                    "standard_price": quant.product_id.product_tmpl_id.standard_price,
-                    "is_ok": True,
-                }
-                inventory_values["line_ids"].append((0, 0, values))
-        if inventory_values["line_ids"]:
-            inventory = self.env["stock.inventory"].create(inventory_values)
-            inventory.action_validate()
+    is_inventory_ok = fields.Boolean("Inventory OK")
+
+    @api.model
+    def get_theoretical_quantity(
+        self,
+        product_id,
+        location_id,
+        lot_id=None,
+        package_id=None,
+        owner_id=None,
+        to_uom=None,
+    ):
+        product_id = self.env["product.product"].browse(product_id)
+        product_id.check_access_rights("read")
+        product_id.check_access_rule("read")
+
+        location_id = self.env["stock.location"].browse(location_id)
+        lot_id = self.env["stock.lot"].browse(lot_id)
+        package_id = self.env["stock.quant.package"].browse(package_id)
+        owner_id = self.env["res.partner"].browse(owner_id)
+        to_uom = self.env["uom.uom"].browse(to_uom)
+        quants = self.env["stock.quant"]._gather(
+            product_id,
+            location_id,
+            lot_id=lot_id,
+            package_id=package_id,
+            owner_id=owner_id,
+            strict=True,
+        )
+        if lot_id:
+            quants = quants.filtered(lambda q: q.lot_id == lot_id)
+        theoretical_quantity = sum(quant.quantity for quant in quants)
+        if to_uom and product_id.uom_id != to_uom:
+            theoretical_quantity = product_id.uom_id._compute_quantity(theoretical_quantity, to_uom)
+        return theoretical_quantity
