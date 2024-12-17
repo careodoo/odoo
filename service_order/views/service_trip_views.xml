@@ -42,21 +42,23 @@
             <group>
               <field name="sequence" />
               <field name="reference" />
-              <field name="pickup_location_id" domain="[('project_ids','in',[project_id])]"
+              <field name="pickup_location_id" domain="[('project_ids', 'in', [project_id])]"
                 readonly="states == 'completed'" />
               <field name="center_id" readonly="states == 'completed'" />
               <field name="trip_tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"
                 readonly="states == 'completed'" />
               <field name="order_id" readonly="states == 'completed'" />
+
             </group>
             <group>
               <field name="type_id" readonly="states == 'completed'" />
               <field name="project_id" readonly="states == 'completed'" />
               <field name="pickuped_datetime" readonly="states == 'completed'" />
-              <!-- <field name="create_date" readonly="states == 'completed'" /> -->
+              <!-- <field name="create_date" readonly="states == 'completed'"/> -->
               <field name="contact_id" readonly="states == 'completed'" />
               <field name="team_id" readonly="states == 'completed'" />
               <field name="trip_date" readonly="states == 'completed'" />
+
             </group>
             <group string="Totals">
               <!-- <field name="total_weight" /> -->

@@ -150,7 +150,7 @@
                   <div t-if="doc.order_id">
                     <a t-att-href="'service_order/%s/' % doc.order_id.id">
                       <img
-                        t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('QR', doc.order_id.qr_url, 500, 500)"
+                        t-att-src="'/report/barcode/?barcode_type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('QR', doc.order_id.qr_url, 500, 500)"
                         style="height: 100px;width:100px" />
                     </a>
                   </div>

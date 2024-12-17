@@ -225,8 +225,8 @@ class ServiceTrip(models.Model):
 
   def send_mail_onchange_states(self):
     template_id = self.env.ref('service_order.mail_template_trip_upadte_state')
-    template_id.send_mail(self.id, force_send=True,notif_layout='mail.mail_notification_light')
-    self.with_context(force_send=True).message_post_with_template(
-        template_id.id,
-        email_layout_xmlid='mail.mail_notification_light',
+    template_id.send_mail(self.id, force_send=True,email_layout_xmlid='mail.mail_notification_light')
+    self.with_context(force_send=True).message_post_with_source(
+        template_id,
+        subtype_xmlid='mail.mt_note',
     )
