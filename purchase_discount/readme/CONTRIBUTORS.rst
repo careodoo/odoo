@@ -8,8 +8,9 @@
 
   * Pedro M. Baeza
   * Vicent Cubells <vicent.cubells@tecnativa.com>
-  * Carlos Roca
 
 * Sudhir Arya <sudhir@erpharbor.com>
 * Lorenzo Battistini <https://github.com/eLBati>
 * Luisa Miguéns <luisa.miguens@solvos.es>
+* Vishnu Vanneri <vanneri.odoodev@gmail.com>
+* Moaad Bourhim <moaad.bourhim@gmail.com>

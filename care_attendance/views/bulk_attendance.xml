@@ -93,7 +93,6 @@
                         <button name="button_confirm" type="object" string="Submit" class="oe_highlight"
                             invisible="department_manager != uid or state != 'draft'"
                             groups="care_attendance.group_bulk_attendance_user"/>
-
                         <button name="button_approve" type="object" string="Approve" class="oe_highlight"
                                 invisible="approver != uid or state not in ['draft', 'confirm']"/>
 
@@ -101,6 +100,7 @@
                                 invisible="approver != uid or state not in ['draft', 'confirm']"/>
                         <button name="button_draft" type="object" string="Reset to Draft"
                                 invisible="approver != uid or state != 'confirm'"/>
+                            invisible="approver != uid or state not in ['draft', 'confirm']"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,approved"/>
                     </header>
                     <sheet>
@@ -111,7 +111,7 @@
                         </div>
                         <group>
                             <field name="active" invisible="1"/>
-                            <field name="type" readonly="state != 'draft'" widget="radio" options="{'horizontal': True}"/>
+                            <field name="type" readonly="state != 'draft'"/>
                             <field name="approver" invisible="1"/>
                             <field name="department_manager" invisible="1"/>
                             <field name="original_department_ids" widget="many2many_tags" invisible="1"/>
