@@ -10,7 +10,7 @@
             <xpath expr="//group[@name='purchase']" position="inside">
                 <field
                     name="purchase_general_discount"
-                    attrs="{'invisible': [('is_company', '=', False), ('parent_id', '!=', False)]}"
+                    invisible="not is_company and parent_id != False"
                 />
             </xpath>
          </field>

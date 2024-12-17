@@ -12,7 +12,7 @@
         />
         <field name="arch" type="xml">
             <xpath
-                expr="//div[@data-key='purchase']/div[hasclass('o_settings_container')][1]"
+                expr="//app[@name='purchase']"
                 position="inside"
             >
                 <div class="col-xs-12 col-6 o_setting_box">
@@ -26,13 +26,8 @@
                         <div class="text-muted">
                             Select to which purchase line field will the purchase general discount be propagated.
                         </div>
-                        <div class="content-group">
-                            <div class="mt16 row">
-                                <field
-                                    name="purchase_general_discount_field"
-                                    class="oe_inline"
-                                />
-                            </div>
+                        <div class="text-muted">
+                            <field name="purchase_general_discount_field" />
                         </div>
                     </div>
                 </div>

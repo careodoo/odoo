@@ -1,45 +1,16 @@
 # Copyright 2019 Tecnativa - David Vidal
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
-from lxml import etree
 
 from odoo import api, fields, models
-import odoo.addons.decimal_precision as dp
 
 
 class PurchaseOrder(models.Model):
     _inherit = "purchase.order"
 
-    discount_type = fields.Selection([('percent', 'Percentage'), ('amount', 'Amount')], string='Discount type',
-                                     readonly=True,
-                                     states={'draft': [('readonly', False)], 'sent': [('readonly', False)]},
-                                     default='percent')
-    discount_rate = fields.Float('Discount Rate', digits=dp.get_precision('Account'),
-                                 readonly=True, states={'draft': [('readonly', False)], 'sent': [('readonly', False)]})
-
-    general_discount = fields.Float(digits="Discount", string="Gen. Disc. (%)",)
-    amount_undiscounted = fields.Float('Amount Before Discount', compute='_compute_amount_undiscounted', digits=0)
-
-    @api.onchange('discount_type', 'discount_rate', 'order_line')
-    def supply_rate(self):
-
-        for order in self:
-            if order.discount_type == 'amount' and self.order_line:
-                total = discount = 0.0
-                for line in order.order_line:
-                    total += round((line.product_uom_qty * line.price_unit))
-                if order.discount_rate != 0:
-                    discount = (order.discount_rate / total) * 100
-                else:
-                    discount = order.discount_rate
-                for line in order.order_line:
-                    line.discount = discount
-
-    def _compute_amount_undiscounted(self):
-        for order in self:
-            total = 0.0
-            for line in order.order_line:
-                total += line.price_subtotal + line.price_unit * ((line.discount or 0.0) / 100.0) * line.product_uom_qty  # why is there a discount in a field named amount_undiscounted ??
-            order.amount_undiscounted = total
+    general_discount = fields.Float(
+        digits="Discount",
+        string="Gen. Disc. (%)",
+    )
 
     _sql_constraints = [
         (
@@ -51,16 +22,17 @@ class PurchaseOrder(models.Model):
 
     @api.onchange("partner_id")
     def onchange_partner_id(self):
-        super().onchange_partner_id()
+        res = super().onchange_partner_id()
         self.general_discount = (
             self.partner_id.commercial_partner_id.purchase_general_discount
         )
+        return res
 
     def _get_general_discount_field(self):
         """We can set in settings another discount field to be applied
-           For example, if we had purchase_triple_dicount, we could set the
-           general discount in discount3 to be applied after all other
-           discounts"""
+        For example, if we had purchase_triple_dicount, we could set the
+        general discount in discount3 to be applied after all other
+        discounts"""
         discount_field = self.company_id.purchase_general_discount_field
         return discount_field or "discount"
 
@@ -74,27 +46,23 @@ class PurchaseOrder(models.Model):
             order.onchange_general_discount()
 
     @api.model
-    def fields_view_get(
-        self, view_id=None, view_type="form", toolbar=False, submenu=False
-    ):
+    def _get_view(self, view_id=None, view_type="form", **options):
         """The purpose of this is to write a context on "order_line" field
-         respecting other contexts on this field.
-         There is a PR (https://github.com/odoo/odoo/pull/26607) to odoo for
-         avoiding this. If merged, remove this method and add the attribute
-         in the field.
-         """
-        res = super().fields_view_get(
-            view_id=view_id, view_type=view_type, toolbar=toolbar, submenu=submenu,
-        )
+        respecting other contexts on this field.
+        There is a PR (https://github.com/odoo/odoo/pull/26607) to odoo for
+        avoiding this. If merged, remove this method and add the attribute
+        in the field.
+        """
+        arch, view = super()._get_view(view_id=view_id, view_type=view_type, **options)
         if view_type == "form":
             discount_field = self._get_general_discount_field()
-            order_xml = etree.XML(res["arch"])
-            order_line_fields = order_xml.xpath("//field[@name='order_line']")
+            order_line_fields = arch.xpath("//field[@name='order_line']")
             if order_line_fields:
                 order_line_field = order_line_fields[0]
                 context = order_line_field.attrib.get("context", "{}").replace(
-                    "{", "{{'default_{}': general_discount, ".format(discount_field), 1,
+                    "{",
+                    "{{'default_{}': general_discount, ".format(discount_field),
+                    1,
                 )
                 order_line_field.attrib["context"] = context
-                res["arch"] = etree.tostring(order_xml)
-        return res
+        return arch, view
