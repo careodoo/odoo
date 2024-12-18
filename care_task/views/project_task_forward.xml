@@ -17,9 +17,9 @@
                     <field name="stage_id" widget="badge"/>
                     <field name="state" widget="badge" decoration-success="state == 'confirmed'" decoration-danger="state == 'rejected'"/>
                     <button name="button_confirm_forward" type="object" string="Confirm" class="oe_highlight"
-                            attrs="{'invisible': &quot;['|', ('state', '!=', 'draft'), ('user_id', '!=', uid)]&quot;}"/>
+                            invisible="user_id != uid or state != 'draft'"/>
                     <button name="button_reject_forward" type="object" string="Reject" class="btn-danger"
-                            attrs="{'invisible': &quot;['|', ('state', '!=', 'draft'), ('user_id', '!=', uid)]&quot;}"/>
+                            invisible="user_id != uid or state != 'draft'"/>
                 </tree>
             </field>
         </record>

@@ -11,7 +11,7 @@ class TaskForward(models.Model):
     confirm_date = fields.Datetime()
     project_id = fields.Many2one('project.project', related='task_id.project_id', store=True)
     name = fields.Char(related='task_id.name', store=True)
-    date_deadline = fields.Date(related='task_id.date_deadline', store=True)
+    date_deadline = fields.Datetime(related='task_id.date_deadline', store=True)
     stage_id = fields.Many2one('project.task.type', related='task_id.stage_id', store=True, string='Task Stage')
     active = fields.Boolean(default=True)
     original_user = fields.Boolean()
