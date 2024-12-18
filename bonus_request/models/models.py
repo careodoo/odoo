@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api
-from odoo.exceptions import Warning, ValidationError
+from odoo.exceptions import ValidationError
 
 
 class BonusRequest(models.Model):
