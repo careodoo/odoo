@@ -1,0 +1,11 @@
+<odoo>
+	<data noupdate="1">
+		<record id="product_return_reason_1" model="product.return.reason">
+			<field name="name">Damaged During Transport</field>
+			<field name="description">Product is harmed or experiences losses during the process of being transported</field>
+		</record>
+		<record id="product_return_reason_2" model="product.return.reason">
+			<field name="name">Customer wants to exchange another product</field>
+		</record>
+	</data>
+</odoo>

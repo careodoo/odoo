@@ -1,0 +1,251 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* to_product_return_reason
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-03-23 04:41+0000\n"
+"PO-Revision-Date: 2024-03-23 04:41+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: to_product_return_reason
+#. odoo-python
+#: code:addons/to_product_return_reason/models/product_return_reason.py:0
+#, python-format
+msgid "%s (copy)"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__message_needaction
+msgid "Action Needed"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__active
+msgid "Active"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model_terms:ir.ui.view,arch_db:to_product_return_reason.product_return_reason_view_form
+msgid "Archived"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__message_attachment_count
+msgid "Attachment Count"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model_terms:ir.actions.act_window,help:to_product_return_reason.action_product_return_reason
+msgid "Click to create a product return reason."
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__create_uid
+msgid "Created by"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__create_date
+msgid "Created on"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:product.return.reason,name:to_product_return_reason.product_return_reason_2
+msgid "Customer wants to exchange another product"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:product.return.reason,name:to_product_return_reason.product_return_reason_1
+msgid "Damaged During Transport"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__description
+msgid "Description"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model_terms:ir.ui.view,arch_db:to_product_return_reason.product_return_reason_view_form
+msgid "Descriptions"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__display_name
+msgid "Display Name"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__message_follower_ids
+msgid "Followers"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__message_partner_ids
+msgid "Followers (Partners)"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__has_message
+msgid "Has Message"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__id
+msgid "ID"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,help:to_product_return_reason.field_product_return_reason__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,help:to_product_return_reason.field_product_return_reason__message_has_error
+#: model:ir.model.fields,help:to_product_return_reason.field_product_return_reason__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,help:to_product_return_reason.field_product_return_reason__active
+msgid ""
+"If unchecked, it will allow you to hide the reason without removing it."
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__message_is_follower
+msgid "Is Follower"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__write_uid
+msgid "Last Updated by"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__write_date
+msgid "Last Updated on"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__message_has_error
+msgid "Message Delivery error"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__message_ids
+msgid "Messages"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__message_needaction_counter
+msgid "Number of Actions"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__message_has_error_counter
+msgid "Number of errors"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,help:to_product_return_reason.field_product_return_reason__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,help:to_product_return_reason.field_product_return_reason__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.actions.act_window,name:to_product_return_reason.action_product_return_reason
+#: model_terms:ir.ui.view,arch_db:to_product_return_reason.product_return_reason_view_form
+#: model_terms:ir.ui.view,arch_db:to_product_return_reason.product_return_reason_view_tree
+msgid "Product Return Reason"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:product.return.reason,description:to_product_return_reason.product_return_reason_1
+msgid ""
+"Product is harmed or experiences losses during the process of being "
+"transported"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__products_count
+msgid "Products Count"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model,name:to_product_return_reason.model_product_return_reason
+msgid "Products Return Reason"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model_terms:ir.ui.view,arch_db:to_product_return_reason.product_return_reason_view_form
+msgid "Reason Title"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:res.groups,name:to_product_return_reason.group_return_reason_manager
+msgid "Return Reasons Manager"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__product_ids
+msgid "Returned Products"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.constraint,message:to_product_return_reason.constraint_product_return_reason_name_unique
+msgid "The Title of the reason must be unique"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,help:to_product_return_reason.field_product_return_reason__product_ids
+msgid "The products that have been returned with this reason"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.constraint,message:to_product_return_reason.constraint_product_return_reason_name_description_check
+msgid "The title of the reason should not be the description"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,help:to_product_return_reason.field_product_return_reason__name
+msgid "The title of the reason. e.g. Bad quality, Customer changed mind, etc"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:res.groups,comment:to_product_return_reason.group_return_reason_manager
+msgid ""
+"The users of this group will have all access rights to manipulate all Return"
+" Reason records (Read, Update, Delete, Create)."
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__name
+msgid "Title"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,field_description:to_product_return_reason.field_product_return_reason__website_message_ids
+msgid "Website Messages"
+msgstr ""
+
+#. module: to_product_return_reason
+#: model:ir.model.fields,help:to_product_return_reason.field_product_return_reason__website_message_ids
+msgid "Website communication history"
+msgstr ""
