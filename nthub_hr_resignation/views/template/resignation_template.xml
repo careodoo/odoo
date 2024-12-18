@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <template id="portal_resignation" name="Resignation Request">
+        <t t-call="portal.portal_layout">
+            <t t-set="o_portal_fullwidth_alert" groups="base.group_user" t-if="resignation_id">
+                <t t-call="portal.portal_back_in_edit_mode">
+                    <t t-set="backend_url"
+                       t-value="'/web#return_label=Website&amp;model=hr.employee.resignation&amp;id=%s&amp;view_type=form' % (resignation_id.id)"/>
+                </t>
+            </t>
+            <p class="alert alert-danger mt8" t-if="request.params.get('error')" role="alert">
+                <t t-esc="request.params.get('error')"/>
+            </p>
+            <div class="oe_structure"/>
+            <div class="container oe_website_sale s_website_form portal_resignation">
+                <form class="hr_resignation_form s_website_form form-horizontal container-fluid"
+                      action="/resignation/request" role="form" method="post" data-model_name="hr.employee.resignation"
+                      enctype="multipart/form-data">
+                    <input type="hidden" id="resignation_id" name="resignation_id"
+                           t-att-value="resignation_id.id if resignation_id else None"/>
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <t t-call="portal.portal_record_layout">
+                        <t t-set="card_header">
+                            <div class="row no-gutters">
+                                <div class="col-md">
+                                    <h5 class="mb-1 mb-md-0" t-if="not resignation_id">
+                                        Create Resignation Request
+                                    </h5>
+                                    <h5 class="mb-1 mb-md-0" t-if="resignation_id">
+                                        <span t-esc="resignation_id.employee_id.name"
+                                              style="text-transform: uppercase;"/>
+                                        <t t-if="resignation_id.state == 'draft'">
+                                            <span class="badge badge-pill"
+                                                  style="background-color: #999999; color: white;"
+                                                  title="Current stage of the task" t-field="resignation_id.state"/>
+                                        </t>
+                                        <t t-if="resignation_id.state == 'done'">
+                                            <span class="badge badge-pill"
+                                                  style="background-color: #0bdb12; color: white;"
+                                                  title="Current stage of the task" t-field="trip_id.resignation_id"/>
+                                        </t>
+                                        <t t-if="resignation_id.state == 'hr_dept'">
+                                            <span class="badge badge-pill"
+                                                  style="background-color: #16a2b8; color: white;"
+                                                  title="Current stage of the task" t-field="trip_id.resignation_id"/>
+                                        </t>
+                                        <t t-if="resignation_id.state == 'financial_dept'">
+                                            <span class="badge badge-pill"
+                                                  style="background-color: #17a2b8; color: white;"
+                                                  title="Current stage of the task" t-field="resignation_id.state"/>
+                                        </t>
+                                        <t t-if="resignation_id.state == 'done'">
+                                            <span class="badge badge-pill"
+                                                  style="background-color: #c16fb7; color: white;"
+                                                  title="Current stage of the task" t-field="resignation_id.state"/>
+                                        </t>
+                                        <t t-if="resignation_id.state == 'refuse'">
+                                            <span class="badge badge-pill"
+                                                  style="background-color: #15a2b8; color: white;"
+                                                  title="Current stage of the task" t-field="resignation_id.state"/>
+                                        </t>
+                                    </h5>
+                                </div>
+                                <div class="col-md text-md-right ipc_hr_portal">
+                                    <button type="submit" t-if="not resignation_id" id="create_btrip_data"
+                                            class="btn btn-primary">Create
+                                    </button>
+                                </div>
+                            </div>
+                        </t>
+                        <t t-set="card_body">
+                            <p class="alert alert-danger mt8" t-if="request.params.get('error')" role="alert">
+                                <t t-esc="request.params.get('error')"/>
+                            </p>
+                            <div class="row no-gutters">
+                                <div class="row oe_sub w-100">
+                                    <div class="col-md-6">
+                                        <div class="form-group row">
+                                            <label class="col-md-4  o_label" for="employee_id">Employee</label>
+                                            <div class="col-md-8">
+                                                <select id="employee_id" name="employee_id"
+                                                        t-att-style="(resignation_id) and 'display: none'"
+                                                        t-attf-class="form-control"
+                                                        t-att-disabled="resignation_id if resignation_id else None">
+                                                    <option value="" t-attf-selected="selected"></option>
+                                                    <t t-foreach="employee_ids or []" t-as="employee_id">
+                                                        <option t-att-employee_id="employee_id['name']"
+                                                                t-att-value="employee_id['id']"
+                                                                t-att-selected="employee_id['id']">
+                                                            <t t-esc="employee_id['name']"/>
+                                                        </option>
+                                                    </t>
+                                                </select>
+                                                <input type="text"
+                                                       t-att-style="(not resignation_id) and 'display: none'"
+                                                       t-att-disabled="resignation_id if resignation_id else None"
+                                                       class="form-control"
+                                                       t-att-value="resignation_id.employee_id.name if resignation_id and resignation_id.employee_id else None"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group row">
+                                            <label class="col-md-4  o_label" for="ticket_date">Ticket Date
+                                            </label>
+                                            <div class="col-md-8">
+                                                <input id="ticket_date" required="required"
+                                                       t-att-disabled="resignation_id if resignation_id else None"
+                                                       type="date" class="form-control" name="ticket_date"
+                                                       t-att-value="resignation_id.ticket_date if resignation_id and resignation_id.ticket_date else ticket_date"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group row">
+                                            <label class="col-md-4  o_label" for="resignation_type">Type</label>
+                                            <div class="col-md-8">
+                                                <select id="resignation_type" name="resignation_type"
+                                                        class="form-control"
+                                                        t-att-style="(resignation_id) and 'display: none'"
+                                                        t-att-disabled="resignation_id.state != 'draft' if resignation_id else None">
+                                                    <!--                                                    <option t-att-value="0" >-->
+                                                    <!--                                                       Select Resignation Type-->
+                                                    <!--                                                    </option>-->
+                                                    <option t-att-value="resignation">
+                                                        resignation
+                                                    </option>
+                                                    <option t-att-value="termination">
+                                                        termination
+                                                    </option>
+                                                    <option t-att-value="death">
+                                                        death
+                                                    </option>
+                                                </select>
+                                                <input type="text"
+                                                       t-att-style="(not resignation_id) and 'display: none'"
+                                                       t-att-disabled="resignation_id if resignation_id else None"
+                                                       class="form-control"
+                                                       t-att-value="resignation_id.resignation_type if resignation_id and resignation_id.resignation_type else None"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group row">
+                                            <label class="col-md-4  o_label" for="ticket_date">Leave Date
+                                            </label>
+                                            <div class="col-md-8">
+                                                <input id="leave_date" required="required"
+                                                       t-att-disabled="resignation_id if resignation_id else None"
+                                                       type="date" class="form-control" name="leave_date"
+                                                       t-att-value="resignation_id.leave_date if resignation_id and resignation_id.leave_date else ticket_date"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group row">
+                                            <label class="col-md-4  o_label" for="location">Reason
+                                            </label>
+                                            <div class="col-md-8">
+                                                <input required="required"
+                                                       t-att-disabled="resignation_id if resignation_id else None"
+                                                       type="text" class="form-control" name="reason"
+                                                       t-att-value="resignation_id.reason if resignation_id and resignation_id.reason else ''"/>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="form-group row">
+                                            <label class="col-md-4  o_label" for="approved_date">Resignation Date
+                                            </label>
+                                            <div class="col-md-8">
+                                                <input id="approved_date" required="required" t-att-disabled="true"
+                                                       type="date" class="form-control" name="approved_date"
+                                                       t-att-value="resignation_id.approved_date if resignation_id and resignation_id.approved_date else None"/>
+                                            </div>
+                                        </div>
+                                    </div>
+
+
+                                </div>
+
+                            </div>
+                            <div class="row">
+                                <div class="form-group s_website_form_field">
+                                    <h5 class="col-md-5 pl-0">
+                                        <label class="o_label" for="ufile">Add Attachments
+                                        </label>
+                                    </h5>
+                                    <div class="col-md-7">
+                                        <input type="file" id="uploadImage"
+                                               name="ufile"
+                                               accept="image/*,application/pdf" multiple="multiple"/>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </t>
+                    </t>
+                    <div t-if="resignation_id" class="mt32">
+                        <h4>
+                            <strong>Message and communication history</strong>
+                        </h4>
+                        <t t-call="portal.message_thread">
+                            <t t-set="object" t-value="resignation_id"/>
+                            <t t-set="pid" t-value="pid"/>
+                            <t t-set="chatter_mode" t-value="'json'"/>
+                            <t t-set="hash" t-value="hash"/>
+                        </t>
+                    </div>
+                </form>
+            </div>
+        </t>
+    </template>
+
+
+    <template id="thankyou_resignation" name="Thank you">
+        <t t-call="website.layout">
+            <div id="wrap">
+                <div class="oe_structure">
+                    <div class="container pt32 pb32">
+                        <div class="row pb32 alert alert-info pt32">
+                            <div class="col-md-12">
+                                <h1>Thank you!</h1>
+                            </div>
+                            <div class="col-md-12">
+                                <h5>
+                                    Your Resignation Request is successfully created you can check your request here
+                                    <a
+                                            t-attf-href="/my/resignation">
+                                        <t t-esc="record.name"/>
+                                    </a>
+                                    .
+                                </h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

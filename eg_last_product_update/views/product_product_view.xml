@@ -1,0 +1,22 @@
+<odoo>
+    <record id="product_product_extended_last_update_form_view" model="ir.ui.view">
+        <field name="name">product_product_extended_last_update_form_view</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_normal_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Last Update" name="last_update">
+                    <field name="last_product_update_ids" readonly="1">
+                        <tree delete="false" create="false" default_order='create_date desc'>
+                            <field name="name"/>
+                            <field name="create_date"/>
+                            <field name="create_uid"/>
+                            <field name="before_value"/>
+                            <field name="after_value"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

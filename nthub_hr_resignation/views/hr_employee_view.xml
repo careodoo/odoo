@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="view_employee_inherit_form" model="ir.ui.view">
+        <field name="name">hr.employee.inherited.form</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <field name="company_id" position="after">
+                <field name="resigned" invisible="not resigned"/>
+                <field name="resignation_type" invisible="not resigned"/>
+            </field>
+        </field>
+    </record>
+</odoo>

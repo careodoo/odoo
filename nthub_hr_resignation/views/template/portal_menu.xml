@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data noupdate="1">
+        <record id="menu_hr_resignation" model="website.menu">
+            <field name="name">Resignation Request</field>
+            <field name="url">/create/resignation/request?create_from_header=true</field>
+            <field name="sequence" type="int">11</field>
+<!--            <field name="group_ids"  eval="[(6,0,[ref('base.group_portal'), ref('base.group_system')])]"/>-->
+        </record>
+
+    </data>
+</odoo>

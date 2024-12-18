@@ -9,14 +9,13 @@
                 <xpath expr="//form/sheet/notebook/page[2]" position="inside">
                     <group string="Military Service">
                         <field name="military_service_position"/>
-                        <field name="postponed_date"
-                               attrs="{'invisible': [('military_service_position', '!=', 'Postponed')]}"/>
+                        <field name="postponed_date" invisible="military_service_position != 'Postponed'"/>
                     </group>
                     <group string="Insurance">
                         <field name="insurance_start_date"/>
                         <field name="insurance_type"/>
                         <field name="insurance_status"/>
-                        <field name="insurance_salary" attrs="{'invisible': [('insurance_status', '!=', 'insured')]}"/>
+                        <field name="insurance_salary" invisible="insurance_status != 'insured'"/>
                     </group>
                 </xpath>
 

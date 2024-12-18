@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<odoo>
+    <!-- Employee Clearance -->
+    <menuitem action="hr_employee_resignation_action" id="menu_hr_emp_resignation" sequence="8"
+              name="Employee Resignation" parent="hr.menu_hr_main" groups="hr.group_hr_user"/>
+</odoo>

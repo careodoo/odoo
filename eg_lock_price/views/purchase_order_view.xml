@@ -1,0 +1,15 @@
+<odoo>
+    <record id="purchase_order_lock_price_form_view" model="ir.ui.view">
+        <field name="name">purchase.order.lock.price.form.view</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='order_line']/tree/field[@name='name']" position="after">
+                <field name="readonly_price" invisible="1"/>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/tree/field[@name='price_unit']" position="replace">
+                <field name="price_unit" string="Unit Price" readonly="readonly_price == True"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

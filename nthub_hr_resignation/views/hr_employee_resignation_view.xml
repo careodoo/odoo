@@ -1,0 +1,117 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="hr_employee_resignation_form_view1" model="ir.ui.view">
+        <field name="name">hr.employee.resignation.forms</field>
+        <field name="model">hr.employee.resignation</field>
+        <field name="arch" type="xml">
+            <form string="Employee resignation">
+                <header>
+                    <button name="action_submit" string="Submit" type="object" invisible="state != 'draft'"
+                            class="oe_highlight" groups="hr.group_hr_user"/>
+                    <button name="action_hr_approve" string="HR Approve" type="object" invisible="state != 'submit'"
+                            class="oe_highlight" groups="hr.group_hr_manager"/>
+                    <button name="action_finance_approve" string="Finance Approve" invisible="state != 'hr_dept'"
+                            type="object" class="oe_highlight" groups="account.group_account_manager"/>
+                    <button name="action_resignation_done" string="Done" invisible="state != 'finance_dept'"
+                            type="object" class="oe_highlight" groups="hr.group_hr_manager"/>
+                    <button name="action_resignation_refuse" string="Refuse" invisible="state != 'done'" type="object"
+                            groups="hr.group_hr_user"/>
+                    <button name="action_set_to_draft" string="Set to Draft" invisible="state != 'refuse'" type="object"
+                            groups="base.group_user"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,done"
+                           statusbar_colors='{"draft":"blue","refuse":"red"}'/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" nolabel="1" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group string="Employee Information">
+                        <group>
+                            <field name="employee_id" required="1" placeholder='Select Employee...'
+                                   readonly="state != 'draft'"/>
+                            <field name="department_id" readonly="1" invisible="not department_id"/>
+                            <field name="company_id" options="{'no_create': True}" groups="base.group_multi_company"/>
+                        </group>
+                        <group>
+                            <field name="resignation_type" required="1" readonly="state != 'draft'"/>
+                            <field name="ticket_date" readonly="state != 'draft'"/>
+                            <field name="leave_date" required="1" readonly="state != 'draft'"/>
+                            <field name="approved_date" readonly="1"/>
+                            <field name="attachment_ids" widget="many2many_binary" string="Attach a file" nolabel="1"
+                                   colspan="2"/>
+                        </group>
+                    </group>
+                    <group string="Resignation Reason">
+                        <field name="reason" string=" " required="1"/>
+                    </group>
+                    <notebook>
+                        <page string="Extra Information" groups="base.group_no_one">
+                            <group name="extra_info" col="4">
+                                <field name="create_uid" readonly="1"/>
+                                <field name="create_date" readonly="1"/>
+                                <field name="write_uid" readonly="1"/>
+                                <field name="write_date" readonly="1"/>
+                                <field name="approved_by" invisible="not approved_by"/>
+                                <field name="approved_date" invisible="not approved_date"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="hr_employee_resignation_tree_view" model="ir.ui.view">
+        <field name="name">hr.employee.resignation.tree</field>
+        <field name="model">hr.employee.resignation</field>
+        <field name="arch" type="xml">
+            <tree string="Employee Resignation">
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="resignation_type"/>
+                <field name="ticket_date" optional="hide"/>
+                <field name="leave_date" optional="hide"/>
+                <field name="approved_date" optional="show"/>
+                <field name="company_id"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_employee_resignation_filter" model="ir.ui.view">
+        <field name="name">hr.employee.resignation.filter.select</field>
+        <field name="model">hr.employee.resignation</field>
+        <field name="arch" type="xml">
+            <search string="Search Employee Resignation">
+                <field name="employee_id" string="Employee"/>
+                <field name="company_id" string="company"/>
+                <field name="department_id" string="Department"/>
+                <separator/>
+                <group expand="0" string="Group By...">
+                    <filter name="group_type" string="Type" context="{'group_by':'resignation_type'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by':'state'}"/>
+                    <filter name="group_company" string="Company" context="{'group_by':'company_id'}"/>
+                    <filter name="group_department" string="Department" context="{'group_by':'department_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="hr_employee_resignation_action" model="ir.actions.act_window">
+        <field name="name">Employee Resignation</field>
+        <field name="res_model">hr.employee.resignation</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_employee_resignation_filter"/>
+        <field name="help" type="html">
+            <p class="oe_view_nocontent_create">
+                Click to Add Employee Resignation Details.
+            </p>
+        </field>
+    </record>
+</odoo>

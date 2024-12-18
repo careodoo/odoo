@@ -14,11 +14,11 @@
             <field name="arch" type="xml">
                 <form string="Legal Actions">
                     <header>
-                        <button name="process" string="Process" type="object" states="draft"/>
-                        <button name="delay" string="Delay" type="object" states="draft,running"/>
-                        <button name="won" string="Won" type="object" states="running"/>
-                        <button name="loss" string="Loss" type="object" states="running"/>
-                        <button name="cancel" string="Cancel" type="object" states="running,draft"/>
+                        <button name="process" string="Process" type="object" invisible="state != 'draft'"/>
+                        <button name="delay" string="Delay" type="object" invisible="state not in ['draft', 'running']"/>
+                        <button name="won" string="Won" type="object" invisible="state != 'running'"/>
+                        <button name="loss" string="Loss" type="object"  invisible="state != 'running'"/>
+                        <button name="cancel" string="Cancel" type="object" invisible="state not in ['draft', 'running']"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,running,delay,fail,won"/>
                     </header>
                     <sheet>
@@ -33,12 +33,9 @@
                                 <field name="party1"/>
                                 <field name="party2_name" invisible="1"/>
                                 <field name="party2"/>
-                                <field name="employee_id" attrs="{'invisible': [('party2','!=','employee')],
-                                                                  'required': [('party2','=','employee')]}"/>
-                                <field name="partner_id" attrs="{'invisible': [('party2','!=','partner')],
-                                                                  'required': [('party2','=','partner')]}"/>
-                                <field name="other_name" attrs="{'invisible': [('party2','!=','other')],
-                                                                  'required': [('party2','=','other')]}"/>
+                                <field name="employee_id" invisible="party2 != 'employee'" required="party2 == 'employee'"/>
+                                <field name="partner_id" invisible="party2 != 'partner'" required="party2 == 'partner'"/>
+                                <field name="other_name" invisible="party2 != 'other'" required="party2 == 'other'"/>
                                 <field name="court_name"/>
                                 <field name="judge"/>
                                 <field name="lawyer"/>
