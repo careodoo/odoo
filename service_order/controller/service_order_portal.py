@@ -193,7 +193,7 @@ class ServiceOrderPortal(CustomerPortal):
       return http.request.redirect(f'/service_order/{order_id}')
     else:
       datetime_converted = self.convert_input_datetime(kw.get('request_datetime'))
-      http.request.env['service.order'].sudo().create({
+      order_id = http.request.env['service.order'].sudo().create({
           **kw,
           'request_datetime': datetime_converted,
       })

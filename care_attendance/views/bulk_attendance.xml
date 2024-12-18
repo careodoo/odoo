@@ -94,11 +94,13 @@
                             invisible="department_manager != uid or state != 'draft'"
                             groups="care_attendance.group_bulk_attendance_user"/>
                         <button name="button_approve" type="object" string="Approve" class="oe_highlight"
-                            invisible="approver != uid or state not in ['draft', 'confirm']"/>
+                                invisible="approver != uid or state not in ['draft', 'confirm']"/>
+
                         <button name="button_refuse" type="object" string="Refuse" class="btn btn-danger"
-                            invisible="approver != uid or state not in ['draft', 'confirm']"/>
+                                invisible="approver != uid or state not in ['draft', 'confirm']"/>
                         <button name="button_draft" type="object" string="Reset to Draft"
-                            invisible="approver != uid or state != 'confirm'"/>
+                                invisible="approver != uid or state != 'confirm'"/>
+                            invisible="approver != uid or state not in ['draft', 'confirm']"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirm,approved"/>
                     </header>
                     <sheet>

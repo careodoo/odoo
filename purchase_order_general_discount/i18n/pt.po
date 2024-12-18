@@ -110,6 +110,3 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:purchase_order_general_discount.purchase_order_form
 msgid "Update general discounts"
 msgstr "Atualizar descontos gerais"
-
-#~ msgid "Config Settings"
-#~ msgstr "Parâmetros de Configuração"
