@@ -6,7 +6,7 @@ import json
 from odoo import http
 from odoo.tools import html_escape
 from odoo.http import content_disposition, request
-from odoo.addons.web.controllers.main import _serialize_exception
+# from odoo.addons.web.controllers.main import _serialize_exception
 from PyPDF2 import  PdfFileReader, PdfFileWriter
 
 class ReportController(http.Controller):
@@ -47,6 +47,6 @@ class ReportController(http.Controller):
             error_message = {
                 'code': 200,
                 'message': 'Odoo Server Error',
-                'data': _serialize_exception(e)
+                # 'data': _serialize_exception(e)
             }
             return request.make_response(html_escape(json.dumps(error_message)))
