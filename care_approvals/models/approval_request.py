@@ -136,8 +136,8 @@ class ApprovalProductLine(models.Model):
 
     department_product_ids = fields.Many2many('product.product', compute='compute_department_product_ids', store=True)
     product_id = fields.Many2one('product.product', domain="[('id', 'in', department_product_ids)]")
-    # qoh_available = fields.Float(string="On Hand", compute='_compute_po_qoh')
-    # foh_available = fields.Float(string="Forecasted")
+    qoh_available = fields.Float(string="On Hand", compute='_compute_po_qoh')
+    foh_available = fields.Float(string="Forecasted")
     request_uom_id = fields.Many2one('uom.uom')
 
     @api.constrains('quantity')
@@ -152,11 +152,11 @@ class ApprovalProductLine(models.Model):
                         if limit < all_qty:
                             raise ValidationError(f"you have exceeded limit for {rec.product_id.name} ({limit})!")
 
-    # @api.depends('product_id')
-    # def _compute_po_qoh(self):
-    #     for rec in self:
-    #         rec.qoh_available = rec.product_id.qty_available
-    #         rec.foh_available = rec.product_id.virtual_available
+    @api.depends('product_id')
+    def _compute_po_qoh(self):
+        for rec in self:
+            rec.qoh_available = rec.product_id.qty_available
+            rec.foh_available = rec.product_id.virtual_available
 
     @api.depends('approval_request_id.department_id')
     def compute_department_product_ids(self):
