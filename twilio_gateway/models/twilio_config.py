@@ -16,7 +16,7 @@ except Exception as e:
     _logger.error("#WKDEBUG-1  python  twilio library not installed .")
 
 from odoo import models, fields, api, _
-from odoo.exceptions import except_orm, Warning, UserError
+from odoo.exceptions import UserError
 from . twilio_messaging import send_sms_using_twilio
 
 

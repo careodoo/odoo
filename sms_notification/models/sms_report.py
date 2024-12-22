@@ -18,7 +18,6 @@ from odoo import models, fields, api, _
 from odoo import SUPERUSER_ID
 import re
 import operator
-from odoo.exceptions import except_orm, Warning, RedirectWarning
 
 
 class SmsReport(models.Model):

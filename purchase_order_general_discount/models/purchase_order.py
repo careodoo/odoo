@@ -11,6 +11,13 @@ class PurchaseOrder(models.Model):
         digits="Discount",
         string="Gen. Disc. (%)",
     )
+    discount_type = fields.Selection([('percent', 'Percentage'), ('amount', 'Amount')], string='Discount type',
+                                     readonly=True,
+                                     states={'draft': [('readonly', False)], 'sent': [('readonly', False)]},
+                                     default='percent')
+    discount_rate = fields.Float('Discount Rate',
+                                 readonly=True, states={'draft': [('readonly', False)], 'sent': [('readonly', False)]})
+
 
     _sql_constraints = [
         (
@@ -66,3 +73,9 @@ class PurchaseOrder(models.Model):
                 )
                 order_line_field.attrib["context"] = context
         return arch, view
+
+
+class PurchaseOrderLine(models.Model):
+    _inherit = "purchase.order.line"
+
+    reference = fields.Char(string='Vendor Reference')

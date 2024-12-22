@@ -18,7 +18,7 @@ from odoo import SUPERUSER_ID, api
 import re
 from functools import reduce
 import operator
-from odoo.exceptions import Warning
+from odoo.exceptions import ValidationError
 from odoo import models, fields, api, _
 import logging
 _logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ class SmsBase(models.AbstractModel):
         gateway_obj = sms_gateway if sms_gateway else self.env[
             "sms.mail.server"].search([], order='sequence asc', limit=1)
         if gateway_obj and not gateway_obj.gateway:
-            raise Warning("SMS configuration has no gateway.")
+            raise ValidationError("SMS configuration has no gateway.")
         elif gateway_obj and gateway_obj.gateway:
             return gateway_obj
         else:
