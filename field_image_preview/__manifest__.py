@@ -34,14 +34,14 @@ This is extension for <field widget="image"> widget image
             'static/description/stock_cursor.png',
     ],
     # 'data': [ 'views/form_image_preview_templates.xml', ],
-    'assets': {
-        'web.assets_backend': [
-            'field_image_preview/static/**/*',
-        ],
-        'web.assets_qweb': [
-            'field_image_preview/static/src/xml/image.xml',
-        ],
-    },
+    # 'assets': {
+    #     'web.assets_backend': [
+    #         'field_image_preview/static/**/*',
+    #     ],
+    #     'web.assets_qweb': [
+    #         'field_image_preview/static/src/xml/image.xml',
+    #     ],
+    # },
     # 'qweb': [ 'static/src/xml/image.xml', ],
     'installable': True,
     'application': False,

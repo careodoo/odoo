@@ -24,17 +24,17 @@
         'report/report_inventory_movement_templates.xml',
     ],
     'images': ['static/description/main_screen.png'],
-    'assets': {
-        'web.assets_backend': [
-                '/web/webclient/actions/action_service',
-                '/stock_movement_report/static/src/scss/inventory_movement_report.scss',
-                '/stock_movement_report/static/src/js/inventory_movement_action.js',
-                '/stock_movement_report/static/src/js/action_manager_stock_reports.js',
-                ],
-        'web.assets_qweb': [
-            'stock_movement_report/static/src/xml/**/*',
-        ],
-        },
+    # 'assets': {
+    #     'web.assets_backend': [
+    #             '/web/webclient/actions/action_service',
+    #             '/stock_movement_report/static/src/scss/inventory_movement_report.scss',
+    #             '/stock_movement_report/static/src/js/inventory_movement_action.js',
+    #             '/stock_movement_report/static/src/js/action_manager_stock_reports.js',
+    #             ],
+    #     'web.assets_qweb': [
+    #         'stock_movement_report/static/src/xml/**/*',
+    #     ],
+    #     },
     'price': 149.0,
     'currency': 'EUR',
     'application': True,

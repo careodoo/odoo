@@ -21,7 +21,7 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
-                        <button name="button_transfer" type="object" string="Transfer" states="draft"
+                        <button name="button_transfer" type="object" string="Transfer" invisible="state != 'draft'"
                                         class="oe_highlight"/>
                         <field name="state" widget="statusbar"/>
                     </header>
@@ -30,10 +30,10 @@
                             <group>
                                 <field name="create_from" invisible="1"/>
                                 <field name="tank_id" invisible="1"/>
-                                <field name="from_tank_id" required="1" attrs="{'readonly': [('state', '=', 'done')]}"/>
-                                <field name="to_tank_id" required="1" attrs="{'readonly': [('state', '=', 'done')]}"/>
-                                <field name="quantity" required="1" attrs="{'readonly': [('state', '=', 'done')]}"/>
-                                <field name="date" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                                <field name="from_tank_id" required="1" readonly="state == 'done'"/>
+                                <field name="to_tank_id" required="1" readonly="state == 'done'"/>
+                                <field name="quantity" required="1" readonly="state == 'done'"/>
+                                <field name="date" readonly="state == 'done'"/>
                                 <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
                             </group>
                             <group/>

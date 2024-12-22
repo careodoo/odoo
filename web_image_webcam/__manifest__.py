@@ -22,14 +22,14 @@
         "web",
     ],
 
-    'assets': {
-        'web.assets_backend': [
-            'web_image_webcam/static/src/**/*.css',
-            'web_image_webcam/static/src/js/webcam_widget_new.js',
-        ],
-        'web.assets_qweb': [
-            'web_image_webcam/static/src/xml/web_widget_image_webcam.xml',
-        ],
-    },
+    # 'assets': {
+    #     'web.assets_backend': [
+    #         'web_image_webcam/static/src/**/*.css',
+    #         'web_image_webcam/static/src/js/webcam_widget_new.js',
+    #     ],
+    #     'web.assets_qweb': [
+    #         'web_image_webcam/static/src/xml/web_widget_image_webcam.xml',
+    #     ],
+    # },
     "installable": True,
 }

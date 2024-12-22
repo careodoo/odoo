@@ -38,16 +38,16 @@
     # 'qweb': [
     #     "static/src/xml/base.xml",
     # ],
-    'assets': {
-        'web.assets_backend': [
-            'hr_attendance_base/static/src/css/steps.css',
-            'hr_attendance_base/static/src/css/sweetalert2.css',
-            'hr_attendance_base/static/src/js/lib/sweetalert2.js',
-            'hr_attendance_base/static/src/js/attendances_base.js',
-            'hr_attendance_base/static/src/js/kiosk_mode_base.js'
-        ],
-        'web.assets_qweb': [
-            'hr_attendance_base/static/src/**/*.xml',
-        ],
-    },
+    # 'assets': {
+    #     'web.assets_backend': [
+    #         'hr_attendance_base/static/src/css/steps.css',
+    #         'hr_attendance_base/static/src/css/sweetalert2.css',
+    #         'hr_attendance_base/static/src/js/lib/sweetalert2.js',
+    #         'hr_attendance_base/static/src/js/attendances_base.js',
+    #         'hr_attendance_base/static/src/js/kiosk_mode_base.js'
+    #     ],
+    #     'web.assets_qweb': [
+    #         'hr_attendance_base/static/src/**/*.xml',
+    #     ],
+    # },
 }

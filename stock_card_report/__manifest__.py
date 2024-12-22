@@ -17,11 +17,11 @@
         "reports/stock_card_report.xml",
         "wizard/stock_card_report_wizard_view.xml",
     ],
-    "assets": {
-        "web.assets_backend": [
-            "stock_card_report/static/src/css/**/*",
-            "stock_card_report/static/src/js/**/*",
-        ]
-    },
+    # "assets": {
+    #     "web.assets_backend": [
+    #         "stock_card_report/static/src/css/**/*",
+    #         "stock_card_report/static/src/js/**/*",
+    #     ]
+    # },
     "installable": True,
 }

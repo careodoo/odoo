@@ -42,21 +42,21 @@ filters pictures filters image editor photos editor resizer \
     "cloc_exclude": [
         "static/src/lib/**/*",  # exclude a single folder
     ],
-    'assets': {
-        'web.assets_backend': [
-            'field_image_editor/static/src/lib/tui-color-picker.css',
-            'field_image_editor/static/src/lib/tui.image-editor-3.7.2/dist/tui-image-editor.css',
-            'field_image_editor/static/src/lib/fabric.js',
-            'field_image_editor/static/src/lib/tui-code-snippet.min.js',
-            'field_image_editor/static/src/lib/tui-color-picker.js',
-            'field_image_editor/static/src/lib/FileSaver.min.js',
-            'field_image_editor/static/src/lib/tui.image-editor-3.7.2/dist/tui-image-editor.js',
-            'field_image_editor/static/src/lib/tui.image-editor-3.7.2/examples/js/theme/white-theme.js',
-            'field_image_editor/static/src/lib/tui.image-editor-3.7.2/examples/js/theme/black-theme.js',
-            'field_image_editor/static/src/js/image.js',
-        ],
-        'web.assets_qweb': [
-            'field_image_editor/static/src/xml/image.xml',
-        ]
-    },
+    # 'assets': {
+    #     'web.assets_backend': [
+    #         'field_image_editor/static/src/lib/tui-color-picker.css',
+    #         'field_image_editor/static/src/lib/tui.image-editor-3.7.2/dist/tui-image-editor.css',
+    #         'field_image_editor/static/src/lib/fabric.js',
+    #         'field_image_editor/static/src/lib/tui-code-snippet.min.js',
+    #         'field_image_editor/static/src/lib/tui-color-picker.js',
+    #         'field_image_editor/static/src/lib/FileSaver.min.js',
+    #         'field_image_editor/static/src/lib/tui.image-editor-3.7.2/dist/tui-image-editor.js',
+    #         'field_image_editor/static/src/lib/tui.image-editor-3.7.2/examples/js/theme/white-theme.js',
+    #         'field_image_editor/static/src/lib/tui.image-editor-3.7.2/examples/js/theme/black-theme.js',
+    #         'field_image_editor/static/src/js/image.js',
+    #     ],
+    #     'web.assets_qweb': [
+    #         'field_image_editor/static/src/xml/image.xml',
+    #     ]
+    # },
 }

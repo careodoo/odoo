@@ -94,9 +94,9 @@ Netelip SMS Gateway""",
   "auto_install"         :  False,
   "price"                :  49,
   "currency"             :  "USD",
-  'assets': {
-        'web.assets_backend': [
-            'sms_notification/static/src/js/field_phone_widget.js',
-        ],
-    },
+  # 'assets': {
+  #       'web.assets_backend': [
+  #           'sms_notification/static/src/js/field_phone_widget.js',
+  #       ],
+  #   },
 }

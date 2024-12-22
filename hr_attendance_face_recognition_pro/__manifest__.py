@@ -40,25 +40,25 @@ from a digital image or a video frame from a video source""",
         'views/res_config_settings_views.xml',
     ],
 
-    'assets': {
-        'web.assets_backend': [
-            'hr_attendance_face_recognition_pro/static/src/css/toogle_button.css',
-            'hr_attendance_face_recognition_pro/static/src/js/lib/webcam.js',
-            # 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.12.0/dist/tf.min.js',
-            # 'https://cdnjs.cloudflare.com/ajax/libs/human/2.6.1/human.js',
-            'hr_attendance_face_recognition_pro/static/src/js/lib/human.js',
-            # 'hr_attendance_face_recognition_pro/static/src/js/lib/human.js',
-            'hr_attendance_face_recognition_pro/static/src/js/widget_image_recognition.js',
-            'hr_attendance_face_recognition_pro/static/src/js/res_users_kanban_face_recognition.js',
-            'hr_attendance_face_recognition_pro/static/src/js/my_attendances_face_recognition.js',
-            'hr_attendance_face_recognition_pro/static/src/js/kiosk_mode_face_recognition.js',
-
-        ],
-        'web.assets_qweb': [
-            'hr_attendance_face_recognition_pro/static/src/xml/attendance.xml',
-            'hr_attendance_face_recognition_pro/static/src/xml/kiosk.xml',
-        ],
-    },
+    # 'assets': {
+    #     'web.assets_backend': [
+    #         'hr_attendance_face_recognition_pro/static/src/css/toogle_button.css',
+    #         'hr_attendance_face_recognition_pro/static/src/js/lib/webcam.js',
+    #         # 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.12.0/dist/tf.min.js',
+    #         # 'https://cdnjs.cloudflare.com/ajax/libs/human/2.6.1/human.js',
+    #         'hr_attendance_face_recognition_pro/static/src/js/lib/human.js',
+    #         # 'hr_attendance_face_recognition_pro/static/src/js/lib/human.js',
+    #         'hr_attendance_face_recognition_pro/static/src/js/widget_image_recognition.js',
+    #         'hr_attendance_face_recognition_pro/static/src/js/res_users_kanban_face_recognition.js',
+    #         'hr_attendance_face_recognition_pro/static/src/js/my_attendances_face_recognition.js',
+    #         'hr_attendance_face_recognition_pro/static/src/js/kiosk_mode_face_recognition.js',
+    #
+    #     ],
+    #     'web.assets_qweb': [
+    #         'hr_attendance_face_recognition_pro/static/src/xml/attendance.xml',
+    #         'hr_attendance_face_recognition_pro/static/src/xml/kiosk.xml',
+    #     ],
+    # },
 
     "cloc_exclude": [
         "static/src/js/lib/**/*",  # exclude a single folder
