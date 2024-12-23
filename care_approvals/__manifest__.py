@@ -20,7 +20,7 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'approvals', 'hr', 'sale', 'purchase', 'care_sale', 'web_m2x_options','care_department'],
+    'depends': ['base', 'approvals', 'hr', 'sale', 'purchase', 'care_sale','care_department'],
 
     # always loaded
     'data': [
