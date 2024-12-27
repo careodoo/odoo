@@ -9,29 +9,29 @@
                 <div class="page">
                     <style>
                         table.GeneratedTable {
-                            width: 100%;
-                            background-color: #ffffff;
-                            border-collapse: collapse;
-                            border-width: 1px;
-                            border-color: #000000;
-                            border-style: solid;
-                            font-size: 14px;
-                            color: #000000;
+                        width: 100%;
+                        background-color: #ffffff;
+                        border-collapse: collapse;
+                        border-width: 1px;
+                        border-color: #000000;
+                        border-style: solid;
+                        font-size: 14px;
+                        color: #000000;
                         }
 
                         table.Contact {
-                            width: 50%;
+                        width: 50%;
                         }
 
                         table.GeneratedTable td, table.GeneratedTable th {
-                            border-width: 1px;
-                            border-color: #000000;
-                            border-style: solid;
-                            padding: 2px;
+                        border-width: 1px;
+                        border-color: #000000;
+                        border-style: solid;
+                        padding: 2px;
                         }
 
                         table.GeneratedTable thead {
-                            background-color: #a3a3a3;
+                        background-color: #a3a3a3;
                         }
                     </style>
 
@@ -159,7 +159,8 @@
                         <tbody>
                             <tr>
                                 <td>
-                                    <h5 class="text-capitalize text-center text-decoration-underline">Terms &amp; Conditions</h5>
+                                    <h5 class="text-capitalize text-center text-decoration-underline">Terms &amp;
+                                        Conditions</h5>
                                     <p t-field="o.note"/>
                                 </td>
                             </tr>
@@ -189,25 +190,27 @@
                         </tbody>
                     </table>
                     <table class="GeneratedTable Contact m-2" t-if="o.show_signature">
-                    <thead>
-                        <tr>
-                            <t t-if="o.show_signature"><th>Requestor</th></t>
-                            <t t-else=""><th></th></t>
-                            <th class="text-center">Signature</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <t t-foreach="o.signature_lines" t-as="sign">
+                        <thead>
                             <tr>
-                                <td>
-                                    <span t-esc="sign.employee_id.name"/> - <t t-esc="sign.employee_title"/>
-                                </td>
-                                <td style="width:200px;height:75px;"></td>
+                                <t t-if="o.show_signature"><th>Requestor</th></t>
+                                <t t-else=""><th></th></t>
+                                <th class="text-center">Signature</th>
                             </tr>
-                        </t>
-                    </tbody>
-                </table>
-
+                        </thead>
+                        <tbody>
+                            <t t-foreach="o.signature_lines" t-as="sign">
+                                <tr>
+                                    <td>
+                                        <span t-esc="sign.employee_id.name"/> - <t t-esc="sign.employee_title"/>
+                                    </td>
+                                    <td style="width:200px;height:75px;"></td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                    <div class="d-none">
+                        <span name="order_note"/>
+                    </div>
                 </div>
             </t>
         </xpath>

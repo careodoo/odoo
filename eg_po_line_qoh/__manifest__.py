@@ -9,7 +9,7 @@
 
     "data": [
         'views/purchase_order_view.xml',
-        'report/purchase_order_report.xml'
+        # 'report/purchase_order_report.xml'
     ],
 
     'images': ['static/description/banner.png'],

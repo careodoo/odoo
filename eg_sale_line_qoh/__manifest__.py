@@ -10,7 +10,7 @@
         
     "data": [
         'views/sale_order_line_view.xml',
-        'report/sale_order_report.xml'
+        # 'report/sale_order_report.xml'
     ],
 
     'images': ['static/description/banner.png'],
