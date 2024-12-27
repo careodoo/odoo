@@ -6,8 +6,8 @@
             <field name="model">project.task.forward</field>
             <field name="arch" type="xml">
                 <tree>
-                    <field name="active" invisible="1"/>
-                    <field name="task_id" invisible="1"/>
+                    <field name="active" column_invisible="1"/>
+                    <field name="task_id" column_invisible="1"/>
                     <field name="create_date"/>
                     <field name="project_id"/>
                     <field name="name"/>
@@ -38,20 +38,26 @@
                 </form>
             </field>
         </record>
-        <record id="project_task_forward_action" model="ir.actions.act_window">
-            <field name="name">Incoming</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">project.task.forward</field>
-            <field name="view_mode">tree,form</field>
-        </record>
         <record id="project_task_forward_action2" model="ir.actions.act_window">
             <field name="name">Incoming</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">project.task.forward</field>
             <field name="view_mode">tree,form</field>
+            <field name="view_ids" eval="[(5, 0, 0),
+                (0, 0, {'view_mode': 'tree', 'view_id': ref('care_task.project_task_forward_view_tree')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('care_task.project_task_forward_view_form')})]"/>
         </record>
-        <menuitem id="project_task_forward_menu" name="Incoming" parent="care_task.my_tasks_root"
-                  action="project_task_forward_action" sequence="3"
+        <record id="project_task_forward_action3" model="ir.actions.act_window">
+            <field name="name">Incoming</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">project.task.forward</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_ids" eval="[(5, 0, 0),
+                (0, 0, {'view_mode': 'tree', 'view_id': ref('care_task.project_task_forward_view_tree')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('care_task.project_task_forward_view_form')})]"/>
+        </record>
+        <menuitem id="project_task_forward_menu3" name="Incoming" parent="care_task.my_tasks_root"
+                  action="project_task_forward_action3" sequence="3"
                   groups="care_task.group_task_forward_user,care_task.group_task_forward_manager"/>
         <menuitem id="project_task_forward_menu2" name="Incoming" parent="project.menu_main_pm"
                   action="project_task_forward_action2" sequence="3"
