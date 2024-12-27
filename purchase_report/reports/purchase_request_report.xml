@@ -121,6 +121,9 @@
                             <td>
                                 <span class="font-weight-bold">Country: <t t-esc="doc.country.name"/></span>
                             </td>
+                            <td>
+                                <span class="font-weight-bold">Suggested PO: <span t-field="doc.suggested_po"/></span>
+                            </td>
                         </tr>
                     </tbody>
                 </table>

@@ -4,8 +4,8 @@
         <template id="report_purchase_request_document" inherit_id="purchase_report.report_purchase_request_document">
             <xpath expr="//table[@id='sign_table']" position="replace">
                 <br/>
-                <div class="row" style="margin-left:-5px;margin-right:-5px;">
-                    <div class="col-6" style="float: left;padding: 5px;">
+                <div class="row">
+                    <div class="col-6" style="padding: 5px;">
                         <table class="GeneratedTable m-2" t-if="doc.show_signature" id="sign_table">
                             <thead>
                                 <tr>
@@ -27,7 +27,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="col-6" style="float: left;padding: 5px;">
+                    <div class="col-6" style="padding: 5px;">
                         <table class="GeneratedTable m-2" t-if="doc.cost_center and doc.show_budget" id="cost_center_table">
                             <tbody>
                                 <tr>
