@@ -301,15 +301,16 @@ class ServiceOrderPortal(CustomerPortal):
       **kw,
   ):
     date_start = fields.Datetime.from_string(date_from)
-    date_end = fields.Datetime.from_string(date_to)
+    date_end = fields.Datetime.from_string(date_to).replace(hour=23, minute=59, second=59)
     orders = http.request.env['service.order'].search([
         ('order_datetime', '>=', date_start),
         ('order_datetime', '<=', date_end),
     ])
     report_sudo = http.request.env.ref('service_order.action_report_service_order_pdf').with_user(
         SUPERUSER_ID)
-    report = getattr(report_sudo, '_render_qweb_pdf')(
-        orders.ids,
+    report = http.request.env["ir.actions.report"].sudo()._render_qweb_pdf(
+        report_sudo,
+        res_ids=orders.ids,
         data={
             'report_type': 'pdf',
             'date_from': date_start.date(),
