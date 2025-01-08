@@ -26,7 +26,7 @@
                 </xpath>
                 <xpath expr="//notebook" position="inside">
                     <page name="forward" string="Forward History">
-                        <field name="forward_ids"/>
+                        <field name="forward_ids" context="{'tree_view_ref': 'care_task.project_task_forward_view_tree'}"/>
                     </page>
                 </xpath>
 
