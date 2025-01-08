@@ -47,10 +47,14 @@ class Proposal(models.Model):
 
     def prepare_attachments(self, contract, report):
         if report == 'pricing':
-            report_template_id = self.env.ref('care_proposal.action_proposal_pdf_report')._render_qweb_pdf(self.id)
+            report_template_id, dummy = self.env["ir.actions.report"].sudo()._render_qweb_pdf(
+                self.env.ref('care_proposal.action_proposal_pdf_report').id,
+                res_ids=self.ids, data={})
         else:
-            report_template_id = self.env.ref('care_proposal.action_proposal_report')._render_qweb_pdf(self.id)
-        data_record = base64.b64encode(report_template_id[0])
+            report_template_id, dummy = self.env["ir.actions.report"].sudo()._render_qweb_pdf(
+                self.env.ref('care_proposal.action_proposal_report').id,
+                res_ids=self.ids, data={})
+        data_record = base64.b64encode(report_template_id)
         attachment_values = {
             'name': self.name,
             'type': 'binary',
