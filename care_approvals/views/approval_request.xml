@@ -9,15 +9,19 @@
                 <xpath expr="//header" position="inside">
                     <button name="button_create_po" type="object" string="Create Purchase Order" class="oe_highlight"/>
                     <button name="button_create_so" type="object" string="Create Sale Order" class="oe_highlight"/>
-                    <button name="print_report" type="object" string="Print Report" class="oe_highlight" invisible="has_report != 'required'"/>
+                    <button name="print_report" type="object" string="Print Report" class="oe_highlight"
+                            invisible="has_report != 'required'"/>
                 </xpath>
                 <xpath expr="//button[@name='action_get_attachment_view']" position="after">
-                    <button name="action_open_so" type="object" class="oe_stat_button" icon="fa-usd" invisible="so_count == 0">
+                    <button name="action_open_so" type="object" class="oe_stat_button" icon="fa-usd"
+                            invisible="so_count == 0">
                         <field name="so_count" string="Sale Orders" widget="statinfo"/>
                     </button>
-                    <button name="action_open_po" type="object" class="oe_stat_button" icon="fa-credit-card" invisible="po_count == 0">
+                    <button name="action_open_po" type="object" class="oe_stat_button" icon="fa-credit-card"
+                            invisible="po_count == 0">
                         <field name="po_count" string="Purchase Orders" widget="statinfo"/>
                     </button>
+                    <button name="action_open_lines" type="object" class="oe_stat_button" icon="fa-list">Lines</button>
                 </xpath>
                 <xpath expr="//field[@name='request_owner_id']" position="after">
                     <field name="valid_department_ids" invisible="1"/>
@@ -34,9 +38,6 @@
                         </group>
                     </page>
                 </xpath>
-<!--                <xpath expr="//field[@name='product_line_ids']" position="attributes">-->
-<!--                    <attribute name="widget">one2many_approval</attribute>-->
-<!--                </xpath>-->
             </field>
         </record>
         <record id="care_approval_request_view_tree" model="ir.ui.view">
@@ -64,17 +65,30 @@
             <field name="model">approval.product.line</field>
             <field name="inherit_id" ref="approvals.approval_product_line_view_tree"/>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='product_id']" position="before">
-                    <field name="department_product_ids" invisible="1"/>
+                <xpath expr="//tree" position="inside">
+                    <field name="department_product_ids" column_invisible="1"/>
                 </xpath>
                 <xpath expr="//field[@name='product_id']" position="after">
                     <field name="qoh_available" groups="approvals.group_approval_user"/>
                     <field name="foh_available" groups="approvals.group_approval_user"/>
                 </xpath>
-<!--                <xpath expr="//field[@name='product_id']" position="attributes">-->
-<!--                    <attribute name="options">{'limit': 0}</attribute>-->
-<!--                </xpath>-->
             </field>
+        </record>
+        <record id="action_create_so_from_approval_product" model="ir.actions.server">
+            <field name="name">Approvals: Create SO</field>
+            <field name="model_id" ref="care_approvals.model_approval_product_line"/>
+            <field name="state">code</field>
+            <field name="code">action = model.button_create_so()</field>
+            <field name="binding_model_id" ref="care_approvals.model_approval_product_line"/>
+            <field name="binding_view_types">list</field>
+        </record>
+        <record id="action_create_po_from_approval_product" model="ir.actions.server">
+            <field name="name">Approvals: Create PO</field>
+            <field name="model_id" ref="care_approvals.model_approval_product_line"/>
+            <field name="state">code</field>
+            <field name="code">action = model.button_create_po()</field>
+            <field name="binding_model_id" ref="care_approvals.model_approval_product_line"/>
+            <field name="binding_view_types">list</field>
         </record>
     </data>
 </odoo>

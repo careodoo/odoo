@@ -37,7 +37,7 @@ class ApprovalRequestOrder(models.TransientModel):
         for line in self.product_ids:
             vals.append((0, 0, {
                 'product_id': line.product_id.id,
-                'product_uom_qty': line.quantity,
+                'product_qty': line.quantity,
                 'product_uom': line.request_uom_id.id if line.request_uom_id else line.product_uom_id.id,
             }))
         if vals:

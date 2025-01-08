@@ -43,13 +43,13 @@ class ApprovalRequest(models.Model):
         res = super(ApprovalRequest, self).create(vals)
         return res
 
-
     @api.depends('request_owner_id')
     def compute_department_id(self):
         for rec in self:
             rec.department_id = False
             if rec.request_owner_id:
-                departments = rec.request_owner_id.employee_ids.filtered(lambda e: e.department_id).mapped('department_id')
+                departments = rec.request_owner_id.employee_ids.filtered(lambda e: e.department_id).mapped(
+                    'department_id')
                 if departments:
                     rec.department_id = departments[0].id
 
@@ -122,15 +122,30 @@ class ApprovalRequest(models.Model):
 
     @api.depends('request_owner_id')
     def get_valid_department_ids(self):
-      for approval in self:
-        approval.valid_department_ids = False
-        if approval.request_owner_id:
-          valid_department_ids =  self.env['hr.department'].search([]).filtered(lambda dep: self.request_owner_id in dep.allowed_user_ids).mapped("parent_id")
-          sub_department_ids = self.env['hr.department'].search([('parent_id','in',valid_department_ids.ids)])
-          if valid_department_ids:
-              approval.valid_department_ids =  (valid_department_ids | sub_department_ids).sorted(lambda dep:dep.display_name).ids
-          else:
-            approval.valid_department_ids =  self.request_owner_id.employee_ids.filtered(lambda e: e.department_id).mapped('department_id').ids
+        for approval in self:
+            approval.valid_department_ids = False
+            if approval.request_owner_id:
+                valid_department_ids = self.env['hr.department'].search([]).filtered(
+                    lambda dep: self.request_owner_id in dep.allowed_user_ids).mapped("parent_id")
+                sub_department_ids = self.env['hr.department'].search([('parent_id', 'in', valid_department_ids.ids)])
+                if valid_department_ids:
+                    approval.valid_department_ids = (valid_department_ids | sub_department_ids).sorted(
+                        lambda dep: dep.display_name).ids
+                else:
+                    approval.valid_department_ids = self.request_owner_id.employee_ids.filtered(
+                        lambda e: e.department_id).mapped('department_id').ids
+
+    def action_open_lines(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': "Lines",
+            'res_model': 'approval.product.line',
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'domain': [('approval_request_id', '=', self.id)]
+        }
+
+
 class ApprovalProductLine(models.Model):
     _inherit = 'approval.product.line'
 
@@ -144,11 +159,13 @@ class ApprovalProductLine(models.Model):
     def validate_quantity(self):
         for rec in self:
             if rec.quantity and rec.approval_request_id.department_id:
-                lines = rec.approval_request_id.department_id.product_ids.filtered(lambda p: p.product_id.id == rec.product_id.id)
+                lines = rec.approval_request_id.department_id.product_ids.filtered(
+                    lambda p: p.product_id.id == rec.product_id.id)
                 if lines:
                     limit = lines[0].limit
                     if limit:
-                        all_qty = sum(rec.approval_request_id.product_line_ids.filtered(lambda p: p.product_id.id == rec.product_id.id).mapped('quantity'))
+                        all_qty = sum(rec.approval_request_id.product_line_ids.filtered(
+                            lambda p: p.product_id.id == rec.product_id.id).mapped('quantity'))
                         if limit < all_qty:
                             raise ValidationError(f"you have exceeded limit for {rec.product_id.name} ({limit})!")
 
@@ -165,3 +182,39 @@ class ApprovalProductLine(models.Model):
             if rec.approval_request_id.department_id:
                 products = rec.approval_request_id.department_id.product_ids.mapped('product_id').mapped('id')
                 rec.department_product_ids = [(6, 0, products)]
+
+    def button_create_so(self):
+        context = {
+                'default_type': 'so',
+                'default_product_ids': [(6, 0, self.env.context.get('active_ids'))],
+            }
+        if self.env.context.get('active_id'):
+            line = self.env['approval.product.line'].browse(self.env.context.get('active_id'))
+            if line:
+                context.update({'default_request_id': line.approval_request_id.id})
+        return {
+            'type': 'ir.actions.act_window',
+            'name': "Create Sale Order",
+            'res_model': 'approval.request.order',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context
+        }
+
+    def button_create_po(self):
+        context = {
+                'default_type': 'po',
+                'default_product_ids': [(6, 0, self.env.context.get('active_ids'))],
+            }
+        if self.env.context.get('active_id'):
+            line = self.env['approval.product.line'].browse(self.env.context.get('active_id'))
+            if line:
+                context.update({'default_request_id': line.approval_request_id.id})
+        return {
+            'type': 'ir.actions.act_window',
+            'name': "Create Purchase Order",
+            'res_model': 'approval.request.order',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context
+        }
