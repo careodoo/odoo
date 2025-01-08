@@ -239,12 +239,7 @@
                     </div>
                     <div class="col-3"/>
                     <div class="col-3">
-                        <img src="/care_sale/static/src/img/stamp.png"
-                             style="position: absolute;
-                             right: 40px;top: 0px;
-                             width: 130px;height: 130px;
-                             display: block;margin-left: 0px;
-                             margin-right: auto;padding-top:0px"  alt="Logo"/>
+                        <img src="/care_sale/static/src/img/stamp.png" style="width: 130px;height: 130px;"  alt="Logo"/>
                     </div>
                 </div>
             </div>
