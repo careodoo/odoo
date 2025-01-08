@@ -16,8 +16,9 @@ class Employee(models.Model):
 
     def write(self, vals):
         if not self.env.context.get('ignore_suspend', False):
-            if self.suspend_date and not self.can_edit:
-                raise ValidationError(f"you can't edit suspended employee {self.name}!")
+            for rec in self:
+                if rec.suspend_date and not rec.can_edit:
+                    raise ValidationError(f"you can't edit suspended employee {rec.name}!")
         res = super(Employee, self).write(vals)
         return res
 
