@@ -26,27 +26,25 @@
                 <header>
                     <field name="approver_users" invisible="1" force_save="1"/>
                     <field name="user_confirmed" invisible="1" force_save="1"/>
-                    <button name="button_submit" type="object" string="Submit" class="oe_highlight" states="draft"/>
-                    <button name="button_cancel" type="object" string="Cancel"
-                            attrs="{'invisible': [('state', '=', 'cancel')]}"/>
-                    <button name="button_draft" type="object" string="Reset to Draft"
-                            attrs="{'invisible': [('state', '=', 'draft')]}"/>
+                    <button name="button_submit" type="object" string="Submit" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="button_cancel" type="object" string="Cancel" invisible="state == 'cancel'"/>
+                    <button name="button_draft" type="object" string="Reset to Draft" invisible="state == 'draft'"/>
                     <button name="button_approve" type="object" string="Approve" class="oe_highlight"
-                            attrs="{'invisible': &quot;['|','|', ('approver_users', 'not in', [uid]), ('user_confirmed', '=', True), ('state', 'not in', ['submit', 'waiting'])]&quot;}"/>
+                            invisible="approver_users not in [uid] or user_confirmed or state not in ['submit', 'waiting']"/>
                     <button name="button_reject" type="object" string="Reject" class="btn btn-danger"
-                            attrs="{'invisible': &quot;['|','|', ('approver_users', 'not in', [uid]), ('user_confirmed', '=', True), ('state', 'not in', ['submit', 'waiting'])]&quot;}"/>
+                            invisible="approver_users not in [uid] or user_confirmed or state not in ['submit', 'waiting']"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,submit,approve"/>
                 </header>
                 <sheet>
                     <group>
-                        <field name="project_id" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                        <field name="project_manager_id" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                        <field name="request_date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        <field name="project_id" readonly="state != 'draft'"/>
+                        <field name="project_manager_id" readonly="state != 'draft'"/>
+                        <field name="request_date" readonly="state != 'draft'"/>
                         <field name="barcode"/>
                     </group>
                     <notebook>
                         <page name="request_lines" string="Employees">
-                            <field name="request_line_ids" attrs="{'readonly': [('state', '!=', 'draft')]}">
+                            <field name="request_line_ids" readonly="state != 'draft'">
                                 <tree editable="bottom">
                                     <field name="project_id" invisible="1"/>
                                     <field name="barcode"/>
@@ -69,7 +67,7 @@
                                     <field name="date_rejected" readonly="1" force_save="1"/>
                                     <field name="reject_reason" readonly="1" force_save="1"/>
                                     <button name="send_approve_request" type="object" string="Request For Approve"
-                                            class="oe_highlight" attrs="{'invisible': [('approved', '=', True)]}"/>
+                                            class="oe_highlight" invisible="approved"/>
                                 </tree>
                             </field>
                         </page>
