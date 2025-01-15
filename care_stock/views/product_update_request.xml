@@ -18,9 +18,9 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
-                        <button name="button_submit" type="object" string="Submit" class="oe_highlight" states="draft"/>
-                        <button name="button_approve" type="object" string="Approve" class="oe_highlight" states="submitted" groups="care_stock.group_product_update_request_approver"/>
-                        <button name="button_reject" type="object" string="Reject" states="submitted" groups="care_stock.group_product_update_request_approver"/>
+                        <button name="button_submit" type="object" string="Submit" class="oe_highlight" invisible="state != 'draft'"/>
+                        <button name="button_approve" type="object" string="Approve" class="oe_highlight" invisible="state != 'submitted'" groups="care_stock.group_product_update_request_approver"/>
+                        <button name="button_reject" type="object" string="Reject" invisible="state != 'submitted'" groups="care_stock.group_product_update_request_approver"/>
                         <field name="state" widget="statusbar"/>
                     </header>
                     <sheet>
@@ -30,11 +30,11 @@
                             </h1>
                         </div>
                         <group>
-                            <field name="notes" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="notes" readonly="state != 'draft'"/>
                         </group>
                         <notebook>
                             <page name="lines" string="Lines">
-                                <field name="line_ids" attrs="{'readonly': [('state', '!=', 'draft')]}">
+                                <field name="line_ids" readonly="state != 'draft'">
                                     <tree editable="bottom">
                                         <field name="product_id"/>
                                         <field name="cost" readonly="1" force_save="1"/>
