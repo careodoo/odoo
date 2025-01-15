@@ -23,10 +23,13 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
-                        <button name="request_more_hours" type="object" string="Request More Hours" class="oe_highlight" attrs="{'invisible': ['|', '|', ('state', '!=', 'draft'), ('need_more_hours', '=', False), ('extra_hour_count', '>', 0)]}"/>
-                        <button name="button_submit" type="object" string="Submit" states="draft" class="oe_highlight"/>
-                        <button name="button_approve" type="object" string="Approve" class="oe_highlight" attrs="{'invisible': &quot;['|', ('approver_ids', 'not in', [uid]), ('state', '!=', 'submitted')]&quot;}"/>
-                        <button name="button_reject" type="object" string="Reject" class="btn-danger" attrs="{'invisible': &quot;['|', ('approver_ids', 'not in', [uid]), ('state', '!=', 'submitted')]&quot;}"/>
+                        <button name="request_more_hours" type="object" string="Request More Hours" class="oe_highlight"
+                                invisible="state != 'draft' or not need_more_hours or extra_hour_count > 0"/>
+                        <button name="button_submit" type="object" string="Submit" invisible="state != 'draft'" class="oe_highlight"/>
+                        <button name="button_approve" type="object" string="Approve" class="oe_highlight"
+                                invisible="approver_ids not in [uid] or state != 'submitted'"/>
+                        <button name="button_reject" type="object" string="Reject" class="btn-danger"
+                                invisible="approver_ids not in [uid] or state != 'submitted'"/>
                         <field name="state" widget="statusbar"/>
                     </header>
                     <sheet>
@@ -34,23 +37,23 @@
                         <div class="oe_title">
                             <label for="employee_id" name="model_name_label"/>
                             <h1>
-                                <field name="employee_id" required="1" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <field name="employee_id" required="1" readonly="state != 'draft'"/>
                             </h1>
                         </div>
                         <group>
                             <field name="active" invisible="1"/>
                             <field name="need_more_hours" invisible="1"/>
                             <field name="extra_hour_count" invisible="1"/>
-                            <field name="barcode" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="barcode" readonly="state != 'draft'"/>
                             <field name="employee_barcode"/>
                             <field name="department_id"/>
                             <field name="approver_ids" widget="many2many_tags"/>
                             <field name="position"/>
-                            <field name="type" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="permission_from" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="permission_hours" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="type" readonly="state != 'draft'"/>
+                            <field name="permission_from" readonly="state != 'draft'"/>
+                            <field name="permission_hours" readonly="state != 'draft'"/>
                             <field name="permission_to"/>
-                            <field name="reason" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="reason" readonly="state != 'draft'"/>
                             <field name="total_hours"/>
                             <field name="total_extra_hours"/>
                             <field name="used_hours"/>
