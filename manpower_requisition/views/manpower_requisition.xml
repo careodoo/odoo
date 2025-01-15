@@ -24,17 +24,17 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
-                        <button name="button_submit" type="object" string="Submit" class="oe_highlight" states="draft"/>
+                        <button name="button_submit" type="object" string="Submit" class="oe_highlight" invisible="state != 'draft'"/>
                         <button name="button_hr_approve" type="object" string="Approve" class="oe_highlight" groups="hr.group_hr_manager"
-                            attrs="{'invisible': &quot;['|', '|', ('hr_user_ids', 'not in', [uid]), ('state', '!=', 'submit'), ('hr_approve', '=', True)]&quot;}"/>
+                                invisible="hr_user_ids not in [uid] or state != 'submit' or hr_approve"/>
                         <button name="button_reject" type="object" string="Reject" class="oe_highlight" groups="hr.group_hr_manager"
-                            attrs="{'invisible': &quot;['|', ('hr_user_ids', 'not in', [uid]), ('state', '!=', 'submit')]&quot;}"/>
+                                invisible="hr_user_ids not in [uid] or state != 'submit'"/>
                         <button name="button_manager_approve" type="object" string="Approve" class="oe_highlight"
-                            attrs="{'invisible': &quot;['|', '|', ('department_manager_id', '!=', uid), ('state', '!=', 'submit'), ('manager_approve', '=', True)]&quot;}"/>
+                                invisible="department_manager_id != uid or state != 'submit' or manager_approve"/>
                         <button name="button_reject" type="object" string="Reject" class="oe_highlight"
-                            attrs="{'invisible': &quot;['|', ('department_manager_id', '!=', uid), ('state', '!=', 'submit')]&quot;}"/>
+                                invisible="department_manager_id != uid or state != 'submit'"/>
                         <button name="button_parent_approve" type="object" string="Approve" class="oe_highlight"
-                            attrs="{'invisible': &quot;['|', ('parent_manager_id', '!=', uid), ('state', '!=', 'submit')]&quot;}"/>
+                                invisible="parent_manager_id != uid or state != 'submit'"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,submit,approve"/>
                     </header>
                     <sheet>
@@ -87,7 +87,7 @@
                             <group>
                                 <field name="need_hr_approve"/>
                                 <field name="need_manager_approve"/>
-                                <field name="need_parent_approve" attrs="{'invisible': [('parent_department_id', '=', False)]}"/>
+                                <field name="need_parent_approve" invisible="not parent_department_id"/>
                                 <field name="department_manager_id" invisible="1"/>
                                 <field name="parent_manager_id" invisible="1"/>
                                 <field name="hr_user_ids" widget="many2many_tags" invisible="1"/>
