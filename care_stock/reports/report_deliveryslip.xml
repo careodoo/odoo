@@ -23,7 +23,7 @@
                             </div>
                             <div class="col-4" name="right_box">
                                 <center>
-                                    <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', o.qr_url + str(o.id), 600, 50)" style="width:100px;height:60px;"/>
+                                    <img t-att-src="'/report/barcode/?barcode_type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', o.qr_url + str(o.id), 600, 50)" style="width:100px;height:60px;"/>
                                 </center>
                             </div>
                         </div>

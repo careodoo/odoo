@@ -52,7 +52,7 @@
                             <div class="row">
                                 <div class="col-4">
                                     <center>
-                                        <img t-if="doc.barcode" t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('Code128',doc.barcode,180,50)" />
+                                        <img t-if="doc.barcode" t-att-src="'/report/barcode/?barcode_type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('Code128',doc.barcode,180,50)" />
                                         <div t-esc="doc.barcode"/>
                                     </center>
                                     <br/>
@@ -60,7 +60,7 @@
                                 <div class="col-4"><h3 class="text-center">Asset <t t-esc="doc.name"/></h3></div>
                                 <div class="col-4">
                                     <center>
-                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:60px;height:60px;"/>
+                                        <img t-att-src="'/report/barcode/?barcode_type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.qr_url + str(doc.id), 600, 50)" style="width:60px;height:60px;"/>
                                     </center>
                                     <br/>
                                 </div>
