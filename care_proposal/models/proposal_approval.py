@@ -20,5 +20,5 @@ class ProposalApproval(models.Model):
                 self.proposal_id.id,
                 email_values=email_values,
                 force_send=True,
-                notif_layout='mail.mail_notification_light',
+                email_layout_xmlid='mail.mail_notification_light',
             )

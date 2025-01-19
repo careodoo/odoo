@@ -141,7 +141,7 @@ class OvertimeRequestApproval(models.Model):
 
     def send_approve_request(self):
         template = self.env.ref('hr_overtime_compensation.email_template_approve_request_approval')
-        self.env['mail.template'].browse(template.id).send_mail(self.id, force_send=True, notif_layout='mail.mail_notification_light')
+        self.env['mail.template'].browse(template.id).send_mail(self.id, force_send=True, email_layout_xmlid='mail.mail_notification_light')
         project = self.overtime_request_id.project_id.name
         self.overtime_request_id.sudo().activity_schedule(
             'hr_overtime_compensation.mail_act_hr_overtime',

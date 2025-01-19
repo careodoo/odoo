@@ -191,7 +191,7 @@ class PurchaseSign(models.Model):
         if self.request_id:
             template = self.env.ref('purchase_report.purchase_sign_template_pr')
             self.env['mail.template'].browse(template.id).send_mail(self.id, force_send=True,
-                                                                    notif_layout='mail.mail_notification_light')
+                                                                    email_layout_xmlid='mail.mail_notification_light')
             self.sudo().activity_schedule(
                 'purchase_report.mail_act_purchase_sign_create',
                 summary='PO {} Sign'.format(self.request_id.name),
@@ -200,7 +200,7 @@ class PurchaseSign(models.Model):
         elif self.purchase_order_id:
             template = self.env.ref('purchase_report.purchase_sign_template_po')
             self.env['mail.template'].browse(template.id).send_mail(self.id, force_send=True,
-                                                                    notif_layout='mail.mail_notification_light')
+                                                                    email_layout_xmlid='mail.mail_notification_light')
             self.sudo().activity_schedule(
                 'purchase_report.mail_act_purchase_sign_create',
                 summary='PR{} Sign'.format(self.purchase_order_id.name),

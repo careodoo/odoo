@@ -268,7 +268,7 @@ class CostCenterExtraBudget(models.Model):
         template = self.env.ref('purchase_limit.purchase_sign_template_extra_budget')
         for line in self.signature_lines:
             self.env['mail.template'].browse(template.id).send_mail(
-                line.id, force_send=True, notif_layout='mail.mail_notification_light'
+                line.id, force_send=True, email_layout_xmlid='mail.mail_notification_light'
             )
             line.sudo().activity_schedule(
                 'purchase_report.mail_act_purchase_sign_create',

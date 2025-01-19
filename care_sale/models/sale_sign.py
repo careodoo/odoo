@@ -28,7 +28,7 @@ class SaleSign(models.Model):
         if self.sale_order_id:
             template = self.env.ref('care_sale.sale_sign_template')
             self.env['mail.template'].browse(template.id).send_mail(self.id, force_send=True,
-                                                                    notif_layout='mail.mail_notification_light')
+                                                                    email_layout_xmlid='mail.mail_notification_light')
             self.sudo().activity_schedule(
                 'care_sale.mail_act_sale_sign_create',
                 summary='Sale Order{} Sign'.format(self.sale_order_id.name),
