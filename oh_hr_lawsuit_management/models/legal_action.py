@@ -54,14 +54,12 @@ class HrLawsuit(models.Model):
                              help='Choose the contact of Layer from the contact list',
                              states={'won': [('readonly', True)]})
     party1 = fields.Many2one('res.company', string='Party 1', required=1, readonly=1,
-                             help='Choose the company as first Party',
-                             states={'draft': [('readonly', False)]})
+                             help='Choose the company as first Party',)
     party2 = fields.Selection([('employee', 'Employee'),
                                ('partner', 'Partner'),
                                ('other', 'Others')], default='employee',
                               string='Party 2', required=1, readonly=1,
-                              help='Choose the second party in the legal issue.It can be Employee, Contacts or others.',
-                              states={'draft': [('readonly', False)]})
+                              help='Choose the second party in the legal issue.It can be Employee, Contacts or others.',)
     employee_id = fields.Many2one('hr.employee', string='Employee', copy=False,
                                   readonly=1, states={'draft': [('readonly', False)]},
                                   help='Choose the Employee')

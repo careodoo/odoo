@@ -30,9 +30,9 @@
                             <group>
                                 <field name="active" invisible="1"/>
                                 <field name="ref_no"/>
-                                <field name="party1"/>
+                                <field name="party1" readonly="state != 'draft'"/>
                                 <field name="party2_name" invisible="1"/>
-                                <field name="party2"/>
+                                <field name="party2" readonly="state != 'draft'"/>
                                 <field name="employee_id" invisible="party2 != 'employee'" required="party2 == 'employee'"/>
                                 <field name="partner_id" invisible="party2 != 'partner'" required="party2 == 'partner'"/>
                                 <field name="other_name" invisible="party2 != 'other'" required="party2 == 'other'"/>
