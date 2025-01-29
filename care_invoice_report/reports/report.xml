@@ -111,9 +111,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="justify-content-center" style="text-align: center; width: 50% !important;">
-                                    <t t-set="total" t-value="0"/>
                                     <t t-foreach="doc.invoice_line_ids" t-as="line">
-                                        <t t-set="total" t-value="total + line.price_subtotal"/>
                                         <tr>
                                             <td><span t-field="doc.date_to"/></td>
                                             <td><span t-field="doc.date_from"/></td>
@@ -126,9 +124,9 @@
                                     </t>
                                     <tr>
                                         <td>Total</td>
-                                        <td colspan="4"><span t-esc="doc.number_to_arabic(total)"/></td>
+                                        <td colspan="4" style="direction:rtl !important;"><span t-esc="doc.number_to_arabic(doc.amount_total)"/></td>
                                         <td>الاجمالي</td>
-                                        <td><span t-esc="total"/></td>
+                                        <td><span t-field="doc.amount_total"/></td>
                                     </tr>
                                 </tbody>
                             </table>
