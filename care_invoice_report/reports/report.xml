@@ -75,6 +75,21 @@
                                 </div>
                             </center>
                             <br />
+                            <table class="GeneratedTable justify-content-end" style="text-align: end; width: 100% !important;">
+                                <thead>
+                                    <tr>
+                                        <th width="50%"><span>CUSTOMER NAME:</span><span style="margin-left: 220px;">:اسم العميل</span></th>                                        
+                                        <th width="50%"><span>CUSTOMER NO:</span><span style="margin-left: 240px;">:رقم العميل</span></th>                                        
+                                    </tr>
+                                </thead>
+                                <tbody class="justify-content-end" style="text-align: end; width: 50% !important; min-height: 100px !important;">
+                                    <tr style="height: 20px;">
+                                        <td>المحترمين <span t-field="doc.partner_id.name"/> /السادة</td>
+                                        <td><span style="margin-right: 50px;">Date: </span><span style="margin-left: 50px;" t-field="doc.invoice_date"/><span style="margin-left: 150px;"> :التاريخ</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <br />
                             <table class="GeneratedTable justify-content-center" style="text-align: center; width: 100% !important;">
                                 <thead>
                                     <tr>
