@@ -5,3 +5,4 @@ class AccountMove(models.Model):
 
     project_id = fields.Many2one('project.project', string='Project')
     department_id = fields.Many2one('hr.department', string='Department')
+    request_invoice = fields.Many2one('request.invoice', string='Request Invoice')

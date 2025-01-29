@@ -30,6 +30,7 @@ class RequestInvoice(models.Model):
 
     def action_convert_to_invoice(self):
         invoice = self.env['account.move'].create({
+            'request_invoice': self.id,
             'partner_id': self.partner_id.id,
             'project_id': self.project_id.id,
             'department_id': self.department_id.id,
@@ -64,7 +65,7 @@ class RequestInvoiceLine(models.Model):
     _description = 'Request Invoice Line'
 
     request_id = fields.Many2one('request.invoice', string='Invoice Request')
-    product_id = fields.Many2one('product.product', string='Product')
+    product_id = fields.Many2one('product.product', string='Product', required=True)
     display_type = fields.Selection(selection=[('product', 'Product')],default='product', store=True, readonly=False,required=True, compute="_compute_name")
     label = fields.Char(string='Label', compute="_compute_name")
     quantity = fields.Integer(string='Quantity', default=1.0)
