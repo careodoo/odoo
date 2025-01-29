@@ -6,7 +6,7 @@ class RequestInvoice(models.Model):
     _description = 'Request Invoice'
 
     name = fields.Char(string='Name',required=True, readonly=True, copy=False, default='/')
-    partner_id = fields.Many2one('res.partner', string='Customer')
+    partner_id = fields.Many2one('res.partner', string='Customer', required=True)
     project_id = fields.Many2one('project.project', string='Project')
     department_id = fields.Many2one('hr.department', string='Department')
     invoice_date = fields.Date(string='Invoice Date')
@@ -39,12 +39,8 @@ class RequestInvoice(models.Model):
             'move_type': 'out_invoice',
             'invoice_date': self.invoice_date,
         })
-        invoice
-        print(invoice)
         invoice_lines = []
         for line in self.request_invoice_id:
-            print('line')
-            print(line)
             invoice_lines.append((0, 0, {
             'move_id': invoice.id,
             'product_id': line.product_id.id,
@@ -55,8 +51,6 @@ class RequestInvoice(models.Model):
             'product_uom_id': line.product_uom_id.id,
         }))
         invoice.write({'invoice_line_ids': invoice_lines})
-        print(invoice)
-        print(invoice.invoice_line_ids)
         self.write({'state': 'invoiced'})
 
 
