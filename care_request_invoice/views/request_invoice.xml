@@ -1,0 +1,119 @@
+<?xml version='1.0' encoding='utf-8'?>
+<odoo>
+    <data>
+
+        <record id="invoice_request_view_form" model="ir.ui.view">
+            <field name="name">request.invoice.form</field>
+            <field name="model">request.invoice</field>
+            <field name="arch" type="xml">
+                <form string="Invoice Request">
+                    <header>
+
+                        <button name="action_submit" data-hotkey="s"
+                            string="Submit" type="object"
+                            groups="care_request_invoice.group_create_request_invoice"
+                            invisible="state != 'draft'"/>
+
+                        <button name="action_convert_to_invoice" data-hotkey="q"
+                            string="Convert To Invoice" type="object"
+                            groups="care_request_invoice.group_convert_to_invoice"
+                            invisible="state != 'submitted'"/>
+
+                        <button name="action_cancel" type="object" string="Cancel" groups="care_request_invoice.group_create_request_invoice" invisible="state in ['draft', 'cancel', 'invoiced']" data-hotkey="x"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,submitted,invoiced"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" readonly="1"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="partner_id" readonly="state != 'draft'"/>
+                                <field name="project_id" readonly="state != 'draft'"/>
+                                <field name="department_id" readonly="state != 'draft'"/>
+                            </group>
+                            <group>
+                                <field name="invoice_date" readonly="state != 'draft'"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Invoice Lines" name="invoice_lines">
+                                <field
+                                name="request_invoice_id"
+                                widget="section_and_note_one2many"
+                                mode="tree"
+                                readonly="state != 'draft'">
+
+                                    <tree
+                                    string="Request Invoice Lines"
+                                    editable="bottom"
+                                    limit="200">
+                                        <field name="request_id" column_invisible="1" />
+                                        <field name="product_id" />
+                                        <field name="display_type" column_invisible="1" />
+                                        <field name="label" />
+                                        <field name="quantity" />
+                                        <field name="product_uom_id" />
+                                        <field name="price" />
+                                        <field name="price_subtotal" />
+                                        <field name="company_id" column_invisible="1" />
+                                        <field name="currency_id" column_invisible="1" />
+                                    </tree>
+
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>    
+                    <!-- Chatter -->
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" groups="base.group_user"/>
+                        <field name="message_ids"/>
+                    </div>           
+                </form>
+            </field>
+        </record>   
+    
+        <record id="invoice_request_view_tree" model="ir.ui.view">
+            <field name="name">request.invoice.tree</field>
+            <field name="model">request.invoice</field>
+            <field name="arch" type="xml">
+                <tree string="Invoice Requests">
+                    <field name="name"/>
+                    <field name="partner_id" />
+                    <field name="project_id" />
+                    <field name="department_id" />
+                    <field name="invoice_date" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_invoice_request" model="ir.actions.act_window">
+            <field name="name">Invoice Requests</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">request.invoice</field>
+            <field name="view_mode">tree,form</field> 
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create New Invoice Request
+                </p>
+            </field>                  
+        </record>
+        <menuitem id="invoice_request_menu_root"
+            name="Invoice Requests"
+            web_icon="care_request_invoice,static/description/icon.png"
+            groups="care_request_invoice.group_create_request_invoice"
+            action="action_invoice_request"
+            sequence="35" />
+
+        <menuitem id="invoice_request_menu"
+            action="action_invoice_request"
+            parent="invoice_request_menu_root"
+            groups="care_request_invoice.group_create_request_invoice"
+            name="Invoice Request"
+            sequence="10" />
+    </data>
+    
+</odoo>
