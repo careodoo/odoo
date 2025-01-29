@@ -4,14 +4,14 @@
         <template id="invoice_internal_layout">
             <t t-if="not o" t-set="o" t-value="doc"/>
                 <div class="header">
-                    <img src="/care_invoice_report/static/src/img/header.png" atl="header.png" class="w-100"/>
+                    <img src="/care_hr/static/src/img/header.png" atl="header.png" class="w-100"/>
                 </div>
             <div class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
-              <t t-raw="0"/>
+              <t t-out="0"/>
             </div>
             <div t-attf-class="footer o_standard_footer">
                 <div class="row">
-                    <img src="/care_invoice_report/static/src/img/footer.png" atl="header.png" class="w-100"/>
+                    <img src="/care_hr/static/src/img/footer.png" atl="header.png" class="w-100"/>
                 </div>
             </div>
         </template>
