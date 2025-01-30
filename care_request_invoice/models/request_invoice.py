@@ -1,4 +1,4 @@
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 
 class RequestInvoice(models.Model):
     _name = 'request.invoice'
@@ -11,22 +11,83 @@ class RequestInvoice(models.Model):
     department_id = fields.Many2one('hr.department', string='Department')
     invoice_date = fields.Date(string='Invoice Date')
     request_invoice_id = fields.One2many('request.invoice.line','request_id' ,string='Invoice Lines')
+    invoice_count = fields.Integer(string="Invoice Count", compute='_get_invoiced')
+    invoice_ids = fields.Many2many(
+        comodel_name='account.move',
+        string="Invoices",
+        compute='_get_invoiced',
+        copy=False)
     state = fields.Selection(selection=[
             ('draft', 'Draft'),
             ('submitted', 'Submitted'),
             ('invoiced', 'Invoiced'),
+            ('rejected', 'Rejected'),
             ('cancel', 'Cancelled'),],string='Status',required=True,readonly=True,copy=False,tracking=True,default='draft')
     
     @api.model
     def create(self, vals):
         vals['name'] = self.env['ir.sequence'].get('request.invoice')
         return super(RequestInvoice, self).create(vals)
+    
+    def action_draft(self):
+        self.write({'state': 'draft'})
 
     def action_submit(self):
         self.write({'state': 'submitted'})
 
     def action_cancel(self):
         self.write({'state': 'cancel'})
+
+    def action_refuse(self):
+        return {
+            'name': _('Refuse Reason'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'request.invoice.refusal.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'view_id': self.env.ref('care_request_invoice.request_invoice_refusal_wizard_view_form').id,
+            'context': {
+                'active_id': self.id,
+                'refuse': True,
+            }
+        }
+    
+    def _action_refuse(self):
+        self.write({'state': 'rejected'})
+
+    @api.depends('invoice_date','request_invoice_id')
+    def _get_invoiced(self):
+        for rec in self:
+            invoices = self.env['account.move'].search([('request_invoice','=', rec.id)])
+            rec.invoice_ids = invoices
+            rec.invoice_count = len(invoices)
+
+    def action_view_invoice(self, invoices=False):
+        if not invoices:
+            invoices = self.mapped('invoice_ids')
+        action = self.env['ir.actions.actions']._for_xml_id('account.action_move_out_invoice_type')
+        if len(invoices) > 1:
+            action['domain'] = [('id', 'in', invoices.ids)]
+        elif len(invoices) == 1:
+            form_view = [(self.env.ref('account.view_move_form').id, 'form')]
+            if 'views' in action:
+                action['views'] = form_view + [(state,view) for state,view in action['views'] if view != 'form']
+            else:
+                action['views'] = form_view
+            action['res_id'] = invoices.id
+        else:
+            action = {'type': 'ir.actions.act_window_close'}
+
+        context = {
+            'default_move_type': 'out_invoice',
+        }
+        if len(self) == 1:
+            context.update({
+                'default_partner_id': self.partner_id.id,
+                'default_invoice_origin': self.name,
+            })
+        action['context'] = context
+        return action
 
     def action_convert_to_invoice(self):
         invoice = self.env['account.move'].create({

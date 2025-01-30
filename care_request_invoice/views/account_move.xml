@@ -10,7 +10,7 @@
                 <xpath expr="//group//group[@id='header_left_group']" position="inside">
                     <field name="project_id" />
                     <field name="department_id" />
-                    <field name="request_invoice" />
+                    <field name="request_invoice" readonly="1" />
                 </xpath>
             </field>
         </record>

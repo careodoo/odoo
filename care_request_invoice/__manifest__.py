@@ -11,6 +11,7 @@
     'data': [
         'security/groups.xml',
         'security/ir.model.access.csv',
+        'wizard/refusal_reason_wizard_view.xml',
         'views/account_move.xml',
         'views/request_invoice.xml',
         'views/sequence.xml',

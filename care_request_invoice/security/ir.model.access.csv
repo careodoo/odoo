@@ -1,3 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_request_invoice,request.invoice,model_request_invoice,care_request_invoice.group_create_request_invoice,1,1,1,1
 access_request_invoice_line,request.invoice.line,model_request_invoice_line,care_request_invoice.group_create_request_invoice,1,1,1,1
+access_request_invoice_refusal_wizard,request.invoice.refusal.wizard,model_request_invoice_refusal_wizard,care_request_invoice.group_convert_to_invoice,1,1,1,1

@@ -3,7 +3,7 @@
     <data noupdate="1">
         <record id="request_invoice_seq" model="ir.sequence">
           <field name="name">Request Invoice</field>
-          <field name="prefix">Req/INV</field> 
+          <field name="prefix">REQ/INV</field> 
           <field name="padding">3</field>
           <field name="code">request.invoice</field>
         </record>
