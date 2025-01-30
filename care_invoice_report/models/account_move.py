@@ -7,6 +7,7 @@ class AccountMove(models.Model):
 
     date_from = fields.Date(string='Date From')
     date_to = fields.Date(string='Date To')
+    internal_ref = fields.Char(string='Internal Referance')
 
     def number_to_arabic(self, amount):
         self.ensure_one()
@@ -27,7 +28,7 @@ class AccountMove(models.Model):
         lang = self.env['res.lang'].search([('code', '=', 'ar_001')])
         amount_words = tools.ustr('{amt_value} {amt_word}').format(
                         amt_value=_num2words(integer_value, lang=lang.iso_code),
-                        amt_word="دينار",
+                        amt_word="دينار كويتي",
                         )
         if not self.currency_id.is_zero(amount - integer_value):
             amount_words += ' ' + _('و') + tools.ustr(' {amt_value} {amt_word}').format(
