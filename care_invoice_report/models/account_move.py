@@ -1,10 +1,15 @@
 from odoo import models, fields, tools, _
 from num2words import num2words
 import logging
+from datetime import datetime
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
+    def generate_barcode(self):
+        return str(int(datetime.now().timestamp()))
+
+    barcode = fields.Char(default=generate_barcode)
     date_from = fields.Date(string='Date From')
     date_to = fields.Date(string='Date To')
     internal_ref = fields.Char(string='Internal Referance')
@@ -36,6 +41,11 @@ class AccountMove(models.Model):
                         amt_word="فلس",
                         )
         return amount_words + ' فقط لا غير '
+
+    def get_invoice_portal_url(self):
+        base_url = self.env['ir.config_parameter'].get_param('web.base.url')
+        url = base_url + self.get_portal_url()
+        return url
 
 
 class AccountMoveLine(models.Model):

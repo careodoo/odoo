@@ -21,7 +21,8 @@
                 </xpath>
 
                 <xpath expr="//group[@id='header_right_group']//field[@name='payment_reference']" position="after">
-                    <field name="internal_ref" />
+                    <field name="internal_ref"/>
+                    <field name="barcode"/>
                 </xpath>
             </field>
         </record>

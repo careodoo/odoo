@@ -1,27 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <template id="invoice_internal_layout">
-            <t t-if="not o" t-set="o" t-value="doc"/>
-                <div class="header">
-                    <!-- <img src="/care_hr/static/src/img/header.png" atl="header.png" class="w-100"/> -->
-                </div>
-            <div class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
-              <t t-out="0"/>
-            </div>
-            <div t-attf-class="footer o_standard_footer">
-                <div class="row">
-                    <!-- <img src="/care_hr/static/src/img/footer.png" atl="header.png" class="w-100"/> -->
-                </div>
-            </div>
-        </template>
         <template id="invoice_internal_layout_w_header">
             <t t-if="not o" t-set="o" t-value="doc"/>
-                <div class="header">
-                    <img src="/care_hr/static/src/img/header.png" atl="header.png" class="w-100"/>
-                </div>
-            <div class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
-              <t t-out="0"/>
+            <div class="header">
+                <img src="/care_hr/static/src/img/header.png" atl="header.png" class="w-100"/>
+            </div>
+            <div class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id"
+                 t-att-data-oe-lang="o and o.env.context.get('lang')">
+                <t t-out="0"/>
             </div>
             <div t-attf-class="footer o_standard_footer">
                 <div class="row">
@@ -36,8 +23,8 @@
             <field name="report_name">care_invoice_report.joining_header_report</field>
             <field name="report_file">care_invoice_report.joining_header_report</field>
             <field name="binding_model_id" ref="account.model_account_move"/>
-			<field name="binding_type">report</field>
-			<field name="binding_view_types">form</field>
+            <field name="binding_type">report</field>
+            <field name="binding_view_types">form</field>
         </record>
         <template id="report_invoice_document" inherit_id="account.report_invoice_document">
             <xpath expr="//t[@t-call='web.external_layout']" position="replace">
@@ -45,7 +32,7 @@
                     <t t-call="care_invoice_report.invoice_internal_layout_w_header">
                         <div class="page rtl" style="font-family:Arial,Helvetica,sans-serif !important;">
                             <style>
-                            table.GeneratedTable {
+                                table.GeneratedTable {
                                 background-color: #ffffff;
                                 border-collapse: collapse;
                                 border-width: 2px;
@@ -54,67 +41,86 @@
                                 font-size: 14px;
                                 color: #000000;
                                 justify-content: center;
-                            }
+                                }
 
-                            table.GeneratedTable td, table.GeneratedTable th {
+                                table.GeneratedTable td, table.GeneratedTable th {
                                 border-width: 1px;
                                 border-color: #000000;
                                 border-style: solid;
                                 padding: 10px;
                                 font-weight: bold;
                                 margin:10px;
-                            }
+                                }
 
-                            .bordered-row{
+                                .bordered-row{
                                 border-bottom:1px solid black;padding-left:10px;padding-right:10px;
-                            }
-                            .rtl-row{
+                                }
+                                .rtl-row{
                                 text-align: right !important;direction: rtl !important;
-                            }
-                        </style>
+                                }
+                            </style>
                             <t t-foreach="docs" t-as="doc">
-                                <br />
-                                <div class="justify-content-center" width="100%">
-                                    <div class="d-flex justify-content-between" style="width: 100%;">
-                                        <div style="flex: 1;">
-                                            <center>
-                                                <div class="justify-content-center">
-                                                    <table class="GeneratedTable justify-content-center" style="text-align: center; width: 60% !important;">
-                                                        <tbody class="justify-content-center" style="text-align: center; width: 100% !important;">
-                                                            <tr class="justify-content-center text-center">
-                                                                <td><h5>Invoice No.</h5>
-                                                                <h5><span t-field="doc.internal_ref"/> فاتورة رقم </h5></td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </center>
-                                        </div>
-                                        <div class="justify-content-end" style="text-align: end; flex: 0; padding: 40px;">
-                                            <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s'%('QR', doc._compute_access_url(), 150, 150)"/>
-                                        </div>
+                                <div class="row">
+                                    <div class="col-4">
+                                        <center>
+                                            <img t-if="doc.barcode"
+                                                 t-att-src="'/report/barcode/?barcode_type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('Code128',doc.barcode,180,50)"/>
+                                            <div t-esc="doc.barcode"/>
+                                        </center>
+                                    </div>
+                                    <div class="col-4">
+                                        <center>
+                                            <div class="justify-content-center">
+                                                <table class="GeneratedTable justify-content-center"
+                                                       style="text-align: center; width: 90% !important;">
+                                                    <tbody class="justify-content-center"
+                                                           style="text-align: center; width: 100% !important;">
+                                                        <tr class="justify-content-center text-center">
+                                                            <td><h5>Invoice No.</h5>
+                                                                <h5><span t-field="doc.internal_ref"/> فاتورة
+                                                                    رقم </h5></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </center>
+                                    </div>
+                                    <div class="col-4">
+                                        <center>
+                                            <img t-att-src="'/report/barcode/?barcode_type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.get_invoice_portal_url(), 600, 50)"
+                                                 style="width:100px;height:60px;"/>
+                                        </center>
                                     </div>
                                 </div>
-                                <br />
-                                <table class="GeneratedTable justify-content-end" style="text-align: end; width: 100% !important;">
+                                <br/>
+                                <table class="GeneratedTable justify-content-end"
+                                       style="text-align: end; width: 100% !important;">
                                     <thead>
                                         <tr>
-                                            <th width="50%"><span>CUSTOMER NAME:</span><span style="margin-left: 150px;">:اسم العميل</span></th>                                        
-                                            <!-- <th width="50%"><span>CUSTOMER NO:</span><span style="margin-left: 230px;">:رقم العميل</span></th>                                         -->
-                                            <td><span style="margin-right: 50px;">CUSTOMER NO: </span><span style="margin-left: 50px;" t-field="doc.partner_id.id"/><span style="margin-left: 50px;"> :رقم العميل</span></td>
+                                            <th width="50%"><span>CUSTOMER NAME:</span><span
+                                                    style="margin-left: 150px;">:اسم العميل</span></th>
+                                            <td><span style="margin-right: 50px;">CUSTOMER NO: </span><span
+                                                    style="margin-left: 50px;" t-esc="str(doc.partner_id.id)"/><span
+                                                    style="margin-left: 50px;"> :رقم العميل</span></td>
                                         </tr>
                                     </thead>
-                                <center>
-                                    <tbody class="justify-content-end rtl" style="text-align: end; width: 50% !important; min-height: 100px !important;">
-                                        <tr style="height: 20px;">
-                                            <td class="rtl"> السادة/ <span t-field="doc.partner_id.name"/> المحترمين </td>
-                                            <td><span style="margin-right: 50px;">Date: </span><span style="margin-left: 50px;" t-field="doc.invoice_date"/><span style="margin-left: 100px;"> :التاريخ</span></td>
-                                        </tr>
-                                    </tbody>
-                                </center>
+                                    <center>
+                                        <tbody style="width: 50% !important; min-height: 100px !important;">
+                                            <tr style="height: 20px;">
+                                                <td style="direction: rtl !important;text-align:center !important">
+                                                    <span>السادة المحترمين / </span>
+                                                    <span t-field="doc.partner_id"/>
+                                                </td>
+                                                <td><span style="margin-right: 50px;">Date: </span><span
+                                                        style="margin-left: 50px;" t-field="doc.invoice_date"/><span
+                                                        style="margin-left: 100px;"> :التاريخ</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </center>
                                 </table>
-                                <br />
-                                <table class="GeneratedTable justify-content-center" style="text-align: center; width: 100% !important;">
+                                <br/>
+                                <table class="GeneratedTable justify-content-center"
+                                       style="text-align: center; width: 100% !important;">
                                     <thead>
                                         <tr>
                                             <th width="15%" colspan="2">التاريخ Date</th>
@@ -134,7 +140,8 @@
                                             <th>Total Amount</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="justify-content-center" style="text-align: center; width: 50% !important;">
+                                    <tbody class="justify-content-center"
+                                           style="text-align: center; width: 50% !important;">
                                         <t t-foreach="doc.invoice_line_ids" t-as="line">
                                             <tr>
                                                 <td><span t-field="doc.date_to"/></td>
@@ -148,40 +155,47 @@
                                         </t>
                                         <tr>
                                             <td>Total</td>
-                                            <td colspan="4" style="direction:rtl !important;"><span t-esc="doc.number_to_arabic(doc.amount_total)"/></td>
+                                            <td colspan="4" style="direction:rtl !important;"><span
+                                                    t-esc="doc.number_to_arabic(doc.amount_total)"/></td>
                                             <td>الاجمالي</td>
                                             <td><span t-field="doc.amount_total"/></td>
                                         </tr>
                                     </tbody>
                                 </table>
-                                <br />
+                                <br/>
                                 <center>
-                                <table class="GeneratedTable justify-content-end" style="text-align: end; width: 100% !important;">
-                                    <tbody class="justify-content-end" style="text-align: end; width: 100% !important;">
-                                        <center>
-                                        <tr>
+                                    <table class="GeneratedTable justify-content-end"
+                                           style="text-align: end; width: 100% !important;">
+                                        <tbody class="justify-content-end"
+                                               style="text-align: end; width: 100% !important;">
                                             <center>
-                                            <td class="rtl-row" width="50%" rowspan="3" style="text-align: center !important;margin-left:100px !important;">
-                                                يرجي سداد الفاتورة خلال <span t-esc="doc.invoice_payment_term_id.name" /> يوما من اصدارها<br/>
-                                                Invoice to settled within 15 days from the date of issue<br/>
-                                                ماعدا السهو والخطأ<br/>
-                                                E &amp; O E
-                                            </td>
+                                                <tr>
+                                                    <center>
+                                                        <td class="rtl-row" width="50%" rowspan="3"
+                                                            style="text-align: center !important;margin-left:100px !important;">
+                                                            يرجي سداد الفاتورة خلال <span
+                                                                t-esc="doc.invoice_payment_term_id.name"/> يوما من
+                                                            اصدارها<br/>
+                                                            Invoice to settled within 15 days from the date of
+                                                            issue<br/>
+                                                            ماعدا السهو والخطأ<br/>
+                                                            E &amp; O E
+                                                        </td>
+                                                    </center>
+                                                    <td width="30%"></td>
+                                                    <td width="20%">/ المستلم</td>
+                                                </tr>
                                             </center>
-                                            <td width="30%"></td>
-                                            <td width="20%">/ المستلم</td>
-                                        </tr>
-                                        </center>
-                                        <tr>
-                                            <td width="30%"></td>
-                                            <td>/ التوقيع</td>
-                                        </tr>
-                                        <tr>
-                                            <td width="30%"></td>
-                                            <td>/ التاريخ</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                            <tr>
+                                                <td width="30%"></td>
+                                                <td>/ التوقيع</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="30%"></td>
+                                                <td>/ التاريخ</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </center>
                             </t>
                         </div>
@@ -189,12 +203,12 @@
                 </t>
             </xpath>
         </template>
-		<template id="joining_header_report">
-			<t t-call="web.html_container">
-				<t t-call="care_invoice_report.invoice_internal_layout">
+        <template id="joining_header_report">
+            <t t-call="web.html_container">
+                <t t-call="web.basic_layout">
                     <div class="page rtl" style="font-family:Arial,Helvetica,sans-serif !important;">
                         <style>
-                        table.GeneratedTable {
+                            table.GeneratedTable {
                             background-color: #ffffff;
                             border-collapse: collapse;
                             border-width: 2px;
@@ -203,67 +217,86 @@
                             font-size: 14px;
                             color: #000000;
                             justify-content: center;
-                        }
+                            }
 
-                        table.GeneratedTable td, table.GeneratedTable th {
+                            table.GeneratedTable td, table.GeneratedTable th {
                             border-width: 1px;
                             border-color: #000000;
                             border-style: solid;
                             padding: 10px;
                             font-weight: bold;
                             margin:10px;
-                        }
+                            }
 
-                        .bordered-row{
+                            .bordered-row{
                             border-bottom:1px solid black;padding-left:10px;padding-right:10px;
-                        }
-                        .rtl-row{
+                            }
+                            .rtl-row{
                             text-align: right !important;direction: rtl !important;
-                        }
-                    </style>
+                            }
+                        </style>
                         <t t-foreach="docs" t-as="doc">
-                            <br />
-                            <div class="justify-content-center" width="100%">
-                                <div class="d-flex justify-content-between" style="width: 100%;">
-                                    <div style="flex: 1;">
-                                        <center>
-                                            <div class="justify-content-center">
-                                                <table class="GeneratedTable justify-content-center" style="text-align: center; width: 60% !important;">
-                                                    <tbody class="justify-content-center" style="text-align: center; width: 100% !important;">
-                                                        <tr class="justify-content-center text-center">
-                                                            <td><h5>Invoice No.</h5>
-                                                            <h5><span t-field="doc.internal_ref"/> فاتورة رقم </h5></td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </center>
-                                    </div>
-                                    <div class="justify-content-end" style="text-align: end; flex: 0; padding: 40px;">
-                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s'%('QR', doc._compute_access_url(), 150, 150)"/>
-                                    </div>
+                            <div class="row">
+                                <div class="col-4">
+                                    <center>
+                                        <img t-if="doc.barcode"
+                                             t-att-src="'/report/barcode/?barcode_type=%s&amp;value=%s&amp;width=%s&amp;height=%s' %('Code128',doc.barcode,180,50)"/>
+                                        <div t-esc="doc.barcode"/>
+                                    </center>
+                                </div>
+                                <div class="col-4">
+                                    <center>
+                                        <div class="justify-content-center">
+                                            <table class="GeneratedTable justify-content-center"
+                                                   style="text-align: center; width: 90% !important;">
+                                                <tbody class="justify-content-center"
+                                                       style="text-align: center; width: 100% !important;">
+                                                    <tr class="justify-content-center text-center">
+                                                        <td><h5>Invoice No.</h5>
+                                                            <h5><span t-field="doc.internal_ref"/> فاتورة
+                                                                رقم </h5></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </center>
+                                </div>
+                                <div class="col-4">
+                                    <center>
+                                        <img t-att-src="'/report/barcode/?barcode_type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', doc.get_invoice_portal_url(), 600, 50)"
+                                             style="width:100px;height:60px;"/>
+                                    </center>
                                 </div>
                             </div>
-                            <br />
-                            <table class="GeneratedTable justify-content-end" style="text-align: end; width: 100% !important;">
+                            <br/>
+                            <table class="GeneratedTable justify-content-end"
+                                   style="text-align: end; width: 100% !important;">
                                 <thead>
                                     <tr>
-                                        <th width="50%"><span>CUSTOMER NAME:</span><span style="margin-left: 150px;">:اسم العميل</span></th>                                        
-                                        <!-- <th width="50%"><span>CUSTOMER NO:</span><span style="margin-left: 230px;">:رقم العميل</span></th>                                         -->
-                                        <td><span style="margin-right: 50px;">CUSTOMER NO: </span><span style="margin-left: 50px;" t-field="doc.partner_id.id"/><span style="margin-left: 50px;"> :رقم العميل</span></td>
+                                        <th width="50%"><span>CUSTOMER NAME:</span><span style="margin-left: 150px;">
+                                            :اسم العميل</span></th>
+                                        <td><span style="margin-right: 50px;">CUSTOMER NO: </span><span
+                                                style="margin-left: 50px;" t-esc="str(doc.partner_id.id)"/><span
+                                                style="margin-left: 50px;"> :رقم العميل</span></td>
                                     </tr>
                                 </thead>
-                            <center>
-                                <tbody class="justify-content-end rtl" style="text-align: end; width: 50% !important; min-height: 100px !important;">
-                                    <tr style="height: 20px;">
-                                        <td class="rtl"> السادة/ <span t-field="doc.partner_id.name"/> المحترمين </td>
-                                        <td><span style="margin-right: 50px;">Date: </span><span style="margin-left: 50px;" t-field="doc.invoice_date"/><span style="margin-left: 100px;"> :التاريخ</span></td>
-                                    </tr>
-                                </tbody>
-                            </center>
-                                </table>
-                            <br />
-                            <table class="GeneratedTable justify-content-center" style="text-align: center; width: 100% !important;">
+                                <center>
+                                    <tbody style="width: 50% !important; min-height: 100px !important;">
+                                        <tr style="height: 20px;">
+                                            <td style="direction: rtl !important;text-align:center !important">
+                                                <span>السادة المحترمين / </span>
+                                                <span t-field="doc.partner_id"/>
+                                            </td>
+                                            <td><span style="margin-right: 50px;">Date: </span><span
+                                                    style="margin-left: 50px;" t-field="doc.invoice_date"/><span
+                                                    style="margin-left: 100px;"> :التاريخ</span></td>
+                                        </tr>
+                                    </tbody>
+                                </center>
+                            </table>
+                            <br/>
+                            <table class="GeneratedTable justify-content-center"
+                                   style="text-align: center; width: 100% !important;">
                                 <thead>
                                     <tr>
                                         <th width="15%" colspan="2">التاريخ Date</th>
@@ -283,7 +316,8 @@
                                         <th>Total Amount</th>
                                     </tr>
                                 </thead>
-                                <tbody class="justify-content-center" style="text-align: center; width: 50% !important;">
+                                <tbody class="justify-content-center"
+                                       style="text-align: center; width: 50% !important;">
                                     <t t-foreach="doc.invoice_line_ids" t-as="line">
                                         <tr>
                                             <td><span t-field="doc.date_to"/></td>
@@ -297,19 +331,23 @@
                                     </t>
                                     <tr>
                                         <td>Total</td>
-                                        <td colspan="4" style="direction:rtl !important;"><span t-esc="doc.number_to_arabic(doc.amount_total)"/></td>
+                                        <td colspan="4" style="direction:rtl !important;"><span
+                                                t-esc="doc.number_to_arabic(doc.amount_total)"/></td>
                                         <td>الاجمالي</td>
                                         <td><span t-field="doc.amount_total"/></td>
                                     </tr>
                                 </tbody>
                             </table>
-                            <br />
-                            <table class="GeneratedTable justify-content-end" style="text-align: end; width: 100% !important;">
+                            <br/>
+                            <table class="GeneratedTable justify-content-end"
+                                   style="text-align: end; width: 100% !important;">
                                 <tbody class="justify-content-end" style="text-align: end; width: 100% !important;">
                                     <tr>
                                         <center>
-                                            <td class="rtl-row" width="50%" rowspan="3" style="text-align: center !important;margin-left:100px !important;">
-                                                يرجي سداد الفاتورة خلال <span t-esc="doc.invoice_payment_term_id.name" /> يوما من اصدارها<br/>
+                                            <td class="rtl-row" width="50%" rowspan="3"
+                                                style="text-align: center !important;margin-left:100px !important;">
+                                                يرجي سداد الفاتورة خلال <span t-esc="doc.invoice_payment_term_id.name"/>
+                                                يوما من اصدارها<br/>
                                                 Invoice to settled within 15 days from the date of issue<br/>
                                                 ماعدا السهو والخطأ<br/>
                                                 E &amp; O E
