@@ -11,6 +11,7 @@ class RequestInvoice(models.Model):
     department_id = fields.Many2one('hr.department', string='Department')
     invoice_date = fields.Date(string='Invoice Date')
     request_invoice_id = fields.One2many('request.invoice.line','request_id' ,string='Invoice Lines')
+    pricelist_id = fields.Many2one('product.pricelist', string='Pricelist')
     invoice_count = fields.Integer(string="Invoice Count", compute='_get_invoiced')
     invoice_ids = fields.Many2many(
         comodel_name='account.move',
@@ -28,6 +29,10 @@ class RequestInvoice(models.Model):
     def create(self, vals):
         vals['name'] = self.env['ir.sequence'].get('request.invoice')
         return super(RequestInvoice, self).create(vals)
+    
+    @api.onchange('partner_id')
+    def _onchange_partner_id(self):
+        self.pricelist_id = self.partner_id.property_product_pricelist.id
     
     def action_draft(self):
         self.write({'state': 'draft'})
@@ -57,6 +62,10 @@ class RequestInvoice(models.Model):
 
     @api.depends('invoice_date','request_invoice_id')
     def _get_invoiced(self):
+        # The invoice_ids are obtained thanks to the invoice lines of the SO
+        # lines, and we also search for possible refunds created directly from
+        # existing invoices. This is necessary since such a refund is not
+        # directly linked to the SO.
         for rec in self:
             invoices = self.env['account.move'].search([('request_invoice','=', rec.id)])
             rec.invoice_ids = invoices
@@ -158,7 +167,12 @@ class RequestInvoiceLine(models.Model):
         self.price = 0.0
         self.price_subtotal = 0.0
         for line in self:
-            line.price = line.product_id.lst_price
-            line.price_subtotal = line.price * line.quantity
+            if line.request_id.pricelist_id:
+                pricelist_price, rule_id = self.env['product.pricelist'].search([('id','=',line.request_id.pricelist_id.id)])._get_product_price_rule(line.product_id,1)
+                line.price = pricelist_price
+                line.price_subtotal = pricelist_price * line.quantity
+            else:
+                line.price = line.product_id.lst_price
+                line.price_subtotal = line.price * line.quantity
 
     
