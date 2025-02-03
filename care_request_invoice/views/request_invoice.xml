@@ -43,7 +43,14 @@
                             </group>
                             <group>
                                 <field name="invoice_date" readonly="state != 'draft'"/>
-                                <field name="pricelist_id" readonly="state != 'draft'"/>
+                                <field name="company_id" invisible="1"/>
+                                <field name="has_active_pricelist" invisible="1"/>
+                                <field name="show_update_pricelist" invisible="1"/>
+                                <label for="pricelist_id" groups="product.group_product_pricelist" invisible="not has_active_pricelist"/>
+                                <div class="o_row" invisible="not has_active_pricelist">
+                                    <field name="pricelist_id" options="{'no_open':True,'no_create': True}" readonly="state != 'draft'"/>
+                                    <button name="action_update_prices" type="object" string=" Update Prices" help="Recompute all prices based on this pricelist" class="btn-link mb-1 px-0" icon="fa-refresh" confirm="This will update the unit price of all products based on the new pricelist." invisible="not show_update_pricelist or state in ['invoiced', 'cancel']"/>
+                                </div>
                             </group>
                         </group>
                         <notebook>

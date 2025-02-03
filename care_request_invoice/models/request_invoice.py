@@ -5,13 +5,19 @@ class RequestInvoice(models.Model):
     _inherit = ['portal.mixin', 'product.catalog.mixin', 'mail.thread', 'mail.activity.mixin', 'utm.mixin']
     _description = 'Request Invoice'
 
-    name = fields.Char(string='Name',required=True, readonly=True, copy=False, default='/')
-    partner_id = fields.Many2one('res.partner', string='Customer', required=True)
-    project_id = fields.Many2one('project.project', string='Project')
-    department_id = fields.Many2one('hr.department', string='Department')
-    invoice_date = fields.Date(string='Invoice Date')
+    name = fields.Char(string='Name',required=True, readonly=True, copy=False, store=True, default='/')
+    partner_id = fields.Many2one('res.partner', string='Customer', required=True, store=True)
+    project_id = fields.Many2one('project.project', string='Project', store=True)
+    department_id = fields.Many2one('hr.department', string='Department', store=True)
+    invoice_date = fields.Date(string='Invoice Date', store=True)
     request_invoice_id = fields.One2many('request.invoice.line','request_id' ,string='Invoice Lines')
-    pricelist_id = fields.Many2one('product.pricelist', string='Pricelist')
+    company_id = fields.Many2one('res.company', string='Company', required=True, readonly=False, store=True,
+        default=lambda self: self.env.company)
+    has_active_pricelist = fields.Boolean(
+        compute='_compute_has_active_pricelist')
+    show_update_pricelist = fields.Boolean(
+        string="Has Pricelist Changed", store=False)  # True if the pricelist was changed
+    pricelist_id = fields.Many2one('product.pricelist', string='Pricelist', store=True)
     invoice_count = fields.Integer(string="Invoice Count", compute='_get_invoiced')
     invoice_ids = fields.Many2many(
         comodel_name='account.move',
@@ -33,6 +39,28 @@ class RequestInvoice(models.Model):
     @api.onchange('partner_id')
     def _onchange_partner_id(self):
         self.pricelist_id = self.partner_id.property_product_pricelist.id
+
+    @api.depends('company_id')
+    def _compute_has_active_pricelist(self):
+        for order in self:
+            order.has_active_pricelist = bool(self.env['product.pricelist'].search(
+                [('company_id', 'in', (False, order.company_id.id)), ('active', '=', True)],
+                limit=1,
+            ))
+
+    @api.onchange('pricelist_id')
+    def _onchange_pricelist_id_show_update_prices(self):
+        self.show_update_pricelist = bool(self.request_invoice_id)
+
+    def action_update_prices(self):
+        self.request_invoice_id._compute_total()
+
+        if self.pricelist_id:
+            message = _("Product prices have been recomputed according to pricelist %s.",
+                self.pricelist_id._get_html_link())
+        else:
+            message = _("Product prices have been recomputed.")
+        self.message_post(body=message)
     
     def action_draft(self):
         self.write({'state': 'draft'})
@@ -62,10 +90,6 @@ class RequestInvoice(models.Model):
 
     @api.depends('invoice_date','request_invoice_id')
     def _get_invoiced(self):
-        # The invoice_ids are obtained thanks to the invoice lines of the SO
-        # lines, and we also search for possible refunds created directly from
-        # existing invoices. This is necessary since such a refund is not
-        # directly linked to the SO.
         for rec in self:
             invoices = self.env['account.move'].search([('request_invoice','=', rec.id)])
             rec.invoice_ids = invoices
@@ -128,17 +152,17 @@ class RequestInvoiceLine(models.Model):
     _name = 'request.invoice.line'
     _description = 'Request Invoice Line'
 
-    request_id = fields.Many2one('request.invoice', string='Invoice Request')
-    product_id = fields.Many2one('product.product', string='Product', required=True)
+    request_id = fields.Many2one('request.invoice', string='Invoice Request', store=True)
+    product_id = fields.Many2one('product.product', string='Product', required=True, store=True)
     display_type = fields.Selection(selection=[('product', 'Product')],default='product', store=True, readonly=False,required=True, compute="_compute_name")
-    label = fields.Char(string='Label', compute="_compute_name")
-    quantity = fields.Integer(string='Quantity', default=1.0)
-    product_uom_id = fields.Many2one('uom.uom', string='Unit of Measure')
-    company_id = fields.Many2one('res.company', string='Company', required=True, readonly=False,
+    label = fields.Char(string='Name')
+    quantity = fields.Integer(string='Quantity', default=1.0, store=True)
+    product_uom_id = fields.Many2one('uom.uom', string='Unit of Measure', store=True)
+    company_id = fields.Many2one('res.company', string='Company', required=True, readonly=False, store=True,
         default=lambda self: self.env.company)
-    currency_id = fields.Many2one('res.currency', string='Account Currency', related='company_id.currency_id')
-    price = fields.Float(string='Price', default=0.0, compute="_compute_total")
-    price_subtotal = fields.Monetary(string='Tax excl.', default=0.0, compute="_compute_total")
+    currency_id = fields.Many2one('res.currency', string='Account Currency', related='company_id.currency_id', store=True)
+    price = fields.Float(string='Price', default=0.0, compute="_compute_total", store=True)
+    price_subtotal = fields.Monetary(string='Tax excl.', default=0.0, compute="_compute_total", store=True)
 
     @api.onchange('product_id')
     def _onchange_product_id(self):
@@ -149,18 +173,13 @@ class RequestInvoiceLine(models.Model):
                 line.product_uom_id = line.product_id.uom_id
                 line.price = line.product_id.lst_price
                 line.display_type = 'product'
-
-    @api.depends('product_id')
-    def _compute_name(self):
-        self.label = ''
-        for line in self:
-            values = []
-            if line.product_id.partner_ref:
-                values.append(line.product_id.partner_ref)
-            if line.product_id.description_sale:
-                values.append(line.product_id.description_sale)
-            
-            line.label = '\n'.join(values)
+                values = []
+                if line.product_id.partner_ref:
+                    values.append(line.product_id.partner_ref)
+                if line.product_id.description_sale:
+                    values.append(line.product_id.description_sale)
+                
+                line.label = '\n'.join(values)
 
     @api.depends('product_id','quantity')
     def _compute_total(self):
