@@ -100,7 +100,7 @@
                     <field name="project_id" />
                     <field name="department_id" />
                     <field name="invoice_date" />
-                    <field name="state" />
+                    <field name="state" widget="badge" decoration-success="state == 'invoiced'" decoration-info="state == 'draft'" />
                 </tree>
             </field>
         </record>

@@ -10,7 +10,7 @@ class RequestInvoice(models.Model):
     project_id = fields.Many2one('project.project', string='Project', store=True)
     department_id = fields.Many2one('hr.department', string='Department', store=True)
     invoice_date = fields.Date(string='Invoice Date', store=True)
-    request_invoice_id = fields.One2many('request.invoice.line','request_id' ,string='Invoice Lines')
+    request_invoice_id = fields.One2many('request.invoice.line','request_id' ,string='Invoice Lines', copy=True)
     company_id = fields.Many2one('res.company', string='Company', required=True, readonly=False, store=True,
         default=lambda self: self.env.company)
     has_active_pricelist = fields.Boolean(
