@@ -18,6 +18,8 @@ class RequestInvoice(models.Model):
     show_update_pricelist = fields.Boolean(
         string="Has Pricelist Changed", store=False)  # True if the pricelist was changed
     pricelist_id = fields.Many2one('product.pricelist', string='Pricelist', store=True)
+    contract_id = fields.Many2one('hr.contract', string='Contract', store=True)
+    proposal_id = fields.Many2one('proposal.proposal', string='Proposal', related='pricelist_id.proposal_id')
     invoice_count = fields.Integer(string="Invoice Count", compute='_get_invoiced')
     invoice_ids = fields.Many2many(
         comodel_name='account.move',
