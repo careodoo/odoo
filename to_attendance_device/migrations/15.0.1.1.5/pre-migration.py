@@ -21,11 +21,11 @@ def _apply_xml_id_for_attendance_activity_and_state(env):
             'model': 'attendance.activity',
             'res_id': attendance_activity_break.get('id')
             })
-        # env.cr.execute("""
-        #     UPDATE attendance_activity
-        #     set name = 'Break'
-        #     WHERE id = %s
-        # """, (attendance_activity_break.get('id'),))
+        env.cr.execute("""
+            UPDATE attendance_activity
+            set name = 'Break'
+            WHERE id = %s
+        """, (attendance_activity_break.get('id'),))
 
     env.cr.execute("""
         SELECT t1.id
@@ -42,11 +42,11 @@ def _apply_xml_id_for_attendance_activity_and_state(env):
             'model': 'attendance.activity',
             'res_id': attendance_activity_unknown_punch_state.get('id')
             })
-        # env.cr.execute("""
-        #     UPDATE attendance_activity
-        #     set name = 'Unknown Punch State'
-        #     WHERE id = %s
-        # """, (attendance_activity_unknown_punch_state.get('id'),))
+        env.cr.execute("""
+            UPDATE attendance_activity
+            set name = 'Unknown Punch State'
+            WHERE id = %s
+        """, (attendance_activity_unknown_punch_state.get('id'),))
 
     env.cr.execute("""
         SELECT id
@@ -92,11 +92,11 @@ def _apply_xml_id_for_attendance_activity_and_state(env):
             'model': 'attendance.state',
             'res_id': attendance_device_state_code_255.get('id')
             })
-        # env.cr.execute("""
-        #     UPDATE attendance_state
-        #     SET name = 'Unknown Punch State (this usually happen when you check-in or out with no punch state specified)'
-        #     WHERE code = 255
-        # """)
+        env.cr.execute("""
+            UPDATE attendance_state
+            SET name = 'Unknown Punch State (this usually happen when you check-in or out with no punch state specified)'
+            WHERE code = 255
+        """)
 
 
 def migrate(cr, version):
