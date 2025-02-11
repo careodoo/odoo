@@ -21,11 +21,11 @@ def _apply_xml_id_for_attendance_activity_and_state(env):
             'model': 'attendance.activity',
             'res_id': attendance_activity_break.get('id')
             })
-        env.cr.execute("""
-            UPDATE attendance_activity
-            set name = 'Break'
-            WHERE id = %s
-        """, (attendance_activity_break.get('id'),))
+        # env.cr.execute("""
+        #     UPDATE attendance_activity
+        #     set name = 'Break'
+        #     WHERE id = %s
+        # """, (attendance_activity_break.get('id'),))
 
     env.cr.execute("""
         SELECT t1.id
