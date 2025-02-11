@@ -51,6 +51,8 @@
                                     <field name="pricelist_id" options="{'no_open':True,'no_create': True}" readonly="state != 'draft'"/>
                                     <button name="action_update_prices" type="object" string=" Update Prices" help="Recompute all prices based on this pricelist" class="btn-link mb-1 px-0" icon="fa-refresh" confirm="This will update the unit price of all products based on the new pricelist." invisible="not show_update_pricelist or state in ['invoiced', 'cancel']"/>
                                 </div>
+                                <field name="proposal_id" />
+                                <field name="contract_id" />
                             </group>
                         </group>
                         <notebook>
@@ -72,7 +74,7 @@
                                         <field name="quantity" />
                                         <field name="product_uom_id" />
                                         <field name="price" />
-                                        <field name="price_subtotal" />
+                                        <field name="price_subtotal" sum="Total Price" />
                                         <field name="company_id" column_invisible="1" />
                                         <field name="currency_id" column_invisible="1" />
                                     </tree>
@@ -100,7 +102,7 @@
                     <field name="project_id" />
                     <field name="department_id" />
                     <field name="invoice_date" />
-                    <field name="state" />
+                    <field name="state" widget="badge" decoration-success="state == 'invoiced'" decoration-danger="state == 'cancel'" decoration-warning="state == 'submitted'" />
                 </tree>
             </field>
         </record>
@@ -119,14 +121,14 @@
         <menuitem id="invoice_request_menu_root"
             name="Invoice Requests"
             web_icon="care_request_invoice,static/description/icon.png"
-            groups="care_request_invoice.group_create_request_invoice"
+            groups="care_request_invoice.group_create_request_invoice,care_request_invoice.group_convert_to_invoice"
             action="action_invoice_request"
             sequence="35" />
 
         <menuitem id="invoice_request_menu"
             action="action_invoice_request"
             parent="invoice_request_menu_root"
-            groups="care_request_invoice.group_create_request_invoice"
+            groups="care_request_invoice.group_create_request_invoice,care_request_invoice.group_convert_to_invoice"
             name="Invoice Request"
             sequence="10" />
     </data>
