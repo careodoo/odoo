@@ -7,18 +7,46 @@ import calendar
 import logging
 
 from io import BytesIO
-from dateutil.relativedelta import relativedelta
+from dateutil import rrule
 from requests import get
-from datetime import timedelta
-from requests.exceptions import SSLError, ConnectionError
+from datetime import timedelta, datetime, time, date
+from requests.exceptions import SSLError, ConnectionError as RequestsConnectionError
+from PIL import Image, ImageChops
+from functools import wraps
 
-from odoo import models, fields, _
+from odoo import models, fields, _, api, registry
 from odoo.exceptions import UserError, ValidationError
-from odoo.tools import remove_accents
+from odoo.tools import remove_accents, date_utils, relativedelta, float_round
+from odoo.models import PREFETCH_MAX
 
 from ..controllers.my_ip import MY_IP_ROUTE
 
 _logger = logging.getLogger(__name__)
+
+
+def after_commit(func):
+    """
+    Decorator to add some custom tasks after things are commit (and cursor is closed)
+    """
+
+    @wraps(func)
+    def wrapped(self, *args, **kwargs):
+        dbname = self.env.cr.dbname
+        context = self.env.context
+        uid = self.env.uid
+
+        @self.env.cr.postcommit.add
+        def called_after():
+            db_registry = registry(dbname)
+            with db_registry.cursor() as cr:
+                env = api.Environment(cr, uid, context)
+                try:
+                    func(self.with_env(env), *args, **kwargs)
+                except Exception as e:
+                    _logger.warning("Could not sync record now: %s" % self)
+                    _logger.exception(e)
+
+    return wrapped
 
 
 class TOBase(models.AbstractModel):
@@ -29,14 +57,14 @@ class TOBase(models.AbstractModel):
         """
         Method to check if the barcode exists in the input model
 
-        @param barcode: the barcode to check its existance in the model
-        @param model_name: The technical name of the model to check. For example, product.template, product.product, etc. If not passed, the current model will be used
-        @param barcode_field: the name of the field storing barcode in the corresponding model
-        @param inactive_rec: search both active and inactive records of the model for barcode existance check. Please pass False for this arg if the model does not have active field
+        :param barcode: the barcode to check its existance in the model
+        :param model_name: The technical name of the model to check. For example, product.template, product.product, etc. If not passed, the current model will be used
+        :param barcode_field: the name of the field storing barcode in the corresponding model
+        :param inactive_rec: search both active and inactive records of the model for barcode existance check. Please pass False for this arg if the model does not have active field
 
-        @return: Boolean
+        :return: Boolean
         """
-        Object = model_name and self.env[model_name] or self
+        Object = self.env[model_name] if model_name else self
         domain = [(barcode_field, '=', barcode)]
         if inactive_rec:
             found = Object.with_context(active_test=False).search(domain)
@@ -69,186 +97,279 @@ class TOBase(models.AbstractModel):
         barcode = base_number_str + str(calculated_digit)
         return barcode
 
-    def convert_time_to_utc(self, dt, tz_name=None, is_dst=None):
+    def get_company_tz(self, company=None):
+        """
+        Return the timezone corresponding to a company.
+        :rtype: str
+        """
+        company = company or self.env.company
+        tz = company.partner_id.tz
+        if not tz and company.country_id:
+            timezones = pytz.country_timezones(company.country_id.code)
+            if timezones:
+                tz = timezones[0]
+        return tz or 'UTC'
+
+    def convert_local_to_utc(self, dt, force_local_tz_name=None, is_dst=None, naive=False):
         """
         :param dt: an instance of datetime object to convert to UTC
-        :param tz_name: the name of the timezone to convert. In case of no tz_name passed, this method will try to find the timezone in context or the login user record
+        :param force_local_tz_name: the name of the local timezone from which the given dt will be converted.
+            In case of no tz_name passed, this method will try to find the timezone in context or the login user record
         :param is_dst: respecting daylight saving time or not
 
-        :return: an instance of datetime object in UTC (with timezone notation)
+        :return: an instance of datetime object in UTC (with or without timezone notation depending on the given naive value)
         :rtype: datetime
         """
-        tz_name = tz_name or self._context.get('tz') or self.env.user.tz
-        if not tz_name:
+        force_local_tz_name = force_local_tz_name or self._context.get('tz') or self.env.user.tz
+        if not force_local_tz_name:
             raise ValidationError(_("Local time zone is not defined. You may need to set a time zone in your user's Preferences."))
-        local = pytz.timezone(tz_name)
+        local = pytz.timezone(force_local_tz_name)
         local_dt = local.localize(dt, is_dst=is_dst)
-        return local_dt.astimezone(pytz.utc)
+        res = local_dt.astimezone(pytz.utc)
+        if naive:
+            res = res.replace(tzinfo=None)
+        return res
 
-    def convert_utc_time_to_tz(self, utc_dt, tz_name=None, is_dst=None):
+    def convert_utc_to_local(self, utc_dt, force_local_tz_name=None, is_dst=None, naive=False):
         """
         Method to convert UTC time to local time
         :param utc_dt: datetime in UTC
-        :param tz_name: the name of the timezone to convert. In case of no tz_name passed, this method will try to find the timezone in context or the login user record
+        :param force_local_tz_name: the name of the timezone to convert. In case of no tz_name passed,
+            this method will try to find the timezone in context or the login user record
         :param is_dst: respecting daylight saving time or not
-        
+        :param naive: if True, returned datetime object comes without timezone info.
+
         :return: datetime object presents local time
         """
-        tz_name = tz_name or self._context.get('tz') or self.env.user.tz
-        if not tz_name:
+        force_local_tz_name = force_local_tz_name or self._context.get('tz') or self.env.user.tz
+        if not force_local_tz_name:
             raise ValidationError(_("Local time zone is not defined. You may need to set a time zone in your user's Preferences."))
-        tz = pytz.timezone(tz_name)
-        return pytz.utc.localize(utc_dt, is_dst=is_dst).astimezone(tz)
+        tz = pytz.timezone(force_local_tz_name)
+        res = pytz.utc.localize(utc_dt, is_dst=is_dst).astimezone(tz)
+        if naive:
+            res = res.replace(tzinfo=None)
+        return res
 
     def time_to_float_hour(self, dt):
         """
         This method will convert a datetime object to a float that present the corresponding time without date. For example,
             datetime.datetime(2019, 3, 24, 12, 44, 0, 307664) will become 12.733418795555554
-        @param dt: datetime object
-        @param type: datetime
-        
-        @return: The extracted time in float. For example, 12.733418795555554 for datetime.time(12, 44, 0, 307664)
-        @rtype: float
+        :param dt: datetime object
+        :param type: datetime
+
+        :return: The extracted time in float. For example, 12.733418795555554 for datetime.time(12, 44, 0, 307664)
+        :rtype: float
         """
         return dt.hour + dt.minute / 60.0 + dt.second / (60.0 * 60.0) + dt.microsecond / (60.0 * 60.0 * 1000000.0)
 
-    def _find_last_date_of_period_from_period_start_date(self, period_name, period_start_date):
+    def float_hours_to_time(self, float_hours, tzinfo=None):
+        """
+        Convert hours in float to datetime.time object
+        :param float_hours: a float indicate hours. For example: 10.5 for 10:30
+        :param tzinfo: set timezone for the converted time to return
+
+        :return: datetime.time object that presents the given float_hours
+        :rtype: time
+        """
+        hours = int(float_hours)
+        float_minutes = (float_hours - hours) * 60
+        minutes = int(float_minutes)
+        float_seconds = (float_minutes - minutes) * 60
+        seconds = int(float_seconds)
+        microsecond = int((float_seconds - seconds) * 1000000)
+        if isinstance(tzinfo, str):
+            tzinfo = pytz.timezone(tzinfo)
+        return date_utils.time(hours, minutes, seconds, microsecond, tzinfo)
+
+    def _find_last_date_of_period_from_period_start_date(self, period_name, period_start_date, periods_to_skip=0):
         """
         This method finds the last date of the given period defined by the period_name and the start date of the period. For example:
-        - if you pass 'monthly' as the period_name, date('2018-05-20') as the period_start_date, the result will be date('2018-02-20')
-        - if you pass 'quarterly' as the period_name, date('2018-05-20') as the date, the result will be date('2018-08-20')
-        
-        @param period_name: (string) the name of the given period which is either 'weekly' or 'monthly' or 'quarterly' or 'biannually' or 'annually'
-        @param period_start_date: (datetime.datetime) the starting date of the period from which the period will be started
-        @return: (datetime.datetime) the last date of the period
-        @raise ValidationError: when the passed period_name is invalid
+        - if you pass 'monthly' as the period_name, date('2018-05-20') as the period_start_date, the result will be date('2018-06-19')
+        - if you pass 'quarterly' as the period_name, date('2018-05-20') as the date, the result will be date('2018-08-19')
+
+        :param str period_name: the name of the given period which is either 'weekly' or 'monthly' or 'quarterly' or 'biannually' or 'annually'
+        :param (datetime.datetime | datetime.date) period_start_date:  the starting date of the period from which the period will be started
+        :param int periods_to_skip: the number of periods that will be skipped from the starting date
+
+        :return: (datetime.datetime) the last date of the period
+        :raise ValidationError: when the passed period_name is invalid
         """
-        if period_name not in ('weekly', 'monthly', 'quarterly', 'biannually', 'annually'):
-            raise ValidationError(_("Wrong value passed to the argument `period_name` of the method `find_last_date_of_period`."
-                                    " The value for `period_name` should be either 'weekly' or 'monthly' or 'quarterly' or 'biannually' or 'annually'"))
-        if period_name == 'weekly':
-            dt = period_start_date + relativedelta(days=6)
+        if not isinstance(period_start_date, date):
+            raise ValidationError(_("The given period_start_date must be either date or datetime type. This could be programming error..."))
+        period_name, msg = self._validate_period_name(period_name)
+        if not period_name:
+            raise ValidationError(msg)
+        if period_name == 'daily':
+            dt = period_start_date + relativedelta(days=1) * (periods_to_skip + 1)
+        elif period_name == 'weekly':
+            dt = period_start_date + relativedelta(days=7) * (periods_to_skip + 1)
         elif period_name == 'monthly':
-            dt = period_start_date + relativedelta(months=1) - relativedelta(days=1)
+            dt = period_start_date + relativedelta(months=1) * (periods_to_skip + 1)
         elif period_name == 'quarterly':
-            dt = period_start_date + relativedelta(months=3) - relativedelta(days=1)
+            dt = period_start_date + relativedelta(months=3) * (periods_to_skip + 1)
         elif period_name == 'biannually':
-            dt = period_start_date + relativedelta(months=6) - relativedelta(days=1)
+            dt = period_start_date + relativedelta(months=6) * (periods_to_skip + 1)
         else:
-            dt = period_start_date + relativedelta(years=1) - relativedelta(days=1)
+            dt = period_start_date + relativedelta(years=1) * (periods_to_skip + 1)
+        # As we want the last date of the current period instead of the first date of the next period,
+        # subtracting 1 day (for date) or 1 microsecond (for datetime) is required here
+        if not isinstance(period_start_date, datetime):
+            dt = dt - relativedelta(days=1)
+        else:
+            dt = dt - relativedelta(microseconds=1)
         return dt
 
     def _validate_period_name(self, period_name):
+        compatible_map = {
+            'hour': 'hourly',
+            'day': 'daily',
+            'week': 'weekly',
+            'month': 'monthly',
+            'quarter': 'quarterly',
+            'biannual': 'biannually',
+            'year': 'annually',
+            'annual': 'annually',
+        }
         msg = ''
-        if period_name not in ('weekly', 'monthly', 'quarterly', 'biannually', 'annually'):
-            msg = _("Wrong value passed to the argument `period_name` of the method `find_last_date_of_period`."
-                    " The value for `period_name` should be either 'weekly' or 'monthly' or 'quarterly' or 'biannually' or 'annually'")
+        if period_name in compatible_map.keys():
+            period_name = compatible_map[period_name]
+        if period_name not in compatible_map.values():
+            msg = _("Wrong value passed to the argument representing the period."
+                    " The value for `period_name` should be either 'hourly' or 'daily' or 'weekly' or 'monthly' or 'quarterly' or 'biannually' or 'annually'")
             return False, msg
         else:
-            return True, msg
+            return period_name, msg
 
-    def find_first_date_of_period(self, period_name, date):
+    def find_first_date_of_period(self, period_name, given_date, start_day_offset=0):
         """
         This method finds the first date of the given period defined by period name and any date of the period
-        @param period_name: (string) the name of the given period which is either 'weekly' or 'monthly' or 'quarterly' or 'biannually' or 'annually'
-        @param date: (datetime.datetime) any date of the period to find
-        @return: (datetime.datetime) the first date of the period
+
+        :param period_name: (string) the name of the given period which is either 'weekly' or 'monthly' or 'quarterly' or 'biannually' or 'annually'
+        :param given_date: datetime.datetime | datetime.date any datetime or date of the period to find
+        :param start_day_offset: integer to offset the first date of the given period.
+
+        :return: datetime.datetime | datetime.date the first date of the period
+        :rtype: datetime.datetime | datetime.date datetime or date, according to the type of the given given_date
+
+        :raise ValidationError: when the passed period_name is invalid
         """
-        ret, msg = self._validate_period_name(period_name)
-        if not ret:
+        period_name, msg = self._validate_period_name(period_name)
+        if not period_name:
             raise ValidationError(msg)
 
         if period_name == 'weekly':
-            dt = date - relativedelta(days=date.weekday())
+            dt = given_date - relativedelta(days=given_date.weekday())
         elif period_name == 'monthly':
-            dt = date + relativedelta(day=1)  # force day as 1 while keep year and month unchanged
+            # force day as 1
+            dt = given_date + relativedelta(day=1)
         elif period_name == 'quarterly':
-            if date.month >= 1 and date.month <= 3:
-                dt = fields.Date.to_date('%s-%s-%s' % (date.year, '01', '01'))
-            elif date.month >= 4 and date.month <= 6:
-                dt = fields.Date.to_date('%s-%s-%s' % (date.year, '04', '01'))
-            elif date.month >= 7 and date.month <= 9:
-                dt = fields.Date.to_date('%s-%s-%s' % (date.year, '07', '01'))
+            if given_date.month >= 1 and given_date.month <= 3:
+                dt = datetime(given_date.year, 1, 1)
+            elif given_date.month >= 4 and given_date.month <= 6:
+                dt = datetime(given_date.year, 4, 1)
+            elif given_date.month >= 7 and given_date.month <= 9:
+                dt = datetime(given_date.year, 7, 1)
             else:
-                dt = fields.Date.to_date('%s-%s-%s' % (date.year, 10, '01'))
+                dt = datetime(given_date.year, 10, 1)
         elif period_name == 'biannually':
-            if date.month <= 6:
-                dt = fields.Date.to_date('%s-01-01' % date.year)
+            if given_date.month <= 6:
+                dt = datetime(given_date.year, 1, 1)
             else:
-                dt = fields.Date.to_date('%s-07-01' % date.year)
+                dt = datetime(given_date.year, 7, 1)
         else:
-            dt = fields.Date.to_date('%s-01-01' % date.year)
+            dt = datetime(given_date.year, 1, 1)
+
+        if start_day_offset > 0:
+            dt = dt + relativedelta(days=start_day_offset)
+        if isinstance(dt, date) and not isinstance(dt, datetime):
+            dt = datetime.combine(dt, time.min)
+        dt = dt.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        # ensure the return type is as the same as the input given_date type
+        if isinstance(given_date, date) and not isinstance(given_date, datetime):
+            dt = dt.date()
+
         return dt
 
-    def find_last_date_of_period(self, period_name, date, date_is_start_date=False):
+    def find_last_date_of_period(self, period_name, given_date, date_is_start_date=False):
         """
         This method finds the last date of the given period defined by period name and any date of the period. For example:
         - if you pass 'monthly' as the period_name, date('2018-05-20') as the date, the result will be date('2018-05-31')
         - if you pass 'quarterly' as the period_name, date('2018-05-20') as the date, the result will be date('2018-06-30')
-        @param period_name: (string) the name of the given period which is either 'weekly' or 'monthly' or 'quarterly' or 'biannually' or 'annually'
-        @param date: (datetime.datetime) either the start date of the given period or any date of the period, depending on the passed value of the arg. date_is_start_date
-        @param date_is_start_date: (bool) True to indicate the given date is also the starting date of the given period_name, otherwise, the given date is any of the period's dates
-        @return: (datetime.datetime) the last date of the period
-        @raise ValidationError: when the passed period_name is invalid
+        :param period_name: (string) the name of the given period which is either 'weekly' or 'monthly' or 'quarterly' or 'biannually' or 'annually'
+        :param date: (datetime.datetime) either the start date of the given period or any date of the period, depending on the passed value of the arg. date_is_start_date
+        :param date_is_start_date: (bool) True to indicate the given date is also the starting date of the given period_name, otherwise, the given date is any of the period's dates
+        :return: (datetime.datetime) the last date of the period
+        :raise ValidationError: when the passed period_name is invalid
         """
-        ret, msg = self._validate_period_name(period_name)
-        if not ret:
+        period_name, msg = self._validate_period_name(period_name)
+        if not period_name:
             raise ValidationError(msg)
 
         # If the given date is the start date of the period
         if date_is_start_date:
-            return self._find_last_date_of_period_from_period_start_date(period_name=period_name, period_start_date=date)
+            return self._find_last_date_of_period_from_period_start_date(period_name=period_name, period_start_date=given_date)
 
+        dt = self.find_first_date_of_period(period_name, given_date, start_day_offset=0)
         # else
         if period_name == 'weekly':
-            dt = date + relativedelta(days=6 - date.weekday())
+            dt = dt + relativedelta(days=7, microseconds=-1)
         elif period_name == 'monthly':
-            days_of_month = self.get_days_of_month_from_date(date)
-            dt = fields.Datetime.to_datetime('%s-%s-%s' % (date.year, str(date.month).zfill(2), str(days_of_month).zfill(2)))
+            dt = dt + relativedelta(months=1, microseconds=-1)
         elif period_name == 'quarterly':
-            if date.month >= 1 and date.month <= 3:
-                dt = fields.Datetime.to_datetime('%s-%s-%s' % (date.year, '03', 31))
-            elif date.month >= 4 and date.month <= 6:
-                dt = fields.Datetime.to_datetime('%s-%s-%s' % (date.year, '06', 30))
-            elif date.month >= 7 and date.month <= 9:
-                dt = fields.Datetime.to_datetime('%s-%s-%s' % (date.year, '09', 30))
-            else:
-                dt = fields.Datetime.to_datetime('%s-%s-%s' % (date.year, 12, 31))
+            dt = dt + relativedelta(months=3, microseconds=-1)
         elif period_name == 'biannually':
-            if date.month <= 6:
-                dt = fields.Datetime.to_datetime('%s-%s-%s' % (date.year, '06', 30))
-            else:
-                dt = fields.Datetime.to_datetime('%s-12-31' % date.year)
+            dt = dt + relativedelta(months=6, microseconds=-1)
         else:
-            dt = fields.Datetime.to_datetime('%s-12-31' % date.year)
+            dt = dt + relativedelta(years=1, microseconds=-1)
+
+        # ensure the return type is as the same as the input given_date type
+        if isinstance(given_date, date) and not isinstance(given_date, datetime):
+            dt = dt.date()
         return dt
 
     def period_iter(self, period_name, dt_start, dt_end, start_day_offset=0):
         """
         Method to generate sorted dates for periods of the given period_name and dt_start and dt_end
-        @param period_name: (string) the name of the given period which is either 'weekly' or 'monthly' or 'quarterly' or 'biannually' or 'annually'
-        @param dt_start: (datetime.datetime)
-        @param dt_end: (datetime.datetime)
-        @param start_day_offset: default value is zero, which means that the start days are always the very first day of the period
-        @return: [list] list of datetime objects contain dt_start and end dates of found periods. For example:
+        :param period_name: (string) the name of the given period which is either 'weekly' or 'monthly' or 'quarterly' or 'biannually' or 'annually'
+        :param dt_start: datetime.datetime | datetime.date
+        :param dt_end: datetime.datetime | datetime.date
+        :param start_day_offset: default value is zero, which means that the start days are always the very first day of the period
+
+        :return: [list] list of datetime | date objects contain dt_start and end dates of found periods. For example:
                 if we pass [datetime.date(2018, 7, 4) and datetime.date(2018, 10, 31) and 0 as the dt_start and the dt_end and the
                 start_day_offset correspondingly, the result will be
                     [datetime.date(2018, 7, 4),
                     datetime.date(2018, 7, 31), datetime.date(2018, 8, 31), datetime.date(2018, 9, 30), datetime.date(2018, 10, 31)]
+        :rtype: list
         """
+        period_name, msg = self._validate_period_name(period_name)
+        if not period_name:
+            raise ValidationError(msg)
+
+        if type(dt_start) != type(dt_end):
+            raise ValidationError(_("The given dt_start and dt_end passed into the method `period_iter(period_name, dt_start, dt_end, start_day_offset)`"
+                                    " must be in the same type. This could be a programming error..."))
         if not start_day_offset >= 0:
             raise ValidationError(_("The `start_day_offset` passed to the method `period_iter` must be greater than or equal to zero!"))
+
+        if isinstance(dt_start, datetime):
+            delta = relativedelta(microseconds=1)
+        else:
+            delta = relativedelta(days=1)
+
         res = [dt_start]
         period_start_date = self.find_first_date_of_period(period_name, dt_start) + relativedelta(days=start_day_offset)
+
         if period_start_date > dt_start:
-            res.append(period_start_date - relativedelta(days=1))
+            res.append(period_start_date - delta)
 
         while period_start_date <= dt_end:
             last_dt = self._find_last_date_of_period_from_period_start_date(period_name=period_name, period_start_date=period_start_date)
             if last_dt > dt_end:
                 last_dt = dt_end
             res.append(last_dt)
-            period_start_date = last_dt + relativedelta(days=1)
+            period_start_date = last_dt + delta
 
         res.sort()
         return res
@@ -259,12 +380,31 @@ class TOBase(models.AbstractModel):
     def get_day_of_year_from_date(self, date):
         """
         Return the day of year from date. For example, 2018-01-06 will return 6
-        
-        :param date: date object 
+
+        :param date: date object
         """
-        first_date = fields.Date.to_date('%-01-01' % date.year)
+        first_date = fields.Date.to_date('%s-01-01' % date.year)
         day = self.get_days_between_dates(first_date, date) + 1
         return day
+
+    def get_days_in_year(self, date):
+        """
+        Return number of days in year from year
+        """
+        # if the dt_to >= the last moment of the February, the dt_to's year will be taken for leap year test
+        if date.month > 2 or (date.month == 2 and date == fields.Datetime.end_of(date, 'month')):
+            is_leap_year = date.year % 4 == 0
+        # otherwise, the previous year of the dt_to's year will be
+        else:
+            is_leap_year = (date.year - 1) % 4 == 0
+        return 366 if is_leap_year else 365
+
+    def get_hours_between_dates(self, dt_from, dt_to):
+        """
+        Return number of hours between two dates
+        """
+        diff_seconds = (dt_to - dt_from).total_seconds
+        return diff_seconds / 3600
 
     def get_days_between_dates(self, dt_from, dt_to):
         """
@@ -272,13 +412,85 @@ class TOBase(models.AbstractModel):
         """
         return (dt_to - dt_from).days
 
+    def get_weeks_between_dates(self, dt_from, dt_to):
+        """
+        Return number of weeks between two dates
+        """
+        diff_days = self.get_days_between_dates(dt_from, dt_to)
+        return diff_days // 7
+
+    def get_months_between_dates(self, dt_from, dt_to):
+        """
+        Calculate number of months (in float) between two given dates (include both ends) that respects odd/even months
+
+        :return: number of months (in float) between two given dates
+        :rtype: float
+        """
+        if not isinstance(dt_from, date):
+            raise ValidationError(_("The given dt_from must be either date or datetime."))
+        if not isinstance(dt_to, date):
+            raise ValidationError(_("The given dt_to must be either date or datetime."))
+
+        if not isinstance(dt_from, datetime):
+            dt_from = datetime.combine(dt_from, time.min)
+        if not isinstance(dt_to, datetime):
+            dt_to = datetime.combine(dt_to, time.max)
+
+        months = 0.0
+        dates_list = [dt_from]
+        for dt in rrule.rrule(freq=rrule.MONTHLY, dtstart=dt_from, bymonthday=1, until=dt_to):
+            if dt not in dates_list:
+                dates_list.append(dt)
+        if dt_to not in dates_list:
+            dates_list.append(dt_to)
+
+        dates_count = len(dates_list)
+        last_seen_date = False
+        for idx, dt in enumerate(dates_list):
+            if not last_seen_date:
+                last_seen_date = dt
+                continue
+            if idx == 1 or idx == dates_count - 1:
+                months += ((dt - last_seen_date).days / self.get_days_of_month_from_date(last_seen_date))
+            else:
+                months += 1
+            last_seen_date = dt
+        return months
+
+    def get_number_of_years_between_dates(self, dt_from, dt_to):
+        """
+        Calculate number of years (in float) between two given dates (excl. the dt_to) that respects leap years
+
+        :param dt_from: datetime | date
+        :param dt_to: datetime | date
+
+        :return: number of years (in float) between two given dates (excl dt_to)
+        :rtype: float
+        """
+        if not isinstance(dt_from, date):
+            raise ValidationError(_("The given dt_from must be either date or datetime."))
+        if not isinstance(dt_to, date):
+            raise ValidationError(_("The given dt_to must be either date or datetime."))
+
+        if not isinstance(dt_from, datetime):
+            dt_from = datetime.combine(dt_from, time.min)
+        if not isinstance(dt_to, datetime):
+            dt_to = datetime.combine(dt_to, time.min)
+
+        days_in_years = self.get_days_in_year(dt_to)
+        diff = relativedelta(dt_to, dt_from)
+        return diff.years + \
+            diff.months / 12 + \
+            diff.days / days_in_years + \
+            ((diff.hours + diff.minutes / 60 + diff.seconds / 3600 + diff.microseconds / (1000000 * 3600)) / 24) / days_in_years
+
     def get_weekdays_for_period(self, dt_from, dt_to):
         """
         Method to return the a dictionary in form of {int0:date, wd1:date, ...} where int0/int1
             are integer 0~6 presenting weekdays and date1/date2 are dates that are the correspong weekdays
-        @param dt_from: datetime.datetime|datetime.date
-        @param dt_to: datetime.datetime|datetime.date
-        @return: dict{int0:date, wd1:date, ...}
+        :param dt_from: datetime.datetime|datetime.date
+        :param dt_to: datetime.datetime|datetime.date
+        :return: dict{int0:date, wd1:date, ...}
         """
         nb_of_days = self.get_days_between_dates(dt_from, dt_to) + 1
         if nb_of_days > 7:
@@ -288,6 +500,32 @@ class TOBase(models.AbstractModel):
             day_rec = dt_from + timedelta(days=day)
             weekdays[day_rec.weekday()] = day_rec.date()
         return weekdays
+
+    def convert_relativedelta_to_timedelta(self, relative_delta, date_from=None):
+        """
+        Convert relativedelta object to timedelta object (datetime.timedelta)
+        @param relative_delta: relativedelta object, relativedelta()
+        @param date_from: custom datetime to start calculating, instead of current datetime
+        @return: timedelta object, (datetime.timedelta)
+
+        example: relativedelta(days=+1, hours=+1, minutes=+30)
+            => datetime.timedelta(days=1, hours=1, minutes=30)
+        """
+        now = date_from or fields.Datetime.now()
+        return now + relative_delta - now
+
+    def get_total_seconds_from_relativedelta(self, relative_delta, date_from=None):
+        """
+        Convert relativedelta object to seconds
+        @param relative_delta: relativedelta object, relativedelta()
+        @param date_from: custom datetime to start calculating, instead of current datetime
+        @return: integer, total seconds
+
+        example: relativedelta(days=+1, hours=+1, minutes=+30)
+            => 91800s
+        """
+        timedelta = self.convert_relativedelta_to_timedelta(relative_delta, date_from)
+        return timedelta.total_seconds()
 
     def next_weekday(self, date, weekday=None):
         """
@@ -301,25 +539,26 @@ class TOBase(models.AbstractModel):
             4: will return 2018-10-26 (Friday next week)
             5: will return 2018-10-27 (Saturday next week)
             6: will return 2018-10-28 (Sunday next week)
-            None: will return 2018-10-25 (the same week day next week)        
-        @param date: (datetime.datetime or datetime.date) the given date to find the date next week
-        @param weekday: week day of the next week which is an integer from 0 to 6 presenting a day of week, or None to find the date of the same week day next week
+            None: will return 2018-10-25 (the same week day next week)
+        :param date: (datetime.datetime or datetime.date) the given date to find the date next week
+        :param weekday: week day of the next week which is an integer from 0 to 6 presenting a day of week, or None to find the date of the same week day next week
 
-        @return: date of the same weekday next week
+        :return: date of the same weekday next week
         """
         # if weekday is None, set it as the same as the weekday of the given date
-        if weekday is None:
-            weekday = date.weekday()
-
-        days_ahead = weekday - date.weekday()
-        if days_ahead <= 0:  # Target day already happened this week
-            days_ahead += 7
-        return date + timedelta(days_ahead)
+        result = date + timedelta(7)
+        if weekday is not None:
+            if not 0 <= weekday <= 6:
+                raise ValidationError(_("Wrong value passed to the argument `weekday` of the method `next_weekday`."
+                                        " The value for `weekday` must be >= 0 and <= 6"))
+            result = self.find_first_date_of_period('weekly', result)
+            result += timedelta(weekday)
+        return result
 
     def split_date(self, date):
         """
         Method to split a date into year,month,day separatedly
-        @param date date:
+        :param date date:
         """
         year = date.year
         month = date.month
@@ -333,11 +572,11 @@ class TOBase(models.AbstractModel):
 
     def _zip_dir(self, path, zf, incl_dir=False):
         """
-        @param path: the path to the directory to zip
-        @param zf: the ZipFile object which is an instance of zipfile.ZipFile
-        @type zf: ZipFile
-        
-        @return: zipfile.ZipFile object that contain all the content of the path
+        :param path: the path to the directory to zip
+        :param zf: the ZipFile object which is an instance of zipfile.ZipFile
+        :type zf: ZipFile
+
+        :return: zipfile.ZipFile object that contain all the content of the path
         """
         path = os.path.normpath(path)
 
@@ -358,11 +597,11 @@ class TOBase(models.AbstractModel):
         """
         zip a directory tree into a bytes object which is ready for storing in Binary field
 
-        @param path: the absolute path to the directory to zip
-        @type path: string
-        
-        @return: return bytes object containing data for storing in Binary fields
-        @rtype: bytes
+        :param path: the absolute path to the directory to zip
+        :type path: string
+
+        :return: return bytes object containing data for storing in Binary fields
+        :rtype: bytes
         """
         # initiate A BytesIO object
         file_data = BytesIO()
@@ -377,18 +616,18 @@ class TOBase(models.AbstractModel):
         # read bytes to the EOF
         file_data_read = file_data.read()
         # encode bytes for output to return
-        out = base64.encodebytes(file_data_read)
+        out = base64.b64encode(file_data_read)
         return out
 
     def zip_dirs(self, paths):
         """
         zip a tree of directories (defined by paths) into a bytes object which is ready for storing in Binary field
 
-        @param paths: list of absolute paths (string) to the directories to zip
-        @type paths: list
-        
-        @return: return bytes object containing data for storing in Binary fields
-        @rtype: bytes
+        :param paths: list of absolute paths (string) to the directories to zip
+        :type paths: list
+
+        :return: return bytes object containing data for storing in Binary fields
+        :rtype: bytes
         """
         # initiate A BytesIO object
         file_data = BytesIO()
@@ -404,7 +643,7 @@ class TOBase(models.AbstractModel):
         # read bytes to the EOF
         file_data_read = file_data.read()
         # encode bytes for output to return
-        out = base64.encodebytes(file_data_read)
+        out = base64.b64encode(file_data_read)
         return out
 
     def guess_lang(self, sample):
@@ -416,7 +655,7 @@ class TOBase(models.AbstractModel):
     def strip_accents(self, s):
         s = remove_accents(s)
         return self._no_accent_vietnamese(s)
-    
+
     def _no_accent_vietnamese(self, s):
         """
         Convert Vietnamese unicode string from 'Tiếng Việt có dấu' thanh 'Tieng Viet khong dau'
@@ -440,20 +679,16 @@ class TOBase(models.AbstractModel):
         s = re.sub(u'[đ]', 'd', s)
         return s
 
-    def no_accent_vietnamese(self, s):
-        _logger.warn('The method `no_accent_vietnamese()` is deprecated. Please use the `_no_accent_vietnamese()` instead')
-        return self._no_accent_vietnamese(s)
-
     def sum_digits(self, n, number_of_digit_return=None):
         """
         This will sum all digits of the given number until the result has x digits where x is number_of_digit_return
-        @param n: the given number for sum of its digits
-        @type n: int|float
-        @param number_of_digit_return: the number of digist in the return result.
+        :param n: the given number for sum of its digits
+        :type n: int|float
+        :param number_of_digit_return: the number of digist in the return result.
             For example, if n=178 and number_of_digit_return=2, the result will be 16. However, if number_of_digit_return <= 1, the result will be 7 (=1+6 again)
-            
-        @return: the sum of all the digits until the result has `number_of_digit_return` digits
-        @rtype: int
+
+        :return: the sum of all the digits until the result has `number_of_digit_return` digits
+        :rtype: int
         """
         s = 0
         for d in str(n):
@@ -461,7 +696,7 @@ class TOBase(models.AbstractModel):
                 s += int(d)
 
         str_len = len(str(s))
-        if isinstance(number_of_digit_return, int) and str_len > number_of_digit_return and str_len > 1 :
+        if isinstance(number_of_digit_return, int) and str_len > number_of_digit_return and str_len > 1:
             return self.sum_digits(s)
         return s
 
@@ -469,13 +704,13 @@ class TOBase(models.AbstractModel):
         """
         9 is lucky number
         This will find the nearest integer if the given number that have digits sum = 9 (sum digits until 1 digit is returned)
-        @param n: the given number for finding its nearest lucky number
-        @type n: int|float
-        @param rounding: the number of digist for rounding
+        :param n: the given number for finding its nearest lucky number
+        :type n: int|float
+        :param rounding: the number of digist for rounding
             For example, if n=178999 and rounding=2, the result will be 178900. However, if rounding = 4, the result will be 170000
-            
-        @return: the lucky number
-        @rtype: int
+
+        :return: the lucky number
+        :rtype: int
         """
         if rounding < 0:
             rounding = 0
@@ -506,17 +741,275 @@ class TOBase(models.AbstractModel):
             respond = get(url)
         # catch SSLError when the url comes with an invalid SSL certificate (e.g, a self-signed one)
         except SSLError as e:
-            _logger.warn("SSLError occurred while getting URL %s. Here is the details: %s. Now trying without SSL verification...", url, str(e))
+            _logger.warning("SSLError occurred while getting URL %s. Here is the details: %s. Now trying without SSL verification...", url, str(e))
             # ignore ssl certificate validation
             respond = get(url, verify=False)
         # catch the ConnectionError that occurs when it failed to establish a new connection to the given URL
-        except ConnectionError as e:
+        except RequestsConnectionError as e:
             _logger.error("Failed to establish connection to the given URL %s. Here is the details: %s.", url, str(e))
         # catch the remaining possible errors
         except Exception as e:
             _logger.error("Error occurred while getting URL %s. Here is the details: %s.", url, str(e))
         try:
             return respond.text
-        except NameError as e:
+        except NameError:
             return '127.0.0.1'
 
+    def identical_images(self, img1, img2):
+        """
+        Compare 2 given image object of :class:`fields.Image` if they are identical
+        PIL module do not support `.svg` format (ref: https://pillow.readthedocs.io/en/5.1.x/handbook/image-file-formats.html)
+        So please don't compare 2 unsupported type images
+        :param: img1: fields.Image object
+        :param: img2: fields.Image object
+
+        :return: return True if 2 images ARE identical, otherwise return False
+        :rtype: boolean
+        :raise: OSError when image(s) in pillow unsupported type
+        """
+
+        # img1 and img2 can be False depends on condition we given
+        if img1 and img2:
+            try:
+                img1 = Image.open(BytesIO(base64.decodebytes(img1)))
+                img2 = Image.open(BytesIO(base64.decodebytes(img2)))
+                if not ImageChops.difference(image1=img1, image2=img2).getbbox():
+                    return True
+                else:
+                    return False
+            except OSError:
+                # OSError: cannot identify image file <_io.BytesIO object at 0x7fbac2950f10>
+                _logger.error("You are comparing 2 images which are not supported file type of PIL. "
+                              "Please follow this link to see what PIL supported: "
+                              "(https://pillow.readthedocs.io/en/5.1.x/handbook/image-file-formats.html)"
+                              "You should either choose to convert image type back to PIL supported types with python libraries,"
+                              " or accept binary string comparing as last result.")
+                raise OSError
+            except Exception as e:
+                # Raise `ValueError: images do not match` when you are trying to compare 2 images
+                # with different types (E.g: jpeg and png)
+                _logger.debug(e)
+                return False
+        else:
+            return False
+
+    def validate_year(self, year):
+        """
+        This method validates the given year and return the year in integer.
+
+        :param year: str|int the given year to validate
+        :return: the given year in integer that was validated
+        :rtype: int
+        :raise ValidationError: if the input year is neither a digit nor a digest > 0 and <= 9999
+        """
+        if year and (type(year) == int or year.isdigit()):
+            year_int = int(year)
+            if year_int > 0 and year_int <= 9999:
+                return year
+        raise ValidationError(_("Invalid year '%s'") % year)
+
+    def break_timerange_for_midnight(self, start_dt, end_dt):
+        """
+        generate intervals broken by midnight (00:00:00)
+        for example datetime(2021-02-02 20:00:00) ~ datetime(2021-02-03 20:00:00) will produce
+        [datetime(2021-02-02 20:00:00), datetime(2021-02-03 00:00:00), datetime(2021-02-03 20:00:00)]
+        :param start_dt: datetime
+        :param end_dt: datetime
+
+        :return: list of datetimes with midnight inside
+        :rtype: list
+        """
+        dates = []
+        for dt in rrule.rrule(freq=rrule.DAILY, dtstart=start_dt, until=end_dt):
+            if not dates:
+                dates.append(dt)
+                continue
+            if dates[-1].date().weekday() != dt.date().weekday():
+                dates.append(datetime.combine(dt.date(), time.min))
+            if dates[-1] != dt:
+                dates.append(dt)
+        if end_dt not in dates:
+            if dates[-1].date().weekday() != end_dt.date().weekday():
+                dates.append(datetime.combine(end_dt.date(), time.min))
+            if end_dt not in dates:
+                dates.append(end_dt)
+        return dates
+
+    @api.model
+    def splittor(self, collection, max_rec_in_batch=None, flush=True):
+        """Splits the given collection in batches of the given max_rec_in_batch or 1000
+        (if prefetch_max is not passed) to avoid entire-recordset-prefetch-effects
+        and & removes the previous batch from the cache after it's been iterated in full
+
+        :param collection: the collection to split into batches
+        :type collection: recordset | list
+        :param max_rec_in_batch: max number of records in each splitted batch.
+            If not give or False evaluated, PREFETCH_MAX will be taken
+        :param flush: if enabled (by default), the collection sub-collection will be invalidate_recordset with flush
+
+        :return: return an iterator
+        """
+        max_rec_in_batch = max_rec_in_batch or PREFETCH_MAX
+        for idx in range(0, len(collection), max_rec_in_batch):
+            sub = collection[idx:idx + max_rec_in_batch]
+            yield sub
+            if isinstance(sub, models.Model):
+                sub.invalidate_recordset(flush=flush)
+
+    @api.model
+    def _update_brand_icon(self):
+        from .. import _update_brand_web_icon_data
+        _update_brand_web_icon_data(self.env)
+
+    def mile2km(self, miles):
+        return miles * 1.60934
+
+    def km2mile(self, km):
+        return km / 1.60934
+
+    def get_ratio_between_periods(self, period1, duration1, period2, duration2, given_date=False):
+        """
+        This method calculates the ratio between 2 time periods. For example:
+        - if you pass 'monthly' as the period1, 'daily' as the period2, date('2024-02-09') as the given_date, the result will be 29/7
+
+        :param str period1: the name of the given period which is either 'weekly' or 'monthly' or 'quarterly'
+        or 'biannually' or 'annually' or 'hourly' or 'daily'
+        :param int duration1: the number of period1 to compare
+        :param str period2: the name of the given period which is either 'weekly' or 'monthly' or 'quarterly'
+        or 'biannually' or 'annually' or 'hourly' or 'daily'
+        :param int duration2: the number of period2 to compare
+        :param (datetime.date | datetime.datetime) given_date: the starting date of the period from which the period
+        will be started, get current date if value is false
+
+        :return: (float) ratio between periods
+        :raise ValidationError: when the passed period_name is invalid
+        """
+        assert duration1 > 0 and duration2 > 0, "duration1 and duration2 must be greater than 0."
+        period1, msg1 = self._validate_period_name(period1)
+        period2, msg2 = self._validate_period_name(period2)
+        if not period1 or not period2:
+            msg = msg1 if not period1 else msg2
+            raise ValidationError(msg)
+
+        given_date = given_date or date.today()
+        if period1 == period2:
+            return duration1 / duration2
+        elif {period1, period2} == {'annually', 'monthly'}:
+            return (12 if period1 == 'annually' else 1 / 12) * duration1 / duration2
+        elif {period1, period2} == {'annually', 'quarterly'}:
+            return (4 if period1 == 'annually' else 1 / 4) * duration1 / duration2
+        elif {period1, period2} == {'annually', 'biannually'}:
+            return (2 if period1 == 'annually' else 1 / 2) * duration1 / duration2
+        elif {period1, period2} == {'quarterly', 'monthly'}:
+            return (3 if period1 == 'quarterly' else 1 / 3) * duration1 / duration2
+        elif {period1, period2} == {'biannually', 'monthly'}:
+            return (6 if period1 == 'biannually' else 1 / 6) * duration1 / duration2
+        elif {period1, period2} == {'biannually', 'quarterly'}:
+            return (2 if period1 == 'biannually' else 1 / 2) * duration1 / duration2
+        elif {period1, period2} == {'weekly', 'daily'}:
+            return (7 if period1 == 'weekly' else 1 / 7) * duration1 / duration2
+        elif {period1, period2} == {'daily', 'hourly'}:
+            return (24 if period1 == 'daily' else 1 / 24) * duration1 / duration2
+        elif {period1, period2} == {'weekly', 'hourly'}:
+            return (24 * 7 if period1 == 'weekly' else 1 / (24 * 7)) * duration1 / duration2
+        elif 'hourly' in {period1, period2}:
+            tmp_period = period1 if period2 == 'hourly' else period2
+            periods_to_skip = duration1 - 1 if period2 == 'hourly' else duration2 - 1
+            last_date_period = self._find_last_date_of_period_from_period_start_date(tmp_period, given_date, periods_to_skip)
+            range_date_period = self.get_days_between_dates(given_date, last_date_period) + 1
+            ratio_between_periods = range_date_period * 24 / duration2 if period2 == 'hourly' else 1 / (range_date_period * 24 / duration1)
+        else:
+            last_date_period1 = self._find_last_date_of_period_from_period_start_date(period1, given_date, duration1 - 1)
+            last_date_period2 = self._find_last_date_of_period_from_period_start_date(period2, given_date, duration2 - 1)
+
+            range_date_period1 = self.get_days_between_dates(given_date, last_date_period1) + 1
+            range_date_period2 = self.get_days_between_dates(given_date, last_date_period2) + 1
+
+            ratio_between_periods = range_date_period1 / range_date_period2
+
+        return ratio_between_periods
+
+    def calculate_weights(self, *item_weights, precision_digits=None, precision_rounding=None, rounding_method='HALF-UP'):
+        """
+        This methods calculate weight of each in percentage of the total weight without that requirement that total weight is 100%
+        For example, if you pass 2 and 6, the result will return [25.0, 75.0]
+
+        :param *item_weights: item weights. For example: calculate_weights(2, 6) will return [25.0, 75.0]
+        :param int precision_digits: number of fractional digits to round returned weights to.
+        :param float precision_rounding: decimal number of returned weights representing the minimum
+            non-zero value at the desired precision (for example, 0.01 for a
+            2-digit precision).
+        :param rounding_method: the rounding method used: 'HALF-UP', 'UP' or 'DOWN',
+            the first one rounding up to the closest number with the rule that
+            number>=0.5 is rounded up to 1, the second always rounding up and the
+            latest one always rounding down.
+
+        :return: list of weights in float that are compatible with percentage widget. For example, calculate_weights(2, 6) will return [0.25, 0.75]
+        """
+        if any(not isinstance(weight, (int, float)) for weight in item_weights):
+            raise UserError(_("The method `calculate_weights` only accepts item weights in either float or integer."))
+        total = sum(item_weights)
+        item_weights_count = len(item_weights)
+        res = []
+        for weight in item_weights:
+            if total != 0:
+                percentage = weight / total
+            else:
+                percentage = 1 / item_weights_count
+            if precision_digits or precision_rounding:
+                percentage = float_round(percentage, precision_digits, precision_rounding, rounding_method)
+            res.append(percentage)
+        if res and sum(res) != 1:
+            res[-1] += 1 - sum(res)
+        return res
+
+    def fibonacci(self, nterms, deduplicate_1=False):
+        """
+        Method to generate Fibonacci sequence.
+        Shamelessly copy from https://www.programiz.com/python-programming/examples/fibonacci-sequence ^_^
+
+        :param nterms: number of terms. For example, if nterms = 5, the return result will be a list of 5 items
+        :param deduplicate_1: if True, the first 1 in the return series will be removed when nterms >= 3
+            For example, fibonacci(3, True) will return [0, 1, 2] instead of [0, 1, 1]
+
+        :return: Fibonacci sequence
+        :rtype: list
+        """
+        if nterms <= 0:
+            raise UserError(_("Number of terms must be greater than zero (0)"))
+        if deduplicate_1:
+            nterms += 1
+        res = []
+        count = 0
+        n1, n2 = 0, 1
+        while count < nterms:
+            res.append(n1)
+            nth = n1 + n2
+            # update values
+            n1 = n2
+            n2 = nth
+            count += 1
+        if deduplicate_1 and nterms > 2:
+            res.remove(1)
+        return res
+
+    @api.model
+    def _get_file_size(self, path):
+        """
+        Get size of a file or directory
+
+        :param str path: path to the file or directory
+        :return: size of the file or directory (byte)
+        :rtype: int
+        """
+        if os.path.isfile(path):
+            return os.path.getsize(path)
+        elif os.path.isdir(path):
+            total_size = 0
+            for dirpath, dirnames, filenames in os.walk(path):
+                for filename in filenames:
+                    file_path = os.path.join(dirpath, filename)
+                    if not os.path.islink(file_path):  # Exclude symbolic links
+                        total_size += os.path.getsize(file_path)
+            return total_size
+        raise UserError(_("Cannot get the size of a file or folder"))

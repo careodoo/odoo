@@ -1,51 +1,33 @@
-import pytz
 import logging
+import pytz
+import threading
+import re
 
 from datetime import datetime
 
 from odoo import models, fields, api, registry, _
 from odoo.exceptions import ValidationError, UserError
-from odoo.tools import format_datetime
 from odoo.osv import expression
+from odoo.addons.base.models.res_partner import _tz_get
+from odoo.addons.to_base.helper.multi_threading import Threading
 
 from ..pyzk.zk import ZK
 from ..pyzk.zk.user import User
+from ..pyzk.zk.attendance import Attendance
 from ..pyzk.zk.exception import ZKErrorResponse, ZKNetworkError, ZKConnectionUnauthorized
 
 _logger = logging.getLogger(__name__)
 
 
-
-
 class AttendanceDevice(models.Model):
     _name = 'attendance.device'
-    _description = 'Attendance Device'
+    _description = 'Attendance Machine'
     _inherit = ['mail.thread', 'mail.activity.mixin', 'to.base']
 
-    def _get_default_attendance_states(self):
-        att_state_ids = self.env['attendance.state']
-
-        # Normal Working Attendance
-        attendance_device_state_code_0 = self.env.ref('to_attendance_device.attendance_device_state_code_0')
-        if attendance_device_state_code_0:
-            att_state_ids += attendance_device_state_code_0
-        attendance_device_state_code_1 = self.env.ref('to_attendance_device.attendance_device_state_code_1')
-        if attendance_device_state_code_1:
-            att_state_ids += attendance_device_state_code_1
-
-        # Overtime Working Attendance
-        attendance_device_state_code_4 = self.env.ref('to_attendance_device.attendance_device_state_code_4')
-        if attendance_device_state_code_4:
-            att_state_ids += attendance_device_state_code_4
-        attendance_device_state_code_5 = self.env.ref('to_attendance_device.attendance_device_state_code_5')
-        if attendance_device_state_code_5:
-            att_state_ids += attendance_device_state_code_5
-        return att_state_ids
-
     @api.model
-    def _get_default_attendance_device_state_lines(self):
+    def _default_get_attendance_device_state_lines(self):
         attendance_device_state_line_data = []
-        for state in self._get_default_attendance_states():
+        for state in self.env['attendance.state'].search([]):
             attendance_device_state_line_data.append(
                 (0, 0, {
                     'attendance_state_id': state.id,
@@ -56,74 +38,76 @@ class AttendanceDevice(models.Model):
                 )
         return attendance_device_state_line_data
 
+    @api.model
+    def _default_trans_flag_ids(self):
+        return self.env['attendance.device.trans.flag'].search([('sequence', '<=', 7)])
+
     state = fields.Selection([
         ('draft', 'Draft'),
         ('confirmed', 'Confirmed'),
         ('cancelled', 'Cancelled')
-        ], string='Status', default='draft', index=True, copy=False, required=True, tracking=True)
+        ],
+        string='Status',
+        default='draft',
+        index=True,
+        copy=False,
+        required=True,
+        tracking=True,
+        help="Only confirmed machines will get their data synchronized automatically."
+    )
 
-    name = fields.Char(string="Name", required=True, help='The name of the attendance device', tracking=True, translate=True, copy=True, default='/',
-                       readonly=True, states={'draft': [('readonly', False)]})
+    name = fields.Char(string='Name', required=True, help="The name of the attendance machine",
+                       tracking=True, translate=True, copy=True, default='/')
 
     firmware_version = fields.Char(string='Firmware Version', readonly=True,
-                                   help="The firmware version of the device which will be filled automatically when you hit the 'Get Device Info' button.")
-    serialnumber = fields.Char(string='Serial Number', readonly=True,
-                               help="The serial number of the device which will be filled automatically when you hit the 'Get Device Info' button.")
+                                   help="The firmware version of the machine which will be filled automatically when you hit the 'Get Machine Info' button.")
+    serialnumber = fields.Char(string='Serial Number',
+                                help="The serial number of the machine which will be filled automatically when you hit the 'Get Machine Info' button.")
     oem_vendor = fields.Char(string='OEM Vendor', readonly=True,
-                               help="The OEM Vendor of the device which will be filled automatically when you hit the 'Get Device Info' button.")
+                               help="The OEM Vendor of the machine which will be filled automatically when you hit the 'Get Machine Info' button.")
     platform = fields.Char(string='Platform', readonly=True,
-                               help="The Platform of the device which will be filled automatically when you hit the 'Get Device Info' button.")
+                               help="The Platform of the machine which will be filled automatically when you hit the 'Get Machine Info' button.")
     fingerprint_algorithm = fields.Char(string='Fingerprint Algorithm', readonly=True,
-                               help="The Fingerprint Algorithm (aka ZKFPVersion) of the device which will be filled automatically when you hit the 'Get Device Info' button.")
-    device_name = fields.Char(string='Device Name', readonly=True,
-                               help="The model of the device which will be filled automatically when you hit the 'Get Device Info' button.")
+                               help="The Fingerprint Algorithm (aka ZKFPVersion) of the machine which will be filled automatically when you hit the 'Get Machine Info' button.")
+    device_name = fields.Char(string='Machine Name', readonly=True,
+                               help="The model of the machine which will be filled automatically when you hit the 'Get Machine Info' button.")
 
     work_code = fields.Char(string='Work Code', readonly=True,
-                               help="The Work Code of the device which will be filled automatically when you hit the 'Get Device Info' button.")
+                               help="The Work Code of the machine which will be filled automatically when you hit the 'Get Machine Info' button.")
 
-    ip = fields.Char(string="IP / Domain Name", required=True, tracking=True, copy=False, readonly=True, states={'draft': [('readonly', False)]},
-                     help='The accessible IP or Domain Name of the device to get device\'s attendance data', default='0.0.0.0')
-    port = fields.Integer(string="Port", required=True, default=4370, tracking=True, readonly=True, states={'draft': [('readonly', False)]})
-    timeout = fields.Integer(string='Timeout', default=20, required=True, help='Connection Timeout in second', tracking=True,
-                             readonly=True, states={'draft': [('readonly', False)]})
-    description = fields.Text(string="Description")
-    user_id = fields.Many2one('res.users', string="Technician", tracking=True, default=lambda self: self.env.user)
-    device_user_ids = fields.One2many('attendance.device.user', 'device_id', string='Device Users',
-                                      help='List of Users stored in the attendance device')
-    device_users_count = fields.Integer(string='Users Count', compute='_compute_device_users_count', store=True)
+    ip = fields.Char(string='IP / Domain Name', tracking=True, copy=False,
+                     help="The accessible IP or Domain Name of the machine to get the machine's attendance data", default='0.0.0.0')
+    port = fields.Integer(string='Port', default=4370, tracking=True)
+    timeout = fields.Integer(string='Timeout', default=20, required=True, help="Maximum time in seconds to wait for response from the machine", tracking=True)
+    description = fields.Text(string='Description')
+    user_id = fields.Many2one('res.users', string='Technician', tracking=True, default=lambda self: self.env.user)
+    device_user_ids = fields.One2many('attendance.device.user', 'device_id', string='Machine Users',
+                                      help="List of Users stored in the attendance machine")
+    device_users_count = fields.Integer(string='Users Count', compute='_compute_device_users_count', store=True, tracking=True)
 
     mapped_employee_ids = fields.Many2many('hr.employee', 'mapped_device_employee_rel', string='Mapped Employees',
                                            compute='_compute_employees', store=True,
-                                           help="List of employees that have been mapped with this device's users")
+                                           help="List of employees that have been mapped with this machine's users")
 
-    mapped_employees_count = fields.Integer(string='Mapped Employee Count', compute='_compute_mapped_employees_count', store=True)
+    mapped_employees_count = fields.Integer(string='Mapped Employee Count', compute='_compute_mapped_employees_count', store=True, tracking=True)
 
-    umapped_device_user_ids = fields.One2many('attendance.device.user', 'device_id', string='Device Users',
+    umapped_device_user_ids = fields.One2many('attendance.device.user', 'device_id', string='Unmapped Machine Users',
                                               domain=[('employee_id', '=', False)],
-                                              help='List of Device Users that have not been mapped with an employee')
+                                              help="List of Machine Users that have not been mapped with an employee")
 
     unmapped_employee_ids = fields.Many2many('hr.employee', 'device_employee_rel', 'device_id', 'employee_id',
                                              compute='_compute_employees', store=True, string='Unmapped Employees',
-                                             help="The employees that have not been mapped with any user of this device")
+                                             help="The employees that have not been mapped with any user of this machine")
 
     attendance_device_state_line_ids = fields.One2many('attendance.device.state.line', 'device_id', string='State Codes', copy=False,
-                                                       default=_get_default_attendance_device_state_lines,
-                                                       readonly=True, states={'draft': [('readonly', False)]})
+                                                       default=_default_get_attendance_device_state_lines)
     location_id = fields.Many2one('attendance.device.location', string='Location', tracking=True,
-                                  help='The location where the device is located', required=True,
-                                  readonly=True, states={'draft': [('readonly', False)]})
+                                  help="The location where the machine is located", required=True)
 
-    ignore_unknown_code = fields.Boolean(string='Ignore Unknown Code', default=False, tracking=True,
-                                         help='Sometimes you don\'t want to load attendance data with status '
-                                         'codes those not declared in the table below. In such the case, check this field.',
-                                         readonly=True, states={'draft': [('readonly', False)]})
-
-    company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company,
-                                 readonly=True, states={'draft': [('readonly', False)]})
+    company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
 
     auto_clear_attendance = fields.Boolean(string='Auto Clear Attendance Data', default=False, tracking=True,
-                                            readonly=True, states={'draft': [('readonly', False)]},
-                                            help='Check this to clear all device attendance data after download into Odoo')
+                                            help="Check this to clear all machine attendance data after download into System")
 
     auto_clear_attendance_schedule = fields.Selection([
         ('on_download_complete', 'On Download Completion'),
@@ -131,7 +115,7 @@ class AttendanceDevice(models.Model):
         help="On Download Completion: Delete attendance data as soon as download finished\n"
         "Time Scheduled: Delete attendance data on the time specified below")
     auto_clear_attendance_hour = fields.Float(string='Auto Clear At', tracking=True, required=True, default=0.0,
-                                               help="The time (in the attendance device's timezone) to clear attendance data after download.")
+                                               help="The time (in the attendance machine's timezone) to clear attendance data after download.")
 
     auto_clear_attendance_dow = fields.Selection([
         ('-1', 'Everyday'),
@@ -141,31 +125,30 @@ class AttendanceDevice(models.Model):
         ('3', 'Thursday'),
         ('4', 'Friday'),
         ('5', 'Saturday'),
-        ('6', 'Sunday'), ], string='Auto Clear On', default='-1', required=True, tracking=True)
+        ('6', 'Sunday'), ], string='Auto Clear On', default='6', required=True, tracking=True)
 
     auto_clear_attendance_error_notif = fields.Boolean(string='Auto Clear Attendance Notif.', default=True,
                                                         tracking=True,
-                                                        help='Notify upon no safe found to clear attendance data')
+                                                        help="Notify upon no safe found to clear attendance data")
 
-    tz = fields.Selection('_tz_get', string='Time zone', compute='_compute_tz', store=True,
-                          help="The device's timezone, used to output proper date and time values inside attendance reports.")
+    tz = fields.Selection(_tz_get, string='Time zone',
+                          compute='_compute_tz', store=True, precompute=True,
+                          help="The machine's timezone, used to output proper date and time values inside attendance reports.")
 
-    active = fields.Boolean(string='Active', default=True, tracking=True, readonly=True, states={'draft': [('readonly', False)]})
+    active = fields.Boolean(string='Active', default=True, tracking=True, readonly=True)
     unique_uid = fields.Boolean(string='Unique UID', default=True, required=True, tracking=True,
-                                readonly=True, states={'draft': [('readonly', False)]},
-                                help='Some Bad Devices allow uid duplication. In this case, uncheck this field. But it is recommended to change your device.')
+                                help="Some Bad Machines allow uid duplication. In this case, uncheck this field. But it is recommended to change your machine.")
     last_attendance_download = fields.Datetime(string='Last Sync.', readonly=True,
-                                               help='The last time that the attendance data was downlowed from the device into Odoo.')
+                                               help="The last time that the attendance data was downlowed from the machine into System.")
 
     map_before_dl = fields.Boolean(string='Map Employee Before Download', default=True,
-                                   help='Always try to map users and employees (if any new found) before downloading attendance data.')
+                                   help="Always try to map users and employees (if any new found) before downloading attendance data.")
     create_employee_during_mapping = fields.Boolean(string='Generate Employees During Mapping', default=False,
-                                                    help="If checked, during mapping between Device's Users and company's employees, umapped device"
+                                                    help="If checked, during mapping between Machine's Users and company's employees, unmapped machine"
                                                     " users will try to create a new employee then map accordingly.")
 
     download_error_notification = fields.Boolean(string='Download Error Notification', default=True,
-                                                 readonly=True, states={'draft': [('readonly', False)]},
-                                                 help='Enable this to get notified when data download error occurs.')
+                                                 help="Enable this to get notified when data download error occurs.")
     debug_message = fields.Boolean(string='Debug Message', default=False, help="If checked, debugging messages will be posted in"
                                    " OpenChatter for debugging purpose")
 
@@ -173,53 +156,165 @@ class AttendanceDevice(models.Model):
     total_att_records = fields.Integer(string='Attendance Records', compute='_compute_total_attendance_records')
     finger_template_ids = fields.One2many('finger.template', 'device_id', string='Finger Template', readonly=True)
     total_finger_template_records = fields.Integer(string='Finger Templates', compute='_compute_total_finger_template_records')
-    protocol = fields.Selection([('udp', 'UDP'), ('tcp', 'TCP')], string='Protocol', required=True, default='tcp',
+    protocol = fields.Selection([('udp', 'UDP'), ('tcp', 'TCP'), ('icloud', 'Icloud - ADMS')], string='Protocol', required=True, default='tcp',
                                 tracking=True,
                                 help="Some old devices do not support TCP. In such the case, please try on switching to UDP.")
-    omit_ping = fields.Boolean(string='Omit Ping', default=True, help='Omit ping ip address when connecting to device.',
-                               readonly=True, states={'draft': [('readonly', False)]})
-    password = fields.Char(string='Password', readonly=True, states={'draft': [('readonly', False)]},
-                           help="The password to authenticate the device, if required")
+    omit_ping = fields.Boolean(string='Omit Ping', default=True, help="Omit ping ip address when connecting to machine.")
+    password = fields.Char(string='Password', help="The password to authenticate the machine, if required")
 
     unaccent_user_name = fields.Boolean(string='Unaccent User Name', default=True, tracking=True,
-                                        help="Some Devices support Unicode names such as the ZKTeco K50, some others do not."
+                                        help="Some Machines support Unicode names such as the ZKTeco K50, some others do not."
                                         " In addition to this, the name field on devices is usually limited at about 24 Latin characters"
                                         " or less Unicode characters. Unaccent is sometimes a workaround for long Unicode names")
+    # 65472 (0xFFc0) is the max size of TCP in the original pyzk (use in the method base.read_with_buffer as MAX_CHUNK)
+    max_size_TCP = fields.Selection([('65472', '65472 bytes'),
+                                     ('32768', '32768 bytes'),
+                                     ('16384', '16384 bytes'),
+                                     ('8192', '8192 bytes'),
+                                     ('4096', '4096 bytes'),
+                                     ('2048', '2048 bytes'),
+                                     ('1024', '1024 bytes'),
+                                     ], string='TCP Max-Size', default='65472', required=True,
+                                     help="The default value (65472) works well for almost attendance machines. However, in some rare cases"
+                                     " the error '[Errno 32] Broken pipe' may occur while getting data from devices. In such case, you may try on decreasing this value"
+                                     " to see if it would help.\n"
+                                     "Note: the smaller this value is, the slower data getting will be.")
+    # 16384 is the max size of UDP in the original pyzk (use in the method base.read_with_buffer)
+    max_size_UDP = fields.Selection([('65472', '65472 bytes'),
+                                     ('32768', '32768 bytes'),
+                                     ('16384', '16384 bytes'),
+                                     ('8192', '8192 bytes'),
+                                     ('4096', '4096 bytes'),
+                                     ('2048', '2048 bytes'),
+                                     ('1024', '1024 bytes'),
+                                     ], string='UDP Max-Size', default='16384', required=True,
+                                     help="The default value (16384) works well for almost attendance machines. However, in some rare cases,"
+                                     " the error 'timed out' may occur while getting data from devices. In such situation, you may try on decreasing this value to see if it would help\n."
+                                     "Note: the smaller this value is, the slower data getting will be.")
+    tz_num = fields.Char(
+        string='Timezone',
+        compute='_compute_tz_num',
+        store=True
+    )
+    error_delay = fields.Integer(
+        string='Error Delay',
+        default=30,
+        help="The interval time (second) to re-connnect server after connecting network failure."
+    )
+    delay = fields.Integer(
+        string='Delay',
+        default=10,
+        help="The interval (seconds) for the client to connect to the server during normal networking,\n"
+        "that is, the client requests the \"get command\" function. It is recommended to set it to 2~60.\n"
+        "Seconds, you can set a smaller value if you need a quick response, but the pressure on the server will increase."
+    )
+    trans_times = fields.Char(
+        string='Trans Times',
+        default='00:00; 12:00',
+        help="The time to check per fixed time and send new data (hour:minute, 24 hours format),\n"
+            "use semicolon to divide multiple time, the most support is 10 time."
+    )
+    trans_interval = fields.Integer(
+        string='Trans Interval',
+        default=2,
+        help="The interval time (minute) to check and send new data"
+    )
+    trans_flag = fields.Char(
+        string='Trans Flag',
+        compute='_compute_trans_flag',
+        store=True,
+        help="Mark for what new data sent to server"
+    )
+    trans_flag_ids = fields.Many2many(
+        'attendance.device.trans.flag',
+        'attendance_device_trans_flag_rel',
+        string='Trans Flag Ids',
+        default=_default_trans_flag_ids
+    )
+    real_time = fields.Boolean(
+        string='Real Time',
+        default=True,
+        help="Whether to send new records in real time"
+    )
+    server_ver = fields.Char(
+        string='Server Version',
+        default='2.4.1'
+    )
+    # TODO: The document only notes that this field is used to encode timekeeping records.
+    # However, I still don't know how to use this field.
+    encrypt = fields.Boolean(
+        string='Encrypt',
+        default=False,
+        help="Whether to send data with encryption"
+    )
+    # TODO: The *_stamp fields are used to mark records. This means that once a record has been uploaded,
+    # it will not be uploaded again (except when explicitly requested).
+    # This is particularly meaningful when dealing with numerous records.
+    # However, I still don't know how to use this field.
+    attlog_stamp = fields.Char(
+        string='ATTLOG Stamp',
+        default='0',
+        help="The latest record time-stamp mark of the latest attendance record uploaded by device"
+    )
+    operlog_stamp = fields.Char(
+        string='OPERLOG Stamp',
+        default='0',
+        help="The latest operation-record time-stamp mark of the latest personal data uploaded by device"
+    )
+    attphoto_stamp = fields.Char(
+        string='ATTPHOTOStamp',
+        default='0',
+        help="Attendance photo when a client uploads data, the timestamp is uploaded as a cut-off function"
+    )
+    command_device_ids = fields.One2many(
+        'attendance.command.device',
+        'device_id',
+        string='Commands To Device',
+        help="List of commands sent to the device"
+    )
+    data_log_device_ids = fields.One2many(
+        'attendance.data.log.device',
+        'device_id',
+        string='Data Log From Device',
+        help="List of device log data"
+    )
+    log_command_count = fields.Integer(
+        string='Command Name Count',
+        compute='_compute_log_command_count'
+    )
+    data_log_count = fields.Integer(
+        string='Data Log Count',
+        compute='_compute_data_log_count'
+    )
 
-    zk = None
     zk_cache = {}
 
     _sql_constraints = [
         ('ip_and_port_unique',
          'UNIQUE(ip, port, location_id)',
-         "You cannot have more than one device with the same ip and port of the same location!"),
+         "You cannot have more than one machine with the same ip and port of the same location!"),
+        ('serialnumber_unique',
+         'UNIQUE(serialnumber)',
+         "You cannot have same serial number"),
     ]
 
-    def _set_zk(self):
+    @property
+    def zk(self):
         """
         This method return a ZK object.
         If an object corresponding to the connection param was created
-        and available in self.zk_cache, it will be return. To avoid it, call it with .with_context(no_zk_cache=True)        
+        and available in self.zk_cache, it will be return. To avoid it, call it with .with_context(no_zk_cache=True)
         """
         self.ensure_one()
         force_udp = self.protocol == 'udp'
         password = self.password or 0
-        cached_key = self.protocol + str(self.omit_ping) + str(self.timeout) + str(password)
-        if self.ip:
-            cached_key += self.ip
-        if self.port:
-            cached_key += str(self.port)
+        cached_key = (self.protocol, self.omit_ping, self.timeout, password, self.max_size_TCP, self.max_size_UDP, self.ip, self.port)
 
-        if not cached_key in self.zk_cache.keys() or self.env.context.get('no_zk_cache', False):
-            self.zk_cache[cached_key] = ZK(self.ip, self.port, self.timeout, password=password, force_udp=force_udp, ommit_ping=self.omit_ping)
-        machine_ip = self.ip
-        port = self.port
-        self.zk = ZK(self.ip, self.port, self.timeout, password=password, force_udp=force_udp, ommit_ping=self.omit_ping)
-        # self.zk = self.zk_cache[cached_key]
+        if cached_key not in self.zk_cache.keys() or self.env.context.get('no_zk_cache', False):
+            self.zk_cache[cached_key] = ZK(self.ip, self.port, self.timeout, password=password, force_udp=force_udp, ommit_ping=self.omit_ping,
+                                           max_size_TCP=int(self.max_size_TCP), max_size_UDP=int(self.max_size_UDP))
 
-    @api.model
-    def _tz_get(self):
-        return [(x, x) for x in pytz.all_timezones]
+        return self.zk_cache[cached_key]
 
     @api.depends('location_id.tz')
     def _compute_tz(self):
@@ -230,11 +325,8 @@ class AttendanceDevice(models.Model):
             else:
                 r.tz = default_tz
 
-    def name_get(self):
-        """
-        name_get that supports displaying location name and model as prefix
-        """
-        result = []
+    @api.depends('name')
+    def _compute_display_name(self):
         for r in self:
             name = r.name
             if r.oem_vendor:
@@ -244,8 +336,21 @@ class AttendanceDevice(models.Model):
                     name = "[%s] %s" % (r.oem_vendor, name)
             if r.location_id:
                 name = "[%s] %s" % (r.location_id.name, name)
-            result.append((r.id, name))
-        return result
+            r.display_name = name
+
+    @api.depends('tz')
+    def _compute_tz_num(self):
+        for r in self:
+            timezone = pytz.timezone(r.tz or 'GMT')
+            r.tz_num = str(int(datetime.now(timezone).tzinfo.utcoffset(datetime.now(timezone)).total_seconds() / 3600))
+
+    @api.depends('trans_flag_ids')
+    def _compute_trans_flag(self):
+        for r in self:
+            trans_valu = ['0' for k in range(10)]
+            for i in r.trans_flag_ids:
+                trans_valu[i.sequence - 1] = '1'
+            r.trans_flag = ''.join(trans_valu)
 
     @api.model
     def name_search(self, name, args=None, operator='ilike', limit=100):
@@ -258,25 +363,25 @@ class AttendanceDevice(models.Model):
             domain = ['|', ('location_id.name', '=ilike', name + '%'), ('name', operator, name)]
             if operator in expression.NEGATIVE_TERM_OPERATORS:
                 domain = ['&'] + domain
-        state = self.search(domain + args, limit=limit)
-        return state.name_get()
+        states = self.search(domain + args, limit=limit)
+        return [(state.id, state.display_name) for state in states]
 
     @api.depends('device_user_ids', 'device_user_ids.active')
     def _compute_device_users_count(self):
-        total_att_data = self.env['attendance.device.user'].read_group([('device_id', 'in', self.ids)], ['device_id'], ['device_id'])
-        mapped_data = dict([(dict_data['device_id'][0], dict_data['device_id_count']) for dict_data in total_att_data])
+        total_att_data = self.env['attendance.device.user']._read_group([('device_id', 'in', self.ids)], ['device_id'], ['__count'])
+        mapped_data = {device.id: count for device, count in total_att_data}
         for r in self:
             r.device_users_count = mapped_data.get(r.id, 0)
 
     def _compute_total_finger_template_records(self):
-        total_att_data = self.env['finger.template'].read_group([('device_id', 'in', self.ids)], ['device_id'], ['device_id'])
-        mapped_data = dict([(dict_data['device_id'][0], dict_data['device_id_count']) for dict_data in total_att_data])
+        total_att_data = self.env['finger.template']._read_group([('device_id', 'in', self.ids)], ['device_id'], ['__count'])
+        mapped_data = {device.id: count for device, count in total_att_data}
         for r in self:
             r.total_finger_template_records = mapped_data.get(r.id, 0)
 
     def _compute_total_attendance_records(self):
-        total_att_data = self.env['user.attendance'].read_group([('device_id', 'in', self.ids)], ['device_id'], ['device_id'])
-        mapped_data = dict([(dict_data['device_id'][0], dict_data['device_id_count']) for dict_data in total_att_data])
+        total_att_data = self.env['user.attendance']._read_group([('device_id', 'in', self.ids)], ['device_id'], ['__count'])
+        mapped_data = {device.id: count for device, count in total_att_data}
         for r in self:
             r.total_att_records = mapped_data.get(r.id, 0)
 
@@ -285,9 +390,19 @@ class AttendanceDevice(models.Model):
         HrEmployee = self.env['hr.employee']
         for r in self:
             r.update({
-                'unmapped_employee_ids':[(6, 0, HrEmployee.search([('id', 'not in', r.device_user_ids.mapped('employee_id').ids)]).ids)],
-                'mapped_employee_ids': [(6, 0, r.device_user_ids.mapped('employee_id').filtered(lambda employee: employee.active == True).ids)],
+                'unmapped_employee_ids': [(6, 0, HrEmployee.search([('company_id', '=', r.company_id.id), ('id', 'not in', r.device_user_ids.employee_id.ids)]).ids)],
+                'mapped_employee_ids': [(6, 0, r.device_user_ids.employee_id.filtered(lambda employee: employee.active is True).ids)],
                 })
+
+    @api.depends('command_device_ids.name')
+    def _compute_log_command_count(self):
+        for r in self:
+            r.log_command_count = len(r.command_device_ids)
+
+    @api.depends('data_log_device_ids.op_type')
+    def _compute_data_log_count(self):
+        for r in self:
+            r.data_log_count = len(r.data_log_device_ids)
 
     @api.depends('mapped_employee_ids')
     def _compute_mapped_employees_count(self):
@@ -296,12 +411,12 @@ class AttendanceDevice(models.Model):
 
     @api.onchange('unique_uid')
     def onchange_unique_uid(self):
-        if not self.unique_uid:
-            message = _('This is for experiment to check if the device contains bad data with non-unique user\'s uid.'
-                        ' Turn this option off will allow mapping device user\'s user_id with user\'s user_id in Odoo.\n'
-                        'NOTE:\n'
-                        '- non-latin user_id are not supportted.\n'
-                        '- Do not turn this option off in production.')
+        if not self.unique_uid and self.protocol in ['tcp', 'udp']:
+            message = _("This is for experiment to check if the machine contains bad data with non-unique user's uid."
+                        " Turn this option off will allow mapping machine user's user_id with user's user_id in System.\n"
+                        "NOTE:\n"
+                        "- non-latin user_id are not supportted.\n"
+                        "- Do not turn this option off in production.")
             return {
                 'warning': {
                     'title': "Warning!",
@@ -309,121 +424,125 @@ class AttendanceDevice(models.Model):
                 },
             }
 
+    @api.onchange('protocol')
+    def onchange_protocol(self):
+        if len(self.device_user_ids) > 0:
+            message = _("Because the connection method and previous configuration are different. "
+                        "It is necessary to reload the user list and fingerprint data on the attendance machine. \n"
+                        "When you press save changes, the system will automatically download the user list and fingerprint data")
+            return {
+                'warning': {
+                    'title': "Warning!",
+                    'message': message,
+                },
+            }
+
+    @api.model
+    def _get_updated_fields_for_icloud_setting(self):
+        """
+        Return a list of fields string when user update these one we will
+        need to upload setting into machine again
+        """
+        return ['delay', 'error_delay', 'trans_times', 'real_time', 'trans_interval', 'trans_flag_ids']
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
             if 'ip' in vals:
-                vals['ip'] = vals['ip'].strip()
+                vals['ip'] = vals['ip'].strip() or False
         return super(AttendanceDevice, self).create(vals_list)
 
     def write(self, vals):
         if 'ip' in vals:
-            vals['ip'] = vals['ip'].strip()
-        return super(AttendanceDevice, self).write(vals)
+            vals['ip'] = vals['ip'].strip() or False
+        res = super(AttendanceDevice, self).write(vals)
+        if any(field in vals for field in self._get_updated_fields_for_icloud_setting()) or ('protocol' in vals and vals['protocol'] == 'icloud'):
+            for r in self:
+                r.action_upload_setting()
+        return res
 
     def connect(self):
+
+        def post_message(email_template, error_msg=''):
+            try:
+                with registry(self._cr.dbname).cursor() as cr:
+                    with cr.savepoint():
+                        self.with_env(self.env(cr=cr)).with_context(error_msg=error_msg).post_message(email_template)
+                    # pylint: disable=invalid-commit
+                    cr.commit()
+            except Exception as e:
+                _logger.error(
+                    "Could not post message using the template %s. Here is debugging info: %s",
+                    email_template.display_name,
+                    str(e)
+                    )
+
         self.ensure_one()
-
-        def post_message():
-            email_template_id = self.env.ref('to_attendance_device.email_template_attendance_device')
-            self.post_message(email_template_id)
-            self.env.cr.commit()
-
         error_msg = False
         try:
-            machine_ip = self.ip
-            port = self.port
-            zkconnect = ZK(machine_ip, port=port, timeout=10, password=0, force_udp=False, ommit_ping=False)
-            self._set_zk()
-            attendance_connection = zkconnect.connect()
-            return attendance_connection
+            return self.zk.connect()
         except ZKNetworkError as e:
-            error_msg = _("Could not reach the device %s (ping %s)") % (self.display_name, self.ip)
-        except ZKConnectionUnauthorized as e:
-            error_msg = _("Connection Unauthorized! The device %s may require password") % self.display_name
+            error_msg = _("Could not connect to the machine %s.\nDebugging info: %s") % (self.display_name, e)
+        except ZKConnectionUnauthorized:
+            error_msg = _("Connection Unauthorized! The machine %s may require password.") % self.display_name
         except ZKErrorResponse as e:
-            error_msg = _("Could not get connected to the device %s. This is usually due to either the network error or"
+            error_msg = _("Could not get connected to the machine %s. This is usually due to either the network error or"
                     " wrong protocol selection or password authentication is required.\n"
                     "Debugging info:\n%s") % (self.display_name, e)
         except Exception as e:
-            error_msg = _("Could not get connected to the device '%s'. Please check your network"
-                          " configuration and device password and/or hard restart your device") % (self.display_name,)
+            error_msg = _("Could not get connected to the machine '%s'. Please check your network"
+                          " configuration and machine password and/or hard restart your machine.\nDebugging info: %s") % (self.display_name, e)
 
         if error_msg:
-            post_message()
+            email_template = self.env.ref('to_attendance_device.email_template_attendance_device')
+            post_message(email_template, error_msg)
             raise ValidationError(error_msg)
 
     def disconnect(self):
         try:
-            machine_ip = self.ip
-            port = self.port
-            force_udp = self.protocol == 'udp'
-            password = self.password or 0
-            zkd = ZK(self.ip, self.port, self.timeout, password=password, force_udp=force_udp, ommit_ping=self.omit_ping)
-            conn = ' '
-            conn = zkd.connect()
-            disconnect = conn.disconnect()
-            return disconnect
+            return self.zk.disconnect()
         except Exception as e:
             _logger.error(e)
-            raise ValidationError(_("Could not get Disconnected the device %s disconnected. Here is the debugging information:\n%s")
+            raise ValidationError(_("Could not get the machine %s disconnected. Here is the debugging information:\n%s")
                                   % (self.display_name, e))
 
     def disableDevice(self):
         """
-        disable (lock) device, ensure no activity when process run
+        disable (lock) machine, ensure no activity when process run
         """
         try:
-            machine_ip = self.ip
-            port = self.port
-            force_udp = self.protocol == 'udp'
-            password = self.password or 0
-            zk = ZK(self.ip, self.port, self.timeout, password=password, force_udp=force_udp, ommit_ping=self.omit_ping)
-            return zk.disable_device()
+            return self.zk.disable_device()
         except Exception as e:
             _logger.error(e)
-            raise ValidationError(_("Could disable not get the device %s disabled. Here is the debugging information:\n%s")
+            raise ValidationError(_("Could not get the machine %s disabled. Here is the debugging information:\n%s")
                                   % (self.display_name, e))
 
-    def action_restart(self):
+    def _restart(self):
         self.ensure_one()
         self.restartDevice()
 
     def enableDevice(self):
         """
-        re-enable the connected device
+        re-enable the connected machine
         """
-        try:   
-            force_udp = self.protocol == 'udp'
-            password = self.password or 0
-            zke = ZK(self.ip, self.port, self.timeout, password=password, force_udp=force_udp, ommit_ping=self.omit_ping)
-            conn = ' '
-            conn = zke.connect()
-            enabledevice = conn.enable_device()
-            return enabledevice
+        try:
+            return self.zk.enable_device()
         except Exception as e:
             _logger.error(e)
-            raise ValidationError(_('Could not get Enable Device the device %s enabled. Here is the debugging information:\n%s')
+            raise ValidationError(_("Could not get the machine %s enabled. Here is the debugging information:\n%s")
                                   % (self.display_name, e))
 
     def getFirmwareVersion(self):
         '''
         return the firmware version
         '''
-        machine_ip = self.ip
-        port = self.port
-        force_udp = self.protocol == 'udp'
-        password = self.password or 0
-        zkfirm = ZK(self.ip, self.port, self.timeout, password=password, force_udp=force_udp, ommit_ping=self.omit_ping)
-        conn = ''
         try:
-            conn = zkfirm.connect()
-            firmversion = conn.get_firmware_version()
-            return firmversion
-
+            self.connect()
+            self.enableDevice()
+            return self.zk.get_firmware_version()
         except Exception as e:
             _logger.error(e)
-            raise ValidationError(_("Could not get the firmware version of the device %s. Here is the debugging information:\n%s")
+            raise ValidationError(_("Could not get the firmware version of the machine %s. Here is the debugging information:\n%s")
                                   % (self.display_name, e))
         finally:
             self.disconnect()
@@ -432,19 +551,13 @@ class AttendanceDevice(models.Model):
         '''
         return the serial number
         '''
-        machine_ip = self.ip
-        port = self.port
-        force_udp = self.protocol == 'udp'
-        password = self.password or 0
-        zkdevicename = ZK(self.ip, self.port, self.timeout, password=password, force_udp=force_udp, ommit_ping=self.omit_ping)
-        conn = ''
         try:
-            conn = zkdevicename.connect()
-            serialnumber = conn.get_serialnumber()
-            return serialnumber
+            self.connect()
+            self.enableDevice()
+            return self.zk.get_serialnumber()
         except Exception as e:
             _logger.error(e)
-            raise ValidationError(_("Could not get the serial number of the device %s. Here is the debugging information:\n%s")
+            raise ValidationError(_("Could not get the serial number of the machine %s. Here is the debugging information:\n%s")
                                   % (self.display_name, e))
         finally:
             self.disconnect()
@@ -453,19 +566,13 @@ class AttendanceDevice(models.Model):
         '''
         return the serial number
         '''
-        machine_ip = self.ip
-        port = self.port
-        force_udp = self.protocol == 'udp'
-        password = self.password or 0
-        zkdevicename = ZK(self.ip, self.port, self.timeout, password=password, force_udp=force_udp, ommit_ping=self.omit_ping)
-        conn = ''
         try:
-            conn = zkdevicename.connect()
-            oemvendor = conn.get_oem_vendor()
-            return oemvendor
+            self.connect()
+            self.enableDevice()
+            return self.zk.get_oem_vendor()
         except Exception as e:
             _logger.error(e)
-            raise ValidationError(_('Could not get the OEM Vendor of the device %s. Here is the debugging information:\n%s')
+            raise ValidationError(_("Could not get the OEM Vendor of the machine %s. Here is the debugging information:\n%s")
                                   % (self.display_name, e))
         finally:
             self.disconnect()
@@ -474,21 +581,13 @@ class AttendanceDevice(models.Model):
         '''
         return the Fingerprint Algorithm
         '''
-        machine_ip = self.ip
-        port = self.port
-
-        force_udp = self.protocol == 'udp'
-        password = self.password or 0
-        zkdevicename = ZK(self.ip, self.port, self.timeout, password=password, force_udp=force_udp, ommit_ping=self.omit_ping)
-        conn = ''
         try:
-            conn = zkdevicename.connect()
-            algorithm = conn.get_fp_version()
-            return algorithm
-
+            self.connect()
+            self.enableDevice()
+            return self.zk.get_fp_version()
         except Exception as e:
             _logger.error(e)
-            raise ValidationError(_('Could not get the Fingerprint Algorithm of the device %s. Here is the debugging information:\n%s')
+            raise ValidationError(_("Could not get the Fingerprint Algorithm of the machine %s. Here is the debugging information:\n%s")
                                   % (self.display_name, e))
         finally:
             self.disconnect()
@@ -497,18 +596,13 @@ class AttendanceDevice(models.Model):
         '''
         return the serial number
         '''
-
         try:
-            machine_ip = self.ip
-            port = self.port
-            zkdevicename = ZK(machine_ip, port=port, timeout=10, password=0, force_udp=False, ommit_ping=False)
-            conn = ''
-            conn = zkdevicename.connect()
-            platform = conn.get_platform()
-            return platform
+            self.connect()
+            self.enableDevice()
+            return self.zk.get_platform()
         except Exception as e:
             _logger.error(e)
-            raise ValidationError(_('Could not get the Platform of the device %s. Here is the debugging information:\n%s')
+            raise ValidationError(_("Could not get the platform of the machine %s. Here is the debugging information:\n%s")
                                   % (self.display_name, e))
         finally:
             self.disconnect()
@@ -518,16 +612,12 @@ class AttendanceDevice(models.Model):
         return the serial number
         '''
         try:
-            machine_ip = self.ip
-            port = self.port
-            zkdevicename = ZK(machine_ip, port=port, timeout=10, password=0, force_udp=False, ommit_ping=False)
-            conn = ''
-            conn = zkdevicename.connect()
-            devicename = conn.get_device_name()
-            return devicename
+            self.connect()
+            self.enableDevice()
+            return self.zk.get_device_name()
         except Exception as e:
             _logger.error(e)
-            raise ValidationError(_('Could not get the Name of the device %s. Here is the debugging information:\n%s')
+            raise ValidationError(_("Could not get the Name of the machine %s. Here is the debugging information:\n%s")
                                   % (self.display_name, e))
         finally:
             self.disconnect()
@@ -537,122 +627,122 @@ class AttendanceDevice(models.Model):
         return the serial number
         '''
         try:
-            machine_ip = self.ip
-            port = self.port
-            zktworkcode = ZK(machine_ip, port=port, timeout=10, password=0, force_udp=False, ommit_ping=False)
-            conn = ''
-            conn = zktworkcode.connect()
-            workcode = conn.get_workcode()
-            return workcode
+            self.connect()
+            self.enableDevice()
+            return self.zk.get_workcode()
         except Exception as e:
             _logger.error(e)
-            raise ValidationError(_('Could not get the Work Code of the device %s. Here is the debugging information:\n%s')
+            raise ValidationError(_("Could not get the Work Code of the machine %s. Here is the debugging information:\n%s")
                                   % (self.display_name, e))
         finally:
             self.disconnect()
 
     def restartDevice(self):
         '''
-        restart the device
+        restart the machine
         '''
-        try:
-            self.connect()
-            self.enableDevice()
-            return self.zk.restart()
-        except Exception as e:
-            _logger.error(e)
-            raise ValidationError(_('Could not get the serial number of the device %s. Here is the debugging information:\n%s')
-                                  % (self.display_name, e))
+        if self.protocol == 'icloud':
+            data = "REBOOT"
+            self._create_cmd_icloud(data)
+        else:
+            try:
+                self.connect()
+                self.enableDevice()
+                return self.zk.restart()
+            except Exception as e:
+                _logger.error(e)
+                raise ValidationError(_("Could not restart the machine %s. Here is the debugging information:\n%s")
+                                    % (self.display_name, e))
 
     def setUser(self, uid=None, name='', privilege=0, password='', group_id='', user_id='', card=0):
-        try:
-            machine_ip = self.ip
-            port = self.port
-            force_udp = self.protocol == 'udp'
-            password = self.password or 0
-            zkts = ZK(self.ip, self.port, self.timeout, password=password, force_udp=force_udp, ommit_ping=self.omit_ping)
-            conn = ''
-            conn = zkts.connect()
-            users = conn.set_user(uid, name, privilege, password, group_id, user_id, card)
-            return users
-
-        except Exception as e:
-            _logger.info(e)
-            raise ValidationError(_('Could not set user into the device %s. Here is the user information:\n'
-                                    'uid: %s\n'
-                                    'name: %s\n'
-                                    'privilege: %s\n'
-                                    'password: %s\n'
-                                    'group_id: %s\n'
-                                    'user_id: %s\n'
-                                    'Here is the debugging information:\n%s')
-                                  % (self.display_name, uid, name, privilege, password, group_id, user_id, e))
-        finally:
-            self.enableDevice()
-            self.disconnect()
+        if self.protocol == 'icloud':
+            cmd = "DATA UPDATE USERINFO"
+            data = "PIN={}\t".format(user_id)
+            data += "Name={}\t".format(name)
+            data += "Passwd={}\t".format(password)
+            data += "Card={}\t".format(card)
+            data += "Grp={}\t".format(group_id)
+            data += "Pri={}".format(privilege)
+            self._create_cmd_icloud(cmd, data)
+        else:
+            try:
+                self.connect()
+                self.enableDevice()
+                self.disableDevice()
+                return self.zk.set_user(uid, name, privilege, password, group_id, user_id, card)
+            except Exception as e:
+                _logger.info(e)
+                raise ValidationError(_("Could not set user into the machine %s. Here is the user information:\n"
+                                        "uid: %s\n"
+                                        "name: %s\n"
+                                        "privilege: %s\n"
+                                        "password: %s\n"
+                                        "group_id: %s\n"
+                                        "user_id: %s\n"
+                                        "Here is the debugging information:\n%s\n")
+                                    % (self.display_name, uid, name, privilege, password, group_id, user_id, e))
+            finally:
+                self.enableDevice()
+                self.disconnect()
 
     def delUser(self, uid, user_id):
         '''
         delete specific user by uid
         '''
-        try:
-            self.connect()
-            self.enableDevice()
-            self.disableDevice()
-            return self.zk.delete_user(uid, user_id)
-        except Exception as e:
-            _logger.error(e)
-            raise ValidationError(_('Could not delete the user with uid "%s", user_id "%s" from the device %s\n%s')
-                                  % (uid, user_id, self.display_name, e))
-        finally:
-            self.enableDevice()
-            self.disconnect()
-
-    def action_clear_data(self):
-        '''
-        clear all data (include: user, attendance report, finger database )
-        '''
-        try:
-            self.connect()
-            self.enableDevice()
-            self.disableDevice()
-            return self.zk.clear_data()
-        except Exception as e:
-            _logger.error(e)
-            raise ValidationError(_('Could not clear data from the device %s. Here is the debugging information:\n%s')
-                                  % (self.display_name, e))
-        finally:
-            self.enableDevice()
-            self.disconnect()
+        if self.protocol == 'icloud':
+            cmd = "DATA DELETE USERINFO"
+            data = "PIN={}".format(user_id)
+            self._create_cmd_icloud(cmd, data)
+        else:
+            try:
+                self.connect()
+                self.enableDevice()
+                self.disableDevice()
+                return self.zk.delete_user(uid, user_id)
+            except ZKErrorResponse as e:
+                raise ZKErrorResponse(_("Could not delete the user with uid '%s', user_id '%s' from the device %s\n%s")
+                                    % (uid, user_id, self.display_name, e))
+            finally:
+                self.enableDevice()
+                self.disconnect()
 
     def getUser(self):
         '''
-        return a Python List of device users in User(uid, name, privilege, password, group_id, user_id)
+        return a Python List of machine users in User(uid, name, privilege, password, group_id, user_id)
         '''
-        machine_ip = self.ip
-        port = self.port
-        force_udp = self.protocol == 'udp'
-        password = self.password or 0
-        zkts = ZK(self.ip, self.port, self.timeout, password=password, force_udp=force_udp, ommit_ping=self.omit_ping)
-        conn = ''
         try:
-            conn = zkts.connect()
-            user = conn.get_users()
-            return user
+            self.connect()
+            self.enableDevice()
+            self.disableDevice()
+            return self.zk.get_users()
         except Exception as e:
             _logger.error(str(e))
-            raise ValidationError(_('Could not get users from the device %s\n'
-                                    'If you had connected to your device, perhaps your device had problem. '
-                                    'Some bad devices allowed duplicated uid may cause such problem. In such case, '
-                                    'if you still want to load users from that bad device, please uncheck Data '
-                                    'Acknowledge field.\n'
-                                    'Here is the debugging error message:\n%s') % (self.display_name, str(e)))
+            raise ValidationError(_("Could not get users from the machine %s\n"
+                                    "If you had connected to your machine, perhaps your machine had problem. "
+                                    "Some bad machines allowed duplicated uid may cause such problem. In such case, "
+                                    "if you still want to load users from those bad machines, please uncheck Data "
+                                    "Acknowledge field.\n"
+                                    "Here is the debugging error message:\n%s") % (self.display_name, str(e)))
         finally:
             self.enableDevice()
             self.disconnect()
 
     def upload_finger_templates(self, uid, name, privilege, password, group_id, user_id, fingers):
         user = User(uid, name, privilege, password, group_id, user_id, card=0)
+        if self.protocol == 'icloud':
+            for finger in fingers:
+                fid = int(finger.fid)
+                valid = int(finger.valid)
+                template = finger.template.decode('utf-8')
+                size = finger.size
+                cmd = "DATA UPDATE FINGERTMP"
+                data = "PIN={}\t".format(user_id)
+                data += "FID={}\t".format(fid)
+                data += "Size={}\t".format(size)
+                data += "Valid={}\t".format(valid)
+                data += "TMP={}".format(template)
+                self._create_cmd_icloud(cmd, data)
+            return True
         try:
             self.connect()
             self.enableDevice()
@@ -660,10 +750,10 @@ class AttendanceDevice(models.Model):
             return self.zk.save_user_template(user, fingers)
         except Exception as e:
             _logger.error(e)
-            raise ValidationError(_("Could not set finger template into the device %s. Here are the information:\n"
+            raise ValidationError(_("Could not set finger template into the machine %s. Here are the information:\n"
                                     "user_id: %s\n"
                                     "Debugging information:\n%s")
-                                  % (self.display_name, user_id, e))
+                                % (self.display_name, user_id, e))
         finally:
             self.enableDevice()
             self.disconnect()
@@ -672,77 +762,76 @@ class AttendanceDevice(models.Model):
         '''
         delete finger template by uid and fid
         '''
-        try:
-            self.connect()
-            self.enableDevice()
-            self.disableDevice()
-            return self.zk.delete_user_template(uid, fid, user_id)
-        except Exception as e:
-            _logger.error(e)
-            raise ValidationError(_('Could not delete finger template with fid "%s" of uid "%s" from the device %s') % (fid, uid, self.display_name,))
-        finally:
-            self.enableDevice()
-            self.disconnect()
+        if self.protocol == 'icloud':
+            cmd = "DATA DELETE FINGERTMP"
+            data = "PIN={}\t".format(user_id)
+            data += "FID={}".format(fid)
+            self._create_cmd_icloud(cmd, data)
+        else:
+            try:
+                self.connect()
+                self.enableDevice()
+                self.disableDevice()
+                return self.zk.delete_user_template(uid, fid, user_id)
+            except Exception as e:
+                _logger.error(e)
+                raise ValidationError(_("Could not delete finger template with fid '%s' of uid '%s' from the machine %s") % (fid, uid, self.display_name,))
+            finally:
+                self.enableDevice()
+                self.disconnect()
 
     def getFingerTemplate(self):
         '''
         return a Python List of fingers template in Finger(uid, fid, valid, template)
         '''
         try:
-            machine_ip = self.ip
-            port = self.port
-            force_udp = self.protocol == 'udp'
-            password = self.password or 0
-            zkta = ZK(self.ip, self.port, self.timeout, password=password, force_udp=force_udp, ommit_ping=self.omit_ping)
-            conns = ''
-            conns = zkta.connect()
-            fingertemplates = conns.get_templates()
-            return fingertemplates
+            self.connect()
+            self.enableDevice()
+            self.disableDevice()
+            return self.zk.get_templates()
         except Exception as e:
             _logger.error(str(e))
-            raise ValidationError(_('Could not get finger templates from the device %s\n'
-                                    'If you had connected to your device, perhaps your device had problem. '
-                                    'Some bad devices allowed duplicated uid may cause such problem. In such case, '
-                                    'if you still want to load users from that bad device, please uncheck Data '
-                                    'Acknowledge field.\n'
-                                    'Here is the debugging error message:\n%s') % (self.display_name, str(e)))
+            raise ValidationError(_("Could not get finger templates from the machine %s\n"
+                                    "If you had connected to your machine, perhaps your machine had problem. "
+                                    "Some bad machines allowed duplicated uid may cause such problem. In such case, "
+                                    "if you still want to load users from those bad machines, please uncheck Data "
+                                    "Acknowledge field.\n"
+                                    "Here is the debugging error message:\n%s") % (self.display_name, str(e)))
         finally:
             self.enableDevice()
             self.disconnect()
 
     def get_next_uid(self):
         '''
-        return max uid of users on attendance device
+        return max uid of users on attendance machine
         '''
-
         try:
-            machine_ip = self.ip
-            port = self.port
-            force_udp = self.protocol == 'udp'
-            password = self.password or 0
-            zktuid = ZK(self.ip, self.port, self.timeout, password=password, force_udp=force_udp, ommit_ping=self.omit_ping)
-            conn = ''
-            conn = zktuid.connect()
-            uid = conn.get_next_uid()
-            return uid
-
+            self.connect()
+            self.enableDevice()
+            self.disableDevice()
+            return self.zk.get_next_uid()
         except Exception as e:
             _logger.error(str(e))
-            raise ValidationError(_('Could not get max uid from the device %s\n'
-                                    'If you had connected to your device, perhaps your device had problem.\n'
-                                    'Here is the debugging error message:\n%s') % (self.display_name, str(e)))
+            raise ValidationError(_("Could not get max uid from the machine %s\n"
+                                    "If you had connected to your machine, perhaps your machine had problem.\n"
+                                    "Here is the debugging error message:\n%s") % (self.display_name, str(e)))
         finally:
             self.enableDevice()
             self.disconnect()
 
     def getMachineTime(self):
+        """
+        Get naive machine date and time in its local timezone
+        """
         try:
             self.connect()
             self.enableDevice()
-            return self.zk.get_time()
+            local_dt = self.zk.get_time()
+            utc = self.env['to.base'].convert_local_to_utc(local_dt, force_local_tz_name=self.tz, naive=False)
+            return utc.astimezone(pytz.timezone(self.tz))
         except Exception as e:
             _logger.error(str(e))
-            raise ValidationError(_("Could not get time from the device %s\n"
+            raise ValidationError(_("Could not get time from the machine %s\n"
                                     "Here is the debugging error message:\n%s") % (self.display_name, str(e)))
         finally:
             self.disconnect()
@@ -751,34 +840,32 @@ class AttendanceDevice(models.Model):
         '''
         clear all data (include: user, attendance report, finger database )
         '''
-        try:
-            self.connect()
-            self.enableDevice()
-            return self.zk.clear_data()
-        except Exception:
-            raise ValidationError(_('Could not clear all data from the device %s') % (self.display_name,))
-        finally:
-            self.enableDevice()
-            self.disconnect()
+        if self.protocol == 'icloud':
+            cmd = "CLEAR DATA"
+            self._create_cmd_icloud(cmd)
+        else:
+            try:
+                self.connect()
+                self.enableDevice()
+                return self.zk.clear_data()
+            except Exception:
+                raise ValidationError(_("Could not clear all data from the machine %s") % (self.display_name,))
+            finally:
+                self.enableDevice()
+                self.disconnect()
 
     def getAttendance(self):
         post_err_msg = False
-
         try:
-            machine_ip = self.ip
-            port = self.port
-            force_udp = self.protocol == 'udp'
-            password = self.password or 0
-            zktatt = ZK(self.ip, self.port, self.timeout, password=password, force_udp=force_udp, ommit_ping=self.omit_ping)
-            conn = ''
-            conn = zktatt.connect()
-            attendances = conn.get_attendance()
-            return attendances
+            self.connect()
+            self.enableDevice()
+            self.disableDevice()
+            return self.zk.get_attendance()
 
         except Exception as e:
             _logger.error(str(e))
             post_err_msg = True
-            raise ValidationError(_('Could not get attendance data from the device %s') % (self.display_name,))
+            raise ValidationError(_("Could not get attendance data from the machine %s") % (self.display_name,))
 
         finally:
             if post_err_msg and self.download_error_notification:
@@ -787,36 +874,35 @@ class AttendanceDevice(models.Model):
             self.enableDevice()
             self.disconnect()
 
-    def clearAttendance(self):
+    def _attendance_clear_by_icloud(self):
         '''
-        clear all attendance records from the device
+        clear all attendance records from the machine
         '''
-        try:
-            self.connect()
-            self.enableDevice()
-            self.disableDevice()
-            return self.zk.clear_attendance()
-        except Exception:
-            raise ValidationError(_('Could not get attendance data from the device %s') % (self.display_name,))
-        finally:
-            self.enableDevice()
-            self.disconnect()
+        if self.protocol == 'icloud':
+            cmd = "CLEAR LOG"
+            self._create_cmd_icloud(cmd)
+        else:
+            try:
+                self.connect()
+                self.enableDevice()
+                self.disableDevice()
+                return self.zk.clear_attendance()
+            except Exception as e:
+                raise ValidationError(_("Could not clear attendance data from the machine %s. Here is the debugging information:\n%s")
+                                        % (self.display_name, e))
+            finally:
+                self.enableDevice()
+                self.disconnect()
 
     def _download_users_by_uid(self):
         """
-        This method download and update all device users into model attendance.device.user using uid as key
+        This method download and update all machine users into model attendance.device.user using uid as key
         """
         DeviceUser = self.env['attendance.device.user']
         for r in self:
             error_msg = ""
-            machine_ip = r.ip
-            port = r.port
-            force_udp = self.protocol == 'udp'
-            password = self.password or 0
-            zk = ZK(self.ip, self.port, self.timeout, password=password, force_udp=force_udp, ommit_ping=self.omit_ping)
-            conn = ''
-            conn = zk.connect()
-            device_users = conn.get_users()
+            # device_users = User(uid, name, privilege, password, group_id, user_id)
+            device_users = r.getUser()
 
             uids = []
             for device_user in device_users:
@@ -870,7 +956,7 @@ class AttendanceDevice(models.Model):
                             update_data['device_id'] = vals['device_id']
                         if bool(update_data):
                             try:
-                                existing.write(update_data)
+                                existing.with_context(write_new_data_user_to_device=True).write(update_data)
                             except Exception as e:
                                 _logger.info(e)
                                 _logger.info(vals)
@@ -879,22 +965,16 @@ class AttendanceDevice(models.Model):
             if error_msg and r.debug_message:
                 r.message_post(body=error_msg)
 
-    def _download_users_by_user_id(self):
+    def _download_users_by_user_id(self, users=None):
         """
-        This method download and update all device users into model attendance.device.user using user_id as key
-        NOTE: This method is experimental as it failed on comparing user_id in unicode type from devices (unicode: string) with user_id in unicode string from Odoo (u'string')
+        This method download and update all machine users into model attendance.device.user using user_id as key
+        NOTE: This method is experimental as it failed on comparing user_id in unicode type from machines (unicode: string) with user_id in unicode string from System (u'string')
         """
         DeviceUser = self.env['attendance.device.user']
         for r in self:
+            error_msg = ""
             # device_users = User(uid, name, privilege, password, group_id, user_id)
-            machine_ip = r.ip
-            port = r.port
-            force_udp = self.protocol == 'udp'
-            password = self.password or 0
-            zk = ZK(self.ip, self.port, self.timeout, password=password, force_udp=force_udp, ommit_ping=self.omit_ping)
-            conn = ''
-            conn = zk.connect()
-            device_users = conn.get_users()
+            device_users = users if r.protocol == 'icloud' else r.getUser()
 
             user_ids = []
             for device_user in device_users:
@@ -904,6 +984,9 @@ class AttendanceDevice(models.Model):
             device_user_ids = DeviceUser.with_context(active_test=False).search([('device_id', '=', r.id)])
             for user in device_user_ids.filtered(lambda user: user.user_id in user_ids):
                 existing_user_ids.append(str(user.user_id))
+
+            users_not_in_device = device_user_ids.filtered(lambda user: user.user_id not in existing_user_ids)
+            users_not_in_device.write({'not_in_device': True})
 
             for device_user in device_users:
                 user_id = str(device_user.user_id)
@@ -916,26 +999,67 @@ class AttendanceDevice(models.Model):
                     'device_id': r.id,
                     }
                 if device_user.group_id.isdigit():
-                    vals['group_id'] = device_user.group_id
+                    vals['group_id'] = int(device_user.group_id)
                 if user_id not in existing_user_ids:
-                    DeviceUser.create(vals)
+                    try:
+                        DeviceUser.create(vals)
+                    except Exception as e:
+                        _logger.info(e)
+                        _logger.info(vals)
+                        error_msg += str(e)
+                        error_msg += _("\nData that caused the error: %s") % str(vals)
                 else:
                     existing = DeviceUser.with_context(active_test=False).search([
                         ('user_id', '=', user_id),
                         ('device_id', '=', r.id)], limit=1)
                     if existing:
-                        existing.write(vals)
+                        update_data = {}
+                        if existing.name != vals['name']:
+                            update_data['name'] = vals['name']
+                        if existing.privilege != vals['privilege']:
+                            update_data['privilege'] = vals['privilege']
+                        if existing.password != vals['password']:
+                            update_data['password'] = vals['password']
+                        if 'group_id' in vals and existing.group_id != vals['group_id']:
+                            update_data['group_id'] = vals['group_id']
+                        if existing.user_id != vals['user_id']:
+                            update_data['user_id'] = vals['user_id']
+                        if existing.device_id.id != vals['device_id']:
+                            update_data['device_id'] = vals['device_id']
+                        if bool(update_data):
+                            try:
+                                existing.with_context(write_new_data_user_to_device=True).write(update_data)
+                            except Exception as e:
+                                _logger.info(e)
+                                _logger.info(vals)
+                                error_msg += str(e) + "<br />"
+                                error_msg += _("\nData that caused the error: %s") % str(update_data)
+            if error_msg and r.debug_message:
+                r.message_post(body=error_msg)
 
     def action_show_time(self):
         """
         Show the time on the machine
         """
         self.ensure_one()
-        raise ValidationError(_("The Machine time is %s") % self.getMachineTime())
+        action = self._prepare_action_confirm()
+        if self.protocol == 'icloud':
+            action['context'].update({
+                'method': 'N/A',
+                'title': _('Machine Time'),
+                'confirm': _("This feature is not supported in the Icloud protocol.")
+            })
+        else:
+            action['context'].update({
+                'method': 'N/A',
+                'title': _('Machine Time'),
+                'confirm': _("The machine time is %s") % self.getMachineTime()
+            })
+        return action
 
-    def action_user_download(self):
+    def _user_download(self):
         """
-        This method download and update all device users into model attendance.device.user
+        This method download and update all machine users into model attendance.device.user
         """
         for r in self:
             if r.unique_uid:
@@ -943,17 +1067,18 @@ class AttendanceDevice(models.Model):
             else:
                 r._download_users_by_user_id()
 
-    def action_user_upload(self):
+    def _user_upload(self):
         """
         This method will
-        1. Download users from device
+        1. If the protocol is not icloud, Download users from machine will be performed
         2. Map the users with emloyee
-        3. Upload users from model attendance.device.user into the device
+        3. Upload users from model attendance.device.user into the machine
         """
         ignored_employees_dict = {}
         for r in self:
-            # Then we download and map all employees with users
-            r.action_employee_map()
+            if r.protocol != 'icloud':
+                # Then we download and map all employees with users
+                r._employee_map()
             # Then we create users from unmapped employee
             ignored_employees = []
             for employee in r.unmapped_employee_ids:
@@ -962,17 +1087,16 @@ class AttendanceDevice(models.Model):
                     continue
                 employee.upload_to_attendance_device(r)
             # we download and map all employees with users again
-            r.action_employee_map()
+            r._employee_map()
 
             if len(ignored_employees) > 0:
                 ignored_employees_dict[r] = ignored_employees
 
-        if not bool(ignored_employees_dict):
-            message = _('The following employees, who have no Badge ID defined, have not been uploaded to the corresponding device:\n')
+        if bool(ignored_employees_dict):
+            message = _("The following employees, who have no Badge ID defined, have not been uploaded to the corresponding machine:\n")
             for device in ignored_employees_dict.keys():
                 for employee in ignored_employees_dict[device]:
                     message += device.name + ': ' + employee.name + '\n'
-
             return {
                 'warning': {
                     'title': "Some Employees could not be uploaded!",
@@ -980,88 +1104,129 @@ class AttendanceDevice(models.Model):
                 },
             }
 
-    def action_employee_map(self):
-        self.action_user_download()
-
+    def _employee_map(self):
         for r in self:
+            if r.protocol != 'icloud':
+                r._user_download()
             for user in r.device_user_ids.filtered(lambda user: not user.employee_id):
                 employee = user.smart_find_employee()
                 if employee:
                     user.write({
                         'employee_id': employee.id,
                         })
-            # upload users that are available in Odoo but not available in device
-            for user in r.device_user_ids.filtered(lambda user: user.not_in_device):
-                user.setUser()
 
             # upload users that are available in Odoo but not available in device
             for user in r.device_user_ids.filtered(lambda user: user.not_in_device):
-                user.setUser()
-                user.write({'not_in_device': False})
+                new_user_in_device = user.setUser()
+                if new_user_in_device:
+                    new_user_in_device.write({'not_in_device': False})
 
             if r.create_employee_during_mapping:
                 users = r.device_user_ids.filtered(lambda user: not user.employee_id)
                 if users:
                     users.generate_employees()
 
-    def action_attendance_download(self):
+    def action_fetch_attendance_data(self):
+        for r in self:
+            if r.protocol == 'icloud':
+                cmd = "LOG"
+                r._create_cmd_icloud(cmd)
+            else:
+                r._threaded_fetch_attendance_data()
+                return {'type': 'ir.actions.client', 'tag': 'reload'}
+
+    @Threading(db_connection_percentage=15, auto_commit=True, max_batch_size=1)
+    def _threaded_fetch_attendance_data(self, attendance_data=None):
+        return self._fetch_attendance_data(attendance_data)
+
+    @api.model
+    def _cron_download_device_attendance(self):
+        devices = self.env['attendance.device'].search([('state', '=', 'confirmed'), ('protocol', '!=', 'icloud')])
+        devices.with_context(ignore_error=True)._threaded_fetch_attendance_data()
+
+    def _fetch_attendance_data(self, attendance_data_icloud=None):
         DeviceUserAttendance = self.env['user.attendance']
         AttendanceUser = self.env['attendance.device.user']
 
+        map_before_dl = self.filtered(lambda r: r.map_before_dl and r.protocol != 'icloud')
+        if map_before_dl:
+            map_before_dl._finger_template_download()
+        email_template = self.env.ref('to_attendance_device.email_template_unknown_attendance_status_code')
         for r in self:
             error_msg = ""
-            if r.map_before_dl:
-                r.action_finger_template_download()
-
             attendance_states = {}
+            if r.map_before_dl:
+                r._employee_map()
             for state_line in r.attendance_device_state_line_ids:
                 attendance_states[state_line.attendance_state_id.code] = state_line.attendance_state_id.id
 
-            attendance_data = r.getAttendance()
+            attendance_data = attendance_data_icloud if r.protocol == 'icloud' else r.getAttendance()
+
             for attendance in attendance_data:
-                if attendance.punch not in attendance_states.keys():
-                    if not r.ignore_unknown_code:
-                        raise UserError(_('We found attendance status code "%s" from your device %s '
-                                      'but no such code found in the device\'s settings in Odoo. '
-                                      'Please go to the device %s and add this attendance code.\n'
-                                      'In case you want to ignore to load attendance data with this code, '
-                                      ' go to the device setting in Odoo and check "Ignore Unknown Code".')
-                                    % (attendance.punch, r.display_name, r.display_name))
-                    else:
+                if r.last_attendance_download and attendance.timestamp < r.last_attendance_download:
+                    attendance_data.remove(attendance)
+            existing_attendance_codes = list(attendance_states.keys())
+            unknown_attendance_codes = set([
+                attendance.punch for attendance in attendance_data
+                if attendance.punch not in existing_attendance_codes
+                ])
+            if unknown_attendance_codes:
+                with registry(self._cr.dbname).cursor() as cr:
+                    env = r.env(cr=cr)
+                    for unknown_attendance_code in unknown_attendance_codes:
+                        try:
+                            with env.cr.savepoint():
+                                context = {
+                                    'code': unknown_attendance_code,
+                                    'machine_name': r.display_name,
+                                }
+                                r.with_env(env).with_context(context).post_message(email_template)
+                            # pylint: disable=invalid-commit
+                            env.cr.commit()
+                        except Exception as e:
+                            env.cr.rollback()
+                            _logger.error(
+                                "Could not post message using the template %s. Here is debugging info: %s",
+                                email_template.display_name,
+                                str(e)
+                                )
+            # start storing data into the `user.attendance`
+            attendance_users = AttendanceUser.with_context(active_test=False).search([('device_id', '=', r.id)])
+            duplicate_attends = DeviceUserAttendance.search([('device_id', '=', r.id)])
+
+            for attendance in attendance_data:
+                attendance_user = attendance_users.filtered(lambda user: user.user_id == attendance.user_id)[:1]
+                if attendance_user:
+                    utc_timestamp = r.convert_local_to_utc(attendance.timestamp, r.tz, naive=True)
+                    duplicate_attend = duplicate_attends.filtered_domain([
+                        ('user_id', '=', attendance_user.id),
+                        ('timestamp', '=', utc_timestamp)])[:1]
+                    if duplicate_attend:
                         continue
 
-                user_id = AttendanceUser.with_context(active_test=False).search([
-                    ('user_id', '=', attendance.user_id),
-                    ('device_id', '=', r.id)], limit=1)
-                if user_id:
-                    utc_timestamp = r.convert_time_to_utc(attendance.timestamp, r.tz)
-                    str_utc_timestamp = fields.Datetime.to_string(utc_timestamp)
-                    duplicate_attend = DeviceUserAttendance.search([
-                        ('device_id', '=', r.id),
-                        ('user_id', '=', user_id.id),
-                        ('timestamp', '=', str_utc_timestamp)], limit=1)
-
-                    if not duplicate_attend:
-                        try:
-                            vals = {
+                    try:
+                        with r.env.cr.savepoint():
+                            r.env.cr.execute("""SELECT id FROM user_attendance LIMIT 1 FOR NO KEY UPDATE SKIP LOCKED""")
+                            DeviceUserAttendance.create({
                                 'device_id': r.id,
-                                'user_id': user_id.id,
-                                'timestamp': str_utc_timestamp,
+                                'user_id': attendance_user.id,
+                                'timestamp': utc_timestamp,
                                 'status': attendance.punch,
                                 'attendance_state_id': attendance_states[attendance.punch]
-                                }
-
-                            DeviceUserAttendance.create(vals)
-                        except Exception as e:
-                            error_msg += str(e) + "<br />"
-                            error_msg += _("Error create DeviceUserAttendance record: device_id %s; user_id %s; timestamp %s; attendance_state_id %s.<br />") % (
-                                r.id,
-                                user_id.id,
-                                format_datetime(r.env, attendance.timestamp, r.tz),
-                                attendance_states[attendance.punch]
+                                })
+                    except Exception as e:
+                        error_msg += str(e) + "<br />"
+                        error_msg += _("Error create DeviceUserAttendance record: device_id %s; user_id %s; timestamp %s; attendance_state_id %s.<br />") % (
+                            r.id,
+                            attendance_user.id,
+                            attendance.timestamp,
+                            attendance_states.get(
+                                attendance.punch,
+                                _("[Unknown attendance state, here is what we got for attendance.punch: %s") % attendance.punch
                                 )
-                            _logger.error(error_msg)
-                            pass
+                            )
+                        _logger.error(error_msg)
+
             r.last_attendance_download = fields.Datetime.now()
             if error_msg and r.debug_message:
                 r.message_post(body=error_msg)
@@ -1070,46 +1235,54 @@ class AttendanceDevice(models.Model):
                 continue
 
             if r.auto_clear_attendance_schedule == 'on_download_complete':
-                r.action_attendance_clear()
+                r._attendance_clear()
             elif r.auto_clear_attendance_schedule == 'time_scheduled':
                 # datetime in the timezone of the device
-                dt_now = self.convert_utc_time_to_tz(datetime.utcnow(), r.tz)
+                dt_now = self.convert_utc_to_local(datetime.utcnow(), r.tz, naive=True)
                 float_dt_now = self.time_to_float_hour(dt_now)
 
                 if int(r.auto_clear_attendance_dow) == -1 or dt_now.weekday() == int(r.auto_clear_attendance_dow):
                     delta = r.auto_clear_attendance_hour - float_dt_now
                     if abs(delta) <= 0.5 or abs(delta) >= 23.5:
-                        r.action_attendance_clear()
+                        r._attendance_clear()
 
-    def action_finger_template_download(self):
+    def _finger_template_download(self, fingers=None):
         FingerTemplate = self.env['finger.template']
+        self._employee_map()
+        all_device_users = self.env['attendance.device.user'].search([('device_id', 'in', self.ids)])
         for r in self:
-            r.action_employee_map()
-            device_users = self.env['attendance.device.user'].search([('device_id', '=', r.id)])
+            device_users = all_device_users.filtered(lambda dev: dev.device_id.id == r.id)
 
             # if there is still no device users, just ignore downloading finger templates
             if not device_users:
                 continue
 
-            template_data = r.getFingerTemplate()
+            template_data = fingers if r.protocol == 'icloud' else r.getFingerTemplate()
             template_datas = []
             for template in template_data:
-                template_datas.append(str(template.uid) + '_' + str(template.fid))
+                if r.protocol == 'icloud':
+                    template_datas.append(f"{template.user_id}_{template.fid}")
+                else:
+                    template_datas.append(f"{template.uid}_{template.fid}")
 
             existing_finger_template_ids = []
             finger_template_ids = FingerTemplate.search([('device_id', '=', r.id)])
-            for template in finger_template_ids.filtered(lambda tmp: (str(tmp.uid) + '_' + str(tmp.fid)) in template_datas):
-                existing_finger_template_ids.append(str(template.uid) + '_' + str(template.fid))
 
-            vals_list = []
+            if r.protocol == 'icloud':
+                for template in finger_template_ids.filtered(lambda tmp: f"{tmp.user_id}_{tmp.fid}" in template_datas):
+                    existing_finger_template_ids.append(f"{template.user_id}_{template.fid}")
+            else:
+                for template in finger_template_ids.filtered(lambda tmp: f"{tmp.uid}_{tmp.fid}" in template_datas):
+                    existing_finger_template_ids.append(f"{template.uid}_{template.fid}")
 
             for template in template_data:
+                user_id = template.user_id if hasattr(template, 'user_id') else None
                 uid = template.uid
                 fid = template.fid
                 valid = template.valid
                 tmp = template.template
-                device_user_id = self.env['attendance.device.user'].search([('uid', '=', uid), ('device_id', '=', r.id)], limit=1)
-                device_user_id = device_users.filtered(lambda u: u.uid == uid)
+                size = template.size
+                device_user_id = device_users.filtered(lambda u: u.user_id == user_id) if r.protocol == 'icloud' else device_users.filtered(lambda u: u.uid == uid)
                 if not device_user_id:
                     continue
                 else:
@@ -1119,27 +1292,27 @@ class AttendanceDevice(models.Model):
                     'fid': fid,
                     'valid': valid,
                     'template': tmp,
+                    'size': size,
                     }
                 if device_user_id.employee_id:
                     vals['employee_id'] = device_user_id.employee_id.id
 
-                if (str(template.uid) + '_' + str(template.fid)) not in existing_finger_template_ids:
-                    vals_list.append(vals)
+                if r.protocol != 'icloud' and (f"{template.uid}_{template.fid}") not in existing_finger_template_ids:
+                    FingerTemplate.create(vals)
+                if r.protocol == 'icloud' and (f"{template.user_id}_{template.fid}") not in existing_finger_template_ids:
+                    FingerTemplate.create(vals)
                 else:
-                    existing = FingerTemplate.search([
-                        ('uid', '=', uid),
-                        ('fid', '=', fid),
-                        ('device_id', '=', r.id),
-                        ], limit=1)
+                    domain_user_id = [('user_id', '=', user_id), ('fid', '=', fid), ('device_id', '=', r.id)]
+                    domain_uid = [('uid', '=', uid), ('fid', '=', fid), ('device_id', '=', r.id)]
+                    domain = domain_user_id if r.protocol == 'icloud' else domain_uid
+                    existing = FingerTemplate.search(domain, limit=1)
                     if existing:
                         existing.write(vals)
-            if vals_list:
-                FingerTemplate.create(vals_list)
         return
 
     def is_attendance_clear_safe(self):
         """
-        If the data from devices has not been downloaded into Odoo, this method will return false
+        If the data from machines has not been downloaded into Odoo, this method will return false
         """
         UserAttendance = self.env['user.attendance']
         User = self.env['attendance.device.user']
@@ -1151,110 +1324,105 @@ class AttendanceDevice(models.Model):
             if att.punch not in check_statuses:
                 continue
             user = User.with_context(active_test=False).search([('user_id', '=', att.user_id), ('device_id', '=', self.id)], limit=1)
-            utc_dt = self.convert_time_to_utc(att.timestamp, self.tz)
-            str_utc_dt = fields.Datetime.to_string(utc_dt)
+            utc_dt = self.convert_local_to_utc(att.timestamp, self.tz, naive=True)
             match = UserAttendance.search([('device_id', '=', self.id),
                                            ('user_id', '=', user.id),
                                            ('status', '=', att.punch),
-                                           ('timestamp', '=', str_utc_dt)], limit=1)
+                                           ('timestamp', '=', utc_dt)], limit=1)
             if not match:
                 return False, att
         return True, False
 
-    def action_attendance_clear(self):
+    def _attendance_clear(self):
         """
-        Method to clear all attendance data from the device
+        Method to clear all attendance data from the machine
         """
-
+        email_template = self.env.ref('to_attendance_device.email_template_not_safe_to_clear_attendance')
         for r in self:
-            error_msg = ""
-            attendance_clear_safe, att = r.is_attendance_clear_safe()
-            if attendance_clear_safe:
-                r.clearAttendance()
+            if r.protocol == 'icloud':
+                r._attendance_clear_by_icloud()
             else:
-                error_msg += _("It was not safe to clear attendance data from the device %s.<br />") % (r.name,)
-                error_msg += _("The following attendance data has not been stored in Odoo yet:<br />")
-                error_msg += _("user_id: %s<br />timestamp: %s<br />status: %s<br />") % (att.user_id, att.timestamp, att.punch)
-                _logger.warning("It was not safe to clear attendance data from the device %s" % r.name)
-                if r.auto_clear_attendance_error_notif:
-                    email_template_id = self.env.ref('to_attendance_device.email_template_not_safe_to_clear_attendance')
-                    r.post_message(email_template_id)
-            if error_msg and r.debug_message:
-                r.message_post(body=error_msg)
+                error_msg = ""
+                attendance_clear_safe, att = r.is_attendance_clear_safe()
+                if attendance_clear_safe:
+                    r._attendance_clear_by_icloud()
+                else:
+                    error_msg += _("It was not safe to clear attendance data from the machine %s.<br />") % (r.name,)
+                    error_msg += _("The following attendance data has not been stored in System yet:<br />")
+                    error_msg += _("user_id: %s<br />timestamp: %s<br />status: %s<br />") % (att.user_id, att.timestamp, att.punch)
+                    _logger.warning("It was not safe to clear attendance data from the machine %s" % r.name)
+                    if r.auto_clear_attendance_error_notif:
+                        try:
+                            with registry(self._cr.dbname).cursor() as cr:
+                                with cr.savepoint():
+                                    r.with_env(self.env(cr=cr)).post_message(email_template)
+                                # pylint: disable=invalid-commit
+                                cr.commit()
+                        except Exception as e:
+                            _logger.error(
+                                "Could not post message using the template %s. Here is debugging info: %s",
+                                email_template.display_name,
+                                str(e)
+                                )
 
-
-
-
-
+                if error_msg and r.debug_message:
+                    r.message_post(body=error_msg)
+                if error_msg:
+                    raise ValidationError(error_msg.replace('<br />', '\n'))
 
     def action_check_connection(self):
-        for r in self:
-            machine_ip = r.ip
-            port = r.port
-            force_udp = self.protocol == 'udp'
-            password = self.password or 0
-            zkc = ZK(self.ip, self.port, self.timeout, password=password, force_udp=force_udp, ommit_ping=self.omit_ping)
-            connc = ''
-            try:
-                connc = zkc.connect()
-                users = connc.get_users()
-            except Exception as e:
-                raise UserError('The connection has not been achieved')
-            finally:
-                if connc:
-                    connc.disconnect()
-                    raise UserError(_('successful connection:  "%s".') %
-                                    (users))
-
-    def action_check_connections(self):
         self.ensure_one()
         if self.connect():
             self.disconnect()
-            raise UserError(_('Connect to the device %s successfully') % (self.display_name,))
+            action = self._prepare_action_confirm()
+            action['context'].update({
+                'method': 'N/A',
+                'title': _('Machine Connection'),
+                'confirm': _("Connect to the machine %s successfully!") % (self.display_name,)
+            })
+            return action
 
     def action_device_information(self):
         dbname = self._cr.dbname
-        cr = registry(dbname).cursor()
         for r in self:
             try:
-                machine_ip = r.ip
-                port = r.port
-                force_udp = self.protocol == 'udp'
-                password = self.password or 0
-                zk = ZK(self.ip, self.port, self.timeout, password=password, force_udp=force_udp, ommit_ping=self.omit_ping)
-                cr = registry(dbname).cursor()
-                r = r.with_env(r.env(cr=cr))
-                conn = zk.connect()
-                r.firmware_version = conn.get_firmware_version()
-                r.serialnumber = conn.get_serialnumber()
-                r.platform = conn.get_platform()
-                r.oem_vendor = conn.get_oem_vendor()
-                r.fingerprint_algorithm = conn.get_fp_version()
-                r.device_name = conn.get_device_name()
-                r.work_code = conn.get_workcode()
+                with registry(dbname).cursor() as cr:
+                    with cr.savepoint():
+                        r = r.with_env(r.env(cr=cr))
+                        if r.protocol == 'icloud':
+                            r._create_cmd_icloud('INFO')
+                        else:
+                            r.connect()
+                            r.firmware_version = r.zk.get_firmware_version()
+                            r.serialnumber = r.zk.get_serialnumber()
+                            r.platform = r.zk.get_platform()
+                            r.fingerprint_algorithm = r.zk.get_fp_version()
+                            r.device_name = r.zk.get_device_name()
+                            r.work_code = r.zk.get_workcode()
+                            r.oem_vendor = r.zk.get_oem_vendor()
+                    # pylint: disable=invalid-commit
+                    cr.commit()
             except Exception as e:
                 _logger.error(e)
-            finally:
-                cr.commit()
-                cr.close()
+                raise UserError(e)
 
     @api.model
     def post_message(self, email_template):
         if self.user_id:
             self.message_subscribe([self.user_id.partner_id.id])
-        if email_template:
-            self.message_post_with_template(email_template.id)
+        test_mode = self.env.registry.in_test_mode() or getattr(threading.current_thread(), 'testing', False)
+        if email_template and not test_mode:
+            self.message_mail_with_source(email_template)
 
     def action_view_users(self):
-        action = self.env.ref('to_attendance_device.device_user_list_action')
-        result = action.read()[0]
+        result = self.env['ir.actions.act_window']._for_xml_id('to_attendance_device.device_user_list_action')
 
         # reset context
         result['context'] = {}
 
         # choose the view_mode accordingly
         if self.device_users_count != 1:
-            result['domain'] = "[('id', 'in', " + str(self.device_user_ids.ids) + ")]"
+            result['domain'] = "[('id', 'in', %s)]" % self.with_context(active_test=False).device_user_ids.ids
         elif self.device_users_count == 1:
             res = self.env.ref('to_attendance_device.attendance_device_user_form_view', False)
             result['views'] = [(res and res.id or False, 'form')]
@@ -1263,8 +1431,7 @@ class AttendanceDevice(models.Model):
 
     def action_view_attendance_data(self):
         self.ensure_one()
-        action = self.env.ref('to_attendance_device.action_user_attendance_data')
-        result = action.read()[0]
+        result = self.env['ir.actions.act_window']._for_xml_id('to_attendance_device.action_user_attendance_data')
 
         # reset context
         result['context'] = {}
@@ -1279,14 +1446,13 @@ class AttendanceDevice(models.Model):
         return result
 
     def action_view_mapped_employees(self):
-        action = self.env.ref('hr.open_view_employee_list_my')
-        result = action.read()[0]
+        result = self.env['ir.actions.act_window']._for_xml_id('hr.open_view_employee_list_my')
 
         # reset context
         result['context'] = {}
         # choose the view_mode accordingly
         if self.mapped_employees_count != 1:
-            result['domain'] = "[('id', 'in', " + str(self.mapped_employee_ids.ids) + ")]"
+            result['domain'] = "[('id', 'in', " + str(self.with_context(active_test=False).mapped_employee_ids.ids) + ")]"
         elif self.mapped_employees_count == 1:
             res = self.env.ref('to_attendance_device.view_employee_form', False)
             result['views'] = [(res and res.id or False, 'form')]
@@ -1295,8 +1461,7 @@ class AttendanceDevice(models.Model):
 
     def action_view_finger_template(self):
         self.ensure_one()
-        action = self.env.ref('to_attendance_device.action_finger_template')
-        result = action.read()[0]
+        result = self.env['ir.actions.act_window']._for_xml_id('to_attendance_device.action_finger_template')
 
         # reset context
         result['context'] = {}
@@ -1310,34 +1475,439 @@ class AttendanceDevice(models.Model):
             result['res_id'] = self.finger_template_ids.id
         return result
 
-    def unlink(self):
-        force_delete = self.env.context.get('force_delete', False)
+    def action_view_log_command_to_device(self):
+        self.ensure_one()
+        result = self.env['ir.actions.act_window']._for_xml_id('to_attendance_device.attendance_command_device_tree_action')
+
+        # reset context
+        result['context'] = {}
+        result['domain'] = "[('device_id', 'in', " + str(self.ids) + ")]"
+        return result
+
+    def action_view_data_log_device(self):
+        self.ensure_one()
+        result = self.env['ir.actions.act_window']._for_xml_id('to_attendance_device.attendance_data_log_device_tree_action')
+
+        # reset context
+        result['context'] = {}
+        result['domain'] = "[('device_id', 'in', " + str(self.ids) + ")]"
+        return result
+
+    @api.ondelete(at_uninstall=False)
+    def _unlink_if_draft_state(self):
         for r in self:
             if r.state != 'draft':
-                raise UserError(_("You cannot delete the device '%s' while its state is not Draft.")
+                raise UserError(_("You cannot delete the machine '%s' while its state is not Draft.")
                                 % (r.display_name,))
+
+    @api.ondelete(at_uninstall=False)
+    def _unlink_except_not_force_delete(self):
+        force_delete = self.env.context.get('force_delete', False)
+        for r in self:
             if r.device_user_ids and not force_delete:
-                raise UserError(_("You may not be able to delete the device '%s' while its data is stored in Odoo."
-                                  " Please remove all the related data of this device before removing it from Odoo."
-                                  " You may also consider to deactivate this device so that you don't have to delete"
+                raise UserError(_("You may not be able to delete the machine '%s' while its data is stored in System."
+                                  " Please remove all the related data of this machine before removing it from System."
+                                  " You may also consider to deactivate this machine so that you don't have to delete"
                                   " it.") % (r.display_name,))
-        return super(AttendanceDevice, self).unlink()
+
+    def _prepare_action_confirm(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Information'),
+            'res_model': 'device.confirm.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'active_id': self.id,
+            }
+        }
+
+    def action_user_upload(self):
+        action = self._prepare_action_confirm()
+        action['context'].update({
+            'method': '_user_upload',
+            'title': _('Upload Users To Machine'),
+            'confirm': _("System will map the existing users with System's employees."
+                       " The unmapped employees will be uploaded to this machine as new users"
+                       " and then download those new users into System and map them again"
+                       " with those unmapped employees. Do you want to proceed?")
+        })
+        return action
+
+    def action_user_download(self):
+        action = self._prepare_action_confirm()
+        method = '_icloud_download_users' if self.protocol == 'icloud' else '_user_download'
+        action['context'].update({
+            'method': method,
+            'title': _('Download Users From Machine'),
+            'confirm': _("System will connect and download all the users from your machine"
+                    " (without mapping those with the existing Employees in System)."
+                    " Do you want to proceed?")
+        })
+        return action
+
+    def action_employee_map(self):
+        action = self._prepare_action_confirm()
+        content_tcp = _("System will connect and download all the users from your machine"
+                       " and try to map those with the System's employees."
+                       " Do you want to proceed?")
+        content_icloud = _("System will try to map those with the System's employees."
+                       " Do you want to proceed?")
+        content = content_icloud if self.protocol == 'icloud' else content_tcp
+        action['context'].update({
+            'method': '_employee_map',
+            'title': _('Map Employees With Users'),
+            'confirm': content,
+        })
+        return action
+
+    def action_finger_template_download(self):
+        action = self._prepare_action_confirm()
+        method = '_icloud_download_fingers' if self.protocol == 'icloud' else '_finger_template_download'
+        action['context'].update({
+                'method': method,
+                'title': _('Download Fingerprints From Machine'),
+                'confirm': _("System will connect and download all the fingers template from your machine."
+                        " Do you want to proceed?")
+            })
+        return action
+
+    def action_clear_attendance_data(self):
+        action = self._prepare_action_confirm()
+        action['context'].update({
+            'method': '_attendance_clear',
+            'title': _('Clear Attendance Data'),
+            'confirm': _("System will connect and clear all the attendance data"
+                       " in this machine. Are you sure about this?")
+        })
+        return action
+
+    def action_restart(self):
+        action = self._prepare_action_confirm()
+        action['context'].update({
+            'method': '_restart',
+            'title': _('Restart Machine'),
+            'confirm': _("Are you sure to restart the machine: %s?") % (self.display_name,)
+        })
+        return action
+
+    def _icloud_download_users(self):
+        for r in self:
+            cmd = "DATA QUERY USERINFO"
+            r._create_cmd_icloud(cmd)
+
+    def _icloud_download_fingers(self):
+        for r in self:
+            cmd = "DATA QUERY FINGERTMP"
+            r._create_cmd_icloud(cmd)
+
+    def process_data_from_device(self, method, serial_number, data, table=None):
+        """
+        This method is used to process the data from the machine
+        """
+        device = self.search([('serialnumber', '=', serial_number), ('protocol', '=', 'icloud'), ('state', '=', 'confirmed')], limit=1)
+        if device:
+            # Update configuration data for the attendance device.
+            if method == 'GET':
+                reply = 'GET OPTION FROM: ' + serial_number + '\n'
+                reply += 'ATTLOGStamp=' + device.attlog_stamp + '\n'
+                reply += 'OPERLOGStamp=' + device.operlog_stamp + '\n'
+                reply += 'ATTPHOTOStamp=' + device.attphoto_stamp + '\n'
+                reply += 'ErrorDelay=' + str(device.error_delay) + '\n'
+                reply += 'Delay=' + str(device.delay) + '\n'
+                reply += 'TransTimes=' + device.trans_times + '\n'
+                reply += 'TransInterval=' + str(device.trans_interval) + '\n'
+                reply += 'TransFlag=' + device.trans_flag + '\n'
+                reply += 'TimeZone=' + device.tz_num + '\n'
+                reply += 'Realtime=' + ('1' if device.real_time else '0') + '\n'
+                reply += 'Encrypt=' + ('1' if device.encrypt else '0') + '\n'
+                reply += 'ServerVer=' + device.server_ver + '\n'
+                reply += 'TableNameStamp\n'
+                reply += '\n'
+                return reply
+            # Update data received from the attendance device.
+            if method == 'POST':
+                if table == 'OPERLOG' or table == 'ATTLOG':
+                    key = data.split('\t')[0] if data.split('\t')[0].isdigit() else data.split(' ')[0]
+                    value = False
+                    if key.isdigit():
+                        # updating attendance data
+                        attendance_data = device._unpack_attendance_to_list(data)
+                        device._threaded_fetch_attendance_data(attendance_data)
+                        value = len(attendance_data)
+                    elif key == 'USER':
+                        # updating user data
+                        users = device._unpack_user_to_list(data)
+                        device._download_users_by_user_id(users)
+                        value = len(users)
+                    elif key == 'FP':
+                        # updating fingerprint data
+                        fingers = device._unpack_finger_to_list(data)
+                        device._finger_template_download(fingers)
+                        value = len(fingers)
+                    elif key == 'OPLOG':
+                        # updating log
+                        data_logs = device._unpack_operation_log_to_list(data)
+                        device._download_operation_log(data_logs)
+                        value = len(data_logs)
+                    elif key == 'USERPIC':
+                        # updating user's image on the device
+                        # TODO: will develop in the next period
+                        # data structure
+                        # USERPIC PIN=1       FileName=1.jpg  Size=14728      Content=/9j/4AAQ...
+                        pass
+                    else:
+                        # TODO: Catch exceptional data to facilitate the development of the next module.
+                        _logger.info(data)
+                    return "OK{}\n".format((":" + str(value)) if value else '')
+                if table == 'options':
+                    # TODO: Tested on 2 machine lines, and the results are as follows:
+                    # - Machine number 1 has no return result in this table.
+                    # - Machine number 2 has a return result in this table.
+                    # The result data includes information from the attendance device.
+                    info = self._convert_string_to_dict(data)
+                    device.write(self._update_information(info))
+                    return 'OK'
+                else:
+                    # TODO: Catch exceptional data to facilitate the development of the next module.
+                    _logger.info(data)
+                    return 'OK'
+        return 'OK'
+
+    def process_getrequest(self, serial_number):
+        """
+        This method is used in cases where there is a new command that needs to be sent to the attendance device.
+        """
+        domain = [
+            ('device_id.serialnumber', '=', serial_number),
+            ('device_id.protocol', '=', 'icloud'),
+            ('state', '=', 'draft')
+            ]
+        cmd_device = self.env['attendance.command.device'].search(domain, order='number, create_date DESC', limit=1)
+        if cmd_device:
+            cmd_reply = "C:{}:{} {}\n".format(cmd_device.number, cmd_device.name, cmd_device.data or '')
+            cmd_device.write({'state': 'pending', 'transfer_time': fields.Datetime.now()})
+            return cmd_reply
+        return 'OK'
+
+    def process_returned_command_results(self, serial_number, data):
+        """
+        This method is employed when there are results sent back from the attendance device.
+        """
+        reponse = self._convert_string_to_dict(data)
+        reponse_num = reponse.get('ID', False)
+        reponse_cmd = reponse.get('CMD', 'N/A').strip()
+        reponse_value = reponse.get('Return', 'N/A')
+        domain = [
+            ('device_id.serialnumber', '=', serial_number),
+            ('device_id.protocol', '=', 'icloud'),
+            ('state', '=', 'pending'),
+            ('number', '=', reponse_num and int(reponse_num)),
+            ('name', 'ilike', reponse_cmd),
+            ('return_value', '=', 'N/A'),
+            ]
+        cmd_device = self.env['attendance.command.device'].search(domain, order='number, write_date DESC', limit=1)
+        if cmd_device:
+            cmd_device.write({
+                'state': 'done' if int(reponse_value) == 0 else 'error',
+                'return_value': reponse_value,
+                'return_time': fields.Datetime.now(),
+                })
+            user_id = re.search(r'PIN=([^\t]+)', cmd_device.data or '')
+            if user_id:
+                device_user = self.env['attendance.device.user'].with_context(active_test=False).search([('user_id', '=', user_id.group(1))], limit=1)
+                if device_user:
+                    # Employees have been updated on the attendance device
+                    device_user.write({'not_in_device': False})
+            # Update information of the attendance device.
+            if reponse.get('CMD', None) == 'INFO':
+                device = self.search([
+                    ('serialnumber', '=', serial_number),
+                    ('protocol', '=', 'icloud')
+                    ], limit=1)
+                if device:
+                    device.write(self._update_information(reponse))
+        return 'OK'
+
+    def _convert_string_to_dict(self, data: str):
+        d = dict()
+        try:
+            data_split = data.split('\n') if '\n' in data else data.split(',')
+            for item in data_split:
+                pairs = [i.split('=') for i in item.split('&') if '=' in i]
+                for key, value in pairs:
+                    d[key.lstrip('~')] = value
+        except Exception:
+            _logger.error("Data information is in the wrong format: {}".format(data))
+        finally:
+            return d
+
+    def _update_information(self, info):
+        return {
+            'device_name': info.get('DeviceName', False),
+            'firmware_version': info.get('FWVersion', False),
+            'platform': info.get('Platform', False),
+            'fingerprint_algorithm': info.get('FPVersion', False),
+            'oem_vendor': info.get('OEMVendor', False),
+            'ip': info.get('IPAddress', False),
+        }
+
+    def _unpack_user_to_list(self, users):
+        data_list = list()
+        try:
+            users = users.split('\n')
+            for user in users:
+                user_dict = dict()
+                for item in user.split('\t'):
+                    if '=' in item:
+                        key, value = item.split('=', 1)
+                        user_dict[key] = value
+                if user_dict:
+                    # User(uid, name, privilege, password, group_id, user_id)
+                    data_list.append(User(uid=user_dict.get('Uid', None),
+                                        name=user_dict.get('Name', ''),
+                                        privilege=int(user_dict.get('Pri', '')) if user_dict.get('Pri', '').isdigit() else None,
+                                        password=str(user_dict.get('Passwd', '')),
+                                        group_id=str(user_dict.get('Grp', '')),
+                                        user_id=str(user_dict.get('USER PIN', '')),
+                                        card=int(user_dict.get('Card', '')) if user_dict.get('Card', '').isdigit() else -1,)
+                        )
+        except Exception:
+            _logger.error("Data users is in the wrong format: {}".format(users))
+        finally:
+            return data_list
+
+    def _unpack_finger_to_list(self, fingers):
+        data_list = list()
+        try:
+            fingers = fingers.split('\n')
+            for finger in fingers:
+                finger_dict = dict()
+                for item in finger.split('\t'):
+                    if '=' in item:
+                        key, value = item.split('=', 1)
+                        finger_dict[key] = value
+                if finger_dict:
+                    # Finger_UserId(fid, size, valid, template, user_id, uid=None)
+                    data_list.append(FingerUserId(fid=finger_dict.get('FID', 0),
+                                                valid=finger_dict.get('Valid', 0),
+                                                template=finger_dict.get('TMP', ''),
+                                                size=finger_dict.get('Size', 0),
+                                                user_id=finger_dict.get('FP PIN', ''),)
+                        )
+        except Exception:
+            _logger.error("Data fingers is in the wrong format: {}".format(fingers))
+        finally:
+            return data_list
+
+    def _unpack_attendance_to_list(self, attendance_data):
+        attendances = list()
+        try:
+            attendance_data = attendance_data.split('\n')
+            for user in attendance_data:
+                if user:
+                    attendance_user = user.split('\t')
+                    date_format = "%Y-%m-%d %H:%M:%S"
+                    timestamp = datetime.strptime(attendance_user[1], date_format)
+                    # Attendance(user_id, timestamp, status, punch=0, uid=0):
+                    attendance = Attendance(user_id=attendance_user[0],
+                                            timestamp=timestamp,
+                                            status=int(attendance_user[3]),
+                                            punch=int(attendance_user[2]))
+                    attendances.append(attendance)
+        except Exception:
+            _logger.error("Data attendances is in the wrong format: {}".format(attendance_data))
+        finally:
+            return attendances
+
+    def _unpack_operation_log_to_list(self, log_data):
+        logs = list()
+        try:
+            log_data = log_data.split('\n')
+            for lg in log_data:
+                if lg:
+                    log = lg.split('\t')
+                    date_format = "%Y-%m-%d %H:%M:%S"
+                    op_time = datetime.strptime(log[2], date_format)
+                    op_time = self.env['to.base'].convert_local_to_utc(op_time, force_local_tz_name=self.tz, naive=True)
+                    log_dict = {
+                        'op_type': log[0].replace('OPLOG ', ''),
+                        'op_who': log[1],
+                        'op_time': op_time,
+                        'value_1': log[3],
+                        'value_2': log[4],
+                        'value_3': log[5],
+                        'reserved': log[6]
+                    }
+                    logs.append(log_dict)
+        except Exception:
+            _logger.error("Data logs is in the wrong format: {}".format(log_data))
+        finally:
+            return logs
+
+    def _create_cmd_icloud(self, command, data=None):
+        self.env['attendance.command.device'].create({
+            'name': command,
+            'data': data,
+            'device_id': self.id,
+            'return_value': 'N/A'
+        })
+
+    def action_upload_setting(self):
+        self._create_cmd_icloud(command="CHECK")
+
+    def _download_operation_log(self, data_log):
+        data_logs = self.env['attendance.data.log.device'].with_context(active_test=False).search([('device_id', '=', self.id)])
+        for data in data_log:
+            log = data_logs.filtered(lambda lg: lg.op_time == data.get('op_time', False))
+            if not log:
+                self.env['attendance.data.log.device'].create({
+                    'device_id': self.id,
+                    'op_type': data.get('op_type', False),
+                    'op_who': data.get('op_who', False),
+                    'op_time': data.get('op_time', False),
+                    'value_1': data.get('value_1', False),
+                    'value_2': data.get('value_2', False),
+                    'value_3': data.get('value_3', False),
+                    'reserved': data.get('reserved', False)
+                })
 
 
 class AttendanceDeviceStateLine(models.Model):
     _name = 'attendance.device.state.line'
-    _description = 'Attendance Device State'
+    _description = 'Attendance Machine State'
 
     attendance_state_id = fields.Many2one('attendance.state', string='State Code', required=True, index=True,)
-    device_id = fields.Many2one('attendance.device', string='Device', required=True, ondelete='cascade', index=True, copy=False)
+    device_id = fields.Many2one('attendance.device', string='Machine', required=True, ondelete='cascade', index=True, copy=False)
     code = fields.Integer(string='Code Number', related='attendance_state_id.code', store=True, readonly=True)
     type = fields.Selection(related='attendance_state_id.type', store=True)
     activity_id = fields.Many2one('attendance.activity', related='attendance_state_id.activity_id',
-                                  help='Attendance activity, e.g. Normal Working, Overtime, etc', readonly=True, store=True, index=True)
+                                  help="Attendance activity, e.g. Normal Working, Overtime, etc", readonly=True, store=True, index=True)
 
     _sql_constraints = [
-        ('attendance_state_id_device_id_unique',
+        ('attendance_state_device_unique',
          'UNIQUE(attendance_state_id, device_id)',
-         "The Code must be unique per Device"),
+         "The Code must be unique per Machine"),
     ]
 
+
+class DeveiceTransFlag(models.Model):
+    _name = 'attendance.device.trans.flag'
+    _description = 'To compute the attendance.device.trans_flag field.'
+
+    # This model was created to generate data for selecting communication
+    # function flags between the server and the attendance machine.
+
+    name = fields.Char(string='Function Flag Name', translate=True)
+    sequence = fields.Integer(string="Sequences", help="Order number of the function")
+
+
+class FingerUserId():
+    # This class is created to be compatible with the fingerprint class of the "pyzk" library.
+    def __init__(self, fid, size, valid, template, user_id, uid=None):
+        self.size = int(size)
+        self.uid = int(uid) if uid or uid == 0 else None
+        self.fid = int(fid)
+        self.valid = int(valid)
+        self.template = template
+        self.user_id = user_id

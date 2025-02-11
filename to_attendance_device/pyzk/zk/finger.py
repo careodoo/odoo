@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from struct import pack  # , unpack
 import codecs
 
@@ -49,4 +48,3 @@ class Finger(object):
 
     def dump(self):
         return "<Finger> [uid:{:>3}, fid:{}, size:{:>4} v:{} t:{}]".format(self.uid, self.fid, self.size, self.valid, codecs.encode(self.template, 'hex'))
-

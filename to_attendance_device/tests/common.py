@@ -1,7 +1,8 @@
 from odoo import fields
-from odoo.tests import TransactionCase
+from odoo.tests.common import HttpCase
 
-class Common(TransactionCase):
+
+class Common(HttpCase):
 
     def setUp(self):
         super(Common, self).setUp()
@@ -18,7 +19,7 @@ class Common(TransactionCase):
             'ip': 'ip_test',
             'port': 4355,
             'timeout': 5,
-            'password':'0',
+            'password': '0',
             'location_id': self.attendance_device_location.id
             })
         self.attendance_device_user = self.env['attendance.device.user'].create({

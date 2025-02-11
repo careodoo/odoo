@@ -8,6 +8,8 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='structure_type_id']" position="after">
                     <field name="att_policy_id" required="1"/>
+                    <field name="auto_attendance_sheet" required="0"/>
+                    <field name="attendance_sheet_based" required="0"/>
                 </xpath>
             </field>
         </record>

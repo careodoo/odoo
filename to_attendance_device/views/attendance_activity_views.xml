@@ -30,7 +30,7 @@
 			<field name="name">attendance.activity.tree</field>
 			<field name="model">attendance.activity</field>
 			<field name="arch" type="xml">
-				<tree string="Attendance Activities">
+				<tree string="Attendance Activities" sample="1">
 					<field name="name" />
 					<field name="status_count" />
 				</tree>
@@ -49,7 +49,7 @@
 
 
 		<menuitem id="attendance_activity_menu" name="Attendance Activity"
-			parent="hr_attendance.menu_hr_attendance_settings" sequence="1100"
+			parent="attendace_device_menu" sequence="12"
 			action="attendance_activity_tree_action" groups="hr_attendance.group_hr_attendance_manager" />
 
 	</data>

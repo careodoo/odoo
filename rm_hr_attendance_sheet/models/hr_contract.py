@@ -18,10 +18,10 @@ from datetime import datetime, timedelta
 
 
 class HrContract(models.Model):
-  _inherit = 'hr.contract'
-  _description = 'Employee Contract'
+    _inherit = 'hr.contract'
+    _description = 'Employee Contract'
+    att_policy_id = fields.Many2one('hr.attendance.policy',
+                                    string='Attendance Policy')
+    auto_attendance_sheet = fields.Boolean('Auto Generate Attendance Sheet')
+    attendance_sheet_based = fields.Boolean('Based ON Attendance Sheet')
 
-  att_policy_id = fields.Many2one(
-      'hr.attendance.policy',
-      string='Attendance Policy',
-  )

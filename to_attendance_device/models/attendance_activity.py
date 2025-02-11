@@ -6,10 +6,10 @@ class AttendanceActivity(models.Model):
     _description = 'Attendance Activity'
 
     name = fields.Char(string='Name', required=True, translate=True,
-                              help='The name of the attendance activity. E.g. Normal Working, Overtime, etc')
+                              help="The name of the attendance activity. E.g. Normal Working, Overtime, etc")
 
     attendance_status_ids = fields.One2many('attendance.state', 'activity_id', string='Attendance Status',
-                                            help='The check-in and check-out statuses of this activity')
+                                            help="The check-in and check-out statuses of this activity")
 
     status_count = fields.Integer(string='Status Count', compute='_compute_status_count')
 
@@ -25,7 +25,7 @@ class AttendanceActivity(models.Model):
             r.status_count = len(r.attendance_status_ids)
 
     def getAttendance(self, device_id=None, user_id=None):
-        domain = [('attendance_state_id', 'in', self.mapped('attendance_status_ids').ids)]
+        domain = [('attendance_state_id', 'in', self.attendance_status_ids.ids)]
         if device_id:
             domain += [('device_id', '=', device_id.id)]
 

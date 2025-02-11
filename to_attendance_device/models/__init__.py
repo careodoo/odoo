@@ -7,5 +7,5 @@ from . import user_attendance
 from . import attendance_device_location
 from . import hr_attendance
 from . import finger_template
-from . import daily_attendance
-from . import res_config_settings
+from . import attendance_command_to_device
+from . import attendance_datalog_from_device

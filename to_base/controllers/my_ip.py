@@ -5,7 +5,7 @@ MY_IP_ROUTE = '/my/ip/'
 
 class MyIPController(Controller):
 
-    @route([MY_IP_ROUTE], type='http', auth="public", website=True)
+    @route([MY_IP_ROUTE], type='http', auth="public", website=True, sitemap=False)
     def my_ip(self, **kwargs):
         """
         Method to return the IP of the remote host that sends the request to /my/ip/

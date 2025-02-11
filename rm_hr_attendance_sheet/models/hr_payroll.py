@@ -8,84 +8,79 @@
 ##############################################################################
 
 from odoo import api, fields, models, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 
 
 class HrPayslip(models.Model):
-  _inherit = 'hr.payslip'
+    _inherit = 'hr.payslip'
 
-  sheet_id = fields.Many2one(
-      comodel_name="attendance.sheet",
-      string="Attendance Sheet",
-      required=False,
-  )
+    attendance_sheet_ids = fields.One2many(comodel_name='attendance.sheet', inverse_name='payslip_id',
+                                           string='Attendance Sheets', ondelete='cascade')
 
-  def _get_workday_lines(self):
-    self.ensure_one()
+    overtime_no = fields.Integer(string="Overtime No", compute='_compute_att_sheet_data')
+    overtime_hours = fields.Float(string="Overtime Hours", compute='_compute_att_sheet_data')
+    late_no = fields.Integer(string="Late No", compute='_compute_att_sheet_data')
+    late_hours = fields.Float(string="Late Hours", compute='_compute_att_sheet_data')
+    absent_no = fields.Integer(string="Absent No", compute='_compute_att_sheet_data')
+    absent_hours = fields.Float(string="Absent Hours", compute='_compute_att_sheet_data')
+    diff_no = fields.Integer(string="Diff No", compute='_compute_att_sheet_data')
+    diff_hours = fields.Float(string="Diff Hours", compute='_compute_att_sheet_data')
+    worked_days = fields.Integer(string="Work Days No", compute='_compute_att_sheet_data')
+    worked_hours = fields.Float(string="Work Days Hours", compute='_compute_att_sheet_data')
+    # no_unpaid_leave = fields.Float(compute="_compute_att_sheet_data",
+    #                                string="No Unpaid Leave Times")
+    # tot_unpaid_leave = fields.Float(compute="_compute_att_sheet_data",
+    #                                 string="Total Unpaid Leave")
 
-    work_entry_obj = self.env['hr.work.entry.type']
-    overtime_work_entry = work_entry_obj.search([('code', '=', 'ATTSHOT')])
-    latin_work_entry = work_entry_obj.search([('code', '=', 'ATTSHLI')])
-    absence_work_entry = work_entry_obj.search([('code', '=', 'ATTSHAB')])
-    difftime_work_entry = work_entry_obj.search([('code', '=', 'ATTSHDT')])
-    if not overtime_work_entry:
-      raise ValidationError(_(
-          'Please Add Work Entry Type For Attendance Sheet Overtime With Code ATTSHOT'))
-    if not latin_work_entry:
-      raise ValidationError(_(
-          'Please Add Work Entry Type For Attendance Sheet Late In With Code ATTSHLI'))
-    if not absence_work_entry:
-      raise ValidationError(_(
-          'Please Add Work Entry Type For Attendance Sheet Absence With Code ATTSHAB'))
-    if not difftime_work_entry:
-      raise ValidationError(_(
-          'Please Add Work Entry Type For Attendance Sheet Diff Time With Code ATTSHDT'))
+    def _compute_att_sheet_data(self):
+        for slip in self:
+            overtime_no = overtime_hours = late_no = late_hours = absent_no = absent_hours = diff_no = diff_hours = worked_days = worked_hours = 0
+            # no_unpaid_leave = 0
+            # tot_unpaid_leave = 0
+            for sheet in slip.attendance_sheet_ids:
+                overtime_no += sheet.no_overtime
+                overtime_hours += sheet.tot_overtime
+                late_no += sheet.no_late
+                late_hours += sheet.tot_late
+                absent_no += sheet.no_absence
+                absent_hours += sheet.tot_absence
+                diff_no += sheet.no_difftime
+                diff_hours += sheet.tot_difftime
+                worked_hours += sheet.tot_worked_hour
+                # no_unpaid_leave += sheet.no_unpaid_leave
+                # tot_unpaid_leave += sheet.tot_unpaid_leave
+                
+            slip.overtime_no = overtime_no
+            slip.overtime_hours = overtime_hours
+            slip.late_no = late_no
+            slip.late_hours = late_hours
+            slip.absent_no = absent_no
+            slip.absent_hours = absent_hours
+            slip.diff_no = diff_no
+            slip.diff_hours = diff_hours
+            slip.worked_days = worked_days
+            slip.worked_hours = worked_hours
+            # slip.no_unpaid_leave = no_unpaid_leave
+            # slip.tot_unpaid_leave = tot_unpaid_leave
 
-    overtime = [{
-        'name': "Overtime",
-        'code': 'OVT',
-        'work_entry_type_id': overtime_work_entry[0].id,
-        'sequence': 30,
-        'number_of_days': self.sheet_id.no_overtime,
-        'number_of_hours': self.sheet_id.tot_overtime,
-    }]
-    absence = [{
-        'name': "Absence",
-        'code': 'ABS',
-        'work_entry_type_id': absence_work_entry[0].id,
-        'sequence': 35,
-        'number_of_days': self.sheet_id.no_absence,
-        'number_of_hours': self.sheet_id.tot_absence,
-    }]
-    late = [{
-        'name': "Late In",
-        'code': 'LATE',
-        'work_entry_type_id': latin_work_entry[0].id,
-        'sequence': 40,
-        'number_of_days': self.sheet_id.no_late,
-        'number_of_hours': self.sheet_id.tot_late,
-    }]
-    difftime = [{
-        'name': "Difference time",
-        'code': 'DIFFT',
-        'work_entry_type_id': difftime_work_entry[0].id,
-        'sequence': 45,
-        'number_of_days': self.sheet_id.no_difftime,
-        'number_of_hours': self.sheet_id.tot_difftime,
-    }]
-    worked_days_lines = overtime + late + absence + difftime
-    return worked_days_lines
+    def set_payslip_attendance_sheet(self):
+        self.ensure_one()
+        sheet_ids = self.env['attendance.sheet'].search(
+            [('employee_id', '=', self.employee_id.id), ('date_from', '>=', self.date_from),
+             ('date_to', '<=', self.date_to), ('state', '=', 'done')])
+        if sheet_ids:
+            self.write({'attendance_sheet_ids': [(6, 0, sheet_ids.ids)]})
 
-  def compute_sheet(self):
-    if self.sheet_id:
-      worked_day_lines = self._get_workday_lines()
-      print("ffffffffffffffffff", self.worked_days_line_ids)
-      if len(self.worked_days_line_ids) < 2:
-        self.worked_days_line_ids = [(0, 0, x) for x in worked_day_lines]
-      res = super().compute_sheet()
+    def _get_new_worked_days_lines(self):
+        res = super(HrPayslip, self)._get_new_worked_days_lines()
+        if self.contract_id and self.contract_id.attendance_sheet_based:
+            self.set_payslip_attendance_sheet()
+        return res
 
-      return res
-    else:
-      res = super().compute_sheet()
-
-      return res
+    def compute_sheet(self):
+        for slip in self:
+            if slip.contract_id and slip.contract_id.attendance_sheet_based:
+                slip.set_payslip_attendance_sheet()
+                if not slip.attendance_sheet_ids:
+                    raise UserError(_('No Approved Attendance Sheet Found For Employee : %s') % (slip.employee_id.name))
+        return super(HrPayslip, self).compute_sheet()

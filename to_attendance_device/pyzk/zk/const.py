@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-
+# pylint: skip-file
 USHRT_MAX = 65535
 
 CMD_DB_RRQ          = 7     # Read in some kind of data from the machine
@@ -78,20 +77,20 @@ CMD_ACK_RETRY       = 2003  # * Regstered event occorred */
 CMD_ACK_REPEAT      = 2004  # Not available
 CMD_ACK_UNAUTH      = 2005  # Connection unauthorized
 
-CMD_ACK_UNKNOWN     = 0xffff# Unkown order
-CMD_ACK_ERROR_CMD   = 0xfffd# Order false
-CMD_ACK_ERROR_INIT  = 0xfffc#/* Not Initializated */
-CMD_ACK_ERROR_DATA  = 0xfffb# Not available
+CMD_ACK_UNKNOWN     = 0xffff  # Unkown order
+CMD_ACK_ERROR_CMD   = 0xfffd  # Order false
+CMD_ACK_ERROR_INIT  = 0xfffc  # /* Not Initializated */
+CMD_ACK_ERROR_DATA  = 0xfffb  # Not available
 
 EF_ATTLOG           = 1     # Be real-time to verify successfully
-EF_FINGER           = (1<<1)# be real–time to press fingerprint (be real time to return data type sign)
-EF_ENROLLUSER       = (1<<2)# Be real-time to enroll user
-EF_ENROLLFINGER     = (1<<3)# be real-time to enroll fingerprint
-EF_BUTTON           = (1<<4)# be real-time to press button
-EF_UNLOCK           = (1<<5)# be real-time to unlock
-EF_VERIFY           = (1<<7)# be real-time to verify fingerprint
-EF_FPFTR            = (1<<8)# be real-time capture fingerprint minutia
-EF_ALARM            = (1<<9)# Alarm signal
+EF_FINGER           = (1<<1)  # be real–time to press fingerprint (be real time to return data type sign)
+EF_ENROLLUSER       = (1<<2)  # Be real-time to enroll user
+EF_ENROLLFINGER     = (1<<3)  # be real-time to enroll fingerprint
+EF_BUTTON           = (1<<4)  # be real-time to press button
+EF_UNLOCK           = (1<<5)  # be real-time to unlock
+EF_VERIFY           = (1<<7)  # be real-time to verify fingerprint
+EF_FPFTR            = (1<<8)  # be real-time capture fingerprint minutia
+EF_ALARM            = (1<<9)  # Alarm signal
 
 USER_DEFAULT        = 0
 USER_ENROLLER       = 2
@@ -106,5 +105,5 @@ FCT_USER            = 5
 FCT_SMS             = 6
 FCT_UDATA           = 7
 
-MACHINE_PREPARE_DATA_1 = 20560 # 0x5050
-MACHINE_PREPARE_DATA_2 = 32130 # 0x7282
+MACHINE_PREPARE_DATA_1 = 20560  # 0x5050
+MACHINE_PREPARE_DATA_2 = 32130  # 0x7282

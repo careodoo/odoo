@@ -1,6 +1,7 @@
 from odoo.addons.to_attendance_device.tests.common import Common
 from odoo.tests import tagged
 
+
 @tagged('post_install', '-at_install')
 class TestHrEmployee(Common):
 

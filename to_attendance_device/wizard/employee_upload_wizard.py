@@ -1,4 +1,5 @@
 from odoo import models, fields, api
+from odoo.exceptions import ValidationError
 from odoo.models import NewId
 
 
@@ -13,8 +14,14 @@ class EmployeeUploadLine(models.TransientModel):
     employee_id = fields.Many2one('hr.employee', string='Employees to upload', required=True, ondelete='cascade')
 
     def upload_employees(self):
-        for r in self:
-            r.employee_id.upload_to_attendance_device(r.device_id)
+        devices = self.device_id
+        error_msg = ""
+        for device in devices:
+            employees = self.filtered(lambda line: line.device_id.id == device.id).employee_id
+            with self.pool.cursor() as cr:
+                error_msg += employees.with_env(self.env(cr=cr)).upload_to_attendance_device(device)
+        if error_msg:
+            raise ValidationError(error_msg)
 
 
 class EmployeeUploadWizard(models.TransientModel):
@@ -22,15 +29,21 @@ class EmployeeUploadWizard(models.TransientModel):
     _description = 'Employee Upload Wizard'
 
     @api.model
-    def _get_employee_ids(self):
+    def _default_get_employee_ids(self):
         return self.env['hr.employee'].search([('id', 'in', self.env.context.get('active_ids', []))])
 
-    device_ids = fields.Many2many('attendance.device', 'employee_upload_wizard_attendance_device_rel', 'wizard_id', 'device_id',
-                                  string='Devices', required=True,
-                                  compute='_compute_devices', store=True, readonly=False)
+    device_ids = fields.Many2many(
+        'attendance.device',
+        'employee_upload_wizard_attendance_device_rel',
+        'wizard_id',
+        'device_id',
+        string='Devices',
+        required=True,
+        readonly=False
+    )
 
     employee_ids = fields.Many2many('hr.employee', 'employee_upload_wizard_hr_employee_rel', 'wizard_id', 'employee_id',
-                                    string='Employees to upload', default=_get_employee_ids, required=True)
+                                    string='Employees to upload', default=_default_get_employee_ids, required=True)
 
     line_ids = fields.One2many('employee.upload.line', 'wizard_id', string='Upload Details', compute='_compute_line_ids',
                                store=True, readonly=False)
@@ -38,7 +51,7 @@ class EmployeeUploadWizard(models.TransientModel):
     @api.depends('employee_ids')
     def _compute_devices(self):
         for r in self:
-            device_ids = r.employee_ids.mapped('unamapped_attendance_device_ids')
+            device_ids = r.employee_ids.unamapped_attendance_device_ids.filtered(lambda device: device.state != 'cancelled')
             r.device_ids = [(6, 0, device_ids.ids)]
 
     def _prepare_lines(self):
@@ -62,10 +75,4 @@ class EmployeeUploadWizard(models.TransientModel):
             r.line_ids = [(5,)] + r._prepare_lines()
 
     def action_employee_upload(self):
-        line_ids = self.mapped('line_ids')
-        no_barcode_employees = line_ids.mapped('employee_id').filtered(lambda emp: not emp.barcode)
-        no_barcode_employees.generate_random_barcode()
-        line_ids.upload_employees()
-        # we download and map all employees with users again
-        self.mapped('device_ids').action_employee_map()
-
+        self.line_ids.upload_employees()

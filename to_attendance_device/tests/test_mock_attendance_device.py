@@ -1,4 +1,5 @@
-import datetime, pytz
+import datetime
+import pytz
 from unittest.mock import patch
 from psycopg2 import IntegrityError
 
@@ -10,11 +11,12 @@ from odoo.exceptions import ValidationError, UserError
 
 from ..pyzk.zk.base import Attendance, Finger, ZK
 from ..pyzk.zk.user import User
-from ..pyzk.zk.exception import ZKErrorConnection, ZKConnectionUnauthorized, ZKErrorResponse, ZKNetworkError
+from ..pyzk.zk.exception import ZKErrorConnection
+
 
 class ZkDeviceMock():
-    users = [User(uid=1, name='test', user_id=1, privilege=1)]
-    attendances = [Attendance(user_id=1, timestamp=fields.Datetime.now(), status=1, punch=0, uid=1)]
+    users = [User(uid=1, name='test', user_id='1', privilege=1)]
+    attendances = [Attendance(user_id='1', timestamp=fields.Datetime.now(), status=1, punch=0, uid=1)]
     fingers = [Finger(uid=1, fid=1, valid=1, template=b"J\xc7SS21\x00")]
 
     @classmethod
@@ -125,6 +127,7 @@ class ZkDeviceMock():
     def _clear_data(cls, *arg, **kargs):
         raise ZKErrorConnection("instance are not connected.")
 
+
 @tagged('post_install', '-at_install')
 @patch.object(ZK, 'connect', ZkDeviceMock._connect)
 @patch.object(ZK, 'disconnect', ZkDeviceMock._disconnect)
@@ -153,7 +156,7 @@ class TestAttendanceDeviceMock(TransactionCase):
             'ip': 'ip_test',
             'port': 1111,
             'timeout': 20,
-            'password':'1234',
+            'password': '1234',
             'location_id': cls.attendance_device_location.id,
             })
 
@@ -175,6 +178,7 @@ class TestAttendanceDeviceMock(TransactionCase):
         cr = self.registry.cursor()
         device = self.attendance_device.with_env(self.attendance_device.env(cr=cr))
         device.action_device_information()
+        # pylint: disable=invalid-commit
         cr.commit()
         self.assertRecordValues(
             device,
@@ -202,7 +206,7 @@ class TestAttendanceDeviceMock(TransactionCase):
         action['context'].update({
             'method': 'N/A',
             'title': 'Machine Time',
-            'content': "The machine time is %s" % utc.astimezone(pytz.timezone(self.attendance_device.tz))
+            'confirm': "The machine time is %s" % utc.astimezone(pytz.timezone(self.attendance_device.tz))
         })
         self.assertEqual(self.attendance_device.action_show_time(), action)
 
@@ -210,7 +214,7 @@ class TestAttendanceDeviceMock(TransactionCase):
     @patch.object(ZK, 'restart', ZkDeviceMock._restart)
     @mute_logger('odoo.addons.to_attendance_device.models.attendance_device', 'ZKErrorConnection')
     def test_03_action_restart(self):
-        with self.assertRaises(ValidationError, msg = "test_action_restart failed"):
+        with self.assertRaises(ValidationError, msg="test_action_restart failed"):
             self.attendance_device._restart()
 
     # 12. Download user
@@ -254,9 +258,6 @@ class TestAttendanceDeviceMock(TransactionCase):
         self.attendance_device._compute_device_users_count()
         self.assertEqual(self.attendance_device.device_users_count, 1, "test_action_employee_upload passed failed")
 
-        with self.assertRaises(ValidationError), mute_logger('odoo.sql_db'):
-            employee_upload_wizard.action_employee_upload()
-
     # 16. Synchronize attendance
     def test_11_sync_attendance(self):
         self.attendance_device.create_employee_during_mapping = True
@@ -271,19 +272,19 @@ class TestAttendanceDeviceMock(TransactionCase):
             'name': 'new_att_device_location',
             'hr_work_location_id': self.env.ref('hr.work_location_1').id,
             })
-        new_att_device = self.env['attendance.device'].create({
+        self.env['attendance.device'].create({
             'name': 'new_att_device',
             'ip': self.attendance_device.ip,
             'port': self.attendance_device.port,
             'timeout': 20,
-            'password':'1234',
+            'password': '1234',
             'location_id': new_att_device_location.id,
-            })
+        })
         self.assertEqual(self.env['attendance.device'].search_count([]), 2, "test_new_device_dupplicate_ip_port_location failed")
 
     # 15. Xóa 1 thiết bị không ở trạng thái draft: Confirm/cancelled
     def test_13_delete_device_not_in_draft(self):
-        with self.assertRaises(UserError, msg = "test_delete_device_not_in_draft failed"):
+        with self.assertRaises(UserError, msg="test_delete_device_not_in_draft failed"):
             self.attendance_device.state = 'confirmed'
             self.attendance_device.unlink()
 
@@ -294,7 +295,7 @@ class TestAttendanceDeviceMock(TransactionCase):
             'ip': 'new_ip',
             'port': 122,
             'timeout': 20,
-            'password':'1234',
+            'password': '1234',
             'location_id': self.attendance_device_location.id,
             })
         new_att_device.unlink()
@@ -302,24 +303,24 @@ class TestAttendanceDeviceMock(TransactionCase):
 
     # 17. Xóa thiết bị ở trạng thái Draft và đã có dữ liệu chấm công
     def test_15_delete_device_in_draft_has_attendance_data(self):
-        with self.assertRaises(UserError, msg = "test_delete_device_in_draft_has_attendance_data failed"):
+        with self.assertRaises(UserError, msg="test_delete_device_in_draft_has_attendance_data failed"):
             new_att_device = self.env['attendance.device'].create({
                 'name': 'new_att_device',
                 'ip': 'new_ip',
                 'port': 122,
                 'timeout': 20,
-                'password':'1234',
+                'password': '1234',
                 'location_id': self.attendance_device_location.id,
                 })
             new_att_device_user = self.env['attendance.device.user'].create({
                 'name': 'new user',
                 'device_id': new_att_device.id,
-                'user_id': 123,
+                'user_id': '123',
                 'uid': 123,
                 })
             self.user_attendance = self.env['user.attendance'].create({
                 'device_id': new_att_device.id,
-                'user_id': new_att_device_user.id,
+                'user_id': str(new_att_device_user.id),
                 'timestamp': fields.datetime.now(),
                 'status': 1,
                 'attendance_state_id': self.env['attendance.state'].search([])[1].id,
@@ -332,13 +333,13 @@ class TestAttendanceDeviceMock(TransactionCase):
         self.attendance_device.location_id.tz = 'Asia/Ho_Chi_Minh'
         self.assertEqual(self.attendance_device.tz, 'Asia/Ho_Chi_Minh')
 
-   # Form test
+    # Form test
     # Case 6: Sau khi thực hiện Download Users (tại form view của Device Manager), số lượng Users sẽ được tự cập nhật theo số lượng users có trong máy chấm công
     def test_17_compute_device_users_count(self):
         self.env['attendance.device.user'].create({
             'name': 'test_attendance_device_user',
             'device_id': self.attendance_device.id,
-            'user_id': 2
+            'user_id': '2'
             })
         self.assertEqual(self.attendance_device.device_users_count, 1)
 
@@ -348,12 +349,12 @@ class TestAttendanceDeviceMock(TransactionCase):
         new_employee = self.env['hr.employee'].create({
             'name': 'Van A',
             })
-        new_user = self.env['attendance.device.user'].create({
+        self.env['attendance.device.user'].create({
             'name': 'new_test_user',
             'device_id': self.attendance_device.id,
-            'user_id': 2,
+            'user_id': '2',
             'employee_id': new_employee.id,
-            })
+        })
         self.assertEqual(self.attendance_device.mapped_employees_count, 1)
         pass
 
@@ -364,7 +365,7 @@ class TestAttendanceDeviceMock(TransactionCase):
         self.env['finger.template'].create({
             'uid': 2,
             'fid': 2,
-            'device_user_id': self.attendance_device.device_user_ids.search([('name','=','test')], limit=1).id,
+            'device_user_id': self.attendance_device.device_user_ids.search([('name', '=', 'test')], limit=1).id,
             'device_id': self.attendance_device.id,
             })
         self.attendance_device._compute_total_finger_template_records()
@@ -376,10 +377,10 @@ class TestAttendanceDeviceMock(TransactionCase):
         self.attendance_device._fetch_attendance_data()
         self.env['user.attendance'].create({
             'device_id': self.attendance_device.id,
-            'user_id': self.attendance_device.device_user_ids.search([('name','=','test')], limit=1).id,
+            'user_id': str(self.attendance_device.device_user_ids.search([('name', '=', 'test')], limit=1).id),
             'timestamp': fields.datetime.now(),
             'status': 1,
-            'attendance_state_id': self.env['attendance.state'].search([('code','=',1)], limit=1).id,
+            'attendance_state_id': self.env['attendance.state'].search([('code', '=', 1)], limit=1).id,
             })
         self.attendance_device._compute_total_attendance_records()
         self.assertEqual(self.attendance_device.total_att_records, 2, "test_compute_total_attendance_records failed")
@@ -387,44 +388,44 @@ class TestAttendanceDeviceMock(TransactionCase):
     # Tư vấn bổ sung testcases
     # 17. Một Attendance status không có cùng một loại Attendance type
     def test_21_attendance_status_type_unique(self):
-        #create a new attendance activity
+        # create a new attendance activity
         self.attendance_activity = self.env['attendance.activity'].create({
             'name': 'new_test_attendance_activity'
             })
-        #create a new attendance status with the type = checkin
+        # create a new attendance status with the type = checkin
         self.env['attendance.state'].create({
             'name': 'new_test_attendance_state',
-            'activity_id': self.env['attendance.activity'].search([('name','=','new_test_attendance_activity')], limit=1).id,
+            'activity_id': self.env['attendance.activity'].search([('name', '=', 'new_test_attendance_activity')], limit=1).id,
             'code': 222,
             'type': 'checkin'
             })
         with self.assertRaises(IntegrityError), mute_logger('odoo.sql_db'):
-            #create a new attendance status with the same type = checkin, same activity but another code
+            # create a new attendance status with the same type = checkin, same activity but another code
             self.env['attendance.state'].create({
                 'name': 'new_test_attendance_state',
-                'activity_id': self.env['attendance.activity'].search([('name','=','new_test_attendance_activity')], limit=1).id,
+                'activity_id': self.env['attendance.activity'].search([('name', '=', 'new_test_attendance_activity')], limit=1).id,
                 'code': 223,
                 'type': 'checkin'
                 })
 
     # 18. Code number của Attendance status là duy nhất
     def test_22_attendance_status_code_unique(self):
-        #create a new attendance activity
+        # create a new attendance activity
         self.attendance_activity = self.env['attendance.activity'].create({
             'name': 'new_test_attendance_activity'
             })
-        #create a new attendance status with the code = 222
+        # create a new attendance status with the code = 222
         self.env['attendance.state'].create({
             'name': 'new_test_attendance_state',
-            'activity_id': self.env['attendance.activity'].search([('name','=','new_test_attendance_activity')], limit=1).id,
+            'activity_id': self.env['attendance.activity'].search([('name', '=', 'new_test_attendance_activity')], limit=1).id,
             'code': 222,
             'type': 'checkin'
             })
         with self.assertRaises(IntegrityError), mute_logger('odoo.sql_db'):
-            #create a new attendance status with the same code = 222, same activity but another type
+            # create a new attendance status with the same code = 222, same activity but another type
             self.env['attendance.state'].create({
                 'name': 'new_test_attendance_state',
-                'activity_id': self.env['attendance.activity'].search([('name','=','new_test_attendance_activity')], limit=1).id,
+                'activity_id': self.env['attendance.activity'].search([('name', '=', 'new_test_attendance_activity')], limit=1).id,
                 'code': 222,
                 'type': 'checkout'
                 })
@@ -435,7 +436,7 @@ class TestAttendanceDeviceMock(TransactionCase):
         # when Generate Emloyees is enabled, _employee_map() will create an employee named "test"
         self.attendance_device.create_employee_during_mapping = True
         self.attendance_device._employee_map()
-        self.assertTrue(self.env['hr.employee'].search([('name','=','test')]))
+        self.assertTrue(self.env['hr.employee'].search([('name', '=', 'test')]))
 
     # Download attendances from many devices simultaneously
     def test_24_action_attendance_download_devices(self):
@@ -444,7 +445,7 @@ class TestAttendanceDeviceMock(TransactionCase):
             'ip': 'ip_test',
             'port': 1112,
             'timeout': 20,
-            'password':'1234',
+            'password': '1234',
             'location_id': self.attendance_device_location.id,
             })
         self.attendance_device_3 = self.env['attendance.device'].create({
@@ -452,11 +453,11 @@ class TestAttendanceDeviceMock(TransactionCase):
             'ip': 'ip_test',
             'port': 1113,
             'timeout': 20,
-            'password':'1234',
+            'password': '1234',
             'location_id': self.attendance_device_location.id,
             })
         attendance_devices = self.env['attendance.device'].search([])
-        attendance_devices.action_fetch_attendance_data()
+        attendance_devices._fetch_attendance_data()  # don't use threading here
         self.assertEqual(self.attendance_device.total_att_records, 1)
         self.assertEqual(self.attendance_device_2.total_att_records, 1)
         self.assertEqual(self.attendance_device_3.total_att_records, 1)

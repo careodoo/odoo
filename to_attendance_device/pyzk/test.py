@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# pylint: skip-file
 import sys
 
 from zk import ZK, const

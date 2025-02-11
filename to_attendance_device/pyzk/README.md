@@ -347,7 +347,7 @@ optional arguments:
                         attendance]
 ```
 
-To restore on a different device, make sure to specify the `filename`. on restoring, it asks for the serial number of the destination device (to make sure it was correct, as it deletes all data) WARNING. there is no way to restore attendance data, you can keep it or clear it, but once cleared, there is no way to restore it. 
+To restore on a different device, make sure to specify the `filename`. on restoring, it asks for the serial number of the destination device (to make sure it was correct, as it deletes all data) WARNING. there is no way to restore attendance data, you can keep it or clear it, but once cleared, there is no way to restore it.
 
 # Compatible devices
 
@@ -392,7 +392,7 @@ Firmware Version : Ver 6.60 Jun 9 2017
 Platform : JZ4725_TFT
 DeviceName : K20 (latest checked correctly!)
 
-Firmware Version : Ver 6.60 Aug 23 2014 
+Firmware Version : Ver 6.60 Aug 23 2014
 Platform : ZEM600_TFT
 DeviceName : VF680 (face device only, but we read the user and attendance list!)
 
@@ -427,7 +427,7 @@ DeviceName : iClock880-H/ID (Active testing! latest fix)
 
 ```
 Firmware Version : Ver 6.4.1 (build 99) (display version 2012-08-31)
-Platform : 
+Platform :
 DeviceName : iClock260 (no capture data - probably similar problem as the latest TESTED)
 ```
 

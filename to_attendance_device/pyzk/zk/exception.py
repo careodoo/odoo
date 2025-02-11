@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 class ZKError(Exception):
     pass
 
@@ -13,6 +12,7 @@ class ZKErrorResponse(ZKError):
 
 class ZKNetworkError(ZKError):
     pass
+
 
 class ZKConnectionUnauthorized(ZKError):
     pass

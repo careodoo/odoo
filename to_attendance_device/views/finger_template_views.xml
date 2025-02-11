@@ -14,7 +14,11 @@
 								<field name="device_id" readonly="1" />
 							</group>
 							<group>
-								<field name="uid" readonly="1" />
+								<field name="protocol" invisible="1" />
+								<field name="uid" readonly="1"
+									invisible="protocol == 'icloud'"/>
+								<field name="user_id" readonly="1"
+									invisible="protocol != 'icloud'"/>
 								<field name="fid" readonly="1" />
 								<field name="valid" readonly="1" />
 							</group>
@@ -28,10 +32,12 @@
 			<field name="name">Finger Template</field>
 			<field name="model">finger.template</field>
 			<field name="arch" type="xml">
-				<tree string="Finger Template" create="false" edit="false">
+				<tree string="Finger Template" create="false" edit="false" sample="1">
+					<field name="protocol" column_invisible="1" />
 					<field name="device_user_id" />
 					<field name="employee_id" />
-					<field name="uid" />
+					<field name="uid" invisible="protocol == 'icloud'" />
+					<field name="user_id" invisible="protocol != 'icloud'" />
 					<field name="fid" />
 					<field name="valid" />
 					<field name="device_id" />
@@ -53,7 +59,7 @@
 					<group expand="0" string="Group By...">
 						<filter string="User" name="device_user_id"
 							context="{'group_by': 'device_user_id'}" />
-						<filter string="Device" name="device_id"
+						<filter string="Machine" name="device_id"
 							context="{'group_by': 'device_id'}" />
 					</group>
 				</search>
@@ -71,7 +77,7 @@
 		<menuitem id="finger_template_menu" name="Finger Template"
 			parent="attendace_device_menu" sequence="20"
 			action="action_finger_template"
-			groups="hr_attendance.group_hr_attendance_user" />
+			groups="hr_attendance.group_hr_attendance_officer" />
 
 	</data>
 </odoo>

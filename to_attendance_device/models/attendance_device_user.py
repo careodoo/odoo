@@ -1,9 +1,10 @@
 import logging
+from random import randint
 
-from odoo import models, fields, api, registry, _
+from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
-from ..pyzk.zk.finger import Finger
+from ..pyzk.zk.exception import ZKErrorResponse
 
 _logger = logging.getLogger(__name__)
 
@@ -11,34 +12,40 @@ _logger = logging.getLogger(__name__)
 class AttendanceDeviceUser(models.Model):
     _name = 'attendance.device.user'
     _inherit = 'mail.thread'
-    _description = 'Attendance Device User'
+    _description = 'Attendance Machine User'
 
-    name = fields.Char(string='Name', help='The name of the employee stored in the device', required=True, tracking=True)
-    device_id = fields.Many2one('attendance.device', string='Attendance Device', required=True, ondelete='cascade', tracking=True)
-    uid = fields.Integer(string='UID', help='The ID (technical field) of the user/employee in the device storage', readonly=True, tracking=True)
-    user_id = fields.Char(string='ID Number', size=8, help='The ID Number of the user/employee in the device storage', required=True, tracking=True)
-    password = fields.Char(string='Password', tracking=True)
-    group_id = fields.Integer(string='Group', default=0, tracking=True)
-    privilege = fields.Integer(string='Privilege', tracking=True)
-    del_user = fields.Boolean(string='Delete User', default=False,
+    def _get_default_color(self):
+        return randint(1, 11)
+
+    name = fields.Char(string='Name', help="The name of the employee stored in the machine", required=True, tracking=True)
+    device_id = fields.Many2one('attendance.device', string='Attendance Machine', required=True, ondelete='cascade', tracking=True)
+    uid = fields.Integer(string='UID', help="The ID (technical field) of the user/employee in the machine storage", readonly=True, tracking=True)
+    user_id = fields.Char(string='ID Number', size=8, help="The ID Number of the user/employee in the machine storage", required=True, tracking=True)
+    password = fields.Char(string='Password', tracking=True, help="Used when checkin/checkout on the attendance machines by password")
+    group_id = fields.Integer(string='Group', default=0, tracking=True, help="Group ID of the user on the attendance machines")
+    privilege = fields.Integer(string='Privilege', tracking=True, help="Privilege of the user on the attendance machines")
+    del_user = fields.Boolean(string='Delete In Machine?', default=False,
                               tracking=True,
-                              help='If checked, the user on the device will be deleted upon deleting this record in Odoo')
-    employee_id = fields.Many2one('hr.employee', string='Employee', help='The Employee who is corresponding to this device user',
+                              help="If checked, the user on the machine will be deleted upon deleting this record in System")
+    employee_id = fields.Many2one('hr.employee', string='Employee', help="The Employee who is corresponding to this machine user",
                                   ondelete='set null', tracking=True)
     attendance_ids = fields.One2many('user.attendance', 'user_id', string='Attendance Data', readonly=True)
     attendance_id = fields.Many2one('user.attendance', string='Current Attendance', store=True,
                                     compute='_compute_current_attendance',
-                                    help='The technical field to store current attendance recorded of the user.')
-    active = fields.Boolean(string='Active', compute='_get_active', inverse='_set_active', tracking=True, store=True)
+                                    help="The technical field to store current attendance recorded of the user.")
+    active = fields.Boolean(string='Active',
+                            compute='_compute_get_active', store=True, precompute=True,
+                            default=True, tracking=True, readonly=False)
     finger_templates_ids = fields.One2many('finger.template', 'device_user_id', string='Finger Template', readonly=True)
     total_finger_template_records = fields.Integer(string='Finger Templates', compute='_compute_total_finger_template_records')
-    not_in_device = fields.Boolean(string='Not in Device', readonly=True, help="Technical field to indicate this user is not available in device storage."
-                                 " It could be deleted outside Odoo.")
+    not_in_device = fields.Boolean(string='Not in machine', readonly=True, help="Technical field to indicate this user is not available in machine storage."
+                                 " It could be deleted outside System.")
+    color = fields.Integer('Color Index', default=_get_default_color)
 
     _sql_constraints = [
         ('employee_id_device_id_unique',
          'UNIQUE(employee_id, device_id)',
-         "The Employee must be unique per Device"),
+         "The Employee must be unique per machine"),
     ]
 
     def _compute_total_finger_template_records(self):
@@ -46,15 +53,12 @@ class AttendanceDeviceUser(models.Model):
             r.total_finger_template_records = len(r.finger_templates_ids)
 
     @api.depends('device_id', 'device_id.active', 'employee_id', 'employee_id.active')
-    def _get_active(self):
+    def _compute_get_active(self):
         for r in self:
             if r.employee_id:
                 r.active = r.device_id.active and r.employee_id.active
             else:
                 r.active = r.device_id.active
-                
-    def _set_active(self):
-        pass
 
     @api.depends('attendance_ids')
     def _compute_current_attendance(self):
@@ -67,27 +71,31 @@ class AttendanceDeviceUser(models.Model):
             if r.device_id and r.device_id.unique_uid:
                 duplicate = self.search([('id', '!=', r.id), ('device_id', '=', r.device_id.id), ('user_id', '=', r.user_id)], limit=1)
                 if duplicate:
-                    raise UserError(_('The ID Number must be unique per Device!'
-                                      ' A new user was being created/updated whose user_id and'
-                                      ' device_id is the same as the existing one\'s (name: %s; device: %s; user_id: %s)')
+                    raise UserError(_("The ID Number must be unique per machine!"
+                                      " A new user was being created/updated whose user_id and"
+                                      " machine_id is the same as the existing one's (name: %s; machine: %s; user_id: %s)")
                                       % (duplicate.name, duplicate.device_id.display_name, duplicate.user_id))
 
     def unlink(self):
-        dbname = self._cr.dbname
-        for r in self:
-            if r.del_user:
-                try:
-                    cr = registry(dbname).cursor()
-                    r = r.with_env(r.env(cr=cr))
+        to_del_dev_users = self.filtered(lambda u: u.del_user)
+        remaining = self - to_del_dev_users
+        for r in to_del_dev_users:
+            try:
+                # to avoid inconsistent data, delete attendance device users only if it
+                # was successfully deleted from device
+                with r.env.cr.savepoint():
                     r.device_id.delUser(r.uid, r.user_id)
-                    super(AttendanceDeviceUser, r).unlink()
-                except Exception as e:
+                    remaining |= r
+            except ZKErrorResponse as e:
+                # when try to delete a user that does not exist in device, exception ZKErrorResponse will raise
+                # catch this exception to allow to delete this user in Odoo
+                if "Can't delete user" in '%s' % e:
+                    remaining |= r
+                else:
                     _logger.error(e)
-                finally:
-                    cr.commit()
-                    cr.close()
-            else:
-                super(AttendanceDeviceUser, r).unlink()
+            except Exception as e:
+                _logger.error(e)
+        super(AttendanceDeviceUser, remaining).unlink()
         return True
 
     def setUser(self):
@@ -103,17 +111,22 @@ class AttendanceDeviceUser(models.Model):
         return new_user
 
     def upload_finger_templates(self):
-        finger_templates = self.mapped('finger_templates_ids')
-        if not finger_templates:
-            if self.employee_id:
-                if self.employee_id.finger_templates_ids:                    
-                    finger_templates = self.env['finger.template'].create({
-                            'device_user_id': self.id,
-                            'fid': 0,
-                            'valid': self.employee_id.finger_templates_ids[0].valid,
-                            'template': self.employee_id.finger_templates_ids[0].template,
-                            'employee_id': self.employee_id.id
-                        })
+        finger_templates = self.finger_templates_ids
+        if self.employee_id:
+            new_finger_templates = self.env['finger.template'].search(
+                [('employee_id', '=', self.employee_id.id),
+                ('template', 'not in', finger_templates.mapped('template'))])
+            if new_finger_templates:
+                vals_list = []
+                for finger_template in new_finger_templates:
+                    vals_list.append({
+                        'device_user_id': self.id,
+                        'fid': finger_template.fid,
+                        'valid': finger_template.valid,
+                        'template': finger_template.template,
+                        'employee_id': self.employee_id.id
+                    })
+                finger_templates += self.env['finger.template'].create(vals_list)
         finger_templates.upload_to_device()
 
     def action_upload_finger_templates(self):
@@ -138,10 +151,8 @@ class AttendanceDeviceUser(models.Model):
 
     def generate_employees(self):
         """
-        This method will generate new employees from the device user data.
+        This method will generate new employees from the machine user data.
         """
-        employees = self.env['hr.employee']
-
         # prepare employees data
         employee_vals_list = []
         for r in self:
@@ -149,9 +160,9 @@ class AttendanceDeviceUser(models.Model):
 
         # generate employees
         if employee_vals_list:
-            employees = employees.sudo().create(employee_vals_list)
+            return self.env['hr.employee'].sudo().create(employee_vals_list)
 
-        return employees
+        return self.env['hr.employee']
 
     def smart_find_employee(self):
         self.ensure_one()
@@ -168,8 +179,7 @@ class AttendanceDeviceUser(models.Model):
         return employee_id
 
     def action_view_finger_template(self):
-        action = self.env.ref('to_attendance_device.action_finger_template')
-        result = action.read()[0]
+        result = self.env['ir.actions.act_window']._for_xml_id('to_attendance_device.action_finger_template')
 
         # reset context
         result['context'] = {}
@@ -185,7 +195,22 @@ class AttendanceDeviceUser(models.Model):
 
     def write(self, vals):
         res = super(AttendanceDeviceUser, self).write(vals)
-        if 'name' in vals:
-            for r in self:
+        for r in self:
+            if r.env.context.get('write_new_data_user_to_device', False):
                 r.setUser()
         return res
+
+    def _message_get_suggested_recipients(self):
+        """
+        Override this method of mail.thread model to avoid exception, because it has a special behaviours of 'user_id' field
+        Code raise exception: 'obj.user_id.partner_id' (user_id in attendance.device.user model is string, not relational field)
+        """
+        # TODO: delete this method when odoo merge and r+ https://github.com/odoo/odoo/pull/155149/ to preserve the feature
+        result = dict((res_id, []) for res_id in self.ids)
+        return result
+
+    @api.depends('name')
+    def _compute_display_name(self):
+        protocol = dict(self.env['attendance.device']._fields['protocol']._description_selection(self.env))
+        for r in self:
+            r.display_name = "{}-{}-{}".format(str(r.name), str(r.device_id.name), str(protocol.get(r.device_id.protocol, False)))
