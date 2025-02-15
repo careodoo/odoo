@@ -23,8 +23,8 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
-                        <button name="button_submit" type="object" string="Submit" class="oe_highlight" states="draft"/>
-                        <button name="button_approve" type="object" string="Approve" class="oe_highlight" states="submit"/>
+                        <button name="button_submit" type="object" string="Submit" class="oe_highlight" invisible="state != 'draft'"/>
+                        <button name="button_approve" type="object" string="Approve" class="oe_highlight" invisible="state != 'submit'"/>
                         <button name="button_generate_timesheet" type="object" string="Generate Timesheet" class="oe_highlight"/>
                         <field name="state" widget="statusbar"/>
                     </header>

@@ -480,12 +480,11 @@ class Proposal(models.Model):
         self.ensure_one()
         ir_model_data = self.env['ir.model.data']
         try:
-            template_id = ir_model_data._xmlid_lookup('care_proposal.email_template_proposal')[2]
+            template_id = ir_model_data._xmlid_lookup('care_proposal.email_template_proposal')[1]
         except ValueError:
             template_id = False
         try:
-            compose_form_id = ir_model_data._xmlid_lookup(
-                'mail.email_compose_message_wizard_form')[2]
+            compose_form_id = ir_model_data._xmlid_lookup('mail.email_compose_message_wizard_form')[1]
         except ValueError:
             compose_form_id = False
         ctx = dict(self.env.context or {})
@@ -494,7 +493,7 @@ class Proposal(models.Model):
             'active_model': 'proposal.proposal',
             'model_description': 'Proposal',
             'active_id': self.ids[0],
-            'default_res_id': self.ids[0],
+            'default_res_ids': self.ids,
             'default_use_template': bool(template_id),
             'default_template_id': template_id,
             'default_composition_mode': 'comment',
