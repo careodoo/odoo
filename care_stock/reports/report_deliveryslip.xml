@@ -114,7 +114,7 @@
                                         <span t-field="move.product_uom_id"/>
                                     </td>
                                     <td>
-                                        <span t-field="move.quantity_done"/>
+                                        <span t-field="move.qty_done"/>
                                         <span t-field="move.product_uom_id"/>
                                     </td>
                                 </tr>
