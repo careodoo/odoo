@@ -111,11 +111,11 @@
                                     </td>
                                     <td>
                                         <span t-field="move.quantity_product_uom"/>
-                                        <span t-field="move.product_uom"/>
+                                        <span t-field="move.product_uom_id"/>
                                     </td>
                                     <td>
                                         <span t-field="move.quantity_done"/>
-                                        <span t-field="move.product_uom"/>
+                                        <span t-field="move.product_uom_id"/>
                                     </td>
                                 </tr>
                             </tbody>
@@ -218,7 +218,7 @@
                                             <td/>
                                             <td class="text-center w-auto">
                                                 <span t-field="bo_line.quantity_product_uom"/>
-                                                <span t-field="bo_line.product_uom"/>
+                                                <span t-field="bo_line.product_uom_id"/>
                                             </td>
                                         </tr>
                                     </t>
