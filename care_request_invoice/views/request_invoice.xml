@@ -57,16 +57,8 @@
                         </group>
                         <notebook>
                             <page string="Invoice Lines" name="invoice_lines">
-                                <field
-                                name="request_invoice_id"
-                                widget="section_and_note_one2many"
-                                mode="tree"
-                                readonly="state != 'draft'">
-
-                                    <tree
-                                    string="Request Invoice Lines"
-                                    editable="bottom"
-                                    limit="200">
+                                <field name="request_invoice_id" widget="section_and_note_one2many" readonly="state != 'draft'">
+                                    <tree string="Request Invoice Lines" editable="bottom">
                                         <field name="request_id" column_invisible="1" />
                                         <field name="product_id" />
                                         <field name="display_type" column_invisible="1" />
@@ -74,24 +66,33 @@
                                         <field name="quantity" />
                                         <field name="product_uom_id" />
                                         <field name="price" />
-                                        <field name="price_subtotal" sum="Total Price" />
+                                        <field name="price_subtotal"/>
                                         <field name="company_id" column_invisible="1" />
                                         <field name="currency_id" column_invisible="1" />
                                     </tree>
-
                                 </field>
+                                <group col="12" class="oe_invoice_lines_tab">
+                                    <group colspan="8">
+                                    </group>
+                                    <group colspan="4">
+                                        <group class="oe_subtotal_footer">
+                                            <field name="currency_id" invisible="1"/>
+                                            <field name="amount_total"/>
+                                        </group>
+                                    </group>
+                                </group>
                             </page>
                         </notebook>
-                    </sheet>    
+                    </sheet>
                     <!-- Chatter -->
                     <div class="oe_chatter">
                         <field name="message_follower_ids" groups="base.group_user"/>
                         <field name="message_ids"/>
-                    </div>           
+                    </div>
                 </form>
             </field>
-        </record>   
-    
+        </record>
+
         <record id="invoice_request_view_tree" model="ir.ui.view">
             <field name="name">request.invoice.tree</field>
             <field name="model">request.invoice</field>
@@ -102,6 +103,8 @@
                     <field name="project_id" />
                     <field name="department_id" />
                     <field name="invoice_date" />
+                    <field name="currency_id" column_invisible="1"/>
+                    <field name="amount_total"/>
                     <field name="state" widget="badge" decoration-success="state == 'invoiced'" decoration-danger="state == 'cancel'" decoration-warning="state == 'submitted'" />
                 </tree>
             </field>
@@ -111,12 +114,12 @@
             <field name="name">Invoice Requests</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">request.invoice</field>
-            <field name="view_mode">tree,form</field> 
+            <field name="view_mode">tree,form</field>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">
                     Create New Invoice Request
                 </p>
-            </field>                  
+            </field>
         </record>
         <menuitem id="invoice_request_menu_root"
             name="Invoice Requests"
@@ -132,5 +135,5 @@
             name="Invoice Request"
             sequence="10" />
     </data>
-    
+
 </odoo>

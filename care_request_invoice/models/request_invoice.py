@@ -32,6 +32,13 @@ class RequestInvoice(models.Model):
             ('invoiced', 'Invoiced'),
             ('rejected', 'Rejected'),
             ('cancel', 'Cancelled'),],string='Status',required=True,readonly=True,copy=False,tracking=True,default='draft')
+    currency_id = fields.Many2one('res.currency', string='Account Currency', related='company_id.currency_id', store=True)
+    amount_total = fields.Monetary(compute='compute_amount_total', store=True, string='Total')
+
+    @api.depends('request_invoice_id.price_subtotal')
+    def compute_amount_total(self):
+        for rec in self:
+            rec.amount_total = sum(rec.request_invoice_id.mapped('price_subtotal') or [])
     
     @api.model
     def create(self, vals):
