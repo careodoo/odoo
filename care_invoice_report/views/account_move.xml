@@ -15,9 +15,12 @@
                         <field name="date_to" />
                     </div>
                 </xpath>
-
-                <xpath expr="//page[@name='invoice_tab']//tree//field[@name='quantity']" position="after">
-                    <field name="unit_no" />
+                <xpath expr="//group[@id='header_left_group']" position="inside">
+                    <field name="labor_service"/>
+                </xpath>
+                <xpath expr="//page[@name='invoice_tab']//tree//field[@name='quantity']" position="before">
+                    <field name="labors" column_invisible="not parent.labor_service"/>
+                    <field name="days" column_invisible="not parent.labor_service"/>
                 </xpath>
 
                 <xpath expr="//group[@id='header_right_group']//field[@name='payment_reference']" position="after">

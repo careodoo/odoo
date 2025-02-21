@@ -1,4 +1,4 @@
-from odoo import models, fields, tools, _
+from odoo import models, fields, api, tools, _
 from num2words import num2words
 import logging
 from datetime import datetime
@@ -13,6 +13,7 @@ class AccountMove(models.Model):
     date_from = fields.Date(string='Date From')
     date_to = fields.Date(string='Date To')
     internal_ref = fields.Char(string='Internal Referance')
+    labor_service = fields.Boolean()
 
     def number_to_arabic(self, amount):
         self.ensure_one()
@@ -58,7 +59,7 @@ class AccountMove(models.Model):
         integer_value = int(parts[0])
         fractional_value = int(parts[2] or 0)
 
-        lang = self.env['res.lang'].search([('code', '=', 'en')])
+        lang = self.env['res.lang'].search([('iso_code', '=', 'en')])
         amount_words = tools.ustr('{amt_value} {amt_word}').format(
                         amt_value=_num2words(integer_value, lang=lang.iso_code),
                         amt_word=self.currency_id.currency_unit_label or self.currency_id.name,
@@ -79,4 +80,11 @@ class AccountMove(models.Model):
 class AccountMoveLine(models.Model):
     _inherit = 'account.move.line'
 
-    unit_no = fields.Float(string='Unit') 
+    unit_no = fields.Float(string='Unit')
+    labors = fields.Integer(default=1)
+    days = fields.Integer(default=1)
+
+    @api.onchange('labors', 'days')
+    def onchange_labors_and_days(self):
+        if self.move_id.labor_service:
+            self.quantity = self.labors * self.days

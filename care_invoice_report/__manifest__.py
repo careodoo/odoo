@@ -17,7 +17,7 @@
 
     # always loaded
     'data': [
-        'views/view.xml',
+        'views/account_move.xml',
         'reports/report.xml',
     ],
 }

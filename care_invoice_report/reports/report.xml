@@ -363,17 +363,19 @@
                                     <tr>
                                         <th width="15%" colspan="2">التاريخ Date</th>
                                         <th width="40%">البيان</th>
-                                        <th width="5%">الوحدة</th>
+                                        <th width="10%">عدد العمال</th>
                                         <th width="10%">ايام العمل</th>
-                                        <th width="15%">سعر الوحدة</th>
-                                        <th width="15%">القيمة الاجمالية</th>
+                                        <th width="5%">الوحدة</th>
+                                        <th width="10%">سعر الوحدة</th>
+                                        <th width="10%">القيمة الاجمالية</th>
                                     </tr>
                                     <tr style="height: 10px;">
                                         <th>الي To</th>
                                         <th>من From</th>
                                         <th>Description</th>
-                                        <th>Unit</th>
+                                        <th>Labor QTY</th>
                                         <th>Workdays</th>
+                                        <th>Unit</th>
                                         <th>Unit Price</th>
                                         <th>Total Amount</th>
                                     </tr>
@@ -385,15 +387,16 @@
                                             <td><span t-field="doc.date_to"/></td>
                                             <td><span t-field="doc.date_from"/></td>
                                             <td><span t-field="line.name"/></td>
-                                            <td><span t-field="line.unit_no"/></td>
-                                            <td><span t-field="line.quantity"/></td>
+                                            <td><span t-field="line.labors"/></td>
+                                            <td><span t-field="line.days"/></td>
+                                            <td><span t-field="line.product_uom_id"/></td>
                                             <td><span t-field="line.price_unit"/></td>
                                             <td><span t-field="line.price_subtotal"/></td>
                                         </tr>
                                     </t>
                                     <tr>
                                         <td>Total</td>
-                                        <td colspan="4" style="direction:rtl !important;"><span
+                                        <td colspan="5" style="direction:rtl !important;"><span
                                                 t-esc="doc.number_to_arabic(doc.amount_total)"/></td>
                                         <td>الاجمالي</td>
                                         <td><span t-field="doc.amount_total"/></td>
@@ -870,10 +873,11 @@
                                     <tr>
                                         <th width="15%" colspan="2">Date</th>
                                         <th width="40%" rowspan="2">Description</th>
-                                        <th width="10%" rowspan="2">Quantity</th>
+                                        <th width="10%" rowspan="2">Labors QTY</th>
+                                        <th width="10%" rowspan="2">Working Days</th>
                                         <th width="5%" rowspan="2">Unit</th>
-                                        <th width="15%" rowspan="2">Unit Price</th>
-                                        <th width="15%" rowspan="2">Total Amount</th>
+                                        <th width="10%" rowspan="2">Unit Price</th>
+                                        <th width="10%" rowspan="2">Total Amount</th>
                                     </tr>
                                     <tr style="height: 10px;">
                                         <th>To</th>
@@ -887,16 +891,18 @@
                                             <td><span t-field="doc.date_to"/></td>
                                             <td><span t-field="doc.date_from"/></td>
                                             <td><span t-field="line.name"/></td>
-                                            <td><span t-field="line.quantity"/></td>
-                                            <td><span t-field="line.unit_no"/></td>
+                                            <td><span t-field="line.labors"/></td>
+                                            <td><span t-field="line.days"/></td>
+                                            <td><span t-field="line.product_uom_id"/></td>
                                             <td><span t-field="line.price_unit"/></td>
                                             <td><span t-field="line.price_subtotal"/></td>
                                         </tr>
                                     </t>
                                     <tr>
                                         <td>Total</td>
-                                        <td colspan="5" style="direction:rtl !important;"><span
-                                                t-esc="doc.number_to_english(doc.amount_total)"/></td>
+                                        <td colspan="6" style="direction:rtl !important;">
+                                            <span t-esc="doc.number_to_english(doc.amount_total)"/>
+                                        </td>
                                         <td><span t-field="doc.amount_total"/></td>
                                     </tr>
                                 </tbody>
@@ -1028,10 +1034,11 @@
                                     <tr>
                                         <th width="15%" colspan="2">Date</th>
                                         <th width="40%" rowspan="2">Description</th>
-                                        <th width="10%" rowspan="2">Quantity</th>
+                                        <th width="10%" rowspan="2">Labors QTY</th>
+                                        <th width="10%" rowspan="2">Working Days</th>
                                         <th width="5%" rowspan="2">Unit</th>
-                                        <th width="15%" rowspan="2">Unit Price</th>
-                                        <th width="15%" rowspan="2">Total Amount</th>
+                                        <th width="10%" rowspan="2">Unit Price</th>
+                                        <th width="10%" rowspan="2">Total Amount</th>
                                     </tr>
                                     <tr style="height: 10px;">
                                         <th>To</th>
@@ -1045,15 +1052,16 @@
                                             <td><span t-field="doc.date_to"/></td>
                                             <td><span t-field="doc.date_from"/></td>
                                             <td><span t-field="line.name"/></td>
-                                            <td><span t-field="line.quantity"/></td>
-                                            <td><span t-field="line.unit_no"/></td>
+                                            <td><span t-field="line.labors"/></td>
+                                            <td><span t-field="line.days"/></td>
+                                            <td><span t-field="line.product_uom_id"/></td>
                                             <td><span t-field="line.price_unit"/></td>
                                             <td><span t-field="line.price_subtotal"/></td>
                                         </tr>
                                     </t>
                                     <tr>
                                         <td>Total</td>
-                                        <td colspan="5" style="direction:rtl !important;"><span
+                                        <td colspan="6" style="direction:rtl !important;"><span
                                                 t-esc="doc.number_to_english(doc.amount_total)"/></td>
                                         <td><span t-field="doc.amount_total"/></td>
                                     </tr>
@@ -1187,11 +1195,12 @@
                                 <thead>
                                     <tr>
                                         <th width="15%" colspan="2">التاريخ</th>
-                                        <th width="40%" rowspan="2">البيان</th>
-                                        <th width="5%" rowspan="2">الوحدة</th>
-                                        <th width="10%" rowspan="2">ايام العمل</th>
-                                        <th width="15%" rowspan="2">سعر الوحدة</th>
-                                        <th width="15%" rowspan="2">القيمة الاجمالية</th>
+                                        <th width="40%">البيان</th>
+                                        <th width="10%">عدد العمال</th>
+                                        <th width="10%">ايام العمل</th>
+                                        <th width="5%">الوحدة</th>
+                                        <th width="10%">سعر الوحدة</th>
+                                        <th width="10%">القيمة الاجمالية</th>
                                     </tr>
                                     <tr style="height: 10px;">
                                         <th>الي</th>
@@ -1205,14 +1214,15 @@
                                             <td><span t-field="doc.date_to"/></td>
                                             <td><span t-field="doc.date_from"/></td>
                                             <td><span t-field="line.name"/></td>
-                                            <td><span t-field="line.unit_no"/></td>
-                                            <td><span t-field="line.quantity"/></td>
+                                            <td><span t-field="line.labors"/></td>
+                                            <td><span t-field="line.days"/></td>
+                                            <td><span t-field="line.product_uom_id"/></td>
                                             <td><span t-field="line.price_unit"/></td>
                                             <td><span t-field="line.price_subtotal"/></td>
                                         </tr>
                                     </t>
                                     <tr>
-                                        <td colspan="5" style="direction:rtl !important;"><span
+                                        <td colspan="6" style="direction:rtl !important;"><span
                                                 t-esc="doc.number_to_arabic(doc.amount_total)"/></td>
                                         <td>الاجمالي</td>
                                         <td><span t-field="doc.amount_total"/></td>
@@ -1252,7 +1262,7 @@
                 </t>
             </t>
         </template>
-        <template id="ar_invoice">
+        <template id="ar_invoice_without_header">
             <t t-call="web.html_container">
                 <t t-call="web.basic_layout">
                     <div class="page rtl" style="font-family:Arial,Helvetica,sans-serif !important;">
@@ -1348,11 +1358,12 @@
                                 <thead>
                                     <tr>
                                         <th width="15%" colspan="2">التاريخ</th>
-                                        <th width="40%" rowspan="2">البيان</th>
-                                        <th width="5%" rowspan="2">الوحدة</th>
-                                        <th width="10%" rowspan="2">ايام العمل</th>
-                                        <th width="15%" rowspan="2">سعر الوحدة</th>
-                                        <th width="15%" rowspan="2">القيمة الاجمالية</th>
+                                        <th width="40%">البيان</th>
+                                        <th width="10%">عدد العمال</th>
+                                        <th width="10%">ايام العمل</th>
+                                        <th width="5%">الوحدة</th>
+                                        <th width="10%">سعر الوحدة</th>
+                                        <th width="10%">القيمة الاجمالية</th>
                                     </tr>
                                     <tr style="height: 10px;">
                                         <th>الي</th>
@@ -1366,14 +1377,15 @@
                                             <td><span t-field="doc.date_to"/></td>
                                             <td><span t-field="doc.date_from"/></td>
                                             <td><span t-field="line.name"/></td>
-                                            <td><span t-field="line.unit_no"/></td>
-                                            <td><span t-field="line.quantity"/></td>
+                                            <td><span t-field="line.labors"/></td>
+                                            <td><span t-field="line.days"/></td>
+                                            <td><span t-field="line.product_uom_id"/></td>
                                             <td><span t-field="line.price_unit"/></td>
                                             <td><span t-field="line.price_subtotal"/></td>
                                         </tr>
                                     </t>
                                     <tr>
-                                        <td colspan="5" style="direction:rtl !important;"><span
+                                        <td colspan="6" style="direction:rtl !important;"><span
                                                 t-esc="doc.number_to_arabic(doc.amount_total)"/></td>
                                         <td>الاجمالي</td>
                                         <td><span t-field="doc.amount_total"/></td>
