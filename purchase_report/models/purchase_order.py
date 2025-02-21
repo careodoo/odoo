@@ -1,10 +1,13 @@
 from odoo import fields, models, api
 from .qr import QrCodeGenerator
 from odoo.http import request
+from odoo.exceptions import ValidationError
 
 
 class PurchaseInherit(models.Model):
     _inherit = 'purchase.order'
+
+    signature_users = fields.Many2many('res.users')
 
     def get_default_sign_lines(self):
         default_employees = []
@@ -64,6 +67,8 @@ class PurchaseInherit(models.Model):
 
     def button_confirm(self):
         for order in self:
+            if self.env.uid not in order.signature_users.ids:
+                raise ValidationError("you are not allowed to confirm po")
             order.signature_lines.filtered(lambda l: l.employee_id.user_id.id == self.env.uid).write({'confirm': True})
             if order.signature_lines.filtered(lambda l: not l.confirm):
                 return
