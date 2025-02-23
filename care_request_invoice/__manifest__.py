@@ -6,7 +6,7 @@
     'license': 'LGPL-3',
     'category': 'Uncategorized',
     'depends': [
-        'base','account','product','uom','hr','project','hr_contract','care_proposal'
+        'base','account','product','uom','hr','project','care_experience','care_proposal', 'care_invoice_report'
     ],
     'data': [
         'security/groups.xml',

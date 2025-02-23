@@ -40,6 +40,7 @@
                                 <field name="partner_id" readonly="state != 'draft'"/>
                                 <field name="project_id" readonly="state != 'draft'"/>
                                 <field name="department_id" readonly="state != 'draft'"/>
+                                <field name="labor_service" readonly="state != 'draft'"/>
                             </group>
                             <group>
                                 <field name="invoice_date" readonly="state != 'draft'"/>
@@ -64,6 +65,7 @@
                                         <field name="display_type" column_invisible="1" />
                                         <field name="label" />
                                         <field name="quantity" />
+                                        <field name="days" />
                                         <field name="product_uom_id" />
                                         <field name="price" />
                                         <field name="price_subtotal"/>

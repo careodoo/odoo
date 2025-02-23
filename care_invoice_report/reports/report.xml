@@ -1377,7 +1377,7 @@
                                             <td><span t-field="doc.date_to"/></td>
                                             <td><span t-field="doc.date_from"/></td>
                                             <td><span t-field="line.name"/></td>
-                                            <td><span t-field="line.labors"/></td>
+                                            <td><span t-field="line.quantity"/></td>
                                             <td><span t-field="line.days"/></td>
                                             <td><span t-field="line.product_uom_id"/></td>
                                             <td><span t-field="line.price_unit"/></td>

@@ -19,7 +19,7 @@
                     <field name="labor_service"/>
                 </xpath>
                 <xpath expr="//page[@name='invoice_tab']//tree//field[@name='quantity']" position="before">
-                    <field name="labors" column_invisible="not parent.labor_service"/>
+<!--                    <field name="labors" column_invisible="not parent.labor_service"/>-->
                     <field name="days" column_invisible="not parent.labor_service"/>
                 </xpath>
 

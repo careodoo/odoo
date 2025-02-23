@@ -84,7 +84,8 @@ class AccountMoveLine(models.Model):
     labors = fields.Integer(default=1)
     days = fields.Integer(default=1)
 
-    @api.onchange('labors', 'days')
-    def onchange_labors_and_days(self):
-        if self.move_id.labor_service:
-            self.quantity = self.labors * self.days
+    @api.onchange('product_id')
+    def onchange_labors_service(self):
+        if self.product_id.labor_service:
+            self.days = self.product_id.days_per_month
+

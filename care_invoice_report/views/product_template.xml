@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="care_invoice_report_product_template_form_view" model="ir.ui.view">
+            <field name="name">care_invoice_report_product_template_form_view</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_form_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//group[@name='group_general']" position="inside">
+                    <field name="labor_service"/>
+                    <field name="days_per_month" invisible="not labor_service"/>
+                    <field name="hours_per_day" invisible="not labor_service"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

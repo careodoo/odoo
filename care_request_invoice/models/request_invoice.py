@@ -18,7 +18,7 @@ class RequestInvoice(models.Model):
     show_update_pricelist = fields.Boolean(
         string="Has Pricelist Changed", store=False)  # True if the pricelist was changed
     pricelist_id = fields.Many2one('product.pricelist', string='Pricelist', store=True)
-    contract_id = fields.Many2one('hr.contract', string='Contract', store=True)
+    contract_id = fields.Many2one('care.experience', string='Contract', store=True)
     proposal_id = fields.Many2one('proposal.proposal', string='Proposal', related='pricelist_id.proposal_id')
     invoice_count = fields.Integer(string="Invoice Count", compute='_get_invoiced')
     invoice_ids = fields.Many2many(
@@ -34,6 +34,7 @@ class RequestInvoice(models.Model):
             ('cancel', 'Cancelled'),],string='Status',required=True,readonly=True,copy=False,tracking=True,default='draft')
     currency_id = fields.Many2one('res.currency', string='Account Currency', related='company_id.currency_id', store=True)
     amount_total = fields.Monetary(compute='compute_amount_total', store=True, string='Total')
+    labor_service = fields.Boolean()
 
     @api.depends('request_invoice_id.price_subtotal')
     def compute_amount_total(self):
@@ -134,6 +135,7 @@ class RequestInvoice(models.Model):
     def action_convert_to_invoice(self):
         invoice = self.env['account.move'].create({
             'request_invoice': self.id,
+            'labor_service': self.labor_service,
             'partner_id': self.partner_id.id,
             'project_id': self.project_id.id,
             'department_id': self.department_id.id,
@@ -148,6 +150,7 @@ class RequestInvoice(models.Model):
             'move_id': invoice.id,
             'product_id': line.product_id.id,
             'quantity': line.quantity,
+            'days': line.days,
             'price_unit': line.price,
             'name': line.label,
             'display_type': 'product',
@@ -165,12 +168,13 @@ class RequestInvoiceLine(models.Model):
     product_id = fields.Many2one('product.product', string='Product', required=True, store=True)
     display_type = fields.Selection(selection=[('product', 'Product')],default='product', store=True, readonly=False,required=True, compute="_compute_name")
     label = fields.Char(string='Name')
+    days = fields.Integer(default=1)
     quantity = fields.Integer(string='Quantity', default=1.0, store=True)
     product_uom_id = fields.Many2one('uom.uom', string='Unit of Measure', store=True)
     company_id = fields.Many2one('res.company', string='Company', required=True, readonly=False, store=True,
         default=lambda self: self.env.company)
     currency_id = fields.Many2one('res.currency', string='Account Currency', related='company_id.currency_id', store=True)
-    price = fields.Float(string='Price', default=0.0, compute="_compute_total", store=True)
+    price = fields.Float(string='Price', default=0.0, compute="_compute_total", store=True, digits='Product Price',)
     price_subtotal = fields.Monetary(string='Tax excl.', default=0.0, compute="_compute_total", store=True)
 
     @api.onchange('product_id')
@@ -190,17 +194,28 @@ class RequestInvoiceLine(models.Model):
                 
                 line.label = '\n'.join(values)
 
-    @api.depends('product_id','quantity')
+    @api.depends('product_id','quantity', 'days')
     def _compute_total(self):
         self.price = 0.0
         self.price_subtotal = 0.0
         for line in self:
             if line.request_id.pricelist_id:
                 pricelist_price, rule_id = self.env['product.pricelist'].search([('id','=',line.request_id.pricelist_id.id)])._get_product_price_rule(line.product_id,1)
-                line.price = pricelist_price
+                if line.product_id.days_per_month and line.days:
+                    days_rate = line.days / line.product_id.days_per_month
+                    line.price = pricelist_price * days_rate
+                else:
+                    line.price = pricelist_price
                 line.price_subtotal = pricelist_price * line.quantity
             else:
-                line.price = line.product_id.lst_price
+                if line.product_id.days_per_month and line.days:
+                    days_rate = line.days / line.product_id.days_per_month
+                    line.price = line.product_id.lst_price * days_rate
+                else:
+                    line.price = line.product_id.lst_price
                 line.price_subtotal = line.price * line.quantity
 
-    
+    @api.onchange('product_id')
+    def onchange_labors_service(self):
+        if self.product_id.labor_service:
+            self.days = self.product_id.days_per_month

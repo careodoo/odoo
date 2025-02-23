@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="care_invoice_report_product_pricelist_view" model="ir.ui.view">
+            <field name="name">care_invoice_report_product_pricelist_view</field>
+            <field name="model">product.pricelist</field>
+            <field name="inherit_id" ref="product.product_pricelist_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='item_ids']/tree/field[@name='fixed_price']" position="after">
+                    <field name="price_per_day"/>
+                    <field name="price_per_hour"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

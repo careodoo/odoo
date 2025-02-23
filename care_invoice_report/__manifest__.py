@@ -18,6 +18,8 @@
     # always loaded
     'data': [
         'views/account_move.xml',
+        'views/product_template.xml',
+        'views/pricelist.xml',
         'reports/report.xml',
     ],
 }
