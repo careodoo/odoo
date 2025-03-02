@@ -55,7 +55,8 @@
                             <field name="self_time_off"/>
                             <field name="hr_department_id" invisible="self_time_off" required="not self_time_off"/>
                             <field name="hr_employee_id" required="1" readonly="hr_department_id == False or self_time_off"/>
-                            <field name="holiday_status_id" readonly="hr_department_id == False or not self_time_off"/>
+                            <field name="company_id" invisible="1" />
+                            <field name="holiday_status_id" readonly="0" required="1" domain="[('company_id', 'in', [company_id, False]), '|', ('requires_allocation', '=', 'no'), ('has_valid_allocation', '=', True)]"/>
                             <field name="employee_ids" widget="many2many_tags" invisible="1"/>
                             <field name="employee_id" invisible="1"/>
                             <field name="request_date_from" string="From" required="1" readonly="hr_department_id == False and not self_time_off"/>
