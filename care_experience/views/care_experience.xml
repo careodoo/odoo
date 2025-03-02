@@ -1,94 +1,96 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-  <data>
-    <record id="care_experience_view_form" model="ir.ui.view">
-      <field name="name">care_experience_view_form</field>
-      <field name="model">care.experience</field>
-      <field name="arch" type="xml">
-        <form>
-          <header>
-            <button name="button_submit" type="object" string="Submit" class="oe_highlight"
-              invisible="state != 'draft'" />
-            <button name="button_valid" type="object" string="Valid" class="oe_highlight"
-              invisible="state != 'submit'" />
-            <button name="button_expired" type="object" string="Expire" class="btn-danger"
-              invisible="state != 'submit'" />
-            <button name="button_draft" groups="care_experience.reset_experience_to_draft"
-              type="object" string="Reset to draft" class="oe_highlight"
-              invisible="state == 'draft'" />
+    <data>
+        <record id="care_experience_view_form" model="ir.ui.view">
+            <field name="name">care_experience_view_form</field>
+            <field name="model">care.experience</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="button_submit" type="object" string="Submit" class="oe_highlight"
+                                invisible="state != 'draft'"/>
+                        <button name="button_valid" type="object" string="Valid" class="oe_highlight"
+                                invisible="state != 'submit'"/>
+                        <button name="button_expired" type="object" string="Expire" class="btn-danger"
+                                invisible="state != 'submit'"/>
+                        <button name="button_draft" groups="care_experience.reset_experience_to_draft"
+                                type="object" string="Reset to draft" class="oe_highlight"
+                                invisible="state == 'draft'"/>
 
-            <field name="state" widget="statusbar" />
-          </header>
-          <sheet string="Experience">
-            <field name="kanban_state" widget="state_selection" />
-            <widget name="web_ribbon" text="Archived" bg_color="bg-danger"
-              invisible="active == True" />
-            <field name="active" invisible="1" />
-            <div class="oe_title">
-              <h1>
-                <field name="name" placeholder="Name..." />
-              </h1>
-            </div>
-            <group>
-              <group>
-                <field name="ref" />
-                <field name="partner_id" />
-                <field name="contract_amount" />
-                <field name="period" />
-                <field name="labor_quantity" />
-              </group>
-              <group>
-                <field name="proposal_id" />
-                <field name="start_date" />
-                <field name="expire_date" />
-                <field name="contract_type" />
-                <field name="contract_copy" widget="many2many_binary" />
-              </group>
-            </group>
-            <field name="line_ids">
-              <tree editable="bottom">
-                <field name="name" />
-                <field name="start_date" />
-                <field name="expire_date" />
-                <field name="period" />
-              </tree>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet string="Experience">
+                        <field name="kanban_state" widget="state_selection"/>
+                        <widget name="web_ribbon" text="Archived" bg_color="bg-danger"
+                                invisible="active == True"/>
+                        <field name="active" invisible="1"/>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" placeholder="Name..."/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="ref"/>
+                                <field name="partner_id"/>
+                                <field name="contract_amount"/>
+                                <field name="period"/>
+                                <field name="labor_quantity"/>
+                            </group>
+                            <group>
+                                <field name="proposal_id"/>
+                                <field name="project_id"/>
+                                <field name="department_id"/>
+                                <field name="start_date"/>
+                                <field name="expire_date"/>
+                                <field name="contract_type"/>
+                                <field name="contract_copy" widget="many2many_binary"/>
+                            </group>
+                        </group>
+                        <field name="line_ids">
+                            <tree editable="bottom">
+                                <field name="name"/>
+                                <field name="start_date"/>
+                                <field name="expire_date"/>
+                                <field name="period"/>
+                            </tree>
+                        </field>
+                        <field name="notes" placeholder="Type down your notes here..." nolabel="1"/>
+                    </sheet>
+                    <div class="oe_chatter" name="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="message_ids"/>
+                        <field name="activity_ids"/>
+                    </div>
+                </form>
             </field>
-              <field name="notes" placeholder="Type down your notes here..." nolabel="1" />
-          </sheet>
-          <div class="oe_chatter" name="oe_chatter">
-            <field name="message_follower_ids" />
-            <field name="message_ids" />
-            <field name="activity_ids" />
-          </div>
-        </form>
-      </field>
-    </record>
-    <record id="care_experience_view_tree" model="ir.ui.view">
-      <field name="name">care_experience_view_tree</field>
-      <field name="model">care.experience</field>
-      <field name="arch" type="xml">
-        <tree>
-          <field name="active" invisible="1" />
-          <field name="name" />
-          <field name="partner_id" />
-          <field name="contract_amount" />
-          <field name="period" />
-          <field name="labor_quantity" />
-          <field name="start_date" />
-          <field name="expire_date" />
-          <field name="contract_type" />
-          <field name="state" widget="badge" decoration-danger="state == 'expired'"
-            decoration-success="state == 'valid'" />
-        </tree>
-      </field>
-    </record>
-    <record id="care_experience_action" model="ir.actions.act_window">
-      <field name="name">Project Contracts</field>
-      <field name="type">ir.actions.act_window</field>
-      <field name="res_model">care.experience</field>
-      <field name="view_mode">tree,form</field>
-    </record>
-    <menuitem id="care_experience_menu" name="Project Contracts" action="care_experience_action"
-      sequence="55" />
-  </data>
+        </record>
+        <record id="care_experience_view_tree" model="ir.ui.view">
+            <field name="name">care_experience_view_tree</field>
+            <field name="model">care.experience</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="active" invisible="1"/>
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="contract_amount"/>
+                    <field name="period"/>
+                    <field name="labor_quantity"/>
+                    <field name="start_date"/>
+                    <field name="expire_date"/>
+                    <field name="contract_type"/>
+                    <field name="state" widget="badge" decoration-danger="state == 'expired'"
+                           decoration-success="state == 'valid'"/>
+                </tree>
+            </field>
+        </record>
+        <record id="care_experience_action" model="ir.actions.act_window">
+            <field name="name">Project Contracts</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">care.experience</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem id="care_experience_menu" name="Project Contracts" action="care_experience_action"
+                  sequence="55"/>
+    </data>
 </odoo>

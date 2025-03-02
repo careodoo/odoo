@@ -9,7 +9,7 @@
     'category': 'Uncategorized',
     'version': '17.0.0.0',
     'license': 'LGPL-3',    
-    'depends': ['base', 'mail', 'care_proposal'],
+    'depends': ['base', 'mail', 'hr', 'project', 'care_proposal'],
     'data': [
         'security/ir.model.access.csv',
         'security/experience_security_groups.xml',

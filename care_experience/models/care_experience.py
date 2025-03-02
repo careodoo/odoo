@@ -43,6 +43,8 @@ class Experience(models.Model):
         string='Contract ID',
     )
     contract_copy = fields.Many2many("ir.attachment")
+    project_id = fields.Many2one('project.project', string='Project', store=True)
+    department_id = fields.Many2one('hr.department', string='Department', store=True)
 
     @api.depends('contract_type', 'sequence')
     def compute_ref(self):

@@ -7,8 +7,6 @@ class RequestInvoice(models.Model):
 
     name = fields.Char(string='Name',required=True, readonly=True, copy=False, store=True, default='/')
     partner_id = fields.Many2one('res.partner', string='Customer', required=True, store=True)
-    project_id = fields.Many2one('project.project', string='Project', store=True)
-    department_id = fields.Many2one('hr.department', string='Department', store=True)
     invoice_date = fields.Date(string='Invoice Date', store=True)
     request_invoice_id = fields.One2many('request.invoice.line','request_id' ,string='Invoice Lines', copy=True)
     company_id = fields.Many2one('res.company', string='Company', required=True, readonly=False, store=True,
@@ -18,8 +16,10 @@ class RequestInvoice(models.Model):
     show_update_pricelist = fields.Boolean(
         string="Has Pricelist Changed", store=False)  # True if the pricelist was changed
     pricelist_id = fields.Many2one('product.pricelist', string='Pricelist', store=True)
-    contract_id = fields.Many2one('care.experience', string='Contract', store=True)
-    proposal_id = fields.Many2one('proposal.proposal', string='Proposal', related='pricelist_id.proposal_id')
+    proposal_id = fields.Many2one('proposal.proposal', string='Proposal', related='pricelist_id.proposal_id', store=True)
+    contract_id = fields.Many2one('care.experience', string='Contract', compute='compute_contract_id', store=True)
+    project_id = fields.Many2one('project.project', string='Project', compute='compute_contract_id', store=True)
+    department_id = fields.Many2one('hr.department', string='Department', compute='compute_contract_id', store=True)
     invoice_count = fields.Integer(string="Invoice Count", compute='_get_invoiced')
     invoice_ids = fields.Many2many(
         comodel_name='account.move',
@@ -35,6 +35,17 @@ class RequestInvoice(models.Model):
     currency_id = fields.Many2one('res.currency', string='Account Currency', related='company_id.currency_id', store=True)
     amount_total = fields.Monetary(compute='compute_amount_total', store=True, string='Total')
     labor_service = fields.Boolean()
+
+    @api.depends('proposal_id')
+    def compute_contract_id(self):
+        for rec in self:
+            rec.contract_id = False
+            rec.project_id = False
+            rec.department_id = False
+            if rec.proposal_id and rec.proposal_id.contract_ids:
+                rec.contract_id = rec.proposal_id.contract_ids[0].id
+                rec.project_id = rec.contract_id.project_id.id
+                rec.department_id = rec.contract_id.department_id.id
 
     @api.depends('request_invoice_id.price_subtotal')
     def compute_amount_total(self):
@@ -76,6 +87,12 @@ class RequestInvoice(models.Model):
         self.write({'state': 'draft'})
 
     def action_submit(self):
+        for user in self.env.ref('care_request_invoice.group_convert_to_invoice').users:
+            self.sudo().activity_schedule(
+                'care_request_invoice.submit_request_invoice_activity_type',
+                summary='Invoice Request',
+                note='Invoice Request Submitted',
+                user_id=user.id)
         self.write({'state': 'submitted'})
 
     def action_cancel(self):
@@ -166,7 +183,7 @@ class RequestInvoiceLine(models.Model):
 
     request_id = fields.Many2one('request.invoice', string='Invoice Request', store=True)
     product_id = fields.Many2one('product.product', string='Product', required=True, store=True)
-    display_type = fields.Selection(selection=[('product', 'Product')],default='product', store=True, readonly=False,required=True, compute="_compute_name")
+    display_type = fields.Selection(selection=[('product', 'Product')],default='product', store=True, readonly=False,required=True)
     label = fields.Char(string='Name')
     days = fields.Integer(default=1)
     quantity = fields.Integer(string='Quantity', default=1.0, store=True)

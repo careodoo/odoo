@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="submit_request_invoice_activity_type" model="mail.activity.type">
+            <field name="name">Request Invoice</field>
+            <field name="icon">fa-sun-o</field>
+            <field name="res_model">request.invoice</field>
+        </record>
+    </data>
+</odoo>
