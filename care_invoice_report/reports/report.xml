@@ -215,8 +215,7 @@
                                         </t>
                                         <tr>
                                             <td>Total</td>
-                                                    t-esc="doc.number_to_arabic(doc.amount_total)"/></td>
-                                            <td colspan="1" style="direction:rtl !important;"><span
+                                            <td style="direction:rtl !important;"><span t-esc="doc.number_to_arabic(doc.amount_total)"/></td>
                                             <td>الاجمالي</td>
                                             <td><span t-field="doc.amount_total"/></td>
                                         </tr>
@@ -566,8 +565,7 @@
                                     </t>
                                     <tr>
                                         <td>Total</td>
-                                                t-esc="doc.number_to_arabic(doc.amount_total)"/></td>
-                                        <td colspan="1" style="direction:rtl !important;"><span
+                                        <td style="direction:rtl !important;"><span t-esc="doc.number_to_arabic(doc.amount_total)"/></td>
                                         <td>الاجمالي</td>
                                         <td><span t-field="doc.amount_total"/></td>
                                     </tr>
@@ -736,8 +734,7 @@
                                     </t>
                                     <tr>
                                         <td>Total</td>
-                                                t-esc="doc.number_to_arabic(doc.amount_total)"/></td>
-                                        <td colspan="1" style="direction:rtl !important;"><span
+                                        <td colspan="1" style="direction:rtl !important;"><span t-esc="doc.number_to_arabic(doc.amount_total)"/></td>
                                         <td>الاجمالي</td>
                                         <td><span t-field="doc.amount_total"/></td>
                                     </tr>
