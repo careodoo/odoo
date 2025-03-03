@@ -15,6 +15,20 @@ class AccountMove(models.Model):
     internal_ref = fields.Char(string='Internal Referance')
     labor_service = fields.Boolean()
 
+    def action_print_care(self):
+        return {
+            'name': _('Print Type'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'print.type.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'view_id': self.env.ref('care_invoice_report.print_type_wizard_view_form').id,
+            'context': {
+                'active_id': self.id,
+                'refuse': True,
+            }
+        }
+
     def number_to_arabic(self, amount):
         self.ensure_one()
         def _num2words(number, lang):
@@ -83,6 +97,18 @@ class AccountMoveLine(models.Model):
     unit_no = fields.Float(string='Unit')
     labors = fields.Integer(default=1)
     days = fields.Integer(default=1)
+    date_from = fields.Date(string='Date From', compute='_compute_dates', readonly=False, store=True)
+    date_to = fields.Date(string='Date To', compute='_compute_dates', readonly=False, store=True)
+
+    @api.depends('move_id','move_id.date_from', 'move_id.date_to')
+    def _compute_dates(self):
+        for rec in self.move_id:
+            if rec.date_from and rec.date_to:
+                self.date_from = rec.date_from
+                self.date_to = rec.date_to
+            else:
+                self.date_from = False
+                self.date_to = False
 
     @api.onchange('product_id')
     def onchange_labors_service(self):

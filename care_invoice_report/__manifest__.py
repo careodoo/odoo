@@ -17,6 +17,8 @@
 
     # always loaded
     'data': [
+        'security/ir.model.access.csv',
+        'wizard/print_type_wizard_view.xml',
         'views/account_move.xml',
         'views/product_template.xml',
         'views/pricelist.xml',
