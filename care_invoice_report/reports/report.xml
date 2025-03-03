@@ -28,13 +28,13 @@
         </record>
         <record model="ir.actions.report" id="action_regular_invoice_report">
             <field name="name">Regular Care Invoice</field>
-            <field name="model">account.move</field>
+            <!-- <field name="model">account.move</field> -->
             <field name="report_type">qweb-pdf</field>
             <field name="report_name">care_invoice_report.regular_invoice</field>
             <field name="report_file">care_invoice_report.regular_invoice</field>
             <field name="binding_model_id" ref="account.model_account_move"/>
-            <field name="binding_type">report</field>
-            <field name="binding_view_types">form</field>
+            <!-- <field name="binding_type">report</field>
+            <field name="binding_view_types">form</field> -->
         </record>
         <record model="ir.actions.report" id="action_regular_invoice_without_header_report">
             <field name="name">Regular Care Invoice without Header</field>
@@ -184,7 +184,8 @@
                                     <thead>
                                         <tr>
                                             <!-- <th width="15%" colspan="2">التاريخ Date</th> -->
-                                            <th width="40%">البيان</th>
+                                            <th width="30%">البيان</th>
+                                            <th width="15%">العدد</th>
                                             <th width="5%">الوحدة</th>
                                             <!-- <th width="10%">ايام العمل</th> -->
                                             <th width="15%">سعر الوحدة</th>
@@ -194,6 +195,7 @@
                                             <!-- <th>الي To</th>
                                             <th>من From</th> -->
                                             <th>Description</th>
+                                            <th>Qty</th>
                                             <th>Unit</th>
                                             <!-- <th>Workdays</th> -->
                                             <th>Unit Price</th>
@@ -207,15 +209,16 @@
                                                 <!-- <td><span t-field="line.date_to"/></td>
                                                 <td><span t-field="line.date_from"/></td> -->
                                                 <td><span t-field="line.name"/></td>
-                                                <!-- <td><span t-field="line.unit_no"/></td> -->
                                                 <td><span t-field="line.quantity"/></td>
+                                                <td><span t-field="line.product_uom_id"/></td>
                                                 <td><span t-field="line.price_unit"/></td>
                                                 <td><span t-field="line.price_subtotal"/></td>
                                             </tr>
                                         </t>
                                         <tr>
                                             <td>Total</td>
-                                            <td style="direction:rtl !important;"><span t-esc="doc.number_to_arabic(doc.amount_total)"/></td>
+                                            <td colspan="2" style="direction:rtl !important;"><span
+                                                    t-esc="doc.number_to_arabic(doc.amount_total)"/></td>
                                             <td>الاجمالي</td>
                                             <td><span t-field="doc.amount_total"/></td>
                                         </tr>
@@ -386,7 +389,7 @@
                                             <td><span t-field="line.date_to"/></td>
                                             <td><span t-field="line.date_from"/></td>
                                             <td><span t-field="line.name"/></td>
-                                            <td><span t-field="line.labors"/></td>
+                                            <td><span t-field="line.quantity"/></td>
                                             <td><span t-field="line.days"/></td>
                                             <td><span t-field="line.product_uom_id"/></td>
                                             <td><span t-field="line.price_unit"/></td>
@@ -534,11 +537,11 @@
                                 <thead>
                                     <tr>
                                         <!-- <th width="15%" colspan="2">التاريخ Date</th> -->
-                                        <th width="40%">البيان</th>
+                                        <th width="35%">البيان</th>
                                         <!-- <th width="10%">الكمية</th> -->
-                                        <th width="5%">الوحدة</th>
-                                        <th width="15%">سعر الوحدة</th>
-                                        <th width="15%">القيمة الاجمالية</th>
+                                        <th width="20%">الوحدة</th>
+                                        <th width="10%">سعر الوحدة</th>
+                                        <th width="10%">القيمة الاجمالية</th>
                                     </tr>
                                     <tr style="height: 10px;">
                                         <!-- <th>الي To</th>
@@ -557,8 +560,8 @@
                                             <!-- <td><span t-field="line.date_to"/></td>
                                             <td><span t-field="line.date_from"/></td> -->
                                             <td><span t-field="line.name"/></td>
-                                            <!-- <td><span t-field="line.quantity"/></td> -->
-                                            <td><span t-field="line.unit_no"/></td>
+                                            <td><span t-field="line.quantity"/></td>
+                                            <!-- <td><span t-field="line.unit_no"/></td> -->
                                             <td><span t-field="line.price_unit"/></td>
                                             <td><span t-field="line.price_subtotal"/></td>
                                         </tr>
@@ -703,11 +706,11 @@
                                 <thead>
                                     <tr>
                                         <!-- <th width="15%" colspan="2">التاريخ Date</th> -->
-                                        <th width="40%">البيان</th>
+                                        <th width="35%">البيان</th>
                                         <!-- <th width="10%">الكمية</th> -->
-                                        <th width="5%">الوحدة</th>
-                                        <th width="15%">سعر الوحدة</th>
-                                        <th width="15%">القيمة الاجمالية</th>
+                                        <th width="20%">الوحدة</th>
+                                        <th width="10%">سعر الوحدة</th>
+                                        <th width="10%">القيمة الاجمالية</th>
                                     </tr>
                                     <tr style="height: 10px;">
                                         <!-- <th>الي To</th>
@@ -726,15 +729,15 @@
                                             <!-- <td><span t-field="line.date_to"/></td>
                                             <td><span t-field="line.date_from"/></td> -->
                                             <td><span t-field="line.name"/></td>
-                                            <!-- <td><span t-field="line.quantity"/></td> -->
-                                            <td><span t-field="line.unit_no"/></td>
+                                            <td><span t-field="line.quantity"/></td>
+                                            <!-- <td><span t-field="line.unit_no"/></td> -->
                                             <td><span t-field="line.price_unit"/></td>
                                             <td><span t-field="line.price_subtotal"/></td>
                                         </tr>
                                     </t>
                                     <tr>
                                         <td>Total</td>
-                                        <td colspan="1" style="direction:rtl !important;"><span t-esc="doc.number_to_arabic(doc.amount_total)"/></td>
+                                        <td style="direction:rtl !important;"><span t-esc="doc.number_to_arabic(doc.amount_total)"/></td>
                                         <td>الاجمالي</td>
                                         <td><span t-field="doc.amount_total"/></td>
                                     </tr>
@@ -844,24 +847,19 @@
                                    style="text-align: end; width: 100% !important;">
                                 <thead>
                                     <tr>
-                                        <th width="50%"><span>CUSTOMER NAME:</span><span style="margin-left: 150px;"></span></th>
-                                        <td><span style="margin-right: 50px;">CUSTOMER NO: </span><span
+                                        <th rowspan="2" style="vertical-align: middle;">
+                                                <span style="margin-left: 50px;">CUSTOMER NAME</span>
+                                                :<span style="margin-left: 50px;" t-esc="doc.partner_id.name"/></th>
+                                        <th><span style="margin-right: 50px;">CUSTOMER NO: </span><span
                                                 style="margin-left: 50px;" t-esc="str(doc.partner_id.id)"/><span
-                                                style="margin-left: 50px;"></span></td>
+                                                style="margin-left: 50px;"></span></th>
+                                    </tr>
+                                    <tr>
+                                        <th><span style="margin-right: 50px;">Date: </span><span
+                                                    style="margin-left: 50px;" t-field="doc.invoice_date"/><span
+                                                    style="margin-left: 100px;"></span></th>
                                     </tr>
                                 </thead>
-                                <center>
-                                    <tbody style="width: 50% !important; min-height: 100px !important;">
-                                        <tr style="height: 20px;">
-                                            <td style="direction: rtl !important;text-align:center !important">
-                                                <span t-field="doc.partner_id"/>
-                                            </td>
-                                            <td><span style="margin-right: 50px;">Date: </span><span
-                                                    style="margin-left: 50px;" t-field="doc.invoice_date"/><span
-                                                    style="margin-left: 100px;"></span></td>
-                                        </tr>
-                                    </tbody>
-                                </center>
                             </table>
                             <br/>
                             <table class="GeneratedTable justify-content-center"
@@ -869,12 +867,12 @@
                                 <thead>
                                     <tr>
                                         <th width="15%" colspan="2">Date</th>
-                                        <th width="40%" rowspan="2">Description</th>
-                                        <th width="10%" rowspan="2">Labors QTY</th>
-                                        <th width="10%" rowspan="2">Working Days</th>
-                                        <th width="5%" rowspan="2">Unit</th>
-                                        <th width="10%" rowspan="2">Unit Price</th>
-                                        <th width="10%" rowspan="2">Total Amount</th>
+                                        <th width="40%" rowspan="2" style="vertical-align: middle;">Description</th>
+                                        <th width="10%" rowspan="2" style="vertical-align: middle;">Labors QTY</th>
+                                        <th width="10%" rowspan="2" style="vertical-align: middle;">Working Days</th>
+                                        <th width="5%" rowspan="2" style="vertical-align: middle;">Unit</th>
+                                        <th width="10%" rowspan="2" style="vertical-align: middle;">Unit Price</th>
+                                        <th width="10%" rowspan="2" style="vertical-align: middle;">Total Amount</th>
                                     </tr>
                                     <tr style="height: 10px;">
                                         <th>To</th>
@@ -888,7 +886,7 @@
                                             <td><span t-field="line.date_to"/></td>
                                             <td><span t-field="line.date_from"/></td>
                                             <td><span t-field="line.name"/></td>
-                                            <td><span t-field="line.labors"/></td>
+                                            <td><span t-field="line.quantity"/></td>
                                             <td><span t-field="line.days"/></td>
                                             <td><span t-field="line.product_uom_id"/></td>
                                             <td><span t-field="line.price_unit"/></td>
@@ -1005,24 +1003,19 @@
                                    style="text-align: end; width: 100% !important;">
                                 <thead>
                                     <tr>
-                                        <th width="50%"><span>CUSTOMER NAME:</span><span style="margin-left: 150px;"></span></th>
-                                        <td><span style="margin-right: 50px;">CUSTOMER NO: </span><span
+                                        <th rowspan="2" style="vertical-align: middle;">
+                                                <span style="margin-left: 50px;">CUSTOMER NAME</span>
+                                                :<span style="margin-left: 50px;" t-esc="doc.partner_id.name"/></th>
+                                        <th><span style="margin-right: 50px;">CUSTOMER NO: </span><span
                                                 style="margin-left: 50px;" t-esc="str(doc.partner_id.id)"/><span
-                                                style="margin-left: 50px;"></span></td>
+                                                style="margin-left: 50px;"></span></th>
+                                    </tr>
+                                    <tr>
+                                        <th><span style="margin-right: 50px;">Date: </span><span
+                                                    style="margin-left: 50px;" t-field="doc.invoice_date"/><span
+                                                    style="margin-left: 100px;"></span></th>
                                     </tr>
                                 </thead>
-                                <center>
-                                    <tbody style="width: 50% !important; min-height: 100px !important;">
-                                        <tr style="height: 20px;">
-                                            <td style="direction: rtl !important;text-align:center !important">
-                                                <span t-field="doc.partner_id"/>
-                                            </td>
-                                            <td><span style="margin-right: 50px;">Date: </span><span
-                                                    style="margin-left: 50px;" t-field="doc.invoice_date"/><span
-                                                    style="margin-left: 100px;"></span></td>
-                                        </tr>
-                                    </tbody>
-                                </center>
                             </table>
                             <br/>
                             <table class="GeneratedTable justify-content-center"
@@ -1030,12 +1023,12 @@
                                 <thead>
                                     <tr>
                                         <th width="15%" colspan="2">Date</th>
-                                        <th width="40%" rowspan="2">Description</th>
-                                        <th width="10%" rowspan="2">Labors QTY</th>
-                                        <th width="10%" rowspan="2">Working Days</th>
-                                        <th width="5%" rowspan="2">Unit</th>
-                                        <th width="10%" rowspan="2">Unit Price</th>
-                                        <th width="10%" rowspan="2">Total Amount</th>
+                                        <th width="40%" rowspan="2" style="vertical-align: middle;">Description</th>
+                                        <th width="10%" rowspan="2" style="vertical-align: middle;">Labors QTY</th>
+                                        <th width="10%" rowspan="2" style="vertical-align: middle;">Working Days</th>
+                                        <th width="5%" rowspan="2" style="vertical-align: middle;">Unit</th>
+                                        <th width="10%" rowspan="2" style="vertical-align: middle;">Unit Price</th>
+                                        <th width="10%" rowspan="2" style="vertical-align: middle;">Total Amount</th>
                                     </tr>
                                     <tr style="height: 10px;">
                                         <th>To</th>
@@ -1165,27 +1158,19 @@
                                    style="text-align: end; width: 100% !important;">
                                 <thead>
                                     <tr>
-                                        <td><span
-                                                style="margin-left: 50px;" t-esc="doc.partner_id.name"/><span
-                                                style="margin-left: 50px;"> :اسم العميل</span></td>
-                                        <td><span
+                                        <th rowspan="2" style="vertical-align: middle;">
+                                                <span style="margin-left: 50px;">اسم العميل</span>
+                                                :<span style="margin-left: 50px;" t-esc="doc.partner_id.name"/></th>
+                                        <th><span
                                                 style="margin-left: 50px;" t-esc="str(doc.partner_id.id)"/><span
-                                                style="margin-left: 50px;"> :رقم العميل</span></td>
+                                                style="margin-left: 50px;"> :رقم العميل</span></th>
+                                    </tr>
+                                    <tr>
+                                        <th><span
+                                                    style="margin-left: 50px;" t-field="doc.invoice_date"/><span
+                                                    style="margin-left: 100px;"> :التاريخ</span></th>
                                     </tr>
                                 </thead>
-                                <center>
-                                    <tbody style="width: 50% !important; min-height: 100px !important;">
-                                        <tr style="height: 20px;">
-                                            <td style="direction: rtl !important;text-align:center !important">
-                                                <!-- <span>السادة المحترمين / </span>
-                                                <span t-field="doc.partner_id"/> -->
-                                            </td>
-                                            <td><span
-                                                    style="margin-left: 50px;" t-field="doc.invoice_date"/><span
-                                                    style="margin-left: 100px;"> :التاريخ</span></td>
-                                        </tr>
-                                    </tbody>
-                                </center>
                             </table>
                             <br/>
                             <table class="GeneratedTable justify-content-center"
@@ -1193,12 +1178,12 @@
                                 <thead>
                                     <tr>
                                         <th width="15%" colspan="2">التاريخ</th>
-                                        <th width="40%" rowspan="2">البيان</th>
-                                        <th width="10%" rowspan="2">عدد العمال</th>
-                                        <th width="10%" rowspan="2">ايام العمل</th>
-                                        <th width="5%" rowspan="2">الوحدة</th>
-                                        <th width="10%" rowspan="2">سعر الوحدة</th>
-                                        <th width="10%" rowspan="2">القيمة الاجمالية</th>
+                                        <th width="40%" rowspan="2" style="vertical-align: middle;">البيان</th>
+                                        <th width="10%" rowspan="2" style="vertical-align: middle;">عدد العمال</th>
+                                        <th width="10%" rowspan="2" style="vertical-align: middle;">ايام العمل</th>
+                                        <th width="5%" rowspan="2" style="vertical-align: middle;">الوحدة</th>
+                                        <th width="10%" rowspan="2" style="vertical-align: middle;">سعر الوحدة</th>
+                                        <th width="10%" rowspan="2" style="vertical-align: middle;">القيمة الاجمالية</th>
                                     </tr>
                                     <tr style="height: 10px;">
                                         <th>الي</th>
@@ -1212,7 +1197,7 @@
                                             <td><span t-field="line.date_to"/></td>
                                             <td><span t-field="line.date_from"/></td>
                                             <td><span t-field="line.name"/></td>
-                                            <td><span t-field="line.labors"/></td>
+                                            <td><span t-field="line.quantity"/></td>
                                             <td><span t-field="line.days"/></td>
                                             <td><span t-field="line.product_uom_id"/></td>
                                             <td><span t-field="line.price_unit"/></td>
@@ -1329,27 +1314,19 @@
                                    style="text-align: end; width: 100% !important;">
                                 <thead>
                                     <tr>
-                                        <td><span
-                                                style="margin-left: 50px;" t-esc="doc.partner_id.name"/><span
-                                                style="margin-left: 50px;"> :اسم العميل</span></td>
-                                        <td><span
+                                        <th rowspan="2" style="vertical-align: middle;">
+                                                <span style="margin-left: 50px;">اسم العميل</span>
+                                                :<span style="margin-left: 50px;" t-esc="doc.partner_id.name"/></th>
+                                        <th><span
                                                 style="margin-left: 50px;" t-esc="str(doc.partner_id.id)"/><span
-                                                style="margin-left: 50px;"> :رقم العميل</span></td>
+                                                style="margin-left: 50px;"> :رقم العميل</span></th>
+                                    </tr>
+                                    <tr>
+                                        <th><span
+                                                    style="margin-left: 50px;" t-field="doc.invoice_date"/><span
+                                                    style="margin-left: 100px;"> :التاريخ</span></th>
                                     </tr>
                                 </thead>
-                                <center>
-                                    <tbody style="width: 50% !important; min-height: 100px !important;">
-                                        <tr style="height: 20px;">
-                                            <td style="direction: rtl !important;text-align:center !important">
-                                                <!-- <span>السادة المحترمين / </span>
-                                                <span t-field="doc.partner_id"/> -->
-                                            </td>
-                                            <td><span
-                                                    style="margin-left: 50px;" t-field="doc.invoice_date"/><span
-                                                    style="margin-left: 100px;"> :التاريخ</span></td>
-                                        </tr>
-                                    </tbody>
-                                </center>
                             </table>
                             <br/>
                             <table class="GeneratedTable justify-content-center"
@@ -1357,12 +1334,12 @@
                                 <thead>
                                     <tr>
                                         <th width="15%" colspan="2">التاريخ</th>
-                                        <th width="40%" rowspan="2">البيان</th>
-                                        <th width="10%" rowspan="2">عدد العمال</th>
-                                        <th width="10%" rowspan="2">ايام العمل</th>
-                                        <th width="5%" rowspan="2">الوحدة</th>
-                                        <th width="10%" rowspan="2">سعر الوحدة</th>
-                                        <th width="10%" rowspan="2">القيمة الاجمالية</th>
+                                        <th width="40%" rowspan="2" style="vertical-align: middle;">البيان</th>
+                                        <th width="10%" rowspan="2" style="vertical-align: middle;">عدد العمال</th>
+                                        <th width="10%" rowspan="2" style="vertical-align: middle;">ايام العمل</th>
+                                        <th width="5%" rowspan="2" style="vertical-align: middle;">الوحدة</th>
+                                        <th width="10%" rowspan="2" style="vertical-align: middle;">سعر الوحدة</th>
+                                        <th width="10%" rowspan="2" style="vertical-align: middle;">القيمة الاجمالية</th>
                                     </tr>
                                     <tr style="height: 10px;">
                                         <th>الي</th>
