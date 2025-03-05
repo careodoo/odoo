@@ -536,18 +536,20 @@
                                    style="text-align: center; width: 100% !important;">
                                 <thead>
                                     <tr>
-                                        <!-- <th width="15%" colspan="2">التاريخ Date</th> -->
-                                        <th width="35%">البيان</th>
-                                        <!-- <th width="10%">الكمية</th> -->
-                                        <th width="20%">الوحدة</th>
+                                        <th width="15%" colspan="2">التاريخ Date</th>
+                                        <th width="40%">البيان</th>
+                                        <th width="10%">عدد العمال</th>
+                                        <th width="10%">ايام العمل</th>
+                                        <th width="5%">الوحدة</th>
                                         <th width="10%">سعر الوحدة</th>
                                         <th width="10%">القيمة الاجمالية</th>
                                     </tr>
                                     <tr style="height: 10px;">
-                                        <!-- <th>الي To</th>
-                                        <th>من From</th> -->
+                                        <th>الي To</th>
+                                        <th>من From</th>
                                         <th>Description</th>
-                                        <!-- <th>Quantity</th> -->
+                                        <th>Labor QTY</th>
+                                        <th>Workdays</th>
                                         <th>Unit</th>
                                         <th>Unit Price</th>
                                         <th>Total Amount</th>
@@ -557,11 +559,12 @@
                                        style="text-align: center; width: 50% !important;">
                                     <t t-foreach="doc.invoice_line_ids" t-as="line">
                                         <tr>
-                                            <!-- <td><span t-field="line.date_to"/></td>
-                                            <td><span t-field="line.date_from"/></td> -->
+                                            <td><span t-field="line.date_to"/></td>
+                                            <td><span t-field="line.date_from"/></td>
                                             <td><span t-field="line.name"/></td>
                                             <td><span t-field="line.quantity"/></td>
-                                            <!-- <td><span t-field="line.unit_no"/></td> -->
+                                            <td><span t-field="line.days"/></td>
+                                            <td><span t-field="line.product_uom_id"/></td>
                                             <td><span t-field="line.price_unit"/></td>
                                             <td><span t-field="line.price_subtotal"/></td>
                                         </tr>
@@ -705,18 +708,20 @@
                                    style="text-align: center; width: 100% !important;">
                                 <thead>
                                     <tr>
-                                        <!-- <th width="15%" colspan="2">التاريخ Date</th> -->
-                                        <th width="35%">البيان</th>
-                                        <!-- <th width="10%">الكمية</th> -->
-                                        <th width="20%">الوحدة</th>
+                                        <th width="15%" colspan="2">التاريخ Date</th>
+                                        <th width="40%">البيان</th>
+                                        <th width="10%">عدد العمال</th>
+                                        <th width="10%">ايام العمل</th>
+                                        <th width="5%">الوحدة</th>
                                         <th width="10%">سعر الوحدة</th>
                                         <th width="10%">القيمة الاجمالية</th>
                                     </tr>
                                     <tr style="height: 10px;">
-                                        <!-- <th>الي To</th>
-                                        <th>من From</th> -->
+                                        <th>الي To</th>
+                                        <th>من From</th>
                                         <th>Description</th>
-                                        <!-- <th>Quantity</th> -->
+                                        <th>Labor QTY</th>
+                                        <th>Workdays</th>
                                         <th>Unit</th>
                                         <th>Unit Price</th>
                                         <th>Total Amount</th>
@@ -726,11 +731,12 @@
                                        style="text-align: center; width: 50% !important;">
                                     <t t-foreach="doc.invoice_line_ids" t-as="line">
                                         <tr>
-                                            <!-- <td><span t-field="line.date_to"/></td>
-                                            <td><span t-field="line.date_from"/></td> -->
+                                            <td><span t-field="line.date_to"/></td>
+                                            <td><span t-field="line.date_from"/></td>
                                             <td><span t-field="line.name"/></td>
                                             <td><span t-field="line.quantity"/></td>
-                                            <!-- <td><span t-field="line.unit_no"/></td> -->
+                                            <td><span t-field="line.days"/></td>
+                                            <td><span t-field="line.product_uom_id"/></td>
                                             <td><span t-field="line.price_unit"/></td>
                                             <td><span t-field="line.price_subtotal"/></td>
                                         </tr>
