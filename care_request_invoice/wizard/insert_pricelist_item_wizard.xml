@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="insert_pricelist_item_wizard_view_form" model="ir.ui.view">
+            <field name="name">insert.pricelist.item.wizard.view.form</field>
+            <field name="model">insert.pricelist.item.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <field name="pricelist_id" invisible="1"/>
+                    <field name="pricelist_items"/>
+                    <footer>
+                        <button string="Insert" type="object"
+                            name="action_insert" class="btn-primary"
+                            data-hotkey="q" />
+
+                        <button string="Cancel" class="btn-secondary"
+                            special="cancel" data-hotkey="x"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

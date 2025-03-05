@@ -12,6 +12,7 @@
         'security/groups.xml',
         'security/ir.model.access.csv',
         'data/activity_type.xml',
+        'wizard/insert_pricelist_item_wizard.xml',
         'wizard/refusal_reason_wizard_view.xml',
         'views/account_move.xml',
         'views/product_pricelist.xml',

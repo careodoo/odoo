@@ -20,8 +20,9 @@
                             invisible="state != 'submitted'"/>
 
                         <button name="action_cancel" type="object" string="Cancel" groups="care_request_invoice.group_create_request_invoice" invisible="state in ['draft', 'cancel', 'invoiced']" data-hotkey="x"/>
-                        <button name="action_draft" type="object" string="Reset to Draft" groups="care_request_invoice.group_create_request_invoice" invisible="state != 'cancel'" data-hotkey="r"/>
+                        <button name="action_draft" type="object" string="Reset to Draft" groups="care_request_invoice.group_create_request_invoice" invisible="state != 'cancel'" data-hotkey="d"/>
                         <button name="action_refuse" type="object" string="Reject Request" groups="care_request_invoice.group_convert_to_invoice" invisible="state != 'submitted'" data-hotkey="r"/>
+                        <button name="action_pricelist_item" class="oe_highlight" type="object" string="Insert From List" groups="care_request_invoice.group_convert_to_invoice" invisible="state != 'draft' and not pricelist_id" />
                         <field name="state" widget="statusbar" statusbar_visible="draft,submitted,invoiced"/>
                     </header>
                     <sheet>

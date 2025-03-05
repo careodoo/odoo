@@ -115,6 +115,21 @@ class RequestInvoice(models.Model):
     def _action_refuse(self):
         self.write({'state': 'rejected'})
 
+    def action_pricelist_item(self):
+        return {
+            'name': _('Pricelist Item'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'insert.pricelist.item.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'view_id': self.env.ref('care_request_invoice.insert_pricelist_item_wizard_view_form').id,
+            'context': {
+                'active_id': self.id,
+                'default_pricelist_id': self.pricelist_id.id,
+            },
+            # 'domain': [('pricelist_id', '=', self.pricelist_id.id)],
+        }
+
     @api.depends('invoice_date','request_invoice_id')
     def _get_invoiced(self):
         for rec in self:
