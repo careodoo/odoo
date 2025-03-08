@@ -206,8 +206,8 @@ class RequestInvoiceLine(models.Model):
     company_id = fields.Many2one('res.company', string='Company', required=True, readonly=False, store=True,
         default=lambda self: self.env.company)
     currency_id = fields.Many2one('res.currency', string='Account Currency', related='company_id.currency_id', store=True)
-    price = fields.Float(string='Price', default=0.0, compute="_compute_total", store=True, digits='Product Price',)
-    price_subtotal = fields.Monetary(string='Tax excl.', default=0.0, compute="_compute_total", store=True)
+    price = fields.Float(string='Price', compute="_compute_total", store=True, digits='Product Price',)
+    price_subtotal = fields.Monetary(string='Tax excl.', compute="_compute_total", store=True)
 
     @api.onchange('product_id')
     def _onchange_product_id(self):
@@ -228,24 +228,25 @@ class RequestInvoiceLine(models.Model):
 
     @api.depends('product_id','quantity', 'days')
     def _compute_total(self):
-        self.price = 0.0
-        self.price_subtotal = 0.0
         for line in self:
-            if line.request_id.pricelist_id:
-                pricelist_price, rule_id = self.env['product.pricelist'].search([('id','=',line.request_id.pricelist_id.id)])._get_product_price_rule(line.product_id,1)
-                if line.product_id.days_per_month and line.days:
-                    days_rate = line.days / line.product_id.days_per_month
-                    line.price = pricelist_price * days_rate
+            line.price = 0.0
+            line.price_subtotal = 0.0
+            if line.product_id:
+                if line.request_id.pricelist_id:
+                    pricelist_price, rule_id = self.env['product.pricelist'].search([('id','=',line.request_id.pricelist_id.id)])._get_product_price_rule(line.product_id,1)
+                    if line.product_id.days_per_month and line.days:
+                        days_rate = line.days / line.product_id.days_per_month
+                        line.price = pricelist_price * days_rate
+                    else:
+                        line.price = pricelist_price
+                    line.price_subtotal = line.price * line.quantity
                 else:
-                    line.price = pricelist_price
-                line.price_subtotal = pricelist_price * line.quantity
-            else:
-                if line.product_id.days_per_month and line.days:
-                    days_rate = line.days / line.product_id.days_per_month
-                    line.price = line.product_id.lst_price * days_rate
-                else:
-                    line.price = line.product_id.lst_price
-                line.price_subtotal = line.price * line.quantity
+                    if line.product_id.days_per_month and line.days:
+                        days_rate = line.days / line.product_id.days_per_month
+                        line.price = line.product_id.lst_price * days_rate
+                    else:
+                        line.price = line.product_id.lst_price
+                    line.price_subtotal = line.price * line.quantity
 
     @api.onchange('product_id')
     def onchange_labors_service(self):
