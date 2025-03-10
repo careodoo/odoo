@@ -86,7 +86,7 @@ class AccountMove(models.Model):
         return ' Only ' + amount_words + ' Only '
 
     def get_invoice_portal_url(self):
-        base_url = self.env['ir.config_parameter'].get_param('web.base.url')
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
         url = base_url + self.get_portal_url()
         return url
 
