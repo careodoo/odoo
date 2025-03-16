@@ -6,7 +6,7 @@
             <field name="model">hr.department</field>
             <field name="inherit_id" ref="hr.view_department_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//widget[@name='web_ribbon']" position="before">
+                <xpath expr="//div[@name='button_box']" position="replace">
                     <div name="button_box" class="oe_button_box" invisible="not context.get('dashboard_view', False)">
                         <button class="oe_stat_button" icon="fa-circle" type="object" name="button_show_employees"
                                 invisible="not show_employees">

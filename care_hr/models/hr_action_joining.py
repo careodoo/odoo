@@ -23,7 +23,7 @@ class HrActionJoining(models.Model):
     join_date = fields.Date(required=True)
     delay = fields.Integer()
     salary_date = fields.Date()
-    department_id = fields.Many2one('hr.department', related='employee_id.department_id')
+    department_id = fields.Many2one('hr.department')
     state = fields.Selection(selection=[
         ('draft', 'Draft'), ('submit', 'Submitted'), ('approved', 'Approved'),
     ], default='draft')
@@ -50,3 +50,10 @@ class HrActionJoining(models.Model):
             qr_info += '/web#id=%s&action=%s&model=%s&view_type=form&cids=&menu_id=%s' % (rec.id, action_id, 'hr.action.joining', menu_id)
             rec.qr_url = qr_info
             rec.qr_image = generateQrCode.generate_qr_code(qr_info)
+
+    def action_assign_department(self):
+        joins = self.env['hr.action.joining'].browse(self.env.context.get('active_ids'))
+        for join in joins:
+            join.write({
+                'department_id': join.employee_id.department_id.id
+            })

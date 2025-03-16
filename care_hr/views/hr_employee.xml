@@ -27,6 +27,9 @@
                 <xpath expr="//widget[@name='web_ribbon']" position="after">
                     <widget name="web_ribbon" title="Suspended" bg_color="bg-danger" invisible="suspend_date == False"/>
                 </xpath>
+                <xpath expr="//field[@name='department_id']" position="after">
+                    <field name="barcode"/>
+                </xpath>
             </field>
         </record>
         <record id="care_hr_kanban_view_employees" model="ir.ui.view" >
@@ -36,7 +39,13 @@
             <field name="arch" type="xml">
                 <xpath expr="//kanban/templates/t/div" position="inside">
                     <field name="suspend_date" invisible="1"/>
+                    <field name="hostel_id" invisible="1"/>
                     <widget name="web_ribbon" title="Suspended" bg_color="bg-danger" invisible="suspend_date == False"/>
+                </xpath>
+                <xpath expr="//li[hasclass('hr_tags')]" position="before">
+                    <li class="hr_tags">
+                        <field name="hostel_id" />
+                    </li>
                 </xpath>
             </field>
         </record>

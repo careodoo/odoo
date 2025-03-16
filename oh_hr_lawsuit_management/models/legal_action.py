@@ -61,11 +61,10 @@ class HrLawsuit(models.Model):
                               string='Party 2', required=1, readonly=1,
                               help='Choose the second party in the legal issue.It can be Employee, Contacts or others.',)
     employee_id = fields.Many2one('hr.employee', string='Employee', copy=False,
-                                  readonly=1, states={'draft': [('readonly', False)]},
+                                   states={'draft': [('readonly', False)]},
                                   help='Choose the Employee')
     partner_id = fields.Many2one('res.partner', string='Partner',
                                  copy=False,
-                                 readonly=1,
                                  states={'draft': [('readonly', False)]},
                                  help='Choose the partner')
     other_name = fields.Char(string='Name', help='Enter the details of other type')
