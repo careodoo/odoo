@@ -18,7 +18,7 @@
                     <div class="header">
                         <div class="row">
                             <div class="col-5">
-                                <div class="text-right pt-5">(عقد نموذج (2</div>
+                                <div class="rtl-txt pt-5">(عقد نموذج (2</div>
                             </div>
                             <div class="col-3">
                                 <img class="text-left" src="/purchase_report/static/src/img/Emblem_of_Kuwait.svg.png"
@@ -61,11 +61,11 @@
                         width: 50%;
                         border-left:1px solid #b3adad;
                         border-right:1px solid #b3adad;
-                        text-align:center;
                         padding:2px;
                         background: #ffffff;
                         color: #313030;
                         }
+                        .rtl-txt{text-align: right !important;direction: rtl !important;}
                     </style>
                     <table>
                         <tbody>
@@ -89,10 +89,10 @@
                                         contract was concluded by and between:
                                     </dt>
                                 </td>
-                                <td class="text-right" style="font-size:14px;">
+                                <td class="rtl-txt" style="font-size:14px;">
                                     <dt>دولة الكـويت</dt>
-                                    <dt>-: الهيئة العامة للقوي العاملة ادارة عمل محافظة <span t-esc="employee.work_department"/></dt>
-                                    <dt>-: إنه في يوم
+                                    <dt>الهيئة العامة للقوي العاملة ادارة عمل محافظة:- <span t-esc="employee.work_department"/></dt>
+                                    <dt> إنه في يوم:-
                                         <span t-field="employee.day_translated"/>
                                         الموافق
                                         <span t-esc="datetime.datetime.today().strftime('%Y-%m-%d')"/>
@@ -128,7 +128,7 @@
                                     </dt>
                                     <dt>( Second party )</dt>
                                 </td>
-                                <td class="text-right" style="font-size:14px;">
+                                <td class="rtl-txt" style="font-size:14px;">
                                     <dt>١- شركة /
                                         <span t-esc="employee.company_id.name"/>
                                         ويمثلها فى التوقيع على
@@ -178,7 +178,7 @@
                                 </td>
                                 <td style="font-size:14px;">
                                     <dt class="text-center">تهميد</dt>
-                                    <dt class="text-right">يمتلك الطرف الأول منشأة بإسم شركة الرعاية لمقاولات تنظيف
+                                    <dt class="rtl-txt">يمتلك الطرف الأول منشأة بإسم شركة الرعاية لمقاولات تنظيف
                                         المبانى والمدن تعمل فـي مجال التنظيف ويرغب فـى التعـاقـد مـع الطــرف الثـانـي
                                         للعمــل لديـه بمهنــة
                                         <span t-esc="employee.social_affairs_title"/>
@@ -195,7 +195,7 @@
                                 </td>
                                 <td style="font-size:14px;">
                                     <dt class="text-center">البنـد الأول</dt>
-                                    <dt class="text-right">يعتبـر التمهـيد السابق جزء لا يتجزأ من هذا العقـد</dt>
+                                    <dt class="rtl-txt">يعتبـر التمهـيد السابق جزء لا يتجزأ من هذا العقـد</dt>
                                 </td>
                             </tr>
                             <tr>
@@ -212,7 +212,7 @@
                                 <td style="font-size:14px;">
                                     <dt class="text-center">البنـد الثـانـي</dt>
                                     <dt class="text-center">"طبيـعـة العمـل"</dt>
-                                    <dt class="text-right">تعـاقـد الطـرف الأول مـع الطـرف الثـانـي للعمــل لديـه
+                                    <dt class="rtl-txt">تعـاقـد الطـرف الأول مـع الطـرف الثـانـي للعمــل لديـه
                                         <span t-esc="employee.social_affairs_title"/>
                                         داخل دولـة الكــويـت
                                     </dt>
@@ -230,7 +230,7 @@
                                 <td style="font-size:14px;">
                                     <dt class="text-center">البنـد الثـالث</dt>
                                     <dt class="text-center">"فترة التجربة"</dt>
-                                    <dt class="text-right">يخضع الطرف الثاني لفترة تجربة لمدة لا تزيد عن 100 يوم عمل ،
+                                    <dt class="rtl-txt">يخضع الطرف الثاني لفترة تجربة لمدة لا تزيد عن 100 يوم عمل ،
                                         ويحق لكل طرف إنهاء العقد خلال تلك الفترة دون إخطار
                                     </dt>
                                 </td>
@@ -250,13 +250,13 @@
                                 <td style="font-size:14px;">
                                     <dt class="text-center">البنـد الـرابـع</dt>
                                     <dt class="text-center">"قيمـة الأجـر"</dt>
-                                    <dt class="text-right">يتقـاضـي الطــرف الثـانـي عـن تنفيـذ هـذا العقـد أجـراً
+                                    <dt class="rtl-txt">يتقـاضـي الطــرف الثـانـي عـن تنفيـذ هـذا العقـد أجـراً
                                         مقـداره
                                         <span t-esc="int(employee.affairs_salary)"/>
                                         دينـارا يـدفع فـي نهـاية كل شهر ولا يجـوز للطـرف الأول تخفيض الأجـر
                                         أثنـاء سـريان هذا العقد
                                     </dt>
-                                    <dt class="text-right">و لا يجـوز نقـل الطـرف الثـانـي إلـى الأجـر اليـومـى دون
+                                    <dt class="rtl-txt">و لا يجـوز نقـل الطـرف الثـانـي إلـى الأجـر اليـومـى دون
                                         موافقـة
                                     </dt>
                                 </td>
@@ -274,7 +274,7 @@
                                 <td style="font-size:14px;">
                                     <dt class="text-center">البنـد الـخامس</dt>
                                     <dt class="text-center">"نفاذ العقـد"</dt>
-                                    <dt class="text-right">يبدأ نفـاذ العقـد إعتبـارا من
+                                    <dt class="rtl-txt">يبدأ نفـاذ العقـد إعتبـارا من
                                         <span t-esc="datetime.datetime.today().strftime('%Y-%m-%d')"/>
                                         ويلتـزم الطـرف
                                         الثـانـى بالقيـام بأداء عملـه طوال مدة نفاذه
@@ -293,7 +293,7 @@
                                 <td style="font-size:14px;">
                                     <dt class="text-center">البند السادس</dt>
                                     <dt class="text-center">"مدة العقـد"</dt>
-                                    <dt class="text-right">هـذا العقد غير محدد المـدة ويبدا إعتبـارة
+                                    <dt class="rtl-txt">هـذا العقد غير محدد المـدة ويبدا إعتبـارة
                                         **************
                                         ولمده ************** ويجوز تجـديـد العقـد بمـوافقـة الطرفيـن لمـدد مماثلة بحد
                                         أقصـى خمس سنوات ميلاديـة
@@ -313,7 +313,7 @@
                                 <td style="font-size:14px;">
                                     <dt class="text-center">البنـد السابع</dt>
                                     <dt class="text-center">"الأجازة السنوية"</dt>
-                                    <dt class="text-right">للطـرف الثـانـي الحق فـي أجازة سنوية مدفوعة الأجـر مـدتها 30
+                                    <dt class="rtl-txt">للطـرف الثـانـي الحق فـي أجازة سنوية مدفوعة الأجـر مـدتها 30
                                         يومـا، ولا يستحقهـا عن السنة الأولـى إلا بعـد انقضـاء مـدة تسعة أشهر تحسب من
                                         تاريخ نفاذ العقـد
                                     </dt>
@@ -331,7 +331,7 @@
                                 <td style="font-size:14px;">
                                     <dt class="text-center">البنـد الثامـن</dt>
                                     <dt class="text-center">"عـدد ساعات العمــل"</dt>
-                                    <dt class="text-right">لا يجوز للطـرف الأول تشغيـل الطـرف الثـانـي لمـدة تزيد عن
+                                    <dt class="rtl-txt">لا يجوز للطـرف الأول تشغيـل الطـرف الثـانـي لمـدة تزيد عن
                                         ثمـانـي ساعات عمـل يوميـا تتخللهـا فترة راحـة لا تقل عن ساعة باستثنـاء الحـالات
                                         المقـررة قـانـونـًا
                                     </dt>
@@ -349,7 +349,7 @@
                                 <td style="font-size:14px;">
                                     <dt class="text-center">البنـد التاسـع</dt>
                                     <dt class="text-center">"قيمـة تـذكـرة السـفــر"</dt>
-                                    <dt class="text-right">يتحمـل الطـرف الأول مصـاريف عـودة الطـرف الثـانـي إلـي بلده
+                                    <dt class="rtl-txt">يتحمـل الطـرف الأول مصـاريف عـودة الطـرف الثـانـي إلـي بلده
                                         عند إنتهاء علاقة العمـل ومغادرته نهائيا للبلاد
                                     </dt>
                                 </td>
@@ -367,7 +367,7 @@
                                 <td style="font-size:14px;">
                                     <dt class="text-center">البنـد العــاشـــر</dt>
                                     <dt class="text-center">"التأمين ضـد إصابات وأمراض العمـل"</dt>
-                                    <dt class="text-right">يلتـزم الطـرف الأول بالتأمين علـى الطـرف الثانـى ضـد إصابات
+                                    <dt class="rtl-txt">يلتـزم الطـرف الأول بالتأمين علـى الطـرف الثانـى ضـد إصابات
                                         وأمـراض العمـل، كمـا يلتـزم بقيمـة التأمين الصحـى طبقـا للقـانون رقم (1) لسنة
                                         1999
                                     </dt>
@@ -384,7 +384,7 @@
                                 <td style="font-size:14px;">
                                     <dt class="text-center">البنـد الحادى عشـر</dt>
                                     <dt class="text-center">"مكـافأة نهاية الخدمـة"</dt>
-                                    <dt class="text-right">يستحق الطـرف الثـانـي مكافأة نهاية الخـدمة المنصـوص عليها
+                                    <dt class="rtl-txt">يستحق الطـرف الثـانـي مكافأة نهاية الخـدمة المنصـوص عليها
                                         بالقوانين المنظمة
                                     </dt>
                                 </td>
@@ -403,7 +403,7 @@
                                 <td style="font-size:14px;">
                                     <dt class="text-center">البنـد الثانـى عشـر</dt>
                                     <dt class="text-center">"القانون الواجب التطبيق"</dt>
-                                    <dt class="text-right">تسـري أحكـام قانون العمـل فى القطـاع الأهلـى رقم 6 لسنة 2010
+                                    <dt class="rtl-txt">تسـري أحكـام قانون العمـل فى القطـاع الأهلـى رقم 6 لسنة 2010
                                         والقرارات المنفـذة له فيما لم يرد بشأنه نص فى هـذا العقـد، ويقع باطلاً كل شرط تم
                                         الإتفاق عليه بالمخالفة لأحكام القانون ، ما لم يكن فيه ميـزة أفضـل للعـامـــل
                                     </dt>
@@ -420,9 +420,9 @@
                                 <td style="font-size:14px;">
                                     <dt class="text-center">البنـد الثالث عشـر</dt>
                                     <dt class="text-center">"شـروط خـاصـة"</dt>
-                                    <dt class="text-right">١- لا يوجد</dt>
-                                    <dt class="text-right">٢- لا يوجد</dt>
-                                    <dt class="text-right">٣- لا يوجد</dt>
+                                    <dt class="rtl-txt">١- لا يوجد</dt>
+                                    <dt class="rtl-txt">٢- لا يوجد</dt>
+                                    <dt class="rtl-txt">٣- لا يوجد</dt>
                                 </td>
                             </tr>
                             <tr>
@@ -438,7 +438,7 @@
                                 <td style="font-size:14px;">
                                     <dt class="text-center">البنـد الـرابع عشـر</dt>
                                     <dt class="text-center">"المحكمـة المختصـة"</dt>
-                                    <dt class="text-right">تختص المحكمـة الكلية ودوائرها العمـالية طبقا لأحكام القانون
+                                    <dt class="rtl-txt">تختص المحكمـة الكلية ودوائرها العمـالية طبقا لأحكام القانون
                                         رقم 46 لسنة 1987، بنظـر كافة المنازعات الناشئة عن تطبيق أو تفسيـر هـذا العقـد
                                     </dt>
                                 </td>
@@ -454,7 +454,7 @@
                                 <td style="font-size:14px;">
                                     <dt class="text-center">البنـد الخامس عشـر</dt>
                                     <dt class="text-center">"لغـة العقــد"</dt>
-                                    <dt class="text-right">حـرر هـذا العقـد باللغتين العربية والأنجليزية ، ويعتد بنصـوص
+                                    <dt class="rtl-txt">حـرر هـذا العقـد باللغتين العربية والأنجليزية ، ويعتد بنصـوص
                                         اللغـة العـربية عند وقوع أى تعارض بينهـمــا
                                     </dt>
                                 </td>
@@ -471,7 +471,7 @@
                                 <td style="font-size:14px;">
                                     <dt class="text-center">البنـد السادس عشـر</dt>
                                     <dt class="text-center">"نسـخ العقـــد"</dt>
-                                    <dt class="text-right">حـرر هذا العقـد من ثلاث نسخ بيد كل طرف نسخة للعمل بموجبها
+                                    <dt class="rtl-txt">حـرر هذا العقـد من ثلاث نسخ بيد كل طرف نسخة للعمل بموجبها
                                         والثالثة تودع لدي الهيئة العامة للقـوي العاملة
                                     </dt>
                                 </td>
@@ -514,8 +514,8 @@
                     </table>
                     <div class="footer">
                         <div class="row">
-                            <div class="col-12 mt-3">
-                                <p class="text-right border-top" style="font-size: 12px;">ملاحظة/هذا النموذج بعد نموذجا
+                            <div class="col-12 mt-3" style="text-align: right !important;direction: rtl !important;">
+                                <p class="rtl-txt border-top" style="font-size: 12px;">ملاحظة/هذا النموذج بعد نموذجا
                                     إسترشاد بالشروط وأحكام عقد المعطل في القطاع الأهلي وبحق لكل إعداد نموذج مماثلا له
                                     على
                                     المطيةعات لخاصة بها شرط أن يطمن كافة الأحكام والشروط الواردة بهذا النموذج
