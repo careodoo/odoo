@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Mail Activity Types for Security Management -->
+    <record id="mail_activity_key_return" model="mail.activity.type">
+        <field name="name">Key Return</field>
+        <field name="icon">fa-key</field>
+        <field name="sequence">10</field>
+        <field name="res_model">security.key</field>
+        <field name="category">default</field>
+        <field name="delay_count">0</field>
+        <field name="summary">Key Return Reminder</field>
+    </record>
+
+    <record id="mail_activity_task_progress" model="mail.activity.type">
+        <field name="name">Task Progress Update</field>
+        <field name="icon">fa-tasks</field>
+        <field name="sequence">20</field>
+        <field name="res_model">security.task</field>
+        <field name="category">default</field>
+        <field name="delay_count">1</field>
+        <field name="summary">Task Progress Update</field>
+    </record>
+</odoo>

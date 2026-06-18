@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_security_team" model="ir.actions.report">
+        <field name="name">Team Performance Report</field>
+        <field name="model">security.team</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">security_management.report_security_team</field>
+        <field name="report_file">security_management.report_security_team</field>
+        <field name="binding_model_id" ref="model_security_team"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_security_team">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="team">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2 class="text-center">Security Team Performance Report</h2>
+                        
+                        <div class="row mt32 mb32">
+                            <div class="col-6">
+                                <strong>Team:</strong> <span t-field="team.name"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Date:</strong> <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d')"/>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt16">
+                            <div class="col-12">
+                                <h4>Team Information</h4>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Team Leader:</strong></td>
+                                        <td><span t-field="team.leader_id.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Team Members:</strong></td>
+                                        <td><span t-esc="len(team.member_ids)"/></td>
+                                    </tr>
+                                    <tr t-if="team.client_id">
+                                        <td><strong>Client:</strong></td>
+                                        <td><span t-field="team.client_id.name"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt16">
+                            <div class="col-12">
+                                <h4>Performance Metrics</h4>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Tasks Assigned:</strong></td>
+                                        <td><span t-field="team.task_count"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Patrols Completed:</strong></td>
+                                        <td><span t-field="team.patrol_count"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt16" t-if="team.member_ids">
+                            <div class="col-12">
+                                <h4>Team Members</h4>
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Position</th>
+                                            <th>Contact</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="team.member_ids" t-as="member">
+                                            <td><span t-field="member.name"/></td>
+                                            <td><span t-field="member.job_position"/></td>
+                                            <td><span t-field="member.mobile"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt16">
+                            <div class="col-12">
+                                <p>This report provides an overview of the security team's performance and composition. For more detailed analytics, please refer to the dashboard.</p>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

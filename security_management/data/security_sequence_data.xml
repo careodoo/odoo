@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Client Sequence -->
+        <record id="seq_security_client" model="ir.sequence">
+            <field name="name">Security Client Sequence</field>
+            <field name="code">security.client</field>
+            <field name="prefix">CLIENT/</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        
+        <!-- Team Sequence -->
+        <record id="seq_security_team" model="ir.sequence">
+            <field name="name">Security Team Sequence</field>
+            <field name="code">security.team</field>
+            <field name="prefix">TEAM/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        
+        <!-- Premise Sequence -->
+        <record id="seq_security_premise" model="ir.sequence">
+            <field name="name">Security Premise Sequence</field>
+            <field name="code">security.premise</field>
+            <field name="prefix">PREM/</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        
+        <!-- Key Hub Sequence -->
+        <record id="seq_security_key_hub" model="ir.sequence">
+            <field name="name">Security Key Hub Sequence</field>
+            <field name="code">security.key.hub</field>
+            <field name="prefix">HUB/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        
+        <!-- Task Sequence -->
+        <record id="seq_security_task" model="ir.sequence">
+            <field name="name">Security Task Sequence</field>
+            <field name="code">security.task</field>
+            <field name="prefix">TASK/</field>
+            <field name="padding">6</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        
+        <!-- Patrol Point Sequence -->
+        <record id="seq_security_patrol_point" model="ir.sequence">
+            <field name="name">Security Patrol Point Sequence</field>
+            <field name="code">security.patrol.point</field>
+            <field name="prefix">PT/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        
+        <!-- Patrol Sequence -->
+        <record id="seq_security_patrol" model="ir.sequence">
+            <field name="name">Security Patrol Sequence</field>
+            <field name="code">security.patrol</field>
+            <field name="prefix">PATROL/</field>
+            <field name="padding">6</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        
+        <!-- Schedule Sequence -->
+        <record id="seq_security_schedule" model="ir.sequence">
+            <field name="name">Security Schedule Sequence</field>
+            <field name="code">security.schedule</field>
+            <field name="prefix">SCH/</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        
+        <!-- Shift Assignment Sequence -->
+        <record id="seq_security_shift_assignment" model="ir.sequence">
+            <field name="name">Security Shift Assignment Sequence</field>
+            <field name="code">security.shift.assignment</field>
+            <field name="prefix">SHIFT/</field>
+            <field name="padding">6</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        
+        <!-- Gate Pass Sequence -->
+        <record id="seq_security_gate_pass" model="ir.sequence">
+            <field name="name">Security Gate Pass Sequence</field>
+            <field name="code">security.gate.pass</field>
+            <field name="prefix">PASS/</field>
+            <field name="padding">6</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        
+        <!-- Visit Record Sequence -->
+        <record id="seq_security_visit_record" model="ir.sequence">
+            <field name="name">Security Visit Record Sequence</field>
+            <field name="code">security.visit.record</field>
+            <field name="prefix">VISIT/</field>
+            <field name="padding">6</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        
+        <!-- Inspection Sequence -->
+        <record id="seq_security_inspection" model="ir.sequence">
+            <field name="name">Security Inspection Sequence</field>
+            <field name="code">security.inspection</field>
+            <field name="prefix">INSP/</field>
+            <field name="padding">6</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        
+        <!-- Incident Report Sequence -->
+        <record id="seq_security_incident_report" model="ir.sequence">
+            <field name="name">Security Incident Report</field>
+            <field name="code">security.incident.report</field>
+            <field name="prefix">IR/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        
+        <!-- Incidence Report Sequence -->
+        <record id="seq_security_incidence_report" model="ir.sequence">
+            <field name="name">Security Incidence Report Sequence</field>
+            <field name="code">security.incidence.report</field>
+            <field name="prefix">INC/</field>
+            <field name="padding">6</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        
+        <!-- Gate Pass Payment Sequence -->
+        <record id="seq_security_gate_pass_payment" model="ir.sequence">
+            <field name="name">Gate Pass Payment Sequence</field>
+            <field name="code">security.gate.pass.payment</field>
+            <field name="prefix">PAY/</field>
+            <field name="padding">6</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        
+        <!-- Cashier Report Sequence -->
+        <record id="seq_security_cashier_report" model="ir.sequence">
+            <field name="name">Security Cashier Report Sequence</field>
+            <field name="code">security.cashier.report</field>
+            <field name="prefix">CASH/</field>
+            <field name="padding">6</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        
+        <!-- Close Check Sequence -->
+        <record id="seq_security_close_check" model="ir.sequence">
+            <field name="name">Security Close Check Sequence</field>
+            <field name="code">security.close.check</field>
+            <field name="prefix">CHECK/</field>
+            <field name="padding">6</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        
+        <!-- Tracking Sequence -->
+        <record id="seq_security_tracking" model="ir.sequence">
+            <field name="name">Security Tracking Sequence</field>
+            <field name="code">security.tracking</field>
+            <field name="prefix">TRACK/</field>
+            <field name="padding">8</field>
+            <field name="company_id" eval="False"/>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Minimal security-related field group extension -->
+    <record id="view_security_employee_preferences_form" model="ir.ui.view">
+        <field name="name">security.employee.preferences.form</field>
+        <field name="model">hr.employee</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <form string="Security Details">
+                <sheet>
+                    <group name="security_details">
+                        <field name="security_rank"/>
+                        <field name="employee_code"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

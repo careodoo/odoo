@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="security_management.IncidentReportingDashboard" owl="1">
+        <div class="o_security_incident_dashboard">
+            <div class="o_incident_dashboard_header mb-3">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h2>Incident Reporting Dashboard</h2>
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-primary mr-2" t-on-click="onCreateIncident">
+                            <i class="fa fa-plus mr-1"></i>New Incident
+                        </button>
+                        <button class="btn btn-info mr-2" t-on-click="onCreateInspection">
+                            <i class="fa fa-clipboard-check mr-1"></i>New Inspection
+                        </button>
+                        <button class="btn btn-outline-secondary" t-on-click="onRefreshDashboard">
+                            <i class="fa fa-refresh mr-1"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="o_incident_dashboard_content">
+                <div class="row mb-4">
+                    <!-- Filters -->
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">Filters</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4 mb-2">
+                                        <label for="period_filter">Time Period</label>
+                                        <select id="period_filter" class="form-control" t-on-change="onFilterChange" data-filter="period">
+                                            <option value="week" t-att-selected="state.filters.period === 'week'">Last Week</option>
+                                            <option value="month" t-att-selected="state.filters.period === 'month'">Last Month</option>
+                                            <option value="quarter" t-att-selected="state.filters.period === 'quarter'">Last Quarter</option>
+                                            <option value="year" t-att-selected="state.filters.period === 'year'">Last Year</option>
+                                            <option value="all" t-att-selected="state.filters.period === 'all'">All Time</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <label for="incident_type_filter">Incident Type</label>
+                                        <select id="incident_type_filter" class="form-control" t-on-change="onFilterChange" data-filter="incident_type">
+                                            <option value="all" t-att-selected="state.filters.incident_type === 'all'">All Types</option>
+                                            <option value="theft" t-att-selected="state.filters.incident_type === 'theft'">Theft/Burglary</option>
+                                            <option value="damage" t-att-selected="state.filters.incident_type === 'damage'">Property Damage</option>
+                                            <option value="injury" t-att-selected="state.filters.incident_type === 'injury'">Injury/Medical</option>
+                                            <option value="fire" t-att-selected="state.filters.incident_type === 'fire'">Fire Incident</option>
+                                            <option value="flood" t-att-selected="state.filters.incident_type === 'flood'">Water/Flood Damage</option>
+                                            <option value="power" t-att-selected="state.filters.incident_type === 'power'">Power Outage</option>
+                                            <option value="trespass" t-att-selected="state.filters.incident_type === 'trespass'">Trespassing</option>
+                                            <option value="vandalism" t-att-selected="state.filters.incident_type === 'vandalism'">Vandalism</option>
+                                            <option value="other" t-att-selected="state.filters.incident_type === 'other'">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <label for="severity_filter">Severity</label>
+                                        <select id="severity_filter" class="form-control" t-on-change="onFilterChange" data-filter="severity">
+                                            <option value="all" t-att-selected="state.filters.severity === 'all'">All Severities</option>
+                                            <option value="low" t-att-selected="state.filters.severity === 'low'">Low</option>
+                                            <option value="medium" t-att-selected="state.filters.severity === 'medium'">Medium</option>
+                                            <option value="high" t-att-selected="state.filters.severity === 'high'">High</option>
+                                            <option value="critical" t-att-selected="state.filters.severity === 'critical'">Critical</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Summary Cards -->
+                    <div class="col-12 mb-4">
+                        <div class="row">
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-primary text-white h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Total Incidents</h5>
+                                        <h2 class="display-4"><t t-esc="state.dashboardData.total_incidents || 0"/></h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-danger text-white h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Critical Incidents</h5>
+                                        <h2 class="display-4"><t t-esc="state.dashboardData.critical_incidents || 0"/></h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-warning text-white h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Open Incidents</h5>
+                                        <h2 class="display-4"><t t-esc="state.dashboardData.open_incidents || 0"/></h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-info text-white h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Inspections</h5>
+                                        <h2 class="display-4"><t t-esc="state.dashboardData.inspections || 0"/></h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts -->
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Incidents by Type</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas class="o_incident_type_chart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Incidents by Severity</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas class="o_incident_severity_chart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Incident Trend</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas class="o_incident_trend_chart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Incidents -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Recent Incidents</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Reference</th>
+                                                <th>Type</th>
+                                                <th>Date</th>
+                                                <th>Severity</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-if="state.dashboardData.recent_incidents and state.dashboardData.recent_incidents.length">
+                                                <t t-foreach="state.dashboardData.recent_incidents" t-as="incident" t-key="incident.id">
+                                                    <tr t-on-click="(ev) => onIncidentCardClick(ev)" t-att-data-incident-id="incident.id">
+                                                        <td><t t-esc="incident.name"/></td>
+                                                        <td><t t-esc="incident.incident_type"/></td>
+                                                        <td><t t-esc="incident.date"/></td>
+                                                        <td>
+                                                            <span t-attf-class="badge badge-pill badge-{{incident.severity_class}}">
+                                                                <t t-esc="incident.severity"/>
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <span t-attf-class="badge badge-pill badge-{{incident.status_class}}">
+                                                                <t t-esc="incident.status"/>
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                </t>
+                                            </t>
+                                            <tr t-if="!state.dashboardData.recent_incidents || !state.dashboardData.recent_incidents.length">
+                                                <td colspan="5" class="text-center">No recent incidents</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Inspections -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Recent Inspections</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Reference</th>
+                                                <th>Location</th>
+                                                <th>Date</th>
+                                                <th>Inspector</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-if="state.dashboardData.recent_inspections and state.dashboardData.recent_inspections.length">
+                                                <t t-foreach="state.dashboardData.recent_inspections" t-as="inspection" t-key="inspection.id">
+                                                    <tr>
+                                                        <td><t t-esc="inspection.name"/></td>
+                                                        <td><t t-esc="inspection.location"/></td>
+                                                        <td><t t-esc="inspection.date"/></td>
+                                                        <td><t t-esc="inspection.inspector"/></td>
+                                                        <td>
+                                                            <span t-attf-class="badge badge-pill badge-{{inspection.status_class}}">
+                                                                <t t-esc="inspection.status"/>
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                </t>
+                                            </t>
+                                            <tr t-if="!state.dashboardData.recent_inspections || !state.dashboardData.recent_inspections.length">
+                                                <td colspan="5" class="text-center">No recent inspections</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

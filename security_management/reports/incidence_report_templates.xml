@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Incidence Report Template -->
+    <template id="report_incidence_detailed">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2 class="text-center">Security Incidence Report</h2>
+                        <div class="row mt32 mb32">
+                            <div class="col-6">
+                                <strong>Report Reference:</strong> <span t-field="doc.name"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Status:</strong> <span t-field="doc.state"/>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Incident Date:</strong> <span t-field="doc.incident_date"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Incident Time:</strong> <span t-field="doc.incident_time" t-options='{"widget": "float_time"}'/>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Premise:</strong> <span t-field="doc.premise_id.name"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Location:</strong> <span t-field="doc.location"/>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Incident Type:</strong> <span t-field="doc.incident_type"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Severity:</strong> <span t-field="doc.severity"/>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Reported By:</strong> <span t-field="doc.reporter_id.name"/>
+                            </div>
+                            <div class="col-6" t-if="doc.investigator_id">
+                                <strong>Investigator:</strong> <span t-field="doc.investigator_id.name"/>
+                            </div>
+                        </div>
+                        
+                        <h4 class="mt32">Incident Description</h4>
+                        <p t-field="doc.description"/>
+                        
+                        <h4 class="mt32">Immediate Action Taken</h4>
+                        <p t-field="doc.action_taken"/>
+                        
+                        <div t-if="doc.state not in ('draft', 'submitted')">
+                            <h4 class="mt32">Investigation Notes</h4>
+                            <p t-field="doc.investigation_notes"/>
+                        </div>
+                        
+                        <div t-if="doc.state in ('resolved', 'closed')">
+                            <h4 class="mt32">Resolution</h4>
+                            <p t-field="doc.resolution"/>
+                            
+                            <h4 class="mt32">Preventive Measures</h4>
+                            <p t-field="doc.preventive_measures"/>
+                        </div>
+                        
+                        <div t-if="doc.involved_person_ids">
+                            <h4 class="mt32">Persons Involved</h4>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Role</th>
+                                        <th>Contact Info</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="doc.involved_person_ids" t-as="person">
+                                        <td><span t-field="person.name"/></td>
+                                        <td><span t-field="person.role"/></td>
+                                        <td><span t-field="person.contact_info"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div t-if="doc.evidence_ids">
+                            <h4 class="mt32">Evidence</h4>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Type</th>
+                                        <th>Collection Date</th>
+                                        <th>Collected By</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="doc.evidence_ids" t-as="evidence">
+                                        <td><span t-field="evidence.name"/></td>
+                                        <td><span t-field="evidence.type"/></td>
+                                        <td><span t-field="evidence.collection_date"/></td>
+                                        <td><span t-field="evidence.collected_by.name"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div t-if="doc.authorities_contacted">
+                            <h4 class="mt32">Authority Information</h4>
+                            <div class="row">
+                                <div class="col-6">
+                                    <strong>Authority Type:</strong> <span t-field="doc.authority_type"/>
+                                </div>
+                                <div class="col-6">
+                                    <strong>Reference:</strong> <span t-field="doc.authority_reference"/>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="footer text-center" style="border-top: 1px solid black;">
+                            <div class="text-muted">
+                                <span>Report generated on </span>
+                                <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d %H:%M')"/>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+    
+    <!-- Cashier Report Template -->
+    <template id="report_cashier_detailed">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2 class="text-center">Cashier Report</h2>
+                        <div class="row mt32 mb32">
+                            <div class="col-6">
+                                <strong>Report Reference:</strong> <span t-field="doc.name"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Date:</strong> <span t-field="doc.date"/>
+                            </div>
+                        </div>
+                        
+                        <!-- Add more cashier report specific fields here -->
+                        
+                        <div class="footer text-center" style="border-top: 1px solid black;">
+                            <div class="text-muted">
+                                <span>Report generated on </span>
+                                <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d %H:%M')"/>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

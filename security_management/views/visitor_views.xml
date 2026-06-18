@@ -1,0 +1,506 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Security Contact Views -->
+    <record id="view_security_contact_list" model="ir.ui.view">
+        <field name="name">security.contact.list</field>
+        <field name="model">security.contact</field>
+        <field name="arch" type="xml">
+            <tree string="Contacts">
+                <field name="name"/>
+                <field name="client_id"/>
+                <field name="email"/>
+                <field name="phone"/>
+                <field name="position"/>
+                <field name="company_id"/>
+                <field name="is_available"/>
+                <field name="visit_count"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_security_contact_form" model="ir.ui.view">
+        <field name="name">security.contact.form</field>
+        <field name="model">security.contact</field>
+        <field name="arch" type="xml">
+            <form string="Contact">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_visits" type="object" class="oe_stat_button" icon="fa-calendar">
+                            <field name="visit_count" string="Visits" widget="statinfo"/>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="client_id"/>
+                            <field name="partner_id"/>
+                            <field name="is_available"/>
+                        </group>
+                        <group>
+                            <field name="email"/>
+                            <field name="phone"/>
+                            <field name="position"/>
+                            <field name="company_id"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_security_contact_search" model="ir.ui.view">
+        <field name="name">security.contact.search</field>
+        <field name="model">security.contact</field>
+        <field name="arch" type="xml">
+            <search string="Search Contacts">
+                <field name="name"/>
+                <field name="client_id"/>
+                <field name="email"/>
+                <field name="phone"/>
+                <field name="company_id"/>
+                <separator/>
+                <filter string="Available" name="available" domain="[('is_available', '=', True)]"/>
+                <filter string="Unavailable" name="unavailable" domain="[('is_available', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Client" name="group_by_client" context="{'group_by': 'client_id'}"/>
+                    <filter string="Company" name="group_by_company" context="{'group_by': 'company'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_security_contact" model="ir.actions.act_window">
+        <field name="name">Contacts</field>
+        <field name="res_model">security.contact</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_security_contact_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new security contact
+            </p>
+        </field>
+    </record>
+
+    <!-- Security Gate Pass Views -->
+    <record id="view_security_gate_pass_list" model="ir.ui.view">
+        <field name="name">security.gate.pass.list</field>
+        <field name="model">security.gate.pass</field>
+        <field name="arch" type="xml">
+            <tree string="Gate Passes" decoration-info="state=='draft'" decoration-success="state=='active'" decoration-warning="state=='approved'" decoration-danger="state=='expired'" decoration-muted="state=='cancelled'">
+                <field name="name"/>
+                <field name="client_id"/>
+                <field name="pass_type"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="person_count" sum="Total Persons"/>
+                <field name="days_validity" sum="Total Days"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_security_gate_pass_form" model="ir.ui.view">
+        <field name="name">security.gate.pass.form</field>
+        <field name="model">security.gate.pass</field>
+        <field name="arch" type="xml">
+            <form string="Gate Pass">
+                <header>
+                    <button name="action_approve" string="Approve" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_cancel" string="Cancel" type="object" invisible="state in ('cancelled', 'expired')"/>
+                    <button name="action_print_pass" string="Print Pass" type="object" invisible="state == 'draft'"/>
+                    <button name="action_send_email" string="Send by Email" type="object" invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,approved,active,expired"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="client_id" readonly="state != 'draft'"/>
+                            <field name="pass_type" readonly="state != 'draft'"/>
+                            <field name="vehicle_id" invisible="pass_type != 'vehicle'" required="pass_type == 'vehicle'" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="start_date" readonly="state != 'draft'"/>
+                            <field name="end_date" readonly="state != 'draft'"/>
+                            <field name="days_validity"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Purpose" name="purpose">
+                            <field name="purpose" readonly="state != 'draft'"/>
+                        </page>
+                        <page string="Persons" name="persons" invisible="pass_type != 'personal'">
+                            <field name="person_ids" readonly="state != 'draft'">
+                                <tree editable="bottom">
+                                    <field name="name"/>
+                                    <field name="id_type"/>
+                                    <field name="id_number"/>
+                                    <field name="phone"/>
+                                    <field name="email"/>
+                                    <field name="company"/>
+                                    <field name="purpose"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Approval Information" name="approval_info" invisible="state == 'draft'">
+                            <group>
+                                <field name="approved_by"/>
+                                <field name="approval_date"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_security_gate_pass_search" model="ir.ui.view">
+        <field name="name">security.gate.pass.search</field>
+        <field name="model">security.gate.pass</field>
+        <field name="arch" type="xml">
+            <search string="Search Gate Passes">
+                <field name="name"/>
+                <field name="client_id"/>
+                <field name="purpose"/>
+                <separator/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Approved" name="approved" domain="[('state', '=', 'approved')]"/>
+                <filter string="Active" name="active" domain="[('state', '=', 'active')]"/>
+                <filter string="Expired" name="expired" domain="[('state', '=', 'expired')]"/>
+                <filter string="Cancelled" name="cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <separator/>
+                <filter string="Personal" name="personal" domain="[('pass_type', '=', 'personal')]"/>
+                <filter string="Vehicle" name="vehicle" domain="[('pass_type', '=', 'vehicle')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_by_state" context="{'group_by': 'state'}"/>
+                    <filter string="Client" name="group_by_client" context="{'group_by': 'client_id'}"/>
+                    <filter string="Pass Type" name="group_by_pass_type" context="{'group_by': 'pass_type'}"/>
+                    <filter string="Start Date" name="group_by_start_date" context="{'group_by': 'start_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_security_gate_pass" model="ir.actions.act_window">
+        <field name="name">Gate Passes</field>
+        <field name="res_model">security.gate.pass</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_security_gate_pass_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new gate pass
+            </p>
+        </field>
+    </record>
+
+    <!-- Security Vehicle Views -->
+    <record id="view_security_vehicle_list" model="ir.ui.view">
+        <field name="name">security.vehicle.list</field>
+        <field name="model">security.vehicle</field>
+        <field name="arch" type="xml">
+            <tree string="Vehicles">
+                <field name="name"/>
+                <field name="make"/>
+                <field name="model"/>
+                <field name="vehicle_type"/>
+                <field name="license_plate"/>
+                <field name="color"/>
+                <field name="owner_id"/>
+                <field name="gate_pass_count"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_security_vehicle_form" model="ir.ui.view">
+        <field name="name">security.vehicle.form</field>
+        <field name="model">security.vehicle</field>
+        <field name="arch" type="xml">
+            <form string="Vehicle">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_gate_passes" type="object" class="oe_stat_button" icon="fa-id-card">
+                            <field name="gate_pass_count" string="Gate Passes" widget="statinfo"/>
+                        </button>
+                        <!-- Close checks button removed as it's not available in the new model -->
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="make"/>
+                            <field name="model"/>
+                            <field name="vehicle_type"/>
+                            <field name="license_plate"/>
+                            <field name="color"/>
+                            <field name="year"/>
+                        </group>
+                        <group>
+                            <field name="owner_id"/>
+                        </group>
+                    </group>
+                    <!-- Create Gate Pass button removed as it's not available in the new model -->
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_security_vehicle_search" model="ir.ui.view">
+        <field name="name">security.vehicle.search</field>
+        <field name="model">security.vehicle</field>
+        <field name="arch" type="xml">
+            <search string="Search Vehicles">
+                <field name="name"/>
+                <field name="model"/>
+                <field name="license_plate"/>
+                <field name="owner_id"/>
+                <separator/>
+                <filter string="Cars" name="cars" domain="[('vehicle_type', '=', 'car')]"/>
+                <filter string="Trucks" name="trucks" domain="[('vehicle_type', '=', 'truck')]"/>
+                <filter string="Vans" name="vans" domain="[('vehicle_type', '=', 'van')]"/>
+                <filter string="Motorcycles" name="motorcycles" domain="[('vehicle_type', '=', 'motorcycle')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Type" name="group_by_type" context="{'group_by': 'vehicle_type'}"/>
+                    <filter string="Make" name="group_by_make" context="{'group_by': 'make'}"/>
+                    <filter string="Model" name="group_by_model" context="{'group_by': 'model'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_security_vehicle" model="ir.actions.act_window">
+        <field name="name">Vehicles</field>
+        <field name="res_model">security.vehicle</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_security_vehicle_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Register a new vehicle
+            </p>
+        </field>
+    </record>
+
+    <!-- Security Visit Record Views -->
+    <record id="view_security_visit_record_list" model="ir.ui.view">
+        <field name="name">security.visit.record.list</field>
+        <field name="model">security.visit.record</field>
+        <field name="arch" type="xml">
+            <tree string="Visit Records" decoration-info="state=='planned'" decoration-success="state=='checked_in'" decoration-muted="state=='checked_out'" decoration-danger="state=='cancelled'">
+                <field name="name"/>
+                <field name="contact_name"/>
+                <field name="client_id"/>
+                <field name="visit_date"/>
+                <field name="check_in_time"/>
+                <field name="check_out_time"/>
+                <field name="premise_id"/>
+                <field name="visitor_count" sum="Total Visitors"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_security_visit_record_form" model="ir.ui.view">
+        <field name="name">security.visit.record.form</field>
+        <field name="model">security.visit.record</field>
+        <field name="arch" type="xml">
+            <form string="Visit Record">
+                <header>
+                    <button name="action_check_in" string="Check In" type="object" class="oe_highlight" invisible="state != 'planned'"/>
+                    <button name="action_check_out" string="Check Out" type="object" class="oe_highlight" invisible="state != 'checked_in'"/>
+                    <button name="action_cancel" string="Cancel" type="object" invisible="state in ('checked_out', 'cancelled')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="planned,checked_in,checked_out"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="client_id" readonly="state != 'planned'"/>
+                            <field name="contact_name" readonly="state != 'planned'"/>
+                            <field name="contact_email" readonly="state != 'planned'"/>
+                            <field name="contact_phone" readonly="state != 'planned'"/>
+                            <field name="contact_position" readonly="state != 'planned'"/>
+                        </group>
+                        <group>
+                            <field name="visit_date" readonly="state != 'planned'"/>
+                            <field name="check_in_time" readonly="1"/>
+                            <field name="check_out_time" readonly="1"/>
+                            <field name="visitor_count" readonly="state != 'planned'"/>
+                            <field name="accompanied_by" readonly="state != 'planned'"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="premise_id" readonly="state != 'planned'"/>
+                            <field name="floor_id" readonly="state != 'planned'"/>
+                            <field name="unit_id" readonly="state != 'planned'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Purpose" name="purpose">
+                            <field name="purpose" readonly="state != 'planned'"/>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_security_visit_record_search" model="ir.ui.view">
+        <field name="name">security.visit.record.search</field>
+        <field name="model">security.visit.record</field>
+        <field name="arch" type="xml">
+            <search string="Search Visit Records">
+                <field name="name"/>
+                <field name="contact_name"/>
+                <field name="client_id"/>
+                <field name="premise_id"/>
+                <separator/>
+                <filter string="Planned" name="planned" domain="[('state', '=', 'planned')]"/>
+                <filter string="Checked In" name="checked_in" domain="[('state', '=', 'checked_in')]"/>
+                <filter string="Checked Out" name="checked_out" domain="[('state', '=', 'checked_out')]"/>
+                <filter string="Cancelled" name="cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <separator/>
+                <filter string="Today" name="today" domain="[('visit_date', '=', context_today())]"/>
+                <filter string="This Week" name="this_week" domain="[('visit_date', '>=', (context_today() + relativedelta(weeks=-1,days=1,weekday=0)).strftime('%Y-%m-%d')), ('visit_date', '&lt;=', (context_today() + relativedelta(weekday=6)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_by_state" context="{'group_by': 'state'}"/>
+                    <filter string="Client" name="group_by_client" context="{'group_by': 'client_id'}"/>
+                    <filter string="Premise" name="group_by_premise" context="{'group_by': 'premise_id'}"/>
+                    <filter string="Visit Date" name="group_by_visit_date" context="{'group_by': 'visit_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_security_visit_record" model="ir.actions.act_window">
+        <field name="name">Visit Records</field>
+        <field name="res_model">security.visit.record</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_security_visit_record_search"/>
+        <field name="context">{'search_default_planned': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new visit record
+            </p>
+        </field>
+    </record>
+
+    <!-- Security Close Check Views -->
+    <record id="view_security_close_check_list" model="ir.ui.view">
+        <field name="name">security.close.check.list</field>
+        <field name="model">security.close.check</field>
+        <field name="arch" type="xml">
+            <tree string="Close Checks" decoration-success="state=='allowed'" decoration-danger="state=='not_allowed'" decoration-warning="state=='warning'">
+                <field name="name"/>
+                <field name="vehicle_id"/>
+                <field name="plate_number"/>
+                <field name="guard_id"/>
+                <field name="timestamp"/>
+                <field name="premise_id"/>
+                <field name="client_id"/>
+                <field name="has_valid_pass"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_security_close_check_form" model="ir.ui.view">
+        <field name="name">security.close.check.form</field>
+        <field name="model">security.close.check</field>
+        <field name="arch" type="xml">
+            <form string="Close Check">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="vehicle_id"/>
+                            <field name="plate_number" readonly="1"/>
+                            <field name="guard_id"/>
+                            <field name="timestamp"/>
+                        </group>
+                        <group>
+                            <field name="premise_id"/>
+                            <field name="client_id" readonly="1"/>
+                            <field name="has_valid_pass"/>
+                            <field name="gate_pass_id" invisible="has_valid_pass == False"/>
+                            <field name="state"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Reason/Notes" name="reason">
+                            <field name="reason"/>
+                        </page>
+                        <page string="Action Taken" name="action_taken">
+                            <field name="action_taken"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_security_close_check_search" model="ir.ui.view">
+        <field name="name">security.close.check.search</field>
+        <field name="model">security.close.check</field>
+        <field name="arch" type="xml">
+            <search string="Search Close Checks">
+                <field name="name"/>
+                <field name="vehicle_id"/>
+                <field name="plate_number"/>
+                <field name="guard_id"/>
+                <field name="premise_id"/>
+                <field name="client_id"/>
+                <separator/>
+                <filter string="Allowed" name="allowed" domain="[('state', '=', 'allowed')]"/>
+                <filter string="Not Allowed" name="not_allowed" domain="[('state', '=', 'not_allowed')]"/>
+                <filter string="Warning" name="warning" domain="[('state', '=', 'warning')]"/>
+                <separator/>
+                <filter string="Has Valid Pass" name="has_valid_pass" domain="[('has_valid_pass', '=', True)]"/>
+                <filter string="No Valid Pass" name="no_valid_pass" domain="[('has_valid_pass', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_by_state" context="{'group_by': 'state'}"/>
+                    <filter string="Vehicle" name="group_by_vehicle" context="{'group_by': 'vehicle_id'}"/>
+                    <filter string="Guard" name="group_by_guard" context="{'group_by': 'guard_id'}"/>
+                    <filter string="Premise" name="group_by_premise" context="{'group_by': 'premise_id'}"/>
+                    <filter string="Client" name="group_by_client" context="{'group_by': 'client_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_security_close_check" model="ir.actions.act_window">
+        <field name="name">Close Checks</field>
+        <field name="res_model">security.close.check</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_security_close_check_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new close check
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Items -->
+</odoo>

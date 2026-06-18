@@ -1,0 +1,466 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Gate Pass Form View -->
+    <record id="view_security_gate_pass_form" model="ir.ui.view">
+        <field name="name">security.gate.pass.form</field>
+        <field name="model">security.gate.pass</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_submit" string="Submit" type="object"
+                            invisible="state != 'draft'" class="btn-primary"/>
+                    <button name="action_approve" string="Approve" type="object"
+                            invisible="state != 'pending'" class="btn-primary"/>
+                    <button name="action_reject" string="Reject" type="object"
+                            invisible="state != 'pending'" class="btn-danger"/>
+                    <button name="action_check_in" string="Check In" type="object"
+                            invisible="state != 'approved' or checked_in" class="btn-success"/>
+                    <button name="action_check_out" string="Check Out" type="object"
+                            invisible="not checked_in or checked_out" class="btn-info"/>
+                    <button name="action_print_gate_pass" string="Print Pass" type="object"
+                            invisible="state != 'approved'" class="btn-secondary"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            invisible="state in ('cancelled', 'rejected')" class="btn-secondary"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,pending,approved,valid,expired,cancelled"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_visitor" type="object" class="oe_stat_button" icon="fa-user"
+                                invisible="not visitor_id">
+                            <field name="visitor_id" string="Visitor" widget="statinfo"/>
+                        </button>
+                        <button name="regenerate_qr_code" type="object" class="oe_stat_button" icon="fa-qrcode"
+                                invisible="state not in ('approved', 'valid')">
+                            <span>Regenerate QR</span>
+                        </button>
+                        <button name="action_generate_qr_code" type="object" class="oe_stat_button" icon="fa-qrcode"
+                                invisible="state != 'approved'">
+                            <span>Generate QR</span>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <notebook>
+                        <page string="Basic Information">
+                            <group>
+                                <group string="Visitor Information">
+                                    <field name="visitor_id"/>
+                                    <field name="visitor_name"/>
+                                    <field name="visitor_phone"/>
+                                    <field name="visitor_email"/>
+                                    <field name="visitor_company"/>
+                                    <field name="purpose"/>
+                                    <field name="person_count" invisible="pass_type != 'personal'" required="pass_type == 'personal'"/>
+                                </group>
+                                <group string="Visit Details">
+                                    <field name="client_id" options="{'no_create': True}"/>
+                                    <field name="premise_id" options="{'no_create': True}"/>
+                                    <field name="host_id" options="{'no_create': True}"/>
+                                    <field name="contact_id" options="{'no_create': True}"/>
+                                    <field name="visit_date"/>
+                                    <field name="valid_from"/>
+                                    <field name="valid_until"/>
+                                    <field name="expected_arrival"/>
+                                    <field name="expected_departure"/>
+                                    <field name="days_valid"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Pass Details">
+                            <group>
+                                <group string="Pass Information">
+                                    <field name="pass_type"/>
+                                    <field name="is_recurring"/>
+                                    <field name="recurring_days" widget="many2many_tags"
+                                           invisible="not is_recurring" required="is_recurring"/>
+                                    <field name="barcode"/>
+                                    <field name="qr_code" widget="image" class="oe_avatar"
+                                           invisible="not qr_code"/>
+                                </group>
+                                <group string="Access Information">
+                                    <field name="access_areas" widget="many2many_tags"/>
+                                    <field name="require_escort"/>
+                                    <field name="escort_id" invisible="not require_escort" required="require_escort"/>
+                                    <field name="items_carried" widget="many2many_tags"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Vehicle Information" invisible="pass_type != 'vehicle'">
+                            <group>
+                                <group>
+                                    <field name="vehicle_id"/>
+                                    <field name="license_plate"/>
+                                </group>
+                                <group>
+                                    <!-- Placeholder for additional vehicle fields -->
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Check-in/Check-out">
+                            <group>
+                                <group string="Check-in Information">
+                                    <field name="checked_in"/>
+                                    <field name="check_in_time" readonly="1"/>
+                                </group>
+                                <group string="Check-out Information">
+                                    <field name="checked_out"/>
+                                    <field name="check_out_time" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Approval Information">
+                            <group>
+                                <group>
+                                    <field name="approved_by" readonly="1"/>
+                                    <field name="approved_date" readonly="1"/>
+                                    <field name="approver_id" readonly="1"/>
+                                    <field name="approval_date" readonly="1"/>
+                                </group>
+                                <group>
+                                    <field name="rejection_reason"
+                                           invisible="state != 'rejected'" required="state == 'rejected'"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Visit History" invisible="not visit_log_ids">
+                            <field name="visit_log_ids">
+                                <tree>
+                                    <field name="event_type"/>
+                                    <field name="event_time"/>
+                                    <field name="recorded_by"/>
+                                    <field name="note"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page string="Visit Records" invisible="not visit_record_ids">
+                            <field name="visit_record_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="visit_date"/>
+                                    <field name="check_in_time"/>
+                                    <field name="check_out_time"/>
+                                    <field name="visit_duration"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                            <group class="oe_subtotal_footer">
+                                <field name="visit_count" class="oe_inline"/>
+                            </group>
+                        </page>
+
+                        <page string="Additional Information">
+                            <group>
+                                <group>
+                                    <field name="person_count"/>
+                                    <field name="days_validity"/>
+                                </group>
+                                <group>
+                                    <field name="image_ids" widget="many2many_binary"/>
+                                </group>
+                            </group>
+                            <group string="Notes">
+                                <field name="notes" placeholder="Add any additional notes or instructions..." nolabel="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Gate Pass list View -->
+    <record id="view_security_gate_pass_list" model="ir.ui.view">
+        <field name="name">security.gate.pass.list</field>
+        <field name="model">security.gate.pass</field>
+        <field name="arch" type="xml">
+            <tree decoration-info="state == 'pending'" decoration-success="state == 'approved'"
+                  decoration-muted="state == 'completed'" decoration-danger="state == 'rejected'">
+                <field name="name"/>
+                <field name="visitor_name"/>
+                <field name="visitor_company"/>
+                <field name="premise_id"/>
+                <field name="host_id"/>
+                <field name="visit_date"/>
+                <field name="expected_arrival"/>
+                <field name="expected_departure"/>
+                <field name="state"/>
+                <field name="checked_in"/>
+                <field name="checked_out"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Gate Pass Search View -->
+    <record id="view_security_gate_pass_search" model="ir.ui.view">
+        <field name="name">security.gate.pass.search</field>
+        <field name="model">security.gate.pass</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="visitor_name"/>
+                <field name="visitor_company"/>
+                <field name="premise_id"/>
+                <field name="host_id"/>
+                <field name="purpose"/>
+                <separator/>
+                <filter string="Pending Approval" name="pending_passes" domain="[('state', '=', 'pending')]"/>
+                <filter string="Approved" name="approved_passes" domain="[('state', '=', 'approved')]"/>
+                <filter string="Completed" name="completed_passes" domain="[('state', '=', 'completed')]"/>
+                <filter string="Rejected" name="rejected_passes" domain="[('state', '=', 'rejected')]"/>
+                <filter string="Cancelled" name="cancelled_passes" domain="[('state', '=', 'cancelled')]"/>
+                <separator/>
+                <filter string="Checked In" name="checked_in_passes" domain="[('checked_in', '=', True), ('checked_out', '=', False)]"/>
+                <filter string="Today's Visits" name="today_visits" domain="[('visit_date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter string="Tomorrow's Visits" name="tomorrow_visits" domain="[('visit_date', '=', (context_today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_by_state" context="{'group_by': 'state'}"/>
+                    <filter string="Premise" name="group_by_premise" context="{'group_by': 'premise_id'}"/>
+                    <filter string="Host" name="group_by_host" context="{'group_by': 'host_id'}"/>
+                    <filter string="Visit Date" name="group_by_date" context="{'group_by': 'visit_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Gate Pass Calendar View -->
+    <record id="view_security_gate_pass_calendar" model="ir.ui.view">
+        <field name="name">security.gate.pass.calendar</field>
+        <field name="model">security.gate.pass</field>
+        <field name="arch" type="xml">
+            <calendar string="Gate Passes" date_start="expected_arrival" date_stop="expected_departure" color="state" mode="day">
+                <field name="name"/>
+                <field name="visitor_name"/>
+                <field name="visitor_company"/>
+                <field name="premise_id"/>
+                <field name="host_id"/>
+                <field name="purpose"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- Gate Pass Kanban View -->
+    <record id="view_security_gate_pass_kanban" model="ir.ui.view">
+        <field name="name">security.gate.pass.kanban</field>
+        <field name="model">security.gate.pass</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="visitor_name"/>
+                <field name="visitor_company"/>
+                <field name="premise_id"/>
+                <field name="host_id"/>
+                <field name="visit_date"/>
+                <field name="expected_arrival"/>
+                <field name="expected_departure"/>
+                <field name="state"/>
+                <field name="checked_in"/>
+                <field name="checked_out"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click">
+                            <div class="row mb-1">
+                                <div class="col-6">
+                                    <strong><field name="visitor_name"/></strong>
+                                </div>
+                                <div class="col-6 text-right">
+                                    <span t-attf-class="badge badge-#{record.state.raw_value == 'pending' ? 'info' :
+                                                                       record.state.raw_value == 'approved' ? 'success' :
+                                                                       record.state.raw_value == 'rejected' ? 'danger' :
+                                                                       record.state.raw_value == 'cancelled' ? 'secondary' : 'primary'}">
+                                        <field name="state"/>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="row mb-1">
+                                <div class="col-12">
+                                    <small><field name="visitor_company"/></small>
+                                </div>
+                            </div>
+                            <div class="row mb-1">
+                                <div class="col-12">
+                                    <i class="fa fa-building-o mr-1"/><field name="premise_id"/>
+                                </div>
+                            </div>
+                            <div class="row mb-1">
+                                <div class="col-12">
+                                    <i class="fa fa-user mr-1"/><field name="host_id"/>
+                                </div>
+                            </div>
+                            <div class="row mb-1">
+                                <div class="col-6">
+                                    <i class="fa fa-calendar mr-1"/>
+                                    <field name="visit_date"/>
+                                </div>
+                                <div class="col-6 text-right">
+                                    <i class="fa fa-clock-o mr-1"/>
+                                    <field name="expected_arrival" widget="datetime" options="{'format': 'HH:mm'}"/> -
+                                    <field name="expected_departure" widget="datetime" options="{'format': 'HH:mm'}"/>
+                                </div>
+                            </div>
+                            <div class="row" t-if="record.state.raw_value == 'approved'">
+                                <div class="col-6">
+                                    <span t-if="record.checked_in.raw_value" class="badge badge-success">
+                                        <i class="fa fa-sign-in mr-1"/>Checked In
+                                    </span>
+                                    <span t-if="!record.checked_in.raw_value" class="badge badge-light">
+                                        <i class="fa fa-sign-in mr-1"/>Not Checked In
+                                    </span>
+                                </div>
+                                <div class="col-6 text-right">
+                                    <span t-if="record.checked_out.raw_value" class="badge badge-info">
+                                        <i class="fa fa-sign-out mr-1"/>Checked Out
+                                    </span>
+                                    <span t-if="record.checked_in.raw_value and !record.checked_out.raw_value" class="badge badge-warning">
+                                        <i class="fa fa-sign-out mr-1"/>Not Checked Out
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Visit Log Form View -->
+    <record id="view_security_visit_log_form" model="ir.ui.view">
+        <field name="name">security.visit.log.form</field>
+        <field name="model">security.visit.log</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="gate_pass_id" options="{'no_create': True}"/>
+                            <field name="event_type"/>
+                            <field name="event_time"/>
+                        </group>
+                        <group>
+                            <field name="recorded_by" options="{'no_create': True}"/>
+                            <field name="location_latitude"/>
+                            <field name="location_longitude"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Notes">
+                            <field name="note" placeholder="Add any notes or observations..."/>
+                        </page>
+                        <page string="Images" invisible="image_ids == []">
+                            <field name="image_ids" widget="many2many_binary" options="{'preview_image': 'image_128'}"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Visit Log list View -->
+    <record id="view_security_visit_log_list" model="ir.ui.view">
+        <field name="name">security.visit.log.list</field>
+        <field name="model">security.visit.log</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="gate_pass_id"/>
+                <field name="event_type"/>
+                <field name="event_time"/>
+                <field name="recorded_by"/>
+                <field name="note"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Visit Log Search View -->
+    <record id="view_security_visit_log_search" model="ir.ui.view">
+        <field name="name">security.visit.log.search</field>
+        <field name="model">security.visit.log</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="gate_pass_id"/>
+                <field name="event_type"/>
+                <field name="recorded_by"/>
+                <field name="note"/>
+                <separator/>
+                <filter string="Check-Ins" name="check_ins" domain="[('event_type', '=', 'check_in')]"/>
+                <filter string="Check-Outs" name="check_outs" domain="[('event_type', '=', 'check_out')]"/>
+                <filter string="Today" name="today" domain="[('event_time', '&gt;=', context_today().strftime('%Y-%m-%d')),
+                                                           ('event_time', '&lt;', (context_today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Gate Pass" name="group_by_gate_pass" context="{'group_by': 'gate_pass_id'}"/>
+                    <filter string="Event Type" name="group_by_event_type" context="{'group_by': 'event_type'}"/>
+                    <filter string="Recorded By" name="group_by_recorded_by" context="{'group_by': 'recorded_by'}"/>
+                    <filter string="Day" name="group_by_day" context="{'group_by': 'event_time:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action for Gate Passes -->
+    <record id="action_security_gate_pass" model="ir.actions.act_window">
+        <field name="name">Gate Passes</field>
+        <field name="res_model">security.gate.pass</field>
+        <field name="view_mode">kanban,tree,form,calendar</field>
+        <field name="search_view_id" ref="view_security_gate_pass_search"/>
+        <field name="context">{'search_default_pending_passes': 1, 'search_default_approved_passes': 1, 'search_default_today_visits': 1, 'group_by': 'state'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first gate pass!
+            </p>
+            <p>
+                Gate passes are used to manage visitor access to premises.
+                You can track visitor check-ins, check-outs, and approvals.
+            </p>
+        </field>
+    </record>
+
+    <!-- Action for Visit Logs -->
+    <record id="action_security_visit_log" model="ir.actions.act_window">
+        <field name="name">Visit Logs</field>
+        <field name="res_model">security.visit.log</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_security_visit_log_search"/>
+        <field name="context">{'search_default_today': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No visit logs yet!
+            </p>
+            <p>
+                Visit logs are created when visitors check in or check out.
+                They record the time, location, and any notes about the visit.
+            </p>
+        </field>
+    </record>
+
+    <!-- Client Action for Gate Pass -->
+    <record id="action_gate_pass_client" model="ir.actions.client">
+        <field name="name">Gate Pass Management</field>
+        <field name="tag">security_gate_pass_action</field>
+        <field name="target">main</field>
+    </record>
+
+    <!-- Client Action for Gate Pass Scanner -->
+    <record id="action_gate_pass_scanner_client" model="ir.actions.client">
+        <field name="name">Gate Pass Scanner</field>
+        <field name="tag">gate_pass_scanner</field>
+        <field name="target">main</field>
+    </record>
+
+    <!-- Gate Pass Scanner URL Action (original) -->
+    <record id="action_gate_pass_scanner" model="ir.actions.act_url">
+        <field name="name">Gate Pass Scanner (URL)</field>
+        <field name="target">new</field>
+        <field name="url">/security/gate_pass/scanner</field>
+    </record>
+
+</odoo>

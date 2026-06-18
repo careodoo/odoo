@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Unit Form View -->
+    <record id="view_security_unit_form" model="ir.ui.view">
+        <field name="name">security.unit.form</field>
+        <field name="model">security.unit</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_keys" type="object" class="oe_stat_button" icon="fa-key">
+                            <field name="key_count" string="Keys" widget="statinfo"/>
+                        </button>
+                        <button name="action_generate_qr_code" type="object" class="oe_stat_button" icon="fa-qrcode">
+                            <span>Generate QR</span>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Unit Name"/>
+                        </h1>
+                        <h2>
+                            <field name="unit_number" placeholder="Unit Number"/>
+                        </h2>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="floor_id" options="{'no_create': True}"/>
+                            <field name="premise_id" options="{'no_create': True}" readonly="1"/>
+                            <field name="client_id" options="{'no_create': True}" readonly="1"/>
+                            <field name="unit_type"/>
+                        </group>
+                        <group>
+                            <field name="barcode" readonly="1"/>
+                            <field name="qr_code" readonly="1" widget="image" class="oe_avatar"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description" name="description">
+                            <field name="description" placeholder="Add a description for this unit..."/>
+                        </page>
+                        <page string="Keys" name="keys">
+                            <field name="key_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="key_number"/>
+                                    <field name="key_type"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Patrol Points" name="patrol_points">
+                            <field name="patrol_point_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="code"/>
+                                    <field name="point_type"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Unit list View -->
+    <record id="view_security_unit_list" model="ir.ui.view">
+        <field name="name">security.unit.list</field>
+        <field name="model">security.unit</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="unit_number"/>
+                <field name="floor_id"/>
+                <field name="premise_id"/>
+                <field name="client_id"/>
+                <field name="unit_type"/>
+                <field name="key_count"/>
+                <field name="patrol_point_count"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Unit Search View -->
+    <record id="view_security_unit_search" model="ir.ui.view">
+        <field name="name">security.unit.search</field>
+        <field name="model">security.unit</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="unit_number"/>
+                <field name="floor_id"/>
+                <field name="premise_id"/>
+                <field name="client_id"/>
+                <field name="barcode"/>
+                <field name="qr_code"/>
+                <separator/>
+                <filter string="Office" name="office" domain="[('unit_type', '=', 'office')]"/>
+                <filter string="Restaurant" name="restaurant" domain="[('unit_type', '=', 'restaurant')]"/>
+                <filter string="Shop" name="shop" domain="[('unit_type', '=', 'shop')]"/>
+                <filter string="Cafe" name="cafe" domain="[('unit_type', '=', 'cafe')]"/>
+                <filter string="Storage" name="storage" domain="[('unit_type', '=', 'storage')]"/>
+                <filter string="Other" name="other" domain="[('unit_type', '=', 'other')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Floor" name="group_by_floor" context="{'group_by': 'floor_id'}"/>
+                    <filter string="Premise" name="group_by_premise" context="{'group_by': 'premise_id'}"/>
+                    <filter string="Client" name="group_by_client" context="{'group_by': 'client_id'}"/>
+                    <filter string="Unit Type" name="group_by_type" context="{'group_by': 'unit_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>

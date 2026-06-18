@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+            <!-- Default Shift Types -->
+        <record id="security_shift_type_morning" model="security.shift.type">
+            <field name="name">Morning Shift</field>
+            <field name="code">MS</field>
+            <field name="start_time">6.0</field>
+            <field name="end_time">14.0</field>
+            <field name="color">#28a745</field> <!-- Green -->
+        </record>
+         <record id="security_shift_type_24h" model="security.shift.type">
+            <field name="name">24-Hour Shift</field>
+            <field name="code">24H</field>
+            <field name="start_time">8.0</field>
+            <field name="end_time">8.0</field>
+            <field name="color">#dc3545</field> <!-- Red -->
+            <field name="is_24h" eval="True"/>
+        </record>
+        
+        <!-- Default Task Types -->
+        <record id="security_task_type_patrol" model="security.task.type">
+            <field name="name">Patrol</field>
+            <field name="code">PAT</field>
+            <field name="description">Regular patrol of assigned areas.</field>
+            <field name="color">#007bff</field> <!-- Blue -->
+        </record>
+        
+        <record id="security_task_type_inspection" model="security.task.type">
+            <field name="name">Inspection</field>
+            <field name="code">INS</field>
+            <field name="description">Inspection of security equipment and premises.</field>
+            <field name="color">#28a745</field> <!-- Green -->
+        </record>
+        
+        <record id="security_task_type_access" model="security.task.type">
+            <field name="name">Access Control</field>
+            <field name="code">ACC</field>
+            <field name="description">Managing access points and visitor verification.</field>
+            <field name="color">#ffc107</field> <!-- Yellow -->
+        </record>
+        
+        <record id="security_task_type_surveillance" model="security.task.type">
+            <field name="name">Surveillance</field>
+            <field name="code">SUR</field>
+            <field name="description">Monitoring security cameras and systems.</field>
+            <field name="color">#17a2b8</field> <!-- Blue -->
+        </record>
+        
+        <record id="security_task_type_response" model="security.task.type">
+            <field name="name">Emergency Response</field>
+            <field name="code">EMR</field>
+            <field name="description">Responding to security incidents and emergencies.</field>
+            <field name="color">#dc3545</field> <!-- Red -->
+        </record>
+                <record id="security_shift_type_afternoon" model="security.shift.type">
+            <field name="name">Afternoon Shift</field>
+            <field name="code">AS</field>
+            <field name="start_time">14.0</field>
+            <field name="end_time">22.0</field>
+            <field name="color">#ffc107</field> <!-- Yellow -->
+        </record>
+        
+        <record id="security_shift_type_night" model="security.shift.type">
+            <field name="name">Night Shift</field>
+            <field name="code">NS</field>
+            <field name="start_time">22.0</field>
+            <field name="end_time">6.0</field>
+            <field name="color">#17a2b8</field> <!-- Blue -->
+        </record>
+        <!-- Default Security Teams -->
+        <record id="security_team_patrol" model="security.team">
+            <field name="name">Patrol Team</field>
+            <field name="code">PT001</field>
+            <field name="client_id" ref="security_management.default_security_client"/>
+            <field name="active" eval="True"/>
+            <field name="shift_type_id" ref="security_management.security_shift_type_morning"/>
+            <field name="description">Responsible for regular patrolling of premises and checkpoints.</field>
+        </record>
+        
+        <record id="security_team_response" model="security.team">
+            <field name="name">Emergency Response Team</field>
+            <field name="code">ERT001</field>
+            <field name="client_id" ref="security_management.default_security_client"/>
+            <field name="active" eval="True"/>
+            <field name="shift_type_id" ref="security_management.security_shift_type_24h"/>
+            <field name="description">Specialized team for handling emergency situations and incidents.</field>
+        </record>
+        
+        <record id="security_team_access" model="security.team">
+            <field name="name">Access Control Team</field>
+            <field name="code">ACT001</field>
+            <field name="client_id" ref="security_management.default_security_client"/>
+            <field name="active" eval="True"/>
+            <field name="shift_type_id" ref="security_management.security_shift_type_morning"/>
+            <field name="description">Manages access control, gate passes, and visitor management.</field>
+        </record>
+        
+        <record id="security_team_surveillance" model="security.team">
+            <field name="name">Surveillance Team</field>
+            <field name="code">ST001</field>
+            <field name="client_id" ref="security_management.default_security_client"/>
+            <field name="active" eval="True"/>
+            <field name="shift_type_id" ref="security_management.security_shift_type_afternoon"/>
+            <field name="description">Monitors security cameras and surveillance systems.</field>
+        </record>
+        
+        <record id="security_team_key" model="security.team">
+            <field name="name">Key Management Team</field>
+            <field name="code">KMT001</field>
+            <field name="client_id" ref="security_management.default_security_client"/>
+            <field name="active" eval="True"/>
+            <field name="shift_type_id" ref="security_management.security_shift_type_morning"/>
+            <field name="description">Responsible for key management, issuance, and tracking.</field>
+        </record>
+        
+        <!-- Default Security Team Roles -->
+        <record id="security_team_role_leader" model="security.team.role">
+            <field name="name">Team Leader</field>
+            <field name="code">TL</field>
+            <field name="description">Leads the security team and coordinates operations.</field>
+        </record>
+        
+        <record id="security_team_role_supervisor" model="security.team.role">
+            <field name="name">Supervisor</field>
+            <field name="code">SUP</field>
+            <field name="description">Supervises security operations and reports to team leader.</field>
+        </record>
+        
+        <record id="security_team_role_officer" model="security.team.role">
+            <field name="name">Security Officer</field>
+            <field name="code">SO</field>
+            <field name="description">Performs regular security duties as assigned.</field>
+        </record>
+        
+        <record id="security_team_role_specialist" model="security.team.role">
+            <field name="name">Security Specialist</field>
+            <field name="code">SS</field>
+            <field name="description">Specialized security personnel with specific expertise.</field>
+        </record>
+        
+        <record id="security_team_role_trainee" model="security.team.role">
+            <field name="name">Trainee</field>
+            <field name="code">TR</field>
+            <field name="description">Security personnel in training.</field>
+        </record>
+    </data>
+</odoo>

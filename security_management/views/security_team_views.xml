@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Security Team Form View -->
+    <record id="view_security_team_form" model="ir.ui.view">
+        <field name="name">security.team.form</field>
+        <field name="model">security.team</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Team Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="leader_id"/>
+                            <field name="client_id"/>
+                        </group>
+                        <group>
+                            <field name="active"/>
+                            <field name="member_count"/>
+                            <field name="task_count"/>
+                            <field name="patrol_count"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Team Members" name="team_members">
+                            <field name="member_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="work_phone"/>
+                                    <field name="job_title"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Description" name="description">
+                            <field name="description"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Security Team list View -->
+    <record id="view_security_team_list" model="ir.ui.view">
+        <field name="name">security.team.list</field>
+        <field name="model">security.team</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="leader_id"/>
+                <field name="client_id"/>
+                <field name="member_count"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Security Team Action -->
+    <record id="action_security_team" model="ir.actions.act_window">
+        <field name="name">Security Teams</field>
+        <field name="res_model">security.team</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new security team
+            </p>
+            <p>
+                Create security teams and assign team members.
+            </p>
+        </field>
+    </record>
+</odoo>

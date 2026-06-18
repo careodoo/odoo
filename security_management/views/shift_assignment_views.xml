@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree View for Shift Assignments -->
+    <record id="view_security_shift_assignment_tree" model="ir.ui.view">
+        <field name="name">security.shift.assignment.tree</field>
+        <field name="model">security.shift.assignment</field>
+        <field name="arch" type="xml">
+            <tree decoration-info="state == 'scheduled'" decoration-success="state == 'checked_out' or state == 'completed'" decoration-warning="state == 'checked_in'" decoration-danger="state == 'missed'" decoration-muted="state == 'cancelled'">
+                <field name="name"/>
+                <field name="security_employee_id"/>
+                <field name="schedule_id"/>
+                <field name="date"/>
+                <field name="shift_id"/>
+                <field name="client_id"/>
+                <field name="start_datetime"/>
+                <field name="end_datetime"/>
+                <field name="state"/>
+                <field name="guard_id" optional="hide"/>
+                <field name="attendance_id" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View for Shift Assignments -->
+    <record id="view_security_shift_assignment_form" model="ir.ui.view">
+        <field name="name">security.shift.assignment.form</field>
+        <field name="model">security.shift.assignment</field>
+        <field name="arch" type="xml">
+            <form string="Shift Assignment">
+                <header>
+                    <button name="action_check_in" type="object" string="Check In" 
+                            class="oe_highlight" invisible="state != 'scheduled'"/>
+                    <button name="action_check_out" type="object" string="Check Out" 
+                            class="oe_highlight" invisible="state != 'checked_in'"/>
+                    <button name="action_timeoff" type="object" string="Record Time Off" 
+                            invisible="state != 'checked_in'"/>
+                    <button name="action_mark_missed" type="object" string="Mark as Missed" 
+                            invisible="state in ('checked_in', 'checked_out')"/>
+                    <button name="action_cancel" type="object" string="Cancel" 
+                            invisible="state in ('checked_in', 'checked_out')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="scheduled,checked_in,checked_out,completed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="security_employee_id" options="{'no_create': True}"/>
+                            <field name="guard_id" options="{'no_create': True}"/>
+                            <field name="schedule_id" options="{'no_create': True}"/>
+                            <field name="client_id" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="shift_id" options="{'no_create': True}"/>
+                            <field name="date"/>
+                            <field name="start_datetime"/>
+                            <field name="end_datetime"/>
+                            <field name="attendance_id" readonly="1" invisible="attendance_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Notes" name="notes">
+                            <field name="notes"/>
+                        </page>
+                        <page string="Attendance Details" name="attendance" invisible="attendance_id">
+                            <group>
+                                <group>
+                                    <field name="attendance_id" invisible="1"/>
+                                    <field name="attendance_check_in" string="Check In Time" readonly="1"/>
+                                    <field name="attendance_check_out" string="Check Out Time" readonly="1"/>
+                                </group>
+                                <group>
+                                    <field name="attendance_worked_hours" string="Worked Hours" readonly="1"/>
+                                </group>
+                            </group>
+                            <field name="attendance_timeoff_ids" string="Time Offs" readonly="1">
+                                <tree>
+                                    <field name="start_time"/>
+                                    <field name="end_time"/>
+                                    <field name="duration"/>
+                                    <field name="reason"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View for Shift Assignments -->
+    <record id="view_security_shift_assignment_search" model="ir.ui.view">
+        <field name="name">security.shift.assignment.search</field>
+        <field name="model">security.shift.assignment</field>
+        <field name="arch" type="xml">
+            <search string="Search Shift Assignments">
+                <field name="name"/>
+                <field name="security_employee_id"/>
+                <field name="schedule_id"/>
+                <field name="shift_id"/>
+                <field name="client_id"/>
+                <field name="date"/>
+                <filter string="Today" name="today" domain="[('date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter string="Tomorrow" name="tomorrow" domain="[('date', '=', (context_today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d'))]"/>
+                <filter string="This Week" name="this_week" domain="[('date', '&gt;=', context_today().strftime('%Y-%m-%d')), ('date', '&lt;=', (context_today() + datetime.timedelta(days=6)).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <filter string="Scheduled" name="scheduled" domain="[('state', '=', 'scheduled')]"/>
+                <filter string="Checked In" name="checked_in" domain="[('state', '=', 'checked_in')]"/>
+                <filter string="Checked Out" name="checked_out" domain="[('state', '=', 'checked_out')]"/>
+                <filter string="Completed" name="completed" domain="[('state', '=', 'completed')]"/>
+                <filter string="Missed" name="missed" domain="[('state', '=', 'missed')]"/>
+                <filter string="Cancelled" name="cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Employee" name="group_by_employee" domain="[]" context="{'group_by': 'security_employee_id'}"/>
+                    <filter string="Schedule" name="group_by_schedule" domain="[]" context="{'group_by': 'schedule_id'}"/>
+                    <filter string="Shift" name="group_by_shift" domain="[]" context="{'group_by': 'shift_id'}"/>
+                    <filter string="Client" name="group_by_client" domain="[]" context="{'group_by': 'client_id'}"/>
+                    <filter string="Date" name="group_by_date" domain="[]" context="{'group_by': 'date'}"/>
+                    <filter string="Status" name="group_by_state" domain="[]" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Calendar View for Shift Assignments - Temporarily disabled due to Odoo 17 compatibility issues
+    <record id="view_security_shift_assignment_calendar" model="ir.ui.view">
+        <field name="name">security.shift.assignment.calendar</field>
+        <field name="model">security.shift.assignment</field>
+        <field name="arch" type="xml">
+            <calendar string="Shift Assignments" date_start="start_datetime" date_stop="end_datetime" color="security_employee_id">
+                <field name="name"/>
+                <field name="state"/>
+            </calendar>
+        </field>
+    </record>
+    -->
+
+    <!-- Pivot View for Shift Assignments -->
+    <record id="view_security_shift_assignment_pivot" model="ir.ui.view">
+        <field name="name">security.shift.assignment.pivot</field>
+        <field name="model">security.shift.assignment</field>
+        <field name="arch" type="xml">
+            <pivot string="Shift Assignments">
+                <field name="date" type="row"/>
+                <field name="security_employee_id" type="row"/>
+                <field name="shift_id" type="col"/>
+                <field name="state" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Graph View for Shift Assignments -->
+    <record id="view_security_shift_assignment_graph" model="ir.ui.view">
+        <field name="name">security.shift.assignment.graph</field>
+        <field name="model">security.shift.assignment</field>
+        <field name="arch" type="xml">
+            <graph string="Shift Assignments" type="bar">
+                <field name="date"/>
+                <field name="security_employee_id"/>
+                <field name="state"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Action for Shift Assignments -->
+    <record id="action_security_shift_assignment" model="ir.actions.act_window">
+        <field name="name">Shift Assignments</field>
+        <field name="res_model">security.shift.assignment</field>
+        <field name="view_mode">tree,form,pivot,graph</field>
+        <field name="search_view_id" ref="view_security_shift_assignment_search"/>
+        <field name="context">{
+            'search_default_today': 1,
+            'search_default_scheduled': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No shift assignments found.
+            </p>
+            <p>
+                Create a new shift assignment to schedule employees for security shifts.
+            </p>
+        </field>
+    </record>
+</odoo>

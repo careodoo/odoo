@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Client Form View -->
+    <record id="view_security_client_form" model="ir.ui.view">
+        <field name="name">security.client.form</field>
+        <field name="model">security.client</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_send_expiry_notification" string="Send Expiry Notification" type="object" invisible="contract_state not in ['expiring', 'expired']"/>
+                    <button name="extend_contract" string="Extend Contract (1 Year)" type="object" context="{'months': 12}"/>
+                    <field name="contract_state" widget="statusbar" statusbar_visible="draft,active,expiring,expired"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_premises" type="object" class="oe_stat_button" icon="fa-building">
+                            <field name="premise_count" string="Premises" widget="statinfo"/>
+                        </button>
+                        <button name="action_view_teams" type="object" class="oe_stat_button" icon="fa-users">
+                            <field name="team_count" string="Teams" widget="statinfo"/>
+                        </button>
+                        <button name="action_view_tasks" type="object" class="oe_stat_button" icon="fa-tasks">
+                            <field name="task_count" string="Tasks" widget="statinfo"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Client Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="contact_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="contract_start_date"/>
+                            <field name="contract_end_date"/>
+                            <field name="days_to_expiry"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Security Teams">
+                            <field name="security_team_ids" context="{'tree_view_ref': 'security_management.view_security_team_tree'}"/>
+                        </page>
+                        <page string="Premises">
+                            <field name="premise_ids" context="{'tree_view_ref': 'security_management.view_premise_tree'}"/>
+                        </page>
+                        <page string="Schedules">
+                            <field name="schedule_ids" context="{'tree_view_ref': 'security_management.view_schedule_tree'}"/>
+                        </page>
+                        <page string="Contacts">
+                            <field name="contact_ids" context="{'tree_view_ref': 'security_management.view_contact_tree'}"/>
+                        </page>
+                        <page string="Schedules">
+                            <field name="schedule_ids" context="{'tree_view_ref': 'security_management.view_schedule_tree'}"/>
+                        </page>
+                        <page string="Contacts">
+                            <field name="contact_ids" context="{'tree_view_ref': 'security_management.view_contact_tree'}"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Client list View -->
+    <record id="view_security_client_list" model="ir.ui.view">
+        <field name="name">security.client.list</field>
+        <field name="model">security.client</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="contract_state == 'expired'" decoration-warning="contract_state == 'expiring'">
+                <field name="name"/>
+                <field name="contact_id"/>
+                <field name="contract_start_date"/>
+                <field name="contract_end_date"/>
+                <field name="days_to_expiry"/>
+                <field name="team_count"/>
+                <field name="premise_count"/>
+                <field name="contract_state"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Client Search View -->
+    <record id="view_security_client_search" model="ir.ui.view">
+        <field name="name">security.client.search</field>
+        <field name="model">security.client</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="contact_id"/>
+                <separator/>
+                <filter string="Active Contracts" name="active_contracts" domain="[('contract_state', '=', 'active')]"/>
+                <filter string="Expiring Contracts" name="expiring_contracts" domain="[('contract_state', '=', 'expiring')]"/>
+                <filter string="Expired Contracts" name="expired_contracts" domain="[('contract_state', '=', 'expired')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Contract Status" name="group_by_contract_state" context="{'group_by': 'contract_state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Client Kanban View -->
+    <record id="view_security_client_kanban" model="ir.ui.view">
+        <field name="name">security.client.kanban</field>
+        <field name="model">security.client</field>
+        <field name="arch" type="xml">
+            <kanban class="o_security_client_kanban">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="contact_id"/>
+                <field name="contract_state"/>
+                <field name="days_to_expiry"/>
+                <field name="team_count"/>
+                <field name="premise_count"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_global_click o_kanban_record_has_image_fill">
+                            <div class="o_kanban_image_fill_left o_kanban_image_full" t-attf-style="background-color: #{contract_state == 'active' ? '#00A09D' : contract_state == 'expiring' ? '#F0AD4E' : contract_state == 'expired' ? '#D9534F' : '#6C757D'}">
+                                <img t-att-src="contact_id ? '/web/image/res.partner/' + contact_id + '/image_128' : '/web/static/img/placeholder.png'"
+                                     t-att-alt="contact_id ? contact_id.display_name : ''" class="o_kanban_image_fill_left_little"/>
+                            </div>
+                            <div class="oe_kanban_details">
+                                <strong class="o_kanban_record_title">
+                                    <field name="name"/>
+                                </strong>
+                                <div>
+                                    <span>Status: </span>
+                                    <field name="contract_state" widget="badge"
+                                           decoration-success="contract_state == 'active'"
+                                           decoration-warning="contract_state == 'expiring'"
+                                           decoration-danger="contract_state == 'expired'"/>
+                                </div>
+                                <div t-if="days_to_expiry">
+                                    <t t-if="days_to_expiry &lt; 0">
+                                        Expired <field name="days_to_expiry" widget="timeago" class="text-danger"/>
+                                    </t>
+                                    <t t-else="">
+                                        Expires in <field name="days_to_expiry"/> days
+                                    </t>
+                                </div>
+                                <div>
+                                    <span><field name="team_count"/> Teams</span> |
+                                    <span><field name="premise_count"/> Premises</span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Client Action -->
+    <record id="action_security_client" model="ir.actions.act_window">
+        <field name="name">Clients</field>
+        <field name="res_model">security.client</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="context">{'search_default_active_contracts': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first client!
+            </p>
+            <p>
+                Manage your security clients, their contracts, and the services provided to them.
+            </p>
+        </field>
+    </record>
+</odoo>

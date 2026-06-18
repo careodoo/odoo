@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Gate Pass Scanner Template -->
+    <template id="gate_pass_scanner_template" name="Gate Pass Scanner">
+        <t t-call="web.layout">
+            <t t-set="title">Gate Pass Scanner</t>
+            <t t-set="head">
+                <link rel="stylesheet" href="/security_management/static/src/css/gate_pass_scanner.css"/>
+                <!-- jsQR.js removed - now using browser's BarcodeDetector API with ZXing fallback -->
+            </t>
+            <div class="o_gate_pass_scanner_container">
+                <div class="container mt-4">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <p><i class="fa fa-info-circle me-2"></i> The Gate Pass Scanner is now available as a client action in the Odoo interface.</p>
+                                <p>Please use the menu: <strong>Visitors → Gate Pass Scanner</strong> to access the scanner.</p>
+                                <p class="mt-3">
+                                    <a href="/web#action=security_management.action_gate_pass_scanner_client" class="btn btn-primary">
+                                        <i class="fa fa-arrow-right me-1"></i> Go to Gate Pass Scanner
+                                    </a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

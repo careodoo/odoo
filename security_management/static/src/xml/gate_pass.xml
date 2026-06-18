@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="security_management.GatePassComponent" owl="1">
+        <div class="o_security_gate_pass">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Gate Pass</h4>
+                </div>
+                <div class="card-body">
+                    <t t-if="!state.gatePassData">
+                        <div class="alert alert-warning">Gate pass not found</div>
+                    </t>
+                    <t t-else="">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <strong>Visitor Name:</strong>
+                                        <span class="ml-2"><t t-esc="state.gatePassData.visitor_name"/></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Status:</strong>
+                                        <span t-attf-class="badge ml-2 {{ getStatusClass() }}"><t t-esc="getStatusText()"/></span>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <strong>Phone:</strong>
+                                        <span class="ml-2"><t t-esc="state.gatePassData.visitor_phone || ''"/></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Email:</strong>
+                                        <span class="ml-2"><t t-esc="state.gatePassData.visitor_email || ''"/></span>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <strong>Valid From:</strong>
+                                        <span class="ml-2"><t t-esc="state.gatePassData.valid_from"/></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Valid Until:</strong>
+                                        <span class="ml-2"><t t-esc="state.gatePassData.valid_until"/></span>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <strong>Visit Purpose:</strong>
+                                        <p class="mt-2"><t t-esc="state.gatePassData.visit_purpose"/></p>
+                                    </div>
+                                </div>
+                                <div class="o_gate_pass_action_buttons mt-4">
+                                    <button t-if="showValidateButton()" class="btn btn-success mr-2" t-on-click="onValidate">
+                                        <i class="fa fa-check mr-1"></i>Approve
+                                    </button>
+                                    <button t-if="showRejectButton()" class="btn btn-danger mr-2" t-on-click="onReject">
+                                        <i class="fa fa-times mr-1"></i>Reject
+                                    </button>
+                                    <button t-if="showCheckInButton()" class="btn btn-primary mr-2" t-on-click="onCheckIn">
+                                        <i class="fa fa-sign-in mr-1"></i>Check In
+                                    </button>
+                                    <button t-if="showCheckOutButton()" class="btn btn-info mr-2" t-on-click="onCheckOut">
+                                        <i class="fa fa-sign-out mr-1"></i>Check Out
+                                    </button>
+                                    <button t-if="showPrintButton()" class="btn btn-secondary" t-on-click="onPrint">
+                                        <i class="fa fa-print mr-1"></i>Print
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <div class="o_gate_pass_qr_code mb-3"></div>
+                                    <small class="text-muted">Scan this QR code at the security gate</small>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="security_management.RejectReasonDialog" owl="1">
+        <div class="p-3">
+            <p>Please provide a reason for rejecting this gate pass:</p>
+            <textarea class="form-control" rows="3" t-model="state.reason"></textarea>
+            <div class="d-flex justify-content-end mt-3">
+                <button class="btn btn-secondary mr-2" t-on-click="props.close">Cancel</button>
+                <button class="btn btn-danger" t-on-click="onConfirm">Reject</button>
+            </div>
+        </div>
+    </t>
+</templates>

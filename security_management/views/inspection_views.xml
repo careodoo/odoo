@@ -1,0 +1,503 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inspection Form View -->
+    <record id="view_security_inspection_form" model="ir.ui.view">
+        <field name="name">security.inspection.form</field>
+        <field name="model">security.inspection</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_submit" string="Submit" type="object"
+                            invisible="state != 'draft'" class="btn-primary"/>
+                    <button name="action_start_inspection" string="Start Inspection" type="object" invisible="state != 'submitted'" class="btn-primary"/>
+                    <button name="action_end_inspection" string="End Inspection" type="object" invisible="state != 'in_progress'" class="btn-success"/>
+                    <button name="action_complete" string="Complete" type="object" invisible="state != 'in_progress' or end_time == False" class="btn-success"/>
+                    <button name="action_cancel" string="Cancel" type="object" invisible="state in ['completed', 'cancelled']" class="btn-danger"/>
+                    <button name="action_reopen" string="Reopen" type="object" invisible="state != 'completed'" class="btn-warning"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,assigned,in_progress,completed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_issues" type="object" class="oe_stat_button" icon="fa-exclamation-triangle">
+                            <field name="issue_count" string="Issues" widget="statinfo"/>
+                        </button>
+                        <button name="action_view_tasks" type="object" class="oe_stat_button" icon="fa-tasks">
+                            <field name="task_count" string="Tasks" widget="statinfo"/>
+                        </button>
+                        <button name="action_generate_report" type="object" class="oe_stat_button" icon="fa-file-pdf-o"
+                                invisible="state not in ['completed']">
+                            <span>Generate Report</span>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="premise_id" options="{'no_create': True}" readonly="state != 'draft'"/>
+                            <field name="inspection_type" readonly="state != 'draft'"/>
+                            <field name="guard_id" options="{'no_create': True}" readonly="state not in ['draft', 'submitted']"/>
+                            <field name="inspector_id" options="{'no_create': True}" readonly="state not in ['draft', 'submitted']"/>
+                            <field name="priority" widget="priority"/>
+                        </group>
+                        <group>
+                            <field name="issue_type" readonly="state != 'draft'"/>
+                            <field name="scheduled_date" readonly="state != 'draft'"/>
+                            <field name="start_time" readonly="1" invisible="start_time == False"/>
+                            <field name="end_time" readonly="1" invisible="end_time == False"/>
+                            <field name="duration" widget="float_time" readonly="1" invisible="duration == 0"/>
+                            <field name="issue_description"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Inspection Areas">
+                            <field name="inspection_area_ids" readonly="state != 'in_progress'">
+                                <tree editable="bottom">
+                                    <field name="area_name"/>
+                                    <field name="status" widget="badge" decoration-success="status == 'ok'" decoration-danger="status == 'issue'"/>
+                                    <field name="notes"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Checklist" invisible="state == 'draft'">
+                            <field name="checklist_item_ids" readonly="state != 'in_progress'" context="{'default_inspection_id': id}">
+                                <tree editable="bottom">
+                                    <field name="name"/>
+                                    <field name="is_completed" widget="boolean_toggle"/>
+                                    <field name="has_issue" widget="boolean_toggle"/>
+                                    <field name="notes"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Issues" invisible="state == 'draft'">
+                            <field name="issue_ids" context="{'default_inspection_id': id}" readonly="state != 'in_progress'">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="severity"/>
+                                    <field name="area_id"/>
+                                    <field name="reported_by"/>
+                                    <field name="status"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes" placeholder="Add any additional notes or observations..." readonly="state != 'in_progress'"/>
+                        </page>
+                        <page string="Images" invisible="state == 'draft'">
+                            <field name="image_ids" widget="many2many_binary" options="{'preview_image': 'image_128', 'mimetype_field': 'mimetype'}" readonly="state != 'in_progress'"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Inspection list View -->
+    <record id="view_security_inspection_list" model="ir.ui.view">
+        <field name="name">security.inspection.list</field>
+        <field name="model">security.inspection</field>
+        <field name="arch" type="xml">
+            <tree decoration-info="state == 'draft'" decoration-warning="state == 'submitted'"
+                  decoration-primary="state == 'assigned'" decoration-danger="state == 'in_progress'"
+                  decoration-success="state == 'completed'" decoration-muted="state == 'cancelled'">
+                <field name="name"/>
+                <field name="premise_id"/>
+                <field name="inspection_type"/>
+                <field name="inspector_id"/>
+                <field name="scheduled_date"/>
+                <field name="priority" widget="priority"/>
+                <field name="issue_count"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Inspection Search View -->
+    <record id="view_security_inspection_search" model="ir.ui.view">
+        <field name="name">security.inspection.search</field>
+        <field name="model">security.inspection</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="premise_id"/>
+                <field name="inspection_type"/>
+                <field name="inspector_id"/>
+                <separator/>
+                <filter string="Draft" name="draft_inspections" domain="[('state', '=', 'draft')]"/>
+                <filter string="Submitted" name="submitted_inspections" domain="[('state', '=', 'submitted')]"/>
+                <filter string="Assigned" name="assigned_inspections" domain="[('state', '=', 'assigned')]"/>
+                <filter string="In Progress" name="in_progress_inspections" domain="[('state', '=', 'in_progress')]"/>
+                <filter string="Completed" name="completed_inspections" domain="[('state', '=', 'completed')]"/>
+                <filter string="Cancelled" name="cancelled_inspections" domain="[('state', '=', 'cancelled')]"/>
+                <separator/>
+                <filter string="High Priority" name="high_priority" domain="[('priority', '=', '3')]"/>
+                <filter string="With Issues" name="with_issues" domain="[('issue_count', '>', 0)]"/>
+                <filter string="Today" name="today" domain="[('scheduled_date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter string="This Week" name="this_week" domain="[('scheduled_date', '&gt;=', (context_today() - datetime.timedelta(days=context_today().weekday())).strftime('%Y-%m-%d')),
+                                                                   ('scheduled_date', '&lt;=', (context_today() + datetime.timedelta(days=6-context_today().weekday())).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Premise" name="group_by_premise" context="{'group_by': 'premise_id'}"/>
+                    <filter string="Inspector" name="group_by_inspector" context="{'group_by': 'inspector_id'}"/>
+                    <filter string="Type" name="group_by_type" context="{'group_by': 'inspection_type'}"/>
+                    <filter string="Status" name="group_by_state" context="{'group_by': 'state'}"/>
+                    <filter string="Priority" name="group_by_priority" context="{'group_by': 'priority'}"/>
+                    <filter string="Scheduled Date" name="group_by_date" context="{'group_by': 'scheduled_date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Inspection Calendar View -->
+    <record id="view_security_inspection_calendar" model="ir.ui.view">
+        <field name="name">security.inspection.calendar</field>
+        <field name="model">security.inspection</field>
+        <field name="arch" type="xml">
+            <calendar string="Inspections" date_start="scheduled_date" color="inspector_id" mode="month">
+                <field name="name"/>
+                <field name="premise_id"/>
+                <field name="inspection_type"/>
+                <field name="state"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- Inspection Kanban View -->
+    <record id="view_security_inspection_kanban" model="ir.ui.view">
+        <field name="name">security.inspection.kanban</field>
+        <field name="model">security.inspection</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="premise_id"/>
+                <field name="inspection_type"/>
+                <field name="inspector_id"/>
+                <field name="scheduled_date"/>
+                <field name="priority"/>
+                <field name="issue_count"/>
+                <field name="state"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click">
+                            <div class="row mb-1">
+                                <div class="col-6">
+                                    <strong><field name="name"/></strong>
+                                </div>
+                                <div class="col-6 text-right">
+                                    <field name="priority" widget="priority"/>
+                                </div>
+                            </div>
+                            <div class="row mb-1">
+                                <div class="col-12">
+                                    <i class="fa fa-building-o mr-1"/><field name="premise_id"/>
+                                </div>
+                            </div>
+                            <div class="row mb-1">
+                                <div class="col-12">
+                                    <i class="fa fa-tag mr-1"/><field name="inspection_type"/>
+                                </div>
+                            </div>
+                            <div class="row mb-1">
+                                <div class="col-12">
+                                    <i class="fa fa-user mr-1"/><field name="inspector_id"/>
+                                </div>
+                            </div>
+                            <div class="row mb-1">
+                                <div class="col-6">
+                                    <i class="fa fa-calendar mr-1"/>
+                                    <field name="scheduled_date"/>
+                                </div>
+                                <div class="col-6 text-right">
+                                    <span t-attf-class="badge badge-{{record.state.raw_value == 'draft' ? 'info' : (record.state.raw_value == 'submitted' ? 'warning' : (record.state.raw_value == 'assigned' ? 'primary' : (record.state.raw_value == 'in_progress' ? 'danger' : (record.state.raw_value == 'completed' ? 'success' : 'secondary'))))}}">
+                                        <field name="state"/>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="row" t-if="record.issue_count.raw_value > 0">
+                                <div class="col-12 text-right">
+                                    <span class="badge badge-danger">
+                                        <i class="fa fa-exclamation-triangle mr-1"/><field name="issue_count"/> Issues
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Incident Report Form View -->
+    <record id="view_security_incidence_report_form" model="ir.ui.view">
+        <field name="name">security.incidence.report.form</field>
+        <field name="model">security.incidence.report</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_submit" string="Submit" type="object"
+                            invisible="state != 'draft'" class="btn-primary"/>
+                    <button name="action_investigate" string="Start Investigation" type="object"
+                            invisible="state != 'submitted'" class="btn-info"/>
+                    <button name="action_resolve" string="Resolve" type="object"
+                            invisible="state != 'investigating'" class="btn-success"/>
+                    <button name="action_close" string="Close Case" type="object"
+                            invisible="state != 'resolved'" class="btn-secondary"/>
+                    <button name="action_reopen" string="Reopen" type="object"
+                            invisible="state != 'closed'" class="btn-warning"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,investigating,resolved,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_tasks" type="object" class="oe_stat_button" icon="fa-tasks">
+                            <field name="task_count" string="Tasks" widget="statinfo"/>
+                        </button>
+                        <button name="action_generate_report" type="object" class="oe_stat_button" icon="fa-file-pdf-o"
+                                invisible="state in ('draft', 'submitted')">
+                            <span>Generate Report</span>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="premise_id" options="{'no_create': True}" readonly="state != 'draft'"/>
+                            <field name="incident_type" readonly="state != 'draft'"/>
+                            <field name="incident_date" readonly="state != 'draft'"/>
+                            <field name="incident_time" readonly="state != 'draft'"/>
+                            <field name="reporter_id" options="{'no_create': True}" readonly="state != 'draft'"/>
+                            <field name="severity" widget="priority" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="location" readonly="state != 'draft'"/>
+                            <field name="investigator_id" options="{'no_create': True}" readonly="state not in ['draft', 'submitted']"/>
+                            <field name="investigation_start_date" readonly="1" invisible="investigation_start_date == False"/>
+                            <field name="resolution_date" readonly="1" invisible="resolution_date == False"/>
+                            <field name="closure_date" readonly="1" invisible="closure_date == False"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Incident Description">
+                            <field name="description" placeholder="Describe the incident in detail..." readonly="state != 'draft'"/>
+                        </page>
+                        <page string="Persons Involved" invisible="state == 'draft'">
+                            <field name="involved_person_ids" readonly="state in ('closed')">
+                                <tree editable="bottom">
+                                    <field name="name"/>
+                                    <field name="role"/>
+                                    <field name="contact_info"/>
+                                    <field name="statement"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Investigation" invisible="state in ('draft', 'submitted')">
+                            <group>
+                                <field name="investigation_notes" placeholder="Record investigation findings and progress..."
+                                       readonly="state in ('closed')"/>
+                            </group>
+                        </page>
+                        <page string="Resolution" invisible="state in ('draft', 'submitted', 'investigating')">
+                            <group>
+                                <field name="resolution" placeholder="Describe how the incident was resolved..."
+                                       readonly="state in ('closed')" required="state in ('resolved', 'closed')"/>
+                                <field name="preventive_measures" placeholder="Describe measures to prevent similar incidents..."
+                                       readonly="state in ('closed')"/>
+                            </group>
+                        </page>
+                        <page string="Evidence" invisible="state == 'draft'">
+                            <field name="evidence_ids" readonly="state in ('closed')">
+                                <tree editable="bottom">
+                                    <field name="name"/>
+                                    <field name="type"/>
+                                    <field name="description"/>
+                                    <field name="collection_date"/>
+                                    <field name="collected_by"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Images" invisible="state == 'draft'">
+                            <field name="image_ids" widget="many2many_binary" options="{'preview_image': 'image_128', 'mimetype_field': 'mimetype'}" readonly="state in ('closed')"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Incident Report list View -->
+    <record id="view_security_incidence_report_list" model="ir.ui.view">
+        <field name="name">security.incidence.report.list</field>
+        <field name="model">security.incidence.report</field>
+        <field name="arch" type="xml">
+            <tree decoration-info="state == 'draft'" decoration-warning="state == 'submitted'"
+                  decoration-danger="state == 'investigating'" decoration-success="state == 'resolved'"
+                  decoration-muted="state == 'closed'">
+                <field name="name"/>
+                <field name="premise_id"/>
+                <field name="incident_type"/>
+                <field name="incident_date"/>
+                <field name="reporter_id"/>
+                <field name="investigator_id"/>
+                <field name="severity" widget="priority"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Incident Report Search View -->
+    <record id="view_security_incidence_report_search" model="ir.ui.view">
+        <field name="name">security.incidence.report.search</field>
+        <field name="model">security.incidence.report</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="premise_id"/>
+                <field name="incident_type"/>
+                <field name="reporter_id"/>
+                <field name="investigator_id"/>
+                <field name="description"/>
+                <separator/>
+                <filter string="Draft" name="draft_reports" domain="[('state', '=', 'draft')]"/>
+                <filter string="Submitted" name="submitted_reports" domain="[('state', '=', 'submitted')]"/>
+                <filter string="Investigating" name="investigating_reports" domain="[('state', '=', 'investigating')]"/>
+                <filter string="Resolved" name="resolved_reports" domain="[('state', '=', 'resolved')]"/>
+                <filter string="Closed" name="closed_reports" domain="[('state', '=', 'closed')]"/>
+                <separator/>
+                <filter string="High Severity" name="high_severity" domain="[('severity', '=', '3')]"/>
+                <filter string="Today's Incidents" name="today_incidents" domain="[('incident_date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter string="This Week" name="this_week" domain="[('incident_date', '&gt;=', (context_today() - datetime.timedelta(days=context_today().weekday())).strftime('%Y-%m-%d')),
+                                                                   ('incident_date', '&lt;=', (context_today() + datetime.timedelta(days=6-context_today().weekday())).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Premise" name="group_by_premise" context="{'group_by': 'premise_id'}"/>
+                    <filter string="Incident Type" name="group_by_type" context="{'group_by': 'incident_type'}"/>
+                    <filter string="Reporter" name="group_by_reporter" context="{'group_by': 'reporter_id'}"/>
+                    <filter string="Investigator" name="group_by_investigator" context="{'group_by': 'investigator_id'}"/>
+                    <filter string="Status" name="group_by_state" context="{'group_by': 'state'}"/>
+                    <filter string="Severity" name="group_by_severity" context="{'group_by': 'severity'}"/>
+                    <filter string="Incident Date" name="group_by_date" context="{'group_by': 'incident_date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Incident Report Calendar View -->
+    <record id="view_security_incidence_report_calendar" model="ir.ui.view">
+        <field name="name">security.incidence.report.calendar</field>
+        <field name="model">security.incidence.report</field>
+        <field name="arch" type="xml">
+            <calendar string="Incidents" date_start="incident_date" color="incident_type" mode="month">
+                <field name="name"/>
+                <field name="premise_id"/>
+                <field name="severity"/>
+                <field name="state"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- Incident Report Kanban View -->
+    <record id="view_security_incidence_report_kanban" model="ir.ui.view">
+        <field name="name">security.incidence.report.kanban</field>
+        <field name="model">security.incidence.report</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="premise_id"/>
+                <field name="incident_type"/>
+                <field name="incident_date"/>
+                <field name="reporter_id"/>
+                <field name="investigator_id"/>
+                <field name="severity"/>
+                <field name="state"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click">
+                            <div class="row mb-1">
+                                <div class="col-6">
+                                    <strong><field name="name"/></strong>
+                                </div>
+                                <div class="col-6 text-right">
+                                    <field name="severity" widget="priority"/>
+                                </div>
+                            </div>
+                            <div class="row mb-1">
+                                <div class="col-12">
+                                    <i class="fa fa-building-o mr-1"/><field name="premise_id"/>
+                                </div>
+                            </div>
+                            <div class="row mb-1">
+                                <div class="col-12">
+                                    <i class="fa fa-tag mr-1"/><field name="incident_type"/>
+                                </div>
+                            </div>
+                            <div class="row mb-1">
+                                <div class="col-6">
+                                    <i class="fa fa-user mr-1"/><field name="reporter_id"/>
+                                </div>
+                                <div class="col-6 text-right">
+                                    <i class="fa fa-calendar mr-1"/>
+                                    <field name="incident_date"/>
+                                </div>
+                            </div>
+                            <div class="row" t-if="record.investigator_id.raw_value">
+                                <div class="col-6">
+                                    <i class="fa fa-search mr-1"/><field name="investigator_id"/>
+                                </div>
+                                <div class="col-6 text-right">
+                                    <span t-attf-class="badge badge-#{record.state.raw_value == 'draft' ? 'info' :
+                                                                       record.state.raw_value == 'submitted' ? 'warning' :
+                                                                       record.state.raw_value == 'investigating' ? 'danger' :
+                                                                       record.state.raw_value == 'resolved' ? 'success' : 'secondary'}">
+                                        <field name="state"/>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Action for Inspections -->
+    <record id="action_security_inspection" model="ir.actions.act_window">
+        <field name="name">Inspections</field>
+        <field name="res_model">security.inspection</field>
+        <field name="view_mode">kanban,tree,form,calendar</field>
+        <field name="search_view_id" ref="view_security_inspection_search"/>
+        <field name="context">{'search_default_draft_inspections': 1, 'search_default_assigned_inspections': 1, 'search_default_in_progress_inspections': 1, 'group_by': 'state'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first inspection!
+            </p>
+            <p>
+                Inspections are scheduled security checks of premises.
+                You can assign inspectors, track issues, and generate reports.
+            </p>
+        </field>
+    </record>
+
+    <!-- Action for Incident Reports -->
+    <record id="action_security_incidence_report" model="ir.actions.act_window">
+        <field name="name">Incident Reports</field>
+        <field name="res_model">security.incidence.report</field>
+        <field name="view_mode">kanban,tree,form,calendar</field>
+        <field name="search_view_id" ref="view_security_incidence_report_search"/>
+        <field name="context">{'search_default_draft_reports': 1, 'search_default_submitted_reports': 1, 'search_default_investigating_reports': 1, 'group_by': 'state'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first incident report!
+            </p>
+            <p>
+                Incident reports document security incidents that occur at premises.
+                You can track investigations, resolutions, and generate reports.
+            </p>
+        </field>
+    </record>
+</odoo>

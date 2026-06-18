@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_task_category_tree" model="ir.ui.view">
+        <field name="name">security.task.category.tree</field>
+        <field name="model">security.task.category</field>
+        <field name="arch" type="xml">
+            <tree string="Task Categories">
+                <field name="name"/>
+                <field name="description"/>
+                <field name="color"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_task_category_form" model="ir.ui.view">
+        <field name="name">security.task.category.form</field>
+        <field name="model">security.task.category</field>
+        <field name="arch" type="xml">
+            <form string="Task Category">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="description"/>
+                        <field name="color"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_security_task_category" model="ir.actions.act_window">
+        <field name="name">Task Category</field>
+        <field name="res_model">security.task.category</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[]</field>
+        <field name="context">{}</field>
+    </record>
+</odoo>

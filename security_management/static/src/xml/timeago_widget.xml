@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="security_management.TimeAgoWidget" owl="1">
+        <span t-esc="formattedValue" t-att-class="props.record.data.days_to_expiry &lt; 0 ? 'text-danger' : props.record.data.days_to_expiry &lt; 7 ? 'text-warning' : 'text-success'"/>
+    </t>
+</templates>

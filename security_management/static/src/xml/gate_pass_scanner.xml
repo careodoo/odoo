@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="security_management.GatePassScanner" owl="1">
+        <div class="gate-pass-scanner">
+            <div class="container py-4">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h2 class="mb-3">Gate Pass Scanner</h2>
+                        <p class="text-muted">Use this scanner to check in or check out visitors with gate passes.</p>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <!-- Scanner Section -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Scanner</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="scanner-container">
+                                    <div class="video-container">
+                                        <video t-ref="video" id="video" autoplay="true" playsinline="true"></video>
+                                        <canvas t-ref="canvas" id="canvas" class="d-none"></canvas>
+                                        <div id="scan-region-highlight"></div>
+                                        <div id="scan-region-highlight-border"></div>
+                                    </div>
+                                    
+                                    <div class="scanner-controls mt-3">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="camera-select" class="form-label">Camera</label>
+                                                <select t-ref="cameraSelect" id="camera-select" class="form-select" t-on-change="onCameraChange">
+                                                    <option value="">Loading cameras...</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="scan-type" class="form-label">Scan Type</label>
+                                                <select t-ref="scanType" id="scan-type" class="form-select">
+                                                    <option value="check_in">Check In</option>
+                                                    <option value="check_out">Check Out</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="d-flex">
+                                            <button t-ref="startButton" id="start-button" class="btn btn-primary me-2" t-on-click="startScanning">
+                                                <i class="fa fa-play me-1"></i> Start Camera
+                                            </button>
+                                            <button t-ref="stopButton" id="stop-button" class="btn btn-secondary" t-on-click="stopScanning" disabled="disabled">
+                                                <i class="fa fa-stop me-1"></i> Stop Camera
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Results Section -->
+                    <div class="col-lg-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Scan Result</h5>
+                            </div>
+                            <div class="card-body">
+                                <div t-if="state.showResult" id="scan-result">
+                                    <!-- Success Result -->
+                                    <div t-if="state.showSuccess" id="result-success" class="alert alert-success">
+                                        <h5 class="alert-heading">Success!</h5>
+                                        <p id="success-message" t-esc="state.successMessage"></p>
+                                        
+                                        <hr/>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6 mb-2">
+                                                <strong>Pass Number:</strong>
+                                                <span t-esc="state.gatePass.name"></span>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <strong>Visitor:</strong>
+                                                <span t-esc="state.gatePass.visitor_name"></span>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <strong>Company:</strong>
+                                                <span t-esc="state.gatePass.visitor_company"></span>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <strong>Purpose:</strong>
+                                                <span t-esc="state.gatePass.purpose"></span>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <strong>Pass Type:</strong>
+                                                <span t-esc="state.gatePass.pass_type"></span>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <strong>Valid Until:</strong>
+                                                <span t-esc="formatDateTime(state.gatePass.valid_until)"></span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mt-3">
+                                            <a t-if="state.gatePass.id" t-att-href="'/web#id=' + state.gatePass.id + '&amp;model=security.gate.pass&amp;view_type=form'" 
+                                               id="view-gate-pass-link" class="btn btn-sm btn-primary" target="_blank">
+                                                <i class="fa fa-external-link me-1"></i> View Gate Pass
+                                            </a>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Error Result -->
+                                    <div t-if="state.showError" id="result-error" class="alert alert-danger">
+                                        <h5 class="alert-heading">Error</h5>
+                                        <p id="error-message" t-esc="state.errorMessage"></p>
+                                    </div>
+                                </div>
+                                <div t-else="" class="text-center py-4">
+                                    <i class="fa fa-qrcode fa-3x text-muted mb-3"></i>
+                                    <p>Scan a gate pass QR code to see results here.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Scan History -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Recent Scans</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="scan-history">
+                                    <div t-if="state.scanHistory.length === 0" class="text-center py-3">
+                                        <p class="text-muted">No scan history yet.</p>
+                                    </div>
+                                    <div t-else="" id="scan-history-list" class="list-group">
+                                        <t t-foreach="state.scanHistory.slice(0, 10)" t-as="scan" t-key="scan_index">
+                                            <a t-att-href="'/web#id=' + scan.gatePass.id + '&amp;model=security.gate.pass&amp;view_type=form'" 
+                                               class="list-group-item list-group-item-action" target="_blank">
+                                                <div class="d-flex w-100 justify-content-between">
+                                                    <h6 class="mb-1" t-esc="scan.gatePass.visitor_name"></h6>
+                                                    <small t-esc="scan.timestamp.toLocaleTimeString()"></small>
+                                                </div>
+                                                <p class="mb-1" t-esc="scan.message"></p>
+                                                <small t-esc="scan.gatePass.name + ' - ' + scan.gatePass.pass_type"></small>
+                                            </a>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

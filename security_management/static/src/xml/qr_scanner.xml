@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="security_management.QRScanner" owl="1">
+        <div class="o_security_qr_scanner">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">QR Code Scanner</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div id="o_security_qr_reader" class="o_security_qr_video mb-3" style="width: 100%; min-height: 300px; border: 1px solid #ddd;"></div>
+                            <div class="d-flex justify-content-between">
+                                <button class="btn btn-primary o_security_start_scan" t-on-click="startScanning">Start Scanning</button>
+                                <button class="btn btn-secondary o_security_stop_scan" style="display: none;" t-on-click="stopScanning">Stop Scanning</button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="o_security_scan_result mt-3 mt-md-0"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <small class="text-muted">Point the camera at a QR code to scan it</small>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

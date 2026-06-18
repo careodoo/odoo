@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Email Template for Contract Expiry Notification -->
+    <record id="email_template_contract_expiry" model="mail.template">
+        <field name="name">Client Contract Expiry Notification</field>
+        <field name="model_id" ref="model_security_client"/>
+        <field name="subject">Contract Expiry Notification: ${object.name}</field>
+        <field name="email_from">${(user.email_formatted or user.company_id.email_formatted or '') | safe}</field>
+        <field name="partner_to">${object.partner_id.id if object.partner_id else ''}</field>
+        <field name="body_html" type="html">
+            <div style="margin: 0px; padding: 0px;">
+                <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                    Dear ${object.name},
+                    <br/><br/>
+                    This is a notification regarding your contract with our security services.
+                    <br/><br/>
+                    % if object.contract_state == 'expiring':
+                        Your contract is set to expire on <strong>${format_date(object.contract_end_date)}</strong>.
+                        Please contact us to discuss renewal options.
+                    % elif object.contract_state == 'expired':
+                        Your contract has expired on <strong>${format_date(object.contract_end_date)}</strong>.
+                        Please contact us immediately to avoid any interruption in security services.
+                    % endif
+                    <br/><br/>
+                    Contract Details:
+                    <ul>
+                        <li>Contract Start Date: ${format_date(object.contract_start_date)}</li>
+                        <li>Contract End Date: ${format_date(object.contract_end_date)}</li>
+                        <li>Contract Status: ${dict(object._fields['contract_state'].selection).get(object.contract_state)}</li>
+                    </ul>
+                    <br/>
+                    If you have any questions or would like to discuss renewal options, please don't hesitate to contact us.
+                    <br/><br/>
+                    Best regards,
+                    <br/>
+                    Security Management Team
+                </p>
+            </div>
+        </field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+
+    <!-- Email Template for Gate Pass -->
+    <record id="email_template_gate_pass" model="mail.template">
+        <field name="name">Gate Pass Notification</field>
+        <field name="model_id" ref="model_security_gate_pass"/>
+        <field name="subject">Gate Pass: ${object.name}</field>
+        <field name="email_from">${(user.email_formatted or user.company_id.email_formatted or '') | safe}</field>
+        <field name="body_html" type="html">
+            <div style="margin: 0px; padding: 0px;">
+                <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                    Dear Recipient,
+                    <br/><br/>
+                    A gate pass has been issued with the following details:
+                    <br/><br/>
+                    <ul>
+                        <li>Gate Pass Number: ${object.name}</li>
+                        <li>Visitor: ${object.visitor_id.name}</li>
+                        <li>Purpose: ${object.purpose or 'N/A'}</li>
+                        <li>Valid From: ${format_datetime(object.valid_from)}</li>
+                        <li>Valid Until: ${format_datetime(object.valid_until)}</li>
+                        <li>Status: ${object.state}</li>
+                    </ul>
+                    <br/>
+                    Please present this gate pass at the security checkpoint.
+                    <br/><br/>
+                    Best regards,
+                    <br/>
+                    Security Management Team
+                </p>
+            </div>
+        </field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+    
+    <!-- Email Template for Rejected Gate Pass -->
+    <record id="email_template_gate_pass_rejected" model="mail.template">
+        <field name="name">Gate Pass Rejection Notification</field>
+        <field name="model_id" ref="model_security_gate_pass"/>
+        <field name="subject">Gate Pass Rejected: ${object.name}</field>
+        <field name="email_from">${(user.email_formatted or user.company_id.email_formatted or '') | safe}</field>
+        <field name="body_html" type="html">
+            <div style="margin: 0px; padding: 0px;">
+                <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                    Dear ${object.visitor_id.name},
+                    <br/><br/>
+                    We regret to inform you that your gate pass request has been rejected:
+                    <br/><br/>
+                    <ul>
+                        <li>Gate Pass Number: ${object.name}</li>
+                        <li>Purpose: ${object.purpose or 'N/A'}</li>
+                        <li>Requested Date: ${format_date(object.visit_date)}</li>
+                        <li>Status: Rejected</li>
+                    </ul>
+                    <br/>
+                    % if object.rejection_reason:
+                    <p><strong>Reason for rejection:</strong> ${object.rejection_reason}</p>
+                    % endif
+                    <br/>
+                    If you have any questions, please contact your host or the security office.
+                    <br/><br/>
+                    Best regards,
+                    <br/>
+                    Security Management Team
+                </p>
+            </div>
+        </field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+
+    <!-- Email Template for Incident Report -->
+    <record id="email_template_incidence_report" model="mail.template">
+        <field name="name">Incident Report Notification</field>
+        <field name="model_id" ref="model_security_incidence_report"/>
+        <field name="subject">Incident Report: ${object.name}</field>
+        <field name="email_from">${(user.email_formatted or user.company_id.email_formatted or '') | safe}</field>
+        <field name="body_html" type="html">
+            <div style="margin: 0px; padding: 0px;">
+                <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                    Dear Recipient,
+                    <br/><br/>
+                    An incident has been reported with the following details:
+                    <br/><br/>
+                    <ul>
+                        <li>Incident Number: ${object.name}</li>
+                        <li>Reported By: ${object.reported_by_id.name}</li>
+                        <li>Date &amp; Time: ${format_datetime(object.date)}</li>
+                        <li>Location: ${object.location_id.name if object.location_id else 'N/A'}</li>
+                        <li>Severity: ${object.severity}</li>
+                        <li>Status: ${object.state}</li>
+                    </ul>
+                    <br/>
+                    <strong>Description:</strong>
+                    <p>${object.description or 'No description provided.'}</p>
+                    <br/>
+                    Please review the incident report and take appropriate action.
+                    <br/><br/>
+                    Best regards,
+                    <br/>
+                    Security Management Team
+                </p>
+            </div>
+        </field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+
+    <!-- Email Template for Patrol Started -->
+    <record id="email_template_patrol_started" model="mail.template">
+        <field name="name">Patrol Started Notification</field>
+        <field name="model_id" ref="model_security_patrol"/>
+        <field name="subject">Patrol Started: ${object.name}</field>
+        <field name="email_from">${(user.email_formatted or user.company_id.email_formatted or '') | safe}</field>
+        <field name="body_html" type="html">
+            <div style="margin: 0px; padding: 0px;">
+                <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                    Dear Recipient,
+                    <br/><br/>
+                    A patrol has been started with the following details:
+                    <br/><br/>
+                    <ul>
+                        <li>Patrol Number: ${object.name}</li>
+                        <li>Patrol Officer: ${object.employee_id.name}</li>
+                        <li>Start Time: ${format_datetime(object.start_time)}</li>
+                        <li>Location: ${object.location_id.name if object.location_id else 'N/A'}</li>
+                        <li>Route: ${object.route_id.name if object.route_id else 'N/A'}</li>
+                    </ul>
+                    <br/>
+                    You will be notified when the patrol is completed.
+                    <br/><br/>
+                    Best regards,
+                    <br/>
+                    Security Management Team
+                </p>
+            </div>
+        </field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+</odoo>

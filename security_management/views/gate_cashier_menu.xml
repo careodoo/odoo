@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Gate Cashier Menu Items -->
+    <!-- These menu items are placed in a separate file to ensure proper loading order -->
+    
+    <menuitem id="menu_security_gate_cashier_main" 
+              name="Cashiers" 
+              parent="menu_security_gate_cashier_operations" 
+              action="security_management.action_security_gate_cashier" 
+              sequence="10"/>
+              
+    <menuitem id="menu_security_gate_payment" 
+              name="Payment Checkout" 
+              parent="menu_security_gate_cashier_operations" 
+              action="security_management.action_security_gate_payment" 
+              sequence="20"/>
+              
+    <menuitem id="menu_security_gate_cash_drawer_main" 
+              name="Cash Drawers" 
+              parent="menu_security_gate_cashier_operations" 
+              action="security_management.action_security_gate_cash_drawer" 
+              sequence="30"/>
+              
+    <menuitem id="menu_security_gate_cashier_shift_main" 
+              name="Cashier Shifts" 
+              parent="menu_security_gate_cashier_operations" 
+              action="security_management.action_security_gate_cashier_shift" 
+              sequence="40"/>
+</odoo>

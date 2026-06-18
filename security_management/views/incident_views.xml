@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Incident Report list View -->
+    <record id="view_security_incident_report_list" model="ir.ui.view">
+        <field name="name">security.incident.report.list</field>
+        <field name="model">security.incident.report</field>
+        <field name="arch" type="xml">
+            <tree string="Incident Reports" decoration-danger="severity=='critical'" decoration-warning="severity=='high'" sample="1">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="premise_id"/>
+                <field name="incident_type"/>
+                <field name="severity"/>
+                <field name="reporter_id"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'resolved'" decoration-warning="state == 'investigating'" decoration-danger="state == 'reported'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Incident Report Form View -->
+    <record id="view_security_incident_report_form" model="ir.ui.view">
+        <field name="name">security.incident.report.form</field>
+        <field name="model">security.incident.report</field>
+        <field name="arch" type="xml">
+            <form string="Incident Report">
+                <header>
+                    <button name="action_report" string="Report" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_investigate" string="Start Investigation" type="object" class="oe_highlight" invisible="state != 'reported'"/>
+                    <button name="action_resolve" string="Mark Resolved" type="object" class="oe_highlight" invisible="state != 'investigating'"/>
+                    <button name="action_close" string="Close" type="object" class="oe_highlight" invisible="state != 'resolved'"/>
+                    <button name="action_reset_to_draft" string="Reset to Draft" type="object" invisible="state not in ['reported', 'investigating']"/>
+                    <button name="action_notify_police" string="Notify Police" type="object" invisible="police_notified == True" class="btn-warning"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,reported,investigating,resolved,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="date"/>
+                            <field name="reporter_id"/>
+                            <field name="premise_id"/>
+                            <field name="location"/>
+                            <field name="incident_type"/>
+                            <field name="severity" widget="priority"/>
+                        </group>
+                        <group>
+                            <field name="guard_id"/>
+                            <field name="team_id"/>
+                            <field name="police_notified"/>
+                            <field name="police_report_number" invisible="police_notified == False"/>
+                            <field name="resolution_date" readonly="1" invisible="state not in ('resolved', 'closed')"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description" name="description">
+                            <field name="description" placeholder="Describe the incident in detail..."/>
+                        </page>
+                        <page string="Action Taken" name="action">
+                            <field name="action_taken" placeholder="Describe actions taken in response to the incident..."/>
+                        </page>
+                        <page string="People Involved" name="people">
+                            <group>
+                                <field name="witness_ids" widget="many2many_tags"/>
+                                <field name="involved_person_ids" widget="many2many_tags"/>
+                            </group>
+                        </page>
+                        <page string="Resolution" name="resolution" invisible="state not in ('resolved', 'closed')">
+                            <field name="resolution_notes" placeholder="Describe how the incident was resolved..."/>
+                        </page>
+                        <page string="Follow-up" name="followup">
+                            <group>
+                                <field name="follow_up_required"/>
+                                <field name="follow_up_date" invisible="follow_up_required == False"/>
+                                <field name="follow_up_notes" invisible="follow_up_required == False" placeholder="Notes for follow-up actions..."/>
+                            </group>
+                        </page>
+                        <page string="Attachments" name="attachments">
+                            <field name="attachment_ids" widget="many2many_binary"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Incident Report Search View -->
+    <record id="view_security_incident_report_search" model="ir.ui.view">
+        <field name="name">security.incident.report.search</field>
+        <field name="model">security.incident.report</field>
+        <field name="arch" type="xml">
+            <search string="Search Incident Reports">
+                <field name="name"/>
+                <field name="premise_id"/>
+                <field name="reporter_id"/>
+                <field name="description"/>
+                <field name="incident_type"/>
+                <separator/>
+                <filter string="My Reports" name="my_reports" domain="[('reporter_id', '=', uid)]"/>
+                <filter string="Critical" name="critical" domain="[('severity', '=', 'critical')]"/>
+                <filter string="High Severity" name="high" domain="[('severity', '=', 'high')]"/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Reported" name="reported" domain="[('state', '=', 'reported')]"/>
+                <filter string="Investigating" name="investigating" domain="[('state', '=', 'investigating')]"/>
+                <filter string="Resolved" name="resolved" domain="[('state', '=', 'resolved')]"/>
+                <filter string="Closed" name="closed" domain="[('state', '=', 'closed')]"/>
+                <filter string="Police Notified" name="police" domain="[('police_notified', '=', True)]"/>
+                <filter string="Follow-up Required" name="followup" domain="[('follow_up_required', '=', True)]"/>
+                <filter string="Today" name="today" domain="[('date', '>=', context_today().strftime('%Y-%m-%d')), ('date', '&lt;', (context_today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d'))]"/>
+                <filter string="This Week" name="this_week" domain="[('date', '>=', (context_today() + relativedelta(weeks=-1, days=1, weekday=0)).strftime('%Y-%m-%d')), ('date', '&lt;', (context_today() + relativedelta(weeks=0, days=1, weekday=0)).strftime('%Y-%m-%d'))]"/>
+                <filter string="This Month" name="this_month" domain="[('date', '>=', (context_today().replace(day=1)).strftime('%Y-%m-%d')), ('date', '&lt;', (context_today().replace(day=1) + relativedelta(months=1)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_by_state" context="{'group_by': 'state'}"/>
+                    <filter string="Premise" name="group_by_premise" context="{'group_by': 'premise_id'}"/>
+                    <filter string="Incident Type" name="group_by_type" context="{'group_by': 'incident_type'}"/>
+                    <filter string="Severity" name="group_by_severity" context="{'group_by': 'severity'}"/>
+                    <filter string="Reporter" name="group_by_reporter" context="{'group_by': 'reporter_id'}"/>
+                    <filter string="Date" name="group_by_date" context="{'group_by': 'date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Incident Report Pivot View -->
+    <record id="view_security_incident_report_pivot" model="ir.ui.view">
+        <field name="name">security.incident.report.pivot</field>
+        <field name="model">security.incident.report</field>
+        <field name="arch" type="xml">
+            <pivot string="Incident Analysis" sample="1">
+                <field name="premise_id" type="row"/>
+                <field name="incident_type" type="row"/>
+                <field name="date" type="col" interval="month"/>
+                <field name="severity" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Incident Report Graph View -->
+    <record id="view_security_incident_report_graph" model="ir.ui.view">
+        <field name="name">security.incident.report.graph</field>
+        <field name="model">security.incident.report</field>
+        <field name="arch" type="xml">
+            <graph string="Incident Analysis" sample="1">
+                <field name="incident_type"/>
+                <field name="date" interval="month"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Incident Report Calendar View -->
+    <record id="view_security_incident_report_calendar" model="ir.ui.view">
+        <field name="name">security.incident.report.calendar</field>
+        <field name="model">security.incident.report</field>
+        <field name="arch" type="xml">
+            <calendar string="Incidents" date_start="date" color="incident_type" mode="month">
+                <field name="name"/>
+                <field name="premise_id"/>
+                <field name="severity"/>
+                <field name="state"/>
+            </calendar>
+        </field>
+    </record>
+</odoo>

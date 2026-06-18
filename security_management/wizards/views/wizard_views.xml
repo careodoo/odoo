@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Key Checkout Wizard Form View -->
+    <record id="view_security_key_checkout_wizard_form" model="ir.ui.view">
+        <field name="name">security.key.checkout.wizard.form</field>
+        <field name="model">security.key.checkout.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Checkout Key">
+                <sheet>
+                    <div class="alert alert_info" role="alert">
+                        <p>Please complete the form to check out this key.</p>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="key_id" invisible="1"/>
+                            <field name="allowed_security_employee_ids" invisible="1"/>
+                            <field name="key_name"/>
+                            <field name="key_hub_id"/>
+                            <field name="unit_id"/>
+                        </group>
+                        <group>
+                            <field name="security_employee_id" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="expected_return_time"/>
+                        </group>
+                    </group>
+                    <group string="Purpose">
+                        <field name="reason" nolabel="1" placeholder="Please specify the reason for checking out this key..."/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_checkout" string="Checkout" type="object" class="btn_primary"/>
+                    <button string="Cancel" class="btn_secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Key Checkout Wizard Action -->
+    <record id="action_security_key_checkout_wizard" model="ir.actions.act_window">
+        <field name="name">Checkout Key</field>
+        <field name="res_model">security.key.checkout.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_security_key"/>
+        <field name="binding_view_types">form</field>
+    </record>
+
+    <!-- Key Checkin Wizard Form View -->
+    <record id="view_security_key_checkin_wizard_form" model="ir.ui.view">
+        <field name="name">security.key.checkin.wizard.form</field>
+        <field name="model">security.key.checkin.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Check-in Key">
+                <sheet>
+                    <div class="alert alert_info" role="alert">
+                        <p>Please confirm the return of this key.</p>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="key_id" invisible="1"/>
+                            <field name="key_name"/>
+                            <field name="key_hub_id"/>
+                        </group>
+                        <group>
+                            <field name="current_holder_id"/>
+                        </group>
+                    </group>
+                    <group string="Additional Notes">
+                        <field name="notes" nolabel="1" placeholder="Add any notes about the condition of the key or circumstances of return..."/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_checkin" string="Check-in" type="object" class="btn_primary"/>
+                    <button string="Cancel" class="btn_secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Key Checkin Wizard Action -->
+    <record id="action_security_key_checkin_wizard" model="ir.actions.act_window">
+        <field name="name">Check-in Key</field>
+        <field name="res_model">security.key.checkin.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_security_key"/>
+        <field name="binding_view_types">form</field>
+    </record>
+
+    <!-- Key Lost Wizard Form View -->
+    <record id="view_security_key_lost_wizard_form" model="ir.ui.view">
+        <field name="name">security.key.lost.wizard.form</field>
+        <field name="model">security.key.lost.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Report Lost Key">
+                <sheet>
+                    <div class="alert alert_warning" role="alert">
+                        <p><strong>Warning:</strong> Reporting a key as lost will trigger the security protocol and notify security managers.</p>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="key_id" invisible="1"/>
+                            <field name="key_name"/>
+                            <field name="key_hub_id"/>
+                        </group>
+                        <group>
+                            <field name="current_holder_id"/>
+                        </group>
+                    </group>
+                    <group string="Lost Key Details">
+                        <field name="reason" nolabel="1" placeholder="Please provide details about how and where the key was lost..."/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_mark_lost" string="Report Lost" type="object" class="btn_danger"/>
+                    <button string="Cancel" class="btn_secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Key Lost Wizard Action -->
+    <record id="action_security_key_lost_wizard" model="ir.actions.act_window">
+        <field name="name">Report Lost Key</field>
+        <field name="res_model">security.key.lost.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_security_key"/>
+        <field name="binding_view_types">form</field>
+    </record>
+    
+    <!-- Patrol Checkin Wizard Form View -->
+    <record id="view_security_patrol_checkin_wizard_form" model="ir.ui.view">
+        <field name="name">security.patrol.checkin.wizard.form</field>
+        <field name="model">security.patrol.checkin.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Patrol Checkpoint Check-in">
+                <sheet>
+                    <div class="alert alert_info" role="alert">
+                        <p>Please record your checkpoint check-in details.</p>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="patrol_id" invisible="1"/>
+                            <field name="available_checkpoint_ids" invisible="1"/>
+                            <field name="checkpoint_id" options="{'no_create': True}"/>
+                            <field name="status" widget="radio"/>
+                        </group>
+                        <group>
+                            <field name="image" widget="image" class="oe_avatar"/>
+                        </group>
+                    </group>
+                    <group string="Notes" invisible="status == 'normal'">
+                        <field name="issue_description" nolabel="1" placeholder="Describe any issues or emergencies encountered..." required="status in ('issue', 'emergency')" invisible="status == 'normal'"/>
+                    </group>
+                    <group string="Additional Notes">
+                        <field name="notes" nolabel="1" placeholder="Add any additional notes about this checkpoint..."/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_checkin" string="Check-in" type="object" class="btn_primary"/>
+                    <button string="Cancel" class="btn_secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Patrol Checkin Wizard Action -->
+    <record id="action_security_patrol_checkin_wizard" model="ir.actions.act_window">
+        <field name="name">Checkpoint Check-in</field>
+        <field name="res_model">security.patrol.checkin.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_security_patrol"/>
+        <field name="binding_view_types">form</field>
+    </record>
+    
+    <!-- Gate Pass Approval Wizard Form View -->
+    <record id="view_security_gate_pass_approval_wizard_form" model="ir.ui.view">
+        <field name="name">security.gate.pass.approval.wizard.form</field>
+        <field name="model">security.gate.pass.approval.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Gate Pass Approval">
+                <sheet>
+                    <div class="alert alert_info" role="alert">
+                        <p>Please review the gate pass request and approve or reject it.</p>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="gate_pass_id" invisible="1"/>
+                            <field name="visitor_name"/>
+                            <field name="visitor_id_number"/>
+                            <field name="requested_by_id"/>
+                        </group>
+                        <group>
+                            <field name="approval_date"/>
+                            <field name="approved_by_id"/>
+                            <field name="valid_hours"/>
+                        </group>
+                    </group>
+                    <group string="Visit Purpose">
+                        <field name="visit_purpose" nolabel="1" readonly="1"/>
+                    </group>
+                    <group string="Security Settings">
+                        <field name="require_escort"/>
+                        <field name="escort_id" invisible="require_escort == False" required="require_escort == True"/>
+                        <field name="restricted_areas" placeholder="List any areas that this visitor should not be allowed to access..."/>
+                        <field name="special_instructions" placeholder="Any special instructions for the security team regarding this visitor..."/>
+                    </group>
+                    <group string="Approval Notes">
+                        <field name="approval_notes" nolabel="1" placeholder="Add any notes regarding this approval or rejection..."/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_approve" string="Approve" type="object" class="btn_primary"/>
+                    <button name="action_reject" string="Reject" type="object" class="btn_danger"/>
+                    <button string="Cancel" class="btn_secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Gate Pass Approval Wizard Action -->
+    <record id="action_security_gate_pass_approval_wizard" model="ir.actions.act_window">
+        <field name="name">Approve Gate Pass</field>
+        <field name="res_model">security.gate.pass.approval.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_security_gate_pass"/>
+        <field name="binding_view_types">form</field>
+    </record>
+    
+    <!-- Incident Report Wizard Form View -->
+    <record id="view_security_incident_report_wizard_form" model="ir.ui.view">
+        <field name="name">security.incident.report.wizard.form</field>
+        <field name="model">security.incident.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Report Security Incident">
+                <sheet>
+                    <div class="alert alert_warning" role="alert">
+                        <p><strong>Important:</strong> Please provide as much detail as possible about the security incident.</p>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name" placeholder="Brief title describing the incident"/>
+                            <field name="incident_date"/>
+                            <field name="incident_type"/>
+                            <field name="severity" widget="selection_badge"/>
+                        </group>
+                        <group>
+                            <field name="reporter_id"/>
+                            <field name="team_id"/>
+                            <field name="location_id"/>
+                            <field name="floor_id" invisible="location_id == False"/>
+                            <field name="unit_id" invisible="floor_id == False"/>
+                        </group>
+                    </group>
+                    <group string="Incident Details">
+                        <field name="description" nolabel="1" placeholder="Provide a detailed description of what happened..."/>
+                    </group>
+                    <group string="Action Taken">
+                        <field name="action_taken" nolabel="1" placeholder="Describe any immediate actions that were taken..."/>
+                    </group>
+                    <group>
+                        <group string="Witnesses">
+                            <field name="witnesses" nolabel="1" placeholder="List any witnesses to the incident..."/>
+                        </group>
+                        <group string="Authority Information">
+                            <field name="authorities_notified"/>
+                            <field name="authority_report_number" invisible="authorities_notified == False"/>
+                        </group>
+                    </group>
+                    <group string="Evidence">
+                        <field name="image_ids" widget="many2many_binary" nolabel="1"/>
+                    </group>
+                    <group string="Notifications">
+                        <field name="notify_management"/>
+                        <field name="notify_client"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_submit_report" string="Submit Report" type="object" class="btn_primary"/>
+                    <button string="Cancel" class="btn_secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Incident Report Wizard Action -->
+    <record id="action_security_incident_report_wizard" model="ir.actions.act_window">
+        <field name="name">Report Incident</field>
+        <field name="res_model">security.incident.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_security_team"/>
+        <field name="binding_view_types">form</field>
+    </record>
+</odoo>

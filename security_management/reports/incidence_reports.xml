@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Incidence Report Action -->
+    <record id="action_report_incidence" model="ir.actions.report">
+        <field name="name">Incidence Report</field>
+        <field name="model">security.incidence.report</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">security_management.report_incidence_detailed</field>
+        <field name="report_file">security_management.report_incidence_detailed</field>
+        <field name="binding_model_id" ref="model_security_incidence_report"/>
+        <field name="binding_type">report</field>
+    </record>
+    
+    <!-- Cashier Report Action -->
+    <record id="action_report_cashier" model="ir.actions.report">
+        <field name="name">Cashier Report</field>
+        <field name="model">security.cashier.report</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">security_management.report_cashier_detailed</field>
+        <field name="report_file">security_management.report_cashier_detailed</field>
+        <field name="binding_model_id" ref="model_security_cashier_report"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>

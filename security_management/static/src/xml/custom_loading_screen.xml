@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="security_management.CustomLoadingScreen" owl="1">
+        <div t-att-class="containerClass">
+            <div class="loading-spinner">
+                <i t-att-class="'fa fa-spinner fa-spin fa-' + spinnerSize"></i>
+            </div>
+            <div class="loading-message">
+                <span t-esc="displayMessage"/>
+            </div>
+        </div>
+    </t>
+</templates>

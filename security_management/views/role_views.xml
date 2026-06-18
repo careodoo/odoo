@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Security Role Form View -->
+    <record id="view_security_role_form" model="ir.ui.view">
+        <field name="name">security.role.form</field>
+        <field name="model">security.role</field>
+        <field name="arch" type="xml">
+            <form string="Security Role">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Role Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="sequence"/>
+                            <field name="is_leadership"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="min_experience"/>
+                            <field name="required_license"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description" name="description">
+                            <field name="description" placeholder="Describe the role and its responsibilities..."/>
+                        </page>
+                        <page string="Required Skills" name="required_skills">
+                            <field name="required_skill_ids">
+                                <tree editable="bottom">
+                                    <field name="skill_id"/>
+                                    <field name="min_proficiency"/>
+                                    <field name="is_required"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Security Role list View -->
+    <record id="view_security_role_list" model="ir.ui.view">
+        <field name="name">security.role.list</field>
+        <field name="model">security.role</field>
+        <field name="arch" type="xml">
+            <tree string="Security Roles">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="is_leadership"/>
+                <field name="min_experience"/>
+                <field name="required_license"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Security Role Search View -->
+    <record id="view_security_role_search" model="ir.ui.view">
+        <field name="name">security.role.search</field>
+        <field name="model">security.role</field>
+        <field name="arch" type="xml">
+            <search string="Search Security Roles">
+                <field name="name"/>
+                <field name="code"/>
+                <separator/>
+                <filter string="Leadership Roles" name="leadership" domain="[('is_leadership', '=', True)]"/>
+                <filter string="Regular Roles" name="regular" domain="[('is_leadership', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Leadership" name="group_by_leadership" context="{'group_by': 'is_leadership'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Security Role Action -->
+    <record id="action_security_role" model="ir.actions.act_window">
+        <field name="name">Security Roles</field>
+        <field name="res_model">security.role</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_security_role_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new security role
+            </p>
+            <p>
+                Security roles define the responsibilities and required skills for security personnel.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Item for Security Roles -->
+    <menuitem id="menu_security_role"
+              name="Security Roles"
+              parent="menu_security_configuration"
+              action="action_security_role"
+              sequence="5"
+              groups="security_management.group_security_manager,security_management.group_security_admin"/>
+</odoo>

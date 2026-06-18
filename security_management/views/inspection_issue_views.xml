@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- list View -->
+    <record id="view_security_inspection_issue_list" model="ir.ui.view">
+        <field name="name">security.inspection.issue.list</field>
+        <field name="model">security.inspection.issue</field>
+        <field name="arch" type="xml">
+            <tree string="Inspection Issues" decoration-danger="severity=='critical'" decoration-warning="severity=='high'" decoration-info="status=='in_progress'" decoration-success="status=='resolved'">
+                <field name="name"/>
+                <field name="inspection_id"/>
+                <field name="area_id"/>
+                <field name="severity"/>
+                <field name="reported_by"/>
+                <field name="status"/>
+                <field name="resolution_date"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_security_inspection_issue_form" model="ir.ui.view">
+        <field name="name">security.inspection.issue.form</field>
+        <field name="model">security.inspection.issue</field>
+        <field name="arch" type="xml">
+            <form string="Inspection Issue">
+                <header>
+                    <button name="action_mark_in_progress" string="Mark In Progress" type="object"
+                            class="oe_highlight" invisible="status != 'new'"/>
+                    <button name="action_mark_resolved" string="Mark Resolved" type="object"
+                            class="oe_highlight" invisible="status != 'in_progress'"/>
+                    <button name="action_close" string="Close Issue" type="object"
+                            class="oe_highlight" invisible="status != 'resolved'"/>
+                    <button name="action_create_task" string="Create Task" type="object"
+                            invisible="task_id != False or status == 'closed'"/>
+                    <field name="status" widget="statusbar" statusbar_visible="new,in_progress,resolved,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_task" type="object" class="oe_stat_button" icon="fa-tasks"
+                                invisible="task_id == False">
+                            <field name="task_id" string="Task" widget="statinfo"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1><field name="name" placeholder="Issue Title"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="inspection_id"/>
+                            <field name="area_id" invisible="inspection_id == False"/>
+                            <field name="reported_by"/>
+                        </group>
+                        <group>
+                            <field name="severity" widget="selection_badge"/>
+                            <field name="create_date" readonly="1" string="Reported Date"/>
+                            <field name="resolution_date" readonly="1" invisible="resolution_date == False"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description" name="description">
+                            <field name="description" placeholder="Describe the issue in detail..."/>
+                        </page>
+                        <page string="Resolution" name="resolution" invisible="status in ['new']">
+                            <field name="resolution_notes" placeholder="Describe how the issue was resolved..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_security_inspection_issue_search" model="ir.ui.view">
+        <field name="name">security.inspection.issue.search</field>
+        <field name="model">security.inspection.issue</field>
+        <field name="arch" type="xml">
+            <search string="Search Inspection Issues">
+                <field name="name"/>
+                <field name="inspection_id"/>
+                <field name="area_id"/>
+                <field name="reported_by"/>
+                <separator/>
+                <filter string="My Issues" name="my_issues" domain="[('reported_by', '=', uid)]"/>
+                <filter string="New" name="status_new" domain="[('status', '=', 'new')]"/>
+                <filter string="In Progress" name="status_in_progress" domain="[('status', '=', 'in_progress')]"/>
+                <filter string="Resolved" name="status_resolved" domain="[('status', '=', 'resolved')]"/>
+                <filter string="Closed" name="status_closed" domain="[('status', '=', 'closed')]"/>
+                <separator/>
+                <filter string="Critical" name="severity_critical" domain="[('severity', '=', 'critical')]"/>
+                <filter string="High" name="severity_high" domain="[('severity', '=', 'high')]"/>
+                <filter string="Medium" name="severity_medium" domain="[('severity', '=', 'medium')]"/>
+                <filter string="Low" name="severity_low" domain="[('severity', '=', 'low')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Inspection" name="group_by_inspection" context="{'group_by': 'inspection_id'}"/>
+                    <filter string="Area" name="group_by_area" context="{'group_by': 'area_id'}"/>
+                    <filter string="Status" name="group_by_status" context="{'group_by': 'status'}"/>
+                    <filter string="Severity" name="group_by_severity" context="{'group_by': 'severity'}"/>
+                    <filter string="Reported By" name="group_by_reported_by" context="{'group_by': 'reported_by'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Kanban View -->
+    <record id="view_security_inspection_issue_kanban" model="ir.ui.view">
+        <field name="name">security.inspection.issue.kanban</field>
+        <field name="model">security.inspection.issue</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_small_column" records_draggable="0" group_create="false" group_delete="false">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="inspection_id"/>
+                <field name="area_id"/>
+                <field name="severity"/>
+                <field name="status"/>
+                <field name="reported_by"/>
+                <field name="resolution_date"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="name"/>
+                                        </strong>
+                                    </div>
+                                    <div class="o_dropdown_kanban dropdown">
+                                        <a class="dropdown-toggle o-no-caret btn" data-toggle="dropdown" href="#" role="button">
+                                            <span class="fa fa-ellipsis-v"/>
+                                        </a>
+                                        <div class="dropdown-menu" role="menu">
+                                            <t t-if="widget.editable">
+                                                <a type="edit" class="dropdown-item">Edit</a>
+                                            </t>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <div>
+                                        <field name="inspection_id"/>
+                                        <t t-if="record.area_id.raw_value">
+                                            - <field name="area_id"/>
+                                        </t>
+                                    </div>
+                                    <div class="mt-2">
+                                        <span t-att-class="['badge', 'badge-pill', record.severity.raw_value == 'critical' ? 'badge-danger' : (record.severity.raw_value == 'high' ? 'badge-warning' : (record.severity.raw_value == 'medium' ? 'badge-info' : 'badge-success'))]">
+                                            <field name="severity"/>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_bottom">
+                                    <div class="oe_kanban_bottom_left">
+                                        <field name="reported_by" widget="many2one_avatar_user"/>
+                                    </div>
+                                    <div class="oe_kanban_bottom_right">
+                                        <t t-if="record.resolution_date.raw_value">
+                                            <small><field name="resolution_date"/></small>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Calendar View -->
+    <record id="view_security_inspection_issue_calendar" model="ir.ui.view">
+        <field name="name">security.inspection.issue.calendar</field>
+        <field name="model">security.inspection.issue</field>
+        <field name="arch" type="xml">
+            <calendar string="Inspection Issues" date_start="create_date" color="severity" mode="month">
+                <field name="name"/>
+                <field name="inspection_id"/>
+                <field name="severity"/>
+                <field name="status"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- Pivot View -->
+    <record id="view_security_inspection_issue_pivot" model="ir.ui.view">
+        <field name="name">security.inspection.issue.pivot</field>
+        <field name="model">security.inspection.issue</field>
+        <field name="arch" type="xml">
+            <pivot string="Inspection Issues Analysis">
+                <field name="inspection_id" type="row"/>
+                <field name="severity" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Graph View -->
+    <record id="view_security_inspection_issue_graph" model="ir.ui.view">
+        <field name="name">security.inspection.issue.graph</field>
+        <field name="model">security.inspection.issue</field>
+        <field name="arch" type="xml">
+            <graph string="Inspection Issues" type="bar">
+                <field name="severity"/>
+                <field name="status"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_security_inspection_issue" model="ir.actions.act_window">
+        <field name="name">Inspection Issues</field>
+        <field name="res_model">security.inspection.issue</field>
+        <field name="view_mode">tree,kanban,form,calendar,pivot,graph</field>
+        <field name="context">{"search_default_status_new": 1, "search_default_status_in_progress": 1, "group_by": "status"}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No inspection issues found
+            </p>
+            <p>
+                Create a new inspection issue to track problems identified during inspections.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Item -->
+
+</odoo>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Default Security Client -->
+        <record id="default_security_client" model="security.client">
+            <field name="name">Default Security Client</field>
+            <field name="contact_id" ref="base.partner_admin"/>
+            <field name="contract_start_date" eval="time.strftime('%Y-%m-%d')"/>
+<field name="contract_end_date" eval="time.strftime('%Y-%m-%d')"/>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>

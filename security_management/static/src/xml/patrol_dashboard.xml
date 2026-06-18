@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="security_management.PatrolDashboard" owl="1">
+        <div class="o_security_patrol_dashboard" style="height: 100vh; overflow-y: auto; overflow-x: hidden; background-color: #f8f9fa; padding: 20px;">
+            <div class="o_patrol_dashboard_header mb-3">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h2>Patrol Dashboard</h2>
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-outline-primary" t-on-click="refreshDashboard">
+                            <i class="fa fa-refresh mr-1"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="o_patrol_dashboard_content">
+                <div class="row">
+                    <!-- Summary Cards -->
+                    <div class="col-12 mb-4">
+                        <div class="row">
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-primary text-white h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Total Patrols</h5>
+                                        <h2 class="display-4"><t t-esc="state.dashboardData.total_patrols || 0"/></h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-success text-white h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Completed Today</h5>
+                                        <h2 class="display-4"><t t-esc="state.dashboardData.completed_today || 0"/></h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-warning text-white h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">In Progress</h5>
+                                        <h2 class="display-4"><t t-esc="state.dashboardData.in_progress || 0"/></h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-info text-white h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Scheduled</h5>
+                                        <h2 class="display-4"><t t-esc="state.dashboardData.scheduled || 0"/></h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Patrol Status</h5>
+                            </div>
+                            <div class="card-body d-flex align-items-center justify-content-center" style="min-height: 320px; padding: 1.5rem;">
+                                <div class="chart-container" style="position: relative; height: 280px; width: 280px; margin: 0 auto;">
+                                    <canvas class="o_patrol_completion_chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Points Coverage</h5>
+                            </div>
+                            <div class="card-body d-flex align-items-center justify-content-center" style="min-height: 320px; padding: 1.5rem;">
+                                <div class="chart-container" style="position: relative; height: 280px; width: 100%; margin-top: 10px;">
+                                    <canvas class="o_point_coverage_chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Patrols -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Active Patrols</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Patrol</th>
+                                                <th>Guard</th>
+                                                <th>Progress</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-if="state.dashboardData.active_patrols and state.dashboardData.active_patrols.length">
+                                                <t t-foreach="state.dashboardData.active_patrols" t-as="patrol" t-key="patrol.id">
+                                                    <tr>
+                                                        <td>
+                                                            <a href="#" t-on-click.prevent="onPatrolCardClick" t-att-data-patrol-id="patrol.id">
+                                                                <t t-esc="patrol.name"/>
+                                                            </a>
+                                                        </td>
+                                                        <td><t t-esc="patrol.guard_name"/></td>
+                                                        <td>
+                                                            <div class="progress">
+                                                                <div class="progress-bar" role="progressbar" 
+                                                                    t-att-style="'width: ' + (patrol.completion_rate || 0) + '%'" 
+                                                                    t-att-aria-valuenow="patrol.completion_rate || 0" 
+                                                                    aria-valuemin="0" aria-valuemax="100">
+                                                                    <t t-esc="patrol.completion_rate || 0"/>%
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <button t-if="patrol.state === 'scheduled'" class="btn btn-sm btn-primary" t-on-click="onStartPatrol" t-att-data-patrol-id="patrol.id">
+                                                                <i class="fa fa-play mr-1"></i>Start
+                                                            </button>
+                                                            <button t-if="patrol.state === 'in_progress'" class="btn btn-sm btn-info" t-on-click="onScanPoint" t-att-data-patrol-id="patrol.id">
+                                                                <i class="fa fa-qrcode mr-1"></i>Scan
+                                                            </button>
+                                                            <button t-if="patrol.state === 'in_progress'" class="btn btn-sm btn-success" t-on-click="onCompletePatrol" t-att-data-patrol-id="patrol.id">
+                                                                <i class="fa fa-check mr-1"></i>Complete
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                </t>
+                                            </t>
+                                            <tr t-if="!state.dashboardData.active_patrols || !state.dashboardData.active_patrols.length">
+                                                <td colspan="4" class="text-center">No active patrols</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upcoming Patrols -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Upcoming Patrols</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Patrol</th>
+                                                <th>Guard</th>
+                                                <th>Scheduled Start</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-if="state.dashboardData.upcoming_patrols and state.dashboardData.upcoming_patrols.length">
+                                                <t t-foreach="state.dashboardData.upcoming_patrols" t-as="patrol" t-key="patrol.id">
+                                                    <tr>
+                                                        <td>
+                                                            <a href="#" t-on-click.prevent="onPatrolCardClick" t-att-data-patrol-id="patrol.id">
+                                                                <t t-esc="patrol.name"/>
+                                                            </a>
+                                                        </td>
+                                                        <td><t t-esc="patrol.guard_name"/></td>
+                                                        <td><t t-esc="patrol.scheduled_start"/></td>
+                                                        <td>
+                                                            <button class="btn btn-sm btn-primary" t-on-click="onStartPatrol" t-att-data-patrol-id="patrol.id">
+                                                                <i class="fa fa-play mr-1"></i>Start
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                </t>
+                                            </t>
+                                            <tr t-if="!state.dashboardData.upcoming_patrols || !state.dashboardData.upcoming_patrols.length">
+                                                <td colspan="4" class="text-center">No upcoming patrols</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_gate_pass_document">
+        <t t-call="web.external_layout">
+            <t t-set="o" t-value="o.with_context(lang=lang)"/>
+            <div class="page">
+                <div class="oe_structure"/>
+                <div class="row">
+                    <div class="col-12 text-center">
+                        <h2>Gate Pass</h2>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-6">
+                        <strong>Gate Pass Number:</strong> <span t-field="o.name"/>
+                    </div>
+                    <div class="col-6">
+                        <strong>Status:</strong> <span t-field="o.state"/>
+                    </div>
+                </div>
+
+                <div class="row mt-2">
+                    <div class="col-6">
+                        <strong>Valid From:</strong> <span t-field="o.valid_from"/>
+                    </div>
+                    <div class="col-6">
+                        <strong>Valid Until:</strong> <span t-field="o.valid_until"/>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h4>Visitor Information</h4>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-6">
+                        <strong>Name:</strong> <span t-field="o.visitor_id.name"/>
+                    </div>
+                    <div class="col-6">
+                        <strong>Phone:</strong> <span t-field="o.visitor_id.phone"/>
+                    </div>
+                </div>
+
+                <div class="row mt-2">
+                    <div class="col-6">
+                        <strong>Email:</strong> <span t-field="o.visitor_id.email"/>
+                    </div>
+                    <div class="col-6">
+                        <strong>Company:</strong> <span t-field="o.visitor_id.company_name"/>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h4>Visit Details</h4>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-6">
+                        <strong>Purpose:</strong> <span t-field="o.purpose"/>
+                    </div>
+                    <div class="col-6">
+                        <strong>Host:</strong> <span t-field="o.host_id.name"/>
+                    </div>
+                </div>
+
+                <div class="row mt-2" t-if="o.access_areas">
+                    <div class="col-12">
+                        <strong>Access Areas:</strong>
+                        <ul>
+                            <t t-foreach="o.access_areas" t-as="area">
+                                <li><span t-field="area.name"/></li>
+                            </t>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Verification Codes Section -->
+                <div class="row mt-4">
+                    <div class="col-12 text-center">
+                        <h4>Verification Codes</h4>
+                    </div>
+                </div>
+                
+                <div class="row mt-2">
+                    <div class="col-6 text-center">
+                        <div t-if="o.qr_code">
+                            <strong>QR Code</strong><br/>
+                            <img t-att-src="image_data_uri(o.qr_code)" style="max-height: 150px; max-width: 150px; margin: 10px auto;"/>
+                            <p class="text-muted mt-1"><small t-field="o.qr_code_text"/></p>
+                        </div>
+                    </div>
+                    <div class="col-6 text-center">
+                        <div t-if="o.barcode">
+                            <strong>Barcode</strong><br/>
+                            <img t-att-src="'/report/barcode/?type=EAN13&amp;value=%s&amp;width=300&amp;height=80' % o.barcode" style="max-height: 80px;"/>
+                            <p class="text-muted mt-1"><small t-field="o.barcode"/></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-6">
+                        <div class="mt-5 mb-2" style="border-top: 1px solid black; width: 80%;"></div>
+                        <strong>Visitor Signature</strong>
+                    </div>
+                    <div class="col-6">
+                        <div class="mt-5 mb-2" style="border-top: 1px solid black; width: 80%;"></div>
+                        <strong>Security Officer Signature</strong>
+                    </div>
+                </div>
+
+                <div class="oe_structure"/>
+            </div>
+        </t>
+    </template>
+
+    <template id="report_gate_pass">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="security_management.report_gate_pass_document"/>
+            </t>
+        </t>
+    </template>
+</odoo>

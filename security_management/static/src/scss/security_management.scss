@@ -1,0 +1,145 @@
+// Security Management SCSS
+
+// QR Scanner styles
+.o_security_qr_scanner {
+    .o_security_qr_video {
+        border-radius: 4px;
+        overflow: hidden;
+        background-color: #f8f9fa;
+    }
+    
+    .o_security_scan_result {
+        min-height: 200px;
+    }
+}
+
+// Patrol Dashboard styles
+.o_security_patrol_dashboard {
+    .o_patrol_card {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    }
+    
+    .progress {
+        height: 10px;
+        border-radius: 5px;
+    }
+    
+    .card {
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+    }
+    
+    .o_patrol_completion_chart,
+    .o_point_coverage_chart {
+        max-height: 250px;
+    }
+}
+
+// Gate Pass styles
+.o_security_gate_pass {
+    .o_gate_pass_qr_code {
+        display: inline-block;
+        padding: 10px;
+        background-color: white;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .badge {
+        font-size: 0.9rem;
+        padding: 0.4rem 0.6rem;
+    }
+}
+
+// Key Management styles
+.o_security_key_dashboard {
+    .o_key_card,
+    .o_key_hub_card {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    }
+    
+    .o_key_status_chart,
+    .o_key_usage_chart {
+        max-height: 250px;
+    }
+}
+
+// Common styles for all dashboards
+.o_refresh_dashboard {
+    .fa-refresh {
+        transition: transform 0.3s ease;
+    }
+    
+    &:hover .fa-refresh {
+        transform: rotate(180deg);
+    }
+}
+
+// Status badge colors
+.badge-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.badge-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.badge-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.badge-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.badge-info {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.badge-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+// Mobile responsiveness
+@media (max-width: 767.98px) {
+    .o_security_patrol_dashboard,
+    .o_security_key_dashboard {
+        .card {
+            margin-bottom: 1rem;
+        }
+    }
+    
+    .o_security_gate_pass {
+        .o_gate_pass_action_buttons {
+            display: flex;
+            flex-wrap: wrap;
+            
+            button {
+                margin-bottom: 0.5rem;
+            }
+        }
+    }
+}

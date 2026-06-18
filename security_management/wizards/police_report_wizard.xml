@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_police_report_wizard_form" model="ir.ui.view">
+        <field name="name">security.police.report.wizard.form</field>
+        <field name="model">security.police.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Police Report Details">
+                <group>
+                    <field name="police_report_number"/>
+                    <field name="police_station"/>
+                    <field name="reported_date"/>
+                    <field name="additional_notes"/>
+                </group>
+                <footer>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    <button string="Confirm" class="btn-primary" name="action_confirm" type="object"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

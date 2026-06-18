@@ -1,0 +1,635 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Patrol Point Form View -->
+    <record id="view_security_patrol_point_form" model="ir.ui.view">
+        <field name="name">security.patrol.point.form</field>
+        <field name="model">security.patrol.point</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_patrols" type="object" class="oe_stat_button" icon="fa-route">
+                            <field name="patrol_count" string="Patrols" widget="statinfo"/>
+                        </button>
+                        <button name="action_generate_qr_code" type="object" class="oe_stat_button" icon="fa-qrcode">
+                            <span>Generate QR</span>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Patrol Point Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="premise_id" options="{'no_create': True}"/>
+                            <field name="point_type"/>
+                            <field name="sequence"/>
+                            <field name="code"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="location_description"/>
+                            <field name="qr_code" readonly="1" widget="image" class="oe_avatar"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Notes">
+                            <field name="notes" placeholder="Add any additional notes or instructions for this patrol point..."/>
+                        </page>
+                        <page string="Patrol History">
+                            <field name="patrol_log_ids">
+                                <tree>
+                                    <field name="patrol_id"/>
+                                    <field name="guard_id"/>
+                                    <field name="check_time"/>
+                                    <field name="status"/>
+                                    <field name="note"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Patrol Point list View -->
+    <record id="view_security_patrol_point_list" model="ir.ui.view">
+        <field name="name">security.patrol.point.list</field>
+        <field name="model">security.patrol.point</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="premise_id"/>
+                <field name="point_type"/>
+                <field name="location_description"/>
+                <field name="patrol_count"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Patrol Point Search View -->
+    <record id="view_security_patrol_point_search" model="ir.ui.view">
+        <field name="name">security.patrol.point.search</field>
+        <field name="model">security.patrol.point</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="premise_id"/>
+                <field name="point_type"/>
+                <field name="location_description"/>
+                <separator/>
+                <filter string="Critical Points" name="critical_points" domain="[('point_type', '=', 'critical')]"/>
+                <filter string="Entrance Points" name="entrance_points" domain="[('point_type', '=', 'entrance')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Premise" name="group_by_premise" context="{'group_by': 'premise_id'}"/>
+                    <filter string="Point Type" name="group_by_type" context="{'group_by': 'point_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Patrol Point Kanban View -->
+    <record id="view_security_patrol_point_kanban" model="ir.ui.view">
+        <field name="name">security.patrol.point.kanban</field>
+        <field name="model">security.patrol.point</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="premise_id"/>
+                <field name="point_type"/>
+                <field name="location_description"/>
+                <field name="patrol_count"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click">
+                            <div class="row">
+                                <div class="col-6">
+                                    <strong><field name="name"/></strong>
+                                </div>
+                                <div class="col-6 text-right">
+                                    <span t-att-class="['badge', 'badge-' + (record.point_type.raw_value == 'critical' ? 'danger' : (record.point_type.raw_value == 'entrance' ? 'primary' : (record.point_type.raw_value == 'parking' ? 'warning' : 'info')))]">
+                                        <field name="point_type"/>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <span><field name="premise_id"/></span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <small><field name="location_description"/></small>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12 text-right">
+                                    <span class="badge badge-secondary"><field name="patrol_count"/> Patrols</span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Patrol Form View -->
+    <record id="view_security_patrol_form" model="ir.ui.view">
+        <field name="name">security.patrol.form</field>
+        <field name="model">security.patrol</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_start" string="Start Patrol" type="object"
+                            invisible="state != 'scheduled'" class="btn-primary"/>
+                    <button name="action_complete" string="Complete Patrol" type="object"
+                            invisible="state != 'in_progress'" class="btn-success"/>
+                    <button name="action_cancel" string="Cancel Patrol" type="object"
+                            invisible="state in ['completed', 'cancelled']" class="btn-danger"/>
+                    <field name="state" widget="statusbar" statusbar_visible="scheduled,in_progress,completed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_logs" type="object" class="oe_stat_button" icon="fa-list-alt">
+                            <field name="log_count" string="Logs" widget="statinfo"/>
+                        </button>
+                        <button name="action_view_incidents" type="object" class="oe_stat_button" icon="fa-exclamation-triangle">
+                            <field name="incident_count" string="Incidents" widget="statinfo"/>
+                        </button>
+                        <button name="action_scan_point" type="object" class="oe_stat_button" icon="fa-qrcode"
+                                invisible="state != 'in_progress'">
+                            <span>Scan Point</span>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Patrol Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="company_id" invisible="1"/>
+                            <field name="premise_id" options="{'no_create': True}" readonly="0" force_save="1"/>
+                            <field name="route_id" options="{'no_create': True}" required="1" domain="[('premise_id', '=', premise_id), '|', ('company_id', '=', company_id), ('company_id', '=', False)]"/>
+                            <field name="guard_id" options="{'no_create': True}"/>
+                            <field name="team_id" options="{'no_create': True}"/>
+                            <field name="patrol_type"/>
+                            <field name="scheduled_start" required="1" default_focus="1" widget="datetime"/>
+                        </group>
+                        <group>
+                            <field name="start_time"/>
+                            <field name="end_time"/>
+                            <field name="actual_start_time" readonly="1" invisible="actual_start_time == False"/>
+                            <field name="actual_end_time" readonly="1" invisible="actual_end_time == False"/>
+                            <field name="duration" widget="float_time" readonly="1" invisible="duration == 0"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Patrol Points">
+                            <field name="patrol_point_ids" widget="many2many_checkboxes" options="{'no_create': True}">
+                                <tree>
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="point_type"/>
+                                    <field name="location_description"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Patrol Logs" invisible="log_count == 0">
+                            <field name="patrol_log_ids">
+                                <tree>
+                                    <field name="patrol_point_id"/>
+                                    <field name="check_time"/>
+                                    <field name="status"/>
+                                    <field name="note"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes" placeholder="Add any additional notes or instructions for this patrol..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Patrol list View -->
+    <record id="view_security_patrol_list" model="ir.ui.view">
+        <field name="name">security.patrol.list</field>
+        <field name="model">security.patrol</field>
+        <field name="arch" type="xml">
+            <tree decoration-info="state == 'scheduled'" decoration-warning="state == 'in_progress'"
+                  decoration-success="state == 'completed'" decoration-muted="state == 'cancelled'">
+                <field name="name"/>
+                <field name="premise_id"/>
+                <field name="guard_id"/>
+                <field name="start_time"/>
+                <field name="end_time"/>
+                <field name="patrol_type"/>
+                <field name="state"/>
+                <field name="completion_rate" widget="progressbar"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Patrol Search View -->
+    <record id="view_security_patrol_search" model="ir.ui.view">
+        <field name="name">security.patrol.search</field>
+        <field name="model">security.patrol</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="premise_id"/>
+                <field name="guard_id"/>
+                <field name="team_id"/>
+                <separator/>
+                <filter string="Scheduled" name="scheduled_patrols" domain="[('state', '=', 'scheduled')]"/>
+                <filter string="In Progress" name="in_progress_patrols" domain="[('state', '=', 'in_progress')]"/>
+                <filter string="Completed" name="completed_patrols" domain="[('state', '=', 'completed')]"/>
+                <filter string="Cancelled" name="cancelled_patrols" domain="[('state', '=', 'cancelled')]"/>
+                <separator/>
+                <filter string="Today" name="today_patrols" domain="[('start_time', '&gt;=', context_today().strftime('%Y-%m-%d')),
+                                                                    ('start_time', '&lt;', (context_today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d'))]"/>
+                <filter string="This Week" name="this_week_patrols" domain="[('start_time', '&gt;=', (context_today() - datetime.timedelta(days=context_today().weekday())).strftime('%Y-%m-%d')),
+                                                                           ('start_time', '&lt;', (context_today() + datetime.timedelta(days=6-context_today().weekday())).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Premise" name="group_by_premise" context="{'group_by': 'premise_id'}"/>
+                    <filter string="Guard" name="group_by_guard" context="{'group_by': 'guard_id'}"/>
+                    <filter string="Team" name="group_by_team" context="{'group_by': 'team_id'}"/>
+                    <filter string="Status" name="group_by_state" context="{'group_by': 'state'}"/>
+                    <filter string="Day" name="group_by_day" context="{'group_by': 'start_time:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Patrol Calendar View -->
+    <record id="view_security_patrol_calendar" model="ir.ui.view">
+        <field name="name">security.patrol.calendar</field>
+        <field name="model">security.patrol</field>
+        <field name="arch" type="xml">
+            <calendar string="Patrols" date_start="start_time" date_stop="end_time" color="guard_id" mode="month">
+                <field name="name"/>
+                <field name="premise_id"/>
+                <field name="state"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- Patrol Kanban View -->
+    <record id="view_security_patrol_kanban" model="ir.ui.view">
+        <field name="name">security.patrol.kanban</field>
+        <field name="model">security.patrol</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="premise_id"/>
+                <field name="guard_id"/>
+                <field name="start_time"/>
+                <field name="end_time"/>
+                <field name="state"/>
+                <field name="completion_rate"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click">
+                            <div class="row mb-1">
+                                <div class="col-6">
+                                    <strong><field name="name"/></strong>
+                                </div>
+                                <div class="col-6 text-right">
+                                    <span t-att-class="['badge', 'badge-' + (record.state.raw_value == 'scheduled' ? 'info' : (record.state.raw_value == 'in_progress' ? 'warning' : (record.state.raw_value == 'completed' ? 'success' : 'secondary')))]">
+                                        <field name="state"/>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="row mb-1">
+                                <div class="col-12">
+                                    <i class="fa fa-building-o mr-1"/><field name="premise_id"/>
+                                </div>
+                            </div>
+                            <div class="row mb-1">
+                                <div class="col-12">
+                                    <i class="fa fa-user mr-1"/><field name="guard_id"/>
+                                </div>
+                            </div>
+                            <div class="row mb-1">
+                                <div class="col-6">
+                                    <i class="fa fa-clock-o mr-1"/>
+                                    <t t-if="record.start_time.raw_value">
+                                        <field name="start_time" widget="time"/>
+                                    </t>
+                                    <t t-if="record.start_time.raw_value and record.end_time.raw_value"> - </t>
+                                    <t t-if="record.end_time.raw_value">
+                                        <field name="end_time" widget="time"/>
+                                    </t>
+                                </div>
+                                <div class="col-6 text-right">
+                                    <t t-if="record.start_time.raw_value">
+                                        <field name="start_time" widget="date"/>
+                                    </t>
+                                </div>
+                            </div>
+                            <div class="row" t-if="record.completion_rate.raw_value > 0">
+                                <div class="col-12">
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar"
+                                             t-attf-style="width: #{record.completion_rate.raw_value}%;"
+                                             t-attf-aria-valuenow="#{record.completion_rate.raw_value}"
+                                             aria-valuemin="0" aria-valuemax="100">
+                                            <t t-esc="record.completion_rate.raw_value"/>%
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Patrol Log Form View -->
+    <record id="view_security_patrol_log_form" model="ir.ui.view">
+        <field name="name">security.patrol.log.form</field>
+        <field name="model">security.patrol.log</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="patrol_id" options="{'no_create': True}"/>
+                            <field name="patrol_point_id" options="{'no_create': True}"/>
+                            <field name="guard_id" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="check_time"/>
+                            <field name="status"/>
+                            <field name="location_latitude"/>
+                            <field name="location_longitude"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Notes">
+                            <field name="note" placeholder="Add any notes or observations..."/>
+                        </page>
+                        <page string="Images" invisible="image_ids == []">
+                            <field name="image_ids" widget="many2many_binary" options="{'preview_image': 'image_128'}"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Patrol Log list View -->
+    <record id="view_security_patrol_log_list" model="ir.ui.view">
+        <field name="name">security.patrol.log.list</field>
+        <field name="model">security.patrol.log</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="status == 'issue'" decoration-success="status == 'ok'">
+                <field name="patrol_id"/>
+                <field name="patrol_point_id"/>
+                <field name="guard_id"/>
+                <field name="check_time"/>
+                <field name="status"/>
+                <field name="note"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Patrol Log Search View -->
+    <record id="view_security_patrol_log_search" model="ir.ui.view">
+        <field name="name">security.patrol.log.search</field>
+        <field name="model">security.patrol.log</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="patrol_id"/>
+                <field name="patrol_point_id"/>
+                <field name="guard_id"/>
+                <field name="note"/>
+                <separator/>
+                <filter string="Issues Reported" name="issues" domain="[('status', '=', 'issue')]"/>
+                <filter string="Today" name="today" domain="[('check_time', '&gt;=', context_today().strftime('%Y-%m-%d')),
+                                                           ('check_time', '&lt;', (context_today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Patrol" name="group_by_patrol" context="{'group_by': 'patrol_id'}"/>
+                    <filter string="Patrol Point" name="group_by_point" context="{'group_by': 'patrol_point_id'}"/>
+                    <filter string="Guard" name="group_by_guard" context="{'group_by': 'guard_id'}"/>
+                    <filter string="Status" name="group_by_status" context="{'group_by': 'status'}"/>
+                    <filter string="Day" name="group_by_day" context="{'group_by': 'check_time:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Patrol Log Scan Form View -->
+    <record id="view_security_patrol_log_scan_form" model="ir.ui.view">
+        <field name="name">security.patrol.log.scan.form</field>
+        <field name="model">security.patrol.log</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="alert alert-info" role="alert">
+                        <p>Scan the QR code of the patrol point to log your visit.</p>
+                    </div>
+                    <group>
+                        <field name="patrol_id" readonly="1"/>
+                        <field name="guard_id"/>
+                        <field name="point_id" options="{'no_create': True}"/>
+                        <field name="timestamp" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="issue_detected"/>
+                        <field name="issue_description" invisible="issue_detected == False"/>
+                        <field name="notes"/>
+                    </group>
+                    <footer>
+                        <button string="Log Point" name="action_log_point" type="object" class="btn-primary"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action for Patrol Points -->
+    <record id="action_security_patrol_point" model="ir.actions.act_window">
+        <field name="name">Patrol Points</field>
+        <field name="res_model">security.patrol.point</field>
+        <field name="view_mode">tree,form,kanban</field>
+        <field name="search_view_id" ref="view_security_patrol_point_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first patrol point!
+            </p>
+            <p>
+                Patrol points are specific locations that security guards must check during their patrols.
+                Each point can be assigned to a premise and can have a QR code for verification.
+            </p>
+        </field>
+    </record>
+
+    <!-- Action for Patrols -->
+    <record id="action_security_patrol" model="ir.actions.act_window">
+        <field name="name">Patrols</field>
+        <field name="res_model">security.patrol</field>
+        <field name="view_mode">kanban,tree,form,calendar</field>
+        <field name="search_view_id" ref="view_security_patrol_search"/>
+        <field name="context">{'search_default_scheduled_patrols': 1, 'search_default_in_progress_patrols': 1, 'group_by': 'state'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Schedule your first patrol!
+            </p>
+            <p>
+                Patrols are scheduled security checks of premises and their patrol points.
+                You can assign guards to patrols and track their progress.
+            </p>
+        </field>
+    </record>
+
+    <!-- Action for Patrol Logs -->
+    <record id="action_security_patrol_log" model="ir.actions.act_window">
+        <field name="name">Patrol Logs</field>
+        <field name="res_model">security.patrol.log</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_security_patrol_log_search"/>
+        <field name="context">{'search_default_today': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No patrol logs yet!
+            </p>
+            <p>
+                Patrol logs are created when guards check patrol points during their patrols.
+                They record the time, status, and any notes about the patrol point.
+            </p>
+        </field>
+    </record>
+
+    <!-- Patrol Route Views -->
+    <!-- Patrol Route Form View -->
+    <record id="view_security_patrol_route_form" model="ir.ui.view">
+        <field name="name">security.patrol.route.form</field>
+        <field name="model">security.patrol.route</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Route Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="premise_id" options="{'no_create': True}" required="1"/>
+                            <field name="client_id" readonly="1"/>
+                            <field name="frequency"/>
+                            <field name="days_of_week" widget="many2many_tags"
+                                   invisible="frequency != 'weekly'" required="frequency == 'weekly'"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="start_time" widget="float_time"/>
+                            <field name="end_time" widget="float_time"/>
+                            <field name="duration" widget="float_time"/>
+                            <field name="color" widget="color_picker"/>
+                            <field name="active" widget="boolean_toggle"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Patrol Points" name="patrol_points">
+                            <field name="point_ids" widget="many2many" domain="[('premise_id', '=', premise_id)]">
+                                <tree>
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="code"/>
+                                    <field name="point_type"/>
+                                    <field name="location_description"/>
+                                    <field name="check_interval"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Assigned Teams" name="teams">
+                            <field name="team_ids"/>
+                        </page>
+                        <page string="Description" name="description">
+                            <field name="description" placeholder="Add a detailed description of this patrol route..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Patrol Route list View -->
+    <record id="view_security_patrol_route_list" model="ir.ui.view">
+        <field name="name">security.patrol.route.list</field>
+        <field name="model">security.patrol.route</field>
+        <field name="arch" type="xml">
+            <tree decoration-muted="active == False">
+                <field name="name"/>
+                <field name="premise_id"/>
+                <field name="client_id"/>
+                <field name="frequency"/>
+                <field name="point_count"/>
+                <field name="duration" widget="float_time"/>
+                <field name="patrol_count"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="active" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Patrol Route Search View -->
+    <record id="view_security_patrol_route_search" model="ir.ui.view">
+        <field name="name">security.patrol.route.search</field>
+        <field name="model">security.patrol.route</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="premise_id"/>
+                <field name="client_id"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <separator/>
+                <filter string="Daily Routes" name="daily_routes" domain="[('frequency', '=', 'daily')]"/>
+                <filter string="Weekly Routes" name="weekly_routes" domain="[('frequency', '=', 'weekly')]"/>
+                <filter string="Custom Routes" name="custom_routes" domain="[('frequency', '=', 'custom')]"/>
+                <separator/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Premise" name="group_by_premise" context="{'group_by': 'premise_id'}"/>
+                    <filter string="Client" name="group_by_client" context="{'group_by': 'client_id'}"/>
+                    <filter string="Frequency" name="group_by_frequency" context="{'group_by': 'frequency'}"/>
+                    <filter string="Company" name="group_by_company" context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action for Patrol Routes -->
+    <record id="action_security_patrol_route" model="ir.actions.act_window">
+        <field name="name">Patrol Routes</field>
+        <field name="res_model">security.patrol.route</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_security_patrol_route_search"/>
+        <field name="context">{'search_default_active': 1, 'default_company_id': allowed_company_ids[0]}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first patrol route!
+            </p>
+            <p>
+                Patrol routes define a set of points that need to be checked during security patrols.
+                You can define the frequency, timing, and assign teams to routes.
+            </p>
+        </field>
+    </record>
+</odoo>

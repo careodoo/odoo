@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Main Menu with Dashboard action (client action was causing issues) -->
+    <menuitem id="menu_security_root" name="Security Manager" sequence="10" web_icon="security_management,static/description/icon.png" action="action_security_dashboard"/>
+    
+    <!-- Keep the dashboard menu for direct client action access -->
+    <menuitem id="menu_security_dashboard" name="Dashboard" parent="menu_security_root" sequence="1" action="action_security_dashboard"/>
+    
+    <!-- Main Sections -->
+    <menuitem id="menu_security_main" name="Security" parent="menu_security_root" sequence="10"/>
+    <menuitem id="menu_security_operations" name="Operations" parent="menu_security_root" sequence="20"/>
+    <menuitem id="menu_security_task" name="Tasks" parent="menu_security_operations" sequence="10"/>
+    <menuitem id="menu_security_team" name="Teams" parent="menu_security_main" sequence="30"/>
+    <menuitem id="menu_security_schedule" name="Scheduling" parent="menu_security_operations" sequence="20"/>
+    
+    <!-- Client Management -->
+    <menuitem id="menu_security_client" name="Clients" parent="menu_security_main" sequence="10"/>
+    <menuitem id="menu_security_client_list" name="Clients" parent="menu_security_client" sequence="1" action="action_security_client"/>
+    <menuitem id="menu_security_contact_list" name="Contacts" parent="menu_security_client" sequence="2" action="action_security_contact"/>
+    
+    <!-- Premises Management -->
+    <menuitem id="menu_security_premise" name="Premises" parent="menu_security_main" sequence="20"/>
+    <menuitem id="menu_security_premise_list" name="Premises" parent="menu_security_premise" sequence="1" action="action_security_premise"/>
+    <menuitem id="menu_security_floor_list" name="Floors" parent="menu_security_premise" sequence="2" action="action_security_floor"/>
+    <menuitem id="menu_security_unit_list" name="Units" parent="menu_security_premise" sequence="3" action="action_security_unit"/>
+    
+    <!-- Team Management -->
+    <menuitem id="menu_security_team_main" name="Security Teams" parent="menu_security_team" action="action_security_team" sequence="10"/>
+    <menuitem id="menu_security_guard" name="Security Guards" parent="menu_security_team" action="action_security_guard" sequence="20"/>
+    <menuitem id="menu_security_employee" name="Security Employees" parent="menu_security_team" action="action_security_employee" sequence="30"/>
+    
+    <!-- Task Management -->
+    <menuitem id="menu_security_task_main" name="All Tasks" parent="menu_security_task" action="action_security_task" sequence="10"/>
+    <menuitem id="menu_security_my_task" name="My Tasks" parent="menu_security_task" action="action_security_my_task" sequence="20"/>
+    
+    <!-- Patrol Management -->
+    <menuitem id="menu_security_patrol" name="Patrolling" parent="menu_security_operations" sequence="30"/>
+    <menuitem id="menu_security_patrol_point" name="Patrol Points" parent="menu_security_patrol" action="action_security_patrol_point" sequence="10"/>
+    <menuitem id="menu_security_patrol_main" name="Patrols" parent="menu_security_patrol" action="action_security_patrol" sequence="20"/>
+    <menuitem id="menu_security_patrol_log" name="Patrol Logs" parent="menu_security_patrol" action="action_security_patrol_log" sequence="30"/>
+    <menuitem id="menu_security_patrol_dashboard" name="Patrol Dashboard" parent="menu_security_patrol" action="action_patrol_dashboard" sequence="40"/>
+    
+    <!-- Schedule Management -->
+    <menuitem id="menu_security_schedule_main" name="Schedules" parent="menu_security_schedule" action="action_security_schedule" sequence="10"/>
+    <menuitem id="menu_security_shift" name="Shifts" parent="menu_security_schedule" action="action_security_shift" sequence="20"/>
+    <menuitem id="menu_security_assignment" name="Assignments" parent="menu_security_schedule" action="action_security_assignment" sequence="30"/>
+    <menuitem id="menu_security_shift_assignment" name="Shift Assignments" parent="menu_security_schedule" action="action_security_shift_assignment" sequence="40"/>
+    
+    <!-- Key Management -->
+    <menuitem id="menu_security_key" name="Key Management" parent="menu_security_operations" sequence="40"/>
+    <menuitem id="menu_security_key_hub" name="Key Hubs" parent="menu_security_key" action="action_security_key_hub" sequence="10"/>
+    <menuitem id="menu_security_key_main" name="Keys" parent="menu_security_key" action="action_security_key" sequence="20"/>
+    <menuitem id="menu_security_key_log" name="Key Logs" parent="menu_security_key" action="action_security_key_log" sequence="30"/>
+    
+    <!-- Gate Cashier Management -->
+    <menuitem id="menu_security_gate_cashier_operations" name="Gate Cashiers" parent="menu_security_operations" sequence="45"/>
+    
+    <!-- Visitor Management -->
+    <menuitem id="menu_security_visitor" name="Visitors" parent="menu_security_operations" sequence="50"/>
+    <menuitem id="menu_security_gate_pass" name="Gate Passes" parent="menu_security_visitor" action="action_security_gate_pass" sequence="10"/>
+    <menuitem id="menu_security_gate_pass_scanner" name="Gate Pass Scanner" parent="menu_security_visitor" action="action_gate_pass_scanner_client" sequence="15"/>
+    <menuitem id="menu_security_visit_log" name="Visit Logs" parent="menu_security_visitor" action="action_security_visit_log" sequence="20"/>
+    
+    <!-- Inspection & Reporting -->
+    <menuitem id="menu_security_inspection" name="Inspections" parent="menu_security_operations" sequence="60"/>
+    <menuitem id="menu_security_inspection_main" name="Inspections" parent="menu_security_inspection" action="action_security_inspection" sequence="10"/>
+    <menuitem id="menu_security_incident_report" name="Incident Reports" parent="menu_security_inspection" action="action_security_incident_report" sequence="20"/>
+    <menuitem id="menu_security_inspection_issue" name="Inspection Issues" parent="menu_security_inspection" action="action_security_inspection_issue" sequence="20"/>
+    <!-- Configuration -->
+    <menuitem id="menu_security_configuration" name="Configuration" parent="menu_security_root" sequence="100" groups="security_management.group_security_manager,security_management.group_security_admin"/>
+    
+    <!-- Team Configuration -->
+    <menuitem id="menu_security_team_config" name="Team Configuration" parent="menu_security_configuration" sequence="10"/>
+    <menuitem id="menu_security_role" name="Security Roles" parent="menu_security_team_config" action="action_security_role" sequence="10"/>
+    <menuitem id="menu_security_team_role" name="Team Roles" parent="menu_security_team_config" action="action_security_team_role" sequence="20"/>
+    
+    <!-- Task Configuration -->
+    <menuitem id="menu_security_task_config" name="Task Configuration" parent="menu_security_configuration" sequence="20"/>
+    <menuitem id="menu_security_task_type" name="Task Types" parent="menu_security_task_config" action="action_security_task_type" sequence="10"/>
+    <menuitem id="menu_security_task_category" name="Task Categories" parent="menu_security_task_config" action="action_security_task_category" sequence="10"/>
+    <menuitem id="menu_security_task_checklist_template" name="Checklist Templates" parent="menu_security_task_config" action="action_security_task_checklist_template" sequence="20"/>
+    
+    <!-- Schedule Configuration -->
+    <menuitem id="menu_security_schedule_config" name="Schedule Configuration" parent="menu_security_configuration" sequence="30"/>
+    <menuitem id="menu_security_shift_type" name="Shift Types" parent="menu_security_schedule_config" action="action_security_shift_type" sequence="10"/>
+    
+    <!-- Patrol Configuration -->
+    <menuitem id="menu_security_patrol_config" name="Patrol Configuration" parent="menu_security_configuration" sequence="40"/>
+    <menuitem id="menu_security_patrol_route" name="Patrol Routes" parent="menu_security_patrol_config" action="action_security_patrol_route" sequence="10"/>
+    
+    <!-- Visitor Configuration -->
+    <menuitem id="menu_security_visitor_config" name="Visitor Configuration" parent="menu_security_configuration" sequence="50"/>
+    
+    <!-- Incident Configuration -->
+    <menuitem id="menu_security_incident_config" name="Incident Configuration" parent="menu_security_configuration" sequence="60"/>
+    
+    <!-- Reports -->
+    <menuitem id="menu_security_reports" name="Reports" parent="menu_security_root" sequence="90"/>
+    <menuitem id="menu_security_patrol_report" name="Patrol Reports" parent="menu_security_reports" action="action_security_patrol_report" sequence="10"/>
+    <menuitem id="menu_security_key_report" name="Key Reports" parent="menu_security_reports" action="action_security_key_report" sequence="20"/>
+    <menuitem id="menu_security_inspection_report" name="Inspection Reports" parent="menu_security_reports" action="action_security_inspection_report" sequence="30"/>
+    <menuitem id="menu_security_incident_report_summary" name="Incident Summary" parent="menu_security_reports" action="action_security_incident_report_summary" sequence="40"/>
+    <menuitem id="menu_security_schedule_report" name="Schedule Reports" parent="menu_security_reports" action="action_security_schedule_report" sequence="50"/>
+</odoo>

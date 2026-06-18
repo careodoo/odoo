@@ -1,0 +1,497 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Security Gate Cashier Views -->
+    <record id="view_security_gate_cashier_list" model="ir.ui.view">
+        <field name="name">security.gate.cashier.list</field>
+        <field name="model">security.gate.cashier</field>
+        <field name="arch" type="xml">
+            <tree string="Security Gate Cashiers">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="gate_id"/>
+                <field name="drawer_balance" widget="monetary"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="total_transactions_today"/>
+                <field name="total_amount_today" widget="monetary"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="active" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_security_gate_cashier_form" model="ir.ui.view">
+        <field name="name">security.gate.cashier.form</field>
+        <field name="model">security.gate.cashier</field>
+        <field name="arch" type="xml">
+            <form string="Security Gate Cashier">
+                <header>
+                    <button name="action_start_shift" string="Start Shift" type="object" class="oe_highlight" invisible="cash_drawer_id == False"/>
+                    <button name="action_end_shift" string="End Shift" type="object" class="btn-danger"/>
+                    <button name="action_open_cash_drawer" string="Open Drawer" type="object" class="btn-secondary" invisible="cash_drawer_id == False"/>
+                    <button name="action_count_drawer" string="Count Drawer" type="object" class="btn-secondary" invisible="cash_drawer_id == False"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_transactions" type="object" class="oe_stat_button" icon="fa-money">
+                            <field name="total_transactions_today" widget="statinfo" string="Today's Transactions"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" invisible="active == True"/>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="employee_id"/>
+                            <field name="user_id"/>
+                            <field name="gate_id"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="shift_start" widget="float_time"/>
+                            <field name="shift_end" widget="float_time"/>
+                            <field name="cash_drawer_id"/>
+                            <field name="drawer_balance" widget="monetary"/>
+                            <field name="last_balance_check"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Statistics">
+                            <group>
+                                <group string="Transaction Statistics">
+                                    <field name="total_transactions_today"/>
+                                    <field name="total_amount_today" widget="monetary"/>
+                                </group>
+                                <group string="Access Control Statistics">
+                                    <field name="access_granted_count"/>
+                                    <field name="access_denied_count"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Security &amp; Compliance">
+                            <group>
+                                <field name="last_training_date"/>
+                                <field name="security_level"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_security_gate_cashier_search" model="ir.ui.view">
+        <field name="name">security.gate.cashier.search</field>
+        <field name="model">security.gate.cashier</field>
+        <field name="arch" type="xml">
+            <search string="Search Security Gate Cashiers">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="gate_id"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Gate" name="gate" domain="[]" context="{'group_by': 'gate_id'}"/>
+                    <filter string="Security Level" name="security_level" domain="[]" context="{'group_by': 'security_level'}"/>
+                    <filter string="Company" name="company" domain="[]" context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Cash Drawer Views -->
+    <record id="view_security_gate_cash_drawer_list" model="ir.ui.view">
+        <field name="name">security.gate.cash.drawer.list</field>
+        <field name="model">security.gate.cash.drawer</field>
+        <field name="arch" type="xml">
+            <tree string="Cash Drawers">
+                <field name="name"/>
+                <field name="gate_id"/>
+                <field name="current_balance" widget="monetary"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="status"/>
+                <field name="last_balance_check"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_security_gate_cash_drawer_form" model="ir.ui.view">
+        <field name="name">security.gate.cash.drawer.form</field>
+        <field name="model">security.gate.cash.drawer</field>
+        <field name="arch" type="xml">
+            <form string="Cash Drawer">
+                <header>
+                    <button name="action_open_drawer" string="Open Drawer" type="object" class="oe_highlight" invisible="status == 'open'"/>
+                    <button name="action_close_drawer" string="Close Drawer" type="object" class="btn-danger" invisible="status == 'closed'"/>
+                    <field name="status" widget="statusbar" statusbar_visible="closed,open,counting,discrepancy"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" invisible="active == True"/>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="gate_id"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="current_balance" widget="monetary"/>
+                            <field name="last_balance_check"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Transactions">
+                            <field name="transaction_ids">
+                                <tree>
+                                    <field name="transaction_date"/>
+                                    <field name="transaction_type"/>
+                                    <field name="amount" widget="monetary"/>
+                                    <field name="currency_id" invisible="1"/>
+                                    <field name="notes"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Counts">
+                            <field name="count_ids">
+                                <tree>
+                                    <field name="count_date"/>
+                                    <field name="cashier_id"/>
+                                    <field name="expected_amount" widget="monetary"/>
+                                    <field name="counted_amount" widget="monetary"/>
+                                    <field name="discrepancy" widget="monetary"/>
+                                    <field name="currency_id" invisible="1"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Cash Drawer Count Views -->
+    <record id="view_security_gate_cash_drawer_count_list" model="ir.ui.view">
+        <field name="name">security.gate.cash.drawer.count.list</field>
+        <field name="model">security.gate.cash.drawer.count</field>
+        <field name="arch" type="xml">
+            <tree string="Cash Drawer Counts">
+                <field name="count_date"/>
+                <field name="cash_drawer_id"/>
+                <field name="cashier_id"/>
+                <field name="expected_amount" widget="monetary"/>
+                <field name="counted_amount" widget="monetary"/>
+                <field name="discrepancy" widget="monetary"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="state"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_security_gate_cash_drawer_count_form" model="ir.ui.view">
+        <field name="name">security.gate.cash.drawer.count.form</field>
+        <field name="model">security.gate.cash.drawer.count</field>
+        <field name="arch" type="xml">
+            <form string="Cash Drawer Count">
+                <header>
+                    <button name="action_confirm" string="Confirm Count" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,discrepancy"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="cash_drawer_id"/>
+                            <field name="cashier_id"/>
+                            <field name="count_date"/>
+                        </group>
+                        <group>
+                            <field name="expected_amount" widget="monetary"/>
+                            <field name="counted_amount" widget="monetary"/>
+                            <field name="discrepancy" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="company_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Denominations">
+                            <group>
+                                <group string="Notes">
+                                    <field name="notes_200"/>
+                                    <field name="notes_100"/>
+                                    <field name="notes_50"/>
+                                    <field name="notes_20"/>
+                                    <field name="notes_10"/>
+                                    <field name="notes_5"/>
+                                </group>
+                                <group string="Coins">
+                                    <field name="coins_2"/>
+                                    <field name="coins_1"/>
+                                    <field name="coins_05"/>
+                                    <field name="coins_025"/>
+                                    <field name="coins_01"/>
+                                    <field name="coins_005"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Cashier Shift Views -->
+    <record id="view_security_gate_cashier_shift_list" model="ir.ui.view">
+        <field name="name">security.gate.cashier.shift.list</field>
+        <field name="model">security.gate.cashier.shift</field>
+        <field name="arch" type="xml">
+            <tree string="Cashier Shifts">
+                <field name="cashier_id"/>
+                <field name="gate_id"/>
+                <field name="start_time"/>
+                <field name="end_time"/>
+                <field name="duration"/>
+                <field name="starting_balance" widget="monetary"/>
+                <field name="ending_balance" widget="monetary"/>
+                <field name="transaction_count"/>
+                <field name="transaction_total" widget="monetary"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="state"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_security_gate_cashier_shift_form" model="ir.ui.view">
+        <field name="name">security.gate.cashier.shift.form</field>
+        <field name="model">security.gate.cashier.shift</field>
+        <field name="arch" type="xml">
+            <form string="Cashier Shift">
+                <header>
+                    <field name="state" widget="statusbar" statusbar_visible="open,closed,discrepancy"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="cashier_id"/>
+                            <field name="gate_id"/>
+                            <field name="start_time"/>
+                            <field name="end_time"/>
+                            <field name="duration"/>
+                        </group>
+                        <group>
+                            <field name="starting_balance" widget="monetary"/>
+                            <field name="ending_balance" widget="monetary"/>
+                            <field name="expected_balance" widget="monetary"/>
+                            <field name="discrepancy" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Transactions">
+                            <field name="transaction_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="payment_date"/>
+                                    <field name="amount" widget="monetary"/>
+                                    <field name="currency_id" invisible="1"/>
+                                    <field name="payment_method"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Wizard Form Views -->
+    <record id="view_security_gate_cash_drawer_count_wizard_form" model="ir.ui.view">
+        <field name="name">security.gate.cash.drawer.count.wizard.form</field>
+        <field name="model">security.gate.cash.drawer.count.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Count Cash Drawer">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="cash_drawer_id" readonly="1"/>
+                            <field name="cashier_id" required="1"/>
+                            <field name="count_date"/>
+                            <field name="expected_amount" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="counted_amount" widget="monetary"/>
+                            <field name="discrepancy" widget="monetary"/>
+                            <field name="company_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Denominations">
+                            <group>
+                                <group string="Notes">
+                                    <field name="notes_200"/>
+                                    <field name="notes_100"/>
+                                    <field name="notes_50"/>
+                                    <field name="notes_20"/>
+                                    <field name="notes_10"/>
+                                    <field name="notes_5"/>
+                                </group>
+                                <group string="Coins">
+                                    <field name="coins_2"/>
+                                    <field name="coins_1"/>
+                                    <field name="coins_05"/>
+                                    <field name="coins_025"/>
+                                    <field name="coins_01"/>
+                                    <field name="coins_005"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <footer>
+                    <button name="action_confirm_count" string="Confirm Count" type="object" class="oe_highlight"/>
+                    <button special="cancel" string="Cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_security_gate_cashier_end_shift_wizard_form" model="ir.ui.view">
+        <field name="name">security.gate.cashier.end.shift.wizard.form</field>
+        <field name="model">security.gate.cashier.end.shift.wizard</field>
+        <field name="arch" type="xml">
+            <form string="End Shift">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="shift_id" invisible="1"/>
+                            <field name="cashier_id" readonly="1"/>
+                            <field name="cash_drawer_id" readonly="1"/>
+                            <field name="start_time" readonly="1"/>
+                            <field name="end_time"/>
+                            <field name="duration" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="starting_balance" widget="monetary" readonly="1"/>
+                            <field name="expected_balance" widget="monetary" readonly="1"/>
+                            <field name="counted_amount" widget="monetary"/>
+                            <field name="discrepancy" widget="monetary"/>
+                            <field name="transaction_count" readonly="1"/>
+                            <field name="transaction_total" widget="monetary" readonly="1"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Denominations">
+                            <group>
+                                <group string="Notes">
+                                    <field name="notes_200"/>
+                                    <field name="notes_100"/>
+                                    <field name="notes_50"/>
+                                    <field name="notes_20"/>
+                                    <field name="notes_10"/>
+                                    <field name="notes_5"/>
+                                </group>
+                                <group string="Coins">
+                                    <field name="coins_2"/>
+                                    <field name="coins_1"/>
+                                    <field name="coins_05"/>
+                                    <field name="coins_025"/>
+                                    <field name="coins_01"/>
+                                    <field name="coins_005"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <footer>
+                    <button name="action_end_shift" string="End Shift" type="object" class="oe_highlight"/>
+                    <button special="cancel" string="Cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Menu Actions -->
+    <record id="action_security_gate_cashier" model="ir.actions.act_window">
+        <field name="name">Gate Cashiers</field>
+        <field name="res_model">security.gate.cashier</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first security gate cashier
+            </p>
+        </field>
+    </record>
+
+    <record id="action_security_gate_payment" model="ir.actions.act_window">
+        <field name="name">Payment Checkout</field>
+        <field name="res_model">security.gate.pass.payment</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first Payment Checkout
+            </p>
+        </field>
+    </record>
+
+    <record id="action_security_gate_cash_drawer" model="ir.actions.act_window">
+        <field name="name">Cash Drawers</field>
+        <field name="res_model">security.gate.cash.drawer</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first cash drawer
+            </p>
+        </field>
+    </record>
+
+    <record id="action_security_gate_cash_drawer_count" model="ir.actions.act_window">
+        <field name="name">Cash Drawer Counts</field>
+        <field name="res_model">security.gate.cash.drawer.count</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No cash drawer counts yet
+            </p>
+        </field>
+    </record>
+
+    <record id="action_security_gate_cashier_shift" model="ir.actions.act_window">
+        <field name="name">Cashier Shifts</field>
+        <field name="res_model">security.gate.cashier.shift</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No cashier shifts yet
+            </p>
+        </field>
+    </record>
+
+    <record id="action_security_gate" model="ir.actions.act_window">
+        <field name="name">Security Gates</field>
+        <field name="res_model">security.gate</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first security gate
+            </p>
+        </field>
+    </record>
+
+</odoo>

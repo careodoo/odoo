@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- Security Manager Category -->
+        <record id="module_security_manager_category" model="ir.module.category">
+            <field name="name">Security Manager</field>
+            <field name="description">Security service management</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <!-- Security Groups -->
+        <record id="group_security_user" model="res.groups">
+            <field name="name">User</field>
+            <field name="category_id" ref="module_security_manager_category"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <record id="group_security_guard" model="res.groups">
+            <field name="name">Guard</field>
+            <field name="category_id" ref="module_security_manager_category"/>
+            <field name="implied_ids" eval="[(4, ref('group_security_user'))]"/>
+        </record>
+
+        <record id="group_security_manager" model="res.groups">
+            <field name="name">Manager</field>
+            <field name="category_id" ref="module_security_manager_category"/>
+            <field name="implied_ids" eval="[(4, ref('group_security_guard'))]"/>
+            <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+        </record>
+
+        <record id="group_security_admin" model="res.groups">
+            <field name="name">Administrator</field>
+            <field name="category_id" ref="module_security_manager_category"/>
+            <field name="implied_ids" eval="[(4, ref('group_security_manager'))]"/>
+            <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+        </record>
+
+        <!-- Multi-company rules -->
+        <record id="security_client_comp_rule" model="ir.rule">
+            <field name="name">Security Client: Multi-company</field>
+            <field name="model_id" ref="model_security_client"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+        
+        <record id="security_patrol_point_comp_rule" model="ir.rule">
+            <field name="name">Security Patrol Point: Multi-company</field>
+            <field name="model_id" ref="model_security_patrol_point"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+        
+        <record id="security_employee_comp_rule" model="ir.rule">
+            <field name="name">Security Employee: Multi-company</field>
+            <field name="model_id" ref="model_security_employee"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+        
+        <record id="security_skill_comp_rule" model="ir.rule">
+            <field name="name">Security Skill: Multi-company</field>
+            <field name="model_id" ref="model_security_skill"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+        
+        <!-- Gate Cashier multi-company rules -->
+        <record id="security_gate_cashier_comp_rule" model="ir.rule">
+            <field name="name">Security Gate Cashier: Multi-company</field>
+            <field name="model_id" ref="model_security_gate_cashier"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+        
+        <record id="security_gate_cash_drawer_comp_rule" model="ir.rule">
+            <field name="name">Security Gate Cash Drawer: Multi-company</field>
+            <field name="model_id" ref="model_security_gate_cash_drawer"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+        
+        <record id="security_gate_cash_drawer_transaction_comp_rule" model="ir.rule">
+            <field name="name">Security Gate Cash Drawer Transaction: Multi-company</field>
+            <field name="model_id" ref="model_security_gate_cash_drawer_transaction"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+        
+        <record id="security_gate_cash_drawer_count_comp_rule" model="ir.rule">
+            <field name="name">Security Gate Cash Drawer Count: Multi-company</field>
+            <field name="model_id" ref="model_security_gate_cash_drawer_count"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+        
+        <record id="security_gate_cashier_shift_comp_rule" model="ir.rule">
+            <field name="name">Security Gate Cashier Shift: Multi-company</field>
+            <field name="model_id" ref="model_security_gate_cashier_shift"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+        
+        <record id="security_gate_comp_rule" model="ir.rule">
+            <field name="name">Security Gate: Multi-company</field>
+            <field name="model_id" ref="model_security_gate"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+        
+        <!-- HR Employee multi-company rule for security management -->
+        <record id="hr_employee_security_comp_rule" model="ir.rule">
+            <field name="name">HR Employee: Security Management Multi-company</field>
+            <field name="model_id" ref="hr.model_hr_employee"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+            <field name="groups" eval="[(4, ref('group_security_user'))]"/>
+        </record>
+    </data>
+</odoo>

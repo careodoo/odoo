@@ -1,0 +1,471 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Demo Clients -->
+        <record id="demo_client_1" model="security.client">
+            <field name="name">Skyline Tower</field>
+            <field name="client_type">corporate</field>
+            <field name="email">contact@skylinetower.com</field>
+            <field name="phone">+1 555-123-4567</field>
+            <field name="slistt">123 Business Avenue</field>
+            <field name="city">New York</field>
+            <field name="state_id" ref="base.state_us_27"/>
+            <field name="zip">10001</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="contract_start" eval="(DateTime.today() - relativedelta(months=6)).strftime('%Y-%m-%d')"/>
+            <field name="contract_end" eval="(DateTime.today() + relativedelta(years=2, months=6)).strftime('%Y-%m-%d')"/>
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="demo_client_2" model="security.client">
+            <field name="name">Green Valley Mall</field>
+            <field name="client_type">commercial</field>
+            <field name="email">security@greenvalleymall.com</field>
+            <field name="phone">+1 555-987-6543</field>
+            <field name="slistt">456 Shopping Lane</field>
+            <field name="city">Chicago</field>
+            <field name="state_id" ref="base.state_us_14"/>
+            <field name="zip">60601</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="contract_start" eval="(DateTime.today() - relativedelta(months=3)).strftime('%Y-%m-%d')"/>
+            <field name="contract_end" eval="(DateTime.today() + relativedelta(years=1, months=9)).strftime('%Y-%m-%d')"/>
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="demo_client_3" model="security.client">
+            <field name="name">Oceanview Residences</field>
+            <field name="client_type">residential</field>
+            <field name="email">management@oceanviewresidences.com</field>
+            <field name="phone">+1 555-789-0123</field>
+            <field name="slistt">789 Coastal Drive</field>
+            <field name="city">Miami</field>
+            <field name="state_id" ref="base.state_us_10"/>
+            <field name="zip">33101</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="contract_start" eval="(DateTime.today() - relativedelta(months=1)).strftime('%Y-%m-%d')"/>
+            <field name="contract_end" eval="(DateTime.today() + relativedelta(years=3, months=11)).strftime('%Y-%m-%d')"/>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- Demo Premises -->
+        <record id="demo_premise_1" model="security.premise">
+            <field name="name">Main Office Building</field>
+            <field name="client_id" ref="demo_client_1"/>
+            <field name="premise_type">office</field>
+            <field name="slistt">123 Business Avenue, Tower A</field>
+            <field name="city">New York</field>
+            <field name="state_id" ref="base.state_us_27"/>
+            <field name="zip">10001</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="size">15000</field>
+            <field name="floors">30</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="demo_premise_2" model="security.premise">
+            <field name="name">Main Shopping Center</field>
+            <field name="client_id" ref="demo_client_2"/>
+            <field name="premise_type">commercial</field>
+            <field name="slistt">456 Shopping Lane</field>
+            <field name="city">Chicago</field>
+            <field name="state_id" ref="base.state_us_14"/>
+            <field name="zip">60601</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="size">25000</field>
+            <field name="floors">3</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="demo_premise_3" model="security.premise">
+            <field name="name">North Tower</field>
+            <field name="client_id" ref="demo_client_3"/>
+            <field name="premise_type">residential</field>
+            <field name="slistt">789 Coastal Drive, North Tower</field>
+            <field name="city">Miami</field>
+            <field name="state_id" ref="base.state_us_10"/>
+            <field name="zip">33101</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="size">12000</field>
+            <field name="floors">20</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="demo_premise_4" model="security.premise">
+            <field name="name">South Tower</field>
+            <field name="client_id" ref="demo_client_3"/>
+            <field name="premise_type">residential</field>
+            <field name="slistt">789 Coastal Drive, South Tower</field>
+            <field name="city">Miami</field>
+            <field name="state_id" ref="base.state_us_10"/>
+            <field name="zip">33101</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="size">12000</field>
+            <field name="floors">20</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- Demo Security Employees -->
+        <record id="demo_employee_1" model="hr.employee">
+            <field name="name">John Smith</field>
+            <field name="job_title">Security Team Leader</field>
+            <field name="work_phone">+1 555-111-2222</field>
+            <field name="work_email">john.smith@security.com</field>
+            <field name="department_id" ref="hr.dep_administration"/>
+            <field name="gender">male</field>
+        </record>
+
+        <record id="demo_employee_2" model="hr.employee">
+            <field name="name">Sarah Johnson</field>
+            <field name="job_title">Security Supervisor</field>
+            <field name="work_phone">+1 555-222-3333</field>
+            <field name="work_email">sarah.johnson@security.com</field>
+            <field name="department_id" ref="hr.dep_administration"/>
+            <field name="gender">female</field>
+        </record>
+
+        <record id="demo_employee_3" model="hr.employee">
+            <field name="name">Michael Davis</field>
+            <field name="job_title">Security Officer</field>
+            <field name="work_phone">+1 555-333-4444</field>
+            <field name="work_email">michael.davis@security.com</field>
+            <field name="department_id" ref="hr.dep_administration"/>
+            <field name="gender">male</field>
+        </record>
+
+        <record id="demo_employee_4" model="hr.employee">
+            <field name="name">Emily Wilson</field>
+            <field name="job_title">Security Officer</field>
+            <field name="work_phone">+1 555-444-5555</field>
+            <field name="work_email">emily.wilson@security.com</field>
+            <field name="department_id" ref="hr.dep_administration"/>
+            <field name="gender">female</field>
+        </record>
+
+        <record id="demo_employee_5" model="hr.employee">
+            <field name="name">Robert Brown</field>
+            <field name="job_title">Security Specialist</field>
+            <field name="work_phone">+1 555-555-6666</field>
+            <field name="work_email">robert.brown@security.com</field>
+            <field name="department_id" ref="hr.dep_administration"/>
+            <field name="gender">male</field>
+        </record>
+
+        <!-- Demo Security Guards -->
+        <record id="demo_guard_1" model="security.guard">
+            <field name="employee_id" ref="demo_employee_1"/>
+            <field name="guard_type">permanent</field>
+            <field name="badge_number">SG001</field>
+            <field name="license_number">LIC123456</field>
+            <field name="license_expiry" eval="(DateTime.today() + relativedelta(years=2)).strftime('%Y-%m-%d')"/>
+            <field name="team_id" ref="security_team_patrol"/>
+            <field name="role_id" ref="security_team_role_leader"/>
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="demo_guard_2" model="security.guard">
+            <field name="employee_id" ref="demo_employee_2"/>
+            <field name="guard_type">permanent</field>
+            <field name="badge_number">SG002</field>
+            <field name="license_number">LIC234567</field>
+            <field name="license_expiry" eval="(DateTime.today() + relativedelta(years=1, months=6)).strftime('%Y-%m-%d')"/>
+            <field name="team_id" ref="security_team_patrol"/>
+            <field name="role_id" ref="security_team_role_supervisor"/>
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="demo_guard_3" model="security.guard">
+            <field name="employee_id" ref="demo_employee_3"/>
+            <field name="guard_type">permanent</field>
+            <field name="badge_number">SG003</field>
+            <field name="license_number">LIC345678</field>
+            <field name="license_expiry" eval="(DateTime.today() + relativedelta(years=1)).strftime('%Y-%m-%d')"/>
+            <field name="team_id" ref="security_team_access"/>
+            <field name="role_id" ref="security_team_role_officer"/>
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="demo_guard_4" model="security.guard">
+            <field name="employee_id" ref="demo_employee_4"/>
+            <field name="guard_type">permanent</field>
+            <field name="badge_number">SG004</field>
+            <field name="license_number">LIC456789</field>
+            <field name="license_expiry" eval="(DateTime.today() + relativedelta(years=2, months=3)).strftime('%Y-%m-%d')"/>
+            <field name="team_id" ref="security_team_surveillance"/>
+            <field name="role_id" ref="security_team_role_officer"/>
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="demo_guard_5" model="security.guard">
+            <field name="employee_id" ref="demo_employee_5"/>
+            <field name="guard_type">permanent</field>
+            <field name="badge_number">SG005</field>
+            <field name="license_number">LIC567890</field>
+            <field name="license_expiry" eval="(DateTime.today() + relativedelta(years=1, months=9)).strftime('%Y-%m-%d')"/>
+            <field name="team_id" ref="security_team_key"/>
+            <field name="role_id" ref="security_team_role_specialist"/>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- Demo Patrol Points -->
+        <record id="demo_patrol_point_1" model="security.patrol.point">
+            <field name="name">Main Entrance</field>
+            <field name="premise_id" ref="demo_premise_1"/>
+            <field name="location_description">Front entrance of the building</field>
+            <field name="point_type">entrance</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="demo_patrol_point_2" model="security.patrol.point">
+            <field name="name">Parking Garage</field>
+            <field name="premise_id" ref="demo_premise_1"/>
+            <field name="location_description">Underground parking area</field>
+            <field name="point_type">parking</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="demo_patrol_point_3" model="security.patrol.point">
+            <field name="name">Rooftop</field>
+            <field name="premise_id" ref="demo_premise_1"/>
+            <field name="location_description">Building rooftop access point</field>
+            <field name="point_type">critical</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="demo_patrol_point_4" model="security.patrol.point">
+            <field name="name">Main Entrance</field>
+            <field name="premise_id" ref="demo_premise_2"/>
+            <field name="location_description">Main shopping center entrance</field>
+            <field name="point_type">entrance</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="demo_patrol_point_5" model="security.patrol.point">
+            <field name="name">Food Court</field>
+            <field name="premise_id" ref="demo_premise_2"/>
+            <field name="location_description">Central food court area</field>
+            <field name="point_type">public</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="demo_patrol_point_6" model="security.patrol.point">
+            <field name="name">Loading Dock</field>
+            <field name="premise_id" ref="demo_premise_2"/>
+            <field name="location_description">Rear loading area for deliveries</field>
+            <field name="point_type">critical</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- Demo Patrols -->
+        <record id="demo_patrol_1" model="security.patrol">
+            <field name="name">Morning Patrol - Skyline Tower</field>
+            <field name="premise_id" ref="demo_premise_1"/>
+            <field name="start_time" eval="(DateTime.today()).strftime('%Y-%m-%d') + ' 08:00:00'"/>
+            <field name="end_time" eval="(DateTime.today()).strftime('%Y-%m-%d') + ' 10:00:00'"/>
+            <field name="guard_id" ref="demo_guard_1"/>
+            <field name="state">scheduled</field>
+            <field name="patrol_point_ids" eval="[(6, 0, [ref('demo_patrol_point_1'), ref('demo_patrol_point_2'), ref('demo_patrol_point_3')])]"/>
+        </record>
+
+        <record id="demo_patrol_2" model="security.patrol">
+            <field name="name">Afternoon Patrol - Skyline Tower</field>
+            <field name="premise_id" ref="demo_premise_1"/>
+            <field name="start_time" eval="(DateTime.today()).strftime('%Y-%m-%d') + ' 14:00:00'"/>
+            <field name="end_time" eval="(DateTime.today()).strftime('%Y-%m-%d') + ' 16:00:00'"/>
+            <field name="guard_id" ref="demo_guard_2"/>
+            <field name="state">scheduled</field>
+            <field name="patrol_point_ids" eval="[(6, 0, [ref('demo_patrol_point_1'), ref('demo_patrol_point_2'), ref('demo_patrol_point_3')])]"/>
+        </record>
+
+        <record id="demo_patrol_3" model="security.patrol">
+            <field name="name">Evening Patrol - Green Valley Mall</field>
+            <field name="premise_id" ref="demo_premise_2"/>
+            <field name="start_time" eval="(DateTime.today()).strftime('%Y-%m-%d') + ' 18:00:00'"/>
+            <field name="end_time" eval="(DateTime.today()).strftime('%Y-%m-%d') + ' 20:00:00'"/>
+            <field name="guard_id" ref="demo_guard_3"/>
+            <field name="state">scheduled</field>
+            <field name="patrol_point_ids" eval="[(6, 0, [ref('demo_patrol_point_4'), ref('demo_patrol_point_5'), ref('demo_patrol_point_6')])]"/>
+        </record>
+
+        <!-- Demo Keys -->
+        <record id="demo_key_1" model="security.key">
+            <field name="name">Main Office Master Key</field>
+            <field name="key_type">master</field>
+            <field name="premise_id" ref="demo_premise_1"/>
+            <field name="location">Key Hub 1</field>
+            <field name="state">available</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="demo_key_2" model="security.key">
+            <field name="name">Server Room Key</field>
+            <field name="key_type">room</field>
+            <field name="premise_id" ref="demo_premise_1"/>
+            <field name="location">Key Hub 1</field>
+            <field name="state">available</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="demo_key_3" model="security.key">
+            <field name="name">Mall Master Key</field>
+            <field name="key_type">master</field>
+            <field name="premise_id" ref="demo_premise_2"/>
+            <field name="location">Key Hub 2</field>
+            <field name="state">available</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="demo_key_4" model="security.key">
+            <field name="name">Storage Room Key</field>
+            <field name="key_type">room</field>
+            <field name="premise_id" ref="demo_premise_2"/>
+            <field name="location">Key Hub 2</field>
+            <field name="state">available</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- Demo Key Hubs -->
+        <record id="demo_key_hub_1" model="security.key.hub">
+            <field name="name">Office Building Key Hub</field>
+            <field name="premise_id" ref="demo_premise_1"/>
+            <field name="location_description">Security office on ground floor</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="demo_key_hub_2" model="security.key.hub">
+            <field name="name">Mall Key Hub</field>
+            <field name="premise_id" ref="demo_premise_2"/>
+            <field name="location_description">Security office near main entrance</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- Demo Gate Passes -->
+        <record id="demo_gate_pass_1" model="security.gate.pass">
+            <field name="name">PASS/2025/0001</field>
+            <field name="visitor_name">David Thompson</field>
+            <field name="visitor_phone">+1 555-123-7890</field>
+            <field name="visitor_email">david.thompson@example.com</field>
+            <field name="visitor_company">ABC Consulting</field>
+            <field name="purpose">Business Meeting</field>
+            <field name="premise_id" ref="demo_premise_1"/>
+            <field name="visit_date" eval="DateTime.today().strftime('%Y-%m-%d')"/>
+            <field name="expected_arrival" eval="DateTime.today().strftime('%Y-%m-%d') + ' 10:00:00'"/>
+            <field name="expected_departure" eval="DateTime.today().strftime('%Y-%m-%d') + ' 12:00:00'"/>
+            <field name="state">approved</field>
+        </record>
+
+        <record id="demo_gate_pass_2" model="security.gate.pass">
+            <field name="name">PASS/2025/0002</field>
+            <field name="visitor_name">Jennifer Lee</field>
+            <field name="visitor_phone">+1 555-234-5678</field>
+            <field name="visitor_email">jennifer.lee@example.com</field>
+            <field name="visitor_company">XYZ Technologies</field>
+            <field name="purpose">IT Maintenance</field>
+            <field name="premise_id" ref="demo_premise_1"/>
+            <field name="visit_date" eval="DateTime.today().strftime('%Y-%m-%d')"/>
+            <field name="expected_arrival" eval="DateTime.today().strftime('%Y-%m-%d') + ' 14:00:00'"/>
+            <field name="expected_departure" eval="DateTime.today().strftime('%Y-%m-%d') + ' 17:00:00'"/>
+            <field name="state">pending</field>
+        </record>
+
+        <record id="demo_gate_pass_3" model="security.gate.pass">
+            <field name="name">PASS/2025/0003</field>
+            <field name="visitor_name">Mark Wilson</field>
+            <field name="visitor_phone">+1 555-345-6789</field>
+            <field name="visitor_email">mark.wilson@example.com</field>
+            <field name="visitor_company">Delivery Express</field>
+            <field name="purpose">Package Delivery</field>
+            <field name="premise_id" ref="demo_premise_2"/>
+            <field name="visit_date" eval="DateTime.today().strftime('%Y-%m-%d')"/>
+            <field name="expected_arrival" eval="DateTime.today().strftime('%Y-%m-%d') + ' 09:00:00'"/>
+            <field name="expected_departure" eval="DateTime.today().strftime('%Y-%m-%d') + ' 10:00:00'"/>
+            <field name="state">approved</field>
+            <field name="checked_in" eval="True"/>
+            <field name="check_in_time" eval="DateTime.today().strftime('%Y-%m-%d') + ' 09:15:00'"/>
+        </record>
+
+        <!-- Demo Inspections -->
+        <record id="demo_inspection_1" model="security.inspection">
+            <field name="name">INS/2025/0001</field>
+            <field name="premise_id" ref="demo_premise_1"/>
+            <field name="inspector_id" ref="demo_guard_1"/>
+            <field name="inspection_date" eval="(DateTime.today() - relativedelta(days=2)).strftime('%Y-%m-%d')"/>
+            <field name="issue_type">safety</field>
+            <field name="description">Fire extinguisher needs replacement</field>
+            <field name="severity">medium</field>
+            <field name="state">reported</field>
+        </record>
+
+        <record id="demo_inspection_2" model="security.inspection">
+            <field name="name">INS/2025/0002</field>
+            <field name="premise_id" ref="demo_premise_2"/>
+            <field name="inspector_id" ref="demo_guard_2"/>
+            <field name="inspection_date" eval="(DateTime.today() - relativedelta(days=5)).strftime('%Y-%m-%d')"/>
+            <field name="issue_type">security</field>
+            <field name="description">Broken lock on emergency exit</field>
+            <field name="severity">high</field>
+            <field name="state">in_progress</field>
+        </record>
+
+        <!-- Demo Incident Reports -->
+        <record id="demo_incident_1" model="security.incidence.report">
+            <field name="name">INC/2025/0001</field>
+            <field name="premise_id" ref="demo_premise_1"/>
+            <field name="reporter_id" ref="demo_guard_1"/>
+            <field name="incident_date" eval="(DateTime.today() - relativedelta(days=3)).strftime('%Y-%m-%d')"/>
+            <field name="incident_time" eval="(DateTime.today() - relativedelta(days=3)).strftime('%Y-%m-%d') + ' 14:30:00'"/>
+            <field name="incident_type">trespass</field>
+            <field name="description">Unauthorized person attempted to access server room</field>
+            <field name="severity">medium</field>
+            <field name="state">submitted</field>
+        </record>
+
+        <record id="demo_incident_2" model="security.incidence.report">
+            <field name="name">INC/2025/0002</field>
+            <field name="premise_id" ref="demo_premise_2"/>
+            <field name="reporter_id" ref="demo_guard_3"/>
+            <field name="incident_date" eval="(DateTime.today() - relativedelta(days=1)).strftime('%Y-%m-%d')"/>
+            <field name="incident_time" eval="(DateTime.today() - relativedelta(days=1)).strftime('%Y-%m-%d') + ' 18:45:00'"/>
+            <field name="incident_type">theft</field>
+            <field name="description">Shoplifting incident at retail store</field>
+            <field name="severity">low</field>
+            <field name="state">investigated</field>
+        </record>
+
+        <!-- Demo Tasks -->
+        <record id="demo_task_1" model="security.task">
+            <field name="name">Daily Perimeter Check</field>
+            <field name="premise_id" ref="demo_premise_1"/>
+            <field name="task_type_id" ref="security_task_type_patrol"/>
+            <field name="assigned_to_id" ref="demo_guard_1"/>
+            <field name="start_date" eval="DateTime.today().strftime('%Y-%m-%d')"/>
+            <field name="start_time" eval="DateTime.today().strftime('%Y-%m-%d') + ' 08:00:00'"/>
+            <field name="end_time" eval="DateTime.today().strftime('%Y-%m-%d') + ' 09:00:00'"/>
+            <field name="priority">medium</field>
+            <field name="state">assigned</field>
+        </record>
+
+        <record id="demo_task_2" model="security.task">
+            <field name="name">CCTV System Check</field>
+            <field name="premise_id" ref="demo_premise_2"/>
+            <field name="task_type_id" ref="security_task_type_inspection"/>
+            <field name="assigned_to_id" ref="demo_guard_4"/>
+            <field name="start_date" eval="DateTime.today().strftime('%Y-%m-%d')"/>
+            <field name="start_time" eval="DateTime.today().strftime('%Y-%m-%d') + ' 10:00:00'"/>
+            <field name="end_time" eval="DateTime.today().strftime('%Y-%m-%d') + ' 11:00:00'"/>
+            <field name="priority">high</field>
+            <field name="state">assigned</field>
+        </record>
+
+        <record id="demo_task_3" model="security.task">
+            <field name="name">Key Inventory Audit</field>
+            <field name="premise_id" ref="demo_premise_1"/>
+            <field name="task_type_id" ref="security_task_type_inspection"/>
+            <field name="assigned_to_id" ref="demo_guard_5"/>
+            <field name="start_date" eval="DateTime.today().strftime('%Y-%m-%d')"/>
+            <field name="start_time" eval="DateTime.today().strftime('%Y-%m-%d') + ' 14:00:00'"/>
+            <field name="end_time" eval="DateTime.today().strftime('%Y-%m-%d') + ' 15:00:00'"/>
+            <field name="priority">medium</field>
+            <field name="state">assigned</field>
+        </record>
+    </data>
+</odoo>

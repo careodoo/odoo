@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <t t-name="security_management.SecurityDashboard">
+        <div class="o_security_dashboard" style="height: 100vh; overflow-y: auto; overflow-x: hidden; background-color: #f8f9fa; padding: 20px;">
+            <!-- Dashboard Header -->
+            <div class="container-fluid mt-3">
+                <div class="row">
+                    <div class="col-12">
+                        <h1 class="mb-4">Security Dashboard</h1>
+                    </div>
+                </div>
+                
+                <!-- Statistics Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-4 col-lg-2 mb-3">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted mb-2">Clients</h6>
+                                <h2 class="text-primary display-4" t-esc="state.dashboardData.client_count"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-lg-2 mb-3">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted mb-2">Post Sites</h6>
+                                <h2 class="text-danger display-4" t-esc="state.dashboardData.post_site_count"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-lg-2 mb-3">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted mb-2">Guards</h6>
+                                <h2 class="text-warning display-4" t-esc="state.dashboardData.guard_count"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-lg-2 mb-3">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted mb-2">Users</h6>
+                                <h2 class="text-secondary display-4" t-esc="state.dashboardData.user_count"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-lg-2 mb-3">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted mb-2">Check-ins</h6>
+                                <h2 class="text-warning display-4" t-esc="state.dashboardData.checkin_count"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-lg-2 mb-3">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted mb-2">Clock-ins</h6>
+                                <h2 class="text-info display-4" t-esc="state.dashboardData.clockin_count"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Map and Guard List -->
+                <div class="row">
+                    <!-- Map -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0">Guard Locations</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div id="security_map" style="height: 400px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Guard List -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Active Guards</h5>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown">
+                                        Filter
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="#" t-on-click="onFilterGuards">All</a>
+                                        <a class="dropdown-item" href="#" t-on-click="onFilterGuards">Active</a>
+                                        <a class="dropdown-item" href="#" t-on-click="onFilterGuards">Inactive</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th class="pl-4">#</th>
+                                                <th>Guard</th>
+                                                <th>Post Site</th>
+                                                <th>Last Updated</th>
+                                                <th>Battery</th>
+                                                <th>Speed</th>
+                                                <th>Location</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="guard_list">
+                                            <t t-foreach="state.dashboardData.guards" t-as="guard" t-key="guard.id">
+                                                <tr>
+                                                    <td class="pl-4"><t t-esc="(guard_index + 1).toString().padStart(2, '0')"/></td>
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="avatar mr-2" style="width: 32px; height: 32px; border-radius: 50%; overflow: hidden; background-color: #eee;">
+                                                                <img t-att-src="guard.image" alt="Guard Avatar" style="width: 100%; height: 100%; object-fit: cover"/>
+                                                            </div>
+                                                            <div>
+                                                                <div><t t-esc="guard.name"/></div>
+                                                                <span class="badge badge-pill badge-primary"><t t-esc="guard.status"/></span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td><t t-esc="guard.post_site"/></td>
+                                                    <td><t t-esc="guard.last_updated"/></td>
+                                                    <td><t t-esc="guard.battery"/></td>
+                                                    <td><t t-esc="guard.speed"/></td>
+                                                    <td><t t-esc="guard.location"/></td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-primary" t-on-click="() => this.onViewGuardDetails({ target: { dataset: { guardId: guard.id } } })">View</button>
+                                                    </td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

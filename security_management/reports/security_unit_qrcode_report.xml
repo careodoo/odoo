@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_unit_qrcode" model="ir.actions.report">
+        <field name="name">Unit QR Code</field>
+        <field name="model">security.unit</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">security_management.report_unit_qrcode</field>
+        <field name="report_file">security_management.report_unit_qrcode</field>
+        <field name="binding_model_id" ref="model_security_unit"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_unit_qrcode_document">
+        <t t-call="web.external_layout">
+            <t t-set="o" t-value="o.with_context(lang=lang)"/>
+            <div class="page">
+                <div class="oe_structure"/>
+
+                <!-- Modern Card Design for QR Code -->
+                <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+                    <!-- Header with Title -->
+                    <div class="card-header bg-primary text-white text-center py-3" style="border-radius: 12px 12px 0 0;">
+                        <h2 class="mb-0">Unit Information</h2>
+                    </div>
+
+                    <div class="card-body p-4">
+                        <div class="row">
+                            <!-- QR Code Section - Larger and more prominent -->
+                            <div class="col-5 d-flex align-items-center justify-content-center">
+                                <div class="text-center">
+                                    <div t-if="o.qr_code">
+                                        <strong>QR Code</strong>
+                                        <br/>
+                                        <img t-att-src="image_data_uri(o.qr_code)" style="max-height: 150px; max-width: 150px; margin: 10px auto;"/>
+                                        <p class="text-muted mt-1" t-if="o.name">
+                                            <small t-field="o.name"/>
+                                        </p>
+                                    </div>
+                                    <div t-else="" class="mt16">
+                                        <p class="text-center text-muted">No QR code available</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Unit Information Section -->
+                            <div class="col-7">
+                                <div class="mb-3">
+                                    <h3 class="text-primary mb-3">
+                                        <t t-esc="o.name"/>
+                                    </h3>
+
+                                    <div class="row mb-2">
+                                        <div class="col-5">
+                                            <strong class="text-muted">Unit Name:</strong>
+                                        </div>
+                                        <div class="col-7">
+                                            <span t-field="o.name"/>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-2" t-if="o.code">
+                                        <div class="col-5">
+                                            <strong class="text-muted">Unit Code:</strong>
+                                        </div>
+                                        <div class="col-7">
+                                            <span t-field="o.code"/>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-2" t-if="o.premise_id">
+                                        <div class="col-5">
+                                            <strong class="text-muted">Premise:</strong>
+                                        </div>
+                                        <div class="col-7">
+                                            <span t-field="o.premise_id.name"/>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-2" t-if="o.floor_id">
+                                        <div class="col-5">
+                                            <strong class="text-muted">Floor:</strong>
+                                        </div>
+                                        <div class="col-7">
+                                            <span t-field="o.floor_id.name"/>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-2" t-if="o.client_id">
+                                        <div class="col-5">
+                                            <strong class="text-muted">Client:</strong>
+                                        </div>
+                                        <div class="col-7">
+                                            <span t-field="o.client_id.name"/>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-2" t-if="o.company_id">
+                                        <div class="col-5">
+                                            <strong class="text-muted">Company:</strong>
+                                        </div>
+                                        <div class="col-7">
+                                            <span t-field="o.company_id.name"/>
+                                        </div>
+                                    </div>
+
+                                    <!-- Removed the state field that was causing the error -->
+                                </div>
+
+                                <!-- Description if available -->
+                                <div t-if="o.description" class="mt-3 p-2 bg-light" style="border-radius: 6px;">
+                                    <small class="text-muted">Description:</small>
+                                    <p class="mb-0 small">
+                                        <t t-esc="o.description"/>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- QR Code Content Information -->
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="alert alert-secondary py-2 mb-2" style="font-size: 12px;">
+                                    <strong>Unit ID:</strong>
+                                    <span t-field="o.name"/> 
+                                    <t t-if="o.code">
+                                        (<span t-field="o.code"/>)
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Patrol Points Section -->
+                        <div class="row mt-3" t-if="o.patrol_point_ids">
+                            <div class="col-12">
+                                <div class="card mb-3">
+                                    <div class="card-header bg-light">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0">
+                                                <i class="fa fa-map-marker mr-2"></i>Patrol Points
+                                                <span class="badge badge-primary ml-2" t-esc="o.patrol_point_count"/>
+                                            </h5>
+                                        </div>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-hover mb-0">
+                                                <thead class="thead-light">
+                                                    <tr>
+                                                        <th>Name</th>
+                                                        <th>Location</th>
+                                                        <th t-if="o.patrol_point_ids[0].code">Code</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr t-foreach="o.patrol_point_ids" t-as="point">
+                                                        <td>
+                                                            <span t-field="point.name"/>
+                                                        </td>
+                                                        <td>
+                                                            <span t-field="point.location_description"/>
+                                                        </td>
+                                                        <td t-if="point.code">
+                                                            <span t-field="point.code"/>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Usage Instructions -->
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="alert alert-info py-2 mb-2">
+                                    <p class="mb-0 text-center">
+                                        <i class="fa fa-info-circle mr-2"></i>
+                                        Scan this QR code to access unit information and perform check-ins.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer with Creation/Update Information -->
+                    <div class="card-footer bg-light p-3" style="border-radius: 0 0 12px 12px;">
+                        <div class="row text-center">
+                            <div class="col-6" t-if="o.create_date">
+                                <small class="text-muted d-block">Created</small>
+                                <strong>
+                                    <t t-esc="o.create_date" t-options="{'widget': 'datetime', 'format': 'dd MMM yyyy HH:mm'}"/>
+                                </strong>
+                            </div>
+                            <div class="col-6" t-if="o.write_date">
+                                <small class="text-muted d-block">Last Updated</small>
+                                <strong>
+                                    <t t-esc="o.write_date" t-options="{'widget': 'datetime', 'format': 'dd MMM yyyy HH:mm'}"/>
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="oe_structure"/>
+            </div>
+        </t>
+    </template>
+
+    <template id="report_unit_qrcode">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="security_management.report_unit_qrcode_document"/>
+            </t>
+        </t>
+    </template>
+</odoo>

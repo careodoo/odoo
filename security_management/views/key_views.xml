@@ -1,0 +1,517 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Key Form View -->
+    <record id="view_security_key_form" model="ir.ui.view">
+        <field name="name">security.key.form</field>
+        <field name="model">security.key</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_check_out" string="Check Out" type="object"
+                            invisible="state != 'available'" class="btn_primary"/>
+                    <button name="action_check_in" string="Check In" type="object"
+                            invisible="state != 'checked_out'" class="btn_success"/>
+                    <button name="action_mark_lost" string="Mark as Lost" type="object"
+                            invisible="state in ['lost', 'maintenance']" class="btn_danger"/>
+                    <button name="action_recover" string="Recover Key" type="object"
+                            invisible="state != 'lost'" class="btn_info"/>
+                    <!-- Removed action_retire button as it doesn't exist in the model -->
+                    <field name="state" widget="statusbar" statusbar_visible="available,checked_out,lost,maintenance"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_logs" type="object" class="oe_stat_button" icon="fa-history">
+                            <field name="log_count" string="Logs" widget="statinfo"/>
+                        </button>
+                        <button name="action_generate_qr_code" type="object" class="oe_stat_button" icon="fa-qrcode">
+                            <span>Generate QR</span>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Key Name/Number"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="door_number"/>
+                            <field name="key_number"/>
+                            <field name="key_type"/>
+                            <field name="unit_id" options="{'no_create': True}"/>
+                            <field name="floor_id" options="{'no_create': True}" readonly="1"/>
+                            <field name="premise_id" options="{'no_create': True}" readonly="1"/>
+                            <field name="key_hub_id" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="current_holder_id" invisible="state != 'checked_out'"/>
+                            <field name="check_out_time" invisible="state != 'checked_out'"/>
+                            <field name="expected_return_time" invisible="state != 'checked_out'"/>
+                            <field name="barcode" readonly="1"/>
+                            <field name="qr_code" readonly="1" widget="image" class="oe_avatar"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description">
+                            <field name="description" placeholder="Add any additional information about this key..."/>
+                        </page>
+
+                        <page string="Logs">
+                            <field name="log_ids">
+                                <tree>
+                                    <field name="operation"/>
+                                    <field name="timestamp"/>
+                                    <field name="security_employee_id"/>
+                                    <field name="reason"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Key list View -->
+    <record id="view_security_key_list" model="ir.ui.view">
+        <field name="name">security.key.list</field>
+        <field name="model">security.key</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'available'" decoration-info="state == 'checked_out'"
+                  decoration-danger="state == 'lost'" decoration-muted="state == 'maintenance'">
+                <field name="name"/>
+                <field name="door_number"/>
+                <field name="key_number"/>
+                <field name="key_type"/>
+                <field name="unit_id"/>
+                <field name="premise_id"/>
+                <field name="key_hub_id"/>
+                <field name="current_holder_id"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Key Search View -->
+    <record id="view_security_key_search" model="ir.ui.view">
+        <field name="name">security.key.search</field>
+        <field name="model">security.key</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="door_number"/>
+                <field name="key_number"/>
+                <field name="key_type"/>
+                <field name="unit_id"/>
+                <field name="premise_id"/>
+                <field name="key_hub_id"/>
+                <field name="current_holder_id"/>
+                <separator/>
+                <filter string="Available" name="available_keys" domain="[('state', '=', 'available')]"/>
+                <filter string="Checked Out" name="checked_out_keys" domain="[('state', '=', 'checked_out')]"/>
+                <filter string="Lost" name="lost_keys" domain="[('state', '=', 'lost')]"/>
+                <filter string="Maintenance" name="maintenance_keys" domain="[('state', '=', 'maintenance')]"/>
+                <separator/>
+                <filter string="Overdue" name="overdue_keys" domain="[('state', '=', 'checked_out'), ('expected_return_time', '&lt;', context_today().strftime('%Y-%m-%d %H:%M:%S'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_by_state" context="{'group_by': 'state'}"/>
+                    <filter string="Premise" name="group_by_premise" context="{'group_by': 'premise_id'}"/>
+                    <filter string="Floor" name="group_by_floor" context="{'group_by': 'floor_id'}"/>
+                    <filter string="Unit" name="group_by_unit" context="{'group_by': 'unit_id'}"/>
+                    <filter string="Key Hub" name="group_by_hub" context="{'group_by': 'key_hub_id'}"/>
+                    <filter string="Current Holder" name="group_by_holder" context="{'group_by': 'current_holder_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Key Kanban View -->
+    <record id="view_security_key_kanban" model="ir.ui.view">
+        <field name="name">security.key.kanban</field>
+        <field name="model">security.key</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="door_number"/>
+                <field name="key_number"/>
+                <field name="key_type"/>
+                <field name="unit_id"/>
+                <field name="floor_id"/>
+                <field name="premise_id"/>
+                <field name="key_hub_id"/>
+                <field name="current_holder_id"/>
+                <field name="state"/>
+                <field name="check_out_time"/>
+                <field name="expected_return_time"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click">
+                            <div class="row mb-1">
+                                <div class="col-6">
+                                    <strong><field name="name"/></strong>
+                                </div>
+                                <div class="col-6 text-right">
+                                    <span t-att-class="['badge', 'badge-' + (record.state.raw_value == 'available' ? 'success' : (record.state.raw_value == 'checked_out' ? 'info' : (record.state.raw_value == 'lost' ? 'danger' : 'secondary')))]">
+                                        <field name="state"/>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="row mb-1">
+                                <div class="col-6">
+                                    <span>Door: <field name="door_number"/></span>
+                                </div>
+                                <div class="col-6 text-right">
+                                    <span class="badge badge-light">Key: <field name="key_number"/></span>
+                                </div>
+                            </div>
+                            <div class="row mb-1">
+                                <div class="col-12">
+                                    <i class="fa fa-building-o mr-1"/>Unit: <field name="unit_id"/>
+                                </div>
+                            </div>
+                            <div class="row mb-1">
+                                <div class="col-12">
+                                    <i class="fa fa-map-marker mr-1"/>Premise: <field name="premise_id"/>
+                                </div>
+                            </div>
+                            <div class="row mb-1" t-if="record.key_hub_id.raw_value">
+                                <div class="col-12">
+                                    <i class="fa fa-key mr-1"/><field name="key_hub_id"/>
+                                </div>
+                            </div>
+                            <div class="row" t-if="record.state.raw_value == 'checked_out'">
+                                <div class="col-12">
+                                    <i class="fa fa-user mr-1"/><field name="current_holder_id"/>
+                                    <div t-if="record.expected_return_time.raw_value">
+                                        <small>
+                                            Due: <t t-esc="moment(record.expected_return_time.raw_value).format('DD/MM/YYYY HH:mm')"/>
+                                            <span t-if="moment(record.expected_return_time.raw_value).isBefore(moment())" class="text-danger">
+                                                (Overdue)
+                                            </span>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Key Hub Form View -->
+    <record id="view_security_key_hub_form" model="ir.ui.view">
+        <field name="name">security.key.hub.form</field>
+        <field name="model">security.key.hub</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_keys" type="object" class="oe_stat_button" icon="fa-key">
+                            <field name="key_count" string="Keys" widget="statinfo"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Key Hub Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="premise_id" options="{'no_create': True}"/>
+                            <field name="location"/>
+                            <field name="responsible_id" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="available_key_count"/>
+                            <field name="checked_out_key_count"/>
+                            <field name="lost_key_count"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Keys">
+                            <field name="key_ids">
+                                <tree decoration-success="state == 'available'" decoration-info="state == 'checked_out'"
+                                      decoration-danger="state == 'lost'" decoration-muted="state == 'retired'">
+                                    <field name="name"/>
+                                    <field name="door_number"/>
+                                    <field name="key_number"/>
+                                    <field name="key_type"/>
+                                    <field name="unit_id"/>
+                                    <field name="current_holder_id"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes" placeholder="Add any additional information about this key hub..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Key Hub list View -->
+    <record id="view_security_key_hub_list" model="ir.ui.view">
+        <field name="name">security.key.hub.list</field>
+        <field name="model">security.key.hub</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="premise_id"/>
+                <field name="location"/>
+                <field name="responsible_id"/>
+                <field name="key_count"/>
+                <field name="available_key_count"/>
+                <field name="checked_out_key_count"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Key Hub Search View -->
+    <record id="view_security_key_hub_search" model="ir.ui.view">
+        <field name="name">security.key.hub.search</field>
+        <field name="model">security.key.hub</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="premise_id"/>
+                <field name="location"/>
+                <field name="responsible_id"/>
+                <group expand="0" string="Group By">
+                    <filter string="Premise" name="group_by_premise" context="{'group_by': 'premise_id'}"/>
+                    <filter string="Responsible" name="group_by_responsible" context="{'group_by': 'responsible_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Key Hub Kanban View -->
+    <record id="view_security_key_hub_kanban" model="ir.ui.view">
+        <field name="name">security.key.hub.kanban</field>
+        <field name="model">security.key.hub</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="premise_id"/>
+                <field name="location"/>
+                <field name="responsible_id"/>
+                <field name="key_count"/>
+                <field name="available_key_count"/>
+                <field name="checked_out_key_count"/>
+                <field name="lost_key_count"/>
+                <templates>
+                    <t t-name="card">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click">
+                            <div class="row mb-1">
+                                <div class="col-12">
+                                    <strong><field name="name"/></strong>
+                                </div>
+                            </div>
+                            <div class="row mb-1">
+                                <div class="col-12">
+                                    <i class="fa fa-building-o mr-1"/><field name="premise_id"/>
+                                </div>
+                            </div>
+                            <div class="row mb-1">
+                                <div class="col-12">
+                                    <i class="fa fa-map-marker mr-1"/><field name="location"/>
+                                </div>
+                            </div>
+                            <div class="row mb-1">
+                                <div class="col-12">
+                                    <i class="fa fa-user mr-1"/><field name="responsible_id"/>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-4 text-center">
+                                    <span class="badge badge-success"><field name="available_key_count"/></span>
+                                    <div><small>Available</small></div>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <span class="badge badge-info"><field name="checked_out_key_count"/></span>
+                                    <div><small>Checked Out</small></div>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <span class="badge badge-danger"><field name="lost_key_count"/></span>
+                                    <div><small>Lost</small></div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Key History Form View -->
+    <record id="view_security_key_history_form" model="ir.ui.view">
+        <field name="name">security.key.log.form</field>
+        <field name="model">security.key.log</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="key_id" options="{'no_create': True}"/>
+                            <field name="operation"/>
+                            <field name="timestamp"/>
+                        </group>
+                        <group>
+                            <field name="security_employee_id" options="{'no_create': True}"/>
+                            <field name="expected_return"/>
+                            <field name="key_hub_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Notes">
+                            <field name="reason" placeholder="Add any notes or observations..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Key History list View -->
+    <record id="view_security_key_history_list" model="ir.ui.view">
+        <field name="name">security.key.log.list</field>
+        <field name="model">security.key.log</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="key_id"/>
+                <field name="operation"/>
+                <field name="timestamp"/>
+                <field name="security_employee_id"/>
+                <field name="reason"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Key History Search View -->
+    <record id="view_security_key_log_search" model="ir.ui.view">
+        <field name="name">security.key.log.search</field>
+        <field name="model">security.key.log</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="key_id"/>
+                <field name="operation"/>
+                <field name="security_employee_id"/>
+                <field name="reason"/>
+                <separator/>
+                <filter string="Check-Outs" name="check_outs" domain="[('operation', '=', 'check_out')]"/>
+                <filter string="Check-Ins" name="check_ins" domain="[('operation', '=', 'check_in')]"/>
+                <filter string="Lost Reports" name="lost_reports" domain="[('operation', '=', 'lost')]"/>
+                <filter string="Today" name="today" domain="[('timestamp', '&gt;=', context_today().strftime('%Y-%m-%d')),
+                                                            ('timestamp', '&lt;', (context_today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Key" name="group_by_key" context="{'group_by': 'key_id'}"/>
+                    <filter string="Operation" name="group_by_operation" context="{'group_by': 'operation'}"/>
+                    <filter string="Employee" name="group_by_employee" context="{'group_by': 'security_employee_id'}"/>
+                    <filter string="Day" name="group_by_day" context="{'group_by': 'timestamp:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_security_key_history_search" model="ir.ui.view">
+        <field name="name">security.key.history.search</field>
+        <field name="model">security.key.history</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="key_id"/>
+                <field name="event_type"/>
+                <field name="user_id"/>
+                <field name="note"/>
+                <separator/>
+                <filter string="Check-Outs" name="check_outs" domain="[('event_type', '=', 'check_out')]"/>
+                <filter string="Check-Ins" name="check_ins" domain="[('event_type', '=', 'check_in')]"/>
+                <filter string="Lost Reports" name="lost_reports" domain="[('event_type', '=', 'lost')]"/>
+                <filter string="Today" name="today" domain="[('event_time', '&gt;=', context_today().strftime('%Y-%m-%d')),
+                                                            ('event_time', '&lt;', (context_today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Key" name="group_by_key" context="{'group_by': 'key_id'}"/>
+                    <filter string="Event Type" name="group_by_event_type" context="{'group_by': 'event_type'}"/>
+                    <filter string="User" name="group_by_user" context="{'group_by': 'user_id'}"/>
+                    <filter string="Day" name="group_by_day" context="{'group_by': 'event_time:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action for Keys -->
+    <record id="action_security_key" model="ir.actions.act_window">
+        <field name="name">Keys</field>
+        <field name="res_model">security.key</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="search_view_id" ref="view_security_key_search"/>
+        <field name="context">{'search_default_available_keys': 1, 'search_default_checked_out_keys': 1, 'group_by': 'state'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first key!
+            </p>
+            <p>
+                Keys are used to access secure areas within premises.
+                You can track key check-outs, check-ins, and manage lost keys.
+            </p>
+        </field>
+    </record>
+
+    <!-- Action for Key Hubs -->
+    <record id="action_security_key_hub" model="ir.actions.act_window">
+        <field name="name">Key Hubs</field>
+        <field name="res_model">security.key.hub</field>
+        <field name="view_mode">tree,form,kanban</field>
+        <field name="search_view_id" ref="view_security_key_hub_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first key hub!
+            </p>
+            <p>
+                Key hubs are centralized locations for storing and managing keys.
+                Each hub can be assigned to a premise and have a responsible person.
+            </p>
+        </field>
+    </record>
+
+    <!-- Action for Key History -->
+    <record id="action_security_key_history" model="ir.actions.act_window">
+        <field name="name">Key History</field>
+        <field name="res_model">security.key.history</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_security_key_history_search"/>
+        <field name="context">{'search_default_today': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No key history yet!
+            </p>
+            <p>
+                Key history records are created when keys are checked out, checked in, or reported lost.
+                They track who had the key and when it was used.
+            </p>
+        </field>
+    </record>
+
+    <!-- Action for Key Log -->
+    <record id="action_security_key_log" model="ir.actions.act_window">
+        <field name="name">Key Log</field>
+        <field name="res_model">security.key.log</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_security_key_log_search"/>
+        <field name="context">{'search_default_today': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No key logs yet!
+            </p>
+            <p>
+                Key logs are created when keys are checked out, checked in, or reported lost.
+                They track who had the key and when it was used.
+            </p>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="security_management.KeyManagementDashboard" owl="1">
+        <div class="o_security_key_dashboard">
+            <div class="o_key_dashboard_header mb-3">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h2>Key Management Dashboard</h2>
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-outline-primary" t-on-click="onRefreshDashboard">
+                            <i class="fa fa-refresh mr-1"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="o_key_dashboard_content">
+                <div class="row">
+                    <!-- Summary Cards -->
+                    <div class="col-12 mb-4">
+                        <div class="row">
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-primary text-white h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Total Keys</h5>
+                                        <h2 class="display-4"><t t-esc="state.dashboardData.total_keys || 0"/></h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-success text-white h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Available</h5>
+                                        <h2 class="display-4"><t t-esc="state.dashboardData.available_keys || 0"/></h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-warning text-white h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Checked Out</h5>
+                                        <h2 class="display-4"><t t-esc="state.dashboardData.checked_out_keys || 0"/></h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-danger text-white h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Lost</h5>
+                                        <h2 class="display-4"><t t-esc="state.dashboardData.lost_keys || 0"/></h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Key Status</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas class="o_key_status_chart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Key Usage</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas class="o_key_usage_chart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Key Hubs -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Key Hubs</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <t t-if="state.dashboardData.key_hubs and state.dashboardData.key_hubs.length">
+                                        <t t-foreach="state.dashboardData.key_hubs" t-as="hub" t-key="hub.id">
+                                            <div class="col-md-6 mb-3">
+                                                <div class="card" t-on-click="(ev) => onKeyHubCardClick(ev)" t-att-data-hub-id="hub.id">
+                                                    <div class="card-body">
+                                                        <h5 class="card-title"><t t-esc="hub.name"/></h5>
+                                                        <p class="card-text">
+                                                            <strong>Location:</strong> <t t-esc="hub.location"/><br/>
+                                                            <strong>Keys:</strong> <t t-esc="hub.key_count"/>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </t>
+                                    </t>
+                                    <div t-if="!state.dashboardData.key_hubs || !state.dashboardData.key_hubs.length" class="col-12 text-center">
+                                        <p>No key hubs found</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Keys -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Recently Checked Out Keys</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Key</th>
+                                                <th>Checked Out By</th>
+                                                <th>Checkout Time</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-if="state.dashboardData.recent_checkouts and state.dashboardData.recent_checkouts.length">
+                                                <t t-foreach="state.dashboardData.recent_checkouts" t-as="key" t-key="key.id">
+                                                    <tr>
+                                                        <td>
+                                                            <a href="#" t-on-click="(ev) => onKeyCardClick(ev)" t-att-data-key-id="key.id">
+                                                                <t t-esc="key.name"/>
+                                                            </a>
+                                                        </td>
+                                                        <td><t t-esc="key.employee_name"/></td>
+                                                        <td><t t-esc="key.checkout_time"/></td>
+                                                        <td>
+                                                            <button class="btn btn-sm btn-primary" t-on-click="(ev) => onKeyCheckin(ev)" t-att-data-key-id="key.id">
+                                                                <i class="fa fa-sign-in mr-1"></i>Check In
+                                                            </button>
+                                                            <button class="btn btn-sm btn-danger" t-on-click="(ev) => onKeyReportLost(ev)" t-att-data-key-id="key.id">
+                                                                <i class="fa fa-exclamation-triangle mr-1"></i>Report Lost
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                </t>
+                                            </t>
+                                            <tr t-if="!state.dashboardData.recent_checkouts || !state.dashboardData.recent_checkouts.length">
+                                                <td colspan="4" class="text-center">No recent key checkouts</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Available Keys -->
+                    <div class="col-12 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Available Keys</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <t t-if="state.dashboardData.available_key_list and state.dashboardData.available_key_list.length">
+                                        <t t-foreach="state.dashboardData.available_key_list" t-as="key" t-key="key.id">
+                                            <div class="col-md-3 col-sm-6 mb-3">
+                                                <div class="card" t-on-click="(ev) => onKeyCardClick(ev)" t-att-data-key-id="key.id">
+                                                    <div class="card-body">
+                                                        <h5 class="card-title"><t t-esc="key.name"/></h5>
+                                                        <p class="card-text">
+                                                            <strong>Type:</strong> <t t-esc="key.key_type"/><br/>
+                                                            <strong>Hub:</strong> <t t-esc="key.hub_name"/><br/>
+                                                            <strong>Location:</strong> <t t-esc="key.location"/>
+                                                        </p>
+                                                        <button class="btn btn-sm btn-primary" t-on-click.stop="(ev) => onKeyCheckout(ev)" t-att-data-key-id="key.id">
+                                                            <i class="fa fa-sign-out mr-1"></i>Check Out
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </t>
+                                    </t>
+                                    <div t-if="!state.dashboardData.available_key_list || !state.dashboardData.available_key_list.length" class="col-12 text-center">
+                                        <p>No available keys</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

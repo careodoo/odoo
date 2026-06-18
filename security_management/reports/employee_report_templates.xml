@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_security_employee_document">
+        <t t-call="web.external_layout">
+            <t t-set="o" t-value="o.with_context(lang=lang)"/>
+            <div class="page">
+                <div class="oe_structure"/>
+                <div class="row">
+                    <div class="col-12 text-center">
+                        <h2>Security Employee Performance Report</h2>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-6">
+                        <div class="row">
+                            <div class="col-12">
+                                <h4>Employee Information</h4>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <strong>Name:</strong> <span t-field="o.name"/>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <strong>Employee ID:</strong> <span t-field="o.employee_id.name"/>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <strong>Position:</strong> <span t-field="o.job_id.name"/>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <strong>Team:</strong> <span t-field="o.team_id.name"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="row">
+                            <div class="col-12">
+                                <h4>Performance Metrics</h4>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <strong>Tasks Completed:</strong> <span t-esc="len(o.env['security.task'].search([('assigned_to', '=', o.id), ('state', '=', 'completed')]))"/>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <strong>Tasks In Progress:</strong> <span t-esc="len(o.env['security.task'].search([('assigned_to', '=', o.id), ('state', '=', 'in_progress')]))"/>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <strong>Shifts Completed:</strong> <span t-esc="len(o.env['security.shift'].search([('employee_id', '=', o.id), ('state', 'in', ['checked_out', 'confirmed'])]))"/>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <strong>Shifts Missed:</strong> <span t-esc="len(o.env['security.shift'].search([('employee_id', '=', o.id), ('state', '=', 'missed')]))"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h4>Recent Tasks</h4>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Task</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="o.env['security.task'].search([('assigned_to', '=', o.id)], limit=5, order='create_date desc')" t-as="task">
+                                    <tr>
+                                        <td><span t-field="task.name"/></td>
+                                        <td><span t-field="task.deadline"/></td>
+                                        <td><span t-field="task.state"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h4>Recent Shifts</h4>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Location</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="o.env['security.shift'].search([('employee_id', '=', o.id)], limit=5, order='date desc')" t-as="shift">
+                                    <tr>
+                                        <td><span t-field="shift.date"/></td>
+                                        <td><span t-field="shift.location_id.name"/></td>
+                                        <td><span t-field="shift.state"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="oe_structure"/>
+            </div>
+        </t>
+    </template>
+
+    <template id="report_security_employee">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="security_management.report_security_employee_document"/>
+            </t>
+        </t>
+    </template>
+</odoo>

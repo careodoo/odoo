@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_inspection">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="inspection">
+                <t t-set="o" t-value="inspection"/>
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <!-- Header -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="text-center">
+                                    <h2 class="mb-3">
+                                        <strong>SECURITY INSPECTION REPORT</strong>
+                                    </h2>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-6">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td><strong>Inspection Reference:</strong></td>
+                                        <td><span t-field="inspection.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Date &amp; Time:</strong></td>
+                                        <td><span t-field="inspection.timestamp" t-options="{'widget': 'datetime'}"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Inspector:</strong></td>
+                                        <td><span t-field="inspection.inspector_id.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Guard:</strong></td>
+                                        <td><span t-field="inspection.guard_id.name"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td><strong>Type:</strong></td>
+                                        <td>
+                                            <span class="badge badge-info" t-field="inspection.inspection_type"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Priority:</strong></td>
+                                        <td>
+                                            <span t-attf-class="badge #{inspection.priority == '3' and 'badge-danger' or inspection.priority == '2' and 'badge-warning' or 'badge-info'}" 
+                                                  t-field="inspection.priority"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Status:</strong></td>
+                                        <td>
+                                            <span t-attf-class="badge #{inspection.state == 'completed' and 'badge-success' or inspection.state == 'in_progress' and 'badge-primary' or 'badge-secondary'}" 
+                                                  t-field="inspection.state"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Duration:</strong></td>
+                                        <td>
+                                            <span t-field="inspection.duration"/> hours
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Location Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h4 class="mb-3">
+                                    <i class="fa fa-map-marker"/> Location Details
+                                </h4>
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td width="15%"><strong>Client:</strong></td>
+                                        <td width="35%"><span t-field="inspection.client_id.name"/></td>
+                                        <td width="15%"><strong>Premise:</strong></td>
+                                        <td width="35%"><span t-field="inspection.premise_id.name"/></td>
+                                    </tr>
+                                    <tr t-if="inspection.floor_id">
+                                        <td><strong>Floor:</strong></td>
+                                        <td><span t-field="inspection.floor_id.name"/></td>
+                                        <td><strong>Unit:</strong></td>
+                                        <td><span t-field="inspection.unit_id.name"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Issue Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h4 class="mb-3">
+                                    <i class="fa fa-exclamation-triangle"/> Issue Details
+                                </h4>
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td width="15%"><strong>Issue Type:</strong></td>
+                                        <td width="35%">
+                                            <span class="badge badge-secondary" t-field="inspection.issue_type"/>
+                                        </td>
+                                        <td width="15%"><strong>Severity:</strong></td>
+                                        <td width="35%">
+                                            <span t-attf-class="badge #{inspection.severity == 'critical' and 'badge-danger' or inspection.severity == 'high' and 'badge-warning' or inspection.severity == 'medium' and 'badge-info' or 'badge-light'}" 
+                                                  t-field="inspection.severity"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <div class="mt-3">
+                                    <strong>Description:</strong>
+                                    <div class="border p-3 mt-2 bg-light">
+                                        <p><span t-field="inspection.issue_description"/></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Inspection Areas -->
+                        <div class="row mb-4" t-if="inspection.inspection_area_ids">
+                            <div class="col-12">
+                                <h4 class="mb-3">
+                                    <i class="fa fa-list"/> Inspection Areas
+                                </h4>
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Area</th>
+                                            <th>Status</th>
+                                            <th>Notes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="inspection.inspection_area_ids" t-as="area">
+                                            <tr>
+                                                <td><span t-field="area.name"/></td>
+                                                <td>
+                                                    <span t-attf-class="badge #{area.status == 'passed' and 'badge-success' or area.status == 'failed' and 'badge-danger' or 'badge-warning'}" 
+                                                          t-field="area.status"/>
+                                                </td>
+                                                <td><span t-field="area.notes"/></td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Checklist Items -->
+                        <div class="row mb-4" t-if="inspection.checklist_item_ids">
+                            <div class="col-12">
+                                <h4 class="mb-3">
+                                    <i class="fa fa-check-square"/> Checklist Items
+                                </h4>
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Item</th>
+                                            <th>Status</th>
+                                            <th>Comments</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="inspection.checklist_item_ids" t-as="item">
+                                            <tr>
+                                                <td><span t-field="item.description"/></td>
+                                                <td>
+                                                    <span t-if="item.is_completed" class="badge badge-success">
+                                                        <i class="fa fa-check"/> Completed
+                                                    </span>
+                                                    <span t-else="" class="badge badge-warning">
+                                                        <i class="fa fa-times"/> Pending
+                                                    </span>
+                                                </td>
+                                                <td><span t-field="item.comments"/></td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Related Issues -->
+                        <div class="row mb-4" t-if="inspection.issue_ids">
+                            <div class="col-12">
+                                <h4 class="mb-3">
+                                    <i class="fa fa-bug"/> Related Issues
+                                </h4>
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Issue</th>
+                                            <th>Type</th>
+                                            <th>Severity</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="inspection.issue_ids" t-as="issue">
+                                            <tr>
+                                                <td><span t-field="issue.name"/></td>
+                                                <td><span t-field="issue.issue_type"/></td>
+                                                <td>
+                                                    <span t-attf-class="badge #{issue.severity == 'critical' and 'badge-danger' or issue.severity == 'high' and 'badge-warning' or 'badge-info'}" 
+                                                          t-field="issue.severity"/>
+                                                </td>
+                                                <td>
+                                                    <span t-attf-class="badge #{issue.state == 'resolved' and 'badge-success' or issue.state == 'in_progress' and 'badge-primary' or 'badge-secondary'}" 
+                                                          t-field="issue.state"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Resolution Information -->
+                        <div class="row mb-4" t-if="inspection.state == 'completed'">
+                            <div class="col-12">
+                                <h4 class="mb-3">
+                                    <i class="fa fa-check-circle"/> Resolution
+                                </h4>
+                                <table class="table table-sm table-borderless">
+                                    <tr t-if="inspection.assigned_to">
+                                        <td width="15%"><strong>Assigned To:</strong></td>
+                                        <td width="35%"><span t-field="inspection.assigned_to.name"/></td>
+                                        <td width="15%"><strong>Resolution Date:</strong></td>
+                                        <td width="35%"><span t-field="inspection.resolution_date" t-options="{'widget': 'datetime'}"/></td>
+                                    </tr>
+                                </table>
+                                <div class="mt-3" t-if="inspection.resolution_notes">
+                                    <strong>Resolution Notes:</strong>
+                                    <div class="border p-3 mt-2 bg-light">
+                                        <p><span t-field="inspection.resolution_notes"/></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Notes -->
+                        <div class="row mb-4" t-if="inspection.notes">
+                            <div class="col-12">
+                                <h4 class="mb-3">
+                                    <i class="fa fa-sticky-note"/> Additional Notes
+                                </h4>
+                                <div class="border p-3 bg-light">
+                                    <p><span t-field="inspection.notes"/></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Photo Evidence -->
+                        <div class="row mb-4" t-if="inspection.image">
+                            <div class="col-12">
+                                <h4 class="mb-3">
+                                    <i class="fa fa-camera"/> Photo Evidence
+                                </h4>
+                                <div class="text-center">
+                                    <img t-att-src="image_data_uri(inspection.image)" class="img-fluid" style="max-height: 400px;"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="row mt-5">
+                            <div class="col-12">
+                                <hr/>
+                                <div class="text-center text-muted">
+                                    <small>
+                                        Report generated on <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d %H:%M:%S')"/>
+                                        by <span t-esc="user.name"/>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

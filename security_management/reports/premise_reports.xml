@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_premise_qrcode" model="ir.actions.report">
+        <field name="name">Premise QR Code</field>
+        <field name="model">security.premise</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">security_management.report_premise_qrcode</field>
+        <field name="report_file">security_management.report_premise_qrcode</field>
+        <field name="print_report_name">'Premise QR Code - %s' % (object.name)</field>
+        <field name="binding_model_id" ref="model_security_premise"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>
