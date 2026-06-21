@@ -184,6 +184,43 @@ documents (form with state header buttons, barcode/QR, print buttons; list/searc
 
 ---
 
+## 6b. HR 360 Dashboard (OWL client action)
+
+A powerful HR home dashboard, **gated to a group** and used as the **landing screen**
+for its members.
+
+**Backend** — `hr.employee.get_hr_dashboard_data()` (`@api.model`, in `models/hr_employee.py`)
+returns one plain dict: KPIs (total employees, joiners this year, on-leave today,
+present today, pending approvals, suspended, departments, active loans), aggregates
+(`by_department`, `by_job`, `by_gender`, `by_category`, `joiners_trend` = 12-month line,
+`by_leave_type`), and lists (`upcoming_leaves` next 7 days, `new_joiners`, `pending_docs`).
+Optional models are read through `self.env.get(...)` so it works whether or not
+`hr.attendance` / `hr.loan` are installed (present-today and loans degrade to 0).
+`read_group` counts use a `__count` → `<field>_count` fallback (this build exposes the
+latter).
+
+**Frontend** — OWL component `care_hr.HrDashboard` in
+`static/src/hr_dashboard/hr_dashboard.{js,xml,scss}`, registered as client action
+**`care_hr_dashboard`**. Lazy-loads Chart.js via `loadBundle("web.chartjs_lib")`,
+animations off, charts rendered from a plain-data copy (decoupled from the OWL proxy).
+KPI/cards link into the employees list. Declared in `__manifest__.py` →
+`assets/web.assets_backend`.
+
+**Landing + permissions**
+- Group `care_hr.group_hr_dashboard` (security/groups.xml) — implies `hr.group_hr_user`
+  so members can read HR data. Assign users to it later (the "specific users").
+- Client action `care_hr.action_hr_dashboard` + a top-level app menu
+  (`menu_hr_dashboard_root` → `menu_hr_dashboard`), both restricted to the group.
+- `res.users` override (`models/res_users.py`): `_sync_dashboard_home_action()` sets each
+  group member's **Home Action** (`action_id`) to the dashboard, so they land on it at
+  login; removing a user from the group clears it (only if it still points at our
+  dashboard), so they fall back to the normal app menu. Runs from `create()` and from
+  `write()` when group keys change (`groups_id` / `in_group_*` / `sel_groups_*`), guarded
+  against recursion via the `care_hr_sync` context flag.
+
+> To make the dashboard someone's home: tick them into **Dashboard User**
+> (category "HR Dashboard"). To revert: untick — their home returns to the normal menu.
+
 ## 7. Gotchas & notes
 - **`qrcode` dependency** is hard — every document's `_generate_qr_code` calls
   `qr_generator`. A missing lib breaks form rendering of any action document.

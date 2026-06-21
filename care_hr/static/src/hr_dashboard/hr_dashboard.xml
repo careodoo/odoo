@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+    <t t-name="care_hr.HrDashboard">
+        <div class="o_hr_dash" dir="rtl" t-ref="root">
+            <div class="o_hr_dash_head">
+                <div>
+                    <h1>لوحة الموارد البشرية</h1>
+                    <span class="o_hr_dash_sub" t-if="state.data">سنة <t t-esc="state.data.year"/></span>
+                </div>
+                <button class="btn btn-secondary" t-on-click="() => this.refresh()">
+                    <i class="fa fa-refresh"/> تحديث
+                </button>
+            </div>
+
+            <div t-if="state.loading" class="o_hr_dash_loading">
+                <i class="fa fa-spinner fa-spin fa-2x"/>
+                <div>جارٍ التحميل…</div>
+            </div>
+
+            <t t-if="state.data and !state.loading">
+                <!-- KPI cards -->
+                <div class="o_hr_kpis">
+                    <div class="o_hr_kpi k-odoo" t-on-click="() => this.openEmployees([['active','=',true]], 'الموظفون')">
+                        <div class="k-ico"><i class="fa fa-users"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.total)"/><div class="k-lbl">إجمالي الموظفين</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-green">
+                        <div class="k-ico"><i class="fa fa-user-plus"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.new_joiners_year)"/><div class="k-lbl">التحاقات هذا العام</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-blue">
+                        <div class="k-ico"><i class="fa fa-check-circle"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.present_today)"/><div class="k-lbl">حضور اليوم</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-orange">
+                        <div class="k-ico"><i class="fa fa-plane"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.on_leave_today)"/><div class="k-lbl">في إجازة اليوم</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-purple">
+                        <div class="k-ico"><i class="fa fa-hourglass-half"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.pending_approvals)"/><div class="k-lbl">بانتظار الاعتماد</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-red" t-on-click="() => this.openEmployees([['suspend_date','!=',false]], 'موظفون موقوفون')">
+                        <div class="k-ico"><i class="fa fa-ban"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.suspended)"/><div class="k-lbl">موقوفون</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-teal">
+                        <div class="k-ico"><i class="fa fa-sitemap"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.departments)"/><div class="k-lbl">الأقسام</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-cyan">
+                        <div class="k-ico"><i class="fa fa-money"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.active_loans)"/><div class="k-lbl">قروض نشطة</div></div>
+                    </div>
+                </div>
+
+                <!-- charts row 1 -->
+                <div class="o_hr_grid">
+                    <div class="o_hr_card c-2">
+                        <div class="o_hr_card_t">عدد الموظفين حسب القسم</div>
+                        <div class="o_hr_canvas"><canvas id="hrByDept"/></div>
+                    </div>
+                    <div class="o_hr_card">
+                        <div class="o_hr_card_t">التوزيع حسب الجنس</div>
+                        <div class="o_hr_canvas"><canvas id="hrGender"/></div>
+                    </div>
+                </div>
+
+                <!-- charts row 2 -->
+                <div class="o_hr_grid">
+                    <div class="o_hr_card">
+                        <div class="o_hr_card_t">حسب المسمّى الوظيفي</div>
+                        <div class="o_hr_canvas"><canvas id="hrByJob"/></div>
+                    </div>
+                    <div class="o_hr_card">
+                        <div class="o_hr_card_t">الالتحاقات شهرياً</div>
+                        <div class="o_hr_canvas"><canvas id="hrJoiners"/></div>
+                    </div>
+                    <div class="o_hr_card">
+                        <div class="o_hr_card_t">الإجازات حسب النوع</div>
+                        <div class="o_hr_canvas"><canvas id="hrLeaveType"/></div>
+                    </div>
+                </div>
+
+                <!-- lists row -->
+                <div class="o_hr_grid">
+                    <div class="o_hr_card">
+                        <div class="o_hr_card_t">📅 إجازات قادمة (٧ أيام)</div>
+                        <table class="o_hr_tbl">
+                            <thead><tr><th>الموظف</th><th>النوع</th><th>من</th><th>إلى</th><th>أيام</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="state.data.upcoming_leaves" t-as="l" t-key="l_index">
+                                    <td t-esc="l.employee"/><td t-esc="l.type"/>
+                                    <td t-esc="l.date_from"/><td t-esc="l.date_to"/>
+                                    <td t-esc="l.days"/>
+                                </tr>
+                                <tr t-if="!state.data.upcoming_leaves.length"><td colspan="5" class="o_hr_empty">لا يوجد</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="o_hr_card">
+                        <div class="o_hr_card_t">🆕 أحدث الالتحاقات</div>
+                        <table class="o_hr_tbl">
+                            <thead><tr><th>الموظف</th><th>القسم</th><th>المسمّى</th><th>التاريخ</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="state.data.new_joiners" t-as="j" t-key="j_index">
+                                    <td t-esc="j.name"/><td t-esc="j.department"/>
+                                    <td t-esc="j.job"/><td t-esc="j.date"/>
+                                </tr>
+                                <tr t-if="!state.data.new_joiners.length"><td colspan="4" class="o_hr_empty">لا يوجد</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="o_hr_card">
+                        <div class="o_hr_card_t">⏳ مستندات بانتظار الاعتماد</div>
+                        <table class="o_hr_tbl">
+                            <thead><tr><th>النوع</th><th>العدد</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="state.data.pending_docs" t-as="p" t-key="p_index">
+                                    <td t-esc="p.type"/><td><span class="o_hr_badge" t-esc="p.count"/></td>
+                                </tr>
+                                <tr t-if="!state.data.pending_docs.length"><td colspan="2" class="o_hr_empty">لا يوجد</td></tr>
+                            </tbody>
+                        </table>
+                        <div class="o_hr_card_t" style="margin-top:10px;">التصنيفات</div>
+                        <div class="o_hr_canvas o_hr_canvas_sm"><canvas id="hrByCat"/></div>
+                    </div>
+                </div>
+            </t>
+        </div>
+    </t>
+</templates>

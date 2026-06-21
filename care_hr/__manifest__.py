@@ -33,6 +33,7 @@
         'views/hr_leave.xml',
         'views/hr_skills.xml',
         'views/hr_employee.xml',
+        'views/hr_dashboard.xml',
         'wizards/hr_employee_suspend.xml',
         'reports/joining_report.xml',
         'reports/clearance_report.xml',
@@ -40,4 +41,11 @@
         'reports/leave_return_report.xml',
         'reports/leave_request_report.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'care_hr/static/src/hr_dashboard/hr_dashboard.scss',
+            'care_hr/static/src/hr_dashboard/hr_dashboard.js',
+            'care_hr/static/src/hr_dashboard/hr_dashboard.xml',
+        ],
+    },
     }
