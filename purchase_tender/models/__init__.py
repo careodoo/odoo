@@ -8,3 +8,8 @@ from . import tender_material_info
 from . import tender_equipment_analysis
 from . import tender_initial_meeting
 from . import tender_record
+from . import tender_competitor
+from . import tender_checklist
+from . import tender_requirement
+from . import res_partner
+from . import res_config_settings

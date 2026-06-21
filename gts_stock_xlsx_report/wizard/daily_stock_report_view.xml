@@ -30,40 +30,40 @@
                         <group>
                             <field name="warehouse_ids" widget="many2many_tags" domain="[('company_id', '=', company_id)]"
                                    options="{'no_create': True, 'no_open': True}"
-                                   attrs="{'invisible': [('report_by', 'not in', ('category_summarised'))]}"/>
+                                   invisible="report_by not in ['category_summarised']"/>
                             <field name="warehouse_id" domain="[('company_id', '=', company_id)]"
                                    options="{'no_create': True, 'no_open': True}"
-                                   attrs="{'invisible': [('report_by', 'in', ('category_summarised'))]}"/>
+                                   invisible="report_by in ['category_summarised']"/>
                         </group>
                         <group >
                             <field name="location_ids" widget="many2many_tags"
                                    options="{'no_create': True, 'no_open': True}"
                                    domain="[('company_id', '=', company_id),('usage', '=', 'internal')]"
-                                   attrs="{'invisible': [('report_by', 'not in', ('location_wise'))]}"/>
+                                   invisible="report_by not in ['location_wise']"/>
                             <field name="location_id"
                                    options="{'no_create': True, 'no_open': True}"
                                    domain="[('company_id', '=', company_id),('usage', '=', 'internal')]"
-                                   attrs="{'invisible': [('report_by', 'not in', ('detailed_report'))]}"/>
+                                   invisible="report_by not in ['detailed_report']"/>
                         </group>
                     </group>
-                    <group string="Product" colspan="4" attrs="{'invisible': [('report_by', '!=', 'detailed_report')]}">
+                    <group string="Product" colspan="4" invisible="report_by != 'detailed_report'">
                         <group>
                             <field name="product_id" options="{'no_create': True}"
-                                   attrs="{'required': [('report_by', '=', 'detailed_report')]}"/>
+                                   required="report_by == 'detailed_report'"/>
                         </group>
                     </group>
                     <group string="Products" colspan="4"
-                           attrs="{'invisible': ['|', ('report_by', 'in', ('detailed_report', 'category_summarised')), ('report_by', '=', False)]}">
+                           invisible="report_by in ['detailed_report','category_summarised'] or not report_by">
                         <field name="product_ids" nolabel="1"
                                options="{'no_create': True, 'no_open': True}"/>
                     </group>
                     <footer>
                         <button name="act_getstockreport" string="Export" type="object" class="oe_highlight"
-                                attrs="{'invisible': [('report_by', 'in', ('detailed_report', 'category_summarised'))]}"/>
+                                invisible="report_by in ['detailed_report','category_summarised']"/>
                         <button name="detailed_movement_report" string="Export" type="object" class="oe_highlight"
-                                attrs="{'invisible': [('report_by', '!=', 'detailed_report')]}"/>
+                                invisible="report_by != 'detailed_report'"/>
                         <button name="category_summary_report" string="Export" type="object" class="oe_highlight"
-                                attrs="{'invisible': [('report_by', '!=', 'category_summarised')]}"/>
+                                invisible="report_by != 'category_summarised'"/>
                         or
                         <button special="cancel" string="Cancel" type="object" class="oe_link"/>
                     </footer>

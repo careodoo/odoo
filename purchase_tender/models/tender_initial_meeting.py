@@ -10,6 +10,7 @@ class TenderInitialMeeting(models.Model):
     sequence = fields.Integer(default=10)
     date = fields.Date()
     file = fields.Binary()
+    filename = fields.Char(string="Filename")
     tender_id = fields.Many2one('purchase.tender')
     company_id = fields.Many2one(
         'res.company',

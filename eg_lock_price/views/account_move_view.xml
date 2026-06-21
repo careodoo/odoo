@@ -8,7 +8,7 @@
                 <field name="readonly_price" invisible="1"/>
             </xpath>
             <xpath expr="//field[@name='invoice_line_ids']/tree/field[@name='price_unit']" position="replace">
-                <field name="price_unit" string="Price" attrs="{'readonly': [('readonly_price', '=', True)]}"/>
+                <field name="price_unit" string="Price" readonly="readonly_price"/>
             </xpath>
         </field>
     </record>

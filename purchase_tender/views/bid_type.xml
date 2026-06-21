@@ -36,7 +36,7 @@
       <field name="view_mode">tree,form</field>
     </record>
     <menuitem id="purchase_tender_config_menu" name="Configurations" parent="purchase_tender_root"
-      sequence="3" />
+      sequence="8" />
     <menuitem id="bid_type_menu" name="Bid Type"
       parent="purchase_tender.purchase_tender_config_menu" sequence="1" action="bid_type_action" />
   </data>

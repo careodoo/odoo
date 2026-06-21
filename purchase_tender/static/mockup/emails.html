@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تصميم إشعارات البريد — مقترح</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#3a7afe; --green:#21b07b; --red:#e25563; --orange:#f59e0b;
+    --purple:#8b5cf6; --teal:#017e84; --gray:#9aa3b5; --odoo:#714B67;
+    --ink:#1d2433; --muted:#7b8499; --line:#e6e8ef; --bg:#eceef3;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);font-family:'Cairo',system-ui,sans-serif;color:var(--ink);padding:30px 16px 60px}
+  .page-title{max-width:680px;margin:0 auto 8px;font-weight:900;font-size:22px}
+  .page-sub{max-width:680px;margin:0 auto 26px;color:var(--muted);font-weight:700;font-size:13.5px}
+  .label{max-width:600px;margin:34px auto 10px;font-weight:900;font-size:14px;color:var(--odoo);display:flex;align-items:center;gap:8px}
+  .label .tag{font-size:11px;font-weight:800;background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+  /* email shell */
+  .mail{max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;
+    box-shadow:0 1px 2px rgba(20,30,60,.05),0 12px 30px rgba(20,30,60,.10);border:1px solid var(--line)}
+  .brand{padding:16px 22px;display:flex;align-items:center;justify-content:space-between;
+    background:linear-gradient(120deg,#714B67,#9a6f8c);color:#fff}
+  .brand .b1{font-weight:900;font-size:16px;display:flex;align-items:center;gap:9px}
+  .brand .b2{font-size:11.5px;font-weight:700;opacity:.85}
+  .accent{height:5px}
+  .hero{padding:22px 22px 6px;display:flex;gap:14px;align-items:flex-start}
+  .hero .ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:22px;flex-shrink:0}
+  .hero h2{margin:0;font-size:18px;font-weight:900}
+  .hero p{margin:3px 0 0;color:var(--muted);font-weight:700;font-size:13px}
+
+  .body{padding:14px 22px 8px}
+  .card{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:6px}
+  .card .top{padding:13px 15px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);background:#fafbfd}
+  .card .tno{font-size:12px;font-weight:800;color:var(--muted)}
+  .card .tname{font-size:15.5px;font-weight:900;margin-top:2px}
+  .card .org{font-size:12.5px;color:var(--muted);font-weight:700;margin-top:1px}
+  .kv{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line)}
+  .kv .it{background:#fff;padding:11px 13px}
+  .kv .it .k{font-size:11px;color:var(--muted);font-weight:700}
+  .kv .it .v{font-size:15px;font-weight:900;margin-top:3px}
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:999px;font-size:11.5px;font-weight:800}
+  .b-green{background:#e3f7ee;color:#15875a}.b-red{background:#fde9eb;color:#c0392b}
+  .b-blue{background:#e7f0ff;color:#2b62d6}.b-orange{background:#fff4e0;color:#b9770e}
+  .b-purple{background:#efe7ff;color:#6d34d6}.b-gray{background:#eef0f5;color:#5b6677}
+  .btn{display:block;text-align:center;margin:18px 0 6px;background:#714B67;color:#fff;text-decoration:none;
+    font-weight:800;font-size:14px;padding:13px;border-radius:11px}
+  .btn.green{background:#21b07b}.btn.red{background:#e25563}.btn.blue{background:#3a7afe}.btn.orange{background:#f59e0b}
+  .note{margin:14px 0 4px;padding:12px 14px;border-radius:11px;font-size:12.5px;font-weight:700;line-height:1.7}
+  .note.warn{background:#fff7ed;color:#9a5b00;border:1px solid #fde3bf}
+  .note.danger{background:#fdeef0;color:#a02633;border:1px solid #f6c9ce}
+  .note.ok{background:#eef9f3;color:#136c49;border:1px solid #bfe9d3}
+  .prog{height:9px;border-radius:7px;background:#eef0f5;overflow:hidden;margin-top:8px}
+  .prog>i{display:block;height:100%;border-radius:7px}
+  .foot{padding:16px 22px;background:#fafbfd;border-top:1px solid var(--line);color:var(--muted);font-size:11.5px;font-weight:700;text-align:center;line-height:1.8}
+  .countdown{display:flex;gap:10px;justify-content:center;margin:6px 0 2px}
+  .cd{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 0;width:74px;text-align:center}
+  .cd .n{font-size:24px;font-weight:900;color:#e25563}.cd .u{font-size:11px;color:var(--muted);font-weight:700}
+  table.mini{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
+  table.mini th{text-align:right;color:var(--muted);font-weight:800;font-size:11px;padding:8px 8px;border-bottom:1px solid var(--line)}
+  table.mini td{padding:9px 8px;border-bottom:1px solid var(--line);font-weight:700}
+  table.mini tr:last-child td{border-bottom:none}
+</style>
+</head>
+<body>
+
+<div class="page-title">📧 تصميم مقترح لإشعارات البريد الإلكتروني</div>
+<div class="page-sub">معاينة فقط — قالب احترافي موحّد (RTL) ببيانات أعمق لكل نوع إشعار. أخبرني أيها نعتمده وأنفّذه كقوالب بريد فعلية في Odoo.</div>
+
+<!-- ============ 1) NEW TENDER ============ -->
+<div class="label">1 · مناقصة جديدة <span class="tag">عند الإنشاء</span></div>
+<div class="mail">
+  <div class="accent" style="background:#3a7afe"></div>
+  <div class="brand"><div class="b1">🏛️ إدارة المناقصات — Care</div><div class="b2">إشعار آلي</div></div>
+  <div class="hero">
+    <div class="ic" style="background:#e7f0ff;color:#3a7afe">📋</div>
+    <div><h2>مناقصة جديدة أُضيفت</h2><p>تمت إضافة مناقصة جديدة وتحتاج إلى مراجعة الفريق</p></div>
+  </div>
+  <div class="body">
+    <div class="card">
+      <div class="top">
+        <div><div class="tno">م/2451</div><div class="tname">خدمات نظافة وصيانة شاملة</div><div class="org">وزارة الصحة</div></div>
+        <span class="badge b-gray">جديدة</span>
+      </div>
+      <div class="kv">
+        <div class="it"><div class="k">تاريخ الإصدار</div><div class="v">2026-06-18</div></div>
+        <div class="it"><div class="k">موعد الإغلاق</div><div class="v">2026-07-05</div></div>
+        <div class="it"><div class="k">باقٍ</div><div class="v" style="color:#3a7afe">17 يوم</div></div>
+        <div class="it"><div class="k">نوع العطاء</div><div class="v">عامة</div></div>
+        <div class="it"><div class="k">سعر الكراسة</div><div class="v">75.000 د.ك</div></div>
+        <div class="it"><div class="k">العمالة</div><div class="v">35</div></div>
+      </div>
+    </div>
+    <a class="btn blue" href="#">عرض المناقصة ←</a>
+  </div>
+  <div class="foot">أُرسل بواسطة نظام إدارة المناقصات · care-kw.com<br/>أنت مشترك في تنبيهات المناقصات</div>
+</div>
+
+<!-- ============ 2) STATUS CHANGE (WON) ============ -->
+<div class="label">2 · تغيير الحالة — فوز <span class="tag">عند تغيّر الحالة</span></div>
+<div class="mail">
+  <div class="accent" style="background:#21b07b"></div>
+  <div class="brand"><div class="b1">🏛️ إدارة المناقصات — Care</div><div class="b2">إشعار آلي</div></div>
+  <div class="hero">
+    <div class="ic" style="background:#e3f7ee;color:#21b07b">🏆</div>
+    <div><h2>فزنا بالمناقصة!</h2><p>تغيّرت الحالة من «تم التقديم» إلى «فائزة»</p></div>
+  </div>
+  <div class="body">
+    <div class="card">
+      <div class="top">
+        <div><div class="tno">م/2436</div><div class="tname">إدارة مواقف ونقل</div><div class="org">بلدية الكويت</div></div>
+        <span class="badge b-green">فائزة</span>
+      </div>
+      <div class="kv">
+        <div class="it"><div class="k">سعرنا</div><div class="v">760.000</div></div>
+        <div class="it"><div class="k">ترتيبنا</div><div class="v" style="color:#21b07b">#1</div></div>
+        <div class="it"><div class="k">الفارق عن الثاني</div><div class="v">+42.000</div></div>
+      </div>
+    </div>
+    <div class="note ok">✅ تهانينا — أنت الأقل سعراً. الخطوة التالية: متابعة إجراءات الترسية وتجهيز الضمان النهائي.</div>
+    <a class="btn green" href="#">عرض تفاصيل الترسية ←</a>
+  </div>
+  <div class="foot">أُرسل بواسطة نظام إدارة المناقصات · care-kw.com</div>
+</div>
+
+<!-- ============ 3) CLOSING SOON REMINDER ============ -->
+<div class="label">3 · تذكير بقرب الإغلاق <span class="tag">جديد · تلقائي يومي (cron)</span></div>
+<div class="mail">
+  <div class="accent" style="background:#e25563"></div>
+  <div class="brand"><div class="b1">🏛️ إدارة المناقصات — Care</div><div class="b2">تذكير عاجل</div></div>
+  <div class="hero">
+    <div class="ic" style="background:#fde9eb;color:#e25563">⏰</div>
+    <div><h2>مناقصة تُغلق قريباً</h2><p>تبقّى وقت قصير على موعد الإغلاق — يلزم إنهاء التحضير</p></div>
+  </div>
+  <div class="body">
+    <div class="countdown">
+      <div class="cd"><div class="n">3</div><div class="u">أيام</div></div>
+      <div class="cd"><div class="n">11</div><div class="u">ساعة</div></div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <div class="top">
+        <div><div class="tno">م/2440</div><div class="tname">أعمال إنشائية — مبنى إداري</div><div class="org">وزارة الأشغال</div></div>
+        <span class="badge b-orange">جارٍ التحضير</span>
+      </div>
+      <div class="kv">
+        <div class="it"><div class="k">موعد الإغلاق</div><div class="v" style="color:#e25563">2026-06-24</div></div>
+        <div class="it"><div class="k">احتمالية الفوز</div><div class="v">42%</div></div>
+        <div class="it"><div class="k">الضمان</div><div class="v" style="color:#f59e0b">ينتهي قريباً</div></div>
+      </div>
+    </div>
+    <div class="note danger">🔴 لم يتم تسجيل سعرنا بعد لهذه المناقصة. يُرجى إدخال العرض قبل الإغلاق.</div>
+    <a class="btn red" href="#">إكمال التحضير الآن ←</a>
+  </div>
+  <div class="foot">أُرسل بواسطة نظام إدارة المناقصات · care-kw.com</div>
+</div>
+
+<!-- ============ 4) GUARANTEE EXPIRING ============ -->
+<div class="label">4 · ضمان بنكي ينتهي <span class="tag">جديد · تلقائي</span></div>
+<div class="mail">
+  <div class="accent" style="background:#f59e0b"></div>
+  <div class="brand"><div class="b1">🏛️ إدارة المناقصات — Care</div><div class="b2">تنبيه ضمانات</div></div>
+  <div class="hero">
+    <div class="ic" style="background:#fff4e0;color:#f59e0b">🛡️</div>
+    <div><h2>ضمان بنكي يقترب من الانتهاء</h2><p>يلزم التجديد أو الإفراج لتفادي المخاطر المالية</p></div>
+  </div>
+  <div class="body">
+    <div class="card">
+      <div class="top">
+        <div><div class="tno">م/2410</div><div class="tname">خدمات أمن وحراسة</div><div class="org">وزارة الصحة</div></div>
+        <span class="badge b-orange">ينتهي خلال 9 أيام</span>
+      </div>
+      <div class="kv">
+        <div class="it"><div class="k">قيمة الضمان</div><div class="v">2,150.000</div></div>
+        <div class="it"><div class="k">تاريخ الانتهاء</div><div class="v" style="color:#f59e0b">2026-06-30</div></div>
+        <div class="it"><div class="k">البنك</div><div class="v">بيتك</div></div>
+      </div>
+    </div>
+    <div class="note warn">⚠️ راجع حالة المناقصة: إن كانت خاسرة/ملغاة يُمكن طلب الإفراج عن الضمان، وإلا يلزم التجديد.</div>
+    <a class="btn orange" href="#">مراجعة الضمان ←</a>
+  </div>
+  <div class="foot">أُرسل بواسطة نظام إدارة المناقصات · care-kw.com</div>
+</div>
+
+<!-- ============ 5) WEEKLY DIGEST ============ -->
+<div class="label">5 · الملخّص الأسبوعي <span class="tag">جديد · كل أحد</span></div>
+<div class="mail">
+  <div class="accent" style="background:#017e84"></div>
+  <div class="brand"><div class="b1">🏛️ إدارة المناقصات — Care</div><div class="b2">ملخّص أسبوعي</div></div>
+  <div class="hero">
+    <div class="ic" style="background:#e1f5f5;color:#017e84">📊</div>
+    <div><h2>ملخّص هذا الأسبوع</h2><p>نظرة سريعة على أداء ومواعيد المناقصات</p></div>
+  </div>
+  <div class="body">
+    <div class="kv" style="border:1px solid var(--line);border-radius:14px;overflow:hidden">
+      <div class="it"><div class="k">نشطة</div><div class="v">21</div></div>
+      <div class="it"><div class="k">تُغلق هذا الأسبوع</div><div class="v" style="color:#e25563">5</div></div>
+      <div class="it"><div class="k">فزنا بها</div><div class="v" style="color:#21b07b">3</div></div>
+    </div>
+    <div style="font-weight:900;font-size:13px;margin:16px 0 4px">⏰ أقرب المواعيد</div>
+    <table class="mini">
+      <thead><tr><th>المناقصة</th><th>الجهة</th><th>الإغلاق</th></tr></thead>
+      <tbody>
+        <tr><td>أعمال إنشائية</td><td>الأشغال</td><td style="color:#e25563;font-weight:900">خلال يوم</td></tr>
+        <tr><td>أمن وحراسة</td><td>الصحة</td><td style="color:#e25563;font-weight:900">خلال يومين</td></tr>
+        <tr><td>نظافة وصيانة</td><td>الصحة</td><td style="color:#f59e0b;font-weight:900">خلال 3 أيام</td></tr>
+      </tbody>
+    </table>
+    <a class="btn" style="background:#017e84" href="#">فتح لوحة المعلومات ←</a>
+  </div>
+  <div class="foot">أُرسل بواسطة نظام إدارة المناقصات · care-kw.com</div>
+</div>
+
+<!-- ============ 6) DATE CHANGE / POSTPONED ============ -->
+<div class="label">6 · تأجيل / تغيير موعد <span class="tag">عند تغيّر التاريخ</span></div>
+<div class="mail">
+  <div class="accent" style="background:#8b5cf6"></div>
+  <div class="brand"><div class="b1">🏛️ إدارة المناقصات — Care</div><div class="b2">إشعار آلي</div></div>
+  <div class="hero">
+    <div class="ic" style="background:#efe7ff;color:#8b5cf6">📅</div>
+    <div><h2>تغيّر موعد الإغلاق</h2><p>تم تأجيل المناقصة إلى موعد جديد</p></div>
+  </div>
+  <div class="body">
+    <div class="card">
+      <div class="top">
+        <div><div class="tno">م/2418</div><div class="tname">توريد مواد تشغيل</div><div class="org">مؤسسة البترول</div></div>
+        <span class="badge b-purple">مؤجلة</span>
+      </div>
+      <div class="kv" style="grid-template-columns:1fr 1fr">
+        <div class="it"><div class="k">الموعد السابق</div><div class="v" style="text-decoration:line-through;color:var(--muted)">2026-06-22</div></div>
+        <div class="it"><div class="k">الموعد الجديد</div><div class="v" style="color:#8b5cf6">2026-07-10</div></div>
+      </div>
+    </div>
+    <a class="btn" style="background:#8b5cf6" href="#">عرض المناقصة ←</a>
+  </div>
+  <div class="foot">أُرسل بواسطة نظام إدارة المناقصات · care-kw.com</div>
+</div>
+
+</body>
+</html>

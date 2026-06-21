@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+    <record model="ir.actions.report" id="action_tender_requirements_report">
+      <field name="name">متطلبات المناقصة</field>
+      <field name="model">purchase.tender</field>
+      <field name="report_type">qweb-pdf</field>
+      <field name="report_name">purchase_tender.tender_requirements_report</field>
+      <field name="report_file">purchase_tender.tender_requirements_report</field>
+      <field name="binding_model_id" ref="model_purchase_tender" />
+      <field name="binding_type">report</field>
+    </record>
+
+    <template id="tender_requirements_report">
+      <t t-call="web.html_container">
+        <t t-foreach="docs" t-as="doc">
+          <t t-set="csel" t-value="dict(doc.requirement_ids._fields['category'].selection) if doc.requirement_ids else {'document':'مستند','equipment':'معدة','tool':'أداة','condition':'شرط','info':'معلومة'}" />
+          <t t-set="groups" t-value="[('document','📄 المستندات المطلوبة','#2b62d6'),('equipment','🛠️ المعدات','#7a4ed6'),('tool','🔧 الأدوات','#0f9d8c'),('condition','📋 الشروط الجوهرية','#d97706'),('info','ℹ️ المعلومات الأساسية','#5b6472')]" />
+          <div class="page" dir="rtl" style="font-family:'Cairo','Amiri',Arial,sans-serif;color:#1d2433;font-size:12px;">
+
+            <!-- header -->
+            <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
+              <tr>
+                <td style="background:#714B67;color:#fff;padding:16px 20px;width:65%;">
+                  <div style="font-size:21px;font-weight:bold;">متطلبات المناقصة</div>
+                  <div style="font-size:12px;opacity:0.85;margin-top:3px;"><span t-esc="doc.tender_no or '—'" /></div>
+                </td>
+                <td style="background:#5b3b53;color:#fff;padding:16px 20px;text-align:left;vertical-align:middle;">
+                  <div style="font-weight:bold;font-size:14px;">إدارة المناقصات — Care</div>
+                  <div style="font-size:11px;opacity:0.85;">care-kw.com</div>
+                </td>
+              </tr>
+              <tr><td colspan="2" style="height:5px;background:#3a7afe;"></td></tr>
+            </table>
+
+            <!-- title + readiness -->
+            <table style="width:100%;border-collapse:collapse;margin-bottom:14px;">
+              <tr>
+                <td style="vertical-align:top;">
+                  <div style="font-size:18px;font-weight:bold;"><span t-esc="doc.name or ''" /></div>
+                  <div style="color:#7b8499;font-weight:bold;margin-top:3px;"><span t-esc="doc.organization.name or ''" /></div>
+                </td>
+                <td style="text-align:left;vertical-align:top;width:200px;">
+                  <div style="color:#7b8499;font-size:10px;">جاهزية المتطلبات</div>
+                  <div style="font-weight:bold;font-size:16px;"><span t-esc="'%.0f' % (doc.requirement_progress or 0.0)" />%
+                    <span style="color:#7b8499;font-size:11px;font-weight:normal;">(<span t-esc="doc.requirement_ready" />/<span t-esc="doc.requirement_total" />)</span>
+                  </div>
+                  <div style="background:#e9ecf3;border-radius:6px;height:8px;width:100%;margin-top:4px;">
+                    <div t-attf-style="background:#21b07b;border-radius:6px;height:8px;width:{{int(doc.requirement_progress or 0)}}%;"></div>
+                  </div>
+                </td>
+              </tr>
+            </table>
+
+            <!-- executive summary -->
+            <t t-if="doc.ai_summary">
+              <div style="border:1px solid #e6e8ef;border-radius:6px;padding:12px 14px;margin-bottom:16px;background:#fafbfd;">
+                <div style="font-size:14px;font-weight:bold;margin-bottom:6px;">📝 الملخّص التنفيذي</div>
+                <div style="line-height:1.7;"><t t-out="doc.ai_summary" /></div>
+              </div>
+            </t>
+
+            <!-- requirement groups -->
+            <t t-foreach="groups" t-as="g">
+              <t t-set="cat" t-value="g[0]" />
+              <t t-set="items" t-value="doc.requirement_ids.filtered(lambda r: r.category == cat)" />
+              <t t-if="items">
+                <div t-attf-style="font-size:14px;font-weight:bold;margin:10px 0 6px;color:{{g[2]}};"><span t-esc="g[1]" /> <span style="color:#9aa3b5;font-size:11px;">(<span t-esc="len(items)" />)</span></div>
+                <table style="width:100%;border-collapse:collapse;margin-bottom:10px;">
+                  <thead>
+                    <tr style="background:#fafbfd;">
+                      <th style="border:1px solid #e6e8ef;padding:7px 8px;text-align:right;color:#7b8499;font-size:11px;width:28px;">#</th>
+                      <th style="border:1px solid #e6e8ef;padding:7px 8px;text-align:right;color:#7b8499;font-size:11px;">البند</th>
+                      <th style="border:1px solid #e6e8ef;padding:7px 8px;text-align:right;color:#7b8499;font-size:11px;">التفاصيل</th>
+                      <t t-if="cat in ('equipment','tool')"><th style="border:1px solid #e6e8ef;padding:7px 8px;text-align:right;color:#7b8499;font-size:11px;width:50px;">الكمية</th></t>
+                      <t t-if="cat in ('document','equipment','tool')"><th style="border:1px solid #e6e8ef;padding:7px 8px;text-align:center;color:#7b8499;font-size:11px;width:55px;">جاهز</th></t>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <t t-foreach="items" t-as="r">
+                      <tr>
+                        <td style="border:1px solid #e6e8ef;padding:6px 8px;color:#9aa3b5;"><span t-esc="r_index + 1" /></td>
+                        <td style="border:1px solid #e6e8ef;padding:6px 8px;font-weight:bold;"><span t-esc="r.name or ''" /></td>
+                        <td style="border:1px solid #e6e8ef;padding:6px 8px;"><span t-esc="r.detail or '—'" /></td>
+                        <t t-if="cat in ('equipment','tool')"><td style="border:1px solid #e6e8ef;padding:6px 8px;"><span t-esc="r.qty or '—'" /></td></t>
+                        <t t-if="cat in ('document','equipment','tool')">
+                          <td style="border:1px solid #e6e8ef;padding:6px 8px;text-align:center;">
+                            <span t-if="r.is_ready" style="color:#15875a;font-weight:bold;">✔</span>
+                            <span t-else="" style="color:#c0c6d2;">○</span>
+                          </td>
+                        </t>
+                      </tr>
+                    </t>
+                  </tbody>
+                </table>
+              </t>
+            </t>
+
+            <t t-if="not doc.requirement_ids">
+              <div style="border:1px solid #e6e8ef;border-radius:6px;padding:20px;text-align:center;color:#7b8499;">
+                لا توجد متطلبات مُستخرَجة بعد. ارفع ملف المناقصة واضغط «تحليل المستند آلياً».
+              </div>
+            </t>
+
+            <div style="margin-top:24px;color:#9aa3b5;font-size:10px;text-align:center;border-top:1px solid #e6e8ef;padding-top:8px;">
+              نظام إدارة المناقصات · Care — طُبع بتاريخ <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d')" />
+            </div>
+          </div>
+        </t>
+      </t>
+    </template>
+  </data>
+</odoo>

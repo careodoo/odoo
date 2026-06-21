@@ -11,7 +11,7 @@
             <field name="arch" type="xml">
                 <form string="Group Form">
                     <sheet> 
-                        <div style="float:right;width:100px;" attrs="{'invisible':[('total_members','=',0)]}">
+                        <div style="float:right;width:100px;" invisible="total_members == 0">
                             <label for="total_members" string="Total Members" />
                             <field name="total_members"  />
                         </div> 

@@ -1,5 +1,7 @@
 from odoo import _, api, fields, models
 
+from .purchase_tender import ACTIVE_STATES
+
 
 class TenderPriceAnalysis(models.Model):
     _name = 'purchase.tender.price.analysis'
@@ -15,10 +17,10 @@ class TenderPriceAnalysis(models.Model):
     tender_id = fields.Many2one('purchase.tender')
     state = fields.Selection(
         selection=[
-            ('accepted', 'Accepted'),
-            ('excepted', 'Excepted'),
+            ('accepted', 'مقبول'),
+            ('excepted', 'مستبعد'),
         ],
-        string='Status',
+        string='الحالة',
         default='accepted',
     )
     company_id = fields.Many2one(
@@ -28,6 +30,39 @@ class TenderPriceAnalysis(models.Model):
         required=True,
     )
 
+    # --- competitor-analysis dimensions (related to the parent tender) ---
+    organization = fields.Many2one(related='tender_id.organization', store=True, string='الجهة')
+    bid_type = fields.Many2one(related='tender_id.bid_type', store=True, string='النشاط')
+    issue_date = fields.Date(related='tender_id.issue_date', store=True, string='تاريخ الإصدار')
+    tender_state = fields.Selection(related='tender_id.state', store=True, string='حالة المناقصة')
+    winner_price = fields.Float(related='tender_id.winner_price', store=True, string='سعر الفائز')
+    is_ours = fields.Boolean(string='عرضنا', compute='_compute_flags', store=True)
+    is_winner = fields.Boolean(string='فائز', compute='_compute_flags', store=True)
+    win_count = fields.Integer(string='مرات الفوز', compute='_compute_flags', store=True,
+                               group_operator='sum')
+    gap_vs_winner = fields.Float(string='الفارق عن الفائز', compute='_compute_flags', store=True,
+                                 help="This bid's price minus the winning price.")
+
+    @api.depends('contact', 'company_id', 'rank', 'state', 'price', 'tender_id.winner_price')
+    def _compute_flags(self):
+        for rec in self:
+            partner = rec.company_id.partner_id
+            won = rec.rank == 1 and rec.state == 'accepted'
+            rec.is_ours = bool(rec.contact and partner and rec.contact.id == partner.id)
+            rec.is_winner = won
+            rec.win_count = 1 if won else 0
+            rec.gap_vs_winner = (rec.price - rec.tender_id.winner_price) if (rec.price and rec.tender_id.winner_price) else 0.0
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        lines = super().create(vals_list)
+        for line in lines:
+            contact = line.contact
+            if (contact and contact.tender_is_competitor and line.price
+                    and line.tender_id and line.tender_id.state in ACTIVE_STATES):
+                line.tender_id.sudo()._send_watchlist_alert(contact)
+        return lines
+
     @api.depends('tender_id.manpower', 'tender_id.period', 'price')
     def compute_rate(self):
         for rec in self:
@@ -36,7 +71,8 @@ class TenderPriceAnalysis(models.Model):
             else:
                 rec.rate = 0
 
-    @api.depends('price', 'tender_id.price_analysis_ids', 'state')
+    @api.depends('price', 'tender_id.price_analysis_ids.price',
+                 'tender_id.price_analysis_ids.state', 'state')
     def compute_rank(self):
         for rec in self:
             rec.rank = 0

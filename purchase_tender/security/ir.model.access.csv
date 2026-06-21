@@ -28,3 +28,12 @@ access_purchase_tender_follower_m,purchase.tender.follower.m,model_purchase_tend
 
 access_bid_type_u,bid.type.u,model_bid_type,purchase_tender.group_tender_user,1,0,0,0
 access_bid_type_m,bid.type.m,model_bid_type,purchase_tender.group_tender_manager,1,1,1,1
+
+access_purchase_tender_competitor_u,purchase.tender.competitor.u,model_purchase_tender_competitor,purchase_tender.group_tender_user,1,0,0,0
+access_purchase_tender_competitor_m,purchase.tender.competitor.m,model_purchase_tender_competitor,purchase_tender.group_tender_manager,1,0,0,0
+
+access_purchase_tender_checklist_u,purchase.tender.checklist.u,model_purchase_tender_checklist,purchase_tender.group_tender_user,1,1,1,1
+access_purchase_tender_checklist_m,purchase.tender.checklist.m,model_purchase_tender_checklist,purchase_tender.group_tender_manager,1,1,1,1
+
+access_purchase_tender_requirement_u,purchase.tender.requirement.u,model_purchase_tender_requirement,purchase_tender.group_tender_user,1,1,1,1
+access_purchase_tender_requirement_m,purchase.tender.requirement.m,model_purchase_tender_requirement,purchase_tender.group_tender_manager,1,1,1,1

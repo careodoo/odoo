@@ -1,42 +1,157 @@
 <odoo>
   <data>
+    <!-- ============ LIST (enhanced) ============ -->
     <record id="purchase_tender_view_tree" model="ir.ui.view">
       <field name="name">purchase.tender.view.tree</field>
       <field name="model">purchase.tender</field>
       <field name="arch" type="xml">
-        <tree decoration-info="state == 'participated'" decoration-primary="state == 'interested'"
-          decoration-success="state in ['winner', 'purchased']"
-          decoration-danger="state in ['cancelled', 'lost']"
-          decoration-warning="state == 'postponed'" decoration-muted="state == 'closed'">
-          <field name="name" />
-          <field name="tender_no" />
-          <field name="image" widget="image" options="{&quot;size&quot;:[0,20]}" />
-          <field name="tender_name" />
-          <field name="organization" />
-          <field name="manpower" />
-          <field name="price" />
-          <field name="period" />
-          <field name="closing_date" />
-          <field name="winner" />
-          <field name="winner_price" />
-          <field name="winner_rate_price" string="Rate" />
-          <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}" />
-          <field name="state" decoration-info="state == 'participated'"
-            decoration-primary="state == 'interested'"
-            decoration-success="state in ['winner', 'purchased']"
-            decoration-danger="state in ['cancelled', 'lost']"
-            decoration-warning="state == 'postponed'" decoration-muted="state == 'closed'"
-            widget="badge" />
+        <tree string="المناقصات"
+          decoration-success="state in ['winner','purchased','in_progress','completed']"
+          decoration-danger="state in ['cancelled','lost','excepted']"
+          decoration-warning="days_to_close &gt;= 0 and days_to_close &lt;= 7 and state in ['new','under_study','docs_purchased','interested','preparing','participated']"
+          decoration-muted="state == 'closed'">
+          <field name="currency_id" column_invisible="1" />
+          <field name="image_128" widget="image" options="{'size': [24, 24]}" />
+          <field name="short_name" string="المناقصة" />
+          <field name="tender_no" optional="show" />
+          <field name="organization" string="الجهة" />
+          <field name="bid_type" string="النشاط" optional="hide" />
+          <field name="our_price" widget="monetary" string="سعرنا" />
+          <field name="price" widget="monetary" string="سعر الشراء" optional="hide" />
+          <field name="care_rank" string="ترتيبنا" optional="show" />
+          <field name="win_probability" widget="progressbar" string="احتمالية الفوز" />
+          <field name="checklist_progress" widget="progressbar" string="التحضير %" optional="hide" />
+          <field name="prep_score" widget="progressbar" string="جاهزية العطاء" optional="show" />
+          <field name="ai_analyzed" string="حُلّل" widget="boolean_toggle" optional="hide" />
+          <field name="closing_date" string="موعد الإغلاق" optional="show" />
+          <field name="new_closing_date" string="موعد الإغلاق الجديد" optional="hide" />
+          <field name="days_to_close" string="باقٍ (يوم)" optional="show" />
+          <field name="winner" optional="hide" />
+          <field name="winner_price" widget="monetary" optional="hide" />
+          <field name="guarantee_status" optional="hide" />
+          <field name="company_id" groups="base.group_multi_company"
+            options="{'no_create': True}" optional="show" />
+          <field name="state" widget="badge"
+            decoration-success="state in ['winner','purchased','in_progress','completed']"
+            decoration-info="state in ['participated','docs_purchased']"
+            decoration-primary="state in ['interested','preparing']"
+            decoration-warning="state in ['postponed','under_study']"
+            decoration-danger="state in ['cancelled','lost','excepted']"
+            decoration-muted="state in ['closed','new']" />
+          <button name="action_set_docs_purchased" type="object" string="شراء الكراسة" icon="fa-shopping-cart"
+            invisible="state not in ['new','under_study']" />
+          <button name="action_set_participated" type="object" string="تقديم" icon="fa-paper-plane"
+            invisible="state not in ['docs_purchased','interested','preparing']" />
+          <button name="action_set_winner" type="object" string="فوز" icon="fa-trophy"
+            invisible="state != 'participated'" />
         </tree>
       </field>
     </record>
+
+    <!-- ============ KANBAN (cards) ============ -->
+    <record id="purchase_tender_view_kanban" model="ir.ui.view">
+      <field name="name">purchase.tender.view.kanban</field>
+      <field name="model">purchase.tender</field>
+      <field name="arch" type="xml">
+        <kanban class="o_tender_kanban" default_order="importance desc" limit="10">
+          <field name="tender_no" />
+          <field name="short_name" />
+          <field name="organization" />
+          <field name="price" />
+          <field name="our_price" />
+          <field name="currency_id" />
+          <field name="care_rank" />
+          <field name="days_to_close" />
+          <field name="win_probability" />
+          <field name="state" />
+          <field name="guarantee_status" />
+          <field name="winner" />
+          <field name="bid_type" />
+          <field name="prep_score" />
+          <field name="ai_analyzed" />
+          <templates>
+            <t t-name="kanban-box">
+              <div class="oe_kanban_global_click o_tk_card">
+                <div t-attf-class="o_tk_stripe o_tk_s_#{record.state.raw_value}" />
+                <div class="o_tk_head">
+                  <img t-att-src="kanban_image('res.partner', 'image_128', record.organization.raw_value)"
+                    class="o_tk_logo" alt="logo" />
+                  <div class="o_tk_meta">
+                    <div class="o_tk_no" t-esc="record.tender_no.value" />
+                    <div class="o_tk_name" t-esc="record.short_name.value" />
+                    <div class="o_tk_org" t-esc="record.organization.value" />
+                  </div>
+                  <span t-attf-class="o_tk_badge o_tk_s_#{record.state.raw_value}" t-esc="record.state.value" />
+                  <span class="o_tk_ai" t-if="record.ai_analyzed.raw_value" title="تم تحليل المستند آلياً">🔍</span>
+                </div>
+                <div class="o_tk_kv">
+                  <div class="o_tk_it"><span class="k">سعرنا</span><span class="v"><field name="our_price" widget="monetary" /></span></div>
+                  <div class="o_tk_it"><span class="k">ترتيبنا</span><span class="v">#<t t-esc="record.care_rank.value or '—'" /></span></div>
+                  <div class="o_tk_it"><span class="k">الإغلاق</span><span class="v"><t t-esc="record.days_to_close.value" /> يوم</span></div>
+                  <div class="o_tk_it"><span class="k">الضمان</span><span class="v" t-esc="record.guarantee_status.value" /></div>
+                </div>
+                <div class="o_tk_prog">
+                  <div class="o_tk_prog_top"><span>احتمالية الفوز</span><span><t t-esc="record.win_probability.value" />%</span></div>
+                  <div class="o_tk_bar"><div t-attf-style="width:#{record.win_probability.raw_value}%" /></div>
+                </div>
+                <div class="o_tk_prog" t-if="record.prep_score.raw_value">
+                  <div class="o_tk_prog_top"><span>جاهزية العطاء</span><span><t t-esc="Math.round(record.prep_score.raw_value)" />%</span></div>
+                  <div class="o_tk_bar"><div t-attf-style="width:#{record.prep_score.raw_value}%;background:#21b07b;" /></div>
+                </div>
+                <div class="o_tk_actions">
+                  <button type="object" name="action_set_docs_purchased" class="btn btn-sm btn-secondary"
+                    t-if="['new','under_study'].includes(record.state.raw_value)">شراء الكراسة</button>
+                  <button type="object" name="action_set_participated" class="btn btn-sm btn-primary"
+                    t-if="['docs_purchased','interested','preparing'].includes(record.state.raw_value)">تم التقديم</button>
+                  <button type="object" name="action_set_winner" class="btn btn-sm btn-success"
+                    t-if="record.state.raw_value == 'participated'">فائزة</button>
+                  <button type="object" name="action_set_lost" class="btn btn-sm btn-danger"
+                    t-if="record.state.raw_value == 'participated'">خاسرة</button>
+                  <button type="object" name="action_set_purchased" class="btn btn-sm btn-success"
+                    t-if="record.state.raw_value == 'winner'">تمت الترسية</button>
+                </div>
+              </div>
+            </t>
+          </templates>
+        </kanban>
+      </field>
+    </record>
+
+    <!-- ============ FORM ============ -->
     <record id="purchase_tender_view_form" model="ir.ui.view">
       <field name="name">purchase.tender.view.form</field>
       <field name="model">purchase.tender</field>
       <field name="arch" type="xml">
         <form>
           <header>
-            <field widget="statusbar" options="{'clickable': '1'}" name="state" />
+            <button name="action_set_under_study" string="تحت الدراسة" type="object"
+              class="btn-secondary" invisible="state not in ['new']" />
+            <button name="action_set_docs_purchased" string="شراء الكراسة" type="object"
+              class="btn-secondary" invisible="state not in ['new','under_study']" />
+            <button name="action_set_interested" string="مهتمون" type="object"
+              class="btn-primary" invisible="state not in ['new','under_study','docs_purchased']" />
+            <button name="action_set_preparing" string="جارٍ التحضير" type="object"
+              class="btn-primary" invisible="state not in ['interested','docs_purchased']" />
+            <button name="action_set_participated" string="تم التقديم" type="object"
+              class="btn-primary" invisible="state not in ['interested','preparing','docs_purchased']" />
+            <button name="action_set_winner" string="فائزة" type="object"
+              class="btn-success" invisible="state not in ['participated']" />
+            <button name="action_set_purchased" string="تمت الترسية" type="object"
+              class="btn-success" invisible="state not in ['winner']" />
+            <button name="action_set_in_progress" string="قيد التنفيذ" type="object"
+              class="btn-success" invisible="state not in ['purchased']" />
+            <button name="action_set_completed" string="منجزة" type="object"
+              class="btn-success" invisible="state not in ['in_progress']" />
+            <button name="action_set_lost" string="خاسرة" type="object"
+              invisible="state not in ['participated','interested','preparing']" />
+            <button name="action_set_declined" string="لن نشارك" type="object"
+              invisible="state in ['excepted','winner','purchased','in_progress','completed','lost','closed','cancelled']" />
+            <button name="action_set_postponed" string="تأجيل" type="object"
+              invisible="state in ['postponed','purchased','in_progress','completed','lost','closed','cancelled']" />
+            <button name="action_reset_new" string="إعادة" type="object"
+              invisible="state in ['new']" />
+            <field widget="statusbar" options="{'clickable': '1'}" name="state"
+              statusbar_visible="new,under_study,docs_purchased,interested,preparing,participated,winner,purchased" />
           </header>
           <sheet>
             <field name="image" widget="image" class="oe_avatar ml-3 mr-3"
@@ -49,6 +164,7 @@
             <group>
               <group>
                 <field name="active" invisible="1" />
+                <field name="currency_id" invisible="1" />
                 <field name="organization" />
                 <field name="partner_id" invisible="1" />
                 <field name="tender_no" />
@@ -63,19 +179,108 @@
                   options="{'no_create': True}" />
               </group>
               <group>
-                <field name="price" />
-                <field name="guarantee" />
+                <field name="price" widget="monetary" />
+                <field name="guarantee" widget="monetary" />
+                <field name="guarantee_bank" />
+                <field name="guarantee_ref" />
                 <field name="expiry_date" />
+                <field name="guarantee_status" />
                 <field name="period" />
                 <field name="manpower" />
                 <field name="winner" />
-                <field name="winner_price" />
+                <field name="winner_price" widget="monetary" />
                 <field name="winner_rate_price" />
                 <field name="care_rank" />
-                <field name="to_win" />
+                <field name="to_win" widget="monetary" />
+                <field name="price_gap_pct" />
+                <field name="days_to_close" />
+                <field name="win_probability" widget="progressbar" />
+                <field name="loss_reason" invisible="state != 'lost'" />
+                <field name="loss_note" invisible="state != 'lost'" />
               </group>
             </group>
             <notebook>
+              <page string="قائمة التحضير">
+                <field name="checklist_progress" widget="progressbar" />
+                <button name="action_seed_checklist" type="object" string="إضافة قائمة التحضير الافتراضية"
+                  class="btn-primary" invisible="checklist_ids" />
+                <field name="checklist_ids">
+                  <tree editable="bottom">
+                    <field name="sequence" widget="handle" />
+                    <field name="is_done" widget="boolean_toggle" />
+                    <field name="name" />
+                    <field name="responsible_id" />
+                    <field name="deadline" />
+                    <field name="note" />
+                  </tree>
+                </field>
+              </page>
+              <page string="📎 ملف المناقصة">
+                <group>
+                  <group>
+                    <field name="tender_document" filename="tender_document_name" />
+                    <field name="tender_document_name" invisible="1" />
+                  </group>
+                  <group>
+                    <button name="action_analyze_document" type="object" string="🔍 تحليل المستند آلياً"
+                      class="btn-primary" invisible="not tender_document" />
+                    <button name="action_print_requirements" type="object" string="🖨️ طباعة المتطلبات"
+                      class="btn-secondary" invisible="not requirement_ids" />
+                    <field name="ai_analyzed" />
+                    <field name="requirement_progress" widget="progressbar" string="جاهزية المتطلبات" />
+                    <label for="requirement_ready" string="بنود جاهزة" />
+                    <div>
+                      <field name="requirement_ready" class="oe_inline" /> /
+                      <field name="requirement_total" class="oe_inline" />
+                    </div>
+                  </group>
+                </group>
+                <separator string="الملخّص التنفيذي" />
+                <field name="ai_summary" placeholder="يظهر هنا ملخّص المناقصة بعد التحليل الآلي..." />
+              </page>
+              <page string="📄 المستندات المطلوبة">
+                <field name="requirement_ids" domain="[('category','=','document')]" context="{'default_category':'document'}">
+                  <tree editable="bottom">
+                    <field name="sequence" widget="handle" />
+                    <field name="category" column_invisible="1" />
+                    <field name="is_ready" widget="boolean_toggle" />
+                    <field name="name" />
+                    <field name="detail" />
+                  </tree>
+                </field>
+              </page>
+              <page string="🛠️ المعدات والأدوات">
+                <field name="requirement_ids" domain="[('category','in',['equipment','tool'])]" context="{'default_category':'equipment'}">
+                  <tree editable="bottom">
+                    <field name="sequence" widget="handle" />
+                    <field name="category" />
+                    <field name="is_ready" widget="boolean_toggle" />
+                    <field name="name" />
+                    <field name="qty" />
+                    <field name="detail" />
+                  </tree>
+                </field>
+              </page>
+              <page string="📋 الشروط الجوهرية">
+                <field name="requirement_ids" domain="[('category','=','condition')]" context="{'default_category':'condition'}">
+                  <tree editable="bottom">
+                    <field name="sequence" widget="handle" />
+                    <field name="category" column_invisible="1" />
+                    <field name="name" />
+                    <field name="detail" />
+                  </tree>
+                </field>
+              </page>
+              <page string="ℹ️ المعلومات الأساسية">
+                <field name="requirement_ids" domain="[('category','=','info')]" context="{'default_category':'info'}">
+                  <tree editable="bottom">
+                    <field name="sequence" widget="handle" />
+                    <field name="category" column_invisible="1" />
+                    <field name="name" />
+                    <field name="detail" />
+                  </tree>
+                </field>
+              </page>
               <page string="Prices Analysis">
                 <field name="price_analysis_ids">
                   <tree editable="bottom">
@@ -147,7 +352,6 @@
                   </tree>
                 </field>
               </page>
-
             </notebook>
           </sheet>
           <div class="oe_chatter" name="oe_chatter">
@@ -158,15 +362,62 @@
         </form>
       </field>
     </record>
+
+    <!-- ============ SEARCH ============ -->
+    <record id="purchase_tender_view_search" model="ir.ui.view">
+      <field name="name">purchase.tender.view.search</field>
+      <field name="model">purchase.tender</field>
+      <field name="arch" type="xml">
+        <search>
+          <field name="name" string="Tender"
+            filter_domain="['|','|',('name','ilike',self),('tender_no','ilike',self),('tender_name','ilike',self)]" />
+          <field name="organization" />
+          <field name="bid_type" />
+          <field name="winner" />
+          <filter name="f_active" string="نشطة" domain="[('state','in',['new','under_study','docs_purchased','interested','preparing','participated'])]" />
+          <filter name="f_won" string="فائزة" domain="[('state','in',['winner','purchased','in_progress','completed'])]" />
+          <filter name="f_lost" string="خاسرة" domain="[('state','=','lost')]" />
+          <separator />
+          <filter name="f_under_study" string="تحت الدراسة" domain="[('state','=','under_study')]" />
+          <filter name="f_docs" string="شُريت الكراسة" domain="[('state','=','docs_purchased')]" />
+          <filter name="f_interested" string="مهتمون" domain="[('state','=','interested')]" />
+          <filter name="f_preparing" string="جارٍ التحضير" domain="[('state','=','preparing')]" />
+          <filter name="f_participated" string="تم التقديم" domain="[('state','=','participated')]" />
+          <filter name="f_awarded" string="تمت الترسية / تنفيذ" domain="[('state','in',['purchased','in_progress','completed'])]" />
+          <separator />
+          <filter name="f_closing_soon" string="تُغلق خلال ٧ أيام"
+            domain="[('days_to_close','&gt;=',0),('days_to_close','&lt;=',7),('state','in',['new','under_study','docs_purchased','interested','preparing','participated'])]" />
+          <filter name="f_guarantee_expiring" string="ضمان ينتهي قريباً"
+            domain="[('guarantee_status','=','expiring')]" />
+          <separator />
+          <filter name="f_my" string="مناقصاتي" domain="[('create_uid','=',uid)]" />
+          <separator />
+          <filter name="f_analyzed" string="حُلّل آلياً" domain="[('ai_analyzed','=',True)]" />
+          <filter name="f_not_analyzed" string="لم يُحلّل" domain="[('ai_analyzed','=',False)]" />
+          <filter name="f_ready_submit" string="جاهز للتقديم (≥٨٠٪)" domain="[('prep_score','&gt;=',80)]" />
+          <group expand="0" string="تجميع حسب">
+            <filter name="g_state" string="الحالة" context="{'group_by':'state'}" />
+            <filter name="g_company" string="الشركة" context="{'group_by':'company_id'}" />
+            <filter name="g_org" string="الجهة" context="{'group_by':'organization'}" />
+            <filter name="g_bid" string="النشاط" context="{'group_by':'bid_type'}" />
+            <filter name="g_winner" string="الفائز" context="{'group_by':'winner'}" />
+            <filter name="g_loss" string="سبب الخسارة" context="{'group_by':'loss_reason'}" />
+            <filter name="g_month" string="شهر الإصدار" context="{'group_by':'issue_date:month'}" />
+          </group>
+        </search>
+      </field>
+    </record>
+
     <record id="purchase_tender_action" model="ir.actions.act_window">
       <field name="name">Our Tenders</field>
       <field name="type">ir.actions.act_window</field>
       <field name="res_model">purchase.tender</field>
-      <field name="view_mode">tree,form</field>
+      <field name="view_mode">tree,kanban,form</field>
+      <field name="search_view_id" ref="purchase_tender_view_search" />
     </record>
     <menuitem id="purchase_tender_root" name="Our Tenders" sequence="10"
       web_icon="fa fa-pie-chart,#f1c40f,#34495e" />
-    <menuitem id="purchase_tender_menu" name="Tenders" parent="purchase_tender_root" sequence="1"
+    <menuitem id="purchase_tender_menu" name="Tenders" parent="purchase_tender_root" sequence="2"
       action="purchase_tender_action" />
   </data>
 </odoo>

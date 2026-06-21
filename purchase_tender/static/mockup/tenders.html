@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مناقصاتنا — تصميم مقترح</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#3a7afe; --green:#21b07b; --red:#e25563; --orange:#f59e0b;
+    --purple:#8b5cf6; --teal:#017e84; --gray:#9aa3b5; --yellow:#f1c40f; --odoo:#714B67;
+    --muted:#7b8499; --line:#e6e8ef; --bg:#f1f1f4; --ink:#1d2433;
+    --shadow:0 1px 2px rgba(20,30,60,.05), 0 6px 18px rgba(20,30,60,.06);
+    --shadow-h:0 10px 28px rgba(20,30,60,.14);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);font-family:'Cairo',system-ui,sans-serif;color:var(--ink)}
+  a{color:inherit;text-decoration:none}
+
+  /* ---- toolbar ---- */
+  .top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line)}
+  .top .row{display:flex;align-items:center;gap:14px;padding:12px 22px;flex-wrap:wrap}
+  .brand{font-weight:900;font-size:19px;display:flex;align-items:center;gap:9px}
+  .brand .dot{width:11px;height:24px;border-radius:4px;background:linear-gradient(180deg,var(--odoo),#9a6f8c)}
+  .grow{flex:1}
+  .search{display:flex;align-items:center;gap:8px;background:#f4f5f8;border:1px solid var(--line);
+    border-radius:10px;padding:8px 12px;min-width:230px;color:var(--muted);font-weight:600;font-size:13px}
+  .search input{border:0;background:transparent;outline:0;font-family:inherit;font-weight:600;width:100%;color:var(--ink)}
+  .btn{border:0;border-radius:10px;padding:9px 16px;font-family:inherit;font-weight:800;font-size:13px;cursor:pointer}
+  .btn.primary{background:var(--odoo);color:#fff}
+  .switch{display:flex;background:#f0f1f5;border:1px solid var(--line);border-radius:11px;padding:3px;gap:2px}
+  .switch button{border:0;background:transparent;border-radius:8px;padding:7px 13px;font-family:inherit;
+    font-weight:800;font-size:13px;color:var(--muted);cursor:pointer}
+  .switch button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+
+  /* ---- filter chips grouped by phase ---- */
+  .filterbar{padding:0 22px 12px}
+  .fgroup{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .fgroup .glabel{font-size:11px;font-weight:900;color:var(--muted);min-width:74px}
+  .chip{font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:999px;border:1px solid var(--line);
+    background:#fff;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+  .chip:hover{border-color:#cfe0ff}
+  .chip.on{background:#eef3ff;border-color:#cfe0ff;color:var(--blue)}
+  .chip .cnt{font-weight:900;opacity:.8}
+  .chip .dotc{width:8px;height:8px;border-radius:50%}
+  .chip.smart{background:#fff7ed;border-color:#fde3bf;color:#b9770e}
+  .chip.smart.win{background:#eef9f3;border-color:#bfe9d3;color:#15875a}
+  .chip.smart.me{background:#f3eefe;border-color:#ddccfb;color:#6d34d6}
+
+  .wrap{max-width:1580px;margin:0 auto;padding:16px 22px 50px}
+  .pane{display:none}.pane.on{display:block}
+
+  /* ---- kanban cards ---- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);
+    position:relative;overflow:hidden;transition:transform .14s,box-shadow .14s}
+  .card:hover{transform:translateY(-3px);box-shadow:var(--shadow-h)}
+  .card .stripe{position:absolute;inset-inline-start:0;top:0;bottom:0;width:5px}
+  .card .body{padding:15px 16px}
+  .card .head{display:flex;align-items:flex-start;gap:12px}
+  .logo{width:46px;height:46px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;
+    color:#fff;font-weight:900;font-size:17px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+  .head .meta{flex:1;min-width:0}
+  .head .tno{font-size:11.5px;font-weight:800;color:var(--muted);letter-spacing:.3px}
+  .head .name{font-size:15.5px;font-weight:800;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .head .org{font-size:12.5px;color:var(--muted);font-weight:700;margin-top:2px}
+  .kv{display:grid;grid-template-columns:1fr 1fr;gap:9px 12px;margin-top:13px}
+  .kv .it{background:#f7f8fb;border-radius:10px;padding:7px 10px}
+  .kv .it .k{font-size:11px;color:var(--muted);font-weight:700}
+  .kv .it .val{font-size:14px;font-weight:900;margin-top:2px;display:flex;align-items:center;gap:5px}
+  .prog-wrap{margin-top:13px}
+  .prog-top{display:flex;justify-content:space-between;font-size:12px;font-weight:800;margin-bottom:6px}
+  .prog{height:9px;border-radius:7px;background:#eef0f5;overflow:hidden}
+  .prog > i{display:block;height:100%;border-radius:7px}
+  .midrow{display:flex;align-items:center;justify-content:space-between;margin-top:12px}
+  .phase-tag{font-size:10.5px;font-weight:900;color:var(--muted);background:#f0f1f5;padding:3px 9px;border-radius:6px}
+
+  /* quick action buttons */
+  .actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px;padding-top:12px;border-top:1px dashed var(--line)}
+  .act{border:1px solid var(--line);background:#fff;border-radius:9px;padding:6px 11px;font-family:inherit;
+    font-weight:800;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:.12s}
+  .act:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(0,0,0,.08)}
+  .act.go{border-color:#bfe9d3;background:#eef9f3;color:#15875a}
+  .act.bad{border-color:#f6c9ce;background:#fdeef0;color:#c0392b}
+  .act.warn{border-color:#fde3bf;background:#fff7ed;color:#b9770e}
+  .act.next{border-color:#cfe0ff;background:#eef3ff;color:#2b62d6}
+
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;font-size:11.5px;font-weight:800}
+  .g-pill{font-size:11.5px;font-weight:800;display:flex;align-items:center;gap:5px;color:var(--muted)}
+  .g-valid{color:var(--green)} .g-expiring{color:var(--orange)} .g-expired{color:var(--red)}
+  .rank-chip{font-weight:900}
+  .due{font-weight:900}
+  .due.soon{color:var(--red)} .due.warn{color:var(--orange)} .due.ok{color:var(--blue)}
+
+  /* ---- board (grouped by phase) ---- */
+  .board{display:grid;grid-template-columns:repeat(4,minmax(260px,1fr));gap:14px;align-items:start}
+  @media(max-width:1100px){.board{grid-auto-flow:column;grid-template-columns:none;grid-auto-columns:300px;overflow-x:auto}}
+  .col{background:#eef0f4;border:1px solid var(--line);border-radius:14px;padding:11px}
+  .col h4{margin:2px 4px 11px;font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:space-between}
+  .col h4 .meta{font-size:11px;font-weight:800;color:var(--muted)}
+  .col .colbar{height:4px;border-radius:4px;margin:-4px 2px 10px}
+  .mini-card{background:#fff;border:1px solid var(--line);border-radius:11px;padding:11px;margin-bottom:10px;
+    box-shadow:0 1px 2px rgba(20,30,60,.04);cursor:grab}
+  .mini-card:hover{box-shadow:var(--shadow-h)}
+  .mini-card .t{display:flex;align-items:center;gap:9px}
+  .mini-card .logo-sm{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:#fff;font-weight:900;font-size:11px;flex-shrink:0}
+  .mini-card .nm{font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini-card .org{font-size:11px;color:var(--muted);font-weight:700}
+  .mini-card .r{display:flex;align-items:center;justify-content:space-between;margin-top:9px;font-size:11.5px;font-weight:800}
+  .drag-hint{text-align:center;color:var(--muted);font-size:11.5px;font-weight:700;padding:6px}
+
+  /* ---- enhanced list ---- */
+  .tablewrap{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:920px}
+  thead th{text-align:right;padding:13px 14px;color:var(--muted);font-weight:800;font-size:11.5px;
+    background:#fafbfd;border-bottom:1px solid var(--line);white-space:nowrap}
+  tbody td{padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+  tbody tr:hover{background:#f7f8fb}
+  tbody tr:last-child td{border-bottom:none}
+  .row-soon{box-shadow:inset 4px 0 0 var(--red)}
+  .row-warn{box-shadow:inset 4px 0 0 var(--orange)}
+  .cell-org{display:flex;align-items:center;gap:10px}
+  .logo-sm2{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;color:#fff;font-weight:900;font-size:12px}
+  .nm{font-weight:800}.sub{color:var(--muted);font-size:11.5px;font-weight:700}
+  .money{font-weight:900;font-variant-numeric:tabular-nums}
+  .cur{font-size:11px;color:var(--muted);font-weight:700}
+  .mini-prog{display:flex;align-items:center;gap:8px}
+  .mini-prog .pb{width:70px;height:7px;border-radius:6px;background:#eef0f5;overflow:hidden}
+  .mini-prog .pb > i{display:block;height:100%}
+  .mini-prog .pv{font-weight:900;font-size:12px;width:34px}
+  .rowacts{display:flex;gap:6px}
+  .rowact{border:1px solid var(--line);background:#fff;border-radius:7px;padding:4px 9px;font-weight:800;font-size:11.5px;cursor:pointer}
+  .rowact.go{border-color:#bfe9d3;background:#eef9f3;color:#15875a}
+  .rowact.next{border-color:#cfe0ff;background:#eef3ff;color:#2b62d6}
+
+  .note{max-width:1580px;margin:18px auto 0;padding:14px 22px;color:var(--muted);font-size:12.5px;font-weight:700}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;padding:10px 22px 0;max-width:1580px;margin:0 auto;font-size:12px;font-weight:700;color:var(--muted)}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .sw{width:12px;height:12px;border-radius:4px;display:inline-block}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="row">
+    <div class="brand"><span class="dot"></span> مناقصاتنا</div>
+    <div class="search">🔎 <input placeholder="ابحث برقم المناقصة، الاسم، الجهة…"></div>
+    <div class="grow"></div>
+    <div class="switch">
+      <button onclick="show('board',this)">🏛️ مراحل</button>
+      <button class="on" onclick="show('kanban',this)">🗂️ بطاقات</button>
+      <button onclick="show('list',this)">📋 قائمة</button>
+    </div>
+    <button class="btn primary">＋ مناقصة جديدة</button>
+  </div>
+
+  <div class="filterbar">
+    <div class="fgroup">
+      <span class="glabel">١· التقييم</span>
+      <div class="chip"><span class="dotc" style="background:var(--gray)"></span> جديدة <span class="cnt">8</span></div>
+      <div class="chip"><span class="dotc" style="background:#5b8cff"></span> تحت الدراسة <span class="cnt">6</span></div>
+      <div class="chip"><span class="dotc" style="background:var(--teal)"></span> شُريت الكراسة <span class="cnt">5</span></div>
+      <div class="chip on"><span class="dotc" style="background:var(--purple)"></span> مهتمون <span class="cnt">7</span></div>
+      <div class="chip"><span class="dotc" style="background:#b0b7c3"></span> لن نشارك <span class="cnt">3</span></div>
+    </div>
+    <div class="fgroup">
+      <span class="glabel">٢· التقديم</span>
+      <div class="chip"><span class="dotc" style="background:var(--orange)"></span> جارٍ التحضير <span class="cnt">4</span></div>
+      <div class="chip"><span class="dotc" style="background:var(--blue)"></span> تم التقديم <span class="cnt">9</span></div>
+      <span class="glabel" style="min-width:62px">٣· النتيجة</span>
+      <div class="chip"><span class="dotc" style="background:var(--green)"></span> فائزة <span class="cnt">12</span></div>
+      <div class="chip"><span class="dotc" style="background:var(--red)"></span> خاسرة <span class="cnt">9</span></div>
+      <div class="chip"><span class="dotc" style="background:var(--orange)"></span> مؤجلة <span class="cnt">2</span></div>
+    </div>
+    <div class="fgroup">
+      <span class="glabel">٤· التنفيذ</span>
+      <div class="chip"><span class="dotc" style="background:#0bb6bd"></span> تمت الترسية <span class="cnt">6</span></div>
+      <div class="chip"><span class="dotc" style="background:#2b9a86"></span> قيد التنفيذ <span class="cnt">3</span></div>
+      <div class="chip"><span class="dotc" style="background:#6b7280"></span> منجزة <span class="cnt">4</span></div>
+      <span class="glabel" style="min-width:50px">ذكية</span>
+      <div class="chip smart">🔴 تُغلق خلال ٧ أيام <span class="cnt">5</span></div>
+      <div class="chip smart">🛡️ ضمان ينتهي <span class="cnt">3</span></div>
+      <div class="chip smart win">⭐ احتمالية فوز عالية <span class="cnt">8</span></div>
+      <div class="chip smart me">👤 مناقصاتي <span class="cnt">11</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ BOARD (grouped by phase) ============ -->
+<div class="wrap pane" id="board">
+  <div class="drag-hint">💡 اسحب أي مناقصة بين الأعمدة لتغيير حالتها (Drag & Drop)</div>
+  <div class="board" id="boardEl"></div>
+</div>
+
+<!-- ============ KANBAN ============ -->
+<div class="wrap pane on" id="kanban">
+  <div class="grid" id="cards"></div>
+</div>
+
+<!-- ============ LIST ============ -->
+<div class="wrap pane" id="list">
+  <div class="legend">
+    <span><i class="sw" style="background:var(--red)"></i> تُغلق خلال ٣ أيام</span>
+    <span><i class="sw" style="background:var(--orange)"></i> تُغلق خلال أسبوع</span>
+    <span><i class="sw" style="background:var(--green)"></i> فائزة</span>
+    <span><i class="sw" style="background:var(--blue)"></i> احتمالية فوز عالية</span>
+  </div>
+  <div class="tablewrap" style="margin-top:10px">
+    <table>
+      <thead><tr>
+        <th>المناقصة</th><th>الجهة</th><th>سعرنا</th><th>الترتيب</th>
+        <th>احتمالية الفوز</th><th>الإغلاق</th><th>الحالة</th><th>إجراء سريع</th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="note">تصميم مقترح (Mockup) للمعاينة فقط. المراحل الجديدة: تحت الدراسة · شراء الكراسة · لن نشارك · جارٍ التحضير · تمت الترسية · قيد التنفيذ · منجزة — مع أزرار سريعة لتغيير الحالة على كل بطاقة وصف.</div>
+
+<script>
+// state key -> {label, badge bg/color, stripe color, phase}
+const STATE = {
+  new:        {t:'جديدة',        s:'#9aa3b5', bg:'#eef0f5', fg:'#5b6677', ph:1},
+  under_study:{t:'تحت الدراسة',  s:'#5b8cff', bg:'#e7f0ff', fg:'#2b62d6', ph:1},
+  docs:       {t:'شُريت الكراسة', s:'#017e84', bg:'#e1f5f5', fg:'#017e84', ph:1},
+  interested: {t:'مهتمون',       s:'#8b5cf6', bg:'#efe7ff', fg:'#6d34d6', ph:1},
+  declined:   {t:'لن نشارك',     s:'#b0b7c3', bg:'#f0f1f5', fg:'#6b7280', ph:1},
+  preparing:  {t:'جارٍ التحضير', s:'#f59e0b', bg:'#fff4e0', fg:'#b9770e', ph:2},
+  participated:{t:'تم التقديم',  s:'#3a7afe', bg:'#e7f0ff', fg:'#2b62d6', ph:2},
+  winner:     {t:'فائزة',        s:'#21b07b', bg:'#e3f7ee', fg:'#15875a', ph:3},
+  lost:       {t:'خاسرة',        s:'#e25563', bg:'#fde9eb', fg:'#c0392b', ph:3},
+  postponed:  {t:'مؤجلة',        s:'#f59e0b', bg:'#fff4e0', fg:'#b9770e', ph:3},
+  awarded:    {t:'تمت الترسية',  s:'#0bb6bd', bg:'#e1f5f5', fg:'#017e84', ph:4},
+  in_progress:{t:'قيد التنفيذ',  s:'#2b9a86', bg:'#e6f6f1', fg:'#1f7a68', ph:4},
+  completed:  {t:'منجزة',        s:'#6b7280', bg:'#eef0f5', fg:'#4b5563', ph:4},
+};
+// contextual quick actions per state: [label, targetStateKey, style]
+const NEXT = {
+  new:        [['تحت الدراسة','under_study','next'],['شراء الكراسة','docs','next'],['لن نشارك','declined','bad']],
+  under_study:[['مهتمون','interested','go'],['لن نشارك','declined','bad']],
+  docs:       [['جارٍ التحضير','preparing','next'],['لن نشارك','declined','bad']],
+  interested: [['جارٍ التحضير','preparing','next'],['لن نشارك','declined','bad']],
+  preparing:  [['✓ تم التقديم','participated','go']],
+  participated:[['🏆 فائزة','winner','go'],['خاسرة','lost','bad'],['تأجيل','postponed','warn']],
+  winner:     [['تمت الترسية','awarded','go']],
+  awarded:    [['قيد التنفيذ','in_progress','next']],
+  in_progress:[['✓ منجزة','completed','go']],
+  postponed:  [['إعادة فتح','participated','next']],
+  lost:       [['إعادة','new','next']],
+  declined:   [['إعادة','new','next']],
+  completed:  [],
+};
+const PHASES = [
+  {n:1,t:'التقييم',c:'#8b5cf6',keys:['new','under_study','docs','interested','declined']},
+  {n:2,t:'التقديم',c:'#3a7afe',keys:['preparing','participated']},
+  {n:3,t:'النتيجة',c:'#21b07b',keys:['winner','lost','postponed']},
+  {n:4,t:'التنفيذ',c:'#017e84',keys:['awarded','in_progress','completed']},
+];
+const GRAD = [['#3a7afe','#6aa0ff'],['#21b07b','#4fd3a0'],['#8b5cf6','#b08bff'],['#017e84','#0bb6bd'],
+  ['#e25563','#ff8a96'],['#f59e0b','#ffc35a'],['#714B67','#9a6f8c'],['#2b62d6','#5b8cff']];
+function logoFor(i){const g=GRAD[i%GRAD.length];return `background:linear-gradient(135deg,${g[0]},${g[1]})`;}
+function initials(s){return s.replace(/^(وزارة|الهيئة العامة|بلدية|ديوان|مؤسسة)\s*/,'').trim().slice(0,2);}
+function money(v){return v.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3});}
+function dueClass(d){return d<=3?'soon':d<=7?'warn':'ok';}
+function gPill(gs){
+  if(gs==='valid')return '<span class="g-pill g-valid">🛡️ ضمان ساري</span>';
+  if(gs==='expiring')return '<span class="g-pill g-expiring">⚠️ ضمان ينتهي</span>';
+  if(gs==='expired')return '<span class="g-pill g-expired">⛔ ضمان منتهٍ</span>';
+  return '<span class="g-pill">— بدون ضمان</span>';
+}
+function actBtns(st,cls){
+  return (NEXT[st]||[]).map(a=>`<button class="${cls} ${a[2]}">${a[0]}</button>`).join('');
+}
+
+const DATA = [
+  {no:'م/2451',name:'خدمات نظافة وصيانة',org:'وزارة الصحة',price:1250.000,rank:2,n:6,win:78,days:3,winner:'شركة الخليج',gs:'valid',st:'participated',mp:35},
+  {no:'م/2448',name:'توريد أجهزة مختبر',org:'الهيئة العامة للتعليم التطبيقي',price:980.500,rank:1,n:5,win:91,days:12,winner:'—',gs:'valid',st:'interested',mp:12},
+  {no:'م/2440',name:'أعمال إنشائية',org:'وزارة الأشغال العامة',price:3420.000,rank:3,n:8,win:42,days:1,winner:'—',gs:'expiring',st:'preparing',mp:64},
+  {no:'م/2436',name:'إدارة مواقف ونقل',org:'بلدية الكويت',price:760.000,rank:1,n:4,win:88,days:21,winner:'شركتنا',gs:'valid',st:'winner',mp:18},
+  {no:'م/2431',name:'تشغيل مقاصف',org:'وزارة التربية',price:540.250,rank:4,n:7,win:30,days:6,winner:'التموين الحديث',gs:'expired',st:'lost',mp:22},
+  {no:'م/2429',name:'خدمات بيئية',org:'الهيئة العامة للبيئة',price:1980.000,rank:2,n:5,win:64,days:9,winner:'—',gs:'valid',st:'docs',mp:40},
+  {no:'م/2422',name:'صيانة تكييف',org:'ديوان الخدمة المدنية',price:1120.000,rank:1,n:6,win:85,days:30,winner:'شركتنا',gs:'valid',st:'awarded',mp:28},
+  {no:'م/2418',name:'توريد مواد تشغيل',org:'مؤسسة البترول الكويتية',price:4250.000,rank:5,n:9,win:18,days:14,winner:'—',gs:'none',st:'under_study',mp:80},
+  {no:'م/2410',name:'أمن وحراسة',org:'وزارة الصحة',price:2150.000,rank:2,n:7,win:55,days:2,winner:'—',gs:'expiring',st:'new',mp:46},
+  {no:'م/2405',name:'تشغيل وصيانة شبكات',org:'بلدية الكويت',price:1640.000,rank:1,n:5,win:90,days:40,winner:'شركتنا',gs:'valid',st:'in_progress',mp:33},
+];
+
+// ---- cards ----
+document.getElementById('cards').innerHTML = DATA.map((d,i)=>{
+  const S=STATE[d.st]; const dc=dueClass(d.days);
+  const wc=d.win>=70?'#21b07b':d.win>=45?'#f59e0b':'#e25563';
+  const rc=d.rank===1?'#21b07b':d.rank<=3?'#f59e0b':'#e25563';
+  return `<div class="card">
+    <div class="stripe" style="background:${S.s}"></div>
+    <div class="body">
+      <div class="head">
+        <div class="logo" style="${logoFor(i)}">${initials(d.org)}</div>
+        <div class="meta"><div class="tno">${d.no}</div><div class="name">${d.name}</div><div class="org">${d.org}</div></div>
+      </div>
+      <div class="kv">
+        <div class="it"><div class="k">سعرنا</div><div class="val">${money(d.price)} <span class="cur">د.ك</span></div></div>
+        <div class="it"><div class="k">الترتيب</div><div class="val"><span class="rank-chip" style="color:${rc}">#${d.rank}</span> <span class="cur">من ${d.n}</span></div></div>
+        <div class="it"><div class="k">الإغلاق</div><div class="val due ${dc}">${d.days} يوم</div></div>
+        <div class="it"><div class="k">العمالة</div><div class="val">${d.mp}</div></div>
+      </div>
+      <div class="prog-wrap">
+        <div class="prog-top"><span>احتمالية الفوز</span><span style="color:${wc}">${d.win}%</span></div>
+        <div class="prog"><i style="width:${d.win}%;background:${wc}"></i></div>
+      </div>
+      <div class="midrow">
+        <span class="badge" style="background:${S.bg};color:${S.fg}">${S.t}</span>
+        ${gPill(d.gs)}
+      </div>
+      <div class="actions">${actBtns(d.st,'act')||'<span class="g-pill">— لا إجراءات</span>'}</div>
+    </div>
+  </div>`;
+}).join('');
+
+// ---- board grouped by phase ----
+document.getElementById('boardEl').innerHTML = PHASES.map(ph=>{
+  const items = DATA.filter(d=>STATE[d.st].ph===ph.n);
+  const total = items.reduce((a,b)=>a+b.price,0);
+  const cards = items.map((d,i)=>{
+    const S=STATE[d.st];const dc=dueClass(d.days);
+    return `<div class="mini-card">
+      <div class="t"><div class="logo-sm" style="${logoFor(DATA.indexOf(d))}">${initials(d.org)}</div>
+        <div style="min-width:0"><div class="nm">${d.name}</div><div class="org">${d.org}</div></div></div>
+      <div class="r">
+        <span class="badge" style="background:${S.bg};color:${S.fg}">${S.t}</span>
+        <span class="due ${dc}">${d.days}ي</span>
+      </div>
+      <div class="r"><span class="money">${money(d.price)} <span class="cur">د.ك</span></span><span style="color:${d.win>=70?'#21b07b':d.win>=45?'#f59e0b':'#e25563'}">${d.win}%</span></div>
+    </div>`;
+  }).join('') || '<div class="drag-hint">— فارغ —</div>';
+  return `<div class="col">
+    <div class="colbar" style="background:${ph.c}"></div>
+    <h4>${ph.n}· ${ph.t} <span class="meta">${items.length} • ${money(total)} د.ك</span></h4>
+    ${cards}
+  </div>`;
+}).join('');
+
+// ---- list ----
+document.getElementById('rows').innerHTML = DATA.map((d,i)=>{
+  const S=STATE[d.st];const dc=dueClass(d.days);
+  const rowcls=d.days<=3?'row-soon':d.days<=7?'row-warn':'';
+  const wc=d.win>=70?'#21b07b':d.win>=45?'#f59e0b':'#e25563';
+  const rc=d.rank===1?'#21b07b':d.rank<=3?'#f59e0b':'#e25563';
+  return `<tr class="${rowcls}">
+    <td><div class="nm">${d.name}</div><div class="sub">${d.no}</div></td>
+    <td><div class="cell-org"><div class="logo-sm2" style="${logoFor(i)}">${initials(d.org)}</div>${d.org}</div></td>
+    <td><span class="money">${money(d.price)}</span> <span class="cur">د.ك</span></td>
+    <td><span class="money" style="color:${rc}">#${d.rank}</span> <span class="cur">/${d.n}</span></td>
+    <td><div class="mini-prog"><div class="pb"><i style="width:${d.win}%;background:${wc}"></i></div><span class="pv" style="color:${wc}">${d.win}%</span></div></td>
+    <td><span class="due ${dc}">${d.days} يوم${d.days<=3?' 🔴':d.days<=7?' 🟠':''}</span></td>
+    <td><span class="badge" style="background:${S.bg};color:${S.fg}">${S.t}</span></td>
+    <td><div class="rowacts">${(NEXT[d.st]||[]).slice(0,2).map(a=>`<button class="rowact ${a[2]==='bad'?'':a[2]==='go'?'go':'next'}">${a[0]}</button>`).join('')||'—'}</div></td>
+  </tr>`;
+}).join('');
+
+function show(id,btn){
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  document.querySelectorAll('.switch button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+</script>
+</body>
+</html>

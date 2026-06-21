@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data noupdate="0">
+
+    <!-- ============================ NEW TENDER ============================ -->
+    <record id="mail_template_new_tender" model="mail.template">
+      <field name="name">Tender: New Tender</field>
+      <field name="model_id" ref="model_purchase_tender" />
+      <field name="subject">📋 مناقصة جديدة: {{ object.name }}</field>
+      <field name="email_from">{{ (object.company_id.email or user.email_formatted) }}</field>
+      <field name="body_html" type="html">
+<div style="margin:0;padding:0;background:#eceef3;font-family:'Cairo',Tahoma,sans-serif;color:#1d2433;" dir="rtl">
+  <table align="center" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e8ef;">
+    <tr><td style="height:5px;background:#3a7afe;"></td></tr>
+    <tr><td style="background:#714B67;padding:15px 22px;color:#fff;font-weight:800;font-size:15px;">🏛️ إدارة المناقصات — Care</td></tr>
+    <tr><td style="padding:20px 22px 6px;">
+      <div style="font-size:18px;font-weight:800;">📋 مناقصة جديدة أُضيفت</div>
+      <div style="color:#7b8499;font-weight:700;font-size:13px;margin-top:3px;">تمت إضافة مناقصة جديدة وتحتاج إلى مراجعة الفريق</div>
+    </td></tr>
+    <tr><td style="padding:10px 22px 4px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e6e8ef;border-radius:12px;">
+        <tr><td style="padding:12px 14px;border-bottom:1px solid #e6e8ef;background:#fafbfd;">
+          <div style="font-size:12px;font-weight:800;color:#7b8499;"><t t-out="object.tender_no or '—'"/></div>
+          <div style="font-size:15px;font-weight:800;margin-top:2px;"><t t-out="object.name or ''"/></div>
+          <div style="font-size:12px;color:#7b8499;font-weight:700;"><t t-out="object.organization.name or ''"/></div>
+        </td></tr>
+        <tr><td style="padding:12px 14px;font-size:13px;font-weight:700;line-height:2;">
+          📅 الإصدار: <b><t t-out="object.issue_date or '—'"/></b><br/>
+          ⏰ الإغلاق: <b><t t-out="object.closing_date or '—'"/></b> (باقٍ <t t-out="object.days_to_close"/> يوم)<br/>
+          🧰 النشاط: <b><t t-out="object.bid_type.name or '—'"/></b><br/>
+          👷 العمالة: <b><t t-out="object.manpower or 0"/></b>
+        </td></tr>
+      </table>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0 8px;"><tr><td align="center" style="background:#3a7afe;border-radius:10px;">
+        <a t-att-href="object.get_base_url() + '/web#id=' + str(object.id) + '&amp;model=purchase.tender&amp;view_type=form'"
+           style="display:block;padding:12px;color:#fff;text-decoration:none;font-weight:800;font-size:14px;">عرض المناقصة ←</a>
+      </td></tr></table>
+    </td></tr>
+    <tr><td style="padding:14px 22px;background:#fafbfd;border-top:1px solid #e6e8ef;color:#7b8499;font-size:11px;font-weight:700;text-align:center;">نظام إدارة المناقصات · care-kw.com</td></tr>
+  </table>
+</div></field>
+    </record>
+
+    <!-- ============================ STATUS CHANGE ============================ -->
+    <record id="mail_template_status_change" model="mail.template">
+      <field name="name">Tender: Status Change</field>
+      <field name="model_id" ref="model_purchase_tender" />
+      <field name="subject">🔔 تحديث حالة المناقصة: {{ object.name }}</field>
+      <field name="email_from">{{ (object.company_id.email or user.email_formatted) }}</field>
+      <field name="body_html" type="html">
+<div style="margin:0;padding:0;background:#eceef3;font-family:'Cairo',Tahoma,sans-serif;color:#1d2433;" dir="rtl">
+  <table align="center" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e8ef;">
+    <tr><td t-attf-style="height:5px;background:{{ '#21b07b' if object.state in ('winner','purchased','in_progress','completed') else ('#e25563' if object.state in ('lost','excepted','cancelled') else '#8b5cf6') }};"></td></tr>
+    <tr><td style="background:#714B67;padding:15px 22px;color:#fff;font-weight:800;font-size:15px;">🏛️ إدارة المناقصات — Care</td></tr>
+    <tr><td style="padding:20px 22px 6px;">
+      <div style="font-size:18px;font-weight:800;">
+        <t t-if="object.state in ('winner','purchased','in_progress','completed')">🏆 تحديث: فزنا بالمناقصة!</t>
+        <t t-elif="object.state in ('lost','excepted','cancelled')">📉 تحديث حالة المناقصة</t>
+        <t t-else="">🔔 تحديث حالة المناقصة</t>
+      </div>
+      <div style="color:#7b8499;font-weight:700;font-size:13px;margin-top:3px;">الحالة الجديدة: <b><t t-out="dict(object._fields['state'].selection).get(object.state)"/></b></div>
+    </td></tr>
+    <tr><td style="padding:10px 22px 4px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e6e8ef;border-radius:12px;">
+        <tr><td style="padding:12px 14px;border-bottom:1px solid #e6e8ef;background:#fafbfd;">
+          <div style="font-size:12px;font-weight:800;color:#7b8499;"><t t-out="object.tender_no or '—'"/></div>
+          <div style="font-size:15px;font-weight:800;margin-top:2px;"><t t-out="object.name or ''"/></div>
+          <div style="font-size:12px;color:#7b8499;font-weight:700;"><t t-out="object.organization.name or ''"/></div>
+        </td></tr>
+        <tr><td style="padding:12px 14px;font-size:13px;font-weight:700;line-height:2;">
+          💲 سعرنا: <b><t t-out="'%.3f' % (object.our_price or 0.0)"/></b><br/>
+          🥇 ترتيبنا: <b>#<t t-out="object.care_rank or '—'"/></b><br/>
+          🏷️ سعر الفائز: <b><t t-out="'%.3f' % (object.winner_price or 0.0)"/></b><br/>
+          📊 احتمالية الفوز: <b><t t-out="object.win_probability or 0"/>%</b>
+        </td></tr>
+      </table>
+      <t t-if="object.state in ('winner','purchased')">
+        <div style="margin:14px 0 4px;padding:12px 14px;border-radius:10px;background:#eef9f3;color:#136c49;border:1px solid #bfe9d3;font-weight:700;font-size:12.5px;">✅ تهانينا — تابع إجراءات الترسية وتجهيز الضمان النهائي.</div>
+      </t>
+      <t t-if="object.state == 'lost'">
+        <div style="margin:14px 0 4px;padding:12px 14px;border-radius:10px;background:#fdeef0;color:#a02633;border:1px solid #f6c9ce;font-weight:700;font-size:12.5px;">📉 لم نفز هذه المرة — راجع تحليل الأسعار لمعرفة الفارق عن الفائز.</div>
+      </t>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:14px 0 8px;"><tr><td align="center" style="background:#714B67;border-radius:10px;">
+        <a t-att-href="object.get_base_url() + '/web#id=' + str(object.id) + '&amp;model=purchase.tender&amp;view_type=form'"
+           style="display:block;padding:12px;color:#fff;text-decoration:none;font-weight:800;font-size:14px;">عرض المناقصة ←</a>
+      </td></tr></table>
+    </td></tr>
+    <tr><td style="padding:14px 22px;background:#fafbfd;border-top:1px solid #e6e8ef;color:#7b8499;font-size:11px;font-weight:700;text-align:center;">نظام إدارة المناقصات · care-kw.com</td></tr>
+  </table>
+</div></field>
+    </record>
+
+    <!-- ============================ CLOSING SOON ============================ -->
+    <record id="mail_template_closing_soon" model="mail.template">
+      <field name="name">Tender: Closing Soon</field>
+      <field name="model_id" ref="model_purchase_tender" />
+      <field name="subject">⏰ تُغلق خلال {{ object.days_to_close }} يوم: {{ object.name }}</field>
+      <field name="email_from">{{ (object.company_id.email or user.email_formatted) }}</field>
+      <field name="body_html" type="html">
+<div style="margin:0;padding:0;background:#eceef3;font-family:'Cairo',Tahoma,sans-serif;color:#1d2433;" dir="rtl">
+  <table align="center" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e8ef;">
+    <tr><td style="height:5px;background:#e25563;"></td></tr>
+    <tr><td style="background:#714B67;padding:15px 22px;color:#fff;font-weight:800;font-size:15px;">🏛️ إدارة المناقصات — Care</td></tr>
+    <tr><td style="padding:20px 22px 6px;">
+      <div style="font-size:18px;font-weight:800;">⏰ مناقصة تُغلق قريباً</div>
+      <div style="color:#7b8499;font-weight:700;font-size:13px;margin-top:3px;">تبقّى <b style="color:#e25563;"><t t-out="object.days_to_close"/> يوم</b> على موعد الإغلاق</div>
+    </td></tr>
+    <tr><td style="padding:10px 22px 4px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e6e8ef;border-radius:12px;">
+        <tr><td style="padding:12px 14px;border-bottom:1px solid #e6e8ef;background:#fafbfd;">
+          <div style="font-size:12px;font-weight:800;color:#7b8499;"><t t-out="object.tender_no or '—'"/></div>
+          <div style="font-size:15px;font-weight:800;margin-top:2px;"><t t-out="object.name or ''"/></div>
+          <div style="font-size:12px;color:#7b8499;font-weight:700;"><t t-out="object.organization.name or ''"/></div>
+        </td></tr>
+        <tr><td style="padding:12px 14px;font-size:13px;font-weight:700;line-height:2;">
+          ⏰ الإغلاق: <b style="color:#e25563;"><t t-out="object.new_closing_date or object.closing_date or '—'"/></b><br/>
+          📊 احتمالية الفوز: <b><t t-out="object.win_probability or 0"/>%</b><br/>
+          🛡️ الضمان: <b><t t-out="dict(object._fields['guarantee_status'].selection).get(object.guarantee_status)"/></b>
+        </td></tr>
+      </table>
+      <t t-if="not object.our_price">
+        <div style="margin:14px 0 4px;padding:12px 14px;border-radius:10px;background:#fdeef0;color:#a02633;border:1px solid #f6c9ce;font-weight:700;font-size:12.5px;">🔴 لم يُسجّل سعرنا بعد لهذه المناقصة — يُرجى إدخال العرض قبل الإغلاق.</div>
+      </t>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:14px 0 8px;"><tr><td align="center" style="background:#e25563;border-radius:10px;">
+        <a t-att-href="object.get_base_url() + '/web#id=' + str(object.id) + '&amp;model=purchase.tender&amp;view_type=form'"
+           style="display:block;padding:12px;color:#fff;text-decoration:none;font-weight:800;font-size:14px;">إكمال التحضير الآن ←</a>
+      </td></tr></table>
+    </td></tr>
+    <tr><td style="padding:14px 22px;background:#fafbfd;border-top:1px solid #e6e8ef;color:#7b8499;font-size:11px;font-weight:700;text-align:center;">نظام إدارة المناقصات · care-kw.com</td></tr>
+  </table>
+</div></field>
+    </record>
+
+    <!-- ============================ GUARANTEE EXPIRING ============================ -->
+    <record id="mail_template_guarantee_expiring" model="mail.template">
+      <field name="name">Tender: Guarantee Expiring</field>
+      <field name="model_id" ref="model_purchase_tender" />
+      <field name="subject">🛡️ ضمان ينتهي قريباً: {{ object.name }}</field>
+      <field name="email_from">{{ (object.company_id.email or user.email_formatted) }}</field>
+      <field name="body_html" type="html">
+<div style="margin:0;padding:0;background:#eceef3;font-family:'Cairo',Tahoma,sans-serif;color:#1d2433;" dir="rtl">
+  <table align="center" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e8ef;">
+    <tr><td style="height:5px;background:#f59e0b;"></td></tr>
+    <tr><td style="background:#714B67;padding:15px 22px;color:#fff;font-weight:800;font-size:15px;">🏛️ إدارة المناقصات — Care</td></tr>
+    <tr><td style="padding:20px 22px 6px;">
+      <div style="font-size:18px;font-weight:800;">🛡️ ضمان بنكي يقترب من الانتهاء</div>
+      <div style="color:#7b8499;font-weight:700;font-size:13px;margin-top:3px;">يلزم التجديد أو الإفراج لتفادي المخاطر المالية</div>
+    </td></tr>
+    <tr><td style="padding:10px 22px 4px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e6e8ef;border-radius:12px;">
+        <tr><td style="padding:12px 14px;border-bottom:1px solid #e6e8ef;background:#fafbfd;">
+          <div style="font-size:12px;font-weight:800;color:#7b8499;"><t t-out="object.tender_no or '—'"/></div>
+          <div style="font-size:15px;font-weight:800;margin-top:2px;"><t t-out="object.name or ''"/></div>
+          <div style="font-size:12px;color:#7b8499;font-weight:700;"><t t-out="object.organization.name or ''"/></div>
+        </td></tr>
+        <tr><td style="padding:12px 14px;font-size:13px;font-weight:700;line-height:2;">
+          💰 قيمة الضمان: <b><t t-out="'%.3f' % (object.guarantee or 0.0)"/></b><br/>
+          📅 تاريخ الانتهاء: <b style="color:#f59e0b;"><t t-out="object.expiry_date or '—'"/></b><br/>
+          🏦 البنك: <b><t t-out="object.guarantee_bank or '—'"/></b>
+        </td></tr>
+      </table>
+      <div style="margin:14px 0 4px;padding:12px 14px;border-radius:10px;background:#fff7ed;color:#9a5b00;border:1px solid #fde3bf;font-weight:700;font-size:12.5px;">⚠️ إن كانت المناقصة خاسرة/ملغاة يُمكن طلب الإفراج عن الضمان، وإلا يلزم التجديد.</div>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:14px 0 8px;"><tr><td align="center" style="background:#f59e0b;border-radius:10px;">
+        <a t-att-href="object.get_base_url() + '/web#id=' + str(object.id) + '&amp;model=purchase.tender&amp;view_type=form'"
+           style="display:block;padding:12px;color:#fff;text-decoration:none;font-weight:800;font-size:14px;">مراجعة الضمان ←</a>
+      </td></tr></table>
+    </td></tr>
+    <tr><td style="padding:14px 22px;background:#fafbfd;border-top:1px solid #e6e8ef;color:#7b8499;font-size:11px;font-weight:700;text-align:center;">نظام إدارة المناقصات · care-kw.com</td></tr>
+  </table>
+</div></field>
+    </record>
+
+    <!-- ============================ DATE CHANGE / POSTPONED ============================ -->
+    <record id="mail_template_date_change" model="mail.template">
+      <field name="name">Tender: Date Change</field>
+      <field name="model_id" ref="model_purchase_tender" />
+      <field name="subject">📅 تغيّر موعد الإغلاق: {{ object.name }}</field>
+      <field name="email_from">{{ (object.company_id.email or user.email_formatted) }}</field>
+      <field name="body_html" type="html">
+<div style="margin:0;padding:0;background:#eceef3;font-family:'Cairo',Tahoma,sans-serif;color:#1d2433;" dir="rtl">
+  <table align="center" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6e8ef;">
+    <tr><td style="height:5px;background:#8b5cf6;"></td></tr>
+    <tr><td style="background:#714B67;padding:15px 22px;color:#fff;font-weight:800;font-size:15px;">🏛️ إدارة المناقصات — Care</td></tr>
+    <tr><td style="padding:20px 22px 6px;">
+      <div style="font-size:18px;font-weight:800;">📅 تغيّر موعد الإغلاق</div>
+      <div style="color:#7b8499;font-weight:700;font-size:13px;margin-top:3px;">تم تحديث موعد المناقصة</div>
+    </td></tr>
+    <tr><td style="padding:10px 22px 4px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e6e8ef;border-radius:12px;">
+        <tr><td style="padding:12px 14px;border-bottom:1px solid #e6e8ef;background:#fafbfd;">
+          <div style="font-size:12px;font-weight:800;color:#7b8499;"><t t-out="object.tender_no or '—'"/></div>
+          <div style="font-size:15px;font-weight:800;margin-top:2px;"><t t-out="object.name or ''"/></div>
+          <div style="font-size:12px;color:#7b8499;font-weight:700;"><t t-out="object.organization.name or ''"/></div>
+        </td></tr>
+        <tr><td style="padding:12px 14px;font-size:13px;font-weight:700;line-height:2;">
+          📅 الموعد المعتمد: <b style="color:#8b5cf6;"><t t-out="object.new_closing_date or object.closing_date or '—'"/></b><br/>
+          ⏰ باقٍ: <b><t t-out="object.days_to_close"/> يوم</b>
+        </td></tr>
+      </table>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:14px 0 8px;"><tr><td align="center" style="background:#8b5cf6;border-radius:10px;">
+        <a t-att-href="object.get_base_url() + '/web#id=' + str(object.id) + '&amp;model=purchase.tender&amp;view_type=form'"
+           style="display:block;padding:12px;color:#fff;text-decoration:none;font-weight:800;font-size:14px;">عرض المناقصة ←</a>
+      </td></tr></table>
+    </td></tr>
+    <tr><td style="padding:14px 22px;background:#fafbfd;border-top:1px solid #e6e8ef;color:#7b8499;font-size:11px;font-weight:700;text-align:center;">نظام إدارة المناقصات · care-kw.com</td></tr>
+  </table>
+</div></field>
+    </record>
+
+  </data>
+</odoo>

@@ -14,13 +14,13 @@
                            <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-archive">
                                 <div class="o_stat_info">
                                     <field name="active" widget="boolean_button" readonly='1' invisible='True'/>
-                                    <span class="o_stat_text" attrs="{'invisible': [('active', '=', False)]}">Archive</span>
-                                    <span class="o_stat_text" attrs="{'invisible': [('active', '=', True)]}">Restore</span>
+                                    <span class="o_stat_text" invisible="not active">Archive</span>
+                                    <span class="o_stat_text" invisible="active">Restore</span>
                                 </div>
                             </button>
                             <button class="oe_stat_button" name="%(wizard_sms_template_preview)d" icon="fa-search-plus" string="Preview"
                                     type="action" target="new"
-                                    context="{'template_id':active_id}" attrs="{'invisible':[('globally_access','=',True)]}"/>
+                                    context="{'template_id':active_id}" invisible="globally_access"/>
                         </div>
                         <div class="oe_title">
                             <label for="name" class="oe_edit_only"/>
@@ -29,9 +29,9 @@
                         <group>
                             <field name="globally_access"/>
                         </group>
-                        <group string="SMS Notification will automatically triggered when:" attrs="{'invisible':[('globally_access','=',True)]}">
+                        <group string="SMS Notification will automatically triggered when:" invisible="globally_access">
                             <group>
-                                <field name="condition" attrs="{'required':[('globally_access','=',False)]}"/>
+                                <field name="condition" required="not globally_access"/>
                                 <field name="model_id" options="{'no_create': True}" readonly="1"/>
                                 <field name="lang" options="{'no_create': True}" readonly="1"/>
                             </group>

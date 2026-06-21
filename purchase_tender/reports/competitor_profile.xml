@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+    <record model="ir.actions.report" id="action_competitor_profile_report">
+      <field name="name">ملف المنافس</field>
+      <field name="model">purchase.tender.competitor</field>
+      <field name="report_type">qweb-pdf</field>
+      <field name="report_name">purchase_tender.competitor_profile_report</field>
+      <field name="report_file">purchase_tender.competitor_profile_report</field>
+      <field name="binding_model_id" ref="model_purchase_tender_competitor" />
+      <field name="binding_type">report</field>
+    </record>
+
+    <template id="competitor_profile_report">
+      <t t-call="web.html_container">
+        <t t-foreach="docs" t-as="doc">
+          <t t-set="PA" t-value="doc.env['purchase.tender.price.analysis']" />
+          <t t-set="mins" t-value="PA.read_group([('contact','=',doc.partner_id.id),('is_ours','=',False),('organization','!=',False)], [], ['organization'], orderby='organization_count desc', limit=8)" />
+          <t t-set="bids" t-value="PA.search([('contact','=',doc.partner_id.id),('is_ours','=',False)], order='issue_date desc', limit=10)" />
+          <div class="page" dir="rtl" style="font-family:'Cairo','Amiri',Arial,sans-serif;color:#1d2433;font-size:12px;">
+
+            <!-- header -->
+            <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
+              <tr>
+                <td style="background:#714B67;color:#fff;padding:16px 20px;width:65%;">
+                  <div style="font-size:21px;font-weight:bold;">⚔️ ملف المنافس</div>
+                  <div style="font-size:13px;opacity:0.9;margin-top:3px;"><span t-esc="doc.partner_id.name or '—'" /></div>
+                </td>
+                <td style="background:#5b3b53;color:#fff;padding:16px 20px;text-align:left;vertical-align:middle;">
+                  <div style="font-weight:bold;font-size:14px;">إدارة المناقصات — Care</div>
+                  <div style="font-size:11px;opacity:0.85;">care-kw.com</div>
+                </td>
+              </tr>
+              <tr><td colspan="2" style="height:5px;background:#e25563;"></td></tr>
+            </table>
+
+            <!-- badges -->
+            <div style="margin-bottom:12px;">
+              <t t-if="doc.is_watched"><span style="background:#efe7ff;color:#6d34d6;padding:5px 14px;border-radius:20px;font-weight:bold;font-size:11px;margin-left:6px;">👁️ مُتابَع</span></t>
+              <t t-if="doc.is_new_entrant"><span style="background:#e3f7ee;color:#15875a;padding:5px 14px;border-radius:20px;font-weight:bold;font-size:11px;margin-left:6px;">🆕 منافس جديد</span></t>
+              <t t-if="doc.group_id and doc.group_id.id != doc.partner_id.id"><span style="background:#eef0f5;color:#5b6677;padding:5px 14px;border-radius:20px;font-weight:bold;font-size:11px;">المالك: <span t-esc="doc.group_id.name" /></span></t>
+            </div>
+
+            <!-- KPI grid -->
+            <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
+              <tr>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;width:25%;"><div style="color:#7b8499;font-size:10px;">عدد العطاءات</div><div style="font-weight:bold;font-size:15px;"><span t-esc="doc.total_bids" /></div></td>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;width:25%;"><div style="color:#7b8499;font-size:10px;">مرات الفوز</div><div style="font-weight:bold;font-size:15px;"><span t-esc="doc.wins" /></div></td>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;width:25%;"><div style="color:#7b8499;font-size:10px;">معدل الفوز</div><div style="font-weight:bold;font-size:15px;"><span t-esc="doc.win_rate" />%</div></td>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;width:25%;"><div style="color:#7b8499;font-size:10px;">مؤشر الخطورة</div><div style="font-weight:bold;font-size:15px;color:#e25563;"><span t-esc="doc.threat_score" /></div></td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;"><div style="color:#7b8499;font-size:10px;">عدد الجهات</div><div style="font-weight:bold;font-size:14px;"><span t-esc="doc.ministries" /></div></td>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;"><div style="color:#7b8499;font-size:10px;">مؤشر السعر</div><div style="font-weight:bold;font-size:14px;"><span t-esc="doc.price_index" />%</div></td>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;"><div style="color:#7b8499;font-size:10px;">متوسط الترتيب</div><div style="font-weight:bold;font-size:14px;"><span t-esc="doc.avg_rank" /></div></td>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;"><div style="color:#7b8499;font-size:10px;">الجهة الأبرز</div><div style="font-weight:bold;font-size:13px;"><span t-esc="doc.top_ministry_id.name or '—'" /></div></td>
+              </tr>
+            </table>
+
+            <!-- head to head -->
+            <div style="font-size:14px;font-weight:bold;margin:14px 0 8px;">🤝 المواجهة المباشرة معنا</div>
+            <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
+              <tr>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;width:25%;background:#fafbfd;"><div style="color:#7b8499;font-size:10px;">مواجهات معنا</div><div style="font-weight:bold;font-size:15px;"><span t-esc="doc.tenders_vs_us" /></div></td>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;width:25%;background:#eef9f3;"><div style="color:#7b8499;font-size:10px;">تغلّبنا عليه</div><div style="font-weight:bold;font-size:15px;color:#15875a;"><span t-esc="doc.we_beat_them" /></div></td>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;width:25%;background:#fdeef0;"><div style="color:#7b8499;font-size:10px;">تغلّب علينا</div><div style="font-weight:bold;font-size:15px;color:#c0392b;"><span t-esc="doc.they_beat_us" /></div></td>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;width:25%;"><div style="color:#7b8499;font-size:10px;">معدل فوزنا ضده</div><div style="font-weight:bold;font-size:15px;"><span t-esc="doc.our_win_rate_vs" />%</div></td>
+              </tr>
+            </table>
+
+            <!-- ministries -->
+            <div style="font-size:14px;font-weight:bold;margin:14px 0 8px;">🏛️ الجهات التي يستهدفها</div>
+            <table style="width:100%;border-collapse:collapse;">
+              <thead><tr style="background:#fafbfd;">
+                <th style="border:1px solid #e6e8ef;padding:7px;text-align:right;color:#7b8499;font-size:11px;">الجهة</th>
+                <th style="border:1px solid #e6e8ef;padding:7px;text-align:right;color:#7b8499;font-size:11px;width:120px;">عدد العطاءات</th>
+              </tr></thead>
+              <tbody>
+                <t t-foreach="mins" t-as="m">
+                  <tr><td style="border:1px solid #e6e8ef;padding:6px 8px;"><span t-esc="m['organization'][1] if m.get('organization') else '—'" /></td>
+                  <td style="border:1px solid #e6e8ef;padding:6px 8px;font-weight:bold;"><span t-esc="m.get('organization_count', 0)" /></td></tr>
+                </t>
+              </tbody>
+            </table>
+
+            <!-- recent bids -->
+            <div style="font-size:14px;font-weight:bold;margin:16px 0 8px;">🗂️ أحدث عطاءاته</div>
+            <table style="width:100%;border-collapse:collapse;">
+              <thead><tr style="background:#fafbfd;">
+                <th style="border:1px solid #e6e8ef;padding:7px;text-align:right;color:#7b8499;font-size:11px;">المناقصة</th>
+                <th style="border:1px solid #e6e8ef;padding:7px;text-align:right;color:#7b8499;font-size:11px;">الجهة</th>
+                <th style="border:1px solid #e6e8ef;padding:7px;text-align:right;color:#7b8499;font-size:11px;">السعر</th>
+                <th style="border:1px solid #e6e8ef;padding:7px;text-align:right;color:#7b8499;font-size:11px;">الترتيب</th>
+                <th style="border:1px solid #e6e8ef;padding:7px;text-align:right;color:#7b8499;font-size:11px;">فائز؟</th>
+              </tr></thead>
+              <tbody>
+                <t t-foreach="bids" t-as="b">
+                  <tr t-attf-style="{{'background:#eef9f3;' if b.is_winner else ''}}">
+                    <td style="border:1px solid #e6e8ef;padding:6px 8px;"><span t-esc="b.tender_id.name or '—'" /></td>
+                    <td style="border:1px solid #e6e8ef;padding:6px 8px;"><span t-esc="b.organization.name or '—'" /></td>
+                    <td style="border:1px solid #e6e8ef;padding:6px 8px;font-weight:bold;"><span t-esc="'%.3f' % (b.price or 0.0)" /></td>
+                    <td style="border:1px solid #e6e8ef;padding:6px 8px;"><span t-esc="b.rank or '—'" /></td>
+                    <td style="border:1px solid #e6e8ef;padding:6px 8px;"><t t-if="b.is_winner">🏆</t></td>
+                  </tr>
+                </t>
+              </tbody>
+            </table>
+
+            <div style="margin-top:24px;color:#9aa3b5;font-size:10px;text-align:center;border-top:1px solid #e6e8ef;padding-top:8px;">
+              نظام إدارة المناقصات · Care — طُبع بتاريخ <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d')" />
+            </div>
+          </div>
+        </t>
+      </t>
+    </template>
+  </data>
+</odoo>

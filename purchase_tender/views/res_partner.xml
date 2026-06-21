@@ -1,0 +1,14 @@
+<odoo>
+  <record id="view_partner_form_tender_competitor" model="ir.ui.view">
+    <field name="name">res.partner.form.tender.competitor</field>
+    <field name="model">res.partner</field>
+    <field name="inherit_id" ref="base.view_partner_form" />
+    <field name="arch" type="xml">
+      <field name="category_id" position="after">
+        <field name="tender_is_competitor" />
+        <field name="tender_group_id" invisible="not tender_is_competitor"
+          options="{'no_create_edit': False}" />
+      </field>
+    </field>
+  </record>
+</odoo>

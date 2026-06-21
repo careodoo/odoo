@@ -10,26 +10,26 @@
             <field name="arch" type="xml">
                 <form string="SMS Report Form">
                     <header>                       
-                        <button name="send_now" string="Send Now" type="object" class="oe_highlight" states="new"/> 
-                        <button name="retry" string="Retry" type="object" states="undelivered"/>                   
+                        <button name="send_now" string="Send Now" type="object" class="oe_highlight" invisible="state != 'new'"/> 
+                        <button name="retry" string="Retry" type="object" invisible="state != 'undelivered'"/>                   
                         <field name="state" widget="statusbar" statusbar_visible="new,sent,delivered,undelivered" />        
                     </header>
                     <sheet>
                        <group>
-                        <field name="sms_gateway_config_id" attrs="{'readonly':[('state','in',('sent','delivered'))]}"/>
-                            <field name="to" placeholder="Receiver Numbers" attrs="{'readonly':[('state','in',('sent','delivered'))]}"/>
+                        <field name="sms_gateway_config_id" readonly="state in ['sent','delivered']"/>
+                            <field name="to" placeholder="Receiver Numbers" readonly="state in ['sent','delivered']"/>
                         </group>
-                        <field name="auto_delete" help="Permanently delete this SMS after sendind it,to save space." attrs="{'readonly':[('state','in',('sent','delivered'))]}"/>
+                        <field name="auto_delete" help="Permanently delete this SMS after sendind it,to save space." readonly="state in ['sent','delivered']"/>
                         <label for="auto_delete" />
                         <notebook>
                             <page name="sms_body" string="SMS">
                                 <br/>
                                 <label for="msg"/>
-                                <field name="msg" placeholder="Type your message here..!!!" attrs="{'readonly':[('state','in',('sent','delivered'))]}"/> 
+                                <field name="msg" placeholder="Type your message here..!!!" readonly="state in ['sent','delivered']"/> 
                             </page>
-                            <page name="sms_info" string="Other Info" attrs="{'invisible':[('id','=',False)]}">
+                            <page name="sms_info" string="Other Info" invisible="not id">
                                 <label for="message"/>
-                                <field name="message" attrs="{'invisible':['|',('state','in',['new','sent','delivered']),('message','=',False)]}" readonly="1"/>
+                                <field name="message" invisible="state in ['new','sent','delivered'] or not message" readonly="1"/>
                             </page>
                         </notebook>
                     </sheet>
@@ -46,8 +46,8 @@
                     <field name="to"/>
                     <field name="msg"/>
                     <field name="state"/>
-                    <button name="send_now" string="Send Now" type="object" icon="fa-paper-plane text-success" states="new" help="Send Now"/>
-                    <button name="retry" string="Retry" type="object" icon="fa-repeat text-success" states="undelivered" help="Retry"/>
+                    <button name="send_now" string="Send Now" type="object" icon="fa-paper-plane text-success" invisible="state != 'new'" help="Send Now"/>
+                    <button name="retry" string="Retry" type="object" icon="fa-repeat text-success" invisible="state != 'undelivered'" help="Retry"/>
                 </tree>
             </field>            
         </record> 

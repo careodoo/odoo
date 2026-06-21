@@ -1,0 +1,100 @@
+<odoo>
+  <record id="res_config_settings_view_form_tender" model="ir.ui.view">
+    <field name="name">res.config.settings.view.form.tender</field>
+    <field name="model">res.config.settings</field>
+    <field name="inherit_id" ref="base.res_config_settings_view_form" />
+    <field name="arch" type="xml">
+      <xpath expr="//form" position="inside">
+        <app data-string="المناقصات" string="المناقصات" name="purchase_tender">
+          <block title="إشعارات البريد الإلكتروني" name="tender_email_block">
+            <setting string="مناقصة جديدة" help="إرسال بريد عند إضافة مناقصة جديدة">
+              <field name="tender_email_new" />
+            </setting>
+            <setting string="تغيير الحالة" help="إرسال بريد عند تغيّر حالة المناقصة">
+              <field name="tender_email_status" />
+            </setting>
+            <setting string="تغيير الموعد" help="إرسال بريد عند تغيّر موعد الإغلاق">
+              <field name="tender_email_date" />
+            </setting>
+            <setting string="تذكير قرب الإغلاق" help="تذكير تلقائي يومي قبل الإغلاق">
+              <field name="tender_email_closing" />
+            </setting>
+            <setting string="انتهاء الضمان" help="تنبيه يومي بالضمانات التي تنتهي قريباً">
+              <field name="tender_email_guarantee" />
+            </setting>
+            <setting string="الملخّص الأسبوعي" help="ملخّص أسبوعي بالمناقصات والمواعيد">
+              <field name="tender_email_digest" />
+            </setting>
+            <setting string="تنبيه منافس مُتابَع" help="بريد عند تقديم منافس مُتابَع عطاءً">
+              <field name="tender_email_watchlist" />
+            </setting>
+            <setting string="منافسون جدد" help="ملخّص شهري بالمنافسين الجدد">
+              <field name="tender_email_new_entrants" />
+            </setting>
+          </block>
+          <block title="التوقيتات والعتبات" name="tender_timing_block">
+            <setting string="تذكير قبل الإغلاق (أيام)" help="عدد الأيام قبل موعد الإغلاق لإرسال التذكير">
+              <field name="tender_closing_soon_days" class="o_light_label" />
+            </setting>
+            <setting string="تنبيه قبل انتهاء الضمان (أيام)" help="الضمان يُعتبر 'ينتهي قريباً' خلال هذا العدد من الأيام">
+              <field name="tender_guarantee_days" class="o_light_label" />
+            </setting>
+            <setting string="فترة 'منافس جديد' (أيام)" help="المنافس الذي ظهر لأول مرة خلال هذه الفترة يُعتبر جديداً (يُطبَّق بعد تحديث الموديول)">
+              <field name="tender_new_entrant_days" class="o_light_label" />
+            </setting>
+          </block>
+          <block title="ترجيح مؤشر الخطورة" name="tender_threat_block"
+            help="معادلة الخطورة = تغلّب علينا×وزن + مرات الفوز×وزن + عدد العطاءات×وزن (تُطبَّق بعد تحديث الموديول)">
+            <setting string="وزن 'تغلّب علينا'"><field name="tender_threat_beat" class="o_light_label" /></setting>
+            <setting string="وزن 'مرات الفوز'"><field name="tender_threat_win" class="o_light_label" /></setting>
+            <setting string="وزن 'عدد العطاءات'"><field name="tender_threat_bid" class="o_light_label" /></setting>
+          </block>
+          <block title="احتمالية الفوز حسب الترتيب (%)" name="tender_winprob_block">
+            <setting string="الترتيب الأول"><field name="tender_winprob_rank1" class="o_light_label" /></setting>
+            <setting string="الترتيب الثاني"><field name="tender_winprob_rank2" class="o_light_label" /></setting>
+            <setting string="الترتيب الثالث"><field name="tender_winprob_rank3" class="o_light_label" /></setting>
+            <setting string="ترتيب أدنى"><field name="tender_winprob_other" class="o_light_label" /></setting>
+            <setting string="بدون ترتيب"><field name="tender_winprob_norank" class="o_light_label" /></setting>
+          </block>
+          <block title="الإعدادات الافتراضية" name="tender_defaults_block">
+            <setting string="العرض الافتراضي" help="العرض الذي يُفتح أولاً في قائمة المناقصات">
+              <field name="tender_default_view" />
+            </setting>
+            <setting string="عدد السجلات في الصفحة" help="حجم الصفحة في القائمة والبطاقات">
+              <field name="tender_page_size" class="o_light_label" />
+            </setting>
+            <setting string="قائمة التحضير الافتراضية" help="سطر واحد لكل مهمة — تُضاف تلقائياً للمناقصات الجديدة">
+              <field name="tender_default_checklist" widget="text" placeholder="شراء كراسة الشروط&#10;دراسة الشروط&#10;..." />
+            </setting>
+          </block>
+          <block title="ضبط الأهمية (ترتيب صفحة الكل)" name="tender_importance_block"
+            help="درجة الأهمية = وزن الحالة×1000 + حافز قرب الإغلاق + قيمة + احتمالية الفوز. تُطبَّق فور الحفظ.">
+            <setting string="حافز إغلاق ≤ 3 أيام"><field name="tender_imp_urgent3" class="o_light_label" /></setting>
+            <setting string="حافز إغلاق ≤ 7 أيام"><field name="tender_imp_urgent7" class="o_light_label" /></setting>
+            <setting string="حافز إغلاق ≤ 14 يوم"><field name="tender_imp_urgent14" class="o_light_label" /></setting>
+            <setting string="أوزان الحالات" help="سطر لكل حالة بالشكل state=رقم. الحالات: new, under_study, docs_purchased, interested, excepted, preparing, participated, winner, lost, postponed, purchased, in_progress, completed, closed, cancelled">
+              <field name="tender_importance_weights" widget="text" placeholder="docs_purchased=95&#10;winner=96&#10;participated=88" />
+            </setting>
+          </block>
+          <block title="الذكاء الاصطناعي (تحليل المستندات)" name="tender_ai_block"
+            help="مفتاح Claude لتحليل ملف المناقصة واستخراج المستندات والمعدات والشروط تلقائياً.">
+            <setting string="مفتاح الـ API" help="يُستخدم لتحليل ملفات المناقصات. يُحفظ بشكل آمن.">
+              <field name="tender_ai_api_key" password="True" />
+            </setting>
+          </block>
+        </app>
+      </xpath>
+    </field>
+  </record>
+
+  <record id="tender_config_settings_action" model="ir.actions.act_window">
+    <field name="name">إعدادات المناقصات</field>
+    <field name="res_model">res.config.settings</field>
+    <field name="view_mode">form</field>
+    <field name="target">inline</field>
+    <field name="context">{'module': 'purchase_tender'}</field>
+  </record>
+
+  <menuitem id="tender_settings_menu" name="Settings" parent="purchase_tender_config_menu"
+    sequence="0" action="tender_config_settings_action" />
+</odoo>

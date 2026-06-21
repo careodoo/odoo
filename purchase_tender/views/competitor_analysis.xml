@@ -1,0 +1,251 @@
+<odoo>
+  <data>
+    <!-- ===================== COMPETITOR PROFILE (aggregated) ===================== -->
+    <record id="competitor_profile_search" model="ir.ui.view">
+      <field name="name">competitor.profile.search</field>
+      <field name="model">purchase.tender.competitor</field>
+      <field name="arch" type="xml">
+        <search>
+          <field name="partner_id" string="المنافس" />
+          <field name="group_id" string="المالك/المجموعة" />
+          <filter name="beats_us" string="يتغلب علينا" domain="[('they_beat_us','>',0)]" />
+          <filter name="has_wins" string="لديه فوز" domain="[('wins','>',0)]" />
+          <filter name="faced_us" string="واجهناه" domain="[('tenders_vs_us','>',0)]" />
+          <filter name="watched" string="المُتابَعون" domain="[('is_watched','=',True)]" />
+          <filter name="new_entrant" string="ظهروا حديثاً (٩٠ يوم)" domain="[('is_new_entrant','=',True)]" />
+          <group expand="0" string="تجميع حسب">
+            <filter name="g_group" string="المالك/المجموعة" context="{'group_by':'group_id'}" />
+            <filter name="g_ministry" string="الجهة الأبرز" context="{'group_by':'top_ministry_id'}" />
+            <filter name="g_company" string="الشركة" context="{'group_by':'company_id'}" />
+          </group>
+        </search>
+      </field>
+    </record>
+
+    <record id="competitor_profile_tree" model="ir.ui.view">
+      <field name="name">competitor.profile.tree</field>
+      <field name="model">purchase.tender.competitor</field>
+      <field name="arch" type="xml">
+        <tree string="Competitor Profiles" create="false" default_order="threat_score desc"
+          decoration-danger="threat_score >= 40" decoration-warning="threat_score >= 20 and threat_score &lt; 40">
+          <field name="partner_id" string="المنافس" />
+          <field name="group_id" string="المالك/المجموعة" optional="show" />
+          <field name="is_watched" string="مُتابَع" optional="hide" />
+          <field name="is_new_entrant" string="جديد" optional="show" />
+          <field name="top_ministry_id" string="جهته الأبرز" optional="show" />
+          <field name="total_bids" string="عطاءات" sum="الإجمالي" />
+          <field name="wins" string="فوز" sum="الإجمالي" />
+          <field name="win_rate" string="معدل الفوز %" widget="progressbar" />
+          <field name="ministries" string="جهات" />
+          <field name="tenders_vs_us" string="مواجهاتنا" />
+          <field name="they_beat_us" string="غلبنا" />
+          <field name="our_win_rate_vs" string="فوزنا ضده %" widget="progressbar" />
+          <field name="threat_score" string="مؤشر الخطورة" />
+          <field name="price_index" string="مؤشر السعر %" optional="show" />
+          <field name="avg_rank" string="متوسط الترتيب" optional="hide" />
+          <field name="last_seen" string="آخر ظهور" />
+          <field name="company_id" groups="base.group_multi_company" optional="hide" />
+        </tree>
+      </field>
+    </record>
+
+    <record id="competitor_profile_form" model="ir.ui.view">
+      <field name="name">competitor.profile.form</field>
+      <field name="model">purchase.tender.competitor</field>
+      <field name="arch" type="xml">
+        <form string="Competitor" create="false" edit="false">
+          <sheet>
+            <div class="oe_button_box" name="button_box">
+              <button name="action_view_bids" type="object" class="oe_stat_button" icon="fa-list-ul">
+                <field name="total_bids" widget="statinfo" string="عطاءات" />
+              </button>
+              <button name="action_view_bids" type="object" class="oe_stat_button" icon="fa-trophy">
+                <field name="wins" widget="statinfo" string="مرات الفوز" />
+              </button>
+            </div>
+            <div class="oe_title">
+              <h1><field name="partner_id" readonly="1" /></h1>
+            </div>
+            <group>
+              <group string="الأداء العام">
+                <field name="total_bids" string="عدد العطاءات" />
+                <field name="wins" string="مرات الفوز" />
+                <field name="win_rate" string="معدل الفوز %" />
+                <field name="ministries" string="عدد الجهات" />
+                <field name="avg_price" string="متوسط السعر" />
+                <field name="avg_gap" string="متوسط الفارق عن الفائز" />
+                <field name="avg_rank" string="متوسط الترتيب" />
+                <field name="price_index" string="مؤشر السعر %" />
+                <field name="top_ministry_id" string="الجهة الأكثر استهدافاً" />
+                <field name="first_seen" string="أول ظهور" />
+                <field name="last_seen" string="آخر ظهور" />
+                <field name="is_new_entrant" string="منافس جديد (٩٠ يوم)" />
+              </group>
+              <group string="المواجهة المباشرة معنا">
+                <field name="tenders_vs_us" string="مناقصات واجهناه فيها" />
+                <field name="we_beat_them" string="تغلّبنا عليه" />
+                <field name="they_beat_us" string="تغلّب علينا" />
+                <field name="our_win_rate_vs" string="معدل فوزنا ضده %" />
+                <field name="threat_score" string="مؤشر الخطورة" />
+                <field name="company_id" groups="base.group_multi_company" />
+              </group>
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <record id="competitor_profile_pivot" model="ir.ui.view">
+      <field name="name">competitor.profile.pivot</field>
+      <field name="model">purchase.tender.competitor</field>
+      <field name="arch" type="xml">
+        <pivot string="Competitors" sample="1">
+          <field name="group_id" type="row" />
+          <field name="total_bids" type="measure" />
+          <field name="wins" type="measure" />
+          <field name="they_beat_us" type="measure" />
+          <field name="we_beat_them" type="measure" />
+        </pivot>
+      </field>
+    </record>
+
+    <record id="competitor_profile_graph" model="ir.ui.view">
+      <field name="name">competitor.profile.graph</field>
+      <field name="model">purchase.tender.competitor</field>
+      <field name="arch" type="xml">
+        <graph string="Competitors" type="bar" sample="1">
+          <field name="partner_id" />
+          <field name="threat_score" type="measure" />
+        </graph>
+      </field>
+    </record>
+
+    <record id="competitor_profile_action" model="ir.actions.act_window">
+      <field name="name">Competitor Profiles</field>
+      <field name="res_model">purchase.tender.competitor</field>
+      <field name="view_mode">tree,form,pivot,graph</field>
+      <field name="search_view_id" ref="competitor_profile_search" />
+    </record>
+
+    <!-- ===================== BID ANALYSIS (raw bid lines) ===================== -->
+    <record id="competitor_analysis_search" model="ir.ui.view">
+      <field name="name">competitor.analysis.search</field>
+      <field name="model">purchase.tender.price.analysis</field>
+      <field name="arch" type="xml">
+        <search>
+          <field name="contact" string="المنافس" />
+          <field name="organization" />
+          <field name="bid_type" />
+          <field name="tender_id" />
+          <filter name="competitors" string="المنافسون فقط" domain="[('is_ours','=',False)]" />
+          <filter name="ours" string="عروضنا" domain="[('is_ours','=',True)]" />
+          <separator />
+          <filter name="winners" string="العروض الفائزة" domain="[('is_winner','=',True)]" />
+          <filter name="has_price" string="بسعر مُسجّل" domain="[('price','>',0)]" />
+          <group expand="1" string="تجميع حسب">
+            <filter name="g_contact" string="المنافس" context="{'group_by':'contact'}" />
+            <filter name="g_org" string="الجهة" context="{'group_by':'organization'}" />
+            <filter name="g_bid" string="النشاط" context="{'group_by':'bid_type'}" />
+            <filter name="g_state" string="حالة المناقصة" context="{'group_by':'tender_state'}" />
+            <filter name="g_month" string="شهر الإصدار" context="{'group_by':'issue_date:month'}" />
+          </group>
+        </search>
+      </field>
+    </record>
+
+    <record id="competitor_analysis_pivot" model="ir.ui.view">
+      <field name="name">competitor.analysis.pivot</field>
+      <field name="model">purchase.tender.price.analysis</field>
+      <field name="arch" type="xml">
+        <pivot string="Bid Analysis" sample="1">
+          <field name="contact" type="row" />
+          <field name="organization" type="col" />
+          <field name="price" type="measure" />
+          <field name="win_count" type="measure" string="مرات الفوز" />
+          <field name="gap_vs_winner" type="measure" />
+        </pivot>
+      </field>
+    </record>
+
+    <record id="competitor_analysis_graph" model="ir.ui.view">
+      <field name="name">competitor.analysis.graph</field>
+      <field name="model">purchase.tender.price.analysis</field>
+      <field name="arch" type="xml">
+        <graph string="Bid Analysis" type="bar" sample="1">
+          <field name="contact" />
+          <field name="win_count" type="measure" string="مرات الفوز" />
+        </graph>
+      </field>
+    </record>
+
+    <record id="competitor_analysis_tree" model="ir.ui.view">
+      <field name="name">competitor.analysis.tree</field>
+      <field name="model">purchase.tender.price.analysis</field>
+      <field name="arch" type="xml">
+        <tree string="Bid Analysis" decoration-success="is_winner == True" create="false">
+          <field name="contact" string="المنافس" />
+          <field name="organization" string="الجهة" />
+          <field name="tender_id" string="المناقصة" />
+          <field name="bid_type" string="النشاط" optional="show" />
+          <field name="price" string="السعر" sum="إجمالي" />
+          <field name="rank" string="الترتيب" optional="show" />
+          <field name="winner_price" string="سعر الفائز" optional="hide" />
+          <field name="gap_vs_winner" string="الفارق" optional="hide" />
+          <field name="is_winner" string="فائز" />
+          <field name="issue_date" string="التاريخ" optional="show" />
+          <field name="tender_state" string="حالة المناقصة" optional="hide" />
+          <field name="is_ours" column_invisible="1" />
+        </tree>
+      </field>
+    </record>
+
+    <record id="competitor_analysis_action" model="ir.actions.act_window">
+      <field name="name">Bid Analysis</field>
+      <field name="res_model">purchase.tender.price.analysis</field>
+      <field name="view_mode">pivot,graph,tree</field>
+      <field name="domain">[('contact','!=',False)]</field>
+      <field name="context">{'search_default_competitors': 1, 'search_default_g_contact': 1}</field>
+      <field name="search_view_id" ref="competitor_analysis_search" />
+    </record>
+
+    <!-- ===================== MINISTRY WIN-SHARE HEATMAP ===================== -->
+    <record id="ministry_heatmap_pivot" model="ir.ui.view">
+      <field name="name">ministry.heatmap.pivot</field>
+      <field name="model">purchase.tender.price.analysis</field>
+      <field name="arch" type="xml">
+        <pivot string="Ministry Heatmap" sample="1">
+          <field name="organization" type="row" />
+          <field name="contact" type="col" />
+          <field name="win_count" type="measure" />
+        </pivot>
+      </field>
+    </record>
+
+    <record id="ministry_heatmap_action" model="ir.actions.act_window">
+      <field name="name">Ministry Heatmap</field>
+      <field name="res_model">purchase.tender.price.analysis</field>
+      <field name="view_mode">pivot</field>
+      <field name="domain">[('is_ours','=',False),('contact','!=',False)]</field>
+      <field name="context">{'search_default_winners': 1}</field>
+      <field name="search_view_id" ref="competitor_analysis_search" />
+      <field name="view_id" ref="ministry_heatmap_pivot" />
+    </record>
+
+    <!-- ===================== COMPETITOR DASHBOARD (client action) ===================== -->
+    <record id="competitor_dashboard_action" model="ir.actions.client">
+      <field name="name">Competitor Dashboard</field>
+      <field name="tag">purchase_tender_competitor_dashboard</field>
+    </record>
+
+    <!-- ===================== MENUS (English names) ===================== -->
+    <menuitem id="competitor_menu" name="Competitors" parent="purchase_tender_root" sequence="3" />
+    <menuitem id="competitor_dashboard_menu" name="Dashboard"
+      parent="competitor_menu" sequence="0" action="competitor_dashboard_action" />
+    <menuitem id="competitor_profile_menu" name="Competitor Profiles"
+      parent="competitor_menu" sequence="1" action="competitor_profile_action" />
+    <menuitem id="competitor_bids_menu" name="Bid Analysis"
+      parent="competitor_menu" sequence="2" action="competitor_analysis_action" />
+    <menuitem id="ministry_heatmap_menu" name="Ministry Heatmap"
+      parent="competitor_menu" sequence="3" action="ministry_heatmap_action" />
+  </data>
+</odoo>

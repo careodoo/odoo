@@ -56,6 +56,6 @@
       <field name="view_mode">tree,form</field>
     </record>
     <menuitem id="purchase_tender_record_menu" name="Records" parent="purchase_tender_root"
-      sequence="2" action="purchase_tender_record_action" />
+      sequence="5" action="purchase_tender_record_action" />
   </data>
 </odoo>

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+  <t t-name="purchase_tender.CompetitorDashboard">
+    <div class="o_tender_dashboard o_action" dir="rtl" t-ref="root">
+
+      <div class="td-toolbar">
+        <div class="td-title">⚔️ لوحة تحليل المنافسين</div>
+        <div class="td-tools">
+          <select class="td-select" t-on-change="onCompetitorChange">
+            <option value="all">كل المنافسين</option>
+            <t t-foreach="state.data and state.data.competitors or []" t-as="c" t-key="c.id">
+              <option t-att-value="c.id" t-esc="c.name" t-att-selected="state.competitor == c.id" />
+            </t>
+          </select>
+          <select class="td-select" t-on-change="onYearChange">
+            <option value="all">كل السنوات</option>
+            <t t-foreach="state.data and state.data.years or []" t-as="y" t-key="y">
+              <option t-att-value="y" t-esc="y" t-att-selected="state.year == y" />
+            </t>
+          </select>
+        </div>
+      </div>
+
+      <t t-if="state.loading">
+        <div class="td-loading">⏳ جارٍ تحميل البيانات...</div>
+      </t>
+
+      <t t-if="!state.loading and state.data">
+        <div class="td-scroll">
+          <div class="td-body">
+
+            <!-- ============ OVERVIEW ============ -->
+            <t t-if="state.data.mode === 'all'">
+              <div class="td-kpis">
+                <div class="td-kpi"><div class="bar" style="background:#3a7afe"/><div class="ic" style="background:#e7f0ff;color:#3a7afe">⚔️</div><div class="v" t-esc="state.data.kpi.total_competitors"/><div class="l">إجمالي المنافسين</div></div>
+                <div class="td-kpi"><div class="bar" style="background:#8b5cf6"/><div class="ic" style="background:#efe7ff;color:#8b5cf6">📋</div><div class="v" t-esc="state.data.kpi.total_bids"/><div class="l">إجمالي عطاءاتهم</div></div>
+                <div class="td-kpi"><div class="bar" style="background:#e25563"/><div class="ic" style="background:#fde9eb;color:#e25563">💥</div><div class="v" t-esc="state.data.kpi.they_beat_us"/><div class="l">تغلّبوا علينا</div></div>
+                <div class="td-kpi"><div class="bar" style="background:#21b07b"/><div class="ic" style="background:#e3f7ee;color:#21b07b">🛡️</div><div class="v" t-esc="state.data.kpi.we_beat_them"/><div class="l">تغلّبنا عليهم</div></div>
+                <div class="td-kpi"><div class="bar" style="background:#017e84"/><div class="ic" style="background:#e1f5f5;color:#017e84">🎯</div><div class="v"><t t-esc="state.data.kpi.our_win_rate"/>%</div><div class="l">معدل فوزنا الإجمالي</div></div>
+                <div class="td-kpi"><div class="bar" style="background:#f59e0b"/><div class="ic" style="background:#fff4e0;color:#f59e0b">💲</div><div class="v"><t t-esc="state.data.kpi.avg_price_index"/>%</div><div class="l">متوسط مؤشر السعر</div></div>
+                <div class="td-kpi"><div class="bar" style="background:#21b07b"/><div class="ic" style="background:#e3f7ee;color:#21b07b">🆕</div><div class="v" t-esc="state.data.kpi.new_entrants"/><div class="l">منافسون جدد (٩٠ يوم)</div></div>
+              </div>
+              <div class="td-card" style="margin-bottom:14px">
+                <h3>🔥 الأخطر علينا: <span t-esc="state.data.kpi.top_threat" style="color:#e25563"/></h3>
+              </div>
+
+              <div class="td-grid td-1-1">
+                <div class="td-card"><h3>🔥 الأكثر خطورة</h3><div class="chart-lg"><canvas id="tdcThreats"/></div></div>
+                <div class="td-card"><h3>💥 الأكثر تغلّباً علينا</h3><div class="chart-lg"><canvas id="tdcBeatUs"/></div></div>
+              </div>
+              <div class="td-grid td-1-1">
+                <div class="td-card"><h3>🏆 الأكثر فوزاً</h3><div class="chart-lg"><canvas id="tdcWins"/></div></div>
+                <div class="td-card"><h3>💲 مؤشر السعر (٪ من سعر الفائز)</h3><div class="chart-lg"><canvas id="tdcPriceIdx"/></div></div>
+              </div>
+              <div class="td-grid td-2-1">
+                <div class="td-card"><h3>🏛️ شدة المنافسة حسب الجهة</h3><div class="chart"><canvas id="tdcMinistry"/></div></div>
+                <div class="td-card"><h3>🤝 المواجهة الإجمالية معنا</h3><div class="chart"><canvas id="tdcH2H"/></div></div>
+              </div>
+            </t>
+
+            <!-- ============ ONE COMPETITOR ============ -->
+            <t t-if="state.data.mode === 'one'">
+              <div class="td-kpis">
+                <div class="td-kpi"><div class="bar" style="background:#8b5cf6"/><div class="ic" style="background:#efe7ff;color:#8b5cf6">📋</div><div class="v" t-esc="state.data.kpi.total_bids"/><div class="l">عدد عطاءاته</div></div>
+                <div class="td-kpi"><div class="bar" style="background:#21b07b"/><div class="ic" style="background:#e3f7ee;color:#21b07b">🏆</div><div class="v" t-esc="state.data.kpi.wins"/><div class="l">مرات فوزه</div></div>
+                <div class="td-kpi"><div class="bar" style="background:#3a7afe"/><div class="ic" style="background:#e7f0ff;color:#3a7afe">🎯</div><div class="v"><t t-esc="state.data.kpi.win_rate"/>%</div><div class="l">معدل فوزه</div></div>
+                <div class="td-kpi"><div class="bar" style="background:#017e84"/><div class="ic" style="background:#e1f5f5;color:#017e84">🏛️</div><div class="v" t-esc="state.data.kpi.ministries"/><div class="l">عدد الجهات</div></div>
+                <div class="td-kpi"><div class="bar" style="background:#f59e0b"/><div class="ic" style="background:#fff4e0;color:#f59e0b">💲</div><div class="v"><t t-esc="state.data.kpi.price_index"/>%</div><div class="l">مؤشر السعر</div></div>
+                <div class="td-kpi"><div class="bar" style="background:#e25563"/><div class="ic" style="background:#fde9eb;color:#e25563">💥</div><div class="v" t-esc="state.data.kpi.they_beat_us"/><div class="l">تغلّب علينا</div></div>
+                <div class="td-kpi"><div class="bar" style="background:#21b07b"/><div class="ic" style="background:#e3f7ee;color:#21b07b">🛡️</div><div class="v" t-esc="state.data.kpi.we_beat_them"/><div class="l">تغلّبنا عليه</div></div>
+                <div class="td-kpi"><div class="bar" style="background:#017e84"/><div class="ic" style="background:#e1f5f5;color:#017e84">⚖️</div><div class="v"><t t-esc="state.data.kpi.our_win_rate_vs"/>%</div><div class="l">معدل فوزنا ضده</div></div>
+                <div class="td-kpi"><div class="bar" style="background:#e25563"/><div class="ic" style="background:#fde9eb;color:#e25563">🔥</div><div class="v" t-esc="state.data.kpi.threat"/><div class="l">مؤشر الخطورة</div></div>
+                <div class="td-kpi"><div class="bar" style="background:#9aa3b5"/><div class="ic" style="background:#eef0f5;color:#5b6677">📉</div><div class="v" t-esc="state.data.kpi.avg_rank"/><div class="l">متوسط ترتيبه</div></div>
+              </div>
+
+              <div class="td-grid td-2-1">
+                <div class="td-card"><h3>📈 عطاءاته شهرياً</h3><div class="chart-lg"><canvas id="tdcMonthly"/></div></div>
+                <div class="td-card"><h3>🤝 المواجهة معنا</h3><div class="chart"><canvas id="tdcH2H"/></div></div>
+              </div>
+              <div class="td-card">
+                <h3>💲 تطوّر تسعيره شهرياً (متوسط السعر)</h3><div class="chart-lg"><canvas id="tdcPriceTrend"/></div>
+              </div>
+              <div class="td-card">
+                <h3>🏛️ الجهات التي يستهدفها</h3><div class="chart"><canvas id="tdcMinistries"/></div>
+              </div>
+            </t>
+
+          </div>
+        </div>
+      </t>
+    </div>
+  </t>
+</templates>

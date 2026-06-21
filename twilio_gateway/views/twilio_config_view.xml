@@ -7,10 +7,10 @@
             <field name="inherit_id" ref="sms_notification.sms_mail_server_formview"/>                     
             <field name="arch" type="xml">
                 <xpath expr="//group[@name='conn_info']" position="after">
-                    <group string='Security And Authentication' attrs="{'invisible':[('gateway','!=','twilio')]}">
-                        <field name="twilio_number" placeholder="Twilio Phone Number(e.g. +12044993370)" attrs="{'required':[('gateway','=','twilio')]}"/>
-                        <field name="account_sid" attrs="{'required':[('gateway','=','twilio')]}"/>
-                        <field name="auth_token" attrs="{'required':[('gateway','=','twilio')]}"/>
+                    <group string='Security And Authentication' invisible="gateway != 'twilio'">
+                        <field name="twilio_number" placeholder="Twilio Phone Number(e.g. +12044993370)" required="gateway == 'twilio'"/>
+                        <field name="account_sid" required="gateway == 'twilio'"/>
+                        <field name="auth_token" required="gateway == 'twilio'"/>
                         <button name="test_conn_twilio" string="Test Connection" type="object"  />  
                     </group>
                 </xpath>

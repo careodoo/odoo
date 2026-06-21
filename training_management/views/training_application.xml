@@ -49,14 +49,14 @@
                         <field name="is_approved" invisible="1"/>
                         <field name="is_completed" invisible="1"/>
                         <button name="button_create_tasks" type="object" string="Create Tasks" class="oe_highlight"
-                            attrs="{'invisible': [('is_approved', '=', False)]}"/>
+                            invisible="not is_approved"/>
                         <button name="print_certificate" type="object" string="Print Certificate" class="oe_highlight"
-                                attrs="{'invisible': [('is_completed', '=', False)]}"/>
+                                invisible="not is_completed"/>
                         <field name="stage_id" widget="statusbar" options="{'clickable': '1'}"/>
                     </header>
                     <sheet>
                         <div class="oe_button_box" name="button_box">
-                            <button class="oe_stat_button" icon="fa-pencil-square-o" name="action_view_tasks" type="object"  attrs="{'invisible': [('task_count','&lt;=',0)]}">
+                            <button class="oe_stat_button" icon="fa-pencil-square-o" name="action_view_tasks" type="object"  invisible="task_count &lt;= 0">
                                 <field name="task_count" widget="statinfo" string="Tasks"/>
                             </button>
                         </div>

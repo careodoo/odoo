@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+    <record model="ir.actions.report" id="action_tender_summary_report">
+      <field name="name">ملخّص المناقصة</field>
+      <field name="model">purchase.tender</field>
+      <field name="report_type">qweb-pdf</field>
+      <field name="report_name">purchase_tender.tender_summary_report</field>
+      <field name="report_file">purchase_tender.tender_summary_report</field>
+      <field name="binding_model_id" ref="model_purchase_tender" />
+      <field name="binding_type">report</field>
+    </record>
+
+    <template id="tender_summary_report">
+      <t t-call="web.html_container">
+        <t t-foreach="docs" t-as="doc">
+          <t t-set="sel" t-value="dict(doc._fields['state'].selection)" />
+          <t t-set="gsel" t-value="dict(doc._fields['guarantee_status'].selection)" />
+          <t t-set="scolor" t-value="'#21b07b' if doc.state in ('winner','purchased','in_progress','completed') else ('#e25563' if doc.state in ('lost','excepted','cancelled') else '#3a7afe')" />
+          <div class="page" dir="rtl" style="font-family:'Cairo','Amiri',Arial,sans-serif;color:#1d2433;font-size:12px;">
+
+            <!-- header -->
+            <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
+              <tr>
+                <td t-attf-style="background:#714B67;color:#fff;padding:16px 20px;width:65%;">
+                  <div style="font-size:21px;font-weight:bold;">ملخّص المناقصة</div>
+                  <div style="font-size:12px;opacity:0.85;margin-top:3px;"><span t-esc="doc.tender_no or '—'" /></div>
+                </td>
+                <td style="background:#5b3b53;color:#fff;padding:16px 20px;text-align:left;vertical-align:middle;">
+                  <div style="font-weight:bold;font-size:14px;">إدارة المناقصات — Care</div>
+                  <div style="font-size:11px;opacity:0.85;">care-kw.com</div>
+                </td>
+              </tr>
+              <tr><td colspan="2" t-attf-style="height:5px;background:{{scolor}};"></td></tr>
+            </table>
+
+            <!-- title + status -->
+            <table style="width:100%;border-collapse:collapse;margin-bottom:14px;">
+              <tr>
+                <td style="vertical-align:top;">
+                  <div style="font-size:18px;font-weight:bold;"><span t-esc="doc.name or ''" /></div>
+                  <div style="color:#7b8499;font-weight:bold;margin-top:3px;"><span t-esc="doc.organization.name or ''" /></div>
+                </td>
+                <td style="text-align:left;vertical-align:top;width:160px;">
+                  <span t-attf-style="background:{{scolor}};color:#fff;padding:6px 16px;border-radius:20px;font-weight:bold;font-size:12px;">
+                    <span t-esc="sel.get(doc.state)" />
+                  </span>
+                </td>
+              </tr>
+            </table>
+
+            <!-- key figures grid -->
+            <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
+              <tr>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;width:25%;"><div style="color:#7b8499;font-size:10px;">تاريخ الإصدار</div><div style="font-weight:bold;font-size:13px;"><span t-esc="doc.issue_date or '—'" /></div></td>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;width:25%;"><div style="color:#7b8499;font-size:10px;">موعد الإغلاق</div><div style="font-weight:bold;font-size:13px;"><span t-esc="doc.new_closing_date or doc.closing_date or '—'" /></div></td>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;width:25%;"><div style="color:#7b8499;font-size:10px;">باقٍ (يوم)</div><div style="font-weight:bold;font-size:13px;"><span t-esc="doc.days_to_close" /></div></td>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;width:25%;"><div style="color:#7b8499;font-size:10px;">نوع العطاء</div><div style="font-weight:bold;font-size:13px;"><span t-esc="doc.bid_type.name or '—'" /></div></td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;"><div style="color:#7b8499;font-size:10px;">سعرنا</div><div style="font-weight:bold;font-size:13px;"><span t-esc="'%.3f' % (doc.our_price or 0.0)" /></div></td>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;"><div style="color:#7b8499;font-size:10px;">سعر الفائز</div><div style="font-weight:bold;font-size:13px;"><span t-esc="'%.3f' % (doc.winner_price or 0.0)" /></div></td>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;"><div style="color:#7b8499;font-size:10px;">ترتيبنا</div><div style="font-weight:bold;font-size:13px;">#<span t-esc="doc.care_rank or '—'" /></div></td>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;"><div style="color:#7b8499;font-size:10px;">احتمالية الفوز</div><div style="font-weight:bold;font-size:13px;"><span t-esc="doc.win_probability or 0" />%</div></td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;"><div style="color:#7b8499;font-size:10px;">قيمة الضمان</div><div style="font-weight:bold;font-size:13px;"><span t-esc="'%.3f' % (doc.guarantee or 0.0)" /></div></td>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;"><div style="color:#7b8499;font-size:10px;">انتهاء الضمان</div><div style="font-weight:bold;font-size:13px;"><span t-esc="doc.expiry_date or '—'" /></div></td>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;"><div style="color:#7b8499;font-size:10px;">العمالة</div><div style="font-weight:bold;font-size:13px;"><span t-esc="doc.manpower or 0" /></div></td>
+                <td style="border:1px solid #e6e8ef;padding:9px 12px;"><div style="color:#7b8499;font-size:10px;">المدة</div><div style="font-weight:bold;font-size:13px;"><span t-esc="doc.period or 0" /></div></td>
+              </tr>
+            </table>
+
+            <!-- loss reason -->
+            <t t-if="doc.state == 'lost' and doc.loss_reason">
+              <table style="width:100%;border-collapse:collapse;margin-bottom:14px;">
+                <tr><td style="background:#fdeef0;border:1px solid #f6c9ce;color:#a02633;padding:10px 14px;font-weight:bold;">
+                  📉 سبب الخسارة: <span t-esc="dict(doc._fields['loss_reason'].selection).get(doc.loss_reason)" />
+                  <t t-if="doc.loss_note"> — <span style="font-weight:normal;" t-esc="doc.loss_note" /></t>
+                </td></tr>
+              </table>
+            </t>
+
+            <!-- price analysis -->
+            <div style="font-size:14px;font-weight:bold;margin:6px 0 8px;">📊 تحليل الأسعار</div>
+            <table style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr style="background:#fafbfd;">
+                  <th style="border:1px solid #e6e8ef;padding:8px;text-align:right;color:#7b8499;font-size:11px;">الترتيب</th>
+                  <th style="border:1px solid #e6e8ef;padding:8px;text-align:right;color:#7b8499;font-size:11px;">المتقدّم</th>
+                  <th style="border:1px solid #e6e8ef;padding:8px;text-align:right;color:#7b8499;font-size:11px;">السعر</th>
+                  <th style="border:1px solid #e6e8ef;padding:8px;text-align:right;color:#7b8499;font-size:11px;">المعدّل</th>
+                  <th style="border:1px solid #e6e8ef;padding:8px;text-align:right;color:#7b8499;font-size:11px;">الحالة</th>
+                </tr>
+              </thead>
+              <tbody>
+                <t t-foreach="doc.price_analysis_ids.sorted(key=lambda p: (p.rank == 0, p.rank or 9999))" t-as="p">
+                  <t t-set="ours" t-value="p.contact and doc.company_id.partner_id and p.contact.id == doc.company_id.partner_id.id" />
+                  <tr t-attf-style="{{'background:#eef3ff;' if ours else ('background:#eef9f3;' if p.rank == 1 else '')}}">
+                    <td style="border:1px solid #e6e8ef;padding:7px 8px;font-weight:bold;"><span t-esc="p.rank or '—'" /></td>
+                    <td style="border:1px solid #e6e8ef;padding:7px 8px;">
+                      <span t-esc="p.contact.name or p.name or '—'" />
+                      <t t-if="ours"><strong style="color:#2b62d6;"> (نحن)</strong></t>
+                      <t t-if="p.rank == 1 and not ours"><strong style="color:#15875a;"> 🏆</strong></t>
+                    </td>
+                    <td style="border:1px solid #e6e8ef;padding:7px 8px;font-weight:bold;"><span t-esc="'%.3f' % (p.price or 0.0)" /></td>
+                    <td style="border:1px solid #e6e8ef;padding:7px 8px;"><span t-esc="'%.3f' % (p.rate or 0.0)" /></td>
+                    <td style="border:1px solid #e6e8ef;padding:7px 8px;"><span t-esc="p.state" /></td>
+                  </tr>
+                </t>
+                <t t-if="not doc.price_analysis_ids">
+                  <tr><td colspan="5" style="border:1px solid #e6e8ef;padding:10px;text-align:center;color:#7b8499;">لا توجد بيانات أسعار</td></tr>
+                </t>
+              </tbody>
+            </table>
+
+            <div style="margin-top:24px;color:#9aa3b5;font-size:10px;text-align:center;border-top:1px solid #e6e8ef;padding-top:8px;">
+              نظام إدارة المناقصات · Care — طُبع بتاريخ <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d')" />
+            </div>
+          </div>
+        </t>
+      </t>
+    </template>
+  </data>
+</odoo>

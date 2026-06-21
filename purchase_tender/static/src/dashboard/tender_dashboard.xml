@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+  <t t-name="purchase_tender.TenderDashboard">
+    <div class="o_tender_dashboard o_action" dir="rtl" t-ref="root">
+
+      <!-- toolbar -->
+      <div class="td-toolbar">
+        <div class="td-title">📊 لوحة معلومات المناقصات</div>
+        <div class="td-tools">
+          <select class="td-select" t-on-change="onYearChange">
+            <option value="all">كل السنوات</option>
+            <t t-foreach="state.data and state.data.years or []" t-as="y" t-key="y">
+              <option t-att-value="y" t-esc="y" t-att-selected="state.year == y"/>
+            </t>
+          </select>
+        </div>
+      </div>
+
+      <div class="td-scroll">
+      <t t-if="state.loading">
+        <div class="td-loading">⏳ جارٍ تحميل البيانات...</div>
+      </t>
+
+      <t t-if="!state.loading and state.data">
+        <div class="td-body">
+
+          <!-- KPIs -->
+          <div class="td-kpis">
+            <div class="td-kpi" t-on-click="() => this.openList([], 'كل المناقصات')">
+              <div class="bar" style="background:#3a7afe"/><div class="ic" style="background:#e7f0ff;color:#3a7afe">📋</div>
+              <div class="v" t-esc="state.data.kpi.total"/><div class="l">إجمالي المناقصات</div>
+            </div>
+            <div class="td-kpi" t-on-click="() => this.openList([['state','in',['winner','purchased']]], 'المناقصات الفائزة')">
+              <div class="bar" style="background:#21b07b"/><div class="ic" style="background:#e3f7ee;color:#21b07b">🏆</div>
+              <div class="v" t-esc="state.data.kpi.won"/><div class="l">فائزة</div>
+            </div>
+            <div class="td-kpi">
+              <div class="bar" style="background:#8b5cf6"/><div class="ic" style="background:#efe7ff;color:#8b5cf6">🎯</div>
+              <div class="v"><t t-esc="state.data.kpi.win_rate"/>%</div><div class="l">معدل الفوز</div>
+            </div>
+            <div class="td-kpi">
+              <div class="bar" style="background:#017e84"/><div class="ic" style="background:#e1f5f5;color:#017e84">💰</div>
+              <div class="v" t-esc="fmt(state.data.kpi.awarded_value)"/><div class="l">قيمة العقود الفائزة</div>
+            </div>
+            <div class="td-kpi" t-on-click="() => this.openList([['state','in',['new','participated','interested']]], 'المناقصات النشطة')">
+              <div class="bar" style="background:#3a7afe"/><div class="ic" style="background:#e7f0ff;color:#3a7afe">📊</div>
+              <div class="v" t-esc="fmt(state.data.kpi.pipeline_value)"/><div class="l">قيمة المناقصات الحالية</div>
+            </div>
+            <div class="td-kpi" t-on-click="() => this.openList([['days_to_close','>=',0],['days_to_close','&lt;=',7],['state','in',['new','participated','interested']]], 'إغلاقات خلال 7 أيام')">
+              <div class="bar" style="background:#f59e0b"/><div class="ic" style="background:#fff4e0;color:#f59e0b">⏳</div>
+              <div class="v" t-esc="state.data.kpi.closing_7d"/><div class="l">إغلاقات خلال 7 أيام</div>
+            </div>
+            <div class="td-kpi">
+              <div class="bar" style="background:#e25563"/><div class="ic" style="background:#fde9eb;color:#e25563">📉</div>
+              <div class="v" t-esc="state.data.kpi.avg_rank"/><div class="l">متوسط ترتيب Care</div>
+            </div>
+            <div class="td-kpi">
+              <div class="bar" style="background:#8b5cf6"/><div class="ic" style="background:#efe7ff;color:#8b5cf6">🛡️</div>
+              <div class="v" t-esc="fmt(state.data.kpi.guarantees_value)"/><div class="l">ضمانات قائمة</div>
+            </div>
+            <div class="td-kpi" t-on-click="() => this.openList([['guarantee_status','=','expiring']], 'ضمانات تنتهي قريباً')">
+              <div class="bar" style="background:#f59e0b"/><div class="ic" style="background:#fff4e0;color:#f59e0b">⚠️</div>
+              <div class="v" t-esc="state.data.kpi.guarantees_expiring"/><div class="l">ضمانات تنتهي قريباً</div>
+            </div>
+            <div class="td-kpi">
+              <div class="bar" style="background:#e25563"/><div class="ic" style="background:#fde9eb;color:#e25563">💸</div>
+              <div class="v" t-esc="fmt(state.data.kpi.money_left)"/><div class="l">فُرَص ضائعة</div>
+            </div>
+            <div class="td-kpi">
+              <div class="bar" style="background:#21b07b"/><div class="ic" style="background:#e3f7ee;color:#21b07b">📈</div>
+              <div class="v"><t t-esc="state.data.kpi.avg_gap"/>%</div><div class="l">متوسط فرق السعر</div>
+            </div>
+            <div class="td-kpi">
+              <div class="bar" style="background:#3a7afe"/><div class="ic" style="background:#e7f0ff;color:#3a7afe">🔮</div>
+              <div class="v"><t t-esc="state.data.kpi.win_prob_active"/>%</div><div class="l">احتمالية الفوز المتوقعة</div>
+            </div>
+          </div>
+
+          <!-- ⏰ upcoming + 🗂️ recent (top) -->
+          <div class="td-grid td-1-1">
+            <div class="td-card">
+              <h3>⏰ مواعيد الإغلاق القادمة</h3>
+              <t t-foreach="state.data.upcoming" t-as="u" t-key="u.id">
+                <div class="td-alert" t-on-click="() => this.openTender(u.id)">
+                  <div class="d" t-attf-style="background:{{u.days &lt;= 3 ? '#e25563' : (u.days &lt;= 7 ? '#f59e0b' : '#3a7afe')}}">
+                    <span t-esc="u.days"/><span style="font-size:9px">يوم</span>
+                  </div>
+                  <div style="flex:1">
+                    <div style="font-weight:700" t-esc="u.name"/>
+                    <div class="muted" t-esc="u.org"/>
+                  </div>
+                  <span class="muted" t-esc="u.date"/>
+                </div>
+              </t>
+              <t t-if="!state.data.upcoming.length"><div class="td-empty">لا توجد إغلاقات قادمة</div></t>
+            </div>
+            <div class="td-card">
+              <h3>🗂️ أحدث المناقصات</h3>
+              <table class="td-table">
+                <thead><tr><th>المناقصة</th><th>الحالة</th><th>سعرنا</th><th>الفائز</th><th>الترتيب</th></tr></thead>
+                <tbody>
+                  <t t-foreach="state.data.recent" t-as="r" t-key="r.id">
+                    <tr t-on-click="() => this.openTender(r.id)" style="cursor:pointer">
+                      <td style="font-weight:700" t-esc="r.name"/>
+                      <td><span t-attf-class="badge {{stateBadgeClass(r.state)}}" t-esc="r.state_label"/></td>
+                      <td t-esc="r.price ? fmt(r.price) : '—'"/><td t-esc="r.winner or '—'"/>
+                      <td class="rank" t-esc="r.rank or '—'"/>
+                    </tr>
+                  </t>
+                  <t t-if="!state.data.recent.length"><tr><td colspan="5" class="td-empty">لا توجد بيانات</td></tr></t>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- trend + status -->
+          <div class="td-grid td-2-1">
+            <div class="td-card">
+              <h3>📈 اتجاه الأداء الشهري</h3>
+              <div class="chart-lg"><canvas id="tdTrend"/></div>
+            </div>
+            <div class="td-card">
+              <h3>🧩 توزيع الحالات</h3>
+              <div class="chart"><canvas id="tdStatus"/></div>
+            </div>
+          </div>
+
+          <!-- funnel + cumulative -->
+          <div class="td-grid td-1-1">
+            <div class="td-card">
+              <h3>🔻 قمع التحويل</h3>
+              <div class="chart"><canvas id="tdFunnel"/></div>
+            </div>
+            <div class="td-card">
+              <h3>💵 القيمة التراكمية للعقود الفائزة</h3>
+              <div class="chart"><canvas id="tdCumval"/></div>
+            </div>
+          </div>
+
+          <!-- forecast -->
+          <div class="td-grid td-2-1">
+            <div class="td-card">
+              <h3>🔮 التوقّع الشهري للقيمة المرجّحة</h3>
+              <div class="chart-lg"><canvas id="tdForecast"/></div>
+            </div>
+            <div class="td-card">
+              <h3>📈 القيمة المتوقعة للمناقصات الحالية</h3>
+              <div style="font-size:34px;font-weight:900;color:#21b07b;margin-top:14px"><t t-esc="fmt(state.data.kpi.weighted_pipeline)"/> <span style="font-size:14px;color:#7b8499">د.ك</span></div>
+              <div style="color:#7b8499;font-weight:700;margin-top:8px;line-height:1.8">مجموع (سعرنا × احتمالية الفوز) لكل المناقصات النشطة — تقدير واقعي للإيراد المتوقع.</div>
+            </div>
+          </div>
+
+          <!-- orgs + bidtype + rank -->
+          <div class="td-grid td-3">
+            <div class="td-card">
+              <h3>🏛️ أعلى الجهات</h3>
+              <div class="chart-sm"><canvas id="tdOrgs"/></div>
+            </div>
+            <div class="td-card">
+              <h3>📑 أنواع العطاءات</h3>
+              <div class="chart-sm"><canvas id="tdBidtype"/></div>
+            </div>
+            <div class="td-card">
+              <h3>🥇 توزيع ترتيب Care</h3>
+              <div class="chart-sm"><canvas id="tdRank"/></div>
+            </div>
+          </div>
+
+          <!-- by company + by activity -->
+          <div class="td-grid td-1-1">
+            <div class="td-card">
+              <h3>🏢 الأداء حسب الشركة</h3>
+              <div class="chart"><canvas id="tdCompany"/></div>
+            </div>
+            <div class="td-card">
+              <h3>🧰 المناقصات حسب النشاط</h3>
+              <div class="chart"><canvas id="tdActivity"/></div>
+            </div>
+          </div>
+
+          <!-- loss reasons + lost value -->
+          <div class="td-grid td-2-1">
+            <div class="td-card">
+              <h3>📉 أسباب الخسارة</h3>
+              <div class="chart"><canvas id="tdLoss"/></div>
+            </div>
+            <div class="td-card">
+              <h3>💸 قيمة الفرص الضائعة</h3>
+              <div style="font-size:34px;font-weight:900;color:#e25563;margin-top:14px"><t t-esc="fmt(state.data.kpi.money_left)"/> <span style="font-size:14px;color:#7b8499">د.ك</span></div>
+              <div style="color:#7b8499;font-weight:700;margin-top:8px;line-height:1.8">إجمالي الفارق في المناقصات الخاسرة التي كنّا قريبين منها — قابلة للاستعادة بتحسين التسعير.</div>
+            </div>
+          </div>
+
+          <!-- competitor overview -->
+          <div class="td-grid td-2-1">
+            <div class="td-card">
+              <h3>⚔️ أبرز المنافسين تغلّباً علينا</h3>
+              <div class="chart"><canvas id="tdCompBeat"/></div>
+            </div>
+            <div class="td-card">
+              <h3>⚔️ ملخّص المنافسة</h3>
+              <div class="td-prog-row"><div class="mini"><span>إجمالي المنافسين</span><span t-esc="state.data.competitor_stats.total"/></div></div>
+              <div class="td-prog-row"><div class="mini"><span>تغلّبوا علينا</span><span style="color:#e25563" t-esc="state.data.competitor_stats.beat_us"/></div></div>
+              <div class="td-prog-row"><div class="mini"><span>تغلّبنا عليهم</span><span style="color:#21b07b" t-esc="state.data.competitor_stats.we_beat"/></div></div>
+              <div class="td-prog-row">
+                <div class="mini"><span>معدل فوزنا أمام المنافسين</span><span><t t-esc="state.data.competitor_stats.our_winrate_field"/>%</span></div>
+                <div class="prog"><i t-attf-style="width:{{state.data.competitor_stats.our_winrate_field}}%;background:#21b07b"/></div>
+              </div>
+              <div class="td-prog-row"><div class="mini"><span>🔥 الأخطر علينا</span><span style="color:#e25563;font-weight:900" t-esc="state.data.competitor_stats.top_threat"/></div></div>
+            </div>
+          </div>
+
+          <!-- win rate by org + competitors -->
+          <div class="td-grid td-1-1">
+            <div class="td-card">
+              <h3>🎯 معدل الفوز حسب الجهة</h3>
+              <t t-foreach="state.data.win_rate_by_org" t-as="w" t-key="w.org">
+                <div class="td-prog-row">
+                  <div class="mini"><span t-esc="w.org"/><span><t t-esc="w.rate"/>%</span></div>
+                  <div class="prog"><i t-attf-style="width:{{w.rate}}%;background:#3a7afe"/></div>
+                </div>
+              </t>
+              <t t-if="!state.data.win_rate_by_org.length"><div class="td-empty">لا توجد بيانات</div></t>
+            </div>
+            <div class="td-card">
+              <h3>⚔️ أبرز المنافسين الذين يتغلبون علينا</h3>
+              <table class="td-table">
+                <thead><tr><th>المنافس</th><th>هزَمنا</th><th>متوسط الفارق</th></tr></thead>
+                <tbody>
+                  <t t-foreach="state.data.competitors" t-as="c" t-key="c.name">
+                    <tr><td t-esc="c.name"/><td t-esc="c.count"/><td class="neg" t-esc="fmt(c.avg_gap)"/></tr>
+                  </t>
+                  <t t-if="!state.data.competitors.length"><tr><td colspan="3" class="td-empty">لا توجد بيانات</td></tr></t>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- closest + guarantees -->
+          <div class="td-grid td-1-1">
+            <div class="td-card">
+              <h3>😮 أقرب الخسائر</h3>
+              <table class="td-table">
+                <thead><tr><th>المناقصة</th><th>الجهة</th><th>الفائز</th><th>الفارق</th></tr></thead>
+                <tbody>
+                  <t t-foreach="state.data.closest" t-as="cl" t-key="cl.id">
+                    <tr t-on-click="() => this.openTender(cl.id)" style="cursor:pointer">
+                      <td style="font-weight:700" t-esc="cl.name"/><td class="muted" t-esc="cl.org"/>
+                      <td t-esc="cl.winner or '—'"/><td class="neg" t-esc="cl.gap ? fmt(cl.gap) : '—'"/>
+                    </tr>
+                  </t>
+                  <t t-if="!state.data.closest.length"><tr><td colspan="4" class="td-empty">لا توجد بيانات</td></tr></t>
+                </tbody>
+              </table>
+            </div>
+            <div class="td-card">
+              <h3>🛡️ الضمانات البنكية</h3>
+              <table class="td-table">
+                <thead><tr><th>المناقصة</th><th>القيمة</th><th>الانتهاء</th><th>الحالة</th></tr></thead>
+                <tbody>
+                  <t t-foreach="state.data.guarantees" t-as="g" t-key="g.id">
+                    <tr t-on-click="() => this.openTender(g.id)" style="cursor:pointer">
+                      <td style="font-weight:700" t-esc="g.name"/><td t-esc="g.value ? fmt(g.value) : '—'"/>
+                      <td class="muted" t-esc="g.expiry or '—'"/>
+                      <td>
+                        <span t-attf-class="badge {{g.status === 'expired' ? 'b-lost' : (g.status === 'expiring' ? 'b-post' : (g.status === 'valid' ? 'b-win' : 'b-new'))}}"
+                          t-esc="g.status === 'expired' ? 'منتهٍ' : (g.status === 'expiring' ? 'ينتهي قريباً' : (g.status === 'valid' ? 'سارٍ' : 'لا يوجد'))"/>
+                      </td>
+                    </tr>
+                  </t>
+                  <t t-if="!state.data.guarantees.length"><tr><td colspan="4" class="td-empty">لا توجد ضمانات</td></tr></t>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </t>
+      </div>
+    </div>
+  </t>
+</templates>

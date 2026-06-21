@@ -29,99 +29,99 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-xs-12 col-md-6 o_setting_box" attrs="{'invisible':[('is_twilio_in_addon','=',False)]}" >
+                                <div class="col-xs-12 col-md-6 o_setting_box" invisible="not is_twilio_in_addon" >
                                     <div class="o_setting_left_pane">
-                                        <field name="is_twilio_in_addon" attrs="{'invisible':True}"  />
+                                        <field name="is_twilio_in_addon" invisible="True"  />
                                         <field name="module_twilio_gateway" />
                                     </div>
                                     <div class="o_setting_right_pane">
                                         <label for="module_twilio_gateway"/>
                                     </div>
                                 </div>
-                                <div class="col-xs-12 col-md-6 o_setting_box" attrs="{'invisible':[('is_plivo_in_addon','=',False)]}" >
+                                <div class="col-xs-12 col-md-6 o_setting_box" invisible="not is_plivo_in_addon" >
                                     <div class="o_setting_left_pane">
-                                        <field name="is_plivo_in_addon" attrs="{'invisible':True}"  />
+                                        <field name="is_plivo_in_addon" invisible="True"  />
                                         <field name="module_plivo_gateway" />
                                     </div>
                                     <div class="o_setting_right_pane">
                                         <label for="module_plivo_gateway"/>
                                     </div>
                                 </div>
-                                <div class="col-xs-12 col-md-6 o_setting_box" attrs="{'invisible':[('is_clicksend_in_addon','=',False)]}" >
+                                <div class="col-xs-12 col-md-6 o_setting_box" invisible="not is_clicksend_in_addon" >
                                     <div class="o_setting_left_pane">
-                                        <field name="is_clicksend_in_addon" attrs="{'invisible':True}"  />
+                                        <field name="is_clicksend_in_addon" invisible="True"  />
                                         <field name="module_clicksend_gateway" />
                                     </div>
                                     <div class="o_setting_right_pane">
                                         <label for="module_clicksend_gateway"/>
                                     </div>
                                 </div>
-                                <div class="col-xs-12 col-md-6 o_setting_box" attrs="{'invisible':[('is_msg91_in_addon','=',False)]}" >
+                                <div class="col-xs-12 col-md-6 o_setting_box" invisible="not is_msg91_in_addon" >
                                     <div class="o_setting_left_pane">
-                                        <field name="is_msg91_in_addon" attrs="{'invisible':True}"  />
+                                        <field name="is_msg91_in_addon" invisible="True"  />
                                         <field name="module_msg91_gateway" />
                                     </div>
                                     <div class="o_setting_right_pane">
                                         <label for="module_msg91_gateway"/>
                                     </div>
                                 </div>
-                                <div class="col-xs-12 col-md-6 o_setting_box" attrs="{'invisible':[('is_mobily_in_addon','=',False)]}" >
+                                <div class="col-xs-12 col-md-6 o_setting_box" invisible="not is_mobily_in_addon" >
                                     <div class="o_setting_left_pane">
-                                        <field name="is_mobily_in_addon" attrs="{'invisible':True}"  />
+                                        <field name="is_mobily_in_addon" invisible="True"  />
                                         <field name="module_mobily_gateway" />
                                     </div>
                                     <div class="o_setting_right_pane">
                                         <label for="module_mobily_gateway"/>
                                     </div>
                                 </div>
-                                <div class="col-xs-12 col-md-6 o_setting_box" attrs="{'invisible':[('is_skebby_in_addon','=',False)]}" >
+                                <div class="col-xs-12 col-md-6 o_setting_box" invisible="not is_skebby_in_addon" >
                                     <div class="o_setting_left_pane">
-                                        <field name="is_skebby_in_addon" attrs="{'invisible':True}"  />
+                                        <field name="is_skebby_in_addon" invisible="True"  />
                                         <field name="module_skebby_gateway" />
                                     </div>
                                     <div class="o_setting_right_pane">
                                         <label for="module_skebby_gateway"/>
                                     </div>
                                 </div>
-                                <div class="col-xs-12 col-md-6 o_setting_box" attrs="{'invisible':[('is_netelip_in_addon','=',False)]}" >
+                                <div class="col-xs-12 col-md-6 o_setting_box" invisible="not is_netelip_in_addon" >
                                     <div class="o_setting_left_pane">
-                                        <field name="is_netelip_in_addon" attrs="{'invisible':True}"  />
+                                        <field name="is_netelip_in_addon" invisible="True"  />
                                         <field name="module_netelip_gateway" />
                                     </div>
                                     <div class="o_setting_right_pane">
                                         <label for="module_netelip_gateway"/>
                                     </div>
                                 </div>
-                                <div class="col-xs-12 col-md-6 o_setting_box" attrs="{'invisible':[('is_nexmo_in_addon','=',False)]}">
+                                <div class="col-xs-12 col-md-6 o_setting_box" invisible="not is_nexmo_in_addon">
                                     <div class="o_setting_left_pane">
-                                        <field name="is_nexmo_in_addon" attrs="{'invisible':True}" />
+                                        <field name="is_nexmo_in_addon" invisible="True" />
                                         <field name="module_nexmo_gateway" />
                                     </div>
                                     <div class="o_setting_right_pane">
                                         <label for="module_nexmo_gateway"/>
                                     </div>
                                 </div>
-                                <div class="col-xs-12 col-md-6 o_setting_box" attrs="{'invisible':[('is_messagebird_in_addon','=',False)]}">
+                                <div class="col-xs-12 col-md-6 o_setting_box" invisible="not is_messagebird_in_addon">
                                     <div class="o_setting_left_pane">
-                                        <field name="is_messagebird_in_addon" attrs="{'invisible':True}" />
+                                        <field name="is_messagebird_in_addon" invisible="True" />
                                         <field name="module_messagebird_gateway" />
                                     </div>
                                     <div class="o_setting_right_pane">
                                         <label for="module_messagebird_gateway"/>
                                     </div>
                                 </div>
-                                <div class="col-xs-12 col-md-6 o_setting_box" attrs="{'invisible':[('is_textlocal_in_addon','=',False)]}">
+                                <div class="col-xs-12 col-md-6 o_setting_box" invisible="not is_textlocal_in_addon">
                                     <div class="o_setting_left_pane">
-                                        <field name="is_textlocal_in_addon" attrs="{'invisible':True}" />
+                                        <field name="is_textlocal_in_addon" invisible="True" />
                                         <field name="module_textlocal_gateway" />
                                     </div>
                                     <div class="o_setting_right_pane">
                                         <label for="module_textlocal_gateway"/>
                                     </div>
                                 </div>
-                                <div class="col-xs-12 col-md-6 o_setting_box" attrs="{'invisible':[('is_smshub_in_addon','=',False)]}">
+                                <div class="col-xs-12 col-md-6 o_setting_box" invisible="not is_smshub_in_addon">
                                     <div class="o_setting_left_pane">
-                                        <field name="is_smshub_in_addon" attrs="{'invisible':True}" />
+                                        <field name="is_smshub_in_addon" invisible="True" />
                                         <field name="module_smshub_gateway" />
                                     </div>
                                     <div class="o_setting_right_pane">
