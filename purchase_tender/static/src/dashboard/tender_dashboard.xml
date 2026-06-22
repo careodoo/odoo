@@ -34,11 +34,11 @@
               <div class="bar" style="background:#21b07b"/><div class="ic" style="background:#e3f7ee;color:#21b07b">🏆</div>
               <div class="v" t-esc="state.data.kpi.won"/><div class="l">فائزة</div>
             </div>
-            <div class="td-kpi">
+            <div class="td-kpi" t-on-click="() => this.view([['state','in',['winner','purchased','in_progress','completed','lost']]], 'المناقصات المحسومة', true)">
               <div class="bar" style="background:#8b5cf6"/><div class="ic" style="background:#efe7ff;color:#8b5cf6">🎯</div>
               <div class="v"><t t-esc="state.data.kpi.win_rate"/>%</div><div class="l">معدل الفوز</div>
             </div>
-            <div class="td-kpi">
+            <div class="td-kpi" t-on-click="() => this.view([['state','in',['winner','purchased','in_progress','completed']]], 'العقود الفائزة', true)">
               <div class="bar" style="background:#017e84"/><div class="ic" style="background:#e1f5f5;color:#017e84">💰</div>
               <div class="v" t-esc="fmt(state.data.kpi.awarded_value)"/><div class="l">قيمة العقود الفائزة</div>
             </div>
@@ -50,11 +50,11 @@
               <div class="bar" style="background:#f59e0b"/><div class="ic" style="background:#fff4e0;color:#f59e0b">⏳</div>
               <div class="v" t-esc="state.data.kpi.closing_7d"/><div class="l">إغلاقات خلال 7 أيام</div>
             </div>
-            <div class="td-kpi">
+            <div class="td-kpi" t-on-click="() => this.view([['care_rank','>',0]], 'المناقصات حسب الترتيب', true)">
               <div class="bar" style="background:#e25563"/><div class="ic" style="background:#fde9eb;color:#e25563">📉</div>
               <div class="v" t-esc="state.data.kpi.avg_rank"/><div class="l">متوسط ترتيب Care</div>
             </div>
-            <div class="td-kpi">
+            <div class="td-kpi" t-on-click="() => this.view([['guarantee','>',0]], 'الضمانات القائمة', true)">
               <div class="bar" style="background:#8b5cf6"/><div class="ic" style="background:#efe7ff;color:#8b5cf6">🛡️</div>
               <div class="v" t-esc="fmt(state.data.kpi.guarantees_value)"/><div class="l">ضمانات قائمة</div>
             </div>
@@ -62,15 +62,15 @@
               <div class="bar" style="background:#f59e0b"/><div class="ic" style="background:#fff4e0;color:#f59e0b">⚠️</div>
               <div class="v" t-esc="state.data.kpi.guarantees_expiring"/><div class="l">ضمانات تنتهي قريباً</div>
             </div>
-            <div class="td-kpi">
+            <div class="td-kpi" t-on-click="() => this.view([['state','=','lost'],['to_win','>',0]], 'الفرص الضائعة', true)">
               <div class="bar" style="background:#e25563"/><div class="ic" style="background:#fde9eb;color:#e25563">💸</div>
               <div class="v" t-esc="fmt(state.data.kpi.money_left)"/><div class="l">فُرَص ضائعة</div>
             </div>
-            <div class="td-kpi">
+            <div class="td-kpi" t-on-click="() => this.view([['state','in',['winner','purchased','in_progress','completed','lost']]], 'المناقصات المحسومة', true)">
               <div class="bar" style="background:#21b07b"/><div class="ic" style="background:#e3f7ee;color:#21b07b">📈</div>
               <div class="v"><t t-esc="state.data.kpi.avg_gap"/>%</div><div class="l">متوسط فرق السعر</div>
             </div>
-            <div class="td-kpi">
+            <div class="td-kpi" t-on-click="() => this.view([['state','in',['new','under_study','docs_purchased','interested','preparing','participated']]], 'المناقصات النشطة', false)">
               <div class="bar" style="background:#3a7afe"/><div class="ic" style="background:#e7f0ff;color:#3a7afe">🔮</div>
               <div class="v"><t t-esc="state.data.kpi.win_prob_active"/>%</div><div class="l">احتمالية الفوز المتوقعة</div>
             </div>
