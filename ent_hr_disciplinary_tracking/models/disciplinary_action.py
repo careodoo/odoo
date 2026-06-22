@@ -34,7 +34,7 @@ class DisciplinaryAction(models.Model):
         ('explain', 'Waiting Explanation'),
         ('submitted', 'Waiting Action'),
         ('action', 'Action Validated'),
-        ('cancel', 'Cancelled')], default='draft', track_visibility='onchange',
+        ('cancel', 'Cancelled')], default='draft', tracking=True,
         help="Disciplinary action record states")
     name = fields.Char(string='Reference', required=True, copy=False,
                        readonly=True,
@@ -68,12 +68,13 @@ class DisciplinaryAction(models.Model):
                               help="Employee joining date")
 
     # assigning the sequence for the record
-    @api.model
-    def create(self, vals):
+    @api.model_create_multi
+    def create(self, vals_list):
         """Super create to add sequence"""
-        vals['name'] = self.env['ir.sequence'].next_by_code(
-            'disciplinary.action')
-        return super(DisciplinaryAction, self).create(vals)
+        for vals in vals_list:
+            vals['name'] = self.env['ir.sequence'].next_by_code(
+                'disciplinary.action')
+        return super(DisciplinaryAction, self).create(vals_list)
 
     # Check the user is a manager or employee
     @api.depends('read_only')

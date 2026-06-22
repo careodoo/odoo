@@ -45,6 +45,26 @@ class HrLeave(models.Model):
                                 help='Leave validators',
                                 compute="_compute_user_ids")
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        """ Seed validation_status_ids for multi-level approval leave types
+        when leaves are created programmatically/by import (bypassing the
+        form onchange). Mirrors _onchange_holiday_status_id: one status line
+        per validator of the chosen leave type. Only seeds when the type is
+        flagged multi-level and no validation lines were already provided. """
+        leaves = super().create(vals_list)
+        for leave in leaves:
+            leave_type = leave.holiday_status_id
+            if (leave_type and leave_type.multi_level_validation
+                    and not leave.validation_status_ids):
+                existing = leave.validation_status_ids.mapped('user_id').ids
+                lines = [(0, 0, {'user_id': validator.user_id.id})
+                         for validator in leave_type.validator_ids.filtered(
+                             lambda x: x.user_id.id not in existing)]
+                if lines:
+                    leave.validation_status_ids = lines
+        return leaves
+
     @api.depends('validation_status_ids')
     def _compute_user_ids(self):
         """Method for computing user_ids"""

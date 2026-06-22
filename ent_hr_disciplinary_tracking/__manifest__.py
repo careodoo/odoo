@@ -40,6 +40,9 @@
              'views/disciplinary_action_views.xml',
              'views/discipline_category_views.xml',
              ],
+    'demo': [
+             'data/demo.xml',
+             ],
     'images': ['static/description/banner.jpg'],
     'license': 'OPL-1',
     'installable': True,

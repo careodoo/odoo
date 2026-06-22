@@ -76,8 +76,7 @@ class OrientationChecklistRequest(models.Model):
         ir_model_data = self.env['ir.model.data']
         try:
             template_id = ir_model_data._xmlid_lookup(
-                'employee_orientation.orientation_request_mailer')[2]
-            print(template_id)
+                'employee_orientation.orientation_request_view')[2]
         except ValueError:
             template_id = False
         try:

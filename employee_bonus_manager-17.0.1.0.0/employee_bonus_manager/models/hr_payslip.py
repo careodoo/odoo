@@ -40,9 +40,18 @@ class HrPayslip(models.Model):
                 ('move_id.date', '>=', self.date_from),
                 ('move_id.date', '<=', self.date_to)])
             amount = sum(bonus.mapped('bonus_amount'))
-            self.input_line_ids = [(0, 0, {
-                'name': 'Bonus',
-                'code': 'BONUS',
-                'contract_id': self.contract_id.id,
-                'amount': amount,
-            })]
+            existing_bonus = self.input_line_ids.filtered(
+                lambda line: line.code == 'BONUS')
+            if existing_bonus:
+                existing_bonus.update({
+                    'name': 'Bonus',
+                    'contract_id': self.contract_id.id,
+                    'amount': amount,
+                })
+            else:
+                self.update({'input_line_ids': [(0, 0, {
+                    'name': 'Bonus',
+                    'code': 'BONUS',
+                    'contract_id': self.contract_id.id,
+                    'amount': amount,
+                })]})

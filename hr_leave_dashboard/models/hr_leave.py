@@ -78,6 +78,8 @@ class HrLeave(models.Model):
                     current_employee.child_ids if
                     child != current_employee]
         child_list = [child.get('id') for child in children]
+        if not child_list:
+            return []
         if len(child_list) > 1:
             query = "SELECT employee_id,name,date_from,date_to FROM hr_leave " \
                     "INNER JOIN hr_employee ON hr_leave.employee_id = " \
@@ -130,6 +132,7 @@ class HrLeave(models.Model):
         self._cr.execute(query)
         holidays = self._cr.dictfetchall()
         upcoming_holidays = [holiday for holiday in holidays if
+                             holiday.get('date_to') and
                              employee_datetime.date() < holiday.get(
                                  'date_to').date()]
         return upcoming_holidays

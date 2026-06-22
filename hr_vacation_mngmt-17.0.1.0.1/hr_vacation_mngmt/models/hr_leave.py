@@ -161,10 +161,10 @@ class HrLeave(models.Model):
         leave_request = self.env['hr.leave'].search(
             [('state', '=', 'validate')])
         leave_reminder = self.env['ir.config_parameter'].sudo().get_param(
-            'leave_reminder')
+            'hr_vacation_mngmt.leave_reminder')
         reminder_day_before = int(
             self.env['ir.config_parameter'].sudo().get_param(
-                'reminder_day_before'))
+                'hr_vacation_mngmt.reminder_day_before'))
         mail_template = self.env.ref(
             'hr_vacation_mngmt.email_template_hr_leave_reminder_mail')
         holiday_managers = self.env.ref(

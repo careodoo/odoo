@@ -32,7 +32,8 @@ class PackingReportValues(models.AbstractModel):
         """Function execute on report values"""
         lst = []
         empl_obj = self.env['hr.employee'].search(
-            [('department_id', '=', data['dept_id'])])
+            [('department_id', '=', data['dept_id']),
+             ('certificates', '=', True)])
         docs = self.env['hr.employee'].browse(docids)
         for line in empl_obj:
             lst.append({

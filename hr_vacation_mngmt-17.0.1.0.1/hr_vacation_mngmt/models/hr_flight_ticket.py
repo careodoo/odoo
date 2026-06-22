@@ -142,9 +142,6 @@ class HrFlightTicket(models.Model):
         elif self.state == 'confirmed':
             if self.invoice_id and self.invoice_id.state == 'draft':
                 self.write({'state': 'canceled'})
-            if self.invoice_id and self.invoice_id.state == 'open':
-                self.invoice_id.action_invoice_cancel()
-                self.write({'state': 'canceled'})
 
     @api.model
     def run_update_ticket_status(self):

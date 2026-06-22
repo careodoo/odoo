@@ -174,7 +174,8 @@ class HrPayslip(models.Model):
             leave_sal_gross = self.env.ref(
                 'hr_vacation_mngmt.hr_salary_rule_leave_salary_gross')
             default_leave_salary = self.env[
-                'ir.config_parameter'].sudo().get_param('default_leave_salary')
+                'ir.config_parameter'].sudo().get_param(
+                'hr_vacation_mngmt.default_leave_salary')
             if default_leave_salary == '0':
                 leave_salary = leave_sal_basic
             elif default_leave_salary == '1':

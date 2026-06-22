@@ -44,7 +44,9 @@ class HrPayslip(models.Model):
         if self.env['ir.config_parameter'].sudo().get_param(
                 'send_payslip_by_email'):
             for payslip in self:
-                if payslip.employee_id.private_email:
+                employee = payslip.employee_id
+                if employee.work_email or employee.private_email or (
+                        employee.user_id and employee.user_id.email):
                     template = self.env.ref(
                         'hr_payslip_monthly_report.email_template_payslip')
                     template.sudo().send_mail(payslip.id, force_send=True)
