@@ -1013,14 +1013,54 @@ class PurchaseTender(models.Model):
                        for k, v in sorted(act_stats.items(), key=lambda x: x[1]['count'], reverse=True)]
 
         # --- forecast: expected value weighted by win-probability ---
-        weighted_pipeline = sum((t.our_price or t.price or 0.0) * (t.win_probability or 0.0) / 100.0
-                                for t in active)
+        # Estimate each active tender's CONTRACT value: our actual bid (our_price)
+        # if set, otherwise the average winner price of historically decided
+        # tenders of the same activity (bid_type), else the overall average.
+        # NOTE: `price` is the spec-booklet cost (تكلفة الكراسة), NOT the contract
+        # value, so it must never be used as the value basis here.
+        decided_all = self.search([('state', 'in', list(won_states) + ['lost'])])
+        base_vals = [t.winner_price for t in decided_all if t.winner_price]
+        if not base_vals:
+            base_vals = [t.our_price for t in self.search([]) if t.our_price]
+        overall_avg = (sum(base_vals) / len(base_vals)) if base_vals else 0.0
+        bt_acc = {}
+        for t in decided_all:
+            if t.winner_price:
+                acc = bt_acc.setdefault(t.bid_type.id, [0.0, 0])
+                acc[0] += t.winner_price
+                acc[1] += 1
+        bt_avg = {k: (s / n) for k, (s, n) in bt_acc.items() if n}
+
+        def est_value(t):
+            if t.our_price:
+                return t.our_price, True
+            return bt_avg.get(t.bid_type.id, overall_avg), False
+
+        weighted_pipeline = 0.0
+        gross_pipeline = 0.0
+        priced_n = est_n = 0
         forecast = [0.0] * 12
         for t in active:
+            val, is_priced = est_value(t)
+            if is_priced:
+                priced_n += 1
+            else:
+                est_n += 1
+            gross_pipeline += val
+            w = val * (t.win_probability or 0.0) / 100.0
+            weighted_pipeline += w
             eff = t.new_closing_date or t.closing_date
             if eff:
-                forecast[eff.month - 1] += (t.our_price or t.price or 0.0) * (t.win_probability or 0.0) / 100.0
+                forecast[eff.month - 1] += w
         forecast = [round(x, 2) for x in forecast]
+        expected = {
+            'weighted': round(weighted_pipeline, 2),
+            'gross': round(gross_pipeline, 2),
+            'priced': priced_n,
+            'estimated': est_n,
+            'active': len(active),
+            'avg_basis': round(overall_avg, 2),
+        }
 
         # --- loss reasons ---
         loss_labels = dict(self._fields['loss_reason'].selection)
@@ -1070,6 +1110,7 @@ class PurchaseTender(models.Model):
                 'active': len(active),
                 'lost': len(lost),
             },
+            'expected': expected,
             'status_dist': [{'key': k, 'label': state_labels.get(k, k), 'value': v} for k, v in status_dist.items()],
             'by_company': by_company,
             'by_activity': by_activity,

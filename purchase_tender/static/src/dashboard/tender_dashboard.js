@@ -98,6 +98,30 @@ export class TenderDashboard extends Component {
         });
     }
 
+    // Build the issue_date domain for the selected year (empty for "all").
+    yearDomain() {
+        const y = this.state.year;
+        if (!y || y === "all") return [];
+        return [["issue_date", ">=", `${y}-01-01`], ["issue_date", "<=", `${y}-12-31`]];
+    }
+
+    // "عرض" — open the full list of tenders behind a block.
+    // useYear=false for active-pipeline blocks (active tenders are always current).
+    view(domain, name, useYear = true) {
+        const dom = (useYear ? this.yearDomain() : []).concat(domain || []);
+        this.openList(dom, name);
+    }
+
+    openCompetitors() {
+        this.action.doAction({
+            type: "ir.actions.act_window",
+            name: "تحليل المنافسين",
+            res_model: "purchase.tender.competitor",
+            views: [[false, "list"], [false, "form"]],
+            target: "current",
+        });
+    }
+
     destroyCharts() {
         if (this._observer) { try { this._observer.disconnect(); } catch (e) { /* noop */ } this._observer = null; }
         this._pending = {};

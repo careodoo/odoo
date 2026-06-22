@@ -106,3 +106,16 @@ class TenderCompetitor(models.Model):
             'domain': [('contact', '=', self.partner_id.id), ('is_ours', '=', False)],
             'context': {'search_default_g_org': 1},
         }
+
+    def action_view_wins(self):
+        """Only the tenders this competitor actually WON (not every bid)."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'مرات فوز %s' % (self.partner_id.name or ''),
+            'res_model': 'purchase.tender.price.analysis',
+            'view_mode': 'tree,pivot,graph',
+            'domain': [('contact', '=', self.partner_id.id),
+                       ('is_ours', '=', False), ('is_winner', '=', True)],
+            'context': {'search_default_g_org': 1},
+        }

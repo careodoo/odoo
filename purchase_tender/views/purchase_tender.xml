@@ -5,7 +5,7 @@
       <field name="name">purchase.tender.view.tree</field>
       <field name="model">purchase.tender</field>
       <field name="arch" type="xml">
-        <tree string="المناقصات"
+        <tree string="المناقصات" default_order="days_to_close asc, importance desc, id desc"
           decoration-success="state in ['winner','purchased','in_progress','completed']"
           decoration-danger="state in ['cancelled','lost','excepted']"
           decoration-warning="days_to_close &gt;= 0 and days_to_close &lt;= 7 and state in ['new','under_study','docs_purchased','interested','preparing','participated']"
@@ -38,10 +38,12 @@
             decoration-warning="state in ['postponed','under_study']"
             decoration-danger="state in ['cancelled','lost','excepted']"
             decoration-muted="state in ['closed','new']" />
-          <button name="action_set_docs_purchased" type="object" string="شراء الكراسة" icon="fa-shopping-cart"
+          <button name="action_set_interested" type="object" string="مهتم" icon="fa-star"
             invisible="state not in ['new','under_study']" />
+          <button name="action_set_docs_purchased" type="object" string="شراء الكراسة" icon="fa-shopping-cart"
+            invisible="state != 'interested'" />
           <button name="action_set_participated" type="object" string="تقديم" icon="fa-paper-plane"
-            invisible="state not in ['docs_purchased','interested','preparing']" />
+            invisible="state not in ['docs_purchased','preparing']" />
           <button name="action_set_winner" type="object" string="فوز" icon="fa-trophy"
             invisible="state != 'participated'" />
         </tree>
@@ -99,10 +101,12 @@
                   <div class="o_tk_bar"><div t-attf-style="width:#{record.prep_score.raw_value}%;background:#21b07b;" /></div>
                 </div>
                 <div class="o_tk_actions">
+                  <button type="object" name="action_set_interested" class="btn btn-sm btn-secondary"
+                    t-if="['new','under_study'].includes(record.state.raw_value)">مهتم</button>
                   <button type="object" name="action_set_docs_purchased" class="btn btn-sm btn-secondary"
-                    t-if="['new','under_study'].includes(record.state.raw_value)">شراء الكراسة</button>
+                    t-if="record.state.raw_value == 'interested'">شراء الكراسة</button>
                   <button type="object" name="action_set_participated" class="btn btn-sm btn-primary"
-                    t-if="['docs_purchased','interested','preparing'].includes(record.state.raw_value)">تم التقديم</button>
+                    t-if="['docs_purchased','preparing'].includes(record.state.raw_value)">تم التقديم</button>
                   <button type="object" name="action_set_winner" class="btn btn-sm btn-success"
                     t-if="record.state.raw_value == 'participated'">فائزة</button>
                   <button type="object" name="action_set_lost" class="btn btn-sm btn-danger"
@@ -372,9 +376,13 @@
           <field name="name" string="Tender"
             filter_domain="['|','|',('name','ilike',self),('tender_no','ilike',self),('tender_name','ilike',self)]" />
           <field name="organization" />
+          <field name="company_id" string="الشركة" />
           <field name="bid_type" />
           <field name="winner" />
-          <filter name="f_active" string="نشطة" domain="[('state','in',['new','under_study','docs_purchased','interested','preparing','participated'])]" />
+          <filter name="f_active" string="النشطة" domain="[('state','in',['new','under_study','docs_purchased','interested','preparing','participated'])]" />
+          <filter name="f_concluded" string="المنتهية (فائزة/خاسرة/مغلقة)"
+            domain="[('state','in',['winner','purchased','in_progress','completed','lost','postponed','closed','cancelled','excepted'])]" />
+          <separator />
           <filter name="f_won" string="فائزة" domain="[('state','in',['winner','purchased','in_progress','completed'])]" />
           <filter name="f_lost" string="خاسرة" domain="[('state','=','lost')]" />
           <separator />
@@ -409,15 +417,26 @@
     </record>
 
     <record id="purchase_tender_action" model="ir.actions.act_window">
-      <field name="name">Our Tenders</field>
+      <field name="name">Active Tenders</field>
       <field name="type">ir.actions.act_window</field>
       <field name="res_model">purchase.tender</field>
       <field name="view_mode">tree,kanban,form</field>
       <field name="search_view_id" ref="purchase_tender_view_search" />
+      <field name="context">{'search_default_f_active': 1}</field>
+    </record>
+    <record id="purchase_tender_action_concluded" model="ir.actions.act_window">
+      <field name="name">Concluded Tenders</field>
+      <field name="type">ir.actions.act_window</field>
+      <field name="res_model">purchase.tender</field>
+      <field name="view_mode">tree,kanban,form</field>
+      <field name="search_view_id" ref="purchase_tender_view_search" />
+      <field name="context">{'search_default_f_concluded': 1}</field>
     </record>
     <menuitem id="purchase_tender_root" name="Our Tenders" sequence="10"
       web_icon="fa fa-pie-chart,#f1c40f,#34495e" />
-    <menuitem id="purchase_tender_menu" name="Tenders" parent="purchase_tender_root" sequence="2"
+    <menuitem id="purchase_tender_menu" name="Active Tenders" parent="purchase_tender_root" sequence="2"
       action="purchase_tender_action" />
+    <menuitem id="purchase_tender_menu_concluded" name="Concluded Tenders" parent="purchase_tender_root" sequence="3"
+      action="purchase_tender_action_concluded" />
   </data>
 </odoo>
