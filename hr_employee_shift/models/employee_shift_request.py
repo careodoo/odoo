@@ -63,18 +63,19 @@ class EmployeeShiftRequest(models.Model):
     active = fields.Boolean(default=True)
     show_shift_department = fields.Boolean()
 
-    @api.model
-    def create(self, vals):
-        if vals.get('employee_id') and vals.get('current_department') and vals.get('new_department'):
-            open_requests = self.env['employee.shift.request'].search([
-                ('employee_id', '=', vals.get('employee_id')),
-                ('current_department', '=', vals.get('current_department')),
-                ('new_department', '=', vals.get('new_department')),
-                ('state', 'not in', ['refuse_1', 'refuse_2', 'refuse_3', 'done'])  # closed states
-            ])
-            if open_requests:
-                raise ValidationError("There is an open shift request (id={}) with the same inputs".format(open_requests[0].id))
-        res = super(EmployeeShiftRequest, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('employee_id') and vals.get('current_department') and vals.get('new_department'):
+                open_requests = self.env['employee.shift.request'].search([
+                    ('employee_id', '=', vals.get('employee_id')),
+                    ('current_department', '=', vals.get('current_department')),
+                    ('new_department', '=', vals.get('new_department')),
+                    ('state', 'not in', ['refuse_1', 'refuse_2', 'refuse_3', 'done'])  # closed states
+                ])
+                if open_requests:
+                    raise ValidationError("There is an open shift request (id={}) with the same inputs".format(open_requests[0].id))
+        res = super(EmployeeShiftRequest, self).create(vals_list)
         return res
 
     @api.onchange('employee_id')

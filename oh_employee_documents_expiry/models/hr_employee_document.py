@@ -108,12 +108,17 @@ class HrEmployeeDocument(models.Model):
                 }
                 self.env['mail.mail'].create(main_content).send()
 
-    @api.constrains('expiry_date')
+    @api.constrains('expiry_date', 'issue_date')
     def _check_expiry_date(self):
         """This method is called as a constraint whenever the 'expiry_date'
-         field of an 'hr.employee.document' record is modified."""
+         field of an 'hr.employee.document' record is modified.
+         Past/expired dates are allowed (HR must be able to record
+         already-expired documents); only ensure the expiry date is not
+         before the issue date."""
         for rec in self:
-            if rec.expiry_date:
+            if rec.expiry_date and rec.issue_date:
                 exp_date = fields.Date.from_string(rec.expiry_date)
-                if exp_date < date.today():
-                    raise UserError(_('Your Document Is Expired.'))
+                iss_date = fields.Date.from_string(rec.issue_date)
+                if exp_date < iss_date:
+                    raise UserError(
+                        _('The expiry date cannot be before the issue date.'))

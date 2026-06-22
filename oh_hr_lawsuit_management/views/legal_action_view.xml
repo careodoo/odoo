@@ -36,13 +36,13 @@
                                 <field name="employee_id" invisible="party2 != 'employee'" required="party2 == 'employee'"/>
                                 <field name="partner_id" invisible="party2 != 'partner'" required="party2 == 'partner'"/>
                                 <field name="other_name" invisible="party2 != 'other'" required="party2 == 'other'"/>
-                                <field name="court_name"/>
-                                <field name="judge"/>
-                                <field name="lawyer"/>
+                                <field name="court_name" readonly="state == 'won'"/>
+                                <field name="judge" readonly="state == 'won'"/>
+                                <field name="lawyer" readonly="state == 'won'"/>
                                 <field name="company_id" options="{'no_create': True}" groups="base.group_multi_company"/>
                             </group>
                             <group>
-                                <field name="requested_date"/>
+                                <field name="requested_date" readonly="state != 'draft'"/>
                                 <field name="hearing_date"/>
                                 <field name="next_appointment"/>
                             </group>

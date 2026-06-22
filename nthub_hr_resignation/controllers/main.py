@@ -61,7 +61,7 @@ class PortalAccount(CustomerPortal):
                     return request.render("nthub_hr_resignation.thankyou_resignation", {'record': record})
         except Exception as e:
             request.env.cr.rollback()
-            return request.redirect("/my/trips?error=%s" % tools.ustr(e))
+            return request.redirect("/my/resignation?error=%s" % tools.ustr(e))
 
     def btrip_attchcreate(self, ufiles, record):
         for file in ufiles:

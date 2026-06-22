@@ -9,10 +9,11 @@ class HrLawsuit(models.Model):
     _description = 'Hr Lawsuit Management'
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
-    @api.model
-    def create(self, vals):
-        vals['name'] = self.env['ir.sequence'].next_by_code('hr.lawsuit')
-        return super(HrLawsuit, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            vals['name'] = self.env['ir.sequence'].next_by_code('hr.lawsuit')
+        return super(HrLawsuit, self).create(vals_list)
 
     def won(self):
         self.state = 'won'
@@ -29,30 +30,33 @@ class HrLawsuit(models.Model):
     def delay(self):
         self.state = 'delay'
 
-    @api.depends('party2', 'employee_id')
+    @api.depends('party2', 'employee_id', 'partner_id', 'other_name')
     def set_party2(self):
         for each in self:
             if each.party2 == 'employee':
                 each.party2_name = each.employee_id.name
+            elif each.party2 == 'partner':
+                each.party2_name = each.partner_id.name
+            elif each.party2 == 'other':
+                each.party2_name = each.other_name
+            else:
+                each.party2_name = False
 
     name = fields.Char(string='Code', copy=False)
     ref_no = fields.Char(string="Reference Number")
     company_id = fields.Many2one('res.company', 'Company', readonly=True,
                                  default=lambda self: self.env.user.company_id,
                                  help='Name of the company of the user')
-    requested_date = fields.Date(string='Date', copy=False, readonly=1,
-                                 help='Start Date',
-                                 states={'draft': [('readonly', False)]})
+    requested_date = fields.Date(string='Date', copy=False,
+                                 help='Start Date')
     hearing_date = fields.Date(string='Hearing Date',
                                help='Upcoming hearing date')
     court_name = fields.Char(string='Court Name', tracking=True,
-                             states={'won': [('readonly', True)]},
                              help='Name of the Court')
-    judge = fields.Char(string='Judge', tracking=True, states={'won': [('readonly', True)]},
+    judge = fields.Char(string='Judge', tracking=True,
                         help='Name of the Judge')
     lawyer = fields.Many2one('res.partner', string='Lawyer', tracking=True,
-                             help='Choose the contact of Layer from the contact list',
-                             states={'won': [('readonly', True)]})
+                             help='Choose the contact of Layer from the contact list')
     party1 = fields.Many2one('res.company', string='Party 1', required=1, readonly=1,
                              help='Choose the company as first Party',)
     party2 = fields.Selection([('employee', 'Employee'),
@@ -61,11 +65,9 @@ class HrLawsuit(models.Model):
                               string='Party 2', required=1, readonly=1,
                               help='Choose the second party in the legal issue.It can be Employee, Contacts or others.',)
     employee_id = fields.Many2one('hr.employee', string='Employee', copy=False,
-                                   states={'draft': [('readonly', False)]},
                                   help='Choose the Employee')
     partner_id = fields.Many2one('res.partner', string='Partner',
                                  copy=False,
-                                 states={'draft': [('readonly', False)]},
                                  help='Choose the partner')
     other_name = fields.Char(string='Name', help='Enter the details of other type')
     party2_name = fields.Char(compute='set_party2', string='Name', store=True)

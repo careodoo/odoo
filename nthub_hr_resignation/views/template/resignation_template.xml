@@ -37,14 +37,14 @@
                                         <t t-if="resignation_id.state == 'done'">
                                             <span class="badge badge-pill"
                                                   style="background-color: #0bdb12; color: white;"
-                                                  title="Current stage of the task" t-field="trip_id.resignation_id"/>
+                                                  title="Current stage of the task" t-field="resignation_id.state"/>
                                         </t>
                                         <t t-if="resignation_id.state == 'hr_dept'">
                                             <span class="badge badge-pill"
                                                   style="background-color: #16a2b8; color: white;"
-                                                  title="Current stage of the task" t-field="trip_id.resignation_id"/>
+                                                  title="Current stage of the task" t-field="resignation_id.state"/>
                                         </t>
-                                        <t t-if="resignation_id.state == 'financial_dept'">
+                                        <t t-if="resignation_id.state == 'finance_dept'">
                                             <span class="badge badge-pill"
                                                   style="background-color: #17a2b8; color: white;"
                                                   title="Current stage of the task" t-field="resignation_id.state"/>

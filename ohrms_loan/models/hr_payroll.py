@@ -48,7 +48,6 @@ class HrPayslip(models.Model):
             worked_days_lines += worked_days_lines.new(r)
         self.worked_days_line_ids = worked_days_lines
         if contracts:
-            print(date_from, date_to, '001qq')
             input_line_ids = self.get_inputs(contracts, date_from, date_to)
             input_lines = self.input_line_ids.browse([])
             for r in input_line_ids:

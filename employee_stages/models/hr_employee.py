@@ -34,7 +34,7 @@ class HrEmployee(models.Model):
                               ('relieved', 'Resigned'),
                               ('terminate', 'Terminated')], string='Status',
                              default='joined',
-                             track_visibility='always', copy=False,
+                             tracking=True, copy=False,
                              help="Employee Stages.\nSlap On: "
                                   "Joined\nGrounding: Training\nTest period : "
                                   "Probation")
@@ -55,6 +55,11 @@ class HrEmployee(models.Model):
     def action_start_grounding(self):
         """This is used to create the ground stage on staging history"""
         self.state = 'grounding'
+        stage_history_ids = self.stages_history_ids.search(
+            [('employee_id', '=', self.id),
+             ('state', '=', 'joined')])
+        if stage_history_ids:
+            stage_history_ids.sudo().write({'end_date': fields.Date.today()})
         self.stages_history_ids.sudo().create({'start_date': fields.Date.today(),
                                                'employee_id': self.id,
                                                'state': 'grounding'})
@@ -93,7 +98,8 @@ class HrEmployee(models.Model):
               'notice_period')])
         if stage_history_ids:
             stage_history_ids.sudo().write({'end_date': fields.Date.today()})
-        self.stages_history_ids.sudo().create({'end_date': fields.Date.today(),
+        self.stages_history_ids.sudo().create({'start_date': fields.Date.today(),
+                                               'end_date': fields.Date.today(),
                                                'employee_id': self.id,
                                                'state': 'relieved'})
 
@@ -122,7 +128,8 @@ class HrEmployee(models.Model):
                                             ('state', '=',
                                              'grounding')]).sudo().write(
                 {'end_date': fields.Date.today()})
-        self.stages_history_ids.sudo().create({'end_date': fields.Date.today(),
+        self.stages_history_ids.sudo().create({'start_date': fields.Date.today(),
+                                               'end_date': fields.Date.today(),
                                                'employee_id': self.id,
                                                'state': 'terminate'})
 

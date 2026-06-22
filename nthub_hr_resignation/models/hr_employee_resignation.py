@@ -92,6 +92,7 @@ class HrEmployeeResignation(models.Model):
         self.ensure_one()
         self.state = 'done'
         self.approved_date = fields.Datetime.now()
+        self.approved_by = self.env.user
         self.employee_id.active = False
         self.employee_id.resigned = True
         self.employee_id.resignation_type = self.resignation_type
@@ -102,14 +103,3 @@ class HrEmployeeResignation(models.Model):
         """
         self.ensure_one()
         self.state = 'draft'
-
-    def action_open_eos_request(self):
-        return {
-            'name': self.employee_name + ' EOS',
-            'view_mode': 'form',
-            'res_model': 'hr.employee.eos',
-            'res_id': self.eos_id.id,
-            'view_id': self.env.ref('nthub_hr_eos.view_employee_eos_form').id,
-            'type': 'ir.actions.act_window',
-            'target': 'current',
-        }

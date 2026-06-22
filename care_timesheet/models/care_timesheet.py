@@ -23,7 +23,7 @@ class CareTimesheet(models.Model):
     def check_dates(self):
         for rec in self:
             if rec.date_from and rec.date_to:
-                if self.date_from > self.date_to:
+                if rec.date_from > rec.date_to:
                     raise UserError("Date From shouldn't before Date To !")
 
     @api.model
@@ -68,8 +68,9 @@ class CareTimesheet(models.Model):
                 if str(start.weekday()) in calendar_lines:
                     all_possible_days.append(start)
                 start += relativedelta(days=1)
-            available_days = list(set(all_possible_days).difference(set(worked_days)))
-            for i in range(line.diff):
+            worked_set = set(worked_days)
+            available_days = [d for d in all_possible_days if d not in worked_set]
+            for i in range(min(line.diff, len(available_days))):
                 self.env['hr.attendance'].create({
                     'employee_id': emp.id,
                     'check_in': available_days[i],
@@ -113,5 +114,5 @@ class CareTimesheetLine(models.Model):
     def compute_diff(self):
         for rec in self:
             rec.diff = 0
-            if rec.actual and rec.count:
+            if rec.count:
                 rec.diff = rec.count - rec.actual

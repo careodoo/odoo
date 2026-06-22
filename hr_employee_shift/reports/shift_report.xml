@@ -68,7 +68,7 @@
                                         <span>Employee Name:</span>
                                     </div>
                                     <div class="col-3">
-                                        <span t-field="doc.employee_id.english_name"/>
+                                        <span t-esc="doc.employee_id.english_name if 'english_name' in doc.employee_id._fields else doc.employee_id.name"/>
                                     </div>
                                     <div class="col-3 rtl-row">
                                         <span t-field="doc.employee_id"/>

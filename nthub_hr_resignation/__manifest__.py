@@ -3,7 +3,7 @@
 
 {
     'name': "HR Resignation",
-    'version': '15.0',
+    'version': '17.0.1.0.0',
     'summary': """ HR Resignation """,
     'description': """Manage Employee Resignation""",
     'category': 'Human Resources',
@@ -11,7 +11,7 @@
     'company': 'Neoteric Hub',
     'live_test_url': '',
     'website': 'https://www.neoterichub.com',
-    'depends': ['hr', 'account', 'website'],
+    'depends': ['hr', 'hr_contract', 'account', 'website'],
     'data': [
         'security/ir.model.access.csv',
         'security/ir_rule.xml',

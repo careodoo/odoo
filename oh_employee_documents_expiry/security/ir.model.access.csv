@@ -6,3 +6,4 @@ access_hr_document_user,access.hr.document.user,model_hr_document,base.group_use
 access_hr_document_hr_manager,access.hr.document.hr.manager,model_hr_document,hr.group_hr_manager,1,1,1,1
 access_hr_document_hr_user,access.hr.document.hr.user,model_hr_document,hr.group_hr_user,1,1,1,0
 access_document_type_hr_manager,access.document.type.hr.manager,model_document_type,hr.group_hr_manager,1,1,1,1
+access_document_type_user,access.document.type.user,model_document_type,base.group_user,1,0,0,0
