@@ -8,6 +8,7 @@
     'data': [
         'security/ir.model.access.csv',
         'security/security.xml',
+        'data/activity_type.xml',
         'data/mail_template.xml',
         'views/overtime_request_views.xml',
         'views/overtime_approval_views.xml',

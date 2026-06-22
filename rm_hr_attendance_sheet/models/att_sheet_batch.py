@@ -43,7 +43,7 @@ class AttendanceSheetBatch(models.Model):
         ('draft', 'Draft'),
         ('att_gen', 'Attendance Sheets Generated'),
         ('att_sub', 'Attendance Sheets Submitted'),
-        ('done', 'Close')], default='draft', track_visibility='onchange',
+        ('done', 'Close')], default='draft', tracking=True,
         string='Status', required=True, readonly=True, index=True, )
 
     @api.onchange('department_id', 'date_from', 'date_to')

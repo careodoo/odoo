@@ -55,10 +55,16 @@ class HrEmployee(models.Model):
         elif option == 'last_15_days':
             dates = [str(date.today() - timedelta(days=day))
                      for day in range(15)]
-        cids = request.httprequest.cookies.get('cids')
-        allowed_company_ids = [int(cid) for cid in cids.split(',')]
+        allowed_company_ids = []
+        cids = request and request.httprequest.cookies.get('cids') or ''
+        for cid in cids.replace('-', ',').split(','):
+            cid = cid.strip()
+            if cid.isdigit():
+                allowed_company_ids.append(int(cid))
+        if not allowed_company_ids:
+            allowed_company_ids = self.env.companies.ids
         for employee in self.env['hr.employee'].search(
-                [('company_id', '=', allowed_company_ids)]):
+                [('company_id', 'in', allowed_company_ids)]):
             leave_data = []
             employee_present_dates = []
             employee_leave_dates = []

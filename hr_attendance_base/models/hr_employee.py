@@ -49,26 +49,40 @@ class HrEmployee(models.Model):
     #     return result
 
     def parse_param(self, vals, mode='in'):
+        # Defensive: parse_param runs on hr.employee but writes columns that live
+        # on hr.attendance. Only the ismobile_* columns are declared by THIS base
+        # module; every other column below (geospatial/ip/geo/token/webcam/
+        # user_agent_html/face_recognition/kiosk_shop + the dynamic `accesses`
+        # keys) is owned by optional sibling add-on modules that may NOT be
+        # installed. Writing an unknown field would raise on the subsequent
+        # create()/write(), crashing the punch. So we only set a value when the
+        # target field actually exists on hr.attendance.
+        attendance_fields = self.env['hr.attendance']._fields
+
+        def _set(field_name, value):
+            if field_name in attendance_fields:
+                vals.update({field_name: value})
+
         if self._context.get('ismobile', None):
-            vals.update({'ismobile_check_' + mode: self._context.get('ismobile', None)})
+            _set('ismobile_check_' + mode, self._context.get('ismobile', None))
         if self._context.get('geospatial_id', None):
-            vals.update({'geospatial_check_' + mode + '_id': self._context.get('geospatial_id', None)})
+            _set('geospatial_check_' + mode + '_id', self._context.get('geospatial_id', None))
         if self._context.get('ip_id', None):
-            vals.update({'ip_check_' + mode + '_id': self._context.get('ip_id', None)})
+            _set('ip_check_' + mode + '_id', self._context.get('ip_id', None))
         if self._context.get('ip', None):
-            vals.update({'ip_check_' + mode: self._context.get('ip', None)})
+            _set('ip_check_' + mode, self._context.get('ip', None))
         if self._context.get('geo', None):
-            vals.update({'geo_check_' + mode: self._context.get('geo', None)})
+            _set('geo_check_' + mode, self._context.get('geo', None))
         if self._context.get('token', None):
-            vals.update({'token_check_' + mode + '_id': self._context.get('token', None)})
+            _set('token_check_' + mode + '_id', self._context.get('token', None))
         if self._context.get('webcam', None):
-            vals.update({'webcam_check_' + mode: self._context.get('webcam', None)})
+            _set('webcam_check_' + mode, self._context.get('webcam', None))
         if self._context.get('user_agent_html', None):
-            vals.update({'user_agent_html_check_' + mode: self._context.get('user_agent_html', None)})
+            _set('user_agent_html_check_' + mode, self._context.get('user_agent_html', None))
         if self._context.get('face_recognition_image', None):
-            vals.update({'face_recognition_image_check_' + mode: self._context.get('face_recognition_image', None)})
+            _set('face_recognition_image_check_' + mode, self._context.get('face_recognition_image', None))
         if self._context.get('kiosk_shop_id', None):
-            vals.update({'kiosk_shop_id_check_' + mode: self._context.get('kiosk_shop_id', None)})
+            _set('kiosk_shop_id_check_' + mode, self._context.get('kiosk_shop_id', None))
 
         access_allowed = self._context.get('access_allowed', None)
         access_denied = self._context.get('access_denied', None)
@@ -79,14 +93,14 @@ class HrEmployee(models.Model):
             for key, value in accesses.items():
                 if value.get('enable', False):
                     if value.get('access', False):
-                        vals.update({key + '_check_' + mode: access_allowed})
+                        _set(key + '_check_' + mode, access_allowed)
                     else:
-                        vals.update({key + '_check_' + mode: access_denied})
+                        _set(key + '_check_' + mode, access_denied)
                 else:
                     if value.get('access', False):
-                        vals.update({key + '_check_' + mode: access_allowed_disable})
+                        _set(key + '_check_' + mode, access_allowed_disable)
                     else:
-                        vals.update({key + '_check_' + mode: access_denied_disable})
+                        _set(key + '_check_' + mode, access_denied_disable)
 
     def _attendance_action_change(self):
         """ Check In/Check Out action

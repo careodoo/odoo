@@ -1,135 +1,77 @@
-odoo.define('hr_attendance_face_recognition.kiosk_mode', function (require) {
-    "use strict";
+/** @odoo-module **/
 
-    var core = require('web.core');
-    var KioskMode = require('hr_attendance.kiosk_mode');
-    var FaceRecognitionDialog = require('hr_attendance_face_recognition.my_attendances').FaceRecognitionDialog;
+/**
+ * Kiosk-mode face RECOGNITION — Odoo 17 migration.
+ *
+ * ORIGINAL (Odoo 13/14): `hr_attendance_face_recognition.kiosk_mode` did
+ * `require('hr_attendance.kiosk_mode').include({...})`, loaded Human with
+ * detector rotation on, RPC'd /hr_attendance_base with
+ * `face_recognition_mode:'kiosk'`, and opened the shared `FaceRecognitionDialog`
+ * in kiosk mode; on a match it redirected to `hr_attendance_my_attendances` for
+ * the matched employee with `face_recognition_force:true`.
+ *
+ * v17 STATUS: `hr_attendance.kiosk_mode` (legacy AMD) DOES NOT EXIST in Odoo 17
+ * — core's kiosk is the OWL `public_kiosk_app`. The sibling `hr_attendance_base`
+ * kiosk host is also disabled. So, as with my_attendances, there is no host to
+ * `.include()` and no legacy Dialog to reuse.
+ *
+ * MIGRATION DECISION: migrated to a CLEAN, LOADABLE ES module that reuses the
+ * preserved, framework-agnostic `FaceRecognitionEngine` (from
+ * my_attendances_face_recognition.js) and exposes a kiosk-tuned model loader +
+ * the kiosk RPC helper. The recognition ALGORITHM is unchanged; only the legacy
+ * client-action `.include()` glue (which has no v17 host) is dropped.
+ *
+ * A future OWL kiosk component can:
+ *   1. `human = await loadKioskModels()`
+ *   2. `data = await loadKioskData(rpc)`  // /hr_attendance_base, kiosk mode
+ *   3. `engine = new FaceRecognitionEngine({ human, ...parsed, onMatch })`
+ *   4. on match -> action.doAction('hr_attendance_my_attendances', {context:{
+ *        employee, face_recognition_force:true, ... }})
+ *
+ * TODO (manual, advanced): build that OWL kiosk wrapper + redirect. Tracked in
+ * DOCUMENTATION.md §10.
+ */
 
+import {
+    FaceRecognitionEngine,
+    parseDataFaceRecognition,
+} from "@hr_attendance_face_recognition_pro/js/my_attendances_face_recognition";
 
-    var FaceRecognitionKioskMode = KioskMode.include({
-        events: {
-            "click .o_hr_attendance_button_employees": function () {
-                this.start();
-            },
-        },
-        // loaded models there for best perfomance
-        load_models: async function () {
-            let def = $.Deferred();
-            const myConfig = {
-                // backend: 'webgl',
-                modelBasePath: '/hr_attendance_face_recognition_pro/static/src/js/models',
-                face: {
-                    enabled: true,
-                    detector: { rotation: true, return: true },
-                    mesh: { enabled: true },
-                    description: { enabled: true },
-                },
-            };
-            this.human = new Human.Human(myConfig);
-            await this.human.load();
-            def.resolve();
-            return def
-        },
+const MODEL_BASE_PATH =
+    "/hr_attendance_face_recognition_pro/static/src/js/models";
 
-        // parse data setting from server
-        parse_data_face_recognition: function () {
-            var self = this;
+/** Kiosk Human config (detector rotation ON for varied angles). Verbatim. */
+const KIOSK_HUMAN_CONFIG = {
+    modelBasePath: MODEL_BASE_PATH,
+    face: {
+        enabled: true,
+        detector: { rotation: true, return: true },
+        mesh: { enabled: true },
+        description: { enabled: true },
+    },
+};
 
-            self.state_read.then(function (data) {
-                var data = self.data;
-                self.face_recognition_pro_scale_recognition = data.face_recognition_pro_scale_recognition;
-                self.face_recognition_pro_scale_spoofing =  data.face_recognition_pro_scale_spoofing;
-                self.face_recognition_enable = data.face_recognition_enable;
-                self.face_recognition_store = data.face_recognition_store;
-                self.face_recognition_auto = data.face_recognition_auto;
-                self.face_recognition_pro_photo_check = data.face_recognition_pro_photo_check;
+/** Lazily create + load a Human engine for kiosk recognition. */
+export async function loadKioskModels() {
+    // `Human` global comes from static/src/js/lib/human.js
+    const human = new Human.Human(KIOSK_HUMAN_CONFIG);
+    await human.load();
+    return human;
+}
 
-                self.face_emotion = data.face_emotion;
-                self.face_gender = data.face_gender;
-                var age_map = {
-                    '20': '0-20',
-                    '30': '20-30',
-                    '40': '30-40',
-                    '50': '40-50',
-                    '60': '50-60',
-                    '70': '60-any',
-                    'any': 'any-any'
-                }
-                if (data.face_age === 'any')
-                    self.face_age = 'any-any';
-                else
-                    self.face_age = age_map[Math.ceil(data.face_age).toString()];
-
-                if (!self.face_recognition_access)
-                    self.face_recognition_access = false;
-
-                self.labels_ids = data.labels_ids;
-                //self.labels_ids_emp = JSON.parse(data.labels_ids_emp);
-                self.labels_ids_emp = data.labels_ids_emp;
-                self.descriptor_ids = [];
-                for (var f32base64 of data.descriptor_ids) {
-                    self.descriptor_ids.push(new Float32Array(new Uint8Array([...atob(f32base64)].map(c => c.charCodeAt(0))).buffer))
-                }
-                self.face_photo = true;
-                if (!self.labels_ids.length || !self.descriptor_ids.length)
-                    self.face_photo = false;
-                self.state_save.resolve();
-            });
-        },
-
-        init: function (parent, options) {
-            this.promise_face_recognition = this.load_models();
-            // state when end request /hr_attendance_base
-            this.state_read = $.Deferred();
-            // after read, we write data to memory 
-            this.state_save = $.Deferred();
-            // after save we render page template
-            this.state_render = $.Deferred();
-            // after render we bind click action on template and add map
-            this._super(parent, options);
-        },
-
-        start: function () {
-            var self = this;
-            var def_hr_attendance_base = this._rpc({
-                route: '/hr_attendance_base',
-                params: {
-                    face_recognition_mode: 'kiosk'
-                },
-            }).then(function (data) {
-                self.data = data;
-                self.state_read.resolve();
-                self.state_save.then(function () {
-                    self.state_render.resolve();
-                });
-            });
-            self.parse_data_face_recognition();
-            return $.when(def_hr_attendance_base, this._super.apply(this, arguments)).then(
-                result => {
-                    this.promise_face_recognition.then(
-                        result => {
-                            this.state_save.then(
-                                result => {
-                                    if (this.face_photo)
-                                        new FaceRecognitionDialog(this, {
-                                            labels_ids: this.labels_ids,
-                                            descriptor_ids: this.descriptor_ids,
-                                            labels_ids_emp: this.labels_ids_emp,
-                                            // after finded redirect to my attendance 
-                                            // without face recognition control
-                                            face_recognition_mode: 'kiosk'
-                                        }).open();
-                                    else
-                                        Swal.fire({
-                                            title: 'No one images/photos uploaded',
-                                            text: "Please go to your profile and upload 1 photo",
-                                            icon: 'error',
-                                            confirmButtonColor: '#3085d6',
-                                            confirmButtonText: 'Ok'
-                                        });
-                                })
-                        })
-                })
-        },
+/**
+ * Fetch the kiosk descriptors/settings from the controller and parse them.
+ * Legacy `this._rpc({route:'/hr_attendance_base', params:{face_recognition_mode:'kiosk'}})`
+ * -> the OWL `rpc` service. Returns the parsed engine settings + descriptors.
+ *
+ * @param {function} rpc  the v17 rpc service (useService("rpc"))
+ */
+export async function loadKioskData(rpc) {
+    const data = await rpc("/hr_attendance_base", {
+        face_recognition_mode: "kiosk",
     });
-});
+    return parseDataFaceRecognition(data);
+}
+
+// Re-export the engine so kiosk consumers import everything from one place.
+export { FaceRecognitionEngine };

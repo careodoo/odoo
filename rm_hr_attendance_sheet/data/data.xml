@@ -164,7 +164,7 @@
             <field name="condition_python">result =(payslip.overtime_no > 0) or False
             </field>
             <field name="amount_select">code</field>
-            <field name="amount_python_compute">result=-(payslip.overtime_hours * (contract.wage/(9*26)))
+            <field name="amount_python_compute">result=(payslip.overtime_hours * (contract.wage/(9*26)))
             </field>
             <field name="sequence" eval="30"/>
             <field name="note">Over time</field>

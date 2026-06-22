@@ -58,10 +58,10 @@ class LateCheckIn(models.Model):
         """Compute the penalty amount if the employee was late"""
         for rec in self:
             amount = float(self.env['ir.config_parameter'].sudo().get_param(
-                'deduction_amount'))
+                'employee_late_check_in.deduction_amount') or 0.0)
             rec.penalty_amount = amount
             if self.env['ir.config_parameter'].sudo().get_param(
-                    'deduction_type') == 'minutes':
+                    'employee_late_check_in.deduction_type') == 'minutes':
                 rec.penalty_amount = amount * rec.late_minutes
 
     def approve(self):

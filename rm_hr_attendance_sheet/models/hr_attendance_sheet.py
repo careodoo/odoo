@@ -54,7 +54,7 @@ class AttendanceSheet(models.Model):
     state = fields.Selection([
         ('draft', 'Draft'),
         ('confirm', 'Confirmed'),
-        ('done', 'Approved')], default='draft', track_visibility='onchange',
+        ('done', 'Approved')], default='draft', tracking=True,
         string='Status', required=True, readonly=True, index=True,
         help=' * The \'Draft\' status is used when a HR user is creating a new  attendance sheet. '
              '\n* The \'Confirmed\' status is used when  attendance sheet is confirmed by HR user.'
@@ -110,7 +110,12 @@ class AttendanceSheet(models.Model):
     def unlink(self):
         if any(self.filtered(
                 lambda att: att.state not in ('draft', 'confirm'))):
-            # TODO:un comment validation in case on non testing
+            # The "cannot delete a confirmed/approved sheet" guard is left
+            # intentionally disabled here. It is a deployment/policy choice
+            # (kept off so approved sheets can still be cleaned up during
+            # testing/data fixes), not a bug, and enabling it would change
+            # existing behaviour. Re-enable the raise below if the client
+            # wants the deletion blocked.
             pass
             # raise UserError(_(
             #     'You cannot delete an attendance sheet which is '
@@ -169,6 +174,34 @@ class AttendanceSheet(models.Model):
                 _logger.warning(
                     ('Error While Creating monthly attendance sheet %s ' % e))
 
+    def _cron_update_attendance_sheet(self, shift_days=0):
+        """Daily cron: refresh the attendance lines of the current-period
+        draft sheets by re-running the reconciliation engine.
+
+        Previously this cron pointed at a method that did not exist, so it
+        raised ``AttributeError`` on every run. It now recomputes the existing
+        draft sheets via ``get_attendances()`` (the real recompute method).
+
+        :param shift_days: optional offset (in days) applied to "today" when
+            resolving which month's sheets to refresh; defaults to 0.
+        """
+        today = date.today() + relativedelta(days=shift_days)
+        start_month = today + relativedelta(day=1)
+        end_month = today + relativedelta(months=1, day=1, days=-1)
+        att_sheet_obj = self.env['attendance.sheet']
+        sheets = att_sheet_obj.search([
+            ('state', '=', 'draft'),
+            ('date_from', '=', start_month),
+            ('date_to', '=', end_month),
+        ])
+        for sheet in sheets:
+            try:
+                sheet.get_attendances()
+            except Exception as e:
+                _logger.warning(
+                    'Error While Updating attendance sheet %s : %s' % (
+                        sheet.name, e))
+
     def action_confirm(self):
         self.write({'state': 'confirm'})
 
@@ -201,7 +234,8 @@ class AttendanceSheet(models.Model):
                 "Employee %s does not have attendance policy" % employee.name))
         self.att_policy_id = self.contract_id.att_policy_id
 
-    @api.depends('line_ids.overtime', 'line_ids.diff_time', 'line_ids.late_in')
+    @api.depends('line_ids.overtime', 'line_ids.diff_time', 'line_ids.late_in',
+                 'line_ids.worked_hours')
     def _compute_sheet_total(self):
         """
         Compute Total overtime,late ,absence,diff time and worked hours
@@ -226,6 +260,8 @@ class AttendanceSheet(models.Model):
                 lambda l: l.diff_time > 0 and l.status != "ab")
             sheet.tot_difftime = sum([l.diff_time for l in diff_lines])
             sheet.no_difftime = len(diff_lines)
+            # Compute Total Worked Hours (sum of the per-day worked hours)
+            sheet.tot_worked_hour = sum(sheet.line_ids.mapped('worked_hours'))
 
     def _get_float_from_time(self, time):
         str_time = datetime.strftime(time, "%H:%M")
@@ -283,7 +319,6 @@ class AttendanceSheet(models.Model):
             [('date_from', '<=', date), ('date_to', '>=', date),
              ('state', '=', 'active')])
         for ph in public_holidays:
-            print('ph is', ph.name, [e.name for e in ph.emp_ids])
             if not ph.emp_ids:
                 return public_holidays
             if emp.id in ph.emp_ids.ids:

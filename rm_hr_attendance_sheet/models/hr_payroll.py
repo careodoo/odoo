@@ -47,6 +47,10 @@ class HrPayslip(models.Model):
                 diff_no += sheet.no_difftime
                 diff_hours += sheet.tot_difftime
                 worked_hours += sheet.tot_worked_hour
+                # Count days that actually have worked hours (was never
+                # incremented before, so worked_days always stayed 0).
+                worked_days += len(
+                    sheet.line_ids.filtered(lambda l: l.worked_hours > 0))
                 # no_unpaid_leave += sheet.no_unpaid_leave
                 # tot_unpaid_leave += sheet.tot_unpaid_leave
                 

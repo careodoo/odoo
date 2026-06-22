@@ -1,12 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<template xml:space="preserve">
-    <t t-name="HrAttendanceKioskMode">
+<!--
+    Odoo 17 migration of the kiosk QWeb template.
+
+    The legacy `HrAttendanceKioskMode` template was the markup for the removed
+    legacy AMD kiosk widget (`hr_attendance.kiosk_mode`). In Odoo 17 the kiosk is
+    the OWL `public_kiosk_app` with its own templates, so this markup no longer
+    has a host. It is kept here as a valid, standalone v17 OWL template (renamed
+    with a `t-esc`/`t-att` syntax fix) only so the bundle compiles; it is not
+    wired to any component. See DOCUMENTATION.md §10 — a bespoke kiosk screen
+    must be rebuilt as an OWL component if required.
+-->
+<templates xml:space="preserve">
+    <t t-name="hr_attendance_face_recognition_pro.HrAttendanceKioskMode">
         <div class="o_hr_attendance_kiosk_mode_container o_home_menu_background">
             <span class="o_hr_attendance_kiosk_backdrop"/>
             <div class="o_hr_attendance_clock text-center"/>
             <div class="o_hr_attendance_kiosk_mode">
-                <h1><small>Welcome to</small> <t t-esc="widget.company_name"/></h1>
-                <img t-attf-src="{{widget.company_image_url}}" alt="Company Logo" class="o_hr_attendance_kiosk_company_image"/>
+                <h1><small>Welcome to</small> <t t-esc="props.company_name"/></h1>
+                <img t-att-src="props.company_image_url" alt="Company Logo" class="o_hr_attendance_kiosk_company_image"/>
                 <div class="row o_hr_attendance_kiosk_welcome_row">
                     <div class="col-sm-12">
                         <button class="o_hr_attendance_button_employees btn btn-primary mb16">
@@ -17,4 +28,4 @@
             </div>
         </div>
     </t>
-</template>
+</templates>

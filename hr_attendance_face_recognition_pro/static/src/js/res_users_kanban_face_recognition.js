@@ -1,230 +1,189 @@
-odoo.define('attendances_face_recognition_access.res_users_kanban_face_recognition', function (require) {
-    "use strict";
+/** @odoo-module **/
 
-    var core = require('web.core');
-    var QWeb = core.qweb;
-    var FieldOne2Many = require('web.relational_fields').FieldOne2Many;
+/**
+ * Face ENROLMENT — Odoo 17 migration.
+ *
+ * ORIGINAL (Odoo 13/14): `attendances_face_recognition_access.res_users_kanban_face_recognition`
+ * included `web.relational_fields:FieldOne2Many` to hook the "Add face" kanban on
+ * res.users / hr.employee. On save of a new image it ran Human on the uploaded
+ * photo, derived the base64 descriptor + landmark-overlay image, and created a
+ * res.users.image / hr.employee.image record.
+ *
+ * v17 STATUS: `web.relational_fields`, `web.field_registry`, `core.qweb` and the
+ * `FieldOne2Many` widget were REMOVED in the OWL rewrite — there is NO host
+ * widget to `.include()` any more. The one2many is now the OWL `X2ManyField`
+ * component, whose save pipeline is entirely different. A faithful
+ * "wrapper-only" port is therefore impossible without a full OWL re-author.
+ *
+ * MIGRATION DECISION (per task rule "prefer a clean, loadable result, stub the
+ * advanced feature, document it"): this file is migrated to a CLEAN, LOADABLE
+ * ES module that PRESERVES THE RECOGNITION ALGORITHM EXACTLY as reusable,
+ * exported helpers (Human detect -> embedding -> base64 descriptor -> overlay
+ * image -> create record via the v17 ORM service). The legacy auto-hook into
+ * the kanban save flow is the only thing stubbed — it has no v17 host. A future
+ * OWL "Add face" component can import `enrolFaceFromImage()` below and get the
+ * full, unchanged pipeline.
+ *
+ * Algorithm (detect/embedding/match) is byte-for-byte the original; only the
+ * module wrapper and the create() call (legacy `this._rpc` -> ORM service) changed.
+ *
+ * TODO (manual, advanced): build an OWL component / view button that calls
+ * `enrolFaceFromImage(orm, model, ownerId, imageEl, record)` to restore the
+ * one-click "Add face" UX. Tracked in DOCUMENTATION.md §10.
+ */
 
-    var BtnDescriptionFieldOne2Many = FieldOne2Many.include({
-        init: function (parent, name, record, options) {
-            this._super.apply(this, arguments);
-            if (this.model == 'res.users' || this.model == 'hr.employee')
-                this.promise_face_recognition = this.load_models();
-        },
+import { registry } from "@web/core/registry";
 
-        _openFormDialog: function (params) {
-            if ((this.model == 'res.users'|| this.model == 'hr.employee') && this.view.arch.tag === 'kanban') {
-                var context = this.record.getContext(_.extend({},
-                    this.recordParams,
-                    { additionalContext: params.context }
-                ));
-                this.trigger_up('open_one2many_record', _.extend(params, {
-                    domain: this.record.getDomain(this.recordParams),
-                    context: context,
-                    field: this.field,
-                    fields_view: this.attrs.views && this.attrs.views.form,
-                    parentID: this.value.id,
-                    viewInfo: this.view,
-                    deletable: this.activeActions.delete && params.deletable,
-                    on_saved: async record => {
-                        await this._progressbar(record, '_save_custom');
-                    },
-                }));
-            }
-            else
-                this._super.apply(this, arguments);
-        },
+const MODEL_BASE_PATH =
+    "/hr_attendance_face_recognition_pro/static/src/js/models";
 
-        _detectFaceFromImageBase64: async function (image) {
-            const result = await this.human.detect(image);
+/** Human config used for enrolment (face detect + mesh + description). Verbatim. */
+const ENROL_HUMAN_CONFIG = {
+    debug: false,
+    async: true,
+    modelBasePath: MODEL_BASE_PATH,
+    face: {
+        face: { enabled: true },
+        mesh: { enabled: true },
+        description: { enabled: true },
+        detector: { rotation: false },
+        iris: { enabled: false },
+        emotion: { enabled: false },
+    },
+    hand: { enabled: false },
+    body: { enabled: false },
+    object: { enabled: false },
+    gesture: { enabled: false },
+    segmentation: { enabled: false },
+    filter: { enabled: false },
+};
 
-            if (!result.face.length)
-                return {
-                    descriptorBase64: false,
-                    imageDescriptorBase64: false,
-                    error: 'Not found faces'
-                }
-            
-            // if (result.face[0].real )
-            let imageDescriptorBase64 = await this._drawDescriptor(image, result);
-            let descriptorBase64 = this._f32base64(result.face[0].embedding)
+/** Lazily create + load a Human engine instance for enrolment. */
+export async function loadEnrolModels() {
+    // `Human` is the global exposed by static/src/js/lib/human.js
+    const human = new Human.Human(ENROL_HUMAN_CONFIG);
+    await human.load();
+    return human;
+}
 
-            return {
-                descriptorBase64: descriptorBase64,
-                imageDescriptorBase64: imageDescriptorBase64.split(',')[1],
-                error: false
-            }
-        },
+/**
+ * Serialise a Float32 embedding to base64 (33% bigger but JSON-safe).
+ * Preserved verbatim from the legacy `_f32base64`.
+ */
+export function f32base64(descriptorArray1024) {
+    return btoa(
+        String.fromCharCode(
+            ...new Uint8Array(new Float32Array(descriptorArray1024).buffer)
+        )
+    );
+}
 
-        _save_custom: async function (record) {
-            if (_.some(this.value.data, { id: record.id })) {
-                await this._setValue({ operation: 'UPDATE', id: record.id });
-            }
-            else {
-                var image = $('#face-recognition-image img')[0];
-                let res = await this._detectFaceFromImageBase64(image)
-                if (res.error) {
-                    Swal.close();
-                    Swal.fire({
-                        title: 'Ooops',
-                        html: 'Dont found face on image, please select other or crop face manually',
-                        type: "warning",
-                    });
-                    return
-                }
+/**
+ * Render Human's landmark overlay for an image and return it as a base64
+ * data-URL. Preserved verbatim from the legacy `_drawDescriptor`.
+ */
+export async function drawDescriptor(human, image, result) {
+    const img = await human.image(image);
+    const canvas = img.canvas;
 
-                record.data.descriptor = res.descriptorBase64
-                record.data.image_detection = res.imageDescriptorBase64
+    const canvas2 = document.createElement("canvas");
+    canvas2.width = canvas.width;
+    canvas2.height = canvas.height;
 
-                //this._setValue({ operation: 'CREATE', id: record.id, data:record.data });
-                await this._create_image(record)
-                await this._setValue({ operation: 'UPDATE', id: record.id });
-                Swal.close();
-                // location.reload();
-                this.trigger_up('reload');
-            }
-        },
+    human.draw.all(canvas2, result);
+    return canvas2.toDataURL();
+}
 
-        _renderButtons: function () {
-            if (this.activeActions.create) {
-                if ((this.model == 'res.users'|| this.model == 'hr.employee') && !this.isReadonly && this.view.arch.tag === 'kanban') {
-                    this.$buttons = $(QWeb.render('KanbanView.buttons', {
-                        btnClass: 'btn-secondary',
-                        create_text: this.nodeOptions.create_text,
-                        model: this.field.relation,
-                        face_mode: this.nodeOptions.face_mode,
-                    }));
-                    this.$buttons.on('click', 'button.o-kanban-button-new', this._onAddRecord.bind(this));
-                    this.$buttons.on('click', 'button.o-kanban-button-hide-face-recognition', this._hide_canvas_face_recognition.bind(this));
-                    if (this.nodeOptions.face_mode == 'user' && this.record.data.res_users_image_ids.count > 0)
-                        this.$buttons = "<div>You already set images, if you want change it, contact your Administrator</div>";
-                }
-            }
-            this._super.apply(this, arguments);
-        },
+/**
+ * Detect a single face on a base64/<img> source and produce the descriptor
+ * (base64 embedding) + overlay image. Preserved verbatim from the legacy
+ * `_detectFaceFromImageBase64`.
+ */
+export async function detectFaceFromImageBase64(human, image) {
+    const result = await human.detect(image);
 
-        load_models: async function () {
-            let def = $.Deferred();
-            const myConfig = {
-                debug: false,
-                async: true,
-                modelBasePath: '/hr_attendance_face_recognition_pro/static/src/js/models',
-                face: { // runs all face models
-                    face: { enabled: true },
-                    mesh: { enabled: true},
-                    description: { enabled: true },
+    if (!result.face.length) {
+        return {
+            descriptorBase64: false,
+            imageDescriptorBase64: false,
+            error: "Not found faces",
+        };
+    }
 
-                    detector: { rotation: false },
-                    iris: { enabled: false },
-                    emotion: { enabled: false },
-                },
-                hand: { enabled: false },
-                body: { enabled: false },
-                object: { enabled: false },
-                gesture: { enabled: false },
-                segmentation: { enabled: false },
-                filter: { enabled: false },
-            };
-            this.human = new Human.Human(myConfig);
-            await this.human.load();
-            def.resolve();
-            return def
-        },
+    const imageDescriptorBase64 = await drawDescriptor(human, image, result);
+    const descriptorBase64 = f32base64(result.face[0].embedding);
 
-        _hide_canvas_face_recognition: function () {
-            $('.only-descriptor').toggle("slow", function () { });
-            $('.o-kanban-button-hide-face-recognition').toggleClass('badge-success');
-            $('.o-kanban-button-hide-face-recognition').toggleClass('badge-warning');
-        },
+    return {
+        descriptorBase64,
+        imageDescriptorBase64: imageDescriptorBase64.split(",")[1],
+        error: false,
+    };
+}
 
-        _progressbar: function (record, func) {
-            return Swal.fire({
-                title: 'Face descriptor create process...',
-                html: 'I will close in automaticaly',
-                timerProgressBar: true,
-                allowOutsideClick: false,
-                type: "info",
-                backdrop: `
-                rgba(0,0,123,0.0)
-                url("/hr_attendance_face_recognition_pro/static/description/cat-space.gif")
-                left top
-                no-repeat
-              `,
-                willOpen: () => {
-                    Swal.showLoading()
-                    this[func](record);
-                },
-                willClose: () => {
-                }
-            });
-        },
+/**
+ * Full enrolment pipeline: detect face on `imageEl`, compute descriptor, and
+ * create the *.image record via the v17 ORM service.
+ *
+ * Legacy `this._rpc({model, method:'create', args:[vals]})` -> `orm.create`.
+ * `model` is "res.users" or "hr.employee" (the OWNER model); the image model
+ * and owner FK are derived from it exactly as the original did.
+ *
+ * @returns {object} { id } on success, or { error } if no face was found.
+ */
+export async function enrolFaceFromImage(orm, model, ownerId, imageEl, baseVals = {}) {
+    const human = await loadEnrolModels();
+    const res = await detectFaceFromImageBase64(human, imageEl);
+    if (res.error) {
+        return { error: res.error };
+    }
 
-        _drawDescriptor: async function (image, result) {
-            const img = await this.human.image(image);
-            const canvas = img.canvas;
+    const vals = {
+        descriptor: res.descriptorBase64,
+        image_detection: res.imageDescriptorBase64,
+        image: baseVals.image,
+        name: baseVals.name,
+        sequence: baseVals.sequence,
+    };
 
-            let canvas2 = document.createElement('canvas');
-            canvas2.width = canvas.width;
-            canvas2.height = canvas.height;
+    let imageModel = "res.users.image";
+    if (model === "res.users") {
+        vals.res_user_id = ownerId;
+    }
+    if (model === "hr.employee") {
+        imageModel = "hr.employee.image";
+        vals.hr_employee_id = ownerId;
+    }
 
-            this.human.draw.all(canvas2, result);
-            return canvas2.toDataURL();
-        },
+    const id = await orm.create(imageModel, [vals]);
+    return { id };
+}
 
-        _f32base64: function (descriptorArray1024) {
-            // descriptor from float32 to base64 33% more data
-            // console.log('BEFORE: ', descriptorArray1024)
-            let f32base64 = btoa(String.fromCharCode(...(new Uint8Array(new Float32Array(descriptorArray1024).buffer))));
-            // console.log('AFTER: ', new Float32Array(new Uint8Array([...atob(f32base64)].map(c => c.charCodeAt(0))).buffer))
-            return f32base64;
-        },
-
-        // _save_descriptor: function (userImageID, descriptor, image_detection) {
-        //     let modelImage = 'res.users.image';
-        //     if (this.model == 'hr.employee')
-        //         modelImage = 'hr.employee.image';
-        //     return this._rpc({
-        //         model: modelImage,
-        //         method: 'write',
-        //         args: [[userImageID], {
-        //             descriptor: this._f32base64(descriptor),
-        //             image_detection: image_detection,
-        //         }],
-        //     }).then(function () {
-        //         console.log('descriptor success save');
-        //     });
-        // },
-
-        _create_image: function (record) {
-            let data = record.data;
-            let vals = {
-                descriptor: data.descriptor,
-                image_detection: data.image_detection,
-                image: data.image,
-                name: data.name,
-                sequence: data.sequence
-            }
-
-            let modelImage = 'res.users.image';
-            if (this.model == 'res.users')
-                vals.res_user_id = record.context.default_res_user_id
-    
-            if (this.model == 'hr.employee'){
-                modelImage = 'hr.employee.image';
-                vals.hr_employee_id = record.context.default_hr_employee_id
-            }
-
-            console.log(record, '_create_image');
-            return this._rpc({
-                model: modelImage,
-                method: 'create',
-                args: [vals],
-            }).then(function () {
-                Swal.close();
-                console.log('descriptor success create');
-            });
-        },
+/**
+ * Toggle the `.only-descriptor` overlay layer. Preserved (DOM-only) from the
+ * legacy `_hide_canvas_face_recognition`.
+ */
+export function hideCanvasFaceRecognition() {
+    document.querySelectorAll(".only-descriptor").forEach((el) => {
+        el.style.display = el.style.display === "none" ? "" : "none";
     });
+    document
+        .querySelectorAll(".o-kanban-button-hide-face-recognition")
+        .forEach((btn) => {
+            btn.classList.toggle("badge-success");
+            btn.classList.toggle("badge-warning");
+        });
+}
 
-
-});
+// Expose the enrolment helpers on a private registry category so a future OWL
+// "Add face" component (or other modules) can consume them without re-importing
+// the whole file. This registration cannot fail at load.
+registry
+    .category("hr_attendance_face_recognition_pro")
+    .add("enrol_helpers", {
+        loadEnrolModels,
+        f32base64,
+        drawDescriptor,
+        detectFaceFromImageBase64,
+        enrolFaceFromImage,
+        hideCanvasFaceRecognition,
+    });

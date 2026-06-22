@@ -35,6 +35,18 @@
         'views/views.xml',
     ],
 
+    # NOTE: assets intentionally left DISABLED on Odoo 17.
+    # The shipped JS (static/src/js/attendances_base.js, kiosk_mode_base.js) is
+    # legacy pre-OWL `odoo.define(...)` AMD code that `require('web.core')` and
+    # `require('hr_attendance.my_attendances')` / `hr_attendance.kiosk_confirm`.
+    # Those AMD modules no longer exist in Odoo 17 (core ships an OWL attendance
+    # app), so re-enabling these bundles would break the backend asset build.
+    # The `web.assets_qweb` bundle was also removed in Odoo 15+, so that key is
+    # invalid here. This module is a base/eco-system layer: the real, v17-ported
+    # JS widgets are meant to be provided by the dependent (paid) sibling add-ons
+    # (IP/geo/token/webcam/face/kiosk), which are NOT present in this repo.
+    # Do not uncomment until the JS is ported to OWL and the sibling modules ship
+    # their v17 assets.
     # 'qweb': [
     #     "static/src/xml/base.xml",
     # ],

@@ -30,9 +30,10 @@ class CareAttendanceReportXlsx(models.AbstractModel):
         ])
         departments = self.env['hr.department'].search([])
         managers = set(departments.mapped('manager_id'))
-        sick_off = self.env['hr.leave.type'].search([('name', '=', 'Sick Time Off')])
-        if not sick_off:
-            raise UserError("please set sick time off type!")
+        # Resilient lookup: don't crash the whole report if the leave type is
+        # renamed/missing. sick_off is only used for the (currently disabled)
+        # sick-leave branch below, so an empty recordset is harmless here.
+        sick_off = self.env['hr.leave.type'].search([('name', '=', 'Sick Time Off')], limit=1)
         days_between = (date_to - date_from).days
         date_list = [(date_from + timedelta(days=i)) for i in range(0, days_between + 1)]
 
@@ -110,9 +111,10 @@ class CareAttendanceReportXlsx(models.AbstractModel):
             ('check_in', '>=', date_from), ('check_in', '<=', date_to)
         ])
         male_employees = set(self.env['hr.employee'].search([('gender', '=', 'male')])).difference(managers)
-        sick_off = self.env['hr.leave.type'].search([('name', '=', 'Sick Time Off')])
-        if not sick_off:
-            raise UserError("please set sick time off type!")
+        # Resilient lookup: don't crash the whole report if the leave type is
+        # renamed/missing. sick_off is only used for the (currently disabled)
+        # sick-leave branch below, so an empty recordset is harmless here.
+        sick_off = self.env['hr.leave.type'].search([('name', '=', 'Sick Time Off')], limit=1)
         days_between = (date_to - date_from).days
         date_list = [(date_from + timedelta(days=i)) for i in range(0, days_between + 1)]
 
@@ -189,9 +191,10 @@ class CareAttendanceReportXlsx(models.AbstractModel):
             ('check_in', '>=', date_from), ('check_in', '<=', date_to)
         ])
         female_employees = set(self.env['hr.employee'].search([('gender', '=', 'female')])).difference(managers)
-        sick_off = self.env['hr.leave.type'].search([('name', '=', 'Sick Time Off')])
-        if not sick_off:
-            raise UserError("please set sick time off type!")
+        # Resilient lookup: don't crash the whole report if the leave type is
+        # renamed/missing. sick_off is only used for the (currently disabled)
+        # sick-leave branch below, so an empty recordset is harmless here.
+        sick_off = self.env['hr.leave.type'].search([('name', '=', 'Sick Time Off')], limit=1)
         days_between = (date_to - date_from).days
         date_list = [(date_from + timedelta(days=i)) for i in range(0, days_between + 1)]
 

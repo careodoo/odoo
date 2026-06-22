@@ -45,8 +45,6 @@
         'web.assets_backend': [
             "advance_hr_attendance_dashboard/static/src/js/attendance_dashboard.js",
             "advance_hr_attendance_dashboard/static/src/scss/attendance_dashboard.scss",
-        ],
-        'web.assets_qweb': [
             "advance_hr_attendance_dashboard/static/src/xml/attendance_dashboard_templates.xml",
         ],
     },

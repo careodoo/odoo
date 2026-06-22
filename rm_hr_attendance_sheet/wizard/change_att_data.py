@@ -31,5 +31,10 @@ class attendance_sheet_line_change(models.TransientModel):
 
         }
         atts_line_id.write(res)
+        # No explicit recompute call is needed: the sheet header totals are
+        # stored computed fields that depend on the line fields written above
+        # (overtime / late_in / diff_time), so the ORM write retriggers
+        # _compute_sheet_total automatically. The old call below referenced a
+        # method (calculate_att_data) that never existed, so it stays disabled.
         # atts_line_id.att_sheet_id.calculate_att_data()
         return {'type': 'ir.actions.act_window_close'}

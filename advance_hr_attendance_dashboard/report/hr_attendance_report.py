@@ -19,6 +19,7 @@
 #    If not, see <http://www.gnu.org/licenses/>.
 #
 #############################################################################
+from markupsafe import Markup
 from odoo import api, models
 
 
@@ -30,7 +31,13 @@ class ReportHrAttendance(models.AbstractModel):
     @api.model
     def _get_report_values(self, doc_ids, data=None):
         """Get the report values for the Attendance Report."""
-        print(data)
+        data = dict(data or {})
+        # The client ships already-rendered table HTML (tHead/tBody). On Odoo 17
+        # ``t-raw`` is removed, so the template uses ``t-out``; wrap the HTML in
+        # ``Markup`` so it is emitted as markup instead of being escaped.
+        for key in ('tHead', 'tBody'):
+            if data.get(key):
+                data[key] = Markup(data[key])
         return {
             'doc_model': 'hr.attendance',
             'data': data,

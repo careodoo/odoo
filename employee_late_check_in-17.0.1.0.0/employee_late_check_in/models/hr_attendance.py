@@ -48,9 +48,12 @@ class HrAttendance(models.Model):
                             rec.sudo().check_in.weekday()) and
                             schedule.day_period == 'morning'):
                         dt = rec.check_in
-                        if self.env.user.tz in pytz.all_timezones:
+                        tz = (rec.sudo().employee_id.contract_id.
+                              resource_calendar_id.tz
+                              or rec.sudo().employee_id.tz)
+                        if tz in pytz.all_timezones:
                             old_tz = pytz.timezone('UTC')
-                            new_tz = pytz.timezone(self.env.user.tz)
+                            new_tz = pytz.timezone(tz)
                             dt = old_tz.localize(dt).astimezone(new_tz)
                         str_time = dt.strftime("%H:%M")
                         check_in_date = datetime.strptime(
@@ -70,9 +73,9 @@ class HrAttendance(models.Model):
         """Function creates records in late.check.in model for the employees
         who were late"""
         minutes_after = int(self.env['ir.config_parameter'].sudo().get_param(
-            'late_check_in_after')) or 0
+            'employee_late_check_in.late_check_in_after')) or 0
         max_limit = int(self.env['ir.config_parameter'].sudo().get_param(
-            'maximum_minutes')) or 0
+            'employee_late_check_in.maximum_minutes')) or 0
         for rec in self.sudo().search([]):
             if rec.id not in self.env['late.check.in'].sudo().search(
                     []).attendance_id.ids:
@@ -97,4 +100,4 @@ class HrAttendance(models.Model):
         for record in self:
             self.env['late.check.in'].sudo().search(
                 [('attendance_id', '=', record.id)]).unlink()
-            return super(HrAttendance, self).unlink()
+        return super(HrAttendance, self).unlink()

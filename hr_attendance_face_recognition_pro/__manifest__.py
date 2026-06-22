@@ -40,25 +40,32 @@ from a digital image or a video frame from a video source""",
         'views/res_config_settings_views.xml',
     ],
 
-    # 'assets': {
-    #     'web.assets_backend': [
-    #         'hr_attendance_face_recognition_pro/static/src/css/toogle_button.css',
-    #         'hr_attendance_face_recognition_pro/static/src/js/lib/webcam.js',
-    #         # 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.12.0/dist/tf.min.js',
-    #         # 'https://cdnjs.cloudflare.com/ajax/libs/human/2.6.1/human.js',
-    #         'hr_attendance_face_recognition_pro/static/src/js/lib/human.js',
-    #         # 'hr_attendance_face_recognition_pro/static/src/js/lib/human.js',
-    #         'hr_attendance_face_recognition_pro/static/src/js/widget_image_recognition.js',
-    #         'hr_attendance_face_recognition_pro/static/src/js/res_users_kanban_face_recognition.js',
-    #         'hr_attendance_face_recognition_pro/static/src/js/my_attendances_face_recognition.js',
-    #         'hr_attendance_face_recognition_pro/static/src/js/kiosk_mode_face_recognition.js',
+    # Odoo 17 assets. Migrated from the legacy (commented-out) block that
+    # referenced the removed `web.assets_qweb` bundle. In v17, OWL templates
+    # (.xml) are co-loaded with the backend bundle, so the separate qweb bundle
+    # is gone and the templates are listed directly under web.assets_backend.
     #
-    #     ],
-    #     'web.assets_qweb': [
-    #         'hr_attendance_face_recognition_pro/static/src/xml/attendance.xml',
-    #         'hr_attendance_face_recognition_pro/static/src/xml/kiosk.xml',
-    #     ],
-    # },
+    # ORDER MATTERS: the external global libraries (webcam.js -> `Webcam`,
+    # human.js -> `Human`) are non-module IIFEs that must be evaluated BEFORE
+    # the app ES modules that reference those globals. CSS first, then libs,
+    # then the app JS, then the QWeb templates.
+    'assets': {
+        'web.assets_backend': [
+            'hr_attendance_face_recognition_pro/static/src/css/toogle_button.css',
+            'hr_attendance_face_recognition_pro/static/src/css/lightbox.css',
+            # external globals (plain IIFEs, NOT ES modules) -> load first
+            'hr_attendance_face_recognition_pro/static/src/js/lib/webcam.js',
+            'hr_attendance_face_recognition_pro/static/src/js/lib/human.js',
+            # app ES modules (/** @odoo-module **/)
+            'hr_attendance_face_recognition_pro/static/src/js/widget_image_recognition.js',
+            'hr_attendance_face_recognition_pro/static/src/js/res_users_kanban_face_recognition.js',
+            'hr_attendance_face_recognition_pro/static/src/js/my_attendances_face_recognition.js',
+            'hr_attendance_face_recognition_pro/static/src/js/kiosk_mode_face_recognition.js',
+            # OWL/QWeb templates
+            'hr_attendance_face_recognition_pro/static/src/xml/attendance.xml',
+            'hr_attendance_face_recognition_pro/static/src/xml/kiosk.xml',
+        ],
+    },
 
     "cloc_exclude": [
         "static/src/js/lib/**/*",  # exclude a single folder

@@ -55,11 +55,12 @@ class LateCheckinSettings(models.TransientModel):
         """
         res = super(LateCheckinSettings, self).set_values()
         self.env['ir.config_parameter'].sudo().set_param(
-            'deduction_amount', self.deduction_amount)
+            'employee_late_check_in.deduction_amount', self.deduction_amount)
         self.env['ir.config_parameter'].sudo().set_param(
-            'maximum_minutes', self.maximum_minutes)
+            'employee_late_check_in.maximum_minutes', self.maximum_minutes)
         self.env['ir.config_parameter'].sudo().set_param(
-            'late_check_in_after', self.late_check_in_after)
+            'employee_late_check_in.late_check_in_after',
+            self.late_check_in_after)
         self.env['ir.config_parameter'].sudo().set_param(
-            'deduction_type', self.deduction_type)
+            'employee_late_check_in.deduction_type', self.deduction_type)
         return res

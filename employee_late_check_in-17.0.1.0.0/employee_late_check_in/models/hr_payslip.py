@@ -34,8 +34,8 @@ class PayslipLateCheckIn(models.Model):
     def get_inputs(self, contracts, date_from, date_to):
         """Function used for writing late check-in record in the payslip input
          tree."""
-        res = super(PayslipLateCheckIn, self).get_inputs(contracts, date_to,
-                                                         date_from)
+        res = super(PayslipLateCheckIn, self).get_inputs(contracts, date_from,
+                                                         date_to)
         late_check_in_type = self.env.ref(
             'employee_late_check_in.late_check_in')
         late_check_in_id = self.env['late.check.in'].search(

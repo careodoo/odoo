@@ -1,82 +1,65 @@
-odoo.define('widget_image_recognition', function(require) {
-    var core = require('web.core');
-    var qweb = core.qweb;
-    var Registry = require('web.field_registry');
-    var BasicFields = require('web.basic_fields');
+/** @odoo-module **/
 
-    var session = require('web.session');
-    var utils = require('web.utils');
-    var field_utils = require('web.field_utils');
+/**
+ * Face-recognition image field widget — Odoo 17 migration.
+ *
+ * ORIGINAL (Odoo 13/14): registered a field widget `image_recognition`
+ * extending `web.basic_fields:FieldBinaryImage`, adding a "Hide/Show faces on
+ * images" toggle and a custom QWeb (`core.qweb`) render of `ImageRecognition-img`.
+ *
+ * v17 STATUS: the legacy `web.basic_fields`, `web.field_registry`, `core.qweb`
+ * and `field_utils` symbols this widget extended were REMOVED in the Odoo 15+
+ * OWL rewrite. There is no `FieldBinaryImage` class to extend any more (the v17
+ * image field is the OWL `ImageField` component with a completely different API),
+ * so a faithful "wrapper-only" port is not possible.
+ *
+ * This module is therefore migrated to a CLEAN, LOADABLE ES module that:
+ *   - exports the still-useful, framework-agnostic toggle helper, and
+ *   - registers a tiny no-op so the `image_recognition` widget name stays known
+ *     and the *.image kanban/form views that reference `widget="image_recognition"`
+ *     fall back to the standard image field instead of crashing.
+ *
+ * The "Hide/Show faces" overlay toggle behaviour is preserved as a DOM helper
+ * and wired via a document-level click handler on the legacy button class, so
+ * the feature keeps working wherever the QWeb button is rendered.
+ *
+ * TODO (manual, advanced): re-implement as a proper OWL field component
+ * extending `@web/views/fields/image/image_field:ImageField` if a bespoke
+ * render of the snapshot is required. Tracked in DOCUMENTATION.md §10.
+ */
 
-    var ImageRecognition = BasicFields.FieldBinaryImage.extend({
-        events: _.extend({}, BasicFields.FieldBinaryImage.prototype.events, {
-            'click button.o-kanban-button-hide-face-recognition': '_hide_canvas_face_recognition',
-        }),
+import { registry } from "@web/core/registry";
 
-        _hide_canvas_face_recognition: function () {
-            $('.only-descriptor').toggle( "slow", function() {});
-            $('.o-kanban-button-hide-face-recognition').toggleClass('badge-success');
-            $('.o-kanban-button-hide-face-recognition').toggleClass('badge-warning');
-        },
-        start: function () {
-            this._super.apply(this, arguments);
-            console.log($('.token-count-title'));
-        },
-        _render: function () {
-            this._super.apply(this, arguments);
-            var self = this;
-            var url = this.placeholder;
-            if (this.value) {
-                if (!utils.is_bin_size(this.value)) {
-                    // Use magic-word technique for detecting image type
-                    url = 'data:image/' + (this.file_type_magic_word[this.value[0]] || 'png') + ';base64,' + this.value;
-                } else {
-                    var field = this.nodeOptions.preview_image || this.name;
-                    var unique = this.recordData.__last_update;
-                    url = this._getImageUrl(this.model, this.res_id, field, unique);
-                }
-            }
-
-            // if check in/out on mobile device photo 1:1 else 2:3
-            var face_width = '600px';
-            var face_height = '400px';
-            if (this.recordData.ismobile_check_in &&
-                (this.attrs.name =='webcam_check_in' || this.attrs.name == 'face_recognition_image_check_in'))
-                var face_width = '400px';
-            if (this.recordData.ismobile_check_out && 
-                (this.attrs.name =='webcam_check_out' || this.attrs.name == 'face_recognition_image_check_out'))
-                var face_width = '400px';
-            var $img = $(qweb.render("ImageRecognition-img", {
-                widget: this,
-                url: url,
-                face_width:face_width,
-                face_height:face_height}));
-
-            // override css size attributes (could have been defined in css files)
-            // if specified on the widget
-            var width = this.nodeOptions.size ? this.nodeOptions.size[0] : this.attrs.width;
-            var height = this.nodeOptions.size ? this.nodeOptions.size[1] : this.attrs.height;
-
-            if (width) {
-                $img.attr('width', width);
-                $img.css('max-width', width + 'px');
-            }
-            if (height) {
-                $img.attr('height', height);
-                $img.css('max-height', height + 'px');
-            }
-            this.$('> img').remove();
-            this.$el.prepend($img);
-
-            $img.one('error', function () {
-                $img.attr('src', self.placeholder);
-                self.do_warn(_t("Image"), _t("Could not display the selected image."));
-            });
-
-            //return this._super.apply(this, arguments);
-        },
+/**
+ * Toggle the `.only-descriptor` face-overlay layer on/off. Framework-agnostic:
+ * preserved verbatim (DOM logic only) from the legacy widget.
+ */
+export function hideCanvasFaceRecognition() {
+    document.querySelectorAll(".only-descriptor").forEach((el) => {
+        el.style.display = el.style.display === "none" ? "" : "none";
     });
-    Registry.add('image_recognition', ImageRecognition);
+    document.querySelectorAll(".o-kanban-button-hide-face-recognition").forEach((btn) => {
+        btn.classList.toggle("badge-success");
+        btn.classList.toggle("badge-warning");
+    });
+}
 
-
+// Delegate clicks on the legacy "Hide/Show faces on images" button so the
+// overlay toggle keeps working without a custom field widget.
+document.addEventListener("click", (ev) => {
+    const btn = ev.target && ev.target.closest
+        ? ev.target.closest("button.o-kanban-button-hide-face-recognition")
+        : null;
+    if (btn) {
+        ev.preventDefault();
+        hideCanvasFaceRecognition();
+    }
 });
+
+// Keep the widget name registered (as the standard image field) so existing
+// views with widget="image_recognition" do not error. The bespoke snapshot
+// render is intentionally NOT reimplemented here (see header TODO).
+const fieldsRegistry = registry.category("fields");
+if (!fieldsRegistry.contains("image_recognition") && fieldsRegistry.contains("image")) {
+    fieldsRegistry.add("image_recognition", fieldsRegistry.get("image"));
+}

@@ -2,9 +2,15 @@
 
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import pytz
 from dateutil import relativedelta
+
+
+def _float_to_time_delta(hour_float):
+    """Convert a calendar float hour (e.g. 8.5 -> 08:30) into a timedelta,
+    preserving the fractional minutes that int() would otherwise truncate."""
+    return timedelta(hours=hour_float)
 
 
 class BulkAttendance(models.Model):
@@ -83,6 +89,26 @@ class BulkAttendance(models.Model):
     def button_draft(self):
         self.state = 'draft'
 
+    def _bulk_attendance_exists(self, employee_id, t, extra_department_id=False):
+        """Return True if a bulk-generated hr.attendance row already exists for
+        this employee on the date ``t`` (avoids duplicate check-in/out rows when
+        bulk attendance is re-run for the same employee + day). Extra-department
+        rows are matched/excluded separately so the legitimate second row per
+        employee is preserved."""
+        day_start = datetime(t.year, t.month, t.day)
+        day_end = day_start + timedelta(days=1)
+        domain = [
+            ('bulk_id', '!=', False),
+            ('employee_id', '=', employee_id),
+            ('check_in', '>=', day_start),
+            ('check_in', '<', day_end),
+        ]
+        if extra_department_id:
+            domain.append(('extra_department_id', '=', extra_department_id))
+        else:
+            domain.append(('extra_department_id', '=', False))
+        return bool(self.env['hr.attendance'].search_count(domain))
+
     def button_approve(self):
         t = datetime.combine(self.bulk_date, datetime.min.time()) if self.bulk_date else datetime.today()
         if self.type == 'absence':
@@ -97,14 +123,17 @@ class BulkAttendance(models.Model):
                 raise ValidationError("working hours for {} has no {} lines".format(emp.name, t.strftime("%A")))
             tz = pytz.timezone(emp.tz)
             offset = tz.utcoffset(t).seconds / 3600
-            check_in = datetime(t.year, t.month, t.day, int(today_calendar_lines[0].hour_from)) - relativedelta.relativedelta(hours=offset)
+            day_start = datetime(t.year, t.month, t.day)
+            check_in = day_start + _float_to_time_delta(today_calendar_lines[0].hour_from) - relativedelta.relativedelta(hours=offset)
             check_out = False
             if self.bulk_date < date.today():
                 if len(today_calendar_lines) == 1:
-                    check_out = datetime(t.year, t.month, t.day, int(today_calendar_lines[0].hour_to)) - relativedelta.relativedelta(hours=offset)
+                    check_out = day_start + _float_to_time_delta(today_calendar_lines[0].hour_to) - relativedelta.relativedelta(hours=offset)
                 elif len(today_calendar_lines) > 1:
-                    check_out = datetime(t.year, t.month, t.day, int(today_calendar_lines[1].hour_to)) - relativedelta.relativedelta(hours=offset)
+                    check_out = day_start + _float_to_time_delta(today_calendar_lines[1].hour_to) - relativedelta.relativedelta(hours=offset)
 
+            if self._bulk_attendance_exists(emp.id, t):
+                continue
             self.env['hr.attendance'].create({
                 'employee_id': emp.id,
                 'check_in': check_in,
@@ -120,14 +149,16 @@ class BulkAttendance(models.Model):
                     raise ValidationError("extra working hours for {} has no {} lines".format(extra.employee_id.name, t.strftime("%A")))
                 tz = pytz.timezone(extra.employee_id.tz)
                 offset = tz.utcoffset(t).seconds / 3600
-                check_in = datetime(t.year, t.month, t.day,
-                                    int(today_calendar_lines[0].hour_from)) - relativedelta.relativedelta(hours=offset)
+                day_start = datetime(t.year, t.month, t.day)
+                check_in = day_start + _float_to_time_delta(today_calendar_lines[0].hour_from) - relativedelta.relativedelta(hours=offset)
                 check_out = False
                 if self.bulk_date < date.today():
                     if len(today_calendar_lines) == 1:
-                        check_out = datetime(t.year, t.month, t.day, int(today_calendar_lines[0].hour_to)) - relativedelta.relativedelta(hours=offset)
+                        check_out = day_start + _float_to_time_delta(today_calendar_lines[0].hour_to) - relativedelta.relativedelta(hours=offset)
                     elif len(today_calendar_lines) > 1:
-                        check_out = datetime(t.year, t.month, t.day, int(today_calendar_lines[1].hour_to)) - relativedelta.relativedelta(hours=offset)
+                        check_out = day_start + _float_to_time_delta(today_calendar_lines[1].hour_to) - relativedelta.relativedelta(hours=offset)
+                if self._bulk_attendance_exists(extra.employee_id.id, t, extra_department_id=extra.id):
+                    continue
                 self.env['hr.attendance'].create({
                     'employee_id': extra.employee_id.id,
                     'check_in': check_in,
@@ -166,15 +197,14 @@ class BulkAttendance(models.Model):
                     lambda att: int(att.dayofweek) == t.isoweekday() - 1)
             tz = pytz.timezone(att.employee_id.tz)
             offset = tz.utcoffset(t).seconds / 3600
+            day_start = datetime(t.year, t.month, t.day)
 
             if len(today_calendar_lines) == 1:
-                check_out = datetime(t.year, t.month, t.day,
-                                    int(today_calendar_lines[0].hour_to)) - relativedelta.relativedelta(hours=offset)
+                check_out = day_start + _float_to_time_delta(today_calendar_lines[0].hour_to) - relativedelta.relativedelta(hours=offset)
                 if datetime.now() >= check_out:
                     att.check_out = check_out
             elif len(today_calendar_lines) > 1:
-                check_out = datetime(t.year, t.month, t.day,
-                                    int(today_calendar_lines[1].hour_to)) - relativedelta.relativedelta(hours=offset)
+                check_out = day_start + _float_to_time_delta(today_calendar_lines[1].hour_to) - relativedelta.relativedelta(hours=offset)
                 if datetime.now() >= check_out:
                     att.check_out = check_out
 

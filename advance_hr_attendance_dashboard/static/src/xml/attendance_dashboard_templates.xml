@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<template>
-    <t t-name="AttendanceDashboard" owl="1">
+<templates xml:space="preserve">
+    <t t-name="AttendanceDashboard">
         <div class="o_action_manager" style="height: 100%; overflow-y:scroll"
              t-ref="attendance-dashboard">
             <div class="employee_dashboard">
@@ -93,4 +93,4 @@
             </div>
         </div>
     </t>
-</template>
+</templates>
