@@ -1117,6 +1117,26 @@ class ZK(object):
             if self.verbose: print("Can't read/find finger")
             return None
 
+    def _get_templates_per_user(self):
+        """Fallback used when the device does not support buffered reads
+        (read_with_buffer -> "RWB Not supported", e.g. ZKTeco Horus E1-FP).
+        Reads each enrolled user's fingers one by one via GET_USER_TEMPLATE."""
+        templates = []
+        try:
+            users = self.get_users()
+        except Exception:
+            users = []
+        for user in users:
+            for temp_id in range(10):  # up to 10 finger slots per user
+                try:
+                    finger = self.get_user_template(uid=user.uid, temp_id=temp_id)
+                except Exception:
+                    finger = None
+                # empty slots come back with a 0-length template -> skip them
+                if finger and getattr(finger, 'template', b'') and len(finger.template) > 0:
+                    templates.append(finger)
+        return templates
+
     def get_templates(self):
         """
         :return: list of Finger object
@@ -1125,7 +1145,12 @@ class ZK(object):
         if self.fingers == 0:
             return []
         templates = []
-        templatedata, size = self.read_with_buffer(const.CMD_DB_RRQ, const.FCT_FINGERTMP)
+        try:
+            templatedata, size = self.read_with_buffer(const.CMD_DB_RRQ, const.FCT_FINGERTMP)
+        except ZKErrorResponse:
+            # Device firmware does not support the buffered template read.
+            # Fall back to reading templates per user/finger.
+            return self._get_templates_per_user()
         if size < 4:
             if self.verbose: print("WRN: no user data")
             return []
