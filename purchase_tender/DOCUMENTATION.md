@@ -237,21 +237,53 @@ button raises a friendly "add the key" message — the feature is fully built bu
   `win_probability` (progressbar), `prep_score` (جاهزية العطاء, progressbar),
   `checklist_progress`/`ai_analyzed` (optional cols), close date, `days_to_close`, state
   badge + quick-action buttons. Row decorations by state/urgency.
+  **`default_order="days_to_close asc, importance desc, id desc"`** — soonest closing first.
+  **Workflow quick-buttons follow the stage sequence:** new/under_study → **«مهتم»**
+  (`action_set_interested`) → interested → **«شراء الكراسة»** (`action_set_docs_purchased`)
+  → docs_purchased/preparing → **«تقديم»** → participated → **«فوز»**. (Kanban mirrors this.)
 - **Kanban** (`limit=10`, styled by `static/src/kanban/tender_kanban.scss`): logo, name,
   org, KV grid (سعرنا/ترتيب/إغلاق/الضمان), win-probability bar, **جاهزية العطاء** bar,
-  🔍 badge when `ai_analyzed`, state quick-action buttons.
+  🔍 badge when `ai_analyzed`, state quick-action buttons (same مهتم→شراء الكراسة sequence).
 - **Form:** header state buttons; tabs incl. قائمة التحضير (checklist + progress),
   **📎 ملف المناقصة** (upload + «🔍 تحليل المستند آلياً» + «🖨️ طباعة المتطلبات» +
   readiness bar + executive summary), 5 requirement tabs (📄 مستندات / 🛠️ معدات وأدوات /
   📋 شروط / ℹ️ معلومات), price analysis, sub-analyses.
-- **Search:** state filters, closing-soon, guarantee-expiring, mine, and AI filters
-  «حُلّل آلياً» / «لم يُحلّل» / «جاهز للتقديم (≥٨٠٪)»; group-by state/company/organization.
+- **Search:** name/tender_no, organization, **`company_id` (الشركة)**, bid_type, winner;
+  filters `f_active` (النشطة), `f_concluded` (المنتهية: won/lost/closed), won/lost,
+  per-state, closing-soon, guarantee-expiring, mine, AI («حُلّل آلياً»/«لم يُحلّل»/«جاهز
+  للتقديم ≥٨٠٪»); group-by state/company/organization/bid_type/winner/loss/month.
+- **Actions & menus (two tabs under "Our Tenders"):**
+  - `purchase_tender_action` — **"Active Tenders"**, `context={'search_default_f_active': 1}`
+    → opens the active pipeline only, flat.
+  - `purchase_tender_action_concluded` — **"Concluded Tenders"**,
+    `context={'search_default_f_concluded': 1}` → won/lost/closed.
+  > ⚠️ `purchase_tender_action`'s `ir.model.data` had `noupdate=t` (set by Studio) which
+  > blocked the XML `context` on `-u`; it was cleared once so the default filter applies.
+  > Per-user **default favorites** (`ir.filters`, `is_default=true`) that carry a `group_by`
+  > will re-group the list on open regardless of the action — clear `is_default` on those
+  > to make it open flat (see Gotchas).
 
 ### 6.2 Dashboards (OWL client actions)
 - `static/src/dashboard/` — main dashboard (`tag = purchase_tender_dashboard`). Lazy
   Chart.js (IntersectionObserver, animations off) for performance; data from
   `get_dashboard_data`. Blocks newest-first; upcoming-closings + latest-tenders at top.
   Full Arabic month names; per-state colours keyed by **state key**.
+- **Fully interactive (3 drill-down layers — all year-aware):**
+  1. **12 KPI cards** — each `t-on-click` opens the tenders behind it.
+  2. **Per-block «عرض» button** (`.td-foot`) — opens that block's full record list via
+     `view(domain, name, useYear)`; competitor blocks call `openCompetitors()`.
+  3. **Chart segments** — `_clickable(handler)` adds `onClick`/`onHover`; clicking a bar/
+     slice on the status, top-orgs, bid-type, rank, company, activity, and loss charts
+     opens exactly those tenders. Uses **dotted-path domains** (`company_id.name`,
+     `organization.name`, `bid_type.name`) so no record ids are needed; `status_dist` has
+     `key`, `rank_dist` has keys, `loss_reasons` has `key`.
+  - `view()` prepends `yearDomain()` for historical blocks; active-pipeline blocks pass
+    `useYear=false` (active tenders are always current). Funnel block = «مسار المناقصات»;
+    company chart = «المناقصات حسب الشركة».
+- **Expected-value KPI (`expected` in payload):** each active tender's CONTRACT value is
+  estimated as `our_price` if set, else the avg winner price of decided tenders of the same
+  `bid_type`, else the overall avg — **never the `price` booklet cost**. Card shows
+  weighted (× win prob), gross, priced/estimated counts, and the avg basis.
 - `static/src/competitor_dashboard/` — competitor dashboard
   (`tag = purchase_tender_competitor_dashboard`); top filter to pick a competitor;
   data from `get_competitor_dashboard_data`.
@@ -311,9 +343,22 @@ changes apply immediately.
 - **Dashboard "froze"** = client-side; fixed with lazy charts + animations off + plain-data
   copies + `limit=10` kanban. Server side is fast.
 - **`our_price` vs `price`:** `price` = cost of the spec booklet; `our_price` = our bid
-  (only ~11 % populated). The list shows `our_price` as «سعرنا».
+  (only ~11 % populated). The list shows `our_price` as «سعرنا». **Never use `price` as a
+  contract-value basis** (the dashboard expected-value estimates from `our_price` / avg
+  winner price instead).
 - After settings change, computed fields are re-applied in `set_values()` — don't duplicate
   that logic elsewhere.
+- **List opens grouped despite a flat action?** Per-user **default favorites**
+  (`ir.filters`, `is_default=true`) carrying a `group_by` re-apply on open. To make a page
+  open flat, clear `is_default` on those rows (keeps the favorite usable):
+  `UPDATE ir_filters SET is_default=false WHERE model_id='purchase.tender' AND is_default=true AND context LIKE '%group_by%';`
+- **Studio `noupdate`:** records Studio has touched get `ir.model.data.noupdate=t`, so `-u`
+  silently skips your XML changes to them (bit us on `purchase_tender_action`'s `context`).
+  Check `ir_model_data.noupdate` if an XML field change won't take; clear it once.
+- **Competitor stat buttons:** «عطاءات» → `action_view_bids` (all bids); «مرات الفوز» →
+  `action_view_wins` (won only, `is_winner=True`). Don't point both at the same method.
+- **Odoo shell doesn't auto-commit** — call `env.cr.commit()` for data fixes run via
+  `odoo-bin shell`, or use SQL; otherwise the change rolls back on exit.
 
 ---
 
