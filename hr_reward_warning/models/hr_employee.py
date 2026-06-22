@@ -38,22 +38,22 @@ class HrEmployee(models.Model):
             announcement_ids_general = self.env[
                 'hr.announcement'].sudo().search_count(
                 [('is_announcement', '=', True),
-                 ('state', 'in', ('approved', 'done')),
+                 ('state', 'in', ('approved',)),
                  ('date_start', '<=', fields.Date.today())])
             announcement_ids_emp = (self.env['hr.announcement'].
             sudo().search_count(
                 [('employee_ids', 'in', self.id),
-                 ('state', 'in', ('approved', 'done')),
+                 ('state', 'in', ('approved',)),
                  ('date_start', '<=', fields.Date.today())]))
             announcement_ids_dep = (self.env['hr.announcement'].
             sudo().search_count(
                 [('department_ids', 'in', self.department_id.id),
-                 ('state', 'in', ('approved', 'done')),
+                 ('state', 'in', ('approved',)),
                  ('date_start', '<=', fields.Date.today())]))
             announcement_ids_job = (self.env['hr.announcement'].
             sudo().search_count(
                 [('position_ids', 'in', self.job_id.id),
-                 ('state', 'in', ('approved', 'done')),
+                 ('state', 'in', ('approved',)),
                  ('date_start', '<=', fields.Date.today())]))
             employee.announcement_count = (announcement_ids_general +
                                            announcement_ids_emp +
@@ -65,19 +65,19 @@ class HrEmployee(models.Model):
         announcement_ids_general = self.env[
             'hr.announcement'].sudo().search(
             [('is_announcement', '=', True),
-             ('state', 'in', ('approved', 'done')),
+             ('state', 'in', ('approved',)),
              ('date_start', '<=', fields.Date.today())])
         announcement_ids_emp = self.env['hr.announcement'].sudo().search(
             [('employee_ids', 'in', self.id),
-             ('state', 'in', ('approved', 'done')),
+             ('state', 'in', ('approved',)),
              ('date_start', '<=', fields.Date.today())])
         announcement_ids_dep = self.env['hr.announcement'].sudo().search(
             [('department_ids', 'in', self.department_id.id),
-             ('state', 'in', ('approved', 'done')),
+             ('state', 'in', ('approved',)),
              ('date_start', '<=', fields.Date.today())])
         announcement_ids_job = self.env['hr.announcement'].sudo().search(
             [('position_ids', 'in', self.job_id.id),
-             ('state', 'in', ('approved', 'done')),
+             ('state', 'in', ('approved',)),
              ('date_start', '<=', fields.Date.today())])
         announcement_ids = (announcement_ids_general.ids +
                             announcement_ids_emp.ids +

@@ -39,7 +39,7 @@ class HrAnnouncement(models.Model):
                    ('approved', 'Approved'), ('rejected', 'Refused'),
                    ('expired', 'Expired')],
         string='Status', default='draft', help="State of announcement.",
-        track_visibility='always')
+        tracking=True)
     requested_date = fields.Date(string='Requested Date',
                                  default=fields.Datetime.now().
                                  strftime('%Y-%m-%d'),
@@ -91,17 +91,18 @@ class HrAnnouncement(models.Model):
             raise ValidationError(_("The Start Date must be earlier "
                                     "than the End Date"))
 
-    @api.model
-    def create(self, vals):
+    @api.model_create_multi
+    def create(self, vals_list):
         """ Create method for HrAnnouncement model, adding sequence
         number to announcements. """
-        if vals.get('is_announcement'):
-            vals['name'] = self.env['ir.sequence'].next_by_code(
-                'hr.announcement.general')
-        else:
-            vals['name'] = self.env['ir.sequence'].next_by_code(
-                'hr.announcement')
-        return super(HrAnnouncement, self).create(vals)
+        for vals in vals_list:
+            if vals.get('is_announcement'):
+                vals['name'] = self.env['ir.sequence'].next_by_code(
+                    'hr.announcement.general')
+            else:
+                vals['name'] = self.env['ir.sequence'].next_by_code(
+                    'hr.announcement')
+        return super(HrAnnouncement, self).create(vals_list)
 
     def action_reject_announcement(self):
         """ Refuse button action """

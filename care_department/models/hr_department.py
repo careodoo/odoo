@@ -68,6 +68,25 @@ class Department(models.Model):
                 allowed_users.append(rec.manager_id.parent_id.user_id.id)
             rec.allowed_user_ids = [(6, 0, allowed_users)]
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        # The onchange only fires while editing the form, so departments created
+        # in the background would otherwise keep an empty allowed_user_ids and be
+        # invisible in the "Care Projects" dashboard. Apply the same rule on create.
+        for rec in records:
+            allowed_users = []
+            for user in self.env.ref('base.group_erp_manager').users:
+                allowed_users.append(user.id)
+            for user in self.env.ref('base.group_system').users:
+                allowed_users.append(user.id)
+            if rec.manager_id and rec.manager_id.user_id:
+                allowed_users.append(rec.manager_id.user_id.id)
+            if rec.higher_manager_access and rec.manager_id.parent_id.user_id:
+                allowed_users.append(rec.manager_id.parent_id.user_id.id)
+            rec.allowed_user_ids = [(6, 0, allowed_users)]
+        return records
+
     @api.depends('project_start_date', 'project_end_date')
     def compute_project_estimated_months(self):
         for rec in self:
