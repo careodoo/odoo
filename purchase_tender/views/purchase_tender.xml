@@ -55,7 +55,7 @@
       <field name="name">purchase.tender.view.kanban</field>
       <field name="model">purchase.tender</field>
       <field name="arch" type="xml">
-        <kanban class="o_tender_kanban" default_order="importance desc" limit="10">
+        <kanban class="o_tender_kanban" default_order="days_to_close asc, importance desc" limit="10">
           <field name="tender_no" />
           <field name="short_name" />
           <field name="organization" />
