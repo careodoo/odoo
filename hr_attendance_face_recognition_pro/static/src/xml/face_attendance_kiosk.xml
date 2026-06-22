@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="hr_attendance_face_recognition_pro.FaceAttendanceKiosk">
+        <div class="o_face_kiosk" dir="rtl">
+            <div class="o_face_kiosk_head">
+                <h1>📷 تسجيل الحضور بالبصمة الوجهية</h1>
+                <div class="o_face_kiosk_status" t-esc="state.status"/>
+            </div>
+
+            <div class="o_face_kiosk_stage">
+                <div class="o_face_mount" t-ref="mount"/>
+                <canvas class="o_face_canvas" t-ref="canvas"/>
+            </div>
+
+            <div t-if="state.lastName"
+                 t-attf-class="o_face_result o_face_{{state.lastAction}}">
+                <span class="o_face_name" t-esc="state.lastName"/>
+                <span class="o_face_act"
+                      t-esc="state.lastAction === 'check_in' ? '✅ تم تسجيل الدخول' : '👋 تم تسجيل الخروج'"/>
+            </div>
+
+            <div t-if="state.error" class="o_face_error">
+                <i class="fa fa-exclamation-triangle"/> <span t-esc="state.error"/>
+            </div>
+        </div>
+    </t>
+</templates>

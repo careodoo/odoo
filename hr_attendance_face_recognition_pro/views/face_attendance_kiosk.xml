@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_face_attendance_kiosk" model="ir.actions.client">
+        <field name="name">Face Check-in</field>
+        <field name="tag">face_attendance_kiosk</field>
+        <field name="target">fullscreen</field>
+    </record>
+
+    <menuitem id="menu_face_attendance_kiosk"
+              name="Face Check-in (البصمة الوجهية)"
+              parent="hr_attendance.menu_hr_attendance_root"
+              action="action_face_attendance_kiosk"
+              sequence="50"
+              groups="hr_attendance.group_hr_attendance_officer"/>
+</odoo>

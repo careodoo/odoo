@@ -28,7 +28,7 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-from odoo import http
+from odoo import http, fields
 from odoo.http import request
 # import werkzeug
 # from werkzeug import url_encode
@@ -111,3 +111,44 @@ class HrAttendanceWebcam(HrAttendanceBase):
             'face_age': user_id.face_age,
         })
         return res
+
+    @http.route('/face_attendance/punch', auth='user', type='json')
+    def face_attendance_punch(self, employee_id, snapshot=False, **kw):
+        """Toggle attendance (check in / out) for the face-matched employee and
+        store the webcam snapshot. Used by the Face Check-in kiosk client action."""
+        try:
+            employee = request.env['hr.employee'].sudo().browse(int(employee_id))
+        except (TypeError, ValueError):
+            return {'error': 'bad_employee'}
+        if not employee.exists():
+            return {'error': 'employee_not_found'}
+
+        img = False
+        if snapshot:
+            # strip a possible "data:image/jpeg;base64," prefix
+            img = snapshot.split(',')[-1]
+
+        Att = request.env['hr.attendance'].sudo()
+        open_att = Att.search(
+            [('employee_id', '=', employee.id), ('check_out', '=', False)],
+            limit=1, order='check_in desc')
+        if open_att:
+            vals = {'check_out': fields.Datetime.now()}
+            if img:
+                vals['webcam_check_out'] = img
+                vals['face_recognition_image_check_out'] = img
+            open_att.write(vals)
+            action = 'check_out'
+        else:
+            vals = {'employee_id': employee.id, 'check_in': fields.Datetime.now()}
+            if img:
+                vals['webcam_check_in'] = img
+                vals['face_recognition_image_check_in'] = img
+            Att.create(vals)
+            action = 'check_in'
+        employee.invalidate_recordset(['attendance_state'])
+        return {
+            'name': employee.name,
+            'action': action,
+            'state': employee.attendance_state,
+        }

@@ -38,6 +38,7 @@ from a digital image or a video frame from a video source""",
         'views/res_users.xml',
         'views/hr_employee.xml',
         'views/res_config_settings_views.xml',
+        'views/face_attendance_kiosk.xml',
     ],
 
     # Odoo 17 assets. Migrated from the legacy (commented-out) block that
@@ -61,9 +62,13 @@ from a digital image or a video frame from a video source""",
             'hr_attendance_face_recognition_pro/static/src/js/res_users_kanban_face_recognition.js',
             'hr_attendance_face_recognition_pro/static/src/js/my_attendances_face_recognition.js',
             'hr_attendance_face_recognition_pro/static/src/js/kiosk_mode_face_recognition.js',
+            # Face Check-in kiosk client action (self-contained v17 OWL)
+            'hr_attendance_face_recognition_pro/static/src/css/face_attendance_kiosk.css',
+            'hr_attendance_face_recognition_pro/static/src/js/face_attendance_kiosk.js',
             # OWL/QWeb templates
             'hr_attendance_face_recognition_pro/static/src/xml/attendance.xml',
             'hr_attendance_face_recognition_pro/static/src/xml/kiosk.xml',
+            'hr_attendance_face_recognition_pro/static/src/xml/face_attendance_kiosk.xml',
         ],
     },
 
