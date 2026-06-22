@@ -1068,7 +1068,7 @@ class PurchaseTender(models.Model):
         for t in lost:
             k = t.loss_reason or 'unspecified'
             loss_dist[k] = loss_dist.get(k, 0) + 1
-        loss_reasons = [{'label': loss_labels.get(k, k) if k != 'unspecified' else 'غير محدد', 'value': v}
+        loss_reasons = [{'key': k, 'label': loss_labels.get(k, k) if k != 'unspecified' else 'غير محدد', 'value': v}
                         for k, v in loss_dist.items()]
 
         # --- competitor stats (all-time, from the competitor model) ---

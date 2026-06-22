@@ -181,6 +181,17 @@ export class TenderDashboard extends Component {
         root.querySelectorAll(".chart, .chart-lg, .chart-sm").forEach((el) => this._observer.observe(el));
     }
 
+    // onClick/onHover fragment that drills into the tenders behind a clicked bar/segment
+    _clickable(handler) {
+        return {
+            onClick: (evt, els) => { if (els && els.length) handler(els[0].index); },
+            onHover: (evt, els) => {
+                const t = evt && evt.native && evt.native.target;
+                if (t) t.style.cursor = els && els.length ? "pointer" : "default";
+            },
+        };
+    }
+
     renderCharts() {
         if (typeof Chart === "undefined") return;
         this.destroyCharts();
@@ -221,7 +232,8 @@ export class TenderDashboard extends Component {
                     borderWidth: 2, borderColor: "#fff",
                 }],
             },
-            options: { maintainAspectRatio: false, cutout: "62%", plugins: { legend: { position: "bottom" } } },
+            options: { ...this._clickable((i) => { const s = d.status_dist[i]; this.view([["state", "=", s.key]], s.label, true); }),
+                maintainAspectRatio: false, cutout: "62%", plugins: { legend: { position: "bottom" } } },
         });
 
         // funnel (horizontal bar)
@@ -260,7 +272,8 @@ export class TenderDashboard extends Component {
                 labels: d.top_orgs.map((o) => o.org),
                 datasets: [{ data: d.top_orgs.map((o) => o.count), backgroundColor: COLORS.teal, borderRadius: 4 }],
             },
-            options: { indexAxis: "y", maintainAspectRatio: false, plugins: { legend: { display: false } },
+            options: { ...this._clickable((i) => { const o = d.top_orgs[i]; this.view(o.org === "غير محدد" ? [["organization", "=", false]] : [["organization.name", "=", o.org]], o.org, true); }),
+                indexAxis: "y", maintainAspectRatio: false, plugins: { legend: { display: false } },
                 scales: { x: { beginAtZero: true, grid: { display: false } } } },
         });
 
@@ -275,7 +288,8 @@ export class TenderDashboard extends Component {
                     borderWidth: 2, borderColor: "#fff",
                 }],
             },
-            options: { maintainAspectRatio: false, plugins: { legend: { position: "bottom" } } },
+            options: { ...this._clickable((i) => { const b = d.bid_dist[i]; this.view(b.label === "غير محدد" ? [["bid_type", "=", false]] : [["bid_type.name", "=", b.label]], b.label, true); }),
+                maintainAspectRatio: false, plugins: { legend: { position: "bottom" } } },
         });
 
         // rank distribution (bar)
@@ -289,7 +303,8 @@ export class TenderDashboard extends Component {
                     borderRadius: 4,
                 }],
             },
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } },
+            options: { ...this._clickable((i) => { const k = ["1", "2", "3", "4", "5+"][i]; this.view(k === "5+" ? [["care_rank", ">=", 5]] : [["care_rank", "=", parseInt(k)]], "ترتيب " + k, true); }),
+                maintainAspectRatio: false, plugins: { legend: { display: false } },
                 scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } },
         });
 
@@ -303,7 +318,8 @@ export class TenderDashboard extends Component {
                     { label: "فائزة", data: (d.by_company || []).map((c) => c.won), backgroundColor: COLORS.green, borderRadius: 4 },
                 ],
             },
-            options: { maintainAspectRatio: false, plugins: { legend: { position: "bottom" } },
+            options: { ...this._clickable((i) => { const c = (d.by_company || [])[i]; if (c) this.view([["company_id.name", "=", c.company]], c.company, true); }),
+                maintainAspectRatio: false, plugins: { legend: { position: "bottom" } },
                 scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } },
         });
 
@@ -318,7 +334,8 @@ export class TenderDashboard extends Component {
                     borderWidth: 2, borderColor: "#fff",
                 }],
             },
-            options: { maintainAspectRatio: false, plugins: { legend: { position: "bottom" } } },
+            options: { ...this._clickable((i) => { const a = (d.by_activity || [])[i]; if (a) this.view(a.activity === "غير محدد" ? [["bid_type", "=", false]] : [["bid_type.name", "=", a.activity]], a.activity, true); }),
+                maintainAspectRatio: false, plugins: { legend: { position: "bottom" } } },
         });
 
         // forecast: weighted value by closing month (bar)
@@ -343,7 +360,8 @@ export class TenderDashboard extends Component {
                     borderWidth: 2, borderColor: "#fff",
                 }],
             },
-            options: { cutout: "60%", maintainAspectRatio: false, plugins: { legend: { position: "bottom" } } },
+            options: { ...this._clickable((i) => { const x = (d.loss_reasons || [])[i]; if (x) this.view(x.key && x.key !== "unspecified" ? [["loss_reason", "=", x.key]] : [["state", "=", "lost"], ["loss_reason", "=", false]], x.label, true); }),
+                cutout: "60%", maintainAspectRatio: false, plugins: { legend: { position: "bottom" } } },
         });
 
         // competitors who beat us most (horizontal bar)
