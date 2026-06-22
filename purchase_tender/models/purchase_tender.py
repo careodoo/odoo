@@ -644,7 +644,18 @@ class PurchaseTender(models.Model):
     # Email notifications
     # ------------------------------------------------------------------
     def _tender_follower_partners(self):
-        users = self.env['purchase.tender.follower'].sudo().search([]).mapped('followers')
+        # Recipients = everyone AUTHORIZED for tenders (both tender security
+        # groups) PLUS any explicitly-configured followers, deduplicated, that
+        # have an email. This way new authorized users get notified without
+        # having to be hand-added to the follower list.
+        users = self.env['res.users']
+        for xmlid in ('purchase_tender.group_tender_user',
+                      'purchase_tender.group_tender_manager'):
+            grp = self.env.ref(xmlid, raise_if_not_found=False)
+            if grp:
+                users |= grp.sudo().users
+        users |= self.env['purchase.tender.follower'].sudo().search([]).mapped('followers')
+        users = users.filtered(lambda u: u.active and not u.share)
         return users.mapped('partner_id').filtered(lambda p: p.email)
 
     def _email_enabled(self, key):
