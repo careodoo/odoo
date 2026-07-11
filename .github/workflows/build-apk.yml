@@ -1,0 +1,75 @@
+name: Build Android APK
+
+# Builds a release APK in the cloud (no local Flutter/Android SDK needed) and
+# attaches it to a GitHub Release you can download straight onto a phone.
+on:
+  push:
+    branches: [care-mobile-app]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Show versions
+        run: flutter --version
+
+      - name: Generate Android platform files
+        run: flutter create --platforms=android --org com.carekw --project-name care_mobile .
+
+      - name: Add camera + internet permissions
+        run: |
+          python3 - <<'PY'
+          import re, pathlib
+          p = pathlib.Path("android/app/src/main/AndroidManifest.xml")
+          s = p.read_text()
+          perms = ('    <uses-permission android:name="android.permission.CAMERA"/>\n'
+                   '    <uses-permission android:name="android.permission.INTERNET"/>\n')
+          if "android.permission.CAMERA" not in s:
+              s = re.sub(r'(<manifest[^>]*>\n)', r'\1' + perms, s, count=1)
+          p.write_text(s)
+          print(s[:600])
+          PY
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build release APK
+        run: flutter build apk --release --dart-define=CARE_API_BASE=https://ecare.care-kw.com/api/v1
+
+      - name: Rename APK
+        run: cp build/app/outputs/flutter-apk/app-release.apk care-mobile-${{ github.run_number }}.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: care-mobile-apk
+          path: care-mobile-${{ github.run_number }}.apk
+
+      - name: Publish Release with APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: mobile-v1.0.0-${{ github.run_number }}
+          name: Care Mobile APK build ${{ github.run_number }}
+          files: care-mobile-${{ github.run_number }}.apk
+          body: |
+            APK جاهز للتثبيت على أندرويد (release).
+            الخادم: https://ecare.care-kw.com/api/v1
+            دخول تجريبي: cafmtest / cafm12345
