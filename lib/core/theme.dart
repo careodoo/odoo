@@ -40,7 +40,7 @@ ThemeData buildTheme(ServiceTheme s) {
       elevation: 0,
       centerTitle: true,
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: 0,
       color: s.dark ? const Color(0xFF152238) : Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

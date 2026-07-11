@@ -1,0 +1,2 @@
+47937a919836db6c83cf883ad95fe10ed27dd89b5c25cdd6d563f228b6529f17  care-mobile-v1.0.0.apk
+3d1f7c84c104af5acae5cf8335cfee7e3d8657979d40fc408c3c273f9be10e6c  care-mobile-v1.0.0.aab
