@@ -59,7 +59,18 @@ flutter run              # أو flutter run --release
 بيانات دخول للتجربة: `cafmtest` / `cafm12345`
 (للتجربة الأمنية: ادخل بمستخدم مرتبط بموظف له أوامر عمل من نوع "security" ليفتح مركز الأمن).
 
-## ٥) بناء نسخة الإصدار
+## ⚡ بناء APK تلقائياً على GitHub (بدون أي أداة على جهازك)
+
+المشروع مرفوع على فرع **`care-mobile-app`** في مستودع `careodoo/odoo`، ومعه
+**GitHub Actions** يبني APK إصدار تلقائياً عند كل دفع.
+
+- **حالة البناء:** تبويب **Actions** → «Build Android APK».
+- **تنزيل الـAPK الجاهز:** تبويب **Releases** → أحدث إصدار (`mobile-v1.0.0-N`) → ملف `care-mobile-N.apk`.
+- إن لم يبدأ البناء: فعّل GitHub Actions من إعدادات المستودع (Settings → Actions → Allow).
+- ملاحظة: الـAPK موقّع بمفتاح debug (يُثبَّت مباشرة للتجربة/التوزيع الداخلي). لنشر Play
+  Store يلزم إعداد keystore إصدار (خطوة لاحقة).
+
+## ٥) بناء نسخة الإصدار (يدوياً على جهازك)
 
 ```bash
 # Android — App Bundle للنشر على Play

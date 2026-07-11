@@ -23,3 +23,7 @@ pubspec.lock
 
 # OS
 .DS_Store
+
+# built artifacts we DO want on GitHub
+!dist/
+dist/*.keep
