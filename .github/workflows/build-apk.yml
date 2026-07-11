@@ -40,12 +40,14 @@ jobs:
           import re, pathlib
           p = pathlib.Path("android/app/src/main/AndroidManifest.xml")
           s = p.read_text()
-          perms = ('    <uses-permission android:name="android.permission.CAMERA"/>\n'
-                   '    <uses-permission android:name="android.permission.INTERNET"/>\n')
-          if "android.permission.CAMERA" not in s:
-              s = re.sub(r'(<manifest[^>]*>\n)', r'\1' + perms, s, count=1)
-          p.write_text(s)
-          print(s[:600])
+          perms = ('\n    <uses-permission android:name="android.permission.INTERNET"/>'
+                   '\n    <uses-permission android:name="android.permission.CAMERA"/>')
+          # Insert right after the opening <manifest ...> tag (newline-agnostic).
+          if "android.permission.INTERNET" not in s or "android.permission.CAMERA" not in s:
+              s = re.sub(r'(<manifest\b[^>]*>)', r'\1' + perms, s, count=1)
+              p.write_text(s)
+          assert "android.permission.INTERNET" in p.read_text(), "INTERNET permission not added!"
+          print(p.read_text()[:700])
           PY
 
       - name: Install dependencies
