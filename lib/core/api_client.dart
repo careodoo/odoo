@@ -129,6 +129,11 @@ class ApiClient {
   Future<void> markAllNotifsRead() async =>
       _handle(await http.post(_u('/notifications/read_all'), headers: await _headers()));
 
+  // ---- admin ---------------------------------------------------------------
+  Future<Map<String, dynamic>> adminDashboard() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/admin/dashboard'), headers: await _headers())))['data'] as Map);
+
   // ---- supervisor ----------------------------------------------------------
   Future<Map<String, dynamic>> stats() async =>
       Map<String, dynamic>.from((await _handle(
