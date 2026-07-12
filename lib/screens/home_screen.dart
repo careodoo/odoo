@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/theme.dart';
+import '../core/widgets.dart';
 import 'workorders_screen.dart';
 import 'scan_screen.dart';
 import 'security_home.dart';
+import 'supervisor_screen.dart';
 
 /// Role router: the same app opens a different face depending on who logs in.
 /// A security guard lands on the security command screen; a cleaner/agri worker
@@ -62,7 +64,9 @@ class WorkerHome extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
+          MyStatsRow(counts: p.counts),
+          const SizedBox(height: 12),
           _BigAction(
             icon: Icons.qr_code_scanner,
             label: 'امسح رمز الموقع — إثبات الحضور',
@@ -75,6 +79,13 @@ class WorkerHome extends StatelessWidget {
             onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const WorkOrdersScreen())),
           ),
+          if (p.isSupervisor)
+            _BigAction(
+              icon: Icons.dashboard_customize,
+              label: '🧭 لوحة المشرف — إحصائيات وإسناد',
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const SupervisorScreen())),
+            ),
         ],
       ),
     );

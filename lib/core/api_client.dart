@@ -100,6 +100,29 @@ class ApiClient {
     return List<dynamic>.from(body['data'] as List);
   }
 
+  // ---- supervisor ----------------------------------------------------------
+  Future<Map<String, dynamic>> stats() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/stats'), headers: await _headers())))['data'] as Map);
+
+  Future<List<dynamic>> team() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/team'), headers: await _headers())))['data'] as List);
+
+  Future<List<dynamic>> employees() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/employees'), headers: await _headers())))['data'] as List);
+
+  Future<List<dynamic>> assignable() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/workorders/assignable'), headers: await _headers())))['data'] as List);
+
+  Future<Map<String, dynamic>> assign(int woId, int employeeId) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/workorders/$woId/assign'),
+              headers: await _headers(),
+              body: jsonEncode({'employee_id': employeeId})))) ['data'] as Map);
+
   Future<Map<String, dynamic>> createIncident({
     required String type,
     required String severity,

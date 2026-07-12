@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
+import '../core/widgets.dart';
 import 'scan_screen.dart';
 import 'workorders_screen.dart';
 import 'security_incidents_screen.dart';
 import 'security_list_screen.dart';
+import 'supervisor_screen.dart';
 
 /// The security app's face — deliberately different: a dark "command centre"
 /// look, large glanceable tiles, and a prominent panic action. This is the
@@ -51,7 +53,9 @@ class SecurityHome extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
+          MyStatsRow(counts: p.counts),
+          const SizedBox(height: 14),
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
@@ -60,6 +64,13 @@ class SecurityHome extends StatelessWidget {
             crossAxisSpacing: 12,
             childAspectRatio: 1.05,
             children: [
+              if (p.isSupervisor)
+                _Tile(
+                  icon: '🧭', label: 'لوحة المشرف',
+                  sub: 'إحصائيات · إسناد',
+                  onTap: () => Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const SupervisorScreen())),
+                ),
               _Tile(
                 icon: '📍', label: 'مسح نقطة دورية',
                 sub: 'إثبات تفتيش',

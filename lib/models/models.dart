@@ -14,38 +14,54 @@ class Service {
       );
 }
 
+class Counts {
+  Counts({this.open = 0, this.inProgress = 0, this.done = 0, this.overdue = 0, this.total = 0});
+  final int open, inProgress, done, overdue, total;
+  factory Counts.fromJson(Map j) => Counts(
+        open: j['open'] as int? ?? 0,
+        inProgress: j['in_progress'] as int? ?? 0,
+        done: j['done'] as int? ?? 0,
+        overdue: j['overdue'] as int? ?? 0,
+        total: j['total'] as int? ?? 0,
+      );
+}
+
 class Profile {
   Profile({
     required this.userId,
     required this.name,
     required this.login,
     required this.role,
+    required this.isSupervisor,
     required this.serviceTypes,
     required this.services,
-    required this.openWorkOrders,
+    required this.counts,
     this.employeeId,
   });
   final int userId;
   final String name;
   final String login;
   final String role;
+  final bool isSupervisor;
   final List<String> serviceTypes;
   final List<Service> services;
-  final int openWorkOrders;
+  final Counts counts;
   final int? employeeId;
+
+  int get openWorkOrders => counts.open;
 
   factory Profile.fromJson(Map j) {
     final u = (j['user'] as Map?) ?? {};
-    final counts = (j['counts'] as Map?) ?? {};
     return Profile(
       userId: u['id'] as int? ?? 0,
       name: u['name'] as String? ?? '',
       login: u['login'] as String? ?? '',
       employeeId: u['employee_id'] as int?,
       role: j['role'] as String? ?? 'worker',
+      isSupervisor: j['is_supervisor'] as bool? ?? false,
       serviceTypes: List<String>.from((j['my_service_types'] as List?) ?? const []),
       services: [for (final s in (j['services'] as List? ?? const [])) Service.fromJson(s as Map)],
-      openWorkOrders: counts['open_workorders'] as int? ?? 0,
+      counts: Counts.fromJson((j['counts'] as Map?) ?? const {}),
     );
   }
 }
