@@ -36,6 +36,7 @@ class Profile {
     required this.serviceTypes,
     required this.services,
     required this.counts,
+    required this.unreadNotifications,
     this.employeeId,
   });
   final int userId;
@@ -46,6 +47,7 @@ class Profile {
   final List<String> serviceTypes;
   final List<Service> services;
   final Counts counts;
+  final int unreadNotifications;
   final int? employeeId;
 
   int get openWorkOrders => counts.open;
@@ -62,6 +64,7 @@ class Profile {
       serviceTypes: List<String>.from((j['my_service_types'] as List?) ?? const []),
       services: [for (final s in (j['services'] as List? ?? const [])) Service.fromJson(s as Map)],
       counts: Counts.fromJson((j['counts'] as Map?) ?? const {}),
+      unreadNotifications: j['unread_notifications'] as int? ?? 0,
     );
   }
 }

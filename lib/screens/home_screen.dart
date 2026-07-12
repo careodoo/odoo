@@ -7,6 +7,7 @@ import 'workorders_screen.dart';
 import 'scan_screen.dart';
 import 'security_home.dart';
 import 'supervisor_screen.dart';
+import 'client_home.dart';
 
 /// Role router: the same app opens a different face depending on who logs in.
 /// A security guard lands on the security command screen; a cleaner/agri worker
@@ -17,6 +18,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final profile = context.watch<AuthProvider>().profile!;
+    if (profile.role == 'client') return const ClientHome();
     if (profile.role == 'security') return const SecurityHome();
     return const WorkerHome();
   }
@@ -34,6 +36,7 @@ class WorkerHome extends StatelessWidget {
       appBar: AppBar(
         title: Text('${st.icon}  ${st.label}'),
         actions: [
+          NotifBell(unread: p.unreadNotifications),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => context.read<AuthProvider>().logout(),

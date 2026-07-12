@@ -22,6 +22,7 @@ class SecurityHome extends StatelessWidget {
       appBar: AppBar(
         title: const Text('🛡️  مركز الأمن'),
         actions: [
+          NotifBell(unread: p.unreadNotifications),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => context.read<AuthProvider>().logout(),

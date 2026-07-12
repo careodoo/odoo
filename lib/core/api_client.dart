@@ -100,6 +100,35 @@ class ApiClient {
     return List<dynamic>.from(body['data'] as List);
   }
 
+  // ---- branding (public, no token) -----------------------------------------
+  Future<Map<String, dynamic>> branding() async {
+    final r = await http.get(_u('/branding'),
+        headers: {'Content-Type': 'application/json'});
+    final body = await _handle(r) as Map;
+    return Map<String, dynamic>.from(body['data'] as Map);
+  }
+
+  // ---- client --------------------------------------------------------------
+  Future<Map<String, dynamic>> clientOverview() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/overview'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> clientFacility(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/facility/$id'), headers: await _headers())))['data'] as Map);
+
+  // ---- notifications -------------------------------------------------------
+  Future<(List<dynamic>, int)> notifications() async {
+    final body = await _handle(await http.get(_u('/notifications'), headers: await _headers()));
+    return (List<dynamic>.from(body['data'] as List), (body['unread'] as int?) ?? 0);
+  }
+
+  Future<void> markNotifRead(int id) async =>
+      _handle(await http.post(_u('/notifications/$id/read'), headers: await _headers()));
+
+  Future<void> markAllNotifsRead() async =>
+      _handle(await http.post(_u('/notifications/read_all'), headers: await _headers()));
+
   // ---- supervisor ----------------------------------------------------------
   Future<Map<String, dynamic>> stats() async =>
       Map<String, dynamic>.from((await _handle(

@@ -1,5 +1,37 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
+import '../screens/notifications_screen.dart';
+
+/// App-bar bell with an unread badge.
+class NotifBell extends StatelessWidget {
+  const NotifBell({super.key, required this.unread});
+  final int unread;
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.notifications_outlined),
+          onPressed: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const NotificationsScreen())),
+        ),
+        if (unread > 0)
+          Positioned(
+            top: 8, right: 6,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+              decoration: const BoxDecoration(color: Color(0xFFE5484D), shape: BoxShape.circle),
+              child: Text('$unread',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
+            ),
+          ),
+      ],
+    );
+  }
+}
 
 /// A compact KPI card used across every service face.
 class StatCard extends StatelessWidget {
