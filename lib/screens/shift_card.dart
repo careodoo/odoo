@@ -73,19 +73,13 @@ class _ShiftCardState extends State<ShiftCard> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return Container(
-        height: 74,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: const Color(0xFF64748B).withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)),
-      );
-    }
+    // Always render a visible card with the open/close button — even while the
+    // status is still loading (button shows a spinner) so it's never an empty box.
     final open = _shift?['open'] != null;
     final c = open ? const Color(0xFF16A34A) : const Color(0xFF64748B);
+    final title = _loading
+        ? tr('حالة الوردية…', 'Checking shift…')
+        : (open ? tr('متاح — وردية مفتوحة', 'Available — on shift') : tr('خارج الوردية', 'Off shift'));
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -97,16 +91,20 @@ class _ShiftCardState extends State<ShiftCard> {
         Icon(open ? Icons.check_circle : Icons.radio_button_unchecked, color: c, size: 34),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(open ? tr('متاح — وردية مفتوحة', 'Available — on shift') : tr('خارج الوردية', 'Off shift'),
-              style: TextStyle(color: c, fontWeight: FontWeight.w800, fontSize: 15)),
+          Text(title, style: TextStyle(color: c, fontWeight: FontWeight.w800, fontSize: 15)),
           if (open && _shift!['open']?['facility'] != null)
-            Text('${_shift!['open']['facility']}', style: TextStyle(color: Theme.of(context).colorScheme.outline, fontSize: 12)),
+            Text('${_shift!['open']['facility']}', style: TextStyle(color: Theme.of(context).colorScheme.outline, fontSize: 12))
+          else
+            Text(tr('اضغط لتسجيل الحضور/الانصراف', 'Tap to check in / out'),
+                style: TextStyle(color: Theme.of(context).colorScheme.outline, fontSize: 11.5)),
         ])),
         FilledButton.icon(
           style: FilledButton.styleFrom(backgroundColor: open ? const Color(0xFFE5484D) : const Color(0xFF16A34A)),
-          onPressed: _busy ? null : () => _toggle(!open),
-          icon: Icon(open ? Icons.logout : Icons.login, size: 18),
-          label: Text(_busy ? '...' : (open ? tr('إنهاء الوردية', 'End shift') : tr('بدء الوردية', 'Start shift'))),
+          onPressed: (_busy || _loading) ? null : () => _toggle(!open),
+          icon: (_busy || _loading)
+              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : Icon(open ? Icons.logout : Icons.login, size: 18),
+          label: Text(open ? tr('إنهاء الوردية', 'End shift') : tr('بدء الوردية', 'Start shift')),
         ),
       ]),
     );

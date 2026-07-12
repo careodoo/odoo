@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'api_client.dart';
 import '../models/models.dart';
@@ -12,9 +13,27 @@ class AuthProvider extends ChangeNotifier {
   bool loading = true;
   String? error;
   String? _adminToken; // saved while impersonating
+  Timer? _poll;
 
   bool get isLoggedIn => profile != null;
   bool get isImpersonating => _adminToken != null;
+
+  /// Poll the profile (unread notifications + task counts) every 45s so alerts
+  /// surface live while the app is open — the badge updates without re-login.
+  void _startPolling() {
+    _poll?.cancel();
+    _poll = Timer.periodic(const Duration(seconds: 45), (_) => refresh());
+  }
+
+  /// Refresh the profile silently; keeps the current one if the call fails.
+  Future<void> refresh() async {
+    if (profile == null) return;
+    try {
+      final p = Profile.fromJson(await api.me());
+      profile = p;
+      notifyListeners();
+    } catch (_) {/* transient network error — keep showing the last state */}
+  }
 
   /// Admin test feature: view the app as another user without re-login.
   Future<void> impersonate(String login) async {
@@ -41,6 +60,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       if (await api.token != null) {
         profile = Profile.fromJson(await api.me());
+        _startPolling();
       }
     } catch (_) {
       // stale/expired token → drop it silently, show login
@@ -57,6 +77,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     try {
       profile = Profile.fromJson(await api.login(login, password));
+      _startPolling();
       notifyListeners();
       return true;
     } on ApiException catch (e) {
@@ -76,8 +97,16 @@ class AuthProvider extends ChangeNotifier {
       await exitImpersonation();
       return;
     }
+    _poll?.cancel();
+    _poll = null;
     await api.logout();
     profile = null;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _poll?.cancel();
+    super.dispose();
   }
 }
