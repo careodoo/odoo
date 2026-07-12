@@ -4,6 +4,7 @@ import 'package:nfc_manager/nfc_manager.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
+import '../core/i18n.dart';
 import '../models/models.dart';
 
 /// Scan a location — the worker chooses QR (camera) or NFC (tap the chip).
@@ -128,7 +129,7 @@ class _ScanScreenState extends State<ScanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('مسح الموقع')),
+      appBar: AppBar(title: Text(tr('مسح الموقع', 'Scan location'))),
       body: switch (_mode) {
         _Mode.choose => _chooser(),
         _Mode.qr => _qrView(),
@@ -144,11 +145,11 @@ class _ScanScreenState extends State<ScanScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('اختر طريقة المسح', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          Text(tr('اختر طريقة المسح', 'Choose scan method'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
           const SizedBox(height: 24),
-          _method(Icons.qr_code_scanner, 'مسح رمز QR', 'بالكاميرا', const Color(0xFF2F6DF6), _startQr),
+          _method(Icons.qr_code_scanner, tr('مسح رمز QR', 'Scan QR code'), tr('بالكاميرا', 'Using the camera'), const Color(0xFF2F6DF6), _startQr),
           const SizedBox(height: 16),
-          _method(Icons.nfc, 'مسح شريحة NFC', 'قرّب الجهاز من الشريحة', const Color(0xFF37C98A), _startNfc),
+          _method(Icons.nfc, tr('مسح شريحة NFC', 'Scan NFC tag'), tr('قرّب الجهاز من الشريحة', 'Hold the device near the tag'), const Color(0xFF37C98A), _startNfc),
         ],
       ),
     );

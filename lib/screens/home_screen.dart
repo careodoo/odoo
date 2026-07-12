@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/theme.dart';
 import '../core/widgets.dart';
+import '../core/i18n.dart';
 import 'workorders_screen.dart';
 import 'scan_screen.dart';
 import 'security_home.dart';
@@ -61,7 +62,7 @@ class WorkerHome extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(p.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                        Text('مهامي المفتوحة: ${p.openWorkOrders}',
+                        Text(tr('مهامي المفتوحة', 'My open tasks')+': ${p.openWorkOrders}',
                             style: TextStyle(color: Theme.of(context).colorScheme.outline)),
                       ],
                     ),
@@ -75,29 +76,29 @@ class WorkerHome extends StatelessWidget {
           const SizedBox(height: 12),
           _BigAction(
             icon: Icons.qr_code_scanner,
-            label: 'امسح رمز الموقع — إثبات الحضور',
+            label: tr('امسح رمز الموقع — إثبات الحضور', 'Scan location — check in'),
             onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const ScanScreen())),
           ),
           _BigAction(
             icon: Icons.assignment_outlined,
-            label: 'أوامر العمل الخاصة بي',
+            label: tr('أوامر العمل الخاصة بي', 'My work orders'),
             onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const WorkOrdersScreen())),
           ),
           if (p.role == 'cleaning')
-            _BigAction(icon: Icons.cleaning_services, label: 'تدقيق الجودة (النظافة)',
+            _BigAction(icon: Icons.cleaning_services, label: tr('تدقيق الجودة (النظافة)', 'Quality audits (cleaning)'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ServiceScreen(kind: 'cleaning', title: 'تدقيق النظافة')))),
           if (p.role == 'agriculture')
-            _BigAction(icon: Icons.grass, label: 'مناطق الريّ والزراعة',
+            _BigAction(icon: Icons.grass, label: tr('مناطق الريّ والزراعة', 'Irrigation & planting zones'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ServiceScreen(kind: 'agri', title: 'مناطق الريّ')))),
           if (p.role == 'facade')
-            _BigAction(icon: Icons.cleaning_services, label: 'تصاريح العمل على الارتفاع',
+            _BigAction(icon: Icons.cleaning_services, label: tr('تصاريح العمل على الارتفاع', 'Height-work permits'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ServiceScreen(kind: 'facade', title: 'تصاريح الواجهات')))),
           if (p.isSupervisor)
             _BigAction(
               icon: Icons.dashboard_customize,
-              label: '🧭 لوحة المشرف — إحصائيات وإسناد',
+              label: tr('🧭 لوحة المشرف — إحصائيات وإسناد', '🧭 Supervisor — stats & assign'),
               onTap: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const SupervisorScreen())),
             ),

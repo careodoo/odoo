@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
+import '../core/i18n.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -35,11 +36,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('الإشعارات'),
+        title: Text(tr('الإشعارات', 'Notifications')),
         actions: [
           TextButton(
             onPressed: _readAll,
-            child: const Text('تعليم الكل مقروء', style: TextStyle(color: Colors.white, fontSize: 12)),
+            child: Text(tr('تعليم الكل مقروء', 'Mark all read'), style: const TextStyle(color: Colors.white, fontSize: 12)),
           ),
         ],
       ),

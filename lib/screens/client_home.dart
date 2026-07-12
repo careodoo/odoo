@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/widgets.dart';
 import 'facility_detail_screen.dart';
+import 'work_order_detail_screen.dart';
 
 /// The client's cockpit — everything the module holds for this customer:
 /// buildings, services, teams, live work-order activity. Fully data-driven, so
@@ -160,6 +161,9 @@ class _ClientHomeState extends State<ClientHome> {
           title: Text('${w['title']}', style: const TextStyle(fontWeight: FontWeight.w700)),
           subtitle: Text('${w['service_type']} · ${w['facility']} · ${w['state']}',
               style: TextStyle(color: cs.outline, fontSize: 12)),
+          trailing: const Icon(Icons.chevron_left),
+          onTap: () => Navigator.push(context, MaterialPageRoute(
+              builder: (_) => WorkOrderDetailScreen(id: w['id'] as int, title: '${w['title']}'))),
         ),
       );
 }

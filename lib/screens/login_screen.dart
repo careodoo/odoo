@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
+import '../core/i18n.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -42,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final ok = await context.read<AuthProvider>().login(_login.text.trim(), _pass.text);
     if (mounted) setState(() => _busy = false);
     if (!ok && mounted) {
-      final err = context.read<AuthProvider>().error ?? 'فشل الدخول';
+      final err = context.read<AuthProvider>().error ?? tr('فشل الدخول', 'Login failed');
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
     }
   }
@@ -67,9 +68,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     const Text('CARE FM',
                         style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w900, letterSpacing: 3)),
                     const SizedBox(height: 4),
-                    const Text('نظام إدارة المرافق المتكامل',
+                    Text(tr('نظام إدارة المرافق المتكامل', 'Integrated Facility Management'),
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white70, fontSize: 13, letterSpacing: .3)),
+                        style: const TextStyle(color: Colors.white70, fontSize: 13, letterSpacing: .3)),
                     const SizedBox(height: 30),
                     _card(context),
                     const SizedBox(height: 20),
@@ -126,15 +127,15 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('تسجيل الدخول', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          Text(tr('تسجيل الدخول', 'Sign in'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
           const SizedBox(height: 18),
           TextField(
             controller: _login,
             textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(
-              labelText: 'اسم المستخدم',
-              prefixIcon: Icon(Icons.person_outline),
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: tr('اسم المستخدم', 'Username'),
+              prefixIcon: const Icon(Icons.person_outline),
+              border: const OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 14),
@@ -143,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
             obscureText: _obscure,
             onSubmitted: (_) => _submit(),
             decoration: InputDecoration(
-              labelText: 'كلمة المرور',
+              labelText: tr('كلمة المرور', 'Password'),
               prefixIcon: const Icon(Icons.lock_outline),
               suffixIcon: IconButton(
                 icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
@@ -157,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
             onPressed: _busy ? null : _submit,
             child: _busy
                 ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Text('دخول'),
+                : Text(tr('دخول', 'Log in')),
           ),
         ],
       ),

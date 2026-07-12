@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
+import '../core/i18n.dart';
 import 'home_screen.dart';
 import 'workorders_screen.dart';
 import 'scan_screen.dart';
@@ -27,29 +28,29 @@ class _MainShellState extends State<MainShell> {
   int _idx = 0;
 
   List<_Tab> _tabs(profile) {
-    const home = _Tab(Icons.home_rounded, 'الرئيسية', HomeScreen());
-    const notif = _Tab(Icons.notifications_rounded, 'الإشعارات', NotificationsScreen());
-    const more = _Tab(Icons.grid_view_rounded, 'المزيد', MoreScreen());
+    final home = _Tab(Icons.home_rounded, tr('الرئيسية', 'Home'), const HomeScreen());
+    final notif = _Tab(Icons.notifications_rounded, tr('الإشعارات', 'Alerts'), const NotificationsScreen());
+    final more = _Tab(Icons.grid_view_rounded, tr('المزيد', 'More'), const MoreScreen());
     if (profile.role == 'client') {
-      return const [
+      return [
         home,
-        _Tab(Icons.insights_rounded, 'الإحصائيات', ClientAnalyticsScreen()),
+        _Tab(Icons.insights_rounded, tr('الإحصائيات', 'Analytics'), const ClientAnalyticsScreen()),
         notif, more,
       ];
     }
     if (profile.isAdmin) {
-      return const [
+      return [
         home,
-        _Tab(Icons.assignment_rounded, 'الأعمال', WorkOrdersScreen()),
-        _Tab(Icons.dashboard_customize_rounded, 'المشرف', SupervisorScreen()),
+        _Tab(Icons.assignment_rounded, tr('الأعمال', 'Work'), const WorkOrdersScreen()),
+        _Tab(Icons.dashboard_customize_rounded, tr('المشرف', 'Supervisor'), const SupervisorScreen()),
         notif, more,
       ];
     }
     // worker / security
-    return const [
+    return [
       home,
-      _Tab(Icons.assignment_rounded, 'مهامي', WorkOrdersScreen()),
-      _Tab(Icons.qr_code_scanner_rounded, 'مسح', ScanScreen()),
+      _Tab(Icons.assignment_rounded, tr('مهامي', 'My tasks'), const WorkOrdersScreen()),
+      _Tab(Icons.qr_code_scanner_rounded, tr('مسح', 'Scan'), const ScanScreen()),
       notif, more,
     ];
   }

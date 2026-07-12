@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
+import '../core/i18n.dart';
 import 'workorders_screen.dart';
 import 'scan_screen.dart';
 import 'notifications_screen.dart';
@@ -36,35 +37,39 @@ class MoreScreen extends StatelessWidget {
           child: Text(t, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
         ));
 
-    header('العمل');
-    tile(Icons.assignment, 'أوامر العمل', const WorkOrdersScreen());
-    if (p.role != 'client') tile(Icons.qr_code_scanner, 'مسح رمز الموقع', const ScanScreen());
+    header(tr('العمل', 'Work'));
+    tile(Icons.assignment, tr('أوامر العمل', 'Work orders'), const WorkOrdersScreen());
+    if (p.role != 'client') tile(Icons.qr_code_scanner, tr('مسح رمز الموقع', 'Scan location'), const ScanScreen());
 
-    if (p.role == 'cleaning') { header('النظافة'); tile(Icons.cleaning_services, 'تدقيق الجودة', const ServiceScreen(kind: 'cleaning', title: 'تدقيق النظافة')); }
-    if (p.role == 'agriculture') { header('الزراعة'); tile(Icons.grass, 'مناطق الريّ', const ServiceScreen(kind: 'agri', title: 'مناطق الريّ')); }
-    if (p.role == 'facade') { header('الواجهات'); tile(Icons.cleaning_services, 'تصاريح الارتفاع', const ServiceScreen(kind: 'facade', title: 'تصاريح الواجهات')); }
+    if (p.role == 'cleaning') { header(tr('النظافة', 'Cleaning')); tile(Icons.cleaning_services, tr('تدقيق الجودة', 'Quality audits'), const ServiceScreen(kind: 'cleaning', title: 'تدقيق النظافة')); }
+    if (p.role == 'agriculture') { header(tr('الزراعة', 'Agriculture')); tile(Icons.grass, tr('مناطق الريّ', 'Irrigation zones'), ServiceScreen(kind: 'agri', title: tr('مناطق الريّ', 'Irrigation zones'))); }
+    if (p.role == 'facade') { header(tr('الواجهات', 'Facades')); tile(Icons.cleaning_services, tr('تصاريح الارتفاع', 'Height permits'), const ServiceScreen(kind: 'facade', title: 'تصاريح الواجهات')); }
 
     if (p.role == 'security') {
-      header('الأمن');
-      tile(Icons.report, 'البلاغات الأمنية', const SecurityIncidentsScreen(), c: const Color(0xFFE5484D));
-      tile(Icons.route, 'الدوريات', const SecurityListScreen(kind: 'patrols', title: 'الدوريات'));
-      tile(Icons.vpn_key, 'عهدة المفاتيح', const SecurityListScreen(kind: 'keys', title: 'عهدة المفاتيح'));
-      tile(Icons.badge, 'تصاريح البوابة', const SecurityListScreen(kind: 'gatepasses', title: 'تصاريح البوابة'));
+      header(tr('الأمن', 'Security'));
+      tile(Icons.report, tr('البلاغات الأمنية', 'Incidents'), const SecurityIncidentsScreen(), c: const Color(0xFFE5484D));
+      tile(Icons.route, tr('الدوريات', 'Patrols'), SecurityListScreen(kind: 'patrols', title: tr('الدوريات', 'Patrols')));
+      tile(Icons.vpn_key, tr('عهدة المفاتيح', 'Key custody'), SecurityListScreen(kind: 'keys', title: tr('عهدة المفاتيح', 'Key custody')));
+      tile(Icons.badge, tr('تصاريح البوابة', 'Gate passes'), SecurityListScreen(kind: 'gatepasses', title: tr('تصاريح البوابة', 'Gate passes')));
     }
 
     if (p.isSupervisor || p.isAdmin) {
-      header('الإدارة');
-      tile(Icons.dashboard_customize, 'لوحة المشرف — إسناد', const SupervisorScreen());
-      if (p.isAdmin) tile(Icons.business, 'لوحة الشركة', const AdminHome(), c: const Color(0xFF6366F1));
+      header(tr('الإدارة', 'Management'));
+      tile(Icons.dashboard_customize, tr('لوحة المشرف — إسناد', 'Supervisor board'), const SupervisorScreen());
+      if (p.isAdmin) tile(Icons.business, tr('لوحة الشركة', 'Company dashboard'), const AdminHome(), c: const Color(0xFF6366F1));
     }
 
-    header('الحساب');
-    tile(Icons.notifications, 'الإشعارات', const NotificationsScreen());
-    tile(Icons.logout, 'تسجيل الخروج', null, c: const Color(0xFFE5484D),
+    header(tr('الحساب', 'Account'));
+    tile(Icons.notifications, tr('الإشعارات', 'Notifications'), const NotificationsScreen());
+    // language toggle
+    final lang = context.watch<LangProvider>();
+    tile(Icons.language, lang.isArabic ? 'English' : 'العربية', null, c: const Color(0xFF0B6EA8),
+        onTap: () => context.read<LangProvider>().toggle());
+    tile(Icons.logout, tr('تسجيل الخروج', 'Sign out'), null, c: const Color(0xFFE5484D),
         onTap: () => context.read<AuthProvider>().logout());
 
     return Scaffold(
-      appBar: AppBar(title: const Text('المزيد')),
+      appBar: AppBar(title: Text(tr('المزيد', 'More'))),
       body: ListView(padding: const EdgeInsets.all(14), children: items),
     );
   }
