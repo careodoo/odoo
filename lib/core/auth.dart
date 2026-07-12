@@ -11,8 +11,28 @@ class AuthProvider extends ChangeNotifier {
   Profile? profile;
   bool loading = true;
   String? error;
+  String? _adminToken; // saved while impersonating
 
   bool get isLoggedIn => profile != null;
+  bool get isImpersonating => _adminToken != null;
+
+  /// Admin test feature: view the app as another user without re-login.
+  Future<void> impersonate(String login) async {
+    _adminToken ??= await api.token; // remember the admin token once
+    final data = await api.impersonate(login);
+    profile = Profile.fromJson(data);
+    notifyListeners();
+  }
+
+  Future<void> exitImpersonation() async {
+    if (_adminToken == null) return;
+    await api.setToken(_adminToken);
+    _adminToken = null;
+    profile = Profile.fromJson(await api.me());
+    notifyListeners();
+  }
+
+  Future<List<dynamic>> impersonatableUsers() => api.adminUsers();
 
   /// Called once at startup: if a token is stored, fetch the profile.
   Future<void> bootstrap() async {
@@ -51,6 +71,11 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    if (_adminToken != null) {
+      // exit impersonation instead of a full logout
+      await exitImpersonation();
+      return;
+    }
     await api.logout();
     profile = null;
     notifyListeners();

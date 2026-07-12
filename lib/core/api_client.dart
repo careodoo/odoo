@@ -22,6 +22,7 @@ class ApiClient {
   Future<void> _setToken(String? t) async => t == null
       ? _storage.delete(key: _tokenKey)
       : _storage.write(key: _tokenKey, value: t);
+  Future<void> setToken(String? t) => _setToken(t); // public (for impersonation restore)
 
   Future<Map<String, String>> _headers() async {
     final t = await token;
@@ -182,6 +183,19 @@ class ApiClient {
       _handle(await http.post(_u('/notifications/read_all'), headers: await _headers()));
 
   // ---- admin ---------------------------------------------------------------
+  /// Test-only: list users to impersonate (admin).
+  Future<List<dynamic>> adminUsers() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/admin/users'), headers: await _headers())))['data'] as List);
+
+  /// Switch the session to another user (admin). Sets the returned token.
+  Future<Map<String, dynamic>> impersonate(String login) async {
+    final body = await _handle(await http.post(_u('/admin/impersonate'),
+        headers: await _headers(), body: jsonEncode({'login': login}))) as Map;
+    await _setToken(body['token'] as String?);
+    return Map<String, dynamic>.from(body['data'] as Map);
+  }
+
   Future<Map<String, dynamic>> adminDashboard() async =>
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/admin/dashboard'), headers: await _headers())))['data'] as Map);
@@ -208,6 +222,14 @@ class ApiClient {
               _u('/workorders/$woId/assign'),
               headers: await _headers(),
               body: jsonEncode({'employee_id': employeeId})))) ['data'] as Map);
+
+  Future<Map<String, dynamic>> securityDashboard() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/security/dashboard'), headers: await _headers())))['data'] as Map);
+
+  Future<List<dynamic>> securityData(String kind) async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/security/data/$kind'), headers: await _headers())))['data'] as List);
 
   Future<Map<String, dynamic>> createIncident({
     required String type,
