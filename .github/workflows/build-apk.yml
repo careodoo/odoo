@@ -55,6 +55,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Generate launcher icons (CARE FM)
+        run: dart run flutter_launcher_icons || true
+
       - name: Build release APK
         run: flutter build apk --release --dart-define=CARE_API_BASE=https://ecare.care-kw.com/api/v1
 
