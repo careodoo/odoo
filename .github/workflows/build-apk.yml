@@ -41,7 +41,8 @@ jobs:
           p = pathlib.Path("android/app/src/main/AndroidManifest.xml")
           s = p.read_text()
           perms = ('\n    <uses-permission android:name="android.permission.INTERNET"/>'
-                   '\n    <uses-permission android:name="android.permission.CAMERA"/>')
+                   '\n    <uses-permission android:name="android.permission.CAMERA"/>'
+                   '\n    <uses-permission android:name="android.permission.NFC"/>')
           # Insert right after the opening <manifest ...> tag (newline-agnostic).
           if "android.permission.INTERNET" not in s or "android.permission.CAMERA" not in s:
               s = re.sub(r'(<manifest\b[^>]*>)', r'\1' + perms, s, count=1)
