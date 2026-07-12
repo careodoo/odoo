@@ -144,6 +144,15 @@ class ApiClient {
       List<dynamic>.from((await _handle(
               await http.get(_u('/service/$path'), headers: await _headers())))['data'] as List);
 
+  // ---- occupancy (3D building) ---------------------------------------------
+  Future<List<dynamic>> facilities() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/facilities'), headers: await _headers())))['data'] as List);
+
+  Future<Map<String, dynamic>> facilityOccupancy(int fid) async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/facility/$fid/occupancy'), headers: await _headers())))['data'] as Map);
+
   // ---- shifts (geofenced) --------------------------------------------------
   Future<Map<String, dynamic>> shiftCurrent() async =>
       Map<String, dynamic>.from((await _handle(

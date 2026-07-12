@@ -11,6 +11,7 @@ import 'security_incidents_screen.dart';
 import 'security_list_screen.dart';
 import 'service_screen.dart';
 import 'appraisal_screen.dart';
+import 'occupancy_screen.dart';
 
 /// A single place that links to everything available to this user — so nothing
 /// is more than two taps away.
@@ -61,6 +62,7 @@ class MoreScreen extends StatelessWidget {
     }
 
     if (p.role != 'client') tile(Icons.star, tr('تقييم الأداء', 'Performance'), const AppraisalScreen(), c: const Color(0xFFF59E0B));
+    tile(Icons.apartment, tr('المبنى ثلاثي الأبعاد — إشغال حيّ', '3D building — live'), const OccupancyScreen(), c: const Color(0xFF6366F1));
     header(tr('الحساب', 'Account'));
     tile(Icons.notifications, tr('الإشعارات', 'Notifications'), const NotificationsScreen());
     // language toggle
