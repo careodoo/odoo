@@ -57,9 +57,9 @@ class _LoginScreenState extends State<LoginScreen> {
           const _Backdrop(),
           // 2) content
           SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
+              child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [

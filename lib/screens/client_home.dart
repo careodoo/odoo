@@ -5,6 +5,10 @@ import '../core/i18n.dart';
 import '../core/widgets.dart';
 import 'facility_detail_screen.dart';
 import 'work_order_detail_screen.dart';
+import 'client_team_screen.dart';
+import 'client_activity_screen.dart';
+import 'client_structure_screen.dart';
+import 'client_analytics_screen.dart';
 
 /// The client's cockpit — everything the module holds for this customer:
 /// buildings, services, teams, live work-order activity. Fully data-driven, so
@@ -55,6 +59,8 @@ class _ClientHomeState extends State<ClientHome> {
               padding: const EdgeInsets.all(16),
               children: [
                 _hero(d['client']?.toString() ?? '', cs),
+                const SizedBox(height: 14),
+                _quickAccess(cs),
                 const SizedBox(height: 16),
                 _kpiGrid(k),
                 const SizedBox(height: 20),
@@ -96,14 +102,43 @@ class _ClientHomeState extends State<ClientHome> {
         ]),
       );
 
+  void _go(Widget s) => Navigator.push(context, MaterialPageRoute(builder: (_) => s));
+
+  Widget _quickAccess(ColorScheme cs) {
+    Widget btn(String emoji, String label, Color c, VoidCallback onTap) => Expanded(
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: onTap,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(16)),
+              child: Column(children: [
+                Text(emoji, style: const TextStyle(fontSize: 24)),
+                const SizedBox(height: 6),
+                Text(label, style: TextStyle(color: c, fontWeight: FontWeight.w800, fontSize: 12), textAlign: TextAlign.center),
+              ]),
+            ),
+          ),
+        );
+    return Row(children: [
+      btn('👷', tr('الفريق', 'Team'), const Color(0xFF2F6DF6), () => _go(const ClientTeamScreen())),
+      const SizedBox(width: 10),
+      btn('📡', tr('النشاط', 'Live'), const Color(0xFF16A34A), () => _go(const ClientActivityScreen())),
+      const SizedBox(width: 10),
+      btn('🏢', tr('المباني', 'Buildings'), const Color(0xFF6366F1), () => _go(const ClientStructureScreen())),
+      const SizedBox(width: 10),
+      btn('📊', tr('التحليلات', 'Analytics'), const Color(0xFFF59E0B), () => _go(const ClientAnalyticsScreen())),
+    ]);
+  }
+
   Widget _kpiGrid(Map k) {
     final items = [
-      (tr('المرافق', 'Facilities'), k['facilities'] ?? 0, const Color(0xFF2F6DF6), Icons.location_city),
-      (tr('المباني', 'Buildings'), k['buildings'] ?? 0, const Color(0xFF6366F1), Icons.apartment),
-      (tr('المواقع', 'Locations'), k['locations'] ?? 0, const Color(0xFF0EA5E9), Icons.qr_code),
-      (tr('أعمال مفتوحة', 'Open work'), k['open_workorders'] ?? 0, const Color(0xFFF7A23B), Icons.build),
-      (tr('الخدمات', 'Services'), k['services'] ?? 0, const Color(0xFF37C98A), Icons.design_services),
-      (tr('الفِرَق', 'Teams'), k['teams'] ?? 0, const Color(0xFF14B8A6), Icons.groups),
+      (tr('المرافق', 'Facilities'), k['facilities'] ?? 0, const Color(0xFF2F6DF6), Icons.location_city, () => _go(const ClientStructureScreen())),
+      (tr('المباني', 'Buildings'), k['buildings'] ?? 0, const Color(0xFF6366F1), Icons.apartment, () => _go(const ClientStructureScreen())),
+      (tr('المواقع', 'Locations'), k['locations'] ?? 0, const Color(0xFF0EA5E9), Icons.qr_code, () => _go(const ClientStructureScreen())),
+      (tr('أعمال مفتوحة', 'Open work'), k['open_workorders'] ?? 0, const Color(0xFFF7A23B), Icons.build, () => _go(const ClientAnalyticsScreen())),
+      (tr('الخدمات', 'Services'), k['services'] ?? 0, const Color(0xFF37C98A), Icons.design_services, () => _go(const ClientAnalyticsScreen())),
+      (tr('الفِرَق', 'Teams'), k['teams'] ?? 0, const Color(0xFF14B8A6), Icons.groups, () => _go(const ClientTeamScreen())),
     ];
     return GridView.count(
       crossAxisCount: 3,
@@ -112,7 +147,7 @@ class _ClientHomeState extends State<ClientHome> {
       mainAxisSpacing: 10,
       crossAxisSpacing: 10,
       childAspectRatio: 0.95,
-      children: [for (final it in items) StatCard(label: it.$1, value: it.$2 as int, color: it.$3, icon: it.$4)],
+      children: [for (final it in items) StatCard(label: it.$1, value: it.$2 as int, color: it.$3, icon: it.$4, onTap: it.$5)],
     );
   }
 
@@ -134,16 +169,52 @@ class _ClientHomeState extends State<ClientHome> {
         ),
       );
 
-  Widget _servicesWrap(List services) => Wrap(
-        spacing: 8, runSpacing: 8,
-        children: [
-          for (final s in services)
-            Chip(
-              avatar: Text('${(s as Map)['icon'] ?? '•'}'),
-              label: Text('${s['name']}'),
-            ),
-        ],
-      );
+  static const _svcStyle = {
+    'security': (Color(0xFFE5484D), '🛡️'),
+    'cleaning': (Color(0xFF0EA5E9), '🧹'),
+    'agriculture': (Color(0xFF16A34A), '🌿'),
+    'facade': (Color(0xFF7C3AED), '🏙️'),
+    'maintenance': (Color(0xFFF59E0B), '🔧'),
+  };
+
+  Widget _servicesWrap(List services) {
+    if (services.isEmpty) return const SizedBox.shrink();
+    return GridView.count(
+      crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 10, crossAxisSpacing: 10, childAspectRatio: 2.6,
+      children: [
+        for (final s in services)
+          Builder(builder: (_) {
+            final m = s as Map;
+            final style = _svcStyle[m['type']] ?? (const Color(0xFF334155), '•');
+            final c = style.$1;
+            return InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () => _go(const ClientAnalyticsScreen()),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [c.withValues(alpha: 0.16), c.withValues(alpha: 0.04)],
+                      begin: Alignment.topLeft, end: Alignment.bottomRight),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: c.withValues(alpha: 0.3)),
+                ),
+                child: Row(children: [
+                  Container(
+                    width: 42, height: 42, alignment: Alignment.center,
+                    decoration: BoxDecoration(color: c.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(12)),
+                    child: Text('${m['icon'] ?? style.$2}', style: const TextStyle(fontSize: 22)),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text('${m['name']}',
+                      style: TextStyle(color: c, fontWeight: FontWeight.w900, fontSize: 13.5), maxLines: 2, overflow: TextOverflow.ellipsis)),
+                ]),
+              ),
+            );
+          }),
+      ],
+    );
+  }
 
   Widget _teamCard(Map t, ColorScheme cs) => Card(
         child: ListTile(
@@ -160,9 +231,9 @@ class _ClientHomeState extends State<ClientHome> {
           dense: true,
           leading: const Icon(Icons.build_circle_outlined),
           title: Text('${w['title']}', style: const TextStyle(fontWeight: FontWeight.w700)),
-          subtitle: Text('${w['service_type']} · ${w['facility']} · ${w['state']}',
+          subtitle: Text('${w['service_type']} · ${w['facility']}',
               style: TextStyle(color: cs.outline, fontSize: 12)),
-          trailing: const Icon(Icons.chevron_left),
+          trailing: WoStateBadge('${w['state']}'),
           onTap: () => Navigator.push(context, MaterialPageRoute(
               builder: (_) => WorkOrderDetailScreen(id: w['id'] as int, title: '${w['title']}'))),
         ),

@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import '../core/widgets.dart';
+import 'media_viewer_screen.dart';
 
 class WorkOrderDetailScreen extends StatefulWidget {
   const WorkOrderDetailScreen({super.key, required this.id, required this.title});
@@ -20,11 +22,6 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
   bool _loading = true;
   Timer? _timer;
   Duration _remaining = Duration.zero;
-
-  static const _stateLabel = {
-    'new': 'جديد', 'assigned': 'مُسنَد', 'in_progress': 'قيد التنفيذ',
-    'hold': 'معلّق', 'done': 'بانتظار الاعتماد', 'verified': 'مُعتمد ومُغلق', 'cancelled': 'ملغى',
-  };
 
   @override
   void initState() {
@@ -126,7 +123,7 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
         Text('${_d!['title']}', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),
         const SizedBox(height: 6),
         Wrap(spacing: 6, children: [
-          _chip(_stateLabel[st] ?? st, Colors.white24),
+          _chip(woStateLabel(st), kWoStateColor[st] ?? Colors.white24),
           _chip('${_d!['service']}', Colors.white24),
         ]),
       ]),
@@ -163,7 +160,10 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
 
   Widget _infoCard(ColorScheme cs) => Card(
         child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _row(Icons.location_on, 'الموقع', '${_d!['facility']}${_d!['location'] != null ? ' — ${_d!['location']}' : ''}'),
+          _row(Icons.location_on, tr('الموقع', 'Location'),
+              (_d!['location_detail'] != null && (_d!['location_detail'] as Map)['full'] != null)
+                  ? '${(_d!['location_detail'] as Map)['full']}'
+                  : '${_d!['facility']}${_d!['location'] != null ? ' — ${_d!['location']}' : ''}'),
           _row(Icons.person, 'المُسنَد إليه', '${_d!['assignee'] ?? '—'}'),
           _row(Icons.flag, 'الأولوية', '${_d!['priority']}'),
           _row(Icons.schedule, 'الموعد', '${_d!['deadline'] ?? '—'}'),
@@ -257,14 +257,26 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
   Widget _mediaCard() => Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(tr('الصور والفيديو', 'Photos & video'), style: TextStyle(fontWeight: FontWeight.w800)),
         const SizedBox(height: 8),
-        SizedBox(height: 90, child: ListView(scrollDirection: Axis.horizontal, children: [
-          for (final m in (_d!['media'] as List))
-            Padding(padding: const EdgeInsets.only(left: 8), child: GestureDetector(
-              onTap: () => launchUrl(Uri.parse('${(m as Map)['url']}'), mode: LaunchMode.externalApplication),
-              child: ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network('${(m as Map)['thumb']}', width: 90, height: 90, fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(width: 90, height: 90, color: const Color(0xFFEEF2F7), child: const Icon(Icons.play_circle)))),
-            )),
-        ])),
+        SizedBox(height: 90, child: Builder(builder: (ctx) {
+          final media = (_d!['media'] as List).map((e) => e as Map).toList();
+          return ListView(scrollDirection: Axis.horizontal, children: [
+            for (int i = 0; i < media.length; i++)
+              Padding(padding: const EdgeInsets.only(left: 8), child: GestureDetector(
+                onTap: () async {
+                  final tok = await ctx.read<AuthProvider>().api.token;
+                  if (!ctx.mounted) return;
+                  Navigator.push(ctx, MaterialPageRoute(
+                      builder: (_) => MediaViewerScreen(media: media, index: i, token: tok)));
+                },
+                child: ClipRRect(borderRadius: BorderRadius.circular(10), child: Stack(children: [
+                  Image.network('${media[i]['thumb']}', width: 90, height: 90, fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(width: 90, height: 90, color: const Color(0xFFEEF2F7), child: const Icon(Icons.play_circle))),
+                  if ('${media[i]['type'] ?? ''}'.toLowerCase().contains('video'))
+                    const Positioned.fill(child: Center(child: Icon(Icons.play_circle_fill, color: Colors.white70, size: 34))),
+                ])),
+              )),
+          ]);
+        })),
       ])));
 
   Widget _historyCard(ColorScheme cs) {

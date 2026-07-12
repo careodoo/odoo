@@ -40,7 +40,7 @@ class ApiClient {
     try {
       body = jsonDecode(utf8.decode(r.bodyBytes));
     } catch (_) {
-      throw ApiException(r.statusCode, 'استجابة غير صالحة من الخادم');
+      throw ApiException(r.statusCode, 'استجابة غير صالحة من الخادم (${r.statusCode})');
     }
     if (r.statusCode >= 200 && r.statusCode < 300 && body is Map && body['ok'] == true) {
       return body;
@@ -137,6 +137,22 @@ class ApiClient {
   Future<Map<String, dynamic>> clientFacility(int id) async =>
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/client/facility/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<List<dynamic>> clientTeam() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/client/team'), headers: await _headers())))['data'] as List);
+
+  Future<Map<String, dynamic>> clientEmployee(int id, {String period = 'all'}) async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/employee/$id?period=$period'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> clientActivity() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/activity'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> clientStructure({String period = 'all'}) async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/structure?period=$period'), headers: await _headers())))['data'] as Map);
 
   // ---- per-service data ----------------------------------------------------
   /// path: cleaning/audits | agri/zones | facade/permits
@@ -239,6 +255,10 @@ class ApiClient {
   Future<List<dynamic>> securityData(String kind) async =>
       List<dynamic>.from((await _handle(
               await http.get(_u('/security/data/$kind'), headers: await _headers())))['data'] as List);
+
+  Future<Map<String, dynamic>> securityRecord(String kind, int id) async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/security/record/$kind/$id'), headers: await _headers())))['data'] as Map);
 
   Future<Map<String, dynamic>> createIncident({
     required String type,

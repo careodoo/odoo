@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import '../core/widgets.dart';
 import '../models/models.dart';
 import 'work_order_detail_screen.dart';
 
@@ -72,11 +73,6 @@ class _WoCard extends StatelessWidget {
   final VoidCallback onStart;
   final VoidCallback onDone;
 
-  static const _stateLabel = {
-    'new': 'جديد', 'assigned': 'مُسنَد', 'in_progress': 'قيد التنفيذ',
-    'hold': 'معلّق', 'done': 'منجز', 'verified': 'مُعتمد', 'cancelled': 'ملغى',
-  };
-
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -93,12 +89,7 @@ class _WoCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(child: Text(w.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800))),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                      color: cs.secondaryContainer, borderRadius: BorderRadius.circular(20)),
-                  child: Text(_stateLabel[w.state] ?? w.state, style: const TextStyle(fontSize: 12)),
-                ),
+                WoStateBadge(w.state),
               ],
             ),
             const SizedBox(height: 4),

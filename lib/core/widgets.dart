@@ -4,6 +4,36 @@ import '../core/i18n.dart';
 import '../screens/notifications_screen.dart';
 import '../screens/workorders_screen.dart';
 
+/// Work-order state → colour + Arabic/English label (shared across screens).
+const Map<String, Color> kWoStateColor = {
+  'new': Color(0xFF64748B),
+  'assigned': Color(0xFF2F6DF6),
+  'in_progress': Color(0xFFF59E0B),
+  'hold': Color(0xFF9333EA),
+  'done': Color(0xFF16A34A),
+  'verified': Color(0xFF0E7490),
+  'cancelled': Color(0xFFE5484D),
+};
+String woStateLabel(String s) => const {
+      'new': 'جديد', 'assigned': 'مُسنَد', 'in_progress': 'قيد التنفيذ',
+      'hold': 'معلّق', 'done': 'منجز', 'verified': 'مُعتمد', 'cancelled': 'ملغى',
+    }[s] ?? s;
+
+/// A coloured state pill.
+class WoStateBadge extends StatelessWidget {
+  const WoStateBadge(this.state, {super.key});
+  final String state;
+  @override
+  Widget build(BuildContext context) {
+    final c = kWoStateColor[state] ?? const Color(0xFF64748B);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: c.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20)),
+      child: Text(woStateLabel(state), style: TextStyle(fontSize: 12, color: c, fontWeight: FontWeight.w800)),
+    );
+  }
+}
+
 /// App-bar bell with an unread badge.
 class NotifBell extends StatelessWidget {
   const NotifBell({super.key, required this.unread});

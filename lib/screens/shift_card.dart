@@ -73,7 +73,17 @@ class _ShiftCardState extends State<ShiftCard> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const SizedBox.shrink();
+    if (_loading) {
+      return Container(
+        height: 74,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: const Color(0xFF64748B).withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+      );
+    }
     final open = _shift?['open'] != null;
     final c = open ? const Color(0xFF16A34A) : const Color(0xFF64748B);
     return Container(

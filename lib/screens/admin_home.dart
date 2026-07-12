@@ -4,6 +4,10 @@ import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/widgets.dart';
 import 'notifications_screen.dart';
+import 'workorders_screen.dart';
+import 'supervisor_screen.dart';
+import 'client_team_screen.dart';
+import 'client_structure_screen.dart';
 
 /// Company-wide admin dashboard for CARE — the whole operation at a glance.
 class AdminHome extends StatefulWidget {
@@ -25,7 +29,6 @@ class _AdminHomeState extends State<AdminHome> {
 
   @override
   Widget build(BuildContext context) {
-    final p = context.watch<AuthProvider>().profile!;
     return Scaffold(
       appBar: AppBar(
         title: const Text('🏢 لوحة الشركة'),
@@ -60,15 +63,15 @@ class _AdminHomeState extends State<AdminHome> {
                   crossAxisCount: 3, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
                   mainAxisSpacing: 10, crossAxisSpacing: 10, childAspectRatio: 0.92,
                   children: [
-                    StatCard(label: tr('العملاء', 'Clients'), value: k['clients'] ?? 0, color: const Color(0xFF2F6DF6), icon: Icons.business_center),
-                    StatCard(label: tr('المرافق', 'Facilities'), value: k['facilities'] ?? 0, color: const Color(0xFF6366F1), icon: Icons.location_city),
-                    StatCard(label: tr('المباني', 'Buildings'), value: k['buildings'] ?? 0, color: const Color(0xFF0891B2), icon: Icons.apartment),
-                    StatCard(label: tr('الفِرَق', 'Teams'), value: k['teams'] ?? 0, color: const Color(0xFF14B8A6), icon: Icons.groups),
-                    StatCard(label: tr('الموظفون', 'Employees'), value: k['employees'] ?? 0, color: const Color(0xFF7C3AED), icon: Icons.engineering),
-                    StatCard(label: tr('مفتوحة', 'Open'), value: k['open'] ?? 0, color: const Color(0xFFF7A23B), icon: Icons.build),
-                    StatCard(label: tr('متأخرة', 'Overdue'), value: k['overdue'] ?? 0, color: const Color(0xFFE5484D), icon: Icons.timer_off),
-                    StatCard(label: tr('غير مُسندة', 'Unassigned'), value: k['unassigned'] ?? 0, color: const Color(0xFFB45309), icon: Icons.inbox),
-                    StatCard(label: tr('منجزة', 'Done'), value: k['done'] ?? 0, color: const Color(0xFF16A34A), icon: Icons.check_circle),
+                    StatCard(label: tr('العملاء', 'Clients'), value: k['clients'] ?? 0, color: const Color(0xFF2F6DF6), icon: Icons.business_center, onTap: () => _go(context, const ClientStructureScreen())),
+                    StatCard(label: tr('المرافق', 'Facilities'), value: k['facilities'] ?? 0, color: const Color(0xFF6366F1), icon: Icons.location_city, onTap: () => _go(context, const ClientStructureScreen())),
+                    StatCard(label: tr('المباني', 'Buildings'), value: k['buildings'] ?? 0, color: const Color(0xFF0891B2), icon: Icons.apartment, onTap: () => _go(context, const ClientStructureScreen())),
+                    StatCard(label: tr('الفِرَق', 'Teams'), value: k['teams'] ?? 0, color: const Color(0xFF14B8A6), icon: Icons.groups, onTap: () => _go(context, const ClientTeamScreen())),
+                    StatCard(label: tr('الموظفون', 'Employees'), value: k['employees'] ?? 0, color: const Color(0xFF7C3AED), icon: Icons.engineering, onTap: () => _go(context, const ClientTeamScreen())),
+                    StatCard(label: tr('مفتوحة', 'Open'), value: k['open'] ?? 0, color: const Color(0xFFF7A23B), icon: Icons.build, onTap: () => _go(context, const WorkOrdersScreen())),
+                    StatCard(label: tr('متأخرة', 'Overdue'), value: k['overdue'] ?? 0, color: const Color(0xFFE5484D), icon: Icons.timer_off, onTap: () => _go(context, const WorkOrdersScreen())),
+                    StatCard(label: tr('غير مُسندة', 'Unassigned'), value: k['unassigned'] ?? 0, color: const Color(0xFFB45309), icon: Icons.inbox, onTap: () => _go(context, const SupervisorScreen())),
+                    StatCard(label: tr('منجزة', 'Done'), value: k['done'] ?? 0, color: const Color(0xFF16A34A), icon: Icons.check_circle, onTap: () => _go(context, const WorkOrdersScreen())),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -98,6 +101,8 @@ class _AdminHomeState extends State<AdminHome> {
       ),
     );
   }
+
+  void _go(BuildContext context, Widget s) => Navigator.push(context, MaterialPageRoute(builder: (_) => s));
 
   Widget _panel(String title, List<Widget> children) => Card(
         child: Padding(
