@@ -45,7 +45,9 @@ jobs:
           # Insert right after the opening <manifest ...> tag (newline-agnostic).
           if "android.permission.INTERNET" not in s or "android.permission.CAMERA" not in s:
               s = re.sub(r'(<manifest\b[^>]*>)', r'\1' + perms, s, count=1)
-              p.write_text(s)
+          # app display name shown under the icon
+          s = re.sub(r'android:label="[^"]*"', 'android:label="CARE FM"', s, count=1)
+          p.write_text(s)
           assert "android.permission.INTERNET" in p.read_text(), "INTERNET permission not added!"
           print(p.read_text()[:700])
           PY

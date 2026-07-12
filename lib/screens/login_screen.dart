@@ -55,10 +55,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: const Text('🛡️', style: TextStyle(fontSize: 46)),
                 ),
                 const SizedBox(height: 20),
-                Text('Care — تطبيق الميدان',
+                Text('CARE FM',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.w800)),
+                    style: Theme.of(context).textTheme.headlineMedium
+                        ?.copyWith(fontWeight: FontWeight.w900, letterSpacing: 1.5)),
                 const SizedBox(height: 4),
                 Text('إدارة المرافق والأمن',
                     textAlign: TextAlign.center,

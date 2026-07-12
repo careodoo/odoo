@@ -25,7 +25,7 @@ class CareApp extends StatelessWidget {
     // Theme follows the logged-in user's primary service (security → command look).
     final theme = ServiceTheme.of(auth.profile?.role ?? 'worker');
     return MaterialApp(
-      title: 'Care Field',
+      title: 'CARE FM',
       debugShowCheckedModeBanner: false,
       locale: appLocale,
       theme: buildTheme(theme),
