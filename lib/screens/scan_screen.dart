@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:nfc_manager/nfc_manager.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../models/models.dart';
@@ -51,7 +52,21 @@ class _ScanScreenState extends State<ScanScreen> {
   }
 
   // ---- QR ------------------------------------------------------------------
-  void _startQr() {
+  Future<void> _startQr() async {
+    // Request the camera permission at runtime (Android 6+); without this the
+    // scanner surface shows only an error icon.
+    var status = await Permission.camera.status;
+    if (!status.isGranted) status = await Permission.camera.request();
+    if (!status.isGranted) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(
+            status.isPermanentlyDenied
+                ? 'صلاحية الكاميرا مرفوضة — فعّلها من الإعدادات'
+                : 'يجب السماح باستخدام الكاميرا')));
+        if (status.isPermanentlyDenied) openAppSettings();
+      }
+      return;
+    }
     _qr = MobileScannerController(detectionSpeed: DetectionSpeed.noDuplicates);
     setState(() => _mode = _Mode.qr);
   }
@@ -167,7 +182,23 @@ class _ScanScreenState extends State<ScanScreen> {
   Widget _qrView() => Stack(
         alignment: Alignment.center,
         children: [
-          MobileScanner(controller: _qr!, onDetect: _onDetect),
+          MobileScanner(
+            controller: _qr!,
+            onDetect: _onDetect,
+            errorBuilder: (context, error, child) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  const Icon(Icons.no_photography, color: Colors.white, size: 60),
+                  const SizedBox(height: 12),
+                  Text('تعذّر تشغيل الكاميرا: ${error.errorCode.name}',
+                      textAlign: TextAlign.center, style: const TextStyle(color: Colors.white)),
+                  const SizedBox(height: 12),
+                  FilledButton(onPressed: openAppSettings, child: const Text('فتح الإعدادات')),
+                ]),
+              ),
+            ),
+          ),
           Container(height: 240, width: 240, decoration: BoxDecoration(border: Border.all(color: Colors.white, width: 3), borderRadius: BorderRadius.circular(20))),
           Positioned(bottom: 40, child: FilledButton.icon(onPressed: _reset, icon: const Icon(Icons.close), label: const Text('إلغاء'))),
         ],

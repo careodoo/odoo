@@ -79,6 +79,17 @@ class ApiClient {
     return List<dynamic>.from(body['data'] as List);
   }
 
+  Future<Map<String, dynamic>> workOrderDetail(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/workorders/$id/detail'), headers: await _headers())))['data'] as Map);
+
+  Future<void> workOrderVerify(int id) async =>
+      _handle(await http.post(_u('/workorders/$id/verify'), headers: await _headers()));
+
+  Future<void> workOrderNote(int id, String note) async =>
+      _handle(await http.post(_u('/workorders/$id/note'),
+          headers: await _headers(), body: jsonEncode({'note': note})));
+
   Future<Map<String, dynamic>> workOrderStart(int id) async =>
       Map<String, dynamic>.from((await _handle(await http.post(
               _u('/workorders/$id/start'), headers: await _headers())))['data'] as Map);
@@ -112,6 +123,10 @@ class ApiClient {
   Future<Map<String, dynamic>> clientOverview() async =>
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/client/overview'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> clientAnalytics() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/analytics'), headers: await _headers())))['data'] as Map);
 
   Future<Map<String, dynamic>> clientFacility(int id) async =>
       Map<String, dynamic>.from((await _handle(

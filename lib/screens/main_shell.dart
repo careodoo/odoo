@@ -7,6 +7,7 @@ import 'scan_screen.dart';
 import 'notifications_screen.dart';
 import 'supervisor_screen.dart';
 import 'more_screen.dart';
+import 'client_analytics_screen.dart';
 
 class _Tab {
   const _Tab(this.icon, this.label, this.screen);
@@ -30,7 +31,11 @@ class _MainShellState extends State<MainShell> {
     const notif = _Tab(Icons.notifications_rounded, 'الإشعارات', NotificationsScreen());
     const more = _Tab(Icons.grid_view_rounded, 'المزيد', MoreScreen());
     if (profile.role == 'client') {
-      return const [home, notif, more];
+      return const [
+        home,
+        _Tab(Icons.insights_rounded, 'الإحصائيات', ClientAnalyticsScreen()),
+        notif, more,
+      ];
     }
     if (profile.isAdmin) {
       return const [
