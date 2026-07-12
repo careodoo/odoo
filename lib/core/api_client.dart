@@ -86,6 +86,11 @@ class ApiClient {
   Future<void> workOrderVerify(int id) async =>
       _handle(await http.post(_u('/workorders/$id/verify'), headers: await _headers()));
 
+  Future<void> workOrderPhoto(int id, String base64Data, String filename, String mediaType) async =>
+      _handle(await http.post(_u('/workorders/$id/photo'),
+          headers: await _headers(),
+          body: jsonEncode({'data': base64Data, 'filename': filename, 'media_type': mediaType})));
+
   Future<void> workOrderNote(int id, String note) async =>
       _handle(await http.post(_u('/workorders/$id/note'),
           headers: await _headers(), body: jsonEncode({'note': note})));

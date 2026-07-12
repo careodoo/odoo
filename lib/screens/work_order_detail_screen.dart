@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/auth.dart';
@@ -205,8 +207,36 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
         onPressed: () => _act(() => api.workOrderVerify(widget.id), 'تم الاعتماد والإغلاق'),
         icon: const Icon(Icons.verified), label: Text(tr('اعتماد وإغلاق', 'Approve & close'))));
     }
+    children.add(Row(children: [
+      Expanded(child: OutlinedButton.icon(onPressed: () => _capture(false),
+          icon: const Icon(Icons.photo_camera), label: Text(tr('صورة', 'Photo')))),
+      const SizedBox(width: 8),
+      Expanded(child: OutlinedButton.icon(onPressed: () => _capture(true),
+          icon: const Icon(Icons.videocam), label: Text(tr('فيديو', 'Video')))),
+    ]));
     children.add(OutlinedButton.icon(onPressed: _addNote, icon: const Icon(Icons.add_comment), label: Text(tr('إضافة ملاحظة', 'Add note'))));
     return Column(children: [for (final c in children) Padding(padding: const EdgeInsets.only(bottom: 8), child: SizedBox(width: double.infinity, child: c))]);
+  }
+
+  Future<void> _capture(bool video) async {
+    final api = context.read<AuthProvider>().api;
+    try {
+      final picker = ImagePicker();
+      final XFile? x = video
+          ? await picker.pickVideo(source: ImageSource.camera, maxDuration: const Duration(seconds: 60))
+          : await picker.pickImage(source: ImageSource.camera, imageQuality: 70, maxWidth: 1600);
+      if (x == null) return;
+      final bytes = await x.readAsBytes();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('جارٍ الرفع…', 'Uploading…'))));
+      await api.workOrderPhoto(widget.id, base64Encode(bytes), x.name, video ? 'video' : 'photo');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('تم الرفع للاعتماد', 'Uploaded for approval'))));
+        _load();
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
   }
 
   Future<void> _addNote() async {
