@@ -32,6 +32,7 @@ ThemeData buildTheme(ServiceTheme s) {
   );
   return ThemeData(
     useMaterial3: true,
+    fontFamily: 'Tajawal',
     colorScheme: scheme,
     scaffoldBackgroundColor: s.dark ? const Color(0xFF0B1220) : const Color(0xFFF4F6FA),
     appBarTheme: AppBarTheme(

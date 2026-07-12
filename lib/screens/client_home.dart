@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/widgets.dart';
+import 'facility_detail_screen.dart';
 
 /// The client's cockpit — everything the module holds for this customer:
 /// buildings, services, teams, live work-order activity. Fully data-driven, so
@@ -125,6 +126,9 @@ class _ClientHomeState extends State<ClientHome> {
           subtitle: Text('${f['address'] ?? ''}\nمباني: ${f['buildings']} · مواقع: ${f['locations']} · أعمال مفتوحة: ${f['open_workorders']}',
               style: TextStyle(color: cs.outline, fontSize: 12)),
           isThreeLine: true,
+          trailing: const Icon(Icons.chevron_left),
+          onTap: () => Navigator.push(context, MaterialPageRoute(
+              builder: (_) => FacilityDetailScreen(facilityId: f['id'] as int, name: '${f['name']}'))),
         ),
       );
 
