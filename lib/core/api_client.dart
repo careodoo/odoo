@@ -117,6 +117,12 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/client/facility/$id'), headers: await _headers())))['data'] as Map);
 
+  // ---- per-service data ----------------------------------------------------
+  /// path: cleaning/audits | agri/zones | facade/permits
+  Future<List<dynamic>> serviceList(String path) async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/service/$path'), headers: await _headers())))['data'] as List);
+
   // ---- notifications -------------------------------------------------------
   Future<(List<dynamic>, int)> notifications() async {
     final body = await _handle(await http.get(_u('/notifications'), headers: await _headers()));

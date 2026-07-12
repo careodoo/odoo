@@ -8,6 +8,7 @@ import 'supervisor_screen.dart';
 import 'admin_home.dart';
 import 'security_incidents_screen.dart';
 import 'security_list_screen.dart';
+import 'service_screen.dart';
 
 /// A single place that links to everything available to this user — so nothing
 /// is more than two taps away.
@@ -38,6 +39,10 @@ class MoreScreen extends StatelessWidget {
     header('العمل');
     tile(Icons.assignment, 'أوامر العمل', const WorkOrdersScreen());
     if (p.role != 'client') tile(Icons.qr_code_scanner, 'مسح رمز الموقع', const ScanScreen());
+
+    if (p.role == 'cleaning') { header('النظافة'); tile(Icons.cleaning_services, 'تدقيق الجودة', const ServiceScreen(kind: 'cleaning', title: 'تدقيق النظافة')); }
+    if (p.role == 'agriculture') { header('الزراعة'); tile(Icons.grass, 'مناطق الريّ', const ServiceScreen(kind: 'agri', title: 'مناطق الريّ')); }
+    if (p.role == 'facade') { header('الواجهات'); tile(Icons.cleaning_services, 'تصاريح الارتفاع', const ServiceScreen(kind: 'facade', title: 'تصاريح الواجهات')); }
 
     if (p.role == 'security') {
       header('الأمن');

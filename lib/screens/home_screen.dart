@@ -9,6 +9,7 @@ import 'security_home.dart';
 import 'supervisor_screen.dart';
 import 'client_home.dart';
 import 'admin_home.dart';
+import 'service_screen.dart';
 
 /// Role router: the same app opens a different face depending on who logs in.
 /// A security guard lands on the security command screen; a cleaner/agri worker
@@ -84,6 +85,15 @@ class WorkerHome extends StatelessWidget {
             onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const WorkOrdersScreen())),
           ),
+          if (p.role == 'cleaning')
+            _BigAction(icon: Icons.cleaning_services, label: 'تدقيق الجودة (النظافة)',
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ServiceScreen(kind: 'cleaning', title: 'تدقيق النظافة')))),
+          if (p.role == 'agriculture')
+            _BigAction(icon: Icons.grass, label: 'مناطق الريّ والزراعة',
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ServiceScreen(kind: 'agri', title: 'مناطق الريّ')))),
+          if (p.role == 'facade')
+            _BigAction(icon: Icons.cleaning_services, label: 'تصاريح العمل على الارتفاع',
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ServiceScreen(kind: 'facade', title: 'تصاريح الواجهات')))),
           if (p.isSupervisor)
             _BigAction(
               icon: Icons.dashboard_customize,
