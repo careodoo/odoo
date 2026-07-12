@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/auth.dart';
+import '../core/i18n.dart';
 
 class WorkOrderDetailScreen extends StatefulWidget {
   const WorkOrderDetailScreen({super.key, required this.id, required this.title});
@@ -92,7 +93,7 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
     final p = context.read<AuthProvider>().profile!;
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('تفاصيل المهمة'), actions: [
+      appBar: AppBar(title: Text(tr('تفاصيل المهمة', 'Task details')), actions: [
         IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
       ]),
       body: _loading
@@ -166,11 +167,11 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
           _row(Icons.schedule, 'الموعد', '${_d!['deadline'] ?? '—'}'),
           if (_d!['description'] != null) ...[
             const Divider(),
-            Text('الوصف', style: TextStyle(color: cs.outline, fontSize: 12)),
+            Text(tr('الوصف', 'Description'), style: TextStyle(color: cs.outline, fontSize: 12)),
             Text('${_d!['description']}'),
           ],
           const SizedBox(height: 10),
-          OutlinedButton.icon(onPressed: _openMap, icon: const Icon(Icons.directions), label: const Text('توجّه إلى الموقع (خريطة)')),
+          OutlinedButton.icon(onPressed: _openMap, icon: const Icon(Icons.directions), label: Text(tr('توجّه إلى الموقع (خريطة)', 'Navigate (map)'))),
         ])),
       );
 
@@ -190,32 +191,32 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
     if (st == 'new' || st == 'assigned') {
       children.add(FilledButton.icon(
         onPressed: () => _act(() => api.workOrderStart(widget.id), 'بدأ التنفيذ — العدّاد يعمل'),
-        icon: const Icon(Icons.play_arrow), label: const Text('بدء التنفيذ')));
+        icon: const Icon(Icons.play_arrow), label: Text(tr('بدء التنفيذ', 'Start'))));
     }
     if (st == 'in_progress') {
       children.add(FilledButton.icon(
         style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
         onPressed: () => _act(() => api.workOrderDone(widget.id), 'تم الإرسال للاعتماد'),
-        icon: const Icon(Icons.check), label: const Text('إتمام وإرسال للاعتماد')));
+        icon: const Icon(Icons.check), label: Text(tr('إتمام وإرسال للاعتماد', 'Complete & submit'))));
     }
     if (st == 'done' && (p.isSupervisor || p.isAdmin)) {
       children.add(FilledButton.icon(
         style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0B6EA8)),
         onPressed: () => _act(() => api.workOrderVerify(widget.id), 'تم الاعتماد والإغلاق'),
-        icon: const Icon(Icons.verified), label: const Text('اعتماد وإغلاق')));
+        icon: const Icon(Icons.verified), label: Text(tr('اعتماد وإغلاق', 'Approve & close'))));
     }
-    children.add(OutlinedButton.icon(onPressed: _addNote, icon: const Icon(Icons.add_comment), label: const Text('إضافة ملاحظة')));
+    children.add(OutlinedButton.icon(onPressed: _addNote, icon: const Icon(Icons.add_comment), label: Text(tr('إضافة ملاحظة', 'Add note'))));
     return Column(children: [for (final c in children) Padding(padding: const EdgeInsets.only(bottom: 8), child: SizedBox(width: double.infinity, child: c))]);
   }
 
   Future<void> _addNote() async {
     final ctrl = TextEditingController();
     final ok = await showDialog<bool>(context: context, builder: (_) => AlertDialog(
-      title: const Text('إضافة ملاحظة'),
+      title: Text(tr('إضافة ملاحظة', 'Add note')),
       content: TextField(controller: ctrl, maxLines: 3, decoration: const InputDecoration(hintText: 'اكتب ملاحظة...')),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('إلغاء')),
-        FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('إرسال')),
+        FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(tr('إرسال', 'Send'))),
       ],
     ));
     if (ok == true && ctrl.text.trim().isNotEmpty) {
@@ -224,7 +225,7 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
   }
 
   Widget _mediaCard() => Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('الصور والفيديو', style: TextStyle(fontWeight: FontWeight.w800)),
+        Text(tr('الصور والفيديو', 'Photos & video'), style: TextStyle(fontWeight: FontWeight.w800)),
         const SizedBox(height: 8),
         SizedBox(height: 90, child: ListView(scrollDirection: Axis.horizontal, children: [
           for (final m in (_d!['media'] as List))
@@ -239,9 +240,9 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
   Widget _historyCard(ColorScheme cs) {
     final hist = (_d!['history'] as List).where((h) => (h as Map)['body'] != null && '${h['body']}'.trim().isNotEmpty).toList();
     return Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('السجل (History)', style: TextStyle(fontWeight: FontWeight.w800)),
+      Text(tr('السجل (History)', 'History'), style: TextStyle(fontWeight: FontWeight.w800)),
       const SizedBox(height: 8),
-      if (hist.isEmpty) Text('لا سجل بعد', style: TextStyle(color: cs.outline)),
+      if (hist.isEmpty) Text(tr('لا سجل بعد', 'No history yet'), style: TextStyle(color: cs.outline)),
       for (final h in hist)
         Padding(padding: const EdgeInsets.symmetric(vertical: 6), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Icon(Icons.circle, size: 8, color: Color(0xFF0B6EA8)),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
+import '../core/i18n.dart';
 import '../core/widgets.dart';
 import 'facility_detail_screen.dart';
 import 'work_order_detail_screen.dart';
@@ -31,7 +32,7 @@ class _ClientHomeState extends State<ClientHome> {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('بوابة العميل'),
+        title: Text(tr('بوابة العميل', 'Client portal')),
         actions: [
           NotifBell(unread: p.unreadNotifications),
           IconButton(icon: const Icon(Icons.logout), onPressed: () => context.read<AuthProvider>().logout()),
@@ -57,16 +58,16 @@ class _ClientHomeState extends State<ClientHome> {
                 const SizedBox(height: 16),
                 _kpiGrid(k),
                 const SizedBox(height: 20),
-                _section('مبانيي ومرافقي'),
+                _section(tr('مبانيي ومرافقي', 'My buildings & facilities')),
                 for (final f in (d['facilities'] as List)) _facilityCard(f as Map, cs),
                 const SizedBox(height: 16),
-                _section('الخدمات المقدَّمة'),
+                _section(tr('الخدمات المقدَّمة', 'Services provided')),
                 _servicesWrap(d['services'] as List),
                 const SizedBox(height: 16),
-                _section('فِرَق العمل'),
+                _section(tr('فِرَق العمل', 'Teams')),
                 for (final t in (d['teams'] as List)) _teamCard(t as Map, cs),
                 const SizedBox(height: 16),
-                _section('آخر الأعمال'),
+                _section(tr('آخر الأعمال', 'Recent work')),
                 for (final w in (d['recent_workorders'] as List)) _woCard(w as Map, cs),
                 const SizedBox(height: 24),
               ],
@@ -88,7 +89,7 @@ class _ClientHomeState extends State<ClientHome> {
           const SizedBox(width: 14),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('مرحباً بك', style: TextStyle(color: Colors.white70, fontSize: 13)),
+              Text(tr('مرحباً بك', 'Welcome'), style: TextStyle(color: Colors.white70, fontSize: 13)),
               Text(client, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),
             ]),
           ),
@@ -97,12 +98,12 @@ class _ClientHomeState extends State<ClientHome> {
 
   Widget _kpiGrid(Map k) {
     final items = [
-      ('المرافق', k['facilities'] ?? 0, const Color(0xFF2F6DF6), Icons.location_city),
-      ('المباني', k['buildings'] ?? 0, const Color(0xFF6366F1), Icons.apartment),
-      ('المواقع', k['locations'] ?? 0, const Color(0xFF0EA5E9), Icons.qr_code),
-      ('أعمال مفتوحة', k['open_workorders'] ?? 0, const Color(0xFFF7A23B), Icons.build),
-      ('الخدمات', k['services'] ?? 0, const Color(0xFF37C98A), Icons.design_services),
-      ('الفِرَق', k['teams'] ?? 0, const Color(0xFF14B8A6), Icons.groups),
+      (tr('المرافق', 'Facilities'), k['facilities'] ?? 0, const Color(0xFF2F6DF6), Icons.location_city),
+      (tr('المباني', 'Buildings'), k['buildings'] ?? 0, const Color(0xFF6366F1), Icons.apartment),
+      (tr('المواقع', 'Locations'), k['locations'] ?? 0, const Color(0xFF0EA5E9), Icons.qr_code),
+      (tr('أعمال مفتوحة', 'Open work'), k['open_workorders'] ?? 0, const Color(0xFFF7A23B), Icons.build),
+      (tr('الخدمات', 'Services'), k['services'] ?? 0, const Color(0xFF37C98A), Icons.design_services),
+      (tr('الفِرَق', 'Teams'), k['teams'] ?? 0, const Color(0xFF14B8A6), Icons.groups),
     ];
     return GridView.count(
       crossAxisCount: 3,

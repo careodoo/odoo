@@ -11,6 +11,7 @@ import 'supervisor_screen.dart';
 import 'client_home.dart';
 import 'admin_home.dart';
 import 'service_screen.dart';
+import 'shift_card.dart';
 
 /// Role router: the same app opens a different face depending on who logs in.
 /// A security guard lands on the security command screen; a cleaner/agri worker
@@ -71,6 +72,8 @@ class WorkerHome extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          const ShiftCard(),
           const SizedBox(height: 12),
           MyStatsRow(counts: p.counts),
           const SizedBox(height: 12),

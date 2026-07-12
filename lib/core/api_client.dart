@@ -138,6 +138,32 @@ class ApiClient {
       List<dynamic>.from((await _handle(
               await http.get(_u('/service/$path'), headers: await _headers())))['data'] as List);
 
+  // ---- shifts (geofenced) --------------------------------------------------
+  Future<Map<String, dynamic>> shiftCurrent() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/shift/current'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> shiftOpen(double lat, double lng) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/shift/open'),
+              headers: await _headers(), body: jsonEncode({'lat': lat, 'lng': lng})))) ['data'] as Map);
+
+  Future<Map<String, dynamic>> shiftClose(double lat, double lng) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/shift/close'),
+              headers: await _headers(), body: jsonEncode({'lat': lat, 'lng': lng})))) ['data'] as Map);
+
+  Future<List<dynamic>> shiftActive() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/shift/active'), headers: await _headers())))['data'] as List);
+
+  // ---- appraisal -----------------------------------------------------------
+  Future<Map<String, dynamic>> appraisalMe() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/appraisal/me'), headers: await _headers())))['data'] as Map);
+
+  Future<List<dynamic>> appraisalTeam() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/appraisal/team'), headers: await _headers())))['data'] as List);
+
   // ---- notifications -------------------------------------------------------
   Future<(List<dynamic>, int)> notifications() async {
     final body = await _handle(await http.get(_u('/notifications'), headers: await _headers()));

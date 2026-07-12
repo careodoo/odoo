@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
+import '../core/i18n.dart';
 import '../core/widgets.dart';
 
 /// Supervisor cockpit: live KPIs, team load, and the assignable backlog with
@@ -87,20 +88,20 @@ class _SupervisorScreenState extends State<SupervisorScreen> {
               padding: const EdgeInsets.all(16),
               children: [
                 Row(children: [
-                  Expanded(child: StatCard(label: 'مفتوحة', value: s['open'] ?? 0, color: const Color(0xFF2F6DF6), icon: Icons.inbox)),
+                  Expanded(child: StatCard(label: tr('مفتوحة', 'Open'), value: s['open'] ?? 0, color: const Color(0xFF2F6DF6), icon: Icons.inbox)),
                   const SizedBox(width: 8),
-                  Expanded(child: StatCard(label: 'غير مُسندة', value: s['unassigned'] ?? 0, color: const Color(0xFFF7A23B), icon: Icons.person_off)),
+                  Expanded(child: StatCard(label: tr('غير مُسندة', 'Unassigned'), value: s['unassigned'] ?? 0, color: const Color(0xFFF7A23B), icon: Icons.person_off)),
                   const SizedBox(width: 8),
-                  Expanded(child: StatCard(label: 'متأخرة', value: s['overdue'] ?? 0, color: const Color(0xFFE5484D), icon: Icons.warning_amber)),
+                  Expanded(child: StatCard(label: tr('متأخرة', 'Overdue'), value: s['overdue'] ?? 0, color: const Color(0xFFE5484D), icon: Icons.warning_amber)),
                 ]),
                 const SizedBox(height: 20),
-                const Text('المهام غير المُسندة / الجديدة', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+                Text(tr('المهام غير المُسندة / الجديدة', 'Unassigned / new tasks'), style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 8),
                 if (d.assignable.isEmpty)
                   const Padding(padding: EdgeInsets.all(16), child: Text('لا مهام بانتظار الإسناد ✓', style: TextStyle(color: Color(0xFF9CB2CD)))),
                 for (final w in d.assignable) _assignCard(w as Map),
                 const SizedBox(height: 20),
-                const Text('أحمال الفريق', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+                Text(tr('أحمال الفريق', 'Team load'), style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 8),
                 for (final m in d.team) _teamCard(m as Map),
               ],
@@ -120,7 +121,7 @@ class _SupervisorScreenState extends State<SupervisorScreen> {
             style: FilledButton.styleFrom(backgroundColor: const Color(0xFF2F6DF6)),
             onPressed: () => _assign(w['id'] as int),
             icon: const Icon(Icons.person_add, size: 18),
-            label: const Text('إسناد'),
+            label: Text(tr('إسناد', 'Assign')),
           ),
         ),
       );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
+import '../core/i18n.dart';
 import '../models/models.dart';
 import 'work_order_detail_screen.dart';
 
@@ -39,7 +40,7 @@ class _WorkOrdersScreenState extends State<WorkOrdersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('أوامر العمل')),
+      appBar: AppBar(title: Text(tr('أوامر العمل', 'Work orders'))),
       body: RefreshIndicator(
         onRefresh: () async => setState(_load),
         child: FutureBuilder<List<WorkOrder>>(
@@ -116,7 +117,7 @@ class _WoCard extends StatelessWidget {
                     child: FilledButton.icon(
                       onPressed: onStart,
                       icon: const Icon(Icons.play_arrow),
-                      label: const Text('امسح للبدء'),
+                      label: Text(tr('امسح للبدء', 'Scan to start')),
                     ),
                   ),
                 if (w.inProgress)
@@ -125,7 +126,7 @@ class _WoCard extends StatelessWidget {
                       style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16794A)),
                       onPressed: onDone,
                       icon: const Icon(Icons.check),
-                      label: const Text('تم — أوقف العدّاد'),
+                      label: Text(tr('تم — أوقف العدّاد', 'Done — stop timer')),
                     ),
                   ),
               ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
+import '../core/i18n.dart';
 import '../core/widgets.dart';
 
 /// A big analytics tab for the client — KPIs, service/priority breakdowns, and
@@ -26,7 +27,7 @@ class _ClientAnalyticsScreenState extends State<ClientAnalyticsScreen> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('الإحصائيات')),
+      appBar: AppBar(title: Text(tr('الإحصائيات', 'Analytics'))),
       body: RefreshIndicator(
         onRefresh: () async => setState(_load),
         child: FutureBuilder<Map<String, dynamic>>(
@@ -53,15 +54,15 @@ class _ClientAnalyticsScreenState extends State<ClientAnalyticsScreen> {
                   crossAxisCount: 3, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
                   mainAxisSpacing: 10, crossAxisSpacing: 10, childAspectRatio: 0.92,
                   children: [
-                    StatCard(label: 'إجمالي', value: k['total'] ?? 0, color: const Color(0xFF475569), icon: Icons.workspaces),
-                    StatCard(label: 'مفتوحة', value: k['open'] ?? 0, color: const Color(0xFF2F6DF6), icon: Icons.inbox),
-                    StatCard(label: 'قيد التنفيذ', value: k['in_progress'] ?? 0, color: const Color(0xFFF59E0B), icon: Icons.timelapse),
-                    StatCard(label: 'منجزة', value: k['done'] ?? 0, color: const Color(0xFF16A34A), icon: Icons.check_circle),
-                    StatCard(label: 'متأخرة', value: k['overdue'] ?? 0, color: const Color(0xFFE5484D), icon: Icons.timer_off),
-                    StatCard(label: 'غير مُسندة', value: k['unassigned'] ?? 0, color: const Color(0xFFB45309), icon: Icons.person_off),
-                    StatCard(label: 'المرافق', value: k['facilities'] ?? 0, color: const Color(0xFF6366F1), icon: Icons.location_city),
-                    StatCard(label: 'المواقع', value: k['locations'] ?? 0, color: const Color(0xFF0EA5E9), icon: Icons.qr_code),
-                    StatCard(label: 'الفِرَق', value: k['teams'] ?? 0, color: const Color(0xFF14B8A6), icon: Icons.groups),
+                    StatCard(label: tr('إجمالي', 'Total'), value: k['total'] ?? 0, color: const Color(0xFF475569), icon: Icons.workspaces),
+                    StatCard(label: tr('مفتوحة', 'Open'), value: k['open'] ?? 0, color: const Color(0xFF2F6DF6), icon: Icons.inbox),
+                    StatCard(label: tr('قيد التنفيذ', 'In progress'), value: k['in_progress'] ?? 0, color: const Color(0xFFF59E0B), icon: Icons.timelapse),
+                    StatCard(label: tr('منجزة', 'Done'), value: k['done'] ?? 0, color: const Color(0xFF16A34A), icon: Icons.check_circle),
+                    StatCard(label: tr('متأخرة', 'Overdue'), value: k['overdue'] ?? 0, color: const Color(0xFFE5484D), icon: Icons.timer_off),
+                    StatCard(label: tr('غير مُسندة', 'Unassigned'), value: k['unassigned'] ?? 0, color: const Color(0xFFB45309), icon: Icons.person_off),
+                    StatCard(label: tr('المرافق', 'Facilities'), value: k['facilities'] ?? 0, color: const Color(0xFF6366F1), icon: Icons.location_city),
+                    StatCard(label: tr('المواقع', 'Locations'), value: k['locations'] ?? 0, color: const Color(0xFF0EA5E9), icon: Icons.qr_code),
+                    StatCard(label: tr('الفِرَق', 'Teams'), value: k['teams'] ?? 0, color: const Color(0xFF14B8A6), icon: Icons.groups),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -71,16 +72,16 @@ class _ClientAnalyticsScreenState extends State<ClientAnalyticsScreen> {
                   Expanded(child: _mini('متوسط زمن الاستجابة', '${k['avg_response_min']} د')),
                 ]),
                 const SizedBox(height: 18),
-                _panel('الأعمال حسب الخدمة', [
+                _panel(tr('الأعمال حسب الخدمة', 'Work by service'), [
                   for (final e in byService.entries)
                     _bar('${e.key}  (منجز ${(e.value as Map)['done']} · متأخر ${(e.value)['overdue']})',
                         (e.value as Map)['total'] as int, maxSvc, const Color(0xFF0B6EA8)),
                 ]),
-                _panel('حسب الأولوية', [
+                _panel(tr('حسب الأولوية', 'By priority'), [
                   for (final e in byPriority.entries)
                     _bar(e.key, e.value as int, byPriority.values.fold<int>(1, (m, v) => (v as int) > m ? v : m), const Color(0xFF6366F1)),
                 ]),
-                _panel('أداء الموظفين على مواقعي', [
+                _panel(tr('أداء الموظفين على مواقعي', 'Staff performance'), [
                   for (final emp in employees) _empRow(emp as Map, cs),
                 ]),
               ],

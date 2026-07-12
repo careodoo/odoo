@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
+import '../core/i18n.dart';
 import '../core/widgets.dart';
 import 'notifications_screen.dart';
 
@@ -59,28 +60,28 @@ class _AdminHomeState extends State<AdminHome> {
                   crossAxisCount: 3, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
                   mainAxisSpacing: 10, crossAxisSpacing: 10, childAspectRatio: 0.92,
                   children: [
-                    StatCard(label: 'العملاء', value: k['clients'] ?? 0, color: const Color(0xFF2F6DF6), icon: Icons.business_center),
-                    StatCard(label: 'المرافق', value: k['facilities'] ?? 0, color: const Color(0xFF6366F1), icon: Icons.location_city),
-                    StatCard(label: 'المباني', value: k['buildings'] ?? 0, color: const Color(0xFF0891B2), icon: Icons.apartment),
-                    StatCard(label: 'الفِرَق', value: k['teams'] ?? 0, color: const Color(0xFF14B8A6), icon: Icons.groups),
-                    StatCard(label: 'الموظفون', value: k['employees'] ?? 0, color: const Color(0xFF7C3AED), icon: Icons.engineering),
-                    StatCard(label: 'مفتوحة', value: k['open'] ?? 0, color: const Color(0xFFF7A23B), icon: Icons.build),
-                    StatCard(label: 'متأخرة', value: k['overdue'] ?? 0, color: const Color(0xFFE5484D), icon: Icons.timer_off),
-                    StatCard(label: 'غير مُسندة', value: k['unassigned'] ?? 0, color: const Color(0xFFB45309), icon: Icons.inbox),
-                    StatCard(label: 'منجزة', value: k['done'] ?? 0, color: const Color(0xFF16A34A), icon: Icons.check_circle),
+                    StatCard(label: tr('العملاء', 'Clients'), value: k['clients'] ?? 0, color: const Color(0xFF2F6DF6), icon: Icons.business_center),
+                    StatCard(label: tr('المرافق', 'Facilities'), value: k['facilities'] ?? 0, color: const Color(0xFF6366F1), icon: Icons.location_city),
+                    StatCard(label: tr('المباني', 'Buildings'), value: k['buildings'] ?? 0, color: const Color(0xFF0891B2), icon: Icons.apartment),
+                    StatCard(label: tr('الفِرَق', 'Teams'), value: k['teams'] ?? 0, color: const Color(0xFF14B8A6), icon: Icons.groups),
+                    StatCard(label: tr('الموظفون', 'Employees'), value: k['employees'] ?? 0, color: const Color(0xFF7C3AED), icon: Icons.engineering),
+                    StatCard(label: tr('مفتوحة', 'Open'), value: k['open'] ?? 0, color: const Color(0xFFF7A23B), icon: Icons.build),
+                    StatCard(label: tr('متأخرة', 'Overdue'), value: k['overdue'] ?? 0, color: const Color(0xFFE5484D), icon: Icons.timer_off),
+                    StatCard(label: tr('غير مُسندة', 'Unassigned'), value: k['unassigned'] ?? 0, color: const Color(0xFFB45309), icon: Icons.inbox),
+                    StatCard(label: tr('منجزة', 'Done'), value: k['done'] ?? 0, color: const Color(0xFF16A34A), icon: Icons.check_circle),
                   ],
                 ),
                 const SizedBox(height: 20),
-                _panel('الأعمال حسب الحالة', [
+                _panel(tr('الأعمال حسب الحالة', 'Work by status'), [
                   for (final e in byState.entries) _bar(e.key, e.value as int, maxState, const Color(0xFF0B6EA8)),
                 ]),
-                _panel('الأعمال حسب الخدمة', [
+                _panel(tr('الأعمال حسب الخدمة', 'Work by service'), [
                   for (final e in byService.entries)
                     _bar('${e.key} (مفتوحة ${(e.value as Map)['open']})', (e.value as Map)['total'] as int,
                         byService.values.fold<int>(1, (m, v) => (v as Map)['total'] > m ? (v)['total'] as int : m),
                         const Color(0xFF14B8A6)),
                 ]),
-                _panel('أكثر المرافق ضغطاً', [
+                _panel(tr('أكثر المرافق ضغطاً', 'Busiest facilities'), [
                   for (final f in (d['top_facilities'] as List))
                     ListTile(
                       dense: true,

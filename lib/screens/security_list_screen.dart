@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
+import '../core/i18n.dart';
 
 /// Reusable read-only list for a security resource (patrols / keys / gatepasses).
 /// Each kind renders with its own title, subtitle and status chip mapping.
@@ -41,7 +42,7 @@ class _SecurityListScreenState extends State<SecurityListScreen> {
             }
             if (snap.hasError) return _msg('خطأ: ${snap.error}');
             final items = snap.data ?? const [];
-            if (items.isEmpty) return _msg('لا عناصر.');
+            if (items.isEmpty) return _msg(tr('لا عناصر.', 'No items.'));
             return ListView.builder(
               padding: const EdgeInsets.all(12),
               itemCount: items.length,

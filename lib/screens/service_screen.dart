@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
+import '../core/i18n.dart';
 
 /// Renders a service-specific list (cleaning audits / agri zones / facade
 /// permits) with a tailored card per kind.
@@ -39,7 +40,7 @@ class _ServiceScreenState extends State<ServiceScreen> {
             }
             if (snap.hasError) return _msg('خطأ: ${snap.error}');
             final items = snap.data ?? const [];
-            if (items.isEmpty) return _msg('لا سجلات بعد.');
+            if (items.isEmpty) return _msg(tr('لا سجلات بعد.', 'No records yet.'));
             return ListView.builder(
               padding: const EdgeInsets.all(12),
               itemCount: items.length,
@@ -81,7 +82,7 @@ class _ServiceScreenState extends State<ServiceScreen> {
           title: Text('${m['name']}', style: const TextStyle(fontWeight: FontWeight.w700)),
           subtitle: Text('${m['facility'] ?? ''} · ريّ: ${m['method'] ?? ''} · ${m['frequency'] ?? ''}${m['weather_based'] == true ? ' · حسب الطقس' : ''}\nالتالي: ${m['next_run'] ?? '—'}', style: TextStyle(color: cs.outline, fontSize: 12)),
           isThreeLine: true,
-          trailing: due ? _pill('مستحق', const Color(0xFFF59E0B)) : _pill('منتظم', const Color(0xFF37C98A)),
+          trailing: due ? _pill(tr('مستحق', 'Due'), const Color(0xFFF59E0B)) : _pill(tr('منتظم', 'Regular'), const Color(0xFF37C98A)),
         ));
       case 'facade':
         final safe = m['is_safe'] == true;
@@ -90,7 +91,7 @@ class _ServiceScreenState extends State<ServiceScreen> {
           title: Text('${m['name']} — ${m['zone'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w700)),
           subtitle: Text('${m['facility'] ?? ''} · طريقة: ${m['method'] ?? ''} · رياح ${m['wind_speed']}/${m['wind_limit']} كم/س · ${m['date'] ?? ''}', style: TextStyle(color: cs.outline, fontSize: 12)),
           isThreeLine: true,
-          trailing: _pill(safe ? 'آمن' : '⛔ رياح', safe ? const Color(0xFF16A34A) : const Color(0xFFE5484D)),
+          trailing: _pill(safe ? tr('آمن', 'Safe') : '⛔ رياح', safe ? const Color(0xFF16A34A) : const Color(0xFFE5484D)),
         ));
       default:
         return Card(child: ListTile(title: Text('${m['name']}')));

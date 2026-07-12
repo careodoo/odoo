@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
+import '../core/i18n.dart';
 import '../core/widgets.dart';
 import 'scan_screen.dart';
 import 'workorders_screen.dart';
 import 'security_incidents_screen.dart';
 import 'security_list_screen.dart';
 import 'supervisor_screen.dart';
+import 'shift_card.dart';
 
 /// The security app's face — deliberately different: a dark "command centre"
 /// look, large glanceable tiles, and a prominent panic action. This is the
@@ -55,6 +57,8 @@ class SecurityHome extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
+          const ShiftCard(),
+          const SizedBox(height: 14),
           MyStatsRow(counts: p.counts),
           const SizedBox(height: 14),
           GridView.count(
@@ -73,43 +77,43 @@ class SecurityHome extends StatelessWidget {
                       MaterialPageRoute(builder: (_) => const SupervisorScreen())),
                 ),
               _Tile(
-                icon: '📍', label: 'مسح نقطة دورية',
-                sub: 'إثبات تفتيش',
+                icon: '📍', label: tr('مسح نقطة دورية', 'Scan checkpoint'),
+                sub: tr('إثبات تفتيش', 'Patrol proof'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ScanScreen())),
               ),
               _Tile(
                 icon: '📋', label: 'مهامي',
-                sub: 'أوامر العمل',
+                sub: tr('أوامر العمل', 'Work orders'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkOrdersScreen())),
               ),
               _Tile(
-                icon: '🚨', label: 'زر الطوارئ',
-                sub: 'بلاغ فوري', danger: true,
+                icon: '🚨', label: tr('زر الطوارئ', 'Panic'),
+                sub: tr('بلاغ فوري', 'Instant report'), danger: true,
                 onTap: () => _panic(context),
               ),
               _Tile(
-                icon: '📝', label: 'البلاغات الأمنية',
-                sub: 'عرض · تسجيل حادث',
+                icon: '📝', label: tr('البلاغات الأمنية', 'Incidents'),
+                sub: tr('عرض · تسجيل حادث', 'View · report'),
                 onTap: () => Navigator.push(context,
                     MaterialPageRoute(builder: (_) => const SecurityIncidentsScreen())),
               ),
               _Tile(
-                icon: '🚶', label: 'الدوريات',
-                sub: 'المسارات والحالة',
+                icon: '🚶', label: tr('الدوريات', 'Patrols'),
+                sub: tr('المسارات والحالة', 'Routes & status'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(
-                    builder: (_) => const SecurityListScreen(kind: 'patrols', title: 'الدوريات'))),
+                    builder: (_) => SecurityListScreen(kind: 'patrols', title: tr('الدوريات', 'Patrols')))),
               ),
               _Tile(
-                icon: '🔑', label: 'المفاتيح',
-                sub: 'العهدة والحالة',
+                icon: '🔑', label: tr('المفاتيح', 'Keys'),
+                sub: tr('العهدة والحالة', 'Custody & status'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(
                     builder: (_) => const SecurityListScreen(kind: 'keys', title: 'عهدة المفاتيح'))),
               ),
               _Tile(
-                icon: '🚪', label: 'تصاريح البوابة',
-                sub: 'الزوّار',
+                icon: '🚪', label: tr('تصاريح البوابة', 'Gate passes'),
+                sub: tr('الزوّار', 'Visitors'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(
-                    builder: (_) => const SecurityListScreen(kind: 'gatepasses', title: 'تصاريح البوابة'))),
+                    builder: (_) => SecurityListScreen(kind: 'gatepasses', title: tr('تصاريح البوابة', 'Gate passes')))),
               ),
             ],
           ),

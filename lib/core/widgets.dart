@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
+import '../core/i18n.dart';
 import '../screens/notifications_screen.dart';
+import '../screens/workorders_screen.dart';
 
 /// App-bar bell with an unread badge.
 class NotifBell extends StatelessWidget {
@@ -35,15 +37,16 @@ class NotifBell extends StatelessWidget {
 
 /// A compact KPI card used across every service face.
 class StatCard extends StatelessWidget {
-  const StatCard({super.key, required this.label, required this.value, required this.color, this.icon});
+  const StatCard({super.key, required this.label, required this.value, required this.color, this.icon, this.onTap});
   final String label;
   final int value;
   final Color color;
   final IconData? icon;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final card = Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
@@ -60,6 +63,8 @@ class StatCard extends StatelessWidget {
         ],
       ),
     );
+    if (onTap == null) return card;
+    return InkWell(borderRadius: BorderRadius.circular(14), onTap: onTap, child: card);
   }
 }
 
@@ -71,15 +76,16 @@ class MyStatsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      ('مفتوحة', counts.open, const Color(0xFF2F6DF6), Icons.inbox),
-      ('جارية', counts.inProgress, const Color(0xFFF7A23B), Icons.timelapse),
-      ('منجزة', counts.done, const Color(0xFF16794A), Icons.check_circle),
-      ('متأخرة', counts.overdue, const Color(0xFFE5484D), Icons.warning_amber),
+      (tr('مفتوحة', 'Open'), counts.open, const Color(0xFF2F6DF6), Icons.inbox),
+      (tr('جارية', 'Active'), counts.inProgress, const Color(0xFFF7A23B), Icons.timelapse),
+      (tr('منجزة', 'Done'), counts.done, const Color(0xFF16794A), Icons.check_circle),
+      (tr('متأخرة', 'Overdue'), counts.overdue, const Color(0xFFE5484D), Icons.warning_amber),
     ];
+    void open() => Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkOrdersScreen()));
     return Row(
       children: [
         for (final it in items) ...[
-          Expanded(child: StatCard(label: it.$1, value: it.$2, color: it.$3, icon: it.$4)),
+          Expanded(child: StatCard(label: it.$1, value: it.$2, color: it.$3, icon: it.$4, onTap: open)),
           if (it != items.last) const SizedBox(width: 8),
         ]
       ],

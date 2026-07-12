@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
+import '../core/i18n.dart';
 
 /// Security incidents: list recent + report a new one. Writes straight into
 /// Security Manager (security.incident.report) via /api/v1/security/incidents.
@@ -34,11 +35,11 @@ class _SecurityIncidentsScreenState extends State<SecurityIncidentsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0B1220),
-      appBar: AppBar(title: const Text('البلاغات الأمنية')),
+      appBar: AppBar(title: Text(tr('البلاغات الأمنية', 'Incidents'))),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openForm,
         icon: const Icon(Icons.add_alert),
-        label: const Text('تسجيل حادث'),
+        label: Text(tr('تسجيل حادث', 'Report incident')),
         backgroundColor: const Color(0xFFE5484D),
       ),
       body: RefreshIndicator(
@@ -53,7 +54,7 @@ class _SecurityIncidentsScreenState extends State<SecurityIncidentsScreen> {
               return _msg('خطأ: ${snap.error}');
             }
             final items = snap.data ?? const [];
-            if (items.isEmpty) return _msg('لا بلاغات مسجّلة.');
+            if (items.isEmpty) return _msg(tr('لا بلاغات مسجّلة.', 'No incidents.'));
             return ListView.builder(
               padding: const EdgeInsets.all(12),
               itemCount: items.length,
@@ -154,7 +155,7 @@ class _IncidentFormState extends State<_IncidentForm> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('تسجيل حادث أمني',
+          Text(tr('تسجيل حادث أمني', 'Report a security incident'),
               style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
