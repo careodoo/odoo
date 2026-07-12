@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/widgets.dart';
+import 'create_task_screen.dart';
 
 /// Supervisor cockpit: live KPIs, team load, and the assignable backlog with
 /// one-tap assignment to any team member.
@@ -71,6 +72,15 @@ class _SupervisorScreenState extends State<SupervisorScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF0B1220),
       appBar: AppBar(title: const Text('🧭 لوحة المشرف')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final created = await Navigator.push<bool>(context,
+              MaterialPageRoute(builder: (_) => const CreateTaskScreen()));
+          if (created == true && mounted) setState(_load);
+        },
+        icon: const Icon(Icons.add_task),
+        label: Text(tr('مهمة جديدة', 'New task')),
+      ),
       body: RefreshIndicator(
         onRefresh: () async => setState(_load),
         child: FutureBuilder<_Data>(

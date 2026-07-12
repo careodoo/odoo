@@ -9,6 +9,7 @@ import 'notifications_screen.dart';
 import 'supervisor_screen.dart';
 import 'more_screen.dart';
 import 'client_analytics_screen.dart';
+import 'client_workorders_screen.dart';
 
 class _Tab {
   const _Tab(this.icon, this.label, this.screen);
@@ -34,6 +35,7 @@ class _MainShellState extends State<MainShell> {
     if (profile.role == 'client') {
       return [
         home,
+        _Tab(Icons.assignment_rounded, tr('أوامر العمل', 'Work orders'), const ClientWorkOrdersScreen()),
         _Tab(Icons.insights_rounded, tr('الإحصائيات', 'Analytics'), const ClientAnalyticsScreen()),
         notif, more,
       ];

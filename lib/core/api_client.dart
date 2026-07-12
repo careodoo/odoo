@@ -87,6 +87,18 @@ class ApiClient {
   Future<void> workOrderVerify(int id) async =>
       _handle(await http.post(_u('/workorders/$id/verify'), headers: await _headers()));
 
+  Future<void> workOrderReject(int id, String reason) async =>
+      _handle(await http.post(_u('/workorders/$id/reject'),
+          headers: await _headers(), body: jsonEncode({'reason': reason})));
+
+  Future<Map<String, dynamic>> createWorkOrder(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/workorders/create'), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<List<dynamic>> servicesCatalog() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/services'), headers: await _headers())))['data'] as List);
+
   Future<void> workOrderPhoto(int id, String base64Data, String filename, String mediaType) async =>
       _handle(await http.post(_u('/workorders/$id/photo'),
           headers: await _headers(),
@@ -141,6 +153,10 @@ class ApiClient {
   Future<List<dynamic>> clientTeam() async =>
       List<dynamic>.from((await _handle(
               await http.get(_u('/client/team'), headers: await _headers())))['data'] as List);
+
+  Future<List<dynamic>> clientWorkOrders({String state = 'all'}) async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/client/workorders?state=$state'), headers: await _headers())))['data'] as List);
 
   Future<Map<String, dynamic>> clientEmployee(int id, {String period = 'all'}) async =>
       Map<String, dynamic>.from((await _handle(

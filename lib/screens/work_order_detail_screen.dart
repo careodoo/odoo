@@ -103,11 +103,12 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
                   _header(cs),
                   if (_d!['state'] == 'in_progress') _timerCard(),
                   const SizedBox(height: 12),
+                  if (_d!['instructions'] != null) ...[_instructionsCard(cs), const SizedBox(height: 12)],
                   _infoCard(cs),
                   const SizedBox(height: 12),
                   _actions(api, p),
                   const SizedBox(height: 16),
-                  if ((_d!['media'] as List).isNotEmpty) _mediaCard(),
+                  _resultCard(cs),
                   _historyCard(cs),
                 ]),
     );
@@ -189,33 +190,78 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
 
   Widget _actions(dynamic api, dynamic p) {
     final st = _d!['state'] as String;
+    final missing = (_d!['proof_missing'] as List?) ?? const [];
+    final canSubmit = _d!['can_submit'] == true;
+    final canApprove = _d!['can_approve'] == true;
     final children = <Widget>[];
     if (st == 'new' || st == 'assigned') {
       children.add(FilledButton.icon(
         onPressed: () => _act(() => api.workOrderStart(widget.id), 'بدأ التنفيذ — العدّاد يعمل'),
         icon: const Icon(Icons.play_arrow), label: Text(tr('بدء التنفيذ', 'Start'))));
     }
-    if (st == 'in_progress') {
+    // worker: submit result for approval — only when all required proof is present
+    if (st == 'assigned' || st == 'in_progress') {
+      if (missing.isNotEmpty) {
+        children.add(Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: const Color(0xFFF59E0B).withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
+          child: Row(children: [
+            const Icon(Icons.info_outline, color: Color(0xFFB45309), size: 20),
+            const SizedBox(width: 8),
+            Expanded(child: Text('${tr('مطلوب للاعتماد', 'Required to submit')}: ${missing.join('، ')}',
+                style: const TextStyle(color: Color(0xFFB45309), fontSize: 12.5, fontWeight: FontWeight.w700))),
+          ]),
+        ));
+      }
       children.add(FilledButton.icon(
         style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
-        onPressed: () => _act(() => api.workOrderDone(widget.id), 'تم الإرسال للاعتماد'),
+        onPressed: canSubmit ? () => _act(() => api.workOrderDone(widget.id), 'تم الإرسال للاعتماد') : null,
         icon: const Icon(Icons.check), label: Text(tr('إتمام وإرسال للاعتماد', 'Complete & submit'))));
     }
-    if (st == 'done' && (p.isSupervisor || p.isAdmin)) {
-      children.add(FilledButton.icon(
-        style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0B6EA8)),
-        onPressed: () => _act(() => api.workOrderVerify(widget.id), 'تم الاعتماد والإغلاق'),
-        icon: const Icon(Icons.verified), label: Text(tr('اعتماد وإغلاق', 'Approve & close'))));
+    // supervisor: approve or return the result
+    if (canApprove) {
+      children.add(Row(children: [
+        Expanded(child: FilledButton.icon(
+          style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0B6EA8)),
+          onPressed: () => _act(() => api.workOrderVerify(widget.id), 'تم الاعتماد والإغلاق'),
+          icon: const Icon(Icons.verified), label: Text(tr('اعتماد', 'Approve')))),
+        const SizedBox(width: 8),
+        Expanded(child: OutlinedButton.icon(
+          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFE5484D)),
+          onPressed: _reject,
+          icon: const Icon(Icons.undo), label: Text(tr('إرجاع', 'Return')))),
+      ]));
     }
-    children.add(Row(children: [
-      Expanded(child: OutlinedButton.icon(onPressed: () => _capture(false),
-          icon: const Icon(Icons.photo_camera), label: Text(tr('صورة', 'Photo')))),
-      const SizedBox(width: 8),
-      Expanded(child: OutlinedButton.icon(onPressed: () => _capture(true),
-          icon: const Icon(Icons.videocam), label: Text(tr('فيديو', 'Video')))),
-    ]));
+    // presence + evidence capture (worker)
+    if (st == 'assigned' || st == 'in_progress') {
+      children.add(Row(children: [
+        Expanded(child: OutlinedButton.icon(onPressed: () => _capture(false),
+            icon: const Icon(Icons.photo_camera), label: Text(tr('صورة', 'Photo')))),
+        const SizedBox(width: 8),
+        Expanded(child: OutlinedButton.icon(onPressed: () => _capture(true),
+            icon: const Icon(Icons.videocam), label: Text(tr('فيديو', 'Video')))),
+      ]));
+    }
     children.add(OutlinedButton.icon(onPressed: _addNote, icon: const Icon(Icons.add_comment), label: Text(tr('إضافة ملاحظة', 'Add note'))));
     return Column(children: [for (final c in children) Padding(padding: const EdgeInsets.only(bottom: 8), child: SizedBox(width: double.infinity, child: c))]);
+  }
+
+  Future<void> _reject() async {
+    final ctrl = TextEditingController();
+    final ok = await showDialog<bool>(context: context, builder: (_) => AlertDialog(
+      title: Text(tr('إرجاع المهمة', 'Return task')),
+      content: TextField(controller: ctrl, maxLines: 3,
+          decoration: InputDecoration(hintText: tr('سبب الإرجاع (يظهر للعامل)…', 'Reason (shown to the worker)…'))),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context, false), child: Text(tr('إلغاء', 'Cancel'))),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE5484D)),
+          onPressed: () => Navigator.pop(context, true), child: Text(tr('إرجاع', 'Return'))),
+      ],
+    ));
+    if (ok == true) {
+      _act(() => context.read<AuthProvider>().api.workOrderReject(widget.id, ctrl.text.trim()), 'أُرجعت المهمة للعامل');
+    }
   }
 
   Future<void> _capture(bool video) async {
@@ -254,30 +300,86 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
     }
   }
 
-  Widget _mediaCard() => Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(tr('الصور والفيديو', 'Photos & video'), style: TextStyle(fontWeight: FontWeight.w800)),
-        const SizedBox(height: 8),
-        SizedBox(height: 90, child: Builder(builder: (ctx) {
-          final media = (_d!['media'] as List).map((e) => e as Map).toList();
-          return ListView(scrollDirection: Axis.horizontal, children: [
-            for (int i = 0; i < media.length; i++)
-              Padding(padding: const EdgeInsets.only(left: 8), child: GestureDetector(
-                onTap: () async {
-                  final tok = await ctx.read<AuthProvider>().api.token;
-                  if (!ctx.mounted) return;
-                  Navigator.push(ctx, MaterialPageRoute(
-                      builder: (_) => MediaViewerScreen(media: media, index: i, token: tok)));
-                },
-                child: ClipRRect(borderRadius: BorderRadius.circular(10), child: Stack(children: [
-                  Image.network('${media[i]['thumb']}', width: 90, height: 90, fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(width: 90, height: 90, color: const Color(0xFFEEF2F7), child: const Icon(Icons.play_circle))),
-                  if ('${media[i]['type'] ?? ''}'.toLowerCase().contains('video'))
-                    const Positioned.fill(child: Center(child: Icon(Icons.play_circle_fill, color: Colors.white70, size: 34))),
-                ])),
-              )),
-          ]);
-        })),
-      ])));
+  Widget _instructionsCard(ColorScheme cs) => Card(
+        color: const Color(0xFF0B6EA8).withValues(alpha: 0.06),
+        child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.assignment_turned_in, color: Color(0xFF0B6EA8), size: 20),
+            const SizedBox(width: 8),
+            Text(tr('المطلوب تنفيذه', 'What to do'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+          ]),
+          const SizedBox(height: 8),
+          Text('${_d!['instructions']}', style: const TextStyle(fontSize: 14.5, height: 1.4)),
+        ])),
+      );
+
+  // النتيجة — presence status + the photos/videos/description the worker submits
+  Widget _resultCard(ColorScheme cs) {
+    final result = (_d!['result'] as Map?) ?? const {};
+    final proof = (_d!['proof'] as Map?) ?? const {};
+    final photos = ((result['photos'] as List?) ?? const []).map((e) => e as Map).toList();
+    final videos = ((result['videos'] as List?) ?? const []).map((e) => e as Map).toList();
+    final all = [...photos, ...videos];
+    final presenceOk = _d!['presence_verified'] == true;
+    final rc = (_d!['rejection_count'] ?? 0) as int;
+    return Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        const Icon(Icons.fact_check, color: Color(0xFF16A34A), size: 20),
+        const SizedBox(width: 8),
+        Text(tr('النتيجة', 'Result'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+        const Spacer(),
+        if (rc > 0) Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(color: const Color(0xFFE5484D).withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
+          child: Text('${tr('أُرجعت', 'Returned')} ×$rc', style: const TextStyle(color: Color(0xFFE5484D), fontSize: 11, fontWeight: FontWeight.w800)),
+        ),
+      ]),
+      const SizedBox(height: 10),
+      if (proof['presence'] == true)
+        _proofRow(Icons.qr_code_scanner, tr('إثبات الحضور (QR)', 'Presence (QR)'), presenceOk),
+      if (proof['photo'] == true)
+        _proofRow(Icons.photo_camera, tr('صورة', 'Photo'), photos.isNotEmpty),
+      if (proof['video'] == true)
+        _proofRow(Icons.videocam, tr('فيديو', 'Video'), videos.isNotEmpty),
+      if (result['description'] != null) ...[
+        const Divider(height: 18),
+        Text('${result['description']}', style: const TextStyle(fontSize: 14)),
+      ],
+      if (all.isNotEmpty) ...[
+        const SizedBox(height: 10),
+        SizedBox(height: 90, child: _mediaStrip(all)),
+      ] else Padding(padding: const EdgeInsets.only(top: 8), child: Text(
+          tr('لم يُرفع دليل بعد.', 'No evidence uploaded yet.'), style: TextStyle(color: cs.outline, fontSize: 12.5))),
+    ])));
+  }
+
+  Widget _proofRow(IconData i, String label, bool ok) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        child: Row(children: [
+          Icon(i, size: 17, color: Theme.of(context).colorScheme.outline),
+          const SizedBox(width: 8),
+          Expanded(child: Text(label, style: const TextStyle(fontSize: 13.5))),
+          Icon(ok ? Icons.check_circle : Icons.cancel, size: 18, color: ok ? const Color(0xFF16A34A) : const Color(0xFFE5484D)),
+        ]),
+      );
+
+  Widget _mediaStrip(List<Map> media) => Builder(builder: (ctx) => ListView(scrollDirection: Axis.horizontal, children: [
+        for (int i = 0; i < media.length; i++)
+          Padding(padding: const EdgeInsets.only(left: 8), child: GestureDetector(
+            onTap: () async {
+              final tok = await ctx.read<AuthProvider>().api.token;
+              if (!ctx.mounted) return;
+              Navigator.push(ctx, MaterialPageRoute(
+                  builder: (_) => MediaViewerScreen(media: media, index: i, token: tok)));
+            },
+            child: ClipRRect(borderRadius: BorderRadius.circular(10), child: Stack(children: [
+              Image.network('${media[i]['thumb']}', width: 90, height: 90, fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(width: 90, height: 90, color: const Color(0xFFEEF2F7), child: const Icon(Icons.play_circle))),
+              if (media[i]['is_video'] == true || '${media[i]['type'] ?? ''}'.toLowerCase().contains('video'))
+                const Positioned.fill(child: Center(child: Icon(Icons.play_circle_fill, color: Colors.white70, size: 34))),
+            ])),
+          )),
+      ]));
 
   Widget _historyCard(ColorScheme cs) {
     final hist = (_d!['history'] as List).where((h) => (h as Map)['body'] != null && '${h['body']}'.trim().isNotEmpty).toList();
