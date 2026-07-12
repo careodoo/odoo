@@ -12,6 +12,7 @@ import 'security_list_screen.dart';
 import 'service_screen.dart';
 import 'appraisal_screen.dart';
 import 'occupancy_screen.dart';
+import 'add_worker_screen.dart';
 
 /// A single place that links to everything available to this user — so nothing
 /// is more than two taps away.
@@ -59,6 +60,9 @@ class MoreScreen extends StatelessWidget {
       header(tr('الإدارة', 'Management'));
       tile(Icons.dashboard_customize, tr('لوحة المشرف — إسناد', 'Supervisor board'), const SupervisorScreen());
       if (p.isAdmin) tile(Icons.business, tr('لوحة الشركة', 'Company dashboard'), const AdminHome(), c: const Color(0xFF6366F1));
+    }
+    if (p.canAddWorkers) {
+      tile(Icons.person_add, tr('➕ إضافة عامل', '➕ Add worker'), const AddWorkerScreen(), c: const Color(0xFF16A34A));
     }
 
     if (p.role != 'client') tile(Icons.star, tr('تقييم الأداء', 'Performance'), const AppraisalScreen(), c: const Color(0xFFF59E0B));

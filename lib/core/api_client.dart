@@ -158,6 +158,14 @@ class ApiClient {
       List<dynamic>.from((await _handle(
               await http.get(_u('/client/workorders?state=$state'), headers: await _headers())))['data'] as List);
 
+  Future<Map<String, dynamic>> workerOptions() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/worker/options'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> createWorker(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/client/worker/create'), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
   Future<Map<String, dynamic>> clientEmployee(int id, {String period = 'all'}) async =>
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/client/employee/$id?period=$period'), headers: await _headers())))['data'] as Map);

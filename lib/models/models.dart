@@ -34,6 +34,7 @@ class Profile {
     required this.role,
     required this.isSupervisor,
     required this.isAdmin,
+    required this.canAddWorkers,
     required this.serviceTypes,
     required this.services,
     required this.counts,
@@ -46,6 +47,7 @@ class Profile {
   final String role;
   final bool isSupervisor;
   final bool isAdmin;
+  final bool canAddWorkers;
   final List<String> serviceTypes;
   final List<Service> services;
   final Counts counts;
@@ -64,6 +66,7 @@ class Profile {
       role: j['role'] as String? ?? 'worker',
       isSupervisor: j['is_supervisor'] as bool? ?? false,
       isAdmin: j['is_admin'] as bool? ?? false,
+      canAddWorkers: j['can_add_workers'] as bool? ?? false,
       serviceTypes: List<String>.from((j['my_service_types'] as List?) ?? const []),
       services: [for (final s in (j['services'] as List? ?? const [])) Service.fromJson(s as Map)],
       counts: Counts.fromJson((j['counts'] as Map?) ?? const {}),
