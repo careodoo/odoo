@@ -53,11 +53,17 @@ jobs:
           print(p.read_text()[:700])
           PY
 
+      - name: Force compileSdk 36 (nfc_manager needs >=34)
+        run: sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/' android/app/build.gradle.kts || true
+
       - name: Install dependencies
         run: flutter pub get
 
       - name: Generate launcher icons (CARE FM)
         run: dart run flutter_launcher_icons || true
+
+      - name: Bump nfc_manager compileSdk (it pins 31, AndroidX needs >=34)
+        run: find ~/.pub-cache -path "*nfc_manager*/android/build.gradle" -exec sed -i 's/compileSdkVersion 31/compileSdkVersion 34/' {} + || true
 
       - name: Build release APK
         run: flutter build apk --release --dart-define=CARE_API_BASE=https://ecare.care-kw.com/api/v1
