@@ -61,6 +61,7 @@ class _ManageScreenState extends State<ManageScreen> {
                     _buildings(),
                     _floors(),
                     _locations(),
+                    _assets(),
                     _teams(),
                     _workers(),
                     const SizedBox(height: 24),
@@ -150,6 +151,26 @@ class _ManageScreenState extends State<ManageScreen> {
       ])),
       Text('${tr('إجمالي المواقع', 'Total locations')}: ${_o?['locations_count'] ?? 0} · ${tr('يُولَّد رمز QR تلقائياً', 'QR generated automatically')}',
           style: TextStyle(color: Theme.of(context).colorScheme.outline, fontSize: 12)),
+    ]);
+  }
+
+  Widget _assets() {
+    final name = TextEditingController();
+    int? fac = _l('facilities').isNotEmpty ? _l('facilities').first['id'] as int : null;
+    String? cat = _l('asset_categories').isNotEmpty ? _l('asset_categories').first['v'] as String : null;
+    if (_l('asset_categories').isEmpty) return const SizedBox.shrink();
+    return _section(tr('الأصول', 'Assets'), Icons.precision_manufacturing, [
+      StatefulBuilder(builder: (_, set) => Column(children: [
+        _field(name, tr('اسم الأصل', 'Asset name')),
+        Row(children: [
+          Expanded(child: _dd<int>(fac, [for (final f in _l('facilities')) DropdownMenuItem(value: f['id'] as int, child: Text('${f['name']}'))], (v) => set(() => fac = v), tr('المرفق', 'Facility'))),
+          const SizedBox(width: 8),
+          Expanded(child: _dd<String>(cat, [for (final c in _l('asset_categories')) DropdownMenuItem(value: c['v'] as String, child: Text('${c['l']}'))], (v) => set(() => cat = v), tr('الفئة', 'Category'))),
+        ]),
+        _addBtn(() => _do(() => context.read<AuthProvider>().api.manageUpsert('asset', {'name': name.text.trim(), 'facility_id': fac, 'category': cat}), tr('أُضيف الأصل', 'Asset added'))),
+      ])),
+      const Divider(),
+      for (final a in _l('assets')) _tile('🏭 ${a['code'] ?? ''} · ${a['name']}', () => _confirmDelete('asset', a['id'] as int)),
     ]);
   }
 
