@@ -56,6 +56,33 @@ jobs:
       - name: Force compileSdk 36 (nfc_manager needs >=34)
         run: sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/' android/app/build.gradle.kts || true
 
+      - name: Configure stable release signing (so upgrades install over old app)
+        run: |
+          cp ci/care_release.keystore android/app/care_release.keystore
+          python3 - <<'PY'
+          import pathlib, re
+          p = pathlib.Path("android/app/build.gradle.kts")
+          s = p.read_text()
+          sign = '''
+    signingConfigs {
+        create("release") {
+            storeFile = file("care_release.keystore")
+            storePassword = "carefm2026"
+            keyAlias = "carefm"
+            keyPassword = "carefm2026"
+        }
+    }
+    buildTypes {'''
+          # insert our signingConfigs just before the buildTypes block (once)
+          if 'create("release")' not in s:
+              s = s.replace("buildTypes {", sign, 1)
+          # point the release build at our stable key instead of the random debug key
+          s = s.replace('signingConfig = signingConfigs.getByName("debug")',
+                        'signingConfig = signingConfigs.getByName("release")')
+          p.write_text(s)
+          print("signing configured:", 'create("release")' in p.read_text())
+          PY
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -66,7 +93,12 @@ jobs:
         run: find ~/.pub-cache -path "*nfc_manager*/android/build.gradle" -exec sed -i 's/compileSdkVersion 31/compileSdkVersion 34/' {} + || true
 
       - name: Build release APK
-        run: flutter build apk --release --dart-define=CARE_API_BASE=https://ecare.care-kw.com/api/v1
+        run: |
+          flutter build apk --release \
+            --build-number=${{ github.run_number }} \
+            --build-name=1.0.${{ github.run_number }} \
+            --dart-define=CARE_API_BASE=https://ecare.care-kw.com/api/v1 \
+            --dart-define=BUILD_NUMBER=${{ github.run_number }}
 
       - name: Rename APK
         run: cp build/app/outputs/flutter-apk/app-release.apk care-mobile-${{ github.run_number }}.apk
