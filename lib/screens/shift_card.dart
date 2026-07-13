@@ -4,15 +4,17 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 
-/// Geofenced shift open/close + availability status. Reads GPS and lets the
-/// backend decide whether the worker is within a facility's fence.
-class ShiftCard extends StatefulWidget {
-  const ShiftCard({super.key});
+/// Compact shift on/off toggle for the app-bar header. Geofenced open/close:
+/// reads GPS and the backend decides whether the worker is within a fence.
+class ShiftToggle extends StatefulWidget {
+  const ShiftToggle({super.key, this.onSurface = false});
+  /// true when placed on a dark/coloured app bar (use light text).
+  final bool onSurface;
   @override
-  State<ShiftCard> createState() => _ShiftCardState();
+  State<ShiftToggle> createState() => _ShiftToggleState();
 }
 
-class _ShiftCardState extends State<ShiftCard> {
+class _ShiftToggleState extends State<ShiftToggle> {
   Map<String, dynamic>? _shift;
   bool _loading = true;
   bool _busy = false;
@@ -73,40 +75,48 @@ class _ShiftCardState extends State<ShiftCard> {
 
   @override
   Widget build(BuildContext context) {
-    // Always render a visible card with the open/close button — even while the
-    // status is still loading (button shows a spinner) so it's never an empty box.
     final open = _shift?['open'] != null;
-    final c = open ? const Color(0xFF16A34A) : const Color(0xFF64748B);
-    final title = _loading
-        ? tr('حالة الوردية…', 'Checking shift…')
-        : (open ? tr('متاح — وردية مفتوحة', 'Available — on shift') : tr('خارج الوردية', 'Off shift'));
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: c.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: c.withValues(alpha: 0.4)),
-      ),
-      child: Row(children: [
-        Icon(open ? Icons.check_circle : Icons.radio_button_unchecked, color: c, size: 34),
-        const SizedBox(width: 12),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: TextStyle(color: c, fontWeight: FontWeight.w800, fontSize: 15)),
-          if (open && _shift!['open']?['facility'] != null)
-            Text('${_shift!['open']['facility']}', style: TextStyle(color: Theme.of(context).colorScheme.outline, fontSize: 12))
-          else
-            Text(tr('اضغط لتسجيل الحضور/الانصراف', 'Tap to check in / out'),
-                style: TextStyle(color: Theme.of(context).colorScheme.outline, fontSize: 11.5)),
-        ])),
-        FilledButton.icon(
-          style: FilledButton.styleFrom(backgroundColor: open ? const Color(0xFFE5484D) : const Color(0xFF16A34A)),
-          onPressed: (_busy || _loading) ? null : () => _toggle(!open),
-          icon: (_busy || _loading)
-              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : Icon(open ? Icons.logout : Icons.login, size: 18),
-          label: Text(open ? tr('إنهاء الوردية', 'End shift') : tr('بدء الوردية', 'Start shift')),
+    final onC = widget.onSurface ? Colors.white : Theme.of(context).colorScheme.onSurface;
+    final live = open ? const Color(0xFF22C55E) : (widget.onSurface ? Colors.white70 : const Color(0xFF94A3B8));
+    return Tooltip(
+      message: open ? tr('وردية مفتوحة — اضغط للإنهاء', 'On shift — tap to end')
+                    : tr('خارج الوردية — اضغط للبدء', 'Off shift — tap to start'),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(30),
+        onTap: (_busy || _loading) ? null : () => _toggle(!open),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Container(width: 8, height: 8, decoration: BoxDecoration(color: live, shape: BoxShape.circle)),
+            const SizedBox(width: 6),
+            Text(open ? tr('متاح', 'On') : tr('وردية', 'Shift'),
+                style: TextStyle(color: onC, fontWeight: FontWeight.w800, fontSize: 12.5)),
+            const SizedBox(width: 4),
+            // switch track
+            SizedBox(
+              width: 40, height: 24,
+              child: (_busy || _loading)
+                  ? Center(child: SizedBox(width: 15, height: 15, child: CircularProgressIndicator(strokeWidth: 2, color: onC)))
+                  : AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      decoration: BoxDecoration(
+                        color: open ? const Color(0xFF16A34A) : (widget.onSurface ? Colors.white24 : const Color(0xFFCBD5E1)),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: AnimatedAlign(
+                        duration: const Duration(milliseconds: 180),
+                        alignment: open ? Alignment.centerLeft : Alignment.centerRight, // RTL: open→left
+                        child: Container(
+                          width: 18, height: 18,
+                          margin: const EdgeInsets.all(3),
+                          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                        ),
+                      ),
+                    ),
+            ),
+          ]),
         ),
-      ]),
+      ),
     );
   }
 }

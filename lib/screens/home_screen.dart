@@ -41,6 +41,7 @@ class WorkerHome extends StatelessWidget {
       appBar: AppBar(
         title: Text('${st.icon}  ${st.label}'),
         actions: [
+          const ShiftToggle(),
           NotifBell(unread: p.unreadNotifications),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -72,8 +73,6 @@ class WorkerHome extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          const ShiftCard(),
           const SizedBox(height: 12),
           MyStatsRow(counts: p.counts),
           const SizedBox(height: 12),

@@ -25,6 +25,7 @@ class SecurityHome extends StatelessWidget {
       appBar: AppBar(
         title: const Text('🛡️  مركز الأمن'),
         actions: [
+          const ShiftToggle(onSurface: true),
           NotifBell(unread: p.unreadNotifications),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -57,8 +58,6 @@ class SecurityHome extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 14),
-          const ShiftCard(),
           const SizedBox(height: 14),
           MyStatsRow(counts: p.counts),
           const SizedBox(height: 14),
