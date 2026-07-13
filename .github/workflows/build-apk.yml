@@ -60,23 +60,20 @@ jobs:
         run: |
           cp ci/care_release.keystore android/app/care_release.keystore
           python3 - <<'PY'
-          import pathlib, re
+          import pathlib
           p = pathlib.Path("android/app/build.gradle.kts")
           s = p.read_text()
-          sign = '''
-    signingConfigs {
-        create("release") {
-            storeFile = file("care_release.keystore")
-            storePassword = "carefm2026"
-            keyAlias = "carefm"
-            keyPassword = "carefm2026"
-        }
-    }
-    buildTypes {'''
-          # insert our signingConfigs just before the buildTypes block (once)
+          sign = ('    signingConfigs {\n'
+                  '        create("release") {\n'
+                  '            storeFile = file("care_release.keystore")\n'
+                  '            storePassword = "carefm2026"\n'
+                  '            keyAlias = "carefm"\n'
+                  '            keyPassword = "carefm2026"\n'
+                  '        }\n'
+                  '    }\n'
+                  '    buildTypes {')
           if 'create("release")' not in s:
               s = s.replace("buildTypes {", sign, 1)
-          # point the release build at our stable key instead of the random debug key
           s = s.replace('signingConfig = signingConfigs.getByName("debug")',
                         'signingConfig = signingConfigs.getByName("release")')
           p.write_text(s)
