@@ -8,6 +8,7 @@ import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/widgets.dart';
 import 'media_viewer_screen.dart';
+import 'presence_scan_screen.dart';
 
 class WorkOrderDetailScreen extends StatefulWidget {
   const WorkOrderDetailScreen({super.key, required this.id, required this.title});
@@ -55,10 +56,20 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
     if (_d?['state'] == 'in_progress' && _d?['start_datetime'] != null) {
       final start = DateTime.tryParse('${_d!['start_datetime']}Z')?.toLocal();
       final expected = (_d!['expected_minutes'] as int? ?? 0);
-      if (start != null && expected > 0) {
+      // the SLA deadline is a hard target — the remaining time is the sooner of
+      // (start + expected minutes) and the deadline.
+      final deadline = _d!['deadline'] != null
+          ? DateTime.tryParse('${_d!['deadline']}Z')?.toLocal()
+          : null;
+      if (start != null && (expected > 0 || deadline != null)) {
         void tick() {
-          final elapsed = DateTime.now().difference(start);
-          setState(() => _remaining = Duration(minutes: expected) - elapsed);
+          final now = DateTime.now();
+          DateTime? target;
+          if (expected > 0) target = start.add(Duration(minutes: expected));
+          if (deadline != null && (target == null || deadline.isBefore(target))) {
+            target = deadline;
+          }
+          setState(() => _remaining = target!.difference(now));
         }
         tick();
         _timer = Timer.periodic(const Duration(seconds: 1), (_) => tick());
@@ -161,10 +172,7 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
 
   Widget _infoCard(ColorScheme cs) => Card(
         child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _row(Icons.location_on, tr('الموقع', 'Location'),
-              (_d!['location_detail'] != null && (_d!['location_detail'] as Map)['full'] != null)
-                  ? '${(_d!['location_detail'] as Map)['full']}'
-                  : '${_d!['facility']}${_d!['location'] != null ? ' — ${_d!['location']}' : ''}'),
+          _locationBlock(cs),
           _row(Icons.person, 'المُسنَد إليه', '${_d!['assignee'] ?? '—'}'),
           _row(Icons.flag, 'الأولوية', '${_d!['priority']}'),
           _row(Icons.schedule, 'الموعد', '${_d!['deadline'] ?? '—'}'),
@@ -177,6 +185,41 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
           OutlinedButton.icon(onPressed: _openMap, icon: const Icon(Icons.directions), label: Text(tr('توجّه إلى الموقع (خريطة)', 'Navigate (map)'))),
         ])),
       );
+
+  // Detailed location: facility → building → floor → location (+ QR code)
+  Widget _locationBlock(ColorScheme cs) {
+    final loc = _d!['location_detail'] as Map?;
+    if (loc == null) {
+      return _row(Icons.location_on, tr('الموقع', 'Location'),
+          '${_d!['facility']}${_d!['location'] != null ? ' — ${_d!['location']}' : ''}');
+    }
+    Widget seg(IconData i, String label, String? v) => (v == null || v.isEmpty)
+        ? const SizedBox.shrink()
+        : Padding(padding: const EdgeInsets.symmetric(vertical: 3), child: Row(children: [
+            Icon(i, size: 16, color: cs.outline),
+            const SizedBox(width: 8),
+            SizedBox(width: 66, child: Text(label, style: TextStyle(color: cs.outline, fontSize: 12.5))),
+            Expanded(child: Text(v, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5))),
+          ]));
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: const Color(0xFF0B6EA8).withValues(alpha: 0.06), borderRadius: BorderRadius.circular(12)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Icon(Icons.location_on, size: 18, color: Color(0xFF0B6EA8)),
+          const SizedBox(width: 6),
+          Text(tr('تفاصيل الموقع', 'Location details'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5)),
+        ]),
+        const SizedBox(height: 6),
+        seg(Icons.location_city, tr('المرفق', 'Facility'), loc['facility'] as String?),
+        seg(Icons.apartment, tr('المبنى', 'Building'), loc['building'] as String?),
+        seg(Icons.layers, tr('الدور', 'Floor'), loc['floor'] as String?),
+        seg(Icons.meeting_room, tr('الموقع', 'Location'), loc['name'] as String?),
+        seg(Icons.qr_code, tr('رمز QR', 'QR code'), loc['code'] as String?),
+      ]),
+    );
+  }
 
   Widget _row(IconData i, String l, String v) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 5),
@@ -196,7 +239,7 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
     final children = <Widget>[];
     if (st == 'new' || st == 'assigned') {
       children.add(FilledButton.icon(
-        onPressed: () => _act(() => api.workOrderStart(widget.id), 'بدأ التنفيذ — العدّاد يعمل'),
+        onPressed: _startWithPresence,
         icon: const Icon(Icons.play_arrow), label: Text(tr('بدء التنفيذ', 'Start'))));
     }
     // worker: submit result for approval — only when all required proof is present
@@ -244,6 +287,42 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
     }
     children.add(OutlinedButton.icon(onPressed: _addNote, icon: const Icon(Icons.add_comment), label: Text(tr('إضافة ملاحظة', 'Add note'))));
     return Column(children: [for (final c in children) Padding(padding: const EdgeInsets.only(bottom: 8), child: SizedBox(width: double.infinity, child: c))]);
+  }
+
+  /// Presence gate: the worker must scan the location QR before the task starts.
+  Future<void> _startWithPresence() async {
+    final loc = _d!['location_detail'] as Map?;
+    final expectedCode = (loc?['code'] as String?)?.trim();
+    final expectedName = loc?['name'] as String?;
+    final go = await showDialog<bool>(context: context, builder: (_) => AlertDialog(
+      icon: const Icon(Icons.qr_code_scanner, color: Color(0xFF0B6EA8), size: 36),
+      title: Text(tr('إثبات الحضور', 'Prove presence')),
+      content: Text(
+          tr('قبل بدء التنفيذ يجب إثبات وجودك بالموقع عبر مسح رمز QR الخاص به${expectedName != null ? '\n📍 $expectedName' : ''}',
+             'Scan the location QR to prove you are on site${expectedName != null ? '\n📍 $expectedName' : ''}')),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context, false), child: Text(tr('إلغاء', 'Cancel'))),
+        FilledButton.icon(onPressed: () => Navigator.pop(context, true),
+            icon: const Icon(Icons.qr_code_scanner), label: Text(tr('امسح الآن', 'Scan now'))),
+      ],
+    ));
+    if (go != true || !mounted) return;
+    final code = await Navigator.push<String>(context,
+        MaterialPageRoute(builder: (_) => PresenceScanScreen(expectedName: expectedName)));
+    if (code == null || !mounted) return;
+    // if the WO has a registered location code, it must match the scanned one
+    if (expectedCode != null && expectedCode.isNotEmpty && code.trim() != expectedCode) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          backgroundColor: const Color(0xFFE5484D),
+          content: Text(tr('الرمز الممسوح لا يطابق موقع المهمة — لم يُثبت الحضور',
+              'Scanned code does not match the task location'))));
+      return;
+    }
+    final api = context.read<AuthProvider>().api;
+    try {
+      await api.scan(code); // log the presence scan at the location
+    } catch (_) {/* the start action also logs a tied scan */}
+    await _act(() => api.workOrderStart(widget.id), 'تم إثبات الحضور — بدأ التنفيذ والعدّاد يعمل');
   }
 
   Future<void> _reject() async {

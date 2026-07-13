@@ -92,13 +92,14 @@ class _LoginScreenState extends State<LoginScreen> {
       try {
         final bytes = base64Decode(logo.split(',').last);
         return Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+          constraints: const BoxConstraints(maxWidth: 260),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(20),
             boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20, offset: Offset(0, 8))],
           ),
-          child: Image.memory(bytes, height: 72, width: 72, fit: BoxFit.contain),
+          child: Image.memory(bytes, height: 66, fit: BoxFit.contain),
         );
       } catch (_) {}
     }

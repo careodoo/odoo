@@ -149,6 +149,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
       (tr('نسبة الإنجاز', 'Completion'), '${k['completion_pct'] ?? 0}%', const Color(0xFF16794A), Icons.percent),
       (tr('التزام SLA', 'SLA'), '${k['sla'] ?? 0}%', const Color(0xFF0EA5E9), Icons.verified),
       (tr('متوسط الإنجاز', 'Avg mins'), '${k['avg_duration_min'] ?? 0}د', const Color(0xFF7C3AED), Icons.timer),
+      (tr('ساعات العمل', 'Work hours'), '${k['work_hours'] ?? 0}س', const Color(0xFF0891B2), Icons.schedule),
     ];
     return GridView.count(
       crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
