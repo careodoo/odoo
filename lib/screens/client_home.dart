@@ -12,6 +12,7 @@ import 'client_analytics_screen.dart';
 import 'add_worker_screen.dart';
 import 'contracts_screen.dart';
 import 'manage_screen.dart';
+import 'requests_screen.dart';
 
 /// The client's cockpit — everything the module holds for this customer:
 /// buildings, services, teams, live work-order activity. Fully data-driven, so
@@ -143,13 +144,13 @@ class _ClientHomeState extends State<ClientHome> {
           ),
         );
     return Row(children: [
+      btn('📥', tr('طلب خدمة', 'Request'), const Color(0xFFE6295C), () => _go(const RequestsScreen())),
+      const SizedBox(width: 10),
       btn('👷', tr('الفريق', 'Team'), const Color(0xFF2F6DF6), () => _go(const ClientTeamScreen())),
       const SizedBox(width: 10),
       btn('📡', tr('النشاط', 'Live'), const Color(0xFF16A34A), () => _go(const ClientActivityScreen())),
       const SizedBox(width: 10),
       btn('🏢', tr('المباني', 'Buildings'), const Color(0xFF6366F1), () => _go(const ClientStructureScreen())),
-      const SizedBox(width: 10),
-      btn('📊', tr('التحليلات', 'Analytics'), const Color(0xFFF59E0B), () => _go(const ClientAnalyticsScreen())),
     ]);
   }
 

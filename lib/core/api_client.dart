@@ -170,6 +170,21 @@ class ApiClient {
       List<dynamic>.from((await _handle(
               await http.get(_u('/client/contracts'), headers: await _headers())))['data'] as List);
 
+  Future<List<dynamic>> clientRequests() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/client/requests'), headers: await _headers())))['data'] as List);
+
+  Future<Map<String, dynamic>> createRequest(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/client/request/create'), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<List<dynamic>> servicesList() async {
+    try {
+      return List<dynamic>.from((await _handle(
+              await http.get(_u('/services'), headers: await _headers())))['data'] as List);
+    } catch (_) { return const []; }
+  }
+
   Future<Map<String, dynamic>> manageOptions() async =>
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/client/manage/options'), headers: await _headers())))['data'] as Map);

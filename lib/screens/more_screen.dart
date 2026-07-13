@@ -15,6 +15,7 @@ import 'occupancy_screen.dart';
 import 'add_worker_screen.dart';
 import 'contracts_screen.dart';
 import 'manage_screen.dart';
+import 'requests_screen.dart';
 
 /// A single place that links to everything available to this user — so nothing
 /// is more than two taps away.
@@ -64,6 +65,7 @@ class MoreScreen extends StatelessWidget {
       if (p.isAdmin) tile(Icons.business, tr('لوحة الشركة', 'Company dashboard'), const AdminHome(), c: const Color(0xFF6366F1));
     }
     header(tr('العقود والإدارة', 'Contracts & management'));
+    tile(Icons.inbox, tr('طلبات الخدمة', 'Service requests'), const RequestsScreen(), c: const Color(0xFFE6295C));
     tile(Icons.description, tr('العقود', 'Contracts'), const ContractsScreen(), c: const Color(0xFF0B6EA8));
     if (p.canAddWorkers) {
       tile(Icons.settings_suggest, tr('إدارة المنشأة', 'Manage facility'), const ManageScreen(), c: const Color(0xFF6366F1));
