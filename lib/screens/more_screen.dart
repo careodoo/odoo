@@ -16,6 +16,7 @@ import 'add_worker_screen.dart';
 import 'contracts_screen.dart';
 import 'manage_screen.dart';
 import 'requests_screen.dart';
+import 'quality_screen.dart';
 
 /// A single place that links to everything available to this user — so nothing
 /// is more than two taps away.
@@ -45,6 +46,7 @@ class MoreScreen extends StatelessWidget {
 
     header(tr('العمل', 'Work'));
     tile(Icons.assignment, tr('أوامر العمل', 'Work orders'), const WorkOrdersScreen());
+    tile(Icons.fact_check, tr('الجودة والجولات', 'Quality & rounds'), const QualityScreen(), c: const Color(0xFF0EA5A4));
     if (p.role != 'client') tile(Icons.qr_code_scanner, tr('مسح رمز الموقع', 'Scan location'), const ScanScreen());
 
     if (p.role == 'cleaning') { header(tr('النظافة', 'Cleaning')); tile(Icons.cleaning_services, tr('تدقيق الجودة', 'Quality audits'), const ServiceScreen(kind: 'cleaning', title: 'تدقيق النظافة')); }

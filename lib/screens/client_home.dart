@@ -13,6 +13,7 @@ import 'add_worker_screen.dart';
 import 'contracts_screen.dart';
 import 'manage_screen.dart';
 import 'requests_screen.dart';
+import 'quality_screen.dart';
 
 /// The client's cockpit — everything the module holds for this customer:
 /// buildings, services, teams, live work-order activity. Fully data-driven, so
@@ -67,6 +68,9 @@ class _ClientHomeState extends State<ClientHome> {
                 _quickAccess(cs),
                 const SizedBox(height: 12),
                 Row(children: [
+                  Expanded(child: OutlinedButton.icon(onPressed: () => _go(const QualityScreen()),
+                      icon: const Icon(Icons.fact_check), label: Text(tr('الجودة', 'Quality')))),
+                  const SizedBox(width: 10),
                   Expanded(child: OutlinedButton.icon(onPressed: () => _go(const ContractsScreen()),
                       icon: const Icon(Icons.description), label: Text(tr('العقود', 'Contracts')))),
                   if (p.canAddWorkers) ...[
