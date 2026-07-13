@@ -166,6 +166,24 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await http.post(
               _u('/client/worker/create'), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
 
+  Future<List<dynamic>> clientContracts() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/client/contracts'), headers: await _headers())))['data'] as List);
+
+  Future<Map<String, dynamic>> manageOptions() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/manage/options'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> manageUpsert(String kind, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/client/manage/$kind'), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<void> manageDelete(String kind, int id) async =>
+      _handle(await http.post(_u('/client/manage/$kind/$id/delete'), headers: await _headers()));
+
+  /// Absolute URL for a contract copy (needs the Bearer token to fetch).
+  String contractCopyUrl(String path) => path.startsWith('http') ? path : '$baseUrl$path';
+
   Future<Map<String, dynamic>> clientEmployee(int id, {String period = 'all'}) async =>
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/client/employee/$id?period=$period'), headers: await _headers())))['data'] as Map);

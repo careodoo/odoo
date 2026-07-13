@@ -10,6 +10,8 @@ import 'client_activity_screen.dart';
 import 'client_structure_screen.dart';
 import 'client_analytics_screen.dart';
 import 'add_worker_screen.dart';
+import 'contracts_screen.dart';
+import 'manage_screen.dart';
 
 /// The client's cockpit — everything the module holds for this customer:
 /// buildings, services, teams, live work-order activity. Fully data-driven, so
@@ -62,8 +64,18 @@ class _ClientHomeState extends State<ClientHome> {
                 _hero(d['client']?.toString() ?? '', cs),
                 const SizedBox(height: 14),
                 _quickAccess(cs),
+                const SizedBox(height: 12),
+                Row(children: [
+                  Expanded(child: OutlinedButton.icon(onPressed: () => _go(const ContractsScreen()),
+                      icon: const Icon(Icons.description), label: Text(tr('العقود', 'Contracts')))),
+                  if (p.canAddWorkers) ...[
+                    const SizedBox(width: 10),
+                    Expanded(child: OutlinedButton.icon(onPressed: () => _go(const ManageScreen()),
+                        icon: const Icon(Icons.settings_suggest), label: Text(tr('إدارة المنشأة', 'Manage')))),
+                  ],
+                ]),
                 if (p.canAddWorkers) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   SizedBox(width: double.infinity, child: FilledButton.icon(
                     onPressed: () => _go(const AddWorkerScreen()),
                     icon: const Icon(Icons.person_add),
