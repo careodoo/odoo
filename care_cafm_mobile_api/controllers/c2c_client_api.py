@@ -28,8 +28,18 @@ def _img(model, rid, field='image'):
     return _abs('/web/image/%s/%s/%s' % (model, rid, field))
 
 
-# public C2C image URL (served with sudo so <img> tags render without a token)
-_C2C_IMG_MODELS = {'cat': 'c2c.category', 'svc': 'c2c.service'}
+# public C2C image URLs (served with sudo so <img> tags render without a token)
+# kind -> (model, field)
+_C2C_IMG_MODELS = {
+    'cat': ('c2c.category', 'image'),
+    'svc': ('c2c.service', 'image'),
+    'offer': ('c2c.offer', 'image'),
+    'sub': ('c2c.subscription.plan', 'image'),
+    'review': ('c2c.review', 'avatar'),
+    'provider': ('c2c.provider', 'image'),
+    'wbefore': ('c2c.work.sample', 'before_image'),
+    'wafter': ('c2c.work.sample', 'after_image'),
+}
 
 
 def _c2c_img(kind, rid):
@@ -73,12 +83,13 @@ class C2CClientApi(Controller):
     # ---- public image (sudo, no token needed) -----------------------------
     @route(API + '/c2c/img/<string:kind>/<int:rid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def c2c_img(self, kind, rid, **kw):
-        model = _C2C_IMG_MODELS.get(kind)
+        spec = _C2C_IMG_MODELS.get(kind)
         data = None
-        if model:
+        if spec:
+            model, field = spec
             rec = request.env[model].sudo().browse(int(rid)).exists()
             if rec:
-                data = rec.image
+                data = rec[field]
         raw = base64.b64decode(data or _TRANSPARENT_PNG)
         return request.make_response(raw, headers=[
             ('Content-Type', 'image/png'), ('Content-Length', str(len(raw))),
@@ -88,20 +99,42 @@ class C2CClientApi(Controller):
     # ---- home feed --------------------------------------------------------
     @route(API + '/c2c/home', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def c2c_home(self, **kw):
-        env = _auth()
-        if not env:
-            return _err('غير مصرّح', 401)
+        env = _auth() or request.env  # public catalogue (guest browsing)
         if 'c2c.category' not in env:
             return _ok({'available': False})
         Cat = env['c2c.category'].sudo()
         Svc = env['c2c.service'].sudo()
         cats = Cat.search([], order='sequence, name')
         popular = Svc.search([('popular', '=', True)], limit=8)
+        offers = env['c2c.offer'].sudo().search([('is_live', '=', True)], order='sequence', limit=8) if 'c2c.offer' in env else []
+        featured = env['c2c.review'].sudo().search([('featured', '=', True)], limit=8) if 'c2c.review' in env else []
+        subs = env['c2c.subscription.plan'].sudo().search([], order='sequence', limit=6) if 'c2c.subscription.plan' in env else []
         return _ok({
             'available': True,
             'categories': [self._cat(c) for c in cats],
             'popular': [self._svc(s) for s in popular],
+            'offers': [self._offer(o) for o in offers],
+            'reviews': [self._review(r) for r in featured],
+            'subscriptions': [self._sub(p) for p in subs],
         })
+
+    def _offer(self, o):
+        return {'id': o.id, 'title': o.title, 'subtitle': o.subtitle or None, 'icon': o.icon or '🎉',
+                'kind': o.kind, 'discount_pct': o.discount_pct, 'code': o.code or None,
+                'color': o.color or '#0e3a5f', 'color2': o.color2 or '#17547f',
+                'description': o.description or None, 'image': _c2c_img('offer', o.id)}
+
+    def _review(self, r):
+        return {'id': r.id, 'author': r.author_name, 'rating': int(r.rating or 0),
+                'comment': r.comment or None, 'service': r.service_id.name or None,
+                'date': _d(r.date), 'avatar': _c2c_img('review', r.id) if r.avatar else None}
+
+    def _sub(self, p):
+        return {'id': p.id, 'name': p.name, 'period': p.period, 'visits': p.visits,
+                'price': p.price, 'old_price': p.old_price or None, 'save_pct': p.save_pct,
+                'features': (p.features or '').split('\n') if p.features else [],
+                'color': p.color or '#0e3a5f', 'popular': p.popular, 'category': p.category_id.name or None,
+                'image': _c2c_img('sub', p.id)}
 
     def _cat(self, c):
         return {'id': c.id, 'name': c.name, 'icon': c.icon or '🧩', 'color': c.color or '#0e3a5f',
@@ -120,18 +153,14 @@ class C2CClientApi(Controller):
 
     @route(API + '/c2c/categories', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def c2c_categories(self, **kw):
-        env = _auth()
-        if not env:
-            return _err('غير مصرّح', 401)
+        env = _auth() or request.env  # public catalogue (guest browsing)
         if 'c2c.category' not in env:
             return _ok([])
         return _ok([self._cat(c) for c in env['c2c.category'].sudo().search([], order='sequence, name')])
 
     @route(API + '/c2c/services', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def c2c_services(self, **kw):
-        env = _auth()
-        if not env:
-            return _err('غير مصرّح', 401)
+        env = _auth() or request.env  # public catalogue (guest browsing)
         if 'c2c.service' not in env:
             return _ok([])
         dom = []
@@ -145,9 +174,7 @@ class C2CClientApi(Controller):
 
     @route(API + '/c2c/service/<int:sid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def c2c_service(self, sid, **kw):
-        env = _auth()
-        if not env:
-            return _err('غير مصرّح', 401)
+        env = _auth() or request.env  # public catalogue (guest browsing)
         s = env['c2c.service'].sudo().browse(sid).exists()
         if not s:
             return _err('غير موجود', 404)
@@ -155,7 +182,83 @@ class C2CClientApi(Controller):
         d['audience'] = s.audience
         d['packages'] = [{'id': p.id, 'name': p.name, 'description': p.description or None,
                           'price': p.price, 'duration_min': p.duration_min} for p in s.package_ids]
+        # reviews  (note: a bare model recordset is falsy, so test `is not None`)
+        Rev = env['c2c.review'].sudo() if 'c2c.review' in env else None
+        d['reviews'] = [self._review(r) for r in Rev.search([('service_id', '=', s.id)], limit=20)] if Rev is not None else []
+        d['rating_count'] = len(d['reviews'])
+        # before/after gallery
+        WS = env['c2c.work.sample'].sudo() if 'c2c.work.sample' in env else None
+        d['work_samples'] = [{
+            'id': w.id, 'title': w.title, 'note': w.note or None,
+            'before': _c2c_img('wbefore', w.id) if w.before_image else None,
+            'after': _c2c_img('wafter', w.id) if w.after_image else None,
+        } for w in WS.search([('service_id', '=', s.id)], limit=12)] if WS is not None else []
+        # team qualified for this category
+        Prov = env['c2c.provider'].sudo() if 'c2c.provider' in env else None
+        team = Prov.search([('category_ids', 'in', s.category_id.id)]) if Prov is not None else Prov
+        if Prov is not None and not team:
+            team = Prov.search([], limit=4)
+        d['team'] = [{
+            'id': p.id, 'name': p.name, 'rating': p.rating_avg, 'jobs': p.booking_count,
+            'image': _c2c_img('provider', p.id) if p.image else None,
+        } for p in (team or [])]
         return _ok(d)
+
+    # ---- offers / subscriptions -------------------------------------------
+    @route(API + '/c2c/offers', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def c2c_offers(self, **kw):
+        env = _auth() or request.env
+        if 'c2c.offer' not in env:
+            return _ok([])
+        return _ok([self._offer(o) for o in env['c2c.offer'].sudo().search([('is_live', '=', True)], order='sequence')])
+
+    @route(API + '/c2c/subscriptions', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def c2c_subscriptions(self, **kw):
+        env = _auth() or request.env
+        if 'c2c.subscription.plan' not in env:
+            return _ok([])
+        return _ok([self._sub(p) for p in env['c2c.subscription.plan'].sudo().search([], order='sequence')])
+
+    # ---- long-term / contract requests ------------------------------------
+    @route(API + '/c2c/contract/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def c2c_contract_create(self, **kw):
+        env = _auth() or request.env
+        if 'c2c.contract.request' not in env:
+            return _err('غير متاح', 404)
+        from .api import _body
+        b = _body()
+        if not (b.get('title') and b.get('customer_name') and b.get('phone')):
+            return _err('الاسم والهاتف وعنوان الطلب مطلوبة', 422)
+        env2 = _auth()
+        vals = {
+            'title': b['title'], 'customer_name': b['customer_name'], 'phone': b['phone'],
+            'email': b.get('email') or None, 'description': b.get('description') or None,
+            'audience': b.get('audience') or 'company', 'site_address': b.get('site_address') or None,
+            'duration_months': int(b.get('duration_months') or 12),
+            'category_id': int(b['category_id']) if b.get('category_id') else False,
+            'service_id': int(b['service_id']) if b.get('service_id') else False,
+        }
+        if env2:
+            vals['partner_id'] = env2.user.partner_id.id
+        rec = env['c2c.contract.request'].sudo().create(vals)
+        return _ok({'id': rec.id, 'name': rec.name, 'state': rec.state})
+
+    @route(API + '/c2c/contracts', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def c2c_contracts(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'c2c.contract.request' not in env:
+            return _ok([])
+        st = _sel(env['c2c.contract.request'], 'state')
+        recs = env['c2c.contract.request'].sudo().search(
+            [('partner_id', 'in', self._my_partner_ids(env))], order='id desc', limit=100)
+        return _ok([{
+            'id': r.id, 'name': r.name, 'title': r.title, 'category': r.category_id.name or None,
+            'duration_months': r.duration_months, 'quote_amount': r.quote_amount or None,
+            'quote_period': r.quote_period, 'quote_note': r.quote_note or None,
+            'state': r.state, 'state_label': st.get(r.state, r.state or ''),
+        } for r in recs])
 
     # ---- bookings ---------------------------------------------------------
     def _partner(self, env):

@@ -7,4 +7,11 @@
     <field name="padding">6</field>
     <field name="company_id" eval="False"/>
   </record>
+  <record id="seq_c2c_contract" model="ir.sequence">
+    <field name="name">CARE 2 CARE Contract Request</field>
+    <field name="code">c2c.contract.request</field>
+    <field name="prefix">C2C-CT-</field>
+    <field name="padding">5</field>
+    <field name="company_id" eval="False"/>
+  </record>
 </odoo>

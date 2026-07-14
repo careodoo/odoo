@@ -2,8 +2,14 @@
 <odoo>
   <menuitem id="menu_c2c_root" name="CARE 2 CARE" sequence="53"/>
   <menuitem id="menu_c2c_bookings" name="الحجوزات" parent="menu_c2c_root" action="action_c2c_book" sequence="10"/>
+  <menuitem id="menu_c2c_contracts" name="طلبات التعاقد" parent="menu_c2c_root" action="action_c2c_contract" sequence="15"/>
   <menuitem id="menu_c2c_catalog" name="الكتالوج" parent="menu_c2c_root" sequence="20"/>
   <menuitem id="menu_c2c_services" name="الخدمات" parent="menu_c2c_catalog" action="action_c2c_svc" sequence="10"/>
   <menuitem id="menu_c2c_cats" name="الفئات" parent="menu_c2c_catalog" action="action_c2c_cat" sequence="20"/>
   <menuitem id="menu_c2c_providers" name="مقدّمو الخدمة" parent="menu_c2c_root" action="action_c2c_prov" sequence="30"/>
+  <menuitem id="menu_c2c_marketing" name="التسويق" parent="menu_c2c_root" sequence="40"/>
+  <menuitem id="menu_c2c_offers" name="العروض" parent="menu_c2c_marketing" action="action_c2c_offer" sequence="10"/>
+  <menuitem id="menu_c2c_subs" name="الاشتراكات" parent="menu_c2c_marketing" action="action_c2c_sub" sequence="20"/>
+  <menuitem id="menu_c2c_reviews" name="التقييمات" parent="menu_c2c_marketing" action="action_c2c_review" sequence="30"/>
+  <menuitem id="menu_c2c_works" name="أعمال سابقة" parent="menu_c2c_marketing" action="action_c2c_work" sequence="40"/>
 </odoo>

@@ -150,4 +150,133 @@
     <field name="name">مقدّمو الخدمة</field><field name="res_model">c2c.provider</field><field name="view_mode">tree,form</field>
   </record>
 
+  <!-- ===== REVIEWS ===== -->
+  <record id="view_c2c_review_tree" model="ir.ui.view">
+    <field name="name">c2c.review.tree</field><field name="model">c2c.review</field>
+    <field name="arch" type="xml">
+      <tree><field name="author_name"/><field name="service_id"/><field name="rating"/><field name="comment"/><field name="date"/><field name="featured"/></tree>
+    </field>
+  </record>
+  <record id="action_c2c_review" model="ir.actions.act_window">
+    <field name="name">التقييمات</field><field name="res_model">c2c.review</field><field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- ===== WORK SAMPLES (before/after) ===== -->
+  <record id="view_c2c_work_form" model="ir.ui.view">
+    <field name="name">c2c.work.sample.form</field><field name="model">c2c.work.sample</field>
+    <field name="arch" type="xml">
+      <form><sheet>
+        <div class="oe_title"><h1><field name="title"/></h1></div>
+        <group><group><field name="service_id"/><field name="date"/><field name="note"/></group></group>
+        <group string="قبل / بعد">
+          <field name="before_image" widget="image"/><field name="after_image" widget="image"/>
+        </group>
+      </sheet></form>
+    </field>
+  </record>
+  <record id="view_c2c_work_tree" model="ir.ui.view">
+    <field name="name">c2c.work.sample.tree</field><field name="model">c2c.work.sample</field>
+    <field name="arch" type="xml"><tree><field name="title"/><field name="service_id"/><field name="date"/></tree></field>
+  </record>
+  <record id="action_c2c_work" model="ir.actions.act_window">
+    <field name="name">أعمال سابقة (قبل/بعد)</field><field name="res_model">c2c.work.sample</field><field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- ===== SUBSCRIPTIONS ===== -->
+  <record id="view_c2c_sub_tree" model="ir.ui.view">
+    <field name="name">c2c.subscription.plan.tree</field><field name="model">c2c.subscription.plan</field>
+    <field name="arch" type="xml">
+      <tree><field name="sequence" widget="handle"/><field name="name"/><field name="category_id"/><field name="period"/><field name="visits"/><field name="price"/><field name="old_price"/><field name="save_pct"/><field name="popular"/></tree>
+    </field>
+  </record>
+  <record id="view_c2c_sub_form" model="ir.ui.view">
+    <field name="name">c2c.subscription.plan.form</field><field name="model">c2c.subscription.plan</field>
+    <field name="arch" type="xml">
+      <form><sheet>
+        <field name="image" widget="image" class="oe_avatar"/>
+        <div class="oe_title"><h1><field name="name"/></h1></div>
+        <group>
+          <group><field name="category_id"/><field name="service_id"/><field name="period"/><field name="visits"/></group>
+          <group><field name="price"/><field name="old_price"/><field name="save_pct"/><field name="color" widget="color"/><field name="popular"/></group>
+        </group>
+        <field name="features" placeholder="ميزة في كل سطر…"/>
+      </sheet></form>
+    </field>
+  </record>
+  <record id="action_c2c_sub" model="ir.actions.act_window">
+    <field name="name">الاشتراكات</field><field name="res_model">c2c.subscription.plan</field><field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- ===== OFFERS ===== -->
+  <record id="view_c2c_offer_tree" model="ir.ui.view">
+    <field name="name">c2c.offer.tree</field><field name="model">c2c.offer</field>
+    <field name="arch" type="xml">
+      <tree><field name="sequence" widget="handle"/><field name="icon"/><field name="title"/><field name="kind"/><field name="discount_pct"/><field name="code"/><field name="date_from"/><field name="date_to"/><field name="is_live"/></tree>
+    </field>
+  </record>
+  <record id="view_c2c_offer_form" model="ir.ui.view">
+    <field name="name">c2c.offer.form</field><field name="model">c2c.offer</field>
+    <field name="arch" type="xml">
+      <form><sheet>
+        <field name="image" widget="image" class="oe_avatar"/>
+        <div class="oe_title"><h1><field name="title"/></h1><field name="subtitle"/></div>
+        <group>
+          <group><field name="kind"/><field name="discount_pct"/><field name="code"/><field name="icon"/></group>
+          <group><field name="date_from"/><field name="date_to"/><field name="is_live"/><field name="color" widget="color"/><field name="color2" widget="color"/></group>
+        </group>
+        <field name="description"/>
+      </sheet></form>
+    </field>
+  </record>
+  <record id="action_c2c_offer" model="ir.actions.act_window">
+    <field name="name">العروض</field><field name="res_model">c2c.offer</field><field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- ===== CONTRACT REQUESTS (long-term → quote → CAFM) ===== -->
+  <record id="view_c2c_contract_tree" model="ir.ui.view">
+    <field name="name">c2c.contract.request.tree</field><field name="model">c2c.contract.request</field>
+    <field name="arch" type="xml">
+      <tree decoration-info="state=='new'" decoration-success="state=='converted'" decoration-warning="state=='quoted'" decoration-muted="state=='rejected'">
+        <field name="name"/><field name="customer_name"/><field name="phone"/><field name="title"/>
+        <field name="category_id"/><field name="duration_months"/><field name="quote_amount"/><field name="state"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_c2c_contract_form" model="ir.ui.view">
+    <field name="name">c2c.contract.request.form</field><field name="model">c2c.contract.request</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="action_send_quote" type="object" string="📄 إرسال عرض السعر" class="btn-primary" invisible="state not in ('new','reviewing')"/>
+          <button name="action_approve" type="object" string="موافقة العميل" invisible="state!='quoted'"/>
+          <button name="action_convert_to_cafm" type="object" string="🔄 تحويل لعميل CAFM" class="btn-primary" invisible="state not in ('approved','quoted')"/>
+          <button name="action_reject" type="object" string="رفض" invisible="state in ('converted','rejected')"/>
+          <field name="state" widget="statusbar"/>
+        </header>
+        <sheet>
+          <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+          <group>
+            <group string="مقدّم الطلب">
+              <field name="customer_name"/><field name="phone"/><field name="email"/>
+              <field name="partner_id"/><field name="audience"/><field name="site_address"/>
+            </group>
+            <group string="الاحتياج">
+              <field name="category_id"/><field name="service_id"/><field name="title"/><field name="duration_months"/>
+            </group>
+          </group>
+          <field name="description" placeholder="وصف الاحتياج…"/>
+          <group string="عرض السعر">
+            <group><field name="quote_amount"/><field name="quote_period"/></group>
+            <group><field name="cafm_client_id" readonly="1"/></group>
+          </group>
+          <field name="quote_note" placeholder="تفاصيل العرض…"/>
+        </sheet>
+        <div class="oe_chatter"><field name="message_follower_ids"/><field name="activity_ids"/><field name="message_ids"/></div>
+      </form>
+    </field>
+  </record>
+  <record id="action_c2c_contract" model="ir.actions.act_window">
+    <field name="name">طلبات التعاقد</field><field name="res_model">c2c.contract.request</field><field name="view_mode">tree,form</field>
+  </record>
+
 </odoo>

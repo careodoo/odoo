@@ -9,3 +9,13 @@ acc_c2c_book_u,c2c.booking.u,model_c2c_booking,base.group_user,1,1,1,0
 acc_c2c_book_m,c2c.booking.m,model_c2c_booking,hr.group_hr_manager,1,1,1,1
 acc_c2c_prov_u,c2c.provider.u,model_c2c_provider,base.group_user,1,1,1,0
 acc_c2c_prov_m,c2c.provider.m,model_c2c_provider,hr.group_hr_manager,1,1,1,1
+acc_c2c_review_u,c2c.review.u,model_c2c_review,base.group_user,1,1,1,0
+acc_c2c_review_m,c2c.review.m,model_c2c_review,hr.group_hr_manager,1,1,1,1
+acc_c2c_work_u,c2c.work.sample.u,model_c2c_work_sample,base.group_user,1,1,1,0
+acc_c2c_work_m,c2c.work.sample.m,model_c2c_work_sample,hr.group_hr_manager,1,1,1,1
+acc_c2c_sub_u,c2c.subscription.plan.u,model_c2c_subscription_plan,base.group_user,1,1,1,0
+acc_c2c_sub_m,c2c.subscription.plan.m,model_c2c_subscription_plan,hr.group_hr_manager,1,1,1,1
+acc_c2c_offer_u,c2c.offer.u,model_c2c_offer,base.group_user,1,1,1,0
+acc_c2c_offer_m,c2c.offer.m,model_c2c_offer,hr.group_hr_manager,1,1,1,1
+acc_c2c_contract_u,c2c.contract.request.u,model_c2c_contract_request,base.group_user,1,1,1,0
+acc_c2c_contract_m,c2c.contract.request.m,model_c2c_contract_request,hr.group_hr_manager,1,1,1,1
