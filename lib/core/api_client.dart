@@ -527,6 +527,29 @@ class ApiClient {
                 'store_id': storeId, 'barcode': barcode, 'quantity': quantity,
                 'unit_cost': unitCost, 'order_ref': orderRef,
               }))))['data'] as Map);
+
+  // ---- client-scoped waste transfer & treatment ----------------------------
+  Future<Map<String, dynamic>> clientWasteSummary() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/waste/summary'), headers: await _headers())))['data'] as Map);
+
+  /// kind: orders | trips | centers
+  Future<List<dynamic>> clientWaste(String kind) async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/client/waste/$kind'), headers: await _headers())))['data'] as List);
+
+  Future<Map<String, dynamic>> clientWasteOptions() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/waste/options'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> clientWasteCreate(int projectId, {int? pickupId, int? itemId, double qty = 1.0}) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/client/waste/order/create'),
+              headers: await _headers(),
+              body: jsonEncode({
+                'project_id': projectId,
+                if (pickupId != null) 'pickup_location_id': pickupId,
+                'items': itemId != null ? [{'item_id': itemId, 'quantity': qty}] : [],
+              }))))['data'] as Map);
 }
 
 class ApiException implements Exception {

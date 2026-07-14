@@ -22,6 +22,7 @@ import 'client_agri_screen.dart';
 import 'client_cleaning_screen.dart';
 import 'client_facade_screen.dart';
 import 'client_inventory_screen.dart';
+import 'client_waste_screen.dart';
 import 'schedules_screen.dart';
 import 'attendance_screen.dart';
 import 'notify_send_screen.dart';
@@ -197,6 +198,16 @@ class _ClientHomeState extends State<ClientHome> {
         btn('🏙️', tr('الواجهات', 'Facade'), const Color(0xFF8B5CF6), () => _go(const ClientFacadeScreen())),
         const SizedBox(width: 10),
         btn('📦', tr('المخزون', 'Inventory'), const Color(0xFF0E3A5F), () => _go(const ClientInventoryScreen())),
+      ]),
+      const SizedBox(height: 10),
+      Row(children: [
+        btn('♻️', tr('النفايات', 'Waste'), const Color(0xFF16A34A), () => _go(const ClientWasteScreen())),
+        const SizedBox(width: 10),
+        const Expanded(child: SizedBox()),
+        const SizedBox(width: 10),
+        const Expanded(child: SizedBox()),
+        const SizedBox(width: 10),
+        const Expanded(child: SizedBox()),
       ]),
     ]);
   }
