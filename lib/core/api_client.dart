@@ -342,6 +342,149 @@ class ApiClient {
         body: jsonEncode({'type': type, 'severity': severity, 'description': description})));
     return Map<String, dynamic>.from(body['data'] as Map);
   }
+
+  // ---- contracted services (segmented menu) --------------------------------
+  Future<List<dynamic>> clientServices() async {
+    try {
+      final body = await _handle(await http.get(_u('/client/services'), headers: await _headers()));
+      return List<dynamic>.from((body['data'] as Map)['services'] as List);
+    } catch (_) { return const []; }
+  }
+
+  // ---- shop: products / favorites / cart → order ---------------------------
+  Future<Map<String, dynamic>> clientProducts({String? q, int? categoryId, bool favorites = false}) async {
+    final params = <String>[];
+    if (q != null && q.isNotEmpty) params.add('q=${Uri.encodeComponent(q)}');
+    if (categoryId != null) params.add('category_id=$categoryId');
+    if (favorites) params.add('favorites=1');
+    final qs = params.isEmpty ? '' : '?${params.join('&')}';
+    return Map<String, dynamic>.from((await _handle(
+            await http.get(_u('/client/products$qs'), headers: await _headers())))['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> clientProduct(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/product/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> favoriteToggle(int productId) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/client/favorite/toggle'),
+              headers: await _headers(), body: jsonEncode({'product_id': productId})))) ['data'] as Map);
+
+  Future<Map<String, dynamic>> clientFavorites() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/favorites'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> orderCreate(List<Map<String, dynamic>> lines) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/client/order/create'),
+              headers: await _headers(), body: jsonEncode({'lines': lines})))) ['data'] as Map);
+
+  Future<List<dynamic>> clientOrders() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/client/orders'), headers: await _headers())))['data'] as List);
+
+  Future<Map<String, dynamic>> clientOrder(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/order/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<void> orderCancel(int id) async =>
+      _handle(await http.post(_u('/client/order/$id/cancel'), headers: await _headers()));
+
+  // ---- invoices ------------------------------------------------------------
+  Future<Map<String, dynamic>> clientInvoices() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/invoices'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> clientInvoice(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/invoice/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<void> invoiceApprove(int id, String comment) async =>
+      _handle(await http.post(_u('/client/invoice/$id/approve'),
+          headers: await _headers(), body: jsonEncode({'comment': comment})));
+
+  Future<void> invoiceReject(int id, String comment) async =>
+      _handle(await http.post(_u('/client/invoice/$id/reject'),
+          headers: await _headers(), body: jsonEncode({'comment': comment})));
+
+  Future<List<dynamic>> clientSchedules() async =>
+      List<dynamic>.from(((await _handle(
+              await http.get(_u('/client/schedules'), headers: await _headers())))['data']
+          as Map)['schedules'] as List);
+
+  Future<Map<String, dynamic>> clientAttendanceData() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/attendance'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> notifyOptions() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/notify/options'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> notifySend(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/client/notify/send'),
+              headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<List<dynamic>> notifySent() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/client/notify/sent'), headers: await _headers())))['data'] as List);
+
+  // ---- client-scoped security suite ----------------------------------------
+  Future<Map<String, dynamic>> clientSecuritySummary() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/security/summary'), headers: await _headers())))['data'] as Map);
+
+  /// kind: incidents | patrols | gatepasses | visitors | inspections | guards | keys
+  Future<List<dynamic>> clientSecurity(String kind) async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/client/security/$kind'), headers: await _headers())))['data'] as List);
+
+  // ---- client-scoped agriculture / landscaping suite -----------------------
+  Future<Map<String, dynamic>> clientAgriSummary() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/agri/summary'), headers: await _headers())))['data'] as Map);
+
+  /// kind: zones | plants | operations | species
+  Future<List<dynamic>> clientAgri(String kind) async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/client/agri/$kind'), headers: await _headers())))['data'] as List);
+
+  Future<Map<String, dynamic>> clientAgriPlant(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/agri/plant/$id'), headers: await _headers())))['data'] as Map);
+
+  /// Raise a service request for a tree work. opType: prune|inspect|pest|fertilize|water|other
+  Future<Map<String, dynamic>> clientAgriRequest(int plantId, String opType, {String note = ''}) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/client/agri/request'),
+              headers: await _headers(), body: jsonEncode({'plant_id': plantId, 'op_type': opType, 'note': note}))))['data'] as Map);
+
+  /// Client approves/rejects a zone's irrigation plan. decision: approve|reject
+  Future<Map<String, dynamic>> clientAgriZoneDecision(int zoneId, String decision, {String comment = ''}) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/client/agri/zone/$zoneId/$decision'),
+              headers: await _headers(), body: jsonEncode({'comment': comment}))))['data'] as Map);
+
+  // ---- client-scoped cleaning suite ----------------------------------------
+  Future<Map<String, dynamic>> clientCleanSummary() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/clean/summary'), headers: await _headers())))['data'] as Map);
+
+  /// kind: audits | schedules | rounds | consumables
+  Future<List<dynamic>> clientClean(String kind) async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/client/clean/$kind'), headers: await _headers())))['data'] as List);
+
+  /// Client acknowledges an audit. decision: accept | dispute
+  Future<Map<String, dynamic>> clientCleanAuditAck(int auditId, String decision, {String comment = ''}) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/client/clean/audit/$auditId/$decision'),
+              headers: await _headers(), body: jsonEncode({'comment': comment}))))['data'] as Map);
+
+  // ---- client-scoped facade cleaning suite ---------------------------------
+  Future<Map<String, dynamic>> clientFacadeSummary() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/facade/summary'), headers: await _headers())))['data'] as Map);
+
+  /// kind: zones | permits
+  Future<List<dynamic>> clientFacade(String kind) async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/client/facade/$kind'), headers: await _headers())))['data'] as List);
 }
 
 class ApiException implements Exception {

@@ -14,6 +14,16 @@ import 'contracts_screen.dart';
 import 'manage_screen.dart';
 import 'requests_screen.dart';
 import 'quality_screen.dart';
+import 'shop_screen.dart';
+import 'orders_screen.dart';
+import 'invoices_screen.dart';
+import 'client_security_screen.dart';
+import 'client_agri_screen.dart';
+import 'client_cleaning_screen.dart';
+import 'client_facade_screen.dart';
+import 'schedules_screen.dart';
+import 'attendance_screen.dart';
+import 'notify_send_screen.dart';
 
 /// The client's cockpit — everything the module holds for this customer:
 /// buildings, services, teams, live work-order activity. Fully data-driven, so
@@ -147,14 +157,46 @@ class _ClientHomeState extends State<ClientHome> {
             ),
           ),
         );
-    return Row(children: [
-      btn('📥', tr('طلب خدمة', 'Request'), const Color(0xFFE6295C), () => _go(const RequestsScreen())),
-      const SizedBox(width: 10),
-      btn('👷', tr('الفريق', 'Team'), const Color(0xFF2F6DF6), () => _go(const ClientTeamScreen())),
-      const SizedBox(width: 10),
-      btn('📡', tr('النشاط', 'Live'), const Color(0xFF16A34A), () => _go(const ClientActivityScreen())),
-      const SizedBox(width: 10),
-      btn('🏢', tr('المباني', 'Buildings'), const Color(0xFF6366F1), () => _go(const ClientStructureScreen())),
+    return Column(children: [
+      Row(children: [
+        btn('📥', tr('طلب خدمة', 'Request'), const Color(0xFFE6295C), () => _go(const RequestsScreen())),
+        const SizedBox(width: 10),
+        btn('👷', tr('الفريق', 'Team'), const Color(0xFF2F6DF6), () => _go(const ClientTeamScreen())),
+        const SizedBox(width: 10),
+        btn('📡', tr('النشاط', 'Live'), const Color(0xFF16A34A), () => _go(const ClientActivityScreen())),
+        const SizedBox(width: 10),
+        btn('🏢', tr('المباني', 'Buildings'), const Color(0xFF6366F1), () => _go(const ClientStructureScreen())),
+      ]),
+      const SizedBox(height: 10),
+      Row(children: [
+        btn('🛒', tr('المتجر', 'Shop'), const Color(0xFF0EA5E9), () => _go(const ShopScreen())),
+        const SizedBox(width: 10),
+        btn('📦', tr('طلباتي', 'Orders'), const Color(0xFFF59E0B), () => _go(const OrdersScreen())),
+        const SizedBox(width: 10),
+        btn('💳', tr('الفواتير', 'Invoices'), const Color(0xFF7A1340), () => _go(const InvoicesScreen())),
+        const SizedBox(width: 10),
+        btn('✅', tr('الجودة', 'Quality'), const Color(0xFF16A34A), () => _go(const QualityScreen())),
+      ]),
+      const SizedBox(height: 10),
+      Row(children: [
+        btn('🛡️', tr('الأمن', 'Security'), const Color(0xFFE11D48), () => _go(const ClientSecurityScreen())),
+        const SizedBox(width: 10),
+        btn('🔁', tr('الجدولة', 'Schedules'), const Color(0xFF0D9488), () => _go(const SchedulesScreen())),
+        const SizedBox(width: 10),
+        btn('🕐', tr('الحضور', 'Attendance'), const Color(0xFF0891B2), () => _go(const AttendanceScreen())),
+        const SizedBox(width: 10),
+        btn('📣', tr('إشعار', 'Notify'), const Color(0xFF6366F1), () => _go(const NotifySendScreen())),
+      ]),
+      const SizedBox(height: 10),
+      Row(children: [
+        btn('🧼', tr('النظافة', 'Cleaning'), const Color(0xFF0891B2), () => _go(const ClientCleaningScreen())),
+        const SizedBox(width: 10),
+        btn('🌳', tr('الزراعة', 'Landscape'), const Color(0xFF15803D), () => _go(const ClientAgriScreen())),
+        const SizedBox(width: 10),
+        btn('🏙️', tr('الواجهات', 'Facade'), const Color(0xFF8B5CF6), () => _go(const ClientFacadeScreen())),
+        const SizedBox(width: 10),
+        const Expanded(child: SizedBox()),
+      ]),
     ]);
   }
 
