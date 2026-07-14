@@ -5,7 +5,7 @@ import 'core/auth.dart';
 import 'core/theme.dart';
 import 'core/i18n.dart';
 import 'screens/login_screen.dart';
-import 'screens/main_shell.dart';
+import 'screens/c2c/root_shell.dart';
 
 void main() {
   final api = ApiClient();
@@ -39,7 +39,7 @@ class CareApp extends StatelessWidget {
       ),
       home: auth.loading
           ? const _Splash()
-          : (auth.isLoggedIn ? const MainShell() : const LoginScreen()),
+          : (auth.isLoggedIn ? const RootShell() : const LoginScreen()),
     );
   }
 }

@@ -550,6 +550,47 @@ class ApiClient {
                 if (pickupId != null) 'pickup_location_id': pickupId,
                 'items': itemId != null ? [{'item_id': itemId, 'quantity': qty}] : [],
               }))))['data'] as Map);
+
+  // ---- CARE 2 CARE (home services storefront) ------------------------------
+  Future<Map<String, dynamic>> whoami() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/whoami'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> c2cHome() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/c2c/home'), headers: await _headers())))['data'] as Map);
+
+  Future<List<dynamic>> c2cServices({int? categoryId, String q = ''}) async {
+    final qs = <String>[];
+    if (categoryId != null) qs.add('category_id=$categoryId');
+    if (q.isNotEmpty) qs.add('q=${Uri.encodeComponent(q)}');
+    final path = '/c2c/services${qs.isEmpty ? '' : '?${qs.join('&')}'}';
+    return List<dynamic>.from((await _handle(await http.get(_u(path), headers: await _headers())))['data'] as List);
+  }
+
+  Future<Map<String, dynamic>> c2cService(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/c2c/service/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> c2cBook(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/c2c/book'),
+              headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<List<dynamic>> c2cBookings() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/c2c/bookings'), headers: await _headers())))['data'] as List);
+
+  Future<Map<String, dynamic>> c2cCancel(int id) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/c2c/booking/$id/cancel'),
+              headers: await _headers(), body: jsonEncode({}))))['data'] as Map);
+
+  Future<Map<String, dynamic>> c2cRate(int id, int stars, {String feedback = ''}) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/c2c/booking/$id/rate'),
+              headers: await _headers(), body: jsonEncode({'rating': stars, 'feedback': feedback}))))['data'] as Map);
+
+  Future<Map<String, dynamic>> c2cAccount() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/c2c/account'), headers: await _headers())))['data'] as Map);
 }
 
 class ApiException implements Exception {
