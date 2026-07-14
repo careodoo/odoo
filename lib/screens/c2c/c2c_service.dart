@@ -143,6 +143,9 @@ class _C2CServiceScreenState extends State<C2CServiceScreen> {
                     const SizedBox(height: 8),
                     for (final p in packages) _pkgTile(p as Map),
                   ],
+                  _gallery((s['work_samples'] as List?) ?? []),
+                  _team((s['team'] as List?) ?? []),
+                  _reviews((s['reviews'] as List?) ?? [], s),
                   const SizedBox(height: 90),
                 ]),
               ),
@@ -179,6 +182,125 @@ class _C2CServiceScreenState extends State<C2CServiceScreen> {
         child: Text(t, style: TextStyle(color: c, fontWeight: FontWeight.w800, fontSize: 12)),
       );
 
+  Widget _secTitle(String t) => Padding(
+        padding: const EdgeInsets.only(top: 20, bottom: 10),
+        child: Text(t, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: C2C.navy)),
+      );
+
+  // ---- before / after gallery ----
+  Widget _gallery(List samples) {
+    if (samples.isEmpty) return const SizedBox.shrink();
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _secTitle(tr('أعمال سابقة (قبل / بعد)', 'Past work (before / after)')),
+      SizedBox(
+        height: 150,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: samples.length,
+          itemBuilder: (_, i) {
+            final w = samples[i] as Map;
+            return GestureDetector(
+              onTap: () => _showBeforeAfter(w),
+              child: Container(
+                width: 210,
+                margin: const EdgeInsets.only(left: 10),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)]),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Row(children: [
+                    if (w['before'] != null) Expanded(child: _tagImg('${w['before']}', tr('قبل', 'Before'))),
+                    if (w['after'] != null) Expanded(child: _tagImg('${w['after']}', tr('بعد', 'After'))),
+                  ]),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    ]);
+  }
+
+  Widget _tagImg(String url, String tag) => Stack(fit: StackFit.expand, children: [
+        Image.network(url, fit: BoxFit.cover),
+        Positioned(left: 0, right: 0, bottom: 0, child: Container(
+          color: Colors.black54, padding: const EdgeInsets.symmetric(vertical: 3),
+          child: Text(tag, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
+        )),
+      ]);
+
+  void _showBeforeAfter(Map w) => showDialog(context: context, builder: (_) => Dialog(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Padding(padding: const EdgeInsets.all(12), child: Text('${w['title'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w800))),
+          Row(children: [
+            if (w['before'] != null) Expanded(child: _tagImg('${w['before']}', tr('قبل', 'Before'))),
+            if (w['after'] != null) Expanded(child: _tagImg('${w['after']}', tr('بعد', 'After'))),
+          ]),
+          if (w['note'] != null) Padding(padding: const EdgeInsets.all(12), child: Text('${w['note']}', style: const TextStyle(color: Colors.grey))),
+        ]),
+      ));
+
+  // ---- team ----
+  Widget _team(List team) {
+    if (team.isEmpty) return const SizedBox.shrink();
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _secTitle(tr('فريق العمل', 'Our team')),
+      SizedBox(
+        height: 132,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: team.length,
+          itemBuilder: (_, i) {
+            final t = team[i] as Map;
+            return Container(
+              width: 110,
+              margin: const EdgeInsets.only(left: 10),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)]),
+              child: Column(children: [
+                CircleAvatar(radius: 26, backgroundColor: C2C.navy.withValues(alpha: 0.1), backgroundImage: t['image'] != null ? NetworkImage('${t['image']}') : null, child: t['image'] == null ? const Icon(Icons.person, color: C2C.navy) : null),
+                const SizedBox(height: 6),
+                Text('${t['name']}', maxLines: 2, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                if ((t['rating'] ?? 0) > 0) Text('⭐ ${t['rating']}', style: const TextStyle(fontSize: 11, color: Color(0xFFF5A623), fontWeight: FontWeight.w800)),
+              ]),
+            );
+          },
+        ),
+      ),
+    ]);
+  }
+
+  // ---- reviews ----
+  Widget _reviews(List reviews, Map s) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        _secTitle(tr('تقييمات العملاء', 'Customer reviews')),
+        const Spacer(),
+        if ((s['rating'] ?? 0) > 0) Padding(padding: const EdgeInsets.only(top: 14), child: Text('⭐ ${s['rating']} (${s['rating_count'] ?? reviews.length})', style: const TextStyle(fontWeight: FontWeight.w800, color: C2C.navy))),
+      ]),
+      if (reviews.isEmpty)
+        Text(tr('لا تقييمات بعد', 'No reviews yet'), style: const TextStyle(color: Colors.grey))
+      else
+        for (final r in reviews) _reviewTile(r as Map),
+    ]);
+  }
+
+  Widget _reviewTile(Map r) => Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          CircleAvatar(radius: 20, backgroundColor: C2C.navy.withValues(alpha: 0.1), backgroundImage: r['avatar'] != null ? NetworkImage('${r['avatar']}') : null, child: r['avatar'] == null ? Text('${r['author']}'.characters.first, style: const TextStyle(color: C2C.navy, fontWeight: FontWeight.w800)) : null),
+          const SizedBox(width: 10),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Expanded(child: Text('${r['author']}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13))),
+              Text('★' * (r['rating'] as int? ?? 0), style: const TextStyle(color: Color(0xFFF5A623), fontSize: 13)),
+            ]),
+            if (r['comment'] != null) Padding(padding: const EdgeInsets.only(top: 3), child: Text('${r['comment']}', style: const TextStyle(fontSize: 12.5, height: 1.4))),
+          ])),
+        ]),
+      );
+
   Widget _pkgTile(Map p) {
     final sel = _pkgId == p['id'];
     return InkWell(
@@ -207,6 +329,11 @@ class _C2CServiceScreenState extends State<C2CServiceScreen> {
   }
 
   Future<void> _book(Map s) async {
+    // guests must sign in before booking
+    if (!context.read<AuthProvider>().isLoggedIn) {
+      await promptLogin(context);
+      if (!mounted || !context.read<AuthProvider>().isLoggedIn) return;
+    }
     final ok = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,

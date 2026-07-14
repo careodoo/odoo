@@ -42,7 +42,10 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _busy = true);
     final ok = await context.read<AuthProvider>().login(_login.text.trim(), _pass.text);
     if (mounted) setState(() => _busy = false);
-    if (!ok && mounted) {
+    if (ok && mounted && Navigator.canPop(context)) {
+      // opened on-demand from guest mode → close and reveal the signed-in tree
+      Navigator.pop(context);
+    } else if (!ok && mounted) {
       final err = context.read<AuthProvider>().error ?? tr('فشل الدخول', 'Login failed');
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
     }

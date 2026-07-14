@@ -4,8 +4,8 @@ import 'core/api_client.dart';
 import 'core/auth.dart';
 import 'core/theme.dart';
 import 'core/i18n.dart';
-import 'screens/login_screen.dart';
 import 'screens/c2c/root_shell.dart';
+import 'screens/c2c/c2c_shell.dart';
 
 void main() {
   final api = ApiClient();
@@ -39,7 +39,9 @@ class CareApp extends StatelessWidget {
       ),
       home: auth.loading
           ? const _Splash()
-          : (auth.isLoggedIn ? const RootShell() : const LoginScreen()),
+          // Public app: guests land on the CARE 2 CARE storefront; login is
+          // only prompted on demand (booking / my account).
+          : (auth.isLoggedIn ? const RootShell() : const C2CShell(guest: true)),
     );
   }
 }

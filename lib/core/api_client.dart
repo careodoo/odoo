@@ -591,6 +591,22 @@ class ApiClient {
   Future<Map<String, dynamic>> c2cAccount() async =>
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/c2c/account'), headers: await _headers())))['data'] as Map);
+
+  Future<List<dynamic>> c2cOffers() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/c2c/offers'), headers: await _headers())))['data'] as List);
+
+  Future<List<dynamic>> c2cSubscriptions() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/c2c/subscriptions'), headers: await _headers())))['data'] as List);
+
+  Future<Map<String, dynamic>> c2cContractCreate(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/c2c/contract/create'),
+              headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<List<dynamic>> c2cContracts() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/c2c/contracts'), headers: await _headers())))['data'] as List);
 }
 
 class ApiException implements Exception {

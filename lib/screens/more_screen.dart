@@ -17,6 +17,7 @@ import 'contracts_screen.dart';
 import 'manage_screen.dart';
 import 'requests_screen.dart';
 import 'quality_screen.dart';
+import 'odoo_backend_screen.dart';
 
 /// A single place that links to everything available to this user — so nothing
 /// is more than two taps away.
@@ -48,6 +49,7 @@ class MoreScreen extends StatelessWidget {
     tile(Icons.assignment, tr('أوامر العمل', 'Work orders'), const WorkOrdersScreen());
     tile(Icons.fact_check, tr('الجودة والجولات', 'Quality & rounds'), const QualityScreen(), c: const Color(0xFF0EA5A4));
     if (p.role != 'client') tile(Icons.qr_code_scanner, tr('مسح رمز الموقع', 'Scan location'), const ScanScreen());
+    if (p.role != 'client') tile(Icons.dashboard_customize, tr('لوحة أودو الكاملة', 'Full Odoo backend'), const OdooBackendScreen(), c: const Color(0xFF714B67));
 
     if (p.role == 'cleaning') { header(tr('النظافة', 'Cleaning')); tile(Icons.cleaning_services, tr('تدقيق الجودة', 'Quality audits'), const ServiceScreen(kind: 'cleaning', title: 'تدقيق النظافة')); }
     if (p.role == 'agriculture') { header(tr('الزراعة', 'Agriculture')); tile(Icons.grass, tr('مناطق الريّ', 'Irrigation zones'), ServiceScreen(kind: 'agri', title: tr('مناطق الريّ', 'Irrigation zones'))); }

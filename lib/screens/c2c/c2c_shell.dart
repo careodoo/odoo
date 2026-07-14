@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import '../main_shell.dart';
+import '../login_screen.dart';
 import 'c2c_home.dart';
 import 'c2c_bookings.dart';
 import 'c2c_account.dart';
@@ -18,8 +19,9 @@ class C2C {
 /// The CARE 2 CARE customer storefront shell (Home · Bookings · Account).
 /// Shown as the app's default face; CAFM clients get a switch into the CAFM app.
 class C2CShell extends StatefulWidget {
-  const C2CShell({super.key, this.canSwitchCafm = false});
+  const C2CShell({super.key, this.canSwitchCafm = false, this.guest = false});
   final bool canSwitchCafm;
+  final bool guest;
   @override
   State<C2CShell> createState() => _C2CShellState();
 }
@@ -30,9 +32,9 @@ class _C2CShellState extends State<C2CShell> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      C2CHomeScreen(canSwitchCafm: widget.canSwitchCafm),
-      const C2CBookingsScreen(),
-      C2CAccountScreen(canSwitchCafm: widget.canSwitchCafm),
+      C2CHomeScreen(canSwitchCafm: widget.canSwitchCafm, guest: widget.guest),
+      widget.guest ? const _GuestGate() : const C2CBookingsScreen(),
+      widget.guest ? const _GuestGate() : C2CAccountScreen(canSwitchCafm: widget.canSwitchCafm),
     ];
     return Scaffold(
       backgroundColor: C2C.bg,
@@ -81,5 +83,48 @@ Future<bool> hasCafm(BuildContext context) async {
     return (w['interfaces']?['cafm'] ?? false) == true;
   } catch (_) {
     return false;
+  }
+}
+
+/// Open the login screen on demand (from guest mode). Returns true if the user
+/// signed in (the widget tree rebuilds into the signed-in shell).
+Future<void> promptLogin(BuildContext context) =>
+    Navigator.of(context, rootNavigator: true).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
+
+/// Shown on the Bookings/Account tabs while browsing as a guest.
+class _GuestGate extends StatelessWidget {
+  const _GuestGate();
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: C2C.bg,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+              width: 96, height: 96,
+              decoration: BoxDecoration(color: C2C.navy.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(28)),
+              child: const Icon(Icons.lock_person_rounded, size: 48, color: C2C.navy),
+            ),
+            const SizedBox(height: 18),
+            Text(tr('سجّل الدخول للمتابعة', 'Sign in to continue'), style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: C2C.navy)),
+            const SizedBox(height: 8),
+            Text(tr('لعرض حجوزاتك وحسابك، سجّل الدخول أو أنشئ حسابًا.', 'Sign in to view your bookings and account.'),
+                textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey, fontSize: 14, height: 1.5)),
+            const SizedBox(height: 22),
+            SizedBox(
+              width: double.infinity, height: 52,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(backgroundColor: C2C.red, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                onPressed: () => promptLogin(context),
+                icon: const Icon(Icons.login_rounded),
+                label: Text(tr('تسجيل الدخول', 'Sign in'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+              ),
+            ),
+          ]),
+        ),
+      ),
+    );
   }
 }
