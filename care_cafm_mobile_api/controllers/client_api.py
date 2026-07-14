@@ -857,6 +857,28 @@ class ClientApi(Controller):
         p = env.user.partner_id.commercial_partner_id or env.user.partner_id
         return set(p.sudo().cafm_favorite_product_ids.ids)
 
+    @route(API + '/product/<int:pid>/image', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def product_image(self, pid, **kw):
+        """Serve a product image via sudo so it renders in <img>/CSS tags that
+        carry no auth token. Falls back to Odoo's default placeholder when the
+        product has no image, so the grid degrades gracefully."""
+        size = request.httprequest.args.get('s') or '256'
+        field = 'image_%s' % size if size in ('128', '256', '512', '1024', '1920') else 'image_256'
+        p = request.env['product.product'].sudo().browse(int(pid)).exists()
+        data = None
+        if p:
+            data = p[field] or p.image_1920 or p.product_tmpl_id[field] or p.product_tmpl_id.image_1920
+        if not data:
+            # transparent 1x1 PNG so the frontend fallback (bg colour/icon) shows through
+            data = ('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk'
+                    'YPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==')
+        raw = base64.b64decode(data)
+        return request.make_response(raw, headers=[
+            ('Content-Type', 'image/png'),
+            ('Content-Length', str(len(raw))),
+            ('Cache-Control', 'public, max-age=86400'),
+        ])
+
     @route(API + '/client/products', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def products(self, **kw):
         env = _auth()
@@ -901,7 +923,7 @@ class ClientApi(Controller):
                 'uom': p.uom_id.name or None,
                 'category': p.categ_id.name or None, 'category_id': cid,
                 'favorite': p.id in fav,
-                'image': _abs('/web/image/product.product/%s/image_256' % p.id),
+                'image': _abs('/api/v1/product/%s/image' % p.id),
             })
         categories = sorted(cats.values(), key=lambda c: -c['count'])
         return _ok({'pricelist': pl.name if pl else None, 'products': out,
@@ -933,7 +955,7 @@ class ClientApi(Controller):
             'weight': p.weight or None, 'volume': p.volume or None,
             'description': desc or None,
             'favorite': p.id in self._fav_ids(env),
-            'image': _abs('/web/image/product.product/%s/image_512' % p.id),
+            'image': _abs('/api/v1/product/%s/image?s=512' % p.id),
         })
 
     @route(API + '/client/favorite/toggle', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
@@ -973,7 +995,7 @@ class ClientApi(Controller):
                 'price': round(price, 3), 'currency': (pl.currency_id.name if pl else env.company.currency_id.name),
                 'uom': p.uom_id.name or None, 'category': p.categ_id.name or None,
                 'favorite': True,
-                'image': _abs('/web/image/product.product/%s/image_256' % p.id),
+                'image': _abs('/api/v1/product/%s/image' % p.id),
             })
         return _ok({'products': out, 'favorite_ids': partner.cafm_favorite_product_ids.ids})
 
