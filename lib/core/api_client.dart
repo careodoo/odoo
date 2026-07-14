@@ -485,6 +485,48 @@ class ApiClient {
   Future<List<dynamic>> clientFacade(String kind) async =>
       List<dynamic>.from((await _handle(
               await http.get(_u('/client/facade/$kind'), headers: await _headers())))['data'] as List);
+
+  // ---- client-scoped internal inventory ------------------------------------
+  Future<Map<String, dynamic>> clientInvSummary() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/inv/summary'), headers: await _headers())))['data'] as Map);
+
+  Future<List<dynamic>> clientInvStores() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/client/inv/stores'), headers: await _headers())))['data'] as List);
+
+  Future<List<dynamic>> clientInvItems({int? storeId, bool low = false}) async {
+    final qs = <String>[];
+    if (storeId != null) qs.add('store_id=$storeId');
+    if (low) qs.add('low=1');
+    final path = '/client/inv/items${qs.isEmpty ? '' : '?${qs.join('&')}'}';
+    return List<dynamic>.from((await _handle(
+            await http.get(_u(path), headers: await _headers())))['data'] as List);
+  }
+
+  Future<List<dynamic>> clientInvMoves() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/client/inv/moves'), headers: await _headers())))['data'] as List);
+
+  /// Worker scans a product barcode to consume it from a store.
+  Future<Map<String, dynamic>> clientInvScanIssue(int storeId, String barcode,
+          {double quantity = 1.0, int? facilityId, int? locationId}) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/client/inv/scan-issue'),
+              headers: await _headers(),
+              body: jsonEncode({
+                'store_id': storeId, 'barcode': barcode, 'quantity': quantity,
+                if (facilityId != null) 'facility_id': facilityId,
+                if (locationId != null) 'location_id': locationId,
+              }))))['data'] as Map);
+
+  Future<Map<String, dynamic>> clientInvReceive(int storeId, String barcode,
+          {double quantity = 1.0, double unitCost = 0.0, String orderRef = ''}) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/client/inv/receive'),
+              headers: await _headers(),
+              body: jsonEncode({
+                'store_id': storeId, 'barcode': barcode, 'quantity': quantity,
+                'unit_cost': unitCost, 'order_ref': orderRef,
+              }))))['data'] as Map);
 }
 
 class ApiException implements Exception {
