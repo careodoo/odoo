@@ -438,6 +438,10 @@ const NAV_MAIN=[
   {id:'schedules',ic:'🔁',t:['جدولة الأعمال','Work schedules']},
 ];
 const NAV_TAIL=[
+  {grp:['المخزون','Inventory']},
+  {id:'inv_overview',ic:'📦',t:['المخزون الداخلي','Internal inventory']},
+  {id:'inv_low',ic:'⚠️',t:['أصناف منخفضة','Low stock']},
+  {id:'inv_moves',ic:'🔄',t:['حركات المخزون','Stock movements']},
   {grp:['الأشخاص والمنشآت','People & Facilities']},
   {id:'team',ic:'👷',t:['الفريق','Team'],cnt:'team'},
   {id:'attendance',ic:'🕐',t:['الحضور والانصراف','Attendance']},
@@ -517,6 +521,9 @@ Object.assign(TITLES,{
   facade_overview:[['نظرة غسيل الواجهات','Facade cleaning overview'],['الجدولة والسلامة على الارتفاع','Schedule & height safety']],
   facade_zones:[['الواجهات والجدولة','Elevations & schedule'],['تردّد التنظيف والاستحقاق','Cleaning frequency & due dates']],
   facade_permits:[['تصاريح العمل على ارتفاع','Height-work permits'],['مع قفل الرياح للسلامة','With wind-lockout safety']],
+  inv_overview:[['المخزون الداخلي','Internal inventory'],['أرصدة المخازن والأصناف','Store balances & items']],
+  inv_low:[['أصناف منخفضة المخزون','Low stock'],['ما يحتاج إعادة طلب','Needs reordering']],
+  inv_moves:[['حركات المخزون','Stock movements'],['واردات وصرف وتحويل','Receipts, issues & transfers']],
 });
 function setActive(id){document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.id===id));
   const base=(id||'').replace(/_(cleaning|security|facade|agriculture|agri|maintenance|landscape|pest|other)$/,'');
@@ -1259,6 +1266,32 @@ const ROUTES={
   async sec_keys(p){CUR='sec_keys';const rs=await api('/client/security/keys').catch(()=>[]);
     p.innerHTML='<div class="panel">'+(rs.length?'<table><thead><tr><th>'+T('المفتاح','Key')+'</th><th>'+T('الموقع','Premise')+'</th><th>'+T('الحائز','Holder')+'</th><th>'+T('الحالة','Status')+'</th></tr></thead><tbody>'
       +rs.map(r=>'<tr><td><b>'+esc(r.name||'—')+'</b></td><td>'+esc(r.premise||'—')+'</td><td>'+esc(r.holder||'—')+'</td><td><span class="pill">'+esc(r.state_label||'—')+'</span></td></tr>').join('')+'</tbody></table>':emptyState(T('لا مفاتيح','No keys')))+'</div>';
+  },
+  // ================= INTERNAL INVENTORY SUITE =================
+  async inv_overview(p){CUR='inv_overview';const d=await api('/client/inv/summary').catch(()=>({available:false}));
+    if(!d.available){p.innerHTML=emptyState(T('المخزون غير مفعّل لموقعك','Inventory not enabled for your site'));return;}
+    const rs=await api('/client/inv/items').catch(()=>[]);
+    const card=(ic,v,l,rid,color)=>'<div class="kpi'+(rid?' clk':'')+'"'+(rid?' onclick="go(\''+rid+'\')"':'')+'><div class="top"><div class="ic" style="background:'+color+'">'+ic+'</div><div><div class="v num">'+(v||0)+'</div><div class="l">'+l+'</div></div></div></div>';
+    p.innerHTML='<div class="kpis">'
+      +card('🏬',d.stores,T('المخازن','Stores'),'','#6366f1')
+      +card('📦',d.items,T('الأصناف','Items'),'','#0891b2')
+      +card('⚠️',d.low_stock,T('منخفض المخزون','Low stock'),'inv_low','#e11d48')
+      +card('💰',(d.stock_value||0),T('قيمة المخزون','Stock value'),'','#16a34a')
+      +card('🔄',d.moves_month,T('حركات الشهر','Moves (month)'),'inv_moves','#f59e0b')
+      +'</div>'
+      +'<div class="panel" style="margin-top:14px"><div id="invList"></div></div>';
+    const head='<thead><tr><th>'+T('المنتج','Product')+'</th><th>'+T('المخزن','Store')+'</th><th>'+T('الباركود','Barcode')+'</th><th>'+T('الرصيد','On hand')+'</th><th>'+T('حد الطلب','Min')+'</th><th>'+T('القيمة','Value')+'</th><th>'+T('الحالة','Status')+'</th></tr></thead>';
+    const row=x=>'<tr'+(x.low_stock?' style="background:#fff1f2"':'')+'><td><b>'+esc(x.product)+'</b></td><td class="muted">'+esc(x.store||'—')+'</td><td class="muted">'+esc(x.barcode||'—')+'</td><td class="num" style="font-weight:700'+(x.low_stock?';color:#e11d48':'')+'">'+x.on_hand+' '+esc(x.uom||'')+'</td><td class="num muted">'+x.min_qty+'</td><td class="num">'+x.stock_value+'</td><td>'+(x.low_stock?'<span class="pill" style="background:#fde8ec;color:#e11d48">⚠️ '+T('اطلب','reorder')+' '+x.to_reorder+'</span>':'<span class="pill" style="background:#dcfce7;color:#16a34a">'+T('كافٍ','OK')+'</span>')+'</td></tr>';
+    pgReset('inv2');pagedTable('invList',rs,head,row,'inv2',()=>{},20);
+  },
+  async inv_low(p){CUR='inv_low';const rs=await api('/client/inv/items?low=1').catch(()=>[]);
+    p.innerHTML='<div class="panel">'+(rs.length?'<table><thead><tr><th>'+T('المنتج','Product')+'</th><th>'+T('المخزن','Store')+'</th><th>'+T('الرصيد','On hand')+'</th><th>'+T('حد الطلب','Min')+'</th><th>'+T('الكمية المقترحة','Suggested')+'</th></tr></thead><tbody>'
+      +rs.map(x=>'<tr><td><b>'+esc(x.product)+'</b></td><td class="muted">'+esc(x.store||'—')+'</td><td class="num" style="color:#e11d48;font-weight:700">'+x.on_hand+' '+esc(x.uom||'')+'</td><td class="num muted">'+x.min_qty+'</td><td class="num"><b>'+x.to_reorder+'</b></td></tr>').join('')+'</tbody></table>':emptyState(T('لا أصناف منخفضة 👍','No low stock 👍')))+'</div>';
+  },
+  async inv_moves(p){CUR='inv_moves';const rs=await api('/client/inv/moves').catch(()=>[]);
+    const C={receipt:'#16a34a',issue:'#e11d48',transfer:'#6366f1',adjust:'#f59e0b',return:'#0891b2'};
+    p.innerHTML='<div class="panel">'+(rs.length?'<table><thead><tr><th>'+T('المرجع','Ref')+'</th><th>'+T('النوع','Type')+'</th><th>'+T('المنتج','Product')+'</th><th>'+T('المخزن','Store')+'</th><th>'+T('الوجهة','To')+'</th><th>'+T('المنفّذ','By')+'</th><th>'+T('الكمية','Qty')+'</th><th>'+T('التاريخ','Date')+'</th></tr></thead><tbody>'
+      +rs.map(x=>{const c=C[x.type_raw]||'#64748b';const sign=(x.type_raw==='receipt'||x.type_raw==='return'||x.type_raw==='adjust')?'+':'−';return '<tr><td>'+esc(x.name)+'</td><td><span class="pill" style="background:'+c+'1f;color:'+c+'">'+esc(x.type)+'</span></td><td><b>'+esc(x.product)+'</b></td><td class="muted">'+esc(x.store||'—')+'</td><td>'+esc(x.location||x.facility||'—')+'</td><td class="muted">'+esc(x.employee||'—')+'</td><td class="num" style="color:'+c+';font-weight:700">'+sign+x.quantity+'</td><td class="muted">'+dshort(x.date)+'</td></tr>';}).join('')+'</tbody></table>':emptyState(T('لا حركات','No movements')))+'</div>';
   },
   // ================= FACADE CLEANING SUITE =================
   async facade_overview(p){CUR='facade_overview';const d=await api('/client/facade/summary').catch(()=>({available:false}));

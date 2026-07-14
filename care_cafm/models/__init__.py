@@ -17,3 +17,4 @@ from . import work_schedule
 from . import account_invoice
 from . import offboard
 from . import wo_rating
+from . import inventory

@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- ============ STORES ============ -->
+  <record id="view_store_tree" model="ir.ui.view">
+    <field name="name">care.cafm.store.tree</field><field name="model">care.cafm.store</field>
+    <field name="arch" type="xml">
+      <tree decoration-warning="low_count&gt;0">
+        <field name="name"/><field name="code"/><field name="store_type"/>
+        <field name="facility_id"/><field name="keeper_id"/>
+        <field name="item_count"/><field name="low_count"/><field name="stock_value" sum="القيمة"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_store_form" model="ir.ui.view">
+    <field name="name">care.cafm.store.form</field><field name="model">care.cafm.store</field>
+    <field name="arch" type="xml">
+      <form>
+        <sheet>
+          <div class="oe_button_box" name="button_box">
+            <button name="action_view_items" type="object" class="oe_stat_button" icon="fa-cubes">
+              <field name="item_count" widget="statinfo" string="أصناف"/>
+            </button>
+          </div>
+          <div class="oe_title"><label for="name"/><h1><field name="name" placeholder="مخزن مستشفى لوذان"/></h1></div>
+          <group>
+            <group><field name="code"/><field name="store_type"/><field name="facility_id"/></group>
+            <group><field name="keeper_id"/><field name="low_count"/><field name="stock_value"/></group>
+          </group>
+          <notebook>
+            <page string="الأصناف والأرصدة">
+              <field name="item_ids">
+                <tree editable="bottom" decoration-danger="low_stock==True">
+                  <field name="product_id"/><field name="barcode"/><field name="uom_name"/>
+                  <field name="on_hand"/><field name="min_qty"/><field name="max_qty"/>
+                  <field name="low_stock"/><field name="unit_cost"/><field name="stock_value"/>
+                </tree>
+              </field>
+            </page>
+          </notebook>
+        </sheet>
+        <div class="oe_chatter"><field name="message_follower_ids"/><field name="message_ids"/></div>
+      </form>
+    </field>
+  </record>
+  <record id="action_store" model="ir.actions.act_window">
+    <field name="name">المخازن</field><field name="res_model">care.cafm.store</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- ============ STOCK ITEMS (balances) ============ -->
+  <record id="view_stockitem_tree" model="ir.ui.view">
+    <field name="name">care.cafm.stock.item.tree</field><field name="model">care.cafm.stock.item</field>
+    <field name="arch" type="xml">
+      <tree decoration-danger="low_stock==True">
+        <field name="product_id"/><field name="store_id"/><field name="facility_id"/>
+        <field name="barcode" optional="show"/><field name="on_hand"/><field name="uom_name"/>
+        <field name="min_qty"/><field name="max_qty"/><field name="low_stock"/>
+        <field name="to_reorder" optional="show"/><field name="stock_value" sum="القيمة"/>
+        <button name="action_reorder" type="object" string="إعادة طلب" icon="fa-refresh" class="btn-link"
+                invisible="not low_stock"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_stockitem_search" model="ir.ui.view">
+    <field name="name">care.cafm.stock.item.search</field><field name="model">care.cafm.stock.item</field>
+    <field name="arch" type="xml">
+      <search>
+        <field name="product_id"/><field name="barcode"/><field name="store_id"/><field name="facility_id"/>
+        <filter name="low" string="منخفض المخزون" domain="[('low_stock','=',True)]"/>
+        <group expand="0" string="تجميع">
+          <filter name="g_store" string="المخزن" context="{'group_by':'store_id'}"/>
+          <filter name="g_fac" string="المرفق" context="{'group_by':'facility_id'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+  <record id="action_stockitem" model="ir.actions.act_window">
+    <field name="name">أرصدة المخزون</field><field name="res_model">care.cafm.stock.item</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+  <record id="action_stockitem_low" model="ir.actions.act_window">
+    <field name="name">أصناف منخفضة المخزون</field><field name="res_model">care.cafm.stock.item</field>
+    <field name="view_mode">tree,form</field><field name="domain">[('low_stock','=',True)]</field>
+  </record>
+
+  <!-- ============ STOCK MOVES ============ -->
+  <record id="view_stockmove_tree" model="ir.ui.view">
+    <field name="name">care.cafm.stock.move.tree</field><field name="model">care.cafm.stock.move</field>
+    <field name="arch" type="xml">
+      <tree decoration-success="state=='done'" decoration-muted="state=='draft'">
+        <field name="name"/><field name="date"/><field name="move_type"/>
+        <field name="product_id"/><field name="store_id"/><field name="quantity"/>
+        <field name="facility_id" optional="show"/><field name="location_id" optional="show"/>
+        <field name="employee_id" optional="hide"/><field name="total_cost" optional="hide" sum="الإجمالي"/>
+        <field name="state"/>
+        <button name="action_done" type="object" string="تأكيد" icon="fa-check" class="btn-link"
+                invisible="state=='done'"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_stockmove_form" model="ir.ui.view">
+    <field name="name">care.cafm.stock.move.form</field><field name="model">care.cafm.stock.move</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="action_done" type="object" string="✔ تأكيد الحركة" class="btn-primary" invisible="state=='done'"/>
+          <field name="state" widget="statusbar"/>
+        </header>
+        <sheet>
+          <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+          <group>
+            <group string="الحركة">
+              <field name="move_type"/><field name="store_id"/>
+              <field name="scan_code" placeholder="امسح الباركود…"/>
+              <field name="product_id"/><field name="quantity"/><field name="uom_name"/>
+            </group>
+            <group string="الوجهة / التفاصيل">
+              <field name="dest_store_id" invisible="move_type!='transfer'" required="move_type=='transfer'"/>
+              <field name="facility_id" invisible="move_type!='issue'"/>
+              <field name="location_id" invisible="move_type!='issue'"/>
+              <field name="employee_id"/>
+              <field name="partner_id" invisible="move_type!='receipt'"/>
+              <field name="order_ref" invisible="move_type!='receipt'"/>
+              <field name="expiry_date" invisible="move_type!='receipt'"/>
+              <field name="unit_cost"/><field name="total_cost"/>
+              <field name="workorder_id"/>
+            </group>
+          </group>
+          <field name="note" placeholder="ملاحظة…"/>
+        </sheet>
+        <div class="oe_chatter"><field name="message_follower_ids"/><field name="message_ids"/></div>
+      </form>
+    </field>
+  </record>
+  <record id="view_stockmove_search" model="ir.ui.view">
+    <field name="name">care.cafm.stock.move.search</field><field name="model">care.cafm.stock.move</field>
+    <field name="arch" type="xml">
+      <search>
+        <field name="product_id"/><field name="store_id"/><field name="facility_id"/><field name="employee_id"/>
+        <filter name="receipts" string="واردات" domain="[('move_type','=','receipt')]"/>
+        <filter name="issues" string="صرف" domain="[('move_type','=','issue')]"/>
+        <filter name="draft" string="مسودات" domain="[('state','=','draft')]"/>
+        <group expand="0" string="تجميع">
+          <filter name="g_type" string="نوع الحركة" context="{'group_by':'move_type'}"/>
+          <filter name="g_store" string="المخزن" context="{'group_by':'store_id'}"/>
+          <filter name="g_fac" string="المرفق" context="{'group_by':'facility_id'}"/>
+          <filter name="g_month" string="الشهر" context="{'group_by':'date:month'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+  <record id="action_stockmove" model="ir.actions.act_window">
+    <field name="name">حركات المخزون</field><field name="res_model">care.cafm.stock.move</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- ============ MENUS (under CAFM) ============ -->
+  <menuitem id="menu_cafm_inventory" name="المخزون الداخلي" parent="care_cafm.menu_cafm_root" sequence="55"/>
+  <menuitem id="menu_inv_stores" name="المخازن" parent="menu_cafm_inventory" action="action_store" sequence="10"/>
+  <menuitem id="menu_inv_items" name="أرصدة المخزون" parent="menu_cafm_inventory" action="action_stockitem" sequence="20"/>
+  <menuitem id="menu_inv_low" name="أصناف منخفضة" parent="menu_cafm_inventory" action="action_stockitem_low" sequence="30"/>
+  <menuitem id="menu_inv_moves" name="حركات المخزون" parent="menu_cafm_inventory" action="action_stockmove" sequence="40"/>
+</odoo>
