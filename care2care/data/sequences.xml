@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="seq_c2c_booking" model="ir.sequence">
+    <field name="name">CARE 2 CARE Booking</field>
+    <field name="code">c2c.booking</field>
+    <field name="prefix">C2C-</field>
+    <field name="padding">6</field>
+    <field name="company_id" eval="False"/>
+  </record>
+</odoo>

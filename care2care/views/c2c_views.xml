@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- ===== CATEGORY ===== -->
+  <record id="view_c2c_cat_tree" model="ir.ui.view">
+    <field name="name">c2c.category.tree</field><field name="model">c2c.category</field>
+    <field name="arch" type="xml">
+      <tree><field name="sequence" widget="handle"/><field name="icon"/><field name="name"/><field name="service_count"/></tree>
+    </field>
+  </record>
+  <record id="view_c2c_cat_form" model="ir.ui.view">
+    <field name="name">c2c.category.form</field><field name="model">c2c.category</field>
+    <field name="arch" type="xml">
+      <form><sheet>
+        <field name="image" widget="image" class="oe_avatar"/>
+        <div class="oe_title"><h1><field name="name" placeholder="تنظيف منازل"/></h1></div>
+        <group><group><field name="icon"/><field name="color" widget="color"/><field name="sequence"/></group></group>
+        <field name="service_ids"><tree><field name="name"/><field name="base_price"/><field name="price_unit"/><field name="popular"/></tree></field>
+      </sheet></form>
+    </field>
+  </record>
+  <record id="action_c2c_cat" model="ir.actions.act_window">
+    <field name="name">الفئات</field><field name="res_model">c2c.category</field><field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- ===== SERVICE ===== -->
+  <record id="view_c2c_svc_tree" model="ir.ui.view">
+    <field name="name">c2c.service.tree</field><field name="model">c2c.service</field>
+    <field name="arch" type="xml">
+      <tree><field name="name"/><field name="category_id"/><field name="audience"/><field name="base_price"/><field name="price_unit"/><field name="duration_min"/><field name="rating_avg"/><field name="booking_count"/><field name="popular"/></tree>
+    </field>
+  </record>
+  <record id="view_c2c_svc_form" model="ir.ui.view">
+    <field name="name">c2c.service.form</field><field name="model">c2c.service</field>
+    <field name="arch" type="xml">
+      <form><sheet>
+        <field name="image" widget="image" class="oe_avatar"/>
+        <div class="oe_title"><label for="name"/><h1><field name="name"/></h1></div>
+        <group>
+          <group><field name="category_id"/><field name="audience"/><field name="popular"/></group>
+          <group><field name="base_price"/><field name="price_unit"/><field name="duration_min"/><field name="rating_avg"/><field name="booking_count"/></group>
+        </group>
+        <field name="description" placeholder="وصف الخدمة…"/>
+        <notebook>
+          <page string="الباقات">
+            <field name="package_ids"><tree editable="bottom"><field name="name"/><field name="description"/><field name="price"/><field name="duration_min"/></tree></field>
+          </page>
+        </notebook>
+      </sheet></form>
+    </field>
+  </record>
+  <record id="view_c2c_svc_search" model="ir.ui.view">
+    <field name="name">c2c.service.search</field><field name="model">c2c.service</field>
+    <field name="arch" type="xml">
+      <search><field name="name"/><field name="category_id"/>
+        <filter name="popular" string="الأكثر طلبًا" domain="[('popular','=',True)]"/>
+        <group expand="0" string="تجميع"><filter name="g_cat" string="الفئة" context="{'group_by':'category_id'}"/></group>
+      </search>
+    </field>
+  </record>
+  <record id="action_c2c_svc" model="ir.actions.act_window">
+    <field name="name">الخدمات</field><field name="res_model">c2c.service</field><field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- ===== BOOKING ===== -->
+  <record id="view_c2c_book_tree" model="ir.ui.view">
+    <field name="name">c2c.booking.tree</field><field name="model">c2c.booking</field>
+    <field name="arch" type="xml">
+      <tree decoration-info="state=='confirmed'" decoration-success="state=='done'" decoration-muted="state=='cancelled'" decoration-warning="state=='in_progress'">
+        <field name="name"/><field name="partner_id"/><field name="service_id"/><field name="visit_datetime"/>
+        <field name="provider_id"/><field name="amount"/><field name="payment_state"/><field name="state"/><field name="rating"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_c2c_book_form" model="ir.ui.view">
+    <field name="name">c2c.booking.form</field><field name="model">c2c.booking</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="action_confirm" type="object" string="تأكيد" class="btn-primary" invisible="state!='draft'"/>
+          <button name="action_assign" type="object" string="إسناد" invisible="state not in ('confirmed',)"/>
+          <button name="action_start" type="object" string="بدء التنفيذ" invisible="state!='assigned'"/>
+          <button name="action_done" type="object" string="إنهاء" invisible="state!='in_progress'"/>
+          <button name="action_pay" type="object" string="تسجيل الدفع" invisible="payment_state=='paid'"/>
+          <button name="action_cancel" type="object" string="إلغاء" invisible="state in ('done','cancelled')"/>
+          <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,assigned,in_progress,done"/>
+        </header>
+        <sheet>
+          <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+          <group>
+            <group string="الخدمة">
+              <field name="partner_id"/><field name="service_id"/><field name="package_id"/>
+              <field name="visit_datetime"/><field name="duration_min"/><field name="end_datetime"/>
+            </group>
+            <group string="الموقع والدفع">
+              <field name="phone"/><field name="area"/><field name="address"/><field name="gps"/>
+              <field name="amount"/><field name="payment_method"/><field name="payment_state"/>
+              <field name="provider_id"/>
+            </group>
+          </group>
+          <group string="التقييم" invisible="state!='done'"><field name="rating" widget="priority"/><field name="feedback"/></group>
+          <field name="notes" placeholder="ملاحظات العميل…"/>
+        </sheet>
+        <div class="oe_chatter"><field name="message_follower_ids"/><field name="activity_ids"/><field name="message_ids"/></div>
+      </form>
+    </field>
+  </record>
+  <record id="view_c2c_book_search" model="ir.ui.view">
+    <field name="name">c2c.booking.search</field><field name="model">c2c.booking</field>
+    <field name="arch" type="xml">
+      <search><field name="name"/><field name="partner_id"/><field name="service_id"/><field name="provider_id"/>
+        <filter name="upcoming" string="قادمة" domain="[('visit_datetime','&gt;=',context_today().strftime('%Y-%m-%d'))]"/>
+        <filter name="unpaid" string="غير مدفوعة" domain="[('payment_state','=','unpaid')]"/>
+        <separator/>
+        <filter name="f_draft" string="مسودة" domain="[('state','=','draft')]"/>
+        <filter name="f_done" string="منجزة" domain="[('state','=','done')]"/>
+        <group expand="0" string="تجميع">
+          <filter name="g_state" string="الحالة" context="{'group_by':'state'}"/>
+          <filter name="g_svc" string="الخدمة" context="{'group_by':'service_id'}"/>
+          <filter name="g_prov" string="مقدّم الخدمة" context="{'group_by':'provider_id'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+  <record id="action_c2c_book" model="ir.actions.act_window">
+    <field name="name">الحجوزات</field><field name="res_model">c2c.booking</field><field name="view_mode">tree,form,calendar</field>
+  </record>
+
+  <!-- ===== PROVIDER ===== -->
+  <record id="view_c2c_prov_tree" model="ir.ui.view">
+    <field name="name">c2c.provider.tree</field><field name="model">c2c.provider</field>
+    <field name="arch" type="xml">
+      <tree><field name="name"/><field name="phone"/><field name="category_ids" widget="many2many_tags"/><field name="booking_count"/><field name="rating_avg"/><field name="available"/></tree>
+    </field>
+  </record>
+  <record id="view_c2c_prov_form" model="ir.ui.view">
+    <field name="name">c2c.provider.form</field><field name="model">c2c.provider</field>
+    <field name="arch" type="xml">
+      <form><sheet>
+        <field name="image" widget="image" class="oe_avatar"/>
+        <div class="oe_title"><h1><field name="name"/></h1></div>
+        <group>
+          <group><field name="employee_id"/><field name="phone"/><field name="available"/></group>
+          <group><field name="category_ids" widget="many2many_tags"/><field name="booking_count"/><field name="rating_avg"/></group>
+        </group>
+      </sheet></form>
+    </field>
+  </record>
+  <record id="action_c2c_prov" model="ir.actions.act_window">
+    <field name="name">مقدّمو الخدمة</field><field name="res_model">c2c.provider</field><field name="view_mode">tree,form</field>
+  </record>
+
+</odoo>

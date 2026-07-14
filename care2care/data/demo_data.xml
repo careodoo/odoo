@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo><data noupdate="1">
+
+  <!-- Categories -->
+  <record id="cat_cleaning" model="c2c.category">
+    <field name="name">تنظيف منازل</field><field name="icon">🧹</field><field name="color">#0ea5e9</field><field name="sequence">10</field>
+  </record>
+  <record id="cat_carpet" model="c2c.category">
+    <field name="name">غسيل سجاد وكنب</field><field name="icon">🛋️</field><field name="color">#8b5cf6</field><field name="sequence">20</field>
+  </record>
+  <record id="cat_laundry" model="c2c.category">
+    <field name="name">مغسلة منزلية</field><field name="icon">👕</field><field name="color">#0891b2</field><field name="sequence">30</field>
+  </record>
+  <record id="cat_maint" model="c2c.category">
+    <field name="name">صيانة منزلية</field><field name="icon">🔧</field><field name="color">#f59e0b</field><field name="sequence">40</field>
+  </record>
+  <record id="cat_ac" model="c2c.category">
+    <field name="name">تكييف وتبريد</field><field name="icon">❄️</field><field name="color">#3b82f6</field><field name="sequence">50</field>
+  </record>
+  <record id="cat_pest" model="c2c.category">
+    <field name="name">مكافحة حشرات</field><field name="icon">🐜</field><field name="color">#a16207</field><field name="sequence">60</field>
+  </record>
+
+  <!-- Services -->
+  <record id="svc_deep_clean" model="c2c.service">
+    <field name="name">تنظيف عميق شامل</field><field name="category_id" ref="cat_cleaning"/><field name="audience">both</field>
+    <field name="base_price">25</field><field name="price_unit">visit</field><field name="duration_min">180</field>
+    <field name="popular">1</field><field name="description">تنظيف شامل للمنزل يشمل المطبخ والحمامات والأرضيات والنوافذ.</field>
+  </record>
+  <record id="svc_regular_clean" model="c2c.service">
+    <field name="name">تنظيف دوري بالساعة</field><field name="category_id" ref="cat_cleaning"/><field name="audience">home</field>
+    <field name="base_price">4</field><field name="price_unit">hour</field><field name="duration_min">120</field>
+  </record>
+  <record id="svc_carpet" model="c2c.service">
+    <field name="name">غسيل سجاد (بالمتر)</field><field name="category_id" ref="cat_carpet"/><field name="audience">both</field>
+    <field name="base_price">3</field><field name="price_unit">sqm</field><field name="duration_min">90</field><field name="popular">1</field>
+  </record>
+  <record id="svc_sofa" model="c2c.service">
+    <field name="name">تنظيف كنب ومجالس</field><field name="category_id" ref="cat_carpet"/><field name="audience">home</field>
+    <field name="base_price">15</field><field name="price_unit">visit</field><field name="duration_min">120</field>
+  </record>
+  <record id="svc_laundry" model="c2c.service">
+    <field name="name">غسيل وكي الملابس</field><field name="category_id" ref="cat_laundry"/><field name="audience">home</field>
+    <field name="base_price">10</field><field name="price_unit">visit</field><field name="duration_min">30</field>
+  </record>
+  <record id="svc_ac_service" model="c2c.service">
+    <field name="name">صيانة وتنظيف مكيّفات</field><field name="category_id" ref="cat_ac"/><field name="audience">both</field>
+    <field name="base_price">12</field><field name="price_unit">unit</field><field name="duration_min">45</field><field name="popular">1</field>
+  </record>
+  <record id="svc_plumbing" model="c2c.service">
+    <field name="name">سباكة وإصلاحات</field><field name="category_id" ref="cat_maint"/><field name="audience">both</field>
+    <field name="base_price">8</field><field name="price_unit">hour</field><field name="duration_min">60</field>
+  </record>
+  <record id="svc_electric" model="c2c.service">
+    <field name="name">كهرباء منزلية</field><field name="category_id" ref="cat_maint"/><field name="audience">both</field>
+    <field name="base_price">8</field><field name="price_unit">hour</field><field name="duration_min">60</field>
+  </record>
+  <record id="svc_pest" model="c2c.service">
+    <field name="name">مكافحة حشرات شاملة</field><field name="category_id" ref="cat_pest"/><field name="audience">both</field>
+    <field name="base_price">20</field><field name="price_unit">visit</field><field name="duration_min">60</field>
+  </record>
+
+  <!-- Packages for deep clean -->
+  <record id="pkg_dc_studio" model="c2c.service.package">
+    <field name="service_id" ref="svc_deep_clean"/><field name="name">استوديو / شقة صغيرة</field>
+    <field name="description">حتى غرفتين + مطبخ + حمام</field><field name="price">25</field><field name="duration_min">180</field>
+  </record>
+  <record id="pkg_dc_villa" model="c2c.service.package">
+    <field name="service_id" ref="svc_deep_clean"/><field name="name">فيلا</field>
+    <field name="description">حتى 5 غرف + مطبخ + 3 حمامات + صالة</field><field name="price">60</field><field name="duration_min">360</field>
+  </record>
+
+  <!-- Providers -->
+  <record id="prov_1" model="c2c.provider">
+    <field name="name">فريق التنظيف - أحمد</field><field name="phone">+96599000001</field>
+    <field name="category_ids" eval="[(6,0,[ref('cat_cleaning'),ref('cat_carpet')])]"/>
+  </record>
+  <record id="prov_2" model="c2c.provider">
+    <field name="name">فني الصيانة - راجيش</field><field name="phone">+96599000002</field>
+    <field name="category_ids" eval="[(6,0,[ref('cat_maint'),ref('cat_ac')])]"/>
+  </record>
+
+</data></odoo>

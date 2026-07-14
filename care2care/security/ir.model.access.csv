@@ -1,0 +1,11 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+acc_c2c_cat_u,c2c.category.u,model_c2c_category,base.group_user,1,1,1,0
+acc_c2c_cat_m,c2c.category.m,model_c2c_category,hr.group_hr_manager,1,1,1,1
+acc_c2c_svc_u,c2c.service.u,model_c2c_service,base.group_user,1,1,1,0
+acc_c2c_svc_m,c2c.service.m,model_c2c_service,hr.group_hr_manager,1,1,1,1
+acc_c2c_pkg_u,c2c.service.package.u,model_c2c_service_package,base.group_user,1,1,1,0
+acc_c2c_pkg_m,c2c.service.package.m,model_c2c_service_package,hr.group_hr_manager,1,1,1,1
+acc_c2c_book_u,c2c.booking.u,model_c2c_booking,base.group_user,1,1,1,0
+acc_c2c_book_m,c2c.booking.m,model_c2c_booking,hr.group_hr_manager,1,1,1,1
+acc_c2c_prov_u,c2c.provider.u,model_c2c_provider,base.group_user,1,1,1,0
+acc_c2c_prov_m,c2c.provider.m,model_c2c_provider,hr.group_hr_manager,1,1,1,1
