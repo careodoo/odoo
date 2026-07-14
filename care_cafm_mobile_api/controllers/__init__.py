@@ -7,6 +7,7 @@ from . import agri_client_api
 from . import cleaning_client_api
 from . import facade_client_api
 from . import inventory_client_api
+from . import waste_client_api
 from . import notif_api
 from . import admin_api
 from . import service_api

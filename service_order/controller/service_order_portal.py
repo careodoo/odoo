@@ -38,7 +38,21 @@ class ServiceOrderPortal(CustomerPortal):
     return search_domain
 
   def _get_portal_default_domain(self):
-    return []
+    # Scope orders to the logged-in client's projects (via project.contact_id).
+    # Managers see everything; otherwise a portal user must only see their own
+    # collection orders — an empty domain leaked every client's orders.
+    user = http.request.env.user
+    if user.has_group('base.group_erp_manager') or user.has_group('base.group_system'):
+      return []
+    p = user.partner_id
+    pids = {p.id}
+    if p.commercial_partner_id:
+      pids.add(p.commercial_partner_id.id)
+      pids.update(http.request.env['res.partner'].sudo().search(
+          [('commercial_partner_id', '=', p.commercial_partner_id.id)]).ids)
+    projects = http.request.env['service.project'].sudo().search(
+        [('contact_id', 'in', list(pids))])
+    return [('project_id', 'in', projects.ids)]
 
   def _prepare_home_portal_values(self, counters):
     """ Add subscription details to main account page.

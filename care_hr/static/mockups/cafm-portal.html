@@ -442,6 +442,9 @@ const NAV_TAIL=[
   {id:'inv_overview',ic:'📦',t:['المخزون الداخلي','Internal inventory']},
   {id:'inv_low',ic:'⚠️',t:['أصناف منخفضة','Low stock']},
   {id:'inv_moves',ic:'🔄',t:['حركات المخزون','Stock movements']},
+  {grp:['نقل ومعالجة النفايات','Waste']},
+  {id:'waste_overview',ic:'♻️',t:['أوامر النقل','Collection orders']},
+  {id:'waste_trips',ic:'🚛',t:['الرحلات','Trips']},
   {grp:['الأشخاص والمنشآت','People & Facilities']},
   {id:'team',ic:'👷',t:['الفريق','Team'],cnt:'team'},
   {id:'attendance',ic:'🕐',t:['الحضور والانصراف','Attendance']},
@@ -524,6 +527,8 @@ Object.assign(TITLES,{
   inv_overview:[['المخزون الداخلي','Internal inventory'],['أرصدة المخازن والأصناف','Store balances & items']],
   inv_low:[['أصناف منخفضة المخزون','Low stock'],['ما يحتاج إعادة طلب','Needs reordering']],
   inv_moves:[['حركات المخزون','Stock movements'],['واردات وصرف وتحويل','Receipts, issues & transfers']],
+  waste_overview:[['نقل ومعالجة النفايات','Waste transfer & treatment'],['أوامر النقل وحالتها','Collection orders & status']],
+  waste_trips:[['رحلات النقل','Collection trips'],['من موقع الالتقاط إلى مركز المعالجة','Pickup → treatment center']],
 });
 function setActive(id){document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.id===id));
   const base=(id||'').replace(/_(cleaning|security|facade|agriculture|agri|maintenance|landscape|pest|other)$/,'');
@@ -1266,6 +1271,35 @@ const ROUTES={
   async sec_keys(p){CUR='sec_keys';const rs=await api('/client/security/keys').catch(()=>[]);
     p.innerHTML='<div class="panel">'+(rs.length?'<table><thead><tr><th>'+T('المفتاح','Key')+'</th><th>'+T('الموقع','Premise')+'</th><th>'+T('الحائز','Holder')+'</th><th>'+T('الحالة','Status')+'</th></tr></thead><tbody>'
       +rs.map(r=>'<tr><td><b>'+esc(r.name||'—')+'</b></td><td>'+esc(r.premise||'—')+'</td><td>'+esc(r.holder||'—')+'</td><td><span class="pill">'+esc(r.state_label||'—')+'</span></td></tr>').join('')+'</tbody></table>':emptyState(T('لا مفاتيح','No keys')))+'</div>';
+  },
+  // ================= WASTE TRANSFER & TREATMENT =================
+  async waste_overview(p){CUR='waste_overview';const d=await api('/client/waste/summary').catch(()=>({available:false}));
+    if(!d.available){p.innerHTML=emptyState(T('خدمة نقل النفايات غير مفعّلة لموقعك','Waste service not enabled for your site'));return;}
+    const rs=await api('/client/waste/orders').catch(()=>[]);
+    const ST={draft:'#94a3b8',scheduled:'#3b82f6',pickuped:'#0891b2',arrived:'#6366f1',processing:'#f59e0b',delivered:'#16a34a',completed:'#16a34a',cancelled:'#e11d48'};
+    const STL={draft:'مسودة',scheduled:'مجدول',pickuped:'تم الالتقاط',arrived:'وصل',processing:'قيد المعالجة',delivered:'تم التسليم',completed:'مكتمل',cancelled:'ملغى'};
+    const card=(ic,v,l,color)=>'<div class="kpi"><div class="top"><div class="ic" style="background:'+color+'">'+ic+'</div><div><div class="v num">'+(v||0)+'</div><div class="l">'+l+'</div></div></div></div>';
+    p.innerHTML='<div class="kpis">'+card('♻️',d.orders,T('إجمالي الأوامر','Total orders'),'#16a34a')+card('⏳',d.open,T('قيد التنفيذ','In progress'),'#f59e0b')+card('✅',d.completed,T('مكتملة','Completed'),'#0891b2')+card('🚛',d.trips,T('الرحلات','Trips'),'#6366f1')+card('🏭',d.centers,T('مراكز المعالجة','Centers'),'#334155')+'</div>'
+      +'<div class="panel" style="margin-top:14px;padding:12px"><button class="btn p" onclick="wasteNew()">➕ '+T('طلب نقل جديد','New collection order')+'</button></div>'
+      +'<div class="panel" style="margin-top:14px"><div id="woList"></div></div>';
+    const head='<thead><tr><th>'+T('الرقم','Serial')+'</th><th>'+T('المشروع','Project')+'</th><th>'+T('موقع الالتقاط','Pickup')+'</th><th>'+T('الأصناف','Items')+'</th><th>'+T('الرحلة','Trip')+'</th><th>'+T('التاريخ','Date')+'</th><th>'+T('الحالة','Status')+'</th></tr></thead>';
+    const row=x=>{const c=ST[x.state]||'#64748b';const items=(x.items||[]).map(i=>esc(i.item||'')+' ×'+i.qty).join('، ');return '<tr><td><b>'+esc(x.serial)+'</b></td><td class="muted">'+esc(x.project||'—')+'</td><td>'+esc(x.pickup||'—')+'</td><td class="muted" style="font-size:12px">'+esc(items||'—')+'</td><td>'+esc(x.trip||'—')+'</td><td class="muted">'+dshort(x.order_date)+'</td><td><span class="pill" style="background:'+c+'1f;color:'+c+'">'+esc(STL[x.state]||x.state_label)+'</span></td></tr>';};
+    pgReset('wo');pagedTable('woList',rs,head,row,'wo',()=>{},20);
+  window.wasteNew=async()=>{const o=await api('/client/waste/options').catch(()=>({projects:[],pickups:[],items:[]}));
+    if(!o.projects.length){toast(T('لا يوجد مشروع نفايات مرتبط','No waste project linked'));return;}
+    openDrawer(T('طلب نقل جديد','New collection order'),
+      '<label class="lbl">'+T('المشروع','Project')+'</label><select class="inp" id="wProj">'+o.projects.map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join('')+'</select>'
+      +'<label class="lbl">'+T('موقع الالتقاط','Pickup location')+'</label><select class="inp" id="wPick"><option value="">—</option>'+o.pickups.map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join('')+'</select>'
+      +'<label class="lbl">'+T('الصنف','Item')+'</label><select class="inp" id="wItem"><option value="">—</option>'+o.items.map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join('')+'</select>'
+      +'<label class="lbl">'+T('الكمية','Quantity')+'</label><input class="inp" id="wQty" type="number" value="1">'
+      +'<button class="btn p" style="margin-top:10px" onclick="wasteSend()">📤 '+T('إرسال الطلب','Submit')+'</button>');};
+  window.wasteSend=async()=>{const V=id=>(document.getElementById(id)||{}).value;const it=V('wItem');
+    try{await api('/client/waste/order/create',{method:'POST',body:{project_id:+V('wProj'),pickup_location_id:V('wPick')?+V('wPick'):null,items:it?[{item_id:+it,quantity:+V('wQty')||1}]:[]}});toast(T('أُرسل طلب النقل','Order submitted'));closeDrawer();go('waste_overview');}catch(e){toast(e.message);}};
+  },
+  async waste_trips(p){CUR='waste_trips';const rs=await api('/client/waste/trips').catch(()=>[]);
+    const STL={draft:'مسودة',scheduled:'مجدول',pickuped:'تم الالتقاط',arrived:'وصل',processing:'قيد المعالجة',delivered:'تم التسليم',completed:'مكتمل',cancelled:'ملغى'};
+    p.innerHTML='<div class="panel">'+(rs.length?'<table><thead><tr><th>'+T('الرحلة','Trip')+'</th><th>'+T('موقع الالتقاط','Pickup')+'</th><th>'+T('مركز المعالجة','Center')+'</th><th>'+T('الوزن','Weight')+'</th><th>'+T('الكمية','Qty')+'</th><th>'+T('التاريخ','Date')+'</th><th>'+T('الحالة','Status')+'</th></tr></thead><tbody>'
+      +rs.map(x=>'<tr><td><b>'+esc(x.sequence)+'</b></td><td>'+esc(x.pickup||'—')+'</td><td>'+esc(x.center||'—')+'</td><td class="num">'+(x.total_weight||0)+'</td><td class="num">'+(x.total_quantity||0)+'</td><td class="muted">'+dshort(x.date)+'</td><td><span class="pill">'+esc(STL[x.state]||x.state_label||'')+'</span></td></tr>').join('')+'</tbody></table>':emptyState(T('لا رحلات','No trips')))+'</div>';
   },
   // ================= INTERNAL INVENTORY SUITE =================
   async inv_overview(p){CUR='inv_overview';const d=await api('/client/inv/summary').catch(()=>({available:false}));
