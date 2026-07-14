@@ -1,0 +1,896 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="portal_my_home_pm" inherit_id="portal.portal_my_home" name="Portal Home: PM" priority="38">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="title">بوابة إدارة المشاريع</t>
+                <t t-set="text">نظام مستقل لإدارة مشاريعك</t>
+                <t t-set="url" t-value="'/my/pm'"/>
+                <t t-set="placeholder_count" t-value="'pm_project_count'"/>
+            </t>
+        </xpath>
+    </template>
+
+    <!-- ==================== PREMIUM APP LAYOUT (Tajawal) ==================== -->
+    <template id="pm_layout" name="PM App Layout">
+        <t t-call="web.html_container">
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&amp;display=swap');
+                *{box-sizing:border-box;margin:0;padding:0;font-family:'Tajawal','Segoe UI',Tahoma,sans-serif}
+                :root{--nav:#101a30;--nav2:#1b2a4a;--accent:#f0663c;--blue:#2f6df6;--ink:#1d2433;--soft:#f4f6fb}
+                body{background:var(--soft);color:var(--ink);direction:rtl;-webkit-font-smoothing:antialiased}
+                a{text-decoration:none;color:inherit}
+                .pm-header{position:fixed;top:0;right:0;left:0;height:64px;z-index:60;
+                    background:linear-gradient(90deg,#101a30,#1b2a4a);color:#fff;display:flex;align-items:center;
+                    padding:0 20px;gap:14px;box-shadow:0 4px 20px rgba(16,26,48,.28)}
+                .pm-header img{height:38px;background:#fff;border-radius:8px;padding:3px}
+                .pm-header .ttl{font-weight:800;font-size:17px;letter-spacing:.3px}
+                .pm-header .ttl b{color:var(--accent)}
+                .pm-header .sp{flex:1}
+                .pm-header .user{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);
+                    padding:6px 14px;border-radius:30px;font-size:13px;font-weight:700}
+                .pm-header .av{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;
+                    display:grid;place-items:center;font-weight:800;font-size:12px}
+                .pm-header .logout{color:#ffb3a8;font-weight:700;font-size:13px}
+                .pm-burger{display:none;font-size:24px;cursor:pointer;color:#fff}
+                .pm-navcb{display:none}
+                .pm-shell{display:flex;padding-top:64px;min-height:100vh}
+                .pm-side{width:256px;background:#fff;border-left:1px solid #eef1f7;min-height:calc(100vh - 64px);
+                    padding:16px 12px;position:sticky;top:64px;align-self:flex-start}
+                .pm-mi{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;margin-bottom:3px;
+                    font-weight:700;font-size:14.5px;color:#4a5a78;transition:.18s;position:relative}
+                .pm-mi .ic{width:30px;height:30px;border-radius:9px;background:#f0f4fb;display:grid;place-items:center;font-size:15px}
+                .pm-mi:hover{background:#f5f8ff;color:#15213b}
+                .pm-mi.act{background:linear-gradient(90deg,#2f6df6,#4a86ff);color:#fff;box-shadow:0 6px 16px rgba(47,109,246,.32)}
+                .pm-mi.act .ic{background:rgba(255,255,255,.22)}
+                .pm-mi.mihd{background:transparent;color:#98a3b8;font-weight:800;font-size:11px;letter-spacing:1px;
+                    text-transform:uppercase;margin:12px 6px 4px;padding:2px}
+                .pm-main{flex:1;padding:26px 30px 70px;max-width:1140px;width:100%}
+                .pm-h{font-size:25px;font-weight:900;letter-spacing:-.3px}
+                .pm-sub{color:#7b8499;font-weight:500;font-size:14px;margin-bottom:20px}
+                .pm-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px}
+                .pm-kpi{background:#fff;border:1px solid #eef1f7;border-radius:18px;padding:18px;transition:.18s;
+                    display:flex;align-items:center;gap:14px;box-shadow:0 2px 10px rgba(16,26,48,.04)}
+                .pm-kpi:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(16,26,48,.12)}
+                .pm-kpi .kc{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;font-size:22px;flex:none}
+                .pm-kpi .v{font-size:26px;font-weight:900;color:#101a30;line-height:1}
+                .pm-kpi .l{color:#8a93a8;font-weight:600;font-size:12.5px;margin-top:3px}
+                .pm-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+                .pm-grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+                @media(max-width:900px){.pm-grid3,.pm-grid2{grid-template-columns:1fr}}
+                .pm-card{background:#fff;border:1px solid #eef1f7;border-radius:18px;overflow:hidden;margin-bottom:18px;
+                    box-shadow:0 2px 12px rgba(16,26,48,.05)}
+                .pm-card .hd{padding:14px 18px;font-weight:800;font-size:15px;color:#fff}
+                .pm-card .hd.b1{background:linear-gradient(90deg,#2f6df6,#4a86ff)}
+                .pm-card .hd.b2{background:linear-gradient(90deg,#017e84,#12a8ae)}
+                .pm-card .hd.b3{background:linear-gradient(90deg,#7a5cf0,#9b82ff)}
+                .pm-card .hd.b4{background:linear-gradient(90deg,#e08a00,#ffab24)}
+                .pm-card .hd.b5{background:linear-gradient(90deg,#e2513f,#ff6f5e)}
+                .pm-card .hd.light{background:#fbfcff;color:#101a30;border-bottom:1px solid #eef1f7}
+                .pm-card .bd{padding:18px}
+                .pm-tile{background:#fff;border:1px solid #eef1f7;border-radius:18px;padding:18px;display:block;transition:.18s;
+                    box-shadow:0 2px 12px rgba(16,26,48,.05);border-top:4px solid #2f6df6}
+                .pm-tile:hover{transform:translateY(-3px);box-shadow:0 16px 34px rgba(16,26,48,.14)}
+                .pm-mini{display:grid;grid-template-columns:repeat(4,1fr);text-align:center;margin:12px 0 4px}
+                .pm-mini .mv{font-weight:900;font-size:18px}.pm-mini .ml{font-size:10.5px;color:#8a93a8;font-weight:600}
+                .pm-btn{display:inline-block;border:0;border-radius:12px;padding:11px 18px;font-weight:800;font-size:14px;
+                    cursor:pointer;width:100%;text-align:center;font-family:inherit}
+                .pm-btn.p{background:linear-gradient(90deg,#2f6df6,#4a86ff);color:#fff;box-shadow:0 8px 20px rgba(47,109,246,.28)}
+                .pm-btn.d{background:#101a30;color:#fff}
+                .pm-btn.g{background:#fff;border:1px solid #dbe1ec;color:#3a4a66;width:auto;padding:9px 16px}
+                .pm-badge{display:inline-block;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:800}
+                .pm-mi-badge{margin-inline-start:auto;background:#e2513f;color:#fff;font-size:11px;font-weight:800;
+                    min-width:20px;height:20px;line-height:20px;text-align:center;border-radius:20px;padding:0 6px}
+                .b-red{background:#fdeceb;color:#c0392b}.b-amber{background:#fff3e0;color:#c47f00}
+                .b-green{background:#e6f7ef;color:#12945f}.b-grey{background:#eef1f6;color:#66708a}.b-blue{background:#e9f0ff;color:#2f6df6}
+                table{width:100%;border-collapse:collapse;font-size:13.5px}
+                thead th{background:#fbfcff;color:#66708a;text-align:right;padding:11px 14px;font-weight:800;font-size:12px;border-bottom:2px solid #eef1f7}
+                tbody td{padding:11px 14px;border-bottom:1px solid #f2f5fa;font-weight:600}
+                tbody tr:hover{background:#fafcff}
+                .bar-row{margin-bottom:14px;display:block}
+                .bar-row .lg{display:flex;justify-content:space-between;font-size:13px;font-weight:700}
+                .bar-track{background:#eef1f6;border-radius:8px;height:11px;margin-top:5px;overflow:hidden}
+                .bar-fill{height:11px;border-radius:8px}
+                input,select,textarea{width:100%;border:1px solid #dbe1ec;border-radius:12px;padding:11px 13px;font-size:14px;margin-bottom:10px;font-family:inherit;background:#fbfcff}
+                input:focus,select:focus{outline:none;border-color:#2f6df6;background:#fff}
+                .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+                .pm-alert{border-radius:14px;padding:13px 18px;font-weight:700;font-size:14px;margin-bottom:16px}
+                .ok{background:#effaf3;border:1px solid #bfe8d2;color:#12945f}
+                .bad{background:#fff4f2;border:1px solid #ffd4cc;color:#c0392b}
+                .pm-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+                .pm-info .it .k{color:#8a93a8;font-size:12px;font-weight:600}.pm-info .it .val{font-weight:800;font-size:14.5px;margin-top:2px}
+                .pm-foot{background:#101a30;color:#8ea0c0;text-align:center;padding:18px;font-size:12.5px;font-weight:600}
+                .pm-foot .lg{color:var(--accent);font-weight:900}
+                @media(max-width:900px){
+                    .pm-burger{display:block}.pm-main{padding:18px}
+                    .pm-side{display:none;position:fixed;top:64px;right:0;height:calc(100vh - 64px);z-index:55;box-shadow:-8px 0 24px rgba(0,0,0,.2)}
+                    .pm-navcb:checked ~ .pm-shell .pm-side{display:block}
+                }
+            </style>
+            <input type="checkbox" id="pmnav" class="pm-navcb"/>
+            <div class="pm-header">
+                <label for="pmnav" class="pm-burger">☰</label>
+                <img t-attf-src="/web/image/res.company/#{company.id}/logo" alt="logo"/>
+                <span class="ttl"><b>CARE</b> · بوابة إدارة المشاريع</span>
+                <span class="sp"></span>
+                <span class="user"><span class="av"><t t-esc="user_name[:1]"/></span><t t-esc="user_name"/></span>
+                <a href="/web/session/logout?redirect=/my/pm" class="logout">خروج ←</a>
+            </div>
+            <div class="pm-shell">
+                <aside class="pm-side">
+                    <t t-foreach="menu" t-as="mi">
+                        <t t-if="mi.get('header')"><div class="pm-mi mihd" t-esc="mi['label']"/></t>
+                        <a t-else="" t-att-href="mi['url']" t-attf-class="pm-mi #{mi.get('active') and 'act' or ''}">
+                            <span class="ic" t-esc="mi.get('icon')"/><span t-esc="mi['label']"/>
+                            <t t-if="mi.get('badge')"><span class="pm-mi-badge" t-esc="mi['badge']"/></t>
+                        </a>
+                    </t>
+                </aside>
+                <main class="pm-main"><t t-out="0"/></main>
+            </div>
+            <div class="pm-foot"><span class="lg">CARE</span> — نظام إدارة المشاريع والعقود · © جميع الحقوق محفوظة</div>
+        </t>
+    </template>
+
+    <!-- reusable colored state badge -->
+    <template id="st">
+        <t t-set="_m" t-value="{
+            'draft':['b-grey','مسودة'],'new':['b-blue','جديد'],'open':['b-blue','مفتوحة'],
+            'requested':['b-amber','طلب مُقدَّم'],'disbursed':['b-blue','مصروفة'],'settled':['b-amber','تسوية مُقدَّمة'],
+            'submit':['b-amber','مُرسل'],'submitted':['b-amber','مقدّم'],'to_approve':['b-amber','بانتظار الاعتماد'],
+            'done':['b-green','مؤكّد'],'closed':['b-green','مغلقة'],'approved':['b-green','معتمد'],
+            'confirm':['b-green','مؤكّد'],'confirmed':['b-green','مؤكّد'],'validate':['b-green','معتمد'],'validated':['b-green','معتمد'],
+            'paid':['b-green','مدفوع'],'reject':['b-red','مرفوض'],'rejected':['b-red','مرفوض'],'refuse':['b-red','مرفوض'],
+            'cancel':['b-red','ملغى'],'cancelled':['b-red','ملغى'],'canceled':['b-red','ملغى'],
+            'pending':['b-amber','معلّق'],'accepted':['b-green','مقبول'],'active':['b-green','نشط'],
+            'running':['b-blue','جارٍ'],'waiting':['b-amber','بانتظار'],'progress':['b-blue','قيد التنفيذ'],
+            'in_progress':['b-blue','قيد التنفيذ'],'unpaid':['b-amber','غير مدفوع'],'insured':['b-green','مؤمّن']
+        }"/>
+        <span t-att-class="'pm-badge ' + (_m.get(st) and _m[st][0] or 'b-grey')" t-esc="_m.get(st) and _m[st][1] or (st or '—')"/>
+    </template>
+
+    <!-- ============ DASHBOARD ============ -->
+    <template id="pm_dashboard" name="PM Dashboard">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h">لوحة التحكم</div>
+            <div class="pm-sub">إحصائيات مشاريعك — كل رقم قابل للنقر</div>
+            <div class="pm-kpis">
+                <a href="/my/pm/projects" class="pm-kpi"><span class="kc" style="background:#e9f0ff;color:#2f6df6">🏗️</span><div><div class="v" t-esc="kpi['projects']"/><div class="l">مشاريعي</div></div></a>
+                <a href="/my/pm/tasks?f=open" class="pm-kpi"><span class="kc" style="background:#f0ebff;color:#7a5cf0">📋</span><div><div class="v" t-esc="kpi['open']"/><div class="l">تاسكات مفتوحة</div></div></a>
+                <a href="/my/pm/tasks?f=overdue" class="pm-kpi"><span class="kc" style="background:#fdeceb;color:#e2513f">🚨</span><div><div class="v" t-esc="kpi['overdue']"/><div class="l">متأخرة</div></div></a>
+                <a href="/my/pm/tasks?f=pending" class="pm-kpi"><span class="kc" style="background:#fff3e0;color:#e08a00">➡️</span><div><div class="v" t-esc="kpi['pending_fwd']"/><div class="l">إحالات معلّقة</div></div></a>
+                <a href="/my/pm/projects?risk=high" class="pm-kpi"><span class="kc" style="background:#fdeceb;color:#c0392b">⚠️</span><div><div class="v" t-esc="kpi['at_risk']"/><div class="l">في خطر</div></div></a>
+                <a href="/my/pm/projects" class="pm-kpi"><span class="kc" style="background:#e6f7ef;color:#1a9f6d">👷</span><div><div class="v" t-esc="kpi['workers']"/><div class="l">عمال</div></div></a>
+            </div>
+            <div class="pm-grid3">
+                <div class="pm-card"><div class="hd b1">📊 التاسكات حسب النوع</div><div class="bd">
+                    <t t-if="not by_kind"><div class="pm-sub" style="margin:0">لا توجد بيانات.</div></t>
+                    <t t-foreach="by_kind" t-as="k"><a t-attf-href="/my/pm/tasks?kind=#{k['key']}" class="bar-row">
+                        <div class="lg"><span t-esc="k['label']"/><span t-esc="k['value']"/></div>
+                        <div class="bar-track"><div class="bar-fill" t-attf-style="background:linear-gradient(90deg,#2f6df6,#4a86ff);width:#{k['pct']}%"></div></div></a></t>
+                </div></div>
+                <div class="pm-card"><div class="hd b4">⚠️ توزيع المخاطر</div><div class="bd">
+                    <t t-foreach="risk_bars" t-as="r"><a t-attf-href="/my/pm/projects?risk=#{r['k']}" class="bar-row">
+                        <div class="lg"><span t-esc="r['label']"/><span t-esc="r['value']"/></div>
+                        <div class="bar-track"><div class="bar-fill" t-attf-style="background:#{r['color']};width:#{r['pct']}%"></div></div></a></t>
+                </div></div>
+                <div class="pm-card"><div class="hd b2">🚨 أعلى المشاريع تأخّراً</div><div class="bd">
+                    <t t-if="not top_overdue"><div class="pm-sub" style="margin:0">لا توجد بيانات.</div></t>
+                    <t t-foreach="top_overdue" t-as="o"><a t-attf-href="/my/pm/p/#{o['id']}/tasks" class="bar-row">
+                        <div class="lg"><span t-esc="o['name']"/><span t-esc="o['overdue']"/></div>
+                        <div class="bar-track"><div class="bar-fill" t-attf-style="background:linear-gradient(90deg,#e2513f,#ff6f5e);width:#{o['pct']}%"></div></div></a></t>
+                </div></div>
+            </div>
+        </t>
+    </template>
+
+    <!-- ============ PROJECTS ============ -->
+    <template id="pm_projects" name="PM Projects">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h">مشاريعي</div>
+            <div class="pm-sub">اختر مشروعاً لإدارته</div><form method="get" style="display:flex;gap:8px;margin-bottom:16px"><input type="text" name="q" t-att-value="q" placeholder="🔎 بحث باسم المشروع أو الإدارة" style="max-width:520px;margin:0"/><button class="pm-btn p" style="width:auto">بحث</button></form>
+            <div t-if="not projects" class="pm-alert bad">لا توجد مشاريع.</div>
+            <div class="pm-grid3">
+                <t t-foreach="projects" t-as="p">
+                    <a t-attf-href="/my/pm/p/#{p.id}" class="pm-tile" t-attf-style="border-top-color:#{p.risk_level=='high' and '#e2513f' or (p.risk_level=='medium' and '#e08a00' or '#1a9f6d')}">
+                        <div style="display:flex;justify-content:space-between"><h3 style="font-size:16px;font-weight:800" t-esc="p.name"/>
+                            <span t-if="p.risk_level=='high'" class="pm-badge b-red">خطر عالٍ</span>
+                            <span t-elif="p.risk_level=='medium'" class="pm-badge b-amber">متوسط</span>
+                            <span t-else="" class="pm-badge b-green">مستقر</span></div>
+                        <div class="pm-sub" style="margin:2px 0 0" t-esc="p.pms_department_id.name or '—'"/>
+                        <div class="pm-mini">
+                            <div><div class="mv" style="color:#2f6df6" t-esc="p.worker_count"/><div class="ml">عمال</div></div>
+                            <div><div class="mv" style="color:#7a5cf0" t-esc="p.pms_task_open"/><div class="ml">تاسك</div></div>
+                            <div><div class="mv" style="color:#e2513f" t-esc="p.pms_task_overdue"/><div class="ml">متأخر</div></div>
+                            <div><div class="mv" style="color:#e08a00" t-esc="p.pettycash_count"/><div class="ml">عُهد</div></div>
+                        </div>
+                    </a>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <template id="pm_tasks_global" name="PM Tasks Global">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h" t-esc="title_txt"/><div class="pm-sub"><t t-esc="len(tasks)"/> تاسك — مقسّمة حسب الحالة</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+                <a href="/my/pm/tasks" t-attf-class="pm-btn #{not cur_f and 'p' or ''}" style="width:auto;padding:7px 16px">📋 الكل</a>
+                <a href="/my/pm/tasks?f=open" t-attf-class="pm-btn #{cur_f=='open' and 'p' or ''}" style="width:auto;padding:7px 16px">🟢 المفتوحة</a>
+                <a href="/my/pm/tasks?f=overdue" t-attf-class="pm-btn #{cur_f=='overdue' and 'p' or ''}" style="width:auto;padding:7px 16px">🔴 المتأخرة</a>
+                <a href="/my/pm/tasks?f=pending" t-attf-class="pm-btn #{cur_f=='pending' and 'p' or ''}" style="width:auto;padding:7px 16px">⏳ الإحالات المعلّقة</a>
+            </div>
+            <t t-set="kind_lbl" t-value="{'task':'مهمة','memo':'مذكرة','internal_letter':'كتاب داخلي','internal_request':'طلب داخلي','correspondence':'مراسلة'}"/>
+            <t t-set="kind_col" t-value="{'task':'b-blue','memo':'b-grey','internal_letter':'b-green','internal_request':'b-amber','correspondence':'b-red'}"/>
+            <t t-if="not tasks"><div class="pm-card"><div class="bd" style="text-align:center;color:#8a93a8;padding:20px">لا توجد تاسكات.</div></div></t>
+            <t t-foreach="stage_groups" t-as="g">
+                <div class="pm-card">
+                    <div class="hd light" style="display:flex;align-items:center;gap:8px">
+                        <span class="pm-badge b-blue" t-esc="g['name']"/>
+                        <span style="color:#8a93a8;font-weight:600"><t t-esc="len(g['tasks'])"/> تاسك</span>
+                    </div>
+                    <table><thead><tr><th>العنوان</th><th>المشروع</th><th>النوع</th><th>المكلّف</th><th>الاستحقاق</th></tr></thead><tbody>
+                        <tr t-foreach="g['tasks']" t-as="t">
+                            <td>
+                                <a t-attf-href="/my/pm/p/#{t.project_id.id}/task/#{t.id}" style="color:#2f6df6;font-weight:700" t-esc="t.name"/>
+                                <t t-if="t.priority == '1'"><span style="color:#f5a623"> ★</span></t>
+                            </td>
+                            <td t-esc="t.project_id.name"/>
+                            <td><span t-attf-class="pm-badge #{kind_col.get(t.task_kind,'b-blue')}" t-esc="kind_lbl.get(t.task_kind, t.task_kind)"/></td>
+                            <td t-esc="', '.join(t.user_ids.mapped('name')) or '—'"/>
+                            <td>
+                                <span t-if="t.is_overdue" class="pm-badge b-red" t-esc="t.date_deadline"/>
+                                <span t-else="" t-esc="t.date_deadline or '—'"/>
+                            </td>
+                        </tr>
+                    </tbody></table>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- ============ OVERVIEW (rich) ============ -->
+    <template id="pm_overview" name="PM Overview">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h" t-esc="project.name"/>
+            <div class="pm-sub"><t t-esc="project.pms_department_id.name or ''"/></div>
+            <t t-if="pending_supplies">
+                <a t-attf-href="/my/pm/p/#{project.id}/supplies" style="text-decoration:none">
+                    <div class="pm-alert" style="background:#fff3e0;border:1px solid #ffd8a8;color:#b25e00;display:flex;align-items:center;gap:8px;cursor:pointer">
+                        📥 لديك <b t-esc="pending_supplies"/> وارد مواد بانتظار الاستلام — اضغط للاستلام ←
+                    </div>
+                </a>
+            </t>
+            <div class="pm-kpis">
+                <div class="pm-kpi"><span class="kc" style="background:#e9f0ff;color:#2f6df6">👷</span><div><div class="v" t-esc="project.worker_count"/><div class="l">عمال</div></div></div>
+                <div class="pm-kpi"><span class="kc" style="background:#e1f5f5;color:#017e84">🚗</span><div><div class="v" t-esc="project.vehicle_count"/><div class="l">سيارات</div></div></div>
+                <div class="pm-kpi"><span class="kc" style="background:#f0ebff;color:#7a5cf0">📋</span><div><div class="v" t-esc="project.pms_task_open"/><div class="l">تاسكات</div></div></div>
+                <div class="pm-kpi"><span class="kc" style="background:#fdeceb;color:#e2513f">🚨</span><div><div class="v" t-esc="project.pms_task_overdue"/><div class="l">متأخرة</div></div></div>
+                <div class="pm-kpi"><span class="kc" style="background:#fff3e0;color:#e08a00">🧰</span><div><div class="v" t-esc="project.asset_count"/><div class="l">أصول</div></div></div>
+                <div class="pm-kpi"><span class="kc" style="background:#fdeceb;color:#c0392b">🛂</span><div><div class="v" t-esc="project.compliance_count"/><div class="l">إقامات تنتهي</div></div></div>
+                <div class="pm-kpi"><span class="kc" style="background:#e6f7ef;color:#1a9f6d">✅</span><div><div class="v"><t t-esc="round(project.sla_compliance_pct)"/>%</div><div class="l">SLA</div></div></div>
+                <div class="pm-kpi"><span class="kc" style="background:#fff3e0;color:#c47f00">💵</span><div><div class="v"><t t-esc="round(project.pms_margin_pct)"/>%</div><div class="l">الهامش</div></div></div>
+            </div>
+            <div class="pm-card"><div class="hd light">معلومات المشروع</div><div class="bd"><div class="pm-info">
+                <div class="it"><div class="k">الإدارة</div><div class="val" t-esc="project.pms_department_id.name or '—'"/></div>
+                <div class="it"><div class="k">مدير المشروع</div><div class="val" t-esc="project.project_manager_id.name or '—'"/></div>
+                <div class="it"><div class="k">الحالة</div><div class="val" t-esc="dict(project._fields['pms_state'].selection).get(project.pms_state,'')"/></div>
+                <div class="it"><div class="k">مستوى الخطر</div><div class="val">
+                    <span t-if="project.risk_level=='high'" class="pm-badge b-red">عالٍ</span>
+                    <span t-elif="project.risk_level=='medium'" class="pm-badge b-amber">متوسط</span>
+                    <span t-else="" class="pm-badge b-green">مستقر</span></div></div>
+                <div class="it"><div class="k">العقود</div><div class="val" t-esc="project.experience_count"/></div>
+                <div class="it"><div class="k">العُهد النقدية</div><div class="val" t-esc="project.pettycash_count"/></div>
+            </div></div></div>
+            <div class="pm-grid2">
+                <div class="pm-card"><div class="hd light">📋 آخر التاسكات</div><table><tbody>
+                    <tr t-foreach="recent_tasks" t-as="t"><td><a t-attf-href="/my/pm/p/#{project.id}/task/#{t.id}" style="color:#2f6df6;font-weight:700" t-esc="t.name"/></td><td style="text-align:left"><span t-att-style="t.is_overdue and 'color:#c0392b;font-weight:800' or ''" t-esc="t.date_deadline or '—'"/></td></tr>
+                    <tr t-if="not recent_tasks"><td style="text-align:center;color:#8a93a8;padding:14px">لا توجد.</td></tr></tbody></table></div>
+                <div class="pm-card"><div class="hd light">📦 أصناف تحت الحد الأدنى</div><table><tbody>
+                    <tr t-foreach="low_materials" t-as="m"><td t-esc="m.name"/><td style="text-align:left"><span class="pm-badge b-red">متاح <t t-esc="m.available_qty"/></span></td></tr>
+                    <tr t-if="not low_materials"><td style="text-align:center;color:#12945f;padding:14px">كل الأصناف ضمن الحدود ✓</td></tr></tbody></table></div>
+            </div>
+        </t>
+    </template>
+
+    <template id="pm_p_tasks" name="PM Project Tasks">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h">التاسكات</div><div class="pm-sub" t-esc="project.name"/>
+            <t t-if="ok"><div class="pm-alert ok">✅ تم إنشاء التاسك.</div></t>
+            <t t-if="err"><div class="pm-alert bad">تعذّر الإنشاء.</div></t>
+            <div class="pm-card"><div class="hd b3">➕ إنشاء تاسك جديد</div><div class="bd">
+                <form t-attf-action="/my/pm/p/#{project.id}/task" method="post">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <input type="text" name="name" placeholder="عنوان التاسك" required="required"/>
+                    <div class="row2"><select name="task_kind"><option value="task">مهمة</option><option value="memo">مذكرة</option><option value="internal_letter">كتاب داخلي</option><option value="internal_request">طلب داخلي</option></select>
+                        <select name="pms_category_id"><option value="">— البند —</option><t t-foreach="categories" t-as="c"><option t-att-value="c.id" t-esc="c.name"/></t></select></div>
+                    <input type="date" name="date_deadline"/><button class="pm-btn p">إنشاء</button></form></div></div>
+            <form method="get" style="display:flex;gap:8px;margin-bottom:16px"><input type="text" name="q" t-att-value="q" placeholder="🔎 بحث باسم التاسك أو البند" style="max-width:520px;margin:0"/><button class="pm-btn p" style="width:auto">بحث</button></form>
+
+            <t t-set="kind_lbl" t-value="{'task':'مهمة','memo':'مذكرة','internal_letter':'كتاب داخلي','internal_request':'طلب داخلي','correspondence':'مراسلة'}"/>
+            <t t-set="kind_col" t-value="{'task':'b-blue','memo':'b-grey','internal_letter':'b-green','internal_request':'b-amber','correspondence':'b-red'}"/>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+                <a t-attf-href="/my/pm/p/#{project.id}/tasks" t-attf-class="pm-btn #{not cur_f and 'p' or ''}" style="width:auto;padding:7px 16px">📋 الكل</a>
+                <a t-attf-href="/my/pm/p/#{project.id}/tasks?f=open" t-attf-class="pm-btn #{cur_f=='open' and 'p' or ''}" style="width:auto;padding:7px 16px">🟢 المفتوحة</a>
+                <a t-attf-href="/my/pm/p/#{project.id}/tasks?f=overdue" t-attf-class="pm-btn #{cur_f=='overdue' and 'p' or ''}" style="width:auto;padding:7px 16px">🔴 المتأخرة</a>
+                <a t-attf-href="/my/pm/p/#{project.id}/tasks?f=pending" t-attf-class="pm-btn #{cur_f=='pending' and 'p' or ''}" style="width:auto;padding:7px 16px">⏳ الإحالات المعلّقة</a>
+            </div>
+            <div class="pm-sub" style="margin-bottom:10px">📋 إجمالي <b t-esc="len(tasks)"/> تاسك — مقسّمة حسب الحالة</div>
+            <t t-if="not tasks"><div class="pm-card"><div class="bd" style="text-align:center;color:#8a93a8;padding:20px">لا توجد تاسكات.</div></div></t>
+
+            <t t-foreach="stage_groups" t-as="g">
+                <div class="pm-card">
+                    <div class="hd light" style="display:flex;align-items:center;gap:8px">
+                        <span class="pm-badge b-blue" t-esc="g['name']"/>
+                        <span style="color:#8a93a8;font-weight:600"><t t-esc="len(g['tasks'])"/> تاسك</span>
+                    </div>
+                    <table><thead><tr><th>العنوان</th><th>النوع</th><th>البند</th><th>المكلّف</th><th>الاستحقاق</th></tr></thead><tbody>
+                        <tr t-foreach="g['tasks']" t-as="t">
+                            <td>
+                                <a t-attf-href="/my/pm/p/#{project.id}/task/#{t.id}" style="color:#2f6df6;font-weight:700" t-esc="t.name"/>
+                                <t t-if="t.priority == '1'"><span title="أولوية عالية" style="color:#f5a623"> ★</span></t>
+                            </td>
+                            <td>
+                                <span t-attf-class="pm-badge #{kind_col.get(t.task_kind,'b-blue')}"
+                                      t-esc="kind_lbl.get(t.task_kind, t.task_kind)"/>
+                            </td>
+                            <td t-esc="t.pms_category_id.name or '—'"/>
+                            <td t-esc="', '.join(t.user_ids.mapped('name')) or '—'"/>
+                            <td>
+                                <span t-if="t.is_overdue" class="pm-badge b-red" t-esc="t.date_deadline"/>
+                                <span t-else="" t-esc="t.date_deadline or '—'"/>
+                            </td>
+                        </tr>
+                    </tbody></table>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <template id="pm_p_materials" name="PM Materials">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h">المخزون</div><div class="pm-sub" t-esc="project.name"/>
+            <t t-if="ok"><div class="pm-alert ok">✅ تم إصدار سند التسليم وخصم الرصيد.</div></t>
+            <t t-if="err=='balance'"><div class="pm-alert bad">🚫 الكمية تتجاوز المتاح — رُفض السند.</div></t>
+            <t t-if="err=='1'"><div class="pm-alert bad">تعذّر التنفيذ.</div></t>
+            <div class="pm-card"><div class="hd b1">🚚 إصدار سند تسليم (مقيّد بالرصيد)</div><div class="bd">
+                <form t-attf-action="/my/pm/p/#{project.id}/delivery" method="post">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <select name="material_id" required="required"><option value="">— اختر الصنف —</option><t t-foreach="materials" t-as="m"><option t-att-value="m.id"><t t-esc="m.name"/> (متاح: <t t-esc="m.available_qty"/>)</option></t></select>
+                    <div class="row2"><input type="number" step="any" name="qty" placeholder="الكمية" required="required"/><input type="text" name="location" placeholder="الموقع"/></div>
+                    <input type="text" name="receiver_name" placeholder="اسم المستلم"/><button class="pm-btn p">إصدار السند</button></form></div></div>
+            <div class="pm-card"><div class="hd light">📦 الأرصدة (<t t-esc="len(materials)"/>)</div>
+                <table><thead><tr><th>الصنف</th><th>مستلَم</th><th>مسحوب</th><th>المتاح</th><th>الحد الأدنى</th><th>الحالة</th></tr></thead><tbody>
+                    <tr t-foreach="materials" t-as="m"><td t-esc="m.name"/><td t-esc="m.received_qty"/><td t-esc="m.issued_qty"/>
+                        <td><span t-att-style="m.is_low and 'color:#c0392b;font-weight:800' or 'font-weight:800'" t-esc="m.available_qty"/></td><td t-esc="m.min_qty"/>
+                        <td><span t-if="m.is_low" class="pm-badge b-red">أعِد الطلب</span><span t-else="" class="pm-badge b-green">جيد</span></td></tr>
+                    <tr t-if="not materials"><td colspan="6" style="text-align:center;color:#8a93a8;padding:14px">لا يوجد.</td></tr></tbody></table></div>
+        </t>
+    </template>
+
+    <template id="pm_p_deliveries" name="PM Deliveries">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h">سندات التسليم</div><div class="pm-sub" t-esc="project.name"/>
+            <div class="pm-card"><table><thead><tr><th>المرجع</th><th>الموقع</th><th>التاريخ</th><th>المستلم</th><th>الحالة</th></tr></thead><tbody>
+                <tr t-foreach="deliveries" t-as="d"><td t-esc="d.name"/><td t-esc="d.location or '—'"/><td t-esc="d.date or '—'"/><td t-esc="d.receiver_name or '—'"/>
+                    <td><span t-att-class="d.state=='done' and 'pm-badge b-green' or 'pm-badge b-grey'" t-esc="d.state"/></td></tr>
+                <tr t-if="not deliveries"><td colspan="5" style="text-align:center;color:#8a93a8;padding:14px">لا يوجد.</td></tr></tbody></table></div>
+        </t>
+    </template>
+
+    <template id="pm_p_supplies" name="PM Supplies">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h">الواردات (استلام المواد)</div><div class="pm-sub" t-esc="project.name"/>
+            <t t-if="ok"><div class="pm-alert ok">✅ تم الاستلام وأُضيفت الكميات إلى المخزون.</div></t>
+            <t t-if="err=='state'"><div class="pm-alert bad">🚫 هذا الوارد ليس في حالة "بالطريق".</div></t>
+            <t t-if="err=='1'"><div class="pm-alert bad">تعذّر تنفيذ الاستلام.</div></t>
+            <div class="pm-card"><div class="hd light">📥 الواردات القادمة من المشتريات (<t t-esc="len(supplies)"/>)</div>
+                <table><thead><tr><th>المرجع</th><th>المصدر</th><th>التاريخ</th><th>الأصناف</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>
+                    <tr t-foreach="supplies" t-as="s">
+                        <td t-esc="s.name"/>
+                        <td t-esc="s.source or '—'"/>
+                        <td t-esc="s.date or '—'"/>
+                        <td><t t-foreach="s.line_ids" t-as="l"><div><t t-esc="l.name"/> — <b t-esc="l.qty"/> <t t-esc="l.uom_name or ''"/></div></t><t t-if="not s.line_ids">—</t></td>
+                        <td>
+                            <span t-if="s.state=='received'" class="pm-badge b-green">مُستلَم</span>
+                            <span t-elif="s.state=='sent'" class="pm-badge b-amber">بالطريق</span>
+                            <span t-else="" class="pm-badge b-grey">مسودة</span>
+                        </td>
+                        <td>
+                            <form t-if="s.state=='sent'" t-attf-action="/my/pm/p/#{project.id}/supply/#{s.id}/receive" method="post" style="margin:0">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button class="pm-btn p" style="padding:5px 14px;font-size:12px">استلام ✔</button>
+                            </form>
+                            <span t-if="s.state=='received'" style="color:#27ae60;font-weight:bold">✔ تم</span>
+                        </td>
+                    </tr>
+                    <tr t-if="not supplies"><td colspan="6" style="text-align:center;color:#8a93a8;padding:14px">لا توجد واردات حالياً.</td></tr>
+                </tbody></table></div>
+        </t>
+    </template>
+
+    <template id="pm_p_performance" name="PM Team Performance">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h">أداء الفريق</div><div class="pm-sub" t-esc="project.name"/>
+            <t t-if="not available">
+                <div class="pm-alert bad">نظام تقييم الأداء غير مُفعَّل.</div>
+            </t>
+            <t t-else="">
+                <div class="pm-kpis">
+                    <div class="pm-kpi"><span class="kc" t-att-style="perf_total >= 0 and 'background:#e6f7ef;color:#1a9f6d' or 'background:#fdeceb;color:#e2513f'">📈</span>
+                        <div><div class="v" t-esc="round(perf_total, 1)"/><div class="l">نقاط الأداء (السنة)</div></div></div>
+                    <div class="pm-kpi"><span class="kc" style="background:#e9f0ff;color:#2f6df6">👥</span>
+                        <div><div class="v" t-esc="len(perf_rows)"/><div class="l">أعضاء لديهم أحداث</div></div></div>
+                    <div class="pm-kpi"><span class="kc" style="background:#f0ebff;color:#7a5cf0">📋</span>
+                        <div><div class="v" t-esc="len(perf_events)"/><div class="l">أحداث حديثة</div></div></div>
+                </div>
+                <div class="pm-card"><div class="hd light">👥 أداء الأعضاء (الأقل أولاً)</div>
+                    <table><thead><tr><th>الموظف</th><th>عدد الأحداث</th><th>النقاط</th></tr></thead><tbody>
+                        <tr t-foreach="perf_rows" t-as="r">
+                            <td t-esc="r['emp'].name"/><td t-esc="r['count']"/>
+                            <td><span t-att-class="r['score'] &gt;= 0 and 'pm-badge b-green' or 'pm-badge b-red'" t-esc="round(r['score'], 1)"/></td>
+                        </tr>
+                        <tr t-if="not perf_rows"><td colspan="3" style="text-align:center;color:#8a93a8;padding:14px">لا توجد أحداث أداء بعد.</td></tr>
+                    </tbody></table></div>
+                <div class="pm-card"><div class="hd light">🕒 آخر الأحداث</div>
+                    <table><thead><tr><th>التاريخ</th><th>الموظف</th><th>المصدر</th><th>البيان</th><th>الأثر</th></tr></thead><tbody>
+                        <tr t-foreach="perf_events" t-as="e">
+                            <td t-esc="e.date"/><td t-esc="e.employee_id.name"/><td t-esc="e.source"/><td t-esc="e.name"/>
+                            <td><span t-att-class="e.points &gt;= 0 and 'pm-badge b-green' or 'pm-badge b-red'" t-esc="round(e.points, 1)"/></td>
+                        </tr>
+                        <tr t-if="not perf_events"><td colspan="5" style="text-align:center;color:#8a93a8;padding:14px">لا يوجد.</td></tr>
+                    </tbody></table></div>
+            </t>
+        </t>
+    </template>
+
+    <template id="pm_p_petty" name="PM Petty">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h">العُهد النقدية</div><div class="pm-sub" t-esc="project.name"/>
+            <t t-if="ok"><div class="pm-alert ok">✅ تم تسجيل المصروف.</div></t>
+            <t t-if="err=='overspend'"><div class="pm-alert bad">🚫 المبلغ يتجاوز المتبقّي في العهدة.</div></t>
+            <t t-if="err=='1'"><div class="pm-alert bad">تعذّر التنفيذ.</div></t>
+            <div class="pm-card"><div class="hd b4">💰 إضافة مصروف</div><div class="bd">
+                <form t-attf-action="/my/pm/p/#{project.id}/expense" method="post">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <select name="cash_id"><option value="">— عُهدة جديدة —</option><t t-foreach="pettys" t-as="pc"><option t-att-value="pc.id"><t t-esc="pc.name"/> (متبقّي: <t t-esc="pc.remaining"/>)</option></t></select>
+                    <input type="number" step="any" name="amount" placeholder="قيمة العهدة (للجديدة)"/>
+                    <div class="row2"><input type="text" name="name" placeholder="البيان" required="required"/><input type="number" step="any" name="exp_amount" placeholder="المبلغ" required="required"/></div>
+                    <select name="category"><option value="maintenance">صيانة</option><option value="fuel">محروقات</option><option value="transport">مواصلات</option><option value="supplies">مستلزمات</option><option value="misc">نثريات</option></select>
+                    <button class="pm-btn p">تسجيل</button></form></div></div>
+            <div class="pm-card"><div class="hd light">💰 العُهد (<t t-esc="len(pettys)"/>)</div>
+                <table><thead><tr><th>المرجع</th><th>القيمة</th><th>مصروف</th><th>متبقّي</th><th>الحالة</th></tr></thead><tbody>
+                    <tr t-foreach="pettys" t-as="pc"><td t-esc="pc.name"/><td t-esc="pc.amount"/><td t-esc="pc.spent"/><td t-esc="pc.remaining"/><td><t t-call="care_pms.st"><t t-set="st" t-value="pc.state"/></t></td></tr>
+                    <tr t-if="not pettys"><td colspan="5" style="text-align:center;color:#8a93a8;padding:14px">لا يوجد.</td></tr></tbody></table></div>
+        </t>
+    </template>
+
+    <template id="pm_p_requests" name="PM Requests">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h">طلبات المستندات</div><div class="pm-sub" t-esc="project.name"/>
+            <t t-if="ok"><div class="pm-alert ok">✅ تم تقديم الطلب.</div></t><t t-if="err"><div class="pm-alert bad">تعذّر التقديم.</div></t>
+            <div class="pm-card"><div class="hd b3">📄 طلب تحديث مستند عامل</div><div class="bd">
+                <form t-attf-action="/my/pm/p/#{project.id}/docrequest" method="post">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <select name="employee_id" required="required"><option value="">— اختر العامل —</option><t t-foreach="employees" t-as="e"><option t-att-value="e.id" t-esc="e.name"/></t></select>
+                    <select name="doc_type"><option value="civil_id">البطاقة المدنية</option><option value="passport">الجواز</option><option value="residence">الإقامة</option><option value="work_permit">تصريح عمل</option><option value="photo">صورة</option><option value="medical">طبي</option></select>
+                    <input type="text" name="description" placeholder="ملاحظات"/><button class="pm-btn p">تقديم الطلب</button></form></div></div>
+            <div class="pm-card"><div class="hd light">📄 الطلبات (<t t-esc="len(doc_requests)"/>)</div>
+                <table><thead><tr><th>المرجع</th><th>العامل</th><th>النوع</th><th>الحالة</th></tr></thead><tbody>
+                    <tr t-foreach="doc_requests" t-as="d"><td t-esc="d.name"/><td t-esc="d.employee_id.name"/><td t-esc="d.doc_type"/>
+                        <td><span t-att-class="d.state=='approved' and 'pm-badge b-green' or (d.state=='rejected' and 'pm-badge b-red' or 'pm-badge b-blue')" t-esc="d.state"/></td></tr>
+                    <tr t-if="not doc_requests"><td colspan="4" style="text-align:center;color:#8a93a8;padding:14px">لا يوجد.</td></tr></tbody></table></div>
+        </t>
+    </template>
+
+    <!-- ============ CONTRACTS ============ -->
+    <template id="pm_p_contracts" name="PM Contracts">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h">العقود</div><div class="pm-sub" t-esc="project.name"/>
+            <div class="pm-card"><table><thead><tr><th>المرجع</th><th>الاسم</th><th>الجهة</th><th>الإدارة</th></tr></thead><tbody>
+                <tr t-foreach="contracts" t-as="c"><td t-esc="c.ref or c.sequence or '—'"/><td t-esc="c.name"/><td t-esc="c.partner_id.name or '—'"/><td t-esc="c.department_id.name or '—'"/></tr>
+                <tr t-if="not contracts"><td colspan="4" style="text-align:center;color:#8a93a8;padding:16px">لا توجد عقود مرتبطة.</td></tr></tbody></table></div>
+        </t>
+    </template>
+
+    <!-- ============ ASSETS + CUSTODY ============ -->
+    <template id="pm_p_assets" name="PM Assets">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h">الأصول والعُهد</div><div class="pm-sub" t-esc="project.name"/>
+            <div class="pm-card"><div class="hd b2">🧰 العُهد (<t t-esc="len(custody)"/>)</div>
+                <table><thead><tr><th>الموظف</th><th>النوع</th><th>القيمة</th><th>الحالة</th></tr></thead><tbody>
+                    <tr t-foreach="custody" t-as="c"><td t-esc="c.employee_id.name or '—'"/><td t-esc="c.item_type or '—'"/><td t-esc="c.value"/><td><t t-call="care_pms.st"><t t-set="st" t-value="c.state"/></t></td></tr>
+                    <tr t-if="not custody"><td colspan="4" style="text-align:center;color:#8a93a8;padding:14px">لا يوجد.</td></tr></tbody></table></div>
+            <div class="pm-card"><div class="hd light">🧱 الأصول (<t t-esc="len(assets)"/>)</div>
+                <table><thead><tr><th>الأصل</th></tr></thead><tbody>
+                    <tr t-foreach="assets" t-as="a"><td t-esc="a.name"/></tr>
+                    <tr t-if="not assets"><td style="text-align:center;color:#8a93a8;padding:14px">لا يوجد.</td></tr></tbody></table></div>
+        </t>
+    </template>
+
+    <!-- ============ COMPLIANCE ============ -->
+    <template id="pm_p_compliance" name="PM Compliance">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h">الامتثال والإقامات</div><div class="pm-sub">عمال <t t-esc="project.name"/> الذين تنتهي وثائقهم خلال ٦٠ يوماً (الأقرب أولاً)</div>
+            <div class="pm-card"><table><thead><tr><th>العامل</th><th>أقرب انتهاء</th><th>الإقامة</th><th>تصريح الشؤون</th><th>التأشيرة</th><th>تصريح العمل</th></tr></thead><tbody>
+                <tr t-foreach="rows" t-as="r">
+                    <td style="font-weight:700" t-esc="r['e'].name"/>
+                    <td>
+                        <span t-if="r['days'] &lt;= 15" class="pm-badge b-red"><t t-esc="r['near']"/> · <t t-esc="r['days']"/> يوم</span>
+                        <span t-elif="r['days'] &lt;= 30" class="pm-badge b-amber"><t t-esc="r['near']"/> · <t t-esc="r['days']"/> يوم</span>
+                        <span t-else="" class="pm-badge b-grey"><t t-esc="r['near']"/> · <t t-esc="r['days']"/> يوم</span>
+                    </td>
+                    <td t-esc="r['e'].residency_end_date or '—'"/>
+                    <td t-esc="r['e'].affairs_permit_end_date or '—'"/>
+                    <td t-esc="r['e'].visa_expire or '—'"/>
+                    <td t-esc="r['e'].work_permit_expiration_date or '—'"/>
+                </tr>
+                <tr t-if="not rows"><td colspan="6" style="text-align:center;color:#12945f;padding:16px">لا توجد وثائق قاربت الانتهاء ✓</td></tr></tbody></table></div>
+        </t>
+    </template>
+
+    <!-- ============ FUEL ============ -->
+    <template id="pm_p_fuel" name="PM Fuel">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h">المحروقات</div><div class="pm-sub" t-esc="project.name"/>
+            <div class="pm-card"><table><thead><tr><th>السيارة</th><th>الكمية</th><th>المستهلك</th><th>كم/لتر</th><th>العدّاد</th></tr></thead><tbody>
+                <tr t-foreach="uses" t-as="u"><td><a t-attf-href="/my/pm/p/#{project.id}/vehicle/#{u.vehicle_id.id}" style="color:#2f6df6;font-weight:700" t-esc="u.vehicle_id.name or '—'"/></td><td t-esc="u.quantity"/><td t-esc="u.use_quantity"/><td t-esc="u.liter_per_km_rate"/><td t-esc="u.odometer_value"/></tr>
+                <tr t-if="not uses"><td colspan="5" style="text-align:center;color:#8a93a8;padding:16px">لا توجد بيانات محروقات.</td></tr></tbody></table></div>
+        </t>
+    </template>
+
+    <!-- ============ TEAM ============ -->
+    <template id="pm_p_team" name="PM Team">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h">الفريق والعمال</div><div class="pm-sub"><t t-esc="len(employees)"/> عامل في <t t-esc="project.name"/></div><form method="get" style="display:flex;gap:8px;margin-bottom:16px"><input type="text" name="q" t-att-value="q" placeholder="🔎 بحث: الاسم · البادج · الرقم المدني · الجواز · التصريح · الجوال" style="max-width:520px;margin:0"/><button class="pm-btn p" style="width:auto">بحث</button></form>
+            <div class="pm-card"><table><thead><tr><th>رقم العامل</th><th>الاسم</th><th>الرقم المدني</th><th>المسمّى</th><th>الإقامة/التصريح</th><th>الحالة</th><th>الجوال</th></tr></thead><tbody>
+                <tr t-foreach="employees" t-as="e">
+                    <td style="font-weight:800;color:#2f6df6" t-esc="e.barcode or e.employee_code or '—'"/>
+                    <td><a t-attf-href="/my/pm/p/#{project.id}/employee/#{e.id}" style="color:#2f6df6;font-weight:700" t-esc="e.name"/></td>
+                    <td t-esc="e.civil_code or '—'"/>
+                    <td t-esc="e.job_id.name or e.job_title or '—'"/>
+                    <td t-esc="e.permit_no or '—'"/>
+                    <td><span t-if="e.worker_status" class="pm-badge b-blue" t-esc="dict(e._fields['worker_status'].selection).get(e.worker_status, e.worker_status)"/><span t-else="">—</span></td>
+                    <td t-esc="e.mobile_phone or '—'"/></tr>
+                <tr t-if="not employees"><td colspan="7" style="text-align:center;color:#8a93a8;padding:16px">لا يوجد.</td></tr></tbody></table></div>
+        </t>
+    </template>
+
+    <!-- ============ TASK DETAIL (open + interact) ============ -->
+    <template id="pm_task_detail" name="PM Task Detail">
+        <t t-call="care_pms.pm_layout">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <div><div class="pm-h" t-esc="task.name"/><div class="pm-sub" style="margin:0" t-esc="project.name"/></div>
+                <a t-attf-href="/my/pm/p/#{project.id}/tasks" class="pm-btn g">← التاسكات</a>
+            </div>
+            <t t-if="ok=='comment'"><div class="pm-alert ok">✅ تم إضافة الرد.</div></t>
+            <t t-if="ok=='forward'"><div class="pm-alert ok">✅ تمت الإحالة وإرسال الإشعار.</div></t>
+            <t t-if="ok=='accept'"><div class="pm-alert ok">✅ تم قبول الإحالة.</div></t>
+            <t t-if="ok=='reject'"><div class="pm-alert ok">تم رفض الإحالة.</div></t>
+            <t t-if="err"><div class="pm-alert bad">تعذّر التنفيذ.</div></t>
+            <div class="pm-grid2" style="margin-top:14px">
+                <div class="pm-card"><div class="hd light">تفاصيل التاسك</div><div class="bd">
+                    <div class="pm-info">
+                        <div class="it"><div class="k">النوع</div><div class="val" t-esc="dict(task._fields['task_kind'].selection).get(task.task_kind,'')"/></div>
+                        <div class="it"><div class="k">البند</div><div class="val" t-esc="task.pms_category_id.name or '—'"/></div>
+                        <div class="it"><div class="k">المسند إليه</div><div class="val" t-esc="', '.join(task.user_ids.mapped('name')) or '—'"/></div>
+                        <div class="it"><div class="k">الاستحقاق</div><div class="val"><span t-att-style="task.is_overdue and 'color:#c0392b' or ''" t-esc="task.date_deadline or '—'"/></div></div>
+                        <div class="it"><div class="k">المرحلة</div><div class="val" t-esc="task.stage_id.name or '—'"/></div>
+                        <div class="it"><div class="k">حالة الإحالة</div><div class="val" t-esc="dict(task._fields['forward_state'].selection).get(task.forward_state,'')"/></div>
+                    </div>
+                    <div t-if="task.description" style="margin-top:12px;padding-top:12px;border-top:1px solid #eef1f7;font-weight:500" t-out="task.description"/>
+                </div></div>
+                <div class="pm-card"><div class="hd b3">➡️ الإحالة (Forward)</div><div class="bd">
+                    <t t-if="task.forward_state=='pending' and is_recipient">
+                        <div class="pm-alert bad" style="margin-bottom:10px">أحال إليك <b t-esc="task.forward_from_id.name"/> هذا التاسك.<br/>السبب: <t t-esc="task.forward_reason or '—'"/></div>
+                        <div class="row2">
+                            <form t-attf-action="/my/pm/p/#{project.id}/task/#{task.id}/accept" method="post"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button class="pm-btn p" style="background:linear-gradient(90deg,#1a9f6d,#22c07f)">قبول ✅</button></form>
+                            <form t-attf-action="/my/pm/p/#{project.id}/task/#{task.id}/reject" method="post"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button class="pm-btn p" style="background:linear-gradient(90deg,#e2513f,#ff6f5e)">رفض ✖</button></form>
+                        </div>
+                        <hr style="margin:14px 0;border:0;border-top:1px solid #eef1f7"/>
+                    </t>
+                    <form t-attf-action="/my/pm/p/#{project.id}/task/#{task.id}/forward" method="post">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <select name="forward_to_id" required="required"><option value="">— إحالة إلى —</option><t t-foreach="fwd_users" t-as="u"><option t-att-value="u.id" t-esc="u.name"/></t></select>
+                        <input type="text" name="reason" placeholder="سبب الإحالة"/>
+                        <button class="pm-btn p">إحالة</button>
+                    </form>
+                </div></div>
+            </div>
+            <div class="pm-card"><div class="hd light">📎 المرفقات (<t t-esc="len(attachments)"/>)</div><div class="bd">
+                <div style="display:flex;gap:12px;flex-wrap:wrap">
+                    <t t-foreach="attachments" t-as="att">
+                        <div style="text-align:center;width:150px">
+                            <t t-if="att.mimetype and 'image' in att.mimetype">
+                                <a t-attf-href="/web/content/#{att.id}?download=true" target="_blank"><img t-attf-src="/web/image/#{att.id}" style="width:140px;height:120px;object-fit:cover;border-radius:8px;border:1px solid #eef1f7"/></a>
+                            </t>
+                            <t t-else="">
+                                <a t-attf-href="/web/content/#{att.id}?download=true" target="_blank" style="width:140px;height:120px;border:1px solid #eef1f7;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:34px;color:#2f6df6">📄</a>
+                            </t>
+                            <a t-attf-href="/web/content/#{att.id}?download=true" style="font-size:11px;color:#2f6df6;font-weight:700;display:block;margin-top:4px;word-break:break-all" t-esc="att.name"/>
+                        </div>
+                    </t>
+                    <t t-if="not attachments"><div class="pm-sub" style="margin:0">لا توجد مرفقات.</div></t>
+                </div>
+            </div></div>
+            <div class="pm-card"><div class="hd light">💬 المحادثة والردود</div><div class="bd">
+                <form t-attf-action="/my/pm/p/#{project.id}/task/#{task.id}/comment" method="post" style="margin-bottom:16px">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <textarea name="body" rows="2" placeholder="اكتب رداً أو ملاحظة..." required="required"></textarea>
+                    <button class="pm-btn p" style="width:auto">إرسال الرد</button>
+                </form>
+                <t t-if="not messages"><div class="pm-sub" style="margin:0">لا توجد رسائل بعد.</div></t>
+                <t t-foreach="messages" t-as="m">
+                    <div style="border-right:3px solid #2f6df6;padding:4px 12px;margin-bottom:10px;background:#fafcff;border-radius:0 10px 10px 0">
+                        <div style="font-weight:800;font-size:12.5px" t-esc="m.author_id.name or 'النظام'"/>
+                        <div style="font-size:13px;font-weight:500" t-out="m.body"/>
+                    </div>
+                </t>
+            </div></div>
+        </t>
+    </template>
+
+    <!-- ============ EMPLOYEE FILE (full) ============ -->
+    <template id="pm_employee_file" name="PM Employee File">
+        <t t-call="care_pms.pm_layout">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <div class="pm-h">ملف العامل</div>
+                <a t-attf-href="/my/pm/p/#{project.id}/team" class="pm-btn g">← الفريق</a>
+            </div>
+            <!-- profile header -->
+            <div class="pm-card" style="margin-top:14px"><div class="bd" style="display:flex;gap:22px;align-items:center;flex-wrap:wrap">
+                <img t-attf-src="/web/image/hr.employee/#{emp.id}/avatar_1920" alt="photo"
+                     style="width:120px;height:120px;border-radius:18px;object-fit:cover;border:3px solid #eef1f7;background:#f4f6fb"/>
+                <div style="flex:1;min-width:220px">
+                    <div style="font-size:23px;font-weight:900" t-esc="emp.name"/>
+                    <div class="pm-sub" style="margin:1px 0" t-esc="emp.english_name or ''"/>
+                    <div style="font-weight:700;color:#4a5a78"><t t-esc="emp.job_id.name or emp.job_title or '—'"/> · <t t-esc="emp.department_id.name or '—'"/></div>
+                    <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+                        <span t-if="emp.worker_status" class="pm-badge b-blue">الحالة: <t t-esc="dict(emp._fields['worker_status'].selection).get(emp.worker_status, emp.worker_status)"/></span>
+                        <span t-if="emp.hr_presence_state" t-attf-class="pm-badge #{emp.hr_presence_state=='present' and 'b-green' or 'b-grey'}"><t t-esc="dict(emp._fields['hr_presence_state'].selection).get(emp.hr_presence_state,'')"/></span>
+                        <span t-att-class="emp.active and 'pm-badge b-green' or 'pm-badge b-red'"><t t-esc="emp.active and 'نشط' or 'مؤرشف'"/></span>
+                        <span t-if="emp.resigned" class="pm-badge b-red">مستقيل</span>
+                    </div>
+                </div>
+                <div style="text-align:center;padding:0 10px">
+                    <div class="pm-sub" style="margin:0">رقم العامل</div>
+                    <div style="font-size:22px;font-weight:900;color:#2f6df6" t-esc="emp.barcode or emp.employee_code or '—'"/>
+                </div>
+            </div></div>
+
+            <div class="pm-grid2">
+                <div class="pm-card"><div class="hd b1">👤 البيانات الشخصية</div><div class="bd"><div class="pm-info">
+                    <div class="it"><div class="k">الجنس</div><div class="val" t-esc="dict(emp._fields['gender'].selection).get(emp.gender,'—')"/></div>
+                    <div class="it"><div class="k">تاريخ الميلاد</div><div class="val" t-esc="emp.birthday or '—'"/></div>
+                    <div class="it"><div class="k">مكان الميلاد</div><div class="val" t-esc="emp.place_of_birth or '—'"/></div>
+                    <div class="it"><div class="k">الجنسية</div><div class="val" t-esc="emp.country_id.name or '—'"/></div>
+                    <div class="it"><div class="k">الحالة الاجتماعية</div><div class="val" t-esc="dict(emp._fields['marital'].selection).get(emp.marital,'—')"/></div>
+                    <div class="it"><div class="k">عدد الأبناء</div><div class="val" t-esc="emp.children"/></div>
+                </div></div></div>
+                <div class="pm-card"><div class="hd b2">🪪 الهوية والوثائق</div><div class="bd"><div class="pm-info">
+                    <div class="it"><div class="k">الرقم المدني</div><div class="val" t-esc="emp.civil_code or '—'"/></div>
+                    <div class="it"><div class="k">رقم الهوية</div><div class="val" t-esc="emp.identification_id or '—'"/></div>
+                    <div class="it"><div class="k">الرقم الآلي (MOI)</div><div class="val" t-esc="emp.moi_number or '—'"/></div>
+                    <div class="it"><div class="k">رقم الجواز</div><div class="val" t-esc="emp.passport_no or emp.passport_id or '—'"/></div>
+                    <div class="it"><div class="k">التأمينات (SIN)</div><div class="val" t-esc="emp.sinid or '—'"/></div>
+                    <div class="it"><div class="k">بطاقة العمل</div><div class="val" t-esc="emp.mobility_card or '—'"/></div>
+                </div></div></div>
+                <div class="pm-card"><div class="hd b4">🛂 الإقامة والتصاريح</div><div class="bd"><div class="pm-info">
+                    <div class="it"><div class="k">رقم التصريح</div><div class="val" t-esc="emp.permit_no or '—'"/></div>
+                    <div class="it"><div class="k">رقم التأشيرة</div><div class="val" t-esc="emp.visa_no or '—'"/></div>
+                    <div class="it"><div class="k">بداية الإقامة</div><div class="val" t-esc="emp.residency_start_date or '—'"/></div>
+                    <div class="it"><div class="k">انتهاء الإقامة</div><div class="val" t-esc="emp.residency_end_date or '—'"/></div>
+                    <div class="it"><div class="k">انتهاء التأشيرة</div><div class="val" t-esc="emp.visa_expire or '—'"/></div>
+                    <div class="it"><div class="k">انتهاء تصريح العمل</div><div class="val" t-esc="emp.work_permit_expiration_date or '—'"/></div>
+                    <div class="it"><div class="k">تصريح الشؤون (من)</div><div class="val" t-esc="emp.affairs_permit_start_date or '—'"/></div>
+                    <div class="it"><div class="k">تصريح الشؤون (إلى)</div><div class="val" t-esc="affairs_end or '—'"/></div>
+                </div></div></div>
+                <div class="pm-card"><div class="hd b3">💼 العمل والوظيفة</div><div class="bd"><div class="pm-info">
+                    <div class="it"><div class="k">المسمّى</div><div class="val" t-esc="emp.job_id.name or emp.job_title or '—'"/></div>
+                    <div class="it"><div class="k">الدرجة</div><div class="val" t-esc="emp.job_grade_id.name or '—'"/></div>
+                    <div class="it"><div class="k">المدير المباشر</div><div class="val" t-esc="emp.parent_id.name or '—'"/></div>
+                    <div class="it"><div class="k">نوع الموظف</div><div class="val" t-esc="dict(emp._fields['employee_type'].selection).get(emp.employee_type,'—')"/></div>
+                    <div class="it"><div class="k">تاريخ الالتحاق</div><div class="val" t-esc="emp.joining_date or emp.enter_date or '—'"/></div>
+                    <div class="it"><div class="k">رقم العقد الاجتماعي</div><div class="val" t-esc="emp.social_contract_no or '—'"/></div>
+                </div></div></div>
+                <div class="pm-card"><div class="hd b2">🏥 التأمين والراتب</div><div class="bd"><div class="pm-info">
+                    <div class="it"><div class="k">الراتب الأساسي</div><div class="val" style="color:#12945f" t-esc="wage"/></div>
+                    <div class="it"><div class="k">حالة التأمين</div><div class="val" t-esc="dict(emp._fields['insurance_status'].selection).get(emp.insurance_status,'—')"/></div>
+                    <div class="it"><div class="k">راتب التأمين</div><div class="val" t-esc="emp.insurance_salary"/></div>
+                    <div class="it"><div class="k">راتب الشؤون</div><div class="val" t-esc="emp.affairs_salary"/></div>
+                    <div class="it"><div class="k">المعاش/التقاعد</div><div class="val" t-esc="emp.pension"/></div>
+                </div></div></div>
+                <div class="pm-card"><div class="hd b1">📞 التواصل والعنوان</div><div class="bd"><div class="pm-info">
+                    <div class="it"><div class="k">الجوال</div><div class="val" t-esc="emp.mobile_phone or '—'"/></div>
+                    <div class="it"><div class="k">هاتف خاص</div><div class="val" t-esc="emp.private_phone or '—'"/></div>
+                    <div class="it"><div class="k">بريد خاص</div><div class="val" t-esc="emp.private_email or '—'"/></div>
+                    <div class="it"><div class="k">جهة اتصال الطوارئ</div><div class="val" t-esc="emp.emergency_contact or '—'"/></div>
+                    <div class="it"><div class="k">هاتف الطوارئ</div><div class="val" t-esc="emp.emergency_phone or '—'"/></div>
+                    <div class="it"><div class="k">العنوان</div><div class="val"><t t-esc="emp.private_street or ''"/> <t t-esc="emp.private_city or ''"/></div></div>
+                </div></div></div>
+                <div class="pm-card"><div class="hd b3">🏠 السكن</div><div class="bd"><div class="pm-info">
+                    <div class="it"><div class="k">سكن الشركة</div><div class="val" t-esc="emp.is_company_accommodation and 'نعم' or 'لا'"/></div>
+                    <div class="it"><div class="k">المبنى/السكن</div><div class="val" t-esc="emp.hostel_id.display_name or '—'"/></div>
+                    <div class="it"><div class="k">الطابق</div><div class="val" t-esc="emp.floor_id.display_name or '—'"/></div>
+                    <div class="it"><div class="k">الشقة</div><div class="val" t-esc="emp.flat_id.display_name or '—'"/></div>
+                    <div class="it"><div class="k">الغرفة</div><div class="val" t-esc="emp.room_id.display_name or '—'"/></div>
+                    <div class="it"><div class="k">السرير</div><div class="val" t-esc="emp.bed_id.display_name or '—'"/></div>
+                </div></div></div>
+                <div class="pm-card"><div class="hd b5">📋 حالة الخدمة</div><div class="bd"><div class="pm-info">
+                    <div class="it"><div class="k">الحالة</div><div class="val" t-esc="emp.active and 'على رأس العمل' or 'مؤرشف'"/></div>
+                    <div class="it"><div class="k">مستقيل</div><div class="val" t-esc="emp.resigned and 'نعم' or 'لا'"/></div>
+                    <div class="it"><div class="k">تاريخ المغادرة</div><div class="val" t-esc="emp.departure_date or '—'"/></div>
+                    <div class="it"><div class="k">سبب المغادرة</div><div class="val" t-esc="emp.departure_reason_id.name or '—'"/></div>
+                </div></div></div>
+            </div>
+
+            <!-- financials: loans / penalties / bonuses -->
+            <div class="pm-grid2">
+                <div class="pm-card"><div class="hd b1">💵 السلف والقروض</div>
+                    <table><thead><tr><th>المرجع</th><th>المبلغ</th><th>المتبقّي</th><th>الحالة</th></tr></thead><tbody>
+                        <tr t-foreach="loans_hr" t-as="l"><td t-esc="l.name"/><td t-esc="l.loan_amount"/><td t-esc="l.balance_amount"/><td><t t-call="care_pms.st"><t t-set="st" t-value="l.state"/></t></td></tr>
+                        <tr t-foreach="loans_care" t-as="l"><td t-esc="l.name"/><td t-esc="l.amount"/><td><t t-esc="l.amount - l.paid_amount"/></td><td><t t-call="care_pms.st"><t t-set="st" t-value="l.state"/></t></td></tr>
+                        <tr t-if="not loans_hr and not loans_care"><td colspan="4" style="text-align:center;color:#8a93a8;padding:14px">لا يوجد.</td></tr></tbody></table></div>
+                <div class="pm-card"><div class="hd b5">⚖️ الجزاءات</div>
+                    <table><thead><tr><th>المرجع</th><th>المبلغ</th><th>التاريخ</th><th>الحالة</th></tr></thead><tbody>
+                        <tr t-foreach="penalties" t-as="pn"><td t-esc="pn.name"/><td t-esc="pn.penalty_amount_amount or pn.penalty_amount"/><td t-esc="pn.request_date or '—'"/><td><t t-call="care_pms.st"><t t-set="st" t-value="pn.state"/></t></td></tr>
+                        <tr t-if="not penalties"><td colspan="4" style="text-align:center;color:#12945f;padding:14px">لا توجد جزاءات ✓</td></tr></tbody></table></div>
+                <div class="pm-card"><div class="hd b2">🎁 المكافآت</div>
+                    <table><thead><tr><th>المرجع</th><th>المبلغ</th><th>التاريخ</th><th>الحالة</th></tr></thead><tbody>
+                        <tr t-foreach="bonuses" t-as="bn"><td t-esc="bn.name"/><td t-esc="bn.bonus_amount_amount"/><td t-esc="bn.request_date or '—'"/><td><t t-call="care_pms.st"><t t-set="st" t-value="bn.state"/></t></td></tr>
+                        <tr t-if="not bonuses"><td colspan="4" style="text-align:center;color:#8a93a8;padding:14px">لا يوجد.</td></tr></tbody></table></div>
+            </div>
+
+            <!-- attached document images -->
+            <div class="pm-card"><div class="hd light">🖼️ الوثائق المرفقة</div><div class="bd">
+                <div style="display:flex;gap:14px;flex-wrap:wrap">
+                    <t t-if="emp.id_card"><div style="text-align:center"><img t-attf-src="/web/image/hr.employee/#{emp.id}/id_card" style="width:180px;border-radius:10px;border:1px solid #eef1f7"/><div class="pm-sub" style="margin:4px 0 0">البطاقة المدنية</div></div></t>
+                    <t t-if="emp.driving_license"><div style="text-align:center"><img t-attf-src="/web/image/hr.employee/#{emp.id}/driving_license" style="width:180px;border-radius:10px;border:1px solid #eef1f7"/><div class="pm-sub" style="margin:4px 0 0">رخصة القيادة</div></div></t>
+                    <t t-if="emp.sim_card"><div style="text-align:center"><img t-attf-src="/web/image/hr.employee/#{emp.id}/sim_card" style="width:180px;border-radius:10px;border:1px solid #eef1f7"/><div class="pm-sub" style="margin:4px 0 0">الشريحة</div></div></t>
+                    <t t-if="not emp.id_card and not emp.driving_license and not emp.sim_card"><div class="pm-sub" style="margin:0">لا توجد وثائق مرفقة.</div></t>
+                </div>
+            </div></div>
+
+            <div class="pm-card"><div class="hd light">⏱️ الحضور والانصراف (آخر السجلات)</div><table><thead><tr><th>الدخول</th><th>الخروج</th><th>الساعات</th></tr></thead><tbody><tr t-foreach="attendance" t-as="a"><td t-esc="a.check_in or '—'"/><td t-esc="a.check_out or '—'"/><td t-esc="round(a.worked_hours,2)"/></tr><tr t-if="not attendance"><td colspan="3" style="text-align:center;color:#8a93a8;padding:14px">لا يوجد.</td></tr></tbody></table></div><div class="pm-card"><div class="hd light">📄 طلبات المستندات (<t t-esc="len(docs)"/>)</div>
+                <table><thead><tr><th>المرجع</th><th>النوع</th><th>الحالة</th></tr></thead><tbody>
+                    <tr t-foreach="docs" t-as="d"><td t-esc="d.name"/><td t-esc="d.doc_type"/><td><t t-call="care_pms.st"><t t-set="st" t-value="d.state"/></t></td></tr>
+                    <tr t-if="not docs"><td colspan="3" style="text-align:center;color:#8a93a8;padding:14px">لا يوجد.</td></tr></tbody></table></div>
+        </t>
+    </template>
+
+    <!-- ============ VEHICLE FILE ============ -->
+    <template id="pm_vehicle_file" name="PM Vehicle File">
+        <t t-call="care_pms.pm_layout">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <div><div class="pm-h" t-esc="veh.display_name"/><div class="pm-sub" style="margin:0">ملف السيارة</div></div>
+                <a t-attf-href="/my/pm/p/#{project.id}/fuel" class="pm-btn g">← المحروقات</a>
+            </div>
+            <div class="pm-card" style="margin-top:14px"><div class="hd light">البيانات</div><div class="bd"><div class="pm-info">
+                <div class="it"><div class="k">اللوحة</div><div class="val" t-esc="veh.license_plate or '—'"/></div>
+                <div class="it"><div class="k">الطراز</div><div class="val" t-esc="veh.model_id.name or '—'"/></div>
+                <div class="it"><div class="k">الإدارة</div><div class="val" t-esc="veh.department_id.name or '—'"/></div>
+                <div class="it"><div class="k">السائق</div><div class="val" t-esc="veh.driver_id.name or '—'"/></div>
+                <div class="it"><div class="k">العدّاد</div><div class="val" t-esc="veh.odometer"/></div>
+            </div></div></div>
+            <div class="pm-card"><div class="hd light">⛽ سجل المحروقات (<t t-esc="len(uses)"/>)</div>
+                <table><thead><tr><th>الكمية</th><th>المستهلك</th><th>كم/لتر</th><th>العدّاد</th></tr></thead><tbody>
+                    <tr t-foreach="uses" t-as="u"><td t-esc="u.quantity"/><td t-esc="u.use_quantity"/><td t-esc="u.liter_per_km_rate"/><td t-esc="u.odometer_value"/></tr>
+                    <tr t-if="not uses"><td colspan="4" style="text-align:center;color:#8a93a8;padding:14px">لا يوجد.</td></tr></tbody></table></div>
+        </t>
+    </template>
+
+    <!-- ATTENDANCE -->
+    <template id="pm_p_attendance" name="PM Attendance">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h">الحضور والانصراف</div>
+            <div class="pm-sub">اليوم <t t-esc="today"/> · <t t-esc="project.name"/></div>
+            <div class="pm-kpis">
+                <div class="pm-kpi"><span class="kc" style="background:#e9f0ff;color:#2f6df6">👷</span><div><div class="v" t-esc="total"/><div class="l">إجمالي العمال</div></div></div>
+                <div class="pm-kpi"><span class="kc" style="background:#e6f7ef;color:#1a9f6d">✅</span><div><div class="v" style="color:#1a9f6d" t-esc="len(present)"/><div class="l">حاضر اليوم</div></div></div>
+                <div class="pm-kpi"><span class="kc" style="background:#fdeceb;color:#e2513f">❌</span><div><div class="v" style="color:#e2513f" t-esc="len(absent)"/><div class="l">غائب</div></div></div>
+                <div class="pm-kpi"><span class="kc" style="background:#fff3e0;color:#e08a00">📊</span><div><div class="v"><t t-esc="total and round(100.0*len(present)/total) or 0"/>%</div><div class="l">نسبة الحضور</div></div></div>
+            </div>
+            <div class="pm-grid2">
+                <div class="pm-card"><div class="hd b2">✅ الحاضرون اليوم (<t t-esc="len(present)"/>)</div>
+                    <table><thead><tr><th>العامل</th><th>الدخول</th><th>الخروج</th></tr></thead><tbody>
+                        <tr t-foreach="present" t-as="e"><td><a t-attf-href="/my/pm/p/#{project.id}/employee/#{e.id}" style="color:#2f6df6;font-weight:700" t-esc="e.name"/></td>
+                            <td t-esc="att_by_emp.get(e.id) and att_by_emp[e.id].check_in or '—'"/>
+                            <td t-esc="att_by_emp.get(e.id) and att_by_emp[e.id].check_out or 'بالداخل'"/></tr>
+                        <tr t-if="not present"><td colspan="3" style="text-align:center;color:#8a93a8;padding:14px">لا أحد.</td></tr></tbody></table></div>
+                <div class="pm-card"><div class="hd b5">❌ الغائبون اليوم (<t t-esc="len(absent)"/>)</div>
+                    <table><thead><tr><th>العامل</th><th>البادج</th></tr></thead><tbody>
+                        <tr t-foreach="absent" t-as="e"><td><a t-attf-href="/my/pm/p/#{project.id}/employee/#{e.id}" style="color:#2f6df6;font-weight:700" t-esc="e.name"/></td><td t-esc="e.barcode or '—'"/></tr>
+                        <tr t-if="not absent"><td colspan="2" style="text-align:center;color:#12945f;padding:14px">الجميع حاضر ✓</td></tr></tbody></table></div>
+            </div>
+            <div class="pm-card"><div class="hd light">🕒 آخر سجلات البصمة (<t t-esc="len(recent)"/>)</div>
+                <table><thead><tr><th>العامل</th><th>الدخول</th><th>الخروج</th><th>الساعات</th></tr></thead><tbody>
+                    <tr t-foreach="recent" t-as="a"><td t-esc="a.employee_id.name"/><td t-esc="a.check_in or '—'"/><td t-esc="a.check_out or '—'"/><td t-esc="round(a.worked_hours,2)"/></tr>
+                    <tr t-if="not recent"><td colspan="4" style="text-align:center;color:#8a93a8;padding:14px">لا يوجد.</td></tr></tbody></table></div>
+        </t>
+    </template>
+
+    <!-- TIMESHEET -->
+    <template id="pm_p_timesheet" name="PM Timesheet">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h">التايم شيت</div><div class="pm-sub"><t t-esc="project.name"/> · يُولَّد من البصمة والحضور</div>
+            <t t-if="ok"><div class="pm-alert ok">✅ تم توليد التايم شيت من الحضور وإرساله للاعتماد.</div></t>
+            <t t-if="err=='nodept'"><div class="pm-alert bad">المشروع غير مرتبط بإدارة — لا يمكن توليد التايم شيت.</div></t>
+            <t t-if="err=='1'"><div class="pm-alert bad">تعذّر التوليد — تحقّق من التواريخ.</div></t>
+            <div class="pm-card"><div class="hd b3">➕ إنشاء تايم شيت من الحضور</div><div class="bd">
+                <form t-attf-action="/my/pm/p/#{project.id}/timesheet" method="post">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <div class="row2">
+                        <div><label style="font-size:12px;color:#8a93a8;font-weight:700">من تاريخ</label><input type="date" name="date_from" t-att-value="today" required="required"/></div>
+                        <div><label style="font-size:12px;color:#8a93a8;font-weight:700">إلى تاريخ</label><input type="date" name="date_to" t-att-value="today" required="required"/></div>
+                    </div>
+                    <button class="pm-btn p">توليد من الحضور وإرسال للاعتماد</button>
+                </form>
+                <div class="text-muted" style="font-size:12px;margin-top:6px">يجمع النظام أيام حضور كل عامل من البصمة خلال الفترة (لكل عمال المشروع) ثم يُرسل الكشف للاعتماد — تماماً كموديول التايم شيت في الباك-إند.</div>
+            </div></div>
+            <t t-foreach="sheets" t-as="ts">
+                <div class="pm-card"><div class="hd light">
+                    <t t-esc="ts.name"/> · <t t-esc="ts.date_from"/> → <t t-esc="ts.date_to"/> ·
+                    <span t-att-class="ts.state=='approved' and 'pm-badge b-green' or (ts.state=='submit' and 'pm-badge b-amber' or 'pm-badge b-grey')" t-esc="{'draft':'مسودة','submit':'مُرسل للاعتماد','approved':'معتمد'}.get(ts.state, ts.state)"/>
+                </div>
+                <table><thead><tr><th>العامل</th><th>أيام الحضور (فعلي)</th><th>المطلوب</th><th>الفرق</th></tr></thead><tbody>
+                    <tr t-foreach="ts.line_ids" t-as="l"><td t-esc="l.employee_id.name"/><td style="font-weight:800;color:#12945f" t-esc="l.actual"/><td t-esc="l.count"/><td t-esc="l.diff"/></tr>
+                    <tr t-if="not ts.line_ids"><td colspan="4" style="text-align:center;color:#8a93a8;padding:12px">لا سطور.</td></tr>
+                </tbody></table></div>
+            </t>
+            <div t-if="not sheets" class="pm-alert" style="background:#eef4ff;border:1px solid #cfe0ff;color:#2a5bd7">لا توجد كشوف تايم شيت بعد — أنشئ واحداً بالأعلى.</div>
+        </t>
+    </template>
+
+    <!-- INBOX -->
+    <template id="pm_inbox" name="PM Inbox">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h">الواردة إليّ</div>
+            <div class="pm-sub">التاسكات المُحالة والمسندة إليك</div>
+            <div class="pm-card"><div class="hd b4">📥 إحالات بانتظار قبولك (<t t-esc="len(incoming)"/>)</div>
+                <table><thead><tr><th>التاسك</th><th>المشروع</th><th>من</th><th>السبب</th><th>الإجراء</th></tr></thead><tbody>
+                    <tr t-foreach="incoming" t-as="t">
+                        <td><a t-attf-href="/my/pm/p/#{t.project_id.id}/task/#{t.id}" style="color:#2f6df6;font-weight:700" t-esc="t.name"/></td>
+                        <td t-esc="t.project_id.name"/><td t-esc="t.forward_from_id.name or '—'"/><td t-esc="t.forward_reason or '—'"/>
+                        <td style="white-space:nowrap">
+                            <form t-attf-action="/my/pm/p/#{t.project_id.id}/task/#{t.id}/accept" method="post" style="display:inline">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button class="pm-badge b-green" style="border:0;cursor:pointer">قبول ✅</button></form>
+                            <form t-attf-action="/my/pm/p/#{t.project_id.id}/task/#{t.id}/reject" method="post" style="display:inline;margin-right:4px">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button class="pm-badge b-red" style="border:0;cursor:pointer">رفض ✖</button></form>
+                        </td>
+                    </tr>
+                    <tr t-if="not incoming"><td colspan="5" style="text-align:center;color:#12945f;padding:14px">لا توجد إحالات بانتظارك ✓</td></tr>
+                </tbody></table></div>
+            <div class="pm-card"><div class="hd light">📋 التاسكات المسندة إليّ (<t t-esc="len(assigned)"/>)</div>
+                <table><thead><tr><th>التاسك</th><th>المشروع</th><th>الاستحقاق</th><th>المرحلة</th></tr></thead><tbody>
+                    <tr t-foreach="assigned" t-as="t">
+                        <td><a t-attf-href="/my/pm/p/#{t.project_id.id}/task/#{t.id}" style="color:#2f6df6;font-weight:700" t-esc="t.name"/></td>
+                        <td t-esc="t.project_id.name"/>
+                        <td><span t-att-style="t.is_overdue and 'color:#c0392b;font-weight:800' or ''" t-esc="t.date_deadline or '—'"/></td>
+                        <td t-esc="t.stage_id.name or '—'"/></tr>
+                    <tr t-if="not assigned"><td colspan="4" style="text-align:center;color:#8a93a8;padding:14px">لا يوجد.</td></tr>
+                </tbody></table></div>
+        </t>
+    </template>
+
+    <!-- ============ FINANCE (P&L) ============ -->
+    <template id="pm_p_finance" name="PM Finance">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h">الملف المالي</div><div class="pm-sub">ربحية <t t-esc="project.name"/></div>
+            <div class="pm-kpis">
+                <div class="pm-kpi"><span class="kc" style="background:#e6f7ef;color:#1a9f6d">💵</span><div><div class="v" t-esc="project.pms_revenue"/><div class="l">الإيراد الشهري</div></div></div>
+                <div class="pm-kpi"><span class="kc" style="background:#fdeceb;color:#e2513f">📉</span><div><div class="v" t-esc="project.pms_total_cost"/><div class="l">إجمالي التكلفة</div></div></div>
+                <div class="pm-kpi"><span class="kc" style="background:#e9f0ff;color:#2f6df6">📈</span><div><div class="v" t-esc="project.pms_margin"/><div class="l">الهامش</div></div></div>
+                <div class="pm-kpi"><span class="kc" style="background:#fff3e0;color:#c47f00">%</span><div><div class="v"><t t-esc="round(project.pms_margin_pct)"/>%</div><div class="l">نسبة الهامش</div></div></div>
+            </div>
+            <div class="pm-card"><div class="hd light">تفصيل التكاليف</div>
+                <table><tbody>
+                    <tr><td>تكلفة العمالة</td><td style="text-align:left;font-weight:800" t-esc="project.pms_labor_cost"/></tr>
+                    <tr><td>تكلفة الأسطول</td><td style="text-align:left;font-weight:800" t-esc="project.pms_fleet_cost"/></tr>
+                    <tr><td>مصروف العُهد النقدية</td><td style="text-align:left;font-weight:800" t-esc="project.pms_petty_spent"/></tr>
+                    <tr style="background:#fbfcff"><td style="font-weight:800">إجمالي التكلفة</td><td style="text-align:left;font-weight:900" t-esc="project.pms_total_cost"/></tr>
+                    <tr style="background:#effaf3"><td style="font-weight:800;color:#12945f">صافي الهامش</td><td style="text-align:left;font-weight:900;color:#12945f" t-esc="project.pms_margin"/></tr>
+                </tbody></table></div>
+        </t>
+    </template>
+</odoo>

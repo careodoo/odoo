@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_care_absconding_tree" model="ir.ui.view">
+        <field name="name">care.absconding.report.tree</field>
+        <field name="model">care.absconding.report</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="risk == 'high'" decoration-warning="risk == 'medium'"
+                  decoration-muted="state in ('closed_return','closed_final')">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="report_type"/>
+                <field name="start_date" optional="show"/>
+                <field name="duration_days" string="Days"/>
+                <field name="salary_frozen" optional="show" widget="boolean_toggle"/>
+                <field name="authorities_notified" optional="hide"/>
+                <field name="financial_impact" optional="show"/>
+                <field name="risk" widget="badge"
+                       decoration-danger="risk == 'high'"
+                       decoration-warning="risk == 'medium'"
+                       decoration-success="risk == 'low'"/>
+                <field name="state" widget="badge"
+                       decoration-info="state in ('warned','frozen','reported','legal')"
+                       decoration-success="state == 'closed_return'"
+                       decoration-muted="state == 'closed_final'"/>
+                <field name="currency_id" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Board (mockup 77): grouped by escalation stage -->
+    <record id="view_care_absconding_kanban" model="ir.ui.view">
+        <field name="name">care.absconding.report.kanban</field>
+        <field name="model">care.absconding.report</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_small_column"
+                    records_draggable="false">
+                <field name="risk"/>
+                <field name="report_type"/>
+                <field name="duration_days"/>
+                <field name="financial_impact"/>
+                <field name="currency_id"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click" style="padding:10px;">
+                            <div class="d-flex justify-content-between">
+                                <strong><field name="name"/></strong>
+                                <span t-attf-class="badge {{ record.risk.raw_value == 'high' ? 'text-bg-danger' : (record.risk.raw_value == 'medium' ? 'text-bg-warning' : 'text-bg-success') }}">
+                                    <field name="risk"/>
+                                </span>
+                            </div>
+                            <div><field name="employee_id"/></div>
+                            <div class="text-muted"><field name="report_type"/></div>
+                            <div class="d-flex justify-content-between mt-1">
+                                <span><i class="fa fa-clock-o me-1"/><field name="duration_days"/> d</span>
+                                <span t-if="record.financial_impact.raw_value"><field name="financial_impact"/> <field name="currency_id"/></span>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_care_absconding_form" model="ir.ui.view">
+        <field name="name">care.absconding.report.form</field>
+        <field name="model">care.absconding.report</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_warn" type="object" string="Warn"
+                            class="btn-primary" invisible="state != 'detected'"/>
+                    <button name="action_freeze_salary" type="object" string="Freeze Salary"
+                            class="btn-primary" invisible="state not in ('detected','warned')"/>
+                    <button name="action_report_authorities" type="object" string="Report to PAM/MOI"
+                            class="btn-primary" invisible="state not in ('warned','frozen')"
+                            confirm="Report this worker as absconding to PAM/MOI and mark the worker file as Absconding?"/>
+                    <button name="action_legal" type="object" string="Legal Action"
+                            invisible="state != 'reported'"/>
+                    <button name="action_return" type="object" string="Worker Returned"
+                            invisible="state in ('closed_return','closed_final')"/>
+                    <button name="action_close_final" type="object" string="Close (Final)"
+                            invisible="state in ('detected','closed_return','closed_final')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="detected,warned,frozen,reported,legal"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="High Risk" bg_color="bg-danger"
+                            invisible="risk != 'high'"/>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="report_type"/>
+                            <field name="start_date"/>
+                            <field name="end_date" invisible="state not in ('closed_return','closed_final')"/>
+                            <field name="duration_days"/>
+                            <field name="risk"/>
+                        </group>
+                        <group>
+                            <field name="salary_frozen"/>
+                            <field name="authorities_notified"/>
+                            <field name="financial_impact"/>
+                            <field name="recruitment_cost_wasted"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="Case notes / legal reference / authority correspondence..."/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_care_absconding_search" model="ir.ui.view">
+        <field name="name">care.absconding.report.search</field>
+        <field name="model">care.absconding.report</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="employee_id"/>
+                <filter name="open" string="Open Cases"
+                        domain="[('state','not in',('closed_return','closed_final'))]"/>
+                <filter name="high_risk" string="High Risk" domain="[('risk','=','high')]"/>
+                <filter name="frozen" string="Salary Frozen" domain="[('salary_frozen','=',True)]"/>
+                <filter name="reported" string="Reported to Authorities" domain="[('authorities_notified','=',True)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="g_type" string="Type" context="{'group_by':'report_type'}"/>
+                    <filter name="g_risk" string="Risk" context="{'group_by':'risk'}"/>
+                    <filter name="g_state" string="Stage" context="{'group_by':'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_care_absconding_graph" model="ir.ui.view">
+        <field name="name">care.absconding.report.graph</field>
+        <field name="model">care.absconding.report</field>
+        <field name="arch" type="xml">
+            <graph string="Absconding Cases" type="bar">
+                <field name="report_type"/>
+                <field name="risk"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_care_absconding" model="ir.actions.act_window">
+        <field name="name">Absconding &amp; Transfer</field>
+        <field name="res_model">care.absconding.report</field>
+        <field name="view_mode">tree,kanban,graph,form</field>
+        <field name="search_view_id" ref="view_care_absconding_search"/>
+        <field name="context">{'search_default_open': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Open an absence / absconding case</p>
+            <p>Legal-financial handling of unauthorized absence of sponsored labour:
+               salary freeze, PAM/MOI reporting, financial impact and file closure.</p>
+        </field>
+    </record>
+</odoo>

@@ -245,6 +245,7 @@ Dù thế nào đi nữa, bạn luôn có thể liên hệ với chúng tôi qua
         'views/attendance_command_to_device_view.xml',
         'views/attendance_datalog_from_device_view.xml',
         'views/finger_template_views.xml',
+        'views/care_map_workers.xml',
         'wizard/employee_upload_wizard.xml',
         'wizard/device_confirm_wizard.xml',
     ],

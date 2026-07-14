@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="module_category_letters" model="ir.module.category">
+            <field name="name">Letters</field>
+            <field name="sequence">21</field>
+        </record>
+
+        <record id="group_letter_user" model="res.groups">
+            <field name="name">Letters / User (own letters)</field>
+            <field name="category_id" ref="module_category_letters"/>
+        </record>
+        <record id="group_letter_signer" model="res.groups">
+            <field name="name">Letters / Signer</field>
+            <field name="category_id" ref="module_category_letters"/>
+            <field name="implied_ids" eval="[(4, ref('group_letter_user'))]"/>
+        </record>
+        <record id="group_letter_delegate" model="res.groups">
+            <field name="name">Letters / Delegate</field>
+            <field name="category_id" ref="module_category_letters"/>
+            <field name="implied_ids" eval="[(4, ref('group_letter_user'))]"/>
+        </record>
+        <record id="group_letter_dept" model="res.groups">
+            <field name="name">Letters / Department Follow-up</field>
+            <field name="category_id" ref="module_category_letters"/>
+            <field name="implied_ids" eval="[(4, ref('group_letter_user'))]"/>
+        </record>
+        <record id="group_letter_readonly" model="res.groups">
+            <field name="name">Letters / Read-only (all)</field>
+            <field name="category_id" ref="module_category_letters"/>
+            <field name="implied_ids" eval="[(4, ref('group_letter_user'))]"/>
+        </record>
+        <record id="group_letter_admin" model="res.groups">
+            <field name="name">Letters / Administrator (full)</field>
+            <field name="category_id" ref="module_category_letters"/>
+            <field name="implied_ids" eval="[(4, ref('group_letter_user')), (4, ref('group_letter_signer'))]"/>
+        </record>
+    </data>
+</odoo>

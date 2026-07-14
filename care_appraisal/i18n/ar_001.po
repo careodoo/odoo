@@ -1,0 +1,643 @@
+# -*- coding: utf-8 -*-
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Language: ar_001\n"
+
+
+#. module: care_appraisal
+#. odoo-python
+#: code:addons/care_appraisal/models/hr_attendance.py:0
+#, python-format
+msgid " + overtime"
+msgstr " + أوفرتايم"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_employee_form_performance
+msgid "<span class=\"o_stat_text\">أداء السنة</span>"
+msgstr "<span class=\"o_stat_text\">أداء السنة</span>"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_project_form_performance
+msgid "<span class=\"o_stat_text\">أداء الفريق</span>"
+msgstr "<span class=\"o_stat_text\">أداء الفريق</span>"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_care_performance_log__appraisal_id
+msgid "Appraisal"
+msgstr "التقييم"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_res_config_settings__perf_bonus_points
+msgid "Approved bonus impact"
+msgstr "أثر المكافأة المعتمدة"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_res_config_settings__perf_penalty_points
+msgid "Approved penalty impact"
+msgstr "أثر الجزاء المعتمد"
+
+#. module: care_appraisal
+#: model:ir.model,name:care_appraisal.model_hr_attendance
+#: model:ir.model.fields.selection,name:care_appraisal.selection__care_performance_log__source__attendance
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_log_search
+msgid "Attendance"
+msgstr "الحضور"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_hr_appraisal__performance_attendance_score
+msgid "Attendance Score"
+msgstr "نقاط الحضور"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_hr_appraisal__performance_rating
+msgid "Auto Rating"
+msgstr "التقدير التلقائي"
+
+#. module: care_appraisal
+#. odoo-python
+#: code:addons/care_appraisal/models/care_hr_signals.py:0
+#: model:ir.model.fields.selection,name:care_appraisal.selection__care_performance_log__source__bonus
+#, python-format
+msgid "Bonus"
+msgstr "مكافأة"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_care_performance_log__date
+msgid "Date"
+msgstr "التاريخ"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_care_performance_log__department_id
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_log_search
+msgid "Department"
+msgstr "الإدارة"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_care_performance_log__name
+msgid "Description"
+msgstr "البيان"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_res_config_settings__perf_notify_disabled
+msgid "Disable performance notifications"
+msgstr "إيقاف إشعارات الأداء"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_care_performance_log__polarity
+msgid "Effect"
+msgstr "الأثر"
+
+#. module: care_appraisal
+#: model:ir.model,name:care_appraisal.model_hr_employee
+#: model:ir.model.fields,field_description:care_appraisal.field_care_performance_log__employee_id
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_log_search
+msgid "Employee"
+msgstr "الموظف"
+
+#. module: care_appraisal
+#: model:ir.model,name:care_appraisal.model_care_performance_log
+msgid "Employee Performance Event"
+msgstr "حدث أداء موظف"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_hr_appraisal__performance_event_count
+msgid "Events"
+msgstr "الأحداث"
+
+#. module: care_appraisal
+#: model:ir.model.fields.selection,name:care_appraisal.selection__hr_appraisal__performance_rating__excellent
+msgid "Excellent"
+msgstr "ممتاز"
+
+#. module: care_appraisal
+#: model:ir.model.fields.selection,name:care_appraisal.selection__hr_appraisal__performance_rating__fair
+msgid "Fair"
+msgstr "مقبول"
+
+#. module: care_appraisal
+#. odoo-python
+#: code:addons/care_appraisal/models/hr_attendance.py:0
+#: model:ir.model.fields,field_description:care_appraisal.field_res_config_settings__perf_att_present
+#, python-format
+msgid "Full attendance"
+msgstr "حضور كامل"
+
+#. module: care_appraisal
+#: model:ir.model.fields.selection,name:care_appraisal.selection__hr_appraisal__performance_rating__good
+msgid "Good"
+msgstr "جيد"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_log_search
+msgid "Group By"
+msgstr "تجميع حسب"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_care_performance_log__points
+msgid "Impact Points"
+msgstr "نقاط التأثير"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_res_config_settings__perf_low_threshold
+msgid "Low-performance alert threshold (points)"
+msgstr "حد تنبيه الأداء المنخفض (نقاط)"
+
+#. module: care_appraisal
+#: model:ir.model.fields.selection,name:care_appraisal.selection__care_performance_log__source__manual
+msgid "Manual"
+msgstr "يدوي"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_res_config_settings__perf_att_min_hours
+msgid "Min hours for a full day"
+msgstr "الحد الأدنى لساعات اليوم الكامل"
+
+#. module: care_appraisal
+#: model:ir.model.fields.selection,name:care_appraisal.selection__hr_appraisal__performance_rating__weak
+msgid "Needs Improvement"
+msgstr "يحتاج تحسين"
+
+#. module: care_appraisal
+#: model:ir.model.fields.selection,name:care_appraisal.selection__care_performance_log__polarity__neg
+msgid "Negative"
+msgstr "سالب"
+
+#. module: care_appraisal
+#: model:ir.model.fields.selection,name:care_appraisal.selection__care_performance_log__polarity__neu
+msgid "Neutral"
+msgstr "محايد"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_res_config_settings__perf_notify_threshold
+msgid "Notification threshold (points)"
+msgstr "حد الإشعار (نقاط)"
+
+#. module: care_appraisal
+#. odoo-python
+#: code:addons/care_appraisal/models/project_task.py:0
+#, python-format
+msgid "On-time"
+msgstr "في الموعد"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_log_form
+msgid "Open source record"
+msgstr "فتح السجل المصدر"
+
+#. module: care_appraisal
+#: model:ir.model.fields.selection,name:care_appraisal.selection__care_performance_log__source__other
+msgid "Other"
+msgstr "أخرى"
+
+#. module: care_appraisal
+#. odoo-python
+#: code:addons/care_appraisal/models/project_task.py:0
+#, python-format
+msgid "Overdue"
+msgstr "متأخر"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_res_config_settings__perf_att_overtime_bonus
+msgid "Overtime bonus"
+msgstr "مكافأة الأوفرتايم"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_hr_appraisal__performance_negative
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_log_search
+msgid "Penalties"
+msgstr "الخصومات"
+
+#. module: care_appraisal
+#. odoo-python
+#: code:addons/care_appraisal/models/care_hr_signals.py:0
+#: model:ir.model.fields.selection,name:care_appraisal.selection__care_performance_log__source__penalty
+#, python-format
+msgid "Penalty"
+msgstr "جزاء"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_hr_appraisal_form_performance
+msgid "Perf. Events"
+msgstr "أحداث الأداء"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_log_search
+msgid "Performance"
+msgstr "الأداء"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_hr_appraisal_form_performance
+msgid "Performance (Auto)"
+msgstr "الأداء التلقائي"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_hr_employee__perf_score_ytd
+#: model:ir.model.fields,field_description:care_appraisal.field_security_employee__perf_score_ytd
+msgid "Performance (YTD)"
+msgstr "الأداء (السنة)"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_log_graph
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_log_pivot
+msgid "Performance Analysis"
+msgstr "تحليل الأداء"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_log_form
+msgid "Performance Event"
+msgstr "حدث أداء"
+
+#. module: care_appraisal
+#. odoo-python
+#: code:addons/care_appraisal/models/hr_appraisal.py:0
+#: code:addons/care_appraisal/models/hr_employee.py:0
+#: model:ir.actions.act_window,name:care_appraisal.action_perf_log
+#: model:ir.model.fields,field_description:care_appraisal.field_hr_appraisal__performance_log_ids
+#: model:ir.model.fields,field_description:care_appraisal.field_hr_employee__perf_event_count
+#: model:ir.model.fields,field_description:care_appraisal.field_security_employee__perf_event_count
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_log_tree
+#, python-format
+msgid "Performance Events"
+msgstr "أحداث الأداء"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_care_bonus__performance_logged
+#: model:ir.model.fields,field_description:care_appraisal.field_care_penalty__performance_logged
+#: model:ir.model.fields,field_description:care_appraisal.field_hr_attendance__performance_logged
+#: model:ir.model.fields,field_description:care_appraisal.field_project_task__performance_logged
+msgid "Performance Logged"
+msgstr "سُجِّل الأداء"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_hr_appraisal__performance_score
+msgid "Performance Score"
+msgstr "نتيجة الأداء"
+
+#. module: care_appraisal
+#. odoo-python
+#: code:addons/care_appraisal/models/performance_log.py:0
+#, python-format
+msgid "Performance event"
+msgstr "حدث أداء"
+
+#. module: care_appraisal
+#: model:ir.model.fields,help:care_appraisal.field_project_task__performance_logged
+msgid "Performance impact already recorded for this task."
+msgstr "تم تسجيل أثر الأداء لهذا التاسك."
+
+#. module: care_appraisal
+#: model:ir.model.fields.selection,name:care_appraisal.selection__care_performance_log__polarity__pos
+msgid "Positive"
+msgstr "موجب"
+
+#. module: care_appraisal
+#: model:ir.model.fields,help:care_appraisal.field_care_performance_log__points
+msgid "Positive = reward, negative = penalty."
+msgstr "الموجب مكافأة، والسالب خصم."
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_res_config_settings__perf_reward_per_point
+msgid "Reward amount per point"
+msgstr "قيمة المكافأة لكل نقطة"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_res_config_settings__perf_reward_threshold
+msgid "Reward suggestion threshold (points)"
+msgstr "حد اقتراح المكافأة (نقاط)"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_hr_appraisal__performance_positive
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_log_search
+msgid "Rewards"
+msgstr "المكافآت"
+
+#. module: care_appraisal
+#. odoo-python
+#: code:addons/care_appraisal/models/hr_attendance.py:0
+#, python-format
+msgid "Short day (%.1fh)"
+msgstr "يوم ناقص (%.1f ساعة)"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_res_config_settings__perf_att_short
+msgid "Short day (penalty)"
+msgstr "يوم ناقص (خصم)"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_care_performance_log__source
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_log_search
+msgid "Source"
+msgstr "المصدر"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_care_performance_log__res_id
+msgid "Source ID"
+msgstr "معرّف المصدر"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_care_performance_log__res_model
+msgid "Source Model"
+msgstr "نموذج المصدر"
+
+#. module: care_appraisal
+#: model:ir.model,name:care_appraisal.model_project_task
+msgid "Task"
+msgstr "تاسك"
+
+#. module: care_appraisal
+#: model:ir.model.fields.selection,name:care_appraisal.selection__care_performance_log__source__task
+msgid "Task / Deadline"
+msgstr "تاسك / موعد"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_res_config_settings__perf_task_ontime
+msgid "Task on-time (reward)"
+msgstr "التاسك في الموعد (مكافأة)"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_res_config_settings__perf_task_overdue
+msgid "Task overdue (penalty)"
+msgstr "تأخّر التاسك (خصم)"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_log_search
+msgid "Tasks"
+msgstr "التاسكات"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_hr_appraisal__performance_task_score
+msgid "Tasks Score"
+msgstr "نقاط التاسكات"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_project_project__team_perf_score
+msgid "Team Performance (YTD)"
+msgstr "أداء الفريق (السنة)"
+
+#. module: care_appraisal
+#: model:ir.model.fields,field_description:care_appraisal.field_project_project__team_perf_count
+msgid "Team Performance Events"
+msgstr "أحداث أداء الفريق"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_log_tree
+msgid "Total"
+msgstr "الإجمالي"
+
+#. module: care_appraisal
+#: model:ir.ui.menu,name:care_appraisal.menu_perf_log
+msgid "أحداث الأداء"
+msgstr "أحداث الأداء"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_hr_appraisal_form_performance
+msgid "أداء ضعيف"
+msgstr "أداء ضعيف"
+
+#. module: care_appraisal
+#. odoo-python
+#: code:addons/care_appraisal/models/project_project.py:0
+#, python-format
+msgid "أداء فريق %s"
+msgstr "أداء فريق %s"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_hr_appraisal_form_performance
+msgid "أداء ممتاز"
+msgstr "أداء ممتاز"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "إجمالي النقاط"
+msgstr "إجمالي النقاط"
+
+#. module: care_appraisal
+#: model:ir.actions.act_window,name:care_appraisal.action_perf_config
+#: model:ir.ui.menu,name:care_appraisal.menu_perf_config
+msgid "إعدادات الأداء"
+msgstr "إعدادات الأداء"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_config_settings
+msgid "إعدادات تقييم الأداء"
+msgstr "إعدادات تقييم الأداء"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_config_settings
+msgid "إعدادات نقاط تقييم الأداء"
+msgstr "إعدادات نقاط تقييم الأداء"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_config_settings
+msgid "إلغاء"
+msgstr "إلغاء"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_config_settings
+msgid "اقتراح المكافأة"
+msgstr "اقتراح المكافأة"
+
+#. module: care_appraisal
+#. odoo-python
+#: code:addons/care_appraisal/models/hr_appraisal.py:0
+#, python-format
+msgid "اقتراح تلقائي بناءً على تقييم الأداء: %s نقطة"
+msgstr "اقتراح تلقائي بناءً على تقييم الأداء: %s نقطة"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_hr_appraisal_form_performance
+msgid "اقتراح مكافأة أداء"
+msgstr "اقتراح مكافأة أداء"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "الأثر"
+msgstr "الأثر"
+
+#. module: care_appraisal
+#: model:ir.ui.menu,name:care_appraisal.menu_perf_root
+msgid "الأداء"
+msgstr "الأداء"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_hr_appraisal_form_performance
+msgid "الإجمالي"
+msgstr "الإجمالي"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "الإدارة"
+msgstr "الإدارة"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_config_settings
+msgid "الإشعارات"
+msgstr "الإشعارات"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "البيان"
+msgstr "البيان"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "التاريخ"
+msgstr "التاريخ"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_config_settings
+msgid "التاسكات والمواعيد"
+msgstr "التاسكات والمواعيد"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_hr_appraisal_form_performance
+msgid "التفصيل"
+msgstr "التفصيل"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "التقدير"
+msgstr "التقدير"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_hr_appraisal_search_performance
+msgid "التقدير التلقائي"
+msgstr "التقدير التلقائي"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_config_settings
+msgid "الجزاءات والمكافآت"
+msgstr "الجزاءات والمكافآت"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_config_settings
+msgid "الحضور والانصراف"
+msgstr "الحضور والانصراف"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "الخصومات"
+msgstr "الخصومات"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_config_settings
+msgid "القيم الموجبة مكافأة، والسالبة خصم. تُطبَّق على كل الأحداث الجديدة."
+msgstr "القيم الموجبة مكافأة، والسالبة خصم. تُطبَّق على كل الأحداث الجديدة."
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "المدير المباشر<br/><br/>__________________"
+msgstr "المدير المباشر<br/><br/>__________________"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "المصدر"
+msgstr "المصدر"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "المكافآت"
+msgstr "المكافآت"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "الموارد البشرية<br/><br/>__________________"
+msgstr "الموارد البشرية<br/><br/>__________________"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "الموظف"
+msgstr "الموظف"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_hr_appraisal_form_performance
+msgid "النتيجة"
+msgstr "النتيجة"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "الوظيفة"
+msgstr "الوظيفة"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_hr_appraisal_form_performance
+msgid "تجميع الأداء"
+msgstr "تجميع الأداء"
+
+#. module: care_appraisal
+#: model:ir.actions.act_window,name:care_appraisal.action_perf_analysis
+#: model:ir.ui.menu,name:care_appraisal.menu_perf_analysis
+msgid "تحليل الأداء"
+msgstr "تحليل الأداء"
+
+#. module: care_appraisal
+#. odoo-python
+#: code:addons/care_appraisal/models/performance_log.py:0
+#, python-format
+msgid "تقييم الأداء: %s"
+msgstr "تقييم الأداء: %s"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "توقيع الموظف<br/><br/>__________________"
+msgstr "توقيع الموظف<br/><br/>__________________"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_employee_form_performance
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_project_form_performance
+msgid "حدث"
+msgstr "حدث"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_config_settings
+msgid "حفظ"
+msgstr "حفظ"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "رقم العامل"
+msgstr "رقم العامل"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "سنة"
+msgstr "سنة"
+
+#. module: care_appraisal
+#: model:ir.actions.report,name:care_appraisal.action_report_performance
+msgid "كشف الأداء"
+msgstr "كشف الأداء"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "لا توجد أحداث أداء لهذه السنة."
+msgstr "لا توجد أحداث أداء لهذه السنة."
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_config_settings
+msgid "متابعة الأداء المنخفض"
+msgstr "متابعة الأداء المنخفض"
+
+#. module: care_appraisal
+#. odoo-python
+#: code:addons/care_appraisal/models/hr_appraisal.py:0
+#, python-format
+msgid "مكافأة أداء مقترحة"
+msgstr "مكافأة أداء مقترحة"
+
+#. module: care_appraisal
+#. odoo-python
+#: code:addons/care_appraisal/models/performance_log.py:0
+#, python-format
+msgid "⚠️ ملاحظة أداء"
+msgstr "⚠️ ملاحظة أداء"
+
+#. module: care_appraisal
+#. odoo-python
+#: code:addons/care_appraisal/models/performance_log.py:0
+#, python-format
+msgid "👏 أداء إيجابي"
+msgstr "👏 أداء إيجابي"

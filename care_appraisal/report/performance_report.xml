@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_perf_statement" model="report.paperformat">
+        <field name="name">Performance Statement A4</field>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">12</field>
+        <field name="margin_bottom">12</field>
+        <field name="margin_left">10</field>
+        <field name="margin_right">10</field>
+        <field name="header_spacing">8</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_performance" model="ir.actions.report">
+        <field name="name">كشف الأداء</field>
+        <field name="model">hr.employee</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_appraisal.report_performance_statement</field>
+        <field name="report_file">care_appraisal.report_performance_statement</field>
+        <field name="paperformat_id" ref="paperformat_perf_statement"/>
+        <field name="binding_model_id" ref="hr.model_hr_employee"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_performance_statement">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="emp">
+                <t t-set="st" t-value="emp.get_performance_statement()"/>
+                <t t-set="srcmap" t-value="{'task':'تاسك / موعد','attendance':'حضور وانصراف','penalty':'جزاء','bonus':'مكافأة','manual':'يدوي','other':'أخرى'}"/>
+                <t t-call="web.basic_layout">
+                    <div class="page" style="font-family:'Tajawal',Tahoma,Arial,sans-serif;direction:rtl;color:#1d2433;">
+                        <div style="background:#15213b;padding:14px 20px;border-radius:10px;margin-bottom:14px;color:#fff;display:flex;justify-content:space-between;align-items:center;">
+                            <div>
+                                <span style="color:#f0663c;font-weight:bold;font-size:22px;">CARE</span>
+                                <span style="color:#aeb8cc;font-size:13px;"> · كشف أداء الموظف</span>
+                            </div>
+                            <div style="text-align:left;font-size:12px;color:#aeb8cc;">سنة <span t-esc="st['year']"/></div>
+                        </div>
+
+                        <table style="width:100%;font-size:13px;margin-bottom:12px;border-collapse:collapse;">
+                            <tr>
+                                <td style="padding:5px 8px;color:#8a93a8;width:20%;">الموظف</td>
+                                <td style="padding:5px 8px;font-weight:bold;" t-esc="emp.name"/>
+                                <td style="padding:5px 8px;color:#8a93a8;width:20%;">رقم العامل</td>
+                                <td style="padding:5px 8px;font-weight:bold;" t-esc="emp.barcode or '—'"/>
+                            </tr>
+                            <tr>
+                                <td style="padding:5px 8px;color:#8a93a8;">الإدارة</td>
+                                <td style="padding:5px 8px;font-weight:bold;" t-esc="emp.department_id.name or '—'"/>
+                                <td style="padding:5px 8px;color:#8a93a8;">الوظيفة</td>
+                                <td style="padding:5px 8px;font-weight:bold;" t-esc="emp.job_title or '—'"/>
+                            </tr>
+                        </table>
+
+                        <div style="display:flex;gap:10px;margin-bottom:14px;">
+                            <div style="flex:1;border:1px solid #eef1f6;border-radius:8px;padding:10px;text-align:center;">
+                                <div style="font-size:11px;color:#8a93a8;">إجمالي النقاط</div>
+                                <div t-attf-style="font-size:22px;font-weight:900;color:#{'12945f' if st['total'] &gt;= 0 else 'c0392b'};"><span t-esc="round(st['total'],1)"/></div>
+                            </div>
+                            <div style="flex:1;border:1px solid #eef1f6;border-radius:8px;padding:10px;text-align:center;">
+                                <div style="font-size:11px;color:#8a93a8;">المكافآت</div>
+                                <div style="font-size:22px;font-weight:900;color:#12945f;">+<span t-esc="round(st['positive'],1)"/></div>
+                            </div>
+                            <div style="flex:1;border:1px solid #eef1f6;border-radius:8px;padding:10px;text-align:center;">
+                                <div style="font-size:11px;color:#8a93a8;">الخصومات</div>
+                                <div style="font-size:22px;font-weight:900;color:#c0392b;"><span t-esc="round(st['negative'],1)"/></div>
+                            </div>
+                            <div style="flex:1;border:1px solid #eef1f6;border-radius:8px;padding:10px;text-align:center;background:#15213b;color:#fff;">
+                                <div style="font-size:11px;color:#aeb8cc;">التقدير</div>
+                                <div style="font-size:18px;font-weight:900;" t-esc="st['rating'] or '—'"/>
+                            </div>
+                        </div>
+
+                        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                            <thead>
+                                <tr style="background:#f6f8fc;">
+                                    <th style="padding:7px;border:1px solid #eef1f6;text-align:right;">التاريخ</th>
+                                    <th style="padding:7px;border:1px solid #eef1f6;text-align:right;">المصدر</th>
+                                    <th style="padding:7px;border:1px solid #eef1f6;text-align:right;">البيان</th>
+                                    <th style="padding:7px;border:1px solid #eef1f6;text-align:center;">الأثر</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="st['logs']" t-as="l">
+                                    <td style="padding:6px 7px;border:1px solid #eef1f6;" t-esc="l.date"/>
+                                    <td style="padding:6px 7px;border:1px solid #eef1f6;" t-esc="srcmap.get(l.source, l.source)"/>
+                                    <td style="padding:6px 7px;border:1px solid #eef1f6;" t-esc="l.name"/>
+                                    <td t-attf-style="padding:6px 7px;border:1px solid #eef1f6;text-align:center;font-weight:bold;color:#{'12945f' if l.points &gt;= 0 else 'c0392b'};">
+                                        <span t-esc="round(l.points,1)"/>
+                                    </td>
+                                </tr>
+                                <tr t-if="not st['logs']">
+                                    <td colspan="4" style="padding:14px;text-align:center;color:#8a93a8;border:1px solid #eef1f6;">لا توجد أحداث أداء لهذه السنة.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div style="margin-top:40px;display:flex;justify-content:space-between;font-size:12px;">
+                            <div style="text-align:center;">توقيع الموظف<br/><br/>__________________</div>
+                            <div style="text-align:center;">المدير المباشر<br/><br/>__________________</div>
+                            <div style="text-align:center;">الموارد البشرية<br/><br/>__________________</div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

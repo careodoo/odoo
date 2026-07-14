@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_letter_classification_user,letter.classification.user,model_letter_classification,base.group_user,1,0,0,0
+access_letter_classification_admin,letter.classification.admin,model_letter_classification,group_letter_admin,1,1,1,1
+access_letter_fee_user,letter.fee.user,model_letter_fee,base.group_user,1,1,1,1
+access_letter_template_user,letter.template.user,model_letter_template,base.group_user,1,0,0,0
+access_letter_template_admin,letter.template.admin,model_letter_template,group_letter_admin,1,1,1,1
+access_letter_dashboard_user,letter.dashboard.user,model_letter_dashboard,base.group_user,1,1,1,1
+access_letter_delegate_stat_user,letter.delegate.stat.user,model_letter_delegate_stat,base.group_user,1,0,0,0

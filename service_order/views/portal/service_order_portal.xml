@@ -1,10 +1,12 @@
 <odoo>
   <template id="portal_my_home" name="service_service_portal" inherit_id="portal.portal_my_home">
     <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
-      <t t-call="portal.portal_docs_entry">
-        <t t-set="title">Service Order</t>
-        <t t-set="url" t-value="'/service_orders'" />
-        <t t-set="placeholder_count" t-value="'service_orders_count'" />
+      <t t-if="request.env['service.order'].check_access_rights('read', raise_exception=False)">
+        <t t-call="portal.portal_docs_entry">
+          <t t-set="title">Service Order</t>
+          <t t-set="url" t-value="'/service_orders'" />
+          <t t-set="placeholder_count" t-value="'service_orders_count'" />
+        </t>
       </t>
     </xpath>
   </template>

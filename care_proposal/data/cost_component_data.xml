@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data noupdate="1">
+    <!-- Default cost components (mirror the legacy hard-coded item types) -->
+    <record id="comp_salary" model="proposal.cost.component">
+      <field name="name">Salary</field><field name="code">salary</field><field name="sequence">10</field>
+    </record>
+    <record id="comp_residency" model="proposal.cost.component">
+      <field name="name">Residency</field><field name="code">residency</field><field name="sequence">20</field>
+    </record>
+    <record id="comp_accommodation" model="proposal.cost.component">
+      <field name="name">Accommodation</field><field name="code">accommodation</field><field name="sequence">30</field>
+    </record>
+    <record id="comp_uniform" model="proposal.cost.component">
+      <field name="name">Uniform</field><field name="code">uniform</field><field name="sequence">40</field>
+    </record>
+    <record id="comp_leave" model="proposal.cost.component">
+      <field name="name">Leave &amp; Indemnity</field><field name="code">leave</field><field name="sequence">50</field>
+    </record>
+    <record id="comp_insurance" model="proposal.cost.component">
+      <field name="name">Staff Insurance</field><field name="code">insurance</field><field name="sequence">60</field>
+    </record>
+    <record id="comp_bank_charge" model="proposal.cost.component">
+      <field name="name">Bank Charge</field><field name="code">bank_charge</field><field name="sequence">70</field>
+    </record>
+    <record id="comp_medical" model="proposal.cost.component">
+      <field name="name">Medical Certificate</field><field name="code">medical</field><field name="sequence">80</field>
+    </record>
+    <record id="comp_gate_pass" model="proposal.cost.component">
+      <field name="name">Gate Pass</field><field name="code">gate_pass</field><field name="sequence">90</field>
+    </record>
+    <record id="comp_other" model="proposal.cost.component">
+      <field name="name">Other</field><field name="code">other</field><field name="sequence">100</field>
+    </record>
+  </data>
+</odoo>

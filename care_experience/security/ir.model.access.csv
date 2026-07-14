@@ -1,3 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_care_experience,care_experience,model_care_experience,base.group_user,1,1,1,1
 access_care_experience_line,care_experience_line,model_care_experience_line,base.group_user,1,1,1,1
+access_care_experience_renewal,care_experience_renewal,model_care_experience_renewal,base.group_user,1,1,1,1
+access_care_bank_guarantee,care_bank_guarantee,model_care_bank_guarantee,base.group_user,1,1,1,1

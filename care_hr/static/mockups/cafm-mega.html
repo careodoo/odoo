@@ -1,0 +1,1651 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>CAFM Mega — منصّة إدارة المرافق الشاملة | care</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --ground:#0d1826; --surface:#152438; --surface-2:#1c3149; --line:#294059;
+    --ink:#e9f1fb; --muted:#9cb2cd; --faint:#6a83a2;
+    --accent:#f7a23b; --teal:#2dd4bf; --violet:#a78bfa; --blue:#4aa8ff;
+    --ok:#37c98a; --warn:#f5b638; --crit:#f2603f;
+    --shadow:0 18px 42px -22px rgba(0,0,0,.72); --r:15px;
+    --f:"Segoe UI",Tahoma,system-ui,-apple-system,"Noto Sans Arabic",sans-serif;
+  }
+  @media(prefers-color-scheme:light){:root{--ground:#eef2f7;--surface:#fff;--surface-2:#f4f7fb;--line:#dce5f0;--ink:#132234;--muted:#4d647f;--faint:#7d95b0;--shadow:0 16px 38px -24px rgba(20,40,70,.34)}}
+  :root[data-theme="dark"]{--ground:#0d1826;--surface:#152438;--surface-2:#1c3149;--line:#294059;--ink:#e9f1fb;--muted:#9cb2cd;--faint:#6a83a2;--shadow:0 18px 42px -22px rgba(0,0,0,.72)}
+  :root[data-theme="light"]{--ground:#eef2f7;--surface:#fff;--surface-2:#f4f7fb;--line:#dce5f0;--ink:#132234;--muted:#4d647f;--faint:#7d95b0;--shadow:0 16px 38px -24px rgba(20,40,70,.34)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f);direction:rtl;line-height:1.6;font-size:15.5px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 20px}
+  h1,h2,h3,h4{margin:0;text-wrap:balance;line-height:1.2}
+  .eyebrow{font-size:11.5px;font-weight:800;letter-spacing:2.4px;color:var(--accent);text-transform:uppercase}
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:999px}
+  .chip.ok{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+  .chip.warn{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn)}
+  .chip.crit{background:color-mix(in srgb,var(--crit) 20%,transparent);color:var(--crit)}
+  .chip.blue{background:color-mix(in srgb,var(--blue) 18%,transparent);color:var(--blue)}
+  .chip.teal{background:color-mix(in srgb,var(--teal) 18%,transparent);color:var(--teal)}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}} .pulse{animation:pulse 1.9s infinite}
+  @media(prefers-reduced-motion:reduce){.pulse{animation:none}}
+
+  .top{position:sticky;top:0;z-index:30;backdrop-filter:blur(10px);background:color-mix(in srgb,var(--ground) 84%,transparent);border-bottom:1px solid var(--line)}
+  .top .wrap{display:flex;align-items:center;justify-content:space-between;height:58px}
+  .brand{display:flex;gap:10px;align-items:center;font-weight:800;font-size:17px}
+  .logo{width:32px;height:32px;border-radius:9px;background:linear-gradient(150deg,var(--accent),#e07d1c);display:grid;place-items:center;color:#1a1205;font-weight:900}
+  .nav{display:flex;gap:16px;font-size:13px;font-weight:600;color:var(--muted);flex-wrap:wrap}
+  .nav a{text-decoration:none}.nav a:hover{color:var(--accent)}
+  @media(max-width:1000px){.nav{display:none}}
+  .tt{width:36px;height:36px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:9px;cursor:pointer}
+
+  .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+  .hero::before{content:"";position:absolute;inset:0;background:radial-gradient(1000px 480px at 84% -10%,color-mix(in srgb,var(--accent) 20%,transparent),transparent 58%),radial-gradient(720px 440px at 3% 112%,color-mix(in srgb,var(--teal) 15%,transparent),transparent 55%)}
+  .hero .wrap{position:relative;padding:60px 20px 46px}
+  .hero h1{font-size:clamp(30px,5vw,54px);font-weight:900;letter-spacing:-.5px}
+  .hero h1 b{color:var(--accent)}
+  .lede{max-width:64ch;color:var(--muted);margin-top:15px;font-size:clamp(15px,1.8vw,18px)}
+  .cta{display:flex;gap:11px;flex-wrap:wrap;margin-top:22px}
+  .btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 18px;border-radius:10px;font-weight:800;font-size:13.5px;text-decoration:none;cursor:pointer;display:inline-flex;gap:7px;align-items:center}
+  .btn.pri{background:linear-gradient(150deg,var(--accent),#e07d1c);color:#1a1205;border-color:transparent}
+
+  /* KPI strip */
+  .strip{display:grid;grid-template-columns:repeat(6,1fr);gap:11px;margin-top:34px}
+  @media(max-width:1000px){.strip{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:600px){.strip{grid-template-columns:repeat(2,1fr)}}
+  .kc{background:color-mix(in srgb,var(--surface) 72%,transparent);border:1px solid var(--line);border-radius:12px;padding:12px 13px}
+  .kc .n{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+  .kc .l{font-size:11px;color:var(--muted);margin-top:2px;font-weight:600}
+  .kc .n b{color:var(--accent)} .kc .up{color:var(--ok)} .kc .dn{color:var(--crit)}
+
+  section{padding:52px 0;border-bottom:1px solid var(--line)}
+  .sh{display:flex;flex-direction:column;gap:8px;margin-bottom:26px;max-width:76ch}
+  .sh h2{font-size:clamp(22px,3.2vw,32px);font-weight:850}
+  .sh p{color:var(--muted);margin:0;font-size:14.5px}
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}.g6{grid-template-columns:repeat(6,1fr)}
+  @media(max-width:1000px){.g3,.g4,.g6{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:620px){.g2,.g3,.g4,.g6{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow)}
+  .card h3{font-size:15.5px;font-weight:800;margin-bottom:6px;display:flex;gap:8px;align-items:center}
+  .card p{color:var(--muted);font-size:13px;margin:0}
+  .ic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);font-size:17px}
+  .ttl{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .ttl b{font-size:14px} .ttl .s{font-size:11.5px;color:var(--faint)}
+
+  /* dashboard widgets */
+  .dash{display:grid;grid-template-columns:repeat(12,1fr);gap:13px}
+  .w{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:15px;box-shadow:var(--shadow);min-width:0}
+  .col3{grid-column:span 3}.col4{grid-column:span 4}.col5{grid-column:span 5}.col6{grid-column:span 6}.col7{grid-column:span 7}.col8{grid-column:span 8}.col9{grid-column:span 9}
+  @media(max-width:1000px){.col3,.col4,.col5{grid-column:span 6}.col6,.col7,.col8,.col9{grid-column:span 12}}
+  @media(max-width:620px){.dash{grid-template-columns:1fr}.w[class*=col]{grid-column:auto}}
+  .big{font-size:30px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+  svg{display:block;max-width:100%}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-top:8px}
+  .legend i{width:9px;height:9px;border-radius:2px;display:inline-block;margin-inline-end:5px}
+
+  .bars{display:flex;flex-direction:column;gap:8px}
+  .brow{display:grid;grid-template-columns:98px 1fr 38px;align-items:center;gap:9px;font-size:12px}
+  .track{height:8px;border-radius:5px;background:color-mix(in srgb,var(--line) 55%,transparent);overflow:hidden}
+  .fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--accent),var(--teal))}
+
+  /* kanban */
+  .kan{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}
+  @media(max-width:820px){.kan{grid-template-columns:repeat(2,1fr)}}@media(max-width:520px){.kan{grid-template-columns:1fr}}
+  .klist{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}
+  .klist .kh{font-size:12px;font-weight:800;color:var(--muted);display:flex;justify-content:space-between;padding:2px 4px}
+  .kcard{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 10px;position:relative;font-size:12.5px}
+  .kcard .st{position:absolute;inset-inline-start:0;top:8px;bottom:8px;width:3px;border-radius:3px}
+  .kcard h5{margin:0 0 3px;font-size:12.5px;font-weight:800}
+  .kcard .m{font-size:11px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap}
+
+  /* floor plan */
+  .fp rect{stroke:var(--line);stroke-width:1.4}
+  .room-lbl{font:600 9px var(--f);fill:var(--muted)}
+
+  /* sensor grid */
+  .sensors{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+  @media(max-width:620px){.sensors{grid-template-columns:repeat(2,1fr)}}
+  .sen{border:1px solid var(--line);border-radius:11px;padding:11px;background:var(--surface-2)}
+  .sen .v{font-size:20px;font-weight:900;font-variant-numeric:tabular-nums}
+  .sen .lab{font-size:11px;color:var(--muted)}
+
+  /* alerts feed */
+  .feed{display:flex;flex-direction:column;gap:9px}
+  .al{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;border-inline-start:3px solid var(--line);padding-inline-start:10px}
+  .al.c{border-color:var(--crit)}.al.w{border-color:var(--warn)}.al.i{border-color:var(--blue)}
+  .al .t{color:var(--faint);font-size:11px;min-width:42px;font-variant-numeric:tabular-nums}
+
+  /* phones */
+  .phones{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:820px){.phones{grid-template-columns:1fr}}
+  .phone{background:#05101d;border:7px solid #0a1626;border-radius:30px;padding:11px 10px 15px;box-shadow:var(--shadow);max-width:320px;margin-inline:auto}
+  :root[data-theme="light"] .phone{border-color:#c9d6e6;background:#eef3f9}
+  .phone .bar{display:flex;justify-content:space-between;font-size:10.5px;color:var(--faint);padding:0 5px 8px;font-weight:700}
+  .scr{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+  .scr .hd{padding:11px 12px;background:var(--surface-2);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:800}
+  .scr .bd{padding:10px 11px;display:flex;flex-direction:column;gap:8px}
+  .rowc{border:1px solid var(--line);border-radius:10px;padding:9px 10px;background:var(--surface-2);position:relative}
+  .rowc .st{position:absolute;inset-inline-start:0;top:8px;bottom:8px;width:3px;border-radius:3px}
+  .rowc h5{margin:0 0 2px;font-size:12px;font-weight:800}
+  .rowc .m{font-size:11px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap}
+  .btn-sm{font-size:11.5px;font-weight:800;padding:8px;border-radius:9px;border:none;cursor:pointer;background:linear-gradient(150deg,var(--accent),#e07d1c);color:#1a1205;width:100%}
+
+  /* KPI library */
+  .klib{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}
+  @media(max-width:1000px){.klib{grid-template-columns:repeat(2,1fr)}}@media(max-width:520px){.klib{grid-template-columns:1fr}}
+  .kb{border:1px solid var(--line);border-radius:12px;padding:12px 13px;background:var(--surface)}
+  .kb .kn{font-size:23px;font-weight:900;font-variant-numeric:tabular-nums}
+  .kb .kl{font-size:11.5px;color:var(--muted);margin-top:1px}
+  .kb .kt{font-size:11px;font-weight:800;margin-top:5px}
+
+  .idea{display:flex;gap:11px;align-items:flex-start}
+  .idea .ic{background:color-mix(in srgb,var(--teal) 14%,transparent);color:var(--teal)}
+  .idea b{font-size:13.5px}.idea span{color:var(--muted);font-size:12.5px}
+
+  .pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  @media(max-width:1000px){.pillars{grid-template-columns:repeat(2,1fr)}}@media(max-width:520px){.pillars{grid-template-columns:1fr}}
+  .pil{border:1px solid var(--line);border-radius:13px;padding:15px;background:var(--surface)}
+  .pil .src{font-size:10.5px;color:var(--faint);font-weight:700;margin-top:7px}
+  .pil h4{font-size:14.5px;margin:8px 0 5px}
+  .pil p{font-size:12.5px;color:var(--muted);margin:0}
+
+  .integ{display:flex;flex-wrap:wrap;gap:9px}
+  .pill{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 13px;font-size:12.5px;font-weight:700;display:flex;gap:8px;align-items:center}
+  .road{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+  @media(max-width:1000px){.road{grid-template-columns:repeat(2,1fr)}}@media(max-width:520px){.road{grid-template-columns:1fr}}
+  .phase{border:1px solid var(--line);border-radius:12px;padding:15px;background:var(--surface)}
+  .phase .pn{font-size:11px;font-weight:800;letter-spacing:1px;color:var(--accent)}
+  .phase h4{margin:6px 0;font-size:14px}.phase ul{margin:0;padding-inline-start:15px;color:var(--muted);font-size:12px}
+  /* service lines */
+  .svc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}
+  @media(max-width:1000px){.svc-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:520px){.svc-grid{grid-template-columns:1fr}}
+  .svc{border:1px solid var(--line);border-radius:13px;padding:13px;background:var(--surface);border-top:3px solid var(--accent);position:relative}
+  .svc .si{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-size:17px;background:color-mix(in srgb,var(--accent) 15%,transparent);margin-bottom:8px}
+  .svc h4{font-size:14.5px;margin:0 0 6px}
+  .svc .sm{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted)}
+  .svc .sm b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .matrix{width:100%;border-collapse:collapse;font-size:12.5px}
+  .matrix th,.matrix td{border:1px solid var(--line);padding:8px 10px;text-align:center}
+  .matrix th{background:var(--surface-2);font-weight:800}
+  .matrix td.svc-name{text-align:start;font-weight:700}
+  .matrix .yes{color:var(--ok);font-weight:900}
+  .tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+  .tbl th{background:var(--surface-2);font-weight:800;padding:8px 10px;text-align:start;border-bottom:1px solid var(--line)}
+  .tbl td{padding:8px 10px;border-bottom:1px solid var(--line)}
+  .tbl td.num{font-variant-numeric:tabular-nums;text-align:center}
+  .org-lbl{font:700 10px var(--f);fill:var(--ink)} .org-sub{font:600 8.5px var(--f);fill:var(--muted)}
+  .tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+  .tab{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:700;cursor:default;display:flex;gap:6px;align-items:center}
+  .tab.on{background:linear-gradient(150deg,var(--accent),#e07d1c);color:#1a1205;border-color:transparent}
+  .avt{width:26px;height:26px;border-radius:50%;display:inline-grid;place-items:center;font-size:11px;font-weight:900;color:#04201c;flex:none}
+  .who2{display:flex;align-items:center;gap:9px}
+  .who2 .nm{font-weight:700;font-size:13px}.who2 .rl{font-size:11px;color:var(--muted)}
+  /* QR + location tree */
+  .qr{width:40px;height:40px;flex:none}
+  .loctree{font-size:13px;display:flex;flex-direction:column;gap:2px}
+  .loctree .lv{display:flex;align-items:center;gap:8px;padding:5px 0}
+  .loctree .lv .nm{font-weight:600}
+  .qrtag{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);border-radius:6px;padding:1px 6px}
+  .l1{padding-inline-start:0}.l2{padding-inline-start:20px;color:var(--muted)}.l3{padding-inline-start:44px}.l4{padding-inline-start:68px;font-size:12px}
+  .scanflow{display:flex;gap:10px;flex-wrap:wrap;counter-reset:s}
+  .sf{flex:1 1 190px;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:15px;position:relative}
+  .sf .sn{width:26px;height:26px;border-radius:8px;background:linear-gradient(150deg,var(--accent),#e07d1c);color:#1a1205;font-weight:900;display:grid;place-items:center;font-size:13px;margin-bottom:9px}
+  .sf h4{font-size:14px;margin:0 0 5px}.sf p{font-size:12.5px;color:var(--muted);margin:0}
+  .timer{font-variant-numeric:tabular-nums;font-weight:900;font-size:26px;letter-spacing:1px;color:var(--teal)}
+  .phone-gallery{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  @media(max-width:1000px){.phone-gallery{grid-template-columns:repeat(2,1fr)}}@media(max-width:560px){.phone-gallery{grid-template-columns:1fr}}
+  footer{padding:34px 0 54px;color:var(--faint);font-size:12.5px}
+  @media(prefers-reduced-motion:no-preference){.reveal{opacity:0;transform:translateY(12px);transition:.55s}.reveal.in{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="wrap">
+  <div class="brand"><span class="logo">C</span> CAFM <span style="color:var(--accent);font-weight:900">Mega</span></div>
+  <nav class="nav">
+    <a href="#pillars">مرجعية عالمية</a><a href="#exec">غرفة القيادة</a><a href="#arch">منصّة واحدة</a><a href="#services">خطوط الخدمة</a><a href="#svc-detail">فريق الخدمة</a><a href="#rating">تقييم العاملين</a><a href="#wo">أوامر العمل</a>
+    <a href="#ppm">الصيانة الوقائية</a><a href="#asset">الأصول</a><a href="#space">المساحات</a>
+    <a href="#energy">الطاقة</a><a href="#iot">IoT والتنبيهات</a><a href="#ai">الذكاء</a>
+    <a href="#helpdesk">مكتب الخدمة</a><a href="#contractor">المقاولون</a>
+    <a href="#qr">نظام QR</a><a href="#finance">مالية العقود</a><a href="#twin">التوأم الرقمي</a><a href="#screens">شاشات الموبايل</a>
+    <a href="#kpi">مكتبة KPI</a><a href="#ideas-more">أفكار إضافية</a><a href="#mobile">الموبايل</a>
+  </nav>
+  <button class="tt" id="tt" aria-label="الوضع">◐</button>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">Integrated Facility Management · IWMS · CMMS · CAFM</div>
+  <h1 style="margin-top:12px">منصّة إدارة المرافق <b>الشاملة</b> — بمعايير أقوى الأنظمة عالمياً</h1>
+  <p class="lede">نظام تشغيلي ضخم يجمع أفضل ما في <b>IBM Maximo/TRIRIGA · Planon · Archibus · Facilio · Infraspeak · Fracttal · UpKeep · Limble</b>: أوامر عمل ذكية، صيانة وقائية وتنبؤية، دورة حياة الأصول، إدارة المساحات والإشغال، الطاقة والاستدامة، حسّاسات IoT، مكتب خدمة متعدد القنوات، تطبيقات موبايل، تحليلات وذكاء اصطناعي — بلوحات ومؤشرات وتنبيهات حيّة.</p>
+  <div class="cta"><a class="btn pri" href="#exec">غرفة القيادة التنفيذية ↩</a><a class="btn" href="#kpi">مكتبة الـ KPIs</a></div>
+  <div class="strip">
+    <div class="kc"><div class="n"><b>96.4٪</b></div><div class="l">التزام SLA <span class="up">▲1.2</span></div></div>
+    <div class="kc"><div class="n">1,284</div><div class="l">أمر عمل/شهر <span class="up">▲</span></div></div>
+    <div class="kc"><div class="n">99.1٪</div><div class="l">جاهزية الأصول</div></div>
+    <div class="kc"><div class="n">4.6<span style="font-size:14px">/5</span></div><div class="l">رضا العملاء (CSAT)</div></div>
+    <div class="kc"><div class="n">-12٪</div><div class="l">استهلاك الطاقة <span class="up">تحسّن</span></div></div>
+    <div class="kc"><div class="n">87</div><div class="l">حسّاس IoT متصل</div></div>
+  </div>
+</div></header>
+
+<!-- SECTION INDEX -->
+<section style="padding:26px 0"><div class="wrap">
+  <div class="eyebrow" style="margin-bottom:12px">دليل الأقسام · 30 قسماً</div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px">
+    <a class="pill" href="#pillars">مرجعية عالمية</a>
+    <a class="pill" href="#exec">غرفة القيادة</a>
+    <a class="pill" href="#portfolio">المحفظة والخريطة</a>
+    <a class="pill" href="#arch">منصّة واحدة</a>
+    <a class="pill" href="#services">خطوط الخدمة</a>
+    <a class="pill" href="#svc-detail">فريق الخدمة</a>
+    <a class="pill" href="#rating">تقييم العاملين</a>
+    <a class="pill" href="#wo">أوامر العمل</a>
+    <a class="pill" href="#ppm">الصيانة الوقائية</a>
+    <a class="pill" href="#asset">دورة حياة الأصول</a>
+    <a class="pill" href="#asset-acc">الأصول = المحاسبة</a>
+    <a class="pill" href="#space">المساحات والإشغال</a>
+    <a class="pill" href="#qr">نظام QR والعدّاد</a>
+    <a class="pill" href="#energy">الطاقة والاستدامة</a>
+    <a class="pill" href="#iot">IoT والتنبيهات</a>
+    <a class="pill" href="#ai">الذكاء الاصطناعي</a>
+    <a class="pill" href="#helpdesk">مكتب الخدمة</a>
+    <a class="pill" href="#contractor">المقاولون وPTW</a>
+    <a class="pill" href="#ops">المخزون والأسطول</a>
+    <a class="pill" href="#booking">الحجز والزوّار</a>
+    <a class="pill" href="#compliance">الامتثال والتدقيق</a>
+    <a class="pill" href="#finance">مالية العقود</a>
+    <a class="pill" href="#twin">التوأم الرقمي</a>
+    <a class="pill" href="#kpi">مكتبة KPI</a>
+    <a class="pill" href="#bi">التحليلات والتقارير</a>
+    <a class="pill" href="#mobile">تطبيقات الموبايل</a>
+    <a class="pill" href="#screens">شاشات الموبايل</a>
+    <a class="pill" href="#media">الوسائط الخارجية</a>
+    <a class="pill" href="#ideas-more">بنك الأفكار</a>
+  </div>
+</div></section>
+
+<!-- GLOBAL PILLARS -->
+<section id="pillars"><div class="wrap">
+  <div class="sh"><div class="eyebrow">مرجعية عالمية</div><h2>مبنيّ على قدرات أفضل الأنظمة في العالم</h2>
+    <p>استخلصنا الوظائف الجوهرية من رواد السوق العالمي وطوّعناها لأعمالكم (تنظيف، أمن، صيانة، عقود حكومية).</p></div>
+  <div class="pillars">
+    <div class="pil"><span class="chip warn">EAM/CMMS</span><h4>إدارة الأصول والصيانة</h4><p>سجل أصول، حرجية، صيانة وقائية/تنبؤية، قطع غيار، دورة حياة وتكلفة ملكية.</p><div class="src">مرجع: IBM Maximo · Fracttal · UpKeep</div></div>
+    <div class="pil"><span class="chip teal">IWMS</span><h4>المساحات والعقود</h4><p>مخططات الطوابق، الإشغال، إدارة الإيجارات والعقود، توزيع التكاليف (Chargeback).</p><div class="src">مرجع: Planon · Archibus · TRIRIGA</div></div>
+    <div class="pil"><span class="chip blue">Service &amp; Mobile</span><h4>مكتب الخدمة والميدان</h4><p>تذاكر متعددة القنوات، توزيع ذكي، تطبيق فنّي بلا إنترنت، توقيع وصور.</p><div class="src">مرجع: Infraspeak · Limble · UpKeep</div></div>
+    <div class="pil"><span class="chip crit">Smart/IoT/AI</span><h4>الحسّاسات والذكاء</h4><p>ربط BMS/IoT، صيانة تنبؤية، كشف الشذوذ، تصنيف تلقائي للطلبات، توأم رقمي.</p><div class="src">مرجع: Facilio · Maximo Predict</div></div>
+  </div>
+</div></section>
+
+<!-- EXECUTIVE DASHBOARD -->
+<section id="exec"><div class="wrap">
+  <div class="sh"><div class="eyebrow">غرفة القيادة التنفيذية</div><h2>لوحة واحدة تقود كل العقود والمواقع</h2>
+    <p>تحديث لحظي — تنقر أي مؤشر لتتعمّق حتى مستوى الأمر أو الأصل الواحد.</p></div>
+  <div class="dash">
+    <!-- SLA ring -->
+    <div class="w col3">
+      <div class="ttl"><b>التزام SLA</b><span class="s">هذا الشهر</span></div>
+      <svg viewBox="0 0 120 120" width="120" height="120" style="margin:4px auto">
+        <circle cx="60" cy="60" r="48" fill="none" stroke="var(--line)" stroke-width="13"/>
+        <circle cx="60" cy="60" r="48" fill="none" stroke="var(--ok)" stroke-width="13" stroke-linecap="round"
+          stroke-dasharray="301.6" stroke-dashoffset="10.9" transform="rotate(-90 60 60)"/>
+        <text x="60" y="58" text-anchor="middle" font-size="24" font-weight="900" fill="var(--ink)">96٪</text>
+        <text x="60" y="76" text-anchor="middle" font-size="9" fill="var(--muted)">1,238 ضمن الزمن</text>
+      </svg>
+      <div class="legend"><span><i style="background:var(--ok)"></i>ملتزم</span><span><i style="background:var(--crit)"></i>46 تجاوز</span></div>
+    </div>
+    <!-- WO trend line -->
+    <div class="w col5">
+      <div class="ttl"><b>حجم أوامر العمل — 12 شهر</b><span class="s">تصحيحي مقابل وقائي</span></div>
+      <svg viewBox="0 0 460 150" width="100%" height="150" preserveAspectRatio="none">
+        <g stroke="var(--line)" stroke-width="1">
+          <line x1="0" y1="30" x2="460" y2="30"/><line x1="0" y1="70" x2="460" y2="70"/><line x1="0" y1="110" x2="460" y2="110"/>
+        </g>
+        <polygon points="0,120 40,110 80,116 120,96 160,100 200,84 240,90 280,70 320,74 360,58 400,64 440,46 440,150 0,150"
+          fill="color-mix(in srgb,var(--accent) 16%,transparent)"/>
+        <polyline points="0,120 40,110 80,116 120,96 160,100 200,84 240,90 280,70 320,74 360,58 400,64 440,46"
+          fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+        <polyline points="0,132 40,128 80,124 120,120 160,118 200,110 240,112 280,104 320,100 360,96 400,90 440,84"
+          fill="none" stroke="var(--teal)" stroke-width="2.5" stroke-dasharray="1"/>
+        <circle cx="440" cy="46" r="4" fill="var(--accent)"/>
+      </svg>
+      <div class="legend"><span><i style="background:var(--accent)"></i>تصحيحي</span><span><i style="background:var(--teal)"></i>وقائي (PPM)</span></div>
+    </div>
+    <!-- cost donut -->
+    <div class="w col4">
+      <div class="ttl"><b>تكلفة التشغيل حسب البند</b><span class="s">ربع سنوي</span></div>
+      <div style="display:flex;gap:14px;align-items:center">
+        <svg viewBox="0 0 100 100" width="104" height="104">
+          <circle cx="50" cy="50" r="38" fill="none" stroke="var(--accent)" stroke-width="16" stroke-dasharray="107 132" transform="rotate(-90 50 50)"/>
+          <circle cx="50" cy="50" r="38" fill="none" stroke="var(--teal)" stroke-width="16" stroke-dasharray="60 179" stroke-dashoffset="-107" transform="rotate(-90 50 50)"/>
+          <circle cx="50" cy="50" r="38" fill="none" stroke="var(--violet)" stroke-width="16" stroke-dasharray="42 197" stroke-dashoffset="-167" transform="rotate(-90 50 50)"/>
+          <circle cx="50" cy="50" r="38" fill="none" stroke="var(--blue)" stroke-width="16" stroke-dasharray="30 209" stroke-dashoffset="-209" transform="rotate(-90 50 50)"/>
+        </svg>
+        <div style="font-size:12px" class="bars">
+          <span><i style="background:var(--accent);width:9px;height:9px;display:inline-block;border-radius:2px;margin-inline-end:5px"></i>عمالة 45٪</span>
+          <span><i style="background:var(--teal);width:9px;height:9px;display:inline-block;border-radius:2px;margin-inline-end:5px"></i>مواد 25٪</span>
+          <span><i style="background:var(--violet);width:9px;height:9px;display:inline-block;border-radius:2px;margin-inline-end:5px"></i>مقاولون 18٪</span>
+          <span><i style="background:var(--blue);width:9px;height:9px;display:inline-block;border-radius:2px;margin-inline-end:5px"></i>طاقة 12٪</span>
+        </div>
+      </div>
+    </div>
+    <!-- aging -->
+    <div class="w col4">
+      <div class="ttl"><b>تقادم الأوامر المفتوحة</b><span class="s">64 مفتوح</span></div>
+      <div class="bars" style="margin-top:8px">
+        <div class="brow"><span>&lt; 4 ساعات</span><div class="track"><div class="fill" style="width:52%;background:var(--ok)"></div></div><span>33</span></div>
+        <div class="brow"><span>4-24 ساعة</span><div class="track"><div class="fill" style="width:30%;background:var(--warn)"></div></div><span>19</span></div>
+        <div class="brow"><span>&gt; 24 ساعة</span><div class="track"><div class="fill" style="width:14%;background:var(--crit)"></div></div><span>9</span></div>
+        <div class="brow"><span>متأخّرة SLA</span><div class="track"><div class="fill" style="width:5%;background:var(--crit)"></div></div><span>3</span></div>
+      </div>
+    </div>
+    <!-- satisfaction gauge -->
+    <div class="w col4">
+      <div class="ttl"><b>رضا العملاء (CSAT/NPS)</b><span class="s">آخر 30 يوم</span></div>
+      <svg viewBox="0 0 200 108" width="100%" height="108">
+        <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="var(--line)" stroke-width="15" stroke-linecap="round"/>
+        <path d="M20 100 A80 80 0 0 1 168 62" fill="none" stroke="var(--ok)" stroke-width="15" stroke-linecap="round"/>
+        <text x="100" y="86" text-anchor="middle" font-size="30" font-weight="900" fill="var(--ink)">4.6</text>
+        <text x="100" y="102" text-anchor="middle" font-size="10" fill="var(--muted)">NPS +52 · 312 تقييم</text>
+      </svg>
+    </div>
+    <!-- coverage by contract -->
+    <div class="w col4">
+      <div class="ttl"><b>الأداء حسب العقد</b><span class="s">SLA٪</span></div>
+      <div class="bars" style="margin-top:8px">
+        <div class="brow"><span>برج بيان</span><div class="track"><div class="fill" style="width:98%;background:var(--ok)"></div></div><span>98</span></div>
+        <div class="brow"><span>مجمّع الأفنيوز</span><div class="track"><div class="fill" style="width:94%;background:var(--ok)"></div></div><span>94</span></div>
+        <div class="brow"><span>مستشفى مبارك</span><div class="track"><div class="fill" style="width:88%;background:var(--warn)"></div></div><span>88</span></div>
+        <div class="brow"><span>مدارس الجهراء</span><div class="track"><div class="fill" style="width:79%;background:var(--crit)"></div></div><span>79</span></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- PORTFOLIO / MULTI-SITE MAP -->
+<section id="portfolio"><div class="wrap">
+  <div class="sh"><div class="eyebrow">المحفظة والمواقع</div><h2>كل العقود والمواقع على خريطة واحدة</h2>
+    <p>نظرة المحفظة الكاملة — الحالة التشغيلية لكل موقع بلمحة، مع التعمّق حتى العقد أو المبنى.</p></div>
+  <div class="grid" style="grid-template-columns:1fr 300px;gap:14px">
+    <div class="card">
+      <div class="ttl"><b>مواقع العقود — الكويت</b><span class="s">الحالة الآن</span></div>
+      <svg viewBox="0 0 460 240" width="100%" height="240">
+        <rect width="460" height="240" rx="10" fill="var(--surface-2)"/>
+        <!-- abstract landmass -->
+        <path d="M70 60 Q140 30 220 55 Q320 40 380 90 Q410 140 360 190 Q280 220 200 200 Q110 210 80 160 Q50 110 70 60 Z"
+          fill="color-mix(in srgb,var(--teal) 8%,transparent)" stroke="var(--line)" stroke-width="1.5"/>
+        <!-- pins -->
+        <g font-size="9" fill="var(--ink)">
+          <circle cx="150" cy="95" r="8" fill="var(--ok)"/><circle cx="150" cy="95" r="14" fill="none" stroke="var(--ok)" stroke-width="1" opacity=".5"/><text x="165" y="98">برج بيان · 98٪</text>
+          <circle cx="245" cy="120" r="8" fill="var(--ok)"/><text x="260" y="123">الأفنيوز · 94٪</text>
+          <circle cx="200" cy="165" r="8" fill="var(--warn)"/><text x="215" y="168">مبارك · 88٪</text>
+          <circle cx="320" cy="140" r="8" fill="var(--crit)"/><circle cx="320" cy="140" r="14" fill="none" stroke="var(--crit)" stroke-width="1" opacity=".6"><animate attributeName="r" values="8;16;8" dur="2s" repeatCount="indefinite"/></circle><text x="335" y="143">الجهراء · 79٪</text>
+          <circle cx="110" cy="140" r="8" fill="var(--ok)"/><text x="125" y="143">حولي · 96٪</text>
+        </g>
+      </svg>
+      <div class="legend"><span><i style="background:var(--ok)"></i>ملتزم</span><span><i style="background:var(--warn)"></i>انتباه</span><span><i style="background:var(--crit)"></i>تحت الهدف</span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="card"><div class="ttl"><b>المحفظة</b></div>
+        <div class="bars" style="margin-top:4px">
+          <div class="brow"><span>العقود</span><div class="track"><div class="fill" style="width:100%"></div></div><span>27</span></div>
+          <div class="brow"><span>المواقع</span><div class="track"><div class="fill" style="width:80%;background:var(--teal)"></div></div><span>64</span></div>
+          <div class="brow"><span>العمّال</span><div class="track"><div class="fill" style="width:95%;background:var(--blue)"></div></div><span>2,940</span></div>
+        </div>
+        <div style="margin-top:8px;font-size:12.5px;color:var(--muted)">قيمة المحفظة السنوية: <b style="color:var(--ink)">3.8M د.ك</b></div>
+      </div>
+      <div class="card"><div class="ttl"><b>يحتاج انتباهاً</b><span class="s">3</span></div>
+        <div class="feed">
+          <div class="al c"><span class="t">🔴</span><div>الجهراء — SLA 79٪ + هامش منخفض</div></div>
+          <div class="al w"><span class="t">🟡</span><div>مبارك — تكرار أعطال تكييف</div></div>
+          <div class="al w"><span class="t">🟡</span><div>عقدان ينتهيان خلال 60 يوم</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ONE PLATFORM ARCHITECTURE -->
+<section id="arch"><div class="wrap">
+  <div class="sh"><div class="eyebrow">منصّة واحدة · تطبيق واحد · وحدات مستقلة</div><h2>كل الخدمات — والأمن منها — في نظام وتطبيق واحد</h2>
+    <p>نواة مشتركة واحدة (مواقع QR، أوامر عمل، البصمة، البورتال، اللوحات)، وفوقها <b>وحدات خدمة مستقلة</b> تُفعّل حسب العقد — ومنها <b>الأمن كوحدة قائمة بذاتها</b> لكن داخل نفس التطبيق والبيانات.</p></div>
+
+  <div class="card">
+    <div style="text-align:center;margin-bottom:12px">
+      <div style="display:inline-flex;gap:8px;align-items:center;background:linear-gradient(150deg,var(--accent),#e07d1c);color:#1a1205;font-weight:900;border-radius:11px;padding:10px 18px;font-size:14px">📱 تطبيق واحد لكل الأدوار — يتكيّف حسب الدور (عامل · حارس · فنّي · مشرف · مدير · عميل)</div>
+    </div>
+    <!-- shared core -->
+    <div style="background:color-mix(in srgb,var(--teal) 10%,transparent);border:1px dashed color-mix(in srgb,var(--teal) 45%,transparent);border-radius:12px;padding:12px;text-align:center;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:800;color:var(--teal);letter-spacing:1px">النواة المشتركة (Core)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px">
+        <span class="pill">▣ مواقع QR</span><span class="pill">🧾 أوامر عمل</span><span class="pill">🔗 البصمة/الحضور</span>
+        <span class="pill">📊 اللوحات وKPIs</span><span class="pill">🔔 التنبيهات</span><span class="pill">🌐 بوابة العميل</span><span class="pill">☁️ وسائط خارجية</span>
+      </div>
+    </div>
+    <!-- modular services -->
+    <div style="font-size:12px;font-weight:800;color:var(--muted);text-align:center;letter-spacing:1px;margin-bottom:8px">وحدات الخدمة المستقلة (تُفعّل/تُطفأ لكل عقد)</div>
+    <div class="svc-grid">
+      <div class="svc"><div class="si">🧹</div><h4>وحدة النظافة</h4><div class="sm"><span>موديول مستقل</span><span class="chip ok">مفعّل</span></div></div>
+      <div class="svc" style="border-top-color:var(--teal)"><div class="si" style="background:color-mix(in srgb,var(--teal) 15%,transparent)">🛠️</div><h4>وحدة الصيانة</h4><div class="sm"><span>تكييف/كهرباء/سباكة</span><span class="chip ok">مفعّل</span></div></div>
+      <div class="svc" style="border-top-color:var(--crit)"><div class="si" style="background:color-mix(in srgb,var(--crit) 15%,transparent)">🛡️</div><h4>وحدة الأمن</h4><div class="sm"><span>موديول مستقل</span><span class="chip crit">مدمج</span></div></div>
+      <div class="svc" style="border-top-color:var(--ok)"><div class="si" style="background:color-mix(in srgb,var(--ok) 15%,transparent)">🌿</div><h4>وحدة الحدائق</h4><div class="sm"><span>موديول مستقل</span><span class="chip ok">مفعّل</span></div></div>
+    </div>
+    <div class="al i" style="max-width:none;margin-top:12px"><span class="t">مبدأ</span><div>كل وحدة موديول Odoo مستقل (تثبيت/تحديث منفصل) — لكنها تشترك في النواة والتطبيق والبيانات. تشغّل ما يحتاجه العميل فقط.</div></div>
+  </div>
+
+  <!-- SECURITY as a service module -->
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card" style="border-top:3px solid var(--crit)">
+      <h3><span class="ic" style="background:color-mix(in srgb,var(--crit) 15%,transparent);color:var(--crit)">🛡️</span> وحدة الأمن — كخط خدمة داخل المنصّة</h3>
+      <p style="margin-bottom:10px">نفس نواة CAFM (QR، البصمة، الموبايل، البورتال) — بقدرات أمنية خاصة:</p>
+      <div class="tags">
+        <span class="t">🚶 دوريات بنقاط QR/NFC</span><span class="t">🚨 بلاغات + زر طوارئ</span><span class="t">🎫 تصاريح دخول وزوّار</span>
+        <span class="t">🔑 عُهدة المفاتيح</span><span class="t">📍 تغطية النقاط من البصمة</span><span class="t">⏲ فحص العامل المنفرد</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3><span class="ic">🔄</span> لماذا موحّد لكنه مستقل؟</h3>
+      <div class="feed">
+        <div class="al ok" style="border-color:var(--ok)"><span class="t">✔</span><div><b>تطبيق واحد:</b> الحارس والعامل والمشرف يستخدمون نفس التطبيق — الواجهة تتغيّر حسب الدور.</div></div>
+        <div class="al ok" style="border-color:var(--ok)"><span class="t">✔</span><div><b>بيانات مشتركة:</b> نفس المواقع (QR) ونفس البصمة ونفس العميل — لا ازدواج.</div></div>
+        <div class="al ok" style="border-color:var(--ok)"><span class="t">✔</span><div><b>موديول مستقل:</b> يُثبّت ويُطوّر ويُرخّص وحده دون أن يكسر بقية الخدمات.</div></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- SERVICE LINES -->
+<section id="services"><div class="wrap">
+  <div class="sh"><div class="eyebrow">خطوط الخدمة والفِرَق</div><h2>كل خدمة… بفريقها ومشرفها ومؤشراتها</h2>
+    <p>العقد يضمّ عدة خدمات، ولكل خدمة كتالوجها ونطاقها لكل عميل، وفريقها الخاص، واتفاقية مستوى خدمة، وربحية مستقلة.</p></div>
+
+  <!-- catalog -->
+  <div class="svc-grid">
+    <div class="svc"><div class="si">🧹</div><h4>النظافة</h4><div class="sm"><span>الفريق <b>42</b></span><span class="chip ok">SLA 96٪</span></div></div>
+    <div class="svc" style="border-top-color:var(--crit)"><div class="si" style="background:color-mix(in srgb,var(--crit) 15%,transparent)">🛡️</div><h4>الأمن والحراسة</h4><div class="sm"><span>الفريق <b>68</b></span><span class="chip warn">تغطية 96٪</span></div></div>
+    <div class="svc" style="border-top-color:var(--teal)"><div class="si" style="background:color-mix(in srgb,var(--teal) 15%,transparent)">❄️</div><h4>التكييف (HVAC)</h4><div class="sm"><span>الفريق <b>12</b></span><span class="chip ok">جاهزية 99٪</span></div></div>
+    <div class="svc" style="border-top-color:var(--warn)"><div class="si" style="background:color-mix(in srgb,var(--warn) 18%,transparent)">⚡</div><h4>الكهرباء</h4><div class="sm"><span>الفريق <b>8</b></span><span class="chip ok">SLA 93٪</span></div></div>
+    <div class="svc" style="border-top-color:var(--blue)"><div class="si" style="background:color-mix(in srgb,var(--blue) 15%,transparent)">🔧</div><h4>السباكة</h4><div class="sm"><span>الفريق <b>6</b></span><span class="chip ok">SLA 91٪</span></div></div>
+    <div class="svc" style="border-top-color:var(--ok)"><div class="si" style="background:color-mix(in srgb,var(--ok) 15%,transparent)">🌿</div><h4>تنسيق الحدائق</h4><div class="sm"><span>الفريق <b>9</b></span><span class="chip ok">مجدول</span></div></div>
+    <div class="svc" style="border-top-color:var(--violet)"><div class="si" style="background:color-mix(in srgb,var(--violet) 15%,transparent)">🐜</div><h4>مكافحة الحشرات</h4><div class="sm"><span>الفريق <b>4</b></span><span class="chip ok">دوري</span></div></div>
+    <div class="svc"><div class="si">♻️</div><h4>إدارة النفايات</h4><div class="sm"><span>الفريق <b>7</b></span><span class="chip ok">يومي</span></div></div>
+    <div class="svc" style="border-top-color:var(--crit)"><div class="si" style="background:color-mix(in srgb,var(--crit) 15%,transparent)">🚒</div><h4>السلامة والإطفاء</h4><div class="sm"><span>الفريق <b>5</b></span><span class="chip warn">تفتيش</span></div></div>
+    <div class="svc" style="border-top-color:var(--teal)"><div class="si" style="background:color-mix(in srgb,var(--teal) 15%,transparent)">🏢</div><h4>تنظيف الواجهات</h4><div class="sm"><span>الفريق <b>6</b></span><span class="chip ok">شهري</span></div></div>
+    <div class="svc" style="border-top-color:var(--blue)"><div class="si" style="background:color-mix(in srgb,var(--blue) 15%,transparent)">🛗</div><h4>المصاعد</h4><div class="sm"><span>مقاول</span><span class="chip ok">عقد</span></div></div>
+    <div class="svc"><div class="si">🛎️</div><h4>الاستقبال/الكونسيرج</h4><div class="sm"><span>الفريق <b>5</b></span><span class="chip ok">SLA 97٪</span></div></div>
+  </div>
+
+  <!-- team org + per-service KPIs -->
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card">
+      <div class="ttl"><b>هيكل فريق خدمة — مثال: النظافة</b><span class="s">42 عضواً</span></div>
+      <svg viewBox="0 0 460 210" width="100%" height="210">
+        <g stroke="var(--line)" stroke-width="1.4" fill="none">
+          <line x1="230" y1="42" x2="230" y2="60"/><line x1="110" y1="60" x2="350" y2="60"/>
+          <line x1="110" y1="60" x2="110" y2="76"/><line x1="230" y1="60" x2="230" y2="76"/><line x1="350" y1="60" x2="350" y2="76"/>
+          <line x1="110" y1="118" x2="110" y2="134"/><line x1="230" y1="118" x2="230" y2="134"/><line x1="350" y1="118" x2="350" y2="134"/>
+        </g>
+        <!-- manager -->
+        <g><rect x="150" y="16" width="160" height="26" rx="6" fill="color-mix(in srgb,var(--accent) 26%,transparent)"/><text class="org-lbl" x="230" y="33" text-anchor="middle">مدير خدمة النظافة</text></g>
+        <!-- supervisors -->
+        <g><rect x="55" y="76" width="110" height="42" rx="6" fill="var(--surface-2)"/><text class="org-lbl" x="110" y="94" text-anchor="middle">مشرف موقع A</text><text class="org-sub" x="110" y="108" text-anchor="middle">3 قادة · 14 عامل</text></g>
+        <g><rect x="175" y="76" width="110" height="42" rx="6" fill="var(--surface-2)"/><text class="org-lbl" x="230" y="94" text-anchor="middle">مشرف موقع B</text><text class="org-sub" x="230" y="108" text-anchor="middle">2 قادة · 16 عامل</text></g>
+        <g><rect x="295" y="76" width="110" height="42" rx="6" fill="var(--surface-2)"/><text class="org-lbl" x="350" y="94" text-anchor="middle">مشرف الورديات</text><text class="org-sub" x="350" y="108" text-anchor="middle">ليلي · احتياطي</text></g>
+        <!-- teams -->
+        <g><rect x="60" y="134" width="100" height="34" rx="6" fill="color-mix(in srgb,var(--teal) 14%,transparent)"/><text class="org-sub" x="110" y="154" text-anchor="middle">قادة فِرَق + عمّال</text></g>
+        <g><rect x="180" y="134" width="100" height="34" rx="6" fill="color-mix(in srgb,var(--teal) 14%,transparent)"/><text class="org-sub" x="230" y="154" text-anchor="middle">قادة فِرَق + عمّال</text></g>
+        <g><rect x="300" y="134" width="100" height="34" rx="6" fill="color-mix(in srgb,var(--teal) 14%,transparent)"/><text class="org-sub" x="350" y="154" text-anchor="middle">فريق احتياطي</text></g>
+        <text x="230" y="192" font-size="10" fill="var(--muted)" text-anchor="middle">+ موظف جودة مخصّص للخدمة · حضور بالبصمة لكل عضو</text>
+      </svg>
+    </div>
+    <div class="card">
+      <div class="ttl"><b>أداء الخدمات — لمحة</b><span class="s">هذا الشهر</span></div>
+      <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr><th>الخدمة</th><th style="text-align:center">الفريق</th><th style="text-align:center">SLA</th><th style="text-align:center">رضا</th><th style="text-align:center">تكلفة/شهر</th></tr></thead>
+        <tbody>
+          <tr><td>🧹 النظافة</td><td class="num">42</td><td class="num" style="color:var(--ok)">96٪</td><td class="num">4.6</td><td class="num">8,400</td></tr>
+          <tr><td>🛡️ الأمن</td><td class="num">68</td><td class="num" style="color:var(--warn)">92٪</td><td class="num">4.4</td><td class="num">13,200</td></tr>
+          <tr><td>❄️ التكييف</td><td class="num">12</td><td class="num" style="color:var(--ok)">99٪</td><td class="num">4.7</td><td class="num">5,100</td></tr>
+          <tr><td>⚡ الكهرباء</td><td class="num">8</td><td class="num" style="color:var(--ok)">93٪</td><td class="num">4.5</td><td class="num">3,300</td></tr>
+          <tr><td>🌿 الحدائق</td><td class="num">9</td><td class="num" style="color:var(--ok)">95٪</td><td class="num">4.6</td><td class="num">2,700</td></tr>
+          <tr><td>♻️ النفايات</td><td class="num">7</td><td class="num" style="color:var(--warn)">89٪</td><td class="num">4.2</td><td class="num">2,100</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- service × contract matrix -->
+  <div class="card" style="margin-top:14px">
+    <div class="ttl"><b>مصفوفة الخدمات حسب العقد</b><span class="s">أي خدمة لأي عميل</span></div>
+    <div style="overflow-x:auto">
+    <table class="matrix">
+      <thead><tr><th style="text-align:start">الخدمة \ العقد</th><th>برج بيان</th><th>مجمّع الأفنيوز</th><th>مستشفى مبارك</th><th>مدارس الجهراء</th></tr></thead>
+      <tbody>
+        <tr><td class="svc-name">🧹 النظافة</td><td class="yes">✔</td><td class="yes">✔</td><td class="yes">✔</td><td class="yes">✔</td></tr>
+        <tr><td class="svc-name">🛡️ الأمن</td><td class="yes">✔</td><td class="yes">✔</td><td class="yes">✔</td><td>—</td></tr>
+        <tr><td class="svc-name">❄️ التكييف</td><td class="yes">✔</td><td>—</td><td class="yes">✔</td><td class="yes">✔</td></tr>
+        <tr><td class="svc-name">🌿 الحدائق</td><td class="yes">✔</td><td class="yes">✔</td><td>—</td><td class="yes">✔</td></tr>
+        <tr><td class="svc-name">♻️ النفايات</td><td class="yes">✔</td><td class="yes">✔</td><td class="yes">✔</td><td>—</td></tr>
+        <tr><td class="svc-name">🚒 السلامة</td><td class="yes">✔</td><td>—</td><td class="yes">✔</td><td class="yes">✔</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- ideas -->
+  <div class="grid g3" style="margin-top:14px">
+    <div class="card idea"><span class="ic">⇄</span><div><b>عمّال متعدّدو المهارات</b><br><span>عامل معتمد لأكثر من خدمة → مرونة في التغطية وتقليل التكلفة.</span></div></div>
+    <div class="card idea"><span class="ic">💰</span><div><b>ربحية لكل خدمة</b><br><span>إيراد وتكلفة وهامش مستقل لكل خط خدمة داخل العقد الواحد.</span></div></div>
+    <div class="card idea"><span class="ic">📋</span><div><b>SLA وجودة لكل خدمة</b><br><span>أزمنة استجابة وقوائم تدقيق مختلفة للنظافة عن الأمن عن الصيانة.</span></div></div>
+    <div class="card idea"><span class="ic">🔗</span><div><b>أوامر عمل عابرة للخدمات</b><br><span>بلاغ واحد قد يشمل نظافة + صيانة → تنسيق تلقائي بين الفريقين.</span></div></div>
+    <div class="card idea"><span class="ic">👥</span><div><b>فريق مخصّص أو مشترك</b><br><span>خدمة بفريق ثابت للموقع، أو فريق جوّال يخدم عدة مواقع.</span></div></div>
+    <div class="card idea"><span class="ic">🚀</span><div><b>تعبئة الخدمة (Mobilization)</b><br><span>عند ترسية عقد جديد: تجهيز فريق ومعدّات وجدول لكل خدمة تلقائياً.</span></div></div>
+  </div>
+</div></section>
+
+<!-- SERVICE DETAIL — members & team -->
+<section id="svc-detail"><div class="wrap">
+  <div class="sh"><div class="eyebrow">شاشة الخدمة التفصيلية</div><h2>داخل كل خدمة: الأعضاء والفريق بالاسم والدور والحالة</h2>
+    <p>اختر الخدمة لترى فريقها الكامل — من المدير إلى العامل — مع حضوره الفعلي من البصمة وشهاداته ومهامّه.</p></div>
+
+  <div class="tabs">
+    <span class="tab on">🧹 النظافة</span><span class="tab">🛡️ الأمن</span><span class="tab">❄️ التكييف</span>
+    <span class="tab">⚡ الكهرباء</span><span class="tab">🌿 الحدائق</span><span class="tab">♻️ النفايات</span>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1fr 320px;gap:14px">
+    <div class="card">
+      <div class="ttl"><b>فريق خدمة النظافة — عقد برج بيان</b><span class="s">42 عضواً · حضور اليوم 39/42</span></div>
+      <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr><th>العضو</th><th>الدور</th><th>الوردية / النقطة</th><th style="text-align:center">الحضور (بصمة)</th><th style="text-align:center">الشهادات</th><th style="text-align:center">الحالة</th></tr></thead>
+        <tbody>
+          <tr><td><div class="who2"><span class="avt" style="background:linear-gradient(150deg,var(--accent),#e07d1c)">خ</span><div><div class="nm">خالد العلي</div><div class="rl">إشراف عام</div></div></div></td><td>مدير الخدمة</td><td>—</td><td class="num" style="color:var(--ok)">✔ 6:00</td><td class="num">✔</td><td class="num"><span class="chip ok">فعّال</span></td></tr>
+          <tr><td><div class="who2"><span class="avt" style="background:linear-gradient(150deg,var(--teal),#1b8f80)">س</span><div><div class="nm">سعيد كومار</div><div class="rl">مشرف موقع A</div></div></div></td><td>مشرف</td><td>صباحي · أبراج A</td><td class="num" style="color:var(--ok)">✔ 6:02</td><td class="num">✔</td><td class="num"><span class="chip ok">على رأس العمل</span></td></tr>
+          <tr><td><div class="who2"><span class="avt" style="background:linear-gradient(150deg,var(--violet),#6d4bd0)">ر</span><div><div class="nm">راجيش م.</div><div class="rl">قائد فريق</div></div></div></td><td>قائد فريق</td><td>صباحي · اللوبي</td><td class="num" style="color:var(--ok)">✔ 6:05</td><td class="num">✔</td><td class="num"><span class="chip blue">في مهمة</span></td></tr>
+          <tr><td><div class="who2"><span class="avt" style="background:linear-gradient(150deg,var(--blue),#3f6de0)">م</span><div><div class="nm">محمد سوروج</div><div class="rl">عامل نظافة</div></div></div></td><td>عامل</td><td>صباحي · ط1-3</td><td class="num" style="color:var(--ok)">✔ 6:08</td><td class="num" style="color:var(--warn)">تنتهي 12ي</td><td class="num"><span class="chip blue">في مهمة</span></td></tr>
+          <tr><td><div class="who2"><span class="avt" style="background:linear-gradient(150deg,var(--ok),#1f8f5f)">أ</span><div><div class="nm">أنيل كومار</div><div class="rl">عامل نظافة</div></div></div></td><td>عامل</td><td>—</td><td class="num" style="color:var(--muted)">إجازة</td><td class="num">✔</td><td class="num"><span class="chip warn">إجازة</span></td></tr>
+          <tr><td><div class="who2"><span class="avt" style="background:linear-gradient(150deg,#e0693f,#b1402a)">س</span><div><div class="nm">سونيل ب.</div><div class="rl">عامل نظافة</div></div></div></td><td>عامل</td><td>صباحي · المطعم</td><td class="num" style="color:var(--crit)">✘ لا بصمة</td><td class="num">✔</td><td class="num"><span class="chip crit">غياب</span></td></tr>
+          <tr><td><div class="who2"><span class="avt" style="background:linear-gradient(150deg,var(--teal),#1b8f80)">ن</span><div><div class="nm">نور الدين</div><div class="rl">عامل — احتياطي</div></div></div></td><td>احتياطي</td><td>يُستدعى</td><td class="num" style="color:var(--ok)">✔ 6:15</td><td class="num">✔</td><td class="num"><span class="chip teal">بديل جاهز</span></td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="al w" style="margin-top:10px"><span class="t">آلي</span><div>سونيل ب. لم يسجّل بصمة → النظام يقترح <b>استدعاء البديل نور الدين</b> لتغطية نقطة المطعم.</div></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="card"><div class="ttl"><b>مؤشرات الخدمة</b></div>
+        <div class="bars" style="margin-top:6px">
+          <div class="brow"><span>SLA</span><div class="track"><div class="fill" style="width:96%;background:var(--ok)"></div></div><span>96٪</span></div>
+          <div class="brow"><span>الحضور</span><div class="track"><div class="fill" style="width:93%;background:var(--ok)"></div></div><span>93٪</span></div>
+          <div class="brow"><span>تدقيق الجودة</span><div class="track"><div class="fill" style="width:88%;background:var(--warn)"></div></div><span>88٪</span></div>
+          <div class="brow"><span>مهام اليوم</span><div class="track"><div class="fill" style="width:74%;background:var(--accent)"></div></div><span>74٪</span></div>
+        </div>
+      </div>
+      <div class="card"><div class="ttl"><b>تركيبة الفريق</b><span class="s">42</span></div>
+        <div style="font-size:12.5px" class="bars">
+          <div class="brow"><span>مدير</span><div class="track"><div class="fill" style="width:5%"></div></div><span>1</span></div>
+          <div class="brow"><span>مشرفون</span><div class="track"><div class="fill" style="width:14%;background:var(--teal)"></div></div><span>3</span></div>
+          <div class="brow"><span>قادة فِرَق</span><div class="track"><div class="fill" style="width:22%;background:var(--violet)"></div></div><span>5</span></div>
+          <div class="brow"><span>عمّال</span><div class="track"><div class="fill" style="width:74%;background:var(--blue)"></div></div><span>31</span></div>
+          <div class="brow"><span>احتياطي</span><div class="track"><div class="fill" style="width:10%;background:var(--ok)"></div></div><span>2</span></div>
+        </div>
+      </div>
+      <div class="card"><div class="ttl"><b>موظف الجودة</b></div>
+        <div class="who2"><span class="avt" style="background:linear-gradient(150deg,var(--accent),#e07d1c)">ف</span><div><div class="nm">فاطمة أحمد</div><div class="rl">جودة النظافة · جولة 2/اليوم</div></div></div>
+        <p style="margin-top:8px;font-size:12px">3 ملاحظات تصحيح مفتوحة بمواعيد ومسؤولين.</p>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- WORKER PERFORMANCE & RATING -->
+<section id="rating"><div class="wrap">
+  <div class="sh"><div class="eyebrow">تقييم العاملين ومستواهم وأدائهم</div><h2>تقييم مبنيّ على بيانات فعلية — لا انطباعات</h2>
+    <p>درجة كل عامل تُحسب تلقائياً من الجودة والسرعة والحضور والسلامة ورضا العميل — من مسح الـQR والبصمة وجولات الجودة — وتُترجَم إلى مستوى ومكافأة.</p></div>
+
+  <div class="grid" style="grid-template-columns:320px 1fr;gap:14px">
+    <!-- worker rating card -->
+    <div class="card">
+      <div class="who2" style="margin-bottom:6px"><span class="avt" style="width:44px;height:44px;font-size:16px;background:linear-gradient(150deg,var(--accent),#e07d1c)">م</span>
+        <div><div class="nm" style="font-size:15px">محمد سوروج</div><div class="rl">عامل نظافة · برج بيان</div></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0">
+        <div><span style="font-size:30px;font-weight:900">4.6</span><span style="color:var(--muted);font-size:13px">/5</span></div>
+        <span class="chip ok" style="font-size:12px">المستوى: ذهبي 🥇</span>
+      </div>
+      <!-- radar -->
+      <svg viewBox="0 0 200 200" width="100%" height="190">
+        <g fill="none" stroke="var(--line)" stroke-width="1">
+          <polygon points="100,30 160.6,65 160.6,135 100,170 39.4,135 39.4,65"/>
+          <polygon points="100,53.3 140.4,76.6 140.4,123.3 100,146.6 59.6,123.3 59.6,76.6"/>
+          <polygon points="100,76.6 120.2,88.3 120.2,111.6 100,123.3 79.8,111.6 79.8,88.3"/>
+          <line x1="100" y1="100" x2="100" y2="30"/><line x1="100" y1="100" x2="160.6" y2="65"/><line x1="100" y1="100" x2="160.6" y2="135"/><line x1="100" y1="100" x2="100" y2="170"/><line x1="100" y1="100" x2="39.4" y2="135"/><line x1="100" y1="100" x2="39.4" y2="65"/>
+        </g>
+        <polygon points="100,37 142.4,75.5 157.6,133.3 100,159.5 51.5,128 54.5,73.75"
+          fill="color-mix(in srgb,var(--accent) 26%,transparent)" stroke="var(--accent)" stroke-width="2"/>
+        <g font-size="8.5" fill="var(--muted)" text-anchor="middle">
+          <text x="100" y="24">الجودة</text><text x="176" y="64">السرعة</text><text x="176" y="142">الحضور</text>
+          <text x="100" y="184">السلامة</text><text x="26" y="142">رضا العميل</text><text x="24" y="64">الالتزام</text>
+        </g>
+      </svg>
+    </div>
+
+    <!-- breakdown + leaderboard -->
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="card">
+        <div class="ttl"><b>تفصيل الدرجة</b><span class="s">مصدر كل بند تلقائي</span></div>
+        <div class="bars" style="margin-top:8px">
+          <div class="brow"><span>الجودة (تدقيق)</span><div class="track"><div class="fill" style="width:90%;background:var(--ok)"></div></div><span>90</span></div>
+          <div class="brow"><span>السرعة (عدّاد QR)</span><div class="track"><div class="fill" style="width:70%;background:var(--warn)"></div></div><span>70</span></div>
+          <div class="brow"><span>الحضور (بصمة)</span><div class="track"><div class="fill" style="width:95%;background:var(--ok)"></div></div><span>95</span></div>
+          <div class="brow"><span>السلامة (HSE)</span><div class="track"><div class="fill" style="width:85%;background:var(--ok)"></div></div><span>85</span></div>
+          <div class="brow"><span>رضا العميل</span><div class="track"><div class="fill" style="width:80%;background:var(--ok)"></div></div><span>80</span></div>
+          <div class="brow"><span>الالتزام (SLA)</span><div class="track"><div class="fill" style="width:75%;background:var(--warn)"></div></div><span>75</span></div>
+        </div>
+        <div class="al i" style="margin-top:10px"><span class="t">اتجاه</span><div>تحسّن 8٪ خلال 3 أشهر · نقطة التطوير: <b>سرعة الإنجاز</b> — يُقترح تدريب قصير.</div></div>
+      </div>
+      <div class="card">
+        <div class="ttl"><b>لوحة الترتيب — النظافة</b><span class="s">هذا الشهر</span></div>
+        <div style="overflow-x:auto"><table class="tbl">
+          <thead><tr><th>#</th><th>العامل</th><th style="text-align:center">الدرجة</th><th style="text-align:center">المستوى</th><th style="text-align:center">الاتجاه</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td>راجيش م.</td><td class="num">4.8</td><td class="num"><span class="chip ok">ذهبي</span></td><td class="num" style="color:var(--ok)">▲</td></tr>
+            <tr><td class="num">2</td><td>محمد سوروج</td><td class="num">4.6</td><td class="num"><span class="chip ok">ذهبي</span></td><td class="num" style="color:var(--ok)">▲</td></tr>
+            <tr><td class="num">3</td><td>سعيد كومار</td><td class="num">4.3</td><td class="num"><span class="chip blue">فضّي</span></td><td class="num" style="color:var(--muted)">▬</td></tr>
+            <tr><td class="num">4</td><td>أنيل كومار</td><td class="num">3.6</td><td class="num"><span class="chip warn">برونزي</span></td><td class="num" style="color:var(--crit)">▼</td></tr>
+            <tr><td class="num">5</td><td>سونيل ب.</td><td class="num">2.9</td><td class="num"><span class="chip crit">يحتاج تطوير</span></td><td class="num" style="color:var(--crit)">▼</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 360 sources -->
+  <h3 style="margin:22px 0 12px;font-size:17px">مصادر التقييم — 360°</h3>
+  <div class="grid g4">
+    <div class="card idea"><span class="ic">🔎</span><div><b>موظف الجودة</b><br><span>درجات جولات التفتيش وقوائم الفحص.</span></div></div>
+    <div class="card idea"><span class="ic">🦺</span><div><b>المشرف المباشر</b><br><span>تقييم دوري + ملاحظات ميدانية.</span></div></div>
+    <div class="card idea"><span class="ic">🧑‍💼</span><div><b>العميل</b><br><span>تقييم نجوم بعد كل مهمة تخصّه.</span></div></div>
+    <div class="card idea"><span class="ic">⚙️</span><div><b>النظام (تلقائي)</b><br><span>الحضور والسرعة والالتزام من البيانات.</span></div></div>
+  </div>
+
+  <!-- my ideas -->
+  <h3 style="margin:22px 0 12px;font-size:17px">أفكار من عندي لتطوير الفكرة</h3>
+  <div class="grid g3">
+    <div class="card idea"><span class="ic">⚙️</span><div><b>تقييم مؤتمت بلا تحيّز</b><br><span>80٪ من الدرجة من بيانات فعلية (بصمة/عدّاد/جودة) → عدل وشفافية.</span></div></div>
+    <div class="card idea"><span class="ic">🥇</span><div><b>مستويات مرتبطة بالأجر</b><br><span>برونزي/فضّي/ذهبي → بدلات ومكافآت وترقيات تلقائية (يربط بوحدة البدلات).</span></div></div>
+    <div class="card idea"><span class="ic">🏅</span><div><b>تحفيز وشارات (Gamification)</b><br><span>نقاط وسلاسل إنجاز و«عامل الشهر» لرفع الحماس.</span></div></div>
+    <div class="card idea"><span class="ic">📚</span><div><b>خطة تطوير للأضعف</b><br><span>درجة منخفضة → تدريب مقترح تلقائياً (يربط بوحدة التدريب) ومتابعة.</span></div></div>
+    <div class="card idea"><span class="ic">🧠</span><div><b>مصفوفة المهارات</b><br><span>ربط التقييم بالشهادات والمهارات لتحديد مَن يصلح لأي مهمة/خدمة.</span></div></div>
+    <div class="card idea"><span class="ic">⚠️</span><div><b>تنبؤ بخطر التسرّب</b><br><span>هبوط الأداء + زيادة الحِمل → مؤشر مبكّر لمخاطبة العامل قبل استقالته.</span></div></div>
+    <div class="card idea"><span class="ic">⭐</span><div><b>تقييم العميل يغذّي الدرجة</b><br><span>نجوم العميل بعد المهمة تدخل مباشرةً في درجة العامل والفريق.</span></div></div>
+    <div class="card idea"><span class="ic">🔁</span><div><b>مقارنة ومعايرة</b><br><span>مقارنة العامل بأقرانه في نفس الخدمة/الموقع لعدالة التقييم.</span></div></div>
+    <div class="card idea"><span class="ic">💵</span><div><b>ربط بربحية العقد</b><br><span>الأداء العالي = جودة أعلى وشكاوى أقل = هامش أفضل — يظهر ماليّاً.</span></div></div>
+  </div>
+</div></section>
+
+<!-- WORK ORDERS dispatch -->
+<section id="wo"><div class="wrap">
+  <div class="sh"><div class="eyebrow">أوامر العمل والتوزيع</div><h2>لوحة توزيع ذكية مع مؤقّتات SLA وإسناد آلي</h2>
+    <p>توزيع تلقائي حسب المهارة والقرب والحِمل؛ كل بطاقة تحمل مؤقّت التزامها ولونها حسب الأولوية.</p></div>
+  <div class="kan">
+    <div class="klist"><div class="kh"><span>جديدة</span><span>7</span></div>
+      <div class="kcard"><span class="st" style="background:var(--crit)"></span><h5>تسريب مياه — ط٣</h5><div class="m"><span class="chip crit">حرِج</span><span>⏱ SLA 30د</span></div></div>
+      <div class="kcard"><span class="st" style="background:var(--warn)"></span><h5>عطل تكييف — لوبي</h5><div class="m"><span>عالٍ</span><span>⏱ 2س</span></div></div>
+    </div>
+    <div class="klist"><div class="kh"><span>مُسندة</span><span>14</span></div>
+      <div class="kcard"><span class="st" style="background:var(--blue)"></span><h5>استبدال إنارة — موقف</h5><div class="m"><span>👷 راجيش</span><span>القرب: 40م</span></div></div>
+      <div class="kcard"><span class="st" style="background:var(--teal)"></span><h5>فحص مضخة حريق</h5><div class="m"><span>PPM</span><span>👷 سالم</span></div></div>
+    </div>
+    <div class="klist"><div class="kh"><span>قيد التنفيذ</span><span>9</span></div>
+      <div class="kcard"><span class="st" style="background:var(--accent)"></span><h5>تنظيف عميق — المدخل</h5><div class="m"><span>📷 قبل</span><span>65٪</span></div></div>
+    </div>
+    <div class="klist"><div class="kh"><span>بانتظار الاعتماد</span><span>5</span></div>
+      <div class="kcard"><span class="st" style="background:var(--ok)"></span><h5>صيانة مصعد B</h5><div class="m"><span class="chip ok">أُنجز</span><span>اعتماد العميل</span></div></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- PPM + asset health -->
+<section id="ppm"><div class="wrap">
+  <div class="sh"><div class="eyebrow">الصيانة الوقائية والتنبؤية</div><h2>PPM بتقويم تلقائي + صحة الأصول من الحسّاسات</h2></div>
+  <div class="grid g2">
+    <div class="card">
+      <div class="ttl"><b>تقويم الصيانة الوقائية</b><span class="s">هذا الأسبوع</span></div>
+      <svg viewBox="0 0 460 120" width="100%" height="120">
+        <g font-size="9" fill="var(--muted)" text-anchor="middle">
+          <text x="33" y="14">سبت</text><text x="99" y="14">أحد</text><text x="165" y="14">اثنين</text><text x="231" y="14">ثلاثاء</text><text x="297" y="14">أربعاء</text><text x="363" y="14">خميس</text><text x="429" y="14">جمعة</text>
+        </g>
+        <g>
+          <rect x="8" y="22" width="50" height="20" rx="4" fill="color-mix(in srgb,var(--teal) 30%,transparent)"/><text x="33" y="36" text-anchor="middle" font-size="9" fill="var(--ink)">تكييف×4</text>
+          <rect x="74" y="22" width="50" height="20" rx="4" fill="color-mix(in srgb,var(--accent) 30%,transparent)"/><text x="99" y="36" text-anchor="middle" font-size="9" fill="var(--ink)">مصاعد×2</text>
+          <rect x="140" y="22" width="50" height="20" rx="4" fill="color-mix(in srgb,var(--violet) 30%,transparent)"/><text x="165" y="36" text-anchor="middle" font-size="9" fill="var(--ink)">حريق×3</text>
+          <rect x="206" y="22" width="50" height="20" rx="4" fill="color-mix(in srgb,var(--teal) 30%,transparent)"/><text x="231" y="36" text-anchor="middle" font-size="9" fill="var(--ink)">تكييف×3</text>
+          <rect x="272" y="22" width="50" height="20" rx="4" fill="color-mix(in srgb,var(--blue) 30%,transparent)"/><text x="297" y="36" text-anchor="middle" font-size="9" fill="var(--ink)">مضخات×2</text>
+          <rect x="338" y="22" width="50" height="20" rx="4" fill="color-mix(in srgb,var(--warn) 34%,transparent)"/><text x="363" y="36" text-anchor="middle" font-size="9" fill="var(--ink)">مولّد×1</text>
+          <rect x="140" y="46" width="50" height="20" rx="4" fill="color-mix(in srgb,var(--teal) 30%,transparent)"/><text x="165" y="60" text-anchor="middle" font-size="9" fill="var(--ink)">إنارة×6</text>
+          <rect x="206" y="46" width="50" height="20" rx="4" fill="color-mix(in srgb,var(--accent) 30%,transparent)"/><text x="231" y="60" text-anchor="middle" font-size="9" fill="var(--ink)">سباكة×4</text>
+        </g>
+      </svg>
+      <p style="margin-top:6px">توليد تلقائي من دورة كل أصل (زمنية أو حسب القراءة/الساعات) — مع تسوية الحِمل على الفِرَق.</p>
+    </div>
+    <div class="card">
+      <div class="ttl"><b>صحة الأصول الحرجة</b><span class="s">مؤشر تنبؤي</span></div>
+      <div class="bars" style="margin-top:8px">
+        <div class="brow"><span>شيلر المركزي</span><div class="track"><div class="fill" style="width:91%;background:var(--ok)"></div></div><span>91</span></div>
+        <div class="brow"><span>مولّد الطوارئ</span><div class="track"><div class="fill" style="width:58%;background:var(--warn)"></div></div><span>58</span></div>
+        <div class="brow"><span>مصعد B</span><div class="track"><div class="fill" style="width:37%;background:var(--crit)"></div></div><span>37</span></div>
+        <div class="brow"><span>مضخة الحريق</span><div class="track"><div class="fill" style="width:84%;background:var(--ok)"></div></div><span>84</span></div>
+      </div>
+      <div class="al c" style="margin-top:12px"><span class="t">تنبؤ</span><div><b>مصعد B:</b> ارتفاع اهتزاز + تكرار أعطال → احتمال عطل خلال 9 أيام. جدولة صيانة استباقية موصى بها.</div></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ASSET lifecycle -->
+<section id="asset"><div class="wrap">
+  <div class="sh"><div class="eyebrow">دورة حياة الأصول</div><h2>سجل، حرجية، تكلفة ملكية، وتنبؤ بالإحلال</h2></div>
+  <div class="grid g3">
+    <div class="card"><h3><span class="ic">▣</span> سجل بأكواد QR/RFID</h3><p>كل أصل ببطاقة تُمسح ميدانياً: البيانات، الضمان، الدليل، تاريخ الصيانة، القطع.</p></div>
+    <div class="card"><h3><span class="ic">▦</span> مصفوفة الحرجية</h3><p>تصنيف الأصول حسب الأثر × الاحتمال لتوجيه أولوية الصيانة والموارد.</p></div>
+    <div class="card"><h3><span class="ic">◷</span> تكلفة الملكية (TCO)</h3><p>شراء + صيانة + طاقة + توقف — لكل أصل، لقرار الإصلاح أو الاستبدال.</p></div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <div class="ttl"><b>توقّع تكلفة الإحلال — 5 سنوات</b><span class="s">تخطيط رأسمالي (CapEx)</span></div>
+    <svg viewBox="0 0 460 130" width="100%" height="130">
+      <g stroke="var(--line)"><line x1="0" y1="100" x2="460" y2="100"/><line x1="0" y1="60" x2="460" y2="60"/><line x1="0" y1="20" x2="460" y2="20"/></g>
+      <g fill="var(--accent)">
+        <rect x="30" y="72" width="46" height="28" rx="3"/><rect x="120" y="52" width="46" height="48" rx="3"/>
+        <rect x="210" y="40" width="46" height="60" rx="3"/><rect x="300" y="64" width="46" height="36" rx="3"/><rect x="390" y="30" width="46" height="70" rx="3"/>
+      </g>
+      <g font-size="9" fill="var(--muted)" text-anchor="middle"><text x="53" y="114">2026</text><text x="143" y="114">2027</text><text x="233" y="114">2028</text><text x="323" y="114">2029</text><text x="413" y="114">2030</text></g>
+    </svg>
+  </div>
+</div></section>
+
+<!-- ASSETS = ACCOUNTING (single source) -->
+<section id="asset-acc"><div class="wrap">
+  <div class="sh"><div class="eyebrow">أصول المشروع = أصول المحاسبة</div><h2>سجل أصول واحد — لا ازدواج</h2>
+    <p>الأصل الظاهر في المشروع هو <b>نفس السجل</b> الموجود في نظام الحسابات (الأصول الثابتة). لا نُنشئ قائمة منفصلة — بل نضيف طبقة تشغيلية (موقع · QR · صيانة) فوق سجل المحاسبة نفسه.</p></div>
+
+  <!-- architecture -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="arch" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center;text-align:center">
+      <div class="box" style="flex:1;min-width:150px;border:1px solid var(--line);border-radius:12px;padding:14px;background:color-mix(in srgb,var(--teal) 10%,transparent)">
+        <div style="font-size:24px">🧮</div><b style="font-size:13px;display:block;margin-top:4px">المحاسبة — account.asset</b><p style="font-size:11.5px;color:var(--muted);margin:5px 0 0">القيمة · الإهلاك · الأصل الثابت</p></div>
+      <div style="display:grid;place-items:center;font-size:18px;color:var(--accent);font-weight:900">= <div style="font-size:9px;color:var(--muted)">نفس السجل</div></div>
+      <div class="box" style="flex:1;min-width:150px;border:1px solid var(--line);border-radius:12px;padding:14px;background:color-mix(in srgb,var(--accent) 10%,transparent)">
+        <div style="font-size:24px">🏢</div><b style="font-size:13px;display:block;margin-top:4px">المشروع — طبقة تشغيلية</b><p style="font-size:11.5px;color:var(--muted);margin:5px 0 0">الموقع · QR · الصيانة · الحرجية</p></div>
+    </div>
+    <div class="al i" style="max-width:none;margin-top:12px"><span class="t">مبدأ</span><div>أصل يُسجَّل في المحاسبة → يظهر تلقائياً في مشروعه (بالربط بالقسم/المشروع). لا إدخال مزدوج ولا اختلاف أرقام.</div></div>
+  </div>
+
+  <!-- project asset list -->
+  <div class="card">
+    <div class="ttl"><b>أصول مشروع «برج بيان»</b><span class="s">مصدرها: نظام الحسابات · عرض تشغيلي</span></div>
+    <div style="overflow-x:auto"><table class="tbl">
+      <thead><tr>
+        <th>الأصل</th><th>الفئة</th>
+        <th style="text-align:center">القيمة الدفترية 🧮</th><th style="text-align:center">الإهلاك/سنة 🧮</th>
+        <th style="text-align:center">الموقع 🏢</th><th style="text-align:center">آخر صيانة 🏢</th><th style="text-align:center">QR</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>شيلر مركزي</td><td>تكييف</td><td class="num">42,000</td><td class="num">4,200</td><td class="num">السطح</td><td class="num">قبل 12ي</td><td class="num" style="color:var(--accent)">▣</td></tr>
+        <tr><td>مصعد B</td><td>نقل رأسي</td><td class="num">28,500</td><td class="num">2,850</td><td class="num">مبنى A</td><td class="num" style="color:var(--crit)">متأخرة</td><td class="num" style="color:var(--accent)">▣</td></tr>
+        <tr><td>مولّد طوارئ</td><td>كهرباء</td><td class="num">18,000</td><td class="num">1,800</td><td class="num">القبو</td><td class="num">قبل 5ي</td><td class="num" style="color:var(--accent)">▣</td></tr>
+        <tr><td>مضخة حريق</td><td>إطفاء</td><td class="num">9,200</td><td class="num">920</td><td class="num">غرفة المضخات</td><td class="num">قبل 3ي</td><td class="num" style="color:var(--accent)">▣</td></tr>
+        <tr><td>وحدة تكييف — ط5</td><td>تكييف</td><td class="num">3,400</td><td class="num">340</td><td class="num">الدور 5</td><td class="num" style="color:var(--warn)">مستحقة</td><td class="num" style="color:var(--accent)">▣</td></tr>
+      </tbody>
+      <tfoot><tr style="font-weight:800;background:var(--surface-2)"><td colspan="2">الإجمالي (يطابق دفتر الأصول)</td><td class="num">101,100</td><td class="num">10,110</td><td colspan="3"></td></tr></tfoot>
+    </table></div>
+    <div class="legend"><span>🧮 = من نظام الحسابات (لا يُعدّل هنا)</span><span>🏢 = طبقة التشغيل (CAFM)</span></div>
+  </div>
+
+  <div class="grid g3" style="margin-top:14px">
+    <div class="card idea"><span class="ic">🔗</span><div><b>مصدر واحد للحقيقة</b><br><span>لا سجل أصول ثانٍ — المشروع والمحاسبة يقرآن نفس <code>account.asset</code>.</span></div></div>
+    <div class="card idea"><span class="ic">📍</span><div><b>ربط بالمشروع تلقائياً</b><br><span>حقل المشروع/القسم على الأصل يجعله يظهر في مشروعه دون إدخال يدوي.</span></div></div>
+    <div class="card idea"><span class="ic">🧾</span><div><b>الصيانة تغذّي التكلفة</b><br><span>تكلفة صيانة الأصل من CAFM تُجمع مع قيمته المحاسبية = تكلفة ملكية حقيقية (TCO).</span></div></div>
+  </div>
+</div></section>
+
+<!-- SPACE / floor plan -->
+<section id="space"><div class="wrap">
+  <div class="sh"><div class="eyebrow">المساحات والإشغال</div><h2>مخطط الطابق الحيّ + خريطة الإشغال الحرارية</h2>
+    <p>حالة كل منطقة (نظافة/إشغال/عطل) على المخطط مباشرةً — أساس لإدارة المساحات وتوزيع تكاليف الخدمة.</p></div>
+  <div class="grid g2">
+    <div class="card">
+      <div class="ttl"><b>مخطط الطابق — الدور الأرضي</b><span class="s">الحالة الآن</span></div>
+      <svg class="fp" viewBox="0 0 460 200" width="100%" height="200">
+        <rect x="10" y="10" width="130" height="90" rx="4" fill="color-mix(in srgb,var(--ok) 22%,transparent)"/><text class="room-lbl" x="75" y="58">اللوبي · نظيف</text>
+        <rect x="150" y="10" width="120" height="90" rx="4" fill="color-mix(in srgb,var(--warn) 24%,transparent)"/><text class="room-lbl" x="210" y="58">قاعة · إشغال عالٍ</text>
+        <rect x="280" y="10" width="170" height="45" rx="4" fill="color-mix(in srgb,var(--crit) 22%,transparent)"/><text class="room-lbl" x="365" y="36">دورات مياه · تحتاج تنظيف</text>
+        <rect x="280" y="63" width="170" height="37" rx="4" fill="color-mix(in srgb,var(--ok) 22%,transparent)"/><text class="room-lbl" x="365" y="85">مخزن</text>
+        <rect x="10" y="110" width="200" height="80" rx="4" fill="color-mix(in srgb,var(--blue) 18%,transparent)"/><text class="room-lbl" x="110" y="152">مكاتب · إشغال 62٪</text>
+        <rect x="220" y="110" width="110" height="80" rx="4" fill="color-mix(in srgb,var(--ok) 22%,transparent)"/><text class="room-lbl" x="275" y="152">ممر</text>
+        <rect x="340" y="110" width="110" height="80" rx="4" fill="color-mix(in srgb,var(--warn) 24%,transparent)"/><text class="room-lbl" x="395" y="152">مطعم · ذروة</text>
+      </svg>
+      <div class="legend"><span><i style="background:var(--ok)"></i>سليم</span><span><i style="background:var(--warn)"></i>انتباه</span><span><i style="background:var(--crit)"></i>إجراء مطلوب</span><span><i style="background:var(--blue)"></i>إشغال</span></div>
+    </div>
+    <div class="card">
+      <div class="ttl"><b>إشغال الطوابق × الساعة</b><span class="s">خريطة حرارية</span></div>
+      <svg viewBox="0 0 460 180" width="100%" height="180">
+        <g font-size="8" fill="var(--muted)"><text x="6" y="34">ط5</text><text x="6" y="64">ط4</text><text x="6" y="94">ط3</text><text x="6" y="124">ط2</text><text x="6" y="154">ط1</text></g>
+        <g><!-- rows of cells -->
+          <!-- generate a 5x10 heat grid -->
+          <g transform="translate(28,20)">
+            <!-- row helper via manual rects, opacity as intensity -->
+            <g fill="var(--accent)">
+              <rect x="0" y="0" width="40" height="26" opacity=".2"/><rect x="42" y="0" width="40" height="26" opacity=".35"/><rect x="84" y="0" width="40" height="26" opacity=".6"/><rect x="126" y="0" width="40" height="26" opacity=".8"/><rect x="168" y="0" width="40" height="26" opacity=".7"/><rect x="210" y="0" width="40" height="26" opacity=".55"/><rect x="252" y="0" width="40" height="26" opacity=".4"/><rect x="294" y="0" width="40" height="26" opacity=".3"/><rect x="336" y="0" width="40" height="26" opacity=".5"/><rect x="378" y="0" width="40" height="26" opacity=".25"/>
+            </g>
+            <g fill="var(--accent)" transform="translate(0,30)">
+              <rect x="0" y="0" width="40" height="26" opacity=".3"/><rect x="42" y="0" width="40" height="26" opacity=".5"/><rect x="84" y="0" width="40" height="26" opacity=".85"/><rect x="126" y="0" width="40" height="26" opacity=".95"/><rect x="168" y="0" width="40" height="26" opacity=".9"/><rect x="210" y="0" width="40" height="26" opacity=".7"/><rect x="252" y="0" width="40" height="26" opacity=".5"/><rect x="294" y="0" width="40" height="26" opacity=".4"/><rect x="336" y="0" width="40" height="26" opacity=".6"/><rect x="378" y="0" width="40" height="26" opacity=".35"/>
+            </g>
+            <g fill="var(--accent)" transform="translate(0,60)">
+              <rect x="0" y="0" width="40" height="26" opacity=".25"/><rect x="42" y="0" width="40" height="26" opacity=".4"/><rect x="84" y="0" width="40" height="26" opacity=".7"/><rect x="126" y="0" width="40" height="26" opacity=".85"/><rect x="168" y="0" width="40" height="26" opacity=".8"/><rect x="210" y="0" width="40" height="26" opacity=".6"/><rect x="252" y="0" width="40" height="26" opacity=".45"/><rect x="294" y="0" width="40" height="26" opacity=".3"/><rect x="336" y="0" width="40" height="26" opacity=".5"/><rect x="378" y="0" width="40" height="26" opacity=".2"/>
+            </g>
+            <g fill="var(--accent)" transform="translate(0,90)">
+              <rect x="0" y="0" width="40" height="26" opacity=".2"/><rect x="42" y="0" width="40" height="26" opacity=".3"/><rect x="84" y="0" width="40" height="26" opacity=".5"/><rect x="126" y="0" width="40" height="26" opacity=".6"/><rect x="168" y="0" width="40" height="26" opacity=".55"/><rect x="210" y="0" width="40" height="26" opacity=".45"/><rect x="252" y="0" width="40" height="26" opacity=".35"/><rect x="294" y="0" width="40" height="26" opacity=".25"/><rect x="336" y="0" width="40" height="26" opacity=".4"/><rect x="378" y="0" width="40" height="26" opacity=".18"/>
+            </g>
+            <g fill="var(--accent)" transform="translate(0,120)">
+              <rect x="0" y="0" width="40" height="26" opacity=".35"/><rect x="42" y="0" width="40" height="26" opacity=".55"/><rect x="84" y="0" width="40" height="26" opacity=".9"/><rect x="126" y="0" width="40" height="26" opacity="1"/><rect x="168" y="0" width="40" height="26" opacity=".95"/><rect x="210" y="0" width="40" height="26" opacity=".75"/><rect x="252" y="0" width="40" height="26" opacity=".55"/><rect x="294" y="0" width="40" height="26" opacity=".45"/><rect x="336" y="0" width="40" height="26" opacity=".65"/><rect x="378" y="0" width="40" height="26" opacity=".4"/>
+            </g>
+          </g>
+        </g>
+        <g font-size="8" fill="var(--faint)"><text x="28" y="178">٦ص</text><text x="240" y="178">١ظ</text><text x="430" y="178">٩م</text></g>
+      </svg>
+    </div>
+  </div>
+</div></section>
+
+<!-- QR LOCATION SYSTEM -->
+<section id="qr"><div class="wrap">
+  <div class="sh"><div class="eyebrow">نظام الـ QR للمواقع وإثبات الحضور</div><h2>كل مكان له كود… والمسح يقود كل شيء</h2>
+    <p>لكل عميل: مبانٍ وأدوار وغرف/مكاتب — كلٌّ بكود QR. المسح يحدّد الموقع، ويربط المشكلة بمكانها، ويُثبت حضور العامل، ويبدأ عدّاد قياس مدة الإصلاح.</p></div>
+
+  <div class="grid" style="grid-template-columns:340px 1fr;gap:14px">
+    <!-- location tree -->
+    <div class="card">
+      <div class="ttl"><b>هيكل مواقع العميل</b><span class="s">مبانٍ · أدوار · غرف</span></div>
+      <div class="loctree">
+        <div class="lv l1"><span style="font-size:16px">🏢</span><span class="nm">برج بيان (العميل)</span></div>
+        <div class="lv l2"><span>▸</span><span class="nm">مبنى A</span></div>
+        <div class="lv l3"><span>▸</span><span class="nm">الدور الأرضي</span><span class="qrtag">▣ QR</span></div>
+        <div class="lv l4"><span>•</span><span>اللوبي</span><span class="qrtag">▣ QR</span></div>
+        <div class="lv l4"><span>•</span><span>الاستقبال</span><span class="qrtag">▣ QR</span></div>
+        <div class="lv l4"><span>•</span><span>دورات المياه</span><span class="qrtag">▣ QR</span></div>
+        <div class="lv l3"><span>▸</span><span class="nm">الدور 3</span><span class="qrtag">▣ QR</span></div>
+        <div class="lv l4"><span>•</span><span>مكتب 301</span><span class="qrtag">▣ QR</span></div>
+        <div class="lv l4"><span>•</span><span>غرفة الكهرباء</span><span class="qrtag">▣ QR</span></div>
+        <div class="lv l2"><span>▸</span><span class="nm">مبنى B</span><span style="color:var(--faint);font-size:11px">… 4 أدوار</span></div>
+      </div>
+      <p style="margin-top:10px;font-size:12px;color:var(--muted)">ملصق QR/NFC لكل مكان — يُطبع ويُلصق، ويربط بسجل المكان وأصوله وتاريخه.</p>
+    </div>
+
+    <!-- scan glyph + who-is-where -->
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="card">
+        <div class="ttl"><b>«من أين الآن؟» — من مسح المواقع</b><span class="s">تحديث حيّ</span></div>
+        <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+          <svg class="qr" viewBox="0 0 44 44" width="66" height="66" style="flex:none">
+            <rect width="44" height="44" rx="6" fill="#fff"/>
+            <g fill="#0b1220" fill-rule="evenodd">
+              <path d="M6 6h12v12H6z M9 9h6v6H9z"/><path d="M26 6h12v12H26z M29 9h6v6h-6z"/><path d="M6 26h12v12H6z M9 29h6v6H9z"/>
+            </g>
+            <g fill="#0b1220"><rect x="22" y="8" width="2.6" height="2.6"/><rect x="22" y="14" width="2.6" height="2.6"/><rect x="24" y="22" width="2.6" height="2.6"/><rect x="30" y="24" width="2.6" height="2.6"/><rect x="34" y="22" width="2.6" height="2.6"/><rect x="22" y="30" width="2.6" height="2.6"/><rect x="28" y="30" width="2.6" height="2.6"/><rect x="34" y="30" width="2.6" height="2.6"/><rect x="22" y="36" width="2.6" height="2.6"/><rect x="9" y="22" width="2.6" height="2.6"/><rect x="15" y="22" width="2.6" height="2.6"/></g>
+          </svg>
+          <div style="flex:1;min-width:220px" class="feed">
+            <div class="al ok" style="border-color:var(--ok)"><span class="t">الآن</span><div>🧹 <b>محمد سوروج</b> — يصلح بدورات مياه ط1 · العدّاد يعمل</div></div>
+            <div class="al i"><span class="t">4د</span><div>🛡️ <b>سالم</b> — الدور 3 مكتب 305 (آخر مسح)</div></div>
+            <div class="al i"><span class="t">12د</span><div>🧹 <b>راجيش</b> — اللوبي</div></div>
+            <div class="al w"><span class="t">—</span><div>❄️ <b>أنيل</b> — لم يمسح منذ 40د · تنبيه موقع غير معروف</div></div>
+          </div>
+        </div>
+      </div>
+      <!-- active task timer -->
+      <div class="card">
+        <div class="ttl"><b>عدّاد مهمة نشِط</b><span class="s">WO-4821 · تسريب مياه</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+          <div><div class="timer">00:08:32</div><div style="font-size:12px;color:var(--muted)">منذ مسح الحضور بالموقع · الهدف SLA 30د</div></div>
+          <div class="bars" style="min-width:180px;flex:1">
+            <div class="brow"><span>الاستجابة</span><div class="track"><div class="fill" style="width:100%;background:var(--ok)"></div></div><span>✔</span></div>
+            <div class="brow"><span>الإصلاح</span><div class="track"><div class="fill" style="width:28%;background:var(--teal)"></div></div><span>28٪</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- the 4-step scan flow -->
+  <h3 style="margin:22px 0 12px;font-size:17px">مسار المسح — أربع لحظات يقودها الـ QR</h3>
+  <div class="scanflow">
+    <div class="sf"><div class="sn">1</div><h4>التنقّل بين الأدوار</h4><p>العضو يمسح QR الدور/الغرفة عند وصوله → موقعه يتحدّث تلقائياً في «من أين الآن؟».</p></div>
+    <div class="sf"><div class="sn">2</div><h4>تحديد موقع المشكلة</h4><p>عند كتابة ملاحظة/بلاغ، يمسح QR المكان → البلاغ مربوط بالموقع بدقة (لا لبس).</p></div>
+    <div class="sf"><div class="sn">3</div><h4>إثبات حضور العامل</h4><p>قبل بدء الإصلاح، يمسح العامل QR الموقع → يُثبت وجوده فعلياً في المكان الصحيح.</p></div>
+    <div class="sf"><div class="sn">4</div><h4>عدّاد مدة الإصلاح</h4><p>لحظة المسح يبدأ العدّاد ويتوقف عند «تم» → قياس دقيق لزمن الإصلاح (MTTR) وSLA.</p></div>
+  </div>
+
+  <!-- time on task analytics -->
+  <div class="card" style="margin-top:14px">
+    <div class="ttl"><b>تحليل زمن المهام حسب النوع</b><span class="s">متوسط من عدّادات المسح — دقيقة</span></div>
+    <div class="bars" style="margin-top:8px">
+      <div class="brow"><span>تسريب مياه</span><div class="track"><div class="fill" style="width:52%"></div></div><span>26</span></div>
+      <div class="brow"><span>عطل إنارة</span><div class="track"><div class="fill" style="width:24%;background:var(--ok)"></div></div><span>12</span></div>
+      <div class="brow"><span>تنظيف طارئ</span><div class="track"><div class="fill" style="width:34%;background:var(--teal)"></div></div><span>17</span></div>
+      <div class="brow"><span>عطل تكييف</span><div class="track"><div class="fill" style="width:88%;background:var(--warn)"></div></div><span>44</span></div>
+    </div>
+    <div class="al i" style="margin-top:10px"><span class="t">رؤية</span><div>زمن أعطال التكييف أعلى من المستهدف → مراجعة قطع الغيار أو مهارة الفريق. البيانات كلها من مسح الـQR الفعلي.</div></div>
+  </div>
+
+  <!-- my ideas -->
+  <h3 style="margin:22px 0 12px;font-size:17px">أفكار من عندي لتطوير الفكرة</h3>
+  <div class="grid g3">
+    <div class="card idea"><span class="ic">◎</span><div><b>مسح مضاد للتلاعب</b><br><span>قبول المسح فقط داخل نطاق الموقع (GPS/Geofence) وبطابع زمني — لا حضور وهمي.</span></div></div>
+    <div class="card idea"><span class="ic">📴</span><div><b>NFC + عمل دون إنترنت</b><br><span>ملصقات NFC بلا بطارية للّمس السريع، وطابور مسح يُرفع عند عودة الشبكة.</span></div></div>
+    <div class="card idea"><span class="ic">🧾</span><div><b>سجل رقمي لكل غرفة</b><br><span>مسح QR يفتح تاريخ المكان: آخر تنظيف/صيانة، الأصول، البلاغات — دفتر حيّ.</span></div></div>
+    <div class="card idea"><span class="ic">🧹</span><div><b>إثبات التنظيف بالتردد</b><br><span>مسح عند دخول/خروج كل منطقة → إثبات التنظيف والالتزام بعدد المرات المتعاقد عليها.</span></div></div>
+    <div class="card idea"><span class="ic">⏱</span><div><b>تنبيه تجاوز الزمن</b><br><span>إذا تجاوز العدّاد المدة المتوقعة للمهمة → تصعيد تلقائي للمشرف.</span></div></div>
+    <div class="card idea"><span class="ic">📣</span><div><b>QR عام للعميل/الزائر</b><br><span>ملصق «بلّغ عن مشكلة» في كل مكان — يمسحه أي شخص فيُنشئ بلاغاً مربوطاً بالموقع فوراً.</span></div></div>
+    <div class="card idea"><span class="ic">🛡️</span><div><b>نقاط دورية موحّدة</b><br><span>نفس ملصقات QR تخدم دوريات الأمن (نقاط تفتيش) وجولات الجودة.</span></div></div>
+    <div class="card idea"><span class="ic">📊</span><div><b>إنتاجية وتكلفة حقيقية</b><br><span>زمن المسح يعطي إنتاجية العامل وتكلفة المهمة الفعلية — لتسعير أدق للعقود.</span></div></div>
+    <div class="card idea"><span class="ic">🔥</span><div><b>خريطة مشاكل حسب المكان</b><br><span>تجميع البلاغات على مستوى الغرفة → كشف المواقع الأكثر أعطالاً لمعالجة جذرية.</span></div></div>
+  </div>
+</div></section>
+
+<!-- ENERGY -->
+<section id="energy"><div class="wrap">
+  <div class="sh"><div class="eyebrow">الطاقة والاستدامة (ESG)</div><h2>عدّادات، بصمة كربونية، ومقارنة معيارية</h2></div>
+  <div class="dash">
+    <div class="w col6">
+      <div class="ttl"><b>استهلاك الكهرباء — كيلوواط/ساعة</b><span class="s">هذا العام مقابل الماضي</span></div>
+      <svg viewBox="0 0 460 140" width="100%" height="140">
+        <g stroke="var(--line)"><line x1="0" y1="35" x2="460" y2="35"/><line x1="0" y1="75" x2="460" y2="75"/><line x1="0" y1="115" x2="460" y2="115"/></g>
+        <polyline points="0,60 46,66 92,54 138,70 184,58 230,78 276,64 322,84 368,72 414,92 460,86" fill="none" stroke="var(--faint)" stroke-width="2" stroke-dasharray="4 3"/>
+        <polygon points="0,74 46,82 92,70 138,88 184,78 230,96 276,86 322,104 368,96 414,110 460,106 460,140 0,140" fill="color-mix(in srgb,var(--teal) 14%,transparent)"/>
+        <polyline points="0,74 46,82 92,70 138,88 184,78 230,96 276,86 322,104 368,96 414,110 460,106" fill="none" stroke="var(--teal)" stroke-width="2.5"/>
+      </svg>
+      <div class="legend"><span><i style="background:var(--teal)"></i>هذا العام (-12٪)</span><span><i style="background:var(--faint)"></i>العام الماضي</span></div>
+    </div>
+    <div class="w col3"><div class="ttl"><b>البصمة الكربونية</b></div><div class="big">184<span style="font-size:14px"> طن CO₂</span></div><p style="color:var(--ok);font-size:12.5px;margin-top:4px">▼ 9٪ عن الربع السابق</p><div class="bars" style="margin-top:10px"><div class="brow"><span>كهرباء</span><div class="track"><div class="fill" style="width:70%"></div></div><span>70٪</span></div><div class="brow"><span>وقود مركبات</span><div class="track"><div class="fill" style="width:22%"></div></div><span>22٪</span></div><div class="brow"><span>مياه</span><div class="track"><div class="fill" style="width:8%"></div></div><span>8٪</span></div></div></div>
+    <div class="w col3"><div class="ttl"><b>مقارنة معيارية</b><span class="s">kWh/م²</span></div>
+      <svg viewBox="0 0 120 110" width="120" height="110" style="margin:2px auto">
+        <circle cx="60" cy="60" r="42" fill="none" stroke="var(--line)" stroke-width="12"/>
+        <circle cx="60" cy="60" r="42" fill="none" stroke="var(--ok)" stroke-width="12" stroke-linecap="round" stroke-dasharray="263.8" stroke-dashoffset="79" transform="rotate(-90 60 60)"/>
+        <text x="60" y="56" text-anchor="middle" font-size="19" font-weight="900" fill="var(--ink)">أفضل</text>
+        <text x="60" y="74" text-anchor="middle" font-size="8.5" fill="var(--muted)">-18٪ عن المتوسط</text>
+      </svg>
+    </div>
+  </div>
+</div></section>
+
+<!-- IOT + Alerts -->
+<section id="iot"><div class="wrap">
+  <div class="sh"><div class="eyebrow">حسّاسات IoT ومركز التنبيهات</div><h2>ربط BMS/IoT — والنظام يتحرّك قبل أن يتصل العميل</h2></div>
+  <div class="grid g2">
+    <div class="card">
+      <div class="ttl"><b>الحسّاسات الحيّة</b><span class="s">87 متصل</span></div>
+      <div class="sensors">
+        <div class="sen"><div class="lab">حرارة — سيرفر</div><div class="v" style="color:var(--crit)">28°</div><span class="chip crit">فوق الحد</span></div>
+        <div class="sen"><div class="lab">جودة هواء</div><div class="v" style="color:var(--ok)">Good</div></div>
+        <div class="sen"><div class="lab">استهلاك مياه</div><div class="v">3.4<span style="font-size:11px">م³/س</span></div></div>
+        <div class="sen"><div class="lab">تسرّب — قبو</div><div class="v" style="color:var(--warn)">رطوبة</div><span class="chip warn">إنذار</span></div>
+        <div class="sen"><div class="lab">إشغال واش. ط2</div><div class="v">142</div><span class="lab">زيارة/اليوم</span></div>
+        <div class="sen"><div class="lab">صابون — ديسبنسر</div><div class="v" style="color:var(--warn)">12٪</div><span class="chip warn">إعادة تعبئة</span></div>
+        <div class="sen"><div class="lab">حركة — مخزن</div><div class="v" style="color:var(--ok)">آمن</div></div>
+        <div class="sen"><div class="lab">طاقة المولّد</div><div class="v">78٪</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ttl"><b>مركز التنبيهات</b><span class="s"><span class="dot pulse" style="background:var(--crit)"></span> 3 حرجة</span></div>
+      <div class="feed">
+        <div class="al c"><span class="t">لحظي</span><div>🌡️ <b>حرارة السيرفر 28°</b> — أُنشئ أمر عمل طارئ تلقائياً وأُسند لفنّي التكييف.</div></div>
+        <div class="al c"><span class="t">2د</span><div>💧 <b>تسرّب بالقبو</b> — إشعار المشرف + إغلاق تلقائي مقترح للمحبس.</div></div>
+        <div class="al w"><span class="t">6د</span><div>🧼 صابون واش. ط2 عند 12٪ — أمر إعادة تعبئة للعامل.</div></div>
+        <div class="al w"><span class="t">18د</span><div>⏱ أمر عمل #4821 اقترب من تجاوز SLA — تصعيد للمشرف.</div></div>
+        <div class="al i"><span class="t">32د</span><div>📈 إشغال دورات المياه فوق المعتاد — جدولة تنظيف إضافي.</div></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- AI -->
+<section id="ai"><div class="wrap">
+  <div class="sh"><div class="eyebrow">الذكاء الاصطناعي والتحليلات</div><h2>من ردّ الفعل إلى الاستباق</h2></div>
+  <div class="grid g3">
+    <div class="card idea"><span class="ic">◈</span><div><b>صيانة تنبؤية</b><br><span>تحليل الأعطال والقراءات للتنبؤ بالعطل قبل وقوعه (كمصعد B أعلاه).</span></div></div>
+    <div class="card idea"><span class="ic">⚠</span><div><b>كشف الشذوذ</b><br><span>قفزة استهلاك أو نمط غير معتاد → تنبيه فوري قبل أن يصبح عطلاً.</span></div></div>
+    <div class="card idea"><span class="ic">⇄</span><div><b>تصنيف وتوجيه تلقائي</b><br><span>الطلب النصّي/الصوتي يُصنَّف ويُسند للفريق الصحيح تلقائياً.</span></div></div>
+    <div class="card idea"><span class="ic">💬</span><div><b>مساعد ذكي للعميل/الفنّي</b><br><span>«ما حالة بلاغي؟» · «أقرب فنّي متاح؟» — إجابات فورية.</span></div></div>
+    <div class="card idea"><span class="ic">👁</span><div><b>رؤية حاسوبية للجودة</b><br><span>تحليل صور «قبل/بعد» لاكتشاف بقع أو نواقص تلقائياً.</span></div></div>
+    <div class="card idea"><span class="ic">◔</span><div><b>تنبؤ بتجاوز SLA</b><br><span>مؤشر مبكّر للأوامر المرشّحة للتأخّر لتحريك الموارد استباقياً.</span></div></div>
+  </div>
+</div></section>
+
+<!-- KPI LIBRARY -->
+<section id="kpi"><div class="wrap">
+  <div class="sh"><div class="eyebrow">مكتبة المؤشرات</div><h2>عشرات الـ KPIs جاهزة للوحاتكم</h2>
+    <p>لكل دور لوحته: تنفيذي، تشغيلي، جودة، مالي، استدامة. أمثلة:</p></div>
+  <div class="klib">
+    <div class="kb"><div class="kn">96.4٪</div><div class="kl">التزام SLA</div><div class="kt" style="color:var(--ok)">▲ 1.2٪</div></div>
+    <div class="kb"><div class="kn">2.4<span style="font-size:13px">س</span></div><div class="kl">متوسط زمن الاستجابة</div><div class="kt" style="color:var(--ok)">▼ 12د</div></div>
+    <div class="kb"><div class="kn">18.6<span style="font-size:13px">س</span></div><div class="kl">متوسط زمن الإصلاح (MTTR)</div><div class="kt" style="color:var(--ok)">▼</div></div>
+    <div class="kb"><div class="kn">99.1٪</div><div class="kl">جاهزية الأصول (Uptime)</div><div class="kt" style="color:var(--ok)">مستقر</div></div>
+    <div class="kb"><div class="kn">84٪</div><div class="kl">إنجاز PPM في موعده</div><div class="kt" style="color:var(--warn)">▼ 3٪</div></div>
+    <div class="kb"><div class="kn">1.4٪</div><div class="kl">إعادة فتح الأوامر</div><div class="kt" style="color:var(--ok)">جيد</div></div>
+    <div class="kb"><div class="kn">4.6/5</div><div class="kl">رضا العميل (CSAT)</div><div class="kt" style="color:var(--ok)">▲</div></div>
+    <div class="kb"><div class="kn">+52</div><div class="kl">صافي الترويج (NPS)</div><div class="kt" style="color:var(--ok)">▲ 6</div></div>
+    <div class="kb"><div class="kn">92٪</div><div class="kl">التزام الجولات الأمنية</div><div class="kt" style="color:var(--warn)">▼</div></div>
+    <div class="kb"><div class="kn">88٪</div><div class="kl">درجة تدقيق النظافة</div><div class="kt" style="color:var(--ok)">▲ 2</div></div>
+    <div class="kb"><div class="kn">-12٪</div><div class="kl">استهلاك الطاقة/م²</div><div class="kt" style="color:var(--ok)">تحسّن</div></div>
+    <div class="kb"><div class="kn">7.2<span style="font-size:12px">د.ك/أمر</span></div><div class="kl">تكلفة الأمر الواحد</div><div class="kt" style="color:var(--ok)">▼</div></div>
+    <div class="kb"><div class="kn">96٪</div><div class="kl">تغطية النقاط (بصمة)</div><div class="kt" style="color:var(--warn)">فجوتان</div></div>
+    <div class="kb"><div class="kn">3</div><div class="kl">حوادث سلامة/شهر</div><div class="kt" style="color:var(--ok)">▼ 2</div></div>
+    <div class="kb"><div class="kn">184<span style="font-size:12px">طن</span></div><div class="kl">بصمة كربونية</div><div class="kt" style="color:var(--ok)">▼ 9٪</div></div>
+    <div class="kb"><div class="kn">23٪</div><div class="kl">هامش ربح العقد</div><div class="kt" style="color:var(--ok)">▲ 1.5</div></div>
+  </div>
+</div></section>
+
+<!-- ANALYTICS / REPORT BUILDER -->
+<section id="bi"><div class="wrap">
+  <div class="sh"><div class="eyebrow">التحليلات وباني التقارير</div><h2>من البيانات إلى القرار — تقارير تُبنى بلا برمجة</h2>
+    <p>اسحب وأفلت لبناء أي تقرير، تعمّق من الرقم إلى الأمر الواحد، وجدول الإرسال التلقائي للإدارة والعميل.</p></div>
+  <div class="grid g3">
+    <div class="card"><h3><span class="ic">🧱</span> باني تقارير بالسحب</h3><p>اختر المقاييس والأبعاد والفلاتر → جدول/رسم/محوري جاهز، واحفظه كقالب.</p></div>
+    <div class="card"><h3><span class="ic">🔎</span> تعمّق (Drill-down)</h3><p>من KPI المحفظة → العقد → الموقع → الأصل → الأمر الواحد بنقرات.</p></div>
+    <div class="card"><h3><span class="ic">🗓️</span> تقارير مجدولة</h3><p>إرسال آلي (يومي/أسبوعي/شهري) للإدارة والعميل — PDF/Excel بالبريد أو البوابة.</p></div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <div class="ttl"><b>مثال: أداء الخدمات عبر المواقع</b><span class="s">قابل للتصدير · PDF · Excel · API</span></div>
+    <div style="overflow-x:auto"><table class="matrix">
+      <thead><tr><th style="text-align:start">الخدمة \ الموقع</th><th>بيان</th><th>الأفنيوز</th><th>مبارك</th><th>الجهراء</th><th>المتوسط</th></tr></thead>
+      <tbody>
+        <tr><td class="svc-name">🧹 النظافة</td><td class="yes">97</td><td class="yes">95</td><td>90</td><td style="color:var(--crit)">82</td><td class="yes">91</td></tr>
+        <tr><td class="svc-name">🛡️ الأمن</td><td class="yes">98</td><td>93</td><td class="yes">96</td><td>—</td><td class="yes">96</td></tr>
+        <tr><td class="svc-name">❄️ التكييف</td><td class="yes">99</td><td>—</td><td style="color:var(--warn)">86</td><td class="yes">94</td><td class="yes">93</td></tr>
+      </tbody>
+    </table></div>
+    <div class="legend"><span><i style="background:var(--accent)"></i>تصدير PDF/Excel</span><span><i style="background:var(--teal)"></i>API للبيانات</span><span><i style="background:var(--blue)"></i>لوحة مباشرة للعميل</span></div>
+  </div>
+</div></section>
+
+<!-- MOBILE -->
+<section id="mobile"><div class="wrap">
+  <div class="sh"><div class="eyebrow">تطبيقات الموبايل</div><h2>فنّي · مشرف · عميل — بلا إنترنت وبإثبات كامل</h2></div>
+  <div class="phones">
+    <div class="phone"><div class="bar"><span>٩:٤١</span><span>الفنّي</span><span>📶🔋</span></div>
+      <div class="scr"><div class="hd">مهامّي <span class="chip warn">3</span></div><div class="bd">
+        <div class="rowc"><span class="st" style="background:var(--crit)"></span><h5>تسريب مياه — ط٣</h5><div class="m"><span class="chip crit">حرِج</span><span>⏱ 30د</span></div></div>
+        <div class="rowc"><span class="st" style="background:var(--teal)"></span><h5>فحص مضخة (PPM)</h5><div class="m"><span>امسح QR الأصل</span></div></div>
+        <div class="rowc"><span class="st" style="background:var(--ok)"></span><h5>إنارة موقف</h5><div class="m"><span class="chip ok">أُنجز 📷</span></div></div>
+        <button class="btn-sm">＋ بلاغ / طلب قطعة</button>
+      </div></div></div>
+    <div class="phone"><div class="bar"><span>٩:٤١</span><span>المشرف</span><span>📶🔋</span></div>
+      <div class="scr"><div class="hd">الموقع الآن <span class="chip warn">فجوة</span></div><div class="bd">
+        <div class="rowc"><span class="st" style="background:var(--crit)"></span><h5>🚨 تسرّب بالقبو</h5><div class="m"><span>حسّاس · قبل 2د</span></div></div>
+        <div class="rowc"><span class="st" style="background:var(--ok)"></span><h5>الحضور: 22/24</h5><div class="m"><span>بصمة حيّة</span></div></div>
+        <div class="rowc"><span class="st" style="background:var(--accent)"></span><h5>رصد ملاحظة جودة</h5><div class="m"><span>+ موعد + مسؤول</span></div></div>
+        <button class="btn-sm">إسناد مهمة سريعة</button>
+      </div></div></div>
+    <div class="phone"><div class="bar"><span>٩:٤١</span><span>العميل</span><span>📶🔋</span></div>
+      <div class="scr"><div class="hd">عقدي <span class="chip ok">96٪ SLA</span></div><div class="bd">
+        <div class="rowc"><span class="st" style="background:var(--ok)"></span><h5>بلاغاتي (2 مفتوحة)</h5><div class="m"><span>تتبّع لحظي</span></div></div>
+        <div class="rowc"><span class="st" style="background:var(--blue)"></span><h5>مصعد B — قيد الإصلاح</h5><div class="m"><span>الإنجاز المتوقع 11:30</span></div></div>
+        <div class="rowc"><span class="st" style="background:var(--accent)"></span><h5>قيّم الخدمة الأخيرة</h5><div class="m"><span>★★★★☆</span></div></div>
+        <button class="btn-sm">＋ طلب خدمة جديد</button>
+      </div></div></div>
+  </div>
+</div></section>
+
+<!-- HELPDESK omnichannel -->
+<section id="helpdesk"><div class="wrap">
+  <div class="sh"><div class="eyebrow">مكتب الخدمة متعدد القنوات</div><h2>طلب واحد… من أي قناة</h2>
+    <p>يستقبل الطلبات من كل القنوات ويوحّدها في مسار واحد بتصنيف وأولوية تلقائيين.</p></div>
+  <div class="grid g2">
+    <div class="card">
+      <div class="ttl"><b>قنوات الاستقبال</b><span class="s">آخر 30 يوم</span></div>
+      <div class="bars" style="margin-top:8px">
+        <div class="brow"><span>بوابة العميل</span><div class="track"><div class="fill" style="width:38%"></div></div><span>38٪</span></div>
+        <div class="brow"><span>واتساب</span><div class="track"><div class="fill" style="width:24%;background:var(--ok)"></div></div><span>24٪</span></div>
+        <div class="brow"><span>مسح QR بالموقع</span><div class="track"><div class="fill" style="width:16%;background:var(--teal)"></div></div><span>16٪</span></div>
+        <div class="brow"><span>بريد إلكتروني</span><div class="track"><div class="fill" style="width:12%;background:var(--violet)"></div></div><span>12٪</span></div>
+        <div class="brow"><span>هاتف/كول سنتر</span><div class="track"><div class="fill" style="width:10%;background:var(--blue)"></div></div><span>10٪</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ttl"><b>قمع معالجة التذاكر</b><span class="s">اليوم</span></div>
+      <svg viewBox="0 0 460 130" width="100%" height="130">
+        <g font-size="10" fill="var(--ink)" font-weight="700" text-anchor="middle">
+          <rect x="30" y="18" width="400" height="20" rx="4" fill="color-mix(in srgb,var(--accent) 55%,transparent)"/><text x="230" y="32">وردت — 148</text>
+          <rect x="70" y="44" width="320" height="20" rx="4" fill="color-mix(in srgb,var(--accent) 42%,transparent)"/><text x="230" y="58">صُنّفت وأُسندت — 141</text>
+          <rect x="115" y="70" width="230" height="20" rx="4" fill="color-mix(in srgb,var(--accent) 30%,transparent)"/><text x="230" y="84">جارية — 96</text>
+          <rect x="160" y="96" width="140" height="20" rx="4" fill="color-mix(in srgb,var(--ok) 40%,transparent)"/><text x="230" y="110">أُغلقت اليوم — 112</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+</div></section>
+
+<!-- CONTRACTOR + PTW -->
+<section id="contractor"><div class="wrap">
+  <div class="sh"><div class="eyebrow">المقاولون وتصاريح العمل</div><h2>مقاول مُقيَّم… ولا عمل خطِر بلا تصريح</h2></div>
+  <div class="grid g2">
+    <div class="card">
+      <div class="ttl"><b>بطاقات أداء المقاولين</b><span class="s">تقييم مركّب</span></div>
+      <div class="bars" style="margin-top:8px">
+        <div class="brow"><span>الخليج للمصاعد</span><div class="track"><div class="fill" style="width:92%;background:var(--ok)"></div></div><span>A</span></div>
+        <div class="brow"><span>تكييف المستقبل</span><div class="track"><div class="fill" style="width:78%;background:var(--warn)"></div></div><span>B</span></div>
+        <div class="brow"><span>نور للسباكة</span><div class="track"><div class="fill" style="width:61%;background:var(--warn)"></div></div><span>C</span></div>
+        <div class="brow"><span>الرواد للكهرباء</span><div class="track"><div class="fill" style="width:44%;background:var(--crit)"></div></div><span>D</span></div>
+      </div>
+      <p style="margin-top:8px">التقييم من: الالتزام بالزمن + الجودة + التكلفة + السلامة + رخص سارية.</p>
+    </div>
+    <div class="card">
+      <div class="ttl"><b>تصريح عمل (Permit-to-Work)</b><span class="s">PTW-2026-0342</span></div>
+      <div class="feed">
+        <div class="al i"><span class="t">1</span><div><b>نوع العمل:</b> أعمال ساخنة (لحام) — سطح المبنى</div></div>
+        <div class="al i"><span class="t">2</span><div><b>تقييم المخاطر:</b> ✔ مرفق · معدات الإطفاء ✔ · عزل ✔</div></div>
+        <div class="al w"><span class="t">3</span><div><b>الاعتماد:</b> مشرف السلامة ✔ · مدير الموقع ⏳ بانتظار</div></div>
+        <div class="al c"><span class="t">4</span><div><b>صلاحية:</b> 6 ساعات فقط — إغلاق إجباري بعد الانتهاء + تفتيش</div></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- INVENTORY + PROCUREMENT + FLEET -->
+<section id="ops"><div class="wrap">
+  <div class="sh"><div class="eyebrow">المخزون والمشتريات والأسطول</div><h2>لا يتوقّف العمل بسبب قطعة ناقصة</h2></div>
+  <div class="dash">
+    <div class="w col5">
+      <div class="ttl"><b>قطع الغيار — مستوى المخزون</b><span class="s">إعادة طلب تلقائي</span></div>
+      <div class="bars" style="margin-top:8px">
+        <div class="brow"><span>فلاتر تكييف</span><div class="track"><div class="fill" style="width:82%;background:var(--ok)"></div></div><span>82</span></div>
+        <div class="brow"><span>مصابيح LED</span><div class="track"><div class="fill" style="width:24%;background:var(--warn)"></div></div><span>24</span></div>
+        <div class="brow"><span>صمّامات مياه</span><div class="track"><div class="fill" style="width:9%;background:var(--crit)"></div></div><span>9</span></div>
+        <div class="brow"><span>مواد تنظيف</span><div class="track"><div class="fill" style="width:64%;background:var(--ok)"></div></div><span>64</span></div>
+      </div>
+      <div class="al w" style="margin-top:10px"><span class="t">آلي</span><div>صمّامات المياه تحت حد الأمان → أُنشئ أمر شراء <b>PO-1188</b> تلقائياً.</div></div>
+    </div>
+    <div class="w col3"><div class="ttl"><b>أوامر الشراء</b></div><div class="big">14</div><p style="font-size:12.5px;color:var(--muted)">قيد الاعتماد</p>
+      <div class="bars" style="margin-top:10px"><div class="brow"><span>معتمدة</span><div class="track"><div class="fill" style="width:70%;background:var(--ok)"></div></div><span>32</span></div><div class="brow"><span>مستلمة</span><div class="track"><div class="fill" style="width:55%;background:var(--teal)"></div></div><span>26</span></div></div></div>
+    <div class="w col4"><div class="ttl"><b>أسطول الصيانة</b><span class="s">18 مركبة</span></div>
+      <div class="sensors" style="grid-template-columns:repeat(3,1fr)">
+        <div class="sen"><div class="lab">متاحة</div><div class="v" style="color:var(--ok)">12</div></div>
+        <div class="sen"><div class="lab">بمهمة</div><div class="v" style="color:var(--blue)">4</div></div>
+        <div class="sen"><div class="lab">صيانة</div><div class="v" style="color:var(--warn)">2</div></div>
+      </div>
+      <div class="al i" style="margin-top:10px"><span class="t">وقود</span><div>استهلاك الأسطول ضمن المعدل · تنبيه رخصة قيادة تنتهي خلال 14 يوم.</div></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- BOOKING + VISITORS -->
+<section id="booking"><div class="wrap">
+  <div class="sh"><div class="eyebrow">الحجز وإدارة الزوّار</div><h2>القاعات والمكاتب والزوّار في مكان واحد</h2></div>
+  <div class="grid g2">
+    <div class="card">
+      <div class="ttl"><b>حجز القاعات — اليوم</b><span class="s">قاعة الاجتماعات A</span></div>
+      <svg viewBox="0 0 460 90" width="100%" height="90">
+        <g font-size="9" fill="var(--muted)"><text x="10" y="20">٨</text><text x="120" y="20">١٠</text><text x="230" y="20">١٢</text><text x="340" y="20">٢</text><text x="440" y="20">٤</text></g>
+        <rect x="10" y="30" width="440" height="26" rx="5" fill="color-mix(in srgb,var(--line) 50%,transparent)"/>
+        <rect x="40" y="30" width="90" height="26" rx="5" fill="color-mix(in srgb,var(--accent) 55%,transparent)"/><text x="85" y="47" font-size="9" text-anchor="middle" fill="var(--ink)">مشغولة</text>
+        <rect x="200" y="30" width="70" height="26" rx="5" fill="color-mix(in srgb,var(--teal) 50%,transparent)"/><text x="235" y="47" font-size="9" text-anchor="middle" fill="var(--ink)">اجتماع</text>
+        <rect x="330" y="30" width="80" height="26" rx="5" fill="color-mix(in srgb,var(--warn) 50%,transparent)"/><text x="370" y="47" font-size="9" text-anchor="middle" fill="var(--ink)">محجوزة</text>
+        <text x="230" y="76" font-size="10" fill="var(--muted)" text-anchor="middle">الفراغات متاحة للحجز الذاتي عبر البوابة/الموبايل</text>
+      </svg>
+    </div>
+    <div class="card">
+      <div class="ttl"><b>إدارة الزوّار</b><span class="s">اليوم — 34 زائراً</span></div>
+      <div class="feed">
+        <div class="al ok" style="border-color:var(--ok)"><span class="t">✔</span><div>تسجيل مسبق: وفد مورّد (3) — بطاقات QR أُرسلت</div></div>
+        <div class="al i"><span class="t">داخل</span><div>مهندس المصعد — دخل 9:12 · مرافق: الأمن</div></div>
+        <div class="al c"><span class="t">حظر</span><div>تطابق مع قائمة الممنوعين — مُنع الدخول + تنبيه الأمن</div></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- COMPLIANCE + AUDIT -->
+<section id="compliance"><div class="wrap">
+  <div class="sh"><div class="eyebrow">الامتثال والتدقيق</div><h2>تفتيش دوري ومعايير عالمية</h2>
+    <p>قوائم فحص وفق معايير الصيانة (نمط SFG20) والسلامة، بدرجات وتنبيهات انتهاء شهادات.</p></div>
+  <div class="grid g4">
+    <div class="card"><h3><span class="ic">✔</span> تدقيق النظافة</h3><p>درجة 88٪ · 3 ملاحظات مفتوحة للتصحيح.</p></div>
+    <div class="card"><h3><span class="ic">🛡️</span> تفتيش السلامة</h3><p>ربط بوحدة HSE · جولة أسبوعية موزونة.</p></div>
+    <div class="card"><h3><span class="ic">📜</span> الشهادات والتراخيص</h3><p>تنبيه انتهاء رخص المصاعد/الإطفاء قبل 60 يوم.</p></div>
+    <div class="card"><h3><span class="ic">🗂️</span> سجل التدقيق الكامل</h3><p>كل إجراء موثّق بالوقت والمستخدم — جاهز للعميل والجهات.</p></div>
+  </div>
+</div></section>
+
+<!-- CONTRACT P&L / CHARGEBACK -->
+<section id="finance"><div class="wrap">
+  <div class="sh"><div class="eyebrow">مالية العقود وتوزيع التكاليف</div><h2>ربحية كل عقد بوضوح</h2></div>
+  <div class="dash">
+    <div class="w col7">
+      <div class="ttl"><b>الإيراد مقابل التكلفة — حسب العقد</b><span class="s">ربع سنوي (د.ك)</span></div>
+      <svg viewBox="0 0 460 150" width="100%" height="150">
+        <g stroke="var(--line)"><line x1="0" y1="40" x2="460" y2="40"/><line x1="0" y1="80" x2="460" y2="80"/><line x1="0" y1="120" x2="460" y2="120"/></g>
+        <g>
+          <rect x="30" y="46" width="26" height="74" rx="3" fill="var(--teal)"/><rect x="60" y="70" width="26" height="50" rx="3" fill="var(--accent)"/>
+          <rect x="140" y="54" width="26" height="66" rx="3" fill="var(--teal)"/><rect x="170" y="82" width="26" height="38" rx="3" fill="var(--accent)"/>
+          <rect x="250" y="60" width="26" height="60" rx="3" fill="var(--teal)"/><rect x="280" y="76" width="26" height="44" rx="3" fill="var(--accent)"/>
+          <rect x="360" y="40" width="26" height="80" rx="3" fill="var(--teal)"/><rect x="390" y="88" width="26" height="32" rx="3" fill="var(--accent)"/>
+        </g>
+        <g font-size="9" fill="var(--muted)" text-anchor="middle"><text x="58" y="136">بيان</text><text x="168" y="136">الأفنيوز</text><text x="278" y="136">مبارك</text><text x="388" y="136">الجهراء</text></g>
+      </svg>
+      <div class="legend"><span><i style="background:var(--teal)"></i>الإيراد</span><span><i style="background:var(--accent)"></i>التكلفة</span></div>
+    </div>
+    <div class="w col5">
+      <div class="ttl"><b>توزيع التكاليف (Chargeback)</b><span class="s">لكل عميل/مبنى</span></div>
+      <div class="bars" style="margin-top:8px">
+        <div class="brow"><span>هامش برج بيان</span><div class="track"><div class="fill" style="width:31%;background:var(--ok)"></div></div><span>31٪</span></div>
+        <div class="brow"><span>هامش الأفنيوز</span><div class="track"><div class="fill" style="width:26%;background:var(--ok)"></div></div><span>26٪</span></div>
+        <div class="brow"><span>هامش مبارك</span><div class="track"><div class="fill" style="width:14%;background:var(--warn)"></div></div><span>14٪</span></div>
+        <div class="brow"><span>هامش الجهراء</span><div class="track"><div class="fill" style="width:6%;background:var(--crit)"></div></div><span>6٪</span></div>
+      </div>
+      <div class="al w" style="margin-top:10px"><span class="t">تنبيه</span><div>هامش عقد الجهراء منخفض — مراجعة العمالة الزائدة وتكرار الأعطال.</div></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- DIGITAL TWIN -->
+<section id="twin"><div class="wrap">
+  <div class="sh"><div class="eyebrow">التوأم الرقمي</div><h2>المبنى كنموذج حيّ — كل طابق وحالته</h2>
+    <p>عرض ثلاثي الأبعاد مبسّط: يُبيّن الطوابق ونبضها التشغيلي (أعطال/إشغال/تنبيهات) بلمحة.</p></div>
+  <div class="card">
+    <svg viewBox="0 0 460 240" width="100%" height="240" style="margin:auto;max-width:520px">
+      <!-- isometric stacked floors -->
+      <g stroke="var(--line)" stroke-width="1.5">
+        <!-- floor 5 (top) - alert -->
+        <g><polygon points="160,40 300,40 360,70 220,70" fill="color-mix(in srgb,var(--crit) 30%,transparent)"/><polygon points="160,40 220,70 220,92 160,62" fill="color-mix(in srgb,var(--crit) 18%,transparent)"/><polygon points="300,40 360,70 360,92 300,62" fill="color-mix(in srgb,var(--crit) 24%,transparent)"/><text x="245" y="60" font-size="10" fill="var(--ink)" font-weight="700">ط5 · عطل تكييف</text></g>
+        <!-- floor 4 -->
+        <g transform="translate(0,40)"><polygon points="160,40 300,40 360,70 220,70" fill="color-mix(in srgb,var(--ok) 24%,transparent)"/><polygon points="160,40 220,70 220,92 160,62" fill="color-mix(in srgb,var(--ok) 15%,transparent)"/><polygon points="300,40 360,70 360,92 300,62" fill="color-mix(in srgb,var(--ok) 20%,transparent)"/><text x="255" y="60" font-size="10" fill="var(--ink)" font-weight="700">ط4 · سليم</text></g>
+        <!-- floor 3 - warn -->
+        <g transform="translate(0,80)"><polygon points="160,40 300,40 360,70 220,70" fill="color-mix(in srgb,var(--warn) 28%,transparent)"/><polygon points="160,40 220,70 220,92 160,62" fill="color-mix(in srgb,var(--warn) 16%,transparent)"/><polygon points="300,40 360,70 360,92 300,62" fill="color-mix(in srgb,var(--warn) 22%,transparent)"/><text x="245" y="60" font-size="10" fill="var(--ink)" font-weight="700">ط3 · إشغال عالٍ</text></g>
+        <!-- ground -->
+        <g transform="translate(0,120)"><polygon points="160,40 300,40 360,70 220,70" fill="color-mix(in srgb,var(--teal) 24%,transparent)"/><polygon points="160,40 220,70 220,92 160,62" fill="color-mix(in srgb,var(--teal) 15%,transparent)"/><polygon points="300,40 360,70 360,92 300,62" fill="color-mix(in srgb,var(--teal) 20%,transparent)"/><text x="250" y="60" font-size="10" fill="var(--ink)" font-weight="700">الأرضي · نشِط</text></g>
+      </g>
+      <text x="90" y="150" font-size="10" fill="var(--muted)">◄ انقر أي طابق<tspan x="90" dy="14">للتعمّق حتى الأصل</tspan></text>
+    </svg>
+    <div class="legend" style="justify-content:center"><span><i style="background:var(--ok)"></i>سليم</span><span><i style="background:var(--warn)"></i>انتباه</span><span><i style="background:var(--crit)"></i>عطل</span><span><i style="background:var(--teal)"></i>نشِط</span></div>
+  </div>
+</div></section>
+
+<!-- MOBILE SCREENS GALLERY -->
+<section id="screens"><div class="wrap">
+  <div class="sh"><div class="eyebrow">معرض شاشات الموبايل والتحكّمات</div><h2>كل ما يحتاجه الميدان في يده</h2>
+    <p>شاشات وتحكّمات إضافية لتطبيق الفنّي والعامل والمشرف — من المسح إلى الإثبات إلى الإغلاق.</p></div>
+  <div class="phone-gallery">
+
+    <!-- 1 QR scanner -->
+    <div class="phone"><div class="bar"><span>٩:٤١</span><span>مسح</span><span>📶🔋</span></div>
+      <div class="scr"><div class="hd">امسح كود المكان</div><div class="bd" style="align-items:center">
+        <svg viewBox="0 0 120 120" width="140" height="140">
+          <rect width="120" height="120" rx="10" fill="var(--surface-2)"/>
+          <rect x="30" y="30" width="60" height="60" rx="6" fill="#fff"/>
+          <g fill="#0b1220" fill-rule="evenodd"><path d="M36 36h13v13H36z M39 39h7v7h-7z"/><path d="M71 36h13v13H71z M74 39h7v7h-7z"/><path d="M36 71h13v13H36z M39 74h7v7h-7z"/></g>
+          <g fill="#0b1220"><rect x="55" y="40" width="3" height="3"/><rect x="62" y="46" width="3" height="3"/><rect x="55" y="55" width="3" height="3"/><rect x="66" y="58" width="3" height="3"/><rect x="72" y="62" width="3" height="3"/><rect x="58" y="70" width="3" height="3"/><rect x="70" y="74" width="3" height="3"/></g>
+          <g stroke="var(--accent)" stroke-width="3" fill="none" stroke-linecap="round">
+            <path d="M20 34V22h12"/><path d="M100 34V22H88"/><path d="M20 86v12h12"/><path d="M100 86v12H88"/></g>
+        </svg>
+        <div class="rowc" style="width:100%;text-align:center"><h5>وجّه الكاميرا للملصق</h5><div class="m" style="justify-content:center"><span>أو المس NFC</span></div></div>
+      </div></div></div>
+
+    <!-- 2 location confirmed -->
+    <div class="phone"><div class="bar"><span>٩:٤٢</span><span>موقعي</span><span>📶🔋</span></div>
+      <div class="scr"><div class="hd">تم تحديث موقعك <span class="chip ok">✔</span></div><div class="bd">
+        <div class="rowc"><span class="st" style="background:var(--ok)"></span><h5>📍 برج بيان › مبنى A › ط1 › دورات المياه</h5><div class="m"><span>9:42 · بصمة موقع</span></div></div>
+        <div class="rowc"><span class="st" style="background:var(--blue)"></span><h5>مهامّ هذا المكان (2)</h5><div class="m"><span>تنظيف · بلاغ تسريب</span></div></div>
+        <button class="btn-sm">＋ سجّل ملاحظة هنا</button>
+      </div></div></div>
+
+    <!-- 3 report issue by QR -->
+    <div class="phone"><div class="bar"><span>٩:٤٣</span><span>بلاغ</span><span>📶🔋</span></div>
+      <div class="scr"><div class="hd">بلاغ جديد</div><div class="bd">
+        <div class="rowc"><span class="st" style="background:var(--accent)"></span><h5>📍 الموقع (من المسح)</h5><div class="m"><span>دورات مياه ط1 — تلقائي</span></div></div>
+        <div class="rowc"><h5>النوع</h5><div class="m"><span class="chip crit">تسريب مياه</span><span class="chip warn">كهرباء</span><span class="chip">نظافة</span></div></div>
+        <div class="rowc"><h5>📷 صورة + وصف صوتي</h5><div class="m"><span>اضغط للتسجيل</span></div></div>
+        <button class="btn-sm">إرسال البلاغ</button>
+      </div></div></div>
+
+    <!-- 4 task timer -->
+    <div class="phone"><div class="bar"><span>٩:٥١</span><span>مهمة</span><span>📶🔋</span></div>
+      <div class="scr"><div class="hd">WO-4821 · تسريب</div><div class="bd" style="align-items:center">
+        <div class="rowc" style="width:100%;text-align:center"><h5>امسح للبدء ✔ أُثبت الحضور</h5></div>
+        <div class="timer" style="font-size:30px">00:08:32</div>
+        <div class="m" style="color:var(--muted);font-size:11px">الهدف 30د · متبقٍّ 21د</div>
+        <div style="display:flex;gap:8px;width:100%">
+          <button class="btn-sm" style="background:var(--surface-2);color:var(--ink);border:1px solid var(--line)">⏸ إيقاف مؤقت</button>
+          <button class="btn-sm">✔ تم — أوقف العدّاد</button>
+        </div>
+      </div></div></div>
+
+    <!-- 5 checklist -->
+    <div class="phone"><div class="bar"><span>٩:٥٢</span><span>فحص</span><span>📶🔋</span></div>
+      <div class="scr"><div class="hd">قائمة فحص المهمة</div><div class="bd">
+        <div class="rowc"><span class="st" style="background:var(--ok)"></span><h5>✔ إغلاق المحبس</h5></div>
+        <div class="rowc"><span class="st" style="background:var(--ok)"></span><h5>✔ استبدال الوصلة</h5></div>
+        <div class="rowc"><span class="st" style="background:var(--warn)"></span><h5>☐ اختبار التسريب</h5></div>
+        <div class="rowc"><span class="st" style="background:var(--warn)"></span><h5>☐ تنظيف المكان</h5></div>
+        <button class="btn-sm">إنهاء الفحص</button>
+      </div></div></div>
+
+    <!-- 6 before/after photo -->
+    <div class="phone"><div class="bar"><span>٩:٥٤</span><span>إثبات</span><span>📶🔋</span></div>
+      <div class="scr"><div class="hd">صور قبل / بعد</div><div class="bd">
+        <div style="display:flex;gap:8px">
+          <div style="flex:1;height:70px;border-radius:9px;background:color-mix(in srgb,var(--crit) 22%,transparent);display:grid;place-items:center;font-size:11px;font-weight:800">قبل 📷</div>
+          <div style="flex:1;height:70px;border-radius:9px;background:color-mix(in srgb,var(--ok) 22%,transparent);display:grid;place-items:center;font-size:11px;font-weight:800">بعد 📷</div>
+        </div>
+        <div class="rowc"><h5>توقيع الاستلام</h5><div class="m"><span>✍️ اضغط للتوقيع</span></div></div>
+        <button class="btn-sm">إغلاق المهمة</button>
+      </div></div></div>
+
+    <!-- 7 supervisor live map -->
+    <div class="phone"><div class="bar"><span>٩:٥٥</span><span>المشرف</span><span>📶🔋</span></div>
+      <div class="scr"><div class="hd">من أين الآن؟ <span class="chip live">حيّ</span></div><div class="bd">
+        <div class="rowc"><span class="st" style="background:var(--teal)"></span><h5>محمد — ط1 دورات المياه</h5><div class="m"><span>يصلح ⏱ 08:32</span></div></div>
+        <div class="rowc"><span class="st" style="background:var(--blue)"></span><h5>سالم — ط3 مكتب 305</h5><div class="m"><span>منذ 4د</span></div></div>
+        <div class="rowc"><span class="st" style="background:var(--warn)"></span><h5>أنيل — موقع غير معروف</h5><div class="m"><span>لم يمسح 40د</span></div></div>
+        <button class="btn-sm">إسناد مهمة بالموقع</button>
+      </div></div></div>
+
+    <!-- 8 client rating / SOS -->
+    <div class="phone"><div class="bar"><span>٩:٥٦</span><span>العميل</span><span>📶🔋</span></div>
+      <div class="scr"><div class="hd">تقييم الخدمة</div><div class="bd" style="align-items:center">
+        <div class="rowc" style="width:100%"><span class="st" style="background:var(--ok)"></span><h5>مصعد B — تم الإصلاح</h5><div class="m"><span>خلال 42 دقيقة</span></div></div>
+        <div style="font-size:26px;letter-spacing:3px">★★★★☆</div>
+        <div class="m" style="color:var(--muted);font-size:11px">كيف كانت سرعة وجودة الخدمة؟</div>
+        <button class="btn-sm">إرسال التقييم</button>
+        <button class="btn-sm" style="background:linear-gradient(150deg,var(--crit),#a5252a);color:#fff">🚨 بلاغ عاجل</button>
+      </div></div></div>
+
+  </div>
+</div></section>
+
+<!-- MEDIA ARCHITECTURE -->
+<section id="media"><div class="wrap">
+  <div class="sh"><div class="eyebrow">بنية الوسائط والتخزين الخارجي</div><h2>الصور والفيديو خارج السيرفر — لا ثِقل ولا امتلاء</h2>
+    <p>الوسائط تُرفع <b>مباشرةً من الموبايل</b> إلى تخزين سحابي خارجي عبر رابط موقّع، وتُخدَم عبر CDN — وOdoo يحفظ <b>الرابط فقط</b> (بضعة بايتات) لا الملف. النتيجة: سيرفر خفيف وسريع وقرص لا يمتلئ.</p></div>
+
+  <div class="card">
+    <div style="display:flex;gap:12px;align-items:stretch;flex-wrap:wrap;justify-content:center;text-align:center">
+      <div style="flex:1;min-width:150px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:16px">
+        <div style="font-size:26px">📱</div><b style="font-size:13.5px">تطبيق الميدان</b>
+        <p style="font-size:12px;color:var(--muted);margin:6px 0 0">يلتقط الصورة/الفيديو ويطلب رابط رفع موقّع</p>
+      </div>
+      <div style="display:grid;place-items:center;font-size:20px;color:var(--accent);font-weight:900">←<div style="font-size:9px;color:var(--muted)">رابط موقّع</div></div>
+      <div style="flex:1;min-width:150px;background:color-mix(in srgb,var(--teal) 12%,transparent);border:1px solid var(--line);border-radius:12px;padding:16px">
+        <div style="font-size:26px">☁️</div><b style="font-size:13.5px">تخزين خارجي (S3/R2)</b>
+        <p style="font-size:12px;color:var(--muted);margin:6px 0 0">الملف يُرفع مباشرةً — لا يمرّ بالسيرفر أبداً</p>
+      </div>
+      <div style="display:grid;place-items:center;font-size:20px;color:var(--accent);font-weight:900">←<div style="font-size:9px;color:var(--muted)">توصيل</div></div>
+      <div style="flex:1;min-width:150px;background:color-mix(in srgb,var(--blue) 12%,transparent);border:1px solid var(--line);border-radius:12px;padding:16px">
+        <div style="font-size:26px">🌐</div><b style="font-size:13.5px">CDN</b>
+        <p style="font-size:12px;color:var(--muted);margin:6px 0 0">عرض سريع ومُخزّن مؤقتاً قرب المستخدم</p>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:14px">
+      <div style="display:inline-flex;gap:9px;align-items:center;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:10px 16px">
+        <span style="font-size:20px">🗄️</span><div style="text-align:start"><b style="font-size:13px">Odoo / السيرفر</b><div style="font-size:12px;color:var(--muted)">يحفظ <b>الرابط فقط</b> — لا بايت من الوسائط على القرص</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card">
+      <div class="ttl"><b>خيارات التخزين الموصى بها</b><span class="s">S3-متوافق</span></div>
+      <div style="overflow-x:auto"><table class="tbl">
+        <thead><tr><th>المزوّد</th><th>الميزة</th><th style="text-align:center">التكلفة</th></tr></thead>
+        <tbody>
+          <tr><td><b>Cloudflare R2</b></td><td>بلا رسوم تنزيل (Egress) + CDN مدمج</td><td class="num" style="color:var(--ok)">الأوفر</td></tr>
+          <tr><td>Backblaze B2</td><td>رخيص جداً للتخزين</td><td class="num" style="color:var(--ok)">منخفض</td></tr>
+          <tr><td>Wasabi</td><td>سعر ثابت بلا رسوم تنزيل</td><td class="num">منخفض</td></tr>
+          <tr><td>AWS S3</td><td>الأشهر والأقوى تكاملاً</td><td class="num" style="color:var(--warn)">متوسط</td></tr>
+          <tr><td>MinIO (ذاتي)</td><td>على سيرفر منفصل تملكه أنت</td><td class="num">تحكّم كامل</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <div class="ttl"><b>ممارسات احترافية</b></div>
+      <div class="feed">
+        <div class="al i"><span class="t">🔗</span><div><b>روابط موقّعة ومؤقّتة:</b> الوسائط غير عامة — تُفتح برابط ينتهي، فتبقى خاصة.</div></div>
+        <div class="al i"><span class="t">🖼️</span><div><b>مصغّرات تلقائية:</b> القوائم تعرض صورة صغيرة، والكاملة عند الطلب فقط — تصفّح خفيف.</div></div>
+        <div class="al i"><span class="t">🎬</span><div><b>الفيديو:</b> Bunny.net / Cloudflare Stream للترميز والبث والمصغّرات بدل تخزين خام ثقيل.</div></div>
+        <div class="al i"><span class="t">🗓️</span><div><b>دورة حياة التخزين:</b> نقل الوسائط القديمة تلقائياً لتخزين بارد أرخص بعد فترة.</div></div>
+        <div class="al i"><span class="t">📴</span><div><b>رفع دون إنترنت:</b> طابور محلي في الموبايل يرفع تلقائياً عند عودة الشبكة.</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="al w" style="max-width:none;margin-top:14px"><span class="t">تقني</span><div>في Odoo: نستخدم وحدات تحويل مرفقات <code>ir.attachment</code> إلى S3/R2 (نمط cloud_storage/attachment_s3)، أو <b>الرفع المباشر بروابط موقّعة (presigned)</b> من التطبيق — فلا تمرّ الوسائط بالسيرفر أصلاً وهو الأخفّ على الحِمل.</div></div>
+</div></section>
+
+<!-- INTEGRATION -->
+<section><div class="wrap">
+  <div class="sh"><div class="eyebrow">التكامل مع أنظمتكم</div><h2>يبني فوق ما لديكم</h2></div>
+  <div class="integ">
+    <span class="pill"><span class="dot ok"></span> البصمة (to_attendance_device)</span>
+    <span class="pill"><span class="dot ok"></span> المشاريع/المهام (care_pms)</span>
+    <span class="pill"><span class="dot ok"></span> العقود وSLA (care_experience)</span>
+    <span class="pill"><span class="dot ok"></span> القوى العاملة والورديات (care.roster)</span>
+    <span class="pill"><span class="dot ok"></span> السلامة (HSE) والتدريب</span>
+    <span class="pill"><span class="dot ok"></span> المخزون والمشتريات · الأسطول</span>
+    <span class="pill"><span class="dot ok"></span> بوابة العميل · واتساب/بريد</span>
+    <span class="pill"><span class="dot ok"></span> BMS / IoT / عدّادات</span>
+  </div>
+</div></section>
+
+<!-- EXTRA IDEAS BANK -->
+<section id="ideas-more"><div class="wrap">
+  <div class="sh"><div class="eyebrow">بنك أفكار إضافية</div><h2>أفكار احترافية أخرى — بعضها مفصّل لأعمالكم</h2>
+    <p>ما لم نغطّه بعد، مرتّب حسب المجال. النجمة ⭐ = عالية القيمة لطبيعة عملكم (عمالة أجنبية · تنظيف · أمن · عقود حكومية).</p></div>
+
+  <div style="display:flex;flex-direction:column;gap:20px">
+
+    <div>
+      <div class="eyebrow" style="color:var(--teal)">👷 القوى العاملة</div>
+      <div class="grid g3" style="margin-top:10px">
+        <div class="card idea"><span class="ic">🌐</span><div><b>تطبيق متعدّد اللغات ومنخفض الأمّية ⭐</b><br><span>هندي/أوردو/بنغالي/نيبالي/تاغالوغ + أيقونات وصوت وصور بدل النصوص — لعمالتكم متعدّدة الجنسيات.</span></div></div>
+        <div class="card idea"><span class="ic">🎁</span><div><b>محفظة نقاط ومكافآت</b><br><span>العامل يجمع نقاطاً من الأداء والالتزام ويستبدلها (رصيد/إجازة/هدايا).</span></div></div>
+        <div class="card idea"><span class="ic">🦺</span><div><b>صرف الزي ومعدّات الوقاية (PPE)</b><br><span>تتبّع ما استلمه كل عامل ومواعيد التجديد (يربط بوحدة الزي).</span></div></div>
+        <div class="card idea"><span class="ic">🚌</span><div><b>لوجستيات نقل العمّال ⭐</b><br><span>جدولة الباصات من السكن للمواقع وربطها بالحضور والورديات (يربط بالسكن).</span></div></div>
+        <div class="card idea"><span class="ic">⚖️</span><div><b>محسّن توزيع العمالة</b><br><span>العدد الأمثل لكل موقع مقابل متطلّب العقد — كشف النقص/الفائض تلقائياً.</span></div></div>
+        <div class="card idea"><span class="ic">😴</span><div><b>قواعد الإجهاد والورديات</b><br><span>منع الورديات المتتالية المرهِقة ومراعاة قانون العمل عند الجدولة.</span></div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow" style="color:var(--accent)">💰 المالية والتعاقد</div>
+      <div class="grid g3" style="margin-top:10px">
+        <div class="card idea"><span class="ic">➗</span><div><b>احتساب غرامات SLA تلقائياً ⭐</b><br><span>تجاوز المهلة يولّد غرامة/إشعار خصم للعميل حسب بنود العقد — بلا نزاع.</span></div></div>
+        <div class="card idea"><span class="ic">🧾</span><div><b>فوترة تلقائية من العمل المنجَز</b><br><span>أوامر العمل والساعات تتحوّل إلى فاتورة (عقود بالكميّة أو الوقت).</span></div></div>
+        <div class="card idea"><span class="ic">🛡️</span><div><b>مطالبات الضمان</b><br><span>قبل صرف تكلفة صيانة — فحص إن كان الأصل تحت الضمان لتوفير المال.</span></div></div>
+        <div class="card idea"><span class="ic">📄</span><div><b>تقرير SLA شهري للعميل (PDF آلي) ⭐</b><br><span>يُولّد ويُرسل تلقائياً — شفافية تُقوّي تجديد العقد.</span></div></div>
+        <div class="card idea"><span class="ic">🔁</span><div><b>ذكاء تجديد العقود</b><br><span>تنبيه قبل انتهاء العقد + ملف أداء جاهز للتفاوض (يربط بموديول المناقصات).</span></div></div>
+        <div class="card idea"><span class="ic">📉</span><div><b>إنذار مبكّر لتآكل الهامش</b><br><span>ارتفاع تكلفة/شكاوى عقد معيّن → تنبيه قبل أن يصبح خاسراً.</span></div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow" style="color:var(--blue)">⚙️ التشغيل والتقنية</div>
+      <div class="grid g3" style="margin-top:10px">
+        <div class="card idea"><span class="ic">📖</span><div><b>دليل إجراءات (SOP) بمسح QR</b><br><span>مسح الأصل/المكان يفتح خطوات العمل الصحيحة والفيديو التعليمي.</span></div></div>
+        <div class="card idea"><span class="ic">🧩</span><div><b>باني نماذج ديناميكي</b><br><span>بناء قوائم فحص وتقارير بمنطق شرطي بلا برمجة — لكل خدمة نموذجها.</span></div></div>
+        <div class="card idea"><span class="ic">📡</span><div><b>تنظيف حسب الطلب (Sensor-driven) ⭐</b><br><span>حسّاس ازدحام دورات المياه يطلب تنظيفاً عند الحاجة بدل جدول ثابت — كفاءة أعلى.</span></div></div>
+        <div class="card idea"><span class="ic">👁️</span><div><b>رؤية حاسوبية من الكاميرات</b><br><span>كشف منطقة متّسخة أو ازدحام أو نقطة أمن شاغرة تلقائياً من CCTV.</span></div></div>
+        <div class="card idea"><span class="ic">💬</span><div><b>بوت واتساب/صوتي للبلاغات ⭐</b><br><span>العميل أو العامل يبلّغ بالواتساب أو بالصوت → بلاغ منظّم فوراً.</span></div></div>
+        <div class="card idea"><span class="ic">📈</span><div><b>جدولة استباقية بالازدحام</b><br><span>توقّع الحِمل (فعاليات/ذروة) وتعزيز الفريق مسبقاً.</span></div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow" style="color:var(--crit)">🛡️ السلامة والطوارئ · 🌍 الاستدامة</div>
+      <div class="grid g3" style="margin-top:10px">
+        <div class="card idea"><span class="ic">🧯</span><div><b>إخلاء وتجميع بالبصمة ⭐</b><br><span>عند الطوارئ: حصر فوري لمن بالمبنى ومن وصل نقطة التجمّع — أرواح لا أرقام.</span></div></div>
+        <div class="card idea"><span class="ic">⚖️</span><div><b>حادث ← تأمين ← قانوني</b><br><span>مسار موحّد من البلاغ للمطالبة التأمينية والإجراء القانوني.</span></div></div>
+        <div class="card idea"><span class="ic">♻️</span><div><b>إدارة النفايات وإعادة التدوير</b><br><span>أوزان وأنواع النفايات لكل موقع + تقارير استدامة للعميل.</span></div></div>
+        <div class="card idea"><span class="ic">💧</span><div><b>عدّادات فرعية للمياه/الطاقة</b><br><span>قياس استهلاك كل مستأجر/منطقة لتوزيع التكاليف بعدالة (IWMS).</span></div></div>
+        <div class="card idea"><span class="ic">🏆</span><div><b>أدلة شهادات الاستدامة</b><br><span>جمع الإثباتات لشهادات (LEED/Estidama) تلقائياً من عمليات النظام.</span></div></div>
+        <div class="card idea"><span class="ic">😊</span><div><b>تقييم فوري بالمكان</b><br><span>لوحة «كيف كانت النظافة؟» عند المخارج ودورات المياه تغذّي الجودة مباشرةً.</span></div></div>
+      </div>
+    </div>
+
+  </div>
+</div></section>
+
+<!-- SERVICE-SPECIFIC IDEAS -->
+<section id="svc-ideas"><div class="wrap">
+  <div class="sh"><div class="eyebrow">أفكار خاصة بكل خدمة</div><h2>أفكار احترافية لكل مجال — بعضها لظروف الكويت</h2>
+    <p>🇰🇼 = فكرة مصمّمة لبيئة الكويت (الحرّ، حظر العمل الظهيرة، الغبار، العمالة الوافدة).</p></div>
+
+  <div style="display:flex;flex-direction:column;gap:20px">
+
+    <div>
+      <div class="eyebrow">🧹 النظافة</div>
+      <div class="grid g3" style="margin-top:10px">
+        <div class="card idea"><span class="ic">📡</span><div><b>تنظيف حسب الطلب</b><br><span>حسّاسات ازدحام دورات المياه والممرات تطلب تنظيفاً عند الحاجة بدل جدول ثابت.</span></div></div>
+        <div class="card idea"><span class="ic">🏅</span><div><b>تدقيق بمعايير عالمية</b><br><span>تقييم النظافة بمستويات (APPA/BICSc) بدرجات موزونة وصور إثبات.</span></div></div>
+        <div class="card idea"><span class="ic">🎨</span><div><b>نظام الألوان (عدوى)</b><br><span>تتبّع أدوات ملوّنة لكل منطقة (أحمر لدورات المياه…) لمنع انتقال التلوّث — للمستشفيات.</span></div></div>
+        <div class="card idea"><span class="ic">🧪</span><div><b>ضبط تركيز المواد (COSHH)</b><br><span>جرعات المطهّرات وبطاقات السلامة لكل مادة — أمان وتوفير.</span></div></div>
+        <div class="card idea"><span class="ic">🚻</span><div><b>لوحة «نُظّف الساعة X»</b><br><span>شاشة/QR عند دورات المياه توثّق آخر تنظيف وموعد التالي + تقييم الزائر.</span></div></div>
+        <div class="card idea"><span class="ic">🧴</span><div><b>تعبئة تلقائية للموزّعات</b><br><span>حسّاس صابون/مناديل يطلب إعادة التعبئة قبل النفاد.</span></div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow" style="color:var(--crit)">🛡️ الأمن</div>
+      <div class="grid g3" style="margin-top:10px">
+        <div class="card idea"><span class="ic">🎲</span><div><b>مسارات دورية عشوائية</b><br><span>توليد ترتيب نقاط مختلف كل مرة لمنع توقّع الحارس ورفع الردع.</span></div></div>
+        <div class="card idea"><span class="ic">📷</span><div><b>بلاغ + مقطع كاميرا</b><br><span>ربط الحادث بلقطة CCTV تلقائياً للحظة وقوعه.</span></div></div>
+        <div class="card idea"><span class="ic">🚗</span><div><b>تمييز لوحات المركبات (ANPR)</b><br><span>تسجيل الدخول/الخروج آلياً ومطابقة قائمة الحظر.</span></div></div>
+        <div class="card idea"><span class="ic">📖</span><div><b>أوامر النقطة الرقمية</b><br><span>مسح QR النقطة يفتح تعليمات الحراسة الخاصة بها (Post Orders).</span></div></div>
+        <div class="card idea"><span class="ic">📜</span><div><b>تتبّع رخص الحرّاس</b><br><span>تنبيه انتهاء تصاريح/شهادات الأمن قبل الانتهاء.</span></div></div>
+        <div class="card idea"><span class="ic">🧭</span><div><b>مسار GPS للحارس</b><br><span>خطّ سير الدورية للتأكد من تغطية كامل المحيط.</span></div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow" style="color:var(--ok)">🌿 الزراعة وتنسيق الحدائق</div>
+      <div class="grid g3" style="margin-top:10px">
+        <div class="card idea"><span class="ic">💧</span><div><b>ريّ ذكي بالطقس والرطوبة 🇰🇼</b><br><span>جدولة الريّ حسب حرارة/رطوبة التربة والتوقّعات → توفير كبير للمياه في مناخ الكويت.</span></div></div>
+        <div class="card idea"><span class="ic">🌳</span><div><b>سجل نباتات/أشجار بـ QR</b><br><span>لكل نبتة: النوع، تاريخ الزرع، جدول العناية والتسميد.</span></div></div>
+        <div class="card idea"><span class="ic">🗓️</span><div><b>تقويم موسمي</b><br><span>تقليم/تسميد/مكافحة حسب الموسم تلقائياً.</span></div></div>
+        <div class="card idea"><span class="ic">🧪</span><div><b>سجل المبيدات والأسمدة</b><br><span>الكميات والأنواع والامتثال البيئي والسلامة.</span></div></div>
+        <div class="card idea"><span class="ic">🚿</span><div><b>مراقبة تسرّب الريّ</b><br><span>حسّاس تدفّق يكشف الأعطال والهدر في الشبكة.</span></div></div>
+        <div class="card idea"><span class="ic">🛰️</span><div><b>صحة المسطّحات بالصور/الدرون</b><br><span>رصد المناطق الضعيفة لمعالجتها مبكراً.</span></div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow" style="color:var(--blue)">🏢 غسيل الواجهات</div>
+      <div class="grid g3" style="margin-top:10px">
+        <div class="card idea"><span class="ic">🪢</span><div><b>تصريح عمل على ارتفاع (PTW)</b><br><span>قوائم فحص الحبال/المهمّات والسلامة إلزامية قبل الصعود.</span></div></div>
+        <div class="card idea"><span class="ic">💨</span><div><b>إيقاف حسب سرعة الرياح 🇰🇼</b><br><span>تجاوز حدّ الرياح/الغبار → إيقاف تلقائي للعمل وتنبيه — سلامة حرجة.</span></div></div>
+        <div class="card idea"><span class="ic">🗺️</span><div><b>خريطة واجهات المبنى</b><br><span>أي واجهة/لوح نُظّف ومتى وبأي تردّد + صور قبل/بعد لكل واجهة.</span></div></div>
+        <div class="card idea"><span class="ic">🛗</span><div><b>فحص المهمّات (Cradle/BMU)</b><br><span>تتبّع صلاحية شهادات وحدات التعليق والحبال.</span></div></div>
+        <div class="card idea"><span class="ic">🪟</span><div><b>رصد تلف الزجاج</b><br><span>تسجيل الكسور/الخدوش أثناء العمل وإبلاغ العميل.</span></div></div>
+        <div class="card idea"><span class="ic">🧗</span><div><b>سجل عمّال الارتفاعات</b><br><span>الشهادات والتأمين والتدريب لكل عامل معتمد للارتفاعات.</span></div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow" style="color:var(--violet)">🐜 خدمات أخرى مشابهة (مكافحة حشرات · نفايات · عام)</div>
+      <div class="grid g3" style="margin-top:10px">
+        <div class="card idea"><span class="ic">🎯</span><div><b>خريطة محطّات الطعم (مكافحة)</b><br><span>QR لكل محطة + سجل المعالجة واتجاه النشاط (IPM).</span></div></div>
+        <div class="card idea"><span class="ic">⚖️</span><div><b>وزن ونوع النفايات</b><br><span>لكل عملية جمع + نسبة التدوير وتقرير استدامة للعميل.</span></div></div>
+        <div class="card idea"><span class="ic">🗑️</span><div><b>حسّاس امتلاء الحاويات</b><br><span>جمع عند الامتلاء بدل جدول ثابت — كفاءة أعلى.</span></div></div>
+        <div class="card idea"><span class="ic">🌡️</span><div><b>الالتزام بحظر العمل الظهيرة 🇰🇼</b><br><span>جدولة تتجنّب فترة الحظر الصيفي تلقائياً + تنبيه أي مخالفة.</span></div></div>
+        <div class="card idea"><span class="ic">🌪️</span><div><b>استجابة العواصف الغبارية 🇰🇼</b><br><span>إعادة جدولة ومهام تنظيف إضافية بعد الغبار.</span></div></div>
+        <div class="card idea"><span class="ic">💦</span><div><b>رعاية العمّال (ماء/راحة) 🇰🇼</b><br><span>تذكيرات ماء وراحة في الحرّ + متابعة الإجهاد الحراري.</span></div></div>
+      </div>
+    </div>
+
+  </div>
+</div></section>
+
+<!-- MORE SPECIALIZED SERVICES -->
+<section id="svc-ideas2"><div class="wrap">
+  <div class="sh"><div class="eyebrow">خدمات متخصّصة إضافية</div><h2>أفكار لمجالات خدمية أخرى</h2>
+    <p>مجالات متخصّصة كثيراً ما تُطلب ضمن عقود المرافق في الكويت.</p></div>
+
+  <div style="display:flex;flex-direction:column;gap:20px">
+
+    <div>
+      <div class="eyebrow" style="color:var(--blue)">🏊 صيانة المسابح</div>
+      <div class="grid g3" style="margin-top:10px">
+        <div class="card idea"><span class="ic">🧪</span><div><b>مراقبة كيمياء الماء</b><br><span>حسّاسات كلور/pH + تنبيه فوري عند الانحراف عن الآمن.</span></div></div>
+        <div class="card idea"><span class="ic">🔁</span><div><b>جدول الترشيح والغسيل العكسي</b><br><span>مهام دورية تلقائية للمضخّات والفلاتر مع سجل.</span></div></div>
+        <div class="card idea"><span class="ic">🦺</span><div><b>سجل السلامة والمعدّات</b><br><span>فحص العمق والإنقاذ وحالة المعدّات دورياً.</span></div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow" style="color:var(--teal)">🚰 تنظيف خزانات المياه 🇰🇼</div>
+      <div class="grid g3" style="margin-top:10px">
+        <div class="card idea"><span class="ic">🗓️</span><div><b>جدولة وفق اشتراطات البلدية</b><br><span>تنظيف دوري ملزم + تنبيه الاستحقاق لكل خزان.</span></div></div>
+        <div class="card idea"><span class="ic">🧾</span><div><b>شهادة تنظيف + تحليل مخبري</b><br><span>إرفاق نتيجة تحليل المياه مع كل عملية للعميل والجهات.</span></div></div>
+        <div class="card idea"><span class="ic">▣</span><div><b>سجل تعقيم بـ QR للخزان</b><br><span>مسح الخزان يفتح تاريخه الكامل وموعد التالي.</span></div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow" style="color:var(--crit)">🏥 المخلّفات الطبية</div>
+      <div class="grid g3" style="margin-top:10px">
+        <div class="card idea"><span class="ic">♨️</span><div><b>فصل وتصنيف حسب الخطورة</b><br><span>حاد/معدٍ/دوائي بأكياس مرمّزة وتتبّع دقيق.</span></div></div>
+        <div class="card idea"><span class="ic">🔗</span><div><b>تتبّع من المصدر للتخلّص</b><br><span>مانيفست (Cradle-to-grave) وأوزان وتقارير للجهات.</span></div></div>
+        <div class="card idea"><span class="ic">✅</span><div><b>امتثال الصحة والبيئة</b><br><span>وفق اشتراطات وزارة الصحة/الهيئة العامة للبيئة.</span></div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow" style="color:var(--violet)">🐀 مكافحة القوارض والطيور</div>
+      <div class="grid g3" style="margin-top:10px">
+        <div class="card idea"><span class="ic">🎯</span><div><b>خريطة محطّات ذكية</b><br><span>محطّات طعم/فخاخ بـQR + رصد النشاط واتجاهه.</span></div></div>
+        <div class="card idea"><span class="ic">🕊️</span><div><b>أنظمة طرد الطيور</b><br><span>تركيب وصيانة أنظمة الطرد وتتبّع فعاليتها.</span></div></div>
+        <div class="card idea"><span class="ic">📈</span><div><b>تحليل الفعالية (IPM)</b><br><span>مؤشر تناقص النشاط لإثبات نجاح المكافحة للعميل.</span></div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow" style="color:var(--accent)">🚚 النقل واللوجستيات</div>
+      <div class="grid g3" style="margin-top:10px">
+        <div class="card idea"><span class="ic">📍</span><div><b>تتبّع مركبات العمّال والمواد</b><br><span>GPS لرحلات النقل من السكن للمواقع ونقل المستلزمات.</span></div></div>
+        <div class="card idea"><span class="ic">🗓️</span><div><b>جدولة الرحلات بالورديات</b><br><span>ربط الباصات بالحضور والورديات لضمان الوصول في الوقت.</span></div></div>
+        <div class="card idea"><span class="ic">⛽</span><div><b>وقود ومنع الاحتيال</b><br><span>استهلاك لكل مركبة + كشف الأنماط غير المعتادة.</span></div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow" style="color:var(--ok)">🧴 التعقيم ومكافحة العدوى</div>
+      <div class="grid g3" style="margin-top:10px">
+        <div class="card idea"><span class="ic">🗓️</span><div><b>جداول تعقيم دورية</b><br><span>سجل بـQR لكل منطقة + إثبات وتقرير — للمنشآت الصحية والتعليمية.</span></div></div>
+        <div class="card idea"><span class="ic">🧪</span><div><b>تتبّع المواد والتراكيز</b><br><span>المطهّرات المستخدمة وسلامتها ودورة صلاحيتها.</span></div></div>
+        <div class="card idea"><span class="ic">📄</span><div><b>تقارير امتثال للعميل</b><br><span>إثبات التعقيم الدوري للجهات والعميل تلقائياً.</span></div></div>
+      </div>
+    </div>
+
+  </div>
+</div></section>
+
+<!-- ROADMAP -->
+<section><div class="wrap">
+  <div class="sh"><div class="eyebrow">خطة التنفيذ</div><h2>5 مراحل قابلة للإطلاق</h2></div>
+  <div class="road">
+    <div class="phase"><div class="pn">م ١</div><h4>الأساس</h4><ul><li>المواقع والأصول (QR)</li><li>طلبات وأوامر العمل</li><li>مكتب خدمة أساسي</li></ul></div>
+    <div class="phase"><div class="pn">م ٢</div><h4>الجودة والموبايل</h4><ul><li>جولات وقوائم فحص</li><li>ملاحظات تصحيح (موعد/مسؤول)</li><li>تطبيقات الميدان</li></ul></div>
+    <div class="phase"><div class="pn">م ٣</div><h4>SLA والعميل</h4><ul><li>محرّك SLA + تصعيد</li><li>بوابة العميل + الرضا</li><li>PPM تلقائي</li></ul></div>
+    <div class="phase"><div class="pn">م ٤</div><h4>الأصول والمالية</h4><ul><li>دورة الحياة وTCO</li><li>المخزون والمشتريات</li><li>ربحية العقود</li></ul></div>
+    <div class="phase"><div class="pn">م ٥</div><h4>الذكاء والاستدامة</h4><ul><li>IoT وتنبؤ</li><li>الطاقة وESG</li><li>تحليلات ولوحات</li></ul></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">CAFM Mega — موكاب مفاهيمي شامل مستوحى من رواد إدارة المرافق عالمياً · care · جاهز للتحويل إلى موديولات Odoo على المراحل أعلاه.</div></footer>
+
+<script>
+  document.getElementById('tt').addEventListener('click',()=>{const d=document.documentElement,c=d.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');d.setAttribute('data-theme',c==='dark'?'light':'dark')});
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:.1});
+  document.querySelectorAll('section .card,.w,.phase,.pil,.kb').forEach((el,i)=>{el.classList.add('reveal');el.style.transitionDelay=(i%8*35)+'ms';io.observe(el)});
+</script>
+</body>
+</html>

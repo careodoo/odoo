@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="cron_letter_delivery_reminders" model="ir.cron">
+            <field name="name">Letters: delivery reminders</field>
+            <field name="model_id" ref="sp_letter_v15.model_letter_file"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_delivery_reminders()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="cron_letter_ocr" model="ir.cron">
+            <field name="name">Letters: OCR scanned documents</field>
+            <field name="model_id" ref="sp_letter_v15.model_letter_file"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_run_ocr()</field>
+            <field name="interval_number">30</field>
+            <field name="interval_type">minutes</field>
+            <field name="numbercall">-1</field>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>

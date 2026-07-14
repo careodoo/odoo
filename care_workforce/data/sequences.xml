@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="seq_care_roster" model="ir.sequence">
+            <field name="name">Care Roster</field>
+            <field name="code">care.roster</field>
+            <field name="prefix">ROS-%(year)s-</field>
+            <field name="padding">4</field>
+        </record>
+        <record id="seq_care_disciplinary" model="ir.sequence">
+            <field name="name">Disciplinary Action</field>
+            <field name="code">care.disciplinary.action</field>
+            <field name="prefix">DISC-%(year)s-</field>
+            <field name="padding">4</field>
+        </record>
+        <record id="seq_care_hse" model="ir.sequence">
+            <field name="name">HSE Incident</field>
+            <field name="code">care.hse.incident</field>
+            <field name="prefix">HSE-%(year)s-</field>
+            <field name="padding">4</field>
+        </record>
+        <record id="seq_care_agency_supply" model="ir.sequence">
+            <field name="name">Agency Supply</field>
+            <field name="code">care.agency.supply</field>
+            <field name="prefix">AGS-%(year)s-</field>
+            <field name="padding">4</field>
+        </record>
+    </data>
+</odoo>

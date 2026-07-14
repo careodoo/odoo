@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="tpl_salary_cert" model="letter.template">
+            <field name="name">Salary Certificate</field>
+            <field name="direction">outgoing</field>
+            <field name="classification_id" ref="class_bank"/>
+            <field name="subject">Salary Certificate - [Employee]</field>
+            <field name="body">To whom it may concern,
+
+This is to certify that [Employee] works at CARE as [Job] with a monthly salary of [Salary] KWD since [Join Date].
+
+HR Department</field>
+        </record>
+        <record id="tpl_delegate_auth" model="letter.template">
+            <field name="name">Delegate Authorization</field>
+            <field name="direction">outgoing</field>
+            <field name="classification_id" ref="class_gov"/>
+            <field name="subject">Authorization of Delegate [Delegate]</field>
+            <field name="body">We hereby authorize [Delegate], Civil ID [Civil ID], to follow up our transaction with your department.</field>
+        </record>
+        <record id="tpl_iqama_renew" model="letter.template">
+            <field name="name">Residence (Iqama) Renewal Request</field>
+            <field name="direction">outgoing</field>
+            <field name="classification_id" ref="class_gov"/>
+            <field name="subject">Residence Renewal Request - [Employee]</field>
+            <field name="body">Kindly approve the residence renewal for the attached worker [Employee], file no. [Gov File].</field>
+        </record>
+    </data>
+</odoo>

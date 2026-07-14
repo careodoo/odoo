@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_mobile_token_user,mobile.token.user,model_care_cafm_mobile_token,base.group_user,1,1,1,1
+access_mobile_token_system,mobile.token.system,model_care_cafm_mobile_token,base.group_system,1,1,1,1
+access_cafm_notif_user,cafm.notif.user,model_care_cafm_notification,base.group_user,1,1,1,1
+access_cafm_notif_portal,cafm.notif.portal,model_care_cafm_notification,base.group_portal,1,1,0,0
+access_cafm_notif_compose,cafm.notif.compose,model_care_cafm_notification_compose,base.group_user,1,1,1,1

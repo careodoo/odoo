@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo><data noupdate="1">
+  <record id="ps1" model="care.cafm.pest.station"><field name="name">محطة B1</field><field name="facility_id" ref="care_cafm.fac_bayan"/><field name="location_id" ref="care_cafm.loc_garden"/><field name="station_type">bait</field></record>
+  <record id="tank1" model="care.cafm.watertank"><field name="name">خزان علوي A</field><field name="facility_id" ref="care_cafm.fac_bayan"/><field name="capacity_m3">50</field><field name="frequency_months">6</field></record>
+  <record id="pool1" model="care.cafm.pool.reading"><field name="facility_id" ref="care_cafm.fac_bayan"/><field name="chlorine">2.0</field><field name="ph">7.5</field><field name="temperature">28</field></record>
+</data></odoo>

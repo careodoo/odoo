@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============ SERVICE REQUESTS ============ -->
+    <record id="view_cafm_request_tree" model="ir.ui.view">
+        <field name="name">care.cafm.service.request.tree</field>
+        <field name="model">care.cafm.service.request</field>
+        <field name="arch" type="xml">
+            <tree decoration-info="state=='new'" decoration-success="state=='converted'" decoration-muted="state=='rejected'">
+                <field name="name"/><field name="title"/><field name="facility_id"/>
+                <field name="location_id"/><field name="priority" widget="priority"/>
+                <field name="requested_by"/><field name="request_datetime"/>
+                <field name="state" widget="badge" decoration-success="state=='converted'" decoration-info="state=='new'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_cafm_request_form" model="ir.ui.view">
+        <field name="name">care.cafm.service.request.form</field>
+        <field name="model">care.cafm.service.request</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_review" type="object" string="بدء المراجعة" class="btn-secondary"
+                            invisible="state != 'new'"/>
+                    <button name="action_convert" type="object" string="🛠️ تحويل إلى أمر عمل" class="btn-primary"
+                            invisible="state in ('converted','rejected')"/>
+                    <button name="action_reject" type="object" string="رفض" class="btn-secondary"
+                            invisible="state in ('converted','rejected')"/>
+                    <button name="action_open_workorder" type="object" string="فتح أمر العمل"
+                            invisible="not workorder_id"/>
+                    <field name="state" widget="statusbar" statusbar_visible="new,in_review,converted"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="title" placeholder="عنوان الطلب"/></h1>
+                        <field name="name" readonly="1"/></div>
+                    <group>
+                        <group>
+                            <field name="facility_id"/><field name="location_id"/>
+                            <field name="asset_id"/><field name="service_id"/>
+                        </group>
+                        <group>
+                            <field name="partner_id"/><field name="priority" widget="priority"/>
+                            <field name="requested_hours"/>
+                            <field name="requested_by"/><field name="request_datetime"/>
+                            <field name="workorder_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <field name="description" placeholder="تفاصيل الطلب…"/>
+                    <separator string="المواصفات الكاملة"/>
+                    <field name="specifications" placeholder="مواصفات وتفاصيل تنفيذ الخدمة…"/>
+                </sheet>
+                <div class="oe_chatter"><field name="message_follower_ids"/><field name="activity_ids"/><field name="message_ids"/></div>
+            </form>
+        </field>
+    </record>
+    <record id="action_cafm_request" model="ir.actions.act_window">
+        <field name="name">طلبات الخدمة</field>
+        <field name="res_model">care.cafm.service.request</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html"><p class="o_view_nocontent_smiling_face">لا طلبات خدمة بعد</p>
+            <p>سجّل طلب الخدمة، ثم حوّله بضغطة إلى أمر عمل — «من الطلب إلى الإغلاق».</p></field>
+    </record>
+
+    <!-- ============ ASSETS ============ -->
+    <record id="view_cafm_asset_tree" model="ir.ui.view">
+        <field name="name">care.cafm.asset.tree</field>
+        <field name="model">care.cafm.asset</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="code"/><field name="name"/><field name="barcode"/><field name="category"/>
+                <field name="facility_id"/><field name="location_id"/>
+                <field name="warranty_end"/>
+                <field name="status" widget="badge" decoration-success="status=='operational'" decoration-danger="status=='faulty'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_cafm_asset_form" model="ir.ui.view">
+        <field name="name">care.cafm.asset.form</field>
+        <field name="model">care.cafm.asset</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="%(action_report_cafm_asset_label)d" type="action" string="🖨️ طباعة الملصق (باركود/QR)" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" icon="fa-wrench" type="object" name="action_view_workorders">
+                            <field name="workorder_count" widget="statinfo" string="أوامر العمل"/>
+                        </button>
+                    </div>
+                    <field name="qr_image" widget="image" class="oe_avatar" nolabel="1"/>
+                    <field name="image" widget="image" class="oe_avatar" nolabel="1"/>
+                    <div class="oe_title"><h1><field name="name" placeholder="اسم الأصل"/></h1>
+                        <field name="code" readonly="1"/></div>
+                    <group>
+                        <group string="التصنيف والموقع">
+                            <field name="category"/><field name="facility_id"/>
+                            <field name="location_id"/><field name="building_id"/>
+                            <field name="status"/>
+                        </group>
+                        <group string="الملكية والتعريف">
+                            <field name="ownership" widget="radio" options="{'horizontal': True}"/>
+                            <field name="company_asset_id" invisible="ownership != 'company'"
+                                   options="{'no_create_edit': True}"/>
+                            <field name="serial" invisible="ownership != 'client'"/>
+                            <field name="barcode"/>
+                            <field name="brand"/><field name="model_name"/>
+                            <field name="install_date"/><field name="warranty_end"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="الفحص">
+                            <field name="last_inspection_date"/><field name="next_inspection_date"/>
+                        </group>
+                        <group string="الجرد">
+                            <field name="last_audit_date"/><field name="audit_note"/>
+                        </group>
+                    </group>
+                    <field name="notes" placeholder="ملاحظات…"/>
+                </sheet>
+                <div class="oe_chatter"><field name="message_follower_ids"/><field name="message_ids"/></div>
+            </form>
+        </field>
+    </record>
+    <record id="action_cafm_asset" model="ir.actions.act_window">
+        <field name="name">الأصول</field>
+        <field name="res_model">care.cafm.asset</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- ============ PPM PLANS ============ -->
+    <record id="view_cafm_ppm_tree" model="ir.ui.view">
+        <field name="name">care.cafm.ppm.tree</field>
+        <field name="model">care.cafm.ppm</field>
+        <field name="arch" type="xml">
+            <tree decoration-warning="next_date &lt;= context_today()">
+                <field name="name"/><field name="facility_id"/><field name="service_id"/>
+                <field name="interval_number"/><field name="interval_unit"/>
+                <field name="next_date"/><field name="generated_count"/><field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_cafm_ppm_form" model="ir.ui.view">
+        <field name="name">care.cafm.ppm.form</field>
+        <field name="model">care.cafm.ppm</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_generate_now" type="object" string="🛠️ توليد أمر عمل الآن" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" placeholder="اسم خطة الصيانة"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="facility_id"/><field name="location_id"/>
+                            <field name="asset_id"/><field name="service_id"/><field name="employee_id"/>
+                        </group>
+                        <group>
+                            <label for="interval_number" string="التكرار كل"/>
+                            <div class="o_row"><field name="interval_number"/><field name="interval_unit"/></div>
+                            <field name="expected_minutes"/>
+                            <field name="next_date"/><field name="last_generated" readonly="1"/>
+                            <field name="generated_count" readonly="1"/><field name="active"/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter"><field name="message_ids"/></div>
+            </form>
+        </field>
+    </record>
+    <record id="action_cafm_ppm" model="ir.actions.act_window">
+        <field name="name">الصيانة الوقائية (PPM)</field>
+        <field name="res_model">care.cafm.ppm</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- ============ SLA AGREEMENTS ============ -->
+    <record id="view_cafm_sla_tree" model="ir.ui.view">
+        <field name="name">care.cafm.sla.tree</field>
+        <field name="model">care.cafm.sla</field>
+        <field name="arch" type="xml">
+            <tree><field name="name"/><field name="facility_id"/><field name="service_id"/><field name="active"/></tree>
+        </field>
+    </record>
+    <record id="view_cafm_sla_form" model="ir.ui.view">
+        <field name="name">care.cafm.sla.form</field>
+        <field name="model">care.cafm.sla</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" placeholder="اسم الاتفاقية"/></h1></div>
+                    <group>
+                        <group><field name="facility_id"/><field name="service_id"/></group>
+                        <group><field name="partner_id" readonly="1"/><field name="active"/></group>
+                    </group>
+                    <separator string="مستويات الخدمة حسب الأولوية"/>
+                    <field name="line_ids">
+                        <tree editable="bottom">
+                            <field name="priority"/>
+                            <field name="response_hours"/>
+                            <field name="resolution_hours"/>
+                        </tree>
+                    </field>
+                    <field name="note" placeholder="ملاحظات…"/>
+                </sheet>
+                <div class="oe_chatter"><field name="message_ids"/></div>
+            </form>
+        </field>
+    </record>
+    <record id="action_cafm_sla" model="ir.actions.act_window">
+        <field name="name">اتفاقيات الخدمة (SLA)</field>
+        <field name="res_model">care.cafm.sla</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html"><p class="o_view_nocontent_smiling_face">لا اتفاقيات SLA بعد</p>
+            <p>حدّد زمن الاستجابة والإنجاز لكل أولوية — يُطبَّق تلقائياً على أوامر العمل ويضبط الموعد النهائي والتصعيد.</p></field>
+    </record>
+    <!-- Menus (request/asset/ppm/sla) live in views/cafm_menus.xml -->
+</odoo>

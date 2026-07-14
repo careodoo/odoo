@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Building designer form -->
+    <record id="view_building_designer_form" model="ir.ui.view">
+        <field name="name">care.cafm.building.designer.form</field>
+        <field name="model">care.cafm.building</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" icon="fa-building" disabled="1">
+                            <field name="floor_count" widget="statinfo" string="الأدوار"/>
+                        </button>
+                    </div>
+                    <div class="oe_title"><h1><field name="name" placeholder="اسم المبنى"/></h1></div>
+                    <group>
+                        <group string="التصميم">
+                            <field name="facility_id"/>
+                            <field name="building_type"/>
+                            <field name="total_area"/>
+                            <field name="color" widget="color"/>
+                            <field name="facade_style"/>
+                            <field name="roof_type"/>
+                            <field name="night_lights"/>
+                            <field name="logo_url" placeholder="يُرفع من مصمّم المبنى في البورتال"/>
+                        </group>
+                        <group string="الأبعاد والمكوّنات">
+                            <field name="width_m"/>
+                            <field name="depth_m"/>
+                            <field name="floor_height_m"/>
+                            <field name="has_basement"/>
+                            <field name="basement_count" invisible="not has_basement"/>
+                            <field name="elevators"/>
+                            <field name="stairs"/>
+                            <field name="entrances"/>
+                            <field name="rooms_per_floor"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="الأدوار">
+                            <field name="floor_ids">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_building_designer_tree" model="ir.ui.view">
+        <field name="name">care.cafm.building.designer.tree</field>
+        <field name="model">care.cafm.building</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="facility_id"/>
+                <field name="building_type"/>
+                <field name="width_m"/>
+                <field name="depth_m"/>
+                <field name="floor_count"/>
+                <field name="basement_count"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_building_designer" model="ir.actions.act_window">
+        <field name="name">مصمّم المباني</field>
+        <field name="res_model">care.cafm.building</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_building_designer_tree"/>
+        <field name="help" type="html"><p class="o_view_nocontent_smiling_face">صمّم مباني العملاء</p>
+            <p>لكل مبنى نوعه وأبعاده وسردابه وأدواره — تُرسم منها العارضة ثلاثية الأبعاد الحيّة.</p></field>
+    </record>
+
+    <!-- Menus live in views/cafm_menus.xml -->
+
+    <!-- Shift & notification settings -->
+    <record id="view_cafm_shift_settings" model="ir.ui.view">
+        <field name="name">care.cafm.shift.settings</field>
+        <field name="model">res.config.settings</field>
+        <field name="arch" type="xml">
+            <form string="إعدادات الوردية" class="oe_form_configuration">
+                <sheet>
+                    <div class="app_settings_block">
+                        <h2>إعدادات الوردية والإشعارات</h2>
+                        <group>
+                            <field name="cafm_shift_enforce_hours"/>
+                            <field name="cafm_shift_notify_user_ids" widget="many2many_tags"
+                                   placeholder="اترك فارغاً لإخطار المشرفين تلقائياً"/>
+                        </group>
+                    </div>
+                </sheet>
+                <footer>
+                    <button string="حفظ" type="object" name="execute" class="btn-primary"/>
+                    <button string="إلغاء" type="object" name="cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="action_cafm_shift_settings" model="ir.actions.act_window">
+        <field name="name">إعدادات الوردية والإشعارات</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="view_id" ref="view_cafm_shift_settings"/>
+    </record>
+    <!-- Menu for shift settings lives in views/cafm_menus.xml -->
+</odoo>

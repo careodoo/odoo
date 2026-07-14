@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>دليل نظام CAFM — البداية السريعة</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{--bg:#0d1826;--card:#16273d;--card2:#1c3350;--line:#274261;--ink:#e9f1fb;--muted:#9cb2cd;
+    --ac:#f7a23b;--teal:#2dd4bf;--red:#e5484d;--blue:#4aa8ff;--ok:#37c98a;--violet:#a78bfa;
+    --f:"Segoe UI",Tahoma,system-ui,"Noto Sans Arabic",sans-serif}
+  @media(prefers-color-scheme:light){:root{--bg:#eef2f7;--card:#fff;--card2:#f4f7fb;--line:#dce5f0;--ink:#132234;--muted:#4d647f}}
+  :root[data-theme="dark"]{--bg:#0d1826;--card:#16273d;--card2:#1c3350;--line:#274261;--ink:#e9f1fb;--muted:#9cb2cd}
+  :root[data-theme="light"]{--bg:#eef2f7;--card:#fff;--card2:#f4f7fb;--line:#dce5f0;--ink:#132234;--muted:#4d647f}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);direction:rtl;line-height:1.65}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 20px}
+  a{color:inherit;text-decoration:none}
+  h1,h2,h3{margin:0;text-wrap:balance}
+  .top{display:flex;justify-content:space-between;align-items:center;padding:18px 0}
+  .brand{display:flex;gap:11px;align-items:center;font-weight:900;font-size:19px}
+  .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(150deg,var(--ac),#e07d1c);display:grid;place-items:center;color:#1a1205;font-weight:900}
+  .tt{width:38px;height:38px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;cursor:pointer}
+  .hero{padding:28px 0 8px}
+  .eyebrow{font-size:12px;font-weight:800;letter-spacing:2.4px;color:var(--ac);text-transform:uppercase}
+  .hero h1{font-size:clamp(28px,4.6vw,44px);font-weight:900;margin-top:12px}
+  .hero p{color:var(--muted);max-width:64ch;margin-top:12px;font-size:16px}
+  h2{font-size:19px;margin:30px 0 14px;display:flex;align-items:center;gap:9px}
+  .grid{display:grid;gap:14px}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:820px){.g3{grid-template-columns:1fr}.g2{grid-template-columns:1fr}}
+  .entry{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;border-top:4px solid var(--c,var(--ac));display:flex;flex-direction:column}
+  .entry .i{font-size:32px}.entry h3{font-size:18px;margin:10px 0 6px}
+  .entry p{color:var(--muted);font-size:13.5px;flex:1}
+  .entry .url{font-size:12px;color:var(--muted);direction:ltr;text-align:left;background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;margin:10px 0;word-break:break-all}
+  .go{margin-top:6px;font-weight:800;font-size:14px;color:var(--c,var(--ac));display:inline-flex;gap:6px}
+  .role{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px}
+  .role .h{display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px}
+  .role ul{margin:9px 0 0;padding-inline-start:18px;color:var(--muted);font-size:13px}
+  .role li{margin:4px 0}
+  .role .lnk{margin-top:9px;font-size:12.5px;font-weight:800;color:var(--teal)}
+  .step{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px}
+  .step .n{width:28px;height:28px;border-radius:8px;background:linear-gradient(150deg,var(--ac),#e07d1c);color:#1a1205;font-weight:900;display:grid;place-items:center;flex:none}
+  .step b{font-size:14.5px}.step p{margin:3px 0 0;color:var(--muted);font-size:13px}
+  .mods{display:flex;flex-wrap:wrap;gap:8px}
+  .mod{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 13px;font-size:12.5px;font-weight:700}
+  footer{padding:30px 0 50px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);margin-top:30px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><span class="logo">C</span> دليل نظام CAFM</div>
+    <button class="tt" id="tt" aria-label="الوضع">◐</button>
+  </div>
+
+  <div class="hero">
+    <div class="eyebrow">Getting Started · البداية السريعة</div>
+    <h1>نظام إدارة تشغيل المرافق — كيف تبدأ</h1>
+    <p>النظام مبنيّ ويعمل على سيرفركم. له ثلاث نقاط دخول حسب دورك: الإدارة (غرفة القيادة)، الميدان (تطبيق الموبايل)، والعميل (البوابة المستقلة).</p>
+  </div>
+
+  <h2>🚪 نقاط الدخول الثلاث</h2>
+  <div class="grid g3">
+    <div class="entry" style="--c:var(--blue)">
+      <div class="i">📊</div><h3>الإدارة — غرفة القيادة</h3>
+      <p>مؤشّرات SLA والأوامر المفتوحة والمتأخرة وأداء المرافق والبلاغات — لحظياً. وكل الشاشات من قائمة «CAFM» في Odoo.</p>
+      <div class="url">/cafm/dashboard</div>
+      <a class="go" href="/cafm/dashboard">افتح غرفة القيادة ←</a>
+    </div>
+    <div class="entry" style="--c:var(--ac)">
+      <div class="i">📱</div><h3>الميدان — تطبيق الموبايل</h3>
+      <p>تطبيق واحد يتكيّف مع كل دور وخدمة: عامل، أمن، زراعة، واجهات، مشرف، جودة، عميل — مسح QR، تنفيذ، بلاغات.</p>
+      <div class="url">/cafm/m</div>
+      <a class="go" href="/cafm/m">افتح التطبيق ←</a>
+    </div>
+    <div class="entry" style="--c:var(--teal)">
+      <div class="i">🌐</div><h3>العميل — البوابة المستقلة</h3>
+      <p>بوابة منفصلة عن Odoo تعرض خدماته وأوامر عمله وتتيح الطلب من الكتالوج — عبر واجهة API.</p>
+      <div class="url">/care_hr/static/mockups/cafm-portal.html</div>
+      <a class="go" href="/care_hr/static/mockups/cafm-portal.html">افتح البوابة ←</a>
+    </div>
+  </div>
+
+  <h2>👥 دليل كل دور</h2>
+  <div class="grid g2">
+    <div class="role"><div class="h">🦺 المشرف الميداني</div>
+      <ul><li>يرى حالة الموقع و«من أين الآن؟» من مسح QR</li><li>يُسند المهام للعمّال</li><li>يرصد ملاحظة جودة بموعد ومسؤول</li></ul>
+      <div class="lnk">📱 /cafm/m/supervisor</div></div>
+    <div class="role"><div class="h">🧹 عامل النظافة</div>
+      <ul><li>يرى مهامّه، يمسح QR الموقع لإثبات الحضور وبدء العدّاد</li><li>جولات بمسح دخول/خروج + قبل/بعد</li><li>تدقيق جودة يُنشئ ملاحظات تلقائياً</li></ul>
+      <div class="lnk">📱 /cafm/m/worker · /cafm/m/clean</div></div>
+    <div class="role"><div class="h">🛡️ فرد الأمن</div>
+      <ul><li>دوريات بمسح نقاط QR بالتسلسل</li><li>بلاغات + زر طوارئ</li><li>تصاريح دخول (منع تلقائي للمحظورين) + عُهدة مفاتيح</li></ul>
+      <div class="lnk">📱 /cafm/m/sec</div></div>
+    <div class="role"><div class="h">🌿 عامل الزراعة</div>
+      <ul><li>مناطق الريّ المستحقّة (ذكي حسب الطقس)</li><li>سجل النباتات والمعالجات</li></ul>
+      <div class="lnk">📱 /cafm/m/agri</div></div>
+    <div class="role"><div class="h">🏢 عامل الواجهات</div>
+      <ul><li>تصاريح العمل على الارتفاع (تقييم مخاطر + فحص معدّات)</li><li>إيقاف تلقائي عند تجاوز حدّ الرياح 🇰🇼</li></ul>
+      <div class="lnk">📱 /cafm/m/facade</div></div>
+    <div class="role"><div class="h">🔎 موظف الجودة</div>
+      <ul><li>جولات تفتيش وتسجيل ملاحظات تصحيح</li><li>كل ملاحظة بموعد ومسؤول وإثبات</li></ul>
+      <div class="lnk">📱 /cafm/m/quality</div></div>
+    <div class="role"><div class="h">🧑‍💼 العميل</div>
+      <ul><li>يرى خدماته وأوامر عمله وتقييمه</li><li>يطلب مستلزماته من الكتالوج ويتتبّعها</li></ul>
+      <div class="lnk">🌐 البوابة المستقلة · 📱 /cafm/m/client</div></div>
+    <div class="role"><div class="h">📊 مدير التشغيل</div>
+      <ul><li>غرفة القيادة (KPIs وSLA)</li><li>التقارير (بطاقة عمل · كشف SLA · Excel)</li><li>اعتماد المشتريات وتحويلها لأمر بيع/شراء</li></ul>
+      <div class="lnk">📊 /cafm/dashboard · قائمة CAFM</div></div>
+  </div>
+
+  <h2>⚡ خطوات التهيئة الأولى</h2>
+  <div class="step"><div class="n">1</div><div><b>عرّف المرافق والمواقع</b><p>قائمة CAFM ← الإعداد ← المرافق والمواقع: أنشئ المرفق (اربطه بمشروع وعميل)، ثم المباني والأدوار والغرف. اطبع ملصقات QR لكل موقع.</p></div></div>
+  <div class="step"><div class="n">2</div><div><b>عرّف الخدمات والفِرَق</b><p>خطوط الخدمة (نظافة/أمن/…) والفِرَق (مشرف + أعضاء + جودة) لكل مرفق.</p></div></div>
+  <div class="step"><div class="n">3</div><div><b>اربط أجهزة العمّال</b><p>كل عامل يسجّل الدخول ويفتح /cafm/m — يظهر له تطبيقه حسب دوره وخدمته.</p></div></div>
+  <div class="step"><div class="n">4</div><div><b>(اختياري) فعّل التخزين الخارجي</b><p>الإعدادات ← «وسائط CAFM» ← اختر S3/R2 وأدخل البيانات — لرفع الصور/الفيديو خارج السيرفر.</p></div></div>
+
+  <h2>🧩 موديولات النظام (٨)</h2>
+  <div class="mods">
+    <span class="mod">النواة (QR · أوامر · SLA · تقارير)</span>
+    <span class="mod">🛡️ الأمن</span><span class="mod">🧹 النظافة</span><span class="mod">🌿 الزراعة</span>
+    <span class="mod">🏢 الواجهات</span><span class="mod">🛒 المشتريات</span><span class="mod">☁️ الوسائط الخارجية</span>
+    <span class="mod">🧩 خدمات إضافية + API</span>
+  </div>
+
+  <footer>دليل نظام CAFM · care · مبنيّ ويعمل على ecare.care-kw.com — للمساعدة: قائمة «CAFM» في Odoo.</footer>
+</div>
+<script>document.getElementById('tt').addEventListener('click',()=>{const d=document.documentElement,c=d.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');d.setAttribute('data-theme',c==='dark'?'light':'dark')});</script>
+</body>
+</html>

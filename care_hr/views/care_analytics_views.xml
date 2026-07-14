@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============ Exceptions / Data Quality (one engine) ============ -->
+    <record id="view_care_exception_tree" model="ir.ui.view">
+        <field name="name">care.exception.tree</field>
+        <field name="model">care.exception</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="severity == 'critical' and count &gt; 0"
+                  decoration-warning="severity == 'warning' and count &gt; 0"
+                  decoration-muted="count == 0">
+                <field name="name"/>
+                <field name="category"/>
+                <field name="count"/>
+                <field name="impact"/>
+                <field name="severity" widget="badge" decoration-danger="severity == 'critical'"
+                       decoration-warning="severity == 'warning'"/>
+                <field name="scan_date"/>
+                <button name="action_view_records" type="object" string="View" icon="fa-search"
+                        invisible="count == 0"/>
+                <button name="action_handle" type="object" string="Handle" icon="fa-check"
+                        invisible="state == 'handled'"/>
+                <field name="state" column_invisible="1"/>
+                <field name="res_model" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_care_exception_search" model="ir.ui.view">
+        <field name="name">care.exception.search</field>
+        <field name="model">care.exception</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <filter name="open" string="Needs Action" domain="[('count','&gt;',0)]"/>
+                <filter name="critical" string="Critical" domain="[('severity','=','critical')]"/>
+                <separator/>
+                <filter name="f_data" string="Data Quality" domain="[('category','=','data')]"/>
+                <filter name="f_compliance" string="Compliance" domain="[('category','=','compliance')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="g_cat" string="Category" context="{'group_by':'category'}"/>
+                    <filter name="g_sev" string="Severity" context="{'group_by':'severity'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_care_data_quality" model="ir.actions.act_window">
+        <field name="name">Data Quality</field>
+        <field name="res_model">care.exception</field>
+        <field name="view_mode">tree</field>
+        <field name="domain">[('category','in',('data','payroll'))]</field>
+        <field name="search_view_id" ref="view_care_exception_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Data integrity issues</p>
+            <p>Use "↻ Run Scan" to refresh, then fix before the payroll run.</p>
+        </field>
+    </record>
+    <record id="action_care_exceptions" model="ir.actions.act_window">
+        <field name="name">Exceptions</field>
+        <field name="res_model">care.exception</field>
+        <field name="view_mode">tree</field>
+        <field name="domain">[('category','in',('compliance','operational'))]</field>
+        <field name="search_view_id" ref="view_care_exception_search"/>
+    </record>
+    <record id="action_exception_scan_server" model="ir.actions.server">
+        <field name="name">Run Data/Exception Scan</field>
+        <field name="model_id" ref="model_care_exception"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_run_scan()</field>
+    </record>
+
+    <!-- ============ Attrition ============ -->
+    <record id="view_care_attrition_tree" model="ir.ui.view">
+        <field name="name">care.attrition.tree</field>
+        <field name="model">care.attrition</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="rate &gt;= 15" decoration-warning="rate &gt;= 8 and rate &lt; 15">
+                <field name="dimension"/>
+                <field name="dimension_label"/>
+                <field name="headcount"/>
+                <field name="departures"/>
+                <field name="rate" widget="percentage"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_care_attrition_graph" model="ir.ui.view">
+        <field name="name">care.attrition.graph</field>
+        <field name="model">care.attrition</field>
+        <field name="arch" type="xml">
+            <graph string="Attrition" type="bar">
+                <field name="dimension_label"/>
+                <field name="rate" type="measure"/>
+            </graph>
+        </field>
+    </record>
+    <record id="action_care_attrition" model="ir.actions.act_window">
+        <field name="name">Attrition Analysis</field>
+        <field name="res_model">care.attrition</field>
+        <field name="view_mode">tree,graph</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Attrition by dimension</p>
+            <p>Use "↻ Refresh Attrition" to recompute.</p>
+        </field>
+    </record>
+    <record id="view_care_attrition_risk_tree" model="ir.ui.view">
+        <field name="name">care.attrition.risk.tree</field>
+        <field name="model">care.attrition.risk</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="risk == 'high'" decoration-warning="risk == 'medium'">
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="indicators"/>
+                <field name="score"/>
+                <field name="risk" widget="badge" decoration-danger="risk == 'high'"
+                       decoration-warning="risk == 'medium'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_care_attrition_risk" model="ir.actions.act_window">
+        <field name="name">At-Risk Workers</field>
+        <field name="res_model">care.attrition.risk</field>
+        <field name="view_mode">tree</field>
+    </record>
+    <record id="action_attrition_scan_server" model="ir.actions.server">
+        <field name="name">Refresh Attrition + Risk</field>
+        <field name="model_id" ref="model_care_attrition"/>
+        <field name="state">code</field>
+        <field name="code">
+model.action_run_scan()
+env['care.attrition.risk'].action_run_scan()
+        </field>
+    </record>
+
+    <!-- ============ menus ============ -->
+    <menuitem id="menu_care_data_quality" name="Data Quality"
+              parent="care_hr.menu_care_hr_config_root" action="action_care_data_quality" sequence="40"/>
+    <menuitem id="menu_care_data_quality_scan" name="↻ Run Data Scan"
+              parent="care_hr.menu_care_hr_config_root" action="action_exception_scan_server"
+              sequence="41" groups="hr.group_hr_manager"/>
+    <menuitem id="menu_care_exceptions" name="Exceptions"
+              parent="care_hr.menu_care_hr_compliance_root" action="action_care_exceptions" sequence="40"/>
+    <menuitem id="menu_care_attrition" name="Attrition Analysis"
+              parent="care_hr.menu_sec_people" action="action_care_attrition" sequence="12"/>
+    <menuitem id="menu_care_attrition_risk" name="At-Risk Workers"
+              parent="care_hr.menu_sec_people" action="action_care_attrition_risk" sequence="13"/>
+    <menuitem id="menu_care_attrition_scan" name="↻ Refresh Attrition"
+              parent="care_hr.menu_sec_people" action="action_attrition_scan_server"
+              sequence="14" groups="hr.group_hr_manager"/>
+</odoo>

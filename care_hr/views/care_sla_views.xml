@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_care_sla_tree" model="ir.ui.view">
+        <field name="name">care.sla.tree</field>
+        <field name="model">care.sla</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="state == 'breach'" decoration-warning="state == 'warning'"
+                  decoration-success="state == 'ok'">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="partner_id"/>
+                <field name="date"/>
+                <field name="required_headcount"/>
+                <field name="present_count"/>
+                <field name="gap" sum="Total Gap"/>
+                <field name="coverage_pct" widget="percentage"/>
+                <field name="penalty_risk" widget="monetary" sum="Penalty Risk"/>
+                <field name="state" widget="badge" decoration-danger="state == 'breach'"
+                       decoration-warning="state == 'warning'" decoration-success="state == 'ok'"/>
+                <field name="currency_id" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_care_sla_form" model="ir.ui.view">
+        <field name="name">care.sla.form</field>
+        <field name="model">care.sla</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="contract_id"/>
+                            <field name="partner_id"/>
+                            <field name="date"/>
+                        </group>
+                        <group>
+                            <field name="required_headcount"/>
+                            <field name="present_count" readonly="1"/>
+                            <field name="gap" readonly="1"/>
+                            <field name="coverage_pct" widget="percentage" readonly="1"/>
+                            <field name="penalty_per_head" widget="monetary"/>
+                            <field name="penalty_risk" widget="monetary" readonly="1"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="state" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter"><field name="message_ids"/></div>
+            </form>
+        </field>
+    </record>
+    <record id="view_care_sla_search" model="ir.ui.view">
+        <field name="name">care.sla.search</field>
+        <field name="model">care.sla</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="project_id"/><field name="partner_id"/>
+                <filter name="breach" string="Breach" domain="[('state','=','breach')]"/>
+                <filter name="under" string="Under Target" domain="[('state','in',('warning','breach'))]"/>
+                <filter name="today" string="Today" domain="[('date','=',context_today().strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter name="g_project" string="Project" context="{'group_by':'project_id'}"/>
+                    <filter name="g_state" string="Status" context="{'group_by':'state'}"/>
+                    <filter name="g_date" string="Date" context="{'group_by':'date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_care_sla" model="ir.actions.act_window">
+        <field name="name">Coverage SLA</field>
+        <field name="res_model">care.sla</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_care_sla_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Track site coverage vs contract</p>
+            <p>Use "↻ Compute Today's SLA" to refresh.</p>
+        </field>
+    </record>
+    <record id="action_sla_scan_server" model="ir.actions.server">
+        <field name="name">Compute Today's Coverage SLA</field>
+        <field name="model_id" ref="model_care_sla"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_run_scan()</field>
+    </record>
+    <record id="cron_care_sla" model="ir.cron">
+        <field name="name">Care HR: Daily Coverage SLA</field>
+        <field name="model_id" ref="model_care_sla"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_daily_sla()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <menuitem id="menu_care_sla" name="Coverage SLA"
+              parent="care_hr.menu_care_hr_compliance_root" action="action_care_sla" sequence="8"/>
+    <menuitem id="menu_care_sla_scan" name="↻ Compute Today's SLA"
+              parent="care_hr.menu_care_hr_compliance_root" action="action_sla_scan_server"
+              sequence="9" groups="hr.group_hr_manager"/>
+</odoo>

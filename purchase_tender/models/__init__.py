@@ -1,5 +1,7 @@
 from . import bid_type
 from . import tender_follower
+from . import tender_notification
+from . import tender_classification
 from . import purchase_tender
 from . import tender_price_analysis
 from . import tender_manpower_analysis
@@ -13,3 +15,4 @@ from . import tender_checklist
 from . import tender_requirement
 from . import res_partner
 from . import res_config_settings
+from . import care_experience_bridge

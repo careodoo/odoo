@@ -1,0 +1,11 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_care_automation_rule_user,care.automation.rule.user,model_care_automation_rule,hr.group_hr_user,1,0,0,0
+access_care_automation_rule_mgr,care.automation.rule.mgr,model_care_automation_rule,hr.group_hr_manager,1,1,1,1
+access_care_approval_rule_user,care.approval.rule.user,model_care_approval_rule,hr.group_hr_user,1,0,0,0
+access_care_approval_rule_mgr,care.approval.rule.mgr,model_care_approval_rule,hr.group_hr_manager,1,1,1,1
+access_care_approval_stat_user,care.approval.stat.user,model_care_approval_stat,hr.group_hr_user,1,0,0,0
+access_care_approval_stat_mgr,care.approval.stat.mgr,model_care_approval_stat,hr.group_hr_manager,1,1,1,1
+access_care_integration_user,care.integration.user,model_care_integration,hr.group_hr_user,1,0,0,0
+access_care_integration_mgr,care.integration.mgr,model_care_integration,hr.group_hr_manager,1,1,1,1
+access_care_delegation_user,care.delegation.user,model_care_delegation,base.group_user,1,1,1,0
+access_care_delegation_mgr,care.delegation.mgr,model_care_delegation,hr.group_hr_manager,1,1,1,1

@@ -15,7 +15,11 @@
             invisible="not proposal_ids">
             <field name="proposal_count" widget="statinfo" string="Proposals" />
           </button>
-
+        </xpath>
+        <xpath expr="//field[@name='expected_revenue']" position="after">
+          <field name="winning_proposal_id" invisible="not proposal_ids"
+                 options="{'no_create': True}"/>
+          <field name="proposal_best_amount" invisible="not proposal_ids"/>
         </xpath>
       </field>
     </record>

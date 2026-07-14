@@ -76,8 +76,8 @@
                                     <tbody>
                                         <tr t-foreach="team.member_ids" t-as="member">
                                             <td><span t-field="member.name"/></td>
-                                            <td><span t-field="member.job_position"/></td>
-                                            <td><span t-field="member.mobile"/></td>
+                                            <td><span t-field="member.job_title"/></td>
+                                            <td><span t-field="member.mobile_phone"/></td>
                                         </tr>
                                     </tbody>
                                 </table>

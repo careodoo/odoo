@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_care_manpower_file_tree" model="ir.ui.view">
+        <field name="name">care.manpower.file.tree</field>
+        <field name="model">care.manpower.file</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="state == 'full'" decoration-warning="state == 'high'">
+                <field name="name"/>
+                <field name="authority"/>
+                <field name="activity"/>
+                <field name="quota"/>
+                <field name="used_count"/>
+                <field name="available_count"/>
+                <field name="utilization" widget="percentage"/>
+                <field name="renewal_date"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'ok'"
+                       decoration-warning="state == 'high'"
+                       decoration-danger="state == 'full'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_care_manpower_file_form" model="ir.ui.view">
+        <field name="name">care.manpower.file.form</field>
+        <field name="model">care.manpower.file</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_workers" type="object"
+                                class="oe_stat_button" icon="fa-users"
+                                invisible="not employee_ids">
+                            <field name="used_count" widget="statinfo" string="Workers"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Full" bg_color="bg-danger"
+                            invisible="state != 'full'"/>
+                    <div class="oe_title">
+                        <label for="name" string="File Number"/>
+                        <h1><field name="name" placeholder="e.g. 12345"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="authority"/>
+                            <field name="activity"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group>
+                            <field name="quota"/>
+                            <field name="used_count"/>
+                            <field name="available_count"/>
+                            <field name="utilization" widget="percentage"/>
+                            <field name="state" widget="badge"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="open_date"/>
+                            <field name="renewal_date"/>
+                            <field name="days_to_renewal"/>
+                        </group>
+                        <group>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Registered Workers" name="workers">
+                            <field name="employee_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="job_id"/>
+                                    <field name="department_id"/>
+                                    <field name="job_grade_id"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="note"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_care_manpower_file_kanban" model="ir.ui.view">
+        <field name="name">care.manpower.file.kanban</field>
+        <field name="model">care.manpower.file</field>
+        <field name="arch" type="xml">
+            <kanban>
+                <field name="name"/><field name="authority"/><field name="quota"/>
+                <field name="used_count"/><field name="available_count"/>
+                <field name="utilization"/><field name="state"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click o_kanban_record_has_image_fill">
+                            <div class="o_kanban_record_top">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="name"/>
+                                    </strong>
+                                    <span class="o_kanban_record_subtitle">
+                                        <field name="activity"/>
+                                    </span>
+                                </div>
+                                <field name="state" widget="label_selection"
+                                       options="{'classes': {'ok': 'success', 'high': 'warning', 'full': 'danger'}}"/>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                Quota: <field name="quota"/> ·
+                                Used: <field name="used_count"/> ·
+                                Available: <strong><field name="available_count"/></strong>
+                                <div class="progress mt-1" style="height:6px;">
+                                    <div class="progress-bar bg-primary"
+                                         t-attf-style="width: #{record.utilization.raw_value}%"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_care_manpower_file_search" model="ir.ui.view">
+        <field name="name">care.manpower.file.search</field>
+        <field name="model">care.manpower.file</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="activity"/>
+                <filter name="full" string="Full" domain="[('state','=','full')]"/>
+                <filter name="near_full" string="Near Full" domain="[('state','=','high')]"/>
+                <filter name="expiring" string="Renewal ≤ 60 days"
+                        domain="[('renewal_date','&gt;=', context_today().strftime('%Y-%m-%d')), ('renewal_date','&lt;=', (context_today() + relativedelta(days=60)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter name="g_authority" string="Authority" context="{'group_by':'authority'}"/>
+                    <filter name="g_state" string="Quota Status" context="{'group_by':'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_care_manpower_file" model="ir.actions.act_window">
+        <field name="name">Manpower Files (PAM)</field>
+        <field name="res_model">care.manpower.file</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="search_view_id" ref="view_care_manpower_file_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Register a Manpower File</p>
+            <p>Government files (PAM / Social Affairs) on which iqamas and work permits
+               are registered. Track the visa quota, usage and renewal of each file.</p>
+        </field>
+    </record>
+</odoo>

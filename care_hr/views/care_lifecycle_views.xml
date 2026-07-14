@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ===== Probation ===== -->
+    <record id="view_care_probation_tree" model="ir.ui.view">
+        <field name="name">care.probation.tree</field>
+        <field name="model">care.probation</field>
+        <field name="arch" type="xml">
+            <tree decoration-warning="state in ('running','extended') and days_left &lt;= 14"
+                  decoration-success="state == 'passed'" decoration-danger="state == 'failed'">
+                <field name="name"/><field name="employee_id"/><field name="department_id"/>
+                <field name="start_date"/><field name="end_date"/><field name="days_left"/>
+                <field name="state" widget="badge" decoration-success="state == 'passed'"
+                       decoration-danger="state == 'failed'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_care_probation_form" model="ir.ui.view">
+        <field name="name">care.probation.form</field>
+        <field name="model">care.probation</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_pass" type="object" string="Pass" class="btn-primary"
+                            invisible="state in ('passed','failed')"/>
+                    <button name="action_extend" type="object" string="Extend (+30d)"
+                            invisible="state in ('passed','failed')"/>
+                    <button name="action_fail" type="object" string="Fail"
+                            invisible="state in ('passed','failed')"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group><field name="employee_id"/><field name="start_date"/>
+                            <field name="duration_days"/></group>
+                        <group><field name="end_date"/><field name="review_date"/>
+                            <field name="days_left"/><field name="evaluator_id"/></group>
+                    </group>
+                    <field name="evaluation" placeholder="Evaluation notes..."/>
+                </sheet>
+                <div class="oe_chatter"><field name="message_follower_ids"/>
+                    <field name="activity_ids"/><field name="message_ids"/></div>
+            </form>
+        </field>
+    </record>
+    <record id="action_care_probation" model="ir.actions.act_window">
+        <field name="name">Probation</field>
+        <field name="res_model">care.probation</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- ===== End of Service ===== -->
+    <record id="view_care_eos_tree" model="ir.ui.view">
+        <field name="name">care.eos.tree</field>
+        <field name="model">care.eos</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'paid'" decoration-info="state == 'confirmed'">
+                <field name="name"/><field name="employee_id"/><field name="last_working_day"/>
+                <field name="reason"/><field name="service_years"/><field name="eos_amount"/>
+                <field name="net_amount"/><field name="state" widget="badge"/>
+                <field name="currency_id" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_care_eos_form" model="ir.ui.view">
+        <field name="name">care.eos.form</field>
+        <field name="model">care.eos</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_confirm" type="object" string="Confirm" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_paid" type="object" string="Mark Paid"
+                            invisible="state != 'confirmed'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="employee_id"/><field name="join_date"/>
+                            <field name="last_working_day"/><field name="reason"/>
+                            <field name="basic_wage"/><field name="currency_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="service_years"/>
+                            <field name="eos_days"/>
+                            <field name="eos_amount"/>
+                            <field name="leave_balance_days"/>
+                            <field name="leave_amount"/>
+                            <field name="other_dues"/>
+                            <field name="deductions"/>
+                            <field name="net_amount" class="oe_subtotal_footer_separator"/>
+                        </group>
+                    </group>
+                    <div class="alert alert-info" role="alert">
+                        حساب نهاية الخدمة حسب قانون الكويت (إعدادات اللائحة): 15 يوم/سنة لأول 5
+                        سنوات، شهر/سنة بعدها، بسقف 1.5 سنة راتب + تدرّج الاستقالة.
+                    </div>
+                </sheet>
+                <div class="oe_chatter"><field name="message_follower_ids"/>
+                    <field name="activity_ids"/><field name="message_ids"/></div>
+            </form>
+        </field>
+    </record>
+    <record id="action_care_eos" model="ir.actions.act_window">
+        <field name="name">End of Service</field>
+        <field name="res_model">care.eos</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- menus under Offboarding + Recruitment sections -->
+    <menuitem id="menu_care_probation" name="Probation"
+              parent="care_hr.menu_sec_recruit" action="action_care_probation" sequence="3"/>
+    <menuitem id="menu_care_eos" name="End of Service (EOS)"
+              parent="care_hr.menu_sec_offboard" action="action_care_eos" sequence="3"/>
+
+    <!-- ===== Movement / Transfer ===== -->
+    <record id="view_care_movement_tree" model="ir.ui.view">
+        <field name="name">care.movement.tree</field>
+        <field name="model">care.movement</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'done'">
+                <field name="name"/><field name="date"/><field name="employee_id"/>
+                <field name="movement_type"/><field name="from_department_id"/>
+                <field name="to_department_id"/><field name="state" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_care_movement_form" model="ir.ui.view">
+        <field name="name">care.movement.form</field>
+        <field name="model">care.movement</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_apply" type="object" string="Apply" class="btn-primary"
+                            invisible="state == 'done'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group><field name="employee_id"/><field name="date"/>
+                            <field name="movement_type"/></group>
+                        <group><field name="from_department_id"/><field name="to_department_id"/>
+                            <field name="from_job_id"/><field name="to_job_id"/></group>
+                    </group>
+                    <field name="reason" placeholder="Reason..."/>
+                </sheet>
+                <div class="oe_chatter"><field name="message_follower_ids"/><field name="message_ids"/></div>
+            </form>
+        </field>
+    </record>
+    <record id="action_care_movement" model="ir.actions.act_window">
+        <field name="name">Movements / Transfers</field>
+        <field name="res_model">care.movement</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    <menuitem id="menu_care_movement" name="Movements / Transfers"
+              parent="care_hr.menu_sec_people" action="action_care_movement" sequence="8"/>
+
+    <!-- ===== Letters / Certificates ===== -->
+    <record id="view_care_letter_tree" model="ir.ui.view">
+        <field name="name">care.letter.tree</field>
+        <field name="model">care.letter</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'issued'">
+                <field name="name"/><field name="date"/><field name="employee_id"/>
+                <field name="letter_type"/><field name="state" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_care_letter_form" model="ir.ui.view">
+        <field name="name">care.letter.form</field>
+        <field name="model">care.letter</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_issue" type="object" string="Issue" class="btn-primary"
+                            invisible="state == 'issued'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group><field name="employee_id"/><field name="letter_type"/></group>
+                        <group><field name="date"/><field name="addressed_to"/></group>
+                    </group>
+                    <field name="body" placeholder="Letter content (auto-generated, editable)..."/>
+                </sheet>
+                <div class="oe_chatter"><field name="message_follower_ids"/><field name="message_ids"/></div>
+            </form>
+        </field>
+    </record>
+    <record id="action_care_letter" model="ir.actions.act_window">
+        <field name="name">Letters &amp; Certificates</field>
+        <field name="res_model">care.letter</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    <menuitem id="menu_care_letter" name="Letters &amp; Certificates"
+              parent="care_hr.menu_care_hr_relations_root" action="action_care_letter" sequence="3"/>
+
+    <!-- Letter PDF on letterhead -->
+    <record id="action_report_letter" model="ir.actions.report">
+        <field name="name">Letter</field>
+        <field name="model">care.letter</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_hr.report_letter</field>
+        <field name="report_file">care_hr.report_letter</field>
+        <field name="print_report_name">'Letter - %s' % (object.name or '')</field>
+        <field name="binding_model_id" ref="model_care_letter"/>
+        <field name="binding_type">report</field>
+    </record>
+    <template id="report_letter">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <div class="page rtl" style="font-family:Arial,Helvetica,sans-serif !important;color:#1f2937;">
+                    <img src="/care_hr/static/src/img/header.png" class="w-100" style="width:100%;display:block;"/>
+                    <div style="padding:24px 40px;direction:rtl;min-height:520px;">
+                        <div style="text-align:left;font-size:12px;color:#475569;">
+                            Date: <span t-esc="o.date and o.date.strftime('%d/%m/%Y') or ''"/> ·
+                            Ref: <span t-field="o.name"/></div>
+                        <h2 style="text-align:center;color:#0f2b5b;margin:18px 0;"><span t-field="o.letter_type"/></h2>
+                        <p style="font-size:13px;"><b><span t-field="o.addressed_to"/></b>,</p>
+                        <p style="font-size:13.5px;line-height:2.2;text-align:justify;"><span t-field="o.body"/></p>
+                        <div style="margin-top:50px;font-size:13px;">
+                            <div>Sincerely,</div>
+                            <div style="margin-top:40px;border-top:1px solid #94a3b8;width:220px;padding-top:4px;">
+                                Human Resources Department</div>
+                        </div>
+                    </div>
+                    <img src="/care_hr/static/src/img/footer.png" class="w-100" style="width:100%;display:block;"/>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <record id="cron_care_probation" model="ir.cron">
+        <field name="name">Care HR: Probation Review Reminder</field>
+        <field name="model_id" ref="model_care_probation"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_probation_review()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

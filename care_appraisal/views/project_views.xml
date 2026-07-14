@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_project_form_performance" model="ir.ui.view">
+        <field name="name">project.project.form.performance</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_team_performance" type="object" class="oe_stat_button"
+                        icon="fa-line-chart" groups="hr.group_hr_user">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value"><field name="team_perf_score" widget="float" digits="[16,1]"/></span>
+                        <span class="o_stat_text">أداء الفريق</span>
+                        <span class="o_stat_text"><field name="team_perf_count"/> حدث</span>
+                    </div>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>

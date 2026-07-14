@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="param_task_ontime" model="ir.config_parameter">
+            <field name="key">care_perf.task_ontime</field>
+            <field name="value">2</field>
+        </record>
+        <record id="param_task_overdue" model="ir.config_parameter">
+            <field name="key">care_perf.task_overdue</field>
+            <field name="value">-3</field>
+        </record>
+        <record id="param_att_present" model="ir.config_parameter">
+            <field name="key">care_perf.att_present</field>
+            <field name="value">0.2</field>
+        </record>
+        <record id="param_att_short" model="ir.config_parameter">
+            <field name="key">care_perf.att_short</field>
+            <field name="value">-1</field>
+        </record>
+        <record id="param_att_min_hours" model="ir.config_parameter">
+            <field name="key">care_perf.att_min_hours</field>
+            <field name="value">6</field>
+        </record>
+        <record id="param_att_overtime_bonus" model="ir.config_parameter">
+            <field name="key">care_perf.att_overtime_bonus</field>
+            <field name="value">0.5</field>
+        </record>
+        <record id="param_penalty_points" model="ir.config_parameter">
+            <field name="key">care_perf.penalty_points</field>
+            <field name="value">-3</field>
+        </record>
+        <record id="param_bonus_points" model="ir.config_parameter">
+            <field name="key">care_perf.bonus_points</field>
+            <field name="value">3</field>
+        </record>
+        <record id="param_notify_disabled" model="ir.config_parameter">
+            <field name="key">care_perf.notify_disabled</field>
+            <field name="value">0</field>
+        </record>
+        <record id="param_notify_threshold" model="ir.config_parameter">
+            <field name="key">care_perf.notify_threshold</field>
+            <field name="value">3</field>
+        </record>
+        <record id="param_reward_threshold" model="ir.config_parameter">
+            <field name="key">care_perf.reward_threshold</field>
+            <field name="value">15</field>
+        </record>
+        <record id="param_reward_per_point" model="ir.config_parameter">
+            <field name="key">care_perf.reward_per_point</field>
+            <field name="value">2</field>
+        </record>
+        <record id="param_low_threshold" model="ir.config_parameter">
+            <field name="key">care_perf.low_threshold</field>
+            <field name="value">-10</field>
+        </record>
+    </data>
+</odoo>

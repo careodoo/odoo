@@ -2,6 +2,7 @@ import logging
 import pytz
 import threading
 import re
+import time
 
 from datetime import datetime
 
@@ -17,6 +18,17 @@ from ..pyzk.zk.attendance import Attendance
 from ..pyzk.zk.exception import ZKErrorResponse, ZKNetworkError, ZKConnectionUnauthorized
 
 _logger = logging.getLogger(__name__)
+
+# --- Staged (background) finger template import tuning ----------------------
+# How many users a single worker run will read templates for, at most.
+FT_IMPORT_BATCH_SIZE = 25
+# Hard wall-clock budget (seconds) for one worker run on one device. Even if
+# the batch is not finished, the run stops here and the next cron tick resumes,
+# so a slow machine can never block the server or overrun the cron interval.
+FT_IMPORT_TIME_BUDGET = 45
+# Per finger-slot socket timeout (seconds) while reading templates, so an empty
+# / non-responding slot costs at most this instead of the full device timeout.
+FT_IMPORT_READ_TIMEOUT = 5
 
 
 class AttendanceDevice(models.Model):
@@ -143,6 +155,40 @@ class AttendanceDevice(models.Model):
 
     map_before_dl = fields.Boolean(string='Map Employee Before Download', default=True,
                                    help="Always try to map users and employees (if any new found) before downloading attendance data.")
+
+    # --- Staged (background) finger template import -------------------------
+    ft_import_state = fields.Selection([
+        ('idle', 'Idle'),
+        ('queued', 'Queued'),
+        ('running', 'Running'),
+        ('done', 'Completed'),
+        ('error', 'Error'),
+    ], string='FT Import Status', default='idle', copy=False, tracking=True,
+        help="Status of the staged (background) finger template import.")
+    ft_import_total = fields.Integer(string='FT Users To Process', copy=False, readonly=True)
+    ft_import_done = fields.Integer(string='FT Users Processed', copy=False, readonly=True)
+    ft_import_progress = fields.Float(
+        string='FT Import Progress', compute='_compute_ft_import_progress',
+        store=True, copy=False, help="Percentage of users processed.")
+    ft_import_message = fields.Char(string='FT Import Message', copy=False, readonly=True)
+    ft_import_started = fields.Datetime(string='FT Import Started', copy=False, readonly=True)
+    ft_import_last_run = fields.Datetime(string='FT Import Last Run', copy=False, readonly=True)
+    ft_import_finished = fields.Datetime(string='FT Import Finished', copy=False, readonly=True)
+    ft_import_runs_today = fields.Integer(string='FT Runs Today', copy=False, readonly=True,
+                                          help="How many worker runs processed this device today.")
+    ft_import_runs_date = fields.Date(string='FT Runs Date', copy=False, readonly=True)
+    ft_import_line_ids = fields.One2many('attendance.device.ft.import.line', 'device_id',
+                                         string='FT Import Queue', copy=False)
+    ft_import_pending_count = fields.Integer(string='FT Pending', compute='_compute_ft_import_progress')
+    ft_import_error_count = fields.Integer(string='FT Errors', compute='_compute_ft_import_progress')
+
+    @api.depends('ft_import_total', 'ft_import_done', 'ft_import_line_ids.state')
+    def _compute_ft_import_progress(self):
+        for r in self:
+            r.ft_import_progress = (100.0 * r.ft_import_done / r.ft_import_total) if r.ft_import_total else 0.0
+            lines = r.ft_import_line_ids
+            r.ft_import_pending_count = len(lines.filtered(lambda l: l.state == 'pending'))
+            r.ft_import_error_count = len(lines.filtered(lambda l: l.state == 'error'))
     create_employee_during_mapping = fields.Boolean(string='Generate Employees During Mapping', default=False,
                                                     help="If checked, during mapping between Machine's Users and company's employees, unmapped machine"
                                                     " users will try to create a new employee then map accordingly.")
@@ -315,6 +361,23 @@ class AttendanceDevice(models.Model):
                                            max_size_TCP=int(self.max_size_TCP), max_size_UDP=int(self.max_size_UDP))
 
         return self.zk_cache[cached_key]
+
+    def _pop_zk_cache(self):
+        """Evict the cached ZK object for this device so the next access builds
+        a fresh socket. ZKTeco machines allow only one connection at a time; if
+        a previous session left a half-open / poisoned socket in zk_cache, every
+        later connect() on the same worker process fails with 'TCP packet
+        invalid' until the worker restarts. Evicting on failure self-heals it."""
+        self.ensure_one()
+        password = self.password or 0
+        cached_key = (self.protocol, self.omit_ping, self.timeout, password,
+                      self.max_size_TCP, self.max_size_UDP, self.ip, self.port)
+        cached = self.zk_cache.pop(cached_key, None)
+        if cached is not None:
+            try:
+                cached.disconnect()
+            except Exception:
+                pass
 
     @api.depends('location_id.tz')
     def _compute_tz(self):
@@ -494,8 +557,18 @@ class AttendanceDevice(models.Model):
                           " configuration and machine password and/or hard restart your machine.\nDebugging info: %s") % (self.display_name, e)
 
         if error_msg:
-            email_template = self.env.ref('to_attendance_device.email_template_attendance_device')
-            post_message(email_template, error_msg)
+            # Drop the (possibly poisoned) cached socket so the next attempt
+            # rebuilds a fresh connection instead of failing forever.
+            self._pop_zk_cache()
+            # During the scheduled download (ignore_error) do not e-mail on a
+            # transient failure -- it spams the mailbox every 30 min. Cache
+            # eviction above lets the next tick reconnect cleanly. We still raise
+            # so the per-device thread isolates this device from the others.
+            if not self.env.context.get('ignore_error'):
+                email_template = self.env.ref('to_attendance_device.email_template_attendance_device')
+                post_message(email_template, error_msg)
+            else:
+                _logger.warning(error_msg)
             raise ValidationError(error_msg)
 
     def disconnect(self):
@@ -868,7 +941,7 @@ class AttendanceDevice(models.Model):
             raise ValidationError(_("Could not get attendance data from the machine %s") % (self.display_name,))
 
         finally:
-            if post_err_msg and self.download_error_notification:
+            if post_err_msg and self.download_error_notification and not self.env.context.get('ignore_error'):
                 email_template_id = self.env.ref('to_attendance_device.email_template_error_get_attendance')
                 self.post_message(email_template_id)
             self.enableDevice()
@@ -1150,7 +1223,10 @@ class AttendanceDevice(models.Model):
 
         map_before_dl = self.filtered(lambda r: r.map_before_dl and r.protocol != 'icloud')
         if map_before_dl:
-            map_before_dl._finger_template_download()
+            # Queue the finger templates for the staged background worker
+            # instead of reading them inline -- a slow/non-RWB machine would
+            # otherwise block the whole attendance download for minutes.
+            map_before_dl._ft_import_enqueue()
         email_template = self.env.ref('to_attendance_device.email_template_unknown_attendance_status_code')
         for r in self:
             error_msg = ""
@@ -1245,6 +1321,236 @@ class AttendanceDevice(models.Model):
                     delta = r.auto_clear_attendance_hour - float_dt_now
                     if abs(delta) <= 0.5 or abs(delta) >= 23.5:
                         r._attendance_clear()
+
+    # ------------------------------------------------------------------
+    # Staged (background) finger template import
+    # ------------------------------------------------------------------
+    def _ft_import_enqueue(self):
+        """(Re)build the per-user import queue for these devices and mark them
+        as queued.  Returns immediately -- the worker cron does the actual,
+        machine-bound reading in small time-boxed batches.  Safe to call from
+        the attendance-download cron or from the UI button."""
+        Line = self.env['attendance.device.ft.import.line']
+        DeviceUser = self.env['attendance.device.user']
+        for r in self:
+            if r.protocol == 'icloud' or r.state != 'confirmed':
+                continue
+            # Drop any leftover queue from a previous run and rebuild it.
+            r.ft_import_line_ids.unlink()
+            users = DeviceUser.search([('device_id', '=', r.id)], order='uid')
+            vals_list = []
+            for idx, u in enumerate(users):
+                vals_list.append({
+                    'device_id': r.id,
+                    'device_user_id': u.id,
+                    'uid': u.uid,
+                    'sequence': idx + 1,
+                    'state': 'pending',
+                })
+            if vals_list:
+                Line.create(vals_list)
+            r.write({
+                'ft_import_state': 'queued' if vals_list else 'done',
+                'ft_import_total': len(vals_list),
+                'ft_import_done': 0,
+                'ft_import_started': fields.Datetime.now(),
+                'ft_import_finished': fields.Datetime.now() if not vals_list else False,
+                'ft_import_message': (
+                    _("Queued %s users for finger template import.") % len(vals_list)
+                    if vals_list else _("No machine users to import. Download users first.")),
+            })
+        return True
+
+    @api.model
+    def _cron_ft_import_worker(self):
+        """Worker cron: pick up devices with a pending/running finger template
+        import and process ONE bounded batch per device.  Uses a row lock so
+        overlapping cron ticks never process the same device twice, and commits
+        per device so progress survives a restart."""
+        devices = self.search([
+            ('ft_import_state', 'in', ['queued', 'running']),
+            ('protocol', '!=', 'icloud'),
+            ('state', '=', 'confirmed'),
+        ])
+        for device in devices:
+            # Lock this device row; skip it if another worker already holds it.
+            self.env.cr.execute(
+                "SELECT id FROM attendance_device WHERE id = %s "
+                "FOR UPDATE SKIP LOCKED", (device.id,))
+            if not self.env.cr.fetchone():
+                continue
+            try:
+                device._ft_import_process_batch()
+                self.env.cr.commit()
+            except Exception as e:
+                self.env.cr.rollback()
+                _logger.exception("Finger template import batch failed for %s", device.display_name)
+                device.write({
+                    'ft_import_state': 'error',
+                    'ft_import_message': _("Worker error: %s") % str(e)[:400],
+                    'ft_import_last_run': fields.Datetime.now(),
+                })
+                self.env.cr.commit()
+        return True
+
+    def _ft_import_process_batch(self):
+        """Process up to FT_IMPORT_BATCH_SIZE pending users for this device,
+        bounded by FT_IMPORT_TIME_BUDGET wall-clock seconds.  One machine
+        connection is opened for the whole batch.  Never raises on a single
+        user -- per-user failures are recorded on the queue line."""
+        self.ensure_one()
+        Line = self.env['attendance.device.ft.import.line']
+
+        # Daily run counter (reset when the date rolls over).
+        today = fields.Date.context_today(self)
+        runs_today = self.ft_import_runs_today + 1 if self.ft_import_runs_date == today else 1
+
+        pending = Line.search(
+            [('device_id', '=', self.id), ('state', '=', 'pending')],
+            order='sequence', limit=FT_IMPORT_BATCH_SIZE)
+        if not pending:
+            self.write({
+                'ft_import_state': 'done',
+                'ft_import_finished': fields.Datetime.now(),
+                'ft_import_last_run': fields.Datetime.now(),
+                'ft_import_runs_today': runs_today,
+                'ft_import_runs_date': today,
+                'ft_import_message': _("Completed: %s users processed.") % self.ft_import_total,
+            })
+            return
+
+        self.write({
+            'ft_import_state': 'running',
+            'ft_import_last_run': fields.Datetime.now(),
+            'ft_import_runs_today': runs_today,
+            'ft_import_runs_date': today,
+        })
+
+        deadline = time.monotonic() + FT_IMPORT_TIME_BUDGET
+        processed = 0
+        connected = False
+        try:
+            self.connect()
+            connected = True
+            self.disableDevice()
+            for line in pending:
+                if time.monotonic() > deadline:
+                    break
+                try:
+                    fingers = self.zk.get_user_templates(
+                        line.device_user_id.uid, read_timeout=FT_IMPORT_READ_TIMEOUT)
+                    count = self._ft_store_user_fingers(line.device_user_id, fingers)
+                    line.write({
+                        'state': 'done',
+                        'fingers_count': count,
+                        'message': _("%s template(s)") % count,
+                        'processed_on': fields.Datetime.now(),
+                    })
+                except Exception as e:
+                    line.write({
+                        'state': 'error',
+                        'message': str(e)[:300],
+                        'processed_on': fields.Datetime.now(),
+                    })
+                processed += 1
+        finally:
+            if connected:
+                try:
+                    self.enableDevice()
+                    self.disconnect()
+                except Exception:
+                    pass
+
+        self.ft_import_done = self.ft_import_done + processed
+        remaining = Line.search_count([('device_id', '=', self.id), ('state', '=', 'pending')])
+        if remaining:
+            self.ft_import_message = _(
+                "Processed %(done)s / %(total)s users (run #%(run)s today, %(left)s left).") % {
+                'done': self.ft_import_done, 'total': self.ft_import_total,
+                'run': runs_today, 'left': remaining}
+        else:
+            self.write({
+                'ft_import_state': 'done',
+                'ft_import_finished': fields.Datetime.now(),
+                'ft_import_message': _("Completed: %(done)s users, %(err)s error(s).") % {
+                    'done': self.ft_import_total, 'err': self.ft_import_error_count},
+            })
+        return
+
+    def _ft_store_user_fingers(self, device_user, fingers):
+        """Upsert the finger.template records for one device user. Returns the
+        number of templates written."""
+        self.ensure_one()
+        FingerTemplate = self.env['finger.template']
+        count = 0
+        for template in fingers:
+            fid = template.fid
+            vals = {
+                'device_user_id': device_user.id,
+                'device_id': self.id,
+                'uid': device_user.uid,
+                'user_id': device_user.user_id,
+                'fid': fid,
+                'valid': template.valid,
+                'template': template.template,
+                'size': getattr(template, 'size', len(template.template or b'')),
+            }
+            if device_user.employee_id:
+                vals['employee_id'] = device_user.employee_id.id
+            existing = FingerTemplate.search([
+                ('device_id', '=', self.id),
+                ('uid', '=', device_user.uid),
+                ('fid', '=', fid),
+            ], limit=1)
+            if existing:
+                existing.write(vals)
+            else:
+                FingerTemplate.create(vals)
+            count += 1
+        return count
+
+    def action_ft_import_start(self):
+        """UI button: start (or restart) the staged background import."""
+        self.ensure_one()
+        if self.protocol == 'icloud':
+            raise UserError(_("Staged finger template import is not used for iCloud devices."))
+        if self.state != 'confirmed':
+            raise UserError(_("Please confirm the machine before importing finger templates."))
+        self._ft_import_enqueue()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'type': 'success',
+                'title': _("Finger template import queued"),
+                'message': self.ft_import_message,
+                'sticky': False,
+                'next': {'type': 'ir.actions.act_window_close'},
+            },
+        }
+
+    def action_ft_import_stop(self):
+        """UI button: stop a running/queued import and clear its pending queue."""
+        self.ensure_one()
+        self.ft_import_line_ids.filtered(lambda l: l.state == 'pending').write({
+            'state': 'skipped', 'message': _("Stopped by user")})
+        self.write({
+            'ft_import_state': 'idle',
+            'ft_import_message': _("Stopped by user."),
+            'ft_import_finished': fields.Datetime.now(),
+        })
+        return True
+
+    def action_view_ft_import_lines(self):
+        self.ensure_one()
+        return {
+            'name': _("Finger Template Import Queue"),
+            'type': 'ir.actions.act_window',
+            'res_model': 'attendance.device.ft.import.line',
+            'view_mode': 'tree',
+            'domain': [('device_id', '=', self.id)],
+            'context': {'default_device_id': self.id},
+        }
 
     def _finger_template_download(self, fingers=None):
         FingerTemplate = self.env['finger.template']
@@ -1562,15 +1868,18 @@ class AttendanceDevice(models.Model):
         return action
 
     def action_finger_template_download(self):
-        action = self._prepare_action_confirm()
-        method = '_icloud_download_fingers' if self.protocol == 'icloud' else '_finger_template_download'
-        action['context'].update({
-                'method': method,
-                'title': _('Download Fingerprints From Machine'),
-                'confirm': _("System will connect and download all the fingers template from your machine."
-                        " Do you want to proceed?")
-            })
-        return action
+        # iCloud devices keep the original push-based flow; TCP/UDP machines
+        # now use the staged background import (no blocking, shows progress).
+        if self.protocol == 'icloud':
+            action = self._prepare_action_confirm()
+            action['context'].update({
+                    'method': '_icloud_download_fingers',
+                    'title': _('Download Fingerprints From Machine'),
+                    'confirm': _("System will connect and download all the fingers template from your machine."
+                            " Do you want to proceed?")
+                })
+            return action
+        return self.action_ft_import_start()
 
     def action_clear_attendance_data(self):
         action = self._prepare_action_confirm()

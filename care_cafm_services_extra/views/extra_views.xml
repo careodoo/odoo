@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- pest -->
+  <record id="v_pest_st" model="ir.ui.view"><field name="name">pest.station.tree</field><field name="model">care.cafm.pest.station</field>
+    <field name="arch" type="xml"><tree editable="bottom" decoration-danger="activity_level=='high'"><field name="name"/><field name="facility_id"/><field name="location_id"/><field name="station_type"/><field name="last_check"/><field name="activity_level"/></tree></field></record>
+  <record id="a_pest_st" model="ir.actions.act_window"><field name="name">محطّات المكافحة</field><field name="res_model">care.cafm.pest.station</field><field name="view_mode">tree</field></record>
+  <record id="v_pest_v" model="ir.ui.view"><field name="name">pest.visit.tree</field><field name="model">care.cafm.pest.visit</field>
+    <field name="arch" type="xml"><tree editable="bottom"><field name="date"/><field name="facility_id"/><field name="technician_id"/><field name="product"/><field name="findings"/></tree></field></record>
+  <record id="a_pest_v" model="ir.actions.act_window"><field name="name">زيارات المكافحة</field><field name="res_model">care.cafm.pest.visit</field><field name="view_mode">tree</field></record>
+  <!-- waste -->
+  <record id="v_waste" model="ir.ui.view"><field name="name">waste.tree</field><field name="model">care.cafm.waste.pickup</field>
+    <field name="arch" type="xml"><tree editable="bottom"><field name="date"/><field name="facility_id"/><field name="waste_type"/><field name="weight_kg"/><field name="recycled"/></tree></field></record>
+  <record id="a_waste" model="ir.actions.act_window"><field name="name">جمع النفايات</field><field name="res_model">care.cafm.waste.pickup</field><field name="view_mode">tree</field></record>
+  <!-- pool -->
+  <record id="v_pool" model="ir.ui.view"><field name="name">pool.tree</field><field name="model">care.cafm.pool.reading</field>
+    <field name="arch" type="xml"><tree editable="bottom" decoration-warning="status=='attention'"><field name="reading_time"/><field name="facility_id"/><field name="location_id"/><field name="chlorine"/><field name="ph"/><field name="temperature"/><field name="status" widget="badge" decoration-success="status=='ok'" decoration-warning="status=='attention'"/></tree></field></record>
+  <record id="a_pool" model="ir.actions.act_window"><field name="name">قراءات المسابح</field><field name="res_model">care.cafm.pool.reading</field><field name="view_mode">tree</field></record>
+  <!-- tank -->
+  <record id="v_tank" model="ir.ui.view"><field name="name">tank.tree</field><field name="model">care.cafm.watertank</field>
+    <field name="arch" type="xml"><tree decoration-warning="is_due==True"><field name="name"/><field name="facility_id"/><field name="capacity_m3"/><field name="frequency_months"/><field name="last_cleaned"/><field name="next_due"/><field name="is_due"/><field name="certificate"/>
+      <button name="action_clean" type="object" string="🚰 تنظيف" class="btn-link"/></tree></field></record>
+  <record id="a_tank" model="ir.actions.act_window"><field name="name">خزانات المياه</field><field name="res_model">care.cafm.watertank</field><field name="view_mode">tree</field></record>
+  <!-- menus -->
+  <menuitem id="m_extra" name="خدمات إضافية" parent="care_cafm.menu_cafm_services" sequence="16"/>
+  <menuitem id="m_pest_st" name="محطّات المكافحة" parent="m_extra" action="a_pest_st" sequence="10"/>
+  <menuitem id="m_pest_v" name="زيارات المكافحة" parent="m_extra" action="a_pest_v" sequence="15"/>
+  <menuitem id="m_waste" name="جمع النفايات" parent="m_extra" action="a_waste" sequence="20"/>
+  <menuitem id="m_pool" name="قراءات المسابح" parent="m_extra" action="a_pool" sequence="30"/>
+  <menuitem id="m_tank" name="خزانات المياه" parent="m_extra" action="a_tank" sequence="40"/>
+</odoo>

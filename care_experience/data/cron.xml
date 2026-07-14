@@ -14,6 +14,30 @@
       <field name="doall" eval="False"/>
       <field name="active" eval="True"/>
     </record>
+    <record id="ir_cron_renewal_reminders" model="ir.cron">
+      <field name="name">Contracts: Renewal Reminders</field>
+      <field name="model_id" ref="model_care_experience"/>
+      <field name="state">code</field>
+      <field name="code">model._cron_renewal_reminders()</field>
+      <field name="interval_number">1</field><field name="interval_type">days</field>
+      <field name="numbercall">-1</field><field name="active" eval="True"/>
+    </record>
+    <record id="ir_cron_renewal_deadlines" model="ir.cron">
+      <field name="name">Contracts: Renewal Deadline Alerts</field>
+      <field name="model_id" ref="model_care_experience_renewal"/>
+      <field name="state">code</field>
+      <field name="code">model._cron_deadline_alerts()</field>
+      <field name="interval_number">1</field><field name="interval_type">days</field>
+      <field name="numbercall">-1</field><field name="active" eval="True"/>
+    </record>
+    <record id="ir_cron_guarantee_expiry" model="ir.cron">
+      <field name="name">Contracts: Bank Guarantee Expiry Alerts</field>
+      <field name="model_id" ref="model_care_bank_guarantee"/>
+      <field name="state">code</field>
+      <field name="code">model._cron_expiry_alerts()</field>
+      <field name="interval_number">1</field><field name="interval_type">days</field>
+      <field name="numbercall">-1</field><field name="active" eval="True"/>
+    </record>
   </data>
 
 </odoo>

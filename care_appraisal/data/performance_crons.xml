@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="cron_scan_tasks" model="ir.cron">
+        <field name="name">CARE Performance: scan completed tasks</field>
+        <field name="model_id" ref="project.model_project_task"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_scan_task_performance()</field>
+        <field name="interval_number">6</field>
+        <field name="interval_type">hours</field>
+        <field name="active">True</field>
+    </record>
+
+    <record id="cron_scan_attendance" model="ir.cron">
+        <field name="name">CARE Performance: scan attendance</field>
+        <field name="model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_scan_attendance_performance()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+    </record>
+
+    <record id="cron_scan_penalty" model="ir.cron">
+        <field name="name">CARE Performance: scan penalties</field>
+        <field name="model_id" ref="care_hr.model_care_penalty"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_scan_penalty_performance()</field>
+        <field name="interval_number">6</field>
+        <field name="interval_type">hours</field>
+        <field name="active">True</field>
+    </record>
+
+    <record id="cron_scan_bonus" model="ir.cron">
+        <field name="name">CARE Performance: scan bonuses</field>
+        <field name="model_id" ref="care_hr.model_care_bonus"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_scan_bonus_performance()</field>
+        <field name="interval_number">6</field>
+        <field name="interval_type">hours</field>
+        <field name="active">True</field>
+    </record>
+
+    <record id="cron_low_performance" model="ir.cron">
+        <field name="name">CARE Performance: low-performer HR alert</field>
+        <field name="model_id" ref="model_care_performance_log"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_low_performance_alert()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">months</field>
+        <field name="active">True</field>
+    </record>
+</odoo>

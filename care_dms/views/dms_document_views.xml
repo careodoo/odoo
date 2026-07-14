@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_care_dms_document_tree" model="ir.ui.view">
+        <field name="name">care.dms.document.tree</field>
+        <field name="model">care.dms.document</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="state == 'due_disposal'" decoration-warning="state == 'expiring'"
+                  decoration-info="state == 'legal_hold'" decoration-muted="state == 'disposed'">
+                <field name="reference"/>
+                <field name="name"/>
+                <field name="category_id"/>
+                <field name="employee_id" optional="show"/>
+                <field name="version"/>
+                <field name="issue_date" optional="hide"/>
+                <field name="retention_until"/>
+                <field name="legal_hold" optional="show" widget="boolean_toggle"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'active'"
+                       decoration-warning="state == 'expiring'"
+                       decoration-danger="state == 'due_disposal'"
+                       decoration-info="state == 'legal_hold'"
+                       decoration-muted="state == 'disposed'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_care_dms_document_kanban" model="ir.ui.view">
+        <field name="name">care.dms.document.kanban</field>
+        <field name="model">care.dms.document</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="category_id" class="o_kanban_small_column">
+                <field name="state"/>
+                <field name="legal_hold"/>
+                <field name="version"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click" style="padding:10px;">
+                            <div class="d-flex justify-content-between">
+                                <strong><field name="name"/></strong>
+                                <span t-if="record.legal_hold.raw_value" class="badge text-bg-info">حجز قانوني</span>
+                            </div>
+                            <div class="text-muted"><field name="reference"/> · v<field name="version"/></div>
+                            <div><field name="employee_id"/></div>
+                            <div class="mt-1">
+                                <span t-attf-class="badge {{ record.state.raw_value == 'due_disposal' ? 'text-bg-danger' : (record.state.raw_value == 'expiring' ? 'text-bg-warning' : (record.state.raw_value == 'disposed' ? 'text-bg-secondary' : 'text-bg-success')) }}">
+                                    <field name="state"/>
+                                </span>
+                                <span class="text-muted ms-2" t-if="record.retention_until.raw_value">
+                                    <i class="fa fa-clock-o"/> <field name="retention_until"/>
+                                </span>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_care_dms_document_form" model="ir.ui.view">
+        <field name="name">care.dms.document.form</field>
+        <field name="model">care.dms.document</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_new_version" type="object" string="إصدار جديد"
+                            invisible="not is_current or disposed"/>
+                    <button name="action_toggle_legal_hold" type="object" string="حجز/رفع الحجز القانوني"
+                            invisible="disposed"/>
+                    <button name="action_dispose" type="object" string="إتلاف" class="btn-danger"
+                            invisible="state != 'due_disposal'"
+                            confirm="سيتم تسجيل إتلاف الوثيقة بأثر موثّق. متابعة؟"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="active,expiring,due_disposal"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="مُتلفة" bg_color="bg-secondary" invisible="not disposed"/>
+                    <widget name="web_ribbon" title="حجز قانوني" bg_color="bg-info"
+                            invisible="not legal_hold or disposed"/>
+                    <div class="oe_title">
+                        <span class="o_form_label">المرجع: <field name="reference" class="oe_inline" readonly="1"/>
+                            · إصدار <field name="version" class="oe_inline" readonly="1"/></span>
+                        <h1><field name="name" placeholder="عنوان الوثيقة"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="category_id"/>
+                            <field name="employee_id"/>
+                            <field name="department_id"/>
+                            <field name="owner_id"/>
+                        </group>
+                        <group>
+                            <field name="issue_date"/>
+                            <field name="retention_until"/>
+                            <field name="legal_hold"/>
+                            <field name="legal_hold_reason" invisible="not legal_hold"/>
+                            <field name="is_current" invisible="1"/>
+                            <field name="disposed" invisible="1"/>
+                        </group>
+                    </group>
+                    <group string="الملف">
+                        <field name="attachment" filename="attachment_name"/>
+                        <field name="attachment_name" invisible="1"/>
+                        <field name="previous_version_id" invisible="not previous_version_id"/>
+                    </group>
+                    <field name="note" placeholder="ملاحظات..."/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_care_dms_document_search" model="ir.ui.view">
+        <field name="name">care.dms.document.search</field>
+        <field name="model">care.dms.document</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="reference"/>
+                <field name="category_id"/>
+                <field name="employee_id"/>
+                <filter name="current" string="الإصدار الحالي" domain="[('is_current','=',True)]"/>
+                <filter name="expiring" string="تقترب من الإتلاف" domain="[('state','=','expiring')]"/>
+                <filter name="due" string="مستحقة الإتلاف" domain="[('state','=','due_disposal')]"/>
+                <filter name="hold" string="محجوزة قانونياً" domain="[('legal_hold','=',True)]"/>
+                <separator/>
+                <filter name="not_disposed" string="غير مُتلفة" domain="[('disposed','=',False)]"/>
+                <group expand="0" string="تجميع">
+                    <filter name="g_cat" string="التصنيف" context="{'group_by':'category_id'}"/>
+                    <filter name="g_state" string="الحالة" context="{'group_by':'state'}"/>
+                    <filter name="g_emp" string="الموظف" context="{'group_by':'employee_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_care_dms_document" model="ir.actions.act_window">
+        <field name="name">الوثائق</field>
+        <field name="res_model">care.dms.document</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="search_view_id" ref="view_care_dms_document_search"/>
+        <field name="context">{'search_default_not_disposed': 1, 'search_default_current': 1}</field>
+    </record>
+</odoo>

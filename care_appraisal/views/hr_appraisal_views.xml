@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hr_appraisal_form_performance" model="ir.ui.view">
+        <field name="name">hr.appraisal.form.performance</field>
+        <field name="model">hr.appraisal</field>
+        <field name="inherit_id" ref="hr_appraisal.view_hr_appraisal_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet//div[hasclass('oe_button_box')]" position="inside">
+                <button name="action_view_performance" type="object" class="oe_stat_button"
+                        icon="fa-line-chart">
+                    <field name="performance_event_count" widget="statinfo" string="Perf. Events"/>
+                </button>
+            </xpath>
+            <xpath expr="//sheet" position="before">
+                <widget name="web_ribbon" title="أداء ممتاز" bg_color="text-bg-success"
+                        invisible="performance_rating != 'excellent'"/>
+                <widget name="web_ribbon" title="أداء ضعيف" bg_color="text-bg-danger"
+                        invisible="performance_rating != 'weak'"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Performance (Auto)" name="auto_performance">
+                    <div class="alert alert-info" role="alert">
+                        يتم تجميع أثر التأخير والالتزام بالمواعيد (التاسكات) والحضور والانصراف تلقائياً هنا،
+                        ويؤثر إيجاباً أو سلباً في تقييم الموظف. اضغط "تجميع الأداء" لربط أحداث الفترة بهذا التقييم.
+                    </div>
+                    <button name="action_collect_performance" type="object"
+                            string="تجميع الأداء" class="btn-primary"/>
+                    <button name="action_suggest_reward" type="object"
+                            string="اقتراح مكافأة أداء" class="btn-secondary"
+                            confirm="سيتم إنشاء مكافأة أداء (مسودة) بقيمة مقترحة بناءً على النتيجة، للاعتماد من الموارد البشرية. متابعة؟"/>
+                    <group>
+                        <group string="النتيجة">
+                            <field name="performance_score"/>
+                            <field name="performance_rating"/>
+                            <field name="performance_event_count"/>
+                        </group>
+                        <group string="التفصيل">
+                            <field name="performance_positive"/>
+                            <field name="performance_negative"/>
+                            <field name="performance_task_score"/>
+                            <field name="performance_attendance_score"/>
+                        </group>
+                    </group>
+                    <field name="performance_log_ids" readonly="1">
+                        <tree decoration-success="polarity=='pos'" decoration-danger="polarity=='neg'">
+                            <field name="date"/>
+                            <field name="source"/>
+                            <field name="name"/>
+                            <field name="points" sum="الإجمالي"/>
+                            <field name="polarity" widget="badge"
+                                   decoration-success="polarity=='pos'" decoration-danger="polarity=='neg'"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

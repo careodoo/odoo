@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Hostel (workers' accommodation) dashboard — native kanban, no JS. -->
+    <record id="view_hostel_dashboard_kanban" model="ir.ui.view">
+        <field name="name">hostel.dashboard.kanban</field>
+        <field name="model">hostel</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_dashboard o_hr_dash" create="false">
+                <field name="name"/>
+                <field name="address"/>
+                <field name="total_capacity"/>
+                <field name="used_places"/>
+                <field name="availability"/>
+                <field name="bed_count"/>
+                <field name="room_count"/>
+                <field name="flat_count"/>
+                <field name="maintenance"/>
+                <field name="labor_cost"/>
+                <field name="occupancy_pct"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click o_kanban_record_has_image_fill">
+                            <div class="o_kanban_card_header">
+                                <div class="o_kanban_card_header_title">
+                                    <div class="o_primary"><strong><field name="name"/></strong></div>
+                                    <div class="text-muted o_secondary"><field name="address"/></div>
+                                </div>
+                            </div>
+                            <div class="container o_kanban_card_content mt8">
+                                <div class="row">
+                                    <div class="col-12 mb4">
+                                        <div class="progress" style="height:16px;">
+                                            <div t-attf-class="progress-bar #{record.availability.raw_value &gt; 0 ? 'bg-success' : 'bg-danger'}"
+                                                 t-attf-style="width: #{record.occupancy_pct.raw_value}%;">
+                                                <t t-esc="record.occupancy_pct.value"/>%
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4 text-center">
+                                        <span class="o_value"><field name="used_places"/></span><br/>
+                                        <span class="text-muted">Occupied</span>
+                                    </div>
+                                    <div class="col-4 text-center">
+                                        <span class="o_value"><field name="availability"/></span><br/>
+                                        <span class="text-muted">Available</span>
+                                    </div>
+                                    <div class="col-4 text-center">
+                                        <span class="o_value"><field name="total_capacity"/></span><br/>
+                                        <span class="text-muted">Capacity</span>
+                                    </div>
+                                </div>
+                                <div class="row mt8">
+                                    <div class="col-3 text-center"><field name="bed_count"/><br/><span class="text-muted">Beds</span></div>
+                                    <div class="col-3 text-center"><field name="room_count"/><br/><span class="text-muted">Rooms</span></div>
+                                    <div class="col-3 text-center"><field name="flat_count"/><br/><span class="text-muted">Flats</span></div>
+                                    <div class="col-3 text-center">
+                                        <field name="maintenance"/><br/>
+                                        <span class="text-muted">Maint.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_hostel_dashboard_graph" model="ir.ui.view">
+        <field name="name">hostel.dashboard.graph</field>
+        <field name="model">hostel</field>
+        <field name="arch" type="xml">
+            <graph string="Occupancy by Hostel" type="bar">
+                <field name="name"/>
+                <field name="occupancy_pct" type="measure"/>
+            </graph>
+        </field>
+    </record>
+    <record id="view_hostel_dashboard_pivot" model="ir.ui.view">
+        <field name="name">hostel.dashboard.pivot</field>
+        <field name="model">hostel</field>
+        <field name="arch" type="xml">
+            <pivot string="Hostels">
+                <field name="occupancy_band" type="row"/>
+                <field name="total_capacity" type="measure"/>
+                <field name="occupancy_pct" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+    <record id="view_hostel_dashboard_search" model="ir.ui.view">
+        <field name="name">hostel.dashboard.search</field>
+        <field name="model">hostel</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <filter name="low_occ" string="Low Occupancy" domain="[('occupancy_band','=','low')]"/>
+                <filter name="high_occ" string="Near Full" domain="[('occupancy_band','=','high')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="g_band" string="Occupancy Band" context="{'group_by':'occupancy_band'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_hostel_dashboard" model="ir.actions.act_window">
+        <field name="name">Hostel Dashboard</field>
+        <field name="res_model">hostel</field>
+        <field name="view_mode">kanban,graph,pivot,tree,form</field>
+        <field name="view_id" ref="view_hostel_dashboard_kanban"/>
+        <field name="search_view_id" ref="view_hostel_dashboard_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Occupancy &amp; capacity across all hostels</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_hostel_dashboard" name="Hostel Dashboard"
+              parent="care_hr.menu_sec_welfare" action="action_hostel_dashboard" sequence="2"/>
+</odoo>

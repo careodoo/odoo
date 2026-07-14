@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- AUDIT TEMPLATE -->
+    <record id="view_atpl_form" model="ir.ui.view">
+        <field name="name">clean.audit.template.form</field><field name="model">care.cafm.clean.audit.template</field>
+        <field name="arch" type="xml"><form><sheet>
+            <div class="oe_title"><h1><field name="name"/></h1></div>
+            <field name="item_ids"><tree editable="bottom"><field name="sequence" widget="handle"/><field name="name"/><field name="weight"/></tree></field>
+        </sheet></form></field>
+    </record>
+    <record id="action_atpl" model="ir.actions.act_window"><field name="name">قوالب تدقيق النظافة</field>
+        <field name="res_model">care.cafm.clean.audit.template</field><field name="view_mode">tree,form</field></record>
+
+    <!-- AUDIT -->
+    <record id="view_audit_form" model="ir.ui.view">
+        <field name="name">clean.audit.form</field><field name="model">care.cafm.clean.audit</field>
+        <field name="arch" type="xml"><form><header>
+            <button name="action_generate_lines" type="object" string="توليد البنود من القالب" invisible="state!='draft'"/>
+            <button name="action_done" type="object" string="✔ إنهاء التدقيق" class="oe_highlight" invisible="state!='draft'"/>
+            <field name="state" widget="statusbar"/>
+        </header><sheet>
+            <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+            <group><group><field name="facility_id"/><field name="location_id"/><field name="template_id"/></group>
+                <group><field name="auditor_id" readonly="1"/><field name="audit_date"/>
+                    <field name="score" widget="percentage" readonly="1"/>
+                    <field name="rating" widget="badge" decoration-success="rating=='excellent'" decoration-info="rating=='good'" decoration-warning="rating=='fair'" decoration-danger="rating=='poor'"/>
+                    <field name="fail_count" readonly="1"/>
+                    <field name="client_ack" widget="badge" decoration-success="client_ack=='accepted'" decoration-danger="client_ack=='disputed'"/>
+                    <field name="client_ack_comment" readonly="1"/></group></group>
+            <field name="line_ids"><tree editable="bottom" decoration-danger="result=='fail'" decoration-success="result=='pass'">
+                <field name="name"/><field name="weight"/><field name="result"/><field name="note"/></tree></field>
+        </sheet></form></field>
+    </record>
+    <record id="view_audit_tree" model="ir.ui.view">
+        <field name="name">clean.audit.tree</field><field name="model">care.cafm.clean.audit</field>
+        <field name="arch" type="xml"><tree decoration-danger="score&lt;60" decoration-success="score&gt;=90">
+            <field name="name"/><field name="facility_id"/><field name="location_id"/><field name="audit_date"/>
+            <field name="score" widget="percentage"/><field name="rating" widget="badge"/><field name="fail_count"/><field name="state" widget="badge"/></tree></field>
+    </record>
+    <record id="action_audit" model="ir.actions.act_window"><field name="name">تدقيق الجودة</field>
+        <field name="res_model">care.cafm.clean.audit</field><field name="view_mode">tree,form</field></record>
+
+    <!-- SCHEDULE -->
+    <record id="view_sched_tree" model="ir.ui.view">
+        <field name="name">clean.schedule.tree</field><field name="model">care.cafm.clean.schedule</field>
+        <field name="arch" type="xml"><tree editable="bottom" decoration-warning="is_due==True">
+            <field name="location_id"/><field name="facility_id"/><field name="frequency"/>
+            <field name="demand_based"/><field name="last_done"/><field name="next_due"/><field name="is_due"/></tree></field>
+    </record>
+    <record id="action_sched" model="ir.actions.act_window"><field name="name">جداول التنظيف</field>
+        <field name="res_model">care.cafm.clean.schedule</field><field name="view_mode">tree</field></record>
+
+    <!-- ROUND -->
+    <record id="view_round_tree" model="ir.ui.view">
+        <field name="name">clean.round.tree</field><field name="model">care.cafm.clean.round</field>
+        <field name="arch" type="xml"><tree decoration-info="state=='open'">
+            <field name="name"/><field name="worker_id"/><field name="location_id"/>
+            <field name="scan_in_time"/><field name="scan_out_time"/><field name="duration_minutes"/><field name="state" widget="badge"/></tree></field>
+    </record>
+    <record id="action_round" model="ir.actions.act_window"><field name="name">جولات التنظيف</field>
+        <field name="res_model">care.cafm.clean.round</field><field name="view_mode">tree,form</field></record>
+
+    <!-- CONSUMABLES -->
+    <record id="view_cons_tree" model="ir.ui.view">
+      <field name="name">clean.consumable.tree</field><field name="model">care.cafm.clean.consumable</field>
+      <field name="arch" type="xml">
+        <tree decoration-danger="low_stock==True">
+          <field name="name"/><field name="facility_id"/><field name="category"/>
+          <field name="on_hand"/><field name="unit"/><field name="min_qty"/>
+          <field name="low_stock"/><field name="last_supply_date"/>
+        </tree>
+      </field>
+    </record>
+    <record id="view_cons_form" model="ir.ui.view">
+      <field name="name">clean.consumable.form</field><field name="model">care.cafm.clean.consumable</field>
+      <field name="arch" type="xml">
+        <form><sheet>
+          <div class="oe_title"><h1><field name="name" placeholder="سائل تعقيم أرضيات"/></h1></div>
+          <group>
+            <group><field name="facility_id"/><field name="category"/><field name="unit"/></group>
+            <group><field name="on_hand"/><field name="min_qty"/><field name="low_stock"/><field name="last_supply_date"/></group>
+          </group>
+          <notebook><page string="الحركات">
+            <field name="move_ids">
+              <tree editable="bottom"><field name="date"/><field name="move_type"/><field name="quantity"/><field name="done_by"/><field name="note"/></tree>
+            </field>
+          </page></notebook>
+        </sheet><div class="oe_chatter"><field name="message_follower_ids"/><field name="message_ids"/></div></form>
+      </field>
+    </record>
+    <record id="action_cons" model="ir.actions.act_window"><field name="name">مواد النظافة</field>
+        <field name="res_model">care.cafm.clean.consumable</field><field name="view_mode">tree,form</field></record>
+
+    <!-- MENUS -->
+    <menuitem id="menu_cafm_cleaning" name="النظافة" parent="care_cafm.menu_cafm_services" sequence="12"/>
+    <menuitem id="menu_audit" name="تدقيق الجودة" parent="menu_cafm_cleaning" action="action_audit" sequence="10"/>
+    <menuitem id="menu_sched" name="جداول التنظيف" parent="menu_cafm_cleaning" action="action_sched" sequence="20"/>
+    <menuitem id="menu_round" name="جولات التنظيف" parent="menu_cafm_cleaning" action="action_round" sequence="30"/>
+    <menuitem id="menu_cons" name="مواد النظافة" parent="menu_cafm_cleaning" action="action_cons" sequence="40"/>
+    <menuitem id="menu_atpl" name="قوالب التدقيق" parent="menu_cafm_cleaning" action="action_atpl" sequence="50"/>
+</odoo>

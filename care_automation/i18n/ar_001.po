@@ -1,0 +1,485 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* care_automation
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0+e-20241205\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-05 08:33+0000\n"
+"PO-Revision-Date: 2026-07-05 08:33+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: care_automation
+#: model:ir.model,name:care_automation.model_care_automation_rule
+msgid "HR Automation Rule (No-Code)"
+msgstr "قاعدة أتمتة الموارد البشرية (بدون كود)"
+
+#. module: care_automation
+#: model:ir.model,name:care_automation.model_care_integration
+msgid "HR Integration"
+msgstr "تكامل الموارد البشرية"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_automation_rule__name
+#: model_terms:ir.ui.view,arch_db:care_automation.care_automation_rule_form
+msgid "Rule"
+msgstr "القاعدة"
+
+#. module: care_automation
+#: model:ir.model,name:care_automation.model_care_approval_stat
+msgid "Smart Approval Impact (singleton)"
+msgstr "أثر الموافقات الذكية"
+
+#. module: care_automation
+#: model:ir.model,name:care_automation.model_care_approval_rule
+msgid "Smart Approval Routing Rule"
+msgstr "قاعدة توجيه الموافقات الذكية"
+
+#. module: care_automation
+#: model:ir.ui.menu,name:care_automation.menu_care_approval_impact
+msgid "أثر الموافقات"
+msgstr "أثر الموافقات"
+
+#. module: care_automation
+#: model:ir.actions.act_window,name:care_automation.care_approval_stat_action
+msgid "أثر الموافقات الذكية"
+msgstr "أثر الموافقات الذكية"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_automation_rule__category__other
+msgid "أخرى"
+msgstr "أخرى"
+
+#. module: care_automation
+#: model_terms:ir.actions.act_window,help:care_automation.care_delegation_action
+msgid "أنشئ تفويض صلاحية"
+msgstr "أنشئ تفويض صلاحية"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_integration__icon
+msgid "أيقونة"
+msgstr "أيقونة"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_approval_rule__doc_type__leave
+msgid "إجازة"
+msgstr "إجازة"
+
+#. module: care_automation
+#: model_terms:ir.ui.view,arch_db:care_automation.care_delegation_form
+msgid "إجازة المدير..."
+msgstr "إجازة المدير..."
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_automation_rule__condition
+msgid "إذا (الشرط)"
+msgstr "إذا (الشرط)"
+
+#. module: care_automation
+#: model_terms:ir.ui.view,arch_db:care_automation.care_delegation_form
+msgid "إرسال للاعتماد"
+msgstr "إرسال للاعتماد"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_approval_rule__doc_type__overtime
+msgid "إضافي"
+msgstr "إضافي"
+
+#. module: care_automation
+#: model_terms:ir.ui.view,arch_db:care_automation.care_delegation_form
+msgid "إعادة لمسودة"
+msgstr "إعادة لمسودة"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_delegation__date_end
+msgid "إلى تاريخ"
+msgstr "إلى تاريخ"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_approval_rule__doc_type__permission
+msgid "استئذان"
+msgstr "استئذان"
+
+#. module: care_automation
+#: model_terms:ir.ui.view,arch_db:care_automation.care_delegation_form
+msgid "استرداد"
+msgstr "استرداد"
+
+#. module: care_automation
+#: model_terms:ir.ui.view,arch_db:care_automation.care_delegation_form
+msgid "استرداد التفويض وإيقافه فوراً؟"
+msgstr "استرداد التفويض وإيقافه فوراً؟"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_delegation__scope__overtime
+msgid "اعتماد الأوفر تايم"
+msgstr "اعتماد الأوفر تايم"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_delegation__scope__leave
+msgid "اعتماد الإجازات"
+msgstr "اعتماد الإجازات"
+
+#. module: care_automation
+#: model_terms:ir.ui.view,arch_db:care_automation.care_delegation_form
+msgid "اعتماد الإدارة العليا"
+msgstr "اعتماد الإدارة العليا"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_delegation__scope__payroll_final
+msgid "اعتماد الرواتب النهائي"
+msgstr "اعتماد الرواتب النهائي"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_delegation__scope__loan
+msgid "اعتماد السلف"
+msgstr "اعتماد السلف"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_delegation__scope__expense
+msgid "اعتماد المصاريف"
+msgstr "اعتماد المصاريف"
+
+#. module: care_automation
+#: model_terms:ir.ui.view,arch_db:care_automation.care_delegation_form
+msgid "اعتماد هذا التفويض وتفعيله؟"
+msgstr "اعتماد هذا التفويض وتفعيله؟"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_delegation__delegated_count
+msgid "اعتمادات تمّت بالإنابة"
+msgstr "اعتمادات تمّت بالإنابة"
+
+#. module: care_automation
+#: model:ir.actions.act_window,name:care_automation.care_automation_rule_action
+#: model:ir.ui.menu,name:care_automation.menu_care_automation_rules
+msgid "الأتمتة (بدون كود)"
+msgstr "الأتمتة (بدون كود)"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_automation_rule__cron_id
+msgid "الأتمتة الحقيقية"
+msgstr "الأتمتة الحقيقية"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_automation_rule__category
+msgid "التصنيف"
+msgstr "التصنيف"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_integration__name
+msgid "التكامل"
+msgstr "التكامل"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_approval_rule__name
+#: model:ir.model.fields,field_description:care_automation.field_care_delegation__state
+#: model:ir.model.fields,field_description:care_automation.field_care_integration__status
+#: model_terms:ir.ui.view,arch_db:care_automation.care_delegation_search
+msgid "الحالة"
+msgstr "الحالة"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_delegation__reason
+msgid "السبب"
+msgstr "السبب"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_delegation__scope
+#: model_terms:ir.ui.view,arch_db:care_automation.care_delegation_search
+msgid "الصلاحية"
+msgstr "الصلاحية"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_approval_rule__doc_type__any
+msgid "الكل"
+msgstr "الكل"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_delegation__name
+msgid "المرجع"
+msgstr "المرجع"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_approval_rule__route
+msgid "المسار"
+msgstr "المسار"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_delegation__scope__gov
+msgid "المعاملات الحكومية"
+msgstr "المعاملات الحكومية"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_delegation__delegate_id
+msgid "المفوَّض إليه"
+msgstr "المفوَّض إليه"
+
+#. module: care_automation
+#: model_terms:ir.ui.view,arch_db:care_automation.care_delegation_search
+msgid "المفوِّض"
+msgstr "المفوِّض"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_delegation__delegator_id
+msgid "المفوِّض (من)"
+msgstr "المفوِّض (من)"
+
+#. module: care_automation
+#: model:ir.actions.act_window,name:care_automation.care_approval_rule_action
+#: model:ir.ui.menu,name:care_automation.menu_care_approval_rules
+msgid "الموافقات الذكية"
+msgstr "الموافقات الذكية"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_approval_rule__doc_type
+msgid "النوع"
+msgstr "النوع"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_integration__description
+msgid "الوظيفة"
+msgstr "الوظيفة"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_automation_rule__category__discipline
+msgid "انضباط"
+msgstr "انضباط"
+
+#. module: care_automation
+#: model_terms:ir.ui.view,arch_db:care_automation.care_delegation_search
+msgid "بانتظار الاعتماد"
+msgstr "بانتظار الاعتماد"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_delegation__state__pending
+msgid "بانتظار موافقة الإدارة"
+msgstr "بانتظار موافقة الإدارة"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_automation_rule__action_desc
+msgid "بقّد (الإجراء)"
+msgstr "بقّد (الإجراء)"
+
+#. module: care_automation
+#. odoo-python
+#: code:addons/care_automation/models/care_delegation.py:0
+#, python-format
+msgid "تاريخ الانتهاء يجب أن يكون بعد تاريخ البدء."
+msgstr "تاريخ الانتهاء يجب أن يكون بعد تاريخ البدء."
+
+#. module: care_automation
+#: model_terms:ir.ui.view,arch_db:care_automation.care_delegation_search
+msgid "تجميع"
+msgstr "تجميع"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_automation_rule__category__deploy
+msgid "تشغيل/نشر"
+msgstr "تشغيل/نشر"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_approval_rule__route__escalate_up
+msgid "تصعيد للأعلى"
+msgstr "تصعيد للأعلى"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_approval_rule__route__escalate_manager
+msgid "تصعيد للمدير"
+msgstr "تصعيد للمدير"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_integration__note
+msgid "تفاصيل"
+msgstr "تفاصيل"
+
+#. module: care_automation
+#: model:ir.actions.act_window,name:care_automation.care_delegation_action
+#: model:ir.ui.menu,name:care_automation.menu_care_delegation
+msgid "تفويض الصلاحيات"
+msgstr "تفويض الصلاحيات"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_approval_rule__route__auto
+msgid "تلقائي فوري"
+msgstr "تلقائي فوري"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_delegation__ends_soon
+#: model_terms:ir.ui.view,arch_db:care_automation.care_delegation_search
+msgid "تنتهي هذا الأسبوع"
+msgstr "تنتهي هذا الأسبوع"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_delegation__until_notice
+msgid "حتى إشعار"
+msgstr "حتى إشعار"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_automation_rule__category__gov
+msgid "حكومي"
+msgstr "حكومي"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_automation_rule__is_live
+msgid "حيّة"
+msgstr "حيّة"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_automation_rule__category__welfare
+msgid "رفاهية"
+msgstr "رفاهية"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_automation_rule__category__payroll
+msgid "رواتب"
+msgstr "رواتب"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_delegation__is_current
+#: model_terms:ir.ui.view,arch_db:care_automation.care_delegation_form
+#: model_terms:ir.ui.view,arch_db:care_automation.care_delegation_search
+msgid "سارية الآن"
+msgstr "سارية الآن"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_approval_rule__doc_type__loan
+msgid "سلفة"
+msgstr "سلفة"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_integration__status__off
+msgid "غير مفعّل"
+msgstr "غير مفعّل"
+
+#. module: care_automation
+#: model_terms:ir.ui.view,arch_db:care_automation.care_delegation_search
+msgid "فوّضتها أنا"
+msgstr "فوّضتها أنا"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_integration__status__pending
+msgid "قيد الإعداد"
+msgstr "قيد الإعداد"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_delegation__scope__all
+msgid "كل الصلاحيات"
+msgstr "كل الصلاحيات"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_automation_rule__trigger
+msgid "لقّا (متى)"
+msgstr "لقّا (متى)"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_integration__status__connected
+msgid "متصل"
+msgstr "متصل"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_approval_stat__avg_hours
+msgid "متوسط زمن الاعتماد (ساعات)"
+msgstr "متوسط زمن الاعتماد (ساعات)"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_approval_rule__example
+msgid "مثال"
+msgstr "مثال"
+
+#. module: care_automation
+#: model:ir.model.fields,help:care_automation.field_care_delegation__reason
+msgid "مثال: إجازة المدير"
+msgstr "مثال: إجازة المدير"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_integration__status__linked
+msgid "مربوط"
+msgstr "مربوط"
+
+#. module: care_automation
+#: model:ir.actions.act_window,name:care_automation.care_integration_action
+#: model:ir.ui.menu,name:care_automation.menu_care_integrations
+msgid "مركز التكامل"
+msgstr "مركز التكامل"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_delegation__state__revoked
+msgid "مسترد"
+msgstr "مسترد"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_delegation__state__draft
+msgid "مسودة"
+msgstr "مسودة"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_approval_stat__auto_pct
+msgid "معتمد تلقائياً %"
+msgstr "معتمد تلقائياً %"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_approval_rule__enabled
+#: model:ir.model.fields,field_description:care_automation.field_care_automation_rule__enabled
+msgid "مفعّلة"
+msgstr "مفعّلة"
+
+#. module: care_automation
+#: model_terms:ir.ui.view,arch_db:care_automation.care_delegation_search
+msgid "مفوَّضة إليّ"
+msgstr "مفوَّضة إليّ"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_automation_rule__note
+#: model:ir.model.fields,field_description:care_automation.field_care_delegation__note
+msgid "ملاحظات"
+msgstr "ملاحظات"
+
+#. module: care_automation
+#: model_terms:ir.ui.view,arch_db:care_automation.care_delegation_form
+msgid "ملاحظات / نطاق التفويض بالتفصيل..."
+msgstr "ملاحظات / نطاق التفويض بالتفصيل..."
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_delegation__date_start
+msgid "من تاريخ"
+msgstr "من تاريخ"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_delegation__state__expired
+msgid "منتهٍ"
+msgstr "منتهٍ"
+
+#. module: care_automation
+#. odoo-python
+#: code:addons/care_automation/models/care_delegation.py:0
+#, python-format
+msgid "موافقة الإدارة العليا مطلوبة: فقط مدير الموارد البشرية يعتمد التفويض."
+msgstr "موافقة الإدارة العليا مطلوبة: فقط مدير الموارد البشرية يعتمد التفويض."
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_approval_rule__route__finance
+msgid "موافقة مالية"
+msgstr "موافقة مالية"
+
+#. module: care_automation
+#: model:ir.model.fields.selection,name:care_automation.selection__care_delegation__state__active
+msgid "نشط"
+msgstr "نشط"
+
+#. module: care_automation
+#: model:ir.model.fields,field_description:care_automation.field_care_approval_stat__review_pct
+msgid "يحتاج مراجعة %"
+msgstr "يحتاج مراجعة %"
+
+#. module: care_automation
+#: model:ir.ui.menu,name:care_automation.menu_care_automation_root
+msgid "⚡ الأتمتة والتكامل"
+msgstr "⚡ الأتمتة والتكامل"
+

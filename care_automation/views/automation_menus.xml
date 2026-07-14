@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_care_automation_root"
+              name="⚡ الأتمتة والتكامل"
+              parent="care_hr.menu_care_hr_config_root"
+              sequence="60"/>
+
+    <menuitem id="menu_care_automation_rules"
+              name="الأتمتة (بدون كود)"
+              parent="menu_care_automation_root"
+              action="care_automation_rule_action"
+              sequence="10"/>
+
+    <menuitem id="menu_care_approval_rules"
+              name="الموافقات الذكية"
+              parent="menu_care_automation_root"
+              action="care_approval_rule_action"
+              sequence="20"/>
+
+    <menuitem id="menu_care_approval_impact"
+              name="أثر الموافقات"
+              parent="menu_care_automation_root"
+              action="care_approval_stat_action"
+              sequence="30"/>
+
+    <menuitem id="menu_care_integrations"
+              name="مركز التكامل"
+              parent="menu_care_automation_root"
+              action="care_integration_action"
+              sequence="40"/>
+
+    <menuitem id="menu_care_delegation"
+              name="تفويض الصلاحيات"
+              parent="menu_care_automation_root"
+              action="care_delegation_action"
+              sequence="50"/>
+</odoo>

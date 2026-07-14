@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============ استئذاناتي — clean employee form (still editable to submit) ============ -->
+    <record id="view_my_permission_tree" model="ir.ui.view">
+        <field name="name">my.permission.tree</field>
+        <field name="model">permission.request</field>
+        <field name="arch" type="xml">
+            <tree string="استئذاناتي" decoration-muted="state=='draft'" decoration-info="state=='submitted'"
+                  decoration-success="state=='approved'" decoration-danger="state=='rejected'">
+                <field name="type"/>
+                <field name="permission_from"/>
+                <field name="permission_hours"/>
+                <field name="reason"/>
+                <field name="state" widget="badge"
+                       decoration-info="state=='submitted'" decoration-success="state=='approved'"
+                       decoration-danger="state=='rejected'" decoration-muted="state=='draft'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_my_permission_form" model="ir.ui.view">
+        <field name="name">my.permission.form</field>
+        <field name="model">permission.request</field>
+        <field name="arch" type="xml">
+            <form string="طلب استئذان">
+                <header>
+                    <button name="button_submit" type="object" string="تقديم الطلب"
+                            invisible="state != 'draft'" class="oe_highlight"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1>طلب استئذان</h1></div>
+                    <group>
+                        <group string="بيانات الطلب">
+                            <field name="employee_id" readonly="1" force_save="1"/>
+                            <field name="type"/>
+                            <field name="permission_from"/>
+                            <field name="permission_hours"/>
+                        </group>
+                        <group string="معلومات">
+                            <field name="department_id"/>
+                            <field name="position"/>
+                            <field name="permission_to"/>
+                        </group>
+                    </group>
+                    <separator string="السبب"/>
+                    <field name="reason" placeholder="اكتب سبب الاستئذان..."/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============ سلفي — clean employee form ============ -->
+    <record id="view_my_loan_tree" model="ir.ui.view">
+        <field name="name">my.loan.tree</field>
+        <field name="model">hr.loan</field>
+        <field name="arch" type="xml">
+            <tree string="سلفي" decoration-muted="state=='draft'" decoration-info="state=='waiting_approval_1'"
+                  decoration-success="state=='approve'" decoration-danger="state in ('refuse','cancel')">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="loan_amount" sum="الإجمالي"/>
+                <field name="installment"/>
+                <field name="balance_amount"/>
+                <field name="state" widget="badge"
+                       decoration-info="state=='waiting_approval_1'" decoration-success="state=='approve'"
+                       decoration-danger="state in ('refuse','cancel')" decoration-muted="state=='draft'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_my_loan_form" model="ir.ui.view">
+        <field name="name">my.loan.form</field>
+        <field name="model">hr.loan</field>
+        <field name="arch" type="xml">
+            <form string="طلب سلفة">
+                <header>
+                    <button name="action_submit" type="object" string="تقديم الطلب"
+                            invisible="state != 'draft'" class="oe_highlight"/>
+                    <button name="action_compute_installment" type="object" string="حساب الأقساط"
+                            invisible="state in ('approve','refuse')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,waiting_approval_1,approve"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group string="بيانات السلفة">
+                            <field name="employee_id" readonly="1" force_save="1"/>
+                            <field name="loan_amount"/>
+                            <field name="payment_date"/>
+                            <field name="installment"/>
+                        </group>
+                        <group string="معلومات">
+                            <field name="date"/>
+                            <field name="department_id"/>
+                            <field name="job_position_id"/>
+                            <field name="total_amount"/>
+                            <field name="total_paid_amount"/>
+                            <field name="balance_amount"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

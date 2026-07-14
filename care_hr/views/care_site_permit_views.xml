@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_care_site_permit_tree" model="ir.ui.view">
+        <field name="name">care.site.permit.tree</field>
+        <field name="model">care.site.permit</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="is_valid" decoration-danger="state in ('expired','revoked')"
+                  decoration-warning="state == 'issued' and days_to_expiry &lt;= 30 and days_to_expiry &gt;= 0">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="site_name"/>
+                <field name="permit_type" optional="show"/>
+                <field name="security_clearance"/>
+                <field name="issue_date" optional="hide"/>
+                <field name="expiry_date"/>
+                <field name="days_to_expiry" optional="show"/>
+                <field name="is_valid" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'screening'"
+                       decoration-success="state == 'issued'"
+                       decoration-danger="state in ('expired','revoked')"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_care_site_permit_form" model="ir.ui.view">
+        <field name="name">care.site.permit.form</field>
+        <field name="model">care.site.permit</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_screening" type="object" string="Start Screening"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_issue" type="object" string="Issue Permit"
+                            class="btn-primary" invisible="state != 'screening'"/>
+                    <button name="action_reject" type="object" string="Reject"
+                            invisible="state not in ('screening',)"/>
+                    <button name="action_revoke" type="object" string="Revoke"
+                            invisible="state != 'issued'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,screening,issued"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Valid" bg_color="bg-success"
+                            invisible="not is_valid"/>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="site_name"/>
+                            <field name="permit_type"/>
+                            <field name="security_clearance"/>
+                        </group>
+                        <group>
+                            <field name="issue_date"/>
+                            <field name="expiry_date"/>
+                            <field name="days_to_expiry"/>
+                            <field name="is_valid" invisible="1"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="Notes..."/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_care_site_permit_kanban" model="ir.ui.view">
+        <field name="name">care.site.permit.kanban</field>
+        <field name="model">care.site.permit</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_small_column"
+                    records_draggable="false">
+                <field name="state"/>
+                <field name="is_valid"/>
+                <field name="days_to_expiry"/>
+                <field name="security_clearance"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click" style="padding:10px;">
+                            <div class="d-flex justify-content-between">
+                                <strong><field name="name"/></strong>
+                                <span t-if="record.state.raw_value == 'issued' &amp;&amp; record.days_to_expiry.raw_value &lt;= 30 &amp;&amp; record.days_to_expiry.raw_value &gt;= 0"
+                                      class="badge text-bg-warning">Expiring</span>
+                            </div>
+                            <div><field name="employee_id"/></div>
+                            <div class="text-muted"><field name="site_name"/></div>
+                            <div class="d-flex justify-content-between mt-1">
+                                <field name="permit_type"/>
+                                <span class="badge text-bg-light"><field name="security_clearance"/></span>
+                            </div>
+                            <div class="text-muted mt-1" t-if="record.expiry_date.raw_value">
+                                <i class="fa fa-calendar me-1"/><field name="expiry_date"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_care_site_permit_search" model="ir.ui.view">
+        <field name="name">care.site.permit.search</field>
+        <field name="model">care.site.permit</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <field name="site_name"/>
+                <filter name="valid" string="Valid" domain="[('is_valid','=',True)]"/>
+                <filter name="screening" string="In Screening" domain="[('state','=','screening')]"/>
+                <filter name="expiring" string="Expiring ≤ 30d"
+                        domain="[('state','=','issued'),('expiry_date','&gt;=', context_today().strftime('%Y-%m-%d')),('expiry_date','&lt;=', (context_today() + relativedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter name="g_site" string="Site" context="{'group_by':'site_name'}"/>
+                    <filter name="g_state" string="Status" context="{'group_by':'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_care_site_permit" model="ir.actions.act_window">
+        <field name="name">Site &amp; Security Permits</field>
+        <field name="res_model">care.site.permit</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="search_view_id" ref="view_care_site_permit_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Request a site permit</p>
+            <p>Security permits for government / sensitive sites. A worker may not be
+               deployed to a secured site without a valid permit.</p>
+        </field>
+    </record>
+
+    <record id="cron_care_site_permit_expire" model="ir.cron">
+        <field name="name">Care HR: Expire Site Permits</field>
+        <field name="model_id" ref="model_care_site_permit"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_expire()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

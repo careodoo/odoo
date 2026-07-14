@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+    <t t-name="care_hr.SkillsDashboard">
+        <div class="o_hr_dash" dir="rtl" t-ref="root">
+            <div class="o_hr_dash_head">
+                <div><h1>مركز قيادة المهارات</h1>
+                    <span class="o_hr_dash_sub">Skills Command Center</span></div>
+                <button class="btn btn-secondary" t-on-click="() => this.refresh()">
+                    <i class="fa fa-refresh"/> تحديث</button>
+            </div>
+            <div t-if="state.loading" class="o_hr_dash_loading">
+                <i class="fa fa-spinner fa-spin fa-2x"/><div>جارٍ التحميل…</div></div>
+            <t t-if="state.data and !state.loading">
+                <div class="o_hr_kpis">
+                    <div class="o_hr_kpi k-odoo" t-on-click="() => this.open('hr.employee.skill', [], 'مهارات الموظفين')">
+                        <div class="k-ico"><i class="fa fa-star"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.total)"/><div class="k-lbl">إجمالي مهارات الموظفين</div></div></div>
+                    <div class="o_hr_kpi k-blue" t-on-click="() => this.open('hr.skill', [], 'كتالوج المهارات')">
+                        <div class="k-ico"><i class="fa fa-list"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.catalog)"/><div class="k-lbl">المهارات بالكتالوج</div></div></div>
+                    <div class="o_hr_kpi k-teal" t-on-click="() => this.open('hr.skill.type', [], 'أنواع المهارات')">
+                        <div class="k-ico"><i class="fa fa-cubes"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.types)"/><div class="k-lbl">أنواع المهارات</div></div></div>
+                    <div class="o_hr_kpi k-green">
+                        <div class="k-ico"><i class="fa fa-users"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.emp_with_skills)"/><div class="k-lbl">موظفون لديهم مهارات</div></div></div>
+                    <div class="o_hr_kpi k-purple">
+                        <div class="k-ico"><i class="fa fa-bar-chart"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="state.data.kpi.avg"/><div class="k-lbl">متوسط المهارات/موظف</div></div></div>
+                    <div class="o_hr_kpi k-cyan" t-on-click="() => this.open('hr.employee.skill', [['certified','=',true]], 'الشهادات')">
+                        <div class="k-ico"><i class="fa fa-certificate"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.certified)"/><div class="k-lbl">شهادات</div></div></div>
+                    <div class="o_hr_kpi k-orange" t-on-click="() => this.open('hr.employee.skill', [['cert_state','=','expiring']], 'شهادات تنتهي')">
+                        <div class="k-ico"><i class="fa fa-hourglass-half"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.cert_expiring)"/><div class="k-lbl">شهادات تنتهي قريباً</div></div></div>
+                    <div class="o_hr_kpi k-red" t-on-click="() => this.open('care.job.skill', [], 'تحليل الفجوة')">
+                        <div class="k-ico"><i class="fa fa-exclamation-triangle"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.critical_gaps)"/><div class="k-lbl">فجوات مهارية</div></div></div>
+                </div>
+
+                <div class="o_hr_grid">
+                    <div class="o_hr_card"><div class="o_hr_card_t">المهارات حسب النوع</div>
+                        <div class="o_hr_canvas"><canvas id="skType"/></div></div>
+                    <div class="o_hr_card c-2"><div class="o_hr_card_t">أكثر المهارات شيوعاً</div>
+                        <div class="o_hr_canvas"><canvas id="skTop"/></div></div>
+                </div>
+                <div class="o_hr_grid">
+                    <div class="o_hr_card"><div class="o_hr_card_t">إتقان اللغات</div>
+                        <div class="o_hr_canvas"><canvas id="skLang"/></div></div>
+                    <div class="o_hr_card"><div class="o_hr_card_t">توزيع المستويات</div>
+                        <div class="o_hr_canvas"><canvas id="skLevel"/></div></div>
+                    <div class="o_hr_card"><div class="o_hr_card_t">أكبر فجوات المهارات (وظيفة/مهارة)</div>
+                        <table class="o_hr_tbl">
+                            <tr><th>الوظيفة</th><th>المهارة</th><th>التغطية</th><th>الفجوة</th></tr>
+                            <tr t-foreach="state.data.gaps" t-as="g" t-key="g_index">
+                                <td t-esc="g.job"/><td t-esc="g.skill"/>
+                                <td><span t-esc="g.coverage"/>%</td><td t-esc="g.gap"/></tr>
+                        </table>
+                    </div>
+                </div>
+                <div style="margin-top:8px">
+                    <button class="btn btn-primary" t-on-click="() => this.openMatrix()">
+                        <i class="fa fa-th"/> فتح مصفوفة المهارات</button>
+                </div>
+            </t>
+        </div>
+    </t>
+</templates>

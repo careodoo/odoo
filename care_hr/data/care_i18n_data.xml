@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Apply Arabic (ar_001) translations on every module update. -->
+    <function model="care.i18n" name="_apply_ar"/>
+</odoo>

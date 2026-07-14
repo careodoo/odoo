@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ===== 9 main sections of the Employees app (English source; Arabic via translation) ===== -->
+    <menuitem id="menu_sec_people" name="Employees"
+              parent="hr.menu_hr_root" sequence="1" groups="hr.group_hr_user"/>
+    <menuitem id="menu_sec_time" name="Attendance &amp; Leaves"
+              parent="hr.menu_hr_root" sequence="2" groups="hr.group_hr_user"/>
+    <menuitem id="menu_sec_recruit" name="Recruitment"
+              parent="hr.menu_hr_root" sequence="4" groups="hr.group_hr_user"/>
+    <menuitem id="menu_sec_offboard" name="Offboarding"
+              parent="hr.menu_hr_root" sequence="5" groups="hr.group_hr_user"/>
+    <menuitem id="menu_sec_welfare" name="Welfare &amp; Admin"
+              parent="hr.menu_hr_root" sequence="7" groups="hr.group_hr_user"/>
+
+    <menuitem id="menu_care_hr_config_root"
+              name="Settings"
+              parent="hr.menu_hr_root"
+              sequence="8"
+              groups="hr.group_hr_manager"/>
+
+    <menuitem id="menu_care_hr_policy"
+              name="HR Policy (Labour Law)"
+              parent="menu_care_hr_config_root"
+              action="action_care_hr_config_settings"
+              sequence="1"/>
+
+    <menuitem id="menu_care_job_grade"
+              name="Job Grades / Wage Tiers"
+              parent="menu_care_hr_config_root"
+              action="action_care_job_grade"
+              sequence="2"/>
+
+    <!-- Compliance & Government section (reused) -->
+    <menuitem id="menu_care_hr_compliance_root"
+              name="Compliance &amp; Government"
+              parent="hr.menu_hr_root"
+              sequence="6"
+              groups="hr.group_hr_user"/>
+
+    <menuitem id="menu_care_manpower_file"
+              name="Manpower Files (PAM)"
+              parent="menu_care_hr_compliance_root"
+              action="action_care_manpower_file"
+              sequence="1"/>
+
+    <menuitem id="menu_care_coverage_alert"
+              name="Coverage Monitor"
+              parent="menu_care_hr_compliance_root"
+              action="action_care_coverage_alert"
+              sequence="2"/>
+
+    <menuitem id="menu_care_gov_transaction"
+              name="Gov Transactions (PRO)"
+              parent="menu_care_hr_compliance_root"
+              action="action_care_gov_transaction"
+              sequence="3"/>
+
+    <menuitem id="menu_care_site_permit"
+              name="Site &amp; Security Permits"
+              parent="menu_care_hr_compliance_root"
+              action="action_care_site_permit"
+              sequence="4"/>
+
+    <menuitem id="menu_care_gov_generate_renewals"
+              name="Generate Due Renewals"
+              parent="menu_care_hr_compliance_root"
+              action="action_gov_generate_renewals"
+              sequence="5"/>
+
+    <menuitem id="menu_care_absconding"
+              name="Absconding &amp; Transfer"
+              parent="menu_care_hr_compliance_root"
+              action="action_care_absconding"
+              sequence="6"/>
+
+    <!-- Employee Relations section under the Employees app -->
+    <menuitem id="menu_care_hr_relations_root"
+              name="Employee Relations"
+              parent="hr.menu_hr_root"
+              sequence="52"
+              groups="hr.group_hr_user"/>
+
+    <menuitem id="menu_care_grievance"
+              name="Grievances"
+              parent="menu_care_hr_relations_root"
+              action="action_care_grievance"
+              sequence="1"/>
+
+    <menuitem id="menu_care_announcement"
+              name="Announcements &amp; Policies"
+              parent="menu_care_hr_relations_root"
+              action="action_care_announcement"
+              sequence="2"/>
+
+    <!-- Administration section under the Employees app -->
+    <menuitem id="menu_care_hr_admin_root"
+              name="Administration"
+              parent="hr.menu_hr_root"
+              sequence="53"
+              groups="hr.group_hr_user"/>
+
+    <menuitem id="menu_care_custody"
+              name="Custody Register"
+              parent="menu_care_hr_admin_root"
+              action="action_care_custody"
+              sequence="1"/>
+
+    <!-- Payroll section (reused) -->
+    <menuitem id="menu_care_hr_payroll_root"
+              name="Payroll"
+              parent="hr.menu_hr_root"
+              sequence="3"
+              groups="hr.group_hr_user"/>
+
+    <menuitem id="menu_care_penalty"
+              name="Penalties"
+              parent="menu_care_hr_payroll_root"
+              action="action_care_penalty"
+              sequence="1"/>
+
+    <menuitem id="menu_care_allowance"
+              name="Allowances"
+              parent="menu_care_hr_payroll_root"
+              action="action_care_allowance"
+              sequence="2"/>
+
+    <!-- Traffic Violations lives under the Fleet app (not Employees) -->
+    <menuitem id="menu_care_violation"
+              name="Traffic Violations"
+              parent="fleet.menu_root"
+              action="action_care_violation"
+              sequence="6"
+              groups="hr.group_hr_user"/>
+
+    <menuitem id="menu_care_penalty_type"
+              name="Penalty Catalogue"
+              parent="menu_care_hr_config_root"
+              action="action_care_penalty_type"
+              sequence="3"/>
+
+    <menuitem id="menu_care_allowance_type"
+              name="Allowance Types"
+              parent="menu_care_hr_config_root"
+              action="action_care_allowance_type"
+              sequence="4"/>
+
+    <menuitem id="menu_care_access_profile"
+              name="Access Profiles"
+              parent="menu_care_hr_config_root"
+              action="action_care_access_profile"
+              sequence="10"
+              groups="hr.group_hr_manager"/>
+
+    <menuitem id="menu_care_violation_type"
+              name="Violation Types"
+              parent="menu_care_hr_config_root"
+              action="action_care_violation_type"
+              sequence="5"/>
+
+    <!-- Move the listed standalone menus inside the Employees app -->
+    <function model="ir.ui.menu" name="_care_reparent_under_employees"/>
+    <!-- Reorganize everything into the 9 main sections -->
+    <function model="ir.ui.menu" name="_care_reorganize_menus"/>
+    <!-- Clean up duplicate/Studio Skills menus -->
+    <function model="ir.ui.menu" name="_care_cleanup_skills"/>
+    <!-- Arabic translations for the section menus -->
+    <function model="ir.ui.menu" name="_care_translate_menus"/>
+</odoo>

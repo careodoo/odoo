@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ===== Work Order Job Card (PDF) ===== -->
+    <record id="action_report_workorder" model="ir.actions.report">
+        <field name="name">بطاقة أمر العمل (PDF)</field>
+        <field name="model">care.cafm.workorder</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_cafm.report_workorder</field>
+        <field name="report_file">care_cafm.report_workorder</field>
+        <field name="binding_model_id" ref="model_care_cafm_workorder"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Work Orders Excel -->
+    <record id="action_report_workorder_xlsx" model="ir.actions.report">
+        <field name="name">أوامر العمل (Excel)</field>
+        <field name="model">care.cafm.workorder</field>
+        <field name="report_type">xlsx</field>
+        <field name="report_name">care_cafm.report_workorder_xlsx</field>
+        <field name="report_file">care_cafm.report_workorder_xlsx</field>
+        <field name="binding_model_id" ref="model_care_cafm_workorder"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_workorder">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <div class="page" style="direction:rtl;text-align:right;font-family:Arial,sans-serif;color:#1a2330;font-size:12px">
+                        <div style="background:linear-gradient(135deg,#1e5eff,#0b3ec9);color:#fff;padding:16px 18px;border-radius:10px">
+                            <div style="display:flex;justify-content:space-between;align-items:center">
+                                <div><div style="font-size:12px;opacity:.85;letter-spacing:1px">بطاقة أمر عمل · CAFM</div>
+                                    <div style="font-size:19px;font-weight:800"><span t-field="o.title"/></div>
+                                    <div style="font-size:12px"><span t-field="o.name"/></div></div>
+                                <div style="text-align:left;font-size:12px">
+                                    <div>الحالة: <span t-field="o.state"/></div>
+                                    <div t-if="o.is_overdue" style="color:#ffd7cf;font-weight:700">⏱ متأخر SLA</div></div>
+                            </div>
+                        </div>
+                        <table style="width:100%;border-collapse:collapse;margin-top:14px">
+                            <tr><td style="padding:6px 10px;color:#5a6472;width:22%">المرفق</td><td style="padding:6px 10px;font-weight:700"><span t-field="o.facility_id"/></td>
+                                <td style="padding:6px 10px;color:#5a6472;width:22%">الموقع</td><td style="padding:6px 10px;font-weight:700"><span t-field="o.location_id"/></td></tr>
+                            <tr><td style="padding:6px 10px;color:#5a6472">الخدمة</td><td style="padding:6px 10px;font-weight:700"><span t-field="o.service_id"/></td>
+                                <td style="padding:6px 10px;color:#5a6472">النوع</td><td style="padding:6px 10px;font-weight:700"><span t-field="o.wo_type"/></td></tr>
+                            <tr><td style="padding:6px 10px;color:#5a6472">المُسنَد إليه</td><td style="padding:6px 10px;font-weight:700"><span t-field="o.employee_id"/></td>
+                                <td style="padding:6px 10px;color:#5a6472">الأولوية</td><td style="padding:6px 10px;font-weight:700"><span t-field="o.priority"/></td></tr>
+                        </table>
+                        <h4 style="margin:16px 0 6px;color:#0b3ec9;border-bottom:2px solid #eef1f5;padding-bottom:4px">المسار الزمني (SLA)</h4>
+                        <table style="width:100%;border-collapse:collapse;font-size:12px">
+                            <tr><td style="padding:5px 10px;color:#5a6472">وقت الطلب</td><td style="padding:5px 10px"><span t-field="o.request_datetime"/></td>
+                                <td style="padding:5px 10px;color:#5a6472">الموعد النهائي</td><td style="padding:5px 10px"><span t-field="o.deadline"/></td></tr>
+                            <tr><td style="padding:5px 10px;color:#5a6472">بداية التنفيذ (مسح)</td><td style="padding:5px 10px"><span t-field="o.start_datetime"/></td>
+                                <td style="padding:5px 10px;color:#5a6472">وقت الإنجاز</td><td style="padding:5px 10px"><span t-field="o.done_datetime"/></td></tr>
+                            <tr><td style="padding:5px 10px;color:#5a6472">زمن الاستجابة (د)</td><td style="padding:5px 10px"><span t-field="o.response_minutes"/></td>
+                                <td style="padding:5px 10px;color:#5a6472">مدة الإصلاح (د)</td><td style="padding:5px 10px;font-weight:700"><span t-field="o.duration_minutes"/></td></tr>
+                        </table>
+                        <h4 style="margin:16px 0 6px;color:#0b3ec9;border-bottom:2px solid #eef1f5;padding-bottom:4px">الوصف</h4>
+                        <p><span t-field="o.description"/></p>
+                        <div style="margin-top:40px;display:flex;justify-content:space-between;font-size:11px;color:#555">
+                            <div>العامل: ____________</div><div>المشرف: ____________</div><div>اعتماد العميل: ____________</div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- ===== Facility SLA Statement (PDF) ===== -->
+    <record id="action_report_facility_sla" model="ir.actions.report">
+        <field name="name">كشف SLA للمرفق (PDF)</field>
+        <field name="model">care.cafm.facility</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_cafm.report_facility_sla</field>
+        <field name="report_file">care_cafm.report_facility_sla</field>
+        <field name="binding_model_id" ref="model_care_cafm_facility"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_facility_sla">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <div class="page" style="direction:rtl;text-align:right;font-family:Arial,sans-serif;color:#1a2330;font-size:12px">
+                        <div style="background:linear-gradient(135deg,#0e7a5f,#0a5a46);color:#fff;padding:16px 18px;border-radius:10px">
+                            <div style="font-size:12px;opacity:.85;letter-spacing:1px">كشف أداء الخدمة · SLA</div>
+                            <div style="font-size:20px;font-weight:800"><span t-field="o.name"/></div>
+                            <div style="font-size:12px"><span t-field="o.partner_id"/> · <span t-field="o.project_id"/></div>
+                        </div>
+                        <t t-set="wos" t-value="o.env['care.cafm.workorder'].search([('facility_id','=',o.id)])"/>
+                        <t t-set="open_wo" t-value="wos.filtered(lambda w: w.state not in ('done','verified','cancelled'))"/>
+                        <div style="display:flex;gap:12px;margin-top:16px">
+                            <div style="flex:1;border:1px solid #e6e9ef;border-radius:10px;padding:14px;text-align:center">
+                                <div style="font-size:26px;font-weight:800;color:#0e7a5f"><span t-esc="round(o.sla_compliance,1)"/>%</div>
+                                <div style="color:#5a6472;font-size:11px">التزام SLA</div></div>
+                            <div style="flex:1;border:1px solid #e6e9ef;border-radius:10px;padding:14px;text-align:center">
+                                <div style="font-size:26px;font-weight:800"><span t-esc="len(wos)"/></div>
+                                <div style="color:#5a6472;font-size:11px">إجمالي الأوامر</div></div>
+                            <div style="flex:1;border:1px solid #e6e9ef;border-radius:10px;padding:14px;text-align:center">
+                                <div style="font-size:26px;font-weight:800;color:#4aa8ff"><span t-esc="len(open_wo)"/></div>
+                                <div style="color:#5a6472;font-size:11px">مفتوحة</div></div>
+                            <div style="flex:1;border:1px solid #e6e9ef;border-radius:10px;padding:14px;text-align:center">
+                                <div style="font-size:26px;font-weight:800;color:#e2513f"><span t-esc="o.wo_overdue_count"/></div>
+                                <div style="color:#5a6472;font-size:11px">متأخرة</div></div>
+                        </div>
+                        <h4 style="margin:18px 0 6px;color:#0a5a46;border-bottom:2px solid #eef1f5;padding-bottom:4px">أحدث أوامر العمل</h4>
+                        <table style="width:100%;border-collapse:collapse;font-size:11px">
+                            <thead><tr style="background:#f4f7ff">
+                                <th style="padding:6px 8px;border:1px solid #e6e9ef;text-align:right">الرقم</th>
+                                <th style="padding:6px 8px;border:1px solid #e6e9ef;text-align:right">العنوان</th>
+                                <th style="padding:6px 8px;border:1px solid #e6e9ef;text-align:right">الموقع</th>
+                                <th style="padding:6px 8px;border:1px solid #e6e9ef;text-align:right">الحالة</th>
+                                <th style="padding:6px 8px;border:1px solid #e6e9ef;text-align:right">المدة (د)</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="wos[:15]" t-as="w">
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef"><span t-field="w.name"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef"><span t-field="w.title"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef"><span t-field="w.location_id"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef"><span t-field="w.state"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef"><span t-field="w.duration_minutes"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div style="margin-top:16px;color:#8a93a1;font-size:10px;border-top:1px solid #eef1f5;padding-top:6px">
+                            صدر آلياً من نظام CAFM · care
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

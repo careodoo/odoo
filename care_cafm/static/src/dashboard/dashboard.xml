@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="care_cafm.Dashboard" owl="1">
+        <div class="o_cafm_dash">
+            <div t-if="state.loading" class="o_cafm_loading">
+                <div class="o_cafm_spin"/>
+                <span>جارٍ تحميل لوحة القيادة…</span>
+            </div>
+            <div t-elif="state.error" class="o_cafm_err">
+                <span t-esc="state.error"/>
+                <button class="btn btn-primary" t-on-click="() => this.load()">إعادة المحاولة</button>
+            </div>
+            <t t-else="">
+                <div class="o_cafm_head">
+                    <div>
+                        <h1>🏢 لوحة قيادة إدارة المرافق</h1>
+                        <p class="text-muted">نظرة حيّة على التشغيل والصيانة والجودة</p>
+                    </div>
+                    <button class="btn btn-light o_cafm_refresh" t-on-click="() => this.load()">↻ تحديث</button>
+                </div>
+
+                <!-- KPI cards -->
+                <div class="o_cafm_kpis">
+                    <div class="o_cafm_kpi c-blue" t-on-click="() => this.openWO([['state','in',['new','assigned','in_progress']]], 'أوامر العمل المفتوحة')">
+                        <div class="ic">🔧</div>
+                        <div class="v" t-esc="k.open"/>
+                        <div class="l">أوامر مفتوحة</div>
+                    </div>
+                    <div class="o_cafm_kpi c-red" t-on-click="() => this.openWO([['is_overdue','=',true]], 'المتأخرة')">
+                        <div class="ic">⏰</div>
+                        <div class="v" t-esc="k.overdue"/>
+                        <div class="l">متأخرة</div>
+                    </div>
+                    <div class="o_cafm_kpi c-amber" t-on-click="() => this.openWO([['employee_id','=',false],['state','in',['new','assigned','in_progress']]], 'غير مُسندة')">
+                        <div class="ic">👤</div>
+                        <div class="v" t-esc="k.unassigned"/>
+                        <div class="l">غير مُسندة</div>
+                    </div>
+                    <div class="o_cafm_kpi c-green" t-on-click="() => this.openWO([['state','in',['done','verified']]], 'المنجزة')">
+                        <div class="ic">✅</div>
+                        <div class="v" t-esc="k.done"/>
+                        <div class="l">منجزة</div>
+                    </div>
+                    <div class="o_cafm_kpi c-teal">
+                        <div class="ic">🎯</div>
+                        <div class="v"><t t-esc="k.sla"/>%</div>
+                        <div class="l">الالتزام بالـSLA</div>
+                    </div>
+                    <div class="o_cafm_kpi c-indigo" t-on-click="() => this.openModel('care.cafm.service.request', 'طلبات الخدمة')">
+                        <div class="ic">📥</div>
+                        <div class="v" t-esc="k.requests"/>
+                        <div class="l">طلبات جديدة</div>
+                    </div>
+                </div>
+
+                <!-- mini stat strip -->
+                <div class="o_cafm_strip">
+                    <div class="s" t-on-click="() => this.openModel('care.cafm.facility','العملاء')"><b t-esc="k.clients"/><span>عملاء</span></div>
+                    <div class="s" t-on-click="() => this.openModel('care.cafm.facility','المرافق')"><b t-esc="k.facilities"/><span>مرافق</span></div>
+                    <div class="s"><b t-esc="k.buildings"/><span>مبانٍ</span></div>
+                    <div class="s"><b t-esc="k.floors"/><span>أدوار</span></div>
+                    <div class="s" t-on-click="() => this.openModel('care.cafm.location','المواقع')"><b t-esc="k.locations"/><span>مواقع</span></div>
+                    <div class="s"><b t-esc="k.team"/><span>عاملون</span></div>
+                    <div class="s" t-on-click="() => this.openModel('care.cafm.asset','الأصول')"><b t-esc="k.assets"/><span>أصول</span></div>
+                    <div class="s" t-on-click="() => this.openModel('care.cafm.ppm','الصيانة الوقائية')"><b t-esc="k.ppm"/><span>خطط وقائية</span></div>
+                    <div class="s" t-on-click="() => this.openModel('care.cafm.observation','ملاحظات الجودة')"><b t-esc="k.observations"/><span>ملاحظات جودة</span></div>
+                    <div class="s"><b t-esc="k.total"/><span>إجمالي الأوامر</span></div>
+                </div>
+
+                <!-- time series (day / month / year) -->
+                <div class="o_cafm_card o_cafm_trend">
+                    <div class="o_cafm_trend_h">
+                        <h3>اتجاه أوامر العمل</h3>
+                        <div class="o_cafm_seg">
+                            <button t-att-class="state.range==='day' ? 'on' : ''" t-on-click="() => this.setRange('day')">يومي</button>
+                            <button t-att-class="state.range==='month' ? 'on' : ''" t-on-click="() => this.setRange('month')">شهري</button>
+                            <button t-att-class="state.range==='year' ? 'on' : ''" t-on-click="() => this.setRange('year')">سنوي</button>
+                        </div>
+                    </div>
+                    <div class="o_cafm_chart">
+                        <t t-foreach="series" t-as="pt" t-key="pt_index">
+                            <div class="col">
+                                <div class="colbar"><div class="colfill" t-attf-style="height:{{pt.pct}}%"><span class="colv" t-esc="pt.value"/></div></div>
+                                <div class="collbl" t-esc="pt.label"/>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+
+                <div class="o_cafm_grid">
+                    <!-- by state -->
+                    <div class="o_cafm_card">
+                        <h3>الأوامر حسب الحالة</h3>
+                        <div class="o_cafm_bars">
+                            <t t-foreach="state.data.by_state" t-as="row" t-key="row.key">
+                                <div class="bar" t-on-click="() => this.openWO([['state','=',row.key]], row.label)">
+                                    <div class="bl"><span t-esc="row.label"/><b t-esc="row.count"/></div>
+                                    <div class="bt"><div class="bf" t-attf-style="width:{{row.pct}}%;background:{{row.color}}"/></div>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+
+                    <!-- by service -->
+                    <div class="o_cafm_card">
+                        <h3>الأوامر حسب الخدمة</h3>
+                        <div class="o_cafm_bars" t-if="state.data.by_service.length">
+                            <t t-foreach="state.data.by_service" t-as="row" t-key="row.id">
+                                <div class="bar" t-on-click="() => this.openWO([['service_id','=',row.id]], row.label)">
+                                    <div class="bl"><span t-esc="row.label"/><b t-esc="row.count"/></div>
+                                    <div class="bt"><div class="bf" t-attf-style="width:{{row.pct}}%;background:{{row.color}}"/></div>
+                                </div>
+                            </t>
+                        </div>
+                        <div t-else="" class="o_cafm_empty">لا بيانات</div>
+                    </div>
+
+                    <!-- by priority -->
+                    <div class="o_cafm_card">
+                        <h3>الأوامر حسب الأولوية</h3>
+                        <div class="o_cafm_bars" t-if="state.data.by_priority.length">
+                            <t t-foreach="state.data.by_priority" t-as="row" t-key="row_index">
+                                <div class="bar">
+                                    <div class="bl"><span t-esc="row.label"/><b t-esc="row.count"/></div>
+                                    <div class="bt"><div class="bf" t-attf-style="width:{{row.pct}}%;background:{{row.color}}"/></div>
+                                </div>
+                            </t>
+                        </div>
+                        <div t-else="" class="o_cafm_empty">لا بيانات</div>
+                    </div>
+
+                    <!-- per-service detail cards -->
+                    <div class="o_cafm_card o_cafm_wide">
+                        <h3>تفاصيل الخدمات</h3>
+                        <div class="o_cafm_svcgrid" t-if="state.data.services_detail.length">
+                            <t t-foreach="state.data.services_detail" t-as="s" t-key="s.id">
+                                <div class="svcc" t-on-click="() => this.openWO([['service_id','=',s.id]], s.name)">
+                                    <div class="svcc_h"><span class="svcc_ic" t-esc="s.icon"/><span class="svcc_n" t-esc="s.name"/></div>
+                                    <div class="svcc_row">
+                                        <div><b t-esc="s.open"/><span>مفتوحة</span></div>
+                                        <div><b class="bad" t-esc="s.overdue"/><span>متأخرة</span></div>
+                                        <div><b class="good" t-esc="s.done"/><span>منجزة</span></div>
+                                        <div><b t-esc="s.teams"/><span>فرق</span></div>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                        <div t-else="" class="o_cafm_empty">لا خدمات</div>
+                    </div>
+
+                    <!-- clients -->
+                    <div class="o_cafm_card">
+                        <h3>العملاء — الحِمل المفتوح</h3>
+                        <table class="o_cafm_tbl" t-if="state.data.clients.length">
+                            <thead><tr><th>العميل</th><th>مرافق</th><th>مفتوحة</th></tr></thead>
+                            <tbody>
+                                <t t-foreach="state.data.clients" t-as="c" t-key="c.id">
+                                    <tr><td t-esc="c.name"/><td class="num" t-esc="c.facilities"/><td class="num" t-esc="c.open"/></tr>
+                                </t>
+                            </tbody>
+                        </table>
+                        <div t-else="" class="o_cafm_empty">لا عملاء</div>
+                    </div>
+
+                    <!-- top workers -->
+                    <div class="o_cafm_card">
+                        <h3>أكثر العاملين حِملاً</h3>
+                        <table class="o_cafm_tbl" t-if="state.data.workers.length">
+                            <thead><tr><th>العامل</th><th>مفتوحة</th><th>منجزة</th><th>الكل</th></tr></thead>
+                            <tbody>
+                                <t t-foreach="state.data.workers" t-as="w" t-key="w.id">
+                                    <tr t-on-click="() => this.openWO([['employee_id','=',w.id]], w.name)">
+                                        <td><b t-esc="w.name"/><small t-if="w.job" class="o_cafm_job" t-esc="w.job"/></td>
+                                        <td class="num" t-esc="w.open"/>
+                                        <td class="num good" t-esc="w.done"/>
+                                        <td class="num" t-esc="w.total"/>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                        <div t-else="" class="o_cafm_empty">لا عاملين</div>
+                    </div>
+
+                    <!-- facilities -->
+                    <div class="o_cafm_card">
+                        <h3>المرافق — الحِمل المفتوح</h3>
+                        <table class="o_cafm_tbl" t-if="state.data.facilities.length">
+                            <thead><tr><th>المرفق</th><th>مفتوحة</th><th>متأخرة</th></tr></thead>
+                            <tbody>
+                                <t t-foreach="state.data.facilities" t-as="f" t-key="f.id">
+                                    <tr t-on-click="() => this.openWO([['facility_id','=',f.id],['state','in',['new','assigned','in_progress']]], f.name)">
+                                        <td t-esc="f.name"/>
+                                        <td class="num" t-esc="f.open"/>
+                                        <td class="num" t-attf-class="num {{ f.overdue ? 'bad' : '' }}" t-esc="f.overdue"/>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                        <div t-else="" class="o_cafm_empty">لا مرافق</div>
+                    </div>
+
+                    <!-- recent -->
+                    <div class="o_cafm_card">
+                        <h3>أحدث أوامر العمل</h3>
+                        <div class="o_cafm_recent" t-if="state.data.recent.length">
+                            <t t-foreach="state.data.recent" t-as="w" t-key="w.id">
+                                <div class="ri" t-on-click="() => this.openWORecord(w.id)">
+                                    <span class="dot" t-attf-style="background:{{w.color}}"/>
+                                    <div class="rt">
+                                        <b t-esc="w.title || w.name"/>
+                                        <small t-esc="w.facility + ' · ' + w.employee"/>
+                                    </div>
+                                    <span class="pill" t-attf-style="background:{{w.color}}22;color:{{w.color}}" t-esc="w.state_label"/>
+                                </div>
+                            </t>
+                        </div>
+                        <div t-else="" class="o_cafm_empty">لا أوامر</div>
+                    </div>
+                </div>
+            </t>
+        </div>
+    </t>
+</templates>

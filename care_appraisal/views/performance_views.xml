@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_perf_log_tree" model="ir.ui.view">
+        <field name="name">care.performance.log.tree</field>
+        <field name="model">care.performance.log</field>
+        <field name="arch" type="xml">
+            <tree string="Performance Events" decoration-success="polarity=='pos'"
+                  decoration-danger="polarity=='neg'" create="false">
+                <field name="date"/>
+                <field name="employee_id"/>
+                <field name="department_id" optional="show"/>
+                <field name="source"/>
+                <field name="name"/>
+                <field name="points" sum="Total"/>
+                <field name="polarity" widget="badge"
+                       decoration-success="polarity=='pos'" decoration-danger="polarity=='neg'"/>
+                <field name="appraisal_id" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_perf_log_form" model="ir.ui.view">
+        <field name="name">care.performance.log.form</field>
+        <field name="model">care.performance.log</field>
+        <field name="arch" type="xml">
+            <form string="Performance Event">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="date"/>
+                            <field name="source"/>
+                        </group>
+                        <group>
+                            <field name="points"/>
+                            <field name="polarity"/>
+                            <field name="appraisal_id"/>
+                        </group>
+                    </group>
+                    <field name="name"/>
+                    <field name="res_model" invisible="1"/>
+                    <field name="res_id" invisible="1"/>
+                    <group invisible="not res_model">
+                        <button name="action_open_source" type="object" string="Open source record" class="btn-link"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_perf_log_search" model="ir.ui.view">
+        <field name="name">care.performance.log.search</field>
+        <field name="model">care.performance.log</field>
+        <field name="arch" type="xml">
+            <search string="Performance">
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <filter name="pos" string="Rewards" domain="[('points','&gt;',0)]"/>
+                <filter name="neg" string="Penalties" domain="[('points','&lt;',0)]"/>
+                <separator/>
+                <filter name="src_task" string="Tasks" domain="[('source','=','task')]"/>
+                <filter name="src_att" string="Attendance" domain="[('source','=','attendance')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_employee" string="Employee" context="{'group_by':'employee_id'}"/>
+                    <filter name="group_source" string="Source" context="{'group_by':'source'}"/>
+                    <filter name="group_dept" string="Department" context="{'group_by':'department_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_perf_log_pivot" model="ir.ui.view">
+        <field name="name">care.performance.log.pivot</field>
+        <field name="model">care.performance.log</field>
+        <field name="arch" type="xml">
+            <pivot string="Performance Analysis" sample="1">
+                <field name="department_id" type="row"/>
+                <field name="source" type="col"/>
+                <field name="points" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_perf_log_graph" model="ir.ui.view">
+        <field name="name">care.performance.log.graph</field>
+        <field name="model">care.performance.log</field>
+        <field name="arch" type="xml">
+            <graph string="Performance Analysis" type="bar" sample="1">
+                <field name="department_id"/>
+                <field name="points" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_perf_log" model="ir.actions.act_window">
+        <field name="name">Performance Events</field>
+        <field name="res_model">care.performance.log</field>
+        <field name="view_mode">tree,graph,pivot,form</field>
+        <field name="search_view_id" ref="view_perf_log_search"/>
+    </record>
+
+    <record id="action_perf_analysis" model="ir.actions.act_window">
+        <field name="name">تحليل الأداء</field>
+        <field name="res_model">care.performance.log</field>
+        <field name="view_mode">pivot,graph,tree</field>
+        <field name="search_view_id" ref="view_perf_log_search"/>
+        <field name="context">{'search_default_group_dept': 1}</field>
+    </record>
+</odoo>

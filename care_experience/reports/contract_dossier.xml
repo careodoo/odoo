@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Formal contract dossier: one printable file per contract consolidating
+         terms, renewals, guarantees, insurance and attachments.
+         Report gotchas honored: web.basic_layout INSIDE t-foreach (per-doc),
+         explicit Arial font + direction:rtl for Arabic-safe rendering. -->
+    <record id="action_report_contract_dossier" model="ir.actions.report">
+        <field name="name">ملف العقد (PDF)</field>
+        <field name="model">care.experience</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_experience.report_contract_dossier</field>
+        <field name="report_file">care_experience.report_contract_dossier</field>
+        <field name="binding_model_id" ref="model_care_experience"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_contract_dossier">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <div class="page" style="direction:rtl;text-align:right;font-family:Arial,'Tajawal',sans-serif;color:#1a2330;font-size:12px;">
+
+                        <!-- Title band -->
+                        <div style="background:linear-gradient(135deg,#1e5eff,#0b3ec9);color:#fff;padding:16px 18px;border-radius:10px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <div>
+                                    <div style="font-size:12px;opacity:.85;letter-spacing:1px;">ملف العقد · Contract Dossier</div>
+                                    <div style="font-size:20px;font-weight:800;margin-top:2px;"><span t-field="o.name"/></div>
+                                    <div style="font-size:12px;opacity:.9;"><span t-field="o.ref"/></div>
+                                </div>
+                                <div style="text-align:left;">
+                                    <span t-if="o.contract_type == 'government'" style="background:#0a7cff;padding:4px 10px;border-radius:12px;font-size:11px;">حكومي</span>
+                                    <span t-else="" style="background:#5a6472;padding:4px 10px;border-radius:12px;font-size:11px;">خاص/تجاري</span>
+                                    <div style="margin-top:6px;font-size:11px;">الحالة:
+                                        <span t-field="o.state"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contract terms -->
+                        <h4 style="margin:16px 0 6px;color:#0b3ec9;border-bottom:2px solid #eef1f5;padding-bottom:4px;">بيانات العقد</h4>
+                        <table style="width:100%;border-collapse:collapse;">
+                            <tr>
+                                <td style="padding:5px 8px;color:#5a6472;width:22%;">الجهة المتعاقدة</td>
+                                <td style="padding:5px 8px;font-weight:600;"><span t-field="o.partner_id"/></td>
+                                <td style="padding:5px 8px;color:#5a6472;width:22%;">المشروع</td>
+                                <td style="padding:5px 8px;font-weight:600;"><span t-field="o.project_id"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:5px 8px;color:#5a6472;">قيمة العقد</td>
+                                <td style="padding:5px 8px;font-weight:600;"><span t-field="o.contract_amount"/> <span t-field="o.currency_id.name"/></td>
+                                <td style="padding:5px 8px;color:#5a6472;">القيمة المُسعّرة</td>
+                                <td style="padding:5px 8px;font-weight:600;"><span t-field="o.pricing_value"/> <span t-esc="o.pricing_ref or ''"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:5px 8px;color:#5a6472;">عدد العمالة</td>
+                                <td style="padding:5px 8px;font-weight:600;"><span t-field="o.labor_quantity"/></td>
+                                <td style="padding:5px 8px;color:#5a6472;">المدة (شهور)</td>
+                                <td style="padding:5px 8px;font-weight:600;"><span t-field="o.period"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:5px 8px;color:#5a6472;">تاريخ البدء</td>
+                                <td style="padding:5px 8px;font-weight:600;"><span t-field="o.start_date"/></td>
+                                <td style="padding:5px 8px;color:#5a6472;">تاريخ الانتهاء</td>
+                                <td style="padding:5px 8px;font-weight:600;">
+                                    <span t-field="o.expire_date"/>
+                                    <span t-if="o.days_to_expiry &gt;= 0" style="color:#5a6472;"> (خلال <span t-esc="o.days_to_expiry"/> يوم)</span>
+                                    <span t-else="" style="color:#e2513f;font-weight:700;"> (متأخر <span t-esc="-o.days_to_expiry"/> يوم)</span>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Renewals -->
+                        <h4 style="margin:16px 0 6px;color:#0b3ec9;border-bottom:2px solid #eef1f5;padding-bottom:4px;">التجديدات والتمديدات (<span t-esc="o.renewal_count"/>)</h4>
+                        <table t-if="o.renewal_ids" style="width:100%;border-collapse:collapse;font-size:11px;">
+                            <thead>
+                                <tr style="background:#f4f7ff;">
+                                    <th style="padding:6px 8px;text-align:right;border:1px solid #e6e9ef;">المرجع</th>
+                                    <th style="padding:6px 8px;text-align:right;border:1px solid #e6e9ef;">النوع</th>
+                                    <th style="padding:6px 8px;text-align:right;border:1px solid #e6e9ef;">تاريخ الطلب</th>
+                                    <th style="padding:6px 8px;text-align:right;border:1px solid #e6e9ef;">النهاية الجديدة</th>
+                                    <th style="padding:6px 8px;text-align:right;border:1px solid #e6e9ef;">القيمة الجديدة</th>
+                                    <th style="padding:6px 8px;text-align:right;border:1px solid #e6e9ef;">الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.renewal_ids" t-as="r">
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;"><span t-field="r.name"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;"><span t-field="r.kind"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;"><span t-field="r.request_date"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;"><span t-field="r.new_expire_date"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;"><span t-field="r.new_value"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;"><span t-field="r.state"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p t-else="" style="color:#8a93a1;">لا توجد تجديدات مسجّلة.</p>
+
+                        <!-- Bank guarantees -->
+                        <h4 style="margin:16px 0 6px;color:#0b3ec9;border-bottom:2px solid #eef1f5;padding-bottom:4px;">الكفالات البنكية (<span t-esc="o.guarantee_count"/>)</h4>
+                        <table t-if="o.guarantee_ids" style="width:100%;border-collapse:collapse;font-size:11px;">
+                            <thead>
+                                <tr style="background:#f4f7ff;">
+                                    <th style="padding:6px 8px;text-align:right;border:1px solid #e6e9ef;">رقم الكفالة</th>
+                                    <th style="padding:6px 8px;text-align:right;border:1px solid #e6e9ef;">البنك</th>
+                                    <th style="padding:6px 8px;text-align:right;border:1px solid #e6e9ef;">النوع</th>
+                                    <th style="padding:6px 8px;text-align:right;border:1px solid #e6e9ef;">القيمة</th>
+                                    <th style="padding:6px 8px;text-align:right;border:1px solid #e6e9ef;">الانتهاء</th>
+                                    <th style="padding:6px 8px;text-align:right;border:1px solid #e6e9ef;">الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.guarantee_ids" t-as="g">
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;"><span t-field="g.guarantee_number"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;"><span t-field="g.bank_name"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;"><span t-field="g.guarantee_type"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;"><span t-field="g.amount"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;"><span t-field="g.expiry_date"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;"><span t-field="g.state"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p t-else="" style="color:#8a93a1;">لا توجد كفالات مسجّلة.</p>
+
+                        <!-- Insurance -->
+                        <h4 style="margin:16px 0 6px;color:#0b3ec9;border-bottom:2px solid #eef1f5;padding-bottom:4px;">التأمين</h4>
+                        <table t-if="o.insurance_expiry or o.insurance_company" style="width:100%;border-collapse:collapse;">
+                            <tr>
+                                <td style="padding:5px 8px;color:#5a6472;width:22%;">شركة التأمين</td>
+                                <td style="padding:5px 8px;font-weight:600;"><span t-field="o.insurance_company"/></td>
+                                <td style="padding:5px 8px;color:#5a6472;width:22%;">رقم الوثيقة</td>
+                                <td style="padding:5px 8px;font-weight:600;"><span t-field="o.insurance_policy_no"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:5px 8px;color:#5a6472;">القيمة</td>
+                                <td style="padding:5px 8px;font-weight:600;"><span t-field="o.insurance_amount"/></td>
+                                <td style="padding:5px 8px;color:#5a6472;">تاريخ الانتهاء</td>
+                                <td style="padding:5px 8px;font-weight:600;"><span t-field="o.insurance_expiry"/> — <span t-field="o.insurance_state"/></td>
+                            </tr>
+                        </table>
+                        <p t-else="" style="color:#8a93a1;">لا توجد وثيقة تأمين مسجّلة.</p>
+
+                        <!-- Attachments summary -->
+                        <h4 style="margin:16px 0 6px;color:#0b3ec9;border-bottom:2px solid #eef1f5;padding-bottom:4px;">المرفقات</h4>
+                        <ul style="margin:0;padding-inline-start:18px;color:#333;">
+                            <li>نسخ العقد المرفقة: <b><span t-esc="len(o.contract_copy)"/></b></li>
+                            <li>وثائق التأمين المرفقة: <b><span t-esc="len(o.insurance_attachment)"/></b></li>
+                        </ul>
+
+                        <div style="margin-top:24px;color:#8a93a1;font-size:10px;border-top:1px solid #eef1f5;padding-top:6px;">
+                            صدر آلياً من نظام إدارة العقود — care · تاريخ الطباعة: <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d %H:%M')"/>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

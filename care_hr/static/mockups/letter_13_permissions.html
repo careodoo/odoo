@@ -1,0 +1,83 @@
+<html><head><meta charset='utf-8'>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Cairo',Tahoma,sans-serif}
+body{background:#eef1f6;color:#1d2433;direction:rtl}
+.wrap{width:1180px;margin:0 auto;padding:18px}
+.top{background:#1e2a44;color:#fff;border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.top .logo{font-weight:800;color:#e8564e;font-size:19px}
+.top .crumb{color:#aeb8cc;font-weight:700;font-size:13px}
+.top .sp{flex:1}
+.h{font-size:22px;font-weight:800;margin:4px 0 2px}
+.sub{color:#7b8499;font-weight:700;font-size:13px;margin-bottom:14px}
+.kpis{display:table;width:100%;border-spacing:10px 0;margin:0 -10px 14px}
+.kpi{display:table-cell;width:16.6%;background:#fff;border:1px solid #e4e8f0;border-radius:12px;padding:12px;vertical-align:top}
+.kpi .v{font-size:24px;font-weight:800}
+.kpi .l{color:#7b8499;font-weight:700;font-size:12px;margin-top:2px}
+.kpi.red .v{color:#e2513f}.kpi.amber .v{color:#e08a00}.kpi.green .v{color:#1a9f6d}.kpi.blue .v{color:#2f6df6}.kpi.purple .v{color:#7a5cf0}
+.card{background:#fff;border:1px solid #e4e8f0;border-radius:14px;padding:16px;margin-bottom:14px}
+.card h3{font-size:15px;margin-bottom:12px}
+.alert{background:#fff4f2;border:1px solid #ffd4cc;color:#c0392b;border-radius:10px;padding:11px 14px;font-weight:700;font-size:13px;margin-bottom:12px}
+.alert.info{background:#eef4ff;border-color:#cfe0ff;color:#2a5bd7}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f6f8fc;color:#66708a;text-align:right;padding:9px 10px;font-weight:800;font-size:12px;border-bottom:2px solid #e4e8f0}
+td{padding:9px 10px;border-bottom:1px solid #eef1f6;font-weight:600}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:800}
+.b-red{background:#fdeceb;color:#c0392b}.b-amber{background:#fff3e0;color:#c47f00}.b-green{background:#e6f7ef;color:#12945f}
+.b-blue{background:#e9f0ff;color:#2f6df6}.b-grey{background:#eef1f6;color:#66708a}.b-purple{background:#f0ebff;color:#6a45e0}
+.cols{display:table;width:100%;border-spacing:8px 0}
+.col{display:table-cell;width:16.6%;background:#f6f8fc;border:1px solid #e4e8f0;border-radius:12px;padding:10px;min-height:280px;vertical-align:top}
+.col .ch{font-weight:800;font-size:12.5px;margin-bottom:8px;display:flex;justify-content:space-between}
+.lc{background:#fff;border:1px solid #e7ebf3;border-radius:10px;padding:9px;margin-bottom:8px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.lc .r{font-weight:800;font-size:12px;color:#2f3a57}
+.lc .t{font-size:11.5px;color:#7b8499;font-weight:700;margin-top:2px}
+.lc .m{font-size:11px;margin-top:6px;display:flex;justify-content:space-between;color:#8a93a8;font-weight:700}
+.steps{display:table;width:100%;margin:6px 0}
+.step{display:table-cell;width:20%;text-align:center;position:relative;padding:0 4px;vertical-align:top}
+.step .n{width:40px;height:40px;border-radius:50%;background:#2f6df6;color:#fff;font-weight:800;line-height:40px;margin:0 auto 6px;font-size:15px}
+.step.done .n{background:#1a9f6d}.step.wait .n{background:#c9d2e3;color:#5a6b8c}
+.step .lb{font-weight:800;font-size:12px}.step .ds{color:#7b8499;font-size:11px;font-weight:700;margin-top:2px}
+.step:after{content:'';position:absolute;top:20px;right:-50%;width:100%;height:3px;background:#dfe5ef;z-index:-1}
+.step:first-child:after{display:none}
+.flex{display:table;width:100%;border-spacing:14px 0;margin:0 -14px}
+.grow{display:table-cell;vertical-align:top}
+.label{border:2px dashed #b9c2d6;border-radius:12px;padding:14px;text-align:center;width:300px}
+.label .qr{width:90px;height:90px;background:conic-gradient(#000 0 25%,#fff 0 50%,#000 0 75%,#fff 0);background-size:18px 18px;margin:8px auto;border:4px solid #000}
+.tabs{display:flex;gap:6px;border-bottom:2px solid #eef1f6;margin-bottom:12px}
+.tab{padding:8px 14px;font-weight:800;font-size:13px;color:#7b8499}
+.tab.act{color:#1e2a44;border-bottom:3px solid #e8564e}
+.two{display:table;width:100%;border-spacing:14px 0;margin:0 -14px}
+.two>.card{display:table-cell;width:50%;vertical-align:top}
+.fld{margin-bottom:9px}.fld .k{color:#8a93a8;font-weight:700;font-size:11.5px}.fld .val{font-weight:800;font-size:13px;margin-top:1px}
+.btnrow{margin-bottom:12px}
+.btn{display:inline-block;padding:7px 14px;border-radius:8px;font-weight:800;font-size:12.5px;border:1px solid transparent;margin:0 0 6px 6px}
+.btn.p{background:#2f6df6;color:#fff}.btn.g{background:#1a9f6d;color:#fff}.btn.s{background:#fff;border-color:#d4dae6;color:#3a4a66}
+.btn.s{background:#fff;border:1px solid #d4dae6;color:#3a4a66}
+.pill{display:inline-block;padding:5px 12px;border-radius:8px;background:#eef1f6;font-weight:800;font-size:12px}
+.dqitem{display:table;width:100%;padding:10px 12px;border:1px solid #eef1f6;border-radius:10px;margin-bottom:8px}
+.dqn{font-weight:800;font-size:18px;min-width:60px}
+</style>
+</head><body><div class='wrap'><div class='top'><div class='logo'>CARE • Letters</div><div class='crumb'>المراسلات › الصلاحيات والأدوار</div><div class='sp'></div><div class='crumb'>◐ Sara — إدارة المراسلات</div></div>
+<div class='h'>الصلاحيات والأدوار</div>
+<div class='sub'>أدمن بكامل الصلاحيات · وكل مستخدم يرى كتبه فقط — بحسب دوره</div>
+<div class='flex'>
+<div class='card grow' style='background:#fbf0ff;border-color:#e6ccff'><h3>👑 مدير المراسلات (Admin)</h3>
+<div style='font-weight:700;font-size:12.5px;line-height:1.9'>يرى ويعدّل ويحذف <b>كل الكتب</b> · يدير القوالب والتصنيفات والمندوبين · يعتمد الإعدادات · يطّلع على السرّي.</div></div>
+<div class='card grow' style='background:#eef7ff;border-color:#cfe4ff'><h3>🙍 المستخدم العادي (مُقدِّم الطلب)</h3>
+<div style='font-weight:700;font-size:12.5px;line-height:1.9'>يُنشئ كتباً ويرى <b>كتبه هو فقط</b> التي قدّمها وحالتها · لا يرى كتب غيره.</div></div>
+</div>
+<div class='card'><h3>📋 مصفوفة الصلاحيات حسب الدور</h3>
+<table><tr><th>الدور</th><th>نطاق الرؤية</th><th>إنشاء</th><th>قراءة</th><th>تعديل</th><th>حذف</th><th>ملاحظات</th></tr><tr><td style='font-weight:800'>مدير المراسلات</td><td style='font-size:12px;color:#555'>كل الكتب + الإعدادات</td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='font-size:11.5px;color:#8a93a8;font-weight:700'>صلاحية كاملة + السرّي</td></tr><tr><td style='font-weight:800'>مُقدِّم الطلب</td><td style='font-size:12px;color:#555'>كتبه التي أنشأها فقط</td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='font-size:11.5px;color:#8a93a8;font-weight:700'>يتابع حالة كتبه</td></tr><tr><td style='font-weight:800'>المسؤول المخوّل بالتوقيع</td><td style='font-size:12px;color:#555'>الكتب المنتظرة توقيعه</td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='font-size:11.5px;color:#8a93a8;font-weight:700'>يوقّع فقط</td></tr><tr><td style='font-weight:800'>المندوب</td><td style='font-size:12px;color:#555'>الكتب المُسلَّمة إليه</td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='font-size:11.5px;color:#8a93a8;font-weight:700'>يرفع إثبات الاستلام</td></tr><tr><td style='font-weight:800'>مسؤول القسم</td><td style='font-size:12px;color:#555'>كتب قسمه</td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='font-size:11.5px;color:#8a93a8;font-weight:700'>متابعة قسمه</td></tr><tr><td style='font-weight:800'>مدقّق / قارئ</td><td style='font-size:12px;color:#555'>كل الكتب (قراءة فقط)</td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='font-size:11.5px;color:#8a93a8;font-weight:700'>للأرشيف والتدقيق</td></tr>
+</table></div>
+<div class='flex'>
+<div class='card grow' style='background:#fff6f4;border-color:#ffd0c6'><h3>🔒 قواعد الخصوصية (Record Rules)</h3>
+<div style='font-weight:700;font-size:12px;line-height:1.9'>
+• المستخدم العادي: <code>يرى الكتاب فقط إن كان هو مُنشئه أو مُقدّمه أو مسؤول متابعته</code><br/>
+• المندوب: يرى فقط الكتب التي <code>delegate_id = مستخدمه</code><br/>
+• الكتب المعلَّمة <b>«سرّي»</b>: للأدمن + مَن شورك معه صراحة فقط</div></div>
+<div class='card' style='width:380px'><h3>⚙️ مجموعات المستخدمين</h3>
+<div style='font-weight:700;font-size:12.5px;line-height:2.1'>
+👑 Letters / Admin<br/>✍️ Letters / Signer<br/>🚚 Letters / Delegate<br/>🙍 Letters / User<br/>👁️ Letters / Read-only</div>
+<div style='margin-top:6px;color:#8a93a8;font-weight:700;font-size:11.5px'>تُسند من إعدادات المستخدم — كأي موديول أودو</div></div>
+</div>
+</div></body></html>

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_care_violation_tree" model="ir.ui.view">
+        <field name="name">care.traffic.violation.tree</field>
+        <field name="model">care.traffic.violation</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'deducted'" decoration-info="state == 'approved'"
+                  decoration-muted="state in ('refused','company_borne')">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="vehicle_id"/>
+                <field name="plate" optional="hide"/>
+                <field name="driver_id"/>
+                <field name="violation_type_id"/>
+                <field name="amount"/>
+                <field name="notified" optional="show"/>
+                <field name="responsible"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'approved'"
+                       decoration-success="state == 'deducted'"
+                       decoration-danger="state == 'refused'"/>
+                <field name="currency_id" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_care_violation_form" model="ir.ui.view">
+        <field name="name">care.traffic.violation.form</field>
+        <field name="model">care.traffic.violation</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_request_deduction" type="object" string="Request Deduction"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_approve" type="object" string="Approve (HR)"
+                            class="btn-primary" invisible="state != 'submitted'"
+                            groups="hr.group_hr_user"/>
+                    <button name="action_company_borne" type="object" string="Company Borne"
+                            invisible="state in ('deducted','company_borne','refused')"/>
+                    <button name="action_refuse" type="object" string="Refuse"
+                            invisible="state in ('draft','deducted','refused')"/>
+                    <button name="action_reset" type="object" string="Reset to Draft"
+                            invisible="state in ('draft','deducted')"/>
+                    <button name="action_notify_driver" type="object" string="Notify Driver (App)"
+                            class="btn-secondary" icon="fa-mobile"
+                            invisible="not driver_id"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted,approved,deducted"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Notified" bg_color="bg-info"
+                            invisible="not notified"/>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="date"/>
+                            <field name="vehicle_id"/>
+                            <field name="plate"/>
+                            <field name="driver_id"/>
+                        </group>
+                        <group>
+                            <field name="violation_type_id"/>
+                            <field name="amount"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="responsible"/>
+                            <field name="approved_by" readonly="1"/>
+                            <field name="payslip_id" readonly="1"/>
+                            <field name="notified" readonly="1"/>
+                            <field name="notified_date" readonly="1" invisible="not notified"/>
+                        </group>
+                    </group>
+                    <field name="violation_type" invisible="1"/>
+                    <field name="note" placeholder="Notes / evidence..."/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Violation type catalogue -->
+    <record id="view_care_violation_type_tree" model="ir.ui.view">
+        <field name="name">care.violation.type.tree</field>
+        <field name="model">care.violation.type</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="amount"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="active" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_care_violation_type" model="ir.actions.act_window">
+        <field name="name">Violation Types</field>
+        <field name="res_model">care.violation.type</field>
+        <field name="view_mode">tree</field>
+    </record>
+
+    <record id="action_care_violation" model="ir.actions.act_window">
+        <field name="name">Traffic Violations</field>
+        <field name="res_model">care.traffic.violation</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Record a traffic violation</p>
+            <p>The fleet manager assigns liability and may request an HR-approved
+               salary deduction, reflected in payroll as a separate line.</p>
+        </field>
+    </record>
+</odoo>

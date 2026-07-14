@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_care_kiosk_tree" model="ir.ui.view">
+        <field name="name">care.kiosk.tree</field>
+        <field name="model">care.kiosk</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="device_id"/>
+                <field name="scan_window_seconds"/>
+                <field name="timeout_seconds"/>
+                <field name="access_url" widget="url"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_care_kiosk_form" model="ir.ui.view">
+        <field name="name">care.kiosk.form</field>
+        <field name="model">care.kiosk</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" placeholder="اسم الكشك"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="device_id"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="scan_window_seconds"/>
+                            <field name="timeout_seconds"/>
+                        </group>
+                    </group>
+                    <group string="رابط الكشك">
+                        <field name="access_url" widget="url" nolabel="1"/>
+                        <div class="text-muted">
+                            افتح هذا الرابط على شاشة الكشك بجانب جهاز البصمة. يمسح العامل بصمته على الجهاز فتُفتح جلسته تلقائياً.
+                        </div>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_care_kiosk" model="ir.actions.act_window">
+        <field name="name">أكشاك العمال</field>
+        <field name="res_model">care.kiosk</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_care_kiosk_root" name="🖐️ كشك العمال" sequence="55"/>
+    <menuitem id="menu_care_kiosk" name="إعداد الأكشاك"
+              parent="menu_care_kiosk_root" action="action_care_kiosk" sequence="10"/>
+</odoo>

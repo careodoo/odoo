@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="kiosk_page" name="Worker Kiosk">
+        <t t-call="web.frontend_layout">
+            <t t-set="no_header" t-value="True"/>
+            <t t-set="no_footer" t-value="True"/>
+            <div class="ck-wrap" t-att-data-kiosk="kiosk.id"
+                 t-att-data-window="kiosk.scan_window_seconds"
+                 t-att-data-timeout="kiosk.timeout_seconds">
+                <style>
+                    .ck-wrap{min-height:100vh;background:#0f1830;color:#e8edf7;font-family:Tahoma,Arial,sans-serif;direction:rtl;padding:24px;}
+                    .ck-card{max-width:760px;margin:0 auto;background:#16213e;border-radius:18px;padding:28px;box-shadow:0 10px 40px rgba(0,0,0,.35);}
+                    .ck-title{text-align:center;font-size:26px;font-weight:bold;margin-bottom:4px;}
+                    .ck-sub{text-align:center;color:#9fb0d0;font-size:14px;margin-bottom:20px;}
+                    .ck-finger{width:120px;height:120px;border-radius:50%;background:#233258;display:flex;align-items:center;justify-content:center;margin:18px auto;font-size:52px;animation:pulse 1.6s infinite;}
+                    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(79,142,247,.5)}70%{box-shadow:0 0 0 22px rgba(79,142,247,0)}100%{box-shadow:0 0 0 0 rgba(79,142,247,0)}}
+                    .ck-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px;}
+                    .ck-btn{background:#1e2c4f;border:1px solid #2c3e6b;border-radius:14px;padding:22px;text-align:center;font-size:18px;cursor:pointer;color:#e8edf7;transition:.15s;}
+                    .ck-btn:hover{background:#274b8f;}
+                    .ck-emp{display:flex;align-items:center;gap:14px;justify-content:center;margin-bottom:8px;}
+                    .ck-emp img{width:64px;height:64px;border-radius:50%;object-fit:cover;background:#233258;}
+                    .ck-panel{background:#0f1830;border-radius:12px;padding:14px;margin-top:14px;max-height:44vh;overflow:auto;}
+                    .ck-row{border-bottom:1px solid #223052;padding:10px 4px;font-size:15px;display:flex;justify-content:space-between;gap:10px;}
+                    .ck-top{display:flex;justify-content:space-between;margin-bottom:8px;}
+                    .ck-x{background:#7a2233;border:none;color:#fff;border-radius:10px;padding:8px 16px;cursor:pointer;}
+                    .ck-back{background:#2c3e6b;border:none;color:#fff;border-radius:10px;padding:8px 16px;cursor:pointer;}
+                    textarea.ck-ta{width:100%;border-radius:10px;padding:10px;border:1px solid #2c3e6b;background:#0f1830;color:#e8edf7;}
+                    .ck-send{background:#1f7a3d;border:none;color:#fff;border-radius:10px;padding:10px 20px;cursor:pointer;margin-top:8px;}
+                    .ck-muted{color:#9fb0d0;font-size:13px;}
+                </style>
+                <div class="ck-card">
+                    <div class="ck-title">🔒 <t t-esc="kiosk.name"/></div>
+                    <div class="ck-sub">كشك الخدمة الذاتية للعمال — ضع إصبعك على جهاز البصمة للدخول</div>
+
+                    <!-- Scan screen -->
+                    <div id="ck-scan">
+                        <div class="ck-finger">🖐️</div>
+                        <div class="ck-sub" id="ck-scan-msg">بانتظار مسح البصمة…</div>
+                    </div>
+
+                    <!-- Menu screen -->
+                    <div id="ck-menu" style="display:none;">
+                        <div class="ck-top">
+                            <div class="ck-emp">
+                                <img id="ck-img" src="" alt=""/>
+                                <div>
+                                    <div id="ck-name" style="font-weight:bold;font-size:18px;"></div>
+                                    <div class="ck-muted" id="ck-job"></div>
+                                </div>
+                            </div>
+                            <button class="ck-x" onclick="ckLogout()">إنهاء ✕</button>
+                        </div>
+                        <div class="ck-grid">
+                            <div class="ck-btn" onclick="ckPanel('payslips','قسيمة الراتب')">💵<br/>قسيمة الراتب</div>
+                            <div class="ck-btn" onclick="ckReq('leave','طلب إجازة')">🏖️<br/>طلب إجازة</div>
+                            <div class="ck-btn" onclick="ckPanel('docs','مستنداتي')">📄<br/>مستنداتي</div>
+                            <div class="ck-btn" onclick="ckReq('grievance','شكوى')">📣<br/>شكوى</div>
+                            <div class="ck-btn" onclick="ckPanel('announcements','التعميمات')" style="grid-column:1 / span 2;">📢<br/>التعميمات</div>
+                        </div>
+                    </div>
+
+                    <!-- Panel screen -->
+                    <div id="ck-view" style="display:none;">
+                        <div class="ck-top">
+                            <div id="ck-view-title" style="font-weight:bold;font-size:18px;"></div>
+                            <button class="ck-back" onclick="ckHome()">رجوع ↩</button>
+                        </div>
+                        <div class="ck-panel" id="ck-view-body"></div>
+                    </div>
+                </div>
+
+                <script type="text/javascript">
+                (function(){
+                    var wrap = document.querySelector('.ck-wrap');
+                    var KID = wrap.getAttribute('data-kiosk');
+                    var TIMEOUT = (parseInt(wrap.getAttribute('data-timeout'))||90)*1000;
+                    var idleTimer = null, pollTimer = null;
+
+                    function rpc(path, params){
+                        return fetch('/care/kiosk/'+KID+path, {
+                            method:'POST', headers:{'Content-Type':'application/json'},
+                            body: JSON.stringify({jsonrpc:'2.0', method:'call', params: params||{}})
+                        }).then(function(r){return r.json();}).then(function(j){return j.result||{};});
+                    }
+                    function show(id){
+                        ['ck-scan','ck-menu','ck-view'].forEach(function(x){
+                            document.getElementById(x).style.display = (x===id)?'block':'none';
+                        });
+                    }
+                    function resetIdle(){
+                        if(idleTimer) clearTimeout(idleTimer);
+                        idleTimer = setTimeout(function(){ ckLogout(); }, TIMEOUT);
+                    }
+                    window.ckLogout = function(){
+                        rpc('/logout',{}).then(function(){
+                            show('ck-scan');
+                            document.getElementById('ck-scan-msg').innerText='بانتظار مسح البصمة…';
+                            startPoll();
+                        });
+                    };
+                    window.ckHome = function(){ show('ck-menu'); resetIdle(); };
+                    window.ckPanel = function(panel, title){
+                        resetIdle();
+                        document.getElementById('ck-view-title').innerText = title;
+                        document.getElementById('ck-view-body').innerHTML = '<div class="ck-muted">جارٍ التحميل…</div>';
+                        show('ck-view');
+                        rpc('/panel',{panel:panel}).then(function(res){
+                            if(!res.ok){ ckLogout(); return; }
+                            var items = res.items||[]; var h='';
+                            if(!items.length){ h = '<div class="ck-muted">لا يوجد.</div>'; }
+                            items.forEach(function(it){
+                                if(panel==='payslips') h+='<div class="ck-row"><span>'+(it.name||'')+'</span><span>'+(it.period||'')+' · '+(it.net||'')+'</span></div>';
+                                else if(panel==='docs') h+='<div class="ck-row"><span>'+(it.name||'')+'</span><span class="ck-muted">'+(it.category||'')+' · '+(it.date||'')+'</span></div>';
+                                else h+='<div class="ck-row" style="display:block;"><b>'+(it.name||'')+'</b><div class="ck-muted">'+(it.body||'')+'</div></div>';
+                            });
+                            document.getElementById('ck-view-body').innerHTML = h;
+                        });
+                    };
+                    window.ckReq = function(kind, title){
+                        resetIdle();
+                        document.getElementById('ck-view-title').innerText = title;
+                        document.getElementById('ck-view-body').innerHTML =
+                            '<textarea class="ck-ta" id="ck-note" rows="4" placeholder="اكتب ملاحظتك…"></textarea>'+
+                            '<button class="ck-send" onclick="ckSend(\''+kind+'\')">إرسال</button>'+
+                            '<div id="ck-req-msg" class="ck-muted" style="margin-top:8px;"></div>';
+                        show('ck-view');
+                    };
+                    window.ckSend = function(kind){
+                        var note = (document.getElementById('ck-note')||{}).value||'';
+                        rpc('/request',{kind:kind, note:note}).then(function(res){
+                            var m = document.getElementById('ck-req-msg');
+                            if(res.ok){ m.innerText='✅ تم الإرسال: '+(res.ref||''); setTimeout(ckHome,1500); }
+                            else { m.innerText='تعذّر الإرسال.'; }
+                        });
+                        resetIdle();
+                    };
+                    function onIdentified(res){
+                        if(pollTimer){ clearInterval(pollTimer); pollTimer=null; }
+                        document.getElementById('ck-name').innerText = res.name||'';
+                        document.getElementById('ck-job').innerText = (res.job||'')+(res.department?(' · '+res.department):'');
+                        document.getElementById('ck-img').src = res.image||'';
+                        show('ck-menu'); resetIdle();
+                    }
+                    function startPoll(){
+                        if(pollTimer) clearInterval(pollTimer);
+                        pollTimer = setInterval(function(){
+                            rpc('/identify',{}).then(function(res){ if(res.found) onIdentified(res); });
+                        }, 2000);
+                    }
+                    ['click','touchstart','keydown'].forEach(function(ev){
+                        document.addEventListener(ev, function(){ if(idleTimer) resetIdle(); });
+                    });
+                    startPoll();
+                })();
+                </script>
+            </div>
+        </t>
+    </template>
+</odoo>

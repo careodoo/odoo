@@ -1,0 +1,73 @@
+<html><head><meta charset='utf-8'><style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Cairo',Tahoma,sans-serif}
+body{background:#eef1f6;color:#1d2433;direction:rtl}
+.wrap{width:1180px;margin:0 auto;padding:18px}
+.top{background:#15213b;color:#fff;border-radius:12px;padding:12px 18px;margin-bottom:14px}
+.top .logo{font-weight:800;color:#f0663c;font-size:19px}
+.top .crumb{color:#9fb0d0;font-weight:700;font-size:13px}
+.h{font-size:22px;font-weight:800;margin:2px 0}
+.sub{color:#7b8499;font-weight:700;font-size:13px;margin-bottom:14px}
+.kpis{display:table;width:100%;border-spacing:10px 0;margin:0 -10px 14px}
+.kpi{display:table-cell;width:16.6%;background:#fff;border:1px solid #e4e8f0;border-radius:12px;padding:12px;vertical-align:top;text-align:center}
+.kpi .v{font-size:24px;font-weight:800}.kpi .l{color:#7b8499;font-weight:700;font-size:12px;margin-top:2px}
+.kpi.red .v{color:#e2513f}.kpi.amber .v{color:#e08a00}.kpi.green .v{color:#1a9f6d}.kpi.blue .v{color:#2f6df6}.kpi.purple .v{color:#7a5cf0}.kpi.teal .v{color:#017e84}
+.card{background:#fff;border:1px solid #e4e8f0;border-radius:14px;padding:16px;margin-bottom:14px}
+.card h3{font-size:15px;margin-bottom:12px}
+.row{display:table;width:100%;border-spacing:12px 0;margin:0 -12px}
+.col{display:table-cell;vertical-align:top}
+.alert{background:#fff4f2;border:1px solid #ffd4cc;color:#c0392b;border-radius:10px;padding:11px 14px;font-weight:700;font-size:13px;margin-bottom:12px}
+.alert.info{background:#eef4ff;border-color:#cfe0ff;color:#2a5bd7}.alert.ok{background:#effaf3;border-color:#bfe8d2;color:#12945f}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f6f8fc;color:#66708a;text-align:right;padding:9px 10px;font-weight:800;font-size:12px;border-bottom:2px solid #e4e8f0}
+td{padding:9px 10px;border-bottom:1px solid #eef1f6;font-weight:600}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:800}
+.b-red{background:#fdeceb;color:#c0392b}.b-amber{background:#fff3e0;color:#c47f00}.b-green{background:#e6f7ef;color:#12945f}
+.b-blue{background:#e9f0ff;color:#2f6df6}.b-grey{background:#eef1f6;color:#66708a}.b-purple{background:#f0ebff;color:#6a45e0}.b-teal{background:#e1f5f5;color:#017e84}
+.pcard{background:#fff;border:1px solid #e7ebf3;border-radius:12px;padding:12px;margin-bottom:10px;border-top:4px solid #2f6df6}
+.pcard .pt{font-weight:800;font-size:14px;color:#15213b}
+.pcard .pd{color:#7b8499;font-size:12px;font-weight:700;margin:2px 0 8px}
+.mini{display:table;width:100%;text-align:center}.mini>div{display:table-cell}
+.mini .mv{font-weight:800;font-size:16px}.mini .ml{font-size:10px;color:#8a93a8;font-weight:700}
+.cols{display:table;width:100%;border-spacing:8px 0}
+.kcol{display:table-cell;width:20%;background:#f6f8fc;border:1px solid #e4e8f0;border-radius:12px;padding:8px;vertical-align:top}
+.kcol .ch{font-weight:800;font-size:12px;margin-bottom:8px;display:flex;justify-content:space-between}
+.tc{background:#fff;border:1px solid #e7ebf3;border-radius:9px;padding:8px;margin-bottom:7px}
+.tc .r{font-weight:800;font-size:11.5px;color:#2f3a57}.tc .t{font-size:11px;color:#7b8499;font-weight:700;margin-top:2px}
+.tc .m{font-size:10px;margin-top:6px;color:#8a93a8;font-weight:700;display:flex;justify-content:space-between}
+.av{width:22px;height:22px;border-radius:50%;background:#dfe5ef;display:inline-block;text-align:center;line-height:22px;font-size:10px;font-weight:800;color:#5a6b8c}
+.step{display:table-cell;width:20%;text-align:center;position:relative;vertical-align:top;padding:0 4px}
+.step .n{width:38px;height:38px;border-radius:50%;background:#2f6df6;color:#fff;font-weight:800;line-height:38px;margin:0 auto 6px}
+.step.done .n{background:#1a9f6d}.step.wait .n{background:#c9d2e3;color:#5a6b8c}
+.step .lb{font-weight:800;font-size:11.5px}.step .ds{color:#7b8499;font-size:10.5px;font-weight:700}
+.tl{border-right:3px solid #2f6df6;padding-right:14px;margin-right:6px}
+.tl .it{margin-bottom:12px}.tl .it .tt{font-weight:800;font-size:12.5px}.tl .it .td{color:#8a93a8;font-size:11px;font-weight:700}
+.pill{display:inline-block;padding:4px 10px;border-radius:8px;background:#eef1f6;font-weight:800;font-size:11.5px}
+.fld{margin-bottom:8px}.fld .k{color:#8a93a8;font-weight:700;font-size:11px}.fld .val{font-weight:800;font-size:13px}
+.btn{display:inline-block;padding:7px 14px;border-radius:8px;font-weight:800;font-size:12px;margin-left:6px}
+.btn.p{background:#2f6df6;color:#fff}.btn.g{background:#1a9f6d;color:#fff}.btn.r{background:#e2513f;color:#fff}.btn.s{background:#fff;border:1px solid #d4dae6;color:#3a4a66}
+</style></head><body><div class='wrap'><div class='top'><span class='logo'>CARE • Projects</span> <span class='crumb'>· الإعدادات والصلاحيات</span><span style='float:left' class='crumb'>◐ نظام إدارة المشاريع والتاسكات</span></div>
+<div class='h'>الإعدادات وصلاحيات مدير المشروع</div>
+<div class='sub'>إعدادات لكل شيء + تحكّم دقيق: كل مدير يرى ما يخصّه فقط، قسماً بقسم</div>
+<div class='row'>
+<div class='col'><div class='card'><h3>⚙️ إعدادات الموديول</h3>
+<div style='font-weight:700;font-size:12.5px;line-height:2.1'>
+📁 أنواع التاسكات (مهمة/مذكرة/كتاب/طلب/مراسلة)<br/>
+🏷️ البنود والفئات<br/>
+🪜 مراحل التاسكات (Kanban)<br/>
+📋 قوالب التاسكات المتكررة<br/>
+⏫ قواعد التصعيد والمهل<br/>
+🌐 صلاحيات البورتال<br/>
+🔗 ربط العقود (Experience) والحسابات التحليلية</div></div></div>
+<div class='col'><div class='card'><h3>🔒 خصوصية البيانات</h3>
+<div style='font-weight:700;font-size:12.5px;line-height:2.1'>
+• كل مدير مشروع يرى <b>مشاريعه فقط</b> (Record Rules).<br/>
+• <b>البيانات المالية/الهوامش</b> مخفية عن المشرفين الميدانيين.<br/>
+• التاسكات <b>السرّية</b> للمصرّح لهم فقط.<br/>
+• المجموعات الخاصة للأعضاء فقط.</div>
+<div class='alert ok' style='margin-top:8px'>✅ كل خانة قابلة للتفعيل/الإخفاء لكل دور</div></div></div>
+</div>
+<div class='card'><h3>👁️ مصفوفة رؤية مدير المشروع (قابلة للضبط)</h3>
+<table><tr><th>الدور</th><th>الحضور</th><th>المشتريات</th><th>المالية</th><th>العمال</th><th>السيارات</th><th>التاسكات</th></tr><tr><td style='font-weight:800'>مدير المشروع</td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td></tr><tr><td style='font-weight:800'>مشرف الموقع</td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td></tr><tr><td style='font-weight:800'>منسّق المشتريات</td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td></tr><tr><td style='font-weight:800'>محاسب المشروع</td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td></tr><tr><td style='font-weight:800'>ممثل العميل (بورتال)</td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='text-align:center'><span style='color:#d0d5e0'>—</span></td><td style='text-align:center'><span style='color:#1a9f6d;font-weight:800'>✓</span></td></tr>
+</table></div>
+</div></body></html>

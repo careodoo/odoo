@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ===== Smart approvals — routing table + impact ===== -->
+    <record id="care_approval_rule_tree" model="ir.ui.view">
+        <field name="name">care.approval.rule.tree</field>
+        <field name="model">care.approval.rule</field>
+        <field name="arch" type="xml">
+            <tree default_order="sequence" decoration-success="route=='auto'"
+                  decoration-warning="route in ('escalate_manager','escalate_up')"
+                  decoration-danger="route=='finance'">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="doc_type"/>
+                <field name="route" widget="badge"/>
+                <field name="example"/>
+                <field name="enabled" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="care_approval_rule_form" model="ir.ui.view">
+        <field name="name">care.approval.rule.form</field>
+        <field name="model">care.approval.rule</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" placeholder="الحالة"/></h1></div>
+                    <group>
+                        <group><field name="doc_type"/><field name="route"/></group>
+                        <group><field name="example"/><field name="enabled"/></group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="care_approval_stat_form" model="ir.ui.view">
+        <field name="name">care.approval.stat.form</field>
+        <field name="model">care.approval.stat</field>
+        <field name="arch" type="xml">
+            <form create="false" delete="false">
+                <sheet>
+                    <div class="row text-center">
+                        <div class="col">
+                            <h1 style="color:#047857;"><field name="auto_pct" widget="integer"/>%</h1>
+                            <span class="text-muted">معتمد تلقائياً</span>
+                        </div>
+                        <div class="col">
+                            <h1 style="color:#c2410c;"><field name="review_pct" widget="integer"/>%</h1>
+                            <span class="text-muted">يحتاج مراجعة بشرية</span>
+                        </div>
+                        <div class="col">
+                            <h1 style="color:#4338ca;"><field name="avg_hours"/></h1>
+                            <span class="text-muted">متوسط زمن الاعتماد (ساعة)</span>
+                        </div>
+                    </div>
+                    <field name="name" invisible="1"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="care_approval_rule_action" model="ir.actions.act_window">
+        <field name="name">الموافقات الذكية</field>
+        <field name="res_model">care.approval.rule</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="care_approval_stat_action" model="ir.actions.act_window">
+        <field name="name">أثر الموافقات الذكية</field>
+        <field name="res_model">care.approval.stat</field>
+        <field name="view_mode">form</field>
+        <field name="res_id" ref="appr_stat_main"/>
+        <field name="target">current</field>
+    </record>
+</odoo>

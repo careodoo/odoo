@@ -22,6 +22,13 @@
       <field name="arch" type="xml">
         <form>
           <sheet>
+            <div class="oe_button_box" name="button_box">
+              <button name="action_view_cost_books" type="object"
+                      class="oe_stat_button" icon="fa-book"
+                      groups="care_proposal.group_proposal_cost_admin">
+                <field name="cost_book_count" widget="statinfo" string="Cost Books"/>
+              </button>
+            </div>
             <div class="oe_title">
               <label for="name" />
               <h1>

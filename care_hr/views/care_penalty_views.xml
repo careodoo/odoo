@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Penalty Type (catalogue) -->
+    <record id="view_care_penalty_type_tree" model="ir.ui.view">
+        <field name="name">care.penalty.type.tree</field>
+        <field name="model">care.penalty.type</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="project_id"/>
+                <field name="name"/>
+                <field name="amount"/>
+                <field name="approval_level"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="note"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_care_penalty_type" model="ir.actions.act_window">
+        <field name="name">Penalty Catalogue (per project)</field>
+        <field name="res_model">care.penalty.type</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Penalty record -->
+    <record id="view_care_penalty_tree" model="ir.ui.view">
+        <field name="name">care.penalty.tree</field>
+        <field name="model">care.penalty</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'done'" decoration-muted="state == 'refused'"
+                  decoration-info="state == 'approved'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="employee_id"/>
+                <field name="project_id"/>
+                <field name="penalty_type_id"/>
+                <field name="amount"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'approved'"
+                       decoration-success="state == 'done'"
+                       decoration-danger="state == 'refused'"/>
+                <field name="currency_id" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_care_penalty_form" model="ir.ui.view">
+        <field name="name">care.penalty.form</field>
+        <field name="model">care.penalty</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_submit" type="object" string="Submit"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_approve" type="object" string="Approve"
+                            class="btn-primary" invisible="state != 'submitted'"
+                            groups="hr.group_hr_user"/>
+                    <button name="action_refuse" type="object" string="Refuse"
+                            invisible="state not in ('submitted','approved')"
+                            groups="hr.group_hr_user"/>
+                    <button name="action_reset" type="object" string="Reset to Draft"
+                            invisible="state in ('draft','done')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted,approved,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="project_id"/>
+                            <field name="penalty_type_id"/>
+                        </group>
+                        <group>
+                            <field name="date"/>
+                            <field name="amount"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="approved_by" readonly="1"/>
+                            <field name="payslip_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <field name="reason" placeholder="Reason / description..."/>
+                    <field name="attachment_ids" widget="many2many_binary"/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_care_penalty" model="ir.actions.act_window">
+        <field name="name">Penalties</field>
+        <field name="res_model">care.penalty</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Record a worker penalty</p>
+            <p>Penalties are imposed per project, approved, then deducted in payroll
+               as a separate line (independent from absence deductions).</p>
+        </field>
+    </record>
+</odoo>

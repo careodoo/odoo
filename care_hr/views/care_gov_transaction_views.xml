@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_care_gov_tx_tree" model="ir.ui.view">
+        <field name="name">care.gov.transaction.tree</field>
+        <field name="model">care.gov.transaction</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="overdue" decoration-success="state == 'done'"
+                  decoration-muted="state == 'rejected'">
+                <field name="name"/>
+                <field name="transaction_type"/>
+                <field name="employee_id" optional="show"/>
+                <field name="manpower_file_id" optional="hide"/>
+                <field name="pro_id"/>
+                <field name="fees" optional="show"/>
+                <field name="submit_date" optional="hide"/>
+                <field name="deadline"/>
+                <field name="overdue" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-info="state in ('in_progress','waiting')"
+                       decoration-success="state == 'done'"
+                       decoration-danger="state == 'rejected'"/>
+                <field name="currency_id" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_care_gov_tx_form" model="ir.ui.view">
+        <field name="name">care.gov.transaction.form</field>
+        <field name="model">care.gov.transaction</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_submit" type="object" string="Submit"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_progress" type="object" string="In Progress"
+                            class="btn-primary" invisible="state not in ('submitted','waiting')"/>
+                    <button name="action_waiting" type="object" string="Waiting Document"
+                            invisible="state not in ('submitted','in_progress')"/>
+                    <button name="action_done" type="object" string="Complete"
+                            class="btn-primary" invisible="state in ('draft','done','rejected')"/>
+                    <button name="action_reject" type="object" string="Reject"
+                            invisible="state in ('draft','done','rejected')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted,in_progress,done"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Overdue" bg_color="bg-danger"
+                            invisible="not overdue"/>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="transaction_type"/>
+                            <field name="employee_id"/>
+                            <field name="manpower_file_id"/>
+                            <field name="pro_id"/>
+                        </group>
+                        <group>
+                            <field name="submit_date"/>
+                            <field name="deadline"/>
+                            <field name="overdue" invisible="1"/>
+                            <field name="fees"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="Notes / status updates..."/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Board (mockup 40): grouped by workflow stage -->
+    <record id="view_care_gov_tx_kanban" model="ir.ui.view">
+        <field name="name">care.gov.transaction.kanban</field>
+        <field name="model">care.gov.transaction</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_small_column"
+                    records_draggable="false">
+                <field name="state"/>
+                <field name="overdue"/>
+                <field name="transaction_type"/>
+                <field name="fees"/>
+                <field name="currency_id"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click" style="padding:10px;">
+                            <div class="d-flex justify-content-between">
+                                <strong><field name="name"/></strong>
+                                <span t-if="record.overdue.raw_value" class="badge text-bg-danger">Overdue</span>
+                            </div>
+                            <div class="text-muted"><field name="transaction_type"/></div>
+                            <div><field name="employee_id"/></div>
+                            <div class="d-flex justify-content-between mt-1">
+                                <span><i class="fa fa-user-o me-1"/><field name="pro_id"/></span>
+                                <span t-if="record.fees.raw_value"><field name="fees"/> <field name="currency_id"/></span>
+                            </div>
+                            <div class="text-muted mt-1"><i class="fa fa-clock-o me-1"/><field name="deadline"/></div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_care_gov_tx_graph" model="ir.ui.view">
+        <field name="name">care.gov.transaction.graph</field>
+        <field name="model">care.gov.transaction</field>
+        <field name="arch" type="xml">
+            <graph string="Gov Transactions" type="bar">
+                <field name="transaction_type"/>
+                <field name="state"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_care_gov_tx_pivot" model="ir.ui.view">
+        <field name="name">care.gov.transaction.pivot</field>
+        <field name="model">care.gov.transaction</field>
+        <field name="arch" type="xml">
+            <pivot string="Gov Transactions">
+                <field name="pro_id" type="row"/>
+                <field name="state" type="col"/>
+                <field name="fees" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_care_gov_tx_search" model="ir.ui.view">
+        <field name="name">care.gov.transaction.search</field>
+        <field name="model">care.gov.transaction</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="pro_id"/>
+                <filter name="open" string="Open" domain="[('state','not in',('done','rejected'))]"/>
+                <filter name="overdue" string="Overdue" domain="[('overdue','=',True)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="g_type" string="Type" context="{'group_by':'transaction_type'}"/>
+                    <filter name="g_pro" string="PRO" context="{'group_by':'pro_id'}"/>
+                    <filter name="g_state" string="Status" context="{'group_by':'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_care_gov_transaction" model="ir.actions.act_window">
+        <field name="name">Gov Transactions (PRO)</field>
+        <field name="res_model">care.gov.transaction</field>
+        <field name="view_mode">tree,kanban,graph,pivot,form</field>
+        <field name="search_view_id" ref="view_care_gov_tx_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Track a government transaction</p>
+            <p>Residency, work permit, civil ID and authentication transactions
+               with PRO assignee, fees and SLA deadline.</p>
+        </field>
+    </record>
+
+    <!-- One-click batch renewal generation (mockup 40) -->
+    <record id="action_gov_generate_renewals" model="ir.actions.server">
+        <field name="name">Generate Due Renewals (30d)</field>
+        <field name="model_id" ref="model_care_gov_transaction"/>
+        <field name="binding_model_id" ref="model_care_gov_transaction"/>
+        <field name="binding_view_types">list,kanban</field>
+        <field name="state">code</field>
+        <field name="code">action = model.action_generate_due_renewals()</field>
+    </record>
+</odoo>

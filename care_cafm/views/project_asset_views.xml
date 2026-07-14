@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- project.project: CAFM smart buttons -->
+    <record id="view_project_form_cafm" model="ir.ui.view">
+        <field name="name">project.project.form.cafm</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button name="action_cafm_facilities" type="object" class="oe_stat_button" icon="fa-building">
+                    <field name="cafm_facility_count" widget="statinfo" string="مرافق CAFM"/>
+                </button>
+                <button name="action_cafm_workorders" type="object" class="oe_stat_button" icon="fa-wrench">
+                    <field name="cafm_wo_open" widget="statinfo" string="أوامر مفتوحة"/>
+                </button>
+            </div>
+        </field>
+    </record>
+
+    <!-- account.asset: operational CAFM layer -->
+    <record id="view_asset_form_cafm" model="ir.ui.view">
+        <field name="name">account.asset.form.cafm</field>
+        <field name="model">account.asset</field>
+        <field name="inherit_id" ref="account_asset.view_account_asset_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="التشغيل (CAFM)" name="cafm">
+                    <group>
+                        <field name="cafm_facility_id"/>
+                        <field name="cafm_location_id"/>
+                        <field name="cafm_criticality"/>
+                    </group>
+                    <group>
+                        <field name="cafm_wo_count"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<title>المبنى ثلاثي الأبعاد</title>
+<style>
+  @font-face{font-family:'Tajawal';font-weight:400;src:url('/care_arabic_font/static/fonts/Tajawal-400.ttf') format('truetype')}
+  @font-face{font-family:'Tajawal';font-weight:500;src:url('/care_arabic_font/static/fonts/Tajawal-500.ttf') format('truetype')}
+  @font-face{font-family:'Tajawal';font-weight:700;src:url('/care_arabic_font/static/fonts/Tajawal-700.ttf') format('truetype')}
+  @font-face{font-family:'Tajawal';font-weight:800;src:url('/care_arabic_font/static/fonts/Tajawal-800.ttf') format('truetype')}
+  html,body{margin:0;height:100%;overflow:hidden;background:#eef4fb;font-family:'Tajawal',system-ui,sans-serif;font-size:12.5px}
+  #c{position:fixed;inset:0}
+  #tabs{position:fixed;top:8px;left:8px;right:8px;display:flex;gap:6px;flex-wrap:wrap;z-index:5}
+  .tab{background:rgba(255,255,255,.92);border-radius:20px;padding:5px 12px;font-size:11.5px;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(15,27,45,.12);color:#334}
+  .tab.on{background:#0b6ea8;color:#fff}
+  #hud{position:fixed;top:46px;left:8px;right:8px;display:flex;justify-content:space-between;pointer-events:none;font-size:12px;z-index:4}
+  #kLive{display:inline-flex;align-items:center;gap:6px;color:#16a34a}
+  .livedot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#16a34a;animation:lpulse 1.6s infinite}
+  @keyframes lpulse{0%{box-shadow:0 0 0 0 rgba(22,163,74,.5)}70%{box-shadow:0 0 0 7px rgba(22,163,74,0)}100%{box-shadow:0 0 0 0 rgba(22,163,74,0)}}
+  .kpi{background:rgba(255,255,255,.9);border-radius:11px;padding:5px 11px;box-shadow:0 3px 12px rgba(15,27,45,.12);font-weight:800;color:#0f1b2d}
+  #legend{position:fixed;bottom:8px;left:0;right:0;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:11.5px;color:#334;z-index:4}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-inline-end:4px;vertical-align:middle}
+  #card{position:fixed;bottom:40px;left:10px;right:10px;background:rgba(255,255,255,.98);border-radius:16px;
+    box-shadow:0 10px 34px rgba(15,27,45,.25);padding:14px;display:none;z-index:6;max-width:460px;margin:auto}
+  #card .top{display:flex;gap:12px;align-items:center;padding-left:36px}
+  #card .statuspill{margin-left:4px}
+  #card img,#card .ph{width:56px;height:56px;border-radius:14px;object-fit:cover;background:#e7effe;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#0b6ea8}
+  #card b{font-size:14.5px}
+  #card .meta{color:#64748b;font-size:12.5px;margin-top:2px}
+  #card .x{position:absolute;top:10px;left:12px;background:none;border:none;font-size:18px;cursor:pointer;color:#94a3b8}
+  #card .statuspill{padding:4px 10px;border-radius:20px;font-size:11.5px;font-weight:800;color:#fff;white-space:nowrap;align-self:flex-start}
+  #card .profile{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px}
+  #card .profile .it{font-size:12.5px;color:#334}
+  #card .profile .it b{color:#0f1b2d}
+  #card .activity{margin-top:10px;background:#f1f6fc;border-radius:12px;padding:10px 12px;border-inline-start:3px solid #0b6ea8}
+  #card .activity .ttl{font-size:11px;color:#64748b;font-weight:800}
+  #card .activity .val{font-size:13px;color:#0f1b2d;font-weight:600;margin-top:2px}
+  #card .act{display:flex;gap:8px;margin-top:12px}
+  #card .btn{flex:1;border:none;border-radius:10px;padding:11px;font-weight:800;font-size:14px;cursor:pointer}
+  .b-assign{background:#0b6ea8;color:#fff}.b-close{background:#eef2f7;color:#334}
+  #ctrls{position:fixed;top:8px;right:8px;display:flex;flex-direction:column;gap:6px;z-index:5}
+  #ctrls button{background:rgba(255,255,255,.94);border:none;border-radius:12px;width:42px;height:42px;font-size:18px;cursor:pointer;box-shadow:0 3px 12px rgba(15,27,45,.14);color:#0b6ea8}
+  #ctrls button.on{background:#0b6ea8;color:#fff}
+  #floorbar{position:fixed;bottom:36px;right:8px;display:flex;flex-direction:column;gap:4px;z-index:5;max-height:56vh;overflow:auto}
+  #floorbar .fb{background:rgba(255,255,255,.92);border:none;border-radius:10px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;color:#334;box-shadow:0 2px 8px rgba(15,27,45,.1);white-space:nowrap;display:flex;align-items:center;gap:6px}
+  #floorbar .fb.on{background:#0b6ea8;color:#fff}
+  #floorbar .fb .c{background:#16a34a;color:#fff;border-radius:20px;font-size:9.5px;padding:0 5px;min-width:16px;text-align:center}
+  #wfilter{position:fixed;top:60px;left:8px;right:8px;display:flex;gap:6px;flex-wrap:wrap;z-index:5;justify-content:center;pointer-events:none}
+  #wfilter .wf,#wfilter select{pointer-events:auto;background:rgba(255,255,255,.94);border:none;border-radius:20px;padding:5px 11px;font-size:11px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(15,27,45,.12);color:#334;font-family:inherit}
+  #wfilter .wf.on{background:#0b6ea8;color:#fff}
+  #msg{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#64748b}
+  #toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(15,27,45,.9);color:#fff;padding:12px 18px;border-radius:12px;display:none;z-index:12;font-weight:700}
+  #card .act{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  #card .act .btn{flex:1;min-width:80px}
+  .b-call{background:#16a34a;color:#fff}.b-wa{background:#25d366;color:#fff}
+  #amodal{position:fixed;inset:0;background:rgba(10,20,35,.5);display:none;align-items:flex-end;justify-content:center;z-index:11}
+  #amodal.show{display:flex}
+  #amodal .sheet{background:#fff;width:100%;max-width:460px;border-radius:20px 20px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.28);animation:slideup .22s ease}
+  @keyframes slideup{from{transform:translateY(30px);opacity:.4}to{transform:none;opacity:1}}
+  #amodal .ah{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid #eef2f7}
+  #amodal .ah b{font-size:16px;color:#0f1b2d}
+  #amodal .ah .x{background:#eef2f7;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:15px;color:#64748b}
+  #amodal .ab{padding:16px 18px 22px}
+  #amodal .ab label{display:block;font-size:12px;font-weight:800;color:#64748b;margin:12px 0 5px}
+  #amodal .ab input,#amodal .ab textarea,#amodal .ab select{width:100%;box-sizing:border-box;border:1px solid #dbe3ee;border-radius:11px;padding:11px;font-size:14px;font-family:inherit}
+  #amodal .arow{display:flex;gap:10px}#amodal .arow>div{flex:1}
+  #amodal .submit{width:100%;margin-top:16px;background:#0b6ea8;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:15px;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="c"></div>
+<div id="tabs"></div>
+<div id="ctrls">
+  <button id="btnXray" title="المقطع الداخلي">🔍</button>
+  <button id="btnRot" class="on" title="الدوران التلقائي">🔄</button>
+  <button id="btnReset" title="إعادة الضبط">🎯</button>
+</div>
+<div id="floorbar"></div>
+<div id="wfilter"></div>
+<div id="hud"><span class="kpi" id="kName">…</span><span class="kpi" id="kLive"><span class="livedot"></span> معاينة حيّة</span><span class="kpi" id="kStat"></span></div>
+<div id="legend">
+  <span><span class="dot" style="background:#16a34a"></span>ينفّذ مهمة</span>
+  <span><span class="dot" style="background:#2f6df6"></span>متاح</span>
+  <span><span class="dot" style="background:#f59e0b"></span>نشاط حديث</span>
+  <span><span class="dot" style="background:#94a3b8"></span>خارج الوردية</span>
+</div>
+<div id="card"><button class="x" onclick="document.getElementById('card').style.display='none'">✕</button>
+  <div class="top"><div id="cPhoto" class="ph"></div><div style="flex:1"><b id="cName"></b><div class="meta" id="cMeta"></div></div><span id="cStatus" class="statuspill"></span></div>
+  <div id="cProfile" class="profile"></div>
+  <div id="cActivity" class="activity"></div>
+  <div class="act" id="cAct"></div>
+</div>
+<div id="amodal">
+  <div class="sheet">
+    <div class="ah"><b id="amTitle">إسناد مهمة</b><button class="x" onclick="closeAssign()">✕</button></div>
+    <div class="ab">
+      <label>عنوان المهمة</label>
+      <input id="amT" placeholder="مثال: تعقيم غرفة العمليات"/>
+      <label>المطلوب تنفيذه</label>
+      <textarea id="amI" rows="2" placeholder="تعليمات التنفيذ…"></textarea>
+      <div class="arow">
+        <div><label>المدة (دقيقة)</label><input id="amM" type="number" value="60"/></div>
+        <div><label>الأولوية</label><select id="amP"><option value="1">متوسطة</option><option value="0">عادية</option><option value="2">عالية</option><option value="3">عاجلة</option></select></div>
+      </div>
+      <button class="submit" onclick="submitAssign()">➕ إنشاء وإسناد</button>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+<div id="msg">جارٍ التحميل…</div>
+
+<script src="three.min.js"></script>
+<script src="OrbitControls.js"></script>
+<script>
+const P=new URLSearchParams(location.search);
+const BASE=(P.get('base')||'https://ecare.care-kw.com/api/v1');
+const TOKEN=P.get('token')||''; const FID=P.get('fid');
+const STATUS={on_task:0x16a34a,available:0x2f6df6,recent:0xf59e0b,off:0x94a3b8};
+const SLABEL={on_task:'ينفّذ مهمة',available:'متاح',recent:'نشاط حديث',off:'خارج الوردية'};
+const FACADE={glass:{base:0xcfe0f5,win:'rgba(30,60,110,0.9)',glass:'rgba(150,200,245,0.75)',dens:1},
+  concrete:{base:0xc9cfd6,win:'rgba(70,80,95,0.9)',glass:'rgba(150,160,175,0.6)',dens:0.7},
+  stone:{base:0xd6cbb6,win:'rgba(90,70,50,0.85)',glass:'rgba(200,185,160,0.6)',dens:0.7},
+  brick:{base:0xc08466,win:'rgba(70,40,30,0.85)',glass:'rgba(210,180,160,0.6)',dens:0.7},
+  mixed:{base:0xbccbdd,win:'rgba(40,60,90,0.9)',glass:'rgba(170,200,235,0.7)',dens:0.9}};
+const esc=s=>(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+async function api(path,opt){ const o=opt||{}; const r=await fetch(BASE+path,{method:o.method||'GET',
+  headers:Object.assign({'Content-Type':'application/json'},TOKEN?{'Authorization':'Bearer '+TOKEN}:{}),
+  body:o.body?JSON.stringify(o.body):null}); return r.json(); }
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',1800); }
+
+let scene,cam,rend,ctrl,DATA,ME,BI=0,bgroup,workerMeshes=[];
+let XRAY=false, facadeMats=[], workerObjs=[], floorMeta=[], bDims={w:20,dp:14,fh:4,top:20};
+let pulseHalos=[], prevPos={};   // live status pulse + per-worker last position (smooth move)
+function facadeTex(hex,cols,style,night){
+  const cv=document.createElement('canvas'); cv.width=512; cv.height=128; const x=cv.getContext('2d');
+  const f=FACADE[style]||FACADE.glass;
+  x.fillStyle='#'+('000000'+hex.toString(16)).slice(-6); x.fillRect(0,0,512,128);
+  const n=Math.max(2,Math.round(cols*f.dens)), pad=14,gap=10, ww=(512-pad*2-gap*(n-1))/n, wh=86, wy=22;
+  for(let i=0;i<n;i++){ const wx=pad+i*(ww+gap);
+    // window frame (mullion)
+    x.fillStyle=f.win; x.fillRect(wx,wy,ww,wh);
+    // glass pane with a sky-reflection gradient (top-light → bottom-dark)
+    const lit=night&&Math.random()<0.30;
+    if(lit){ x.fillStyle='rgba(255,225,140,0.95)'; x.fillRect(wx+3,wy+3,ww-6,wh-6); }
+    else{
+      const g=x.createLinearGradient(0,wy,0,wy+wh);
+      if(style==='glass'||style==='mixed'){ g.addColorStop(0,'rgba(205,230,255,0.92)'); g.addColorStop(0.5,'rgba(150,195,240,0.8)'); g.addColorStop(1,'rgba(90,140,195,0.7)'); }
+      else{ g.addColorStop(0,f.glass); g.addColorStop(1,f.glass); }
+      x.fillStyle=g; x.fillRect(wx+3,wy+3,ww-6,wh-6);
+      // diagonal reflection streak
+      x.fillStyle='rgba(255,255,255,0.14)'; x.beginPath(); x.moveTo(wx+3,wy+wh*0.55); x.lineTo(wx+ww*0.5,wy+3); x.lineTo(wx+ww*0.5+8,wy+3); x.lineTo(wx+3,wy+wh*0.62); x.closePath(); x.fill();
+    }
+  }
+  // horizontal floor band shadow
+  x.fillStyle='rgba(20,35,60,0.10)'; x.fillRect(0,0,512,wy); x.fillRect(0,wy+wh,512,128-(wy+wh));
+  const t=new THREE.CanvasTexture(cv); t.anisotropy=8; return t;
+}
+function initScene(){
+  scene=new THREE.Scene(); scene.background=new THREE.Color(0xeef4fb);
+  cam=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,0.1,4000);
+  rend=new THREE.WebGLRenderer({antialias:true}); rend.setSize(innerWidth,innerHeight); rend.setPixelRatio(devicePixelRatio);
+  document.getElementById('c').appendChild(rend.domElement);
+  scene.add(new THREE.AmbientLight(0xffffff,0.82));
+  const dl=new THREE.DirectionalLight(0xffffff,0.6); dl.position.set(60,110,60); scene.add(dl);
+  const dl2=new THREE.DirectionalLight(0xbcd0ea,0.3); dl2.position.set(-50,30,-40); scene.add(dl2);
+  ctrl=new THREE.OrbitControls(cam,rend.domElement); ctrl.enableDamping=true; ctrl.dampingFactor=0.08;
+  ctrl.maxPolarAngle=Math.PI*0.52; ctrl.autoRotate=true; ctrl.autoRotateSpeed=0.7;
+  rend.domElement.addEventListener('pointerdown',()=>ctrl.autoRotate=false);
+  const g=new THREE.Mesh(new THREE.CircleGeometry(240,60),new THREE.MeshStandardMaterial({color:0xdfe8f4}));
+  g.rotation.x=-Math.PI/2; g.position.y=0; scene.add(g);
+  const ray=new THREE.Raycaster(),m=new THREE.Vector2();
+  rend.domElement.addEventListener('click',ev=>{
+    m.x=(ev.clientX/innerWidth)*2-1; m.y=-(ev.clientY/innerHeight)*2+1; ray.setFromCamera(m,cam);
+    const hit=ray.intersectObjects(workerMeshes)[0];
+    if(hit){ showWorker(hit.object.userData); return; }
+    // clicked empty space → dismiss the worker card
+    document.getElementById('card').style.display='none';
+  });
+  addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();rend.setSize(innerWidth,innerHeight);});
+  // control buttons
+  document.getElementById('btnXray').onclick=()=>{ XRAY=!XRAY; applyXray(); };
+  document.getElementById('btnRot').onclick=(e)=>{ ctrl.autoRotate=!ctrl.autoRotate; e.currentTarget.classList.toggle('on',ctrl.autoRotate); };
+  document.getElementById('btnReset').onclick=()=>{ XRAY=false; applyXray(); const d=bDims; ctrl.target.set(0,d.top*0.42,0); cam.position.set(d.top*1.2,d.top*0.85+4,d.top*1.7+8); document.querySelectorAll('#floorbar .fb').forEach(x=>x.classList.remove('on')); };
+  (function loop(){requestAnimationFrame(loop);ctrl.update();animateWorkers(performance.now());rend.render(scene,cam);})();
+}
+function labelSprite(txt,color){
+  const cv=document.createElement('canvas'); cv.width=256;cv.height=64; const x=cv.getContext('2d');
+  x.fillStyle=color||'#0b6ea8'; x.font='bold 34px Tahoma'; x.textAlign='center'; x.fillText(txt,128,44);
+  const t=new THREE.CanvasTexture(cv); const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true}));
+  s.scale.set(9,2.3,1); return s;
+}
+function workerTag(name,colorInt){
+  const hex='#'+('000000'+(colorInt>>>0).toString(16)).slice(-6);
+  const cv=document.createElement('canvas'); cv.width=320; cv.height=80; const x=cv.getContext('2d');
+  const label=(name||'').length>16?(name.slice(0,15)+'…'):name;
+  x.font='700 22px Tajawal, Tahoma'; const tw=Math.min(300,x.measureText(label).width+30);
+  // rounded pill background
+  x.fillStyle=hex; const bx=(320-tw)/2, r=16;
+  x.beginPath(); x.moveTo(bx+r,18); x.arcTo(bx+tw,18,bx+tw,58,r); x.arcTo(bx+tw,58,bx,58,r);
+  x.arcTo(bx,58,bx,18,r); x.arcTo(bx,18,bx+tw,18,r); x.closePath(); x.fill();
+  x.fillStyle='#fff'; x.textAlign='center'; x.fillText(label,160,46);
+  const t=new THREE.CanvasTexture(cv); t.anisotropy=4;
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false}));
+  sp.scale.set(5,1.25,1); return sp;
+}
+function renderBuilding(keepCam){
+  if(bgroup){ scene.remove(bgroup); }
+  bgroup=new THREE.Group(); workerMeshes=[]; facadeMats=[]; workerObjs=[]; floorMeta=[]; pulseHalos=[]; scene.add(bgroup);
+  const b=DATA.buildings[BI]; if(!b) return;
+  const SC=0.62, w=Math.max(3,(b.width||24)*SC), dp=Math.max(3,(b.depth||18)*SC), fh=Math.max(1.5,(b.floor_height||3.4)*SC*1.15);
+  const wcols=Math.max(3,Math.round((b.width||24)/3)), bc=b.basement_count||0;
+  const style=b.facade_style||'glass';
+  const all=[]; for(let i=0;i<bc;i++) all.push({name:'سرداب '+(bc-i),basement:true,workers:[],total:0});
+  b.floors.slice().reverse().forEach(f=>all.push(f));
+  let top=0;
+  addGroundContext(b,w,dp,fh);
+  all.forEach((f,idx)=>{
+    const yy=(idx-bc)*fh+fh/2, occ=f.total||0, isB=f.basement;
+    const geo=new THREE.BoxGeometry(w,fh*0.96,dp);
+    let box, mats=[];
+    if(isB){ const bm=new THREE.MeshStandardMaterial({color:0x5f6673,transparent:true,opacity:0.55}); box=new THREE.Mesh(geo,bm); }
+    else{ const bcol=(FACADE[style]||FACADE.glass).base;
+      const side=new THREE.MeshStandardMaterial({map:facadeTex(occ?0x9fc0ea:bcol,wcols,style,b.night_lights),transparent:true,opacity:1});
+      const plain=new THREE.MeshStandardMaterial({color:bcol,transparent:true,opacity:1});
+      mats=[side,side,plain,plain,side,side]; facadeMats.push(side,plain);
+      box=new THREE.Mesh(geo,mats); }
+    box.position.set(0,yy,0); box.userData={floor:f}; box.renderOrder=1; bgroup.add(box);
+    // interior floor slab (visible when the facade turns to glass in X-ray)
+    if(!isB){ const slab=new THREE.Mesh(new THREE.BoxGeometry(w*0.985,fh*0.06,dp*0.985),new THREE.MeshStandardMaterial({color:0xdae3ef}));
+      slab.position.set(0,yy-fh*0.47,0); bgroup.add(slab); }
+    if(!isB){ top=Math.max(top,yy+fh); floorMeta.push({name:f.name||('الدور '+(idx-bc+1)),y:yy,total:occ}); }
+    const eg=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:isB?0x334:0x3f5f8a,transparent:true,opacity:isB?0.5:0.3}));
+    eg.position.copy(box.position); bgroup.add(eg);
+    // worker markers: exterior (float in front) OR interior (on the floor plate)
+    const wk_n=(f.workers||[]).length, gcols=Math.max(1,Math.ceil(Math.sqrt(wk_n)));
+    (f.workers||[]).forEach((wk,wi)=>{
+      const col=STATUS[wk.status]||0x94a3b8;
+      const px=(wk_n>1? (-(wk_n-1)/2+wi)*Math.min(w*0.75/wk_n, fh*1.6) : 0);
+      const pz=dp/2+fh*0.55;            // just outside the front face
+      const py=yy+fh*0.15;
+      // interior grid position ON the floor slab
+      const gc=wi%gcols, gr=Math.floor(wi/gcols), gcn=Math.min(gcols,wk_n), grn=Math.ceil(wk_n/gcols);
+      const ix=(gcn>1?(-(gcn-1)/2+gc)*(w*0.7/gcn):0), iz=(grn>1?(-(grn-1)/2+gr)*(dp*0.7/grn):0), iy=yy-fh*0.32;
+      // glowing marker sphere (depthTest off → shows through the building)
+      const s=new THREE.Mesh(new THREE.SphereGeometry(fh*0.2,18,18),
+        new THREE.MeshBasicMaterial({color:col, depthTest:false, transparent:true}));
+      // seed from last known position so a moved worker glides to the new spot
+      const seed=prevPos[wk.employee_id];
+      if(seed){ s.position.copy(seed); } else { s.position.set(px,py,pz); }
+      s.renderOrder=20; s.userData=wk; bgroup.add(s); workerMeshes.push(s);
+      // halo ring (pulses for on-task)
+      const halo=new THREE.Mesh(new THREE.RingGeometry(fh*0.26,fh*0.36,20),
+        new THREE.MeshBasicMaterial({color:col, side:THREE.DoubleSide, depthTest:false, transparent:true, opacity:0.45}));
+      halo.position.copy(s.position); halo.renderOrder=19; halo.userData={r0:fh*0.26,r1:fh*0.36}; bgroup.add(halo);
+      if(wk.status==='on_task') pulseHalos.push(halo);
+      // stem connecting the marker to the facade
+      const stem=new THREE.Mesh(new THREE.CylinderGeometry(fh*0.03,fh*0.03,fh*0.55,6),
+        new THREE.MeshBasicMaterial({color:col, depthTest:false, transparent:true, opacity:0.6}));
+      stem.position.set(px,py,dp/2+fh*0.28); stem.rotation.x=Math.PI/2; stem.renderOrder=18; bgroup.add(stem);
+      // name tag above the marker (billboarded, always on top)
+      const tag=workerTag(wk.employee||'', col);
+      tag.position.set(px,py+fh*0.6,pz); tag.renderOrder=21; bgroup.add(tag);
+      // remember ext/int layouts so the X-ray toggle + live loop can move the worker
+      workerObjs.push({s,halo,stem,tag,emp:wk.employee_id,wk:wk,shown:true,
+        ext:{x:px,y:py,z:pz,tz:py+fh*0.6},
+        int:{x:ix,y:iy,z:iz,tz:iy+fh*0.34}});
+    });
+  });
+  applyXray(); buildFilters(); applyFilters();
+  // elevators / stairs shafts
+  for(let i=0;i<(b.elevators||0);i++){ const sh=new THREE.Mesh(new THREE.BoxGeometry(fh*0.5,top,fh*0.5),new THREE.MeshStandardMaterial({color:0x334a66})); sh.position.set(w*0.5-fh*0.3-i*fh*0.6, top/2, dp*0.5-fh*0.3); bgroup.add(sh); }
+  for(let i=0;i<(b.stairs||0);i++){ const sh=new THREE.Mesh(new THREE.BoxGeometry(fh*0.5,top,fh*0.5),new THREE.MeshStandardMaterial({color:0x8a94a3})); sh.position.set(-w*0.5+fh*0.3+i*fh*0.6, top/2, dp*0.5-fh*0.3); bgroup.add(sh); }
+  // entrance (front) + canopy
+  const door=new THREE.Mesh(new THREE.BoxGeometry(w*0.22,fh*0.85,0.4),new THREE.MeshStandardMaterial({color:0x24405f}));
+  door.position.set(0,fh*0.42,dp/2+0.1); bgroup.add(door);
+  const can=new THREE.Mesh(new THREE.BoxGeometry(w*0.32,0.3,fh*0.6),new THREE.MeshStandardMaterial({color:0xb9c7dc}));
+  can.position.set(0,fh*0.9,dp/2+fh*0.25); bgroup.add(can);
+  // logo / name — prominent: backlit facade panel + entrance pylon sign
+  if(b.logo_url){ const tex=new THREE.TextureLoader().load(b.logo_url);
+    // facade panel with white backing near the top
+    const pw=w*0.56, ph=pw*0.32;
+    const back=new THREE.Mesh(new THREE.BoxGeometry(pw*1.12,ph*1.35,0.3),new THREE.MeshStandardMaterial({color:0xffffff,emissive:0x223344,emissiveIntensity:0.15}));
+    back.position.set(0,top-fh*0.7,dp/2+0.16); back.renderOrder=3; bgroup.add(back);
+    const lg=new THREE.Mesh(new THREE.PlaneGeometry(pw,ph),new THREE.MeshBasicMaterial({map:tex,transparent:true}));
+    lg.position.set(0,top-fh*0.7,dp/2+0.34); lg.renderOrder=4; bgroup.add(lg);
+    // free-standing entrance pylon sign
+    const pole=new THREE.Mesh(new THREE.CylinderGeometry(fh*0.09,fh*0.09,fh*1.6,10),new THREE.MeshStandardMaterial({color:0x3a4a5f}));
+    pole.position.set(w*0.42,fh*0.8,dp/2+fh*1.5); bgroup.add(pole);
+    const signW=w*0.34, signH=signW*0.42;
+    const signBack=new THREE.Mesh(new THREE.BoxGeometry(signW*1.15,signH*1.3,0.35),new THREE.MeshStandardMaterial({color:0xffffff}));
+    signBack.position.set(w*0.42,fh*1.75,dp/2+fh*1.5); bgroup.add(signBack);
+    const sign=new THREE.Mesh(new THREE.PlaneGeometry(signW,signH),new THREE.MeshBasicMaterial({map:tex,transparent:true}));
+    sign.position.set(w*0.42,fh*1.75,dp/2+fh*1.5+0.2); bgroup.add(sign);
+    const sign2=sign.clone(); sign2.position.z=dp/2+fh*1.5-0.2; sign2.rotation.y=Math.PI; bgroup.add(sign2);
+  } else { const lab=labelSprite(b.name,'#0b6ea8'); lab.position.set(0,top+2.4,0); bgroup.add(lab); }
+  // roof
+  let roof;
+  if(b.roof_type==='dome') roof=new THREE.Mesh(new THREE.SphereGeometry(w*0.34,20,12,0,Math.PI*2,0,Math.PI/2),new THREE.MeshStandardMaterial({color:0xb9c7dc}));
+  else if(b.roof_type==='pitched') roof=new THREE.Mesh(new THREE.ConeGeometry(w*0.5,fh*1.4,4),new THREE.MeshStandardMaterial({color:0x9aa7bb}));
+  else if(b.roof_type==='helipad'){ roof=new THREE.Mesh(new THREE.CylinderGeometry(w*0.28,w*0.28,0.4,24),new THREE.MeshStandardMaterial({color:0x2b3a4d})); }
+  else roof=new THREE.Mesh(new THREE.BoxGeometry(w*0.6,fh*0.4,dp*0.6),new THREE.MeshStandardMaterial({color:0xb9c7dc}));
+  roof.position.set(0,top+ (b.roof_type==='pitched'?fh*0.7:fh*0.2),0); if(b.roof_type==='pitched')roof.rotation.y=Math.PI/4; bgroup.add(roof);
+  // camera framing (skipped on live refresh so the view stays put)
+  bDims={w:w,dp:dp,fh:fh,top:top};
+  if(!keepCam){ cam.position.set(top*1.2, top*0.85+4, top*1.7+8); ctrl.target.set(0,top*0.42,0); }
+  buildFloorbar();
+}
+// ---- ground context: plaza, road, parking + cars, landscaping ----
+function addGroundContext(b,w,dp,fh){
+  const R=Math.max(w,dp);
+  // plaza pad under the building
+  const pad=new THREE.Mesh(new THREE.BoxGeometry(w*1.5,0.3,dp*1.6),new THREE.MeshStandardMaterial({color:0xcdd7e4}));
+  pad.position.set(0,0.15,0); bgroup.add(pad);
+  // access road along the front (asphalt strip + dashed centre line)
+  if(b.on_road!==false){
+    const road=new THREE.Mesh(new THREE.BoxGeometry(w*3.4,0.2,dp*0.7),new THREE.MeshStandardMaterial({color:0x3c4550}));
+    road.position.set(0,0.1,dp*1.35); bgroup.add(road);
+    for(let i=-6;i<=6;i++){ const dash=new THREE.Mesh(new THREE.BoxGeometry(w*0.16,0.22,0.14),new THREE.MeshStandardMaterial({color:0xdfe6ee}));
+      dash.position.set(i*w*0.26,0.11,dp*1.35); bgroup.add(dash); }
+  }
+  // parking lot beside the building with a few cars
+  if(b.has_parking!==false){
+    const lot=new THREE.Mesh(new THREE.BoxGeometry(w*0.95,0.22,dp*1.15),new THREE.MeshStandardMaterial({color:0x59636f}));
+    lot.position.set(-w*1.15,0.11,dp*0.3); bgroup.add(lot);
+    const carCols=['#e05a5a','#4a7fd0','#e6b34a','#3fae74','#dcdcdc','#8a63c9'];
+    const rows=3, perRow=2;
+    for(let r=0;r<rows;r++) for(let c=0;c<perRow;c++){
+      // parking-space line
+      const ln=new THREE.Mesh(new THREE.BoxGeometry(fh*0.9,0.23,0.06),new THREE.MeshStandardMaterial({color:0xd7dde5}));
+      ln.position.set(-w*1.15+(c-0.5)*fh*1.2, 0.12, dp*0.3+(r-1)*fh*1.3-fh*0.6); bgroup.add(ln);
+      if(Math.random()<0.7){ addCar(-w*1.15+(c-0.5)*fh*1.2, dp*0.3+(r-1)*fh*1.3, fh, carCols[(r*perRow+c)%carCols.length]); }
+    }
+  }
+  // landscaping: a few trees at the corners
+  [[w*0.85,dp*0.85],[-w*0.85,dp*0.9],[w*0.9,-dp*0.8]].forEach(p=>addTree(p[0],p[1],fh));
+}
+function addCar(x,z,fh,color){
+  const g=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.BoxGeometry(fh*0.55,fh*0.28,fh*1.05),new THREE.MeshStandardMaterial({color:color,metalness:0.3,roughness:0.5}));
+  body.position.y=fh*0.24; g.add(body);
+  const cabin=new THREE.Mesh(new THREE.BoxGeometry(fh*0.48,fh*0.22,fh*0.5),new THREE.MeshStandardMaterial({color:0x2b3440,metalness:0.2,roughness:0.3}));
+  cabin.position.set(0,fh*0.42,-fh*0.05); g.add(cabin);
+  g.position.set(x,0.22,z); bgroup.add(g);
+}
+function addTree(x,z,fh){
+  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(fh*0.06,fh*0.08,fh*0.5,6),new THREE.MeshStandardMaterial({color:0x7a5a3a}));
+  trunk.position.set(x,fh*0.25,z); bgroup.add(trunk);
+  const crown=new THREE.Mesh(new THREE.SphereGeometry(fh*0.32,10,10),new THREE.MeshStandardMaterial({color:0x3f9a63}));
+  crown.position.set(x,fh*0.62,z); bgroup.add(crown);
+}
+// ---- X-ray / interior toggle ----
+function applyXray(){
+  facadeMats.forEach(m=>{ m.opacity=XRAY?0.14:1; m.transparent=true; m.needsUpdate=true; });
+  // positions are handled by the animation loop (smooth); here just visibility/scale
+  workerObjs.forEach(o=>{ o.stem.visible=!XRAY && (o.shown!==false); o.tag.scale.set(XRAY?4:5, XRAY?1:1.25, 1); });
+  const bx=document.getElementById('btnXray'); if(bx)bx.classList.toggle('on',XRAY);
+}
+// smoothly ease every worker marker toward its current-mode target + pulse on-task
+function animateWorkers(t){
+  const mode=XRAY?'int':'ext', k=0.12;
+  workerObjs.forEach(o=>{ const g=o[mode]; const p=o.s.position;
+    p.x+=(g.x-p.x)*k; p.y+=(g.y-p.y)*k; p.z+=(g.z-p.z)*k;
+    o.halo.position.copy(p);
+    o.tag.position.set(p.x, p.y+(g.tz-g.y), p.z);
+    if(o.emp) prevPos[o.emp]={x:p.x,y:p.y,z:p.z};
+  });
+  const pw=1+0.18*Math.sin(t*0.005);
+  pulseHalos.forEach(h=>{ h.scale.set(pw,pw,1); if(h.material) h.material.opacity=0.32+0.22*(0.5+0.5*Math.sin(t*0.005)); });
+}
+// live: re-fetch occupancy and update in place (no manual refresh, camera kept)
+async function refreshOccupancy(){
+  try{ const j=await api('/facility/'+FID+'/occupancy'); if(j.ok&&j.data){ DATA=j.data;
+    const tt=DATA.totals||{}; const el=document.getElementById('kStat'); if(el)el.textContent='عاملون '+(tt.workers||0)+' · مهام '+(tt.on_task||0)+' · متاح '+(tt.available||0);
+    renderBuilding(true); } }catch(e){}
+}
+function focusFloor(y){
+  XRAY=true; applyXray();
+  const d=bDims; ctrl.autoRotate=false; document.getElementById('btnRot').classList.remove('on');
+  ctrl.target.set(0,y,0);
+  cam.position.set(d.w*1.3, y+d.fh*1.2, d.dp*1.8);
+}
+function buildFloorbar(){
+  const fb=document.getElementById('floorbar'); if(!fb) return;
+  fb.innerHTML=floorMeta.slice().reverse().map(f=>'<button class="fb" data-y="'+f.y+'">'+esc(f.name)+(f.total?'<span class="c">'+f.total+'</span>':'')+'</button>').join('');
+  fb.querySelectorAll('.fb').forEach(el=>el.onclick=()=>{ fb.querySelectorAll('.fb').forEach(x=>x.classList.remove('on')); el.classList.add('on'); focusFloor(parseFloat(el.dataset.y)); });
+}
+// ---- worker filters (status / job / shift) ----
+const FILT={status:'all',job:'all',shift:'all'};
+const SFILT=[['all','الكل'],['on_task','ينفّذ'],['available','متاح'],['recent','نشاط حديث'],['off','خارج الوردية']];
+function buildFilters(){
+  const el=document.getElementById('wfilter'); if(!el) return;
+  const jobs=[...new Set(workerObjs.map(o=>o.wk&&o.wk.job).filter(Boolean))];
+  const shifts=[...new Set(workerObjs.map(o=>o.wk&&o.wk.shift).filter(Boolean))];
+  el.innerHTML=SFILT.map(s=>'<button class="wf'+(FILT.status===s[0]?' on':'')+'" data-s="'+s[0]+'" onclick="setFilt(\'status\',\''+s[0]+'\')">'+s[1]+'</button>').join('')
+    +(jobs.length?'<select onchange="setFilt(\'job\',this.value)"><option value="all">كل الوظائف</option>'+jobs.map(j=>'<option'+(FILT.job===j?' selected':'')+'>'+esc(j)+'</option>').join('')+'</select>':'')
+    +(shifts.length?'<select onchange="setFilt(\'shift\',this.value)"><option value="all">كل الورديات</option>'+shifts.map(s=>'<option'+(FILT.shift===s?' selected':'')+'>'+esc(s)+'</option>').join('')+'</select>':'');
+}
+function setFilt(k,v){FILT[k]=v;buildFilters();applyFilters();}
+function applyFilters(){
+  let shownN=0;
+  workerObjs.forEach(o=>{const w=o.wk||{};
+    let ok=(FILT.status==='all'||w.status===FILT.status)&&(FILT.job==='all'||w.job===FILT.job)&&(FILT.shift==='all'||w.shift===FILT.shift);
+    o.shown=ok; if(ok)shownN++;
+    o.s.visible=ok; o.halo.visible=ok; o.tag.visible=ok; o.stem.visible=ok&&!XRAY;
+  });
+}
+function buildTabs(){
+  const t=document.getElementById('tabs');
+  t.innerHTML=(DATA.buildings.length>1)?DATA.buildings.map((b,i)=>'<span class="tab '+(i===BI?'on':'')+'" data-i="'+i+'">🏢 '+esc(b.name)+'</span>').join(''):'';
+  t.querySelectorAll('.tab').forEach(el=>el.onclick=()=>{BI=+el.dataset.i;buildTabs();renderBuilding();});
+}
+function showWorker(w){
+  const col='#'+((STATUS[w.status]||0x94a3b8)>>>0).toString(16).slice(-6);
+  document.getElementById('cName').textContent=w.employee||'';
+  document.getElementById('cMeta').innerHTML=(w.job?esc(w.job):'')+(w.department?' · '+esc(w.department):'');
+  const sp=document.getElementById('cStatus'); sp.textContent=SLABEL[w.status]||''; sp.style.background=col;
+  // mini-profile chips
+  const prof=[];
+  if(w.phone) prof.push('<span class="it">📞 <b>'+esc(w.phone)+'</b></span>');
+  if(w.location) prof.push('<span class="it">📍 <b>'+esc(w.location)+(w.building?' · '+esc(w.building):'')+'</b></span>');
+  if(w.task) prof.push('<span class="it">🛠️ <b>'+esc(w.task)+'</b></span>');
+  prof.push('<span class="it">🟢 الوردية: <b>'+(w.shift_open?'مفتوحة':'—')+'</b></span>');
+  document.getElementById('cProfile').innerHTML=prof.join('');
+  // last activity block
+  const a=w.last_activity||{};
+  const line=[a.type, a.location].filter(Boolean).map(esc).join(' — ')||(w.last_seen?'مسح':'—');
+  const when=a.ago?esc(a.ago):(w.last_seen?esc(String(w.last_seen).slice(0,16)):'—');
+  document.getElementById('cActivity').innerHTML='<div class="ttl">آخر نشاط</div><div class="val">'+line+' · '+when+'</div>';
+  const ph=document.getElementById('cPhoto');
+  if(w.photo){ ph.outerHTML='<img id="cPhoto" src="'+w.photo+'"/>'; } else { ph.outerHTML='<div id="cPhoto" class="ph">'+esc((w.employee||'?').trim().charAt(0))+'</div>'; }
+  const act=document.getElementById('cAct');
+  const canAssign=ME&&(ME.is_supervisor||ME.is_admin||ME.can_add_workers);
+  const phn=(w.phone||'').replace(/[^0-9+]/g,'');
+  let btns='';
+  if(canAssign)btns+='<button class="btn b-assign" onclick="openAssign('+w.employee_id+',\''+esc(w.employee||'').replace(/\x27/g,'')+'\')">➕ '+ (w.status==='off'?'كلّف مهمة':'أسند مهمة') +'</button>';
+  if(phn)btns+='<button class="btn b-call" onclick="location.href=\'tel:'+phn+'\'">📞 اتصال</button>';
+  if(phn)btns+='<button class="btn b-wa" onclick="window.open(\'https://wa.me/'+phn.replace(/^\+/,'')+'\',\'_blank\')">💬 واتساب</button>';
+  btns+='<button class="btn b-close" onclick="document.getElementById(\'card\').style.display=\'none\'">إغلاق</button>';
+  act.innerHTML=btns;
+  document.getElementById('card').style.display='block';
+}
+let ASSIGN_EMP=null;
+function openAssign(empId,name){ ASSIGN_EMP=empId;
+  document.getElementById('amTitle').textContent='إسناد مهمة إلى '+(name||'');
+  document.getElementById('amT').value=''; document.getElementById('amI').value='';
+  document.getElementById('amM').value='60'; document.getElementById('amP').value='1';
+  document.getElementById('amodal').classList.add('show');
+}
+function closeAssign(){ document.getElementById('amodal').classList.remove('show'); }
+async function submitAssign(){
+  const title=document.getElementById('amT').value.trim(); if(!title){ toast('أدخل عنوان المهمة'); return; }
+  const body={employee_id:ASSIGN_EMP,title:title,instructions:document.getElementById('amI').value.trim(),
+    expected_minutes:+document.getElementById('amM').value||60,priority:+document.getElementById('amP').value};
+  try{ const r=await api('/workorders/create',{method:'POST',body:body});
+    if(r.ok){ toast('✔ أُسندت المهمة: '+r.data.name); closeAssign(); document.getElementById('card').style.display='none'; }
+    else toast(r.error||'تعذّر'); }catch(e){ toast('خطأ'); }
+}
+// tap the backdrop to close the assign modal
+document.getElementById('amodal').addEventListener('click',e=>{ if(e.target.id==='amodal') closeAssign(); });
+(async function(){
+  if(typeof THREE==='undefined'){ document.getElementById('msg').textContent='تعذّر تحميل المحرّك'; return; }
+  try{
+    try{ ME=(await api('/me')).data; }catch(e){ ME=null; }
+    const j=await api('/facility/'+FID+'/occupancy'); DATA=j.data;
+    if(!j.ok||!DATA){ document.getElementById('msg').textContent='تعذّر جلب البيانات'; return; }
+    document.getElementById('msg').style.display='none';
+    document.getElementById('kName').textContent='🏢 '+(DATA.facility||'');
+    const t=DATA.totals||{}; document.getElementById('kStat').textContent='عاملون '+(t.workers||0)+' · مهام '+(t.on_task||0)+' · متاح '+(t.available||0);
+    initScene(); buildTabs(); renderBuilding();
+    setInterval(refreshOccupancy, 12000);   // live: workers move/update without refresh
+  }catch(e){ document.getElementById('msg').textContent='خطأ: '+e.message; }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_audit" model="ir.actions.report">
+        <field name="name">تقرير تدقيق النظافة (PDF)</field>
+        <field name="model">care.cafm.clean.audit</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_cafm_cleaning.report_audit</field>
+        <field name="report_file">care_cafm_cleaning.report_audit</field>
+        <field name="binding_model_id" ref="model_care_cafm_clean_audit"/>
+        <field name="binding_type">report</field>
+    </record>
+    <template id="report_audit">
+        <t t-call="web.html_container"><t t-foreach="docs" t-as="o"><t t-call="web.basic_layout">
+            <div class="page" style="direction:rtl;text-align:right;font-family:Arial,sans-serif;color:#1a2330;font-size:12px">
+                <div style="background:linear-gradient(135deg,#2f6df6,#0b3ec9);color:#fff;padding:16px 18px;border-radius:10px">
+                    <div style="font-size:12px;opacity:.85">تقرير تدقيق جودة النظافة</div>
+                    <div style="font-size:20px;font-weight:800"><span t-field="o.name"/></div>
+                    <div style="font-size:12px"><span t-field="o.facility_id"/> · <span t-field="o.location_id"/></div>
+                </div>
+                <table style="width:100%;border-collapse:collapse;margin-top:14px">
+                    <tr><td style="padding:6px 10px;color:#5a6472">المدقّق</td><td style="padding:6px 10px;font-weight:700"><span t-field="o.auditor_id"/></td>
+                        <td style="padding:6px 10px;color:#5a6472">التاريخ</td><td style="padding:6px 10px"><span t-field="o.audit_date"/></td></tr>
+                    <tr><td style="padding:6px 10px;color:#5a6472">الدرجة</td><td style="padding:6px 10px;font-weight:800;font-size:16px;color:#0b3ec9"><span t-esc="round(o.score,1)"/>%</td>
+                        <td style="padding:6px 10px;color:#5a6472">التقييم</td><td style="padding:6px 10px;font-weight:700"><span t-field="o.rating"/></td></tr>
+                </table>
+                <h4 style="margin:14px 0 6px;color:#0b3ec9;border-bottom:2px solid #eef1f5;padding-bottom:4px">بنود الفحص</h4>
+                <table style="width:100%;border-collapse:collapse;font-size:11.5px">
+                    <thead><tr style="background:#f4f7ff"><th style="padding:6px 8px;border:1px solid #e6e9ef;text-align:right">البند</th><th style="padding:6px 8px;border:1px solid #e6e9ef">الوزن</th><th style="padding:6px 8px;border:1px solid #e6e9ef">النتيجة</th><th style="padding:6px 8px;border:1px solid #e6e9ef;text-align:right">ملاحظة</th></tr></thead>
+                    <tbody><tr t-foreach="o.line_ids" t-as="l" t-attf-style="background:#{l.result=='fail' and '#fdecea' or (l.result=='pass' and '#eafaf1' or '#fff')}">
+                        <td style="padding:5px 8px;border:1px solid #e6e9ef"><span t-field="l.name"/></td>
+                        <td style="padding:5px 8px;border:1px solid #e6e9ef;text-align:center"><span t-field="l.weight"/></td>
+                        <td style="padding:5px 8px;border:1px solid #e6e9ef;text-align:center"><span t-field="l.result"/></td>
+                        <td style="padding:5px 8px;border:1px solid #e6e9ef"><span t-field="l.note"/></td></tr></tbody>
+                </table>
+                <div style="margin-top:36px;display:flex;justify-content:space-between;font-size:11px;color:#555"><div>المدقّق: ________</div><div>المشرف: ________</div><div>اعتماد العميل: ________</div></div>
+            </div>
+        </t></t></t>
+    </template>
+</odoo>

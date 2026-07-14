@@ -1,0 +1,77 @@
+# -*- coding: utf-8 -*-
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Language: en_US\n"
+
+
+#. module: care_expiry_alerts
+#: model:ir.model.fields,field_description:care_expiry_alerts.field_hr_employee__doc_expiry_next
+#: model:ir.model.fields,field_description:care_expiry_alerts.field_security_employee__doc_expiry_next
+msgid "أقرب انتهاء مستند"
+msgstr "Nearest document expiry"
+
+#. module: care_expiry_alerts
+#: model:ir.model.fields,field_description:care_expiry_alerts.field_hr_employee__doc_expiry_days
+#: model:ir.model.fields,field_description:care_expiry_alerts.field_security_employee__doc_expiry_days
+msgid "أيام حتى الانتهاء"
+msgstr "Days until expiry"
+
+#. module: care_expiry_alerts
+#: model_terms:ir.ui.view,arch_db:care_expiry_alerts.view_expiry_tree
+msgid "أيام متبقية"
+msgstr "Days remaining"
+
+#. module: care_expiry_alerts
+#: model_terms:ir.ui.view,arch_db:care_expiry_alerts.view_expiry_search
+msgid "الإدارة"
+msgstr "Department"
+
+#. module: care_expiry_alerts
+#: model_terms:ir.ui.view,arch_db:care_expiry_alerts.view_expiry_search
+msgid "انتهاء المستندات"
+msgstr "Document expiry"
+
+#. module: care_expiry_alerts
+#: model_terms:ir.ui.view,arch_db:care_expiry_alerts.view_expiry_search
+msgid "تجميع"
+msgstr "Group by"
+
+#. module: care_expiry_alerts
+#: model_terms:ir.ui.view,arch_db:care_expiry_alerts.view_expiry_search
+msgid "خلال 15 يوم"
+msgstr "Within 15 days"
+
+#. module: care_expiry_alerts
+#: model_terms:ir.ui.view,arch_db:care_expiry_alerts.view_expiry_search
+msgid "خلال 30 يوم"
+msgstr "Within 30 days"
+
+#. module: care_expiry_alerts
+#: model_terms:ir.ui.view,arch_db:care_expiry_alerts.view_expiry_search
+msgid "خلال 60 يوم"
+msgstr "Within 60 days"
+
+#. module: care_expiry_alerts
+#: model_terms:ir.ui.view,arch_db:care_expiry_alerts.view_expiry_tree
+msgid "رقم العامل"
+msgstr "Worker number"
+
+#. module: care_expiry_alerts
+#: model:ir.ui.menu,name:care_expiry_alerts.menu_expiry_root
+msgid "متابعة المستندات"
+msgstr "Documents tracking"
+
+#. module: care_expiry_alerts
+#: model:ir.actions.act_window,name:care_expiry_alerts.action_expiry
+#: model:ir.ui.menu,name:care_expiry_alerts.menu_expiry
+#: model_terms:ir.ui.view,arch_db:care_expiry_alerts.view_expiry_tree
+msgid "مستندات قرب الانتهاء"
+msgstr "Documents nearing expiry"
+
+#. module: care_expiry_alerts
+#: model_terms:ir.ui.view,arch_db:care_expiry_alerts.view_expiry_search
+msgid "منتهية"
+msgstr "Expired"

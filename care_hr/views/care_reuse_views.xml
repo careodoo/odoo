@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Integrate the EXISTING hr_recruitment (ATS) + training_management apps
+         into the unified Employees app menu (reuse, not rebuild). -->
+
+    <!-- ===== Recruitment / ATS (hr.applicant, hr.job) ===== -->
+    <record id="action_care_applicants" model="ir.actions.act_window">
+        <field name="name">Applicants (ATS)</field>
+        <field name="res_model">hr.applicant</field>
+        <field name="view_mode">kanban,tree,form,pivot,graph,calendar,activity</field>
+        <field name="context">{'search_default_group_by_stage': 1}</field>
+    </record>
+    <record id="action_care_jobs" model="ir.actions.act_window">
+        <field name="name">Job Positions</field>
+        <field name="res_model">hr.job</field>
+        <field name="view_mode">kanban,tree,form</field>
+    </record>
+
+    <!-- ===== Training (training.application) ===== -->
+    <record id="action_care_training" model="ir.actions.act_window">
+        <field name="name">Trainings</field>
+        <field name="res_model">training.application</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+
+
+    <!-- ===== menus under the Employees app ===== -->
+    <menuitem id="menu_care_applicants" name="Applicants (ATS)"
+              parent="care_hr.menu_sec_recruit" action="action_care_applicants" sequence="1"/>
+    <menuitem id="menu_care_jobs" name="Job Positions"
+              parent="care_hr.menu_sec_recruit" action="action_care_jobs" sequence="2"/>
+    <menuitem id="menu_care_training" name="Training Academy"
+              parent="care_hr.menu_sec_recruit" action="action_care_training" sequence="20"/>
+</odoo>

@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================= Server actions (compute the current user's employee) ================= -->
+
+    <record id="act_my_profile" model="ir.actions.server">
+        <field name="name">ملفي الشخصي</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        <field name="state">code</field>
+        <field name="code"><![CDATA[
+emp = env['hr.employee'].sudo().search([('user_id', '=', env.uid)], limit=1)
+if not emp:
+    raise UserError('لا يوجد ملف موظف مرتبط بحسابك. برجاء التواصل مع الموارد البشرية.')
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'ملفي الشخصي',
+    'res_model': 'hr.employee',
+    'view_mode': 'form',
+    'views': [(env.ref('care_my.view_my_profile_form').id, 'form')],
+    'res_id': emp.id,
+    'target': 'current',
+}
+]]></field>
+    </record>
+
+    <record id="act_my_leaves" model="ir.actions.server">
+        <field name="name">إجازاتي</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        <field name="state">code</field>
+        <field name="code"><![CDATA[
+emp = env['hr.employee'].sudo().search([('user_id', '=', env.uid)], limit=1)
+if not emp:
+    raise UserError('لا يوجد ملف موظف مرتبط بحسابك.')
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'إجازاتي',
+    'res_model': 'hr.leave',
+    'view_mode': 'tree,form',
+    'domain': [('employee_id', '=', emp.id)],
+    'context': {'default_employee_id': emp.id},
+    'target': 'current',
+}
+]]></field>
+    </record>
+
+    <record id="act_my_permissions" model="ir.actions.server">
+        <field name="name">استئذاناتي</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        <field name="state">code</field>
+        <field name="code"><![CDATA[
+emp = env['hr.employee'].sudo().search([('user_id', '=', env.uid)], limit=1)
+if not emp:
+    raise UserError('لا يوجد ملف موظف مرتبط بحسابك.')
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'استئذاناتي',
+    'res_model': 'permission.request',
+    'view_mode': 'tree,form',
+    'views': [
+        (env.ref('care_my.view_my_permission_tree').id, 'tree'),
+        (env.ref('care_my.view_my_permission_form').id, 'form'),
+    ],
+    'domain': [('employee_id', '=', emp.id)],
+    'context': {'default_employee_id': emp.id},
+    'target': 'current',
+}
+]]></field>
+    </record>
+
+    <record id="act_my_loans" model="ir.actions.server">
+        <field name="name">سلفي</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        <field name="state">code</field>
+        <field name="code"><![CDATA[
+emp = env['hr.employee'].sudo().search([('user_id', '=', env.uid)], limit=1)
+if not emp:
+    raise UserError('لا يوجد ملف موظف مرتبط بحسابك.')
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'السلف والمقدمات',
+    'res_model': 'hr.loan',
+    'view_mode': 'tree,form',
+    'views': [
+        (env.ref('care_my.view_my_loan_tree').id, 'tree'),
+        (env.ref('care_my.view_my_loan_form').id, 'form'),
+    ],
+    'domain': [('employee_id', '=', emp.id)],
+    'context': {'default_employee_id': emp.id},
+    'target': 'current',
+}
+]]></field>
+    </record>
+
+    <record id="act_my_attendance" model="ir.actions.server">
+        <field name="name">سجل حضوري</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        <field name="state">code</field>
+        <field name="code"><![CDATA[
+emp = env['hr.employee'].sudo().search([('user_id', '=', env.uid)], limit=1)
+if not emp:
+    raise UserError('لا يوجد ملف موظف مرتبط بحسابك.')
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'سجل حضوري',
+    'res_model': 'hr.attendance',
+    'view_mode': 'tree,form',
+    'views': [(env.ref('care_my.view_my_attendance_tree').id, 'tree')],
+    'search_view_id': (env.ref('care_my.view_my_attendance_search').id, 'search'),
+    'domain': [('employee_id', '=', emp.id)],
+    'context': {'create': False, 'search_default_this_month': 1},
+    'target': 'current',
+}
+]]></field>
+    </record>
+
+    <record id="act_my_doc_request" model="ir.actions.server">
+        <field name="name">طلب مستند</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        <field name="state">code</field>
+        <field name="code"><![CDATA[
+emp = env['hr.employee'].sudo().search([('user_id', '=', env.uid)], limit=1)
+if not emp:
+    raise UserError('لا يوجد ملف موظف مرتبط بحسابك.')
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'طلبات المستندات',
+    'res_model': 'care.pms.doc.request',
+    'view_mode': 'tree,form',
+    'domain': [('employee_id', '=', emp.id)],
+    'context': {'default_employee_id': emp.id, 'default_department_id': emp.department_id.id},
+    'target': 'current',
+}
+]]></field>
+    </record>
+
+    <record id="act_my_bonuses" model="ir.actions.server">
+        <field name="name">مكافآتي</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        <field name="state">code</field>
+        <field name="code"><![CDATA[
+emp = env['hr.employee'].sudo().search([('user_id', '=', env.uid)], limit=1)
+if not emp:
+    raise UserError('لا يوجد ملف موظف مرتبط بحسابك.')
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'مكافآتي',
+    'res_model': 'care.bonus',
+    'view_mode': 'tree,form',
+    'views': [
+        (env.ref('care_my.view_my_bonus_tree').id, 'tree'),
+        (env.ref('care_my.view_my_bonus_form').id, 'form'),
+    ],
+    'domain': [('employee_id', '=', emp.id)],
+    'context': {'create': False, 'edit': False},
+    'target': 'current',
+}
+]]></field>
+    </record>
+
+    <record id="act_my_penalties" model="ir.actions.server">
+        <field name="name">جزاءاتي</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        <field name="state">code</field>
+        <field name="code"><![CDATA[
+emp = env['hr.employee'].sudo().search([('user_id', '=', env.uid)], limit=1)
+if not emp:
+    raise UserError('لا يوجد ملف موظف مرتبط بحسابك.')
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'جزاءاتي',
+    'res_model': 'care.penalty',
+    'view_mode': 'tree,form',
+    'views': [
+        (env.ref('care_my.view_my_penalty_tree').id, 'tree'),
+        (env.ref('care_my.view_my_penalty_form').id, 'form'),
+    ],
+    'domain': [('employee_id', '=', emp.id)],
+    'context': {'create': False, 'edit': False},
+    'target': 'current',
+}
+]]></field>
+    </record>
+
+    <record id="act_my_custody" model="ir.actions.server">
+        <field name="name">عُهدي</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        <field name="state">code</field>
+        <field name="code"><![CDATA[
+emp = env['hr.employee'].sudo().search([('user_id', '=', env.uid)], limit=1)
+if not emp:
+    raise UserError('لا يوجد ملف موظف مرتبط بحسابك.')
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'العُهد المسندة إليّ',
+    'res_model': 'care.custody',
+    'view_mode': 'tree,form',
+    'views': [
+        (env.ref('care_my.view_my_custody_tree').id, 'tree'),
+        (env.ref('care_my.view_my_custody_form').id, 'form'),
+    ],
+    'domain': [('employee_id', '=', emp.id)],
+    'context': {'create': False, 'edit': False},
+    'target': 'current',
+}
+]]></field>
+    </record>
+
+    <record id="act_my_performance" model="ir.actions.server">
+        <field name="name">أدائي</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        <field name="state">code</field>
+        <field name="code"><![CDATA[
+emp = env['hr.employee'].sudo().search([('user_id', '=', env.uid)], limit=1)
+if not emp:
+    raise UserError('لا يوجد ملف موظف مرتبط بحسابك.')
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'أدائي',
+    'res_model': 'care.performance.log',
+    'view_mode': 'tree,form',
+    'views': [(env.ref('care_my.view_my_performance_tree').id, 'tree')],
+    'domain': [('employee_id', '=', emp.id)],
+    'context': {'create': False, 'edit': False},
+    'target': 'current',
+}
+]]></field>
+    </record>
+
+    <record id="act_my_tasks" model="ir.actions.server">
+        <field name="name">مهامي</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        <field name="state">code</field>
+        <field name="code"><![CDATA[
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'مهامي',
+    'res_model': 'project.task',
+    'view_mode': 'kanban,tree,form',
+    'domain': [('user_ids', 'in', [env.uid])],
+    'context': {'default_user_ids': [env.uid]},
+    'target': 'current',
+}
+]]></field>
+    </record>
+
+    <!-- ================= Menus ================= -->
+
+    <menuitem id="menu_my_root" name="My" sequence="1" groups="base.group_user"/>
+
+    <menuitem id="menu_my_profile" name="ملفي الشخصي" parent="menu_my_root"
+              action="act_my_profile" sequence="1"/>
+
+    <menuitem id="menu_my_requests" name="طلباتي" parent="menu_my_root" sequence="10"/>
+
+    <menuitem id="menu_my_leaves" name="إجازاتي" parent="menu_my_requests"
+              action="act_my_leaves" sequence="1"/>
+    <menuitem id="menu_my_permissions" name="استئذاناتي" parent="menu_my_requests"
+              action="act_my_permissions" sequence="2"/>
+    <menuitem id="menu_my_loans" name="سلفي" parent="menu_my_requests"
+              action="act_my_loans" sequence="3"/>
+    <menuitem id="menu_my_doc_request" name="طلب مستند" parent="menu_my_requests"
+              action="act_my_doc_request" sequence="4"/>
+
+    <menuitem id="menu_my_entitlements" name="مستحقاتي" parent="menu_my_root" sequence="15"/>
+    <menuitem id="menu_my_bonuses" name="مكافآتي" parent="menu_my_entitlements"
+              action="act_my_bonuses" sequence="1"/>
+    <menuitem id="menu_my_penalties" name="جزاءاتي" parent="menu_my_entitlements"
+              action="act_my_penalties" sequence="2"/>
+    <menuitem id="menu_my_custody" name="عُهدي" parent="menu_my_entitlements"
+              action="act_my_custody" sequence="3"/>
+    <menuitem id="menu_my_payslips" name="قسائم رواتبي" parent="menu_my_entitlements"
+              action="act_my_payslips" sequence="4"/>
+
+    <menuitem id="menu_my_tasks" name="📌 مهامي" parent="menu_my_root"
+              action="act_my_tasks" sequence="5"/>
+
+    <menuitem id="menu_my_performance" name="📈 أدائي" parent="menu_my_root"
+              action="act_my_performance" sequence="18"/>
+
+    <menuitem id="menu_my_attendance" name="سجل حضوري" parent="menu_my_root"
+              action="act_my_attendance" sequence="20"/>
+
+</odoo>

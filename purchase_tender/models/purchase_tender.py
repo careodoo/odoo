@@ -4,7 +4,7 @@ import json
 import logging
 from datetime import timedelta
 
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -62,6 +62,18 @@ AI_SYSTEM = (
 ACTIVE_STATES = ('new', 'under_study', 'docs_purchased', 'interested', 'preparing', 'participated')
 WON_STATES = ('winner', 'purchased', 'in_progress', 'completed')
 DEAD_STATES = ('lost', 'excepted', 'cancelled', 'closed')
+# All states, in workflow order — used to build the configurable "Active" set.
+ALL_STATES = ('new', 'under_study', 'docs_purchased', 'interested', 'preparing',
+              'participated', 'winner', 'lost', 'postponed', 'purchased',
+              'in_progress', 'completed', 'closed', 'cancelled', 'excepted')
+
+# Proof document attached to the status-change notification for each state.
+# (field, name_field). States not listed send the email without an attachment.
+STATE_DOC = {
+    'docs_purchased': ('doc_docs_purchased', 'doc_docs_purchased_name'),
+    'winner': ('doc_winner', 'doc_winner_name'),
+    'purchased': ('doc_award', 'doc_award_name'),
+}
 
 DEFAULT_CHECKLIST = [
     'شراء كراسة الشروط',
@@ -80,7 +92,7 @@ class PurchaseTender(models.Model):
     _name = 'purchase.tender'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Purchase Tender'
-    _order = 'importance desc, id desc'
+    _order = 'close_sort_key asc, id desc'
 
     name = fields.Char(required=True, tracking=True)
     short_name = fields.Char(string='اسم مختصر', compute='_compute_short_name', store=True,
@@ -111,6 +123,7 @@ class PurchaseTender(models.Model):
         ('docs_purchased', 'تم شراء الكراسة'),
         ('interested', 'مهتمون'),
         ('excepted', 'لن نشارك'),
+        ('expired', 'منتهية'),
         ('preparing', 'جارٍ التحضير'),
         ('participated', 'تم التقديم'),
         ('winner', 'فائزة'),
@@ -128,6 +141,11 @@ class PurchaseTender(models.Model):
     # --- New analytical fields ---
     days_to_close = fields.Integer(compute='_compute_days_to_close', store=True,
                                    help="Days remaining until the (effective) closing date.")
+    close_sort_key = fields.Integer(compute='_compute_days_to_close', store=True,
+                                    help="Ordering key: upcoming tenders (nearest closing first), "
+                                         "then recently-closed, then older, then undated.")
+    classification_id = fields.Many2one('purchase.tender.classification', string='التصنيف',
+                                        tracking=True, help="Business line: cleaning, security, agriculture...")
     price_gap = fields.Float(compute='_compute_price_gap', store=True,
                              help="Our price minus the winner price (positive = we were higher).")
     price_gap_pct = fields.Float(string='Price Gap %', compute='_compute_price_gap', store=True)
@@ -149,6 +167,12 @@ class PurchaseTender(models.Model):
     # --- Bank guarantee tracking ---
     guarantee_bank = fields.Char(string='Guarantee Bank')
     guarantee_ref = fields.Char(string='Guarantee Ref.')
+    guarantee_renewable = fields.Selection([
+        ('renewable', 'قابلة للتجديد'),
+        ('one_time', 'مرة واحدة'),
+    ], string='نوع الكفالة البنكية', default='renewable', tracking=True,
+        help="قابلة للتجديد: يُرسَل إشعار بوجوب تجديد الكفالة قبل انتهائها. "
+             "مرة واحدة: يُرسَل إشعار علمي فقط دون طلب تجديد.")
     guarantee_status = fields.Selection(selection=[
         ('none', 'لا يوجد'),
         ('valid', 'سارٍ'),
@@ -182,6 +206,42 @@ class PurchaseTender(models.Model):
     currency_id = fields.Many2one('res.currency', related='company_id.currency_id', string='Currency')
     active = fields.Boolean(default=True)
 
+    # ------------------------------------------------------------------
+    # Third-party notification (parent company / anyone else)
+    # ------------------------------------------------------------------
+    third_party_ids = fields.Many2many(
+        'res.partner', 'tender_third_party_rel', 'tender_id', 'partner_id',
+        string='جهات ثالثة للإشعار', tracking=True,
+        help='جهات خارجية (مثل الشركة الأم أو غيرها) تستقبل إشعارات حالة المناقصة.')
+
+    # ------------------------------------------------------------------
+    # Per-state proof documents
+    #   * شراء الكراسة / الفوز : اختياري (يُرفق بالإشعار إن وُجد)
+    #   * الترسية / التعاقد     : إلزامي قبل الانتقال
+    # ------------------------------------------------------------------
+    doc_docs_purchased = fields.Binary(string='مستند شراء الكراسة', tracking=True)
+    doc_docs_purchased_name = fields.Char(string='اسم مستند الشراء')
+    doc_winner = fields.Binary(string='مستند الفوز', tracking=True)
+    doc_winner_name = fields.Char(string='اسم مستند الفوز')
+    doc_award = fields.Binary(string='مستند الترسية', tracking=True,
+                              groups='purchase_tender.group_tender_contract')
+    doc_award_name = fields.Char(string='اسم مستند الترسية',
+                                 groups='purchase_tender.group_tender_contract')
+    doc_contract = fields.Binary(string='مستند العقد الموقّع', tracking=True,
+                                 groups='purchase_tender.group_tender_contract')
+    doc_contract_name = fields.Char(string='اسم مستند العقد',
+                                    groups='purchase_tender.group_tender_contract')
+
+    # ------------------------------------------------------------------
+    # Contract flow (after award / تمت الترسية)
+    # ------------------------------------------------------------------
+    contracted = fields.Boolean(string='تم التعاقد', tracking=True, copy=False)
+    contracted_date = fields.Datetime(string='تاريخ التعاقد', readonly=True, tracking=True, copy=False)
+    experience_id = fields.Many2one(
+        'care.experience', string='العقد (Experience)', readonly=True, tracking=True, copy=False,
+        groups='purchase_tender.group_tender_contract',
+        help='سجل العقد المُنشأ في موديول الخبرات care.experience.')
+
     @api.onchange('organization')
     def onchange_organization(self):
         for rec in self:
@@ -198,6 +258,29 @@ class PurchaseTender(models.Model):
         if self.manpower is not None and self.manpower <= 0:
             self.manpower = 1
 
+    # Standing policy: every field change must be logged in the chatter.
+    # Fields excluded from auto-tracking (technical / mail internals).
+    _TRACK_EXCLUDE = {
+        'id', 'display_name', '__last_update', 'create_date', 'create_uid',
+        'write_date', 'write_uid', 'access_token', 'access_url', 'access_warning',
+    }
+
+    def _setup_complete(self):
+        super()._setup_complete()
+        # Enable chatter tracking on every stored, non-technical scalar field
+        # (new, pre-existing custom, or inherited Odoo fields) so all edits are
+        # recorded in the mail thread. Relational multi-value fields are left to
+        # explicit opt-in to avoid noisy/unsupported diffs.
+        for name, field in self._fields.items():
+            if name in self._TRACK_EXCLUDE or name.startswith(('message_', 'activity_')):
+                continue
+            if not getattr(field, 'store', False):
+                continue
+            if field.type in ('one2many', 'many2many'):
+                continue
+            if not getattr(field, 'tracking', False):
+                field.tracking = True
+
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
@@ -207,55 +290,57 @@ class PurchaseTender(models.Model):
                 res.checklist_ids = [(0, 0, {'sequence': (i + 1) * 10, 'name': item})
                                      for i, item in enumerate(checklist_items)]
         email_new = self._email_enabled('new')
-        followers = self.env['purchase.tender.follower'].search([]).mapped('followers')
-        if followers:
-            for res in records:
-                for follower in followers:
+        for res in records:
+            for user in res._notify_cfg_users('new'):
+                res.sudo().activity_schedule(
+                    'purchase_tender.mail_act_tender_create',
+                    summary='Purchase Tender',
+                    note='New tender has been created',
+                    user_id=user.id)
+            if res.closing_date or res.new_closing_date or res.initial_meeting_date:
+                note = self._build_date_note(
+                    res.closing_date, res.new_closing_date, res.initial_meeting_date)
+                for user in res._notify_cfg_users('date'):
                     res.sudo().activity_schedule(
                         'purchase_tender.mail_act_tender_create',
-                        summary='Purchase Tender',
-                        note='New tender has been created',
-                        user_id=follower.id)
-                    if res.closing_date or res.new_closing_date or res.initial_meeting_date:
-                        note = self._build_date_note(
-                            res.closing_date, res.new_closing_date, res.initial_meeting_date)
-                        res.sudo().activity_schedule(
-                            'purchase_tender.mail_act_tender_create',
-                            summary='Purchase Tender Date Update',
-                            note=note,
-                            user_id=follower.id)
+                        summary='Purchase Tender Date Update',
+                        note=note,
+                        user_id=user.id)
         if email_new:
             for res in records:
-                res._send_tender_mail('purchase_tender.mail_template_new_tender')
+                res._send_tender_mail('purchase_tender.mail_template_new_tender', notify_type='new')
         return records
 
     def write(self, values):
         res = super().write(values)
-        followers = self.env['purchase.tender.follower'].search([]).mapped('followers')
-        if followers:
-            if values.get('state', False) in ['postponed', 'cancelled']:
-                for follower in followers:
-                    self.sudo().activity_schedule(
+        if values.get('state', False) in ['postponed', 'cancelled']:
+            for rec in self:
+                for user in rec._notify_cfg_users('status'):
+                    rec.sudo().activity_schedule(
                         'purchase_tender.mail_act_tender_create',
                         summary='Purchase Tender',
                         note='Tender status changed to {}'.format(values['state']),
-                        user_id=follower.id)
-            if values.get('closing_date') or values.get('new_closing_date') or values.get('initial_meeting_date'):
-                for follower in followers:
-                    note = self._build_date_note(
-                        values.get('closing_date'), values.get('new_closing_date'),
-                        values.get('initial_meeting_date'))
-                    self.sudo().activity_schedule(
+                        user_id=user.id)
+        if values.get('closing_date') or values.get('new_closing_date') or values.get('initial_meeting_date'):
+            note = self._build_date_note(
+                values.get('closing_date'), values.get('new_closing_date'),
+                values.get('initial_meeting_date'))
+            for rec in self:
+                for user in rec._notify_cfg_users('date'):
+                    rec.sudo().activity_schedule(
                         'purchase_tender.mail_act_tender_create',
                         summary='Purchase Tender Date Update',
                         note=note,
-                        user_id=follower.id)
+                        user_id=user.id)
         if values.get('state') and self._email_enabled('status'):
+            attach_field, attach_name_field = STATE_DOC.get(values['state'], (None, None))
             for rec in self:
-                rec._send_tender_mail('purchase_tender.mail_template_status_change')
+                rec._send_tender_mail(
+                    'purchase_tender.mail_template_status_change', notify_type='status',
+                    attach_field=attach_field, attach_name_field=attach_name_field)
         if (values.get('closing_date') or values.get('new_closing_date')) and self._email_enabled('date'):
             for rec in self:
-                rec._send_tender_mail('purchase_tender.mail_template_date_change')
+                rec._send_tender_mail('purchase_tender.mail_template_date_change', notify_type='date')
         return res
 
     @staticmethod
@@ -319,7 +404,16 @@ class PurchaseTender(models.Model):
         today = fields.Date.context_today(self)
         for rec in self:
             effective = rec.new_closing_date or rec.closing_date
-            rec.days_to_close = (effective - today).days if effective else 0
+            d = (effective - today).days if effective else 0
+            rec.days_to_close = d
+            # nearest-closing ordering: upcoming soonest first, then recent past,
+            # then older past, then undated last.
+            if not effective:
+                rec.close_sort_key = 2000000
+            elif d >= 0:
+                rec.close_sort_key = d
+            else:
+                rec.close_sort_key = 1000000 - d
 
     @api.depends('care_rank', 'state', 'price_analysis_ids')
     def _compute_win_probability(self):
@@ -593,6 +687,44 @@ class PurchaseTender(models.Model):
             tender.display_name = name
 
     # ------------------------------------------------------------------
+    # Active Tenders (configurable definition + open action)
+    # ------------------------------------------------------------------
+    @api.model
+    def _get_active_states(self):
+        """States considered 'active', configurable from Settings.
+        Falls back to the legacy default set when nothing is configured."""
+        ICP = self.env['ir.config_parameter'].sudo()
+        states = [
+            s for s in ALL_STATES
+            if str(ICP.get_param('purchase_tender.active_state_%s' % s, 'False')).lower()
+            in ('true', '1')
+        ]
+        return states or list(ACTIVE_STATES)
+
+    @api.model
+    def action_open_active_tenders(self):
+        """Open the Active Tenders list using the configured active states.
+        Ordering (nearest closing date / fewest days left first) comes from the
+        tree/kanban views' default_order = 'days_to_close asc'."""
+        ICP = self.env['ir.config_parameter'].sudo()
+        view = ICP.get_param('purchase_tender.default_view', 'tree')
+        modes = 'tree,kanban,form' if view != 'kanban' else 'kanban,tree,form'
+        try:
+            limit = int(ICP.get_param('purchase_tender.page_size', 10) or 10)
+        except (TypeError, ValueError):
+            limit = 10
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Active Tenders'),
+            'res_model': 'purchase.tender',
+            'view_mode': modes,
+            'domain': [('state', 'in', self._get_active_states())],
+            'search_view_id': [self.env.ref('purchase_tender.purchase_tender_view_search').id, False],
+            'limit': limit,
+            'context': {},
+        }
+
+    # ------------------------------------------------------------------
     # Workflow actions
     # ------------------------------------------------------------------
     def action_set_under_study(self):
@@ -619,11 +751,67 @@ class PurchaseTender(models.Model):
     def action_set_interested(self):
         self.write({'state': 'interested'})
 
+    def action_set_expired(self):
+        # المناقصة أُغلقت ولم نشارك فيها
+        self.write({'state': 'expired'})
+
     def action_set_winner(self):
         self.write({'state': 'winner'})
 
     def action_set_purchased(self):
+        # ترسية: مستند الترسية إلزامي
+        for rec in self:
+            if not rec.doc_award:
+                raise UserError(_("يجب إرفاق «مستند الترسية» قبل تحويل المناقصة إلى «تمت الترسية»."))
         self.write({'state': 'purchased'})
+
+    def action_set_contracted(self):
+        """تم التعاقد: يظهر بعد الترسية، ومستند العقد الموقّع إلزامي."""
+        for rec in self:
+            if rec.state != 'purchased':
+                raise UserError(_("لا يمكن التعاقد إلا بعد ترسية المناقصة."))
+            if not rec.doc_contract:
+                raise UserError(_("يجب إرفاق «مستند العقد الموقّع» قبل تأكيد التعاقد."))
+        self.write({'contracted': True, 'contracted_date': fields.Datetime.now()})
+        return True
+
+    def action_create_contract(self):
+        """إنشاء عقد في موديول الخبرات care.experience وفتحه."""
+        self.ensure_one()
+        if not self.contracted:
+            raise UserError(_("يجب تأكيد «تم التعاقد» أولاً قبل إنشاء العقد."))
+        if self.experience_id:
+            return self._open_experience_action(self.experience_id)
+        attachment_ids = []
+        if self.doc_contract:
+            att = self.env['ir.attachment'].sudo().create({
+                'name': self.doc_contract_name or _('Contract'),
+                'type': 'binary',
+                'datas': self.doc_contract,
+                'res_model': 'care.experience',
+            })
+            attachment_ids = att.ids
+        experience = self.env['care.experience'].create({
+            'name': self.tender_name or self.short_name or (self.tender_no or _('Contract')),
+            'partner_id': self.organization.id if self.organization else False,
+            'contract_amount': self.our_price or self.price or 0.0,
+            'contract_type': 'government',
+            'tender_id': self.id,
+            'contract_copy': [(6, 0, attachment_ids)] if attachment_ids else False,
+        })
+        self.experience_id = experience.id
+        self.message_post(body=_("تم إنشاء عقد (Experience) رقم %s من هذه المناقصة.") % experience.id)
+        return self._open_experience_action(experience)
+
+    def _open_experience_action(self, experience):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('العقد'),
+            'res_model': 'care.experience',
+            'res_id': experience.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
 
     def action_set_lost(self):
         self.write({'state': 'lost'})
@@ -658,6 +846,48 @@ class PurchaseTender(models.Model):
         users = users.filtered(lambda u: u.active and not u.share)
         return users.mapped('partner_id').filtered(lambda p: p.email)
 
+    def _notify_cfg_users(self, notify_type):
+        """The single source of truth for WHO receives a given tender
+        notification type — used by BOTH emails and activities so they never
+        diverge.
+
+        Resolution order:
+          1. The active recipient line for this type in the tender's company.
+          2. Else, the active recipient line for this type in ANY company.
+          3. If a line exists (even with an empty user list) → those users only.
+          4. If NO line exists for the type but the per-type routing table IS in
+             use (any line configured at all) → nobody (explicit routing means
+             unconfigured types are NOT broadcast to everyone).
+          5. Only when the whole routing table is empty → legacy all-followers
+             default (backward compatible).
+        """
+        Line = self.env['purchase.tender.notify.line'].sudo()
+        company = self.env.company.id
+        if len(self) == 1 and self.company_id:
+            company = self.company_id.id
+        line = Line.search([
+            ('notify_type', '=', notify_type), ('active', '=', True),
+            ('company_id', '=', company),
+        ], limit=1)
+        if not line:
+            line = Line.search([
+                ('notify_type', '=', notify_type), ('active', '=', True),
+            ], limit=1)
+        if line:
+            return line.user_ids.filtered(lambda u: u.active and not u.share)
+        # No active line for this type.
+        if Line.search_count([]):
+            return self.env['res.users']  # per-type routing in use → no broadcast
+        # Legacy default: nothing configured anywhere.
+        return self.env['purchase.tender.follower'].sudo().search(
+            []).mapped('followers').filtered(lambda u: u.active and not u.share)
+
+    def _notify_line_partners(self, notify_type):
+        """Partners (with email) to notify for a type — derived from
+        _notify_cfg_users so email and activity recipients always match."""
+        users = self._notify_cfg_users(notify_type)
+        return users.mapped('partner_id').filtered(lambda p: p.email)
+
     def _email_enabled(self, key):
         val = self.env['ir.config_parameter'].sudo().get_param('purchase_tender.email_%s' % key, 'True')
         return str(val).lower() not in ('false', '0', '')
@@ -665,16 +895,46 @@ class PurchaseTender(models.Model):
     def _cfg_int(self, key, default):
         return int(self.env['ir.config_parameter'].sudo().get_param('purchase_tender.%s' % key, default) or default)
 
-    def _send_tender_mail(self, template_xmlid):
+    def _tender_recipients(self, notify_type=None):
+        """Partners to notify for a given notification type.
+
+        If an independent recipient list is configured for this type
+        (purchase.tender.notify.line) ONLY those users are used; otherwise the
+        legacy group/follower default applies. This tender's third-party
+        partners (parent company / others) that have an email are always added.
+        """
+        self.ensure_one()
+        partners = self.env['res.partner']
+        if notify_type:
+            partners |= self._notify_line_partners(notify_type)
+        else:
+            partners |= self._tender_follower_partners()
+        partners |= self.third_party_ids.filtered(lambda p: p.email)
+        return partners
+
+    def _send_tender_mail(self, template_xmlid, notify_type=None,
+                          attach_field=None, attach_name_field=None):
         self.ensure_one()
         template = self.env.ref(template_xmlid, raise_if_not_found=False)
         if not template:
             return
-        partners = self._tender_follower_partners()
+        partners = self._tender_recipients(notify_type)
+        attachment_ids = []
+        if attach_field and self[attach_field]:
+            att = self.env['ir.attachment'].sudo().create({
+                'name': self[attach_name_field] or (_('Tender document')),
+                'type': 'binary',
+                'datas': self[attach_field],
+                'res_model': self._name,
+                'res_id': self.id,
+            })
+            attachment_ids = att.ids
         for partner in partners:
+            email_values = {'email_to': partner.email}
+            if attachment_ids:
+                email_values['attachment_ids'] = [(6, 0, attachment_ids)]
             template.sudo().send_mail(
-                self.id, force_send=False,
-                email_values={'email_to': partner.email})
+                self.id, force_send=False, email_values=email_values)
 
     @api.model
     def _cron_tender_closing_soon(self):
@@ -683,20 +943,20 @@ class PurchaseTender(models.Model):
         days = self._cfg_int('closing_soon_days', 3)
         for t in self.search([('state', 'in', list(ACTIVE_STATES))]):
             if 0 <= t.days_to_close <= days:
-                t._send_tender_mail('purchase_tender.mail_template_closing_soon')
+                t._send_tender_mail('purchase_tender.mail_template_closing_soon', notify_type='closing')
 
     @api.model
     def _cron_tender_guarantee_expiring(self):
         if not self._email_enabled('guarantee'):
             return
         for t in self.search([('guarantee_status', '=', 'expiring')]):
-            t._send_tender_mail('purchase_tender.mail_template_guarantee_expiring')
+            t._send_tender_mail('purchase_tender.mail_template_guarantee_expiring', notify_type='guarantee')
 
     @api.model
     def _cron_tender_weekly_digest(self):
         if not self._email_enabled('digest'):
             return
-        partners = self._tender_follower_partners()
+        partners = self._notify_line_partners('digest')
         if not partners:
             return
         active = self.search([('state', 'in', list(ACTIVE_STATES))])
@@ -743,7 +1003,7 @@ class PurchaseTender(models.Model):
     def _cron_new_entrants_digest(self):
         if not self._email_enabled('new_entrants'):
             return
-        partners = self._tender_follower_partners()
+        partners = self._notify_line_partners('new_entrants')
         if not partners:
             return
         entrants = self.env['purchase.tender.competitor'].search(
@@ -785,7 +1045,7 @@ class PurchaseTender(models.Model):
         self.ensure_one()
         if not self._email_enabled('watchlist'):
             return
-        partners = self._tender_follower_partners()
+        partners = self._notify_line_partners('watchlist')
         if not partners:
             return
         link = '%s/web#id=%s&model=purchase.tender&view_type=form' % (self.get_base_url(), self.id)

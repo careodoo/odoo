@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ===== Purchase Order: Send items to project ===== -->
+    <record id="view_purchase_order_form_pms" model="ir.ui.view">
+        <field name="name">purchase.order.form.pms.send</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <button name="action_rfq_send" position="before">
+                <button name="action_pms_send_to_project" type="object"
+                        string="📤 إرسال للمشروع"
+                        class="btn-primary"
+                        confirm="سيتم إرسال أصناف هذا الطلب إلى مدير المشروع وتسجيلها في سجل المشروع. متابعة؟"/>
+            </button>
+            <field name="partner_id" position="after">
+                <field name="pms_project_id"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_purchase_order_smartbtn_pms" model="ir.ui.view">
+        <field name="name">purchase.order.form.pms.smartbtn</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button name="action_pms_open_supplies" type="object"
+                        class="oe_stat_button" icon="fa-truck"
+                        invisible="pms_supply_count == 0">
+                    <field name="pms_supply_count" widget="statinfo" string="واردات المشروع"/>
+                </button>
+            </div>
+        </field>
+    </record>
+
+    <!-- ===== Sales Order: Send items to project ===== -->
+    <record id="view_sale_order_form_pms" model="ir.ui.view">
+        <field name="name">sale.order.form.pms.send</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <button name="action_quotation_send" position="before">
+                <button name="action_pms_send_to_project" type="object"
+                        string="📤 إرسال للمشروع"
+                        class="btn-primary"
+                        confirm="سيتم إرسال أصناف هذا الطلب إلى مدير المشروع وتسجيلها في سجل المشروع. متابعة؟"/>
+            </button>
+            <field name="partner_id" position="after">
+                <field name="pms_project_id"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_sale_order_smartbtn_pms" model="ir.ui.view">
+        <field name="name">sale.order.form.pms.smartbtn</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button name="action_pms_open_supplies" type="object"
+                        class="oe_stat_button" icon="fa-truck"
+                        invisible="pms_supply_count == 0">
+                    <field name="pms_supply_count" widget="statinfo" string="واردات المشروع"/>
+                </button>
+            </div>
+        </field>
+    </record>
+</odoo>

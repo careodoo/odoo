@@ -25,5 +25,29 @@
 			<field name="code">model._cron_download_device_attendance()</field>
 		</record>
 
+		<record id="ir_cron_ft_import_worker" model="ir.cron">
+			<field name="name">Finger Template Import Worker (staged)</field>
+			<field name="model_id" ref="model_attendance_device" />
+			<field name="user_id" ref="base.user_root" />
+			<field name="state">code</field>
+			<field name="interval_number">1</field>
+			<field name="interval_type">minutes</field>
+			<field name="numbercall">-1</field>
+			<field eval="False" name="doall" />
+			<field name="code">model._cron_ft_import_worker()</field>
+		</record>
+
+		<record id="ir_cron_device_health_alert" model="ir.cron">
+			<field name="name">CARE: Attendance device health monitor</field>
+			<field name="model_id" ref="model_attendance_device" />
+			<field name="user_id" ref="base.user_root" />
+			<field name="state">code</field>
+			<field name="interval_number">1</field>
+			<field name="interval_type">hours</field>
+			<field name="numbercall">-1</field>
+			<field eval="False" name="doall" />
+			<field name="code">model._cron_device_health_alert()</field>
+		</record>
+
 	</data>
 </odoo>

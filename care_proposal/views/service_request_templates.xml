@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- ============ PUBLIC: Request a service ============ -->
+  <template id="service_request_form" name="Request a Service">
+    <t t-call="website.layout">
+      <div class="container my-5" style="max-width:820px">
+        <h1 class="mb-1">Request a Service</h1>
+        <p class="text-muted mb-4">Tell us what you need — we'll review it and send you a tailored quote.</p>
+        <form action="/service-request/submit" method="post" enctype="multipart/form-data" class="o_sr_form">
+          <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-bold">Service Type</label>
+              <select name="service_type_id" class="form-select">
+                <option value="">— Select —</option>
+                <t t-foreach="service_types" t-as="st">
+                  <option t-att-value="st.id" t-esc="st.name"/>
+                </t>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-bold">Site / Location</label>
+              <input type="text" name="site_location" class="form-control"/>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-bold">City</label>
+              <input type="text" name="city" class="form-control"/>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-bold">Preferred start date</label>
+              <input type="date" name="desired_start_date" class="form-control"/>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-bold">Estimated duration</label>
+              <input type="text" name="duration" class="form-control" placeholder="e.g. 12 months"/>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-bold">Budget range (optional)</label>
+              <input type="text" name="budget_range" class="form-control"/>
+            </div>
+            <div class="col-12 mb-3">
+              <label class="form-label fw-bold">Requirements / Specifications</label>
+              <textarea name="description" rows="4" class="form-control"
+                        placeholder="Describe what you need in detail..."/>
+            </div>
+            <div class="col-12 mb-3">
+              <label class="form-label fw-bold">Attachments (optional)</label>
+              <input type="file" name="attachments" class="form-control" multiple="multiple"/>
+            </div>
+          </div>
+          <hr/>
+          <h5>Your contact details</h5>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-bold">Name</label>
+              <input type="text" name="contact_name" class="form-control" required="required"/>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-bold">Email</label>
+              <input type="email" name="contact_email" class="form-control" required="required"/>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-bold">Phone</label>
+              <input type="text" name="contact_phone" class="form-control"/>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-bold">Company / Entity</label>
+              <input type="text" name="company_name" class="form-control"/>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg">Submit Request</button>
+          <a href="/service-request/track" class="btn btn-link">Track an existing request</a>
+        </form>
+      </div>
+    </t>
+  </template>
+
+  <!-- ============ PUBLIC: Thank you ============ -->
+  <template id="service_request_thanks" name="Request Submitted">
+    <t t-call="website.layout">
+      <div class="container my-5 text-center" style="max-width:680px">
+        <div class="display-1">✅</div>
+        <h1>Your request has been received</h1>
+        <div class="my-3">
+          <span class="badge bg-dark fs-4 px-4 py-2"><t t-esc="sr.name"/></span>
+        </div>
+        <p class="text-muted">A confirmation was emailed to <b t-esc="sr._recipient_email()"/>.</p>
+        <div class="alert alert-info text-start mt-4">
+          <b>What happens next</b>
+          <ol class="mb-0">
+            <li>Our team reviews and approves your request.</li>
+            <li>We prepare a tailored quotation based on your specifications.</li>
+            <li>You'll get the quote by email — track anytime with your request number and email.</li>
+          </ol>
+        </div>
+        <a href="/service-request/track" class="btn btn-primary">Track this request</a>
+        <a href="/my/service-requests" class="btn btn-outline-secondary">My Requests</a>
+      </div>
+    </t>
+  </template>
+
+  <!-- ============ PUBLIC: Track ============ -->
+  <template id="service_request_track" name="Track Request">
+    <t t-call="website.layout">
+      <div class="container my-5" style="max-width:720px">
+        <h1>Track your request</h1>
+        <p class="text-muted">Enter your request number and email — no account needed.</p>
+        <form action="/service-request/track" method="post" class="row g-2 align-items-end mb-4">
+          <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+          <div class="col-md-5">
+            <label class="form-label fw-bold">Request number</label>
+            <input type="text" name="number" class="form-control" placeholder="SR-00001"
+                   t-att-value="values.get('number')"/>
+          </div>
+          <div class="col-md-5">
+            <label class="form-label fw-bold">Email</label>
+            <input type="email" name="email" class="form-control" t-att-value="values.get('email')"/>
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Track</button>
+          </div>
+        </form>
+        <t t-if="error">
+          <div class="alert alert-warning" t-esc="error"/>
+        </t>
+        <t t-if="sr">
+          <div class="card">
+            <div class="card-body">
+              <h4><t t-esc="sr.name"/> · <t t-esc="sr.service_type_id.name or 'Service'"/>
+                <span class="badge bg-info ms-2" t-esc="dict(sr._fields['state'].selection).get(sr.state)"/>
+              </h4>
+              <p class="text-muted">Submitted on <span t-field="sr.create_date" t-options='{"format": "dd MMM yyyy"}'/></p>
+              <t t-call="care_proposal.sr_timeline"/>
+            </div>
+          </div>
+        </t>
+      </div>
+    </t>
+  </template>
+
+  <!-- shared status timeline -->
+  <template id="sr_timeline" name="SR timeline">
+    <ul class="list-group list-group-flush">
+      <t t-set="order" t-value="['new','under_review','approved','quoted']"/>
+      <t t-set="cur" t-value="order.index(sr.state) if sr.state in order else (3 if sr.state=='quoted' else -1)"/>
+      <li class="list-group-item" t-attf-class="list-group-item #{cur &gt;= 0 and 'text-success' or ''}">● Request received</li>
+      <li class="list-group-item" t-attf-class="list-group-item #{cur &gt;= 1 and 'text-success' or 'text-muted'}">● Under review</li>
+      <li class="list-group-item" t-attf-class="list-group-item #{cur &gt;= 2 and 'text-success' or 'text-muted'}">● Approved</li>
+      <li class="list-group-item" t-attf-class="list-group-item #{cur &gt;= 3 and 'text-success' or 'text-muted'}">● Quotation ready</li>
+    </ul>
+  </template>
+
+  <!-- ============ PORTAL: My Requests ============ -->
+  <template id="portal_my_service_requests" name="My Service Requests">
+    <t t-call="portal.portal_layout">
+      <t t-set="breadcrumbs_searchbar" t-value="True"/>
+      <t t-call="portal.portal_searchbar">
+        <t t-set="title">Service Requests</t>
+      </t>
+      <t t-if="not requests">
+        <div class="alert alert-info">You have no service requests yet.
+          <a href="/service-request">Request a service</a>.</div>
+      </t>
+      <t t-if="requests">
+        <table class="table table-hover">
+          <thead>
+            <tr><th>Request #</th><th>Service</th><th>Site</th><th>Submitted</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr t-foreach="requests" t-as="r">
+              <td><a t-attf-href="/my/service-request/#{r.id}"><t t-esc="r.name"/></a></td>
+              <td t-esc="r.service_type_id.name or '-'"/>
+              <td t-esc="r.site_location or '-'"/>
+              <td><span t-field="r.create_date" t-options='{"format": "dd MMM yyyy"}'/></td>
+              <td><span class="badge bg-secondary" t-esc="dict(r._fields['state'].selection).get(r.state)"/></td>
+            </tr>
+          </tbody>
+        </table>
+        <div t-call="portal.pager"/>
+      </t>
+    </t>
+  </template>
+
+  <!-- ============ PORTAL: Request detail ============ -->
+  <template id="portal_service_request_detail" name="Service Request">
+    <t t-call="portal.portal_layout">
+      <div class="row">
+        <div class="col-12">
+          <h3><t t-esc="sr.name"/> · <t t-esc="sr.service_type_id.name or 'Service'"/>
+            <span class="badge bg-info ms-2" t-esc="dict(sr._fields['state'].selection).get(sr.state)"/>
+          </h3>
+        </div>
+        <div class="col-md-6">
+          <h5>Your specifications</h5>
+          <dl class="row">
+            <dt class="col-5">Site</dt><dd class="col-7" t-esc="sr.site_location or '-'"/>
+            <dt class="col-5">City</dt><dd class="col-7" t-esc="sr.city or '-'"/>
+            <dt class="col-5">Start date</dt><dd class="col-7"><span t-field="sr.desired_start_date"/></dd>
+            <dt class="col-5">Duration</dt><dd class="col-7" t-esc="sr.duration or '-'"/>
+          </dl>
+          <p t-esc="sr.description"/>
+        </div>
+        <div class="col-md-6">
+          <h5>Status</h5>
+          <t t-call="care_proposal.sr_timeline"/>
+          <t t-if="sr.proposal_id">
+            <div class="alert alert-success mt-3">Your quotation <b t-esc="sr.proposal_id.name"/> is ready.</div>
+          </t>
+        </div>
+      </div>
+    </t>
+  </template>
+
+  <!-- ============ PORTAL home card ============ -->
+  <template id="portal_my_home_sr" name="Portal My Home : Service Requests"
+            inherit_id="portal.portal_my_home" priority="40">
+    <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+      <t t-call="portal.portal_docs_entry">
+        <t t-set="title">Service Requests</t>
+        <t t-set="url" t-value="'/my/service-requests'"/>
+        <t t-set="placeholder_count" t-value="'sr_count'"/>
+      </t>
+    </xpath>
+  </template>
+</odoo>

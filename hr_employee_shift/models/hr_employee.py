@@ -1,11 +1,45 @@
-from odoo import fields, models, api
-from odoo.exceptions import ValidationError
+from odoo import fields, models, api, _
+from odoo.exceptions import ValidationError, UserError
 
 
 class Employee(models.Model):
     _inherit = 'hr.employee'
 
     shift_request_records = fields.One2many('employee.shift.request.record', 'employee_id')
+    open_shift_request_id = fields.Many2one('employee.shift.request', compute='_compute_open_shift',
+                                            string='طلب نقل قائم')
+    has_open_shift_request = fields.Boolean(compute='_compute_open_shift')
+
+    def _compute_open_shift(self):
+        closed = ['refuse_1', 'refuse_2', 'refuse_3', 'hr_refuse', 'done']
+        Req = self.env['employee.shift.request']
+        for emp in self:
+            req = Req.search([('employee_id', '=', emp.id),
+                              ('state', 'not in', closed)], limit=1)
+            emp.open_shift_request_id = req.id
+            emp.has_open_shift_request = bool(req)
+
+    def action_open_shift_request(self):
+        """Button on the employee file: transfer this worker to another
+        project/department. Blocks if an open request already exists."""
+        self.ensure_one()
+        if self.has_open_shift_request:
+            raise UserError(_(
+                'يوجد طلب نقل قائم لهذا العامل (%s) لم يُعتمد بعد. لا يمكن إنشاء طلب جديد حتى يُغلق السابق.'
+            ) % self.open_shift_request_id.display_name)
+        if not self.department_id:
+            raise UserError(_('العامل غير مرتبط بقسم/مشروع حالي.'))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('نقل العامل إلى مشروع/قسم آخر'),
+            'res_model': 'employee.shift.request',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_employee_id': self.id,
+                'default_current_department': self.department_id.id,
+            },
+        }
 
     def write(self, vals):
         res = super(Employee, self).write(vals)

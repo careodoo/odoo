@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>مركز قيادة الأمن — Security Command | care</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --ground:#0b0e15; --surface:#141926; --surface-2:#1b2233; --line:#2a3346;
+    --ink:#e9eef7; --muted:#9aa8c0; --faint:#63728c;
+    --alert:#e5484d; --live:#38bdf8; --ok:#3ecf8e; --warn:#f6b23c;
+    --shadow:0 20px 46px -22px rgba(0,0,0,.8); --r:15px;
+    --f:"Segoe UI",Tahoma,system-ui,-apple-system,"Noto Sans Arabic",sans-serif;
+  }
+  @media(prefers-color-scheme:light){:root{--ground:#eceff4;--surface:#fff;--surface-2:#f3f6fb;--line:#d8e0ec;--ink:#111826;--muted:#4b5a72;--faint:#8496af;--shadow:0 16px 40px -24px rgba(20,30,50,.35)}}
+  :root[data-theme="dark"]{--ground:#0b0e15;--surface:#141926;--surface-2:#1b2233;--line:#2a3346;--ink:#e9eef7;--muted:#9aa8c0;--faint:#63728c;--shadow:0 20px 46px -22px rgba(0,0,0,.8)}
+  :root[data-theme="light"]{--ground:#eceff4;--surface:#fff;--surface-2:#f3f6fb;--line:#d8e0ec;--ink:#111826;--muted:#4b5a72;--faint:#8496af;--shadow:0 16px 40px -24px rgba(20,30,50,.35)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f);direction:rtl;line-height:1.62;font-size:16px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+  h1,h2,h3{margin:0;text-wrap:balance;line-height:1.2}
+  .eyebrow{font-size:12px;font-weight:800;letter-spacing:2.5px;color:var(--alert);text-transform:uppercase}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;padding:3px 10px;border-radius:999px}
+  .chip.alert{background:color-mix(in srgb,var(--alert) 20%,transparent);color:var(--alert)}
+  .chip.live{background:color-mix(in srgb,var(--live) 18%,transparent);color:var(--live)}
+  .chip.ok{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+  .chip.warn{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn)}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .pulse{animation:pulse 1.8s infinite}
+  @media(prefers-reduced-motion:reduce){.pulse{animation:none}}
+
+  .top{position:sticky;top:0;z-index:20;backdrop-filter:blur(10px);background:color-mix(in srgb,var(--ground) 84%,transparent);border-bottom:1px solid var(--line)}
+  .top .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+  .brand{display:flex;gap:11px;align-items:center;font-weight:800}
+  .logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(150deg,var(--alert),#a5252a);display:grid;place-items:center;color:#fff;font-weight:900;box-shadow:0 6px 16px -6px var(--alert)}
+  .nav{display:flex;gap:20px;font-size:14px;font-weight:600;color:var(--muted)}
+  .nav a{text-decoration:none}.nav a:hover{color:var(--alert)}
+  @media(max-width:860px){.nav{display:none}}
+  .tt{width:38px;height:38px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:9px;cursor:pointer;font-size:15px}
+
+  .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+  .hero::before{content:"";position:absolute;inset:0;background:radial-gradient(900px 460px at 85% -10%,color-mix(in srgb,var(--alert) 20%,transparent),transparent 58%),radial-gradient(700px 420px at 4% 110%,color-mix(in srgb,var(--live) 15%,transparent),transparent 55%)}
+  .hero .wrap{position:relative;padding:70px 20px 56px}
+  .hero h1{font-size:clamp(32px,5.2vw,58px);font-weight:900;letter-spacing:-.5px}
+  .hero h1 b{color:var(--alert)}
+  .lede{max-width:60ch;color:var(--muted);margin-top:16px;font-size:clamp(16px,1.9vw,19px)}
+  .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
+  .btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:11px 20px;border-radius:11px;font-weight:800;font-size:14px;text-decoration:none;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+  .btn.pri{background:linear-gradient(150deg,var(--alert),#b12a2f);color:#fff;border-color:transparent;box-shadow:0 12px 26px -12px var(--alert)}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-top:40px}
+  @media(max-width:760px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:color-mix(in srgb,var(--surface) 70%,transparent);border:1px solid var(--line);border-radius:13px;padding:15px}
+  .kpi .n{font-size:27px;font-weight:900;font-variant-numeric:tabular-nums}
+  .kpi .n b{color:var(--live)} .kpi .l{font-size:12px;color:var(--muted);margin-top:2px}
+
+  section{padding:62px 0;border-bottom:1px solid var(--line)}
+  .sh{display:flex;flex-direction:column;gap:9px;margin-bottom:30px;max-width:72ch}
+  .sh h2{font-size:clamp(23px,3.3vw,33px);font-weight:850}
+  .sh p{color:var(--muted);margin:0}
+  .grid{display:grid;gap:15px}
+  .g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:900px){.g3,.g4{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:600px){.g2,.g3,.g4{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;box-shadow:var(--shadow)}
+  .card h3{font-size:16px;font-weight:800;margin-bottom:7px;display:flex;gap:9px;align-items:center}
+  .card p{color:var(--muted);font-size:13.5px;margin:0}
+  .ic{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--alert) 15%,transparent);color:var(--alert);font-size:18px}
+
+  /* command dashboard */
+  .cmd{display:grid;grid-template-columns:1.3fr 1fr;gap:16px}
+  @media(max-width:900px){.cmd{grid-template-columns:1fr}}
+  .board{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+  .board .bh{padding:13px 16px;border-bottom:1px solid var(--line);background:var(--surface-2);display:flex;justify-content:space-between;align-items:center}
+  .board .bb{padding:14px 16px}
+  .post{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+  .post:last-child{border-bottom:0}
+  .post .who{color:var(--muted);font-size:12px}
+  .src{font-size:10.5px;color:var(--live);font-weight:800;border:1px solid color-mix(in srgb,var(--live) 40%,transparent);border-radius:6px;padding:1px 6px}
+  .feed{display:flex;flex-direction:column;gap:11px}
+  .ev{display:flex;gap:11px;align-items:flex-start;font-size:13px}
+  .ev .t{color:var(--faint);font-size:11.5px;font-variant-numeric:tabular-nums;min-width:44px}
+  .ev b{font-weight:700}
+
+  .phone{background:#04070d;border:8px solid #0b111d;border-radius:32px;padding:12px 11px 16px;box-shadow:var(--shadow);max-width:330px;margin-inline:auto}
+  :root[data-theme="light"] .phone{border-color:#c7d2e2;background:#eef2f8}
+  .phone .bar{display:flex;justify-content:space-between;font-size:11px;color:var(--faint);padding:0 6px 9px;font-weight:700}
+  .scr{background:var(--surface);border:1px solid var(--line);border-radius:19px;overflow:hidden}
+  .scr .hd{padding:12px 13px;background:var(--surface-2);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .scr .bd{padding:11px 12px;display:flex;flex-direction:column;gap:9px}
+  .rowc{border:1px solid var(--line);border-radius:11px;padding:10px 11px;background:var(--surface-2);position:relative}
+  .rowc .stripe{position:absolute;inset-inline-start:0;top:9px;bottom:9px;width:4px;border-radius:4px}
+  .rowc h4{margin:0 0 2px;font-size:13px;font-weight:800}
+  .rowc .m{font-size:11.5px;color:var(--muted);display:flex;gap:9px;flex-wrap:wrap}
+  .panic{background:linear-gradient(150deg,var(--alert),#a5252a);color:#fff;border:none;border-radius:11px;padding:12px;font-weight:900;font-size:14px;cursor:pointer;letter-spacing:.5px}
+
+  .idea{display:flex;gap:12px;align-items:flex-start}
+  .idea .ic{background:color-mix(in srgb,var(--live) 14%,transparent);color:var(--live)}
+  .idea b{font-size:14px}.idea span{color:var(--muted);font-size:13px}
+
+  .fix{display:flex;gap:13px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--line)}
+  .fix:last-child{border-bottom:0}
+  .fix .bug{font-size:11px;font-weight:900;color:var(--alert);border:1px solid color-mix(in srgb,var(--alert) 40%,transparent);border-radius:7px;padding:3px 8px;flex:none;margin-top:2px}
+  .fix .t{font-size:14.5px;font-weight:700}.fix .s{font-size:13px;color:var(--muted)}
+  code{background:var(--surface-2);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:12.5px;direction:ltr;display:inline-block}
+
+  .integ{display:flex;flex-wrap:wrap;gap:10px}
+  .pill{border:1px solid var(--line);background:var(--surface);border-radius:11px;padding:10px 14px;font-size:13px;font-weight:700;display:flex;gap:9px;align-items:center}
+  .road{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+  @media(max-width:820px){.road{grid-template-columns:1fr 1fr}}@media(max-width:520px){.road{grid-template-columns:1fr}}
+  .phase{border:1px solid var(--line);border-radius:13px;padding:16px;background:var(--surface)}
+  .phase .pn{font-size:12px;font-weight:800;letter-spacing:1px;color:var(--live)}
+  .phase h4{margin:6px 0;font-size:15px}.phase ul{margin:0;padding-inline-start:16px;color:var(--muted);font-size:12.5px}
+  footer{padding:38px 0 58px;color:var(--faint);font-size:13px}
+  @media(prefers-reduced-motion:no-preference){.reveal{opacity:0;transform:translateY(14px);transition:.6s}.reveal.in{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="wrap">
+  <div class="brand"><span class="logo">◈</span> مركز قيادة الأمن <span style="color:var(--faint);font-weight:600;font-size:13px">/ care</span></div>
+  <nav class="nav"><a href="#cmd">غرفة القيادة</a><a href="#bio">ربط البصمة</a><a href="#mobile">التطبيقات</a><a href="#ideas">أفكار</a><a href="#fixes">المراجعة والإصلاح</a></nav>
+  <button class="tt" id="tt" aria-label="الوضع">◐</button>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">Security Operations · Command Center</div>
+  <h1 style="margin-top:13px">تشغيل الأمن <b>بلحظته</b> — من نقطة الحراسة إلى غرفة القيادة</h1>
+  <p class="lede">تطوير موديول الأمن الحالي إلى منظومة تشغيل حيّة: تغطية النقاط والدوريات والبلاغات وتصاريح الدخول والعُهد — مع <b>ربط مباشر بأنظمة البصمة</b> ليُعرف مَن على رأس عمله فعلياً، وتطبيقات موبايل لأفراد الأمن والمشرف والمدير والعميل لمتابعة الأحداث فور وقوعها.</p>
+  <div class="cta"><a class="btn pri" href="#cmd">غرفة القيادة الحيّة ↩</a><a class="btn" href="#fixes">نتائج المراجعة</a></div>
+  <div class="kpis">
+    <div class="kpi"><div class="n"><b>24</b>/26</div><div class="l">نقطة مُغطّاة الآن (من البصمة)</div></div>
+    <div class="kpi"><div class="n">دوريات</div><div class="l">نقاط تفتيش بـ QR/NFC + مسار وزمن</div></div>
+    <div class="kpi"><div class="n">🚨 بلاغات</div><div class="l">تسجيل فوري بالصورة + تصعيد</div></div>
+    <div class="kpi"><div class="n">4 تطبيقات</div><div class="l">فرد أمن · مشرف · مدير · عميل</div></div>
+  </div>
+</div></header>
+
+<!-- COMMAND -->
+<section id="cmd"><div class="wrap">
+  <div class="sh"><div class="eyebrow">غرفة القيادة</div><h2>تغطية النقاط والأحداث الحيّة في شاشة واحدة</h2>
+    <p>حالة كل نقطة حراسة مبنيّة على <b>بصمة الحضور الفعلية</b> لا على جدول ورقي — وأي فجوة تظهر فوراً كتنبيه.</p></div>
+  <div class="cmd">
+    <div class="board">
+      <div class="bh"><b>تغطية نقاط الحراسة</b><span class="chip warn">فجوتان</span></div>
+      <div class="bb">
+        <div class="post"><div>البوابة الرئيسية — برج بيان<div class="who">راشد المطيري</div></div><span class="src">✔ بصمة ٦:٠٢ص</span><span class="chip ok">مُغطّاة</span></div>
+        <div class="post"><div>موقف P2<div class="who">مانو ك.</div></div><span class="src">✔ بصمة ٥:٥٨ص</span><span class="chip ok">مُغطّاة</span></div>
+        <div class="post"><div>المدخل الخلفي<div class="who">— لم يُسجّل حضور —</div></div><span class="src" style="color:var(--alert);border-color:color-mix(in srgb,var(--alert) 40%,transparent)">✘ لا بصمة</span><span class="chip alert pulse">شاغرة</span></div>
+        <div class="post"><div>الدور ٥ — دورية<div class="who">سالم ع.</div></div><span class="src">✔ بصمة ٦:١٠ص</span><span class="chip live">في دورية</span></div>
+        <div class="post"><div>غرفة المراقبة<div class="who">تأخّر ١٨ د عن الوردية</div></div><span class="src">✔ بصمة ٦:١٨ص</span><span class="chip warn">تأخّر</span></div>
+      </div>
+    </div>
+    <div class="board">
+      <div class="bh"><b>الأحداث المباشرة</b><span class="chip live"><span class="dot pulse" style="background:var(--live)"></span> حيّ</span></div>
+      <div class="bb"><div class="feed">
+        <div class="ev"><span class="t">٦:٤١</span><div>🚨 <b>بلاغ:</b> باب طوارئ مفتوح — الدور ٣ <span class="chip alert">عالٍ</span></div></div>
+        <div class="ev"><span class="t">٦:٣٩</span><div>📍 مسح نقطة تفتيش <b>PT-07</b> (دورية سالم)</div></div>
+        <div class="ev"><span class="t">٦:٣٢</span><div>🚗 تصريح دخول مركبة <b>ABC-4821</b> — مورّد</div></div>
+        <div class="ev"><span class="t">٦:٢٠</span><div>🔑 تسليم مفتاح <b>غرفة الكهرباء</b> للصيانة</div></div>
+        <div class="ev"><span class="t">٦:٠٢</span><div>✔ حضور بصمة — <b>راشد</b> بالبوابة الرئيسية</div></div>
+      </div></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- BIOMETRIC LINK -->
+<section id="bio"><div class="wrap">
+  <div class="sh"><div class="eyebrow">ربط البصمة — جوهر التطوير</div><h2>«الجدول يقول موجود… والبصمة تقول الحقيقة»</h2>
+    <p>حالياً حضور الأمن <b>يدوي بالكامل</b> (زر يسجّل الوقت). التطوير يربط <code>security.attendance</code> بأنظمة البصمة الحالية فيصبح كل شيء مبنياً على واقع فعلي.</p></div>
+  <div class="grid g3">
+    <div class="card"><h3><span class="ic">🔗</span> جسر البصمة</h3><p>مطابقة فرد الأمن ببصمته على الجهاز؛ كل بصمة تُغذّي حضور النقطة تلقائياً من <code>user.attendance / hr.attendance</code>.</p></div>
+    <div class="card"><h3><span class="ic">🎯</span> تغطية حقيقية</h3><p>مقارنة المطلوب (جدول الورديات) بالموجود فعلاً (البصمة) → تنبيه فوري بأي نقطة شاغرة أو تأخّر.</p></div>
+    <div class="card"><h3><span class="ic">⏱</span> بلا تلاعب</h3><p>لا حضور بلا بصمة؛ ويمكن دعمه ببصمة الموبايل + GPS للنقاط التي لا جهاز فيها.</p></div>
+  </div>
+</div></section>
+
+<!-- MOBILE -->
+<section id="mobile"><div class="wrap">
+  <div class="sh"><div class="eyebrow">تطبيقات الموبايل</div><h2>لكل من فرد الأمن والمشرف والمدير والعميل</h2>
+    <p>المشرف والمدير والعميل يطّلعون على الأحداث فور وقوعها؛ وفرد الأمن ينفّذ دوريته ويبلّغ من جهازه.</p></div>
+  <div class="grid g2" style="align-items:start">
+    <div class="phone">
+      <div class="bar"><span>٦:٤١ص</span><span>فرد الأمن — سالم</span><span>📶🔋</span></div>
+      <div class="scr">
+        <div class="hd"><b>دوريتي الآن</b><span class="chip live">جارية</span></div>
+        <div class="bd">
+          <div class="rowc"><span class="stripe" style="background:var(--ok)"></span><h4>PT-06 · مخرج الطوارئ</h4><div class="m"><span class="chip ok">مُسحت ٦:٣٤</span></div></div>
+          <div class="rowc"><span class="stripe" style="background:var(--live)"></span><h4>PT-07 · لوحة الكهرباء</h4><div class="m"><span>التالية — امسح NFC</span></div></div>
+          <div class="rowc"><span class="stripe" style="background:var(--warn)"></span><h4>PT-08 · السطح</h4><div class="m"><span>استحقاق ٦:٥٥</span></div></div>
+          <button class="panic">🚨 زر الطوارئ / بلاغ فوري</button>
+        </div>
+      </div>
+    </div>
+    <div class="phone">
+      <div class="bar"><span>٦:٤٢ص</span><span>المشرف / المدير / العميل</span><span>📶🔋</span></div>
+      <div class="scr">
+        <div class="hd"><b>لوحة الموقع الحيّة</b><span class="chip warn">فجوتان</span></div>
+        <div class="bd">
+          <div class="rowc"><span class="stripe" style="background:var(--alert)"></span><h4>🚨 باب طوارئ مفتوح — ط٣</h4><div class="m"><span>قبل دقيقتين</span><span>بانتظار الإجراء</span></div></div>
+          <div class="rowc"><span class="stripe" style="background:var(--alert)"></span><h4>نقطة شاغرة — المدخل الخلفي</h4><div class="m"><span>لا بصمة حضور</span></div></div>
+          <div class="rowc"><span class="stripe" style="background:var(--ok)"></span><h4>التغطية: ٢٤ / ٢٦ نقطة</h4><div class="m"><span>٩٢٪ · محدّث لحظياً</span></div></div>
+          <div class="rowc"><span class="stripe" style="background:var(--live)"></span><h4>دوريتان قيد التنفيذ</h4><div class="m"><span>سالم · مانو</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- IDEAS -->
+<section id="ideas"><div class="wrap">
+  <div class="sh"><div class="eyebrow">أفكار احترافية — من عندي</div><h2>ما يرفع الأمن من «تسجيل» إلى «ردع وتحكّم»</h2></div>
+  <div class="grid g2">
+    <div class="card idea"><span class="ic">▣</span><div><b>نقاط تفتيش NFC/QR للدوريات</b><br><span>لا تُحتسب الدورية إلا بمسح فعلي في كل نقطة وبالتسلسل والزمن الصحيح.</span></div></div>
+    <div class="card idea"><span class="ic">🚨</span><div><b>زر طوارئ / Panic</b><br><span>بلاغ فوري بالموقع من موبايل فرد الأمن يصل غرفة القيادة والمشرف لحظياً.</span></div></div>
+    <div class="card idea"><span class="ic">◎</span><div><b>نقاط محدّدة جغرافياً (Geofence)</b><br><span>تأكيد وجود الحارس داخل نطاق نقطته فعلياً عبر GPS.</span></div></div>
+    <div class="card idea"><span class="ic">⏲</span><div><b>فحص العامل المنفرد (Lone-worker)</b><br><span>طلب تأكيد دوري من الحارس المنفرد؛ عدم الرد = تنبيه تلقائي.</span></div></div>
+    <div class="card idea"><span class="ic">📷</span><div><b>بلاغ بالصورة/الفيديو</b><br><span>كل حادث موثّق بصرياً مع الوقت والموقع لحماية الشركة والعميل.</span></div></div>
+    <div class="card idea"><span class="ic">🚗</span><div><b>تصاريح دخول + قائمة حظر</b><br><span>تسجيل مسبق للزوّار والمركبات وتنبيه عند تطابق قائمة الممنوعين.</span></div></div>
+    <div class="card idea"><span class="ic">🔑</span><div><b>عُهدة المفاتيح</b><br><span>مَن استلم أي مفتاح ومتى ولمن أُعيد — سجل كامل (موجود جزئياً ويُطوّر).</span></div></div>
+    <div class="card idea"><span class="ic">↑</span><div><b>تصعيد آلي للبلاغات</b><br><span>حسب الخطورة والمدة: مشرف ← مدير ← إدارة، مع إشعار العميل عند الحاجة.</span></div></div>
+    <div class="card idea"><span class="ic">◱</span><div><b>بوابة العميل الحيّة</b><br><span>العميل يرى تغطية موقعه وبلاغاته ومؤشر الأداء دون انتظار تقرير.</span></div></div>
+    <div class="card idea"><span class="ic">🔥</span><div><b>خريطة نقاط الخطر المتكرّر</b><br><span>كشف المواقع الأكثر حوادثاً لإعادة توزيع القوة أو التدريب.</span></div></div>
+  </div>
+</div></section>
+
+<!-- INTEGRATION -->
+<section><div class="wrap">
+  <div class="sh"><div class="eyebrow">التكامل</div><h2>يبني على أنظمتكم الحالية</h2></div>
+  <div class="integ">
+    <span class="pill"><span class="dot ok"></span> البصمة (to_attendance_device) — تغطية النقاط الحقيقية</span>
+    <span class="pill"><span class="dot ok"></span> القوى العاملة (care.roster) — الورديات المطلوبة</span>
+    <span class="pill"><span class="dot ok"></span> السلامة (HSE) — حوادث الموقع</span>
+    <span class="pill"><span class="dot ok"></span> المشاريع/العقود (care_pms · care_experience)</span>
+    <span class="pill"><span class="dot ok"></span> بوابة العميل القائمة (Portal)</span>
+  </div>
+</div></section>
+
+<!-- FIXES / REVIEW -->
+<section id="fixes"><div class="wrap">
+  <div class="sh"><div class="eyebrow">المراجعة والإصلاح</div><h2>مشاكل فعلية رصدتُها في الموديول الحالي</h2>
+    <p>من فحص الكود وسجلّات الخادم — جاهزة للإصلاح ضمن التطوير.</p></div>
+  <div class="card">
+    <div class="fix"><span class="bug">خطأ A</span><div><div class="t">حقل يستخدم <code>invisible=</code> في تعريفه</div><div class="s"><code>gate_pass.py:90</code> — <code>rejection_reason</code> يمرّر <code>invisible</code> كخاصية حقل (غير صالح؛ محلّها العرض) → تحذير الخادم. الحل: نقلها إلى الـview.</div></div></div>
+    <div class="fix"><span class="bug">خطأ B</span><div><div class="t"><code>tracking=True</code> على حقول حالة غير مخزّنة</div><div class="s">في assignment/checkin/clockin/post.assignment/task.assignment → تحذيرات «unknown parameter». الحل: إزالة tracking أو تخزين الحقل.</div></div></div>
+    <div class="fix"><span class="bug">خطأ C</span><div><div class="t">خطأ صلاحيات متكرّر في العدّادات</div><div class="s"><code>security_team</code> يقرأ <code>security.post.site</code> و<code>security.clockin</code> بلا صلاحية → أخطاء في السجل. الحل: sudo أو فحص وصول (نفس نمط خطأ البورتال الذي أصلحناه).</div></div></div>
+    <div class="fix"><span class="bug">فجوة D</span><div><div class="t">لا ربط بالبصمة إطلاقاً</div><div class="s">الحضور يدوي بالكامل (<code>action_check_in</code> = زر). الحل: جسر البصمة أعلاه — أكبر قيمة في التطوير.</div></div></div>
+  </div>
+</div></section>
+
+<!-- ROADMAP -->
+<section><div class="wrap">
+  <div class="sh"><div class="eyebrow">خطة التطوير</div><h2>على مراحل</h2></div>
+  <div class="road">
+    <div class="phase"><div class="pn">المرحلة ١</div><h4>إصلاح وتنظيف</h4><ul><li>إصلاح الأخطاء A/B/C</li><li>مراجعة الصلاحيات</li><li>تثبيت الموديول</li></ul></div>
+    <div class="phase"><div class="pn">المرحلة ٢</div><h4>ربط البصمة</h4><ul><li>جسر security.attendance ↔ البصمة</li><li>تغطية النقاط الحقيقية</li><li>تنبيهات الفجوات</li></ul></div>
+    <div class="phase"><div class="pn">المرحلة ٣</div><h4>الموبايل</h4><ul><li>تطبيق فرد الأمن (دورية/بلاغ/طوارئ)</li><li>لوحة المشرف/المدير</li><li>نقاط NFC/QR</li></ul></div>
+    <div class="phase"><div class="pn">المرحلة ٤</div><h4>العميل والذكاء</h4><ul><li>بوابة العميل الحيّة</li><li>تصعيد آلي + قائمة حظر</li><li>خرائط الخطر والتقارير</li></ul></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">موكاب مفاهيمي — تطوير موديول الأمن (Security) وربطه بالبصمة + تطبيقات الموبايل · care</div></footer>
+
+<script>
+  document.getElementById('tt').addEventListener('click',()=>{const d=document.documentElement,c=d.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');d.setAttribute('data-theme',c==='dark'?'light':'dark')});
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:.12});
+  document.querySelectorAll('section .card,.phase').forEach((el,i)=>{el.classList.add('reveal');el.style.transitionDelay=(i%6*40)+'ms';io.observe(el)});
+</script>
+</body>
+</html>

@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============ Client Billing ============ -->
+    <record id="view_care_client_billing_tree" model="ir.ui.view">
+        <field name="name">care.client.billing.tree</field>
+        <field name="model">care.client.billing</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'approved'" decoration-muted="state == 'invoiced'"
+                  decoration-warning="state == 'awaiting_client'">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="partner_id"/>
+                <field name="billing_basis"/>
+                <field name="worker_count"/>
+                <field name="work_days" sum="Worker-Days"/>
+                <field name="price_type"/>
+                <field name="price_unit"/>
+                <field name="amount" sum="Total" widget="monetary"/>
+                <field name="state" widget="badge" decoration-success="state == 'approved'"
+                       decoration-warning="state == 'awaiting_client'"/>
+                <field name="currency_id" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_care_client_billing_form" model="ir.ui.view">
+        <field name="name">care.client.billing.form</field>
+        <field name="model">care.client.billing</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_submit_client" type="object" string="Send to Client"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_client_approve" type="object" string="Client Approved"
+                            class="btn-primary" invisible="state != 'awaiting_client'"/>
+                    <button name="action_generate_invoice" type="object" string="Generate Invoice"
+                            class="btn-primary" invisible="state != 'approved'"/>
+                    <button name="action_reset" type="object" string="Reset to Draft"
+                            invisible="state in ('draft','invoiced')"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="contract_id"/>
+                            <field name="project_id"/>
+                            <field name="partner_id"/>
+                            <field name="billing_basis"/>
+                        </group>
+                        <group>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="price_type"/>
+                            <field name="price_unit"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <group string="From Attendance">
+                        <group>
+                            <field name="worker_count"/>
+                            <field name="work_days"/>
+                        </group>
+                        <group>
+                            <field name="amount" widget="monetary"/>
+                            <field name="invoice_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="Notes..."/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/><field name="activity_ids"/><field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    <record id="view_care_client_billing_search" model="ir.ui.view">
+        <field name="name">care.client.billing.search</field>
+        <field name="model">care.client.billing</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="project_id"/>
+                <field name="partner_id"/>
+                <filter name="approved" string="Client Approved" domain="[('state','=','approved')]"/>
+                <filter name="awaiting" string="Awaiting Client" domain="[('state','=','awaiting_client')]"/>
+                <filter name="not_invoiced" string="Not Invoiced" domain="[('state','!=','invoiced')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="g_project" string="Project" context="{'group_by':'project_id'}"/>
+                    <filter name="g_client" string="Client" context="{'group_by':'partner_id'}"/>
+                    <filter name="g_state" string="Status" context="{'group_by':'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_care_client_billing" model="ir.actions.act_window">
+        <field name="name">Client Billing</field>
+        <field name="res_model">care.client.billing</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_care_client_billing_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Bill clients from actual attendance</p>
+            <p>Use "↻ Generate Monthly Billing" to create lines per contract.</p>
+        </field>
+    </record>
+    <record id="action_client_billing_scan_server" model="ir.actions.server">
+        <field name="name">Generate Monthly Client Billing</field>
+        <field name="model_id" ref="model_care_client_billing"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_run_scan()</field>
+    </record>
+
+    <!-- ============ Contract Profitability (P&L) ============ -->
+    <record id="view_care_pnl_tree" model="ir.ui.view">
+        <field name="name">care.contract.pnl.tree</field>
+        <field name="model">care.contract.pnl</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="margin &lt; 0" decoration-success="margin_pct &gt;= 20"
+                  decoration-warning="margin_pct &gt;= 0 and margin_pct &lt; 20">
+                <field name="project_id"/>
+                <field name="partner_id"/>
+                <field name="sector" widget="badge"/>
+                <field name="worker_count"/>
+                <field name="revenue" sum="Revenue" widget="monetary"/>
+                <field name="cost_total" sum="Cost" widget="monetary"/>
+                <field name="cost_per_worker" widget="monetary"/>
+                <field name="margin" sum="Margin" widget="monetary"/>
+                <field name="margin_pct" widget="percentage"/>
+                <field name="currency_id" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_care_pnl_form" model="ir.ui.view">
+        <field name="name">care.contract.pnl.form</field>
+        <field name="model">care.contract.pnl</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="partner_id"/>
+                            <field name="sector"/>
+                        </group>
+                        <group>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="worker_count"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <group string="Profit &amp; Loss">
+                        <group string="Revenue">
+                            <field name="revenue" widget="monetary"/>
+                        </group>
+                        <group string="Fully-Loaded Cost">
+                            <field name="cost_wages" widget="monetary"/>
+                            <field name="cost_allowances" widget="monetary"/>
+                            <field name="cost_eos" widget="monetary"/>
+                            <field name="cost_total" widget="monetary"/>
+                            <field name="cost_per_worker" widget="monetary"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="margin" widget="monetary"/>
+                        <field name="margin_pct" widget="percentage"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_care_pnl_pivot" model="ir.ui.view">
+        <field name="name">care.contract.pnl.pivot</field>
+        <field name="model">care.contract.pnl</field>
+        <field name="arch" type="xml">
+            <pivot string="Profitability">
+                <field name="project_id" type="row"/>
+                <field name="revenue" type="measure"/>
+                <field name="cost_total" type="measure"/>
+                <field name="margin" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+    <record id="view_care_pnl_graph" model="ir.ui.view">
+        <field name="name">care.contract.pnl.graph</field>
+        <field name="model">care.contract.pnl</field>
+        <field name="arch" type="xml">
+            <graph string="Margin by Project" type="bar">
+                <field name="project_id"/>
+                <field name="margin" type="measure"/>
+            </graph>
+        </field>
+    </record>
+    <record id="action_care_pnl" model="ir.actions.act_window">
+        <field name="name">Contract Profitability</field>
+        <field name="res_model">care.contract.pnl</field>
+        <field name="view_mode">tree,pivot,graph,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Revenue vs fully-loaded cost per project</p>
+            <p>Use "↻ Refresh Profitability" to compute the current month.</p>
+        </field>
+    </record>
+    <record id="action_pnl_scan_server" model="ir.actions.server">
+        <field name="name">Refresh Contract Profitability</field>
+        <field name="model_id" ref="model_care_contract_pnl"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_run_scan()</field>
+    </record>
+
+    <!-- ============ menus (under Payroll/Finance) ============ -->
+    <menuitem id="menu_care_client_billing" name="Client Billing"
+              parent="care_hr.menu_care_hr_payroll_root" action="action_care_client_billing" sequence="20"/>
+    <menuitem id="menu_care_client_billing_scan" name="↻ Generate Monthly Billing"
+              parent="care_hr.menu_care_hr_payroll_root" action="action_client_billing_scan_server"
+              sequence="21" groups="hr.group_hr_manager"/>
+    <menuitem id="menu_care_pnl" name="Contract Profitability"
+              parent="care_hr.menu_care_hr_payroll_root" action="action_care_pnl" sequence="22"/>
+    <menuitem id="menu_care_pnl_scan" name="↻ Refresh Profitability"
+              parent="care_hr.menu_care_hr_payroll_root" action="action_pnl_scan_server"
+              sequence="23" groups="hr.group_hr_manager"/>
+</odoo>

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ================= WORK SCHEDULE ================= -->
+    <record id="view_cafm_schedule_tree" model="ir.ui.view">
+        <field name="name">care.cafm.schedule.tree</field>
+        <field name="model">care.cafm.schedule</field>
+        <field name="arch" type="xml">
+            <tree decoration-muted="not active">
+                <field name="code"/><field name="name"/><field name="service_id"/>
+                <field name="facility_id"/><field name="location_id"/><field name="employee_id"/>
+                <field name="every_minutes"/>
+                <field name="occ_done"/><field name="occ_late"/><field name="occ_missed"/>
+                <field name="compliance" widget="progressbar"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_cafm_schedule_form" model="ir.ui.view">
+        <field name="name">care.cafm.schedule.form</field>
+        <field name="model">care.cafm.schedule</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_generate_today" type="object" string="🛠️ توليد تكرارات اليوم" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="مثال: تنظيف دورة مياه الطابق الأول كل ساعة"/></h1>
+                        <field name="code" readonly="1"/>
+                    </div>
+                    <group>
+                        <group string="النطاق">
+                            <field name="service_id"/><field name="facility_id"/>
+                            <field name="location_id"/><field name="employee_id"/>
+                        </group>
+                        <group string="التكرار والنافذة">
+                            <label for="every_minutes"/>
+                            <div class="o_row"><field name="every_minutes"/> <span>دقيقة</span></div>
+                            <label for="window_start" string="النافذة"/>
+                            <div class="o_row"><field name="window_start" widget="float_time"/> — <field name="window_end" widget="float_time"/></div>
+                            <field name="days"/>
+                            <field name="grace_minutes"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="الإثبات المطلوب">
+                            <field name="require_presence"/><field name="require_photo"/><field name="require_video"/>
+                        </group>
+                        <group string="الالتزام">
+                            <field name="occ_total"/><field name="occ_done"/>
+                            <field name="occ_late"/><field name="occ_missed"/>
+                            <field name="compliance" widget="progressbar"/>
+                        </group>
+                    </group>
+                    <field name="instructions" placeholder="المطلوب تنفيذه في كل زيارة…"/>
+                    <notebook>
+                        <page string="🔁 التكرارات" name="occ">
+                            <field name="occurrence_ids" readonly="1">
+                                <tree decoration-success="state=='done'" decoration-warning="state=='late'" decoration-danger="state=='missed'" decoration-muted="state=='pending'">
+                                    <field name="planned_time"/><field name="actual_time"/>
+                                    <field name="employee_id"/>
+                                    <field name="presence_verified" widget="boolean_toggle"/>
+                                    <field name="response_delay_minutes"/>
+                                    <field name="state" widget="badge"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter"><field name="message_follower_ids"/><field name="activity_ids"/><field name="message_ids"/></div>
+            </form>
+        </field>
+    </record>
+    <record id="action_cafm_schedule" model="ir.actions.act_window">
+        <field name="name">جدولة الأعمال</field>
+        <field name="res_model">care.cafm.schedule</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html"><p class="o_view_nocontent_smiling_face">أنشئ أول جدول عمل متكرر</p>
+            <p>مثل: «تنظيف الحمام كل ساعة» أو «دورية على الأبواب كل نصف ساعة» — يُذكِّر النظام العامل ويتتبّع الالتزام والتأخير.</p></field>
+    </record>
+
+    <!-- ================= OCCURRENCES (status board) ================= -->
+    <record id="view_cafm_occ_tree" model="ir.ui.view">
+        <field name="name">care.cafm.schedule.occurrence.tree</field>
+        <field name="model">care.cafm.schedule.occurrence</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state=='done'" decoration-warning="state=='late'" decoration-danger="state=='missed'" decoration-muted="state=='pending'" create="0">
+                <field name="schedule_id"/><field name="service_id"/>
+                <field name="facility_id"/><field name="location_id"/><field name="employee_id"/>
+                <field name="planned_time"/><field name="actual_time"/>
+                <field name="response_delay_minutes"/>
+                <field name="presence_verified" widget="boolean_toggle"/>
+                <field name="state" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_cafm_occ_form" model="ir.ui.view">
+        <field name="name">care.cafm.schedule.occurrence.form</field>
+        <field name="model">care.cafm.schedule.occurrence</field>
+        <field name="arch" type="xml">
+            <form create="0">
+                <sheet>
+                    <div class="oe_title"><h1><field name="schedule_id" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="location_id" readonly="1"/><field name="employee_id" readonly="1"/>
+                            <field name="planned_time" readonly="1"/><field name="actual_time" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="state" widget="badge"/>
+                            <field name="presence_verified"/>
+                            <field name="response_delay_minutes"/>
+                        </group>
+                    </group>
+                    <field name="result_description" readonly="1"/>
+                    <group>
+                        <field name="proof_photo" widget="image"/>
+                        <field name="proof_photo2" widget="image"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_cafm_occurrence" model="ir.actions.act_window">
+        <field name="name">سجل الزيارات والالتزام</field>
+        <field name="res_model">care.cafm.schedule.occurrence</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_group_state': 1}</field>
+    </record>
+    <record id="view_cafm_occ_search" model="ir.ui.view">
+        <field name="name">care.cafm.schedule.occurrence.search</field>
+        <field name="model">care.cafm.schedule.occurrence</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="schedule_id"/><field name="employee_id"/><field name="facility_id"/>
+                <filter name="f_late" string="متأخرة" domain="[('state','=','late')]"/>
+                <filter name="f_missed" string="فائتة" domain="[('state','=','missed')]"/>
+                <filter name="f_pending" string="قيد الانتظار" domain="[('state','=','pending')]"/>
+                <group expand="0" string="تجميع">
+                    <filter name="group_state" string="الحالة" context="{'group_by':'state'}"/>
+                    <filter name="group_emp" string="العامل" context="{'group_by':'employee_id'}"/>
+                    <filter name="group_sched" string="الجدول" context="{'group_by':'schedule_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <menuitem id="menu_cafm_schedule" name="🔁 جدولة الأعمال" parent="menu_cafm_ops"
+              action="action_cafm_schedule" sequence="15"/>
+    <menuitem id="menu_cafm_occurrence" name="🕒 سجل الزيارات والالتزام" parent="menu_cafm_ops"
+              action="action_cafm_occurrence" sequence="16"/>
+</odoo>

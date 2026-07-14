@@ -1,0 +1,4519 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* care_pms
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0+e-20241205\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-06 09:36+0000\n"
+"PO-Revision-Date: 2026-07-06 09:36+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: care_pms
+#: model:ir.actions.report,print_report_name:care_pms.action_report_project_clearance
+msgid "'Clearance-%s' % (object.name)"
+msgstr "'Clearance-%s' % (object.name)"
+
+#. module: care_pms
+#: model:ir.actions.report,print_report_name:care_pms.action_report_delivery_note
+msgid "'DeliveryNote-%s' % (object.name)"
+msgstr "'DeliveryNote-%s' % (object.name)"
+
+#. module: care_pms
+#: model:ir.actions.report,print_report_name:care_pms.action_report_project_statement
+msgid "'ProjectStatement-%s' % (object.name)"
+msgstr "'ProjectStatement-%s' % (object.name)"
+
+#. module: care_pms
+#: model:ir.actions.report,print_report_name:care_pms.action_report_petty_cash
+msgid "'Settlement-%s' % (object.name)"
+msgstr "'Settlement-%s' % (object.name)"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_materials
+msgid "(available:"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_petty
+msgid "(remaining:"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_clearance
+msgid "<b>Current manager:</b>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_clearance
+msgid "<b>Date:</b> ...................."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_clearance
+msgid "<b>Department:</b>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_delivery_note
+msgid "<b>Location:</b>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_delivery_note
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_clearance
+msgid "<b>Project:</b>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_statement
+msgid "<b>Tasks summary:</b> open"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "<b>الإجمالي المصروف / Total Spent</b>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_statement
+msgid ""
+"<br/>\n"
+"                                الإدارة:"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_delivery_note
+msgid ""
+"<br/>\n"
+"                                التاريخ:"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_delivery_note
+msgid "<br/><br/>Signature: ...................."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+msgid "<option value=\"\">— Forward to —</option>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+msgid "<option value=\"\">— Item —</option>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_petty
+msgid "<option value=\"\">— New custody —</option>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_materials
+msgid "<option value=\"\">— Select item —</option>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_requests
+msgid "<option value=\"\">— Select worker —</option>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_petty
+msgid ""
+"<select name=\"category\"><option "
+"value=\"maintenance\">صيانة</option><option "
+"value=\"fuel\">محروقات</option><option "
+"value=\"transport\">مواصلات</option><option "
+"value=\"supplies\">مستلزمات</option><option "
+"value=\"misc\">نثريات</option></select>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_requests
+msgid ""
+"<select name=\"doc_type\"><option value=\"civil_id\">البطاقة "
+"المدنية</option><option value=\"passport\">الجواز</option><option "
+"value=\"residence\">الإقامة</option><option value=\"work_permit\">تصريح "
+"عمل</option><option value=\"photo\">صورة</option><option "
+"value=\"medical\">طبي</option></select>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid ""
+"<select name=\"kind\" class=\"form-select\">\n"
+"                                    <option value=\"request\">📥 طلب</option>\n"
+"                                    <option value=\"complaint\">🔴 شكوى</option>\n"
+"                                    <option value=\"note\">📝 ملاحظة</option>\n"
+"                                </select>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+msgid ""
+"<select name=\"task_kind\"><option value=\"task\">مهمة</option><option "
+"value=\"memo\">مذكرة</option><option value=\"internal_letter\">كتاب "
+"داخلي</option><option value=\"internal_request\">طلب داخلي</option></select>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+msgid "<span class=\"kc\" style=\"background:#e1f5f5;color:#017e84\">🚗</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_attendance
+msgid "<span class=\"kc\" style=\"background:#e6f7ef;color:#1a9f6d\">✅</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_dashboard
+msgid "<span class=\"kc\" style=\"background:#e6f7ef;color:#1a9f6d\">👷</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_finance
+msgid "<span class=\"kc\" style=\"background:#e6f7ef;color:#1a9f6d\">💵</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_dashboard
+msgid "<span class=\"kc\" style=\"background:#e9f0ff;color:#2f6df6\">🏗️</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_performance
+msgid "<span class=\"kc\" style=\"background:#e9f0ff;color:#2f6df6\">👥</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_attendance
+msgid "<span class=\"kc\" style=\"background:#e9f0ff;color:#2f6df6\">👷</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_finance
+msgid "<span class=\"kc\" style=\"background:#e9f0ff;color:#2f6df6\">📈</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_dashboard
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_performance
+msgid "<span class=\"kc\" style=\"background:#f0ebff;color:#7a5cf0\">📋</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_dashboard
+msgid "<span class=\"kc\" style=\"background:#fdeceb;color:#c0392b\">⚠️</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+msgid "<span class=\"kc\" style=\"background:#fdeceb;color:#c0392b\">🛂</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_attendance
+msgid "<span class=\"kc\" style=\"background:#fdeceb;color:#e2513f\">❌</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_finance
+msgid "<span class=\"kc\" style=\"background:#fdeceb;color:#e2513f\">📉</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_dashboard
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+msgid "<span class=\"kc\" style=\"background:#fdeceb;color:#e2513f\">🚨</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_finance
+msgid "<span class=\"kc\" style=\"background:#fff3e0;color:#c47f00\">%</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+msgid "<span class=\"kc\" style=\"background:#fff3e0;color:#c47f00\">💵</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_dashboard
+msgid "<span class=\"kc\" style=\"background:#fff3e0;color:#e08a00\">➡️</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_attendance
+msgid "<span class=\"kc\" style=\"background:#fff3e0;color:#e08a00\">📊</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+msgid "<span class=\"kc\" style=\"background:#fff3e0;color:#e08a00\">🧰</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_layout
+msgid ""
+"<span class=\"lg\">CARE</span> — نظام إدارة المشاريع والعقود · © جميع الحقوق"
+" محفوظة"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_layout
+msgid ""
+"<span class=\"ttl\"><b>CARE</b> · بوابة إدارة المشاريع</span>\n"
+"                <span class=\"sp\"/>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_delivery_note
+msgid ""
+"<span style=\"color:#f0663c; font-weight:bold; font-size:22px;\">CARE</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_statement
+msgid ""
+"<span style=\"color:#f0663c; font-weight:bold; font-size:24px;\">CARE</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_clearance
+msgid ""
+"<span style=\"color:#f0663c; font-weight:bold; font-size:26px;\">CARE</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid "<span style=\"color:#f0663c;font-weight:800;\">CARE</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_my_pms_projects
+msgid ""
+"<span style=\"color:#f0663c;font-weight:800;font-size:22px;\">CARE</span>\n"
+"                <span style=\"font-weight:700;font-size:16px;\"> · بوابة المشاريع</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_tasks_global
+msgid "<span style=\"color:#f5a623\"> ★</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+msgid "<span title=\"High priority\" style=\"color:#f5a623\"> ★</span>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+msgid "A materials supply awaits receiving — click to receive ←"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_my_home_pm
+msgid "A standalone system to manage your projects"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_attendance
+msgid "Absent"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_form
+msgid "Accept forward ✅"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_inbox
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+msgid "Accept ✅"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_task_forward__state__accepted
+#: model:ir.model.fields.selection,name:care_pms.selection__project_task__forward_state__accepted
+msgid "Accepted"
+msgstr "Accepted"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_inbox
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_supplies
+msgid "Action"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__message_needaction
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__message_needaction
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__message_needaction
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__message_needaction
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__message_needaction
+msgid "Action Needed"
+msgstr "Action Needed"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_task_template__active
+#: model:ir.model.fields,field_description:care_pms.field_care_task_category__active
+#: model:ir.model.fields,field_description:care_pms.field_care_task_forward__active
+#: model:ir.model.fields.selection,name:care_pms.selection__project_project__pms_state__active
+msgid "Active"
+msgstr "Active"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__activity_ids
+msgid "Activities"
+msgstr "Activities"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr "Activity Exception Decoration"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__activity_state
+msgid "Activity State"
+msgstr "Activity State"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__activity_type_icon
+msgid "Activity Type Icon"
+msgstr "Activity Type Icon"
+
+#. module: care_pms
+#: model:care.task.category,name:care_pms.cat_admin
+msgid "Administrative"
+msgstr "Administrative"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_compliance
+msgid "Affairs permit"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Affairs permit (from)"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Affairs permit (to)"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Affairs salary"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+msgid "All items within limits ✓"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash_expense__amount
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_petty
+msgid "Amount"
+msgstr "Amount"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_statement
+msgid "Approval: ....................    Date: ...................."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_doc_request_form
+msgid "Approve ✅"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_doc_request__state__approved
+msgid "Approved"
+msgstr "Approved"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__approver_id
+msgid "Approved By"
+msgstr "Approved By"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_assets
+msgid "Asset"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__asset_count
+msgid "Asset Count"
+msgstr "Asset Count"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+msgid "Assets"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_assets
+msgid "Assets &amp; custodies"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_tasks_global
+msgid "Assignee"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_task_template__user_ids
+msgid "Assignees"
+msgstr "Assignees"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_dashboard
+msgid "At risk"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__message_attachment_count
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__message_attachment_count
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__message_attachment_count
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__message_attachment_count
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__message_attachment_count
+msgid "Attachment Count"
+msgstr "Attachment Count"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_attendance
+msgid "Attendance"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_timesheet
+msgid "Attendance days (actual)"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_attendance
+msgid "Attendance rate"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_contracts
+msgid "Authority"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note_line__available_qty
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material__available_qty
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_materials
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_clearance
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_statement
+msgid "Available"
+msgstr "Available"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_attendance
+msgid "Badge"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Basic salary"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Bed"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material__is_low
+msgid "Below Min"
+msgstr "Below Min"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_material_form
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_material_search
+msgid "Below minimum"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_clearance
+msgid ""
+"Both parties acknowledge that the open responsibilities below were handed "
+"over and received:"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Building/housing"
+msgstr ""
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "CARE"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash_expense__category
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_task_template__pms_category_id
+#: model:ir.model.fields,field_description:care_pms.field_care_task_category__name
+#: model:ir.model.fields,field_description:care_pms.field_project_task__pms_category_id
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_form
+msgid "Category"
+msgstr "Category"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_attendance
+msgid "Check-in"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_attendance
+msgid "Check-out"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_doc_request__doc_type__civil_id
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Civil ID"
+msgstr "Civil ID"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_team
+msgid "Civil ID number"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_clearance
+msgid "Clearance statement — project responsibilities handover"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_petty_form
+msgid "Close custody"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_petty_cash__state__closed
+#: model:ir.model.fields.selection,name:care_pms.selection__project_project__pms_state__closed
+msgid "Closed"
+msgstr "Closed"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_task_category__code
+msgid "Code"
+msgstr "Code"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_task_category__color
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__color
+msgid "Color"
+msgstr "Color"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Company housing"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+msgid "Compliance"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_compliance
+msgid "Compliance &amp; residencies"
+msgstr ""
+
+#. module: care_pms
+#: model:care.task.category,name:care_pms.cat_compliance
+msgid "Compliance / Permits"
+msgstr "Compliance / Permits"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__compliance_count
+msgid "Compliance Count"
+msgstr "Compliance Count"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash_expense__note
+msgid "Condition / Notes"
+msgstr "Condition / Notes"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_delivery_form
+msgid "Confirm"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_delivery_note__state__done
+msgid "Confirmed"
+msgstr "Confirmed"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_fuel
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_vehicle_file
+msgid "Consumed"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__experience_ids
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_contracts
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+msgid "Contracts"
+msgstr "Contracts"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+msgid "Contracts (Experience)"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_task_template__task_kind__correspondence
+#: model:ir.model.fields.selection,name:care_pms.selection__project_task__task_kind__correspondence
+msgid "Correspondence"
+msgstr "Correspondence"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_finance
+msgid "Cost breakdown"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+msgid "Create"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__create_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note_line__create_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__create_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material__create_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material_receipt__create_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__create_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash_expense__create_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__create_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply_line__create_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_task_template__create_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_task_category__create_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_task_forward__create_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__create_uid
+msgid "Created by"
+msgstr "Created by"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__create_date
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note_line__create_date
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__create_date
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material__create_date
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material_receipt__create_date
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__create_date
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash_expense__create_date
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__create_date
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply_line__create_date
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_task_template__create_date
+#: model:ir.model.fields,field_description:care_pms.field_care_task_category__create_date
+#: model:ir.model.fields,field_description:care_pms.field_care_task_forward__create_date
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__create_date
+msgid "Created on"
+msgstr "Created on"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+msgid "Creation failed."
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__currency_id
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash_expense__currency_id
+#: model:ir.model.fields,field_description:care_pms.field_project_project__pms_currency_id
+msgid "Currency"
+msgstr "Currency"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__manager_id
+msgid "Custodian"
+msgstr "Custodian"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_projects
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+msgid "Custodies"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__amount
+msgid "Custody Amount"
+msgstr "Custody Amount"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__custody_count
+msgid "Custody Count"
+msgstr "Custody Count"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_petty
+msgid "Custody amount (for new)"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_dashboard
+msgid "Dashboard"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_vehicle_file
+msgid "Data"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__date
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material_receipt__date
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash_expense__date
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__date
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_deliveries
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_performance
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_supplies
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid "Date"
+msgstr "Date"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Date of birth"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_task_template__interval_type__days
+msgid "Days"
+msgstr "Days"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_task_template__deadline_offset
+msgid "Deadline (+days)"
+msgstr "Deadline (+days)"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__delivery_count
+msgid "Delivery Count"
+msgstr "Delivery Count"
+
+#. module: care_pms
+#: model:ir.model,name:care_pms.model_care_pms_delivery_note_line
+msgid "Delivery Note Line"
+msgstr "Delivery Note Line"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__delivery_ids
+msgid "Delivery Notes"
+msgstr "Delivery Notes"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__location
+msgid "Delivery Site"
+msgstr "Delivery Site"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_delivery_form
+msgid "Delivery note"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_deliveries
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_delivery_tree
+msgid "Delivery notes"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__department_id
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__department_id
+#: model:ir.model.fields,field_description:care_pms.field_project_project__pms_department_id
+#: model:ir.model.fields,field_description:care_pms.field_project_task__pms_department_id
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_contracts
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_vehicle_file
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_search
+msgid "Department"
+msgstr "Department"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+msgid "Department & contract"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model,name:care_pms.model_care_task_group
+msgid "Department Private Task Group"
+msgstr "Department Private Task Group"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Departure date"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Departure reason"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash_expense__name
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_task_template__description
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_performance
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_petty
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_form
+msgid "Description"
+msgstr "Description"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_template_form
+msgid "Description..."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid "Details"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_timesheet
+msgid "Difference"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Direct manager"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__display_name
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note_line__display_name
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__display_name
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material__display_name
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material_receipt__display_name
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__display_name
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash_expense__display_name
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__display_name
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply_line__display_name
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_task_template__display_name
+#: model:ir.model.fields,field_description:care_pms.field_care_task_category__display_name
+#: model:ir.model.fields,field_description:care_pms.field_care_task_forward__display_name
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__display_name
+msgid "Display Name"
+msgstr "Display Name"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__attachment
+msgid "Document Image"
+msgstr "Document Image"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__doc_type
+msgid "Document Type"
+msgstr "Document Type"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_doc_request_form
+msgid "Document request"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_requests
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_doc_request_tree
+msgid "Document requests"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_delivery_note__state__draft
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_doc_request__state__draft
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_supply__state__draft
+#: model:ir.model.fields.selection,name:care_pms.selection__project_project__pms_state__draft
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_supplies
+msgid "Draft"
+msgstr "Draft"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_vehicle_file
+msgid "Driver"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Driving license"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_inbox
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_tasks_global
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid "Due date"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Emergency contact"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Emergency phone"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__employee_id
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_assets
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_performance
+msgid "Employee"
+msgstr "Employee"
+
+#. module: care_pms
+#: model:ir.model,name:care_pms.model_care_pms_doc_request
+msgid "Employee Document Update Request"
+msgstr "Employee Document Update Request"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Employee type"
+msgstr ""
+
+#. module: care_pms
+#: model:care.task.category,name:care_pms.cat_equipment
+msgid "Equipment & Maintenance"
+msgstr "Equipment & Maintenance"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_performance
+msgid "Events count"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_task_template__interval_number
+msgid "Every"
+msgstr "Every"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_attendance
+msgid "Everyone present ✓"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_form
+msgid "Execution"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_petty
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_statement
+msgid "Expense"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__expense_count
+msgid "Expense Count"
+msgstr "Expense Count"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__expense_ids
+msgid "Expenses"
+msgstr "Expenses"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__experience_count
+msgid "Experience Count"
+msgstr "Experience Count"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+msgid "Expiring residencies"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "FINANCIAL CUSTODY SETTLEMENT"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__attachment_name
+msgid "File Name"
+msgstr "File Name"
+
+#. module: care_pms
+#: model:care.task.category,name:care_pms.cat_finance
+msgid "Finance"
+msgstr "Finance"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "Finance Approval"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_finance
+msgid "Financial file"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Flat"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__pms_fleet_cost
+msgid "Fleet Cost"
+msgstr "Fleet Cost"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_finance
+msgid "Fleet cost"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Floor"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__message_follower_ids
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__message_follower_ids
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__message_follower_ids
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__message_follower_ids
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__message_follower_ids
+msgid "Followers"
+msgstr "Followers"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__message_partner_ids
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__message_partner_ids
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__message_partner_ids
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__message_partner_ids
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "Followers (Partners)"
+
+#. module: care_pms
+#: model:ir.model.fields,help:care_pms.field_care_pms_doc_request__activity_type_icon
+msgid "Font awesome icon e.g. fa-tasks"
+msgstr "Font awesome icon e.g. fa-tasks"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_form
+msgid "Forward"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_task__forward_count
+msgid "Forward Count"
+msgstr "Forward Count"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_task__forward_ids
+msgid "Forward History"
+msgstr "Forward History"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_task__forward_reason
+msgid "Forward Reason"
+msgstr "Forward Reason"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_task__forward_state
+msgid "Forward Status"
+msgstr "Forward Status"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_task__forward_to_id
+msgid "Forward To"
+msgstr "Forward To"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+msgid "Forward reason"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_form
+msgid "Forward reason..."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+msgid "Forward rejected."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+msgid "Forward status"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_task__forward_from_id
+msgid "Forwarded By"
+msgstr "Forwarded By"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_task_forward__forward_date
+msgid "Forwarded On"
+msgstr "Forwarded On"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_form
+msgid "Forwards"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_form
+msgid "Forwards log"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_task_forward__from_user_id
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_inbox
+msgid "From"
+msgstr "From"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_timesheet
+msgid "From date"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_petty_cash_expense__category__fuel
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_fuel
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+msgid "Fuel"
+msgstr "Fuel"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__fuel_count
+msgid "Fuel Count"
+msgstr "Fuel Count"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Gender"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_timesheet
+msgid "Generate from attendance and submit for approval"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_template_form
+msgid "Generate now"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_task_template__generated_count
+msgid "Generated"
+msgstr "Generated"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_timesheet
+msgid "Generation failed — check the dates."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_materials
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid "Good"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Grade"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__name
+msgid "Group"
+msgstr "Group"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_material_search
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_search
+msgid "Group by"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_task_group_form
+msgid "Group name..."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_delivery_note
+msgid "Handed by: ...................."
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__has_message
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__has_message
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__has_message
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__has_message
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__has_message
+msgid "Has Message"
+msgstr "Has Message"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_material_search
+msgid "Has balance"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__project_project__risk_level__high
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+msgid "High"
+msgstr "High"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_projects
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_my_pms_projects
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_kanban
+msgid "High risk"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_attendance
+msgid "Hours"
+msgstr ""
+
+#. module: care_pms
+#: model:care.task.category,name:care_pms.cat_hr
+msgid "Human Resources"
+msgstr "Human Resources"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__id
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note_line__id
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__id
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material__id
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material_receipt__id
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__id
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash_expense__id
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__id
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply_line__id
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_task_template__id
+#: model:ir.model.fields,field_description:care_pms.field_care_task_category__id
+#: model:ir.model.fields,field_description:care_pms.field_care_task_forward__id
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__id
+msgid "ID"
+msgstr "ID"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "ID number"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__activity_exception_icon
+msgid "Icon"
+msgstr "Icon"
+
+#. module: care_pms
+#: model:ir.model.fields,help:care_pms.field_care_pms_doc_request__activity_exception_icon
+msgid "Icon to indicate an exception activity."
+msgstr "Icon to indicate an exception activity."
+
+#. module: care_pms
+#: model:ir.model.fields,help:care_pms.field_care_pms_delivery_note__message_needaction
+#: model:ir.model.fields,help:care_pms.field_care_pms_doc_request__message_needaction
+#: model:ir.model.fields,help:care_pms.field_care_pms_petty_cash__message_needaction
+#: model:ir.model.fields,help:care_pms.field_care_pms_supply__message_needaction
+#: model:ir.model.fields,help:care_pms.field_care_task_group__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "If checked, new messages require your attention."
+
+#. module: care_pms
+#: model:ir.model.fields,help:care_pms.field_care_pms_delivery_note__message_has_error
+#: model:ir.model.fields,help:care_pms.field_care_pms_delivery_note__message_has_sms_error
+#: model:ir.model.fields,help:care_pms.field_care_pms_doc_request__message_has_error
+#: model:ir.model.fields,help:care_pms.field_care_pms_doc_request__message_has_sms_error
+#: model:ir.model.fields,help:care_pms.field_care_pms_petty_cash__message_has_error
+#: model:ir.model.fields,help:care_pms.field_care_pms_petty_cash__message_has_sms_error
+#: model:ir.model.fields,help:care_pms.field_care_pms_supply__message_has_error
+#: model:ir.model.fields,help:care_pms.field_care_pms_supply__message_has_sms_error
+#: model:ir.model.fields,help:care_pms.field_care_task_group__message_has_error
+#: model:ir.model.fields,help:care_pms.field_care_task_group__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr "If checked, some messages have a delivery error."
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_performance
+msgid "Impact"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_supply__state__sent
+msgid "In Transit"
+msgstr "In Transit"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_supplies
+msgid "In transit"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Insurance (SIN)"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Insurance salary"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Insurance status"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_task_template__task_kind__internal_letter
+#: model:ir.model.fields.selection,name:care_pms.selection__project_task__task_kind__internal_letter
+msgid "Internal Letter"
+msgstr "Internal Letter"
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_task_template__task_kind__internal_request
+#: model:ir.model.fields.selection,name:care_pms.selection__project_task__task_kind__internal_request
+msgid "Internal Request"
+msgstr "Internal Request"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_search
+msgid "Internal letters"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_search
+msgid "Internal requests"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_task_template__interval_type
+msgid "Interval"
+msgstr "Interval"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__message_is_follower
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__message_is_follower
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__message_is_follower
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__message_is_follower
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__message_is_follower
+msgid "Is Follower"
+msgstr "Is Follower"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_task__is_forward_recipient
+msgid "Is Forward Recipient"
+msgstr "Is Forward Recipient"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_materials
+msgid "Issue note"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material__issued_qty
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_materials
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_statement
+msgid "Issued"
+msgstr "Issued"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_material_form
+msgid "Issued (delivery notes)"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material__line_ids
+msgid "Issues"
+msgstr "Issues"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material__name
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply_line__name
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_materials
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+#: model_terms:ir.ui.view,arch_db:care_pms.report_delivery_note
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_clearance
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_statement
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_material_form
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_search
+msgid "Item"
+msgstr "Item"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_material_form
+msgid "Item name..."
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__line_ids
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_supplies
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid "Items"
+msgstr "Items"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Joining date"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "KWD"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_task_template__task_kind
+#: model:ir.model.fields,field_description:care_pms.field_project_task__task_kind
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_assets
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_requests
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_tasks_global
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_search
+msgid "Kind"
+msgstr "Kind"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__pms_labor_cost
+msgid "Labor Cost"
+msgstr "Labor Cost"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_finance
+msgid "Labor cost"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__write_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note_line__write_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__write_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material__write_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material_receipt__write_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__write_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash_expense__write_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__write_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply_line__write_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_task_template__write_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_task_category__write_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_task_forward__write_uid
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__write_uid
+msgid "Last Updated by"
+msgstr "Last Updated by"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__write_date
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note_line__write_date
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__write_date
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material__write_date
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material_receipt__write_date
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__write_date
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash_expense__write_date
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__write_date
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply_line__write_date
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_task_template__write_date
+#: model:ir.model.fields,field_description:care_pms.field_care_task_category__write_date
+#: model:ir.model.fields,field_description:care_pms.field_care_task_forward__write_date
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__write_date
+msgid "Last Updated on"
+msgstr "Last Updated on"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__line_ids
+msgid "Lines"
+msgstr "Lines"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_deliveries
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_materials
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid "Location"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_layout
+msgid "Logout ←"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__project_project__risk_level__low
+msgid "Low"
+msgstr "Low"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "MOI number"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_petty_cash_expense__category__maintenance
+msgid "Maintenance"
+msgstr "Maintenance"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__manager_id
+msgid "Manager"
+msgstr "Manager"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__pms_margin
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_finance
+msgid "Margin"
+msgstr "Margin"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__pms_margin_pct
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_finance
+msgid "Margin %"
+msgstr "Margin %"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Marital status"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note_line__material_id
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material_receipt__material_id
+msgid "Material"
+msgstr "Material"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__material_count
+msgid "Material Count"
+msgstr "Material Count"
+
+#. module: care_pms
+#: model:ir.model,name:care_pms.model_care_pms_material_receipt
+msgid "Material Monthly Receipt"
+msgstr "Material Monthly Receipt"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__material_ids
+msgid "Materials"
+msgstr "Materials"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_delivery_note
+msgid "Materials delivery note"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_supply_tree
+msgid "Materials supplies"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_supply_form
+msgid "Materials supply"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_doc_request__doc_type__medical
+msgid "Medical"
+msgstr "Medical"
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__project_project__risk_level__medium
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_projects
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_my_pms_projects
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_kanban
+msgid "Medium"
+msgstr "Medium"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__member_ids
+msgid "Members"
+msgstr "Members"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_performance
+msgid "Members with events"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_task_template__task_kind__memo
+#: model:ir.model.fields.selection,name:care_pms.selection__project_task__task_kind__memo
+msgid "Memo"
+msgstr "Memo"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_search
+msgid "Memos"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__message_has_error
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__message_has_error
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__message_has_error
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__message_has_error
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__message_has_error
+msgid "Message Delivery error"
+msgstr "Message Delivery error"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__message_ids
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__message_ids
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__message_ids
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__message_ids
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__message_ids
+msgid "Messages"
+msgstr "Messages"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material__min_qty
+msgid "Min. Qty"
+msgstr "Min. Qty"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_materials
+msgid "Minimum"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_petty_cash_expense__category__misc
+msgid "Miscellaneous"
+msgstr "Miscellaneous"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_team
+msgid "Mobile"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_vehicle_file
+msgid "Model"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__pms_revenue
+msgid "Monthly Revenue"
+msgstr "Monthly Revenue"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_finance
+msgid "Monthly revenue"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_task_template__interval_type__months
+msgid "Months"
+msgstr "Months"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__my_activity_date_deadline
+msgid "My Activity Deadline"
+msgstr "My Activity Deadline"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_inbox
+msgid "My inbox"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_dashboard
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_projects
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_my_home_pms
+msgid "My projects"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_search
+msgid "My tasks"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_contracts
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_team
+msgid "Name"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Nationality"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_compliance
+msgid "Nearest expiry"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__project_project__pms_state__follow
+msgid "Needs Follow-up"
+msgstr "Needs Follow-up"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_finance
+msgid "Net margin"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_form
+msgid "New forward"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__activity_calendar_event_id
+msgid "Next Activity Calendar Event"
+msgstr "Next Activity Calendar Event"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr "Next Activity Deadline"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__activity_summary
+msgid "Next Activity Summary"
+msgstr "Next Activity Summary"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__activity_type_id
+msgid "Next Activity Type"
+msgstr "Next Activity Type"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_task_template__next_date
+msgid "Next Run"
+msgstr "Next Run"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "No attached documents."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+msgid "No attachments."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_dashboard
+msgid "No data."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_compliance
+msgid "No documents nearing expiry ✓"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_inbox
+msgid "No forwards awaiting you ✓"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_fuel
+msgid "No fuel data."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_timesheet
+msgid "No lines."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_contracts
+msgid "No linked contracts."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+msgid "No messages yet."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid "No notes."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_attendance
+msgid "No one."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "No penalties ✓"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_performance
+msgid "No performance events yet."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_my_pms_projects
+msgid "No projects available to you currently."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_projects
+msgid "No projects."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid "No stock."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_supplies
+msgid "No supplies currently."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_tasks_global
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid "No tasks."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_timesheet
+msgid "No timesheets yet — create one above."
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__project_task__forward_state__none
+msgid "None"
+msgstr "None"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_inbox
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_assets
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_attendance
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_deliveries
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_materials
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_performance
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_petty
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_requests
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_team
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_vehicle_file
+msgid "None."
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note_line__note_id
+msgid "Note"
+msgstr "Note"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__description
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_requests
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+msgid "Notes"
+msgstr "Notes"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_doc_request_form
+msgid "Notes..."
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__message_needaction_counter
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__message_needaction_counter
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__message_needaction_counter
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__message_needaction_counter
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__message_needaction_counter
+msgid "Number of Actions"
+msgstr "Number of Actions"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Number of children"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__message_has_error_counter
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__message_has_error_counter
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__message_has_error_counter
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__message_has_error_counter
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__message_has_error_counter
+msgid "Number of errors"
+msgstr "Number of errors"
+
+#. module: care_pms
+#: model:ir.model.fields,help:care_pms.field_care_pms_delivery_note__message_needaction_counter
+#: model:ir.model.fields,help:care_pms.field_care_pms_doc_request__message_needaction_counter
+#: model:ir.model.fields,help:care_pms.field_care_pms_petty_cash__message_needaction_counter
+#: model:ir.model.fields,help:care_pms.field_care_pms_supply__message_needaction_counter
+#: model:ir.model.fields,help:care_pms.field_care_task_group__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "Number of messages requiring action"
+
+#. module: care_pms
+#: model:ir.model.fields,help:care_pms.field_care_pms_delivery_note__message_has_error_counter
+#: model:ir.model.fields,help:care_pms.field_care_pms_doc_request__message_has_error_counter
+#: model:ir.model.fields,help:care_pms.field_care_pms_petty_cash__message_has_error_counter
+#: model:ir.model.fields,help:care_pms.field_care_pms_supply__message_has_error_counter
+#: model:ir.model.fields,help:care_pms.field_care_task_group__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "Number of messages with delivery error"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_fuel
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_vehicle_file
+msgid "Odometer"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_petty_cash__state__open
+msgid "Open"
+msgstr "Open"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_dashboard
+msgid "Open tasks"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__date
+msgid "Opened On"
+msgstr "Opened On"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_materials
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_petty
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+msgid "Operation failed."
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_doc_request__doc_type__other
+msgid "Other"
+msgstr "Other"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_task__is_overdue
+#: model:ir.model.fields.selection,name:care_pms.selection__project_project__pms_state__overdue
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_dashboard
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_projects
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_my_pms_projects
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_kanban
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_form
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_search
+#: model_terms:ir.ui.view,arch_db:care_pms.view_task_group_kanban
+msgid "Overdue"
+msgstr "Overdue"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__overdue_count
+msgid "Overdue Count"
+msgstr "Overdue Count"
+
+#. module: care_pms
+#: model:res.groups,name:care_pms.group_pms_admin
+msgid "PMS / Administrator"
+msgstr "PMS / Administrator"
+
+#. module: care_pms
+#: model:res.groups,name:care_pms.group_pms_monitor
+msgid "PMS / Monitor (read + reports)"
+msgstr "PMS / Monitor (read + reports)"
+
+#. module: care_pms
+#: model:res.groups,name:care_pms.group_pms_portal_manager
+msgid "PMS / Portal Project Manager"
+msgstr "PMS / Portal Project Manager"
+
+#. module: care_pms
+#: model:res.groups,name:care_pms.group_pms_manager
+msgid "PMS / Project Manager"
+msgstr "PMS / Project Manager"
+
+#. module: care_pms
+#: model:res.groups,name:care_pms.group_pms_project_all
+msgid "PMS / See all projects (material dispatch)"
+msgstr "PMS / See all projects (material dispatch)"
+
+#. module: care_pms
+#: model:res.groups,name:care_pms.group_pms_supervisor
+msgid "PMS / Supervisor"
+msgstr "PMS / Supervisor"
+
+#. module: care_pms
+#: model:ir.actions.server,name:care_pms.cron_pms_escalate_ir_actions_server
+msgid "PMS: escalate overdue tasks & pending forwards"
+msgstr "PMS: escalate overdue tasks & pending forwards"
+
+#. module: care_pms
+#: model:ir.actions.server,name:care_pms.cron_pms_recurring_ir_actions_server
+msgid "PMS: generate recurring tasks"
+msgstr "PMS: generate recurring tasks"
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_doc_request__doc_type__passport
+msgid "Passport"
+msgstr "Passport"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Passport number"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_task_forward__state__pending
+#: model:ir.model.fields.selection,name:care_pms.selection__project_task__forward_state__pending
+msgid "Pending"
+msgstr "Pending"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_kanban
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_search
+msgid "Pending forward"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_dashboard
+msgid "Pending forwards"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Pension/retirement"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_performance
+msgid "Performance appraisal system is not enabled."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_performance
+msgid "Performance points (year)"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Permit number"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash_expense__cash_id
+#: model:ir.model.fields,field_description:care_pms.field_project_project__pettycash_ids
+msgid "Petty Cash"
+msgstr "Petty Cash"
+
+#. module: care_pms
+#: model:ir.model,name:care_pms.model_care_pms_petty_cash_expense
+msgid "Petty Cash Expense"
+msgstr "Petty Cash Expense"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__pms_petty_spent
+msgid "Petty Cash Spent"
+msgstr "Petty Cash Spent"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_petty
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_statement
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_petty_form
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_petty_tree
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+msgid "Petty cash"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_finance
+msgid "Petty cash expense"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__pettycash_count
+msgid "Pettycash Count"
+msgstr "Pettycash Count"
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_doc_request__doc_type__photo
+msgid "Photo"
+msgstr "Photo"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Place of birth"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_vehicle_file
+msgid "Plate"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_purchase_order__pms_supply_count
+#: model:ir.model.fields,field_description:care_pms.field_sale_order__pms_supply_count
+msgid "Pms Supply Count"
+msgstr "Pms Supply Count"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__pms_task_open
+msgid "Pms Task Open"
+msgstr "Pms Task Open"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__pms_task_overdue
+msgid "Pms Task Overdue"
+msgstr "Pms Task Overdue"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_performance
+msgid "Points"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__portal_user_ids
+msgid "Portal Users"
+msgstr "Portal Users"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_attendance
+msgid "Present today"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__is_private
+msgid "Private (members only)"
+msgstr "Private (members only)"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Private email"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Private phone"
+msgstr ""
+
+#. module: care_pms
+#: model:care.task.category,name:care_pms.cat_procurement
+msgid "Procurement"
+msgstr "Procurement"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material__product_id
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply_line__product_id
+msgid "Product"
+msgstr "Product"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_finance
+msgid "Profitability"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+msgid "Profitability & SLA"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model,name:care_pms.model_project_project
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__project_id
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note_line__project_id
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__project_id
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material__project_id
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__project_id
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__project_id
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_task_template__project_id
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_inbox
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_tasks_global
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_material_search
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_search
+msgid "Project"
+msgstr "Project"
+
+#. module: care_pms
+#: model:ir.module.category,name:care_pms.module_category_pms
+msgid "Project Management"
+msgstr "Project Management"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__project_manager_id
+msgid "Project Manager"
+msgstr "Project Manager"
+
+#. module: care_pms
+#: model:ir.model,name:care_pms.model_care_pms_material
+msgid "Project Material Balance"
+msgstr "Project Material Balance"
+
+#. module: care_pms
+#: model:ir.model,name:care_pms.model_care_pms_delivery_note
+msgid "Project Material Delivery Note"
+msgstr "Project Material Delivery Note"
+
+#. module: care_pms
+#: model:ir.model,name:care_pms.model_care_pms_supply
+msgid "Project Material Supply (Incoming)"
+msgstr "Project Material Supply (Incoming)"
+
+#. module: care_pms
+#: model:ir.model,name:care_pms.model_care_pms_petty_cash
+msgid "Project Petty Cash / Custody"
+msgstr "Project Petty Cash / Custody"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__pms_state
+msgid "Project Status"
+msgstr "Project Status"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+msgid "Project info"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_timesheet
+msgid "Project is not linked to a department — cannot generate timesheet."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_my_home_pm
+msgid "Project management portal"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+msgid "Project manager"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+msgid "Project name..."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_statement
+msgid "Project statement"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_material_tree
+msgid "Project stock"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_statement
+msgid "Project:"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_tree
+msgid "Projects"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_material_search
+msgid "Projects stock"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model,name:care_pms.model_purchase_order
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__po_id
+msgid "Purchase Order"
+msgstr "Purchase Order"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__request_id
+msgid "Purchase Request"
+msgstr "Purchase Request"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note_line__qty
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply_line__qty
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_fuel
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_materials
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_vehicle_file
+#: model_terms:ir.ui.view,arch_db:care_pms.report_delivery_note
+msgid "Quantity"
+msgstr "Quantity"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__rating_ids
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__rating_ids
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__rating_ids
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__rating_ids
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__rating_ids
+msgid "Ratings"
+msgstr "Ratings"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_materials
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid "Re-order"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_task_forward__reason
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_inbox
+msgid "Reason"
+msgstr "Reason"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash_expense__attachment_name
+msgid "Receipt Name"
+msgstr "Receipt Name"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material__receipt_ids
+msgid "Receipts"
+msgstr "Receipts"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_supply_form
+msgid "Receive → stock"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_supplies
+msgid "Receive ✔"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material__received_qty
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_supply__state__received
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_materials
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_supplies
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_statement
+msgid "Received"
+msgstr "Received"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__receiver_name
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__receiver_name
+msgid "Received By"
+msgstr "Received By"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__received_date
+msgid "Received On"
+msgstr "Received On"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material_receipt__qty
+msgid "Received Qty"
+msgstr "Received Qty"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_deliveries
+msgid "Receiver"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_materials
+msgid "Receiver name"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_delivery_note
+msgid "Receiver:"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_supplies
+msgid "Receiving failed."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_performance
+msgid "Recent events"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_petty
+msgid "Record"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model,name:care_pms.model_care_pms_task_template
+msgid "Recurring Task Template"
+msgstr "Recurring Task Template"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_template_form
+msgid "Recurring task template"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_template_tree
+msgid "Recurring task templates"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__name
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__name
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material_receipt__ref
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__name
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__name
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_contracts
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_deliveries
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_petty
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_requests
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_supplies
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_statement
+msgid "Reference"
+msgstr "Reference"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_delivery_note
+msgid "Reference:"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_form
+msgid "Reject forward ✖"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_inbox
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_doc_request_form
+msgid "Reject ✖"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_doc_request__state__rejected
+#: model:ir.model.fields.selection,name:care_pms.selection__care_task_forward__state__rejected
+#: model:ir.model.fields.selection,name:care_pms.selection__project_task__forward_state__rejected
+msgid "Rejected"
+msgstr "Rejected"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__remaining
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_petty
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_statement
+msgid "Remaining"
+msgstr "Remaining"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_petty_form
+msgid "Reopen"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_template_form
+msgid "Repeat every"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__requested_by
+msgid "Requested By"
+msgstr "Requested By"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_timesheet
+msgid "Required"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_doc_request__doc_type__residence
+msgid "Residence (Iqama)"
+msgstr "Residence (Iqama)"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_compliance
+msgid "Residency"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Residency expiry"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Residency start"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_team
+msgid "Residency/permit"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Resigned"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_task_forward__response_date
+msgid "Responded On"
+msgstr "Responded On"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_task_forward__response_reason
+msgid "Response"
+msgstr "Response"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__activity_user_id
+msgid "Responsible User"
+msgstr "Responsible User"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+msgid "Result"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+msgid "Revenue & costs"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__risk_level
+msgid "Risk Level"
+msgstr "Risk Level"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__risk_score
+msgid "Risk Score"
+msgstr "Risk Score"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+msgid "Risk level"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Room"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "SIM"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid "SLA"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__sla_compliance_pct
+msgid "SLA Compliance %"
+msgstr "SLA Compliance %"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__sla_resolution_hours
+msgid "SLA Resolution (hours)"
+msgstr "SLA Resolution (hours)"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__message_has_sms_error
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__message_has_sms_error
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__message_has_sms_error
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__message_has_sms_error
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr "SMS Delivery error"
+
+#. module: care_pms
+#: model:ir.model,name:care_pms.model_sale_order
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__so_id
+msgid "Sales Order"
+msgstr "Sales Order"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_team
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_projects
+msgid "Search"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_search
+msgid "Search tasks"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_projects
+msgid "Select a project to manage"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid "Send"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_supply_form
+msgid "Send (in transit)"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+msgid "Send reply"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_task_category__sequence
+msgid "Sequence"
+msgstr "Sequence"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "Settlement Submitter"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__receiver_signature
+msgid "Signature"
+msgstr "Signature"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Social contract number"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_performance
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_supplies
+msgid "Source"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__source
+msgid "Source / PR Ref"
+msgstr "Source / PR Ref"
+
+#. module: care_pms
+#: model:ir.model.fields,help:care_pms.field_project_project__portal_user_ids
+msgid ""
+"Special users (supervisors/monitors/clients) who can see this project in the"
+" portal."
+msgstr ""
+"Special users (supervisors/monitors/clients) who can see this project in the"
+" portal."
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__spent
+msgid "Spent"
+msgstr "Spent"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_projects
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_my_pms_projects
+msgid "Stable"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_inbox
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid "Stage"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__state
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__state
+msgid "State"
+msgstr "State"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__state
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__state
+#: model:ir.model.fields,field_description:care_pms.field_care_task_forward__state
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_assets
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_deliveries
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_materials
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_petty
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_requests
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_supplies
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_team
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_statement
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_search
+msgid "Status"
+msgstr "Status"
+
+#. module: care_pms
+#: model:ir.model.fields,help:care_pms.field_care_pms_doc_request__activity_state
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+msgstr ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Status:"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_materials
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_statement
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+msgid "Stock"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid "Subject"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_requests
+msgid "Submission failed."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_doc_request_form
+msgid "Submit"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_requests
+msgid "Submit request"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_petty_form
+msgid "Submit to finance"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_doc_request__state__submitted
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_petty_cash__state__submitted
+msgid "Submitted"
+msgstr "Submitted"
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_petty_cash_expense__category__supplies
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+msgid "Supplies"
+msgstr "Supplies"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_supplies
+msgid "Supplies (materials receipt)"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply_line__supply_id
+msgid "Supply"
+msgstr "Supply"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_material_form
+msgid "Supply (received)"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__supply_count
+msgid "Supply Count"
+msgstr "Supply Count"
+
+#. module: care_pms
+#: model:ir.model,name:care_pms.model_care_pms_supply_line
+msgid "Supply Line"
+msgstr "Supply Line"
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/care_pms_supply.py:0
+#, python-format
+msgid "Supply to Project"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model,name:care_pms.model_project_task
+#: model:ir.model.fields,field_description:care_pms.field_care_task_forward__task_id
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_task_template__task_kind__task
+#: model:ir.model.fields.selection,name:care_pms.selection__project_task__task_kind__task
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_inbox
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_projects
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_tasks_global
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_kanban
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_form
+#: model_terms:ir.ui.view,arch_db:care_pms.view_task_group_kanban
+msgid "Task"
+msgstr "Task"
+
+#. module: care_pms
+#: model:ir.model,name:care_pms.model_care_task_category
+msgid "Task Category / Item"
+msgstr "Task Category / Item"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_task_category__task_count
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__task_count
+msgid "Task Count"
+msgstr "Task Count"
+
+#. module: care_pms
+#: model:ir.model,name:care_pms.model_care_task_forward
+msgid "Task Forward Log"
+msgstr "Task Forward Log"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_task__task_group_id
+msgid "Task Group"
+msgstr "Task Group"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+msgid "Task details"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_task_group_form
+msgid "Task group"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+msgid "Task title"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_form
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_template_form
+msgid "Task title..."
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__task_ids
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_my_pms_projects
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_tree
+#: model_terms:ir.ui.view,arch_db:care_pms.view_task_group_form
+msgid "Tasks"
+msgstr "Tasks"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_inbox
+msgid "Tasks forwarded and assigned to you"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_team
+msgid "Team &amp; workers"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_performance
+msgid "Team performance"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_timesheet
+msgid "Timesheet"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_task_template__name
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_team
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_tasks_global
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_task_tree
+msgid "Title"
+msgstr "Title"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_task_forward__to_user_id
+msgid "To"
+msgstr "To"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_timesheet
+msgid "To date"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_delivery_form
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_supply_form
+msgid "To draft"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_attendance
+msgid "Today"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__pms_total_cost
+msgid "Total Cost"
+msgstr "Total Cost"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_finance
+msgid "Total cost"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_attendance
+msgid "Total workers"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_my_home_pms
+msgid "Track your projects, their tasks and requests"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_petty_cash_expense__category__transport
+msgid "Transport"
+msgstr "Transport"
+
+#. module: care_pms
+#: model:ir.model.fields,help:care_pms.field_care_pms_doc_request__activity_exception_decoration
+msgid "Type of the exception activity on record."
+msgstr "Type of the exception activity on record."
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_clearance
+msgid "Undelivered stock balances"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_material__uom_name
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply_line__uom_name
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+#: model_terms:ir.ui.view,arch_db:care_pms.report_delivery_note
+msgid "Unit"
+msgstr "Unit"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_assets
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_petty
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_statement
+msgid "Value"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_fuel
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_kanban
+msgid "Vehicle"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__vehicle_count
+msgid "Vehicle Count"
+msgstr "Vehicle Count"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_vehicle_file
+msgid "Vehicle file"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_my_pms_projects
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+msgid "Vehicles"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_my_pms_projects
+msgid "View details ←"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_compliance
+msgid "Visa"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Visa expiry"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Visa number"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_delivery_note__website_message_ids
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_doc_request__website_message_ids
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__website_message_ids
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_supply__website_message_ids
+#: model:ir.model.fields,field_description:care_pms.field_care_task_group__website_message_ids
+msgid "Website Messages"
+msgstr "Website Messages"
+
+#. module: care_pms
+#: model:ir.model.fields,help:care_pms.field_care_pms_delivery_note__website_message_ids
+#: model:ir.model.fields,help:care_pms.field_care_pms_doc_request__website_message_ids
+#: model:ir.model.fields,help:care_pms.field_care_pms_petty_cash__website_message_ids
+#: model:ir.model.fields,help:care_pms.field_care_pms_supply__website_message_ids
+#: model:ir.model.fields,help:care_pms.field_care_task_group__website_message_ids
+msgid "Website communication history"
+msgstr "Website communication history"
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_task_template__interval_type__weeks
+msgid "Weeks"
+msgstr "Weeks"
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_doc_request__doc_type__work_permit
+msgid "Work Permit"
+msgstr "Work Permit"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_compliance
+msgid "Work permit"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Work permit card"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Work permit expiry"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_attendance
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_compliance
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_requests
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_timesheet
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_kanban
+msgid "Worker"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_project__worker_count
+msgid "Worker Count"
+msgstr "Worker Count"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_team
+msgid "Worker at"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "Worker file"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_team
+msgid "Worker number"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_dashboard
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_compliance
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_projects
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_my_pms_projects
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+msgid "Workers"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+msgid "Write a reply or note..."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_dashboard
+msgid "Your projects statistics — every number is clickable"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model,name:care_pms.model_care_pms_i18n
+msgid "care_pms Arabic i18n"
+msgstr "care_pms Arabic i18n"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_compliance
+msgid "day"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+msgid "forwarded to you"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_fuel
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_vehicle_file
+msgid "km/L"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_layout
+msgid "logo"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "photo"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model,name:care_pms.model_purchase_request
+msgid "purchase.request"
+msgstr "purchase.request"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_tasks_global
+msgid "task — grouped by status"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+msgid "this task.<br/>Reason:"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_compliance
+msgid "whose documents expire within 60 days (nearest first)"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_statement
+msgid ""
+"·\n"
+"                            <b>أصول:</b>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_statement
+msgid ""
+"·\n"
+"                            <b>سيارات:</b>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_statement
+msgid ""
+"·\n"
+"                            <b>عمال:</b>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_statement
+msgid ""
+"·\n"
+"                            متأخرة"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid ""
+"·\n"
+"                            مدير المشروع:"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_timesheet
+msgid "· Generated from biometrics &amp; attendance"
+msgstr ""
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "· مركز إدارة المشاريع"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_clearance
+msgid ""
+"· \n"
+"                            💰 <b>عُهد نقدية مفتوحة:</b>"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_task.py:0
+#, python-format
+msgid ""
+"أحال إليك <b>%s</b> التاسك التالي ويطلب قبولك أو رفضك. تجد كامل التفاصيل "
+"أدناه."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_clearance
+msgid ""
+"أصل  · \n"
+"                            🗄️ <b>العُهد:</b>"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_project.py:0
+#, python-format
+msgid "أصول %s"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/care_pms_pettycash.py:0
+#, python-format
+msgid ""
+"إجمالي المصروف (%s) يتجاوز قيمة العهدة (%s). لا يمكن الصرف فوق المتبقّي."
+msgstr ""
+
+#. module: care_pms
+#: model:ir.actions.act_window,name:care_pms.action_pms_my_forwards
+#: model:ir.ui.menu,name:care_pms.menu_pms_my_forwards
+msgid "إحالات بانتظاري"
+msgstr "إحالات بانتظاري"
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "إحالات معلّقة"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.actions.report,name:care_pms.action_report_project_clearance
+msgid "إخلاء طرف — المشروع"
+msgstr "إخلاء طرف — المشروع"
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_petty_cash__beneficiary_type__department
+msgid "إدارة"
+msgstr "Department"
+
+#. module: care_pms
+#: model:ir.ui.menu,name:care_pms.menu_pms_root
+msgid "إدارة المشاريع"
+msgstr "إدارة المشاريع"
+
+#. module: care_pms
+#: model:ir.actions.server,name:care_pms.action_pr_send_to_project
+msgid "إرسال إلى المشروع (مخزون)"
+msgstr "إرسال إلى المشروع (مخزون)"
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/care_pms_order.py:0
+#: code:addons/care_pms/models/care_pms_order.py:0
+#, python-format
+msgid "اختر «مشروع الصرف» أولاً قبل الإرسال."
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_task.py:0
+#, python-format
+msgid "اختر المستخدم الذي تريد الإحالة إليه أولاً."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "اعتماد الإدارة المالية"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__beneficiary_department_id
+msgid "الإدارة"
+msgstr "Department"
+
+#. module: care_pms
+#: model:ir.ui.menu,name:care_pms.menu_pms_config
+msgid "الإعدادات"
+msgstr "الإعدادات"
+
+#. module: care_pms
+#: model:ir.actions.act_window,name:care_pms.action_task_category
+#: model:ir.ui.menu,name:care_pms.menu_pms_categories
+msgid "البنود والفئات"
+msgstr "البنود والفئات"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "البيان<br/>Description"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "التاريخ / Date"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "التاريخ<br/>Date"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_task.py:0
+#, python-format
+msgid "التاسك التالي تجاوز موعد استحقاقه ويحتاج تدخّلك."
+msgstr ""
+
+#. module: care_pms
+#: model:ir.actions.act_window,name:care_pms.action_pms_tasks
+#: model:ir.ui.menu,name:care_pms.menu_pms_tasks
+msgid "التاسكات"
+msgstr "التاسكات"
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "التاسكات حسب النوع"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "التصنيف<br/>Category"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash_expense__partner_id
+msgid "الجهة"
+msgstr "Party"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "الجهة<br/>Party"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_project_task__pms_stage_name
+msgid "الحالة"
+msgstr "الحالة"
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "الخطر"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.ui.menu,name:care_pms.menu_pms_req_loan
+msgid "السلف/القروض"
+msgstr "السلف/القروض"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__recipient_id
+msgid "الشخص المستلم"
+msgstr "Recipient"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "الشخص المستلم / Recipient"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.ui.menu,name:care_pms.menu_pms_requests
+msgid "الطلبات"
+msgstr "الطلبات"
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "العقود"
+msgstr ""
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "العمال"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.ui.menu,name:care_pms.menu_pms_ops
+msgid "العمليات والموارد"
+msgstr "العمليات والموارد"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "العهدة باسم / Custodian"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.actions.act_window,name:care_pms.action_pms_petty
+#: model:ir.ui.menu,name:care_pms.menu_pms_petty
+msgid "العُهد النقدية"
+msgstr "العُهد النقدية"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "القيمة / Amount"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/care_pms_materials.py:0
+#, python-format
+msgid "الكمية (%s) تتجاوز المتاح من «%s» (%s)."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "المبلغ<br/>Amount"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "المتبقّي / Remaining"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_clearance
+msgid ""
+"المدير المُستلِم: ....................<br/><br/>التوقيع: "
+"...................."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_clearance
+msgid ""
+"المدير المُسلِّم: ....................<br/><br/>التوقيع: "
+"...................."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "المرجع · Ref"
+msgstr ""
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#: model:ir.actions.act_window,name:care_pms.action_pms_projects
+#: model:ir.ui.menu,name:care_pms.menu_pms_projects
+#, python-format
+msgid "المشاريع"
+msgstr "المشاريع"
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "المشاريع (الأكثر تأخّراً)"
+msgstr ""
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "المشروع"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "المشروع / Project"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,help:care_pms.field_purchase_order__pms_project_id
+#: model:ir.model.fields,help:care_pms.field_sale_order__pms_project_id
+msgid "المشروع الذي تُرسَل إليه أصناف هذا الطلب وتُسجَّل في سجله."
+msgstr "المشروع الذي تُرسَل إليه أصناف هذا الطلب وتُسجَّل في سجله."
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "المصروف / Spent"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_project.py:0
+#, python-format
+msgid "امتثال عمالة %s"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "امسح للوصول للسجل · Scan"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/care_pms_supply.py:0
+#, python-format
+msgid "تأكيد استلام: %s"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_task.py:0
+#, python-format
+msgid "تاسك متأخّر"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_project.py:0
+#, python-format
+msgid "تاسكات %s"
+msgstr ""
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "تاسكات مفتوحة"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/care_pms_materials.py:0
+#, python-format
+msgid "تجاوز الرصيد"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.ui.menu,name:care_pms.menu_pms_req_docs
+msgid "تحديث مستندات عامل"
+msgstr "تحديث مستندات عامل"
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_task.py:0
+#, python-format
+msgid "تذكير: طلب إحالة بانتظارك"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_task.py:0
+#, python-format
+msgid "تذكير: طلب إحالة بانتظارك ⏰"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.actions.report,name:care_pms.action_report_petty_cash
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "تسوية عهدة مالية"
+msgstr "تسوية عهدة مالية"
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_task.py:0
+#, python-format
+msgid "تصعيد: تاسك متأخّر 🚨"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/care_pms_supply.py:0
+#, python-format
+msgid "تم استلام مواد الطلب %s"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/care_pms_docrequest.py:0
+#, python-format
+msgid "تم تحديث مستند «%s» عبر طلب %s."
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_task.py:0
+#, python-format
+msgid "تم رفض الإحالة"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_task.py:0
+#, python-format
+msgid "تم رفض الإحالة ✖"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_task.py:0
+#, python-format
+msgid "تم قبول الإحالة"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_task.py:0
+#, python-format
+msgid "تم قبول الإحالة ✅"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "توقيع مقدم التسوية"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_petty_form
+msgid "جهة الصرف"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_task.py:0
+#, python-format
+msgid "رفض <b>%s</b> إحالة التاسك. يبقى مسنداً إليك — راجع السبب أدناه."
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash_expense__invoice_number
+msgid "رقم الفاتورة"
+msgstr "Invoice Number"
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/care_pms_pettycash.py:0
+#, python-format
+msgid "رقم الفاتورة «%s» مُستخدم مسبقاً لنفس الجهة (%s) في العهدة %s."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "رقم الفاتورة<br/>Invoice #"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_task.py:0
+#, python-format
+msgid "سجل الإحالات"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.actions.report,name:care_pms.action_report_delivery_note
+msgid "سند تسليم مواد"
+msgstr "سند تسليم مواد"
+
+#. module: care_pms
+#: model:ir.actions.act_window,name:care_pms.action_pms_delivery
+#: model:ir.ui.menu,name:care_pms.menu_pms_delivery
+msgid "سندات التسليم"
+msgstr "سندات التسليم"
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_project.py:0
+#, python-format
+msgid "سندات تسليم %s"
+msgstr ""
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "سيارات"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_project.py:0
+#, python-format
+msgid "سيارات %s"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_purchase_order_form_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_sale_order_form_pms
+msgid ""
+"سيتم إرسال أصناف هذا الطلب إلى مدير المشروع وتسجيلها في سجل المشروع. متابعة؟"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_petty_cash__beneficiary_type__person
+msgid "شخص"
+msgstr "Person"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash__beneficiary_type
+msgid "صرف إلى"
+msgstr "Disburse to"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "صرف إلى / To"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.ui.menu,name:care_pms.menu_pms_req_items
+msgid "طلب أصناف (Approvals)"
+msgstr "طلب أصناف (Approvals)"
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_task.py:0
+#, python-format
+msgid "طلب إحالة تاسك إليك"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_task.py:0
+#, python-format
+msgid "طلب إحالة تاسك إليك ➡️"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.ui.menu,name:care_pms.menu_pms_req_purchase
+msgid "طلبات الشراء"
+msgstr "طلبات الشراء"
+
+#. module: care_pms
+#: model:ir.actions.act_window,name:care_pms.action_pms_doc_request
+msgid "طلبات تحديث المستندات"
+msgstr "طلبات تحديث المستندات"
+
+#. module: care_pms
+#: model:ir.ui.menu,name:care_pms.menu_pms_req_care
+msgid "طلبات عامة"
+msgstr "طلبات عامة"
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "عالٍ"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_project.py:0
+#, python-format
+msgid "عقود %s"
+msgstr ""
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "عمال"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_project.py:0
+#, python-format
+msgid "عمال %s"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_project.py:0
+#: code:addons/care_pms/models/project_project.py:0
+#, python-format
+msgid "عُهد %s"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.actions.act_window,name:care_pms.action_pms_task_template
+#: model:ir.ui.menu,name:care_pms.menu_pms_task_templates
+msgid "قوالب التاسكات المتكررة"
+msgstr "قوالب التاسكات المتكررة"
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_task.py:0
+#, python-format
+msgid "قَبِل <b>%s</b> إحالة التاسك وانتقلت ملكيته إليه."
+msgstr ""
+
+#. module: care_pms
+#: model:ir.actions.report,name:care_pms.action_report_project_statement
+msgid "كشف حساب المشروع"
+msgstr "كشف حساب المشروع"
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/care_pms_order.py:0
+#: code:addons/care_pms/models/care_pms_order.py:0
+#, python-format
+msgid "لا توجد أصناف قابلة للإرسال في هذا الطلب."
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/care_pms_materials.py:0
+#, python-format
+msgid "لا يمكن التسليم: الكمية المطلوبة من «%s» (%s) تتجاوز المتاح (%s)."
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_task.py:0
+#, python-format
+msgid "لديك طلب إحالة لهذا التاسك ما زال بانتظار قبولك أو رفضك."
+msgstr ""
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "متأخر"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_project.py:0
+#, python-format
+msgid "متأخرات %s"
+msgstr ""
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "متأخرات حسب الإدارة"
+msgstr ""
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "متأخرات حسب البند"
+msgstr ""
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "متأخرة"
+msgstr ""
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "متوسط"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.actions.act_window,name:care_pms.action_task_group
+#: model:ir.ui.menu,name:care_pms.menu_pms_groups
+msgid "مجموعات التاسكات"
+msgstr "مجموعات التاسكات"
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_project.py:0
+#, python-format
+msgid "محروقات %s"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_project.py:0
+#, python-format
+msgid "مخزون %s"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.actions.act_window,name:care_pms.action_pms_material
+#: model:ir.ui.menu,name:care_pms.menu_pms_materials
+msgid "مخزون المشاريع"
+msgstr "مخزون المشاريع"
+
+#. module: care_pms
+#: model:ir.actions.act_window,name:care_pms.action_pms_stock_all
+#: model:ir.ui.menu,name:care_pms.menu_pms_stock_all
+msgid "مخزون المشاريع (المتبقي)"
+msgstr "مخزون المشاريع (المتبقي)"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_care_pms_petty_cash_expense__attachment
+msgid "مرفق الفاتورة"
+msgstr "Invoice Attachment"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_petty_cash
+msgid "مرفق<br/>Att."
+msgstr ""
+
+#. module: care_pms
+#: model:ir.actions.client,name:care_pms.action_pms_dashboard
+#: model:ir.ui.menu,name:care_pms.menu_pms_dashboard
+msgid "مركز المشاريع"
+msgstr "مركز المشاريع"
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "مشاريع في خطر"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.model.fields.selection,name:care_pms.selection__care_pms_petty_cash__beneficiary_type__project
+msgid "مشروع"
+msgstr "Project"
+
+#. module: care_pms
+#: model:ir.model.fields,field_description:care_pms.field_purchase_order__pms_project_id
+#: model:ir.model.fields,field_description:care_pms.field_sale_order__pms_project_id
+msgid "مشروع الصرف"
+msgstr "مشروع الصرف"
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/controllers/pm_portal.py:0
+#, python-format
+msgid "مصروف"
+msgstr ""
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "مفتوح"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/controllers/portal.py:0
+#, python-format
+msgid "ملاحظة من البورتال: %s"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/controllers/portal.py:0
+#, python-format
+msgid "ملاحظة/طلب من البورتال"
+msgstr ""
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "منخفض"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/controllers/pm_portal.py:0
+#, python-format
+msgid "مهمة"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.ui.menu,name:care_pms.menu_pms_req_shift
+msgid "نقل عامل (Shifting)"
+msgstr "نقل عامل (Shifting)"
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/care_pms_supply.py:0
+#, python-format
+msgid "وارد مواد جديد: %s"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/project_project.py:0
+#, python-format
+msgid "واردات %s"
+msgstr ""
+
+#. module: care_pms
+#. odoo-python
+#: code:addons/care_pms/models/care_pms_order.py:0
+#: code:addons/care_pms/models/care_pms_order.py:0
+#: code:addons/care_pms/models/care_pms_order.py:0
+#: model_terms:ir.ui.view,arch_db:care_pms.view_purchase_order_smartbtn_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_sale_order_smartbtn_pms
+#, python-format
+msgid "واردات المشروع"
+msgstr ""
+
+#. module: care_pms
+#: model:ir.actions.act_window,name:care_pms.action_pms_supply
+#: model:ir.ui.menu,name:care_pms.menu_pms_supply
+msgid "واردات المواد"
+msgstr "واردات المواد"
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_timesheet
+msgid ""
+"يجمع النظام أيام حضور كل عامل من البصمة خلال الفترة (لكل عمال المشروع) ثم "
+"يُرسل الكشف للاعتماد — تماماً كموديول التايم شيت في الباك-إند."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid "← All projects"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_vehicle_file
+msgid "← Fuel"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+msgid "← Tasks"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "← Team"
+msgstr ""
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "↻ تحديث"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "⏱️ Attendance (latest records)"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_tasks_global
+msgid "⏳ Pending forwards"
+msgstr ""
+
+#. module: care_pms
+#. odoo-javascript
+#: code:addons/care_pms/static/src/dashboard/pms_dashboard.xml:0
+#, python-format
+msgid "⏳ جارٍ التحميل..."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "⚖️ Penalties"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_dashboard
+msgid "⚠️ Risk distribution"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_vehicle_file
+msgid "⛽ Fuel log ("
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_materials
+msgid "✅ Delivery note issued and balance deducted."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_petty
+msgid "✅ Expense recorded."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+msgid "✅ Forward accepted."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+msgid "✅ Forwarded and notification sent."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_attendance
+msgid "✅ Present today ("
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_supplies
+msgid "✅ Received and quantities added to stock."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+msgid "✅ Reply added."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_requests
+msgid "✅ Request submitted."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+msgid "✅ Task created."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_timesheet
+msgid "✅ Timesheet generated from attendance and submitted for approval."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid "✅ Your request/note was sent successfully."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_supplies
+msgid "✔ Done"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_attendance
+msgid "❌ Absent today ("
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+msgid "➕ Create new task"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_timesheet
+msgid "➕ Create timesheet from attendance"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+msgid "➡️ Forward"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "🎁 Bonuses"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "🏠 Housing"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "🏥 Insurance &amp; salary"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "👤 Personal data"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_performance
+msgid "👥 Members performance (lowest first)"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+msgid "💬 Chat &amp; replies"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_petty
+msgid "💰 Add expense"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_petty
+msgid "💰 Custodies ("
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "💵 Advances &amp; loans"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "💼 Work &amp; job"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "📄 Document requests ("
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_requests
+msgid "📄 Requests ("
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_requests
+msgid "📄 Worker document update request"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_dashboard
+msgid "📊 Tasks by kind"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_tasks_global
+msgid "📋 All"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+msgid "📋 Clearance"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+msgid "📋 Latest tasks"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "📋 Service status"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid "📋 Tasks ("
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_inbox
+msgid "📋 Tasks assigned to me ("
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+msgid "📋 Total"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_task_detail
+msgid "📎 Attachments ("
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "📞 Contact &amp; address"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_purchase_order_form_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_sale_order_form_pms
+msgid "📤 إرسال للمشروع"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_inbox
+msgid "📥 Forwards awaiting your acceptance ("
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_supplies
+msgid "📥 Incoming supplies from purchasing ("
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid "📥 Submit request / note / complaint"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+msgid "📥 You have"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_materials
+msgid "📦 Balances ("
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_overview
+msgid "📦 Items below minimum"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid "📦 Project stock ("
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_projects
+msgid "🔎 Search by project or department"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+msgid "🔎 Search by task name or item"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_team
+msgid "🔎 Search: name · badge · civil ID · passport · permit · mobile"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_task_group_kanban
+msgid "🔒 Private"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_tasks_global
+msgid "🔴 Overdue"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_attendance
+msgid "🕒 Latest attendance logs ("
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_performance
+msgid "🕒 Latest events"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_petty_form
+msgid "🖨️ Cover & statement"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_delivery_form
+msgid "🖨️ Print note"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.view_pms_project_form
+msgid "🖨️ Project statement"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "🖼️ Attached documents"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.portal_pms_project_page
+msgid "🚚 Delivery notes ("
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_materials
+msgid "🚚 Issue delivery note (balance-guarded)"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_dashboard
+msgid "🚨 Most overdue projects"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_petty
+msgid "🚫 Amount exceeds remaining petty cash."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_materials
+msgid "🚫 Quantity exceeds available — note rejected."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_supplies
+msgid "🚫 This supply is not in \"in transit\" state."
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "🛂 Residency &amp; permits"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_tasks
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_tasks_global
+msgid "🟢 Open"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.report_project_clearance
+msgid "🧰 <b>Assets in custody:</b>"
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_assets
+msgid "🧰 Custodies ("
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_p_assets
+msgid "🧱 Assets ("
+msgstr ""
+
+#. module: care_pms
+#: model_terms:ir.ui.view,arch_db:care_pms.pm_employee_file
+msgid "🪪 Identity &amp; documents"
+msgstr ""

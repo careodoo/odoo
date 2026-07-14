@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============ SERVICE ============ -->
+    <record id="view_service_tree" model="ir.ui.view">
+        <field name="name">care.cafm.service.tree</field>
+        <field name="model">care.cafm.service</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="sequence" widget="handle"/>
+                <field name="icon"/><field name="name"/><field name="service_type"/>
+                <field name="default_sla_hours"/><field name="team_count"/><field name="workorder_count"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_service_form" model="ir.ui.view">
+        <field name="name">care.cafm.service.form</field>
+        <field name="model">care.cafm.service</field>
+        <field name="arch" type="xml">
+            <form><sheet>
+                <div class="oe_title"><h1><field name="name" placeholder="اسم الخدمة"/></h1></div>
+                <group>
+                    <group><field name="service_type"/><field name="code"/><field name="icon"/></group>
+                    <group><field name="default_sla_hours"/><field name="color" widget="color_picker"/><field name="active"/></group>
+                </group>
+                <field name="team_ids" readonly="1">
+                    <tree><field name="name"/><field name="facility_id"/><field name="supervisor_id"/><field name="member_count"/></tree>
+                </field>
+            </sheet></form>
+        </field>
+    </record>
+    <record id="action_service" model="ir.actions.act_window">
+        <field name="name">خطوط الخدمة</field><field name="res_model">care.cafm.service</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- ============ FACILITY ============ -->
+    <record id="view_facility_form" model="ir.ui.view">
+        <field name="name">care.cafm.facility.form</field>
+        <field name="model">care.cafm.facility</field>
+        <field name="arch" type="xml">
+            <form><sheet>
+                <div class="oe_button_box" name="button_box">
+                    <button name="action_view_locations" type="object" class="oe_stat_button" icon="fa-map-marker">
+                        <field name="location_count" widget="statinfo" string="المواقع"/></button>
+                    <button name="action_view_workorders" type="object" class="oe_stat_button" icon="fa-wrench">
+                        <field name="workorder_count" widget="statinfo" string="أوامر عمل"/></button>
+                    <button class="oe_stat_button" icon="fa-cubes" disabled="1">
+                        <field name="asset_count" widget="statinfo" string="أصول"/></button>
+                    <button class="oe_stat_button" icon="fa-line-chart" disabled="1">
+                        <field name="sla_compliance" widget="statinfo" string="التزام SLA %"/></button>
+                    <button class="oe_stat_button" icon="fa-exclamation-triangle" disabled="1">
+                        <field name="wo_overdue_count" widget="statinfo" string="متأخرة"/></button>
+                </div>
+                <div class="oe_title"><h1><field name="name" placeholder="اسم المرفق"/></h1></div>
+                <group>
+                    <group><field name="partner_id"/><field name="project_id"/><field name="department_id"/></group>
+                    <group><field name="code"/><field name="address"/><field name="active"/></group>
+                </group>
+                <notebook>
+                    <page string="المباني والأدوار والمواقع">
+                        <field name="building_ids">
+                            <tree editable="bottom"><field name="name"/><field name="floor_count"/></tree>
+                        </field>
+                        <separator string="المواقع (QR)"/>
+                        <field name="location_ids" context="{'default_facility_id':id}">
+                            <tree><field name="code"/><field name="name"/><field name="floor_id"/><field name="location_type"/><field name="is_checkpoint"/></tree>
+                        </field>
+                    </page>
+                </notebook>
+            </sheet></form>
+        </field>
+    </record>
+    <record id="view_facility_tree" model="ir.ui.view">
+        <field name="name">care.cafm.facility.tree</field>
+        <field name="model">care.cafm.facility</field>
+        <field name="arch" type="xml">
+            <tree><field name="name"/><field name="partner_id"/><field name="project_id"/>
+                <field name="location_count"/><field name="workorder_count"/></tree>
+        </field>
+    </record>
+    <record id="action_facility" model="ir.actions.act_window">
+        <field name="name">المرافق والمواقع</field><field name="res_model">care.cafm.facility</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- ============ LOCATION ============ -->
+    <record id="view_location_tree" model="ir.ui.view">
+        <field name="name">care.cafm.location.tree</field>
+        <field name="model">care.cafm.location</field>
+        <field name="arch" type="xml">
+            <tree><field name="code"/><field name="name"/><field name="facility_id"/>
+                <field name="building_id"/><field name="floor_id"/><field name="location_type"/>
+                <field name="is_checkpoint"/>
+                <button name="action_print_qr" type="object" string="🖨️ QR" class="btn-link"/></tree>
+        </field>
+    </record>
+    <record id="view_location_form" model="ir.ui.view">
+        <field name="name">care.cafm.location.form</field>
+        <field name="model">care.cafm.location</field>
+        <field name="arch" type="xml">
+            <form><header>
+                <button name="action_generate_code" type="object" string="🔄 توليد رمز QR" class="btn-secondary"/>
+                <button name="action_print_qr" type="object" string="🖨️ طباعة ملصق QR" class="btn-primary"/>
+            </header><sheet>
+                <div class="oe_title"><h1><field name="name" placeholder="اسم الموقع/الغرفة"/></h1>
+                    <h3><field name="code" readonly="1" placeholder="يُولَّد تلقائياً"/></h3></div>
+                <group>
+                    <group><field name="facility_id"/><field name="floor_id"/><field name="location_type"/></group>
+                    <group><field name="is_checkpoint"/><field name="active"/>
+                        <field name="last_scan_id" readonly="1"/></group>
+                </group>
+                <field name="qr_image" widget="image" readonly="1" options="{'size':[180,180]}"/>
+            </sheet></form>
+        </field>
+    </record>
+    <record id="action_location" model="ir.actions.act_window">
+        <field name="name">المواقع (QR)</field><field name="res_model">care.cafm.location</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- ============ TEAM ============ -->
+    <record id="view_team_form" model="ir.ui.view">
+        <field name="name">care.cafm.team.form</field>
+        <field name="model">care.cafm.team</field>
+        <field name="arch" type="xml">
+            <form><sheet>
+                <div class="oe_title"><h1><field name="name"/></h1></div>
+                <group>
+                    <group><field name="service_id"/><field name="facility_id"/></group>
+                    <group>
+                        <field name="supervisor_ids" widget="many2many_tags"/>
+                        <field name="quality_ids" widget="many2many_tags"/>
+                        <field name="member_count"/>
+                    </group>
+                </group>
+                <separator string="المستخدمون الأعضاء (أساس التعامل)"/>
+                <field name="user_member_ids" widget="many2many_tags"
+                       help="أضف المستخدمين للفريق — يُربط كل مستخدم بموظفه تلقائياً."/>
+                <separator string="الأعضاء (موظفون)"/>
+                <field name="member_ids" widget="many2many_tags"/>
+                <separator string="الاحتياطي"/>
+                <field name="reserve_ids" widget="many2many_tags"/>
+            </sheet></form>
+        </field>
+    </record>
+    <record id="view_team_tree" model="ir.ui.view">
+        <field name="name">care.cafm.team.tree</field>
+        <field name="model">care.cafm.team</field>
+        <field name="arch" type="xml">
+            <tree><field name="name"/><field name="service_id"/><field name="facility_id"/>
+                <field name="supervisor_id"/><field name="member_count"/></tree>
+        </field>
+    </record>
+    <record id="action_team" model="ir.actions.act_window">
+        <field name="name">الفِرَق</field><field name="res_model">care.cafm.team</field><field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- ============ WORK ORDER ============ -->
+    <record id="view_wo_form" model="ir.ui.view">
+        <field name="name">care.cafm.workorder.form</field>
+        <field name="model">care.cafm.workorder</field>
+        <field name="arch" type="xml">
+            <form><header>
+                <button name="action_assign" type="object" string="إسناد" class="oe_highlight" invisible="state != 'new'"/>
+                <button name="action_scan_start" type="object" string="▣ بدء (إثبات حضور)" class="oe_highlight" invisible="state not in ('assigned',)"/>
+                <button name="action_done" type="object" string="✔ إنجاز" class="oe_highlight" invisible="state not in ('in_progress','hold')"/>
+                <button name="action_verify" type="object" string="اعتماد" invisible="state != 'done'"/>
+                <button name="action_hold" type="object" string="تعليق" invisible="state != 'in_progress'"/>
+                <button name="action_cancel" type="object" string="إلغاء" invisible="state in ('done','verified','cancelled')"/>
+                <field name="state" widget="statusbar" statusbar_visible="new,assigned,in_progress,done,verified"/>
+            </header><sheet>
+                <widget name="web_ribbon" text="متأخر SLA" bg_color="bg-danger" invisible="not is_overdue"/>
+                <div class="oe_title"><h1><field name="title" placeholder="عنوان أمر العمل"/></h1><h3><field name="name" readonly="1"/></h3></div>
+                <group>
+                    <group>
+                        <field name="facility_id"/><field name="location_id"/><field name="service_id"/>
+                        <field name="wo_type"/><field name="priority" widget="priority"/>
+                        <field name="asset_id"/>
+                    </group>
+                    <group>
+                        <field name="employee_id"/><field name="request_datetime"/>
+                        <field name="sla_hours"/><field name="deadline" readonly="1"/>
+                        <field name="start_datetime" readonly="1"/><field name="done_datetime" readonly="1"/>
+                        <field name="response_minutes" readonly="1"/><field name="duration_minutes" readonly="1"/>
+                        <field name="escalation_level" readonly="1"/>
+                        <field name="is_overdue" invisible="1"/>
+                    </group>
+                </group>
+                <field name="description" placeholder="الوصف..."/>
+            </sheet>
+            <div class="oe_chatter"><field name="message_follower_ids"/><field name="activity_ids"/><field name="message_ids"/></div>
+            </form>
+        </field>
+    </record>
+    <record id="view_wo_tree" model="ir.ui.view">
+        <field name="name">care.cafm.workorder.tree</field>
+        <field name="model">care.cafm.workorder</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="is_overdue==True" decoration-success="state=='verified'" decoration-muted="state=='cancelled'">
+                <field name="is_overdue" column_invisible="1"/>
+                <field name="name"/><field name="title"/><field name="facility_id"/><field name="location_id"/>
+                <field name="service_id"/><field name="priority" widget="priority"/>
+                <field name="employee_id"/><field name="deadline"/><field name="duration_minutes"/>
+                <field name="state" widget="badge" decoration-success="state=='verified'" decoration-info="state=='in_progress'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_wo_kanban" model="ir.ui.view">
+        <field name="name">care.cafm.workorder.kanban</field>
+        <field name="model">care.cafm.workorder</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_small_column">
+                <field name="state"/><field name="priority"/><field name="is_overdue"/>
+                <templates><t t-name="kanban-box">
+                    <div class="oe_kanban_global_click" t-attf-style="border-inline-start:4px solid #{record.is_overdue.raw_value ? 'e2513f' : '2f6df6'};padding:8px">
+                        <strong><field name="title"/></strong>
+                        <div class="text-muted" style="font-size:11px"><field name="location_id"/> · <field name="service_id"/></div>
+                        <div style="font-size:11px;margin-top:4px"><field name="employee_id"/></div>
+                    </div>
+                </t></templates>
+            </kanban>
+        </field>
+    </record>
+    <record id="view_wo_search" model="ir.ui.view">
+        <field name="name">care.cafm.workorder.search</field>
+        <field name="model">care.cafm.workorder</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="title"/><field name="facility_id"/><field name="location_id"/><field name="service_id"/><field name="employee_id"/>
+                <filter name="open" string="مفتوحة" domain="[('state','not in',('done','verified','cancelled'))]"/>
+                <filter name="overdue" string="متأخرة SLA" domain="[('is_overdue','=',True)]"/>
+                <filter name="mine" string="مهامّي" domain="[('employee_id.user_id','=',uid)]"/>
+                <group expand="0" string="تجميع">
+                    <filter name="g_state" string="الحالة" context="{'group_by':'state'}"/>
+                    <filter name="g_svc" string="الخدمة" context="{'group_by':'service_id'}"/>
+                    <filter name="g_fac" string="المرفق" context="{'group_by':'facility_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_workorder" model="ir.actions.act_window">
+        <field name="name">أوامر العمل</field><field name="res_model">care.cafm.workorder</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="search_view_id" ref="view_wo_search"/>
+        <field name="context">{'search_default_open':1}</field>
+    </record>
+
+    <!-- ============ OBSERVATION ============ -->
+    <record id="view_obs_form" model="ir.ui.view">
+        <field name="name">care.cafm.observation.form</field>
+        <field name="model">care.cafm.observation</field>
+        <field name="arch" type="xml">
+            <form><header>
+                <button name="action_assign" type="object" string="إسناد بموعد" class="oe_highlight" invisible="state != 'open'"/>
+                <button name="action_make_workorder" type="object" string="🧾 تحويل لأمر عمل" invisible="state not in ('assigned',)"/>
+                <button name="action_start_fix" type="object" string="بدء التصحيح" invisible="state != 'assigned'"/>
+                <button name="action_reinspect" type="object" string="إعادة تفتيش" invisible="state != 'fixing'"/>
+                <button name="action_close" type="object" string="إغلاق" class="oe_highlight" invisible="state not in ('reinspect','fixing')"/>
+                <button name="action_cancel" type="object" string="إلغاء" invisible="state in ('closed','cancelled')"/>
+                <field name="state" widget="statusbar" statusbar_visible="open,assigned,fixing,reinspect,closed"/>
+            </header><sheet>
+                <widget name="web_ribbon" text="متأخرة" bg_color="bg-danger" invisible="not is_overdue"/>
+                <div class="oe_title"><h1><field name="title" placeholder="الملاحظة"/></h1><h3><field name="name" readonly="1"/></h3></div>
+                <group>
+                    <group><field name="facility_id"/><field name="location_id"/><field name="service_id"/><field name="severity"/></group>
+                    <group><field name="raised_by" readonly="1"/><field name="assignee_id"/><field name="deadline"/>
+                        <field name="workorder_id" readonly="1"/><field name="is_overdue" invisible="1"/></group>
+                </group>
+                <field name="description" placeholder="الوصف..."/>
+            </sheet>
+            <div class="oe_chatter"><field name="message_follower_ids"/><field name="activity_ids"/><field name="message_ids"/></div>
+            </form>
+        </field>
+    </record>
+    <record id="view_obs_tree" model="ir.ui.view">
+        <field name="name">care.cafm.observation.tree</field>
+        <field name="model">care.cafm.observation</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="is_overdue==True or severity=='critical'" decoration-success="state=='closed'">
+                <field name="is_overdue" column_invisible="1"/>
+                <field name="name"/><field name="title"/><field name="facility_id"/><field name="location_id"/>
+                <field name="severity" widget="badge" decoration-danger="severity in ('high','critical')"/>
+                <field name="assignee_id"/><field name="deadline"/>
+                <field name="state" widget="badge" decoration-success="state=='closed'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_observation" model="ir.actions.act_window">
+        <field name="name">ملاحظات الجودة والتصحيح</field><field name="res_model">care.cafm.observation</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- ============ SCAN LOG ============ -->
+    <record id="view_scan_tree" model="ir.ui.view">
+        <field name="name">care.cafm.scan.tree</field>
+        <field name="model">care.cafm.scan</field>
+        <field name="arch" type="xml">
+            <tree><field name="scan_datetime"/><field name="employee_id"/><field name="location_id"/>
+                <field name="scan_type"/><field name="workorder_id"/></tree>
+        </field>
+    </record>
+    <record id="action_scan" model="ir.actions.act_window">
+        <field name="name">سجل المسح (QR)</field><field name="res_model">care.cafm.scan</field><field name="view_mode">tree</field>
+    </record>
+
+    <!-- Actions used by menus (menu tree lives in views/cafm_menus.xml) -->
+    <record id="action_open_dashboard" model="ir.actions.act_url">
+        <field name="name">غرفة القيادة (نافذة)</field><field name="url">/cafm/dashboard</field><field name="target">new</field>
+    </record>
+    <record id="action_open_mobile" model="ir.actions.act_url">
+        <field name="name">بوابة العميل</field><field name="url">/cafm</field><field name="target">new</field>
+    </record>
+</odoo>

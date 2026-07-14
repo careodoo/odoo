@@ -1,0 +1,401 @@
+# -*- coding: utf-8 -*-
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Language: en_US\n"
+
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_home_form
+msgid "(خلال"
+msgstr "(within"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_home_form
+msgid "<span class=\"o_stat_text\">أدائي (السنة)</span>"
+msgstr "<span class=\"o_stat_text\">My performance (year)</span>"
+
+#. module: care_my
+#: model:ir.actions.server,name:care_my.act_my_performance
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_performance_tree
+msgid "أدائي"
+msgstr "My performance"
+
+#. module: care_my
+#: model:ir.model.fields,field_description:care_my.field_care_my_home__doc_expiry_next
+msgid "أقرب انتهاء مستند"
+msgstr "Nearest document expiry"
+
+#. module: care_my
+#: model:ir.model.fields,field_description:care_my.field_care_my_home__doc_expiry_days
+msgid "أيام حتى الانتهاء"
+msgstr "Days until expiry"
+
+#. module: care_my
+#: model:ir.actions.server,name:care_my.act_my_leaves
+#: model:ir.ui.menu,name:care_my.menu_my_leaves
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_home_form
+msgid "إجازاتي"
+msgstr "My leaves"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_home_form
+msgid "إجراءات سريعة"
+msgstr "Quick actions"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_attendance_tree
+msgid "إجمالي الساعات"
+msgstr "Total hours"
+
+#. module: care_my
+#: model:ir.actions.server,name:care_my.act_my_permissions
+#: model:ir.ui.menu,name:care_my.menu_my_permissions
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_home_form
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_permission_tree
+msgid "استئذاناتي"
+msgstr "My permissions"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_permission_form
+msgid "اكتب سبب الاستئذان..."
+msgstr "Write the permission reason..."
+
+#. module: care_my
+#: model:ir.model.fields,field_description:care_my.field_care_my_home__perf_score_ytd
+msgid "الأداء (السنة)"
+msgstr "Performance (year)"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_payslip_tree
+msgid "الأساسي"
+msgstr "Basic"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_bonus_tree
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_custody_tree
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_loan_tree
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_penalty_tree
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_performance_tree
+msgid "الإجمالي"
+msgstr "Total"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_profile_form
+msgid "الإقامة"
+msgstr "Residency"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_profile_form
+msgid "التأمين والبنك"
+msgstr "Insurance & bank"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_profile_form
+msgid "الجواز والتأشيرة"
+msgstr "Passport & visa"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_profile_form
+msgid "الرواتب"
+msgstr "Salaries"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_bonus_form
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_penalty_form
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_permission_form
+msgid "السبب"
+msgstr "Reason"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_profile_form
+msgid "الشؤون الاجتماعية"
+msgstr "Social affairs"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_attendance_search
+msgid "الشهر"
+msgstr "Month"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_payslip_tree
+msgid "الصافي"
+msgstr "Net"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_loan_form
+msgid "بيانات السلفة"
+msgstr "Loan details"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_permission_form
+msgid "بيانات الطلب"
+msgstr "Request details"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_profile_form
+msgid "بيانات سريعة"
+msgstr "Quick facts"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_profile_form
+msgid "تصريح الشؤون / الملف"
+msgstr "Affairs permit / file"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_loan_form
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_permission_form
+msgid "تقديم الطلب"
+msgstr "Submit request"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_profile_form
+msgid "تواصل"
+msgstr "Contact"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_penalty_form
+msgid "جزاء"
+msgstr "Penalty"
+
+#. module: care_my
+#: model:ir.actions.server,name:care_my.act_my_penalties
+#: model:ir.ui.menu,name:care_my.menu_my_penalties
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_penalty_tree
+msgid "جزاءاتي"
+msgstr "My penalties"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_loan_form
+msgid "حساب الأقساط"
+msgstr "Compute installments"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_home_form
+msgid "حضور الشهر"
+msgstr "Month attendance"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_attendance_search
+msgid "حضوري"
+msgstr "My attendance"
+
+#. module: care_my
+#: model:ir.actions.server,name:care_my.act_my_attendance
+#: model:ir.ui.menu,name:care_my.menu_my_attendance
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_attendance_tree
+msgid "سجل حضوري"
+msgstr "My attendance log"
+
+#. module: care_my
+#: model:ir.actions.server,name:care_my.act_my_loans
+#: model:ir.ui.menu,name:care_my.menu_my_loans
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_home_form
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_loan_tree
+msgid "سلفي"
+msgstr "My loans"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_permission_form
+msgid "طلب استئذان"
+msgstr "Permission request"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_loan_form
+msgid "طلب سلفة"
+msgstr "Loan request"
+
+#. module: care_my
+#: model:ir.actions.server,name:care_my.act_my_doc_request
+#: model:ir.ui.menu,name:care_my.menu_my_doc_request
+msgid "طلب مستند"
+msgstr "Document request"
+
+#. module: care_my
+#: model:ir.ui.menu,name:care_my.menu_my_requests
+msgid "طلباتي"
+msgstr "My requests"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_home_form
+msgid "عرض ملفي الشخصي الكامل ←"
+msgstr "View my full profile ←"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_custody_form
+msgid "عهدة"
+msgstr "Custody"
+
+#. module: care_my
+#: model:ir.actions.server,name:care_my.act_my_custody
+#: model:ir.ui.menu,name:care_my.menu_my_custody
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_custody_tree
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_home_form
+msgid "عُهدي"
+msgstr "My custody"
+
+#. module: care_my
+#: model:ir.actions.server,name:care_my.act_my_payslips
+#: model:ir.ui.menu,name:care_my.menu_my_payslips
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_payslip_tree
+msgid "قسائم رواتبي"
+msgstr "My payslips"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_payslip_form
+msgid "قسيمة الراتب"
+msgstr "Payslip"
+
+#. module: care_my
+#. odoo-python
+#: code:addons/care_my/models/care_my_home.py:0
+#, python-format
+msgid "لا يوجد ملف موظف مرتبط بحسابك. برجاء التواصل مع الموارد البشرية."
+msgstr "No employee file is linked to your account. Please contact HR."
+
+#. module: care_my
+#. odoo-python
+#: code:addons/care_my/models/care_my_home.py:0
+#: model:ir.actions.server,name:care_my.act_my_home
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_home_form
+#, python-format
+msgid "لوحتي"
+msgstr "My Home"
+
+#. module: care_my
+#: model:ir.ui.menu,name:care_my.menu_my_entitlements
+msgid "مستحقاتي"
+msgstr "My entitlements"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_loan_form
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_permission_form
+msgid "معلومات"
+msgstr "Information"
+
+#. module: care_my
+#: model:ir.actions.server,name:care_my.act_my_bonuses
+#: model:ir.ui.menu,name:care_my.menu_my_bonuses
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_bonus_tree
+msgid "مكافآتي"
+msgstr "My bonuses"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_bonus_form
+msgid "مكافأة"
+msgstr "Bonus"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_custody_form
+msgid "ملاحظات"
+msgstr "Notes"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_home_form
+msgid "ملخّص مالي (تراكمي)"
+msgstr "Financial summary (cumulative)"
+
+#. module: care_my
+#: model:ir.actions.server,name:care_my.act_my_profile
+#: model:ir.ui.menu,name:care_my.menu_my_profile
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_profile_form
+msgid "ملفي الشخصي"
+msgstr "My profile"
+
+#. module: care_my
+#: model:ir.actions.server,name:care_my.act_my_tasks
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_home_form
+msgid "مهامي"
+msgstr "My tasks"
+
+#. module: care_my
+#: model:ir.model.fields,field_description:care_my.field_care_my_home__my_tasks_count
+msgid "مهامي المفتوحة"
+msgstr "My open tasks"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_attendance_search
+msgid "هذا الشهر"
+msgstr "This month"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_home_form
+msgid "يوم)."
+msgstr "days)."
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_home_form
+msgid "— برجاء المتابعة مع الموارد البشرية."
+msgstr "— please follow up with HR."
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_home_form
+msgid "⏰ طلب / متابعة استئذان"
+msgstr "⏰ Request / track permission"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_home_form
+msgid "⏳ تنتهي أقرب وثيقة لديك (إقامة/تصريح) خلال"
+msgstr "⏳ Your nearest document (residency/permit) expires within"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_profile_form
+msgid "🏛️ الشؤون والملف الحكومي"
+msgstr "🏛️ Affairs & government file"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_profile_form
+msgid "🏠 السكن"
+msgstr "🏠 Housing"
+
+#. module: care_my
+#: model:ir.ui.menu,name:care_my.menu_my_home
+msgid "🏠 لوحتي"
+msgstr "🏠 My Home"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_profile_form
+msgid "👤 البيانات الشخصية"
+msgstr "👤 Personal data"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_profile_form
+msgid "💵 الراتب والتأمين"
+msgstr "💵 Salary & insurance"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_home_form
+msgid "💵 طلب / متابعة سلفة"
+msgstr "💵 Request / track loan"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_home_form
+msgid "📄 أقرب انتهاء لوثائقك بتاريخ"
+msgstr "📄 Your nearest document expiry is on"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_home_form
+msgid "📄 طلب مستند"
+msgstr "📄 Document request"
+
+#. module: care_my
+#: model:ir.ui.menu,name:care_my.menu_my_performance
+msgid "📈 أدائي"
+msgstr "📈 My performance"
+
+#. module: care_my
+#: model:ir.ui.menu,name:care_my.menu_my_tasks
+msgid "📌 مهامي"
+msgstr "📌 My tasks"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_profile_form
+msgid "🛂 الإقامة والجواز"
+msgstr "🛂 Residency & passport"
+
+#. module: care_my
+#: model_terms:ir.ui.view,arch_db:care_my.view_my_home_form
+msgid "🛫 طلب / متابعة إجازة"
+msgstr "🛫 Request / track leave"

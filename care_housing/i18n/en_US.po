@@ -1,0 +1,123 @@
+# -*- coding: utf-8 -*-
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Language: en_US\n"
+
+
+#. module: care_housing
+#: model:ir.actions.act_window,name:care_housing.action_room_occupancy
+#: model:ir.ui.menu,name:care_housing.menu_housing_occupancy
+#: model_terms:ir.ui.view,arch_db:care_housing.view_room_occupancy_search
+#: model_terms:ir.ui.view,arch_db:care_housing.view_room_occupancy_tree
+msgid "إشغال الغرف"
+msgstr "Room occupancy"
+
+#. module: care_housing
+#: model:ir.model.fields,field_description:care_housing.field_hr_employee__housing_bed_ids
+#: model:ir.model.fields,field_description:care_housing.field_security_employee__housing_bed_ids
+#: model_terms:ir.ui.view,arch_db:care_housing.view_vacant_bed_search
+msgid "الأسرّة"
+msgstr "Beds"
+
+#. module: care_housing
+#: model:ir.actions.act_window,name:care_housing.action_vacant_beds
+#: model:ir.ui.menu,name:care_housing.menu_housing_vacant_beds
+#: model_terms:ir.ui.view,arch_db:care_housing.view_vacant_bed_tree
+msgid "الأسرّة الشاغرة"
+msgstr "Vacant beds"
+
+#. module: care_housing
+#: model_terms:ir.ui.view,arch_db:care_housing.view_room_occupancy_tree
+msgid "الإجمالي"
+msgstr "Total"
+
+#. module: care_housing
+#: model:ir.model.fields,field_description:care_housing.field_hr_employee__housing_bed_id
+#: model:ir.model.fields,field_description:care_housing.field_security_employee__housing_bed_id
+msgid "السرير"
+msgstr "Bed"
+
+#. module: care_housing
+#: model:ir.model.fields,field_description:care_housing.field_hr_employee__housing_hostel_id
+#: model:ir.model.fields,field_description:care_housing.field_security_employee__housing_hostel_id
+#: model_terms:ir.ui.view,arch_db:care_housing.view_room_occupancy_search
+#: model_terms:ir.ui.view,arch_db:care_housing.view_vacant_bed_search
+msgid "السكن"
+msgstr "Hostel"
+
+#. module: care_housing
+#: model:ir.model.fields,field_description:care_housing.field_hr_employee__housing_floor_id
+#: model:ir.model.fields,field_description:care_housing.field_security_employee__housing_floor_id
+#: model_terms:ir.ui.view,arch_db:care_housing.view_room_occupancy_search
+msgid "الطابق"
+msgstr "Floor"
+
+#. module: care_housing
+#: model:ir.model.fields,field_description:care_housing.field_hr_employee__housing_room_id
+#: model:ir.model.fields,field_description:care_housing.field_security_employee__housing_room_id
+#: model_terms:ir.ui.view,arch_db:care_housing.view_vacant_bed_search
+msgid "الغرفة"
+msgstr "Room"
+
+#. module: care_housing
+#: model_terms:ir.ui.view,arch_db:care_housing.view_room_occupancy_search
+msgid "بدون أسرّة"
+msgstr "No beds"
+
+#. module: care_housing
+#: model_terms:ir.ui.view,arch_db:care_housing.view_room_occupancy_search
+msgid "بها أسرّة شاغرة"
+msgstr "Has vacant beds"
+
+#. module: care_housing
+#: model_terms:ir.ui.view,arch_db:care_housing.view_room_occupancy_search
+#: model_terms:ir.ui.view,arch_db:care_housing.view_vacant_bed_search
+msgid "تجميع"
+msgstr "Group by"
+
+#. module: care_housing
+#: model:ir.actions.act_window,name:care_housing.action_housing_analysis
+msgid "تحليل إشغال السكن"
+msgstr "Housing occupancy analysis"
+
+#. module: care_housing
+#: model:ir.ui.menu,name:care_housing.menu_housing_analysis
+#: model_terms:ir.ui.view,arch_db:care_housing.view_room_occupancy_graph
+#: model_terms:ir.ui.view,arch_db:care_housing.view_room_occupancy_pivot
+msgid "تحليل الإشغال"
+msgstr "Occupancy analysis"
+
+#. module: care_housing
+#: model:ir.model.fields,field_description:care_housing.field_hostel_room__available_beds
+#: model_terms:ir.ui.view,arch_db:care_housing.view_room_occupancy_tree
+msgid "شاغرة"
+msgstr "Available"
+
+#. module: care_housing
+#: model_terms:ir.ui.view,arch_db:care_housing.view_vacant_bed_search
+msgid "شاغرة فقط"
+msgstr "Vacant only"
+
+#. module: care_housing
+#: model:ir.model.fields,field_description:care_housing.field_hostel_room__bed_count
+msgid "عدد الأسرّة"
+msgstr "Bed count"
+
+#. module: care_housing
+#: model:ir.model.fields,field_description:care_housing.field_hostel_room__occupied_beds
+#: model_terms:ir.ui.view,arch_db:care_housing.view_room_occupancy_tree
+msgid "مشغولة"
+msgstr "Occupied"
+
+#. module: care_housing
+#: model_terms:ir.ui.view,arch_db:care_housing.view_room_occupancy_search
+msgid "ممتلئة"
+msgstr "Full"
+
+#. module: care_housing
+#: model:ir.model.fields,field_description:care_housing.field_hostel_room__occupancy_pct
+msgid "نسبة الإشغال %"
+msgstr "Occupancy %"

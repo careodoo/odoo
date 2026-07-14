@@ -1,0 +1,499 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ================= CAFM CLIENT ================= -->
+    <record id="view_cafm_client_kanban" model="ir.ui.view">
+        <field name="name">care.cafm.client.kanban</field>
+        <field name="model">care.cafm.client</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="" class="o_kanban_dashboard">
+                <field name="name"/><field name="code"/><field name="project_count"/>
+                <field name="user_count"/><field name="facility_count"/><field name="open_wo"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click" style="padding:14px;border-radius:12px">
+                            <div style="display:flex;justify-content:space-between;align-items:center">
+                                <strong style="font-size:15px"><field name="name"/></strong>
+                                <span class="badge text-bg-secondary"><field name="code"/></span>
+                            </div>
+                            <div class="text-muted" style="margin:6px 0"><field name="phone"/></div>
+                            <div style="display:flex;gap:14px;margin-top:8px;flex-wrap:wrap">
+                                <span title="مشاريع">🗂️ <field name="project_count"/></span>
+                                <span title="مرافق">🏢 <field name="facility_count"/></span>
+                                <span title="مستخدمون">👤 <field name="user_count"/></span>
+                                <span title="أوامر مفتوحة">🔧 <field name="open_wo"/></span>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    <record id="view_cafm_client_tree" model="ir.ui.view">
+        <field name="name">care.cafm.client.tree</field>
+        <field name="model">care.cafm.client</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="code"/><field name="name"/><field name="partner_id"/>
+                <field name="phone"/><field name="project_count"/><field name="facility_count"/>
+                <field name="user_count"/><field name="open_wo"/>
+                <field name="can_add_workers" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_cafm_client_form" model="ir.ui.view">
+        <field name="name">care.cafm.client.form</field>
+        <field name="model">care.cafm.client</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" icon="fa-folder-open" type="object" name="action_open_projects">
+                            <field name="project_count" widget="statinfo" string="المشاريع"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-building" type="object" name="action_open_projects" invisible="1"/>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="اسم العميل"/></h1>
+                        <field name="code" readonly="1"/>
+                    </div>
+                    <group>
+                        <group string="الربط بأودو">
+                            <field name="partner_id" options="{'no_quick_create': False}"
+                                   help="اختر عميلاً من أودو أو أنشئ واحداً جديداً."/>
+                            <field name="phone"/><field name="email"/>
+                        </group>
+                        <group string="الصلاحيات والإحصاء">
+                            <field name="can_add_workers"/>
+                            <field name="facility_count"/><field name="open_wo"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="👤 مستخدمو العميل" name="users">
+                            <field name="user_ids" widget="many2many_tags"
+                                   options="{'no_quick_create': True}"
+                                   placeholder="اختر مستخدمي البوّابة التابعين لهذا العميل…"/>
+                        </page>
+                        <page string="🛒 منتجات المتجر" name="shop">
+                            <div class="text-muted" style="margin-bottom:8px">اختر المنتجات التي تظهر في متجر هذا العميل — اتركها فارغة لعرض كل المنتجات.</div>
+                            <field name="shop_product_ids">
+                                <tree>
+                                    <field name="image_128" widget="image" options="{'size': [32, 32]}"/>
+                                    <field name="default_code"/><field name="name"/>
+                                    <field name="categ_id"/><field name="lst_price"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="🗂️ المشاريع" name="projects">
+                            <field name="project_ids" context="{'default_client_id': id}">
+                                <tree>
+                                    <field name="code"/><field name="name"/><field name="project_id"/>
+                                    <field name="manager_id"/><field name="team_count"/>
+                                    <field name="facility_count"/><field name="open_wo"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="ملاحظات" name="notes"><field name="notes"/></page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter"><field name="message_follower_ids"/><field name="activity_ids"/><field name="message_ids"/></div>
+            </form>
+        </field>
+    </record>
+    <record id="action_cafm_client_org" model="ir.actions.act_window">
+        <field name="name">العملاء</field>
+        <field name="res_model">care.cafm.client</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="help" type="html"><p class="o_view_nocontent_smiling_face">أنشئ أول عميل</p>
+            <p>سجّل العميل، اربطه بجهة أودو أو أنشئها، وحدّد مستخدميه ومشاريعه.</p></field>
+    </record>
+
+    <!-- ================= CAFM PROJECT ================= -->
+    <record id="view_cafm_project_org_kanban" model="ir.ui.view">
+        <field name="name">care.cafm.project.kanban</field>
+        <field name="model">care.cafm.project</field>
+        <field name="arch" type="xml">
+            <kanban>
+                <field name="name"/><field name="code"/><field name="client_id"/>
+                <field name="team_count"/><field name="member_count"/><field name="facility_count"/><field name="open_wo"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click" style="padding:14px;border-radius:12px">
+                            <div style="display:flex;justify-content:space-between;align-items:center">
+                                <strong style="font-size:15px"><field name="name"/></strong>
+                                <span class="badge text-bg-secondary"><field name="code"/></span>
+                            </div>
+                            <div class="text-muted" style="margin:6px 0">👤 <field name="client_id"/></div>
+                            <div style="display:flex;gap:14px;margin-top:8px;flex-wrap:wrap">
+                                <span title="فرق">👥 <field name="team_count"/></span>
+                                <span title="أعضاء">🧑‍🔧 <field name="member_count"/></span>
+                                <span title="مرافق">🏢 <field name="facility_count"/></span>
+                                <span title="أوامر مفتوحة">🔧 <field name="open_wo"/></span>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    <record id="view_cafm_project_org_tree" model="ir.ui.view">
+        <field name="name">care.cafm.project.tree</field>
+        <field name="model">care.cafm.project</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="code"/><field name="name"/><field name="client_id"/>
+                <field name="project_id"/><field name="manager_id"/>
+                <field name="team_count"/><field name="member_count"/><field name="open_wo"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_cafm_project_org_form" model="ir.ui.view">
+        <field name="name">care.cafm.project.form</field>
+        <field name="model">care.cafm.project</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" icon="fa-users" type="object" name="action_open_teams">
+                            <field name="team_count" widget="statinfo" string="الفرق"/>
+                        </button>
+                    </div>
+                    <field name="logo" widget="image" class="oe_avatar"
+                           options="{'preview_image': 'logo'}"/>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="اسم المشروع"/></h1>
+                        <field name="code" readonly="1"/>
+                        <div class="text-muted">🏢 يظهر شعار المشروع على المبنى ثلاثي الأبعاد</div>
+                    </div>
+                    <group>
+                        <group string="الربط">
+                            <field name="client_id" options="{'no_quick_create': True}"/>
+                            <field name="project_id" options="{'no_quick_create': False}"
+                                   help="اربط بمشروع أودو موجود أو أنشئ واحداً."/>
+                        </group>
+                        <group string="الإحصاء">
+                            <field name="facility_count"/><field name="member_count"/><field name="open_wo"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="مديرو المشروع"><field name="manager_ids" widget="many2many_tags"/></group>
+                        <group string="المشرفون"><field name="supervisor_ids" widget="many2many_tags"/></group>
+                        <group string="مراقبة الجودة"><field name="quality_ids" widget="many2many_tags"/></group>
+                    </group>
+                    <notebook>
+                        <page string="🏢 المرافق" name="facilities">
+                            <field name="facility_ids"><tree><field name="name"/><field name="partner_id"/></tree></field>
+                        </page>
+                        <page string="👥 الفرق" name="teams">
+                            <field name="team_ids" context="{'default_cafm_project_id': id}">
+                                <tree>
+                                    <field name="name"/><field name="service_id"/>
+                                    <field name="supervisor_id"/><field name="quality_user_id"/>
+                                    <field name="line_count" string="الأعضاء"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="👤 مستخدمون آخرون" name="users">
+                            <field name="user_ids" widget="many2many_tags"/>
+                        </page>
+                        <page string="📦 المواد (من المخزون)" name="materials">
+                            <field name="material_ids">
+                                <kanban>
+                                    <field name="image_128"/><field name="name"/><field name="default_code"/>
+                                    <field name="lst_price"/><field name="categ_id"/><field name="qty_available"/>
+                                    <templates>
+                                        <t t-name="kanban-box">
+                                            <div class="oe_kanban_global_click" style="display:flex;gap:10px;padding:8px">
+                                                <img t-att-src="kanban_image('product.product','image_128',record.id.raw_value)" style="width:48px;height:48px;object-fit:contain;border-radius:8px;background:#f4f7fb"/>
+                                                <div><strong><field name="name"/></strong>
+                                                    <div class="text-muted" style="font-size:12px"><field name="default_code"/> · <field name="categ_id"/></div>
+                                                    <div><field name="lst_price"/></div>
+                                                </div>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                                <tree>
+                                    <field name="image_128" widget="image" options="{'size': [32, 32]}"/>
+                                    <field name="default_code"/><field name="name"/>
+                                    <field name="categ_id"/><field name="uom_id"/>
+                                    <field name="qty_available"/><field name="lst_price"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="ملاحظات" name="notes"><field name="notes"/></page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter"><field name="message_follower_ids"/><field name="activity_ids"/><field name="message_ids"/></div>
+            </form>
+        </field>
+    </record>
+    <record id="action_cafm_project_org" model="ir.actions.act_window">
+        <field name="name">المشاريع</field>
+        <field name="res_model">care.cafm.project</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="help" type="html"><p class="o_view_nocontent_smiling_face">أنشئ أول مشروع</p>
+            <p>لكل مشروع: عميله، ربطه بمشروع أودو، مشرفوه ومراقبو الجودة، وفِرَقه.</p></field>
+    </record>
+
+    <!-- ================= TEAM: add project + members with shifts ============ -->
+    <record id="view_cafm_team_form_org" model="ir.ui.view">
+        <field name="name">care.cafm.team.form.org</field>
+        <field name="model">care.cafm.team</field>
+        <field name="inherit_id" ref="care_cafm.view_team_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='service_id']" position="after">
+                <field name="cafm_project_id"/>
+            </xpath>
+            <xpath expr="//sheet" position="inside">
+                <notebook>
+                    <page string="🧑‍🔧 الأعضاء والورديات" name="members">
+                        <field name="member_line_ids">
+                            <tree editable="bottom">
+                                <field name="employee_id"/>
+                                <field name="job_title"/>
+                                <field name="role"/>
+                                <field name="shift_type_id"/>
+                                <field name="phone"/>
+                            </tree>
+                        </field>
+                    </page>
+                </notebook>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ================= SHIFT TYPES ================= -->
+    <record id="view_cafm_shift_type_tree" model="ir.ui.view">
+        <field name="name">care.cafm.shift.type.tree</field>
+        <field name="model">care.cafm.shift.type</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name"/><field name="code"/>
+                <field name="start_time" widget="float_time"/>
+                <field name="end_time" widget="float_time"/>
+                <field name="days"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_cafm_shift_type" model="ir.actions.act_window">
+        <field name="name">أنواع الورديات</field>
+        <field name="res_model">care.cafm.shift.type</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- ================= TEAM MEMBERS — LOAD BOARD (linked records) ========= -->
+    <record id="view_cafm_member_kanban" model="ir.ui.view">
+        <field name="name">care.cafm.team.member.kanban</field>
+        <field name="model">care.cafm.team.member</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="team_id" class="o_kanban_small_column">
+                <field name="employee_id"/><field name="role"/><field name="shift_type_id"/>
+                <field name="open_wo"/><field name="overdue_wo"/><field name="done_wo"/>
+                <field name="job_title"/><field name="photo"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click" style="padding:12px;border-radius:12px">
+                            <div style="display:flex;gap:10px;align-items:center">
+                                <img t-att-src="kanban_image('care.cafm.team.member','photo',record.id.raw_value)"
+                                     style="width:42px;height:42px;border-radius:50%;object-fit:cover"/>
+                                <div style="flex:1">
+                                    <strong><field name="employee_id"/></strong>
+                                    <div class="text-muted" style="font-size:12px"><field name="job_title"/></div>
+                                </div>
+                                <span class="badge text-bg-info"><field name="role"/></span>
+                            </div>
+                            <div style="margin-top:8px;font-size:12px" t-if="record.shift_type_id.raw_value">⏱️ <field name="shift_type_id"/></div>
+                            <div style="display:flex;gap:10px;margin-top:8px">
+                                <span title="مفتوحة">🔧 <field name="open_wo"/></span>
+                                <span title="متأخرة" style="color:#e11d48">⏰ <field name="overdue_wo"/></span>
+                                <span title="منجزة" style="color:#16a34a">✅ <field name="done_wo"/></span>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    <record id="view_cafm_member_tree" model="ir.ui.view">
+        <field name="name">care.cafm.team.member.tree</field>
+        <field name="model">care.cafm.team.member</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="overdue_wo &gt; 0">
+                <field name="employee_id"/><field name="user_id"/><field name="team_id"/>
+                <field name="cafm_project_id"/><field name="role"/><field name="shift_type_id"/>
+                <field name="open_wo"/><field name="overdue_wo"/><field name="done_wo"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_cafm_member_form" model="ir.ui.view">
+        <field name="name">care.cafm.team.member.form</field>
+        <field name="model">care.cafm.team.member</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <field name="photo" widget="image" class="oe_avatar"/>
+                    <div class="oe_title"><h1><field name="employee_id" placeholder="اختر الموظف/العامل"/></h1></div>
+                    <group>
+                        <group string="الربط بأودو">
+                            <field name="employee_id"/>
+                            <field name="user_id"/>
+                            <field name="job_title"/><field name="phone"/>
+                        </group>
+                        <group string="الفريق والوردية">
+                            <field name="team_id"/>
+                            <field name="cafm_project_id" readonly="1"/>
+                            <field name="role"/>
+                            <field name="shift_type_id"/>
+                        </group>
+                    </group>
+                    <group string="الحِمل الحالي">
+                        <group>
+                            <field name="open_wo"/><field name="overdue_wo"/><field name="done_wo"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_cafm_team_member" model="ir.actions.act_window">
+        <field name="name">فريق العمل — الأحمال</field>
+        <field name="res_model">care.cafm.team.member</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="help" type="html"><p class="o_view_nocontent_smiling_face">أضِف أعضاء الفِرَق</p>
+            <p>كل عضو سجلّ مستقل مرتبط بموظف/مستخدم أودو، بدوره ووردِيته وحِمله الحيّ.</p></field>
+    </record>
+
+    <!-- ===== ATTENDANCE (from shift open/close) ===== -->
+    <record id="view_cafm_shift_att_tree" model="ir.ui.view">
+        <field name="name">care.cafm.shift.attendance.tree</field>
+        <field name="model">care.cafm.shift</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state=='open'">
+                <field name="employee_id"/><field name="facility_id"/>
+                <field name="check_in"/><field name="check_out"/>
+                <field name="duration_hours" sum="إجمالي الساعات"/>
+                <field name="in_distance"/>
+                <field name="state" widget="badge" decoration-success="state=='open'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_cafm_shift_att_pivot" model="ir.ui.view">
+        <field name="name">care.cafm.shift.attendance.pivot</field>
+        <field name="model">care.cafm.shift</field>
+        <field name="arch" type="xml">
+            <pivot string="الحضور">
+                <field name="employee_id" type="row"/>
+                <field name="check_in" interval="day" type="col"/>
+                <field name="duration_hours" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+    <record id="view_cafm_shift_att_search" model="ir.ui.view">
+        <field name="name">care.cafm.shift.attendance.search</field>
+        <field name="model">care.cafm.shift</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/><field name="facility_id"/>
+                <filter name="f_open" string="داخل الوردية الآن" domain="[('state','=','open')]"/>
+                <filter name="f_today" string="اليوم" domain="[('check_in','>=', datetime.datetime.combine(context_today(), datetime.time(0,0,0)))]"/>
+                <group expand="0" string="تجميع">
+                    <filter name="g_emp" string="الموظف" context="{'group_by':'employee_id'}"/>
+                    <filter name="g_fac" string="المرفق" context="{'group_by':'facility_id'}"/>
+                    <filter name="g_day" string="اليوم" context="{'group_by':'check_in:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_cafm_attendance" model="ir.actions.act_window">
+        <field name="name">الحضور والانصراف</field>
+        <field name="res_model">care.cafm.shift</field>
+        <field name="view_mode">tree,pivot,form</field>
+        <field name="context">{'search_default_g_emp': 1}</field>
+        <field name="help" type="html"><p class="o_view_nocontent_smiling_face">لا سجلات حضور بعد</p>
+            <p>تُسجَّل تلقائياً عند فتح/إغلاق الوردية من التطبيق — أيام وساعات الحضور لكل عامل.</p></field>
+    </record>
+    <menuitem id="menu_cafm_attendance" name="🕐 الحضور والانصراف" parent="menu_cafm_people"
+              action="action_cafm_attendance" sequence="15"/>
+
+    <!-- ===== OFFBOARD REQUESTS (CARE approves) ===== -->
+    <record id="view_cafm_offboard_tree" model="ir.ui.view">
+        <field name="name">care.cafm.offboard.request.tree</field>
+        <field name="model">care.cafm.offboard.request</field>
+        <field name="arch" type="xml">
+            <tree decoration-warning="state=='pending'" decoration-success="state=='approved'" decoration-danger="state=='rejected'">
+                <field name="name"/><field name="request_type" widget="badge"/>
+                <field name="employee_id"/><field name="job_requested"/>
+                <field name="start_date"/><field name="end_date"/>
+                <field name="facility_id"/><field name="requested_by"/><field name="request_date"/>
+                <field name="state" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_cafm_offboard_form" model="ir.ui.view">
+        <field name="name">care.cafm.offboard.request.form</field>
+        <field name="model">care.cafm.offboard.request</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_approve" type="object" string="✅ موافقة CARE" class="btn-primary"
+                            invisible="state != 'pending'" groups="hr.group_hr_manager"/>
+                    <button name="action_reject" type="object" string="⛔ رفض" class="btn-secondary"
+                            invisible="state != 'pending'" groups="hr.group_hr_manager"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1>
+                        <field name="request_type" widget="radio" options="{'horizontal': True}"/></div>
+                    <group>
+                        <group>
+                            <field name="employee_id"/><field name="job_title"/>
+                            <field name="job_requested" invisible="request_type != 'onboard'"/>
+                            <field name="start_date" invisible="request_type != 'onboard'"/>
+                            <field name="end_date" invisible="request_type != 'offboard'"/>
+                            <field name="facility_id"/><field name="partner_id"/>
+                        </group>
+                        <group>
+                            <field name="requested_by" readonly="1"/><field name="request_date" readonly="1"/>
+                            <field name="decision_by" readonly="1"/><field name="decision_date" readonly="1"/>
+                        </group>
+                    </group>
+                    <separator string="الأسباب / الملاحظات"/>
+                    <field name="reason"/>
+                    <field name="decision_note" placeholder="ملاحظة القرار…"/>
+                </sheet>
+                <div class="oe_chatter"><field name="message_follower_ids"/><field name="activity_ids"/><field name="message_ids"/></div>
+            </form>
+        </field>
+    </record>
+    <record id="action_cafm_offboard" model="ir.actions.act_window">
+        <field name="name">طلبات الالتحاق وإنهائه</field>
+        <field name="res_model">care.cafm.offboard.request</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    <menuitem id="menu_cafm_offboard" name="🔁 طلبات الالتحاق وإنهائه" parent="menu_cafm_people"
+              action="action_cafm_offboard" sequence="40"/>
+
+    <!-- ===== Invoice: show client approval / rejection ===== -->
+    <record id="view_move_form_cafm_approval" model="ir.ui.view">
+        <field name="name">account.move.form.cafm.approval</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/notebook" position="inside">
+                <page string="🤝 موافقة العميل" name="cafm_client_approval"
+                      invisible="move_type not in ('out_invoice','out_refund')">
+                    <group>
+                        <group>
+                            <field name="cafm_client_approval" widget="badge"
+                                   decoration-success="cafm_client_approval == 'accepted'"
+                                   decoration-danger="cafm_client_approval == 'rejected'"/>
+                            <field name="cafm_client_approval_date" readonly="1"/>
+                            <field name="cafm_needs_resend" readonly="1"/>
+                        </group>
+                    </group>
+                    <field name="cafm_client_comment" readonly="1" placeholder="تعليق العميل عند القبول/الرفض…"/>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

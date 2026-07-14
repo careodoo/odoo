@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_pms_doc_request_form" model="ir.ui.view">
+        <field name="name">care.pms.doc.request.form</field>
+        <field name="model">care.pms.doc.request</field>
+        <field name="arch" type="xml">
+            <form string="طلب مستند">
+                <header>
+                    <button name="action_submit" type="object" string="تقديم" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_approve" type="object" string="اعتماد ✅" class="btn-success"
+                            invisible="state != 'submitted'" groups="care_pms.group_pms_manager"/>
+                    <button name="action_reject" type="object" string="رفض ✖" class="btn-danger"
+                            invisible="state != 'submitted'" groups="care_pms.group_pms_manager"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="department_id"/>
+                            <field name="project_id"/>
+                            <field name="doc_type"/>
+                        </group>
+                        <group>
+                            <field name="requested_by"/>
+                            <field name="approver_id"/>
+                            <field name="attachment" filename="attachment_name"/>
+                            <field name="attachment_name" invisible="1"/>
+                        </group>
+                    </group>
+                    <field name="description" placeholder="ملاحظات..."/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    <record id="view_pms_doc_request_tree" model="ir.ui.view">
+        <field name="name">care.pms.doc.request.tree</field>
+        <field name="model">care.pms.doc.request</field>
+        <field name="arch" type="xml">
+            <tree string="طلبات المستندات">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="doc_type"/>
+                <field name="project_id"/>
+                <field name="requested_by"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'submitted'" decoration-success="state == 'approved'"
+                       decoration-danger="state == 'rejected'" decoration-muted="state == 'draft'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_pms_doc_request" model="ir.actions.act_window">
+        <field name="name">طلبات تحديث المستندات</field>
+        <field name="res_model">care.pms.doc.request</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

@@ -1,0 +1,33 @@
+# -*- coding: utf-8 -*-
+{
+    'name': 'CARE My (Employee Self-Service)',
+    'version': '17.0.1.0',
+    'summary': 'Personal "My" menu: full employee file + self-service requests (leave, permission, loan)',
+    'author': 'CARE',
+    'license': 'LGPL-3',
+    'depends': [
+        'hr',
+        'hr_holidays',
+        'hr_attendance',
+        'hr_payroll',
+        'permission_request',
+        'ent_ohrms_loan',
+        'care_hr',
+        'lento_customization',
+        'care_appraisal',
+    ],
+    'data': [
+        'security/care_my_groups.xml',
+        'security/ir.model.access.csv',
+        'views/care_my_profile_views.xml',
+        'views/care_my_payslip_views.xml',
+        'views/care_my_entitlement_views.xml',
+        'views/care_my_attendance_views.xml',
+        'views/care_my_request_views.xml',
+        'views/care_my_actions.xml',
+        'views/care_my_home_views.xml',
+    ],
+    'installable': True,
+    'application': True,
+    'auto_install': False,
+}

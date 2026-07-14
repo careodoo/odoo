@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>CAFM — نظام إدارة تشغيل المرافق | care</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --ground:#0e1a2b; --surface:#16273d; --surface-2:#1d3350; --line:#274261;
+    --ink:#eaf1fb; --muted:#9db2ce; --faint:#6f88a8;
+    --accent:#f7a23b; --accent-2:#2dd4bf;
+    --ok:#39c07a; --warn:#f5b638; --crit:#f2603f; --info:#4aa8ff;
+    --shadow:0 18px 44px -20px rgba(0,0,0,.7);
+    --r:16px;
+    --f-body:"Segoe UI",Tahoma,system-ui,-apple-system,"Noto Sans Arabic",sans-serif;
+  }
+  @media (prefers-color-scheme:light){
+    :root{ --ground:#eef2f7; --surface:#ffffff; --surface-2:#f4f7fb; --line:#dbe4ef;
+      --ink:#132234; --muted:#4d647f; --faint:#7f97b2; --shadow:0 16px 40px -22px rgba(20,40,70,.35); }
+  }
+  :root[data-theme="dark"]{ --ground:#0e1a2b; --surface:#16273d; --surface-2:#1d3350; --line:#274261;
+    --ink:#eaf1fb; --muted:#9db2ce; --faint:#6f88a8; --shadow:0 18px 44px -20px rgba(0,0,0,.7); }
+  :root[data-theme="light"]{ --ground:#eef2f7; --surface:#ffffff; --surface-2:#f4f7fb; --line:#dbe4ef;
+    --ink:#132234; --muted:#4d647f; --faint:#7f97b2; --shadow:0 16px 40px -22px rgba(20,40,70,.35); }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f-body);
+    direction:rtl;line-height:1.65;-webkit-font-smoothing:antialiased;font-size:16px}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+  h1,h2,h3{text-wrap:balance;margin:0;line-height:1.2}
+  a{color:inherit}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;
+    padding:3px 10px;border-radius:999px;letter-spacing:.2px}
+  .chip.ok{background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ok)}
+  .chip.warn{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn)}
+  .chip.crit{background:color-mix(in srgb,var(--crit) 22%,transparent);color:var(--crit)}
+  .chip.info{background:color-mix(in srgb,var(--info) 20%,transparent);color:var(--info)}
+  .eyebrow{font-size:12.5px;font-weight:800;letter-spacing:2px;color:var(--accent);text-transform:uppercase}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+  /* ---------- top bar ---------- */
+  .top{position:sticky;top:0;z-index:20;backdrop-filter:blur(10px);
+    background:color-mix(in srgb,var(--ground) 82%,transparent);border-bottom:1px solid var(--line)}
+  .top .wrap{display:flex;align-items:center;justify-content:space-between;height:62px}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:18px}
+  .logo{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;
+    background:linear-gradient(150deg,var(--accent),#e07d1c);color:#1a1205;font-weight:900;box-shadow:0 6px 16px -6px var(--accent)}
+  .nav{display:flex;gap:22px;font-size:14px;font-weight:600;color:var(--muted)}
+  .nav a{text-decoration:none}.nav a:hover{color:var(--accent)}
+  @media(max-width:820px){.nav{display:none}}
+
+  /* ---------- hero ---------- */
+  .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+  .hero::before{content:"";position:absolute;inset:0;
+    background:radial-gradient(1100px 500px at 82% -8%,color-mix(in srgb,var(--accent) 22%,transparent),transparent 60%),
+              radial-gradient(760px 460px at 6% 108%,color-mix(in srgb,var(--accent-2) 16%,transparent),transparent 55%)}
+  .hero .wrap{position:relative;padding:74px 20px 60px}
+  .hero h1{font-size:clamp(34px,5.4vw,60px);font-weight:900;letter-spacing:-.5px}
+  .hero h1 b{color:var(--accent)}
+  .lede{max-width:60ch;color:var(--muted);font-size:clamp(16px,2vw,19px);margin-top:18px}
+  .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+  .btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:11px 20px;
+    border-radius:11px;font-weight:800;font-size:14px;cursor:pointer;text-decoration:none;display:inline-flex;gap:8px;align-items:center}
+  .btn.pri{background:linear-gradient(150deg,var(--accent),#e07d1c);color:#1a1205;border-color:transparent;box-shadow:0 12px 26px -12px var(--accent)}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:44px}
+  @media(max-width:760px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:color-mix(in srgb,var(--surface) 72%,transparent);border:1px solid var(--line);
+    border-radius:14px;padding:16px 16px}
+  .kpi .n{font-size:30px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+  .kpi .l{font-size:12.5px;color:var(--muted);font-weight:600;margin-top:3px}
+  .kpi .n b{color:var(--accent)}
+
+  /* ---------- sections ---------- */
+  section{padding:66px 0;border-bottom:1px solid var(--line)}
+  .sec-head{display:flex;flex-direction:column;gap:10px;margin-bottom:34px;max-width:70ch}
+  .sec-head h2{font-size:clamp(24px,3.4vw,34px);font-weight:850}
+  .sec-head p{color:var(--muted);margin:0}
+
+  .grid{display:grid;gap:16px}
+  .g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}.g2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:900px){.g3,.g4{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:600px){.g2,.g3,.g4{grid-template-columns:1fr}}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px;box-shadow:var(--shadow)}
+  .card h3{font-size:17px;font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:9px}
+  .card p{color:var(--muted);font-size:14px;margin:0}
+  .ic{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;flex:none;
+    background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent);font-size:19px}
+
+  /* module rail */
+  .mod{display:flex;gap:14px;align-items:flex-start}
+  .mod .num{font-variant-numeric:tabular-nums;font-weight:900;color:var(--accent);font-size:14px;
+    border:1px solid var(--line);border-radius:8px;padding:2px 8px;flex:none;margin-top:2px}
+
+  /* roles */
+  .role{position:relative;overflow:hidden}
+  .role .tag{position:absolute;top:14px;left:14px}
+  .role ul{margin:12px 0 0;padding-inline-start:18px;color:var(--muted);font-size:13.5px}
+  .role li{margin:4px 0}
+
+  /* ---------- device mockups ---------- */
+  .screens{display:grid;grid-template-columns:340px 1fr;gap:26px;align-items:start}
+  @media(max-width:900px){.screens{grid-template-columns:1fr}}
+  .phone{background:#05101d;border:8px solid #0a1626;border-radius:34px;padding:14px 12px 18px;
+    box-shadow:var(--shadow);max-width:340px;margin-inline:auto}
+  :root[data-theme="light"] .phone{border-color:#c9d6e6;background:#eef3f9}
+  .phone .bar{display:flex;justify-content:space-between;font-size:11px;color:var(--faint);padding:0 6px 10px;font-weight:700}
+  .scr{background:var(--surface);border:1px solid var(--line);border-radius:20px;overflow:hidden}
+  .scr .hd{padding:13px 14px;background:linear-gradient(150deg,var(--surface-2),var(--surface));
+    border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .scr .hd b{font-size:14px}
+  .scr .bd{padding:12px 13px;display:flex;flex-direction:column;gap:10px}
+  .task{border:1px solid var(--line);border-radius:12px;padding:11px 12px;background:var(--surface-2);position:relative}
+  .task .stripe{position:absolute;inset-inline-start:0;top:10px;bottom:10px;width:4px;border-radius:4px}
+  .task h4{margin:0 0 3px;font-size:13.5px;font-weight:800}
+  .task .meta{font-size:12px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+  .mini{font-size:11.5px;color:var(--faint)}
+  .assign{display:flex;align-items:center;gap:7px;margin-top:8px;font-size:12px}
+  .av{width:22px;height:22px;border-radius:50%;background:linear-gradient(150deg,var(--accent-2),#1b8f80);
+    color:#04201c;display:grid;place-items:center;font-size:11px;font-weight:900;flex:none}
+  .btn-sm{font-size:12px;font-weight:800;padding:7px 12px;border-radius:9px;border:none;cursor:pointer;
+    background:linear-gradient(150deg,var(--accent),#e07d1c);color:#1a1205}
+  .btn-gh{background:transparent;border:1px solid var(--line);color:var(--ink)}
+
+  /* corrective / QC panel (backend) */
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+  .panel .ph{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;background:var(--surface-2)}
+  .panel .pb{padding:18px}
+  .field{display:flex;justify-content:space-between;gap:14px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:14px}
+  .field:last-child{border-bottom:0}
+  .field .k{color:var(--muted)}
+  .field .v{font-weight:700;text-align:end}
+  .timeline{display:flex;flex-direction:column;gap:0;margin-top:6px}
+  .tl{display:flex;gap:12px;position:relative;padding-bottom:16px}
+  .tl:last-child{padding-bottom:0}
+  .tl .p{width:12px;height:12px;border-radius:50%;background:var(--accent);flex:none;margin-top:4px;z-index:1}
+  .tl .p.done{background:var(--ok)}.tl .p.pending{background:var(--faint)}
+  .tl::before{content:"";position:absolute;inset-inline-start:5px;top:14px;bottom:0;width:2px;background:var(--line)}
+  .tl:last-child::before{display:none}
+  .tl .t{font-size:13.5px;font-weight:700}.tl .s{font-size:12px;color:var(--muted)}
+
+  /* dashboard bars */
+  .gauge{display:flex;align-items:center;gap:14px}
+  .ring{--v:92;width:74px;height:74px;border-radius:50%;flex:none;
+    background:conic-gradient(var(--ok) calc(var(--v)*1%),color-mix(in srgb,var(--line) 60%,transparent) 0);
+    display:grid;place-items:center;position:relative}
+  .ring::before{content:"";position:absolute;inset:9px;border-radius:50%;background:var(--surface)}
+  .ring b{position:relative;font-size:17px;font-weight:900}
+  .bars{display:flex;flex-direction:column;gap:9px}
+  .brow{display:grid;grid-template-columns:110px 1fr 42px;align-items:center;gap:10px;font-size:12.5px}
+  .track{height:9px;border-radius:6px;background:color-mix(in srgb,var(--line) 55%,transparent);overflow:hidden}
+  .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+
+  .idea{display:flex;gap:12px;align-items:flex-start}
+  .idea .ic{background:color-mix(in srgb,var(--accent-2) 15%,transparent);color:var(--accent-2)}
+  .idea b{font-size:14.5px}.idea span{color:var(--muted);font-size:13px}
+
+  .flow{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
+  .step{flex:1 1 150px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;position:relative}
+  .step .st{font-size:12px;color:var(--accent);font-weight:800}
+  .step h4{font-size:14px;margin:5px 0 4px}
+  .step p{font-size:12.5px;color:var(--muted);margin:0}
+
+  .integ{display:flex;flex-wrap:wrap;gap:10px}
+  .pill{border:1px solid var(--line);background:var(--surface);border-radius:11px;padding:10px 14px;font-size:13px;font-weight:700;display:flex;gap:9px;align-items:center}
+  .pill .dot{width:9px;height:9px}
+
+  .road{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  @media(max-width:820px){.road{grid-template-columns:1fr 1fr}}
+  @media(max-width:520px){.road{grid-template-columns:1fr}}
+  .phase{border:1px solid var(--line);border-radius:14px;padding:18px;background:var(--surface)}
+  .phase .pn{font-size:12px;font-weight:800;letter-spacing:1px;color:var(--accent)}
+  .phase h4{margin:7px 0;font-size:16px}
+  .phase ul{margin:0;padding-inline-start:17px;color:var(--muted);font-size:13px}
+  .phase li{margin:3px 0}
+
+  footer{padding:40px 0 60px;color:var(--faint);font-size:13px}
+  .theme-toggle{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:9px;
+    width:38px;height:38px;cursor:pointer;font-size:16px}
+  @media (prefers-reduced-motion:no-preference){
+    .reveal{opacity:0;transform:translateY(14px);transition:opacity .6s,transform .6s}
+    .reveal.in{opacity:1;transform:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="top"><div class="wrap">
+  <div class="brand"><span class="logo">C</span> CAFM<span style="color:var(--faint);font-weight:600;font-size:14px">/ care</span></div>
+  <nav class="nav">
+    <a href="#modules">المنظومة</a><a href="#roles">الأدوار والبوابات</a>
+    <a href="#mobile">تطبيق المشرف</a><a href="#qc">الجودة والتصحيح</a>
+    <a href="#dash">لوحة الإدارة</a><a href="#ideas">أفكار احترافية</a>
+  </nav>
+  <button class="theme-toggle" id="tt" aria-label="تبديل الوضع">◐</button>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">Computer-Aided Facility Management</div>
+  <h1 style="margin-top:14px">نظام إدارة تشغيل المرافق <b>داخل المشاريع والعقود</b></h1>
+  <p class="lede">منصّة تشغيلية واحدة تربط العميل والمشرف والعامل وموظف الجودة والإدارة — من طلب الخدمة، إلى إسناد المهمة، إلى رصد الملاحظة وتصحيحها في موعدها، إلى إثبات الإنجاز بالصورة والموقع — مع تطبيق موبايل ميداني وربط مباشر بأنظمة البصمة والمشاريع الحالية.</p>
+  <div class="cta">
+    <a class="btn pri" href="#mobile">استعراض تطبيق المشرف ↩</a>
+    <a class="btn" href="#roadmap">خطة التنفيذ</a>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="n"><b>5</b> بوابات</div><div class="l">عميل · مشرف · عامل · جودة · إدارة</div></div>
+    <div class="kpi"><div class="n">أوامر عمل</div><div class="l">تصحيحية + وقائية (PPM) بجدولة تلقائية</div></div>
+    <div class="kpi"><div class="n">SLA</div><div class="l">قياس زمن الاستجابة والإنجاز + تصعيد آلي</div></div>
+    <div class="kpi"><div class="n">📱 ميداني</div><div class="l">إسناد ومتابعة وإثبات بالصورة والـ GPS</div></div>
+  </div>
+</div></header>
+
+<!-- MODULES -->
+<section id="modules"><div class="wrap">
+  <div class="sec-head">
+    <div class="eyebrow">المنظومة</div>
+    <h2>باك-إند شامل يدير دورة التشغيل بالكامل</h2>
+    <p>كل مكوّن مبني ليتكامل مع الآخر: الموقع يحمل أصوله، والأصل يولّد أوامر الصيانة، والجولة تُنشئ ملاحظات التصحيح، والمهمة تُسند لعامل وتُثبت بالصورة.</p>
+  </div>
+  <div class="grid g3">
+    <div class="card"><div class="mod"><span class="num">01</span><div><h3>المواقع والأصول</h3><p>سجل المرافق المرتبطة بكل عقد/مشروع وعميل، وأصولها (مكيّفات، مصاعد، مضخّات…) بأكواد QR للفحص والصيانة.</p></div></div></div>
+    <div class="card"><div class="mod"><span class="num">02</span><div><h3>طلبات الخدمة</h3><p>يرفعها العميل أو المشرف؛ تتحوّل تلقائياً إلى أمر عمل مصنّف حسب النوع والأولوية والموقع.</p></div></div></div>
+    <div class="card"><div class="mod"><span class="num">03</span><div><h3>أوامر العمل</h3><p>تصحيحية (طارئة) + وقائية مجدولة (PPM) بتقويم تلقائي، مع تتبّع الحالة والوقت والتكلفة.</p></div></div></div>
+    <div class="card"><div class="mod"><span class="num">04</span><div><h3>الجولات والجودة</h3><p>قوائم فحص (Checklists) موزونة بنِسَب نجاح، تُنتج ملاحظات تصحيحية قابلة للإسناد.</p></div></div></div>
+    <div class="card"><div class="mod"><span class="num">05</span><div><h3>ملاحظات التصحيح</h3><p>رصد الملاحظة + موعد نهائي للتصحيح + إسنادها لشخص بعينه + إثبات الإغلاق بالصورة.</p></div></div></div>
+    <div class="card"><div class="mod"><span class="num">06</span><div><h3>اتفاقية الخدمة SLA</h3><p>أزمنة استجابة/إنجاز لكل نوع خدمة وعقد، مع تصعيد آلي وحساب الغرامات عند التجاوز.</p></div></div></div>
+    <div class="card"><div class="mod"><span class="num">07</span><div><h3>إسناد المهام والموبايل</h3><p>المشرف يوزّع المهام على العمّال لحظياً؛ العامل ينفّذ ويرفع إثباتاً بالصورة والموقع.</p></div></div></div>
+    <div class="card"><div class="mod"><span class="num">08</span><div><h3>الحضور الميداني</h3><p>ربط بأنظمة البصمة الحالية: مَن على الموقع الآن؟ تغطية الورديات مقابل المطلوب.</p></div></div></div>
+    <div class="card"><div class="mod"><span class="num">09</span><div><h3>لوحات ومؤشرات</h3><p>SLA، أوامر مفتوحة/متأخرة، رضا العميل، تكلفة التشغيل لكل عقد، وخريطة تكرار الأعطال.</p></div></div></div>
+  </div>
+</div></section>
+
+<!-- ROLES -->
+<section id="roles"><div class="wrap">
+  <div class="sec-head">
+    <div class="eyebrow">الأدوار والبوابات</div>
+    <h2>لكل دور بوابته وصلاحياته</h2>
+    <p>خمس بوابات مبنية على صلاحيات دقيقة — كل مستخدم يرى ما يخصّه فقط، عبر الويب أو الموبايل.</p>
+  </div>
+  <div class="grid g3">
+    <div class="card role"><span class="tag chip info">ويب + موبايل</span><h3><span class="ic">🧑‍💼</span> العميل</h3>
+      <ul><li>رفع طلب خدمة/شكوى مع صورة وموقع</li><li>متابعة حالة أوامر العمل لحظياً</li><li>لوحة التزام SLA لعقده</li><li>اعتماد الإنجاز + تقييم الرضا (CSAT)</li></ul></div>
+    <div class="card role"><span class="tag chip warn">موبايل ميداني</span><h3><span class="ic">🦺</span> المشرف</h3>
+      <ul><li>لوحة حيّة لحالة الموقع والعمّال</li><li>إسناد المهام وإعادة توزيعها فوراً</li><li>رصد ملاحظة تصحيح بموعد ومسؤول</li><li>اعتماد إنجاز العامل بالصورة</li></ul></div>
+    <div class="card role"><span class="tag chip crit">موبايل</span><h3><span class="ic">🔎</span> موظف الجودة</h3>
+      <ul><li>جولات تفتيش بقوائم فحص موزونة</li><li>تسجيل مخالفة + درجة خطورة</li><li>إنشاء إجراء تصحيحي وإسناده</li><li>إعادة التفتيش والإغلاق</li></ul></div>
+    <div class="card role"><span class="tag chip ok">موبايل/كشك</span><h3><span class="ic">🧹</span> العامل</h3>
+      <ul><li>«مهامّي» اليوم مرتّبة بالأولوية</li><li>قائمة فحص لكل مهمة (قبل/بعد)</li><li>إثبات بالصورة + تسجيل الإنجاز</li><li>حضور/انصراف بالبصمة أو GPS</li></ul></div>
+    <div class="card role"><span class="tag chip info">ويب</span><h3><span class="ic">📊</span> مدير التشغيل</h3>
+      <ul><li>لوحات KPIs وSLA لكل العقود</li><li>تخطيط الصيانة الوقائية والموارد</li><li>تكلفة التشغيل والربحية لكل عقد</li><li>تقارير للعميل والإدارة العليا</li></ul></div>
+    <div class="card role"><span class="tag chip">ويب</span><h3><span class="ic">🗂️</span> منسّق/موظفو الدعم</h3>
+      <ul><li>استقبال الطلبات وتصنيفها</li><li>جدولة أوامر العمل والفِرَق</li><li>إدارة المخزون والمستهلكات</li><li>متابعة المتأخرات والتصعيد</li></ul></div>
+  </div>
+</div></section>
+
+<!-- MOBILE + QC screens -->
+<section id="mobile"><div class="wrap">
+  <div class="sec-head">
+    <div class="eyebrow">تطبيق المشرف الميداني</div>
+    <h2>يرى ما يحدث… ويُسنِد المهمة بلمسة</h2>
+    <p>شاشة المشرف تعرض حالة الموقع لحظياً، ومنها يُسنِد مهمة لعامل، أو يرصد ملاحظة جودة بموعد تصحيح ومسؤول محدّد.</p>
+  </div>
+  <div class="screens">
+    <!-- phone -->
+    <div class="phone">
+      <div class="bar"><span>٩:٤١ ص</span><span>موقع: برج بيان ▾</span><span>📶 🔋</span></div>
+      <div class="scr">
+        <div class="hd"><b>مهامّ الموقع — اليوم</b><span class="chip warn">٣ متأخرة</span></div>
+        <div class="bd">
+          <div class="task"><span class="stripe" style="background:var(--crit)"></span>
+            <h4>تنظيف اللوبي الرئيسي</h4>
+            <div class="meta"><span>الأولوية: عاجلة</span><span class="mini">⏱ متأخرة ٢٥ د</span></div>
+            <div class="assign"><span class="av">م</span> مُسندة إلى: محمد سوروج <button class="btn-sm btn-gh" style="margin-inline-start:auto">إعادة إسناد</button></div>
+          </div>
+          <div class="task"><span class="stripe" style="background:var(--warn)"></span>
+            <h4>فحص مضخّة الحريق</h4>
+            <div class="meta"><span>صيانة وقائية (PPM)</span><span class="mini">استحقاق ١١:٠٠</span></div>
+            <div class="assign"><span class="av" style="background:linear-gradient(150deg,#7aa2ff,#3f6de0);color:#031436">؟</span> غير مُسندة <button class="btn-sm" style="margin-inline-start:auto">إسناد الآن</button></div>
+          </div>
+          <div class="task"><span class="stripe" style="background:var(--ok)"></span>
+            <h4>تعقيم دورات المياه — ط٣</h4>
+            <div class="meta"><span class="chip ok">مُنجزة</span><span class="mini">📷 إثبات مرفق</span></div>
+          </div>
+          <button class="btn-sm" style="width:100%;padding:11px">＋ رصد ملاحظة جودة</button>
+        </div>
+      </div>
+    </div>
+    <!-- QC corrective backend panel -->
+    <div id="qc">
+      <div class="panel">
+        <div class="ph"><div><div class="eyebrow" style="color:var(--accent-2)">ملاحظة تصحيح</div><b style="font-size:16px">QC-2026-0184 · بقع على أرضية المدخل</b></div><span class="chip crit">مفتوحة · متأخرة</span></div>
+        <div class="pb">
+          <div class="field"><span class="k">الموقع / العقد</span><span class="v">برج بيان — عقد التنظيف G/2026</span></div>
+          <div class="field"><span class="k">رصدها</span><span class="v">سارة (جودة) · الجولة #12</span></div>
+          <div class="field"><span class="k">درجة الخطورة</span><span class="v"><span class="chip crit">عالية</span></span></div>
+          <div class="field"><span class="k">مُسندة إلى</span><span class="v">🦺 المشرف: خالد ← 🧹 العامل: راجيش</span></div>
+          <div class="field"><span class="k">موعد التصحيح</span><span class="v" style="color:var(--crit)">اليوم ١:٠٠ م (متبقٍّ ٤٠ د)</span></div>
+          <div class="field"><span class="k">الإثبات المطلوب</span><span class="v">صورة بعد التصحيح + إعادة تفتيش</span></div>
+          <div style="margin-top:16px" class="eyebrow">مسار الملاحظة</div>
+          <div class="timeline" style="margin-top:12px">
+            <div class="tl"><span class="p done"></span><div><div class="t">رُصدت الملاحظة + صورة</div><div class="s">٩:٢٢ ص — سارة (جودة)</div></div></div>
+            <div class="tl"><span class="p done"></span><div><div class="t">أُسندت بموعد تصحيح</div><div class="s">٩:٢٥ ص — إلى المشرف خالد</div></div></div>
+            <div class="tl"><span class="p"></span><div><div class="t">قيد التصحيح الآن</div><div class="s">أُسندت للعامل راجيش · بانتظار الإثبات</div></div></div>
+            <div class="tl"><span class="p pending"></span><div><div class="t">إعادة تفتيش وإغلاق</div><div class="s">تُغلق فقط بعد تحقّق الجودة</div></div></div>
+          </div>
+          <div class="cta" style="margin-top:18px">
+            <button class="btn-sm">رفع صورة الإغلاق</button>
+            <button class="btn-sm btn-gh">تصعيد التأخّر ▲</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- WORK ORDER lifecycle -->
+<section><div class="wrap">
+  <div class="sec-head"><div class="eyebrow">دورة أمر العمل</div><h2>من الطلب إلى الإغلاق — مسار واحد واضح</h2></div>
+  <div class="flow">
+    <div class="step"><div class="st">١ · استقبال</div><h4>طلب/جولة</h4><p>العميل يرفع طلباً أو الجودة ترصد ملاحظة → أمر عمل مصنّف.</p></div>
+    <div class="step"><div class="st">٢ · جدولة</div><h4>إسناد وموعد</h4><p>يُسند لفريق/عامل مع أولوية وموعد التزام SLA.</p></div>
+    <div class="step"><div class="st">٣ · تنفيذ</div><h4>ميداني</h4><p>العامل ينفّذ عبر الموبايل بقائمة فحص وصور قبل/بعد.</p></div>
+    <div class="step"><div class="st">٤ · تحقّق</div><h4>جودة</h4><p>المشرف/الجودة يعتمد الإنجاز أو يعيده مع ملاحظة.</p></div>
+    <div class="step"><div class="st">٥ · إغلاق</div><h4>اعتماد العميل</h4><p>يعتمد العميل ويقيّم الرضا؛ تُحتسب التكلفة والـSLA.</p></div>
+  </div>
+</div></section>
+
+<!-- DASHBOARD -->
+<section id="dash"><div class="wrap">
+  <div class="sec-head"><div class="eyebrow">لوحة مدير التشغيل</div><h2>الصورة الكاملة في شاشة واحدة</h2></div>
+  <div class="grid g3">
+    <div class="card"><h3>التزام SLA — الشهر</h3>
+      <div class="gauge" style="margin-top:10px"><div class="ring" style="--v:92"><b>٩٢٪</b></div>
+        <div style="font-size:13px;color:var(--muted)">١٤٨ أمر ضمن الزمن<br>١٢ تجاوزت المهلة<br><span class="chip warn" style="margin-top:6px">٣ تحت التصعيد</span></div></div></div>
+    <div class="card"><h3>أوامر العمل</h3>
+      <div class="bars" style="margin-top:12px">
+        <div class="brow"><span>مفتوحة</span><div class="track"><div class="fill" style="width:64%"></div></div><span style="font-variant-numeric:tabular-nums">64</span></div>
+        <div class="brow"><span>متأخرة</span><div class="track"><div class="fill" style="width:18%;background:var(--crit)"></div></div><span>18</span></div>
+        <div class="brow"><span>وقائية اليوم</span><div class="track"><div class="fill" style="width:41%;background:var(--accent-2)"></div></div><span>27</span></div>
+        <div class="brow"><span>بانتظار العميل</span><div class="track"><div class="fill" style="width:22%;background:var(--info)"></div></div><span>9</span></div>
+      </div></div>
+    <div class="card"><h3>أكثر المرافق أعطالاً</h3>
+      <div class="bars" style="margin-top:12px">
+        <div class="brow"><span>تكييف — ط٥</span><div class="track"><div class="fill" style="width:88%"></div></div><span>11</span></div>
+        <div class="brow"><span>مصعد B</span><div class="track"><div class="fill" style="width:60%"></div></div><span>7</span></div>
+        <div class="brow"><span>سباكة ط٢</span><div class="track"><div class="fill" style="width:42%"></div></div><span>5</span></div>
+        <div class="brow"><span>إنارة الممر</span><div class="track"><div class="fill" style="width:30%"></div></div><span>4</span></div>
+      </div></div>
+  </div>
+</div></section>
+
+<!-- IDEAS -->
+<section id="ideas"><div class="wrap">
+  <div class="sec-head"><div class="eyebrow">أفكار احترافية — من عندي</div><h2>ما يرفع النظام من «متابعة» إلى «تحكّم ذكي»</h2></div>
+  <div class="grid g2">
+    <div class="card idea"><span class="ic">▣</span><div><b>مسح QR/NFC للأصول</b><br><span>يفتح سجل الأصل وتاريخ صيانته وقائمة فحصه فوراً عند المسح في الموقع.</span></div></div>
+    <div class="card idea"><span class="ic">◎</span><div><b>تحقّق بالموقع (Geofence)</b><br><span>لا يُقبل إثبات المهمة إلا إذا كان العامل داخل نطاق الموقع فعلياً.</span></div></div>
+    <div class="card idea"><span class="ic">◨</span><div><b>صور قبل/بعد إلزامية</b><br><span>لكل مهمة تنظيف/صيانة، أرشيف مصوّر يحمي الشركة أمام العميل.</span></div></div>
+    <div class="card idea"><span class="ic">↑</span><div><b>تصعيد آلي عند تجاوز SLA</b><br><span>تنبيه المشرف ثم المدير ثم الإدارة تلقائياً حسب مدة التأخّر.</span></div></div>
+    <div class="card idea"><span class="ic">🗓</span><div><b>تقويم الصيانة الوقائية (PPM)</b><br><span>توليد أوامر دورية تلقائياً لكل أصل حسب دورته لتقليل الأعطال المفاجئة.</span></div></div>
+    <div class="card idea"><span class="ic">📦</span><div><b>مستهلكات كل موقع</b><br><span>ربط استهلاك المواد بأمر العمل وبمخزون المشروع الحالي (care_pms).</span></div></div>
+    <div class="card idea"><span class="ic">★</span><div><b>رضا العميل CSAT / NPS</b><br><span>تقييم بعد كل إغلاق + مؤشر رضا لكل عقد يظهر في لوحة الإدارة.</span></div></div>
+    <div class="card idea"><span class="ic">✎</span><div><b>قائمة التسليم (Snag List)</b><br><span>حصر ملاحظات التسليم النهائي للمشروع وإغلاقها قبل التسليم للعميل.</span></div></div>
+    <div class="card idea"><span class="ic">🔥</span><div><b>خريطة حرارية للأعطال المتكرّرة</b><br><span>كشف الأصول/المواقع الأكثر تكلفة لاتخاذ قرار استبدال أو تدريب.</span></div></div>
+    <div class="card idea"><span class="ic">◔</span><div><b>قراءات العدّادات</b><br><span>تسجيل الكهرباء/المياه دورياً لمرافق العميل ضمن الجولة.</span></div></div>
+    <div class="card idea"><span class="ic">⚑</span><div><b>ربط السلامة (HSE)</b><br><span>أي حادث في الموقع يفتح بلاغاً في وحدة السلامة المبنية مسبقاً.</span></div></div>
+    <div class="card idea"><span class="ic">◈</span><div><b>تنبؤ بخطر تجاوز SLA</b><br><span>مؤشر مبكّر للأوامر المرشّحة للتأخّر لتحريك الموارد استباقياً.</span></div></div>
+  </div>
+</div></section>
+
+<!-- INTEGRATION -->
+<section><div class="wrap">
+  <div class="sec-head"><div class="eyebrow">التكامل مع أنظمتكم الحالية</div><h2>يبني فوق ما لديكم — لا يستبدله</h2></div>
+  <div class="integ">
+    <span class="pill"><span class="dot ok"></span> أنظمة البصمة (to_attendance_device) — مَن على الموقع الآن</span>
+    <span class="pill"><span class="dot ok"></span> المشاريع والمهام (care_pms) — العقد/القسم/المخزون</span>
+    <span class="pill"><span class="dot ok"></span> العقود (care_experience) — SLA وقيمة العقد</span>
+    <span class="pill"><span class="dot ok"></span> السلامة (care_workforce · HSE)</span>
+    <span class="pill"><span class="dot ok"></span> القوى العاملة والورديات (care.roster)</span>
+    <span class="pill"><span class="dot ok"></span> بوابة العميل (Portal) القائمة</span>
+  </div>
+</div></section>
+
+<!-- ROADMAP -->
+<section id="roadmap"><div class="wrap">
+  <div class="sec-head"><div class="eyebrow">خطة التنفيذ</div><h2>على مراحل قابلة للإطلاق</h2></div>
+  <div class="road">
+    <div class="phase"><div class="pn">المرحلة ١</div><h4>الأساس التشغيلي</h4><ul><li>المواقع والأصول (QR)</li><li>طلبات الخدمة وأوامر العمل</li><li>إسناد أساسي + حالات</li></ul></div>
+    <div class="phase"><div class="pn">المرحلة ٢</div><h4>الجودة والموبايل</h4><ul><li>جولات وقوائم فحص</li><li>ملاحظات التصحيح بموعد ومسؤول</li><li>تطبيق المشرف والعامل</li></ul></div>
+    <div class="phase"><div class="pn">المرحلة ٣</div><h4>SLA والعميل</h4><ul><li>محرّك SLA + تصعيد</li><li>بوابة العميل + الرضا</li><li>ربط البصمة والمخزون</li></ul></div>
+    <div class="phase"><div class="pn">المرحلة ٤</div><h4>الذكاء والتقارير</h4><ul><li>PPM تلقائي</li><li>خرائط الأعطال والتنبؤ</li><li>ربحية العقد ولوحات الإدارة</li></ul></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  موكاب مفاهيمي — نظام إدارة تشغيل المرافق (CAFM) · care · جاهز للتحويل إلى موديولات Odoo على المراحل أعلاه.
+</div></footer>
+
+<script>
+  const tt=document.getElementById('tt');
+  tt.addEventListener('click',()=>{
+    const cur=document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+    document.documentElement.setAttribute('data-theme',cur==='dark'?'light':'dark');
+  });
+  const io=new IntersectionObserver((es)=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:.12});
+  document.querySelectorAll('section .card, .step, .phase').forEach((el,i)=>{el.classList.add('reveal');el.style.transitionDelay=(i%6*40)+'ms';io.observe(el)});
+</script>
+</body>
+</html>

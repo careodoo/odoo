@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_pms_project_form" model="ir.ui.view">
+        <field name="name">pms.project.form</field>
+        <field name="model">project.project</field>
+        <field name="priority">50</field>
+        <field name="arch" type="xml">
+            <form string="مشروع">
+                <header>
+                    <button name="action_pms_statement" type="object" string="🖨️ كشف حساب المشروع"/>
+                    <button name="action_pms_clearance" type="object" string="📋 إخلاء طرف"/>
+                    <field name="pms_state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_pms_workers" type="object" class="oe_stat_button" icon="fa-users">
+                            <field name="worker_count" widget="statinfo" string="عمال"/>
+                        </button>
+                        <button name="action_pms_vehicles" type="object" class="oe_stat_button" icon="fa-car">
+                            <field name="vehicle_count" widget="statinfo" string="سيارات"/>
+                        </button>
+                        <button name="action_pms_tasks" type="object" class="oe_stat_button" icon="fa-tasks">
+                            <field name="pms_task_open" widget="statinfo" string="تاسكات"/>
+                        </button>
+                        <button name="action_pms_overdue" type="object" class="oe_stat_button" icon="fa-exclamation-triangle">
+                            <field name="pms_task_overdue" widget="statinfo" string="متأخرة"/>
+                        </button>
+                        <button name="action_pms_contracts" type="object" class="oe_stat_button" icon="fa-file-text-o">
+                            <field name="experience_count" widget="statinfo" string="عقود"/>
+                        </button>
+                        <button name="action_pms_shift_requests" type="object" class="oe_stat_button" icon="fa-exchange">
+                            <field name="shift_request_count" widget="statinfo" string="طلبات نقل"/>
+                        </button>
+                        <button name="action_pms_custody" type="object" class="oe_stat_button" icon="fa-archive">
+                            <field name="custody_count" widget="statinfo" string="عُهد"/>
+                        </button>
+                        <button name="action_pms_materials" type="object" class="oe_stat_button" icon="fa-cubes">
+                            <field name="material_count" widget="statinfo" string="مخزون"/>
+                        </button>
+                        <button name="action_pms_delivery" type="object" class="oe_stat_button" icon="fa-truck">
+                            <field name="delivery_count" widget="statinfo" string="سندات"/>
+                        </button>
+                        <button name="action_pms_supplies" type="object" class="oe_stat_button" icon="fa-inbox">
+                            <field name="supply_count" widget="statinfo" string="واردات"/>
+                        </button>
+                        <button name="action_pms_pettycash" type="object" class="oe_stat_button" icon="fa-money">
+                            <field name="pettycash_count" widget="statinfo" string="عُهد نقدية"/>
+                        </button>
+                        <button name="action_pms_assets" type="object" class="oe_stat_button" icon="fa-cube">
+                            <field name="asset_count" widget="statinfo" string="أصول"/>
+                        </button>
+                        <button name="action_pms_compliance" type="object" class="oe_stat_button" icon="fa-id-card">
+                            <field name="compliance_count" widget="statinfo" string="امتثال"/>
+                        </button>
+                        <button name="action_pms_fuel" type="object" class="oe_stat_button" icon="fa-tint">
+                            <field name="fuel_count" widget="statinfo" string="محروقات"/>
+                        </button>
+                    </div>
+                    <field name="company_id" invisible="1"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="اسم المشروع..."/></h1>
+                    </div>
+                    <group>
+                        <group string="الإدارة والعقد">
+                            <field name="pms_department_id"/>
+                            <field name="project_manager_id"/>
+                            <field name="partner_id"/>
+                        </group>
+                        <group string="الحالة">
+                            <field name="pms_state"/>
+                            <field name="user_id"/>
+                            <field name="portal_user_ids" widget="many2many_tags"
+                                   options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="الربحية وSLA">
+                            <field name="pms_currency_id" invisible="1"/>
+                            <group>
+                                <group string="الإيراد والتكاليف">
+                                    <field name="pms_revenue"/>
+                                    <field name="pms_labor_cost"/>
+                                    <field name="pms_fleet_cost"/>
+                                    <field name="pms_petty_spent"/>
+                                </group>
+                                <group string="النتيجة">
+                                    <field name="pms_total_cost"/>
+                                    <field name="pms_margin"/>
+                                    <field name="pms_margin_pct" widget="percentage"/>
+                                    <field name="sla_resolution_hours"/>
+                                    <field name="sla_compliance_pct" widget="percentage"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="العقود (Experience)">
+                            <field name="experience_ids">
+                                <tree>
+                                    <field name="ref"/>
+                                    <field name="name"/>
+                                    <field name="partner_id"/>
+                                    <field name="department_id"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_pms_project_kanban" model="ir.ui.view">
+        <field name="name">pms.project.kanban</field>
+        <field name="model">project.project</field>
+        <field name="priority">50</field>
+        <field name="arch" type="xml">
+            <kanban>
+                <field name="name"/><field name="pms_department_id"/><field name="worker_count"/>
+                <field name="vehicle_count"/><field name="pms_task_open"/><field name="pms_task_overdue"/>
+                <field name="pms_state"/><field name="risk_level"/>
+                <field name="pms_client_id"/><field name="pms_client_logo"/>
+                <field name="contract_expiry_date"/><field name="contract_days_to_expiry"/>
+                <field name="contract_expiry_state"/><field name="contract_summary"/>
+                <field name="experience_count"/><field name="project_manager_id"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click"
+                             t-attf-style="border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.12);border-top:4px solid #{record.contract_expiry_state.raw_value == 'expired' ? 'e2513f' : (record.contract_expiry_state.raw_value == 'expiring' ? 'f0932b' : '2f6df6')};">
+                            <!-- header: logo + name + client + risk badge -->
+                            <div style="display:flex;align-items:center;gap:10px;padding:12px 12px 8px;">
+                                <img t-if="record.pms_client_logo.raw_value"
+                                     t-att-src="kanban_image('project.project','pms_client_logo',record.id.raw_value)"
+                                     style="width:44px;height:44px;border-radius:8px;object-fit:contain;background:#fff;border:1px solid #eee;padding:2px;"/>
+                                <div t-else="" style="width:44px;height:44px;border-radius:8px;background:#eef2ff;display:flex;align-items:center;justify-content:center;color:#2f6df6;font-weight:800;font-size:18px;">
+                                    <t t-esc="(record.pms_client_id.value || record.name.value || '؟').trim().substring(0,1)"/>
+                                </div>
+                                <div style="flex:1;min-width:0;">
+                                    <strong style="font-size:14px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><field name="name"/></strong>
+                                    <div class="text-muted" style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                        <i class="fa fa-building-o"/> <t t-esc="record.pms_client_id.value || '—'"/>
+                                    </div>
+                                </div>
+                                <span t-if="record.risk_level.raw_value == 'high'" class="badge text-bg-danger" style="align-self:flex-start;">خطر عالٍ</span>
+                                <span t-elif="record.risk_level.raw_value == 'medium'" class="badge text-bg-warning" style="align-self:flex-start;">متوسط</span>
+                            </div>
+                            <!-- department -->
+                            <div class="text-muted" style="font-size:11px;padding:0 12px 6px;"><i class="fa fa-sitemap"/> <field name="pms_department_id"/></div>
+                            <!-- contract strip -->
+                            <div t-attf-style="margin:0 12px 8px;padding:7px 9px;border-radius:8px;font-size:11px;background:#{record.contract_expiry_state.raw_value == 'expired' ? 'fdecea' : (record.contract_expiry_state.raw_value == 'expiring' ? 'fff4e5' : (record.contract_expiry_state.raw_value == 'none' ? 'f4f4f4' : 'eafaf1'))};">
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <span style="font-weight:700;">
+                                        <i class="fa fa-file-text-o"/>
+                                        <t t-esc="record.experience_count.value"/> عقد
+                                    </span>
+                                    <span t-if="record.contract_expiry_state.raw_value == 'expired'" class="badge text-bg-danger">منتهٍ</span>
+                                    <span t-elif="record.contract_expiry_state.raw_value == 'expiring'" class="badge text-bg-warning">قريب الانتهاء</span>
+                                    <span t-elif="record.contract_expiry_state.raw_value == 'none'" class="badge text-bg-secondary">لا عقد</span>
+                                    <span t-else="" class="badge text-bg-success">سارٍ</span>
+                                </div>
+                                <div t-if="record.contract_expiry_date.raw_value" style="margin-top:4px;color:#555;">
+                                    <i class="fa fa-calendar-o"/> ينتهي: <b><field name="contract_expiry_date"/></b>
+                                    <span t-if="record.contract_days_to_expiry.raw_value &gt;= 0"> (خلال <t t-esc="record.contract_days_to_expiry.value"/> يوم)</span>
+                                    <span t-else="" style="color:#e2513f;font-weight:700;"> (متأخر <t t-esc="-record.contract_days_to_expiry.raw_value"/> يوم)</span>
+                                </div>
+                                <div t-if="record.contract_summary.value" style="margin-top:3px;color:#777;"><t t-esc="record.contract_summary.value"/></div>
+                            </div>
+                            <!-- stats row -->
+                            <div style="display:flex;justify-content:space-between;text-align:center;padding:0 12px 12px;">
+                                <div><div style="font-weight:800;color:#2f6df6;"><field name="worker_count"/></div><div style="font-size:10px;color:#888;">عامل</div></div>
+                                <div><div style="font-weight:800;color:#017e84;"><field name="vehicle_count"/></div><div style="font-size:10px;color:#888;">سيارة</div></div>
+                                <div><div style="font-weight:800;color:#7a5cf0;"><field name="pms_task_open"/></div><div style="font-size:10px;color:#888;">تاسك</div></div>
+                                <div><div style="font-weight:800;color:#e2513f;"><field name="pms_task_overdue"/></div><div style="font-size:10px;color:#888;">متأخر</div></div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_pms_project_tree" model="ir.ui.view">
+        <field name="name">pms.project.tree</field>
+        <field name="model">project.project</field>
+        <field name="priority">50</field>
+        <field name="arch" type="xml">
+            <tree string="المشاريع">
+                <field name="name"/>
+                <field name="pms_client_id"/>
+                <field name="pms_department_id"/>
+                <field name="project_manager_id"/>
+                <field name="experience_count" string="عقود"/>
+                <field name="contract_expiry_date"/>
+                <field name="contract_expiry_state" widget="badge"
+                       decoration-success="contract_expiry_state == 'ok'"
+                       decoration-warning="contract_expiry_state == 'expiring'"
+                       decoration-danger="contract_expiry_state == 'expired'"/>
+                <field name="worker_count"/>
+                <field name="vehicle_count"/>
+                <field name="pms_task_open"/>
+                <field name="pms_task_overdue" decoration-danger="pms_task_overdue &gt; 0"/>
+                <field name="pms_state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_pms_projects" model="ir.actions.act_window">
+        <field name="name">المشاريع</field>
+        <field name="res_model">project.project</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_ids" eval="[(5,0,0),
+            (0,0,{'sequence':1,'view_mode':'kanban','view_id':ref('view_pms_project_kanban')}),
+            (0,0,{'sequence':2,'view_mode':'tree','view_id':ref('view_pms_project_tree')}),
+            (0,0,{'sequence':3,'view_mode':'form','view_id':ref('view_pms_project_form')})]"/>
+    </record>
+</odoo>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Security Manager premise: link to a CAFM facility -->
+    <record id="view_security_premise_form_cafm" model="ir.ui.view">
+        <field name="name">security.premise.form.cafm.bridge</field>
+        <field name="model">security.premise</field>
+        <field name="inherit_id" ref="security_management.view_security_premise_form"/>
+        <field name="arch" type="xml">
+            <field name="client_id" position="after">
+                <field name="cafm_facility_id"/>
+            </field>
+            <sheet position="before">
+                <header>
+                    <button name="action_sync_to_cafm" type="object" string="مزامنة إلى CAFM"
+                            class="btn-primary" icon="fa-refresh"
+                            help="إنشاء/ربط مرفق CAFM مقابل، وعكس الأدوار ونقاط الدوريات كمواقع CAFM بأرمزة QR."/>
+                </header>
+            </sheet>
+        </field>
+    </record>
+
+    <!-- Security Manager floor: link to a CAFM location -->
+    <record id="view_security_floor_form_cafm" model="ir.ui.view">
+        <field name="name">security.floor.form.cafm.bridge</field>
+        <field name="model">security.floor</field>
+        <field name="inherit_id" ref="security_management.view_security_floor_form"/>
+        <field name="arch" type="xml">
+            <field name="premise_id" position="after">
+                <field name="cafm_location_id"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Security Manager patrol point (QR checkpoint): link to a CAFM location -->
+    <record id="view_security_patrol_point_form_cafm" model="ir.ui.view">
+        <field name="name">security.patrol.point.form.cafm.bridge</field>
+        <field name="model">security.patrol.point</field>
+        <field name="inherit_id" ref="security_management.view_security_patrol_point_form"/>
+        <field name="arch" type="xml">
+            <field name="premise_id" position="after">
+                <field name="cafm_location_id"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Security as a CAFM service line (opens the real Security Manager dashboard) -->
+    <menuitem id="menu_cafm_svc_security" name="الأمن والحراسة"
+              parent="care_cafm.menu_cafm_services"
+              action="security_management.action_security_dashboard" sequence="20"/>
+
+    <!-- CAFM facility: smart button to its Security Manager premises -->
+    <record id="view_facility_form_cafm_security" model="ir.ui.view">
+        <field name="name">care.cafm.facility.form.security.bridge</field>
+        <field name="model">care.cafm.facility</field>
+        <field name="inherit_id" ref="care_cafm.view_facility_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button name="action_view_security_premises" type="object"
+                        class="oe_stat_button" icon="fa-shield">
+                    <field name="security_premise_count" widget="statinfo" string="مواقع الأمن"/>
+                </button>
+            </div>
+        </field>
+    </record>
+</odoo>

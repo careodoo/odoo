@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============ Disbursement request form ============ -->
+    <record id="view_care_allowance_payout_form" model="ir.ui.view">
+        <field name="name">care.allowance.payout.form</field>
+        <field name="model">care.allowance.payout</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_collect" type="object" string="🔎 تجميع المستحقات"
+                            class="btn-primary" invisible="state not in ('draft','collected')"/>
+                    <button name="action_send_finance" type="object" string="📤 إرسال للمالية"
+                            class="btn-primary" invisible="state != 'collected'"/>
+                    <button name="action_mark_paid" type="object" string="💰 تأكيد الصرف"
+                            class="btn-success" invisible="state != 'sent_finance'"/>
+                    <button name="action_print_pdf" type="object" string="🖨️ طباعة PDF"
+                            invisible="state == 'draft'"/>
+                    <button name="action_export_xlsx" type="object" string="⬇️ تصدير Excel"
+                            invisible="state == 'draft'"/>
+                    <button name="action_cancel" type="object" string="إلغاء"
+                            invisible="state in ('draft','paid','cancelled')"/>
+                    <button name="action_reset" type="object" string="إعادة لمسودة"
+                            invisible="state in ('draft','paid')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,collected,sent_finance,paid"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group string="فلاتر التجميع">
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="department_id" options="{'no_create': True}"/>
+                            <field name="employee_id" options="{'no_create': True}"/>
+                            <field name="allowance_type_id" options="{'no_create': True}"/>
+                            <field name="only_unpaid"/>
+                        </group>
+                        <group string="الدفع">
+                            <field name="date"/>
+                            <field name="payment_method"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="total_amount"/>
+                            <field name="to_pay_amount"/>
+                            <field name="paid_count"/>
+                            <field name="unpaid_count"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="البنود" name="lines">
+                            <field name="line_ids">
+                                <tree editable="bottom" create="0"
+                                      decoration-success="is_paid == True" decoration-danger="is_paid == False">
+                                    <field name="employee_id" readonly="1"/>
+                                    <field name="department_id" readonly="1"/>
+                                    <field name="allowance_type_id" readonly="1"/>
+                                    <field name="allowance_date" readonly="1"/>
+                                    <field name="amount" readonly="1"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                    <field name="is_paid" readonly="1"/>
+                                    <field name="to_pay"/>
+                                    <field name="pay_status" widget="badge"
+                                           decoration-success="pay_status == 'paid'"
+                                           decoration-danger="pay_status == 'unpaid'"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="ملاحظات المالية" name="finance">
+                            <field name="finance_note" nolabel="1" placeholder="ملاحظات للإدارة المالية..."/>
+                            <group>
+                                <field name="sent_finance_date" readonly="1"/>
+                                <field name="paid_date" readonly="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_care_allowance_payout_tree" model="ir.ui.view">
+        <field name="name">care.allowance.payout.tree</field>
+        <field name="model">care.allowance.payout</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'paid'" decoration-info="state == 'sent_finance'"
+                  decoration-muted="state == 'cancelled'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="department_id"/>
+                <field name="payment_method"/>
+                <field name="line_count" string="بنود"/>
+                <field name="to_pay_amount"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'paid'" decoration-info="state == 'sent_finance'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_care_allowance_payout_search" model="ir.ui.view">
+        <field name="name">care.allowance.payout.search</field>
+        <field name="model">care.allowance.payout</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="department_id"/>
+                <field name="employee_id"/>
+                <field name="allowance_type_id"/>
+                <filter name="f_draft" string="مسودة" domain="[('state','=','draft')]"/>
+                <filter name="f_sent" string="لدى المالية" domain="[('state','=','sent_finance')]"/>
+                <filter name="f_paid" string="مصروف" domain="[('state','=','paid')]"/>
+                <separator/>
+                <filter name="g_month" string="هذا الشهر"
+                        domain="[('date','&gt;=',(context_today().strftime('%Y-%m-01')))]"/>
+                <group expand="0" string="تجميع">
+                    <filter name="grp_dept" string="القسم/المشروع" context="{'group_by':'department_id'}"/>
+                    <filter name="grp_method" string="طريقة الدفع" context="{'group_by':'payment_method'}"/>
+                    <filter name="grp_state" string="الحالة" context="{'group_by':'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_care_allowance_payout" model="ir.actions.act_window">
+        <field name="name">صرف البدلات</field>
+        <field name="res_model">care.allowance.payout</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_care_allowance_payout_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">أنشئ طلب صرف بدلات</p>
+            <p>حدّد الفترة والمشروع/العامل/نوع الاستحقاق، جمّع المستحقات، اطبع PDF/Excel،
+               ثم أرسلها للمالية للدفع.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_care_allowance_payout" name="صرف البدلات"
+              parent="menu_care_hr_payroll_root"
+              action="action_care_allowance_payout" sequence="26"/>
+</odoo>

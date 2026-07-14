@@ -100,6 +100,39 @@ class ResConfigSettings(models.TransientModel):
         string='مفتاح الذكاء الاصطناعي (Claude)',
         config_parameter='purchase_tender.ai_api_key')
 
+    # --- Active Tenders definition (which states count as "active") ---
+    # Defaults preserve the legacy 6 active states; the rest are off.
+    tender_active_new = fields.Boolean(
+        string='جديدة', default=True, config_parameter='purchase_tender.active_state_new')
+    tender_active_under_study = fields.Boolean(
+        string='تحت الدراسة', default=True, config_parameter='purchase_tender.active_state_under_study')
+    tender_active_docs_purchased = fields.Boolean(
+        string='تم شراء الكراسة', default=True, config_parameter='purchase_tender.active_state_docs_purchased')
+    tender_active_interested = fields.Boolean(
+        string='مهتمون', default=True, config_parameter='purchase_tender.active_state_interested')
+    tender_active_preparing = fields.Boolean(
+        string='جارٍ التحضير', default=True, config_parameter='purchase_tender.active_state_preparing')
+    tender_active_participated = fields.Boolean(
+        string='تم التقديم', default=True, config_parameter='purchase_tender.active_state_participated')
+    tender_active_postponed = fields.Boolean(
+        string='مؤجلة', default=False, config_parameter='purchase_tender.active_state_postponed')
+    tender_active_winner = fields.Boolean(
+        string='فائزة', default=False, config_parameter='purchase_tender.active_state_winner')
+    tender_active_purchased = fields.Boolean(
+        string='تمت الترسية', default=False, config_parameter='purchase_tender.active_state_purchased')
+    tender_active_in_progress = fields.Boolean(
+        string='قيد التنفيذ', default=False, config_parameter='purchase_tender.active_state_in_progress')
+    tender_active_completed = fields.Boolean(
+        string='منجزة', default=False, config_parameter='purchase_tender.active_state_completed')
+    tender_active_lost = fields.Boolean(
+        string='خاسرة', default=False, config_parameter='purchase_tender.active_state_lost')
+    tender_active_excepted = fields.Boolean(
+        string='لن نشارك', default=False, config_parameter='purchase_tender.active_state_excepted')
+    tender_active_closed = fields.Boolean(
+        string='مغلقة', default=False, config_parameter='purchase_tender.active_state_closed')
+    tender_active_cancelled = fields.Boolean(
+        string='ملغاة', default=False, config_parameter='purchase_tender.active_state_cancelled')
+
     def set_values(self):
         super().set_values()
         action = self.env.ref('purchase_tender.purchase_tender_action', raise_if_not_found=False)

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_employee_form_performance" model="ir.ui.view">
+        <field name="name">hr.employee.form.performance</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_performance" type="object" class="oe_stat_button"
+                        icon="fa-line-chart" groups="hr.group_hr_user">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value"><field name="perf_score_ytd" widget="float" digits="[16,1]"/></span>
+                        <span class="o_stat_text">أداء السنة</span>
+                        <span class="o_stat_text"><field name="perf_event_count"/> حدث</span>
+                    </div>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>

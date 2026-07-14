@@ -1,96 +1,424 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
+        <!-- ============ Contract (Experience) form ============ -->
         <record id="care_experience_view_form" model="ir.ui.view">
             <field name="name">care_experience_view_form</field>
             <field name="model">care.experience</field>
             <field name="arch" type="xml">
                 <form>
                     <header>
-                        <button name="button_submit" type="object" string="Submit" class="oe_highlight"
+                        <button name="button_submit" type="object" string="تقديم" class="oe_highlight"
                                 invisible="state != 'draft'"/>
-                        <button name="button_valid" type="object" string="Valid" class="oe_highlight"
+                        <button name="button_valid" type="object" string="تفعيل العقد" class="oe_highlight"
                                 invisible="state != 'submit'"/>
-                        <button name="button_expired" type="object" string="Expire" class="btn-danger"
-                                invisible="state != 'submit'"/>
+                        <button name="action_start_renewal" type="object" string="🔄 بدء تجديد/تمديد"
+                                class="btn-primary" invisible="state not in ('valid','under_renewal')"/>
+                        <button name="button_terminate" type="object" string="إنهاء العقد"
+                                invisible="state in ('draft','expired','terminated')"
+                                confirm="تأكيد إنهاء العقد؟"/>
                         <button name="button_draft" groups="care_experience.reset_experience_to_draft"
-                                type="object" string="Reset to draft" class="oe_highlight"
-                                invisible="state == 'draft'"/>
-
-                        <field name="state" widget="statusbar"/>
+                                type="object" string="إعادة لمسودة" invisible="state == 'draft'"/>
+                        <button name="%(care_experience.action_report_contract_dossier)d" type="action"
+                                string="🖨️ طباعة ملف العقد"/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,submit,valid,under_renewal,expired"/>
                     </header>
-                    <sheet string="Experience">
+                    <sheet string="Contract">
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_renewals" type="object" class="oe_stat_button" icon="fa-refresh">
+                                <field name="renewal_count" widget="statinfo" string="التجديدات"/>
+                            </button>
+                            <button name="action_view_guarantees" type="object" class="oe_stat_button" icon="fa-university">
+                                <field name="guarantee_count" widget="statinfo" string="الكفالات"/>
+                            </button>
+                        </div>
                         <field name="kanban_state" widget="state_selection"/>
-                        <widget name="web_ribbon" text="Archived" bg_color="bg-danger"
-                                invisible="active == True"/>
+                        <widget name="web_ribbon" text="منتهٍ" bg_color="bg-danger" invisible="expiry_state != 'expired'"/>
+                        <widget name="web_ribbon" text="يقترب من الانتهاء" bg_color="bg-warning" invisible="expiry_state != 'expiring'"/>
+                        <widget name="web_ribbon" text="تأمين منتهٍ" bg_color="bg-danger" invisible="insurance_state != 'expired'"/>
                         <field name="active" invisible="1"/>
                         <div class="oe_title">
-                            <h1>
-                                <field name="name" placeholder="Name..."/>
-                            </h1>
+                            <label for="name"/>
+                            <h1><field name="name" placeholder="اسم العقد..."/></h1>
+                            <h3><field name="ref" readonly="1"/></h3>
                         </div>
                         <group>
-                            <group>
-                                <field name="ref"/>
+                            <group string="بيانات العقد">
                                 <field name="partner_id"/>
+                                <field name="contract_type"/>
                                 <field name="contract_amount"/>
+                                <field name="currency_id" invisible="1"/>
                                 <field name="period"/>
                                 <field name="labor_quantity"/>
-                            </group>
-                            <group>
-                                <field name="proposal_id"/>
                                 <field name="project_id"/>
                                 <field name="department_id"/>
+                            </group>
+                            <group string="المدة والتنبيهات">
                                 <field name="start_date"/>
                                 <field name="expire_date"/>
-                                <field name="contract_type"/>
-                                <field name="contract_copy" widget="many2many_binary"/>
+                                <field name="days_to_expiry" readonly="1"/>
+                                <field name="expiry_state" readonly="1"/>
+                                <field name="renew_before"/>
+                                <field name="manager_id"/>
+                                <field name="notify_user_ids" widget="many2many_tags"/>
                             </group>
                         </group>
-                        <field name="line_ids">
-                            <tree editable="bottom">
-                                <field name="name"/>
-                                <field name="start_date"/>
-                                <field name="expire_date"/>
-                                <field name="period"/>
-                            </tree>
-                        </field>
-                        <field name="notes" placeholder="Type down your notes here..." nolabel="1"/>
+                        <group string="مصدر التسعير" name="pricing_source">
+                            <field name="proposal_id" invisible="contract_type == 'government'"
+                                   help="العقود الخاصة تُسعّر من نظام العروض (Proposal)"/>
+                            <field name="pricing_ref" readonly="1"/>
+                            <field name="pricing_value" readonly="1"/>
+                        </group>
+                        <notebook>
+                            <page string="البنود" name="lines">
+                                <field name="line_ids">
+                                    <tree editable="bottom">
+                                        <field name="name"/><field name="start_date"/>
+                                        <field name="expire_date"/><field name="period"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="التجديدات/التمديدات" name="renewals">
+                                <field name="renewal_ids" readonly="1">
+                                    <tree decoration-success="state=='signed'" decoration-muted="state=='cancelled'">
+                                        <field name="name"/><field name="kind"/>
+                                        <field name="request_date"/><field name="new_expire_date"/>
+                                        <field name="new_value"/>
+                                        <field name="state" widget="badge"
+                                               decoration-info="state in ('requested','approved','senior_notified','guarantee')"
+                                               decoration-success="state=='signed'"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="الكفالات البنكية" name="guarantees">
+                                <field name="guarantee_ids" context="{'default_experience_id': id}">
+                                    <tree decoration-danger="state=='expired'" decoration-warning="state=='expiring'"
+                                          decoration-success="state=='active'">
+                                        <field name="name"/><field name="guarantee_number"/><field name="bank_name"/>
+                                        <field name="guarantee_type"/><field name="amount"/>
+                                        <field name="currency_id" column_invisible="1"/>
+                                        <field name="expiry_date"/><field name="sent_to_client"/>
+                                        <field name="state" widget="badge"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="التأمين" name="insurance">
+                                <group>
+                                    <group string="بيانات وثيقة التأمين">
+                                        <field name="insurance_company"/>
+                                        <field name="insurance_policy_no"/>
+                                        <field name="insurance_amount"/>
+                                        <field name="currency_id" invisible="1"/>
+                                    </group>
+                                    <group string="المدة والحالة">
+                                        <field name="insurance_start"/>
+                                        <field name="insurance_expiry"/>
+                                        <field name="insurance_days_to_expiry" readonly="1"/>
+                                        <field name="insurance_state" widget="badge" readonly="1"
+                                               decoration-success="insurance_state=='ok'"
+                                               decoration-warning="insurance_state=='expiring'"
+                                               decoration-danger="insurance_state=='expired'"/>
+                                    </group>
+                                </group>
+                                <field name="insurance_attachment" widget="many2many_binary"/>
+                            </page>
+                            <page string="نسخ العقد والمرفقات" name="docs">
+                                <field name="contract_copy" widget="many2many_binary"/>
+                            </page>
+                            <page string="ملاحظات" name="notes">
+                                <field name="notes" nolabel="1" placeholder="ملاحظات..."/>
+                            </page>
+                        </notebook>
                     </sheet>
                     <div class="oe_chatter" name="oe_chatter">
                         <field name="message_follower_ids"/>
-                        <field name="message_ids"/>
                         <field name="activity_ids"/>
+                        <field name="message_ids"/>
                     </div>
                 </form>
             </field>
         </record>
+
         <record id="care_experience_view_tree" model="ir.ui.view">
             <field name="name">care_experience_view_tree</field>
             <field name="model">care.experience</field>
             <field name="arch" type="xml">
-                <tree>
+                <tree decoration-danger="expiry_state=='expired'" decoration-warning="expiry_state=='expiring'">
                     <field name="active" invisible="1"/>
-                    <field name="name"/>
-                    <field name="partner_id"/>
-                    <field name="contract_amount"/>
-                    <field name="period"/>
-                    <field name="labor_quantity"/>
-                    <field name="start_date"/>
-                    <field name="expire_date"/>
-                    <field name="contract_type"/>
+                    <field name="ref"/><field name="name"/><field name="partner_id"/>
+                    <field name="contract_type"/><field name="contract_amount"/>
+                    <field name="start_date"/><field name="expire_date"/>
+                    <field name="days_to_expiry"/>
+                    <field name="expiry_state" widget="badge" decoration-danger="expiry_state=='expired'"
+                           decoration-warning="expiry_state=='expiring'" decoration-success="expiry_state=='ok'"/>
                     <field name="state" widget="badge" decoration-danger="state == 'expired'"
                            decoration-success="state == 'valid'"/>
                 </tree>
             </field>
         </record>
+
+        <record id="care_experience_view_search" model="ir.ui.view">
+            <field name="name">care.experience.search</field>
+            <field name="model">care.experience</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name"/><field name="ref"/><field name="partner_id"/><field name="project_id"/>
+                    <filter name="active_c" string="سارية" domain="[('state','=','valid')]"/>
+                    <filter name="expiring" string="تقترب من الانتهاء" domain="[('expiry_state','=','expiring')]"/>
+                    <filter name="expired" string="منتهية" domain="[('expiry_state','=','expired')]"/>
+                    <filter name="under_renewal" string="قيد التجديد" domain="[('state','=','under_renewal')]"/>
+                    <separator/>
+                    <filter name="ins_expiring" string="تأمين يقترب من الانتهاء" domain="[('insurance_state','=','expiring')]"/>
+                    <filter name="ins_expired" string="تأمين منتهٍ" domain="[('insurance_state','=','expired')]"/>
+                    <separator/>
+                    <filter name="gov" string="حكومي" domain="[('contract_type','=','government')]"/>
+                    <filter name="priv" string="خاص/تجاري" domain="[('contract_type','=','commercials')]"/>
+                    <group expand="0" string="تجميع">
+                        <filter name="g_type" string="النوع" context="{'group_by':'contract_type'}"/>
+                        <filter name="g_state" string="الحالة" context="{'group_by':'state'}"/>
+                        <filter name="g_partner" string="الجهة" context="{'group_by':'partner_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- ============ Analytics (graph + pivot) ============ -->
+        <record id="care_experience_view_graph" model="ir.ui.view">
+            <field name="name">care.experience.graph</field>
+            <field name="model">care.experience</field>
+            <field name="arch" type="xml">
+                <graph string="تحليل العقود" sample="1">
+                    <field name="contract_type"/>
+                    <field name="pricing_value" type="measure"/>
+                </graph>
+            </field>
+        </record>
+        <record id="care_experience_view_pivot" model="ir.ui.view">
+            <field name="name">care.experience.pivot</field>
+            <field name="model">care.experience</field>
+            <field name="arch" type="xml">
+                <pivot string="تحليل العقود" sample="1">
+                    <field name="contract_type" type="row"/>
+                    <field name="state" type="col"/>
+                    <field name="pricing_value" type="measure"/>
+                    <field name="contract_amount" type="measure"/>
+                </pivot>
+            </field>
+        </record>
+
         <record id="care_experience_action" model="ir.actions.act_window">
-            <field name="name">Project Contracts</field>
-            <field name="type">ir.actions.act_window</field>
+            <field name="name">عقود المشاريع</field>
             <field name="res_model">care.experience</field>
+            <field name="view_mode">tree,form,graph,pivot</field>
+            <field name="search_view_id" ref="care_experience_view_search"/>
+        </record>
+        <menuitem id="care_experience_menu" name="عقود المشاريع" action="care_experience_action" sequence="55"/>
+
+        <!-- ============ Expiry follow-up board (kanban by expiry_state) ============ -->
+        <record id="care_experience_view_kanban" model="ir.ui.view">
+            <field name="name">care.experience.kanban.expiry</field>
+            <field name="model">care.experience</field>
+            <field name="arch" type="xml">
+                <kanban default_group_by="expiry_state" class="o_kanban_small_column" records_draggable="false">
+                    <field name="expiry_state"/><field name="name"/><field name="ref"/>
+                    <field name="partner_id"/><field name="expire_date"/><field name="days_to_expiry"/>
+                    <field name="contract_type"/><field name="state"/><field name="renewal_count"/>
+                    <field name="guarantee_count"/><field name="pricing_value"/><field name="currency_id"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div class="oe_kanban_global_click"
+                                 t-attf-style="border-radius:8px;padding:10px;border-right:4px solid #{record.expiry_state.raw_value == 'expired' ? 'e2513f' : (record.expiry_state.raw_value == 'expiring' ? 'f0932b' : '27ae60')};">
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <strong style="font-size:13px;"><field name="name"/></strong>
+                                    <span t-if="record.contract_type.raw_value == 'government'" class="badge text-bg-info">حكومي</span>
+                                    <span t-else="" class="badge text-bg-secondary">خاص</span>
+                                </div>
+                                <div class="text-muted" style="font-size:11px;margin:2px 0;"><i class="fa fa-building-o"/> <t t-esc="record.partner_id.value || '—'"/></div>
+                                <div style="font-size:11px;margin-top:4px;">
+                                    <i class="fa fa-calendar-o"/> <field name="expire_date"/>
+                                    <span t-if="record.days_to_expiry.raw_value &gt;= 0" class="text-muted"> (خلال <t t-esc="record.days_to_expiry.value"/> يوم)</span>
+                                    <span t-else="" style="color:#e2513f;font-weight:700;"> (متأخر <t t-esc="-record.days_to_expiry.raw_value"/> يوم)</span>
+                                </div>
+                                <div style="display:flex;gap:6px;margin-top:6px;font-size:10px;">
+                                    <span class="badge text-bg-light"><i class="fa fa-refresh"/> <t t-esc="record.renewal_count.value"/> تجديد</span>
+                                    <span class="badge text-bg-light"><i class="fa fa-university"/> <t t-esc="record.guarantee_count.value"/> كفالة</span>
+                                </div>
+                                <div style="margin-top:6px;">
+                                    <button name="action_start_renewal" type="object" class="btn btn-sm btn-primary"
+                                            t-if="record.expiry_state.raw_value != 'ok'" style="font-size:11px;padding:2px 8px;">بدء تجديد</button>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <record id="care_experience_expiry_action" model="ir.actions.act_window">
+            <field name="name">متابعة انتهاء العقود</field>
+            <field name="res_model">care.experience</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="view_id" ref="care_experience_view_kanban"/>
+            <field name="search_view_id" ref="care_experience_view_search"/>
+            <field name="domain">[('state','not in',('draft','terminated'))]</field>
+            <field name="context">{'search_default_expiring':1, 'search_default_expired':1}</field>
+        </record>
+        <menuitem id="care_experience_expiry_menu" name="متابعة انتهاء العقود"
+                  action="care_experience_expiry_action" sequence="54"/>
+
+        <!-- ============ Renewal form (the workflow) ============ -->
+        <record id="care_renewal_view_form" model="ir.ui.view">
+            <field name="name">care.experience.renewal.form</field>
+            <field name="model">care.experience.renewal</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="action_receive_request" type="object" string="1) استلام طلب الجهة"
+                                class="btn-primary" invisible="state != 'draft'"/>
+                        <button name="action_approve" type="object" string="2) الموافقة"
+                                class="btn-primary" invisible="state != 'requested'"/>
+                        <button name="action_notify_senior" type="object" string="3) إشعار الإدارة العليا 📧"
+                                class="btn-primary" invisible="state != 'approved'"/>
+                        <button name="action_renew_guarantee" type="object" string="4) تجديد الكفالة وإرسالها"
+                                class="btn-primary" invisible="state != 'senior_notified'"/>
+                        <button name="action_sign" type="object" string="5) توقيع عقد التمديد ✅"
+                                class="btn-success" invisible="state != 'guarantee'"/>
+                        <button name="action_cancel" type="object" string="إلغاء"
+                                invisible="state in ('signed','cancelled')"/>
+                        <button name="action_reset" type="object" string="إعادة لمسودة" invisible="state == 'draft'"/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,requested,approved,senior_notified,guarantee,signed"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                        <group>
+                            <group>
+                                <field name="experience_id" readonly="1"/>
+                                <field name="partner_id" readonly="1"/>
+                                <field name="kind"/>
+                                <field name="notify_user_ids" widget="many2many_tags"/>
+                            </group>
+                            <group>
+                                <field name="currency_id" invisible="1"/>
+                                <field name="new_start_date"/>
+                                <field name="new_expire_date"/>
+                                <field name="new_value"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="خطوات الإجراء" name="steps">
+                                <group>
+                                    <group string="1) طلب الجهة">
+                                        <field name="request_date"/>
+                                        <field name="respond_deadline"/>
+                                        <field name="request_attachment" filename="request_filename"/>
+                                        <field name="request_filename" invisible="1"/>
+                                    </group>
+                                    <group string="2) الموافقة">
+                                        <field name="approval_date"/>
+                                        <field name="approval_attachment" filename="approval_filename"/>
+                                        <field name="approval_filename" invisible="1"/>
+                                    </group>
+                                    <group string="3) الإدارة العليا">
+                                        <field name="senior_notified_date" readonly="1"/>
+                                    </group>
+                                    <group string="4) الكفالة البنكية">
+                                        <field name="guarantee_id"/>
+                                        <field name="guarantee_sent_date"/>
+                                    </group>
+                                    <group string="5) التوقيع والتأمين">
+                                        <field name="sign_deadline"/>
+                                        <field name="sign_date"/>
+                                        <field name="new_contract_attachment" filename="new_contract_filename"/>
+                                        <field name="new_contract_filename" invisible="1"/>
+                                        <field name="insurance_attachment" filename="insurance_filename"/>
+                                        <field name="insurance_filename" invisible="1"/>
+                                    </group>
+                                </group>
+                            </page>
+                            <page string="ملاحظات"><field name="note" nolabel="1"/></page>
+                        </notebook>
+                    </sheet>
+                    <div class="oe_chatter"><field name="message_follower_ids"/><field name="activity_ids"/><field name="message_ids"/></div>
+                </form>
+            </field>
+        </record>
+        <record id="care_renewal_view_tree" model="ir.ui.view">
+            <field name="name">care.experience.renewal.tree</field>
+            <field name="model">care.experience.renewal</field>
+            <field name="arch" type="xml">
+                <tree decoration-success="state=='signed'" decoration-muted="state=='cancelled'">
+                    <field name="name"/><field name="experience_id"/><field name="partner_id"/>
+                    <field name="kind"/><field name="request_date"/><field name="new_expire_date"/>
+                    <field name="respond_deadline"/><field name="sign_deadline"/>
+                    <field name="state" widget="badge" decoration-success="state=='signed'"
+                           decoration-info="state not in ('draft','signed','cancelled')"/>
+                </tree>
+            </field>
+        </record>
+        <record id="care_renewal_action" model="ir.actions.act_window">
+            <field name="name">التجديدات والتمديدات</field>
+            <field name="res_model">care.experience.renewal</field>
             <field name="view_mode">tree,form</field>
         </record>
-        <menuitem id="care_experience_menu" name="Project Contracts" action="care_experience_action"
-                  sequence="55"/>
+        <menuitem id="care_renewal_menu" name="التجديدات/التمديدات" action="care_renewal_action" sequence="56"/>
+
+        <!-- ============ Bank Guarantee ============ -->
+        <record id="care_guarantee_view_form" model="ir.ui.view">
+            <field name="name">care.bank.guarantee.form</field>
+            <field name="model">care.bank.guarantee</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="action_mark_sent" type="object" string="تم الإرسال للجهة"
+                                invisible="sent_to_client"/>
+                        <button name="action_release" type="object" string="إفراج/إعادة"
+                                invisible="state in ('released','returned')"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <widget name="web_ribbon" text="منتهية" bg_color="bg-danger" invisible="state != 'expired'"/>
+                        <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                        <group>
+                            <group>
+                                <field name="experience_id"/><field name="partner_id" readonly="1"/>
+                                <field name="guarantee_number"/><field name="bank_name"/>
+                                <field name="guarantee_type"/>
+                            </group>
+                            <group>
+                                <field name="currency_id" invisible="1"/>
+                                <field name="amount"/><field name="issue_date"/>
+                                <field name="expiry_date"/><field name="days_to_expiry" readonly="1"/>
+                                <field name="sent_to_client"/><field name="sent_date"/>
+                            </group>
+                        </group>
+                        <field name="attachment" filename="attachment_name"/>
+                        <field name="attachment_name" invisible="1"/>
+                        <field name="note" placeholder="ملاحظات..."/>
+                    </sheet>
+                    <div class="oe_chatter"><field name="message_ids"/></div>
+                </form>
+            </field>
+        </record>
+        <record id="care_guarantee_view_tree" model="ir.ui.view">
+            <field name="name">care.bank.guarantee.tree</field>
+            <field name="model">care.bank.guarantee</field>
+            <field name="arch" type="xml">
+                <tree decoration-danger="state=='expired'" decoration-warning="state=='expiring'" decoration-success="state=='active'">
+                    <field name="name"/><field name="experience_id"/><field name="partner_id"/>
+                    <field name="guarantee_number"/><field name="bank_name"/><field name="guarantee_type"/>
+                    <field name="amount"/><field name="currency_id" column_invisible="1"/>
+                    <field name="expiry_date"/><field name="days_to_expiry"/><field name="sent_to_client"/>
+                    <field name="state" widget="badge"/>
+                </tree>
+            </field>
+        </record>
+        <record id="care_guarantee_action" model="ir.actions.act_window">
+            <field name="name">الكفالات البنكية</field>
+            <field name="res_model">care.bank.guarantee</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem id="care_guarantee_menu" name="الكفالات البنكية" action="care_guarantee_action" sequence="57"/>
     </data>
 </odoo>

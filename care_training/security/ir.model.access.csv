@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+acc_tr_course_user,care.training.course.user,model_care_training_course,hr.group_hr_user,1,0,0,0
+acc_tr_course_mgr,care.training.course.mgr,model_care_training_course,hr.group_hr_manager,1,1,1,1
+acc_tr_session_user,care.training.session.user,model_care_training_session,hr.group_hr_user,1,1,1,0
+acc_tr_session_mgr,care.training.session.mgr,model_care_training_session,hr.group_hr_manager,1,1,1,1
+acc_tr_enroll_user,care.training.enrollment.user,model_care_training_enrollment,hr.group_hr_user,1,1,1,1
+acc_tr_enroll_mgr,care.training.enrollment.mgr,model_care_training_enrollment,hr.group_hr_manager,1,1,1,1

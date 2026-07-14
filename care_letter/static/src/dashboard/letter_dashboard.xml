@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+  <t t-name="care_letter.LetterDashboard">
+    <div class="o_letter_dashboard o_action" dir="rtl" t-ref="root">
+
+      <div class="ld-toolbar">
+        <div class="ld-title"><span class="ld-brand">CARE</span> · لوحة المراسلات</div>
+        <button class="ld-refresh" t-on-click="() => this.loadData()">↻ تحديث</button>
+      </div>
+
+      <div class="ld-scroll">
+        <t t-if="state.loading"><div class="ld-loading">⏳ جارٍ تحميل البيانات...</div></t>
+
+        <t t-if="!state.loading and state.data">
+          <div class="ld-body">
+
+            <!-- KPI cards (clickable) -->
+            <div class="ld-kpis">
+              <div class="ld-kpi" t-on-click="() => this.openList([], 'كل الكتب')">
+                <div class="bar" style="background:#2f6df6"/><div class="ic">📚</div>
+                <div class="v" t-esc="fmt(state.data.kpi.total)"/><div class="l">إجمالي الكتب</div>
+              </div>
+              <div class="ld-kpi" t-on-click="() => this.openList([['direction','=','outgoing']], 'الصادر')">
+                <div class="bar" style="background:#1e2a44"/><div class="ic">📤</div>
+                <div class="v" t-esc="fmt(state.data.kpi.outgoing)"/><div class="l">صادر</div>
+              </div>
+              <div class="ld-kpi" t-on-click="() => this.openList([['direction','=','incoming']], 'الوارد')">
+                <div class="bar" style="background:#017e84"/><div class="ic">📥</div>
+                <div class="v" t-esc="fmt(state.data.kpi.incoming)"/><div class="l">وارد</div>
+              </div>
+              <div class="ld-kpi" t-on-click="() => this.openList([['letter_state','=','to_sign']], 'بانتظار التوقيع')">
+                <div class="bar" style="background:#e08a00"/><div class="ic">✍️</div>
+                <div class="v" t-esc="fmt(state.data.kpi.to_sign)"/><div class="l">بانتظار التوقيع</div>
+              </div>
+              <div class="ld-kpi" t-on-click="() => this.openList([['letter_state','=','signed']], 'بانتظار المسح')">
+                <div class="bar" style="background:#7a5cf0"/><div class="ic">🖨️</div>
+                <div class="v" t-esc="fmt(state.data.kpi.to_scan)"/><div class="l">بانتظار المسح</div>
+              </div>
+              <div class="ld-kpi" t-on-click="() => this.openList([['letter_state','=','with_delegate']], 'مع المندوب')">
+                <div class="bar" style="background:#e08a00"/><div class="ic">🚚</div>
+                <div class="v" t-esc="fmt(state.data.kpi.with_delegate)"/><div class="l">مع المندوب</div>
+              </div>
+              <div class="ld-kpi ld-danger" t-on-click="() => this.openList([['is_overdue','=',true]], 'متأخّر التسليم')">
+                <div class="bar" style="background:#e2513f"/><div class="ic">🚨</div>
+                <div class="v" t-esc="fmt(state.data.kpi.overdue)"/><div class="l">متأخّر التسليم</div>
+              </div>
+              <div class="ld-kpi" t-on-click="() => this.openList([['letter_state','in',['delivered','acknowledged','archived']]], 'مُسلَّم/مؤرشف')">
+                <div class="bar" style="background:#1a9f6d"/><div class="ic">✅</div>
+                <div class="v" t-esc="fmt(state.data.kpi.done)"/><div class="l">مُسلَّم/مؤرشف</div>
+              </div>
+              <div class="ld-kpi" t-on-click="() => this.openList([['deli_date','=',false]], 'بلا تاريخ تسليم')">
+                <div class="bar" style="background:#c0392b"/><div class="ic">📭</div>
+                <div class="v" t-esc="fmt(state.data.kpi.no_delivery)"/><div class="l">بلا تاريخ تسليم</div>
+              </div>
+              <div class="ld-kpi" t-on-click="() => this.openList([['image_letter','=',false]], 'بلا مسح ضوئي')">
+                <div class="bar" style="background:#7a5cf0"/><div class="ic">🗎</div>
+                <div class="v" t-esc="fmt(state.data.kpi.no_scan)"/><div class="l">بلا مسح ضوئي</div>
+              </div>
+              <div class="ld-kpi" t-on-click="() => this.openList([['deadline_state','=','overdue']], 'مهلة رد متأخرة')">
+                <div class="bar" style="background:#e2513f"/><div class="ic">⏰</div>
+                <div class="v" t-esc="fmt(state.data.kpi.deadline_over)"/><div class="l">مهلة رد متأخرة</div>
+              </div>
+              <div class="ld-kpi" t-on-click="() => this.openList([['is_confidential','=',true]], 'سرّي')">
+                <div class="bar" style="background:#1e2a44"/><div class="ic">🔒</div>
+                <div class="v" t-esc="fmt(state.data.kpi.confidential)"/><div class="l">سرّي</div>
+              </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="ld-charts">
+              <div class="ld-card ld-c6">
+                <div class="ld-ch-title">الكتب حسب الحالة</div>
+                <div class="ld-canvas"><canvas id="ldStatus"/></div>
+              </div>
+              <div class="ld-card ld-c6">
+                <div class="ld-ch-title">الاتجاه الشهري</div>
+                <div class="ld-canvas"><canvas id="ldTrend"/></div>
+              </div>
+              <div class="ld-card ld-c4">
+                <div class="ld-ch-title">الاتجاه (صادر/وارد)</div>
+                <div class="ld-canvas"><canvas id="ldDirection"/></div>
+              </div>
+              <div class="ld-card ld-c8">
+                <div class="ld-ch-title">حسب التصنيف</div>
+                <div class="ld-canvas"><canvas id="ldClass"/></div>
+              </div>
+              <div class="ld-card ld-c6">
+                <div class="ld-ch-title">أعلى الجهات مراسلةً</div>
+                <div class="ld-canvas"><canvas id="ldPartners"/></div>
+              </div>
+              <div class="ld-card ld-c6">
+                <div class="ld-ch-title">أداء المندوبين (إجمالي / متأخّر)</div>
+                <div class="ld-canvas"><canvas id="ldDelegates"/></div>
+              </div>
+              <div class="ld-card ld-c4">
+                <div class="ld-ch-title">حالة القراءة (OCR)</div>
+                <div class="ld-canvas"><canvas id="ldOcr"/></div>
+              </div>
+            </div>
+
+          </div>
+        </t>
+      </div>
+    </div>
+  </t>
+</templates>

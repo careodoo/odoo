@@ -41,10 +41,15 @@ class ServiceOrderPortal(CustomerPortal):
     return []
 
   def _prepare_home_portal_values(self, counters):
-    """ Add subscription details to main account page """
+    """ Add subscription details to main account page.
+    Only count/show for users who actually have access to service.order —
+    otherwise the async portal counter endpoint raises AccessError and pops
+    an error on every user's «My Account» page. """
     values = super()._prepare_home_portal_values(counters)
-    service_orders_counter = http.request.env['service.order'].search_count([])
-    values['service_orders_count'] = service_orders_counter
+    if 'service_orders_count' in counters:
+      SO = http.request.env['service.order']
+      values['service_orders_count'] = SO.search_count([]) \
+          if SO.check_access_rights('read', raise_exception=False) else 0
     return values
 
   @http.route(
@@ -65,6 +70,10 @@ class ServiceOrderPortal(CustomerPortal):
       groupby='none',
       **kw,
   ):
+    if not http.request.env['service.order'].check_access_rights('read', raise_exception=False):
+      # users without access shouldn't land here (card is hidden for them);
+      # if reached directly, send them back to the portal home gracefully.
+      return http.request.redirect('/my')
     domain = self._get_portal_default_domain()
     searchbar_filters = {
         'all': {'label': _('All'), 'domain': []},

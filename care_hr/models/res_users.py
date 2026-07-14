@@ -5,20 +5,24 @@ class ResUsers(models.Model):
     _inherit = 'res.users'
 
     def _sync_dashboard_home_action(self):
-        """Members of group_hr_dashboard land on the HR dashboard on login
-        (Home Action). Users removed from the group fall back to the normal
-        app menu (action_id cleared, but only if it still points at our
-        dashboard — we never touch a custom home action the user chose)."""
-        group = self.env.ref('care_hr.group_hr_dashboard', raise_if_not_found=False)
+        """The HR dashboard must NOT be forced as the login Home Action.
+        It is reachable as the first page inside the Employees app instead.
+        This only CLEARS a previously forced dashboard home action."""
         action = self.env.ref('care_hr.action_hr_dashboard', raise_if_not_found=False)
-        if not group or not action:
+        if not action:
             return
         for user in self:
-            in_group = group in user.groups_id
-            if in_group and user.action_id.id != action.id:
-                user.sudo().with_context(care_hr_sync=True).action_id = action.id
-            elif not in_group and user.action_id.id == action.id:
+            if user.action_id.id == action.id:
                 user.sudo().with_context(care_hr_sync=True).action_id = False
+
+    @api.model
+    def _clear_all_dashboard_home(self):
+        """One-time cleanup: clear the forced dashboard home action for all users."""
+        action = self.env.ref('care_hr.action_hr_dashboard', raise_if_not_found=False)
+        if not action:
+            return
+        users = self.sudo().search([('action_id', '=', action.id)])
+        users.with_context(care_hr_sync=True).write({'action_id': False})
 
     @api.model_create_multi
     def create(self, vals_list):

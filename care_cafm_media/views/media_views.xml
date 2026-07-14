@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_media_tree" model="ir.ui.view"><field name="name">cafm.media.tree</field><field name="model">care.cafm.media</field>
+    <field name="arch" type="xml"><tree><field name="create_date"/><field name="name"/><field name="media_type"/><field name="external"/><field name="size_kb"/><field name="url" widget="url"/><field name="workorder_id"/><field name="observation_id"/></tree></field></record>
+  <record id="action_media" model="ir.actions.act_window"><field name="name">وسائط CAFM</field><field name="res_model">care.cafm.media</field><field name="view_mode">tree</field></record>
+
+  <!-- settings block -->
+  <record id="res_config_settings_view_form_cafm_media" model="ir.ui.view">
+    <field name="name">res.config.settings.cafm.media</field>
+    <field name="model">res.config.settings</field>
+    <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//form" position="inside">
+        <app data-string="CAFM Media" string="وسائط CAFM" name="care_cafm_media">
+          <block title="التخزين الخارجي للوسائط (S3/R2)" name="cafm_media">
+            <setting string="مزوّد التخزين" help="اختر تخزين خارجي لعدم إثقال السيرفر">
+              <field name="cafm_media_backend"/>
+            </setting>
+            <setting string="بيانات S3/R2" invisible="cafm_media_backend != 's3'">
+              <field name="cafm_media_endpoint" placeholder="https://&lt;account&gt;.r2.cloudflarestorage.com"/>
+              <field name="cafm_media_region" placeholder="auto"/>
+              <field name="cafm_media_bucket" placeholder="cafm-media"/>
+              <field name="cafm_media_access_key"/>
+              <field name="cafm_media_secret_key" password="True"/>
+              <field name="cafm_media_public_base" placeholder="https://cdn.care-kw.com"/>
+            </setting>
+          </block>
+        </app>
+      </xpath>
+    </field>
+  </record>
+
+  <!-- WO form: media page -->
+  <record id="view_wo_form_media" model="ir.ui.view">
+    <field name="name">cafm.workorder.form.media</field><field name="model">care.cafm.workorder</field>
+    <field name="inherit_id" ref="care_cafm.view_wo_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='description']" position="after">
+        <separator string="الوسائط (روابط خارجية)"/>
+        <field name="media_ids"><tree editable="bottom"><field name="media_type"/><field name="name"/><field name="url" widget="url"/><field name="external"/><field name="size_kb"/></tree></field>
+      </xpath>
+    </field>
+  </record>
+
+  <menuitem id="menu_media" name="الوسائط" parent="care_cafm.menu_cafm_ops" action="action_media" sequence="40"/>
+</odoo>

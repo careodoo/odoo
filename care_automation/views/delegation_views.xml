@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="care_delegation_tree" model="ir.ui.view">
+        <field name="name">care.delegation.tree</field>
+        <field name="model">care.delegation</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'active'" decoration-warning="ends_soon"
+                  decoration-muted="state in ('expired','revoked')">
+                <field name="name"/>
+                <field name="delegator_id"/>
+                <field name="delegate_id"/>
+                <field name="scope"/>
+                <field name="reason" optional="show"/>
+                <field name="date_start" optional="hide"/>
+                <field name="date_end"/>
+                <field name="until_notice" optional="hide"/>
+                <field name="ends_soon" column_invisible="1"/>
+                <field name="delegated_count" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'pending'"
+                       decoration-success="state == 'active'"
+                       decoration-muted="state in ('expired','revoked')"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="care_delegation_form" model="ir.ui.view">
+        <field name="name">care.delegation.form</field>
+        <field name="model">care.delegation</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_submit" type="object" string="إرسال للاعتماد"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_approve" type="object" string="اعتماد الإدارة العليا"
+                            class="btn-primary" invisible="state != 'pending'"
+                            confirm="اعتماد هذا التفويض وتفعيله؟"/>
+                    <button name="action_revoke" type="object" string="استرداد"
+                            invisible="state != 'active'"
+                            confirm="استرداد التفويض وإيقافه فوراً؟"/>
+                    <button name="action_reset" type="object" string="إعادة لمسودة"
+                            invisible="state not in ('pending','revoked','expired')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,pending,active"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="سارية الآن" bg_color="bg-success"
+                            invisible="not is_current"/>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="delegator_id"/>
+                            <field name="delegate_id"/>
+                            <field name="scope"/>
+                            <field name="reason" placeholder="إجازة المدير..."/>
+                        </group>
+                        <group>
+                            <field name="until_notice"/>
+                            <field name="date_start"/>
+                            <field name="date_end" invisible="until_notice" required="not until_notice"/>
+                            <field name="delegated_count"/>
+                            <field name="is_current" invisible="1"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="ملاحظات / نطاق التفويض بالتفصيل..."/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="care_delegation_search" model="ir.ui.view">
+        <field name="name">care.delegation.search</field>
+        <field name="model">care.delegation</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="delegator_id"/>
+                <field name="delegate_id"/>
+                <field name="scope"/>
+                <filter name="current" string="سارية الآن" domain="[('is_current','=',True)]"/>
+                <filter name="ends_soon" string="تنتهي هذا الأسبوع"
+                        domain="[('state','=','active'),('until_notice','=',False),('date_end','&gt;=', context_today().strftime('%Y-%m-%d')),('date_end','&lt;=', (context_today() + relativedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                <filter name="pending" string="بانتظار الاعتماد" domain="[('state','=','pending')]"/>
+                <separator/>
+                <filter name="my_given" string="فوّضتها أنا" domain="[('delegator_id','=',uid)]"/>
+                <filter name="my_received" string="مفوَّضة إليّ" domain="[('delegate_id','=',uid)]"/>
+                <group expand="0" string="تجميع">
+                    <filter name="g_scope" string="الصلاحية" context="{'group_by':'scope'}"/>
+                    <filter name="g_state" string="الحالة" context="{'group_by':'state'}"/>
+                    <filter name="g_delegator" string="المفوِّض" context="{'group_by':'delegator_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="care_delegation_action" model="ir.actions.act_window">
+        <field name="name">تفويض الصلاحيات</field>
+        <field name="res_model">care.delegation</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="care_delegation_search"/>
+        <field name="context">{'search_default_current': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">أنشئ تفويض صلاحية</p>
+            <p>فوّض اعتماداً محدداً لمدة محددة لاستمرار العمل عند غياب المسؤول —
+               كل قرار بالإنابة موسوم، وينتهي التفويض تلقائياً.</p>
+        </field>
+    </record>
+</odoo>

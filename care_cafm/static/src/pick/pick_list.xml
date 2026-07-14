@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="care_cafm.PickListView" t-inherit="web.ListView" t-inherit-mode="primary" owl="1">
+        <xpath expr="//button[hasclass('o_list_button_add')]" position="after">
+            <button t-if="props.context.cafm_pick_action" type="button"
+                    class="btn btn-secondary o_cafm_link_btn ms-1" t-on-click="onCafmLink">
+                <i class="fa fa-link me-1"/><span>ربط موجود</span>
+            </button>
+        </xpath>
+    </t>
+</templates>

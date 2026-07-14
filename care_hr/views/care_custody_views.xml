@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_care_custody_tree" model="ir.ui.view">
+        <field name="name">care.custody.tree</field>
+        <field name="model">care.custody</field>
+        <field name="arch" type="xml">
+            <tree decoration-warning="state == 'issued'" decoration-success="state == 'returned'"
+                  decoration-danger="state in ('lost','damaged')">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="department_id" optional="show"/>
+                <field name="item_type"/>
+                <field name="description"/>
+                <field name="issue_date"/>
+                <field name="return_date" optional="show"/>
+                <field name="value" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-warning="state == 'issued'"
+                       decoration-success="state == 'returned'"
+                       decoration-danger="state in ('lost','damaged')"/>
+                <field name="currency_id" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_care_custody_form" model="ir.ui.view">
+        <field name="name">care.custody.form</field>
+        <field name="model">care.custody</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_return" type="object" string="Mark Returned"
+                            class="btn-primary" invisible="state != 'issued'"/>
+                    <button name="action_lost" type="object" string="Lost"
+                            invisible="state != 'issued'"/>
+                    <button name="action_damaged" type="object" string="Damaged"
+                            invisible="state != 'issued'"/>
+                    <button name="action_reset" type="object" string="Reset"
+                            invisible="state == 'issued'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="issued,returned"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="item_type"/>
+                            <field name="description"/>
+                        </group>
+                        <group>
+                            <field name="issue_date"/>
+                            <field name="return_date" readonly="1"/>
+                            <field name="value"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="Condition / notes..."/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_care_custody_search" model="ir.ui.view">
+        <field name="name">care.custody.search</field>
+        <field name="model">care.custody</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <field name="description"/>
+                <filter name="in_custody" string="In Custody" domain="[('state','=','issued')]"/>
+                <filter name="not_returned" string="Lost/Damaged" domain="[('state','in',('lost','damaged'))]"/>
+                <group expand="0" string="Group By">
+                    <filter name="g_type" string="Item Type" context="{'group_by':'item_type'}"/>
+                    <filter name="g_state" string="Status" context="{'group_by':'state'}"/>
+                    <filter name="g_emp" string="Employee" context="{'group_by':'employee_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_care_custody" model="ir.actions.act_window">
+        <field name="name">Custody Register</field>
+        <field name="res_model">care.custody</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_care_custody_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Issue an item</p>
+            <p>Track items handed to workers (ID, SIM, access card, tools...).
+               Outstanding custody blocks offboarding clearance.</p>
+        </field>
+    </record>
+</odoo>

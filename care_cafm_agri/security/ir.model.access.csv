@@ -1,0 +1,13 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+acc_zone_u,agri.zone.u,model_care_cafm_agri_zone,base.group_user,1,1,1,0
+acc_zone_m,agri.zone.m,model_care_cafm_agri_zone,hr.group_hr_manager,1,1,1,1
+acc_plant_u,agri.plant.u,model_care_cafm_agri_plant,base.group_user,1,1,1,0
+acc_plant_m,agri.plant.m,model_care_cafm_agri_plant,hr.group_hr_manager,1,1,1,1
+acc_treat_u,agri.treatment.u,model_care_cafm_agri_treatment,base.group_user,1,1,1,0
+acc_treat_m,agri.treatment.m,model_care_cafm_agri_treatment,hr.group_hr_manager,1,1,1,1
+acc_species_u,agri.species.u,model_care_cafm_agri_species,base.group_user,1,1,1,0
+acc_species_m,agri.species.m,model_care_cafm_agri_species,hr.group_hr_manager,1,1,1,1
+acc_irr_u,agri.irrlog.u,model_care_cafm_agri_irrigation_log,base.group_user,1,1,1,0
+acc_irr_m,agri.irrlog.m,model_care_cafm_agri_irrigation_log,hr.group_hr_manager,1,1,1,1
+acc_op_u,agri.op.u,model_care_cafm_agri_operation,base.group_user,1,1,1,0
+acc_op_m,agri.op.m,model_care_cafm_agri_operation,hr.group_hr_manager,1,1,1,1

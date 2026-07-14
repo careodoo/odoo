@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_dept_link_tree" model="ir.ui.view">
+        <field name="name">hr.department.link.tree</field>
+        <field name="model">hr.department</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom" create="false" delete="false"
+                  decoration-success="project_id" decoration-warning="not project_id and suggested_project_id">
+                <field name="name" readonly="1"/>
+                <field name="total_employee" readonly="1" optional="show"/>
+                <field name="project_id"/>
+                <field name="suggested_project_id" readonly="1" optional="show"/>
+                <field name="suggested_score" readonly="1" optional="show"/>
+                <button name="action_apply_suggestion" type="object" string="Use Suggestion"
+                        icon="fa-check" invisible="project_id or not suggested_project_id"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_dept_link_search" model="ir.ui.view">
+        <field name="name">hr.department.link.search</field>
+        <field name="model">hr.department</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <filter name="unlinked" string="Unlinked" domain="[('project_id','=',False)]"/>
+                <filter name="linked" string="Linked" domain="[('project_id','!=',False)]"/>
+            </search>
+        </field>
+    </record>
+    <record id="action_dept_link" model="ir.actions.act_window">
+        <field name="name">Department → Project Linking</field>
+        <field name="res_model">hr.department</field>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="view_dept_link_tree"/>
+        <field name="search_view_id" ref="view_dept_link_search"/>
+        <field name="context">{'search_default_unlinked': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Link departments to projects</p>
+            <p>Run "↻ Generate Suggestions", then apply or edit. This powers Billing, Profitability and SLA accuracy.</p>
+        </field>
+    </record>
+    <record id="action_dept_suggest_server" model="ir.actions.server">
+        <field name="name">Generate Project Suggestions</field>
+        <field name="model_id" ref="hr.model_hr_department"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_generate_project_suggestions()</field>
+    </record>
+    <record id="action_dept_apply_strong_server" model="ir.actions.server">
+        <field name="name">Apply Strong Matches (≥80%)</field>
+        <field name="model_id" ref="hr.model_hr_department"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_apply_all_strong()</field>
+    </record>
+
+    <menuitem id="menu_dept_link" name="Department → Project Linking"
+              parent="care_hr.menu_care_hr_config_root" action="action_dept_link" sequence="50"/>
+    <menuitem id="menu_dept_suggest" name="↻ Generate Suggestions"
+              parent="care_hr.menu_care_hr_config_root" action="action_dept_suggest_server"
+              sequence="51" groups="hr.group_hr_manager"/>
+    <menuitem id="menu_dept_apply_strong" name="✓ Apply Strong Matches"
+              parent="care_hr.menu_care_hr_config_root" action="action_dept_apply_strong_server"
+              sequence="52" groups="hr.group_hr_manager"/>
+</odoo>

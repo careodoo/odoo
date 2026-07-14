@@ -68,6 +68,18 @@ export class HrDashboard extends Component {
         });
     }
 
+    // open any model list (used by the Care KPI row)
+    openModel(model, domain, name) {
+        this.action.doAction({
+            type: "ir.actions.act_window",
+            name: name || model,
+            res_model: model,
+            domain: domain || [],
+            views: [[false, "list"], [false, "form"]],
+            target: "current",
+        });
+    }
+
     destroyCharts() {
         for (const k in this.charts) {
             try { this.charts[k].destroy(); } catch (e) { /* noop */ }
@@ -110,6 +122,41 @@ export class HrDashboard extends Component {
             },
             options: { ...noLegend, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } },
         });
+
+        // skills by type (doughnut)
+        if (d.by_skill_type && d.by_skill_type.length) {
+            this._make("hrSkillType", {
+                type: "doughnut",
+                data: {
+                    labels: d.by_skill_type.map((x) => x.name),
+                    datasets: [{ data: d.by_skill_type.map((x) => x.count), backgroundColor: PALETTE }],
+                },
+                options: { plugins: { legend: { position: "bottom", labels: { font: { size: 10 } } } }, cutout: "55%" },
+            });
+        }
+        // top skills (horizontal bars)
+        if (d.top_skills && d.top_skills.length) {
+            this._make("hrTopSkills", {
+                type: "bar",
+                data: {
+                    labels: d.top_skills.map((x) => x.name),
+                    datasets: [{ data: d.top_skills.map((x) => x.count), backgroundColor: C.purple, borderRadius: 6 }],
+                },
+                options: { ...noLegend, indexAxis: "y", scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } },
+            });
+        }
+
+        // by nationality (horizontal bars)
+        if (d.by_nationality && d.by_nationality.length) {
+            this._make("hrByNat", {
+                type: "bar",
+                data: {
+                    labels: d.by_nationality.map((x) => x.name),
+                    datasets: [{ data: d.by_nationality.map((x) => x.count), backgroundColor: C.teal, borderRadius: 6 }],
+                },
+                options: { ...noLegend, indexAxis: "y", scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } },
+            });
+        }
 
         // by job (horizontal bars)
         this._make("hrByJob", {

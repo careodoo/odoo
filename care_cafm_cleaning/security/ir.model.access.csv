@@ -1,0 +1,17 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+acc_atpl_u,clean.audit.template.u,model_care_cafm_clean_audit_template,base.group_user,1,0,0,0
+acc_atpl_m,clean.audit.template.m,model_care_cafm_clean_audit_template,hr.group_hr_manager,1,1,1,1
+acc_aitem_u,clean.audit.item.u,model_care_cafm_clean_audit_item,base.group_user,1,0,0,0
+acc_aitem_m,clean.audit.item.m,model_care_cafm_clean_audit_item,hr.group_hr_manager,1,1,1,1
+acc_audit_u,clean.audit.u,model_care_cafm_clean_audit,base.group_user,1,1,1,0
+acc_audit_m,clean.audit.m,model_care_cafm_clean_audit,hr.group_hr_manager,1,1,1,1
+acc_aline_u,clean.audit.line.u,model_care_cafm_clean_audit_line,base.group_user,1,1,1,1
+acc_aline_m,clean.audit.line.m,model_care_cafm_clean_audit_line,hr.group_hr_manager,1,1,1,1
+acc_sched_u,clean.schedule.u,model_care_cafm_clean_schedule,base.group_user,1,1,1,0
+acc_sched_m,clean.schedule.m,model_care_cafm_clean_schedule,hr.group_hr_manager,1,1,1,1
+acc_round_u,clean.round.u,model_care_cafm_clean_round,base.group_user,1,1,1,0
+acc_round_m,clean.round.m,model_care_cafm_clean_round,hr.group_hr_manager,1,1,1,1
+acc_cons_u,clean.consumable.u,model_care_cafm_clean_consumable,base.group_user,1,1,1,0
+acc_cons_m,clean.consumable.m,model_care_cafm_clean_consumable,hr.group_hr_manager,1,1,1,1
+acc_consmv_u,clean.consumable.move.u,model_care_cafm_clean_consumable_move,base.group_user,1,1,1,0
+acc_consmv_m,clean.consumable.move.m,model_care_cafm_clean_consumable_move,hr.group_hr_manager,1,1,1,1

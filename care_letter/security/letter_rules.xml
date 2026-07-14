@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Every internal user: sees ONLY their own / delegated / followed letters -->
+        <record id="rule_letter_own" model="ir.rule">
+            <field name="name">Letters: own letters only</field>
+            <field name="model_id" ref="sp_letter_v15.model_letter_file"/>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="domain_force">['|','|','|','|',
+                ('requester_id','=',user.id),
+                ('create_uid','=',user.id),
+                ('follow_up_person_id.user_id','=',user.id),
+                ('delegate_id.user_id','=',user.id),
+                ('message_partner_ids','in',[user.partner_id.id])]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Signers additionally see letters awaiting signature -->
+        <record id="rule_letter_signer" model="ir.rule">
+            <field name="name">Letters: signer sees to-sign</field>
+            <field name="model_id" ref="sp_letter_v15.model_letter_file"/>
+            <field name="groups" eval="[(4, ref('group_letter_signer'))]"/>
+            <field name="domain_force">[('letter_state','in',['to_sign','signed'])]</field>
+        </record>
+
+        <!-- Department follow-up: sees letters of departments they manage -->
+        <record id="rule_letter_dept" model="ir.rule">
+            <field name="name">Letters: department follow-up</field>
+            <field name="model_id" ref="sp_letter_v15.model_letter_file"/>
+            <field name="groups" eval="[(4, ref('group_letter_dept'))]"/>
+            <field name="domain_force">[('department_id.manager_id.user_id','=',user.id)]</field>
+        </record>
+
+        <!-- Admin & Read-only: see every letter -->
+        <record id="rule_letter_admin_all" model="ir.rule">
+            <field name="name">Letters: administrator sees all</field>
+            <field name="model_id" ref="sp_letter_v15.model_letter_file"/>
+            <field name="groups" eval="[(4, ref('group_letter_admin')), (4, ref('group_letter_readonly'))]"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Private task groups: visible only to manager + members (admins see all) -->
+        <record id="rule_task_group_private" model="ir.rule">
+            <field name="name">Task groups: private to members</field>
+            <field name="model_id" ref="model_care_task_group"/>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="domain_force">['|','|',('is_private','=',False),
+                ('manager_id','=',user.id),('member_ids','in',[user.id])]</field>
+        </record>
+        <record id="rule_task_group_admin" model="ir.rule">
+            <field name="name">Task groups: admin sees all</field>
+            <field name="model_id" ref="model_care_task_group"/>
+            <field name="groups" eval="[(4, ref('group_pms_admin'))]"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+        </record>
+
+        <!-- Portal: users see only projects they are assigned to -->
+        <record id="rule_portal_project" model="ir.rule">
+            <field name="name">Portal: assigned projects only</field>
+            <field name="model_id" ref="project.model_project_project"/>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+            <field name="domain_force">[('portal_user_ids','in',[user.id])]</field>
+        </record>
+        <record id="rule_portal_task" model="ir.rule">
+            <field name="name">Portal: tasks of assigned projects</field>
+            <field name="model_id" ref="project.model_project_task"/>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+            <field name="domain_force">[('project_id.portal_user_ids','in',[user.id])]</field>
+        </record>
+
+        <!-- Portal Project Manager: also sees the projects they manage -->
+        <record id="rule_portal_pm_project" model="ir.rule">
+            <field name="name">Portal PM: managed projects</field>
+            <field name="model_id" ref="project.model_project_project"/>
+            <field name="groups" eval="[(4, ref('group_pms_portal_manager'))]"/>
+            <field name="domain_force">['|',('project_manager_id','=',user.id),
+                ('portal_user_ids','in',[user.id])]</field>
+        </record>
+        <record id="rule_portal_pm_task" model="ir.rule">
+            <field name="name">Portal PM: tasks of managed projects</field>
+            <field name="model_id" ref="project.model_project_task"/>
+            <field name="groups" eval="[(4, ref('group_pms_portal_manager'))]"/>
+            <field name="domain_force">['|',('project_id.project_manager_id','=',user.id),
+                ('project_id.portal_user_ids','in',[user.id])]</field>
+        </record>
+    </data>
+
+    <data noupdate="0">
+        <!-- ============================================================
+             Per-user project/task scoping (GLOBAL rules, AND-ed with all
+             others so a permissive standard rule cannot cancel them).
+
+             See-all: portal users (handled by their own rules), system
+             admins, and the PMS supervisor/manager/admin groups.
+             Everyone else sees ONLY:
+               - projects they manage, contain a task assigned to them,
+                 or are a portal user of;
+               - tasks assigned to them, in a project they manage, or
+                 forwarded to them.
+             The dashboard, lists and kanban all self-filter because they
+             query via search(), which enforces record rules.
+             ============================================================ -->
+        <record id="rule_pms_project_scope" model="ir.rule">
+            <field name="name">PMS: each user sees only their own projects</field>
+            <field name="model_id" ref="project.model_project_project"/>
+            <field name="domain_force">[(1, '=', 1)] if (user.share or user.has_group('base.group_system') or user.has_group('care_pms.group_pms_supervisor') or user.has_group('care_pms.group_pms_manager') or user.has_group('care_pms.group_pms_admin') or user.has_group('care_pms.group_pms_project_all')) else ['|', '|', ('project_manager_id', '=', user.id), ('task_ids.user_ids', 'in', [user.id]), ('portal_user_ids', 'in', [user.id])]</field>
+        </record>
+        <record id="rule_pms_task_scope" model="ir.rule">
+            <field name="name">PMS: each user sees only their own tasks</field>
+            <field name="model_id" ref="project.model_project_task"/>
+            <field name="domain_force">[(1, '=', 1)] if (user.share or user.has_group('base.group_system') or user.has_group('care_pms.group_pms_supervisor') or user.has_group('care_pms.group_pms_manager') or user.has_group('care_pms.group_pms_admin')) else ['|', '|', '|', ('user_ids', 'in', [user.id]), ('project_id.project_manager_id', '=', user.id), ('forward_to_id', '=', user.id), ('project_id.portal_user_ids', 'in', [user.id])]</field>
+        </record>
+
+        <!-- ============================================================
+             Petty-cash custody scoping: each user sees ONLY their own
+             custody (manager_id = them) unless explicitly assigned to
+             follow/settle it (assigned_user_ids). See-all: system admins +
+             PMS supervisor/manager/admin. GLOBAL rules (AND-ed).
+             ============================================================ -->
+        <record id="rule_pms_petty_scope" model="ir.rule">
+            <field name="name">PMS: users see only their own custody</field>
+            <field name="model_id" ref="model_care_pms_petty_cash"/>
+            <field name="domain_force">[(1, '=', 1)] if (user.has_group('base.group_system') or user.has_group('care_pms.group_pms_supervisor') or user.has_group('care_pms.group_pms_manager') or user.has_group('care_pms.group_pms_admin')) else ['|', ('manager_id', '=', user.id), ('assigned_user_ids', 'in', [user.id])]</field>
+        </record>
+        <record id="rule_pms_settlement_scope" model="ir.rule">
+            <field name="name">PMS: users see only settlements of their custody</field>
+            <field name="model_id" ref="model_care_pms_petty_settlement"/>
+            <field name="domain_force">[(1, '=', 1)] if (user.has_group('base.group_system') or user.has_group('care_pms.group_pms_supervisor') or user.has_group('care_pms.group_pms_manager') or user.has_group('care_pms.group_pms_admin')) else ['|', ('cash_id.manager_id', '=', user.id), ('cash_id.assigned_user_ids', 'in', [user.id])]</field>
+        </record>
+        <record id="rule_pms_petty_expense_scope" model="ir.rule">
+            <field name="name">PMS: users see only expenses of their custody</field>
+            <field name="model_id" ref="model_care_pms_petty_cash_expense"/>
+            <field name="domain_force">[(1, '=', 1)] if (user.has_group('base.group_system') or user.has_group('care_pms.group_pms_supervisor') or user.has_group('care_pms.group_pms_manager') or user.has_group('care_pms.group_pms_admin')) else ['|', ('cash_id.manager_id', '=', user.id), ('cash_id.assigned_user_ids', 'in', [user.id])]</field>
+        </record>
+    </data>
+</odoo>

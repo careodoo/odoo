@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Distinct, fully READ-ONLY personal profile (edit/create/delete disabled).
+         Used only by the "My" menu, so the standard Employees form is untouched. -->
+    <record id="view_my_profile_form" model="ir.ui.view">
+        <field name="name">my.employee.profile.form</field>
+        <field name="model">hr.employee</field>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <form string="ملفي الشخصي" create="false" edit="false" delete="false" class="o_my_profile">
+                <sheet>
+                    <field name="company_id" invisible="1"/>
+                    <field name="work_contact_id" invisible="1"/>
+                    <field name="image_1920" widget="image" class="oe_avatar" options="{'preview_image':'avatar_128'}"/>
+                    <div class="oe_title" style="margin-bottom:8px">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1 style="margin-bottom:2px"><field name="name"/></h1>
+                        <h2 style="color:#6b7280;font-weight:500;margin:0"><field name="job_title" placeholder="—"/></h2>
+                        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+                            <span class="badge rounded-pill text-bg-primary" style="font-size:13px;padding:6px 12px">
+                                🪪 <field name="barcode" class="oe_inline"/>
+                            </span>
+                            <span class="badge rounded-pill text-bg-info" style="font-size:13px;padding:6px 12px">
+                                <field name="worker_status" class="oe_inline"/>
+                            </span>
+                        </div>
+                    </div>
+
+                    <group>
+                        <group string="بيانات سريعة">
+                            <field name="department_id"/>
+                            <field name="job_id"/>
+                            <field name="civil_code"/>
+                            <field name="mobile_phone"/>
+                        </group>
+                        <group string="تواصل">
+                            <field name="work_phone"/>
+                            <field name="work_email"/>
+                            <field name="private_email"/>
+                            <field name="joining_date"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="👤 البيانات الشخصية">
+                            <group>
+                                <group>
+                                    <field name="identification_id"/>
+                                    <field name="birthday"/>
+                                    <field name="place_of_birth"/>
+                                    <field name="gender"/>
+                                </group>
+                                <group>
+                                    <field name="marital"/>
+                                    <field name="country_id"/>
+                                    <field name="emergency_contact"/>
+                                    <field name="emergency_phone"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="🛂 الإقامة والجواز">
+                            <group>
+                                <group string="الإقامة">
+                                    <field name="residency_type"/>
+                                    <field name="residency_start_date"/>
+                                    <field name="residency_end_date"/>
+                                    <field name="permit_no"/>
+                                </group>
+                                <group string="الجواز والتأشيرة">
+                                    <field name="passport_no"/>
+                                    <field name="passport_type"/>
+                                    <field name="passport_status"/>
+                                    <field name="visa_no"/>
+                                    <field name="visa_expire"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="🏛️ الشؤون والملف الحكومي">
+                            <group>
+                                <group string="الشؤون الاجتماعية">
+                                    <field name="social_contract_no"/>
+                                    <field name="social_contract_id"/>
+                                    <field name="social_start_date"/>
+                                    <field name="social_affairs_title"/>
+                                </group>
+                                <group string="تصريح الشؤون / الملف">
+                                    <field name="affairs_permit_start_date"/>
+                                    <field name="affairs_permit_end_date"/>
+                                    <field name="manpower_file_id"/>
+                                    <field name="manpower_file_authority"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="💵 الراتب والتأمين">
+                            <group>
+                                <group string="الرواتب">
+                                    <field name="job_grade_id"/>
+                                    <field name="affairs_salary"/>
+                                    <field name="insurance_salary"/>
+                                </group>
+                                <group string="التأمين والبنك">
+                                    <field name="insurance_status"/>
+                                    <field name="bank_account_id"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="🏠 السكن">
+                            <group>
+                                <group>
+                                    <field name="room_id"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,290 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* care_assistant
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0+e-20241205\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-05 21:48+0000\n"
+"PO-Revision-Date: 2026-07-05 21:48+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: ar_001\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: care_assistant
+#. odoo-python
+#: code:addons/care_assistant/models/care_assistant.py:0
+#, python-format
+msgid "<b>%s</b> عامل تنتهي إقامته خلال %s يوم."
+msgstr "<b>%s</b> عامل تنتهي إقامته خلال %s يوم."
+
+#. module: care_assistant
+#. odoo-python
+#: code:addons/care_assistant/models/care_assistant.py:0
+#, python-format
+msgid "<br/>الأعلى توفراً حسب القسم:"
+msgstr "<br/>الأعلى توفراً حسب القسم:"
+
+#. module: care_assistant
+#. odoo-python
+#: code:addons/care_assistant/models/care_assistant.py:0
+#, python-format
+msgid "<br/>الأقرب انتهاءً:"
+msgstr "<br/>الأقرب انتهاءً:"
+
+#. module: care_assistant
+#. odoo-python
+#: code:addons/care_assistant/models/care_assistant.py:0
+#, python-format
+msgid "<br/>يمكنك توليد دفعة تجديد بضغطة من الزر أدناه."
+msgstr "<br/>يمكنك توليد دفعة تجديد بضغطة من الزر أدناه."
+
+#. module: care_assistant
+#: model:ir.model.fields,field_description:care_assistant.field_care_assistant__create_uid
+msgid "Created by"
+msgstr ""
+
+#. module: care_assistant
+#: model:ir.model.fields,field_description:care_assistant.field_care_assistant__create_date
+msgid "Created on"
+msgstr ""
+
+#. module: care_assistant
+#: model:ir.model.fields,field_description:care_assistant.field_care_assistant__display_name
+msgid "Display Name"
+msgstr ""
+
+#. module: care_assistant
+#: model:ir.model.fields,field_description:care_assistant.field_care_assistant__id
+msgid "ID"
+msgstr ""
+
+#. module: care_assistant
+#: model:ir.model.fields,field_description:care_assistant.field_care_assistant__last_intent
+msgid "Last Intent"
+msgstr ""
+
+#. module: care_assistant
+#: model:ir.model.fields,field_description:care_assistant.field_care_assistant__write_uid
+msgid "Last Updated by"
+msgstr ""
+
+#. module: care_assistant
+#: model:ir.model.fields,field_description:care_assistant.field_care_assistant__write_date
+msgid "Last Updated on"
+msgstr ""
+
+#. module: care_assistant
+#: model:ir.model.fields,field_description:care_assistant.field_care_assistant__name
+msgid "Name"
+msgstr ""
+
+#. module: care_assistant
+#: model:ir.model,name:care_assistant.model_care_assistant
+msgid "Smart Assistant"
+msgstr ""
+
+#. module: care_assistant
+#: model_terms:ir.ui.view,arch_db:care_assistant.view_care_assistant_form
+msgid "أسئلة سريعة"
+msgstr "أسئلة سريعة"
+
+#. module: care_assistant
+#: model_terms:ir.ui.view,arch_db:care_assistant.view_care_assistant_form
+msgid "إرسال"
+msgstr "إرسال"
+
+#. module: care_assistant
+#. odoo-python
+#: code:addons/care_assistant/models/care_assistant.py:0
+#, python-format
+msgid "إقامات تقترب من الانتهاء"
+msgstr "إقامات تقترب من الانتهاء"
+
+#. module: care_assistant
+#. odoo-python
+#: code:addons/care_assistant/models/care_assistant.py:0
+#: model_terms:ir.ui.view,arch_db:care_assistant.view_care_assistant_form
+#, python-format
+msgid "احسب نهاية الخدمة"
+msgstr "احسب نهاية الخدمة"
+
+#. module: care_assistant
+#. odoo-python
+#: code:addons/care_assistant/models/care_assistant.py:0
+#, python-format
+msgid "اختر الموظف أولاً من حقل «الموظف» ثم اسأل."
+msgstr "اختر الموظف أولاً من حقل «الموظف» ثم اسأل."
+
+#. module: care_assistant
+#: model:ir.ui.menu,name:care_assistant.menu_care_assistant
+msgid "اسأل المساعد"
+msgstr "اسأل المساعد"
+
+#. module: care_assistant
+#: model_terms:ir.ui.view,arch_db:care_assistant.view_care_assistant_form
+msgid "اسأله بلغتك، يجاوبك من بيانات النظام — محكوم بصلاحياتك."
+msgstr "اسأله بلغتك، يجاوبك من بيانات النظام — محكوم بصلاحياتك."
+
+#. module: care_assistant
+#: model:ir.model.fields,help:care_assistant.field_care_assistant__question
+msgid "اكتب سؤالك بالعربية أو الإنجليزية."
+msgstr "اكتب سؤالك بالعربية أو الإنجليزية."
+
+#. module: care_assistant
+#: model_terms:ir.ui.view,arch_db:care_assistant.view_care_assistant_form
+msgid "اكتب سؤالك..."
+msgstr "اكتب سؤالك..."
+
+#. module: care_assistant
+#: model:ir.model.fields,field_description:care_assistant.field_care_assistant__answer_html
+msgid "الإجابة"
+msgstr "الإجابة"
+
+#. module: care_assistant
+#. odoo-python
+#: code:addons/care_assistant/models/care_assistant.py:0
+#, python-format
+msgid "العمالة المتاحة"
+msgstr "العمالة المتاحة"
+
+#. module: care_assistant
+#. odoo-python
+#: code:addons/care_assistant/models/care_assistant.py:0
+#, python-format
+msgid "العمالة المتاحة الآن"
+msgstr "العمالة المتاحة الآن"
+
+#. module: care_assistant
+#. odoo-python
+#: code:addons/care_assistant/models/care_assistant.py:0
+#: model:ir.actions.act_window,name:care_assistant.action_care_assistant
+#, python-format
+msgid "المساعد الذكي"
+msgstr "المساعد الذكي"
+
+#. module: care_assistant
+#: model:ir.model.fields,field_description:care_assistant.field_care_assistant__employee_id
+msgid "الموظف (لأسئلة نهاية الخدمة/الأرصدة)"
+msgstr "الموظف (لأسئلة نهاية الخدمة/الأرصدة)"
+
+#. module: care_assistant
+#. odoo-python
+#: code:addons/care_assistant/models/care_assistant.py:0
+#, python-format
+msgid ""
+"الموظف: <b>%s</b><br/>المدة: <b>%s سنة و%s شهر</b> (من %s)<br/>الراتب "
+"الأساسي: <b>%s %s</b><br/>المستحق (15 يوم/سنة أول 5 سنوات + شهر/سنة بعدها): "
+"<b>%.0f %s</b><br/><span style=\"color:#64748b;font-size:12px;\">تقدير وفق "
+"قانون العمل الكويتي — يُضاف بدل الإجازة المتبقية.</span>"
+msgstr ""
+"الموظف: <b>%s</b><br/>المدة: <b>%s سنة و%s شهر</b> (من %s)<br/>الراتب "
+"الأساسي: <b>%s %s</b><br/>المستحق (15 يوم/سنة أول 5 سنوات + شهر/سنة بعدها): "
+"<b>%.0f %s</b><br/><span style=\"color:#64748b;font-size:12px;\">تقدير وفق "
+"قانون العمل الكويتي — يُضاف بدل الإجازة المتبقية.</span>"
+
+#. module: care_assistant
+#. odoo-python
+#: code:addons/care_assistant/models/care_assistant.py:0
+#, python-format
+msgid "بدون قسم"
+msgstr "بدون قسم"
+
+#. module: care_assistant
+#. odoo-python
+#: code:addons/care_assistant/models/care_assistant.py:0
+#: code:addons/care_assistant/models/care_assistant.py:0
+#: code:addons/care_assistant/models/care_assistant.py:0
+#, python-format
+msgid "حاسبة نهاية الخدمة"
+msgstr "حاسبة نهاية الخدمة"
+
+#. module: care_assistant
+#: model:ir.model.fields,field_description:care_assistant.field_care_assistant__question
+#: model_terms:ir.ui.view,arch_db:care_assistant.view_care_assistant_form
+msgid "سؤالك"
+msgstr "سؤالك"
+
+#. module: care_assistant
+#: model_terms:ir.ui.view,arch_db:care_assistant.view_care_assistant_form
+msgid "قدرات"
+msgstr "قدرات"
+
+#. module: care_assistant
+#. odoo-python
+#: code:addons/care_assistant/models/care_assistant.py:0
+#: model_terms:ir.ui.view,arch_db:care_assistant.view_care_assistant_form
+#, python-format
+msgid "كم عامل متاح الآن؟"
+msgstr "كم عامل متاح الآن؟"
+
+#. module: care_assistant
+#. odoo-python
+#: code:addons/care_assistant/models/care_assistant.py:0
+#, python-format
+msgid "لا توجد بيانات كافية (تاريخ المباشرة أو الراتب الأساسي) لحساب %s."
+msgstr "لا توجد بيانات كافية (تاريخ المباشرة أو الراتب الأساسي) لحساب %s."
+
+#. module: care_assistant
+#. odoo-python
+#: code:addons/care_assistant/models/care_assistant.py:0
+#, python-format
+msgid ""
+"لم أتعرّف على السؤال. جرّب مثلاً:<ul><li>كم عامل متاح الآن؟</li><li>من تنتهي"
+" إقامته هذا الشهر؟</li><li>احسب نهاية الخدمة (بعد اختيار الموظف)</li></ul>أو"
+" استخدم الأزرار السريعة بالأعلى."
+msgstr ""
+"لم أتعرّف على السؤال. جرّب مثلاً:<ul><li>كم عامل متاح الآن؟</li><li>من تنتهي"
+" إقامته هذا الشهر؟</li><li>احسب نهاية الخدمة (بعد اختيار الموظف)</li></ul>أو"
+" استخدم الأزرار السريعة بالأعلى."
+
+#. module: care_assistant
+#. odoo-python
+#: code:addons/care_assistant/models/care_assistant.py:0
+#: model_terms:ir.ui.view,arch_db:care_assistant.view_care_assistant_form
+#, python-format
+msgid "من تنتهي إقامته هذا الشهر؟"
+msgstr "من تنتهي إقامته هذا الشهر؟"
+
+#. module: care_assistant
+#. odoo-python
+#: code:addons/care_assistant/models/care_assistant.py:0
+#, python-format
+msgid "يوجد حالياً <b>%s</b> عامل بحالة «نشط»."
+msgstr "يوجد حالياً <b>%s</b> عامل بحالة «نشط»."
+
+#. module: care_assistant
+#: model_terms:ir.ui.view,arch_db:care_assistant.view_care_assistant_form
+msgid "👥 عرض العمالة المتاحة"
+msgstr "👥 عرض العمالة المتاحة"
+
+#. module: care_assistant
+#: model_terms:ir.ui.view,arch_db:care_assistant.view_care_assistant_form
+msgid "📤 توليد دفعة تجديد"
+msgstr "📤 توليد دفعة تجديد"
+
+#. module: care_assistant
+#: model_terms:ir.ui.view,arch_db:care_assistant.view_care_assistant_form
+msgid ""
+"🔎 استعلامات فورية (توافر/امتثال/أرصدة)<br/>\n"
+"                                    🧮 حسابات (إجازة/أوفر تايم/EOS)<br/>\n"
+"                                    🌐 عربي/إنجليزي<br/>\n"
+"                                    ⚡ إجراءات سريعة من المحادثة<br/>\n"
+"                                    🔒 محكوم بصلاحيات المستخدم"
+msgstr ""
+"🔎 استعلامات فورية (توافر/امتثال/أرصدة)<br/>\n"
+"                                    🧮 حسابات (إجازة/أوفر تايم/EOS)<br/>\n"
+"                                    🌐 عربي/إنجليزي<br/>\n"
+"                                    ⚡ إجراءات سريعة من المحادثة<br/>\n"
+"                                    🔒 محكوم بصلاحيات المستخدم"
+
+#. module: care_assistant
+#: model:ir.ui.menu,name:care_assistant.menu_care_assistant_root
+#: model_terms:ir.ui.view,arch_db:care_assistant.view_care_assistant_form
+msgid "🤖 المساعد الذكي"
+msgstr "🤖 المساعد الذكي"

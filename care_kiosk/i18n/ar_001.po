@@ -1,0 +1,186 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* care_kiosk
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0+e-20241205\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-05 22:19+0000\n"
+"PO-Revision-Date: 2026-07-05 22:19+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: ar_001\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: care_kiosk
+#: model:ir.model.fields,field_description:care_kiosk.field_care_kiosk__active
+msgid "Active"
+msgstr ""
+
+#. module: care_kiosk
+#: model:ir.model.fields,field_description:care_kiosk.field_care_kiosk__create_uid
+msgid "Created by"
+msgstr ""
+
+#. module: care_kiosk
+#: model:ir.model.fields,field_description:care_kiosk.field_care_kiosk__create_date
+msgid "Created on"
+msgstr ""
+
+#. module: care_kiosk
+#: model:ir.model.fields,field_description:care_kiosk.field_care_kiosk__display_name
+msgid "Display Name"
+msgstr ""
+
+#. module: care_kiosk
+#: model:ir.model.fields,field_description:care_kiosk.field_care_kiosk__id
+msgid "ID"
+msgstr ""
+
+#. module: care_kiosk
+#: model:ir.model.fields,field_description:care_kiosk.field_care_kiosk__write_uid
+msgid "Last Updated by"
+msgstr ""
+
+#. module: care_kiosk
+#: model:ir.model.fields,field_description:care_kiosk.field_care_kiosk__write_date
+msgid "Last Updated on"
+msgstr ""
+
+#. module: care_kiosk
+#: model:ir.model.fields,field_description:care_kiosk.field_care_kiosk__name
+msgid "Name"
+msgstr ""
+
+#. module: care_kiosk
+#: model:ir.model,name:care_kiosk.model_care_kiosk
+msgid "Worker Self-Service Kiosk"
+msgstr "Worker Self-Service Kiosk"
+
+#. module: care_kiosk
+#: model:ir.model.fields,help:care_kiosk.field_care_kiosk__scan_window_seconds
+msgid "أقصى مدة بين مسح البصمة وفتح الجلسة على الكشك."
+msgstr "أقصى مدة بين مسح البصمة وفتح الجلسة على الكشك."
+
+#. module: care_kiosk
+#: model:ir.actions.act_window,name:care_kiosk.action_care_kiosk
+msgid "أكشاك العمال"
+msgstr "أكشاك العمال"
+
+#. module: care_kiosk
+#: model:ir.ui.menu,name:care_kiosk.menu_care_kiosk
+msgid "إعداد الأكشاك"
+msgstr "إعداد الأكشاك"
+
+#. module: care_kiosk
+#: model_terms:ir.ui.view,arch_db:care_kiosk.kiosk_page
+msgid "إنهاء ✕"
+msgstr "إنهاء ✕"
+
+#. module: care_kiosk
+#: model_terms:ir.ui.view,arch_db:care_kiosk.view_care_kiosk_form
+msgid "اسم الكشك"
+msgstr "اسم الكشك"
+
+#. module: care_kiosk
+#: model_terms:ir.ui.view,arch_db:care_kiosk.view_care_kiosk_form
+msgid ""
+"افتح هذا الرابط على شاشة الكشك بجانب جهاز البصمة. يمسح العامل بصمته على "
+"الجهاز فتُفتح جلسته تلقائياً."
+msgstr ""
+"افتح هذا الرابط على شاشة الكشك بجانب جهاز البصمة. يمسح العامل بصمته على "
+"الجهاز فتُفتح جلسته تلقائياً."
+
+#. module: care_kiosk
+#: model:ir.model.fields,help:care_kiosk.field_care_kiosk__device_id
+msgid "الجهاز الذي يمسح العامل بصمته عليه للدخول على هذا الكشك."
+msgstr "الجهاز الذي يمسح العامل بصمته عليه للدخول على هذا الكشك."
+
+#. module: care_kiosk
+#: model_terms:ir.ui.view,arch_db:care_kiosk.kiosk_page
+msgid "بانتظار مسح البصمة…"
+msgstr "بانتظار مسح البصمة…"
+
+#. module: care_kiosk
+#: model:ir.model.fields,help:care_kiosk.field_care_kiosk__timeout_seconds
+msgid "تُغلق الجلسة تلقائياً بعد هذه المدة من الخمول."
+msgstr "تُغلق الجلسة تلقائياً بعد هذه المدة من الخمول."
+
+#. module: care_kiosk
+#: model:ir.model.fields,field_description:care_kiosk.field_care_kiosk__device_id
+msgid "جهاز البصمة"
+msgstr "جهاز البصمة"
+
+#. module: care_kiosk
+#: model:ir.model.fields,field_description:care_kiosk.field_care_kiosk__access_url
+#: model_terms:ir.ui.view,arch_db:care_kiosk.view_care_kiosk_form
+msgid "رابط الكشك"
+msgstr "رابط الكشك"
+
+#. module: care_kiosk
+#: model_terms:ir.ui.view,arch_db:care_kiosk.kiosk_page
+msgid "رجوع ↩"
+msgstr "رجوع ↩"
+
+#. module: care_kiosk
+#. odoo-python
+#: code:addons/care_kiosk/controllers/main.py:0
+#, python-format
+msgid "طلب إجازة عبر الكشك"
+msgstr "طلب إجازة عبر الكشك"
+
+#. module: care_kiosk
+#. odoo-python
+#: code:addons/care_kiosk/controllers/main.py:0
+#, python-format
+msgid "طلب عبر الكشك"
+msgstr "طلب عبر الكشك"
+
+#. module: care_kiosk
+#: model_terms:ir.ui.view,arch_db:care_kiosk.kiosk_page
+msgid "كشك الخدمة الذاتية للعمال — ضع إصبعك على جهاز البصمة للدخول"
+msgstr "كشك الخدمة الذاتية للعمال — ضع إصبعك على جهاز البصمة للدخول"
+
+#. module: care_kiosk
+#: model:ir.model.fields,field_description:care_kiosk.field_care_kiosk__timeout_seconds
+msgid "مهلة الجلسة (ثانية)"
+msgstr "مهلة الجلسة (ثانية)"
+
+#. module: care_kiosk
+#: model:ir.model.fields,field_description:care_kiosk.field_care_kiosk__scan_window_seconds
+msgid "نافذة التعرّف (ثانية)"
+msgstr "نافذة التعرّف (ثانية)"
+
+#. module: care_kiosk
+#: model_terms:ir.ui.view,arch_db:care_kiosk.kiosk_page
+msgid "🏖️<br/>طلب إجازة"
+msgstr "🏖️<br/>طلب إجازة"
+
+#. module: care_kiosk
+#: model_terms:ir.ui.view,arch_db:care_kiosk.kiosk_page
+msgid "💵<br/>قسيمة الراتب"
+msgstr "💵<br/>قسيمة الراتب"
+
+#. module: care_kiosk
+#: model_terms:ir.ui.view,arch_db:care_kiosk.kiosk_page
+msgid "📄<br/>مستنداتي"
+msgstr "📄<br/>مستنداتي"
+
+#. module: care_kiosk
+#: model_terms:ir.ui.view,arch_db:care_kiosk.kiosk_page
+msgid "📢<br/>التعميمات"
+msgstr "📢<br/>التعميمات"
+
+#. module: care_kiosk
+#: model_terms:ir.ui.view,arch_db:care_kiosk.kiosk_page
+msgid "📣<br/>شكوى"
+msgstr "📣<br/>شكوى"
+
+#. module: care_kiosk
+#: model:ir.ui.menu,name:care_kiosk.menu_care_kiosk_root
+msgid "🖐️ كشك العمال"
+msgstr "🖐️ كشك العمال"

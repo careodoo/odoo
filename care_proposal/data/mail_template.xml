@@ -7,21 +7,32 @@
             <field name="subject">Sale Proposal (Ref {{ object.name or 'n/a' }})</field>
             <field name="partner_to">{{ object.partner_id.id }}</field>
             <field name="body_html" type="html">
-<div style="margin: 0px; padding: 0px;">
-    <p style="margin: 0px; padding: 0px; font-size: 13px;">
-        Dear <t t-out="object.partner_id.name or ''">....</t>
-        <t t-if="object.partner_id.parent_id">
-            (<t t-out="object.partner_id.parent_id.name or ''">Azure Interior</t>)
+<t t-set="cfg" t-value="object._email_settings()"/>
+<div style="font-family:Arial,Helvetica,sans-serif;color:#1f2733;max-width:640px;margin:0 auto;font-size:14px;line-height:1.55;">
+    <t t-if="cfg['show_header']">
+        <div style="text-align:center;padding:0 0 10px 0;">
+            <img t-attf-src="#{cfg['base_url']}/care_proposal/static/src/img/care_header_logo_1.png" style="max-width:100%;max-height:90px;"/>
+        </div>
+    </t>
+    <div style="border:1px solid #e6e9f0;border-radius:10px;padding:24px;">
+        <p style="margin:0 0 12px 0;">Dear <t t-out="object.partner_id.name or 'Customer'"/><t t-if="object.partner_id.parent_id"> (<t t-out="object.partner_id.parent_id.name"/>)</t>,</p>
+        <div style="white-space:pre-line;color:#46505f;" t-out="cfg['intro']"/>
+        <t t-if="cfg['show_summary']">
+            <h3 t-attf-style="color:#{cfg['accent']};margin:20px 0 8px 0;font-size:16px;">Quotation Summary</h3>
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                <tr><td style="padding:7px 10px;border:1px solid #e6e9f0;background:#f7f8fb;width:45%;">Reference</td><td style="padding:7px 10px;border:1px solid #e6e9f0;" t-out="object.name or '-'"/></tr>
+                <tr><td style="padding:7px 10px;border:1px solid #e6e9f0;background:#f7f8fb;">Service Type</td><td style="padding:7px 10px;border:1px solid #e6e9f0;" t-out="object.service_type_id.name or '-'"/></tr>
+                <tr><td style="padding:7px 10px;border:1px solid #e6e9f0;background:#f7f8fb;">Site / Location</td><td style="padding:7px 10px;border:1px solid #e6e9f0;" t-out="object.service_site or '-'"/></tr>
+                <tr><td style="padding:7px 10px;border:1px solid #e6e9f0;background:#f7f8fb;">Start Date</td><td style="padding:7px 10px;border:1px solid #e6e9f0;" t-out="object.mobilization_date or '-'"/></tr>
+                <tr><td style="padding:7px 10px;border:1px solid #e6e9f0;background:#f7f8fb;">Duration</td><td style="padding:7px 10px;border:1px solid #e6e9f0;"><t t-out="object.proposal_period or '-'"/></td></tr>
+                <tr><td style="padding:7px 10px;border:1px solid #e6e9f0;background:#f7f8fb;">Valid Until</td><td style="padding:7px 10px;border:1px solid #e6e9f0;" t-out="object.expire_date or '-'"/></tr>
+                <tr><td style="padding:9px 10px;border:1px solid #e6e9f0;background:#f7f8fb;font-weight:bold;">Total Price</td><td t-attf-style="padding:9px 10px;border:1px solid #e6e9f0;font-weight:bold;color:#{cfg['accent']};font-size:15px;"><t t-out="cfg['total']"/> <t t-out="cfg['currency']"/></td></tr>
+            </table>
         </t>
-        <br/><br/>
-        <p>It's great to send you today, we hope you will be our valued customer.</p>
-        <p>We are so grateful for the pleasure of serving you and. and hope we meet your expectations.</p>
-        <br/>
-        <p>Care for Buildings &amp; Cities Cleaning Contracting Co. “Care Cleaning Co.” is one of the leading premier cleaning companies in Kuwait. Established in 1991, Care Cleaning Co. has achieved vigorous triumph in building a reputable portfolio highlighting 3 decades of experience, innovation, and quality.</p>
-        <p>During the last 30 years, Care Company has strengthened its presence and services in the cleaning of cities, roads, buildings, ministries, and airports. Our services range anywhere from housekeeping, general cleaning, handling, waste management, facility management etc.</p>
-        <p>Proposal attached.</p>
-        <p>Hope to hear from you soon.</p>
-    </p>
+        <p style="margin:16px 0 0 0;">Please find the full proposal attached for your kind review.</p>
+        <div style="white-space:pre-line;margin-top:12px;color:#46505f;" t-out="cfg['footer']"/>
+        <p style="margin:14px 0 0 0;font-weight:bold;" t-out="cfg['signature']"/>
+    </div>
 </div></field>
             <field name="report_template_ids" eval="[(4, ref('care_proposal.action_proposal_report'))]"/>
             <field name="lang">{{ object.partner_id.lang }}</field>

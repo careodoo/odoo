@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Succession -->
+    <record id="view_succession_form" model="ir.ui.view">
+        <field name="name">care.succession.form</field>
+        <field name="model">care.succession</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <widget name="web_ribbon" text="بلا بديل جاهز" bg_color="bg-danger"
+                            invisible="ready_now"/>
+                    <div class="oe_title"><h1><field name="name" placeholder="المنصب/الدور الحرج..."/></h1></div>
+                    <group>
+                        <group>
+                            <field name="department_id"/>
+                            <field name="job_id"/>
+                            <field name="incumbent_id"/>
+                        </group>
+                        <group>
+                            <field name="risk" widget="badge"
+                                   decoration-danger="risk=='high'" decoration-warning="risk=='medium'"/>
+                            <field name="ready_now" readonly="1"/>
+                            <field name="candidate_count" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="المرشحون للإحلال">
+                            <field name="successor_ids">
+                                <tree editable="bottom" decoration-success="readiness=='ready'">
+                                    <field name="employee_id"/>
+                                    <field name="readiness"/>
+                                    <field name="note"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="ملاحظات"><field name="note" nolabel="1"/></page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter"><field name="message_follower_ids"/><field name="message_ids"/></div>
+            </form>
+        </field>
+    </record>
+    <record id="view_succession_tree" model="ir.ui.view">
+        <field name="name">care.succession.tree</field>
+        <field name="model">care.succession</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="risk=='high' and not ready_now">
+                <field name="name"/><field name="department_id"/><field name="incumbent_id"/>
+                <field name="risk" widget="badge"/><field name="candidate_count"/>
+                <field name="ready_now"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_succession" model="ir.actions.act_window">
+        <field name="name">خطط الإحلال (Succession)</field>
+        <field name="res_model">care.succession</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- PDF report -->
+    <record id="action_report_allowance_payout" model="ir.actions.report">
+        <field name="name">طلب صرف البدلات (PDF)</field>
+        <field name="model">care.allowance.payout</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_hr.report_allowance_payout</field>
+        <field name="report_file">care_hr.report_allowance_payout</field>
+        <field name="binding_model_id" ref="model_care_allowance_payout"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Excel report (report_xlsx) -->
+    <record id="action_report_allowance_payout_xlsx" model="ir.actions.report">
+        <field name="name">طلب صرف البدلات (Excel)</field>
+        <field name="model">care.allowance.payout</field>
+        <field name="report_type">xlsx</field>
+        <field name="report_name">care_hr.report_allowance_payout_xlsx</field>
+        <field name="report_file">care_hr.report_allowance_payout_xlsx</field>
+        <field name="binding_model_id" ref="model_care_allowance_payout"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_allowance_payout">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <div class="page" style="direction:rtl;text-align:right;font-family:Arial,'Tajawal',sans-serif;color:#1a2330;font-size:12px;">
+                        <div style="background:linear-gradient(135deg,#1e5eff,#0b3ec9);color:#fff;padding:16px 18px;border-radius:10px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <div>
+                                    <div style="font-size:12px;opacity:.85;letter-spacing:1px;">طلب صرف البدلات · Allowance Disbursement</div>
+                                    <div style="font-size:20px;font-weight:800;"><span t-field="o.name"/></div>
+                                </div>
+                                <div style="text-align:left;font-size:12px;">
+                                    <div>الحالة: <span t-field="o.state"/></div>
+                                    <div>التاريخ: <span t-field="o.date"/></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <table style="width:100%;border-collapse:collapse;margin-top:12px;">
+                            <tr>
+                                <td style="padding:5px 8px;color:#5a6472;width:18%;">الفترة</td>
+                                <td style="padding:5px 8px;font-weight:600;"><span t-field="o.date_from"/> ← <span t-field="o.date_to"/></td>
+                                <td style="padding:5px 8px;color:#5a6472;width:18%;">طريقة الدفع</td>
+                                <td style="padding:5px 8px;font-weight:600;"><span t-field="o.payment_method"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:5px 8px;color:#5a6472;">القسم/المشروع</td>
+                                <td style="padding:5px 8px;font-weight:600;"><span t-esc="o.department_id.name or 'الكل'"/></td>
+                                <td style="padding:5px 8px;color:#5a6472;">المطلوب صرفه</td>
+                                <td style="padding:5px 8px;font-weight:700;color:#0b3ec9;"><span t-field="o.to_pay_amount"/> <span t-field="o.currency_id.name"/></td>
+                            </tr>
+                        </table>
+
+                        <table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:10px;">
+                            <thead>
+                                <tr style="background:#1e5eff;color:#fff;">
+                                    <th style="padding:6px 8px;border:1px solid #cdd6e5;">العامل</th>
+                                    <th style="padding:6px 8px;border:1px solid #cdd6e5;">الرقم</th>
+                                    <th style="padding:6px 8px;border:1px solid #cdd6e5;">القسم/المشروع</th>
+                                    <th style="padding:6px 8px;border:1px solid #cdd6e5;">نوع الاستحقاق</th>
+                                    <th style="padding:6px 8px;border:1px solid #cdd6e5;">تاريخ الاستحقاق</th>
+                                    <th style="padding:6px 8px;border:1px solid #cdd6e5;">المبلغ</th>
+                                    <th style="padding:6px 8px;border:1px solid #cdd6e5;">الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.line_ids" t-as="l"
+                                    t-attf-style="background:#{l.is_paid and '#eafaf1' or '#fdecea'};">
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;"><span t-field="l.employee_id"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;"><span t-esc="l.employee_id.employee_code or l.employee_id.barcode or ''"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;"><span t-field="l.department_id"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;"><span t-field="l.allowance_type_id"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;"><span t-field="l.allowance_date"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;"><span t-field="l.amount"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;font-weight:700;">
+                                        <span t-if="l.is_paid" style="color:#1e7e34;">مصروف</span>
+                                        <span t-else="" style="color:#c0392b;">غير مصروف</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr style="background:#f4f7ff;font-weight:800;">
+                                    <td colspan="5" style="padding:6px 8px;border:1px solid #e6e9ef;text-align:left;">الإجمالي</td>
+                                    <td style="padding:6px 8px;border:1px solid #e6e9ef;"><span t-field="o.total_amount"/></td>
+                                    <td style="padding:6px 8px;border:1px solid #e6e9ef;"><span t-esc="o.paid_count"/> مصروف · <span t-esc="o.unpaid_count"/> غير</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                        <div t-if="o.finance_note" style="margin-top:12px;padding:8px 10px;background:#fff8e1;border-radius:6px;">
+                            <b>ملاحظات للمالية:</b> <span t-field="o.finance_note"/>
+                        </div>
+
+                        <div style="margin-top:36px;display:flex;justify-content:space-between;font-size:11px;color:#555;">
+                            <div>أعدّه: ________________</div>
+                            <div>اعتماد المالية: ________________</div>
+                            <div>استلمه: ________________</div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

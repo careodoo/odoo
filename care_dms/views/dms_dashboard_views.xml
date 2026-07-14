@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_care_dms_dashboard_form" model="ir.ui.view">
+        <field name="name">care.dms.dashboard.form</field>
+        <field name="model">care.dms.dashboard</field>
+        <field name="arch" type="xml">
+            <form create="false" delete="false">
+                <sheet>
+                    <div class="oe_title"><h1>إدارة الوثائق والأرشفة</h1></div>
+                    <div class="row text-center mt-2 mb-3">
+                        <div class="col">
+                            <button name="action_open_all" type="object" class="btn btn-link p-0">
+                                <h2 style="color:#4338ca;"><field name="total_docs"/></h2>
+                            </button>
+                            <div class="text-muted">إجمالي الوثائق</div>
+                        </div>
+                        <div class="col">
+                            <h2 style="color:#047857;"><field name="classified_pct"/>%</h2>
+                            <div class="text-muted">مصنّفة/مفهرسة</div>
+                        </div>
+                        <div class="col">
+                            <button name="action_open_expiring" type="object" class="btn btn-link p-0">
+                                <h2 style="color:#c2410c;"><field name="expiring_count"/></h2>
+                            </button>
+                            <div class="text-muted">تقترب من الإتلاف</div>
+                        </div>
+                        <div class="col">
+                            <button name="action_open_due" type="object" class="btn btn-link p-0">
+                                <h2 style="color:#b91c1c;"><field name="due_disposal_count"/></h2>
+                            </button>
+                            <div class="text-muted">مستحقة الإتلاف</div>
+                        </div>
+                        <div class="col">
+                            <button name="action_open_hold" type="object" class="btn btn-link p-0">
+                                <h2 style="color:#0e7490;"><field name="legal_hold_count"/></h2>
+                            </button>
+                            <div class="text-muted">تحت حجز قانوني</div>
+                        </div>
+                    </div>
+                    <group>
+                        <div class="d-flex gap-2">
+                            <button name="action_open_categories" type="object"
+                                    string="📁 التصنيفات وسياسة الاحتفاظ" class="btn btn-primary"/>
+                            <button name="action_open_all" type="object"
+                                    string="🗂️ كل الوثائق" class="btn btn-secondary"/>
+                        </div>
+                    </group>
+                    <div class="alert alert-warning" role="alert">
+                        ⚠️ الإتلاف لا يتم إلا بعد انتهاء مدة الاحتفاظ وغياب الحجز القانوني وبأثر موثّق.
+                    </div>
+                    <field name="category_count" invisible="1"/>
+                    <field name="name" invisible="1"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_care_dms_dashboard" model="ir.actions.act_window">
+        <field name="name">مركز الوثائق</field>
+        <field name="res_model">care.dms.dashboard</field>
+        <field name="view_mode">form</field>
+        <field name="res_id" ref="dms_dashboard_main"/>
+        <field name="target">current</field>
+    </record>
+</odoo>

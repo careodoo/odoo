@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_tender_classification_tree" model="ir.ui.view">
+        <field name="name">purchase.tender.classification.tree</field>
+        <field name="model">purchase.tender.classification</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="tender_count"/>
+                <field name="color" widget="color_picker"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_tender_classification" model="ir.actions.act_window">
+        <field name="name">التصنيفات</field>
+        <field name="res_model">purchase.tender.classification</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">صنّف المناقصات حسب النشاط</p>
+            <p>نظافة · حراسة · زراعة · أو أضِف تصنيفات جديدة.</p>
+        </field>
+    </record>
+    <menuitem id="menu_tender_classification" name="التصنيفات"
+              parent="purchase_tender_root" action="action_tender_classification" sequence="90"/>
+
+    <!-- Force nearest-closing order, overriding the Studio view that sets
+         default_order="expiry_date asc" (higher priority wins). -->
+    <record id="tender_tree_order_nearest_closing" model="ir.ui.view">
+        <field name="name">purchase.tender.tree.order.nearest.closing</field>
+        <field name="model">purchase.tender</field>
+        <field name="inherit_id" ref="purchase_tender.purchase_tender_view_tree"/>
+        <field name="priority">120</field>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="attributes">
+                <attribute name="default_order">close_sort_key asc, id desc</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

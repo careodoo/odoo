@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_location_qr" model="ir.actions.report">
+        <field name="name">ملصق QR للموقع</field>
+        <field name="model">care.cafm.location</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_cafm.report_location_qr</field>
+        <field name="report_file">care_cafm.report_location_qr</field>
+        <field name="binding_model_id" ref="model_care_cafm_location"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_location_qr">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <div class="page" style="text-align:center;font-family:Arial,sans-serif;direction:rtl;padding:24px">
+                        <h2 style="margin:0 0 6px" t-esc="o.facility_id.name or ''"/>
+                        <div style="color:#666;font-size:13px" t-esc="(o.building_id.name or '') + ' · ' + (o.floor_id.name or '')"/>
+                        <h1 style="margin:10px 0 4px;font-size:26px" t-esc="o.name"/>
+                        <img t-att-src="image_data_uri(o.qr_image)" t-if="o.qr_image"
+                             style="width:300px;height:300px;margin:12px auto;display:block"/>
+                        <div style="font-size:20px;font-weight:bold;letter-spacing:2px" t-esc="o.code"/>
+                        <div style="color:#888;font-size:12px;margin-top:8px">امسح الكود لتسجيل الموقع أو رفع بلاغ · care CAFM</div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

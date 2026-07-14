@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Material balance -->
+    <record id="view_pms_material_tree" model="ir.ui.view">
+        <field name="name">care.pms.material.tree</field>
+        <field name="model">care.pms.material</field>
+        <field name="arch" type="xml">
+            <tree string="مخزون المشروع" decoration-danger="is_low">
+                <field name="project_id"/>
+                <field name="name"/>
+                <field name="uom_name"/>
+                <field name="received_qty"/>
+                <field name="issued_qty"/>
+                <field name="available_qty"/>
+                <field name="min_qty"/>
+                <field name="is_low"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_pms_material_form" model="ir.ui.view">
+        <field name="name">care.pms.material.form</field>
+        <field name="model">care.pms.material</field>
+        <field name="arch" type="xml">
+            <form string="صنف">
+                <sheet>
+                    <widget name="web_ribbon" title="تحت الحد الأدنى" bg_color="text-bg-danger" invisible="not is_low"/>
+                    <div class="oe_title"><h1><field name="name" placeholder="اسم الصنف..."/></h1></div>
+                    <group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="product_id"/>
+                            <field name="uom_name"/>
+                            <field name="min_qty"/>
+                        </group>
+                        <group>
+                            <field name="received_qty"/>
+                            <field name="issued_qty"/>
+                            <field name="available_qty"/>
+                            <field name="is_low"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="التزويد (المستلَم)">
+                            <field name="receipt_ids">
+                                <tree editable="bottom">
+                                    <field name="date"/>
+                                    <field name="ref"/>
+                                    <field name="qty"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="المسحوب (سندات التسليم)">
+                            <field name="line_ids" readonly="1">
+                                <tree>
+                                    <field name="note_id"/>
+                                    <field name="qty"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_pms_material" model="ir.actions.act_window">
+        <field name="name">مخزون المشاريع</field>
+        <field name="res_model">care.pms.material</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Delivery note -->
+    <record id="view_pms_delivery_form" model="ir.ui.view">
+        <field name="name">care.pms.delivery.note.form</field>
+        <field name="model">care.pms.delivery.note</field>
+        <field name="arch" type="xml">
+            <form string="سند تسليم">
+                <header>
+                    <button name="action_confirm" type="object" string="تأكيد" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_print" type="object" string="🖨️ طباعة السند"/>
+                    <button name="action_draft" type="object" string="إلى مسودة" invisible="state != 'done'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="location"/>
+                            <field name="date"/>
+                        </group>
+                        <group>
+                            <field name="receiver_name"/>
+                            <field name="receiver_signature" widget="image"/>
+                        </group>
+                    </group>
+                    <field name="line_ids">
+                        <tree editable="bottom">
+                            <field name="material_id"
+                                   domain="[('project_id','=',parent.project_id)]"/>
+                            <field name="available_qty"/>
+                            <field name="qty"/>
+                        </tree>
+                    </field>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    <record id="view_pms_delivery_tree" model="ir.ui.view">
+        <field name="name">care.pms.delivery.note.tree</field>
+        <field name="model">care.pms.delivery.note</field>
+        <field name="arch" type="xml">
+            <tree string="سندات التسليم">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="location"/>
+                <field name="date"/>
+                <field name="receiver_name"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'done'" decoration-muted="state == 'draft'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_pms_delivery" model="ir.actions.act_window">
+        <field name="name">سندات التسليم</field>
+        <field name="res_model">care.pms.delivery.note</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

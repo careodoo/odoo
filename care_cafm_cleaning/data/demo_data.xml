@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo><data noupdate="1">
+  <record id="atpl_1" model="care.cafm.clean.audit.template"><field name="name">تدقيق دورات المياه</field></record>
+  <record id="ai_1" model="care.cafm.clean.audit.item"><field name="template_id" ref="atpl_1"/><field name="name">الأرضيات نظيفة وجافة</field><field name="weight">3</field><field name="sequence">1</field></record>
+  <record id="ai_2" model="care.cafm.clean.audit.item"><field name="template_id" ref="atpl_1"/><field name="name">المرايا والأحواض</field><field name="weight">2</field><field name="sequence">2</field></record>
+  <record id="ai_3" model="care.cafm.clean.audit.item"><field name="template_id" ref="atpl_1"/><field name="name">توفّر الصابون والمناديل</field><field name="weight">2</field><field name="sequence">3</field></record>
+  <record id="ai_4" model="care.cafm.clean.audit.item"><field name="template_id" ref="atpl_1"/><field name="name">خلوّ من الروائح</field><field name="weight">1</field><field name="sequence">4</field></record>
+
+  <record id="sch_wc1" model="care.cafm.clean.schedule"><field name="location_id" ref="care_cafm.loc_wc1"/><field name="frequency">hourly</field><field name="demand_based">1</field></record>
+  <record id="sch_lobby" model="care.cafm.clean.schedule"><field name="location_id" ref="care_cafm.loc_lobby"/><field name="frequency">daily</field></record>
+  <record id="sch_garden" model="care.cafm.clean.schedule"><field name="location_id" ref="care_cafm.loc_garden"/><field name="frequency">weekly</field></record>
+</data></odoo>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_care_coverage_alert_tree" model="ir.ui.view">
+        <field name="name">care.coverage.alert.tree</field>
+        <field name="model">care.coverage.alert</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="reason == 'no_dept' or days_no_attendance &gt;= 3"
+                  decoration-warning="reason == 'no_attendance' and days_no_attendance &lt; 3">
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="job_id"/>
+                <field name="manpower_file_id" optional="show"/>
+                <field name="reason"/>
+                <field name="last_attendance_date"/>
+                <field name="days_no_attendance"/>
+                <field name="scan_date"/>
+                <button name="action_open_employee" type="object" string="Open File"
+                        icon="fa-user" class="btn-link"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_care_coverage_alert_search" model="ir.ui.view">
+        <field name="name">care.coverage.alert.search</field>
+        <field name="model">care.coverage.alert</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <filter name="no_dept" string="No Department/Job" domain="[('reason','=','no_dept')]"/>
+                <filter name="no_att" string="No Attendance" domain="[('reason','=','no_attendance')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="g_reason" string="Reason" context="{'group_by':'reason'}"/>
+                    <filter name="g_dept" string="Department" context="{'group_by':'department_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_care_coverage_alert" model="ir.actions.act_window">
+        <field name="name">Coverage Monitor</field>
+        <field name="res_model">care.coverage.alert</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_care_coverage_alert_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No coverage gaps 🎉</p>
+            <p>Run the scan to detect active workers with no attendance, or not
+               assigned to a department/job. Exempt a worker from their file.</p>
+        </field>
+    </record>
+
+    <!-- Daily scan cron -->
+    <record id="cron_care_coverage_scan" model="ir.cron">
+        <field name="name">Care HR: Attendance Coverage Scan</field>
+        <field name="model_id" ref="model_care_coverage_alert"/>
+        <field name="state">code</field>
+        <field name="code">model.run_scan()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <!-- Exemption fields on the worker file -->
+    <record id="care_view_employee_form_coverage" model="ir.ui.view">
+        <field name="name">care.view.employee.form.coverage</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="care_hr.care_view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='worker_file']/group" position="inside">
+                <group string="Attendance Coverage" groups="hr.group_hr_user">
+                    <field name="coverage_exempt"/>
+                    <field name="coverage_exempt_reason" invisible="not coverage_exempt"/>
+                    <field name="coverage_exempt_until" invisible="not coverage_exempt"/>
+                    <field name="coverage_exempt_by" readonly="1" invisible="not coverage_exempt"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

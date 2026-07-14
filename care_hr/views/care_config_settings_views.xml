@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_care_hr_config_settings" model="ir.ui.view">
+        <field name="name">care.hr.config.settings</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Care HR Policy" string="Care HR Policy" name="care_hr"
+                     logo="/base/static/description/settings.png">
+                    <block title="Leaves" name="care_leaves">
+                        <setting string="Annual Leave (days/yr)">
+                            <field name="care_annual_leave_days"/>
+                        </setting>
+                        <setting string="Entitlement After (months)">
+                            <field name="care_leave_entitlement_months"/>
+                        </setting>
+                        <setting string="Sick Full-pay (days)">
+                            <field name="care_sick_full_days"/>
+                        </setting>
+                    </block>
+                    <block title="End of Service (Kuwait)" name="care_eos">
+                        <setting string="EOS days/yr (first 5 years)">
+                            <field name="care_eos_first5_days"/>
+                        </setting>
+                        <setting string="EOS days/yr (after 5 years)">
+                            <field name="care_eos_after5_days"/>
+                        </setting>
+                        <setting string="EOS Cap (years of pay)">
+                            <field name="care_eos_cap_years"/>
+                        </setting>
+                    </block>
+                    <block title="Notice &amp; Probation" name="care_notice">
+                        <setting string="Notice Period (days)">
+                            <field name="care_notice_days"/>
+                        </setting>
+                        <setting string="Probation (days)">
+                            <field name="care_probation_days"/>
+                        </setting>
+                    </block>
+                    <block title="Working Hours &amp; Overtime" name="care_ot">
+                        <setting string="Daily Hours">
+                            <field name="care_daily_hours"/>
+                        </setting>
+                        <setting string="Overtime Rate (normal)">
+                            <field name="care_ot_rate_normal"/>
+                        </setting>
+                        <setting string="Overtime Rate (holiday)">
+                            <field name="care_ot_rate_holiday"/>
+                        </setting>
+                        <setting string="Monthly OT Cap (hours, 0=off)">
+                            <field name="care_ot_monthly_cap"/>
+                        </setting>
+                    </block>
+                    <block title="Wages, Allowances &amp; Penalties" name="care_wages">
+                        <setting string="Default Base Wage">
+                            <field name="care_base_wage_default"/>
+                        </setting>
+                        <setting string="Monthly Penalty Cap (0=off)">
+                            <field name="care_penalty_monthly_cap"/>
+                        </setting>
+                        <setting string="Allowance Senior-Approval Threshold (0=cash only)">
+                            <field name="care_allowance_senior_threshold"/>
+                        </setting>
+                    </block>
+                    <block title="Documents &amp; Residency" name="care_docs">
+                        <setting string="Document Expiry Alert (days before)">
+                            <field name="care_doc_alert_days"/>
+                        </setting>
+                    </block>
+                    <block title="Attendance Coverage" name="care_coverage">
+                        <setting string="No-Attendance Threshold (days)">
+                            <field name="care_coverage_days"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_care_hr_config_settings" model="ir.actions.act_window">
+        <field name="name">HR Policy Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module': 'care_hr'}</field>
+    </record>
+</odoo>

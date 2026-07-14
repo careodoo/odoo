@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="res_config_settings_view_form_proposal" model="ir.ui.view">
+    <field name="name">res.config.settings.view.form.proposal</field>
+    <field name="model">res.config.settings</field>
+    <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//form" position="inside">
+        <app data-string="Proposals" string="Proposals" name="care_proposal">
+          <block title="Proposal Emails" name="proposal_email_block"
+                 help="Customize the professional email sent to customers. Emails are sent in the customer's own language (from their contact record).">
+            <setting string="Branded header" help="Show the company header banner at the top of the email">
+              <field name="proposal_email_show_header"/>
+            </setting>
+            <setting string="Quotation summary" help="Include a summary table (service, site, dates, total price) in the email">
+              <field name="proposal_email_show_summary"/>
+            </setting>
+            <setting string="Accent color" help="Color used for headings and the total in the email">
+              <field name="proposal_email_accent" widget="char" placeholder="#875a7b"/>
+            </setting>
+            <setting string="Intro text" help="Opening paragraph(s) of the email — appears under the greeting">
+              <field name="proposal_email_intro" widget="text"/>
+            </setting>
+            <setting string="Footer text" help="Closing line before the signature">
+              <field name="proposal_email_footer" widget="text"/>
+            </setting>
+            <setting string="Signature" help="Signature line at the bottom of the email">
+              <field name="proposal_email_signature"/>
+            </setting>
+          </block>
+        </app>
+      </xpath>
+    </field>
+  </record>
+
+  <record id="proposal_config_settings_action" model="ir.actions.act_window">
+    <field name="name">Proposal Settings</field>
+    <field name="res_model">res.config.settings</field>
+    <field name="view_mode">form</field>
+    <field name="target">inline</field>
+    <field name="context">{'module': 'care_proposal'}</field>
+  </record>
+
+  <menuitem id="proposal_settings_menu" name="Settings"
+            parent="proposal_config" action="proposal_config_settings_action" sequence="100"/>
+</odoo>

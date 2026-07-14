@@ -1,0 +1,66 @@
+<html><head><meta charset='utf-8'><style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Cairo',Tahoma,sans-serif}
+body{background:#eef1f6;color:#1d2433;direction:rtl}
+.wrap{width:1180px;margin:0 auto;padding:18px}
+.top{background:#15213b;color:#fff;border-radius:12px;padding:12px 18px;margin-bottom:14px}
+.top .logo{font-weight:800;color:#f0663c;font-size:19px}
+.top .crumb{color:#9fb0d0;font-weight:700;font-size:13px}
+.h{font-size:22px;font-weight:800;margin:2px 0}
+.sub{color:#7b8499;font-weight:700;font-size:13px;margin-bottom:14px}
+.kpis{display:table;width:100%;border-spacing:10px 0;margin:0 -10px 14px}
+.kpi{display:table-cell;width:16.6%;background:#fff;border:1px solid #e4e8f0;border-radius:12px;padding:12px;vertical-align:top;text-align:center}
+.kpi .v{font-size:24px;font-weight:800}.kpi .l{color:#7b8499;font-weight:700;font-size:12px;margin-top:2px}
+.kpi.red .v{color:#e2513f}.kpi.amber .v{color:#e08a00}.kpi.green .v{color:#1a9f6d}.kpi.blue .v{color:#2f6df6}.kpi.purple .v{color:#7a5cf0}.kpi.teal .v{color:#017e84}
+.card{background:#fff;border:1px solid #e4e8f0;border-radius:14px;padding:16px;margin-bottom:14px}
+.card h3{font-size:15px;margin-bottom:12px}
+.row{display:table;width:100%;border-spacing:12px 0;margin:0 -12px}
+.col{display:table-cell;vertical-align:top}
+.alert{background:#fff4f2;border:1px solid #ffd4cc;color:#c0392b;border-radius:10px;padding:11px 14px;font-weight:700;font-size:13px;margin-bottom:12px}
+.alert.info{background:#eef4ff;border-color:#cfe0ff;color:#2a5bd7}.alert.ok{background:#effaf3;border-color:#bfe8d2;color:#12945f}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f6f8fc;color:#66708a;text-align:right;padding:9px 10px;font-weight:800;font-size:12px;border-bottom:2px solid #e4e8f0}
+td{padding:9px 10px;border-bottom:1px solid #eef1f6;font-weight:600}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:800}
+.b-red{background:#fdeceb;color:#c0392b}.b-amber{background:#fff3e0;color:#c47f00}.b-green{background:#e6f7ef;color:#12945f}
+.b-blue{background:#e9f0ff;color:#2f6df6}.b-grey{background:#eef1f6;color:#66708a}.b-purple{background:#f0ebff;color:#6a45e0}.b-teal{background:#e1f5f5;color:#017e84}
+.pcard{background:#fff;border:1px solid #e7ebf3;border-radius:12px;padding:12px;margin-bottom:10px;border-top:4px solid #2f6df6}
+.pcard .pt{font-weight:800;font-size:14px;color:#15213b}
+.pcard .pd{color:#7b8499;font-size:12px;font-weight:700;margin:2px 0 8px}
+.mini{display:table;width:100%;text-align:center}.mini>div{display:table-cell}
+.mini .mv{font-weight:800;font-size:16px}.mini .ml{font-size:10px;color:#8a93a8;font-weight:700}
+.cols{display:table;width:100%;border-spacing:8px 0}
+.kcol{display:table-cell;width:20%;background:#f6f8fc;border:1px solid #e4e8f0;border-radius:12px;padding:8px;vertical-align:top}
+.kcol .ch{font-weight:800;font-size:12px;margin-bottom:8px;display:flex;justify-content:space-between}
+.tc{background:#fff;border:1px solid #e7ebf3;border-radius:9px;padding:8px;margin-bottom:7px}
+.tc .r{font-weight:800;font-size:11.5px;color:#2f3a57}.tc .t{font-size:11px;color:#7b8499;font-weight:700;margin-top:2px}
+.tc .m{font-size:10px;margin-top:6px;color:#8a93a8;font-weight:700;display:flex;justify-content:space-between}
+.av{width:22px;height:22px;border-radius:50%;background:#dfe5ef;display:inline-block;text-align:center;line-height:22px;font-size:10px;font-weight:800;color:#5a6b8c}
+.step{display:table-cell;width:20%;text-align:center;position:relative;vertical-align:top;padding:0 4px}
+.step .n{width:38px;height:38px;border-radius:50%;background:#2f6df6;color:#fff;font-weight:800;line-height:38px;margin:0 auto 6px}
+.step.done .n{background:#1a9f6d}.step.wait .n{background:#c9d2e3;color:#5a6b8c}
+.step .lb{font-weight:800;font-size:11.5px}.step .ds{color:#7b8499;font-size:10.5px;font-weight:700}
+.tl{border-right:3px solid #2f6df6;padding-right:14px;margin-right:6px}
+.tl .it{margin-bottom:12px}.tl .it .tt{font-weight:800;font-size:12.5px}.tl .it .td{color:#8a93a8;font-size:11px;font-weight:700}
+.pill{display:inline-block;padding:4px 10px;border-radius:8px;background:#eef1f6;font-weight:800;font-size:11.5px}
+.fld{margin-bottom:8px}.fld .k{color:#8a93a8;font-weight:700;font-size:11px}.fld .val{font-weight:800;font-size:13px}
+.btn{display:inline-block;padding:7px 14px;border-radius:8px;font-weight:800;font-size:12px;margin-left:6px}
+.btn.p{background:#2f6df6;color:#fff}.btn.g{background:#1a9f6d;color:#fff}.btn.r{background:#e2513f;color:#fff}.btn.s{background:#fff;border:1px solid #d4dae6;color:#3a4a66}
+</style></head><body><div class='wrap'><div class='top'><span class='logo'>CARE • Projects</span> <span class='crumb'>· المحروقات</span><span style='float:left' class='crumb'>◐ نظام إدارة المشاريع والتاسكات</span></div>
+<div class='h'>المحروقات واستهلاك سيارات المشروع</div>
+<div class='sub'>تعبئة · استهلاك · كفاءة · كشف شذوذ</div>
+<div class='kpis'>
+<div class='kpi teal'><div class='v'>3,240</div><div class='l'>لتر هذا الشهر</div></div>
+<div class='kpi blue'><div class='v'>1,180</div><div class='l'>تكلفة د.ك</div></div>
+<div class='kpi green'><div class='v'>8.4</div><div class='l'>كم/لتر (متوسط)</div></div>
+<div class='kpi red'><div class='v'>2</div><div class='l'>تنبيه شذوذ</div></div>
+<div class='kpi amber'><div class='v'>18</div><div class='l'>سيارة</div></div>
+<div class='kpi purple'><div class='v'>92%</div><div class='l'>ضمن الحد</div></div>
+</div>
+<div class='card'><h3>⛽ استهلاك حسب السيارة</h3>
+<table><tr><th>السيارة</th><th>تعبئة (لتر)</th><th>المسافة (كم)</th><th>الكفاءة</th><th>الحالة</th></tr>
+<tr><td>1-23456 بيك أب</td><td>420</td><td>3,700</td><td>8.8</td><td><span class='badge b-green'>طبيعي</span></td></tr>
+<tr><td>2-98765 كنس آلي</td><td>560</td><td>2,100</td><td>3.8</td><td><span class='badge b-blue'>معدّة ثقيلة</span></td></tr>
+<tr style='background:#fff4f2'><td>3-45612 نقل عمال</td><td>640</td><td>1,900</td><td>3.0</td><td><span class='badge b-red'>🚩 استهلاك مرتفع</span></td></tr></table></div>
+<div class='alert'>🚩 السيارة 3-45612: استهلاك مرتفع مقابل مسافة قليلة — تحقّق (تسريب/استخدام غير مصرّح). كشف الشذوذ يقارن التعبئة بسعة الخزان والمسافة.</div>
+</div></body></html>

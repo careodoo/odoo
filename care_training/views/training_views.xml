@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Course -->
+    <record id="view_course_form" model="ir.ui.view">
+        <field name="name">care.training.course.form</field>
+        <field name="model">care.training.course</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" placeholder="اسم الدورة..."/></h1></div>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="category"/>
+                            <field name="duration_hours"/>
+                        </group>
+                        <group>
+                            <field name="is_mandatory"/>
+                            <field name="validity_months"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <field name="description" placeholder="وصف الدورة ومحتواها..."/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_course_tree" model="ir.ui.view">
+        <field name="name">care.training.course.tree</field>
+        <field name="model">care.training.course</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/><field name="category"/><field name="duration_hours"/>
+                <field name="is_mandatory"/><field name="validity_months"/><field name="session_count"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_course" model="ir.actions.act_window">
+        <field name="name">الدورات التدريبية</field>
+        <field name="res_model">care.training.course</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Session -->
+    <record id="view_session_form" model="ir.ui.view">
+        <field name="name">care.training.session.form</field>
+        <field name="model">care.training.session</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_confirm" type="object" string="تأكيد" class="oe_highlight" invisible="state != 'planned'"/>
+                    <button name="action_start" type="object" string="بدء" invisible="state != 'confirmed'"/>
+                    <button name="action_done" type="object" string="إنهاء" class="oe_highlight" invisible="state != 'ongoing'"/>
+                    <button name="action_enroll_department" type="object" string="تسجيل عمال القسم" invisible="state not in ('planned','confirmed')"/>
+                    <button name="action_cancel" type="object" string="إلغاء" invisible="state in ('done','cancelled')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="planned,confirmed,ongoing,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="course_id"/>
+                            <field name="category" readonly="1"/>
+                            <field name="trainer_id"/>
+                            <field name="trainer_name"/>
+                        </group>
+                        <group>
+                            <field name="date"/>
+                            <field name="end_date"/>
+                            <field name="location"/>
+                            <field name="department_id"/>
+                            <field name="capacity"/>
+                            <field name="enrolled_count"/>
+                            <field name="passed_count"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="المتدربون والنتائج">
+                            <field name="enrollment_ids">
+                                <tree editable="bottom" decoration-success="result=='pass'" decoration-danger="result=='fail'">
+                                    <field name="employee_id"/>
+                                    <field name="department_id" readonly="1"/>
+                                    <field name="attended"/>
+                                    <field name="result"/>
+                                    <field name="score"/>
+                                    <field name="certificate_no"/>
+                                    <field name="certificate_expiry" readonly="1"/>
+                                    <field name="cert_state" widget="badge" readonly="1"
+                                           decoration-success="cert_state=='valid'"
+                                           decoration-warning="cert_state=='expiring'"
+                                           decoration-danger="cert_state=='expired'"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="ملاحظات"><field name="note" nolabel="1"/></page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter"><field name="message_follower_ids"/><field name="activity_ids"/><field name="message_ids"/></div>
+            </form>
+        </field>
+    </record>
+    <record id="view_session_tree" model="ir.ui.view">
+        <field name="name">care.training.session.tree</field>
+        <field name="model">care.training.session</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state=='done'" decoration-muted="state=='cancelled'">
+                <field name="name"/><field name="course_id"/><field name="category"/>
+                <field name="date"/><field name="department_id"/>
+                <field name="enrolled_count"/><field name="passed_count"/>
+                <field name="state" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_session" model="ir.actions.act_window">
+        <field name="name">الجلسات التدريبية</field>
+        <field name="res_model">care.training.session</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Certificates (enrollments) view for compliance tracking -->
+    <record id="view_enroll_tree" model="ir.ui.view">
+        <field name="name">care.training.enrollment.tree</field>
+        <field name="model">care.training.enrollment</field>
+        <field name="arch" type="xml">
+            <tree decoration-warning="cert_state=='expiring'" decoration-danger="cert_state=='expired'">
+                <field name="employee_id"/><field name="course_id"/><field name="department_id"/>
+                <field name="session_date"/><field name="result"/>
+                <field name="certificate_no"/><field name="certificate_expiry"/>
+                <field name="cert_state" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_enroll_search" model="ir.ui.view">
+        <field name="name">care.training.enrollment.search</field>
+        <field name="model">care.training.enrollment</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/><field name="course_id"/><field name="department_id"/>
+                <filter name="passed" string="ناجح" domain="[('result','=','pass')]"/>
+                <filter name="expiring" string="شهادة تقترب/منتهية" domain="[('cert_state','in',('expiring','expired'))]"/>
+                <group expand="0" string="تجميع">
+                    <filter name="g_course" string="الدورة" context="{'group_by':'course_id'}"/>
+                    <filter name="g_dept" string="القسم" context="{'group_by':'department_id'}"/>
+                    <filter name="g_cert" string="حالة الشهادة" context="{'group_by':'cert_state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_enroll" model="ir.actions.act_window">
+        <field name="name">الشهادات والمتدربون</field>
+        <field name="res_model">care.training.enrollment</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_enroll_search"/>
+    </record>
+
+    <!-- Menus under HR app -->
+    <menuitem id="menu_training_root" name="التدريب والشهادات" parent="hr.menu_hr_root"
+              sequence="86" groups="hr.group_hr_user"/>
+    <menuitem id="menu_session" name="الجلسات التدريبية" parent="menu_training_root"
+              action="action_session" sequence="10"/>
+    <menuitem id="menu_enroll" name="الشهادات والمتدربون" parent="menu_training_root"
+              action="action_enroll" sequence="20"/>
+    <menuitem id="menu_course" name="الدورات" parent="menu_training_root"
+              action="action_course" sequence="30" groups="hr.group_hr_manager"/>
+</odoo>

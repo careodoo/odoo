@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+    <!-- Search: filters + group-bys that power the analysis charts -->
+    <record id="proposal_view_search" model="ir.ui.view">
+      <field name="name">proposal.search</field>
+      <field name="model">proposal.proposal</field>
+      <field name="arch" type="xml">
+        <search>
+          <field name="name"/>
+          <field name="ref"/>
+          <field name="partner_id"/>
+          <field name="service_type_id"/>
+          <field name="lead_id"/>
+          <separator/>
+          <filter name="f_draft" string="Draft" domain="[('state','=','draft')]"/>
+          <filter name="f_pending" string="In Approval" domain="[('state','in',['submit','waiting'])]"/>
+          <filter name="f_won" string="Won" domain="[('state','=','won')]"/>
+          <filter name="f_lost" string="Rejected/Cancelled" domain="[('state','in',['reject','cancel'])]"/>
+          <separator/>
+          <filter name="f_below_guard" string="Below margin guard" domain="[('below_guard','=',True)]"/>
+          <filter name="f_superseded" string="Superseded" domain="[('superseded','=',True)]"/>
+          <filter name="f_active_only" string="Current (not superseded)" domain="[('superseded','=',False)]"/>
+          <separator/>
+          <filter name="f_this_month" string="This Month"
+                  domain="[('proposal_date','&gt;=',(context_today().replace(day=1)).strftime('%Y-%m-%d'))]"/>
+          <group expand="0" string="Group By">
+            <filter name="g_state" string="Stage" context="{'group_by':'state'}"/>
+            <filter name="g_service_type" string="Service Type" context="{'group_by':'service_type_id'}"/>
+            <filter name="g_partner" string="Customer" context="{'group_by':'partner_id'}"/>
+            <filter name="g_strategy" string="Pricing Strategy" context="{'group_by':'pricing_strategy'}"/>
+            <filter name="g_month" string="Proposal Month" context="{'group_by':'proposal_date:month'}"/>
+            <filter name="g_company" string="Company" context="{'group_by':'company_id'}"/>
+          </group>
+        </search>
+      </field>
+    </record>
+
+    <!-- Graph -->
+    <record id="proposal_view_graph" model="ir.ui.view">
+      <field name="name">proposal.graph</field>
+      <field name="model">proposal.proposal</field>
+      <field name="arch" type="xml">
+        <graph string="Proposals" type="bar" sample="1">
+          <field name="state"/>
+          <field name="total_amount" type="measure"/>
+        </graph>
+      </field>
+    </record>
+
+    <!-- Pivot -->
+    <record id="proposal_view_pivot" model="ir.ui.view">
+      <field name="name">proposal.pivot</field>
+      <field name="model">proposal.proposal</field>
+      <field name="arch" type="xml">
+        <pivot string="Proposals" sample="1">
+          <field name="service_type_id" type="row"/>
+          <field name="state" type="col"/>
+          <field name="total_amount" type="measure"/>
+          <field name="total_pricing_cost" type="measure"/>
+          <field name="margin_amount" type="measure"/>
+        </pivot>
+      </field>
+    </record>
+
+    <!-- OWL dashboard (KPI cards + charts) -->
+    <record id="proposal_dashboard_client_action" model="ir.actions.client">
+      <field name="name">Proposals Dashboard</field>
+      <field name="tag">proposal_dashboard</field>
+    </record>
+    <menuitem id="proposal_dashboard_menu" name="Dashboard"
+      parent="proposal_root_menu" action="proposal_dashboard_client_action" sequence="1"/>
+
+    <!-- Make the dashboard the module's landing page -->
+    <record id="proposal_root_menu" model="ir.ui.menu">
+      <field name="action" eval="'ir.actions.client,' + str(ref('care_proposal.proposal_dashboard_client_action'))"/>
+    </record>
+
+    <!-- Native graph/pivot analysis -->
+    <record id="proposal_analysis_action" model="ir.actions.act_window">
+      <field name="name">Analysis</field>
+      <field name="res_model">proposal.proposal</field>
+      <field name="view_mode">graph,pivot,tree,form</field>
+      <field name="search_view_id" ref="proposal_view_search"/>
+      <field name="context">{'search_default_g_state': 1, 'search_default_f_active_only': 1}</field>
+    </record>
+    <menuitem id="proposal_analysis_menu" name="Analysis"
+      parent="proposal_root_menu" action="proposal_analysis_action" sequence="2"/>
+  </data>
+</odoo>

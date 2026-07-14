@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_my_home_form" model="ir.ui.view">
+        <field name="name">care.my.home.form</field>
+        <field name="model">care.my.home</field>
+        <field name="arch" type="xml">
+            <form string="لوحتي" create="false" edit="false" delete="false">
+                <sheet>
+                    <field name="employee_id" invisible="1"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="doc_expiry_next" invisible="1"/>
+                    <field name="doc_expiry_days" invisible="1"/>
+                    <div class="alert alert-danger" role="alert"
+                         invisible="not doc_expiry_next or doc_expiry_days &gt; 30 or doc_expiry_days &lt; 0"
+                         style="margin-bottom:10px">
+                        ⏳ تنتهي أقرب وثيقة لديك (إقامة/تصريح) خلال <field name="doc_expiry_days" class="oe_inline"/> يوم
+                        بتاريخ <field name="doc_expiry_next" class="oe_inline"/> — برجاء المتابعة مع الموارد البشرية.
+                    </div>
+                    <div class="alert alert-warning" role="alert"
+                         invisible="not doc_expiry_next or doc_expiry_days &lt;= 30 or doc_expiry_days &gt; 90"
+                         style="margin-bottom:10px">
+                        📄 أقرب انتهاء لوثائقك بتاريخ <field name="doc_expiry_next" class="oe_inline"/>
+                        (خلال <field name="doc_expiry_days" class="oe_inline"/> يوم).
+                    </div>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="action"
+                                name="%(care_my.act_my_tasks)d" icon="fa-tasks">
+                            <field name="my_tasks_count" widget="statinfo" string="مهامي"/>
+                        </button>
+                        <button class="oe_stat_button" type="action"
+                                name="%(care_my.act_my_leaves)d" icon="fa-plane">
+                            <field name="leaves_count" widget="statinfo" string="إجازاتي"/>
+                        </button>
+                        <button class="oe_stat_button" type="action"
+                                name="%(care_my.act_my_permissions)d" icon="fa-clock-o">
+                            <field name="permissions_count" widget="statinfo" string="استئذاناتي"/>
+                        </button>
+                        <button class="oe_stat_button" type="action"
+                                name="%(care_my.act_my_loans)d" icon="fa-money">
+                            <field name="loans_count" widget="statinfo" string="سلفي"/>
+                        </button>
+                        <button class="oe_stat_button" type="action"
+                                name="%(care_my.act_my_custody)d" icon="fa-archive">
+                            <field name="custody_count" widget="statinfo" string="عُهدي"/>
+                        </button>
+                        <button class="oe_stat_button" type="action"
+                                name="%(care_my.act_my_attendance)d" icon="fa-calendar-check-o">
+                            <field name="attendance_days" widget="statinfo" string="حضور الشهر"/>
+                        </button>
+                        <button class="oe_stat_button" type="action"
+                                name="%(care_my.act_my_performance)d" icon="fa-line-chart">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value"><field name="perf_score_ytd" widget="float" digits="[16,1]"/></span>
+                                <span class="o_stat_text">أدائي (السنة)</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <field name="image_1920" widget="image" class="oe_avatar"
+                           options="{'preview_image':'avatar_128'}"/>
+                    <div class="oe_title" style="margin-bottom:6px">
+                        <h1 style="margin-bottom:2px"><field name="employee_name"/></h1>
+                        <h2 style="color:#6b7280;font-weight:500;margin:0"><field name="job_title" placeholder="—"/></h2>
+                        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+                            <span class="badge rounded-pill text-bg-primary" style="font-size:13px;padding:6px 12px">🪪 <field name="barcode" class="oe_inline"/></span>
+                            <span class="badge rounded-pill text-bg-info" style="font-size:13px;padding:6px 12px"><field name="worker_status" class="oe_inline"/></span>
+                        </div>
+                    </div>
+
+                    <group>
+                        <group string="ملخّص مالي (تراكمي)">
+                            <field name="bonus_total"/>
+                            <field name="penalty_total"/>
+                            <field name="department_id"/>
+                        </group>
+                        <group string="إجراءات سريعة">
+                            <button type="action" name="%(care_my.act_my_leaves)d"
+                                    string="🛫 طلب / متابعة إجازة" class="btn-primary" style="margin:3px 0"/>
+                            <button type="action" name="%(care_my.act_my_permissions)d"
+                                    string="⏰ طلب / متابعة استئذان" class="btn-secondary" style="margin:3px 0"/>
+                            <button type="action" name="%(care_my.act_my_loans)d"
+                                    string="💵 طلب / متابعة سلفة" class="btn-secondary" style="margin:3px 0"/>
+                            <button type="action" name="%(care_my.act_my_doc_request)d"
+                                    string="📄 طلب مستند" class="btn-secondary" style="margin:3px 0"/>
+                        </group>
+                    </group>
+                    <div class="text-muted" style="margin-top:10px">
+                        <button type="action" name="%(care_my.act_my_profile)d" string="عرض ملفي الشخصي الكامل ←" class="btn-link"/>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="act_my_home" model="ir.actions.server">
+        <field name="name">لوحتي</field>
+        <field name="model_id" ref="care_my.model_care_my_home"/>
+        <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        <field name="state">code</field>
+        <field name="code">action = env['care.my.home'].open_my_home()</field>
+    </record>
+
+    <menuitem id="menu_my_home" name="🏠 لوحتي" parent="menu_my_root"
+              action="act_my_home" sequence="0"/>
+</odoo>

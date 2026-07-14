@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo><data noupdate="1">
+  <record id="fz1" model="care.cafm.facade.zone"><field name="name">الواجهة الشمالية</field><field name="facility_id" ref="care_cafm.fac_bayan"/><field name="method">rope</field><field name="frequency">monthly</field></record>
+  <record id="fz2" model="care.cafm.facade.zone"><field name="name">الواجهة الجنوبية</field><field name="facility_id" ref="care_cafm.fac_bayan"/><field name="method">cradle</field><field name="frequency">monthly</field></record>
+  <record id="fp1" model="care.cafm.facade.permit"><field name="name">FP-2026-0001</field><field name="facility_id" ref="care_cafm.fac_bayan"/><field name="zone_id" ref="fz1"/><field name="wind_speed">18</field><field name="risk_assessed">1</field><field name="equipment_checked">1</field></record>
+</data></odoo>

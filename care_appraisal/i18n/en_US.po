@@ -1,0 +1,273 @@
+# -*- coding: utf-8 -*-
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Language: en_US\n"
+
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_employee_form_performance
+msgid "<span class=\"o_stat_text\">أداء السنة</span>"
+msgstr "<span class=\"o_stat_text\">Year performance</span>"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_project_form_performance
+msgid "<span class=\"o_stat_text\">أداء الفريق</span>"
+msgstr "<span class=\"o_stat_text\">Team performance</span>"
+
+#. module: care_appraisal
+#: model:ir.ui.menu,name:care_appraisal.menu_perf_log
+msgid "أحداث الأداء"
+msgstr "Performance events"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_hr_appraisal_form_performance
+msgid "أداء ضعيف"
+msgstr "Weak performance"
+
+#. module: care_appraisal
+#. odoo-python
+#: code:addons/care_appraisal/models/project_project.py:0
+#, python-format
+msgid "أداء فريق %s"
+msgstr "Team performance %s"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_hr_appraisal_form_performance
+msgid "أداء ممتاز"
+msgstr "Excellent performance"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "إجمالي النقاط"
+msgstr "Total points"
+
+#. module: care_appraisal
+#: model:ir.actions.act_window,name:care_appraisal.action_perf_config
+#: model:ir.ui.menu,name:care_appraisal.menu_perf_config
+msgid "إعدادات الأداء"
+msgstr "Performance settings"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_config_settings
+msgid "إعدادات تقييم الأداء"
+msgstr "Appraisal performance settings"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_config_settings
+msgid "إعدادات نقاط تقييم الأداء"
+msgstr "Performance appraisal points settings"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_config_settings
+msgid "إلغاء"
+msgstr "Cancel"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_config_settings
+msgid "اقتراح المكافأة"
+msgstr "Reward suggestion"
+
+#. module: care_appraisal
+#. odoo-python
+#: code:addons/care_appraisal/models/hr_appraisal.py:0
+#, python-format
+msgid "اقتراح تلقائي بناءً على تقييم الأداء: %s نقطة"
+msgstr "Auto suggestion based on performance appraisal: %s points"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_hr_appraisal_form_performance
+msgid "اقتراح مكافأة أداء"
+msgstr "Suggest performance bonus"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "الأثر"
+msgstr "Impact"
+
+#. module: care_appraisal
+#: model:ir.ui.menu,name:care_appraisal.menu_perf_root
+msgid "الأداء"
+msgstr "Performance"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_hr_appraisal_form_performance
+msgid "الإجمالي"
+msgstr "Total"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "الإدارة"
+msgstr "Department"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_config_settings
+msgid "الإشعارات"
+msgstr "Notifications"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "البيان"
+msgstr "Description"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "التاريخ"
+msgstr "Date"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_config_settings
+msgid "التاسكات والمواعيد"
+msgstr "Tasks & deadlines"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_hr_appraisal_form_performance
+msgid "التفصيل"
+msgstr "Breakdown"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "التقدير"
+msgstr "Rating"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_hr_appraisal_search_performance
+msgid "التقدير التلقائي"
+msgstr "Auto rating"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_config_settings
+msgid "الجزاءات والمكافآت"
+msgstr "Penalties & bonuses"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_config_settings
+msgid "الحضور والانصراف"
+msgstr "Attendance"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "الخصومات"
+msgstr "Deductions"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_config_settings
+msgid "القيم الموجبة مكافأة، والسالبة خصم. تُطبَّق على كل الأحداث الجديدة."
+msgstr "Positive values are rewards, negative are deductions. Applied to all new events."
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "المدير المباشر<br/><br/>__________________"
+msgstr "Direct manager<br/><br/>__________________"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "المصدر"
+msgstr "Source"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "المكافآت"
+msgstr "Bonuses"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "الموارد البشرية<br/><br/>__________________"
+msgstr "HR<br/><br/>__________________"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "الموظف"
+msgstr "Employee"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_hr_appraisal_form_performance
+msgid "النتيجة"
+msgstr "Score"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "الوظيفة"
+msgstr "Job"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_hr_appraisal_form_performance
+msgid "تجميع الأداء"
+msgstr "Collect performance"
+
+#. module: care_appraisal
+#: model:ir.actions.act_window,name:care_appraisal.action_perf_analysis
+#: model:ir.ui.menu,name:care_appraisal.menu_perf_analysis
+msgid "تحليل الأداء"
+msgstr "Performance analysis"
+
+#. module: care_appraisal
+#. odoo-python
+#: code:addons/care_appraisal/models/performance_log.py:0
+#, python-format
+msgid "تقييم الأداء: %s"
+msgstr "Performance appraisal: %s"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "توقيع الموظف<br/><br/>__________________"
+msgstr "Employee signature<br/><br/>__________________"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_employee_form_performance
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_project_form_performance
+msgid "حدث"
+msgstr "event"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_config_settings
+msgid "حفظ"
+msgstr "Save"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "رقم العامل"
+msgstr "Worker number"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "سنة"
+msgstr "Year"
+
+#. module: care_appraisal
+#: model:ir.actions.report,name:care_appraisal.action_report_performance
+msgid "كشف الأداء"
+msgstr "Performance statement"
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.report_performance_statement
+msgid "لا توجد أحداث أداء لهذه السنة."
+msgstr "No performance events for this year."
+
+#. module: care_appraisal
+#: model_terms:ir.ui.view,arch_db:care_appraisal.view_perf_config_settings
+msgid "متابعة الأداء المنخفض"
+msgstr "Low-performance monitoring"
+
+#. module: care_appraisal
+#. odoo-python
+#: code:addons/care_appraisal/models/hr_appraisal.py:0
+#, python-format
+msgid "مكافأة أداء مقترحة"
+msgstr "Suggested performance bonus"
+
+#. module: care_appraisal
+#. odoo-python
+#: code:addons/care_appraisal/models/performance_log.py:0
+#, python-format
+msgid "⚠️ ملاحظة أداء"
+msgstr "⚠️ Performance note"
+
+#. module: care_appraisal
+#. odoo-python
+#: code:addons/care_appraisal/models/performance_log.py:0
+#, python-format
+msgid "👏 أداء إيجابي"
+msgstr "👏 Positive performance"

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="cron_mobile_token_gc" model="ir.cron">
+        <field name="name">CAFM Mobile: تنظيف الرموز المنتهية</field>
+        <field name="model_id" ref="model_care_cafm_mobile_token"/>
+        <field name="state">code</field>
+        <field name="code">model._gc_expired()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+    </record>
+</odoo>

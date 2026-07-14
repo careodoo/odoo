@@ -98,6 +98,15 @@ class UserAttendance(models.Model):
                                 if not last_hr_attendance or (last_hr_attendance.check_out and uatt.timestamp > last_hr_attendance.check_out):
                                     last_hr_attendance = uatt._create_hr_attendance()
                                     uatt_update = True
+                                elif last_hr_attendance and not last_hr_attendance.check_out and uatt.timestamp > last_hr_attendance.check_in:
+                                    # CARE: devices that send status 255 ("no punch state") report
+                                    # every scan as a check-in. Alternate punches: a scan while an
+                                    # attendance is still open = the check-OUT. Without this the
+                                    # 2nd+ punch was silently dropped (marked synced, no hr.attendance).
+                                    last_hr_attendance.with_context(not_manual_check_out_modification=True, sync_from_device=True).write({
+                                        'check_out': uatt.timestamp,
+                                        'checkout_device_id': uatt.device_id.id})
+                                    uatt_update = True
                             else:
                                 if last_hr_attendance and not last_hr_attendance.check_out and uatt.timestamp >= last_hr_attendance.check_in:
                                     last_hr_attendance.with_context(not_manual_check_out_modification=True, sync_from_device=True).write({

@@ -82,6 +82,24 @@
               <field name="tender_ai_api_key" password="True" />
             </setting>
           </block>
+          <block title="تعريف «المناقصات النشطة»" name="tender_active_states_block"
+            help="اختر الحالات التي تُعتبر «نشطة» وتظهر في قائمة Active Tenders. القائمة مرتّبة تلقائياً حسب الأقرب إغلاقاً (الأيام المتبقية).">
+            <setting string="جديدة"><field name="tender_active_new" /></setting>
+            <setting string="تحت الدراسة"><field name="tender_active_under_study" /></setting>
+            <setting string="تم شراء الكراسة"><field name="tender_active_docs_purchased" /></setting>
+            <setting string="مهتمون"><field name="tender_active_interested" /></setting>
+            <setting string="جارٍ التحضير"><field name="tender_active_preparing" /></setting>
+            <setting string="تم التقديم"><field name="tender_active_participated" /></setting>
+            <setting string="مؤجلة"><field name="tender_active_postponed" /></setting>
+            <setting string="فائزة"><field name="tender_active_winner" /></setting>
+            <setting string="تمت الترسية"><field name="tender_active_purchased" /></setting>
+            <setting string="قيد التنفيذ"><field name="tender_active_in_progress" /></setting>
+            <setting string="منجزة"><field name="tender_active_completed" /></setting>
+            <setting string="خاسرة"><field name="tender_active_lost" /></setting>
+            <setting string="لن نشارك"><field name="tender_active_excepted" /></setting>
+            <setting string="مغلقة"><field name="tender_active_closed" /></setting>
+            <setting string="ملغاة"><field name="tender_active_cancelled" /></setting>
+          </block>
         </app>
       </xpath>
     </field>

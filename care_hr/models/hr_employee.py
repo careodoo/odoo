@@ -119,6 +119,72 @@ class Employee(models.Model):
         if Loan is not None:
             active_loans = Loan.search_count([('state', '=', 'approve')])
 
+        # --- Care HR KPIs (manpower, payroll, compliance) ---
+        def _cnt(model, domain):
+            M = self.env.get(model)
+            return M.search_count(domain) if M is not None else 0
+        care_kpi = {'manpower_files': 0, 'quota_total': 0, 'quota_available': 0}
+        MF = self.env.get('care.manpower.file')
+        if MF is not None:
+            files = MF.search([])
+            care_kpi['manpower_files'] = len(files)
+            care_kpi['quota_total'] = sum(files.mapped('quota'))
+            care_kpi['quota_available'] = sum(files.mapped('available_count'))
+        care_kpi['coverage_alerts'] = _cnt('care.coverage.alert', [('state', '=', 'open')])
+        care_kpi['pending_penalties'] = _cnt('care.penalty', [('state', 'in', ('submitted', 'approved'))])
+        care_kpi['pending_allowances'] = _cnt('care.allowance', [('state', 'in', ('submitted', 'dept'))])
+        care_kpi['open_violations'] = _cnt('care.traffic.violation', [('state', 'in', ('submitted', 'approved'))])
+        care_kpi['gov_tx_overdue'] = _cnt('care.gov.transaction', [('overdue', '=', True)])
+        care_kpi['permits_invalid'] = _cnt('care.site.permit', [('state', 'in', ('expired', 'revoked'))])
+        care_kpi['open_grievances'] = _cnt('care.grievance', [('state', 'not in', ('closed', 'refused'))])
+        # passports
+        care_kpi['passports_total'] = _cnt('care.passport', [])
+        care_kpi['passports_in_archive'] = _cnt('care.passport', [('state', '=', 'in_archive')])
+        care_kpi['passports_out'] = _cnt('care.passport', [('state', '=', 'out')])
+        care_kpi['passports_with_pro'] = _cnt('care.passport', [('state', '=', 'out'), ('out_reason', '=', 'pro_residency')])
+        care_kpi['passports_expiring'] = _cnt('care.passport', [('expiry_state', '=', 'expiring')])
+        care_kpi['passports_expired'] = _cnt('care.passport', [('expiry_state', '=', 'expired')])
+        # residency / documents
+        res_soon = today + timedelta(days=60)
+        care_kpi['residency_expiring'] = Emp.search_count(
+            base + [('residency_end_date', '>=', today), ('residency_end_date', '<=', res_soon)])
+        care_kpi['residency_expired'] = Emp.search_count(
+            base + [('residency_end_date', '!=', False), ('residency_end_date', '<', today)])
+        care_kpi['custody_outstanding'] = _cnt('care.custody', [('state', '=', 'issued')])
+        care_kpi['eos_pending'] = _cnt('hr.employee.resignation', [('state', 'in', ('submit', 'hr_dept', 'finance_dept'))])
+
+        # nationality distribution (top 10)
+        by_nationality = []
+        for g in Emp.read_group(base + [('country_id', '!=', False)],
+                                ['country_id'], ['country_id'], limit=12):
+            by_nationality.append({
+                'name': (g['country_id'][1] if g['country_id'] else 'غير محدد'),
+                'count': g.get('__count') or g.get('country_id_count') or 0})
+        by_nationality.sort(key=lambda x: x['count'], reverse=True)
+
+        # ---- Skills deep statistics ----
+        by_skill_type, top_skills = [], []
+        ES = self.env.get('hr.employee.skill')
+        if ES is not None:
+            care_kpi['emp_skills_total'] = ES.search_count([])
+            care_kpi['skills_catalog'] = self.env['hr.skill'].search_count([])
+            care_kpi['skill_types'] = self.env['hr.skill.type'].search_count([])
+            emp_groups = ES.read_group([], ['employee_id'], ['employee_id'])
+            n_emp = len([g for g in emp_groups if g['employee_id']])
+            care_kpi['emp_with_skills'] = n_emp
+            care_kpi['avg_skills_per_emp'] = round(care_kpi['emp_skills_total'] / n_emp, 1) if n_emp else 0
+            for g in ES.read_group([], ['skill_type_id'], ['skill_type_id']):
+                if g['skill_type_id']:
+                    by_skill_type.append({'name': g['skill_type_id'][1],
+                                          'count': g.get('__count') or g.get('skill_type_id_count') or 0})
+            by_skill_type.sort(key=lambda x: x['count'], reverse=True)
+            tmp = []
+            for g in ES.read_group([], ['skill_id'], ['skill_id']):
+                if g['skill_id']:
+                    tmp.append({'name': g['skill_id'][1],
+                                'count': g.get('__count') or g.get('skill_id_count') or 0})
+            top_skills = sorted(tmp, key=lambda x: x['count'], reverse=True)[:12]
+
         # --- recent joiners list ---
         recent = emps.sorted(
             key=lambda e: (e.joining_date or (e.create_date.date() if e.create_date else today)),
@@ -153,6 +219,12 @@ class Employee(models.Model):
             'upcoming_leaves': upcoming_leaves,
             'pending_docs': pending_docs,
             'new_joiners': new_joiners,
+            'care': care_kpi,
+            'by_nationality': by_nationality,
+            'by_skill_type': by_skill_type,
+            'top_skills': top_skills,
+            'today': str(today),
+            'today_60': str(today + timedelta(days=60)),
             'year': year,
         }
 

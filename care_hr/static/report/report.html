@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Care HR — تقرير النظام الكامل وكيفية العمل</title>
+<style>
+  :root{--p:#714B67;--b:#3a7afe;--g:#21b07b;--o:#f59e0b;--r:#e25563;--ink:#1e293b;--mut:#64748b;--line:#e2e8f0;--bg:#f1f5f9}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI','Cairo',Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.8}
+  .top{background:linear-gradient(135deg,#714B67,#3a3552);color:#fff;padding:34px 24px}
+  .wrap{max-width:1040px;margin:0 auto;padding:24px}
+  .top .wrap{padding:0}
+  h1{margin:0 0 6px;font-size:30px}
+  .sub{opacity:.9;font-size:15px}
+  .meta{margin-top:14px;font-size:13px;opacity:.85}
+  .toc{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin:24px 0}
+  .toc h3{margin:0 0 10px}
+  .toc a{color:var(--b);text-decoration:none;display:inline-block;margin:3px 0}
+  .toc ol{margin:0;padding-inline-start:20px;columns:2}
+  section{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:18px 0;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+  h2{margin:0 0 4px;font-size:21px;color:var(--p);border-bottom:2px solid var(--line);padding-bottom:10px}
+  h2 .n{display:inline-block;background:var(--p);color:#fff;border-radius:8px;font-size:14px;padding:2px 10px;margin-left:8px}
+  h3{font-size:16px;margin:16px 0 6px;color:#334155}
+  .path{display:inline-block;background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe;border-radius:7px;padding:2px 9px;font-size:12.5px;font-weight:bold;margin:2px 0}
+  code{background:#f1f5f9;border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:13px;font-family:Consolas,monospace;direction:ltr;display:inline-block}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:right;vertical-align:top}
+  th{background:#f8fafc}
+  ul{margin:6px 0;padding-inline-start:22px}
+  li{margin:3px 0}
+  .tag{display:inline-block;border-radius:20px;padding:2px 11px;font-size:12px;font-weight:bold;color:#fff}
+  .ok{background:var(--g)} .warn{background:var(--o)} .danger{background:var(--r)} .info{background:var(--b)}
+  .box{border-radius:10px;padding:11px 14px;margin:10px 0;font-size:13.5px}
+  .box-g{background:#ecfdf5;border:1px solid #a7f3d0}
+  .box-b{background:#eff6ff;border:1px solid #bfdbfe}
+  .box-o{background:#fffbeb;border:1px solid #fde68a}
+  .how{background:#f8fafc;border-inline-start:4px solid var(--b);border-radius:8px;padding:10px 14px;margin:8px 0;font-size:13.5px}
+  .how b{color:#0c4a6e}
+  .flow{font-size:13px;color:#334155}
+  .flow span{display:inline-block;background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:3px 9px;margin:2px;font-weight:bold;color:#3730a3}
+  .arr{color:#94a3b8;font-weight:bold;margin:0 2px}
+  .foot{text-align:center;color:var(--mut);font-size:13px;padding:24px}
+</style>
+</head>
+<body>
+<div class="top"><div class="wrap">
+  <h1>Care HR — تقرير النظام الكامل</h1>
+  <div class="sub">شرح كل الإضافات المنفّذة على نظام الموارد البشرية وكيفية عمل كل منها</div>
+  <div class="meta">المنصّة: Odoo 17 Enterprise · الموديول: <code>care_hr</code> · الحالة: <span class="tag ok">حيّ على الإنتاج ومُختبر</span></div>
+</div></div>
+
+<div class="wrap">
+
+<div class="toc">
+  <h3>المحتويات</h3>
+  <ol>
+    <li><a href="#access">كيف تصل لكل شيء (القوائم)</a></li>
+    <li><a href="#policy">محرّك الإعدادات واللائحة</a></li>
+    <li><a href="#grades">الدرجات والأجور</a></li>
+    <li><a href="#manpower">ملفات القوى العاملة (PAM)</a></li>
+    <li><a href="#e360">Employee 360 + حالة العامل</a></li>
+    <li><a href="#penalty">الجزاءات → الرواتب</a></li>
+    <li><a href="#allowance">البدلات + مصفوفة الاعتماد</a></li>
+    <li><a href="#violation">المخالفات المرورية + الترحيل</a></li>
+    <li><a href="#coverage">مراقب تغطية الحضور</a></li>
+    <li><a href="#grievance">التظلّمات والشكاوى</a></li>
+    <li><a href="#custody">سجل العُهد</a></li>
+    <li><a href="#gov">معاملات المندوب (PRO)</a></li>
+    <li><a href="#permit">تصاريح المواقع والأمن</a></li>
+    <li><a href="#announce">الإعلانات وإقرار اللوائح</a></li>
+    <li><a href="#access-profiles">Access Profiles (الصلاحيات)</a></li>
+    <li><a href="#dashboard">الداشبورد الحيّ</a></li>
+    <li><a href="#special">مهام خاصة (حذف/ترحيل/إصلاح)</a></li>
+    <li><a href="#payroll-arch">كيف تعمل الرواتب تقنياً</a></li>
+  </ol>
+</div>
+
+<section id="access">
+  <h2>كيف تصل لكل شيء</h2>
+  <p>كل الإضافات داخل تطبيق <b>Employees</b> الأساسي في Odoo، مرتّبة في أقسام جديدة:</p>
+  <table>
+    <tr><th>القسم في القائمة</th><th>ماذا يحتوي</th></tr>
+    <tr><td><span class="path">Employees › Configuration</span></td><td>سياسة العمل (اللائحة)، الدرجات/الأجور، كتالوج الجزاءات، أنواع البدلات، <b>Access Profiles</b></td></tr>
+    <tr><td><span class="path">Employees › Compliance</span></td><td>ملفات القوى العاملة، مراقب التغطية، معاملات المندوب، تصاريح المواقع</td></tr>
+    <tr><td><span class="path">Employees › Employee Relations</span></td><td>التظلّمات، الإعلانات والسياسات</td></tr>
+    <tr><td><span class="path">Employees › Care Payroll</span></td><td>الجزاءات، البدلات، المخالفات المرورية</td></tr>
+    <tr><td><span class="path">Employees › Administration</span></td><td>سجل العُهد</td></tr>
+  </table>
+  <div class="box box-b">القوائم محكومة بالصلاحيات: المستخدم لا يرى إلا ما يخصّه (مثلاً Access Profiles لمدير الموارد البشرية فقط).</div>
+</section>
+
+<section id="policy">
+  <h2>محرّك الإعدادات واللائحة <span class="n">1</span></h2>
+  <span class="path">Configuration › HR Policy (Labour Law)</span>
+  <p>كل أرقام لائحة العمل صارت <b>إعدادات قابلة للتعديل بدون برمجة</b> — تتغيّر فوراً عبر النظام عند تغيّر القانون.</p>
+  <h3>ماذا يحتوي</h3>
+  <ul>
+    <li><b>الإجازات:</b> سنوية 30 يوم، استحقاق بعد 9 أشهر، مرضية متدرّجة.</li>
+    <li><b>نهاية الخدمة:</b> 15 يوم/سنة أول 5 سنوات، شهر/سنة بعدها، سقف 1.5 سنة.</li>
+    <li><b>الإشعار وفترة التجربة</b> · <b>ساعات العمل وأسعار الأوفر تايم.</b></li>
+    <li><b>الأجر الأساسي الافتراضي، سقف الجزاء الشهري، عتبة اعتماد البدل، تنبيه انتهاء المستندات، عتبة عدم الحضور.</b></li>
+  </ul>
+  <div class="how"><b>كيف يعمل:</b> القيم تُخزَّن كـ <code>ir.config_parameter</code> وتُقرأ من بقية الموديولات (الجزاءات تقرأ السقف، البدلات تقرأ العتبة، مراقب التغطية يقرأ عدد الأيام…).</div>
+</section>
+
+<section id="grades">
+  <h2>الدرجات والأجور <span class="n">2</span></h2>
+  <span class="path">Configuration › Job Grades / Wage Tiers</span>
+  <p>تعريف شرائح الأجر (75 / 80 / 85 …) كل درجة بنطاق أجر وأساسي افتراضي، وتُربط بالموظف.</p>
+  <div class="how"><b>كيف يعمل:</b> حقل <code>Job Grade</code> أُضيف لملف الموظف (تبويب Worker File)، ويُستخدم كأساس لتخطيط القوى والرواتب.</div>
+</section>
+
+<section id="manpower">
+  <h2>ملفات القوى العاملة (PAM) <span class="n">3</span></h2>
+  <span class="path">Compliance › Manpower Files (PAM)</span>
+  <p>الملفات المفتوحة لدى الهيئة العامة للقوى العاملة / الشؤون الاجتماعية، وعليها تُسجَّل الإقامات وأذون العمل، ولكل ملف <b>حصة تأشيرات</b>.</p>
+  <table>
+    <tr><th>الحقل</th><th>الوصف</th></tr>
+    <tr><td>الحصة / المستخدم / المتاح</td><td><b>المستخدم</b> يُحسب آلياً من عدد العمال المربوطين بالملف، و<b>المتاح = الحصة − المستخدم</b></td></tr>
+    <tr><td>حالة الإشغال</td><td>متاح / قارب الامتلاء (≥90%) / ممتلئ — بألوان</td></tr>
+    <tr><td>تجديد الملف</td><td>تاريخ + عدّاد أيام للتجديد</td></tr>
+  </table>
+  <div class="how"><b>كيف يعمل:</b> اربط العامل بالملف من ملفه، فيرتفع المستخدم وينخفض المتاح تلقائياً. إحصائيات الملفات تظهر في الداشبورد. الحصة المتاحة تقود قرار الاستقدام.</div>
+</section>
+
+<section id="e360">
+  <h2>Employee 360 + حالة العامل <span class="n">4</span></h2>
+  <span class="path">ملف أي موظف › تبويب Worker File (360°)</span>
+  <ul>
+    <li>تبويب يجمع: الدرجة، ملف القوى العاملة + جهته + <b>الحصة المتبقية</b> (زر سريع)، السكن.</li>
+    <li><b>حالة العامل</b> (جديد / على رأس العمل / إجازة / موقوف / متغيّب / نهاية خدمة) تظهر:
+      <ul><li>كـ <b>statusbar قابل للنقر</b> أعلى الملف.</li><li>كـ <b>Label ملوّن في الكانبان</b>.</li></ul></li>
+    <li>تتزامن آلياً: عند إيقاف الموظف تصبح الحالة "موقوف".</li>
+    <li><b>الشاتر (المحادثة) نُقل لأسفل الملف</b> بعرض كامل بدل الجانب.</li>
+  </ul>
+</section>
+
+<section id="penalty">
+  <h2>الجزاءات → الرواتب <span class="n">5</span></h2>
+  <span class="path">Care Payroll › Penalties</span> &nbsp; + كتالوج: <span class="path">Configuration › Penalty Catalogue</span>
+  <p>عقوبة مالية تُوقَّع على العامل (ليست خصم غياب)، <b>تُعرَّف لكل مشروع على حدة</b> وتُطبَّق على عامل دون آخر.</p>
+  <div class="flow"><span>رصد المخالفة</span><span class="arr">→</span><span>اختيار من كتالوج المشروع</span><span class="arr">→</span><span>تقديم</span><span class="arr">→</span><span>اعتماد HR</span><span class="arr">→</span><span>خصم في القسيمة</span></div>
+  <div class="how"><b>كيف يعمل في الرواتب:</b> عند احتساب قسيمة الشهر، يجمع النظام الجزاءات المعتمدة في فترة القسيمة لذلك العامل ويضيفها كسطر خصم <code>CARE_PENALTY</code>، مع تطبيق <b>السقف الشهري</b> من الإعدادات. <span class="tag ok">مُختبر: خصم −10 وبسقف 6 يصبح −6</span></div>
+</section>
+
+<section id="allowance">
+  <h2>البدلات + مصفوفة الاعتماد <span class="n">6</span></h2>
+  <span class="path">Care Payroll › Allowances</span> &nbsp; + أنواع: <span class="path">Configuration › Allowance Types</span>
+  <p>بدلات (مواصلات/طبيعة عمل/فطور…) بطريقتي صرف: <b>داخل الراتب</b> أو <b>كاش منفصل</b>.</p>
+  <div class="flow"><span>طلب البدل</span><span class="arr">→</span><span>اعتماد مدير الإدارة</span><span class="arr">→</span><span>اعتماد الإدارة العليا (حسب العتبة/الكاش)</span><span class="arr">→</span><span>الراتب أو صرف كاش</span></div>
+  <table>
+    <tr><th>الطريقة</th><th>المعالجة</th></tr>
+    <tr><td>داخل الراتب</td><td>يظهر كإضافة <code>CARE_ALLOWANCE</code> في القسيمة</td></tr>
+    <tr><td>كاش منفصل</td><td>لا يدخل القسيمة؛ يُصرف نقداً ويُسجَّل بتاريخ وتوقيع — منفصل تماماً</td></tr>
+  </table>
+  <div class="how"><b>مصفوفة الاعتماد:</b> أي بدل يتجاوز العتبة (أو أي بدل كاش) يتطلّب اعتماد <b>عضو الإدارة العليا</b> بعد مدير الإدارة. المعتمدون يُحدَّدون لاحقاً عبر مجموعة "Senior Approver" والعتبة في الإعدادات. <span class="tag ok">مُختبر: +10 بالراتب، وكاش 15 صُرف منفصلاً</span></div>
+</section>
+
+<section id="violation">
+  <h2>المخالفات المرورية + الترحيل <span class="n">7</span></h2>
+  <span class="path">Care Payroll › Traffic Violations</span>
+  <p>تصميم جديد بديل لموديول الاستوديو القديم. مدير السيارات يسجّل المخالفة ويحدّد المسؤول (سائق/شركة) ويرفع طلب خصم لـ HR.</p>
+  <div class="flow"><span>رصد المخالفة</span><span class="arr">→</span><span>تحديد المسؤول</span><span class="arr">→</span><span>طلب خصم</span><span class="arr">→</span><span>اعتماد HR</span><span class="arr">→</span><span>خصم CARE_VIOLATION بالقسيمة</span></div>
+  <div class="how"><b>كيف يعمل:</b> ما يخصّ السائق ويُعتمد يُخصم في راتبه كسطر مستقل؛ ما تتحمّله الشركة يُعلَّم "Company Borne". <b>السجلات المدفوعة تاريخياً محميّة من إعادة الخصم</b>.</div>
+  <div class="box box-g"><b>الترحيل:</b> رُحّلت كل بيانات الموديول القديم <code>x_violation</code>: <b>513 سجل</b> + <b>771 رسالة شاتر</b> + <b>912 مرفق (صور إثبات)</b>، ثم حُذف الموديول القديم نهائياً. (نسخة احتياطية محفوظة).</div>
+</section>
+
+<section id="coverage">
+  <h2>مراقب تغطية الحضور <span class="n">8</span></h2>
+  <span class="path">Compliance › Coverage Monitor</span>
+  <p>يكشف العمالة المسجّلة لدينا التي <b>لا حضور لها</b> أو <b>غير مربوطة بقسم/وظيفة</b> — قبل أن تُفسد الرواتب.</p>
+  <div class="how"><b>كيف يعمل:</b> فحص يومي آلي (Cron) يطابق الموظفين النشطين ضد سجل البصمة. أي عامل بلا حضور خلال المدة المحدَّدة (إعدادات) أو بلا قسم يُرفَع كتنبيه.</div>
+  <div class="how"><b>الاستثناء:</b> يمكن استثناء عامل من ملفه الشخصي فقط، وبصلاحية <b>مدير الإدارة</b> (أو HR)، بسبب ومدة، وينتهي تلقائياً. <span class="tag ok">مُختبر: الاستثناء يُسقط التنبيه فوراً</span></div>
+</section>
+
+<section id="grievance">
+  <h2>التظلّمات والشكاوى <span class="n">9</span></h2>
+  <span class="path">Employee Relations › Grievances</span>
+  <p>قناة رسمية لشكاوى العمال مع <b>مؤقّت SLA</b> وتصنيف وتحقيق وحل وقياس رضا.</p>
+  <div class="flow"><span>تقديم</span><span class="arr">→</span><span>فرز</span><span class="arr">→</span><span>تحقيق</span><span class="arr">→</span><span>حل</span><span class="arr">→</span><span>إغلاق + رضا</span></div>
+  <div class="how"><b>كيف يعمل:</b> لكل شكوى موعد نهائي محسوب (التاريخ + أيام SLA)، وعلامة "متأخّرة" حمراء تلقائياً عند تجاوزه قبل الحل.</div>
+</section>
+
+<section id="custody">
+  <h2>سجل العُهد والتسليم <span class="n">10</span></h2>
+  <span class="path">Administration › Custody Register</span>
+  <p>تتبّع العُهد المسلّمة للعامل (هوية، شريحة، بطاقة دخول، أدوات، جهاز، زي) بالتسليم والإعادة والحالة.</p>
+  <div class="how"><b>كيف يعمل:</b> كل عُهدة لها حالة (بحوزته / مُعادة / مفقودة / تالفة). دالة <code>outstanding_for_employee</code> تكشف العُهد غير المُعادة — لربطها بإخلاء الطرف قبل الصرف النهائي.</div>
+</section>
+
+<section id="gov">
+  <h2>معاملات المندوب (PRO) <span class="n">11</span></h2>
+  <span class="path">Compliance › Gov Transactions (PRO)</span>
+  <p>لوحة تشغيلية لكل معاملة حكومية (إقامة/إذن عمل/بطاقة/توثيق/نقل كفالة): المندوب المسؤول، الرسوم، الموعد النهائي و<b>SLA</b>.</p>
+  <div class="how"><b>كيف يعمل:</b> دورة (مسودة → مقدّمة → قيد الإنجاز → منجزة)، وعلامة "متأخّرة" عند تجاوز الموعد. تُجمَّع المتأخرات في الداشبورد.</div>
+</section>
+
+<section id="permit">
+  <h2>تصاريح المواقع والأمن <span class="n">12</span></h2>
+  <span class="path">Compliance › Site &amp; Security Permits</span>
+  <p>تصاريح المواقع الحكومية/الحساسة (جهات سيادية). <b>لا يُنشر عامل في موقع مؤمّن بلا تصريح ساري</b>.</p>
+  <div class="how"><b>كيف يعمل:</b> دورة (طلب → فحص أمني → إصدار)، حقل <b>صلاحية محسوبة</b> (issued + clearance passed + لم ينتهِ)، تنبيه ≤30 يوم، و<b>Cron يومي</b> يحوّل المنتهي إلى "Expired".</div>
+</section>
+
+<section id="announce">
+  <h2>الإعلانات وإقرار اللوائح <span class="n">13</span></h2>
+  <span class="path">Employee Relations › Announcements &amp; Policies</span>
+  <p>نشر التعاميم والسياسات. السياسات <b>تتطلّب إقراراً إلكترونياً</b> من العمال المستهدفين.</p>
+  <div class="how"><b>كيف يعمل:</b> عند نشر "سياسة"، يولّد النظام سجل إقرار لكل عامل في الجمهور المستهدف (الكل أو أقسام محددة). إقرار العامل يُسجَّل <b>بالاسم والوقت كإثبات قانوني</b>، مع عدّادات (مطلوب/تمّ/متبقّي). <span class="tag ok">مُختبر</span></div>
+</section>
+
+<section id="access-profiles">
+  <h2>Access Profiles — أداة الصلاحيات المرنة <span class="n">14</span></h2>
+  <span class="path">Configuration › Access Profiles</span> <span class="tag info">لمدير الموارد البشرية</span>
+  <p>أداة لبناء صلاحيات مخصّصة لكل دور: تحدّد لكل نموذج صلاحيات (قراءة/كتابة/إنشاء/حذف) وتُسندها لمستخدمين.</p>
+  <div class="how"><b>كيف يعمل:</b> عند الضغط على <b>Apply</b> يقوم النظام تلقائياً بـ:
+    <ul>
+      <li>إنشاء/تحديث <b>مجموعة أمان</b> خاصة بالملف.</li>
+      <li>توليد قيود وصول <code>ir.model.access</code> حقيقية لكل سطر نموذج.</li>
+      <li>مزامنة <b>أعضاء المجموعة</b> ليكونوا بالضبط مستخدمي الملف.</li>
+    </ul>
+    وعند حذف الملف يُنظّف المجموعة والقيود تلقائياً. <span class="tag ok">مُختبر: توليد المجموعة والقيود ومزامنة المستخدمين والحذف النظيف</span>
+  </div>
+</section>
+
+<section id="dashboard">
+  <h2>الداشبورد الحيّ <span class="n">15</span></h2>
+  <span class="path">Employees › Dashboard</span>
+  <p>أُضيف صف <b>KPIs حيّ</b> يقرأ أرقاماً حقيقية من قاعدة البيانات، و<b>كل بطاقة قابلة للضغط</b> تفتح قائمتها المفلترة:</p>
+  <ul>
+    <li>حصص التأشيرات المتاحة · تنبيهات تغطية الحضور · جزاءات معلّقة · بدلات بانتظار الاعتماد</li>
+    <li>مخالفات مفتوحة · معاملات متأخرة (SLA) · تظلّمات مفتوحة · تصاريح منتهية</li>
+  </ul>
+</section>
+
+<section id="special">
+  <h2>مهام خاصة: حذف / ترحيل / إصلاح</h2>
+  <table>
+    <tr><th>المهمة</th><th>التفاصيل</th></tr>
+    <tr><td><span class="tag ok">ترحيل + حذف</span> المخالفات القديمة</td><td>513 سجل + 771 رسالة + 912 مرفق نُقلت للجديد، ثم حُذف <code>x_violation</code> (+النوع+المرحلة) نهائياً مع جداوله. نسخة احتياطية: <code>x_violation_backup.json</code></td></tr>
+    <tr><td><span class="tag ok">حذف آمن</span> Employee Stages</td><td>أُلغي تثبيت <code>employee_stages</code> بلا أي تبعيات مكسورة، مع نسخة احتياطية للـ514 سجل حالة. (عُوّض بحقل "حالة العامل" الأنظف)</td></tr>
+    <tr><td><span class="tag danger">إصلاح خلل كامن</span></td><td>حقول <code>Monetary</code> في الإعدادات كانت ستكسر حذف أي مجموعة صلاحيات بالنظام كله — حُوِّلت إلى <code>Float</code></td></tr>
+    <tr><td><span class="tag info">تعديل واجهة</span></td><td>نقل الشاتر لأسفل ملف الموظف</td></tr>
+  </table>
+</section>
+
+<section id="payroll-arch">
+  <h2>كيف تعمل الرواتب تقنياً (مهم)</h2>
+  <p>كل الخصومات والإضافات مبنية فوق <b>نظام رواتب Odoo الأساسي</b> (hr_payroll) بطريقة آمنة:</p>
+  <ul>
+    <li>أُضيفت <b>أنواع إدخال</b> (<code>CARE_PENALTY</code>, <code>CARE_ALLOWANCE</code>, <code>CARE_VIOLATION</code>) و<b>قواعد رواتب</b> مقابلة على الهياكل (Worker/Employee).</li>
+    <li>عند احتساب القسيمة، يجمع النظام السجلات <b>المعتمدة في فترة القسيمة</b> ويحقنها كإدخالات، فتظهر كسطور مستقلة.</li>
+    <li><b>الأمان:</b> القاعدة <b>صفرية الأثر تماماً ما لم يوجد إدخال معتمد</b> — أي لا تغيير على رواتب أي موظف ليس له جزاء/بدل/مخالفة. لذلك التطبيق على الهياكل الحيّة آمن 100%.</li>
+  </ul>
+  <div class="box box-o"><b>منهجية العمل:</b> كل مرحلة نُشرت على الإنتاج ثم اختُبرت فعلياً (إنشاء سجل → اعتماد → احتساب قسيمة → التحقق من السطر)، والبيانات التجريبية أُلغيت بالكامل بعد كل اختبار. أي فشل في الترقية يتراجع تلقائياً (Transactional) فالإنتاج يبقى آمناً.</div>
+</section>
+
+<section id="appendix">
+  <h2>الملحق التقني الدقيق</h2>
+  <p>مرجع تقني فعلي مأخوذ مباشرة من قاعدة بيانات الإنتاج (<code>odoo17</code>).</p>
+
+  <h3>أ) النماذج (Models) المُضافة</h3>
+  <table>
+    <tr><th>النموذج</th><th>الغرض</th></tr>
+    <tr><td><code>care.job.grade</code></td><td>الدرجات وشرائح الأجر</td></tr>
+    <tr><td><code>care.manpower.file</code></td><td>ملفات القوى العاملة + الحصص</td></tr>
+    <tr><td><code>care.penalty</code> · <code>care.penalty.type</code></td><td>الجزاءات + كتالوج المشروع</td></tr>
+    <tr><td><code>care.allowance</code> · <code>care.allowance.type</code></td><td>البدلات + أنواعها</td></tr>
+    <tr><td><code>care.traffic.violation</code></td><td>المخالفات المرورية (513 سجل مُرحّل)</td></tr>
+    <tr><td><code>care.coverage.alert</code></td><td>تنبيهات تغطية الحضور</td></tr>
+    <tr><td><code>care.grievance</code></td><td>التظلّمات</td></tr>
+    <tr><td><code>care.custody</code></td><td>سجل العُهد</td></tr>
+    <tr><td><code>care.gov.transaction</code></td><td>معاملات المندوب</td></tr>
+    <tr><td><code>care.site.permit</code></td><td>تصاريح المواقع</td></tr>
+    <tr><td><code>care.announcement</code> · <code>care.announcement.ack</code></td><td>الإعلانات + الإقرارات</td></tr>
+    <tr><td><code>care.access.profile</code> · <code>care.access.profile.line</code></td><td>أداة الصلاحيات</td></tr>
+  </table>
+
+  <h3>ب) تكامل الرواتب — أنواع الإدخال والقواعد (فعلي)</h3>
+  <table>
+    <tr><th>كود القاعدة</th><th>نوع الإدخال</th><th>الفئة</th><th>التسلسل</th><th>الهياكل المُطبّق عليها</th><th>التعبير</th></tr>
+    <tr><td><code>CARE_PENALTY</code></td><td><code>CARE_PENALTY</code></td><td>DED (خصم)</td><td>200</td><td rowspan="3">Worker Pay · Regular Pay (×2) · Headquarter Employees</td><td dir="ltr"><code>-(inputs.get("CARE_PENALTY") or 0).amount</code></td></tr>
+    <tr><td><code>CARE_VIOLATION</code></td><td><code>CARE_VIOLATION</code></td><td>DED (خصم)</td><td>205</td><td dir="ltr"><code>-(inputs.get("CARE_VIOLATION") or 0).amount</code></td></tr>
+    <tr><td><code>CARE_ALLOWANCE</code></td><td><code>CARE_ALLOWANCE</code></td><td>ALW (بدل)</td><td>50</td><td dir="ltr"><code>(inputs.get("CARE_ALLOWANCE") or 0).amount</code></td></tr>
+  </table>
+  <div class="box box-g"><b>مبدأ الأمان (مؤكَّد):</b> شرط كل قاعدة <code>bool(inputs.get("CODE"))</code> — أي تُحسب فقط عند وجود إدخال معتمد، وإلا ناتجها صفر. لذلك لا تتأثر رواتب أي موظف ليس له سجل معتمد. الحقن يتم في دالة <code>hr.payslip.compute_sheet()</code> التي تجمع السجلات المعتمدة ضمن فترة القسيمة.</div>
+
+  <h3>ج) التسلسلات (Sequences)</h3>
+  <table>
+    <tr><th>المرجع</th><th>البادئة</th></tr>
+    <tr><td>الجزاء <code>care.penalty</code></td><td><code>PEN-</code></td></tr>
+    <tr><td>البدل <code>care.allowance</code></td><td><code>ALW-</code></td></tr>
+    <tr><td>المخالفة <code>care.traffic.violation</code></td><td><code>VIO-</code></td></tr>
+    <tr><td>العُهدة <code>care.custody</code></td><td><code>CST-</code></td></tr>
+    <tr><td>التظلّم <code>care.grievance</code></td><td><code>GRV-</code></td></tr>
+    <tr><td>المعاملة <code>care.gov.transaction</code></td><td><code>TX-</code></td></tr>
+    <tr><td>التصريح <code>care.site.permit</code></td><td><code>SP-</code></td></tr>
+  </table>
+
+  <h3>د) المهام المجدولة (Cron)</h3>
+  <table>
+    <tr><th>المهمة</th><th>التكرار</th><th>الوظيفة</th></tr>
+    <tr><td>Attendance Coverage Scan</td><td>يومياً</td><td>إعادة بناء تنبيهات التغطية</td></tr>
+    <tr><td>Expire Site Permits</td><td>يومياً</td><td>تحويل التصاريح المنتهية إلى Expired</td></tr>
+  </table>
+
+  <h3>هـ) إعدادات اللائحة (مفاتيح + قيم افتراضية)</h3>
+  <table>
+    <tr><th>المفتاح</th><th>الافتراضي</th><th>المفتاح</th><th>الافتراضي</th></tr>
+    <tr><td><code>annual_leave_days</code></td><td>30</td><td><code>eos_cap_years</code></td><td>1.5</td></tr>
+    <tr><td><code>leave_entitlement_months</code></td><td>9</td><td><code>notice_days</code></td><td>30</td></tr>
+    <tr><td><code>sick_full_days</code></td><td>15</td><td><code>probation_days</code></td><td>100</td></tr>
+    <tr><td><code>eos_first5_days</code></td><td>15</td><td><code>daily_hours</code></td><td>8</td></tr>
+    <tr><td><code>eos_after5_days</code></td><td>30</td><td><code>ot_rate_normal</code> / <code>ot_rate_holiday</code></td><td>1.25 / 1.5</td></tr>
+    <tr><td><code>base_wage_default</code></td><td>75</td><td><code>penalty_monthly_cap</code></td><td>0 (معطّل)</td></tr>
+    <tr><td><code>allowance_senior_threshold</code></td><td>0 (الكاش فقط)</td><td><code>coverage_days</code></td><td>3</td></tr>
+    <tr><td><code>doc_alert_days</code></td><td>60</td><td colspan="2"></td></tr>
+  </table>
+  <div class="how">تُقرأ كـ <code>ir.config_parameter</code> بمفتاح <code>care_hr.&lt;key&gt;</code>. تظهر فارغة حتى أول حفظ من صفحة الإعدادات، حينها تُكتب القيم.</div>
+
+  <h3>و) الصلاحيات</h3>
+  <ul>
+    <li>مجموعة جديدة: <b>Care HR / Senior Approver (Top Management)</b> — لاعتماد البدلات/الأمور عالية القيمة. تُملأ بأعضائها لاحقاً.</li>
+    <li>اعتماد البدل يتحقّق برمجياً أن المعتمد الأول هو <b>مدير القسم</b> (<code>department_id.manager_id</code>) أو HR Manager، والثاني عضو في مجموعة Senior.</li>
+    <li>استثناء التغطية مقيّد بمدير القسم/HR في دالة <code>write()</code> على الموظف.</li>
+  </ul>
+
+  <h3>ز) سجل التحقق الفعلي (أرقام الاختبارات)</h3>
+  <table>
+    <tr><th>الاختبار</th><th>النتيجة المُسجّلة</th></tr>
+    <tr><td>ملف قوى عاملة حصة 3 + عاملين</td><td>مستخدم 2 / متاح 1 / إشغال 66.7% ✓</td></tr>
+    <tr><td>جزاء 10 → قسيمة</td><td>سطر <code>CARE_PENALTY</code> = −10.000 ✓ · بسقف 6 → −6.000 ✓</td></tr>
+    <tr><td>بدل 10 داخل الراتب</td><td>سطر <code>CARE_ALLOWANCE</code> = +10.000 ✓</td></tr>
+    <tr><td>بدل كاش 15</td><td>اعتماد إدارة عليا → صُرف منفصلاً (ليس بالقسيمة) ✓</td></tr>
+    <tr><td>مخالفة سائق 12 → قسيمة</td><td>سطر <code>CARE_VIOLATION</code> = −12.000 ✓</td></tr>
+    <tr><td>ترحيل المخالفات</td><td>513 سجل + 771 رسالة + 500 متابع + 912 مرفق ✓</td></tr>
+    <tr><td>مراقب التغطية (فحص حيّ)</td><td>3,644 تنبيه (3,470 بلا حضور + 174 بلا قسم) ✓ · الاستثناء يُسقط التنبيه ✓</td></tr>
+    <tr><td>التظلّم</td><td><code>GRV-00001</code> + موعد + علامة "متأخّر" + دورة الإغلاق ✓</td></tr>
+    <tr><td>العُهدة / المعاملة / التصريح</td><td><code>CST-00001</code> · <code>TX-00001</code> (SLA) · <code>SP-00001</code> (صلاحية + انتهاء) ✓</td></tr>
+    <tr><td>Access Profile</td><td>توليد مجموعة + قيود <code>ir.model.access</code> + مزامنة المستخدمين + حذف نظيف ✓</td></tr>
+    <tr><td>الإعلان/الإقرار</td><td>سياسة لقسم → 3 إقرارات · إقرار يسجّل الوقت ✓</td></tr>
+    <tr><td>KPIs الداشبورد (حيّ)</td><td>تغطية 3644 · مخالفات مفتوحة 2 · باقي المؤشرات حقيقية ✓</td></tr>
+  </table>
+
+  <h3>ح) منهجية النشر</h3>
+  <p class="flow"><span>تعديل الكود</span><span class="arr">→</span><span>ترقية الموديول (stop-after-init)</span><span class="arr">→</span><span>فحص سجل الأخطاء</span><span class="arr">→</span><span>اختبار فعلي في shell</span><span class="arr">→</span><span>إلغاء بيانات الاختبار (rollback)</span><span class="arr">→</span><span>تشغيل الخدمة</span><span class="arr">→</span><span>فحص الويب</span></p>
+  <div class="box box-o">أي فشل في الترقية يتراجع تلقائياً على مستوى المعاملة (Transactional) — فالإنتاج لا يتأثر إطلاقاً بأي محاولة فاشلة.</div>
+</section>
+
+<div class="foot">Care HR · تقرير مُولّد تلقائياً من بيانات الإنتاج الفعلية · النظام حيّ ومُتحقَّق منه</div>
+</div>
+</body>
+</html>

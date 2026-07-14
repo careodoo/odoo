@@ -135,7 +135,7 @@
     <record id="mail_template_guarantee_expiring" model="mail.template">
       <field name="name">Tender: Guarantee Expiring</field>
       <field name="model_id" ref="model_purchase_tender" />
-      <field name="subject">🛡️ ضمان ينتهي قريباً: {{ object.name }}</field>
+      <field name="subject">{{ ('🛡️ يجب تجديد الكفالة البنكية: ' if object.guarantee_renewable == 'renewable' else '🛡️ إشعار: كفالة بنكية تنتهي قريباً — ') + (object.name or '') }}</field>
       <field name="email_from">{{ (object.company_id.email or user.email_formatted) }}</field>
       <field name="body_html" type="html">
 <div style="margin:0;padding:0;background:#eceef3;font-family:'Cairo',Tahoma,sans-serif;color:#1d2433;" dir="rtl">
@@ -143,8 +143,13 @@
     <tr><td style="height:5px;background:#f59e0b;"></td></tr>
     <tr><td style="background:#714B67;padding:15px 22px;color:#fff;font-weight:800;font-size:15px;">🏛️ إدارة المناقصات — Care</td></tr>
     <tr><td style="padding:20px 22px 6px;">
-      <div style="font-size:18px;font-weight:800;">🛡️ ضمان بنكي يقترب من الانتهاء</div>
-      <div style="color:#7b8499;font-weight:700;font-size:13px;margin-top:3px;">يلزم التجديد أو الإفراج لتفادي المخاطر المالية</div>
+      <div style="font-size:18px;font-weight:800;">🛡️ كفالة بنكية تقترب من الانتهاء</div>
+      <t t-if="object.guarantee_renewable == 'renewable'">
+        <div style="color:#b45309;font-weight:800;font-size:13px;margin-top:3px;">⚠️ هذه الكفالة قابلة للتجديد — يجب تجديدها قبل تاريخ الانتهاء</div>
+      </t>
+      <t t-else="">
+        <div style="color:#7b8499;font-weight:700;font-size:13px;margin-top:3px;">ℹ️ كفالة لمرة واحدة — هذا إشعار للعلم فقط، لا تتطلّب تجديداً</div>
+      </t>
     </td></tr>
     <tr><td style="padding:10px 22px 4px;">
       <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e6e8ef;border-radius:12px;">
@@ -159,10 +164,15 @@
           🏦 البنك: <b><t t-out="object.guarantee_bank or '—'"/></b>
         </td></tr>
       </table>
-      <div style="margin:14px 0 4px;padding:12px 14px;border-radius:10px;background:#fff7ed;color:#9a5b00;border:1px solid #fde3bf;font-weight:700;font-size:12.5px;">⚠️ إن كانت المناقصة خاسرة/ملغاة يُمكن طلب الإفراج عن الضمان، وإلا يلزم التجديد.</div>
+      <t t-if="object.guarantee_renewable == 'renewable'">
+        <div style="margin:14px 0 4px;padding:12px 14px;border-radius:10px;background:#fff7ed;color:#9a5b00;border:1px solid #fde3bf;font-weight:800;font-size:12.5px;">⚠️ يجب تجديد الكفالة البنكية قبل تاريخ الانتهاء لتفادي المخاطر المالية. وإن كانت المناقصة خاسرة/ملغاة يُمكن طلب الإفراج عنها بدل التجديد.</div>
+      </t>
+      <t t-else="">
+        <div style="margin:14px 0 4px;padding:12px 14px;border-radius:10px;background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe;font-weight:700;font-size:12.5px;">ℹ️ كفالة لمرة واحدة — هذا إشعار للعلم فقط ولا يلزم تجديدها. يمكن طلب الإفراج عنها عند انتهاء الحاجة.</div>
+      </t>
       <table width="100%" cellpadding="0" cellspacing="0" style="margin:14px 0 8px;"><tr><td align="center" style="background:#f59e0b;border-radius:10px;">
         <a t-att-href="object.get_base_url() + '/web#id=' + str(object.id) + '&amp;model=purchase.tender&amp;view_type=form'"
-           style="display:block;padding:12px;color:#fff;text-decoration:none;font-weight:800;font-size:14px;">مراجعة الضمان ←</a>
+           style="display:block;padding:12px;color:#fff;text-decoration:none;font-weight:800;font-size:14px;"><t t-out="'تجديد الكفالة ←' if object.guarantee_renewable == 'renewable' else 'مراجعة الكفالة ←'"/></a>
       </td></tr></table>
     </td></tr>
     <tr><td style="padding:14px 22px;background:#fafbfd;border-top:1px solid #e6e8ef;color:#7b8499;font-size:11px;font-weight:700;text-align:center;">نظام إدارة المناقصات · care-kw.com</td></tr>

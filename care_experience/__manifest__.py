@@ -15,6 +15,7 @@
         'security/experience_security_groups.xml',
         'data/cron.xml',
         'data/sequence.xml',
+        'reports/contract_dossier.xml',
         'views/care_experience.xml',
         'views/proposal.xml',
     ],

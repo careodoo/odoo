@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+acc_media_u,cafm.media.u,model_care_cafm_media,base.group_user,1,1,1,0
+acc_media_m,cafm.media.m,model_care_cafm_media,hr.group_hr_manager,1,1,1,1

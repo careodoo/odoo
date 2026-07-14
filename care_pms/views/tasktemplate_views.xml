@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_pms_task_template_form" model="ir.ui.view">
+        <field name="name">care.pms.task.template.form</field>
+        <field name="model">care.pms.task.template</field>
+        <field name="arch" type="xml">
+            <form string="قالب تاسك متكرر">
+                <header>
+                    <button name="action_generate_now" type="object" string="توليد الآن" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" placeholder="عنوان التاسك..."/></h1></div>
+                    <group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="pms_category_id"/>
+                            <field name="task_kind"/>
+                            <field name="user_ids" widget="many2many_tags"/>
+                        </group>
+                        <group>
+                            <label for="interval_number" string="التكرار كل"/>
+                            <div class="o_row">
+                                <field name="interval_number" class="oe_inline"/>
+                                <field name="interval_type" class="oe_inline"/>
+                            </div>
+                            <field name="next_date"/>
+                            <field name="deadline_offset"/>
+                            <field name="generated_count"/>
+                            <field name="active" widget="boolean_toggle"/>
+                        </group>
+                    </group>
+                    <field name="description" placeholder="وصف..."/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_pms_task_template_tree" model="ir.ui.view">
+        <field name="name">care.pms.task.template.tree</field>
+        <field name="model">care.pms.task.template</field>
+        <field name="arch" type="xml">
+            <tree string="قوالب التاsكات المتكررة">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="task_kind"/>
+                <field name="interval_number"/>
+                <field name="interval_type"/>
+                <field name="next_date"/>
+                <field name="generated_count"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_pms_task_template" model="ir.actions.act_window">
+        <field name="name">قوالب التاسكات المتكررة</field>
+        <field name="res_model">care.pms.task.template</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

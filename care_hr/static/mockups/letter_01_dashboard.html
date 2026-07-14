@@ -1,0 +1,86 @@
+<html><head><meta charset='utf-8'>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Cairo',Tahoma,sans-serif}
+body{background:#eef1f6;color:#1d2433;direction:rtl}
+.wrap{width:1180px;margin:0 auto;padding:18px}
+.top{background:#1e2a44;color:#fff;border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.top .logo{font-weight:800;color:#e8564e;font-size:19px}
+.top .crumb{color:#aeb8cc;font-weight:700;font-size:13px}
+.top .sp{flex:1}
+.h{font-size:22px;font-weight:800;margin:4px 0 2px}
+.sub{color:#7b8499;font-weight:700;font-size:13px;margin-bottom:14px}
+.kpis{display:table;width:100%;border-spacing:10px 0;margin:0 -10px 14px}
+.kpi{display:table-cell;width:16.6%;background:#fff;border:1px solid #e4e8f0;border-radius:12px;padding:12px;vertical-align:top}
+.kpi .v{font-size:24px;font-weight:800}
+.kpi .l{color:#7b8499;font-weight:700;font-size:12px;margin-top:2px}
+.kpi.red .v{color:#e2513f}.kpi.amber .v{color:#e08a00}.kpi.green .v{color:#1a9f6d}.kpi.blue .v{color:#2f6df6}.kpi.purple .v{color:#7a5cf0}
+.card{background:#fff;border:1px solid #e4e8f0;border-radius:14px;padding:16px;margin-bottom:14px}
+.card h3{font-size:15px;margin-bottom:12px}
+.alert{background:#fff4f2;border:1px solid #ffd4cc;color:#c0392b;border-radius:10px;padding:11px 14px;font-weight:700;font-size:13px;margin-bottom:12px}
+.alert.info{background:#eef4ff;border-color:#cfe0ff;color:#2a5bd7}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f6f8fc;color:#66708a;text-align:right;padding:9px 10px;font-weight:800;font-size:12px;border-bottom:2px solid #e4e8f0}
+td{padding:9px 10px;border-bottom:1px solid #eef1f6;font-weight:600}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:800}
+.b-red{background:#fdeceb;color:#c0392b}.b-amber{background:#fff3e0;color:#c47f00}.b-green{background:#e6f7ef;color:#12945f}
+.b-blue{background:#e9f0ff;color:#2f6df6}.b-grey{background:#eef1f6;color:#66708a}.b-purple{background:#f0ebff;color:#6a45e0}
+.cols{display:table;width:100%;border-spacing:8px 0}
+.col{display:table-cell;width:16.6%;background:#f6f8fc;border:1px solid #e4e8f0;border-radius:12px;padding:10px;min-height:280px;vertical-align:top}
+.col .ch{font-weight:800;font-size:12.5px;margin-bottom:8px;display:flex;justify-content:space-between}
+.lc{background:#fff;border:1px solid #e7ebf3;border-radius:10px;padding:9px;margin-bottom:8px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.lc .r{font-weight:800;font-size:12px;color:#2f3a57}
+.lc .t{font-size:11.5px;color:#7b8499;font-weight:700;margin-top:2px}
+.lc .m{font-size:11px;margin-top:6px;display:flex;justify-content:space-between;color:#8a93a8;font-weight:700}
+.steps{display:table;width:100%;margin:6px 0}
+.step{display:table-cell;width:20%;text-align:center;position:relative;padding:0 4px;vertical-align:top}
+.step .n{width:40px;height:40px;border-radius:50%;background:#2f6df6;color:#fff;font-weight:800;line-height:40px;margin:0 auto 6px;font-size:15px}
+.step.done .n{background:#1a9f6d}.step.wait .n{background:#c9d2e3;color:#5a6b8c}
+.step .lb{font-weight:800;font-size:12px}.step .ds{color:#7b8499;font-size:11px;font-weight:700;margin-top:2px}
+.step:after{content:'';position:absolute;top:20px;right:-50%;width:100%;height:3px;background:#dfe5ef;z-index:-1}
+.step:first-child:after{display:none}
+.flex{display:table;width:100%;border-spacing:14px 0;margin:0 -14px}
+.grow{display:table-cell;vertical-align:top}
+.label{border:2px dashed #b9c2d6;border-radius:12px;padding:14px;text-align:center;width:300px}
+.label .qr{width:90px;height:90px;background:conic-gradient(#000 0 25%,#fff 0 50%,#000 0 75%,#fff 0);background-size:18px 18px;margin:8px auto;border:4px solid #000}
+.tabs{display:flex;gap:6px;border-bottom:2px solid #eef1f6;margin-bottom:12px}
+.tab{padding:8px 14px;font-weight:800;font-size:13px;color:#7b8499}
+.tab.act{color:#1e2a44;border-bottom:3px solid #e8564e}
+.two{display:table;width:100%;border-spacing:14px 0;margin:0 -14px}
+.two>.card{display:table-cell;width:50%;vertical-align:top}
+.fld{margin-bottom:9px}.fld .k{color:#8a93a8;font-weight:700;font-size:11.5px}.fld .val{font-weight:800;font-size:13px;margin-top:1px}
+.btnrow{margin-bottom:12px}
+.btn{display:inline-block;padding:7px 14px;border-radius:8px;font-weight:800;font-size:12.5px;border:1px solid transparent;margin:0 0 6px 6px}
+.btn.p{background:#2f6df6;color:#fff}.btn.g{background:#1a9f6d;color:#fff}.btn.s{background:#fff;border-color:#d4dae6;color:#3a4a66}
+.btn.s{background:#fff;border:1px solid #d4dae6;color:#3a4a66}
+.pill{display:inline-block;padding:5px 12px;border-radius:8px;background:#eef1f6;font-weight:800;font-size:12px}
+.dqitem{display:table;width:100%;padding:10px 12px;border:1px solid #eef1f6;border-radius:10px;margin-bottom:8px}
+.dqn{font-weight:800;font-size:18px;min-width:60px}
+</style>
+</head><body><div class='wrap'><div class='top'><div class='logo'>CARE • Letters</div><div class='crumb'>المراسلات › لوحة المتابعة</div><div class='sp'></div><div class='crumb'>◐ Sara — إدارة المراسلات</div></div>
+<div class='h'>لوحة المراسلات</div>
+<div class='sub'>نظرة شاملة على الصادر والوارد وحالة التسليم والتوقيع</div>
+<div class='alert'>⚠️ <b>١٧٣٤ كتاباً بلا تاريخ تسليم مُسجَّل</b> — التسليم غير مُتتبَّع. ٤٨ كتاباً مع المندوب لم يرجع إثبات استلامها منذ أكثر من ٧ أيام.</div>
+<div class='kpis'>
+<div class='kpi blue'><div class='v'>1,765</div><div class='l'>إجمالي الكتب</div></div>
+<div class='kpi'><div class='v'>1,240</div><div class='l'>صادر</div></div>
+<div class='kpi'><div class='v'>525</div><div class='l'>وارد</div></div>
+<div class='kpi amber'><div class='v'>63</div><div class='l'>بانتظار التوقيع</div></div>
+<div class='kpi purple'><div class='v'>91</div><div class='l'>بانتظار المسح الضوئي</div></div>
+<div class='kpi red'><div class='v'>48</div><div class='l'>مع المندوب (متأخّر)</div></div>
+</div>
+<div class='flex'>
+<div class='card grow'><h3>الكتب حسب المرحلة</h3>
+<table><tr><th>المرحلة</th><th>العدد</th><th>النسبة</th></tr>
+<tr><td>مسودة</td><td>120</td><td><span class='badge b-grey'>7%</span></td></tr>
+<tr><td>موقّع</td><td>210</td><td><span class='badge b-blue'>12%</span></td></tr>
+<tr><td>ممسوح/مؤرشف رقمياً</td><td>640</td><td><span class='badge b-purple'>36%</span></td></tr>
+<tr><td>مع المندوب</td><td>155</td><td><span class='badge b-amber'>9%</span></td></tr>
+<tr><td>مُسلَّم ومُستلَم</td><td>640</td><td><span class='badge b-green'>36%</span></td></tr></table></div>
+<div class='card grow'><h3>حسب الجهة (الأكثر مراسلة)</h3>
+<table><tr><th>الجهة</th><th>صادر</th><th>وارد</th></tr>
+<tr><td>وزارة الشؤون</td><td>210</td><td>88</td></tr>
+<tr><td>الهيئة العامة للقوى العاملة</td><td>180</td><td>64</td></tr>
+<tr><td>بلدية الكويت</td><td>96</td><td>41</td></tr>
+<tr><td>التأمينات الاجتماعية</td><td>72</td><td>33</td></tr></table></div></div>
+</div></body></html>

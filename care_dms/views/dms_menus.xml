@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_care_dms_root" name="📁 إدارة الوثائق" sequence="53"/>
+
+    <menuitem id="menu_care_dms_dashboard" name="مركز الوثائق"
+              parent="menu_care_dms_root" action="action_care_dms_dashboard" sequence="10"/>
+    <menuitem id="menu_care_dms_documents" name="الوثائق"
+              parent="menu_care_dms_root" action="action_care_dms_document" sequence="20"/>
+    <menuitem id="menu_care_dms_categories" name="التصنيفات وسياسة الاحتفاظ"
+              parent="menu_care_dms_root" action="action_care_dms_category" sequence="30"/>
+</odoo>

@@ -1,0 +1,18 @@
+// Force the chatter to the BOTTOM (full width) on the employee file form.
+// Scoped to the employee form via the o_employee_chatter_bottom class added
+// on the form root in care_view_employee_form.
+.o_form_renderer.o_employee_chatter_bottom {
+    flex-direction: column !important;
+
+    > .o_form_sheet_bg {
+        width: 100% !important;
+    }
+
+    // Chatter container (Odoo 17 mail chatter) goes below the sheet, full width
+    .o-mail-ChatterContainer,
+    .o-mail-Chatter {
+        width: 100% !important;
+        max-width: 100% !important;
+        border-left: 0 !important;
+    }
+}

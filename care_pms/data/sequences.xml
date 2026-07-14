@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="seq_delivery_note" model="ir.sequence">
+            <field name="name">PMS Delivery Note</field>
+            <field name="code">care.pms.delivery.note</field>
+            <field name="prefix">DN-%(year)s-</field>
+            <field name="padding">4</field>
+        </record>
+        <record id="seq_petty_cash" model="ir.sequence">
+            <field name="name">PMS Petty Cash</field>
+            <field name="code">care.pms.petty.cash</field>
+            <field name="prefix">PC-%(year)s-</field>
+            <field name="padding">4</field>
+        </record>
+        <record id="seq_supply" model="ir.sequence">
+            <field name="name">PMS Supply</field>
+            <field name="code">care.pms.supply</field>
+            <field name="prefix">SUP-%(year)s-</field>
+            <field name="padding">4</field>
+        </record>
+        <record id="seq_doc_request" model="ir.sequence">
+            <field name="name">PMS Document Request</field>
+            <field name="code">care.pms.doc.request</field>
+            <field name="prefix">DR-%(year)s-</field>
+            <field name="padding">4</field>
+        </record>
+    </data>
+</odoo>

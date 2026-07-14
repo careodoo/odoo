@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- =====================================================================
+         CAFM — single, organized menu tree (all menus consolidated here)
+         Root ▸ Dashboard ▸ Operations ▸ Maintenance ▸ Clients ▸ Team ▸ Setup
+    ===================================================================== -->
+
+    <!-- Native in-frame dashboard (OWL client action) -->
+    <record id="action_cafm_dashboard_client" model="ir.actions.client">
+        <field name="name">لوحة قيادة CAFM</field>
+        <field name="tag">care_cafm_dashboard</field>
+    </record>
+
+    <!-- ===== ROOT (no action → opens the submenu) ===== -->
+    <menuitem id="menu_cafm_root" name="CAFM — إدارة المرافق" sequence="52"/>
+
+    <!-- Dashboards -->
+    <menuitem id="menu_cafm_dashboard" name="📊 لوحة القيادة" parent="menu_cafm_root"
+              action="action_cafm_dashboard_client" sequence="5"/>
+    <menuitem id="menu_cafm_supervisor" name="🧭 لوحة المشرف" parent="menu_cafm_root"
+              action="action_wo_supervisor" sequence="8"/>
+
+    <!-- ===== 1) OPERATIONS ===== -->
+    <menuitem id="menu_cafm_ops" name="🔧 التشغيل" parent="menu_cafm_root" sequence="10"/>
+    <menuitem id="menu_cafm_wo" name="أوامر العمل" parent="menu_cafm_ops"
+              action="action_workorder" sequence="10"/>
+    <menuitem id="menu_cafm_request" name="📥 طلبات الخدمة" parent="menu_cafm_ops"
+              action="action_cafm_request" sequence="20"/>
+    <menuitem id="menu_cafm_obs" name="⭐ ملاحظات الجودة" parent="menu_cafm_ops"
+              action="action_observation" sequence="30"/>
+    <menuitem id="menu_cafm_scan" name="📷 سجل المسح" parent="menu_cafm_ops"
+              action="action_scan" sequence="40"/>
+
+    <!-- ===== 2) MAINTENANCE & ASSETS ===== -->
+    <menuitem id="menu_cafm_maintenance" name="🛠️ الصيانة والأصول" parent="menu_cafm_root" sequence="20"/>
+    <menuitem id="menu_cafm_assets" name="🏭 الأصول" parent="menu_cafm_maintenance"
+              action="action_cafm_asset" sequence="10"/>
+    <menuitem id="menu_cafm_ppm" name="🔧 الصيانة الوقائية (PPM)" parent="menu_cafm_maintenance"
+              action="action_cafm_ppm" sequence="20"/>
+    <menuitem id="menu_cafm_maint_wo" name="أوامر الصيانة" parent="menu_cafm_maintenance"
+              action="action_maintenance_wo" sequence="30"/>
+
+    <!-- ===== 2b) SPECIALIZED SERVICES (agri / cleaning / facade / security…) ===== -->
+    <!-- Kept for the sibling service modules that nest their menus here. -->
+    <menuitem id="menu_cafm_services" name="🧩 الخدمات المتخصّصة" parent="menu_cafm_root" sequence="25"/>
+
+    <!-- ===== 3) CLIENTS & PROJECTS ===== -->
+    <menuitem id="menu_cafm_directory" name="📁 العملاء والمشاريع" parent="menu_cafm_root" sequence="30"/>
+    <menuitem id="menu_cafm_clients" name="العملاء" parent="menu_cafm_directory"
+              action="action_cafm_client_org" sequence="10"/>
+    <menuitem id="menu_cafm_projects" name="المشاريع" parent="menu_cafm_directory"
+              action="action_cafm_project_org" sequence="20"/>
+    <menuitem id="menu_cafm_facilities2" name="🏢 المرافق والمباني" parent="menu_cafm_directory"
+              action="action_facility" sequence="30"/>
+
+    <!-- ===== 4) TEAM & PEOPLE ===== -->
+    <menuitem id="menu_cafm_people" name="👥 الفِرَق والموظفون" parent="menu_cafm_root" sequence="40"/>
+    <menuitem id="menu_cafm_team_board" name="أعضاء الفِرَق — الأحمال" parent="menu_cafm_people"
+              action="action_cafm_team_member" sequence="10"/>
+    <menuitem id="menu_cafm_team2" name="فِرَق الخدمة" parent="menu_cafm_people"
+              action="action_team" sequence="20"/>
+    <menuitem id="menu_cafm_users" name="إعدادات المستخدمين" parent="menu_cafm_people"
+              action="base.action_res_users" groups="base.group_erp_manager" sequence="30"/>
+
+    <!-- ===== 5) SETUP ===== -->
+    <menuitem id="menu_cafm_setup" name="⚙️ الإعداد" parent="menu_cafm_root" sequence="50"/>
+    <menuitem id="menu_cafm_loc" name="🗺️ المواقع (QR)" parent="menu_cafm_setup"
+              action="action_location" sequence="10"/>
+    <menuitem id="menu_cafm_svc" name="🚦 خطوط الخدمة" parent="menu_cafm_setup"
+              action="action_service" sequence="20"/>
+    <menuitem id="menu_cafm_sla" name="📋 اتفاقيات SLA" parent="menu_cafm_setup"
+              action="action_cafm_sla" sequence="30"/>
+    <menuitem id="menu_cafm_shift_types" name="⏱️ أنواع الورديات" parent="menu_cafm_setup"
+              action="action_cafm_shift_type" sequence="35"/>
+    <menuitem id="menu_cafm_building_designer" name="🏗️ مصمّم المباني" parent="menu_cafm_setup"
+              action="action_building_designer" sequence="40"/>
+    <menuitem id="menu_cafm_shift_settings" name="⏰ إعدادات الوردية" parent="menu_cafm_setup"
+              action="action_cafm_shift_settings" groups="base.group_erp_manager" sequence="50"/>
+
+    <!-- ===== Client portal / mobile ===== -->
+    <menuitem id="menu_cafm_mobile" name="📱 بوابة العميل" parent="menu_cafm_root"
+              action="action_open_mobile" sequence="90"/>
+</odoo>

@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ===== HSE Incidents ===== -->
+    <record id="view_care_hse_tree" model="ir.ui.view">
+        <field name="name">care.hse.incident.tree</field>
+        <field name="model">care.hse.incident</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="severity in ('high','critical')" decoration-success="state == 'closed'">
+                <field name="name"/><field name="date"/><field name="employee_id"/>
+                <field name="project_id"/><field name="incident_type"/>
+                <field name="severity" widget="badge" decoration-danger="severity in ('high','critical')"
+                       decoration-warning="severity == 'medium'"/>
+                <field name="state" widget="badge" decoration-success="state == 'closed'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_care_hse_form" model="ir.ui.view">
+        <field name="name">care.hse.incident.form</field>
+        <field name="model">care.hse.incident</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_investigate" type="object" string="Investigate"
+                            class="btn-primary" invisible="state != 'reported'"/>
+                    <button name="action_close" type="object" string="Close"
+                            invisible="state == 'closed'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group><field name="date"/><field name="employee_id"/>
+                            <field name="project_id"/><field name="location"/></group>
+                        <group><field name="incident_type"/><field name="severity"/>
+                            <field name="reported_by"/></group>
+                    </group>
+                    <notebook>
+                        <page string="Description"><field name="description"/></page>
+                        <page string="Investigation"><field name="root_cause" placeholder="Root cause..."/>
+                            <field name="corrective_action" placeholder="Corrective action..."/></page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter"><field name="message_follower_ids"/>
+                    <field name="activity_ids"/><field name="message_ids"/></div>
+            </form>
+        </field>
+    </record>
+    <record id="view_care_hse_search" model="ir.ui.view">
+        <field name="name">care.hse.incident.search</field>
+        <field name="model">care.hse.incident</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/><field name="project_id"/>
+                <filter name="open" string="Open" domain="[('state','!=','closed')]"/>
+                <filter name="serious" string="High/Critical" domain="[('severity','in',('high','critical'))]"/>
+                <group expand="0" string="Group By">
+                    <filter name="g_type" string="Type" context="{'group_by':'incident_type'}"/>
+                    <filter name="g_sev" string="Severity" context="{'group_by':'severity'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_care_hse" model="ir.actions.act_window">
+        <field name="name">HSE Incidents</field>
+        <field name="res_model">care.hse.incident</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_care_hse_search"/>
+    </record>
+
+    <!-- ===== Equipment ===== -->
+    <record id="view_care_equipment_tree" model="ir.ui.view">
+        <field name="name">care.equipment.tree</field>
+        <field name="model">care.equipment</field>
+        <field name="arch" type="xml">
+            <tree decoration-warning="state == 'assigned'" decoration-danger="condition in ('damaged','lost')">
+                <field name="name"/><field name="asset_name"/><field name="category"/>
+                <field name="employee_id"/><field name="project_id"/><field name="issue_date"/>
+                <field name="condition"/><field name="state" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_care_equipment_form" model="ir.ui.view">
+        <field name="name">care.equipment.form</field>
+        <field name="model">care.equipment</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_return" type="object" string="Mark Returned"
+                            invisible="state != 'assigned'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group><field name="asset_name"/><field name="category"/>
+                            <field name="employee_id"/><field name="project_id"/></group>
+                        <group><field name="issue_date"/><field name="return_date"/>
+                            <field name="expiry_date"/><field name="condition"/></group>
+                    </group>
+                    <field name="note"/>
+                </sheet>
+                <div class="oe_chatter"><field name="message_follower_ids"/><field name="message_ids"/></div>
+            </form>
+        </field>
+    </record>
+    <record id="action_care_equipment" model="ir.actions.act_window">
+        <field name="name">Equipment / Assets</field>
+        <field name="res_model">care.equipment</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- ===== Workforce Plan / Establishment ===== -->
+    <record id="view_care_wfp_tree" model="ir.ui.view">
+        <field name="name">care.workforce.plan.tree</field>
+        <field name="model">care.workforce.plan</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom" decoration-danger="gap &gt; 0" decoration-success="gap &lt;= 0">
+                <field name="job_id"/><field name="department_id"/>
+                <field name="job_grade_id" optional="show"/>
+                <field name="required_headcount"/><field name="actual_headcount"/>
+                <field name="gap"/><field name="fill_rate" widget="percentage"/>
+                <field name="note" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_care_wfp_graph" model="ir.ui.view">
+        <field name="name">care.workforce.plan.graph</field>
+        <field name="model">care.workforce.plan</field>
+        <field name="arch" type="xml">
+            <graph string="Establishment" type="bar">
+                <field name="department_id"/>
+                <field name="required_headcount" type="measure"/>
+                <field name="actual_headcount" type="measure"/>
+            </graph>
+        </field>
+    </record>
+    <record id="view_care_wfp_search" model="ir.ui.view">
+        <field name="name">care.workforce.plan.search</field>
+        <field name="model">care.workforce.plan</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="job_id"/>
+                <field name="department_id"/>
+                <field name="job_grade_id"/>
+                <group expand="0" string="Group By">
+                    <filter name="g_dept" string="Department" context="{'group_by':'department_id'}"/>
+                    <filter name="g_grade" string="Grade" context="{'group_by':'job_grade_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_care_wfp" model="ir.actions.act_window">
+        <field name="name">Workforce Plan</field>
+        <field name="res_model">care.workforce.plan</field>
+        <field name="view_mode">tree,graph</field>
+        <field name="search_view_id" ref="view_care_wfp_search"/>
+    </record>
+
+    <!-- ===== Organization Structure Dashboard (mockup 76) ===== -->
+    <record id="view_care_org_structure_form" model="ir.ui.view">
+        <field name="name">care.org.structure.form</field>
+        <field name="model">care.org.structure</field>
+        <field name="arch" type="xml">
+            <form create="false" delete="false">
+                <sheet>
+                    <div class="oe_title"><h1>الهيكل والملاك</h1></div>
+                    <div class="row text-center mt-2 mb-3">
+                        <div class="col"><h2 style="color:#4338ca;"><field name="department_count"/></h2><span class="text-muted">الإدارات</span></div>
+                        <div class="col"><h2 style="color:#0e7490;"><field name="job_count"/></h2><span class="text-muted">المسميات الوظيفية</span></div>
+                        <div class="col"><h2 style="color:#7c3aed;"><field name="approved_total"/></h2><span class="text-muted">الملاك المعتمد</span></div>
+                        <div class="col"><h2 style="color:#047857;"><field name="filled_total"/></h2><span class="text-muted">المشغول</span></div>
+                        <div class="col"><h2 style="color:#c2410c;"><field name="vacant_total"/></h2><span class="text-muted">الشاغر</span></div>
+                        <div class="col"><h2 style="color:#334155;"><field name="fill_rate"/>%</h2><span class="text-muted">نسبة الإشغال</span></div>
+                    </div>
+                    <group>
+                        <div class="d-flex gap-2">
+                            <button name="action_open_departments" type="object" string="🏢 المخطط التنظيمي" class="btn btn-primary"/>
+                            <button name="action_open_establishment" type="object" string="📋 الملاك حسب الوظيفة" class="btn btn-secondary"/>
+                            <button name="action_open_grades" type="object" string="🎖️ الدرجات الوظيفية" class="btn btn-secondary"/>
+                        </div>
+                    </group>
+                    <field name="grade_count" invisible="1"/>
+                    <field name="name" invisible="1"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_care_org_structure" model="ir.actions.act_window">
+        <field name="name">الهيكل والملاك</field>
+        <field name="res_model">care.org.structure</field>
+        <field name="view_mode">form</field>
+        <field name="res_id" ref="org_structure_main"/>
+        <field name="target">current</field>
+    </record>
+
+    <!-- Expose Job Grade on the position form -->
+    <record id="view_hr_job_form_grade" model="ir.ui.view">
+        <field name="name">hr.job.form.grade</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr.view_hr_job_form"/>
+        <field name="arch" type="xml">
+            <field name="department_id" position="after">
+                <field name="job_grade_id"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Department org chart action (reused by Organization menu) -->
+    <record id="action_care_org_chart" model="ir.actions.act_window">
+        <field name="name">المخطط التنظيمي</field>
+        <field name="res_model">hr.department</field>
+        <field name="view_mode">kanban,tree,form</field>
+    </record>
+
+    <!-- menus -->
+    <menuitem id="menu_care_hse" name="HSE Incidents"
+              parent="care_hr.menu_care_hr_compliance_root" action="action_care_hse" sequence="5"/>
+    <menuitem id="menu_care_equipment" name="Equipment / Assets"
+              parent="care_hr.menu_sec_welfare" action="action_care_equipment" sequence="6"/>
+
+    <!-- ===== Organization section (mockup 76) ===== -->
+    <menuitem id="menu_sec_org" name="Organization"
+              parent="hr.menu_hr_root" sequence="3" groups="hr.group_hr_user"/>
+    <menuitem id="menu_care_org_structure" name="الهيكل والملاك"
+              parent="menu_sec_org" action="action_care_org_structure" sequence="10"/>
+    <menuitem id="menu_care_org_chart" name="المخطط التنظيمي"
+              parent="menu_sec_org" action="action_care_org_chart" sequence="20"/>
+    <menuitem id="menu_care_wfp" name="Workforce Plan"
+              parent="menu_sec_org" action="action_care_wfp" sequence="30"/>
+    <menuitem id="menu_care_org_grades" name="Job Grades"
+              parent="menu_sec_org" action="action_care_job_grade" sequence="40"/>
+</odoo>

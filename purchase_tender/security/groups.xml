@@ -10,10 +10,23 @@
       <field name="category_id" ref="module_tender" />
     </record>
 
+    <!-- Granular roles (part of the access matrix) -->
+    <record id="group_tender_contract" model="res.groups">
+      <field name="name">Contract Officer</field>
+      <field name="category_id" ref="module_tender" />
+      <field name="comment">إدارة الترسية والتعاقد وإنشاء العقد ورؤية المستندات المالية.</field>
+    </record>
+
+    <record id="group_tender_notify_admin" model="res.groups">
+      <field name="name">Notification Admin</field>
+      <field name="category_id" ref="module_tender" />
+      <field name="comment">ضبط قوائم مستلمي الإشعارات لكل نوع.</field>
+    </record>
+
     <record id="group_tender_manager" model="res.groups">
       <field name="name">Manager</field>
       <field name="category_id" ref="module_tender" />
-      <field name="implied_ids" eval="[(4, ref('purchase_tender.group_tender_user'))]" />
+      <field name="implied_ids" eval="[(4, ref('purchase_tender.group_tender_user')), (4, ref('purchase_tender.group_tender_contract')), (4, ref('purchase_tender.group_tender_notify_admin'))]" />
     </record>
 
     <record id="tender_rule_user_own" model="ir.rule">

@@ -1,0 +1,417 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* care_dms
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0+e-20241205\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-05 21:35+0000\n"
+"PO-Revision-Date: 2026-07-05 21:35+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: care_dms
+#: model:care.dms.category,retention_rule:care_dms.cat_financial
+msgid "10 سنوات"
+msgstr "10 years"
+
+#. module: care_dms
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_document_form
+msgid "· إصدار"
+msgstr "· version"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_document__disposed
+msgid "أُتلفت"
+msgstr "Disposed"
+
+#. module: care_dms
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_document_form
+msgid "إتلاف"
+msgstr "Dispose"
+
+#. module: care_dms
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_dashboard_form
+msgid "إجمالي الوثائق"
+msgstr "Total documents"
+
+#. module: care_dms
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_dashboard_form
+msgid "إدارة الوثائق والأرشفة"
+msgstr "Document Management & Archiving"
+
+#. module: care_dms
+#. odoo-python
+#: code:addons/care_dms/models/care_dms_document.py:0
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_document_form
+#, python-format
+msgid "إصدار جديد"
+msgstr "New version"
+
+#. module: care_dms
+#: model:care.dms.category,name:care_dms.cat_residency
+msgid "إقامات/أذونات"
+msgstr "Residencies / Permits"
+
+#. module: care_dms
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_category_form
+msgid "اسم التصنيف"
+msgstr "Category name"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_document__attachment_name
+msgid "اسم الملف"
+msgstr "File name"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_category__legal_note
+msgid "الأساس القانوني"
+msgstr "Legal basis"
+
+#. module: care_dms
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_category_form
+msgid "الأساس القانوني لسياسة الاحتفاظ..."
+msgstr "Legal basis of the retention policy..."
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_document__version
+msgid "الإصدار"
+msgstr "Version"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_document__is_current
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_document_search
+msgid "الإصدار الحالي"
+msgstr "Current version"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_document__previous_version_id
+msgid "الإصدار السابق"
+msgstr "Previous version"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_category__name
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_document__category_id
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_document_search
+msgid "التصنيف"
+msgstr "Category"
+
+#. module: care_dms
+#: model:ir.actions.act_window,name:care_dms.action_care_dms_category
+#: model:ir.ui.menu,name:care_dms.menu_care_dms_categories
+msgid "التصنيفات وسياسة الاحتفاظ"
+msgstr "Classifications & Retention Policy"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_category__state
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_document__state
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_document_search
+msgid "الحالة"
+msgstr "Status"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_category__document_count
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_category_tree
+msgid "العدد"
+msgstr "Count"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_document__department_id
+msgid "القسم"
+msgstr "Department"
+
+#. module: care_dms
+#: model:care.dms.category,access_scope:care_dms.cat_employee_files
+msgid "المدير + HR"
+msgstr "Manager + HR"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_document__reference
+msgid "المرجع"
+msgstr "Reference"
+
+#. module: care_dms
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_document_form
+msgid "المرجع:"
+msgstr "Reference:"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_document__owner_id
+msgid "المسؤول"
+msgstr "Owner"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_document__attachment
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_document_form
+msgid "الملف"
+msgstr "File"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_document__employee_id
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_document_search
+msgid "الموظف"
+msgstr "Employee"
+
+#. module: care_dms
+#: model:ir.actions.act_window,name:care_dms.action_care_dms_document
+#: model:ir.ui.menu,name:care_dms.menu_care_dms_documents
+msgid "الوثائق"
+msgstr "Documents"
+
+#. module: care_dms
+#: model:care.dms.category,access_scope:care_dms.cat_residency
+msgid "امتثال + HR"
+msgstr "Compliance + HR"
+
+#. module: care_dms
+#: model:care.dms.category,access_scope:care_dms.cat_gov_corr
+msgid "امتثال + PRO"
+msgstr "Compliance + PRO"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_document__disposal_date
+msgid "تاريخ الإتلاف"
+msgstr "Disposal date"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_document__issue_date
+msgid "تاريخ الوثيقة"
+msgstr "Document date"
+
+#. module: care_dms
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_document_search
+msgid "تجميع"
+msgstr "Group By"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_document__legal_hold
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_dashboard_form
+msgid "تحت حجز قانوني"
+msgstr "Under legal hold"
+
+#. module: care_dms
+#. odoo-python
+#: code:addons/care_dms/models/care_dms_dashboard.py:0
+#: model:ir.model.fields.selection,name:care_dms.selection__care_dms_document__state__expiring
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_dashboard_form
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_document_search
+#, python-format
+msgid "تقترب من الإتلاف"
+msgstr "Approaching disposal"
+
+#. module: care_dms
+#. odoo-python
+#: code:addons/care_dms/models/care_dms_document.py:0
+#, python-format
+msgid "تم الإتلاف بأثر موثّق بواسطة %s."
+msgstr "Disposed with a documented trail by %s."
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_document__retention_until
+msgid "تُحفظ حتى"
+msgstr "Retain until"
+
+#. module: care_dms
+#: model:care.dms.category,retention_rule:care_dms.cat_residency
+msgid "حتى الانتهاء + سنة"
+msgstr "Until expiry + 1 year"
+
+#. module: care_dms
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_document_form
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_document_kanban
+msgid "حجز قانوني"
+msgstr "Legal hold"
+
+#. module: care_dms
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_document_form
+msgid "حجز/رفع الحجز القانوني"
+msgstr "Set / release legal hold"
+
+#. module: care_dms
+#: model:care.dms.category,retention_rule:care_dms.cat_gov_corr
+msgid "حسب الجهة"
+msgstr "Per authority"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_document__legal_hold_reason
+msgid "سبب الحجز"
+msgstr "Hold reason"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_category__retention_years
+msgid "سنوات الاحتفاظ (للحساب الآلي)"
+msgstr "Retention years (for auto-calc)"
+
+#. module: care_dms
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_document_form
+msgid "سيتم تسجيل إتلاف الوثيقة بأثر موثّق. متابعة؟"
+msgstr "The document disposal will be recorded with a documented trail. Continue?"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_category__access_scope
+msgid "صلاحية الوصول"
+msgstr "Access scope"
+
+#. module: care_dms
+#: model:care.dms.category,retention_rule:care_dms.cat_employee_files
+msgid "طوال الخدمة + 5 سنوات"
+msgstr "Whole service + 5 years"
+
+#. module: care_dms
+#: model:ir.model.fields,help:care_dms.field_care_dms_category__retention_years
+msgid "عدد السنوات من تاريخ الوثيقة حتى استحقاق الإتلاف. 0 = يدوي/حسب الجهة."
+msgstr "Number of years from the document date until disposal is due. 0 = manual / per authority."
+
+#. module: care_dms
+#: model:care.dms.category,name:care_dms.cat_employee_files
+msgid "عقود وملفات الموظفين"
+msgstr "Contracts & employee files"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_document__name
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_document_form
+msgid "عنوان الوثيقة"
+msgstr "Document title"
+
+#. module: care_dms
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_document_search
+msgid "غير مُتلفة"
+msgstr "Not disposed"
+
+#. module: care_dms
+#: model:ir.model.fields.selection,name:care_dms.selection__care_dms_category__state__active
+msgid "فعّال"
+msgstr "Active"
+
+#. module: care_dms
+#: model:ir.model.fields.selection,name:care_dms.selection__care_dms_document__state__active
+msgid "فعّالة"
+msgstr "Active"
+
+#. module: care_dms
+#. odoo-python
+#: code:addons/care_dms/models/care_dms_dashboard.py:0
+#, python-format
+msgid "كل الوثائق"
+msgstr "All documents"
+
+#. module: care_dms
+#. odoo-python
+#: code:addons/care_dms/models/care_dms_document.py:0
+#, python-format
+msgid "لا يمكن الإتلاف قبل انتهاء مدة الاحتفاظ."
+msgstr "Disposal is not allowed before the retention period ends."
+
+#. module: care_dms
+#. odoo-python
+#: code:addons/care_dms/models/care_dms_document.py:0
+#, python-format
+msgid "لا يمكن الإتلاف: الوثيقة تحت حجز قانوني."
+msgstr "Cannot dispose: the document is under legal hold."
+
+#. module: care_dms
+#: model:care.dms.category,access_scope:care_dms.cat_financial
+msgid "مالية"
+msgstr "Finance"
+
+#. module: care_dms
+#. odoo-python
+#: code:addons/care_dms/models/care_dms_dashboard.py:0
+#: model:ir.model.fields.selection,name:care_dms.selection__care_dms_document__state__legal_hold
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_document_search
+#, python-format
+msgid "محجوزة قانونياً"
+msgstr "Under legal hold"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_category__retention_rule
+msgid "مدة الاحتفاظ"
+msgstr "Retention period"
+
+#. module: care_dms
+#: model:ir.model.fields.selection,name:care_dms.selection__care_dms_category__state__review_disposal
+msgid "مراجعة إتلاف"
+msgstr "Disposal review"
+
+#. module: care_dms
+#: model:care.dms.category,name:care_dms.cat_gov_corr
+msgid "مراسلات حكومية"
+msgstr "Government correspondence"
+
+#. module: care_dms
+#: model:ir.actions.act_window,name:care_dms.action_care_dms_dashboard
+#: model:ir.ui.menu,name:care_dms.menu_care_dms_dashboard
+msgid "مركز الوثائق"
+msgstr "Document Center"
+
+#. module: care_dms
+#. odoo-python
+#: code:addons/care_dms/models/care_dms_dashboard.py:0
+#: model:ir.model.fields.selection,name:care_dms.selection__care_dms_document__state__due_disposal
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_dashboard_form
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_document_search
+#, python-format
+msgid "مستحقة الإتلاف"
+msgstr "Due for disposal"
+
+#. module: care_dms
+#: model:care.dms.category,name:care_dms.cat_financial
+msgid "مستندات مالية/رواتب"
+msgstr "Financial / payroll documents"
+
+#. module: care_dms
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_dashboard_form
+msgid "مصنّفة/مفهرسة"
+msgstr "Classified / indexed"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_dashboard__classified_pct
+msgid "مصنّفة/مفهرسة %"
+msgstr "Classified / indexed %"
+
+#. module: care_dms
+#: model:ir.model.fields,field_description:care_dms.field_care_dms_document__note
+msgid "ملاحظات"
+msgstr "Notes"
+
+#. module: care_dms
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_document_form
+msgid "ملاحظات..."
+msgstr "Notes..."
+
+#. module: care_dms
+#: model:ir.model.fields.selection,name:care_dms.selection__care_dms_document__state__disposed
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_document_form
+msgid "مُتلفة"
+msgstr "Disposed"
+
+#. module: care_dms
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_category_form
+msgid "وثائق"
+msgstr "Documents"
+
+#. module: care_dms
+#: model:ir.model.fields,help:care_dms.field_care_dms_category__retention_rule
+msgid "وصف سياسة الاحتفاظ كما تُعرض (مثال: طوال الخدمة + 5 سنوات)."
+msgstr "Retention policy description as shown (e.g. Whole service + 5 years)."
+
+#. module: care_dms
+#: model:ir.ui.menu,name:care_dms.menu_care_dms_root
+msgid "📁 إدارة الوثائق"
+msgstr "📁 Document Management"
+
+#. module: care_dms
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_dashboard_form
+msgid "📁 التصنيفات وسياسة الاحتفاظ"
+msgstr "📁 Classifications & Retention"
+
+#. module: care_dms
+#: model_terms:ir.ui.view,arch_db:care_dms.view_care_dms_dashboard_form
+msgid "🗂️ كل الوثائق"
+msgstr "🗂️ All documents"
+

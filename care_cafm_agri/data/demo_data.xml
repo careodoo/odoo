@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo><data noupdate="1">
+
+  <!-- ===== Species catalogue (Gulf-suited) ===== -->
+  <record id="sp_washingtonia" model="care.cafm.agri.species">
+    <field name="name">نخيل واشنطونيا</field><field name="scientific_name">Washingtonia robusta</field>
+    <field name="category">palm</field><field name="water_need">medium</field><field name="sun_exposure">full</field>
+    <field name="prune_interval_days">120</field><field name="fertilize_interval_days">90</field>
+    <field name="heat_tolerant">1</field><field name="salt_tolerant">1</field>
+    <field name="care_guide">تقليم السعف الجاف كل 4 أشهر، تسميد بالحديد ربع سنوي، ريّ غزير صيفًا فجرًا.</field>
+  </record>
+  <record id="sp_date_palm" model="care.cafm.agri.species">
+    <field name="name">نخيل التمر</field><field name="scientific_name">Phoenix dactylifera</field>
+    <field name="category">palm</field><field name="water_need">high</field><field name="sun_exposure">full</field>
+    <field name="prune_interval_days">180</field><field name="fertilize_interval_days">120</field>
+    <field name="heat_tolerant">1</field><field name="salt_tolerant">1</field>
+    <field name="care_guide">تكريب سنوي، مكافحة سوسة النخيل الحمراء دوريًا، ريّ عميق منتظم.</field>
+  </record>
+  <record id="sp_ficus" model="care.cafm.agri.species">
+    <field name="name">فيكس (تين بنغالي)</field><field name="scientific_name">Ficus benghalensis</field>
+    <field name="category">tree</field><field name="water_need">medium</field><field name="sun_exposure">partial</field>
+    <field name="prune_interval_days">90</field><field name="fertilize_interval_days">90</field>
+    <field name="heat_tolerant">1</field>
+    <field name="care_guide">تقليم تشكيلي كل 3 أشهر لضبط النمو الكثيف قرب المباني والأسوار.</field>
+  </record>
+  <record id="sp_bougainvillea" model="care.cafm.agri.species">
+    <field name="name">جهنمية (بوجانفيليا)</field><field name="scientific_name">Bougainvillea glabra</field>
+    <field name="category">shrub</field><field name="water_need">low</field><field name="sun_exposure">full</field>
+    <field name="prune_interval_days">60</field><field name="fertilize_interval_days">60</field>
+    <field name="heat_tolerant">1</field><field name="salt_tolerant">1</field>
+    <field name="care_guide">تقليم متكرر لتحفيز التزهير، ريّ معتدل، تتحمّل الجفاف.</field>
+  </record>
+  <record id="sp_bermuda" model="care.cafm.agri.species">
+    <field name="name">ثيل برمودا</field><field name="scientific_name">Cynodon dactylon</field>
+    <field name="category">grass</field><field name="water_need">high</field><field name="sun_exposure">full</field>
+    <field name="prune_interval_days">14</field><field name="fertilize_interval_days">30</field>
+    <field name="heat_tolerant">1</field><field name="salt_tolerant">1</field>
+    <field name="care_guide">قص أسبوعي في الصيف، تسميد نيتروجيني شهري، ريّ يومي فجرًا.</field>
+  </record>
+  <record id="sp_petunia" model="care.cafm.agri.species">
+    <field name="name">بتونيا (زهور موسمية)</field><field name="scientific_name">Petunia hybrida</field>
+    <field name="category">flower</field><field name="water_need">medium</field><field name="sun_exposure">partial</field>
+    <field name="prune_interval_days">30</field><field name="fertilize_interval_days">21</field>
+    <field name="care_guide">إزالة الأزهار الذابلة أسبوعيًا، حماية من شمس الظهيرة صيفًا.</field>
+  </record>
+
+  <!-- ===== Irrigation zones ===== -->
+  <record id="z1" model="care.cafm.agri.zone">
+    <field name="name">الحديقة الأمامية</field><field name="facility_id" ref="care_cafm.fac_bayan"/>
+    <field name="location_id" ref="care_cafm.loc_garden"/><field name="method">drip</field>
+    <field name="frequency">daily</field><field name="weather_based">1</field>
+    <field name="start_time">5.0</field><field name="duration_min">25</field><field name="flow_lpm">40</field>
+    <field name="area_m2">450</field><field name="valve_state">closed</field><field name="moisture_pct">38</field>
+  </record>
+  <record id="z2" model="care.cafm.agri.zone">
+    <field name="name">المسطّح الجانبي</field><field name="facility_id" ref="care_cafm.fac_bayan"/>
+    <field name="method">sprinkler</field><field name="frequency">alt</field>
+    <field name="start_time">4.5</field><field name="duration_min">30</field><field name="flow_lpm">60</field>
+    <field name="area_m2">800</field><field name="valve_state">closed</field><field name="moisture_pct">45</field>
+  </record>
+  <record id="z3" model="care.cafm.agri.zone">
+    <field name="name">أحواض المدخل الرئيسي</field><field name="facility_id" ref="care_cafm.fac_bayan"/>
+    <field name="method">bubbler</field><field name="frequency">daily</field><field name="weather_based">1</field>
+    <field name="start_time">5.5</field><field name="duration_min">15</field><field name="flow_lpm">25</field>
+    <field name="area_m2">120</field><field name="valve_state">open</field><field name="moisture_pct">52</field>
+  </record>
+
+  <!-- ===== Plants / trees ===== -->
+  <record id="p1" model="care.cafm.agri.plant">
+    <field name="name">نخلة واشنطونيا 1</field><field name="code">TR-0001</field>
+    <field name="species_id" ref="sp_washingtonia"/><field name="facility_id" ref="care_cafm.fac_bayan"/>
+    <field name="location_id" ref="care_cafm.loc_garden"/><field name="zone_id" ref="z1"/>
+    <field name="planted_date">2019-03-10</field><field name="height_m">6.5</field><field name="trunk_cm">45</field>
+    <field name="health">good</field><field name="last_inspection">2026-06-01</field><field name="next_inspection">2026-09-01</field>
+    <field name="last_prune">2026-04-15</field><field name="last_fertilize">2026-05-20</field>
+  </record>
+  <record id="p2" model="care.cafm.agri.plant">
+    <field name="name">نخلة تمر 2</field><field name="code">TR-0002</field>
+    <field name="species_id" ref="sp_date_palm"/><field name="facility_id" ref="care_cafm.fac_bayan"/>
+    <field name="location_id" ref="care_cafm.loc_garden"/><field name="zone_id" ref="z1"/>
+    <field name="planted_date">2015-11-01</field><field name="height_m">9.0</field><field name="trunk_cm">60</field>
+    <field name="health">good</field><field name="last_inspection">2026-05-10</field><field name="next_inspection">2026-08-10</field>
+    <field name="last_prune">2026-02-01</field>
+  </record>
+  <record id="p3" model="care.cafm.agri.plant">
+    <field name="name">فيكس سياج شمالي</field><field name="code">TR-0003</field>
+    <field name="species_id" ref="sp_ficus"/><field name="facility_id" ref="care_cafm.fac_bayan"/>
+    <field name="zone_id" ref="z2"/><field name="planted_date">2021-09-20</field>
+    <field name="height_m">3.2</field><field name="health">fair</field>
+    <field name="last_inspection">2026-03-01</field><field name="next_inspection">2026-06-01</field>
+    <field name="care_note">نمو كثيف يحتاج تقليم تشكيلي متكرر.</field>
+  </record>
+  <record id="p4" model="care.cafm.agri.plant">
+    <field name="name">جهنمية المدخل</field><field name="code">TR-0004</field>
+    <field name="species_id" ref="sp_bougainvillea"/><field name="facility_id" ref="care_cafm.fac_bayan"/>
+    <field name="zone_id" ref="z3"/><field name="planted_date">2022-02-14</field>
+    <field name="height_m">2.0</field><field name="health">good</field>
+    <field name="last_prune">2026-06-20</field>
+  </record>
+
+  <!-- ===== Tree operations (works log) ===== -->
+  <record id="op1" model="care.cafm.agri.operation">
+    <field name="plant_id" ref="p1"/><field name="facility_id" ref="care_cafm.fac_bayan"/>
+    <field name="operation_type">prune</field><field name="date">2026-04-15</field>
+    <field name="material">مقص هيدروليكي</field><field name="cost">15</field><field name="result">done</field>
+    <field name="next_due">2026-08-15</field><field name="note">إزالة السعف الجاف وتنظيف القمة.</field>
+  </record>
+  <record id="op2" model="care.cafm.agri.operation">
+    <field name="plant_id" ref="p1"/><field name="facility_id" ref="care_cafm.fac_bayan"/>
+    <field name="operation_type">fertilize</field><field name="date">2026-05-20</field>
+    <field name="material">سماد حديد مخلبي</field><field name="quantity">2</field><field name="unit">كجم</field>
+    <field name="cost">8</field><field name="result">done</field>
+  </record>
+  <record id="op3" model="care.cafm.agri.operation">
+    <field name="plant_id" ref="p2"/><field name="facility_id" ref="care_cafm.fac_bayan"/>
+    <field name="operation_type">pest</field><field name="date">2026-06-10</field>
+    <field name="material">مبيد سوسة النخيل الحمراء</field><field name="quantity">1</field><field name="unit">لتر</field>
+    <field name="cost">25</field><field name="result">done</field><field name="note">حقن وقائي دوري.</field>
+  </record>
+  <record id="op4" model="care.cafm.agri.operation">
+    <field name="plant_id" ref="p3"/><field name="facility_id" ref="care_cafm.fac_bayan"/>
+    <field name="operation_type">inspect</field><field name="date">2026-03-01</field>
+    <field name="result">done</field><field name="next_due">2026-06-01</field>
+    <field name="note">فحص دوري — نمو كثيف قرب السور.</field>
+  </record>
+
+  <!-- ===== Irrigation logs ===== -->
+  <record id="il1" model="care.cafm.agri.irrigation.log">
+    <field name="zone_id" ref="z1"/><field name="date">2026-07-01</field>
+    <field name="duration_min">25</field><field name="water_m3">1.0</field>
+    <field name="moisture_before">28</field><field name="moisture_after">40</field>
+  </record>
+  <record id="il2" model="care.cafm.agri.irrigation.log">
+    <field name="zone_id" ref="z1"/><field name="date">2026-07-05</field>
+    <field name="duration_min">25</field><field name="water_m3">1.0</field>
+    <field name="moisture_before">30</field><field name="moisture_after">42</field>
+  </record>
+  <record id="il3" model="care.cafm.agri.irrigation.log">
+    <field name="zone_id" ref="z2"/><field name="date">2026-07-04</field>
+    <field name="duration_min">30</field><field name="water_m3">1.8</field>
+    <field name="moisture_before">35</field><field name="moisture_after">48</field>
+  </record>
+
+</data></odoo>

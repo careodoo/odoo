@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- services -->
+        <record id="svc_cleaning" model="care.cafm.service">
+            <field name="name">النظافة</field><field name="code">CLN</field>
+            <field name="service_type">cleaning</field><field name="icon">🧹</field>
+            <field name="default_sla_hours">4</field><field name="sequence">1</field>
+        </record>
+        <record id="svc_security" model="care.cafm.service">
+            <field name="name">الأمن والحراسة</field><field name="code">SEC</field>
+            <field name="service_type">security</field><field name="icon">🛡️</field>
+            <field name="default_sla_hours">1</field><field name="sequence">2</field>
+        </record>
+        <record id="svc_agri" model="care.cafm.service">
+            <field name="name">الزراعة وتنسيق الحدائق</field><field name="code">AGR</field>
+            <field name="service_type">agriculture</field><field name="icon">🌿</field>
+            <field name="default_sla_hours">8</field><field name="sequence">3</field>
+        </record>
+        <record id="svc_hvac" model="care.cafm.service">
+            <field name="name">الصيانة (تكييف/كهرباء)</field><field name="code">MEP</field>
+            <field name="service_type">maintenance</field><field name="icon">❄️</field>
+            <field name="default_sla_hours">2</field><field name="sequence">4</field>
+        </record>
+
+        <!-- client + project -->
+        <record id="partner_bayan" model="res.partner">
+            <field name="name">شركة بيان العقارية</field><field name="is_company">1</field>
+        </record>
+        <record id="project_bayan" model="project.project">
+            <field name="name">عقد برج بيان</field><field name="partner_id" ref="partner_bayan"/>
+        </record>
+
+        <!-- facility -->
+        <record id="fac_bayan" model="care.cafm.facility">
+            <field name="name">برج بيان</field><field name="code">BAYAN</field>
+            <field name="partner_id" ref="partner_bayan"/><field name="project_id" ref="project_bayan"/>
+            <field name="address">شارع الخليج العربي، الكويت</field>
+        </record>
+
+        <!-- buildings + floors -->
+        <record id="bld_a" model="care.cafm.building"><field name="name">مبنى A</field><field name="facility_id" ref="fac_bayan"/></record>
+        <record id="bld_b" model="care.cafm.building"><field name="name">مبنى B</field><field name="facility_id" ref="fac_bayan"/></record>
+        <record id="flr_g" model="care.cafm.floor"><field name="name">الدور الأرضي</field><field name="building_id" ref="bld_a"/><field name="sequence">0</field></record>
+        <record id="flr_1" model="care.cafm.floor"><field name="name">الدور 1</field><field name="building_id" ref="bld_a"/><field name="sequence">1</field></record>
+        <record id="flr_3" model="care.cafm.floor"><field name="name">الدور 3</field><field name="building_id" ref="bld_a"/><field name="sequence">3</field></record>
+
+        <!-- locations (QR) -->
+        <record id="loc_lobby" model="care.cafm.location">
+            <field name="name">اللوبي الرئيسي</field><field name="code">LOC-00001</field>
+            <field name="facility_id" ref="fac_bayan"/><field name="floor_id" ref="flr_g"/><field name="location_type">lobby</field>
+            <field name="is_checkpoint">1</field></record>
+        <record id="loc_gate" model="care.cafm.location">
+            <field name="name">البوابة الرئيسية</field><field name="code">LOC-00002</field>
+            <field name="facility_id" ref="fac_bayan"/><field name="floor_id" ref="flr_g"/><field name="location_type">outdoor</field>
+            <field name="is_checkpoint">1</field></record>
+        <record id="loc_wc1" model="care.cafm.location">
+            <field name="name">دورات مياه ط1</field><field name="code">LOC-00003</field>
+            <field name="facility_id" ref="fac_bayan"/><field name="floor_id" ref="flr_1"/><field name="location_type">restroom</field></record>
+        <record id="loc_elec" model="care.cafm.location">
+            <field name="name">غرفة الكهرباء ط3</field><field name="code">LOC-00004</field>
+            <field name="facility_id" ref="fac_bayan"/><field name="floor_id" ref="flr_3"/><field name="location_type">technical</field>
+            <field name="is_checkpoint">1</field></record>
+        <record id="loc_garden" model="care.cafm.location">
+            <field name="name">الحديقة الأمامية</field><field name="code">LOC-00005</field>
+            <field name="facility_id" ref="fac_bayan"/><field name="floor_id" ref="flr_g"/><field name="location_type">outdoor</field></record>
+
+        <!-- teams -->
+        <record id="team_cln" model="care.cafm.team">
+            <field name="name">فريق نظافة برج بيان</field><field name="service_id" ref="svc_cleaning"/>
+            <field name="facility_id" ref="fac_bayan"/></record>
+        <record id="team_sec" model="care.cafm.team">
+            <field name="name">فريق أمن برج بيان</field><field name="service_id" ref="svc_security"/>
+            <field name="facility_id" ref="fac_bayan"/></record>
+        <record id="team_agr" model="care.cafm.team">
+            <field name="name">فريق حدائق برج بيان</field><field name="service_id" ref="svc_agri"/>
+            <field name="facility_id" ref="fac_bayan"/></record>
+
+        <!-- work orders -->
+        <record id="wo_1" model="care.cafm.workorder">
+            <field name="title">تنظيف عاجل — اللوبي</field><field name="facility_id" ref="fac_bayan"/>
+            <field name="location_id" ref="loc_lobby"/><field name="service_id" ref="svc_cleaning"/>
+            <field name="wo_type">reactive</field><field name="priority">3</field></record>
+        <record id="wo_2" model="care.cafm.workorder">
+            <field name="title">فحص وحدة تكييف — ط3</field><field name="facility_id" ref="fac_bayan"/>
+            <field name="location_id" ref="loc_elec"/><field name="service_id" ref="svc_hvac"/>
+            <field name="wo_type">preventive</field><field name="priority">1</field></record>
+
+        <!-- observation -->
+        <record id="obs_1" model="care.cafm.observation">
+            <field name="title">بقع على أرضية المدخل</field><field name="facility_id" ref="fac_bayan"/>
+            <field name="location_id" ref="loc_lobby"/><field name="service_id" ref="svc_cleaning"/>
+            <field name="severity">high</field><field name="description">تحتاج تنظيفاً فورياً.</field></record>
+    </data>
+</odoo>

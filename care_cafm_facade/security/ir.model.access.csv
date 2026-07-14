@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+acc_fzone_u,facade.zone.u,model_care_cafm_facade_zone,base.group_user,1,1,1,0
+acc_fzone_m,facade.zone.m,model_care_cafm_facade_zone,hr.group_hr_manager,1,1,1,1
+acc_fpermit_u,facade.permit.u,model_care_cafm_facade_permit,base.group_user,1,1,1,0
+acc_fpermit_m,facade.permit.m,model_care_cafm_facade_permit,hr.group_hr_manager,1,1,1,1

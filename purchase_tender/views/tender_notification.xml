@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+    <record id="view_tender_notify_line_tree" model="ir.ui.view">
+      <field name="name">purchase.tender.notify.line.tree</field>
+      <field name="model">purchase.tender.notify.line</field>
+      <field name="arch" type="xml">
+        <tree string="مستلمو الإشعارات" editable="bottom">
+          <field name="notify_type" />
+          <field name="user_ids" widget="many2many_tags" />
+          <field name="active" />
+          <field name="company_id" groups="base.group_multi_company" />
+        </tree>
+      </field>
+    </record>
+
+    <record id="view_tender_notify_line_form" model="ir.ui.view">
+      <field name="name">purchase.tender.notify.line.form</field>
+      <field name="model">purchase.tender.notify.line</field>
+      <field name="arch" type="xml">
+        <form string="مستلمو الإشعارات">
+          <sheet>
+            <group>
+              <field name="notify_type" />
+              <field name="active" />
+              <field name="company_id" groups="base.group_multi_company" />
+            </group>
+            <field name="user_ids" widget="many2many_tags" />
+          </sheet>
+          <div class="oe_chatter">
+            <field name="message_follower_ids" />
+            <field name="message_ids" />
+          </div>
+        </form>
+      </field>
+    </record>
+
+    <record id="action_tender_notify_line" model="ir.actions.act_window">
+      <field name="name">مستلمو الإشعارات (لكل نوع)</field>
+      <field name="res_model">purchase.tender.notify.line</field>
+      <field name="view_mode">tree,form</field>
+      <field name="help" type="html">
+        <p class="o_view_nocontent_smiling_face">حدّد مستخدمين معيّنين لكل نوع إشعار</p>
+        <p>عند تحديد قائمة لنوع معيّن، تذهب إشعارات هذا النوع لهؤلاء المستخدمين فقط.</p>
+      </field>
+    </record>
+
+    <menuitem id="tender_notify_line_menu" name="Notification Recipients"
+      parent="purchase_tender_config_menu" sequence="20"
+      action="action_tender_notify_line"
+      groups="purchase_tender.group_tender_notify_admin" />
+  </data>
+</odoo>

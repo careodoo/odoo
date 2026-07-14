@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>منظومة أنظمة care — الفهرس الموحّد</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --ground:#0f1621; --surface:#18202e; --surface-2:#1f2a3b; --line:#2c3a4f;
+    --ink:#eaf1fb; --muted:#9db0c8; --faint:#67799490;
+    --hr:#3f83f8; --cafm:#f7a23b; --mega:#2dd4bf; --sec:#e5484d; --letter:#38bdf8; --pms:#a78bfa;
+    --shadow:0 20px 46px -24px rgba(0,0,0,.7); --f:"Segoe UI",Tahoma,system-ui,-apple-system,"Noto Sans Arabic",sans-serif;
+  }
+  @media(prefers-color-scheme:light){:root{--ground:#eef2f7;--surface:#fff;--surface-2:#f4f7fb;--line:#dce5f0;--ink:#122135;--muted:#4d647f;--faint:#8496af;--shadow:0 16px 40px -26px rgba(20,40,70,.32)}}
+  :root[data-theme="dark"]{--ground:#0f1621;--surface:#18202e;--surface-2:#1f2a3b;--line:#2c3a4f;--ink:#eaf1fb;--muted:#9db0c8}
+  :root[data-theme="light"]{--ground:#eef2f7;--surface:#fff;--surface-2:#f4f7fb;--line:#dce5f0;--ink:#122135;--muted:#4d647f}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f);direction:rtl;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+  h1,h2,h3{margin:0;text-wrap:balance;line-height:1.15}
+  a{text-decoration:none;color:inherit}
+  .top{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+  .brand{display:flex;gap:11px;align-items:center;font-weight:900;font-size:19px}
+  .logo{width:36px;height:36px;border-radius:10px;background:conic-gradient(from 200deg,#f7a23b,#e5484d,#a78bfa,#3f83f8,#2dd4bf,#f7a23b);display:grid;place-items:center;color:#fff;font-weight:900}
+  .tt{width:38px;height:38px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:9px;cursor:pointer}
+  .hero{padding:34px 0 20px}
+  .eyebrow{font-size:12px;font-weight:800;letter-spacing:2.5px;color:var(--cafm);text-transform:uppercase}
+  .hero h1{font-size:clamp(30px,5vw,50px);font-weight:900;letter-spacing:-.6px;margin-top:12px}
+  .hero p{color:var(--muted);max-width:64ch;margin-top:14px;font-size:clamp(15px,1.9vw,18px)}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:28px 0 50px}
+  @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:560px){.grid{grid-template-columns:1fr}}
+  .card{position:relative;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow);overflow:hidden;transition:transform .18s,border-color .18s}
+  .card:hover{transform:translateY(-4px);border-color:var(--ac)}
+  .card::before{content:"";position:absolute;top:0;inset-inline:0;height:4px;background:var(--ac)}
+  .card.big{grid-column:span 3}
+  @media(max-width:900px){.card.big{grid-column:span 2}}@media(max-width:560px){.card.big{grid-column:span 1}}
+  .ic{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;font-size:24px;background:color-mix(in srgb,var(--ac) 16%,transparent);color:var(--ac);margin-bottom:14px}
+  .card h3{font-size:19px;font-weight:850}
+  .card .sub{color:var(--muted);font-size:13.5px;margin-top:7px;flex:1}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+  .t{font-size:11px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 9px}
+  .go{margin-top:15px;font-weight:800;font-size:13.5px;color:var(--ac);display:inline-flex;gap:6px;align-items:center}
+  .st{position:absolute;top:16px;inset-inline-start:16px;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px}
+  .st.live{background:color-mix(in srgb,#2dd4bf 20%,transparent);color:#2dd4bf}
+  .st.mock{background:color-mix(in srgb,#f7a23b 20%,transparent);color:#f7a23b}
+  .big .row{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+  .big .row>div:first-child{flex:1;min-width:240px}
+  .stats{display:flex;gap:22px;flex-wrap:wrap}
+  .stat .n{font-size:26px;font-weight:900;font-variant-numeric:tabular-nums}
+  .stat .l{font-size:11.5px;color:var(--muted)}
+  footer{padding:26px 0 50px;color:var(--faint);font-size:12.5px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><span class="logo">c</span> منظومة care</div>
+    <button class="tt" id="tt" aria-label="الوضع">◐</button>
+  </div>
+
+  <div class="hero">
+    <div class="eyebrow">Systems Hub · الفهرس الموحّد</div>
+    <h1>كل أنظمة care في مكان واحد</h1>
+    <p>بوابة تجمع الأنظمة المبنية والموكابات المقترحة — اضغط أي بطاقة لفتحها. مبنيّ = يعمل فعلياً على السيرفر · موكاب = تصوّر جاهز للتنفيذ.</p>
+  </div>
+
+  <div class="grid">
+    <!-- HR full system - big -->
+    <a class="card big" href="index.html" style="--ac:var(--hr)">
+      <span class="st live">مبنيّ · يعمل</span>
+      <div class="row">
+        <div>
+          <div class="ic">🏢</div>
+          <h3>نظام الموارد البشرية الشامل</h3>
+          <div class="sub">النظام الأكبر: ملفات الموظفين، الحضور والبصمة، الرواتب والبدلات، الإقامات والامتثال، التقييم، السكن، الوثائق، المساعد الذكي، الكشك، الأتمتة، وأكثر — ~30 موديولاً.</div>
+          <span class="go">استعرض الـ90 شاشة ←</span>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="n">90</div><div class="l">شاشة</div></div>
+          <div class="stat"><div class="n">~30</div><div class="l">موديول</div></div>
+          <div class="stat"><div class="n">3000+</div><div class="l">عامل</div></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- CAFM Mega -->
+    <a class="card" href="cafm-mega.html" style="--ac:var(--mega)">
+      <span class="st mock">موكاب</span>
+      <div class="ic">🏗️</div>
+      <h3>CAFM Mega</h3>
+      <div class="sub">منصّة إدارة المرافق الشاملة بمعايير أقوى الأنظمة عالمياً — 22 قسماً: خطوط الخدمة والفِرَق، أوامر العمل، الصيانة التنبؤية، الأصول، المساحات، الطاقة، IoT، الذكاء، مالية العقود، التوأم الرقمي.</div>
+      <div class="tags"><span class="t">22 قسم</span><span class="t">KPIs</span><span class="t">لوحات</span><span class="t">IoT/AI</span></div>
+      <span class="go">افتح المنصّة الضخمة ←</span>
+    </a>
+
+    <!-- CAFM live system guide -->
+    <a class="card" href="cafm-guide.html" style="--ac:var(--mega)">
+      <span class="st live">مبنيّ · يعمل</span>
+      <div class="ic">🏗️</div>
+      <h3>نظام CAFM — دليل البداية</h3>
+      <div class="sub">النظام الفعلي المبنيّ على السيرفر (٨ موديولات): غرفة القيادة، تطبيق الموبايل لكل دور، البوابة المستقلة، والتقارير. دليل الدخول لكل دور بخطواته وروابطه.</div>
+      <div class="tags"><span class="t">٨ موديولات</span><span class="t">يعمل الآن</span><span class="t">دليل الأدوار</span></div>
+      <span class="go">افتح دليل النظام ←</span>
+    </a>
+
+    <!-- Apps & Portal -->
+    <a class="card" href="apps.html" style="--ac:var(--letter)">
+      <span class="st mock">موكاب</span>
+      <div class="ic">▤</div>
+      <h3>البورتال وتطبيقات الأدوار</h3>
+      <div class="sub">بورتال مستقل تماماً عن Odoo (Headless)، شاشة العميل بخدماته المقدّمة، بوابة مشتريات العميل (كتالوج → أمر بيع/شراء → تتبّع → صرف)، و9 تطبيقات أدوار (أمن/مشرف/عامل/جودة/عميل/مدير…).</div>
+      <div class="tags"><span class="t">Headless</span><span class="t">9 تطبيقات</span><span class="t">مشتريات</span></div>
+      <span class="go">افتح التطبيقات والبورتال ←</span>
+    </a>
+
+    <!-- CAFM -->
+    <a class="card" href="cafm.html" style="--ac:var(--cafm)">
+      <span class="st mock">موكاب</span>
+      <div class="ic">🧰</div>
+      <h3>CAFM — تشغيل المرافق</h3>
+      <div class="sub">النسخة الأساسية: 5 بوابات (عميل/مشرف/عامل/جودة/إدارة)، تطبيق المشرف، ملاحظات الجودة والتصحيح بموعد ومسؤول، دورة أمر العمل، أفكار احترافية.</div>
+      <div class="tags"><span class="t">5 بوابات</span><span class="t">موبايل</span><span class="t">جودة</span></div>
+      <span class="go">افتح CAFM ←</span>
+    </a>
+
+    <!-- Security -->
+    <a class="card" href="security.html" style="--ac:var(--sec)">
+      <span class="st mock">موكاب + مراجعة</span>
+      <div class="ic">🛡️</div>
+      <h3>مركز قيادة الأمن</h3>
+      <div class="sub">تطوير موديول الأمن: غرفة قيادة حيّة مبنية على البصمة، تطبيقات لفرد الأمن/المشرف/المدير/العميل، نقاط NFC/QR، زر طوارئ — مع نتائج مراجعة الكود وأخطائه.</div>
+      <div class="tags"><span class="t">ربط البصمة</span><span class="t">موبايل</span><span class="t">مراجعة</span></div>
+      <span class="go">افتح الأمن ←</span>
+    </a>
+
+    <!-- Letters -->
+    <a class="card" href="letter_index.html" style="--ac:var(--letter)">
+      <span class="st live">مبنيّ · يعمل</span>
+      <div class="ic">✉️</div>
+      <h3>نظام المراسلات والخطابات</h3>
+      <div class="sub">تتبّع التسليم، التوقيع والمسح، OCR عربي، الأدوار، بريد احترافي، الترقيم الوارد — 13 شاشة.</div>
+      <div class="tags"><span class="t">13 شاشة</span><span class="t">OCR</span><span class="t">توقيع</span></div>
+      <span class="go">افتح المراسلات ←</span>
+    </a>
+
+    <!-- PMS -->
+    <a class="card" href="pms_index.html" style="--ac:var(--pms)">
+      <span class="st live">مبنيّ · يعمل</span>
+      <div class="ic">📋</div>
+      <h3>إدارة المشاريع (PMS)</h3>
+      <div class="sub">المشاريع والعقود والمهام، الإحالة، المواد والعُهد، النثريات، الربحية (P&L)، بوابة العميل والمشرف — 18 شاشة.</div>
+      <div class="tags"><span class="t">18 شاشة</span><span class="t">P&L</span><span class="t">بورتال</span></div>
+      <span class="go">افتح المشاريع ←</span>
+    </a>
+  </div>
+
+  <footer>منظومة care · الفهرس الموحّد للأنظمة والموكابات — <span style="color:var(--muted)">ecare.care-kw.com/care_hr/static/mockups/hub.html</span></footer>
+</div>
+<script>
+  document.getElementById('tt').addEventListener('click',()=>{const d=document.documentElement,c=d.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');d.setAttribute('data-theme',c==='dark'?'light':'dark')});
+</script>
+</body>
+</html>

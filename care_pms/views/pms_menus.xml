@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_pms_dashboard" model="ir.actions.client">
+        <field name="name">مركز المشاريع</field>
+        <field name="tag">pms_dashboard</field>
+    </record>
+
+    <menuitem id="menu_pms_root" name="إدارة المشاريع" web_icon="project,static/description/icon.png" sequence="52"/>
+
+    <menuitem id="menu_pms_dashboard" name="مركز المشاريع" parent="menu_pms_root"
+              action="action_pms_dashboard" sequence="1"/>
+    <menuitem id="menu_pms_projects" name="المشاريع" parent="menu_pms_root"
+              action="action_pms_projects" sequence="10"/>
+    <menuitem id="menu_pms_tasks" name="التاسكات" parent="menu_pms_root"
+              action="action_pms_tasks" sequence="20"/>
+    <menuitem id="menu_pms_my_forwards" name="إحالات بانتظاري" parent="menu_pms_root"
+              action="action_pms_my_forwards" sequence="30"/>
+    <menuitem id="menu_pms_groups" name="مجموعات التاسكات" parent="menu_pms_root"
+              action="action_task_group" sequence="40"/>
+
+    <!-- Operations -->
+    <menuitem id="menu_pms_ops" name="العمليات والموارد" parent="menu_pms_root" sequence="50"/>
+    <menuitem id="menu_pms_materials" name="مخزون المشاريع" parent="menu_pms_ops"
+              action="action_pms_material" sequence="1"/>
+    <menuitem id="menu_pms_delivery" name="سندات التسليم" parent="menu_pms_ops"
+              action="action_pms_delivery" sequence="2"/>
+    <menuitem id="menu_pms_petty" name="العُهد النقدية" parent="menu_pms_ops"
+              action="action_pms_petty" sequence="3" groups="care_pms.group_pms_manager"/>
+
+    <!-- Requests hub (links to existing modules) -->
+    <menuitem id="menu_pms_requests" name="الطلبات" parent="menu_pms_root" sequence="60"/>
+    <menuitem id="menu_pms_req_docs" name="تحديث مستندات عامل" parent="menu_pms_requests"
+              action="action_pms_doc_request" sequence="0"/>
+    <menuitem id="menu_pms_req_items" name="طلب أصناف (Approvals)" parent="menu_pms_requests"
+              action="approvals.approval_request_action" sequence="1"/>
+    <menuitem id="menu_pms_req_purchase" name="طلبات الشراء" parent="menu_pms_requests"
+              action="purchase_report.purchase_request_action" sequence="2"/>
+    <menuitem id="menu_pms_req_shift" name="نقل عامل (Shifting)" parent="menu_pms_requests"
+              action="hr_employee_shift.employee_shift_request_action" sequence="3"/>
+    <menuitem id="menu_pms_req_care" name="طلبات عامة" parent="menu_pms_requests"
+              action="care_hr.action_care_request" sequence="4"/>
+    <menuitem id="menu_pms_req_loan" name="السلف/القروض" parent="menu_pms_requests"
+              action="care_hr.action_care_loan" sequence="5"/>
+
+    <menuitem id="menu_pms_config" name="الإعدادات" parent="menu_pms_root" sequence="90"/>
+    <menuitem id="menu_pms_categories" name="البنود والفئات" parent="menu_pms_config"
+              action="action_task_category" sequence="1"/>
+    <menuitem id="menu_pms_task_templates" name="قوالب التاسكات المتكررة" parent="menu_pms_config"
+              action="action_pms_task_template" sequence="2"/>
+</odoo>

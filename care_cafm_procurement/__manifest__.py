@@ -1,0 +1,2 @@
+# -*- coding: utf-8 -*-
+{'name':"Care CAFM — Client Procurement",'summary':"Client orders from an approved catalog -> Sale Order or Purchase Order -> tracking to delivery -> issuance, with reports and a mobile ordering app.",'author':"care-kw",'category':'Services/Facility Management','version':'17.0.1.0.0','license':'LGPL-3','depends':['care_cafm','sale_management','purchase'],'data':['security/ir.model.access.csv','data/sequences.xml','reports/reports.xml','views/procurement_views.xml','data/demo_data.xml'],'installable':True}

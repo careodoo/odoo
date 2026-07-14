@@ -1,0 +1,27 @@
+# -*- coding: utf-8 -*-
+{
+    'name': 'CARE Appraisal Performance',
+    'version': '17.0.1.1',
+    'summary': 'Feed deadline/attendance/task/penalty/bonus performance signals into employee appraisals',
+    'author': 'CARE',
+    'license': 'LGPL-3',
+    'depends': ['hr_appraisal', 'project', 'hr_attendance', 'hr', 'mail', 'care_hr'],
+    'data': [
+        'security/ir.model.access.csv',
+        'security/performance_rules.xml',
+        'data/performance_params.xml',
+        'data/performance_crons.xml',
+        'views/performance_views.xml',
+        'views/hr_appraisal_views.xml',
+        'views/hr_appraisal_list_views.xml',
+        'views/hr_employee_views.xml',
+        'views/project_views.xml',
+        'views/performance_menus.xml',
+        'views/res_config_settings_views.xml',
+        'report/performance_report.xml',
+    ],
+    'installable': True,
+    'application': False,
+    'auto_install': False,
+    'post_init_hook': 'post_init_hook',
+}

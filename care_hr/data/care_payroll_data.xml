@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Organization structure dashboard singleton (mockup 76) -->
+        <record id="org_structure_main" model="care.org.structure">
+            <field name="name">Organization</field>
+        </record>
+
+        <!-- Penalty reference sequence -->
+        <record id="seq_care_penalty" model="ir.sequence">
+            <field name="name">Care Penalty</field>
+            <field name="code">care.penalty</field>
+            <field name="prefix">PEN-</field>
+            <field name="padding">5</field>
+        </record>
+
+        <!-- Allowance reference sequence -->
+        <record id="seq_care_allowance" model="ir.sequence">
+            <field name="name">Care Allowance</field>
+            <field name="code">care.allowance</field>
+            <field name="prefix">ALW-</field>
+            <field name="padding">5</field>
+        </record>
+
+        <!-- Allowance disbursement request sequence -->
+        <record id="seq_care_allowance_payout" model="ir.sequence">
+            <field name="name">Allowance Disbursement</field>
+            <field name="code">care.allowance.payout</field>
+            <field name="prefix">ALWPAY-%(year)s-</field>
+            <field name="padding">4</field>
+        </record>
+
+        <!-- Payslip input types consumed by the Care salary rules -->
+        <record id="input_type_care_penalty" model="hr.payslip.input.type">
+            <field name="name">Penalties (Care)</field>
+            <field name="code">CARE_PENALTY</field>
+        </record>
+        <record id="input_type_care_allowance" model="hr.payslip.input.type">
+            <field name="name">Allowances (Care)</field>
+            <field name="code">CARE_ALLOWANCE</field>
+        </record>
+        <record id="input_type_care_violation" model="hr.payslip.input.type">
+            <field name="name">Traffic Violations (Care)</field>
+            <field name="code">CARE_VIOLATION</field>
+        </record>
+        <record id="input_type_care_loan" model="hr.payslip.input.type">
+            <field name="name">Loan / Advance Installment (Care)</field>
+            <field name="code">CARE_LOAN</field>
+        </record>
+        <record id="input_type_care_gosi" model="hr.payslip.input.type">
+            <field name="name">GOSI Employee Share (Care)</field>
+            <field name="code">CARE_GOSI</field>
+        </record>
+        <record id="input_type_care_bonus" model="hr.payslip.input.type">
+            <field name="name">Bonus (Care)</field>
+            <field name="code">CARE_BONUS</field>
+        </record>
+
+        <record id="seq_care_violation" model="ir.sequence">
+            <field name="name">Care Traffic Violation</field>
+            <field name="code">care.traffic.violation</field>
+            <field name="prefix">VIO-</field>
+            <field name="padding">5</field>
+        </record>
+        <record id="seq_care_grievance" model="ir.sequence">
+            <field name="name">Care Grievance</field>
+            <field name="code">care.grievance</field>
+            <field name="prefix">GRV-</field>
+            <field name="padding">5</field>
+        </record>
+        <record id="seq_care_custody" model="ir.sequence">
+            <field name="name">Care Custody</field>
+            <field name="code">care.custody</field>
+            <field name="prefix">CST-</field>
+            <field name="padding">5</field>
+        </record>
+        <record id="seq_care_gov_tx" model="ir.sequence">
+            <field name="name">Care Gov Transaction</field>
+            <field name="code">care.gov.transaction</field>
+            <field name="prefix">TX-</field>
+            <field name="padding">5</field>
+        </record>
+        <record id="seq_care_site_permit" model="ir.sequence">
+            <field name="name">Care Site Permit</field>
+            <field name="code">care.site.permit</field>
+            <field name="prefix">SP-</field>
+            <field name="padding">5</field>
+        </record>
+        <record id="seq_care_passport" model="ir.sequence">
+            <field name="name">Care Passport</field>
+            <field name="code">care.passport</field>
+            <field name="prefix">PP-</field>
+            <field name="padding">6</field>
+        </record>
+        <record id="seq_care_absconding" model="ir.sequence">
+            <field name="name">Care Absconding Case</field>
+            <field name="code">care.absconding.report</field>
+            <field name="prefix">ABS-</field>
+            <field name="padding">3</field>
+        </record>
+        <record id="seq_care_passport_movement" model="ir.sequence">
+            <field name="name">Care Passport Movement</field>
+            <field name="code">care.passport.movement</field>
+            <field name="prefix">PPM-</field>
+            <field name="padding">5</field>
+        </record>
+            <record id="seq_care_skill_assessment" model="ir.sequence">
+            <field name="name">Care Skill Assessment</field>
+            <field name="code">care.skill.assessment</field>
+            <field name="prefix">ASMT-</field>
+            <field name="padding">5</field>
+        </record>
+        <record id="seq_care_probation" model="ir.sequence"><field name="name">care.probation</field><field name="code">care.probation</field><field name="prefix">PRB-</field><field name="padding">5</field></record>
+        <record id="seq_care_eos" model="ir.sequence"><field name="name">care.eos</field><field name="code">care.eos</field><field name="prefix">EOS-</field><field name="padding">5</field></record>
+        <record id="seq_care_movement" model="ir.sequence"><field name="name">care.movement</field><field name="code">care.movement</field><field name="prefix">MOV-</field><field name="padding">5</field></record>
+        <record id="seq_care_letter" model="ir.sequence"><field name="name">care.letter</field><field name="code">care.letter</field><field name="prefix">LET-</field><field name="padding">5</field></record>
+        <record id="seq_care_deployment" model="ir.sequence"><field name="name">care.deployment</field><field name="code">care.deployment</field><field name="prefix">DEP-</field><field name="padding">5</field></record>
+        <record id="seq_care_worker_quality" model="ir.sequence"><field name="name">care.worker.quality</field><field name="code">care.worker.quality</field><field name="prefix">WQ-</field><field name="padding">5</field></record>
+        <record id="seq_care_request" model="ir.sequence"><field name="name">care.request</field><field name="code">care.request</field><field name="prefix">REQ-</field><field name="padding">5</field></record>
+        <record id="seq_care_bonus" model="ir.sequence"><field name="name">care.bonus</field><field name="code">care.bonus</field><field name="prefix">BON-</field><field name="padding">5</field></record>
+        <record id="seq_care_hse_incident" model="ir.sequence"><field name="name">care.hse.incident</field><field name="code">care.hse.incident</field><field name="prefix">HSE-</field><field name="padding">5</field></record>
+        <record id="seq_care_equipment" model="ir.sequence"><field name="name">care.equipment</field><field name="code">care.equipment</field><field name="prefix">EQP-</field><field name="padding">5</field></record>
+        <record id="seq_care_client_billing" model="ir.sequence"><field name="name">care.client.billing</field><field name="code">care.client.billing</field><field name="prefix">BILL-</field><field name="padding">5</field></record>
+        <record id="seq_care_contract_pnl" model="ir.sequence"><field name="name">care.contract.pnl</field><field name="code">care.contract.pnl</field><field name="prefix">PNL-</field><field name="padding">5</field></record>
+        <record id="seq_care_expense_claim" model="ir.sequence"><field name="name">care.expense.claim</field><field name="code">care.expense.claim</field><field name="prefix">EXP-</field><field name="padding">5</field></record>
+        <record id="seq_care_insurance_policy" model="ir.sequence"><field name="name">care.insurance.policy</field><field name="code">care.insurance.policy</field><field name="prefix">POL-</field><field name="padding">5</field></record>
+        <record id="seq_care_sla" model="ir.sequence"><field name="name">care.sla</field><field name="code">care.sla</field><field name="prefix">SLA-</field><field name="padding">5</field></record>
+        <record id="seq_care_loan" model="ir.sequence"><field name="name">care.loan</field><field name="code">care.loan</field><field name="prefix">LOAN-</field><field name="padding">5</field></record>
+    </data>
+
+    <!-- Attach the deduction rule to Worker/Employee structures (idempotent) -->
+    <function model="hr.payslip" name="_setup_care_payroll_rules"/>
+</odoo>

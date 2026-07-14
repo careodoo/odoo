@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+    <record id="service_request_view_tree" model="ir.ui.view">
+      <field name="name">proposal.service.request.tree</field>
+      <field name="model">proposal.service.request</field>
+      <field name="arch" type="xml">
+        <tree decoration-info="state=='new'" decoration-warning="state=='under_review'"
+              decoration-success="state in ('approved','quoted')" decoration-muted="state in ('declined','cancelled')">
+          <field name="name"/>
+          <field name="partner_id"/>
+          <field name="contact_name"/>
+          <field name="service_type_id"/>
+          <field name="site_location"/>
+          <field name="priority" widget="priority"/>
+          <field name="assigned_user_id"/>
+          <field name="source"/>
+          <field name="create_date"/>
+          <field name="state" widget="badge"
+                 decoration-info="state=='new'" decoration-warning="state=='under_review'"
+                 decoration-success="state in ('approved','quoted')"/>
+        </tree>
+      </field>
+    </record>
+
+    <record id="service_request_view_form" model="ir.ui.view">
+      <field name="name">proposal.service.request.form</field>
+      <field name="model">proposal.service.request</field>
+      <field name="arch" type="xml">
+        <form>
+          <header>
+            <button name="action_under_review" type="object" string="Start Review"
+                    class="oe_highlight" invisible="state != 'new'"/>
+            <button name="action_approve" type="object" string="Approve"
+                    class="oe_highlight" invisible="state not in ('new','under_review')"/>
+            <button name="action_create_quotation" type="object" string="Create Quotation"
+                    class="oe_highlight" invisible="state not in ('approved',) or proposal_id"/>
+            <button name="action_decline" type="object" string="Decline"
+                    invisible="state in ('declined','cancelled','quoted')"/>
+            <button name="action_cancel" type="object" string="Cancel"
+                    invisible="state in ('declined','cancelled','quoted')"/>
+            <field name="state" widget="statusbar"
+                   statusbar_visible="new,under_review,approved,quoted"/>
+          </header>
+          <sheet>
+            <div class="oe_button_box" name="button_box">
+              <button name="action_create_quotation" type="object" class="oe_stat_button"
+                      icon="fa-file-text-o" invisible="not proposal_id">
+                <div class="o_stat_info"><span class="o_stat_text">Quotation</span></div>
+              </button>
+            </div>
+            <div class="oe_title">
+              <h1><field name="name" readonly="1"/></h1>
+            </div>
+            <group>
+              <group string="Requester">
+                <field name="partner_id"/>
+                <field name="contact_name"/>
+                <field name="contact_email"/>
+                <field name="contact_phone"/>
+                <field name="company_name"/>
+                <field name="source"/>
+              </group>
+              <group string="Triage">
+                <field name="assigned_user_id"/>
+                <field name="priority" widget="priority"/>
+                <field name="service_type_id"/>
+                <field name="proposal_id" readonly="1"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+              </group>
+            </group>
+            <group>
+              <group string="Service details">
+                <field name="site_location"/>
+                <field name="city"/>
+                <field name="desired_start_date"/>
+                <field name="duration"/>
+                <field name="budget_range"/>
+              </group>
+            </group>
+            <notebook>
+              <page string="Requirements / Specifications">
+                <field name="description" placeholder="Customer's requirements and specifications..."/>
+              </page>
+              <page string="Attachments">
+                <field name="attachment_ids" widget="many2many_binary"/>
+              </page>
+              <page string="Internal Note">
+                <field name="internal_note" placeholder="Internal triage notes..."/>
+              </page>
+            </notebook>
+          </sheet>
+          <div class="oe_chatter">
+            <field name="message_follower_ids"/>
+            <field name="activity_ids"/>
+            <field name="message_ids"/>
+          </div>
+        </form>
+      </field>
+    </record>
+
+    <record id="service_request_view_search" model="ir.ui.view">
+      <field name="name">proposal.service.request.search</field>
+      <field name="model">proposal.service.request</field>
+      <field name="arch" type="xml">
+        <search>
+          <field name="name"/>
+          <field name="partner_id"/>
+          <field name="contact_email"/>
+          <field name="service_type_id"/>
+          <filter name="f_new" string="New" domain="[('state','=','new')]"/>
+          <filter name="f_review" string="Under Review" domain="[('state','=','under_review')]"/>
+          <filter name="f_approved" string="Approved" domain="[('state','=','approved')]"/>
+          <filter name="f_portal" string="From Portal" domain="[('source','=','portal')]"/>
+          <separator/>
+          <filter name="f_mine" string="Assigned to me" domain="[('assigned_user_id','=',uid)]"/>
+          <group expand="0" string="Group By">
+            <filter name="g_state" string="Status" context="{'group_by':'state'}"/>
+            <filter name="g_service" string="Service Type" context="{'group_by':'service_type_id'}"/>
+            <filter name="g_assigned" string="Assigned To" context="{'group_by':'assigned_user_id'}"/>
+            <filter name="g_source" string="Source" context="{'group_by':'source'}"/>
+          </group>
+        </search>
+      </field>
+    </record>
+
+    <record id="service_request_action" model="ir.actions.act_window">
+      <field name="name">Service Requests</field>
+      <field name="res_model">proposal.service.request</field>
+      <field name="view_mode">tree,form</field>
+      <field name="search_view_id" ref="service_request_view_search"/>
+      <field name="context">{'search_default_f_new': 1, 'search_default_f_review': 1}</field>
+      <field name="help" type="html">
+        <p class="o_view_nocontent_smiling_face">No service requests yet</p>
+        <p>Customer requests submitted from the portal land here for review and quoting.</p>
+      </field>
+    </record>
+
+    <menuitem id="service_request_menu" name="Service Requests"
+      parent="proposal_root_menu" action="service_request_action" sequence="3"/>
+  </data>
+</odoo>

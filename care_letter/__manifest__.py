@@ -1,0 +1,35 @@
+# -*- coding: utf-8 -*-
+{
+    'name': 'CARE Letters — Correspondence Management',
+    'version': '17.0.1.0',
+    'summary': 'Delivery tracking, sign/scan workflow, OCR, templates, roles & notifications',
+    'author': 'CARE',
+    'depends': ['base', 'hr', 'mail', 'sp_letter_v15'],
+    'data': [
+        'security/letter_groups.xml',
+        'security/ir.model.access.csv',
+        'security/letter_rules.xml',
+        'data/sequences.xml',
+        'data/letter_classification_data.xml',
+        'data/letter_template_data.xml',
+        'report/letter_label_report.xml',
+        'views/letter_file_views.xml',
+        'views/letter_misc_views.xml',
+        'views/letter_menus.xml',
+        'data/crons.xml',
+        'data/apply_i18n.xml',
+    ],
+    'assets': {
+        'web.assets_backend': [
+            'care_letter/static/src/dashboard/letter_dashboard.scss',
+            'care_letter/static/src/dashboard/letter_dashboard.js',
+            'care_letter/static/src/dashboard/letter_dashboard.xml',
+            'care_letter/static/src/scan_upload/scan_upload.js',
+            'care_letter/static/src/scan_upload/scan_upload.xml',
+        ],
+    },
+    'installable': True,
+    'application': True,
+    'auto_install': False,
+    'post_init_hook': 'post_init_hook',
+}

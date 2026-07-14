@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============ Expense Claims ============ -->
+    <record id="view_care_expense_tree" model="ir.ui.view">
+        <field name="name">care.expense.claim.tree</field>
+        <field name="model">care.expense.claim</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'reimbursed'" decoration-info="state == 'approved'"
+                  decoration-muted="state == 'refused'" decoration-warning="state == 'submitted'">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="expense_type"/>
+                <field name="expense_date"/>
+                <field name="amount" sum="Total" widget="monetary"/>
+                <field name="has_receipt" widget="boolean_toggle" string="Receipt"/>
+                <field name="reimburse_method"/>
+                <field name="state" widget="badge" decoration-success="state == 'reimbursed'"
+                       decoration-info="state == 'approved'" decoration-warning="state == 'submitted'"/>
+                <field name="currency_id" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_care_expense_form" model="ir.ui.view">
+        <field name="name">care.expense.claim.form</field>
+        <field name="model">care.expense.claim</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_submit" type="object" string="Submit" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_mgr_approve" type="object" string="Manager Approve"
+                            class="btn-primary" invisible="state != 'submitted'" groups="hr.group_hr_user"/>
+                    <button name="action_finance_approve" type="object" string="Finance Approve"
+                            class="btn-primary" invisible="state != 'mgr_approved'" groups="hr.group_hr_manager"/>
+                    <button name="action_reimburse" type="object" string="Mark Reimbursed"
+                            class="btn-primary" invisible="state != 'approved'"/>
+                    <button name="action_refuse" type="object" string="Refuse"
+                            invisible="state in ('reimbursed','refused')"/>
+                    <button name="action_reset" type="object" string="Reset to Draft"
+                            invisible="state in ('draft','reimbursed')"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="expense_type"/>
+                            <field name="expense_date"/>
+                            <field name="description"/>
+                        </group>
+                        <group>
+                            <field name="amount" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="reimburse_method"/>
+                            <field name="custody_id" invisible="reimburse_method != 'cash'"/>
+                            <field name="approved_by" readonly="1"/>
+                            <field name="reimbursed_date" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Receipt">
+                        <field name="receipt" filename="receipt_filename" widget="binary"/>
+                        <field name="receipt_filename" invisible="1"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/><field name="activity_ids"/><field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    <record id="view_care_expense_search" model="ir.ui.view">
+        <field name="name">care.expense.claim.search</field>
+        <field name="model">care.expense.claim</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <field name="expense_type"/>
+                <filter name="pending" string="Pending Approval" domain="[('state','in',('submitted','mgr_approved'))]"/>
+                <filter name="approved" string="Approved (to pay)" domain="[('state','=','approved')]"/>
+                <filter name="no_receipt" string="Missing Receipt" domain="[('has_receipt','=',False)]"/>
+                <filter name="cash" string="Cash" domain="[('reimburse_method','=','cash')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="g_emp" string="Employee" context="{'group_by':'employee_id'}"/>
+                    <filter name="g_type" string="Type" context="{'group_by':'expense_type'}"/>
+                    <filter name="g_state" string="Status" context="{'group_by':'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_care_expense" model="ir.actions.act_window">
+        <field name="name">Expense Claims</field>
+        <field name="res_model">care.expense.claim</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_care_expense_search"/>
+    </record>
+
+    <!-- ============ Insurance Policies ============ -->
+    <record id="view_care_insurance_tree" model="ir.ui.view">
+        <field name="name">care.insurance.policy.tree</field>
+        <field name="model">care.insurance.policy</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="state == 'expired'" decoration-warning="state == 'renew_soon'"
+                  decoration-success="state == 'valid'">
+                <field name="employee_id"/>
+                <field name="insurance_type"/>
+                <field name="insurer"/>
+                <field name="policy_no"/>
+                <field name="category"/>
+                <field name="expiry_date"/>
+                <field name="days_to_expiry"/>
+                <field name="state" widget="badge" decoration-danger="state == 'expired'"
+                       decoration-warning="state == 'renew_soon'" decoration-success="state == 'valid'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_care_insurance_form" model="ir.ui.view">
+        <field name="name">care.insurance.policy.form</field>
+        <field name="model">care.insurance.policy</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="insurance_type"/>
+                            <field name="insurer"/>
+                            <field name="policy_no"/>
+                            <field name="category"/>
+                        </group>
+                        <group>
+                            <field name="start_date"/>
+                            <field name="expiry_date"/>
+                            <field name="days_to_expiry" readonly="1"/>
+                            <field name="state" readonly="1"/>
+                            <field name="premium" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="Notes..."/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/><field name="activity_ids"/><field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    <record id="view_care_insurance_search" model="ir.ui.view">
+        <field name="name">care.insurance.policy.search</field>
+        <field name="model">care.insurance.policy</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/><field name="policy_no"/>
+                <filter name="expiring" string="Expiring / Expired" domain="[('state','in',('renew_soon','expired'))]"/>
+                <group expand="0" string="Group By">
+                    <filter name="g_type" string="Type" context="{'group_by':'insurance_type'}"/>
+                    <filter name="g_state" string="Status" context="{'group_by':'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_care_insurance" model="ir.actions.act_window">
+        <field name="name">Insurance Policies</field>
+        <field name="res_model">care.insurance.policy</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_care_insurance_search"/>
+    </record>
+
+    <!-- ============ GOSI ============ -->
+    <record id="view_care_gosi_tree" model="ir.ui.view">
+        <field name="name">care.gosi.tree</field>
+        <field name="model">care.gosi</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="employee_id"/>
+                <field name="registration_no"/>
+                <field name="gosi_wage" widget="monetary"/>
+                <field name="company_rate"/>
+                <field name="employee_rate"/>
+                <field name="company_amount" widget="monetary" sum="Company"/>
+                <field name="employee_amount" widget="monetary" sum="Employee"/>
+                <field name="active" widget="boolean_toggle"/>
+                <field name="currency_id" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_care_gosi" model="ir.actions.act_window">
+        <field name="name">GOSI</field>
+        <field name="res_model">care.gosi</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Register GOSI per employee</p>
+            <p>The employee share is auto-deducted on the payslip.</p>
+        </field>
+    </record>
+
+    <!-- ============ cron ============ -->
+    <record id="cron_care_insurance_reminder" model="ir.cron">
+        <field name="name">Care HR: Insurance Renewal Reminder</field>
+        <field name="model_id" ref="model_care_insurance_policy"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_insurance_reminder()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <!-- ============ menus ============ -->
+    <menuitem id="menu_care_expense" name="Expense Claims"
+              parent="care_hr.menu_sec_welfare" action="action_care_expense" sequence="7"/>
+    <menuitem id="menu_care_insurance" name="Insurance Policies"
+              parent="care_hr.menu_care_hr_payroll_root" action="action_care_insurance" sequence="30"/>
+    <menuitem id="menu_care_gosi" name="GOSI"
+              parent="care_hr.menu_care_hr_payroll_root" action="action_care_gosi" sequence="31"/>
+</odoo>

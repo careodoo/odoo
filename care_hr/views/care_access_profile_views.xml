@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_care_access_profile_tree" model="ir.ui.view">
+        <field name="name">care.access.profile.tree</field>
+        <field name="model">care.access.profile</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="line_count"/>
+                <field name="applied"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_care_access_profile_form" model="ir.ui.view">
+        <field name="name">care.access.profile.form</field>
+        <field name="model">care.access.profile</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_apply" type="object" string="Apply"
+                            class="btn-primary"/>
+                    <field name="applied" widget="boolean_toggle" readonly="1"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="e.g. Site Supervisor"/></h1>
+                    </div>
+                    <group>
+                        <field name="group_id" readonly="1"/>
+                        <field name="active"/>
+                    </group>
+                    <notebook>
+                        <page string="Permissions" name="perms">
+                            <field name="line_ids">
+                                <tree editable="bottom">
+                                    <field name="model_id"
+                                           options="{'no_create': True, 'no_open': True}"/>
+                                    <field name="perm_read"/>
+                                    <field name="perm_write"/>
+                                    <field name="perm_create"/>
+                                    <field name="perm_unlink"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Users" name="users">
+                            <field name="user_ids" widget="many2many"
+                                   options="{'no_create': True}">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="login"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="note"/>
+                        </page>
+                    </notebook>
+                    <div class="alert alert-info" role="alert">
+                        Click <b>Apply</b> to generate the security group, sync the
+                        model access rules and assign the listed users.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_care_access_profile" model="ir.actions.act_window">
+        <field name="name">Access Profiles</field>
+        <field name="res_model">care.access.profile</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create an access profile</p>
+            <p>Define per-model permissions (read/write/create/delete) and assign them
+               to users. Apply to generate the security group and access rules.</p>
+        </field>
+    </record>
+</odoo>

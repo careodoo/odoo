@@ -1,0 +1,77 @@
+# -*- coding: utf-8 -*-
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Language: ar_001\n"
+
+
+#. module: care_expiry_alerts
+#: model:ir.model.fields,field_description:care_expiry_alerts.field_hr_employee__doc_expiry_next
+#: model:ir.model.fields,field_description:care_expiry_alerts.field_security_employee__doc_expiry_next
+msgid "أقرب انتهاء مستند"
+msgstr "أقرب انتهاء مستند"
+
+#. module: care_expiry_alerts
+#: model:ir.model.fields,field_description:care_expiry_alerts.field_hr_employee__doc_expiry_days
+#: model:ir.model.fields,field_description:care_expiry_alerts.field_security_employee__doc_expiry_days
+msgid "أيام حتى الانتهاء"
+msgstr "أيام حتى الانتهاء"
+
+#. module: care_expiry_alerts
+#: model_terms:ir.ui.view,arch_db:care_expiry_alerts.view_expiry_tree
+msgid "أيام متبقية"
+msgstr "أيام متبقية"
+
+#. module: care_expiry_alerts
+#: model_terms:ir.ui.view,arch_db:care_expiry_alerts.view_expiry_search
+msgid "الإدارة"
+msgstr "الإدارة"
+
+#. module: care_expiry_alerts
+#: model_terms:ir.ui.view,arch_db:care_expiry_alerts.view_expiry_search
+msgid "انتهاء المستندات"
+msgstr "انتهاء المستندات"
+
+#. module: care_expiry_alerts
+#: model_terms:ir.ui.view,arch_db:care_expiry_alerts.view_expiry_search
+msgid "تجميع"
+msgstr "تجميع"
+
+#. module: care_expiry_alerts
+#: model_terms:ir.ui.view,arch_db:care_expiry_alerts.view_expiry_search
+msgid "خلال 15 يوم"
+msgstr "خلال 15 يوم"
+
+#. module: care_expiry_alerts
+#: model_terms:ir.ui.view,arch_db:care_expiry_alerts.view_expiry_search
+msgid "خلال 30 يوم"
+msgstr "خلال 30 يوم"
+
+#. module: care_expiry_alerts
+#: model_terms:ir.ui.view,arch_db:care_expiry_alerts.view_expiry_search
+msgid "خلال 60 يوم"
+msgstr "خلال 60 يوم"
+
+#. module: care_expiry_alerts
+#: model_terms:ir.ui.view,arch_db:care_expiry_alerts.view_expiry_tree
+msgid "رقم العامل"
+msgstr "رقم العامل"
+
+#. module: care_expiry_alerts
+#: model:ir.ui.menu,name:care_expiry_alerts.menu_expiry_root
+msgid "متابعة المستندات"
+msgstr "متابعة المستندات"
+
+#. module: care_expiry_alerts
+#: model:ir.actions.act_window,name:care_expiry_alerts.action_expiry
+#: model:ir.ui.menu,name:care_expiry_alerts.menu_expiry
+#: model_terms:ir.ui.view,arch_db:care_expiry_alerts.view_expiry_tree
+msgid "مستندات قرب الانتهاء"
+msgstr "مستندات قرب الانتهاء"
+
+#. module: care_expiry_alerts
+#: model_terms:ir.ui.view,arch_db:care_expiry_alerts.view_expiry_search
+msgid "منتهية"
+msgstr "منتهية"

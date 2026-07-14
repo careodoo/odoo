@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Home card -->
+    <template id="portal_my_home_pms" inherit_id="portal.portal_my_home" name="Portal My Home: PMS" priority="40">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="title">مشاريعي</t>
+                <t t-set="text">متابعة مشاريعك وتاسكاتها وطلباتك</t>
+                <t t-set="url" t-value="'/my/pms'"/>
+                <t t-set="placeholder_count" t-value="'pms_project_count'"/>
+            </t>
+        </xpath>
+    </template>
+
+    <!-- Projects list: professional cards -->
+    <template id="portal_my_pms_projects" name="My Projects">
+        <t t-call="portal.portal_layout">
+            <div style="background:#15213b;color:#fff;border-radius:12px;padding:16px 22px;margin-bottom:18px;">
+                <span style="color:#f0663c;font-weight:800;font-size:22px;">CARE</span>
+                <span style="font-weight:700;font-size:16px;"> · بوابة المشاريع</span>
+            </div>
+            <div t-if="not projects" class="alert alert-info">لا توجد مشاريع متاحة لك حالياً.</div>
+            <div class="row">
+                <t t-foreach="projects" t-as="p">
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="card h-100 shadow-sm" style="border-top:4px solid #2f6df6;border-radius:12px;">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h5 class="card-title mb-1"><t t-esc="p.name"/></h5>
+                                    <span t-if="p.risk_level == 'high'" class="badge text-bg-danger">خطر عالٍ</span>
+                                    <span t-elif="p.risk_level == 'medium'" class="badge text-bg-warning">متوسط</span>
+                                    <span t-else="" class="badge text-bg-success">مستقر</span>
+                                </div>
+                                <p class="text-muted small mb-3"><i class="fa fa-building"/> <t t-esc="p.pms_department_id.name or '—'"/></p>
+                                <div class="row text-center g-2 mb-3">
+                                    <div class="col-3"><div class="fw-bold fs-5 text-primary" t-esc="p.worker_count"/><div class="small text-muted">عمال</div></div>
+                                    <div class="col-3"><div class="fw-bold fs-5" style="color:#017e84;" t-esc="p.vehicle_count"/><div class="small text-muted">سيارات</div></div>
+                                    <div class="col-3"><div class="fw-bold fs-5" style="color:#7a5cf0;" t-esc="p.pms_task_open"/><div class="small text-muted">تاسكات</div></div>
+                                    <div class="col-3"><div class="fw-bold fs-5 text-danger" t-esc="p.pms_task_overdue"/><div class="small text-muted">متأخرة</div></div>
+                                </div>
+                                <a t-attf-href="/my/pms/#{p.id}" class="btn btn-primary btn-sm w-100">عرض التفاصيل ←</a>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <!-- Project detail: rich -->
+    <template id="portal_pms_project_page" name="Project Detail">
+        <t t-call="portal.portal_layout">
+            <div t-if="request.params.get('submitted')" class="alert alert-success">✅ تم إرسال طلبك/ملاحظتك بنجاح.</div>
+
+            <div style="background:#15213b;color:#fff;border-radius:12px;padding:16px 22px;margin-bottom:16px;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span style="color:#f0663c;font-weight:800;">CARE</span>
+                        <h4 class="mb-0 d-inline"> · <t t-esc="project.name"/></h4>
+                        <div class="small" style="color:#aeb8cc;">
+                            <t t-esc="project.pms_department_id.name or ''"/> ·
+                            مدير المشروع: <t t-esc="project.project_manager_id.name or '—'"/>
+                        </div>
+                    </div>
+                    <a href="/my/pms" class="btn btn-outline-light btn-sm">← كل المشاريع</a>
+                </div>
+            </div>
+
+            <!-- KPI cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-2 col-4"><div class="card text-center h-100"><div class="card-body p-2">
+                    <div class="fw-bold fs-4 text-primary" t-esc="project.worker_count"/><div class="small text-muted">عمال</div></div></div></div>
+                <div class="col-md-2 col-4"><div class="card text-center h-100"><div class="card-body p-2">
+                    <div class="fw-bold fs-4" style="color:#017e84;" t-esc="project.vehicle_count"/><div class="small text-muted">سيارات</div></div></div></div>
+                <div class="col-md-2 col-4"><div class="card text-center h-100"><div class="card-body p-2">
+                    <div class="fw-bold fs-4" style="color:#7a5cf0;" t-esc="project.pms_task_open"/><div class="small text-muted">تاسكات</div></div></div></div>
+                <div class="col-md-2 col-4"><div class="card text-center h-100"><div class="card-body p-2">
+                    <div class="fw-bold fs-4 text-danger" t-esc="project.pms_task_overdue"/><div class="small text-muted">متأخرة</div></div></div></div>
+                <div class="col-md-2 col-4"><div class="card text-center h-100"><div class="card-body p-2">
+                    <div class="fw-bold fs-4" style="color:#e08a00;" t-esc="len(materials)"/><div class="small text-muted">أصناف</div></div></div></div>
+                <div class="col-md-2 col-4"><div class="card text-center h-100"><div class="card-body p-2">
+                    <div class="fw-bold fs-4 text-success"><t t-esc="round(project.sla_compliance_pct)"/>%</div><div class="small text-muted">SLA</div></div></div></div>
+            </div>
+
+            <!-- Quick action: submit request / complaint -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light fw-bold">📥 تقديم طلب / ملاحظة / شكوى</div>
+                <div class="card-body">
+                    <form t-attf-action="/my/pms/#{project.id}/note" method="post">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <select name="kind" class="form-select">
+                                    <option value="request">📥 طلب</option>
+                                    <option value="complaint">🔴 شكوى</option>
+                                    <option value="note">📝 ملاحظة</option>
+                                </select>
+                            </div>
+                            <div class="col-md-5"><input type="text" name="subject" class="form-control" placeholder="الموضوع"/></div>
+                            <div class="col-md-4"><input type="text" name="note" class="form-control" placeholder="التفاصيل" required="required"/></div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm mt-2">إرسال</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tasks -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light fw-bold">📋 التاسكات (<t t-esc="len(tasks)"/>)</div>
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm mb-0">
+                        <thead><tr><th class="ps-3">العنوان</th><th>النوع</th><th>الاستحقاق</th><th>المرحلة</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="tasks" t-as="t">
+                                <td class="ps-3"><t t-esc="t.name"/></td>
+                                <td><span class="badge text-bg-secondary"><t t-esc="t.task_kind"/></span></td>
+                                <td><span t-att-class="t.is_overdue and 'text-danger fw-bold' or ''" t-esc="t.date_deadline or '—'"/></td>
+                                <td><t t-esc="t.stage_id.name or '—'"/></td>
+                            </tr>
+                            <tr t-if="not tasks"><td colspan="4" class="text-center text-muted p-3">لا توجد تاسكات.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Materials -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light fw-bold">📦 مخزون المشروع (<t t-esc="len(materials)"/>)</div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th class="ps-3">الصنف</th><th>المتاح</th><th>الوحدة</th><th>الحالة</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="materials" t-as="m">
+                                <td class="ps-3"><t t-esc="m.name"/></td>
+                                <td><span t-att-class="m.is_low and 'text-danger fw-bold' or 'fw-bold'" t-esc="m.available_qty"/></td>
+                                <td><t t-esc="m.uom_name"/></td>
+                                <td><span t-if="m.is_low" class="badge text-bg-danger">أعِد الطلب</span><span t-else="" class="badge text-bg-success">جيد</span></td>
+                            </tr>
+                            <tr t-if="not materials"><td colspan="4" class="text-center text-muted p-3">لا يوجد مخزون.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Deliveries -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light fw-bold">🚚 سندات التسليم (<t t-esc="len(deliveries)"/>)</div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th class="ps-3">المرجع</th><th>الموقع</th><th>التاريخ</th><th>الحالة</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="deliveries" t-as="d">
+                                <td class="ps-3"><t t-esc="d.name"/></td>
+                                <td><t t-esc="d.location or '—'"/></td>
+                                <td><t t-esc="d.date or '—'"/></td>
+                                <td><span t-att-class="d.state == 'done' and 'badge text-bg-success' or 'badge text-bg-secondary'"><t t-esc="d.state"/></span></td>
+                            </tr>
+                            <tr t-if="not deliveries"><td colspan="4" class="text-center text-muted p-3">لا توجد سندات.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

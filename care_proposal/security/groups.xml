@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+    <record id="module_category_proposal" model="ir.module.category">
+      <field name="name">Proposals</field>
+    </record>
+
+    <!-- Manages the service catalog, cost components and customer cost books. -->
+    <record id="group_proposal_cost_admin" model="res.groups">
+      <field name="name">Cost Catalog Admin</field>
+      <field name="category_id" ref="module_category_proposal"/>
+      <field name="comment">Can manage cost components and customer cost books (pricing master data).</field>
+    </record>
+
+    <!-- Settings administrators get cost-catalog admin by default. -->
+    <record id="base.group_system" model="res.groups">
+      <field name="implied_ids" eval="[(4, ref('care_proposal.group_proposal_cost_admin'))]"/>
+    </record>
+
+    <!-- Portal customers can only see their own service requests. -->
+    <record id="service_request_portal_rule" model="ir.rule">
+      <field name="name">Service Request: portal own</field>
+      <field name="model_id" ref="care_proposal.model_proposal_service_request"/>
+      <field name="domain_force">['|',('partner_id','=',user.partner_id.id),('partner_id','=',user.partner_id.commercial_partner_id.id)]</field>
+      <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+    </record>
+  </data>
+</odoo>

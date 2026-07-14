@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_request" model="ir.actions.report">
+        <field name="name">طلب مشتريات (PDF)</field>
+        <field name="model">care.cafm.request</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_cafm_procurement.report_request</field>
+        <field name="report_file">care_cafm_procurement.report_request</field>
+        <field name="binding_model_id" ref="model_care_cafm_request"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_request">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <div class="page" style="direction:rtl;text-align:right;font-family:Arial,sans-serif;color:#1a2330;font-size:12px">
+                        <div style="background:linear-gradient(135deg,#0e7a5f,#0a5a46);color:#fff;padding:16px 18px;border-radius:10px">
+                            <div style="font-size:12px;opacity:.85;letter-spacing:1px">طلب مشتريات العميل · CAFM</div>
+                            <div style="font-size:20px;font-weight:800"><span t-field="o.name"/></div>
+                            <div style="font-size:12px"><span t-field="o.partner_id"/> · <span t-field="o.facility_id"/> · الحالة: <span t-field="o.state"/></div>
+                        </div>
+                        <table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:16px">
+                            <thead><tr style="background:#f4f7ff">
+                                <th style="padding:6px 8px;border:1px solid #e6e9ef;text-align:right">الصنف</th>
+                                <th style="padding:6px 8px;border:1px solid #e6e9ef">الكمية</th>
+                                <th style="padding:6px 8px;border:1px solid #e6e9ef">الوحدة</th>
+                                <th style="padding:6px 8px;border:1px solid #e6e9ef">السعر</th>
+                                <th style="padding:6px 8px;border:1px solid #e6e9ef">الإجمالي</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="o.line_ids" t-as="l">
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef"><span t-field="l.name"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;text-align:center"><span t-field="l.qty"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;text-align:center"><span t-field="l.uom_name"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;text-align:center"><span t-field="l.price"/></td>
+                                    <td style="padding:5px 8px;border:1px solid #e6e9ef;text-align:center"><span t-field="l.subtotal"/></td>
+                                </tr>
+                            </tbody>
+                            <tfoot><tr style="font-weight:800;background:#f4f7ff">
+                                <td colspan="4" style="padding:6px 8px;border:1px solid #e6e9ef;text-align:left">الإجمالي</td>
+                                <td style="padding:6px 8px;border:1px solid #e6e9ef;text-align:center"><span t-field="o.amount_total"/></td></tr></tfoot>
+                        </table>
+                        <div style="margin-top:36px;display:flex;justify-content:space-between;font-size:11px;color:#555">
+                            <div>مقدّم الطلب: ________</div><div>الاعتماد: ________</div><div>الاستلام: ________</div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

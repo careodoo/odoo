@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="module_category_pms" model="ir.module.category">
+            <field name="name">Project Management</field>
+            <field name="sequence">22</field>
+        </record>
+
+        <record id="group_pms_monitor" model="res.groups">
+            <field name="name">PMS / Monitor (read + reports)</field>
+            <field name="category_id" ref="module_category_pms"/>
+        </record>
+        <record id="group_pms_supervisor" model="res.groups">
+            <field name="name">PMS / Supervisor</field>
+            <field name="category_id" ref="module_category_pms"/>
+            <field name="implied_ids" eval="[(4, ref('group_pms_monitor'))]"/>
+        </record>
+        <record id="group_pms_manager" model="res.groups">
+            <field name="name">PMS / Project Manager</field>
+            <field name="category_id" ref="module_category_pms"/>
+            <field name="implied_ids" eval="[(4, ref('group_pms_supervisor'))]"/>
+        </record>
+        <!-- Portal-side project manager (uses the manager cockpit portal) -->
+        <record id="group_pms_portal_manager" model="res.groups">
+            <field name="name">PMS / Portal Project Manager</field>
+            <field name="category_id" ref="module_category_pms"/>
+        </record>
+
+        <record id="group_pms_admin" model="res.groups">
+            <field name="name">PMS / Administrator</field>
+            <field name="category_id" ref="module_category_pms"/>
+            <field name="implied_ids" eval="[(4, ref('group_pms_manager'))]"/>
+        </record>
+
+        <!-- Opt-in: can SEE all projects (e.g. to dispatch materials to any
+             project) WITHOUT gaining task visibility or manager rights.
+             Standalone (no implied groups) so it grants nothing else. -->
+        <record id="group_pms_project_all" model="res.groups">
+            <field name="name">PMS / See all projects (material dispatch)</field>
+            <field name="category_id" ref="module_category_pms"/>
+        </record>
+    </data>
+</odoo>

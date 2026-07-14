@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+  <t t-name="care_proposal.ProposalDashboard">
+    <div class="o_proposal_dashboard o_action" dir="rtl" t-ref="root">
+
+      <div class="pd-toolbar">
+        <div class="pd-title">📊 لوحة معلومات عروض الأسعار</div>
+        <div class="pd-tools">
+          <select class="pd-select" t-on-change="onYearChange">
+            <option value="all">كل السنوات</option>
+            <t t-foreach="state.data and state.data.years or []" t-as="y" t-key="y">
+              <option t-att-value="y" t-esc="y" t-att-selected="state.year == y"/>
+            </t>
+          </select>
+        </div>
+      </div>
+
+      <div class="pd-scroll">
+        <t t-if="state.loading">
+          <div class="pd-loading">⏳ جارٍ تحميل البيانات...</div>
+        </t>
+
+        <t t-if="!state.loading and state.data">
+          <div class="pd-body">
+
+            <!-- KPIs -->
+            <div class="pd-kpis">
+              <div class="pd-kpi" t-on-click="() => this.openList([], 'كل العروض')">
+                <div class="bar" style="background:#3a7afe"/><div class="ic" style="background:#e7f0ff;color:#3a7afe">📋</div>
+                <div class="v" t-esc="state.data.kpi.total"/><div class="l">إجمالي العروض</div>
+              </div>
+              <div class="pd-kpi" t-on-click="() => this.openList([['state','in',['won','contracted']]], 'العروض الفائزة')">
+                <div class="bar" style="background:#21b07b"/><div class="ic" style="background:#e3f7ee;color:#21b07b">🏆</div>
+                <div class="v" t-esc="state.data.kpi.won"/><div class="l">فائزة</div>
+              </div>
+              <div class="pd-kpi">
+                <div class="bar" style="background:#8b5cf6"/><div class="ic" style="background:#efe7ff;color:#8b5cf6">🎯</div>
+                <div class="v"><t t-esc="state.data.kpi.win_rate"/>%</div><div class="l">معدل الفوز</div>
+              </div>
+              <div class="pd-kpi" t-on-click="() => this.openList([['state','in',['won','contracted']]], 'قيمة العقود')">
+                <div class="bar" style="background:#017e84"/><div class="ic" style="background:#e1f5f5;color:#017e84">💰</div>
+                <div class="v" t-esc="fmt(state.data.kpi.awarded_value)"/><div class="l">قيمة العقود الفائزة</div>
+              </div>
+              <div class="pd-kpi" t-on-click="() => this.openList([['state','in',['draft','submit','waiting','approve']]], 'العروض النشطة')">
+                <div class="bar" style="background:#3a7afe"/><div class="ic" style="background:#e7f0ff;color:#3a7afe">📊</div>
+                <div class="v" t-esc="fmt(state.data.kpi.pipeline_value)"/><div class="l">قيمة العروض الحالية</div>
+              </div>
+              <div class="pd-kpi">
+                <div class="bar" style="background:#f59e0b"/><div class="ic" style="background:#fff4e0;color:#f59e0b">📈</div>
+                <div class="v"><t t-esc="state.data.kpi.avg_margin"/>%</div><div class="l">متوسط الهامش</div>
+              </div>
+              <div class="pd-kpi" t-on-click="() => this.openList([['below_guard','=',true]], 'عروض تحت حد الهامش')">
+                <div class="bar" style="background:#e25563"/><div class="ic" style="background:#fde9eb;color:#e25563">⚠️</div>
+                <div class="v" t-esc="state.data.kpi.below_guard"/><div class="l">تحت حد الهامش</div>
+              </div>
+              <div class="pd-kpi" t-on-click="() => this.openList([['state','=','draft']], 'مسودات')">
+                <div class="bar" style="background:#9aa3b5"/><div class="ic" style="background:#eef1f6;color:#9aa3b5">✎</div>
+                <div class="v" t-esc="state.data.kpi.draft"/><div class="l">مسودات</div>
+              </div>
+              <div class="pd-kpi" t-on-click="() => this.openList([['state','in',['won','contracted']]], 'صافي الربح')">
+                <div class="bar" style="background:#21b07b"/><div class="ic" style="background:#e3f7ee;color:#21b07b">📈</div>
+                <div class="v" t-esc="fmt(state.data.kpi.margin_value)"/><div class="l">صافي ربح العقود</div>
+              </div>
+              <div class="pd-kpi" t-on-click="() => this.openList([['state','in',['won','contracted']]], 'متوسط قيمة الصفقة')">
+                <div class="bar" style="background:#017e84"/><div class="ic" style="background:#e1f5f5;color:#017e84">🧾</div>
+                <div class="v" t-esc="fmt(state.data.kpi.avg_deal)"/><div class="l">متوسط قيمة الصفقة</div>
+              </div>
+              <div class="pd-kpi" t-on-click="() => this.openList([['state','in',['submit','waiting','approve']]], 'بانتظار الاعتماد')">
+                <div class="bar" style="background:#f59e0b"/><div class="ic" style="background:#fff4e0;color:#f59e0b">⏳</div>
+                <div class="v" t-esc="state.data.kpi.pending"/><div class="l">بانتظار الاعتماد</div>
+              </div>
+              <div class="pd-kpi">
+                <div class="bar" style="background:#3a7afe"/><div class="ic" style="background:#e7f0ff;color:#3a7afe">🗓️</div>
+                <div class="v" t-esc="state.data.kpi.this_month"/><div class="l">عروض هذا الشهر</div>
+              </div>
+              <div class="pd-kpi" t-on-click="() => this.action.doAction('care_proposal.service_request_action')">
+                <div class="bar" style="background:#8b5cf6"/><div class="ic" style="background:#efe7ff;color:#8b5cf6">📥</div>
+                <div class="v" t-esc="state.data.kpi.sr_open"/><div class="l">طلبات خدمة مفتوحة</div>
+              </div>
+              <div class="pd-kpi">
+                <div class="bar" style="background:#017e84"/><div class="ic" style="background:#e1f5f5;color:#017e84">💼</div>
+                <div class="v" t-esc="fmt(state.data.kpi.total_value)"/><div class="l">إجمالي قيمة العروض</div>
+              </div>
+            </div>
+
+            <!-- charts -->
+            <div class="pd-grid">
+              <div class="pd-card"><div class="pd-h">توزيع الحالات</div><div class="chart"><canvas id="pdStatus"/></div></div>
+              <div class="pd-card"><div class="pd-h">الاتجاه الشهري</div><div class="chart"><canvas id="pdTrend"/></div></div>
+              <div class="pd-card"><div class="pd-h">القيمة حسب نوع الخدمة</div><div class="chart"><canvas id="pdService"/></div></div>
+              <div class="pd-card"><div class="pd-h">استراتيجية التسعير</div><div class="chart"><canvas id="pdStrategy"/></div></div>
+              <div class="pd-card"><div class="pd-h">أعلى العملاء (قيمة)</div><div class="chart"><canvas id="pdCustomers"/></div></div>
+              <div class="pd-card"><div class="pd-h">القيمة التراكمية للعقود</div><div class="chart"><canvas id="pdCumval"/></div></div>
+              <div class="pd-card"><div class="pd-h">توزيع هامش الربح</div><div class="chart"><canvas id="pdMargin"/></div></div>
+              <div class="pd-card"><div class="pd-h">متوسط الهامش حسب نوع الخدمة</div><div class="chart"><canvas id="pdMarginSvc"/></div></div>
+              <div class="pd-card"><div class="pd-h">العروض حسب الشركة</div><div class="chart"><canvas id="pdCompany"/></div></div>
+              <div class="pd-card"><div class="pd-h">طلبات الخدمة (من البوابة)</div><div class="chart"><canvas id="pdSr"/></div></div>
+            </div>
+
+          </div>
+        </t>
+      </div>
+    </div>
+  </t>
+</templates>

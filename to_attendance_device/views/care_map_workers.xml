@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_map_workers_tree" model="ir.ui.view">
+        <field name="name">attendance.device.user.map.tree</field>
+        <field name="model">attendance.device.user</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom" create="false" delete="false"
+                  decoration-success="employee_id" decoration-muted="att_punch_count == 0">
+                <field name="name" readonly="1"/>
+                <field name="user_id" readonly="1"/>
+                <field name="device_id" readonly="1"/>
+                <field name="att_punch_count" readonly="1"/>
+                <field name="employee_id" options="{'no_create': True}"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_map_workers_search" model="ir.ui.view">
+        <field name="name">attendance.device.user.map.search</field>
+        <field name="model">attendance.device.user</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="user_id"/>
+                <field name="device_id"/>
+                <filter name="unmapped" string="Unmapped" domain="[('employee_id','=',False)]"/>
+                <filter name="mapped" string="Mapped" domain="[('employee_id','!=',False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="g_device" string="Device" context="{'group_by':'device_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_map_workers" model="ir.actions.act_window">
+        <field name="name">Map Workers to Employees</field>
+        <field name="res_model">attendance.device.user</field>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="view_map_workers_tree"/>
+        <field name="search_view_id" ref="view_map_workers_search"/>
+        <field name="context">{'search_default_unmapped': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Link device users to employees</p>
+            <p>Pick the employee for each device user (search by Arabic name). Once mapped,
+               their attendance shows on the employee file and feeds SLA / billing.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_map_workers" name="Map Workers to Employees"
+              parent="attendace_device_menu" action="action_map_workers" sequence="15"/>
+
+    <!-- ===== Monthly Attendance Summary (per employee) ===== -->
+    <record id="view_att_summary_pivot" model="ir.ui.view">
+        <field name="name">user.attendance.summary.pivot</field>
+        <field name="model">user.attendance</field>
+        <field name="arch" type="xml">
+            <pivot string="Monthly Attendance" sample="1">
+                <field name="employee_id" type="row"/>
+                <field name="timestamp" interval="month" type="col"/>
+            </pivot>
+        </field>
+    </record>
+    <record id="view_att_summary_search" model="ir.ui.view">
+        <field name="name">user.attendance.summary.search</field>
+        <field name="model">user.attendance</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <field name="device_id"/>
+                <filter name="this_year" string="This Year"
+                        domain="[('timestamp','&gt;=', (context_today().strftime('%Y-01-01')))]"/>
+                <filter name="mapped" string="Mapped Only" domain="[('employee_id','!=',False)]"/>
+                <group expand="1" string="Group By">
+                    <filter name="g_emp" string="Employee" context="{'group_by':'employee_id'}"/>
+                    <filter name="g_month" string="Month" context="{'group_by':'timestamp:month'}"/>
+                    <filter name="g_device" string="Device" context="{'group_by':'device_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_att_summary" model="ir.actions.act_window">
+        <field name="name">Attendance Punches (Activity)</field>
+        <field name="res_model">user.attendance</field>
+        <field name="view_mode">pivot</field>
+        <field name="view_id" ref="view_att_summary_pivot"/>
+        <field name="search_view_id" ref="view_att_summary_search"/>
+        <field name="context">{'search_default_mapped': 1, 'search_default_g_emp': 1}</field>
+    </record>
+
+    <!-- Present-DAYS summary (distinct punch-dates) per employee per month -->
+    <record id="view_att_monthly_tree" model="ir.ui.view">
+        <field name="name">care.attendance.monthly.tree</field>
+        <field name="model">care.attendance.monthly</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="period"/>
+                <field name="present_days" sum="Present Days"/>
+                <field name="punches" sum="Punches"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_att_monthly_pivot" model="ir.ui.view">
+        <field name="name">care.attendance.monthly.pivot</field>
+        <field name="model">care.attendance.monthly</field>
+        <field name="arch" type="xml">
+            <pivot string="Present Days">
+                <field name="employee_id" type="row"/>
+                <field name="period" interval="month" type="col"/>
+                <field name="present_days" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+    <record id="view_att_monthly_graph" model="ir.ui.view">
+        <field name="name">care.attendance.monthly.graph</field>
+        <field name="model">care.attendance.monthly</field>
+        <field name="arch" type="xml">
+            <graph string="Present Days" type="line">
+                <field name="period" interval="month"/>
+                <field name="present_days" type="measure"/>
+            </graph>
+        </field>
+    </record>
+    <record id="view_att_monthly_search" model="ir.ui.view">
+        <field name="name">care.attendance.monthly.search</field>
+        <field name="model">care.attendance.monthly</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <filter name="this_year" string="This Year"
+                        domain="[('period','&gt;=', context_today().strftime('%Y-01-01'))]"/>
+                <group expand="0" string="Group By">
+                    <filter name="g_emp" string="Employee" context="{'group_by':'employee_id'}"/>
+                    <filter name="g_dept" string="Department" context="{'group_by':'department_id'}"/>
+                    <filter name="g_month" string="Month" context="{'group_by':'period:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_att_monthly" model="ir.actions.act_window">
+        <field name="name">Monthly Attendance Summary</field>
+        <field name="res_model">care.attendance.monthly</field>
+        <field name="view_mode">tree,pivot,graph</field>
+        <field name="search_view_id" ref="view_att_monthly_search"/>
+    </record>
+
+    <menuitem id="menu_att_summary" name="Monthly Attendance Summary"
+              parent="attendace_device_menu" action="action_att_monthly" sequence="16"/>
+    <menuitem id="menu_att_activity" name="Attendance Punches (Activity)"
+              parent="attendace_device_menu" action="action_att_summary" sequence="17"/>
+</odoo>

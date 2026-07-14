@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_pms_task_form" model="ir.ui.view">
+        <field name="name">pms.task.form</field>
+        <field name="model">project.task</field>
+        <field name="priority">50</field>
+        <field name="arch" type="xml">
+            <form string="تاسك">
+                <header>
+                    <button name="action_request_forward" type="object" string="إحالة (Forward)"
+                            class="btn-primary" invisible="forward_state == 'pending'"/>
+                    <button name="action_accept_forward" type="object" string="قبول الإحالة ✅"
+                            class="btn-success" invisible="not (forward_state == 'pending' and is_forward_recipient)"/>
+                    <button name="action_reject_forward" type="object" string="رفض الإحالة ✖"
+                            class="btn-danger" invisible="not (forward_state == 'pending' and is_forward_recipient)"/>
+                    <field name="stage_id" widget="statusbar" options="{'clickable': 1}"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_forwards" type="object" class="oe_stat_button" icon="fa-share">
+                            <field name="forward_count" widget="statinfo" string="إحالات"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="متأخّر" bg_color="text-bg-danger" invisible="not is_overdue"/>
+                    <field name="company_id" invisible="1"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="عنوان التاسك..."/></h1>
+                    </div>
+                    <group>
+                        <group string="التصنيف">
+                            <field name="task_kind"/>
+                            <field name="pms_category_id"/>
+                            <field name="pms_department_id"/>
+                            <field name="task_group_id"/>
+                        </group>
+                        <group string="التنفيذ">
+                            <field name="project_id"/>
+                            <field name="user_ids" widget="many2many_avatar_user"/>
+                            <field name="date_deadline"/>
+                            <field name="priority" widget="priority"/>
+                            <field name="is_overdue" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="الإحالة" invisible="forward_state == 'none'">
+                        <field name="forward_state" readonly="1"/>
+                        <field name="forward_from_id" readonly="1"/>
+                        <field name="is_forward_recipient" invisible="1"/>
+                    </group>
+                    <group string="إحالة جديدة" invisible="forward_state == 'pending'">
+                        <field name="forward_to_id"/>
+                        <field name="forward_reason" placeholder="سبب الإحالة..."/>
+                    </group>
+                    <notebook>
+                        <page string="الوصف"><field name="description"/></page>
+                        <page string="سجل الإحالات">
+                            <field name="forward_ids" readonly="1">
+                                <tree>
+                                    <field name="forward_date"/>
+                                    <field name="from_user_id"/>
+                                    <field name="to_user_id"/>
+                                    <field name="reason"/>
+                                    <field name="state"/>
+                                    <field name="response_date"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_pms_task_kanban" model="ir.ui.view">
+        <field name="name">pms.task.kanban</field>
+        <field name="model">project.task</field>
+        <field name="priority">50</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="pms_stage_name" sample="1" records_draggable="false">
+                <field name="name"/><field name="task_kind"/><field name="pms_category_id"/>
+                <field name="is_overdue"/><field name="forward_state"/><field name="user_ids"/>
+                <field name="date_deadline"/><field name="project_id"/><field name="priority"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click o_kanban_record" style="padding:10px;">
+                            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px;">
+                                <strong style="font-size:13px;line-height:1.35"><field name="name"/></strong>
+                                <field name="priority" widget="priority"/>
+                            </div>
+                            <div class="text-muted" style="font-size:11px;margin:3px 0;">
+                                <i class="fa fa-folder-o"/> <field name="project_id"/>
+                            </div>
+                            <div style="margin:5px 0;display:flex;gap:4px;flex-wrap:wrap;">
+                                <span class="badge text-bg-info"><field name="task_kind"/></span>
+                                <span t-if="record.pms_category_id.raw_value" class="badge text-bg-secondary"><field name="pms_category_id"/></span>
+                                <span t-if="record.forward_state.raw_value == 'pending'" class="badge text-bg-warning">إحالة معلّقة</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+                                <field name="user_ids" widget="many2many_avatar_user"/>
+                                <t t-if="record.date_deadline.raw_value">
+                                    <span t-if="record.is_overdue.raw_value" class="badge text-bg-danger"><i class="fa fa-clock-o"/> <field name="date_deadline"/></span>
+                                    <span t-if="!record.is_overdue.raw_value" class="badge text-bg-light text-dark"><i class="fa fa-clock-o"/> <field name="date_deadline"/></span>
+                                </t>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_pms_task_tree" model="ir.ui.view">
+        <field name="name">pms.task.tree</field>
+        <field name="model">project.task</field>
+        <field name="priority">50</field>
+        <field name="arch" type="xml">
+            <tree string="التاسكات" sample="1" multi_edit="1"
+                  decoration-danger="is_overdue"
+                  decoration-warning="forward_state == 'pending' and not is_overdue">
+                <field name="is_overdue" column_invisible="1"/>
+                <field name="company_id" column_invisible="1"/>
+                <field name="priority" widget="priority" optional="show" nolabel="1"/>
+                <field name="name" string="العنوان"/>
+                <field name="project_id" optional="show"/>
+                <field name="task_kind" widget="badge"
+                       decoration-info="task_kind == 'task'"
+                       decoration-primary="task_kind == 'memo'"
+                       decoration-success="task_kind == 'internal_letter'"
+                       decoration-warning="task_kind == 'internal_request'"
+                       decoration-danger="task_kind == 'correspondence'"/>
+                <field name="pms_category_id" optional="show"/>
+                <field name="pms_department_id" optional="hide"/>
+                <field name="user_ids" widget="many2many_avatar_user" optional="show"/>
+                <field name="date_deadline" optional="show"/>
+                <field name="forward_state" widget="badge" optional="show"
+                       decoration-warning="forward_state == 'pending'"
+                       decoration-success="forward_state == 'accepted'"
+                       decoration-danger="forward_state == 'rejected'"/>
+                <field name="stage_id" widget="badge" decoration-info="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_pms_task_search" model="ir.ui.view">
+        <field name="name">pms.task.search</field>
+        <field name="model">project.task</field>
+        <field name="priority">50</field>
+        <field name="arch" type="xml">
+            <search string="بحث التاسكات">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="pms_category_id"/>
+                <field name="user_ids"/>
+                <filter name="f_overdue" string="متأخّر" domain="[('is_overdue','=',True)]"/>
+                <filter name="f_fwd" string="إحالة معلّقة" domain="[('forward_state','=','pending')]"/>
+                <filter name="f_mine" string="تاسكاتي" domain="[('user_ids','in',uid)]"/>
+                <separator/>
+                <filter name="k_memo" string="مذكرات" domain="[('task_kind','=','memo')]"/>
+                <filter name="k_letter" string="كتب داخلية" domain="[('task_kind','=','internal_letter')]"/>
+                <filter name="k_request" string="طلبات داخلية" domain="[('task_kind','=','internal_request')]"/>
+                <group expand="0" string="تجميع">
+                    <filter name="g_kind" string="النوع" context="{'group_by':'task_kind'}"/>
+                    <filter name="g_cat" string="البند" context="{'group_by':'pms_category_id'}"/>
+                    <filter name="g_proj" string="المشروع" context="{'group_by':'project_id'}"/>
+                    <filter name="g_dept" string="الإدارة" context="{'group_by':'pms_department_id'}"/>
+                    <filter name="g_stage" string="الحالة" context="{'group_by':'pms_stage_name'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_pms_tasks" model="ir.actions.act_window">
+        <field name="name">التاسكات</field>
+        <field name="res_model">project.task</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="search_view_id" ref="view_pms_task_search"/>
+        <field name="context">{'search_default_g_stage': 1}</field>
+        <field name="view_ids" eval="[(5,0,0),
+            (0,0,{'sequence':1,'view_mode':'tree','view_id':ref('view_pms_task_tree')}),
+            (0,0,{'sequence':2,'view_mode':'kanban','view_id':ref('view_pms_task_kanban')}),
+            (0,0,{'sequence':3,'view_mode':'form','view_id':ref('view_pms_task_form')})]"/>
+    </record>
+
+    <record id="action_pms_my_forwards" model="ir.actions.act_window">
+        <field name="name">إحالات بانتظاري</field>
+        <field name="res_model">project.task</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('forward_state','=','pending'),('forward_to_id','=',uid)]</field>
+        <field name="search_view_id" ref="view_pms_task_search"/>
+        <field name="view_ids" eval="[(5,0,0),
+            (0,0,{'sequence':1,'view_mode':'tree','view_id':ref('view_pms_task_tree')}),
+            (0,0,{'sequence':2,'view_mode':'form','view_id':ref('view_pms_task_form')})]"/>
+    </record>
+</odoo>

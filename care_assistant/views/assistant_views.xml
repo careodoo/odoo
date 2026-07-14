@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_care_assistant_form" model="ir.ui.view">
+        <field name="name">care.assistant.form</field>
+        <field name="model">care.assistant</field>
+        <field name="arch" type="xml">
+            <form create="true">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>🤖 المساعد الذكي</h1>
+                        <p class="text-muted">اسأله بلغتك، يجاوبك من بيانات النظام — محكوم بصلاحياتك.</p>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <group string="أسئلة سريعة">
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button name="action_q_availability" type="object"
+                                            string="كم عامل متاح الآن؟" class="btn btn-outline-primary btn-sm"/>
+                                    <button name="action_q_residency" type="object"
+                                            string="من تنتهي إقامته هذا الشهر؟" class="btn btn-outline-primary btn-sm"/>
+                                    <button name="action_q_eos" type="object"
+                                            string="احسب نهاية الخدمة" class="btn btn-outline-primary btn-sm"/>
+                                </div>
+                            </group>
+                            <group>
+                                <field name="employee_id"/>
+                            </group>
+                            <group>
+                                <label for="question" string="سؤالك"/>
+                                <div class="d-flex gap-2">
+                                    <field name="question" nolabel="1" placeholder="اكتب سؤالك..."
+                                           class="oe_inline" style="flex:1;"/>
+                                    <button name="action_ask" type="object" string="إرسال"
+                                            class="btn btn-primary"/>
+                                </div>
+                            </group>
+                            <field name="answer_html" nolabel="1" readonly="1"/>
+                            <div class="mt-2">
+                                <button name="action_generate_renewals" type="object"
+                                        string="📤 توليد دفعة تجديد" class="btn btn-success btn-sm"
+                                        invisible="last_intent != 'residency'"/>
+                                <button name="action_show_available" type="object"
+                                        string="👥 عرض العمالة المتاحة" class="btn btn-secondary btn-sm"
+                                        invisible="last_intent != 'availability'"/>
+                                <field name="last_intent" invisible="1"/>
+                                <field name="name" invisible="1"/>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px;background:#f8fafc;">
+                                <div style="font-weight:600;margin-bottom:8px;">قدرات</div>
+                                <div style="font-size:13px;line-height:2;color:#334155;">
+                                    🔎 استعلامات فورية (توافر/امتثال/أرصدة)<br/>
+                                    🧮 حسابات (إجازة/أوفر تايم/EOS)<br/>
+                                    🌐 عربي/إنجليزي<br/>
+                                    ⚡ إجراءات سريعة من المحادثة<br/>
+                                    🔒 محكوم بصلاحيات المستخدم
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_care_assistant" model="ir.actions.act_window">
+        <field name="name">المساعد الذكي</field>
+        <field name="res_model">care.assistant</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+    </record>
+
+    <menuitem id="menu_care_assistant_root" name="🤖 المساعد الذكي" sequence="54"/>
+    <menuitem id="menu_care_assistant" name="اسأل المساعد"
+              parent="menu_care_assistant_root" action="action_care_assistant" sequence="10"/>
+</odoo>

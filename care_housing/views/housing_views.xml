@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============ Room occupancy ============ -->
+    <record id="view_room_occupancy_tree" model="ir.ui.view">
+        <field name="name">hostel.room.occupancy.tree</field>
+        <field name="model">hostel.room</field>
+        <field name="arch" type="xml">
+            <tree string="إشغال الغرف" create="false" default_order="available_beds desc"
+                  decoration-success="available_beds &gt; 0" decoration-muted="available_beds == 0">
+                <field name="hostel_id"/>
+                <field name="floor_id" optional="show"/>
+                <field name="flat_id" optional="show"/>
+                <field name="name"/>
+                <field name="bed_count" sum="الإجمالي"/>
+                <field name="occupied_beds" sum="مشغولة"/>
+                <field name="available_beds" sum="شاغرة"/>
+                <field name="occupancy_pct" widget="percentage" optional="show"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_room_occupancy_search" model="ir.ui.view">
+        <field name="name">hostel.room.occupancy.search</field>
+        <field name="model">hostel.room</field>
+        <field name="arch" type="xml">
+            <search string="إشغال الغرف">
+                <field name="name"/>
+                <field name="hostel_id"/>
+                <filter name="has_vacancy" string="بها أسرّة شاغرة" domain="[('available_beds','&gt;',0)]"/>
+                <filter name="full" string="ممتلئة" domain="[('available_beds','=',0),('bed_count','&gt;',0)]"/>
+                <separator/>
+                <filter name="no_beds" string="بدون أسرّة" domain="[('bed_count','=',0)]"/>
+                <group expand="1" string="تجميع">
+                    <filter name="g_hostel" string="السكن" context="{'group_by':'hostel_id'}"/>
+                    <filter name="g_floor" string="الطابق" context="{'group_by':'floor_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_room_occupancy_pivot" model="ir.ui.view">
+        <field name="name">hostel.room.occupancy.pivot</field>
+        <field name="model">hostel.room</field>
+        <field name="arch" type="xml">
+            <pivot string="تحليل الإشغال" sample="1">
+                <field name="hostel_id" type="row"/>
+                <field name="bed_count" type="measure"/>
+                <field name="occupied_beds" type="measure"/>
+                <field name="available_beds" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_room_occupancy_graph" model="ir.ui.view">
+        <field name="name">hostel.room.occupancy.graph</field>
+        <field name="model">hostel.room</field>
+        <field name="arch" type="xml">
+            <graph string="تحليل الإشغال" type="bar" sample="1" stacked="1">
+                <field name="hostel_id"/>
+                <field name="occupied_beds" type="measure"/>
+                <field name="available_beds" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_room_occupancy" model="ir.actions.act_window">
+        <field name="name">إشغال الغرف</field>
+        <field name="res_model">hostel.room</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_room_occupancy_tree"/>
+        <field name="search_view_id" ref="view_room_occupancy_search"/>
+        <field name="context">{'search_default_g_hostel': 1}</field>
+    </record>
+
+    <record id="action_housing_analysis" model="ir.actions.act_window">
+        <field name="name">تحليل إشغال السكن</field>
+        <field name="res_model">hostel.room</field>
+        <field name="view_mode">pivot,graph,tree</field>
+        <field name="search_view_id" ref="view_room_occupancy_search"/>
+        <field name="view_ids" eval="[(5,0,0),
+            (0,0,{'sequence':1,'view_mode':'pivot','view_id':ref('view_room_occupancy_pivot')}),
+            (0,0,{'sequence':2,'view_mode':'graph','view_id':ref('view_room_occupancy_graph')}),
+            (0,0,{'sequence':3,'view_mode':'tree','view_id':ref('view_room_occupancy_tree')})]"/>
+    </record>
+
+    <!-- ============ Vacant beds ============ -->
+    <record id="view_vacant_bed_tree" model="ir.ui.view">
+        <field name="name">hostel.bed.vacant.tree</field>
+        <field name="model">hostel.bed</field>
+        <field name="arch" type="xml">
+            <tree string="الأسرّة الشاغرة" create="false">
+                <field name="hostel_id"/>
+                <field name="floor_id" optional="show"/>
+                <field name="room_id"/>
+                <field name="name"/>
+                <field name="employee_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_vacant_bed_search" model="ir.ui.view">
+        <field name="name">hostel.bed.vacant.search</field>
+        <field name="model">hostel.bed</field>
+        <field name="arch" type="xml">
+            <search string="الأسرّة">
+                <field name="name"/>
+                <field name="hostel_id"/>
+                <field name="room_id"/>
+                <filter name="vacant" string="شاغرة فقط" domain="[('employee_id','=',False)]"/>
+                <group expand="1" string="تجميع">
+                    <filter name="g_hostel" string="السكن" context="{'group_by':'hostel_id'}"/>
+                    <filter name="g_room" string="الغرفة" context="{'group_by':'room_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_vacant_beds" model="ir.actions.act_window">
+        <field name="name">الأسرّة الشاغرة</field>
+        <field name="res_model">hostel.bed</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_vacant_bed_tree"/>
+        <field name="search_view_id" ref="view_vacant_bed_search"/>
+        <field name="domain">[('employee_id','=',False)]</field>
+        <field name="context">{'search_default_g_hostel': 1}</field>
+    </record>
+
+    <!-- ============ Employee housing (My profile) ============ -->
+    <record id="view_my_profile_housing" model="ir.ui.view">
+        <field name="name">my.employee.profile.housing</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="care_my.view_my_profile_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='room_id']" position="after">
+                <field name="housing_hostel_id"/>
+                <field name="housing_floor_id"/>
+                <field name="housing_room_id"/>
+                <field name="housing_bed_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ============ Menus ============ -->
+    <menuitem id="menu_housing_occupancy" name="إشغال الغرف" parent="care.hostel_menu"
+              action="action_room_occupancy" sequence="5"/>
+    <menuitem id="menu_housing_vacant_beds" name="الأسرّة الشاغرة" parent="care.hostel_menu"
+              action="action_vacant_beds" sequence="6"/>
+    <menuitem id="menu_housing_analysis" name="تحليل الإشغال" parent="care.hostel_menu"
+              action="action_housing_analysis" sequence="7"/>
+</odoo>

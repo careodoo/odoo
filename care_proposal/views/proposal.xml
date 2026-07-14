@@ -5,33 +5,134 @@
       <field name="name">proposal_view_tree</field>
       <field name="model">proposal.proposal</field>
       <field name="arch" type="xml">
-        <tree>
-          <field name="active" invisible="1" />
-          <field name="name" />
-          <field name="company_id" />
-          <field name="ref" />
-          <field name="partner_id" />
-          <field name="country_id" optional="show" />
-          <field name="city" optional="show" />
-          <field name="phone" optional="show" />
-          <field name="proposal_date" optional="show" />
-          <field name="expire_date" optional="show" />
-          <field name="total_amount" optional="show" />
-          <field name="margin_amount" optional="show" />
-          <field name="margin_percentage" optional="show" />
-          <field name="service_type_id" optional="show" />
-          <field name="service_site" optional="show" />
-          <field name="mobilization_date" optional="show" />
-          <field name="proposal_period" optional="show" />
-          <field name="state" widget="badge" decoration-danger="state in ['reject', 'cancel']"
-            decoration-success="state in ['approve', 'won', 'contracted']"
-            decoration-warning="state == 'submit'" decoration-primary="state == 'waiting'" />
+        <tree sample="1" multi_edit="1"
+              decoration-success="state in ['won','contracted']"
+              decoration-muted="superseded or state in ['reject','cancel']"
+              decoration-danger="below_guard and state not in ['won','contracted','reject','cancel']"
+              decoration-warning="validity_state == 'expiring'">
+          <field name="active" column_invisible="1" />
+          <field name="superseded" column_invisible="1" />
+          <field name="below_guard" column_invisible="1" />
+          <field name="validity_state" column_invisible="1" />
+          <field name="currency_id" column_invisible="1" />
+          <field name="ref" string="#" optional="show"/>
+          <field name="name" string="Proposal"/>
+          <field name="partner_id"/>
+          <field name="service_type_id" optional="show"/>
+          <field name="service_site" optional="hide"/>
+          <field name="version" string="Rev" optional="hide"/>
+          <field name="proposal_date" optional="hide"/>
+          <field name="expire_date" optional="show"/>
+          <field name="days_to_expire" string="Validity (days)" optional="show"
+                 decoration-danger="validity_state == 'expired'"
+                 decoration-warning="validity_state == 'expiring'"
+                 decoration-success="validity_state == 'valid'"/>
+          <field name="pricing_strategy" optional="hide"/>
+          <field name="total_pricing_cost" string="Cost" widget="monetary" optional="hide" sum="Cost"/>
+          <field name="total_amount" string="Price" widget="monetary" optional="show" sum="Total"/>
+          <field name="margin_amount" string="Margin" widget="monetary" optional="show" sum="Margin"/>
+          <field name="margin_percentage" string="Margin %" optional="show"
+                 decoration-danger="margin_percentage &lt; 10"
+                 decoration-warning="margin_percentage &gt;= 10 and margin_percentage &lt; 20"
+                 decoration-success="margin_percentage &gt;= 20"/>
+          <field name="commission_amount" optional="hide" widget="monetary"/>
+          <field name="mobilization_date" optional="hide"/>
+          <field name="proposal_period" optional="hide"/>
+          <field name="lead_id" optional="hide"/>
+          <field name="company_id" optional="hide" groups="base.group_multi_company"/>
+          <field name="state" widget="badge"
+                 decoration-danger="state in ['reject', 'cancel']"
+                 decoration-success="state in ['approve', 'won', 'contracted']"
+                 decoration-warning="state == 'submit'" decoration-primary="state == 'waiting'" />
+          <button name="action_open_decision" type="object" string="Decide"
+                  icon="fa-gavel" class="btn-link"
+                  invisible="state in ['won','contracted','reject','cancel']"
+                  help="Review the pricing summary and take a decision without opening the record"/>
+          <button name="action_open_self" type="object" string="Open"
+                  icon="fa-folder-open-o" class="btn-link"
+                  invisible="state not in ['won','contracted']"
+                  help="Open the awarded proposal"/>
+          <button name="action_duplicate" type="object" string="Re-quote"
+                  icon="fa-copy" class="btn-link"
+                  invisible="state not in ['reject','cancel']"
+                  help="Duplicate this proposal into a new draft quote"/>
         </tree>
+      </field>
+    </record>
+
+    <!-- Compact decision dialog: pricing summary + workflow buttons -->
+    <record id="proposal_decision_form" model="ir.ui.view">
+      <field name="name">proposal.decision.form</field>
+      <field name="model">proposal.proposal</field>
+      <field name="priority">99</field>
+      <field name="arch" type="xml">
+        <form create="false" edit="false">
+          <header>
+            <field name="approver_users" invisible="1"/>
+            <field name="user_confirmed" invisible="1"/>
+            <field name="lead_id" invisible="1"/>
+            <button name="button_submit" type="object" string="Submit" class="oe_highlight"
+                    invisible="state != 'draft'"/>
+            <button name="button_approve" type="object" string="Approve" class="btn-success"
+                    invisible="uid not in approver_users or user_confirmed or state not in ['submit','waiting']"/>
+            <button name="button_reject" type="object" string="Reject" class="btn-danger"
+                    confirm="Are you sure you want to reject this proposal?"
+                    invisible="uid not in approver_users or user_confirmed or state not in ['submit','waiting']"/>
+            <button name="button_won" type="object" string="Won" class="btn-success"
+                    invisible="uid not in approver_users or state != 'approve'"/>
+            <button name="action_mark_winning" type="object" string="Mark Winning"
+                    invisible="not lead_id"/>
+            <button name="button_cancel" type="object" string="Cancel"
+                    invisible="state == 'cancel'"/>
+            <button name="button_draft" type="object" string="Reset to Draft"
+                    invisible="state == 'draft'"/>
+            <field name="state" widget="statusbar" statusbar_visible="draft,submit,approve,won"/>
+          </header>
+          <sheet>
+            <div class="oe_title">
+              <h2><field name="name" readonly="1"/></h2>
+            </div>
+            <field name="below_guard" invisible="1"/>
+            <div class="alert alert-danger" role="alert" invisible="not below_guard">
+              ⚠ This proposal has line(s) below the margin guard.
+            </div>
+            <group>
+              <group string="Proposal">
+                <field name="partner_id" readonly="1"/>
+                <field name="service_type_id" readonly="1"/>
+                <field name="service_site" readonly="1"/>
+                <field name="expire_date" readonly="1"/>
+                <field name="pricing_strategy" readonly="1"/>
+              </group>
+              <group string="Financial summary">
+                <field name="currency_id" invisible="1"/>
+                <field name="total_pricing_cost" widget="monetary" readonly="1"/>
+                <field name="total_commission_amount" widget="monetary" readonly="1"/>
+                <field name="total_amount" widget="monetary" readonly="1" string="Customer Price"/>
+                <field name="margin_amount" widget="monetary" readonly="1" string="Net Margin"/>
+                <field name="margin_percentage" readonly="1" string="Margin %"/>
+              </group>
+            </group>
+            <separator string="Pricing lines"/>
+            <field name="pricing_ids" readonly="1">
+              <tree decoration-danger="below_guard">
+                <field name="below_guard" column_invisible="1"/>
+                <field name="service_id" string="Service"/>
+                <field name="service_quantity" string="Qty"/>
+                <field name="individual_cost" string="Unit cost"/>
+                <field name="individual_sales_price" string="Unit price"/>
+                <field name="profit_percentage" string="Margin %"/>
+                <field name="sales_price" string="Total" sum="Total"/>
+              </tree>
+            </field>
+          </sheet>
+        </form>
       </field>
     </record>
     <record id="proposal_view_form" model="ir.ui.view">
       <field name="name">proposal_view_form</field>
       <field name="model">proposal.proposal</field>
+      <field name="priority">1</field>
       <field name="arch" type="xml">
         <form>
           <header>
@@ -45,6 +146,11 @@
             <button name="button_cancel" type="object" string="Cancel" invisible="state == 'cancel'" />
             <button name="button_draft" type="object" string="Reset to Draft"
               invisible="state == 'draft'" />
+            <button name="action_duplicate" type="object" string="Duplicate"/>
+            <button name="action_new_revision" type="object" string="New Revision"/>
+            <field name="lead_id" invisible="1"/>
+            <button name="action_mark_winning" type="object" string="Mark Winning"
+                    invisible="not lead_id" help="Set this as the winning quotation on its CRM opportunity."/>
 
             <button name="button_approve" type="object" string="Approve" class="oe_highlight"
               invisible="uid not in approver_users or user_confirmed or state not in ['submit', 'waiting']" />
@@ -52,6 +158,9 @@
               confirm="Are you sure you want to reject this proposal?"
               invisible="uid not in approver_users or user_confirmed or state not in ['submit', 'waiting']" />
 
+            <button name="action_resync_costs" type="object" string="Freeze / Re-sync Costs"
+              class="btn-secondary" invisible="state not in ['draft','submit']"
+              help="Snapshot each service cost from the customer's active Cost Books. Existing proposals never change unless you press this."/>
             <button name="generate_pricing" type="object" string="Generate Pricing"
               class="oe_highlight"
               invisible="state not in ['draft','submit']"/>
@@ -60,18 +169,30 @@
             <field name="state" widget="statusbar" statusbar_visible="draft,submit,approve" />
           </header>
           <sheet>
-            <div class="oe_button_box" name="button_box" />
+            <div class="oe_button_box" name="button_box">
+              <button name="action_view_revisions" type="object"
+                      class="oe_stat_button" icon="fa-code-fork"
+                      invisible="revision_count == 0">
+                <field name="revision_count" widget="statinfo" string="Revisions"/>
+              </button>
+            </div>
+            <field name="superseded" invisible="1"/>
+            <widget name="web_ribbon" title="Superseded" bg_color="bg-secondary" invisible="not superseded"/>
             <field name="qr_image" widget="image" class="oe_avatar" invisible="1" />
             <field name="logo" widget="image" class="oe_avatar" />
             <div class="oe_title" style="width: 100%">
               <label for="name" />
               <h1>
                 <field name="name" />
+                <field name="version" widget="badge" class="oe_inline" string="v"/>
               </h1>
+              <field name="revision_of_id" invisible="not revision_of_id"
+                     readonly="1" string="Revision of"/>
             </div>
             <group>
               <group>
                 <field name="company_id" readonly="state != 'draft'" />
+                <field name="currency_id" readonly="state != 'draft'" groups="base.group_multi_currency"/>
                 <field name="ref" readonly="state != 'draft'" />
                 <field name="partner_id" readonly="state != 'draft'" />
                 <field name="proposal_date" readonly="state != 'draft'" />
@@ -133,34 +254,80 @@
                   </group>
                 </group>
               </page>
-              <page name="pricing" string="Pricing">
+              <page name="pricing" string="Pricing Workspace">
+                <group>
+                  <group string="Margin strategy">
+                    <field name="pricing_strategy" widget="radio" readonly="state != 'draft'"/>
+                    <field name="target_margin_pct" readonly="state != 'draft'"
+                           invisible="pricing_strategy not in ['cost_plus','target_margin']"/>
+                    <field name="target_price" readonly="state != 'draft'"
+                           invisible="pricing_strategy != 'target_price'"/>
+                    <field name="price_round" readonly="state != 'draft'"/>
+                    <field name="margin_guard_pct" readonly="state != 'draft'"/>
+                    <button name="action_apply_margin" type="object" string="Apply margin"
+                            class="oe_highlight" invisible="state != 'draft'"/>
+                  </group>
+                  <group string="Price scenarios">
+                    <label for="scenario_economy_pct" string="Economy"/>
+                    <div>
+                      <field name="scenario_economy_pct" class="oe_inline" readonly="state != 'draft'"/> % →
+                      <field name="scenario_economy_price" class="oe_inline" readonly="1"/>
+                      <button name="action_apply_economy" type="object" string="Apply"
+                              class="btn-link" invisible="state != 'draft'"/>
+                    </div>
+                    <label for="scenario_standard_pct" string="Standard"/>
+                    <div>
+                      <field name="scenario_standard_pct" class="oe_inline" readonly="state != 'draft'"/> % →
+                      <field name="scenario_standard_price" class="oe_inline" readonly="1"/>
+                      <button name="action_apply_standard" type="object" string="Apply"
+                              class="btn-link" invisible="state != 'draft'"/>
+                    </div>
+                    <label for="scenario_premium_pct" string="Premium"/>
+                    <div>
+                      <field name="scenario_premium_pct" class="oe_inline" readonly="state != 'draft'"/> % →
+                      <field name="scenario_premium_price" class="oe_inline" readonly="1"/>
+                      <button name="action_apply_premium" type="object" string="Apply"
+                              class="btn-link" invisible="state != 'draft'"/>
+                    </div>
+                  </group>
+                </group>
+                <div class="alert alert-warning" role="alert" invisible="not below_guard">
+                  <field name="below_guard" invisible="1"/>
+                  ⚠ One or more lines are below the margin guard (<field name="margin_guard_pct" class="oe_inline" readonly="1"/>%) — review or manager approval may be required.
+                </div>
                 <field name="pricing_ids" readonly="state != 'draft'">
-                  <tree editable="bottom">
+                  <tree editable="bottom" decoration-danger="below_guard">
                     <field name="name" invisible="1" />
+                    <field name="below_guard" invisible="1" />
                     <field name="service_id" readonly="1" force_save="1" />
                     <field name="service_quantity" readonly="1" force_save="1" />
                     <field name="service_individual_cost" optional="show" readonly="1"
                       force_save="1" />
-                    <field name="service_total_cost" optional="show" readonly="1" force_save="1" />
+                    <field name="service_total_cost" optional="hide" readonly="1" force_save="1" />
                     <field name="material_cost" optional="show" readonly="1" force_save="1" />
                     <field name="equipment_cost" optional="show" readonly="1" force_save="1" />
                     <field name="transportation_cost" optional="show" readonly="1" force_save="1" />
                     <field name="individual_cost" sum="total individual cost" optional="show"
                       readonly="1" force_save="1" />
                     <field name="commission_amount" optional="show" readonly="1" force_save="1" />
-                    <field name="individual_cost_after_commission" />
+                    <field name="individual_cost_after_commission" optional="show"/>
                     <field name="cost" sum="total cost" optional="show" readonly="1" force_save="1" />
                     <field name="individual_sales_price" optional="show" />
                     <field name="profit_percentage" optional="show" />
-                    <field name="individual_profit_amount" optional="show" />
-                    <field name="profit_amount" optional="show" />
+                    <field name="individual_profit_amount" optional="hide" />
+                    <field name="profit_amount" optional="hide" />
                     <field name="sales_price" sum="total sales price" />
                   </tree>
                 </field>
               </page>
               <page name="services" string="Services">
+                <div class="text-muted" style="margin-bottom:6px">
+                  Frozen <field name="frozen_service_count" class="oe_inline"/> /
+                  <field name="service_count_total" class="oe_inline"/> services ·
+                  costs are snapshotted from the customer Cost Books and never drift.
+                </div>
                 <field name="service_ids" readonly="state != 'draft'">
-                  <tree editable="bottom">
+                  <tree editable="bottom" decoration-success="frozen">
                     <field name="proposal_service_id" />
                     <field name="location_id" />
                     <field name="unit_id" />
@@ -168,9 +335,37 @@
                     <field name="weekly_days" />
                     <field name="monthly_days" />
                     <field name="quantity" />
-                    <field name="total_cost" sum="subtotal" />
-                    <field name="total" sum="total" />
+                    <field name="frozen" widget="boolean_toggle" readonly="1" string="Frozen"/>
+                    <field name="effective_unit_cost" string="Unit cost"/>
+                    <field name="effective_total" sum="total" string="Line total"/>
+                    <field name="cost_book_id" optional="hide"/>
+                    <field name="total_cost" optional="hide" string="Live cost"/>
+                    <field name="total" optional="hide" string="Live total"/>
                   </tree>
+                  <form>
+                    <group>
+                      <group>
+                        <field name="proposal_service_id"/>
+                        <field name="quantity"/>
+                        <field name="frozen"/>
+                        <field name="frozen_unit_cost"/>
+                      </group>
+                      <group>
+                        <field name="cost_book_id"/>
+                        <field name="snapshot_date"/>
+                        <field name="effective_total"/>
+                      </group>
+                    </group>
+                    <separator string="Frozen cost breakdown (snapshot)"/>
+                    <field name="snapshot_line_ids">
+                      <tree>
+                        <field name="component_id"/>
+                        <field name="name"/>
+                        <field name="amount" sum="unit cost"/>
+                        <field name="note"/>
+                      </tree>
+                    </field>
+                  </form>
                 </field>
               </page>
               <page name="scopes" string="Scopes">

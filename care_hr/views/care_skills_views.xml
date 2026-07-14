@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ===== Job Skill Requirements + Gap Analysis ===== -->
+    <record id="view_care_job_skill_tree" model="ir.ui.view">
+        <field name="name">care.job.skill.tree</field>
+        <field name="model">care.job.skill</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="coverage &lt; 70" decoration-warning="coverage &gt;= 70 and coverage &lt; 90"
+                  decoration-success="coverage &gt;= 90" editable="bottom">
+                <field name="job_id"/>
+                <field name="skill_id"/>
+                <field name="skill_type_id" readonly="1"/>
+                <field name="required_level_id"/>
+                <field name="criticality"/>
+                <field name="employees_count" string="Employees"/>
+                <field name="covered_count" string="Covered"/>
+                <field name="gap_count" string="Gap"/>
+                <field name="coverage" widget="percentage" string="Coverage"/>
+                <button name="action_view_gap_employees" type="object" string="Who's missing"
+                        icon="fa-users" class="btn-link"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_care_job_skill_search" model="ir.ui.view">
+        <field name="name">care.job.skill.search</field>
+        <field name="model">care.job.skill</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="job_id"/>
+                <field name="skill_id"/>
+                <filter name="critical" string="Critical" domain="[('criticality','=','critical')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="g_job" string="Job" context="{'group_by':'job_id'}"/>
+                    <filter name="g_type" string="Skill Type" context="{'group_by':'skill_type_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_care_job_skill" model="ir.actions.act_window">
+        <field name="name">Job Requirements &amp; Gap</field>
+        <field name="res_model">care.job.skill</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_care_job_skill_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Define required skills per job</p>
+            <p>Set the required skill level for each job position; coverage and gaps are
+               computed automatically against the workforce.</p>
+        </field>
+    </record>
+
+    <!-- ===== Skills Matrix (pivot) ===== -->
+    <record id="view_emp_skill_pivot" model="ir.ui.view">
+        <field name="name">hr.employee.skill.pivot.care</field>
+        <field name="model">hr.employee.skill</field>
+        <field name="arch" type="xml">
+            <pivot string="Skills Matrix" sample="1">
+                <field name="employee_id" type="row"/>
+                <field name="skill_type_id" type="col"/>
+                <field name="level_progress" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+    <record id="view_emp_skill_graph" model="ir.ui.view">
+        <field name="name">hr.employee.skill.graph.care</field>
+        <field name="model">hr.employee.skill</field>
+        <field name="arch" type="xml">
+            <graph string="Skills" type="bar" sample="1">
+                <field name="skill_type_id"/>
+                <field name="level_progress" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_care_skills_matrix" model="ir.actions.act_window">
+        <field name="name">Skills Matrix</field>
+        <field name="res_model">hr.employee.skill</field>
+        <field name="view_mode">pivot,graph,tree</field>
+    </record>
+
+    <!-- ===== Certifications ===== -->
+    <record id="view_emp_skill_cert_tree" model="ir.ui.view">
+        <field name="name">hr.employee.skill.cert.tree</field>
+        <field name="model">hr.employee.skill</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="cert_state == 'expired'"
+                  decoration-warning="cert_state == 'expiring'">
+                <field name="employee_id"/>
+                <field name="skill_id"/>
+                <field name="certified"/>
+                <field name="cert_reference"/>
+                <field name="cert_issue_date"/>
+                <field name="cert_expiry"/>
+                <field name="cert_state" widget="badge"
+                       decoration-success="cert_state == 'valid'"
+                       decoration-warning="cert_state == 'expiring'"
+                       decoration-danger="cert_state == 'expired'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_emp_skill_cert_search" model="ir.ui.view">
+        <field name="name">hr.employee.skill.cert.search</field>
+        <field name="model">hr.employee.skill</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <field name="skill_id"/>
+                <filter name="certified" string="Certified" domain="[('certified','=',True)]"/>
+                <filter name="expiring" string="Expiring" domain="[('cert_state','=','expiring')]"/>
+                <filter name="expired" string="Expired" domain="[('cert_state','=','expired')]"/>
+            </search>
+        </field>
+    </record>
+    <record id="action_care_skills_cert" model="ir.actions.act_window">
+        <field name="name">Certifications</field>
+        <field name="res_model">hr.employee.skill</field>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="view_emp_skill_cert_tree"/>
+        <field name="search_view_id" ref="view_emp_skill_cert_search"/>
+        <field name="domain">[('certified','=',True)]</field>
+    </record>
+
+    <!-- ===== Clean Skills hub menu (under People) ===== -->
+    <menuitem id="menu_care_skills_root" name="Skills Center"
+              parent="care_hr.menu_sec_people" sequence="9" groups="hr.group_hr_user"/>
+
+    <record id="action_skills_dashboard" model="ir.actions.client">
+        <field name="name">Skills Command Center</field>
+        <field name="tag">care_skills_dashboard</field>
+    </record>
+    <menuitem id="menu_care_skills_dashboard" name="Dashboard"
+              parent="menu_care_skills_root" action="action_skills_dashboard" sequence="0"/>
+
+    <menuitem id="menu_care_skills_matrix" name="Skills Matrix"
+              parent="menu_care_skills_root" action="action_care_skills_matrix" sequence="1"/>
+    <menuitem id="menu_care_job_skill" name="Job Requirements &amp; Gap"
+              parent="menu_care_skills_root" action="action_care_job_skill" sequence="2"/>
+    <menuitem id="menu_care_skills_cert" name="Certifications"
+              parent="menu_care_skills_root" action="action_care_skills_cert" sequence="3"/>
+
+    <record id="action_care_skill_catalog" model="ir.actions.act_window">
+        <field name="name">Skills Catalog</field>
+        <field name="res_model">hr.skill</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    <record id="action_care_skill_type" model="ir.actions.act_window">
+        <field name="name">Skill Types</field>
+        <field name="res_model">hr.skill.type</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    <menuitem id="menu_care_skill_catalog" name="Skills Catalog"
+              parent="menu_care_skills_root" action="action_care_skill_catalog" sequence="4"/>
+    <menuitem id="menu_care_skill_type" name="Skill Types"
+              parent="menu_care_skills_root" action="action_care_skill_type"
+              sequence="5" groups="hr.group_hr_manager"/>
+
+    <!-- ===== Skill Assessment ===== -->
+    <record id="view_care_skill_assessment_form" model="ir.ui.view">
+        <field name="name">care.skill.assessment.form</field>
+        <field name="model">care.skill.assessment</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_apply" type="object" string="Apply (update level)"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="skill_id"/>
+                            <field name="skill_type_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="assessor_id"/>
+                            <field name="date"/>
+                            <field name="previous_level_id"/>
+                            <field name="new_level_id"/>
+                        </group>
+                    </group>
+                    <field name="notes" placeholder="Assessment notes..."/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/><field name="activity_ids"/><field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    <record id="view_care_skill_assessment_tree" model="ir.ui.view">
+        <field name="name">care.skill.assessment.tree</field>
+        <field name="model">care.skill.assessment</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'done'">
+                <field name="name"/><field name="date"/><field name="employee_id"/>
+                <field name="skill_id"/><field name="previous_level_id"/><field name="new_level_id"/>
+                <field name="assessor_id"/><field name="state" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_care_skill_assessment" model="ir.actions.act_window">
+        <field name="name">Skill Assessments</field>
+        <field name="res_model">care.skill.assessment</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- ===== Endorsements ===== -->
+    <record id="view_care_skill_endorsement_tree" model="ir.ui.view">
+        <field name="name">care.skill.endorsement.tree</field>
+        <field name="model">care.skill.endorsement</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="employee_id"/><field name="skill_id"/>
+                <field name="endorsed_by"/><field name="date"/><field name="comment"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_care_skill_endorsement" model="ir.actions.act_window">
+        <field name="name">Endorsements</field>
+        <field name="res_model">care.skill.endorsement</field>
+        <field name="view_mode">tree</field>
+    </record>
+
+    <menuitem id="menu_care_skill_assessment" name="Skill Assessments"
+              parent="menu_care_skills_root" action="action_care_skill_assessment" sequence="6"/>
+    <menuitem id="menu_care_skill_endorsement" name="Endorsements"
+              parent="menu_care_skills_root" action="action_care_skill_endorsement" sequence="7"/>
+
+    <record id="cron_care_skill_cert" model="ir.cron">
+        <field name="name">Care HR: Certificate Renewal Reminder</field>
+        <field name="model_id" ref="hr_skills.model_hr_employee_skill"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_cert_reminder()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

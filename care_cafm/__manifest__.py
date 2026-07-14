@@ -1,0 +1,40 @@
+# -*- coding: utf-8 -*-
+{
+    'name': "Care CAFM — Facility Operations",
+    'summary': "Computer-Aided Facility Management: sites & QR locations, service "
+               "lines & teams, work orders with presence-scan timer, corrective "
+               "observations, asset link to accounting, and a role-based mobile app.",
+    'author': "care-kw",
+    'category': 'Services/Facility Management',
+    'version': '17.0.1.0.0',
+    'license': 'LGPL-3',
+    'depends': ['base', 'mail', 'hr', 'project', 'account_asset', 'report_xlsx'],
+    'data': [
+        'security/ir.model.access.csv',
+        'data/sequences.xml',
+        'data/cron.xml',
+        'data/report_qr.xml',
+        'reports/reports.xml',
+        'reports/asset_label.xml',
+        'views/cafm_views.xml',
+        'views/cafm_backend_pro.xml',
+        'views/building_designer.xml',
+        'views/project_asset_views.xml',
+        'views/request_asset_ppm_views.xml',
+        'views/org_views.xml',
+        'views/schedule_views.xml',
+        'data/demo_data.xml',
+        'views/cafm_menus.xml',
+    ],
+    'assets': {
+        'web.assets_backend': [
+            'care_cafm/static/src/dashboard/dashboard.scss',
+            'care_cafm/static/src/dashboard/dashboard.js',
+            'care_cafm/static/src/dashboard/dashboard.xml',
+            'care_cafm/static/src/pick/pick_list.js',
+            'care_cafm/static/src/pick/pick_list.xml',
+        ],
+    },
+    'application': True,
+    'installable': True,
+}

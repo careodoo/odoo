@@ -1,0 +1,422 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================================= -->
+    <!--  SUPERVISOR: stats views for work orders                       -->
+    <!-- ============================================================= -->
+    <record id="view_wo_graph" model="ir.ui.view">
+        <field name="name">care.cafm.workorder.graph</field>
+        <field name="model">care.cafm.workorder</field>
+        <field name="arch" type="xml">
+            <graph string="أوامر العمل" type="bar" sample="1">
+                <field name="service_id"/>
+                <field name="state"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_wo_pivot" model="ir.ui.view">
+        <field name="name">care.cafm.workorder.pivot</field>
+        <field name="model">care.cafm.workorder</field>
+        <field name="arch" type="xml">
+            <pivot string="تحليل أوامر العمل" sample="1">
+                <field name="employee_id" type="row"/>
+                <field name="state" type="col"/>
+                <field name="duration_minutes" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_wo_calendar" model="ir.ui.view">
+        <field name="name">care.cafm.workorder.calendar</field>
+        <field name="model">care.cafm.workorder</field>
+        <field name="arch" type="xml">
+            <calendar string="مواعيد التنفيذ" date_start="deadline" color="employee_id" mode="month">
+                <field name="title"/>
+                <field name="employee_id" filters="1"/>
+                <field name="service_id" filters="1"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- Editable tree for one-click assignment -->
+    <record id="view_wo_assign_tree" model="ir.ui.view">
+        <field name="name">care.cafm.workorder.assign.tree</field>
+        <field name="model">care.cafm.workorder</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom" decoration-danger="is_overdue==True" decoration-muted="state=='cancelled'"
+                  decoration-success="state in ('done','verified')">
+                <field name="name" readonly="1"/>
+                <field name="title"/>
+                <field name="service_id"/>
+                <field name="facility_id"/>
+                <field name="location_id"/>
+                <field name="priority" widget="priority"/>
+                <field name="employee_id"/>
+                <field name="deadline"/>
+                <field name="state" widget="badge"
+                       decoration-info="state in ('new','assigned')" decoration-warning="state=='in_progress'"
+                       decoration-success="state in ('done','verified')"/>
+                <field name="is_overdue" invisible="1"/>
+                <button name="action_assign" type="object" string="إسناد" icon="fa-user-plus"
+                        invisible="state != 'new'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Kanban grouped by employee = a live assignment board -->
+    <record id="view_wo_board_kanban" model="ir.ui.view">
+        <field name="name">care.cafm.workorder.board.kanban</field>
+        <field name="model">care.cafm.workorder</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="employee_id" class="o_kanban_small_column" sample="1">
+                <field name="state"/>
+                <field name="priority"/>
+                <field name="is_overdue"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <strong><field name="title"/></strong>
+                                <span class="badge text-bg-danger float-end" t-if="record.is_overdue.raw_value">متأخرة</span>
+                            </div>
+                            <div class="text-muted"><field name="service_id"/> · <field name="facility_id"/></div>
+                            <div class="o_kanban_record_bottom">
+                                <field name="priority" widget="priority"/>
+                                <span class="badge text-bg-secondary"><field name="state"/></span>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_wo_search_pro" model="ir.ui.view">
+        <field name="name">care.cafm.workorder.search.pro</field>
+        <field name="model">care.cafm.workorder</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="title"/>
+                <field name="employee_id"/>
+                <field name="facility_id"/>
+                <field name="service_id"/>
+                <filter name="open" string="مفتوحة" domain="[('state','not in',('done','verified','cancelled'))]"/>
+                <filter name="overdue" string="متأخرة" domain="[('is_overdue','=',True)]"/>
+                <filter name="unassigned" string="غير مُسندة" domain="[('employee_id','=',False)]"/>
+                <separator/>
+                <filter name="mine" string="مهامي" domain="[('employee_id.user_id','=',uid)]"/>
+                <group expand="1" string="تجميع حسب">
+                    <filter name="group_employee" string="الموظف" context="{'group_by':'employee_id'}"/>
+                    <filter name="group_state" string="الحالة" context="{'group_by':'state'}"/>
+                    <filter name="group_service" string="الخدمة" context="{'group_by':'service_id'}"/>
+                    <filter name="group_facility" string="المرفق" context="{'group_by':'facility_id'}"/>
+                    <filter name="group_priority" string="الأولوية" context="{'group_by':'priority'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_wo_supervisor" model="ir.actions.act_window">
+        <field name="name">لوحة المشرف — إسناد ومتابعة</field>
+        <field name="res_model">care.cafm.workorder</field>
+        <field name="view_mode">kanban,tree,graph,pivot,calendar,form</field>
+        <field name="search_view_id" ref="view_wo_search_pro"/>
+        <field name="context">{'search_default_open':1,'search_default_group_employee':1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">لا توجد مهام بعد</p>
+            <p>هذه لوحة المشرف: اسحب المهام بين الموظفين لإسنادها، أو بدّل للجدول لإسناد سريع، وللرسم البياني لمتابعة الأداء.</p>
+        </field>
+    </record>
+    <record id="action_wo_supervisor_board" model="ir.actions.act_window.view">
+        <field name="sequence">1</field>
+        <field name="view_mode">kanban</field>
+        <field name="view_id" ref="view_wo_board_kanban"/>
+        <field name="act_window_id" ref="action_wo_supervisor"/>
+    </record>
+    <record id="action_wo_supervisor_tree" model="ir.actions.act_window.view">
+        <field name="sequence">2</field>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="view_wo_assign_tree"/>
+        <field name="act_window_id" ref="action_wo_supervisor"/>
+    </record>
+
+    <!-- Maintenance-only work orders -->
+    <record id="action_maintenance_wo" model="ir.actions.act_window">
+        <field name="name">أوامر الصيانة</field>
+        <field name="res_model">care.cafm.workorder</field>
+        <field name="view_mode">kanban,tree,graph,pivot,calendar,form</field>
+        <field name="domain">[('service_type','=','maintenance')]</field>
+        <field name="search_view_id" ref="view_wo_search_pro"/>
+        <field name="context">{'search_default_open':1}</field>
+    </record>
+
+    <!-- ============================================================= -->
+    <!--  EMPLOYEE DASHBOARD (from Employees, linked to the user)       -->
+    <!-- ============================================================= -->
+    <record id="view_employee_form_cafm" model="ir.ui.view">
+        <field name="name">hr.employee.form.cafm</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button name="action_view_cafm_workorders" type="object" class="oe_stat_button" icon="fa-wrench">
+                    <field name="cafm_workorder_count" widget="statinfo" string="مهام CAFM"/>
+                </button>
+            </div>
+            <notebook position="inside">
+                <page string="مهام CAFM" name="cafm">
+                    <group>
+                        <group>
+                            <field name="cafm_open_count"/>
+                            <field name="cafm_overdue_count"/>
+                        </group>
+                        <group>
+                            <field name="cafm_done_count"/>
+                            <field name="cafm_service_types"/>
+                        </group>
+                    </group>
+                </page>
+            </notebook>
+        </field>
+    </record>
+
+    <!-- CAFM team members = employees, as a board with their load -->
+    <record id="view_employee_kanban_cafm" model="ir.ui.view">
+        <field name="name">hr.employee.kanban.cafm</field>
+        <field name="model">hr.employee</field>
+        <field name="arch" type="xml">
+            <kanban class="o_hr_employee_kanban" sample="1">
+                <field name="cafm_open_count"/>
+                <field name="cafm_overdue_count"/>
+                <field name="cafm_service_types"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click o_kanban_record_has_image_fill">
+                            <div class="o_kanban_record_body">
+                                <strong><field name="name"/></strong>
+                                <div class="text-muted"><field name="job_title"/></div>
+                                <div class="text-muted"><field name="cafm_service_types"/></div>
+                                <div class="mt-2">
+                                    <span class="badge text-bg-info">مفتوحة: <field name="cafm_open_count"/></span>
+                                    <span class="badge text-bg-danger" t-if="record.cafm_overdue_count.raw_value">متأخرة: <field name="cafm_overdue_count"/></span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    <record id="action_cafm_team_board" model="ir.actions.act_window">
+        <field name="name">فريق العمل — الأحمال</field>
+        <field name="res_model">hr.employee</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('user_id','!=',False)]</field>
+        <field name="context">{}</field>
+    </record>
+
+    <!-- ============================================================= -->
+    <!--  CLIENTS + PROJECTS  (each opens its buildings/facilities)     -->
+    <!-- ============================================================= -->
+    <record id="view_partner_form_cafm" model="ir.ui.view">
+        <field name="name">res.partner.form.cafm</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button name="action_view_cafm_facilities" type="object" class="oe_stat_button" icon="fa-building"
+                        invisible="cafm_facility_count == 0">
+                    <field name="cafm_facility_count" widget="statinfo" string="مرافق CAFM"/>
+                </button>
+            </div>
+        </field>
+    </record>
+
+    <record id="view_cafm_clients_tree" model="ir.ui.view">
+        <field name="name">res.partner.cafm.clients.tree</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <tree js_class="cafm_pick_list">
+                <field name="name"/><field name="phone"/><field name="email"/><field name="city"/>
+                <field name="cafm_facility_count" string="المرافق"/>
+                <field name="cafm_can_add_workers" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_cafm_clients" model="ir.actions.act_window">
+        <field name="name">العملاء</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="view_ids" eval="[(5,0,0),
+            (0,0,{'view_mode':'tree','view_id':ref('view_cafm_clients_tree')}),
+            (0,0,{'view_mode':'kanban'}),(0,0,{'view_mode':'form'})]"/>
+        <field name="domain">['|',('cafm_facility_ids','!=',False),('is_cafm_client','=',True)]</field>
+        <field name="context">{'default_is_company':True,'default_is_cafm_client':True,'cafm_pick_action':'care_cafm.action_cafm_client_pick'}</field>
+        <field name="help" type="html"><p class="o_view_nocontent_smiling_face">لا عملاء بعد</p>
+            <p>أضف عميلاً جديداً، أو استخدم زر «ربط موجود» بجانب «جديد» لاختيار جهة اتصال مسجّلة مسبقاً.</p></field>
+    </record>
+
+    <!-- Wizard: register an existing contact as a CAFM client -->
+    <record id="view_cafm_client_pick_form" model="ir.ui.view">
+        <field name="name">care.cafm.client.pick.form</field>
+        <field name="model">care.cafm.client.pick</field>
+        <field name="arch" type="xml">
+            <form string="اختيار عميل موجود">
+                <group>
+                    <field name="partner_id"
+                           options="{'no_create_edit': False}"
+                           context="{'default_is_company': True}"/>
+                    <field name="create_facility"/>
+                    <field name="facility_name" invisible="not create_facility"
+                           required="create_facility"/>
+                </group>
+                <footer>
+                    <button string="تسجيل كعميل" type="object" name="action_confirm" class="btn-primary"/>
+                    <button string="إلغاء" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="action_cafm_client_pick" model="ir.actions.act_window">
+        <field name="name">اختيار عميل موجود</field>
+        <field name="res_model">care.cafm.client.pick</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+    <!-- picker now surfaced as a «ربط موجود» button beside New in the list view -->
+
+
+    <!-- Client settings on the contact form: CAFM flags + can-add-workers -->
+    <record id="view_partner_form_cafm" model="ir.ui.view">
+        <field name="name">res.partner.form.cafm</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/notebook" position="inside">
+                <page string="🏢 CARE CAFM" name="cafm_client">
+                    <group>
+                        <group string="إعدادات العميل">
+                            <field name="is_cafm_client"/>
+                            <field name="cafm_can_add_workers"/>
+                            <field name="cafm_facility_count"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Actions-menu (⚙, beside New) entry to pick an existing contact as client -->
+    <record id="action_server_pick_client" model="ir.actions.server">
+        <field name="name">➕ اختيار عميل موجود</field>
+        <field name="model_id" ref="base.model_res_partner"/>
+        <field name="binding_model_id" ref="base.model_res_partner"/>
+        <field name="binding_view_types">list,kanban</field>
+        <field name="state">code</field>
+        <field name="code">action = env.ref('care_cafm.action_cafm_client_pick').sudo().read()[0]</field>
+    </record>
+
+    <!-- Project picker: choose an existing project as a CAFM project -->
+    <record id="view_cafm_project_pick_form" model="ir.ui.view">
+        <field name="name">care.cafm.project.pick.form</field>
+        <field name="model">care.cafm.project.pick</field>
+        <field name="arch" type="xml">
+            <form string="اختيار مشروع موجود">
+                <group><field name="project_id" options="{'no_create_edit': False}"/></group>
+                <footer>
+                    <button string="تسجيل كمشروع CAFM" type="object" name="action_confirm" class="btn-primary"/>
+                    <button string="إلغاء" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="action_cafm_project_pick" model="ir.actions.act_window">
+        <field name="name">اختيار مشروع موجود</field>
+        <field name="res_model">care.cafm.project.pick</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+    <!-- picker now surfaced as a «ربط موجود» button beside New in the list view -->
+
+    <record id="action_server_pick_project" model="ir.actions.server">
+        <field name="name">➕ اختيار مشروع موجود</field>
+        <field name="model_id" ref="project.model_project_project"/>
+        <field name="binding_model_id" ref="project.model_project_project"/>
+        <field name="binding_view_types">list,kanban</field>
+        <field name="state">code</field>
+        <field name="code">action = env.ref('care_cafm.action_cafm_project_pick').sudo().read()[0]</field>
+    </record>
+
+    <record id="view_cafm_projects_tree" model="ir.ui.view">
+        <field name="name">project.project.cafm.tree</field>
+        <field name="model">project.project</field>
+        <field name="arch" type="xml">
+            <tree js_class="cafm_pick_list">
+                <field name="name"/><field name="partner_id"/><field name="user_id"/>
+                <field name="cafm_facility_count" string="المرافق"/>
+                <field name="cafm_team_count" string="الفرق"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_cafm_projects" model="ir.actions.act_window">
+        <field name="name">المشاريع</field>
+        <field name="res_model">project.project</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="view_ids" eval="[(5,0,0),
+            (0,0,{'view_mode':'tree','view_id':ref('view_cafm_projects_tree')}),
+            (0,0,{'view_mode':'kanban'}),(0,0,{'view_mode':'form'})]"/>
+        <field name="domain">['|',('cafm_facility_ids','!=',False),('is_cafm_project','=',True)]</field>
+        <field name="context">{'default_is_cafm_project':True,'cafm_pick_action':'care_cafm.action_cafm_project_pick'}</field>
+    </record>
+
+    <!-- Project form: CARE CAFM structure (teams + facilities → buildings → floors) -->
+    <record id="view_project_form_cafm" model="ir.ui.view">
+        <field name="name">project.project.form.cafm</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" icon="fa-building-o" type="object"
+                        name="action_cafm_facilities" invisible="cafm_facility_count == 0">
+                    <field name="cafm_facility_count" widget="statinfo" string="المرافق"/>
+                </button>
+                <button class="oe_stat_button" icon="fa-th-large" type="object"
+                        name="action_cafm_buildings" invisible="cafm_building_count == 0">
+                    <field name="cafm_building_count" widget="statinfo" string="المباني"/>
+                </button>
+                <button class="oe_stat_button" icon="fa-users" type="object"
+                        name="action_cafm_teams" invisible="cafm_team_count == 0">
+                    <field name="cafm_team_count" widget="statinfo" string="الفرق"/>
+                </button>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="🏢 CARE CAFM" name="cafm">
+                    <field name="is_cafm_project"/>
+                    <separator string="فرق المشروع — اختر/أنشئ فرق المشروع"/>
+                    <field name="cafm_team_ids">
+                        <tree editable="bottom">
+                            <field name="name"/>
+                            <field name="service_id"/>
+                            <field name="facility_id"/>
+                            <field name="supervisor_id"/>
+                            <field name="member_count"/>
+                        </tree>
+                    </field>
+                    <separator string="المرافق (المرفق ← المبنى ← الدور ← الموقع)"/>
+                    <field name="cafm_facility_ids">
+                        <tree>
+                            <field name="name"/>
+                            <field name="partner_id"/>
+                            <field name="building_count"/>
+                            <field name="location_count"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ============================================================= -->
+    <!--  MENUS: الخدمات + الصيانة + المشرف + الفريق                    -->
+    <!-- Menu tree lives in views/cafm_menus.xml -->
+</odoo>

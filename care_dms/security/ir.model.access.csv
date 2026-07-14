@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_dms_category_user,care.dms.category.user,model_care_dms_category,hr.group_hr_user,1,0,0,0
+access_dms_category_mgr,care.dms.category.mgr,model_care_dms_category,hr.group_hr_manager,1,1,1,1
+access_dms_document_user,care.dms.document.user,model_care_dms_document,hr.group_hr_user,1,1,1,0
+access_dms_document_mgr,care.dms.document.mgr,model_care_dms_document,hr.group_hr_manager,1,1,1,1
+access_dms_dashboard_user,care.dms.dashboard.user,model_care_dms_dashboard,hr.group_hr_user,1,0,0,0
+access_dms_dashboard_mgr,care.dms.dashboard.mgr,model_care_dms_dashboard,hr.group_hr_manager,1,1,1,1

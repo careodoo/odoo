@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_disc_type_tree" model="ir.ui.view">
+        <field name="name">care.disciplinary.type.tree</field>
+        <field name="model">care.disciplinary.type</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name"/><field name="default_action"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_disc_type" model="ir.actions.act_window">
+        <field name="name">أنواع المخالفات</field>
+        <field name="res_model">care.disciplinary.type</field>
+        <field name="view_mode">tree</field>
+    </record>
+
+    <record id="view_disc_action_form" model="ir.ui.view">
+        <field name="name">care.disciplinary.action.form</field>
+        <field name="model">care.disciplinary.action</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_issue" type="object" string="إصدار الإجراء" class="oe_highlight"
+                            invisible="state != 'draft'"/>
+                    <button name="action_acknowledge" type="object" string="إقرار العامل"
+                            invisible="state != 'issued'"/>
+                    <button name="action_appeal" type="object" string="تظلّم"
+                            invisible="state not in ('issued','acknowledged')"/>
+                    <button name="action_close" type="object" string="إغلاق"
+                            invisible="state in ('draft','closed','cancelled')"/>
+                    <button name="action_cancel" type="object" string="إلغاء" invisible="state in ('closed','cancelled')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,issued,acknowledged,closed"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" text="فصل" bg_color="bg-danger" invisible="action != 'termination'"/>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="department_id" readonly="1"/>
+                            <field name="type_id"/>
+                            <field name="action"/>
+                            <field name="level" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="date"/>
+                            <field name="amount" invisible="action != 'deduction'"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="issued_by" readonly="1"/>
+                            <field name="ack_date" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="التفاصيل">
+                        <field name="description" placeholder="وصف المخالفة..."/>
+                        <field name="corrective" placeholder="الإجراء التصحيحي المطلوب..."/>
+                        <field name="attachment_ids" widget="many2many_binary"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter"><field name="message_follower_ids"/><field name="activity_ids"/><field name="message_ids"/></div>
+            </form>
+        </field>
+    </record>
+    <record id="view_disc_action_tree" model="ir.ui.view">
+        <field name="name">care.disciplinary.action.tree</field>
+        <field name="model">care.disciplinary.action</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="action=='termination'" decoration-warning="action in ('suspension','warning')">
+                <field name="name"/><field name="employee_id"/><field name="department_id"/>
+                <field name="type_id"/><field name="action"/><field name="level"/>
+                <field name="date"/><field name="state" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_disc_action_search" model="ir.ui.view">
+        <field name="name">care.disciplinary.action.search</field>
+        <field name="model">care.disciplinary.action</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/><field name="department_id"/><field name="type_id"/>
+                <filter name="issued" string="صادرة" domain="[('state','=','issued')]"/>
+                <filter name="term" string="فصل" domain="[('action','=','termination')]"/>
+                <group expand="0" string="تجميع">
+                    <filter name="g_emp" string="العامل" context="{'group_by':'employee_id'}"/>
+                    <filter name="g_dept" string="القسم" context="{'group_by':'department_id'}"/>
+                    <filter name="g_action" string="الإجراء" context="{'group_by':'action'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_disc_action" model="ir.actions.act_window">
+        <field name="name">الإجراءات التأديبية</field>
+        <field name="res_model">care.disciplinary.action</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_disc_action_search"/>
+    </record>
+</odoo>

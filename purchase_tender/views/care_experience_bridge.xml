@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inject the tender pricing link into the contract (care.experience) form.
+         Declared here (not in care_experience) to avoid a circular dependency. -->
+    <record id="care_experience_view_form_tender" model="ir.ui.view">
+        <field name="name">care.experience.form.tender</field>
+        <field name="model">care.experience</field>
+        <field name="inherit_id" ref="care_experience.care_experience_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='pricing_source']/field[@name='proposal_id']" position="after">
+                <field name="tender_id"
+                       invisible="contract_type != 'government'"
+                       options="{'no_create': True}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

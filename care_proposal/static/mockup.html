@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="ar" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Care Proposal — Redesign Mockup</title>
+<style>
+  body{margin:0;background:#0f172a;color:#e2e8f0;font-family:system-ui,Segoe UI,Arial}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px}
+  h1,h2,h3{color:#7dd3fc;border-bottom:1px solid #1e293b;padding-bottom:4px}
+  table{border-collapse:collapse;width:100%;margin:12px 0}
+  th,td{border:1px solid #334155;padding:6px 8px;text-align:left;font-size:13px}
+  th{background:#1e293b}
+  pre{background:#020617;color:#bbf7d0;padding:14px;border-radius:8px;overflow:auto;
+      font-family:"Cascadia Code","DejaVu Sans Mono",Consolas,monospace;font-size:12.5px;line-height:1.35}
+  code{font-family:"Cascadia Code","DejaVu Sans Mono",Consolas,monospace}
+  a{color:#7dd3fc}
+  .hint{color:#94a3b8;font-size:13px;margin:8px 0 20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hint">Care Proposal — Redesign &amp; Full-Screen Mockup (rendered)</div>
+  <div id="out"><pre id="raw"># Care Proposal — Redesign &amp; Full-Screen Mockup (v1 Draft)
+
+&gt; Goal: a fast, easy, accurate, deep pricing &amp; proposal system with a strong
+&gt; dashboard, strong CRM link, per-customer service costs, frozen historical
+&gt; pricing, duplication/revisions, and per-company service-type-aware reports.
+
+---
+
+## 0. Root problems found in the current module (why we redesign)
+
+| # | Problem | Evidence |
+|---|---------|----------|
+| 1 | **Old proposals change when a service cost is edited** | `proposal.service.line.total_cost` is a `related` live-link (proposal_service_line.py:18-20); `compute_service_amounts()` reads the **live master** `line_ids` (proposal.py:270-298) |
+| 2 | **Same service can't cost differently per customer** | `proposal.service` is global, has no `partner_id` (proposal_service.py) |
+| 3 | **No duplicate / revision feature** | no `copy()` / action |
+| 4 | **No dashboard / analytics** | no OWL dashboard in static/ |
+| 5 | **Weak CRM link** | only `lead_id` + count; no stage/revenue/win-loss sync (crm_lead.py) |
+| 6 | **Report price table mismatched to service type** | hard-coded manpower columns for all rows (customer_proposal.xml:164-210) |
+| 7 | **Reports not per-company** | hard-coded logos (customer_proposal.xml:39-42) |
+| 8 | Tangled totals, duplicate material/equipment models, hard-coded 10 cost types in 3 files, no currency, no search view, unreachable `contracted` state, manual `total_commission_amount`, barcode collision bug | multiple |
+
+---
+
+## 1. New architecture (the backbone of the mockup)
+
+```
+                         ┌─────────────────────────────┐
+                         │  SERVICE CATALOG (master)   │   definition only:
+                         │  proposal.service           │   name, type, UoM,
+                         │  + cost COMPONENT template   │   default structure
+                         └──────────────┬──────────────┘
+                                        │ has many dated cost versions /
+                                        │ per-customer overrides
+                         ┌──────────────▼──────────────┐
+                         │  COST BOOK (per customer)   │   proposal.service.cost
+                         │  partner_id (or "default"), │   effective_date, currency
+                         │  component rows + amounts    │   → "this service costs X
+                         └──────────────┬──────────────┘     for THIS customer"
+                                        │  pick + FREEZE (snapshot)
+                                        ▼
+   ┌───────────────────────────────────────────────────────────────────────┐
+   │  PROPOSAL  (proposal.proposal)                                          │
+   │   service lines → SNAPSHOT of component costs (frozen, never re-reads)  │
+   │   cost lines (unified material/equipment/...) → snapshot                │
+   │   pricing = cost  +  margin strategy  →  customer price                 │
+   │   revision_of_id / version, duplicate(), currency_id (Monetary)        │
+   └───────────────────────────────────────────────────────────────────────┘
+```
+
+**Three rules that kill the #1 bug:**
+1. The proposal stores its **own copy** of every cost component (snapshot at add-time).
+2. Totals compute **only** from proposal-local snapshots — never from the master.
+3. A "Re-sync from catalog" button is the *only* way master changes enter an existing proposal (explicit, never silent).
+
+**Per-customer cost:** the Cost Book keyed by `(service, partner, effective_date)`; a "default" book is the fallback. Picking a service in a proposal pulls the right book for that customer &amp; date, then freezes it.
+
+---
+
+## 2. SCREEN MAP (all screens to mock)
+
+1. Dashboard (landing)
+2. Proposals — list / kanban / calendar
+3. Proposal form — header + tabs
+4. Pricing Workspace (the new pricing screen)
+5. Service Catalog (master)
+6. Customer Cost Book (per-customer pricing)
+7. CRM Lead — proposal integration
+8. Duplicate / New Revision dialog
+9. Customer Proposal PDF (service-type-aware, per-company)
+10. Settings / configuration
+
+---
+
+## 3. DASHBOARD  (OWL, landing screen)
+
+```
+┌ PROPOSALS ───────────────────────────── [Company ▾] [This Quarter ▾] [⟳] ┐
+│                                                                            │
+│  ┌ Pipeline Value ┐ ┌ Win Rate ┐ ┌ Avg Margin ┐ ┌ Expiring ≤7d ┐ ┌ Await ┐│
+│  │  KWD 1,240,500 │ │  38 %    │ │   22.4 %   │ │     6        │ │ Appr 4││
+│  │  ▲ 12% vs LQ   │ │ 19/50 won│ │ ▼ 1.1 pts  │ │  KWD 88,200 │ │       ││
+│  └────────────────┘ └──────────┘ └────────────┘ └─────────────┘ └───────┘│
+│                                                                            │
+│  ┌ Pipeline by Stage ──────────────┐  ┌ Value by Service Type ──────────┐ │
+│  │ Draft     ███████ 14  120k       │  │ Cleaning    ████████████ 540k   │ │
+│  │ Submitted ████ 8     90k         │  │ Security    ███████ 320k        │ │
+│  │ Approval  ██ 4       62k         │  │ Manpower    █████ 210k          │ │
+│  │ Won       █████████ 19  410k     │  │ Hospitality ███ 95k             │ │
+│  │ Lost      ███ 7      80k         │  │ Other       ██ 75k              │ │
+│  └──────────────────────────────────┘  └──────────────────────────────────┘ │
+│                                                                            │
+│  ┌ Monthly Trend (value &amp; count) ───────────────────────────────────────┐ │
+│  │  600k ┤            ╭─╮                                                 │ │
+│  │  400k ┤     ╭─╮   ╭╯ ╰╮   ╭─╮     proposals ●  won ●                   │ │
+│  │  200k ┤  ╭─╮│ │╭─╮│   │╭─╮│ │                                          │ │
+│  │       └──┴─┴┴─┴┴─┴┴───┴┴─┴┴─┴──  Jan Feb Mar Apr May Jun              │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                            │
+│  ┌ Top Customers (value) ──────────┐  ┌ Needs Attention ────────────────┐ │
+│  │ 1 Ministry of Health   210k 4   │  │ ⚠ 6 expiring in 7 days          │ │
+│  │ 2 KOC                  180k 3   │  │ ⏳ 4 awaiting your approval       │ │
+│  │ 3 Amiri Diwan          145k 2   │  │ ✎ 3 with margin &lt; 10% (review)  │ │
+│  │ 4 Municipality          98k 5   │  │ ↻ 2 reference cost outdated      │ │
+│  └──────────────────────────────────┘  └──────────────────────────────────┘ │
+│                                                                            │
+│  KPIs row: Avg cycle draft→won 9.4d │ Approval SLA 1.8d │ Expected value  │
+│            (Σ margin×win%) KWD 286k │ Revisions/proposal 1.7              │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+Every card is clickable → filtered list. KPIs: pipeline value, win rate, avg
+margin, expiring, awaiting approval, avg cycle time, approval SLA, expected
+value (margin × win-probability), revisions per proposal.
+
+---
+
+## 4. PROPOSALS — LIST / KANBAN
+
+```
+┌ Proposals ───── [New] ───────────── Filters: [My] [Awaiting me] [Expiring] [Won] ┐
+│ Search ▸ customer, ref, service type, salesperson…           [≣ List][▦ Kanban] │
+├──────┬───────────────┬──────────────┬─────────┬────────┬────────┬───────┬───────┤
+│ Ref  │ Customer      │ Service Type │ Value   │ Margin │ Valid  │ Stage │ Rev   │
+├──────┼───────────────┼──────────────┼─────────┼────────┼────────┼───────┼───────┤
+│PROP… │ Ministry Health│ Cleaning    │ 210,000 │ 24% ●  │ 12 Jul │ Won ● │ v2    │
+│PROP… │ KOC           │ Security     │  88,200 │  9% ▲  │ 28 Jun │ Appr ●│ v1    │
+│PROP… │ Amiri Diwan   │ Hospitality  │  41,000 │ 31% ●  │ 05 Jul │ Draft │ v1    │
+└──────┴───────────────┴──────────────┴─────────┴────────┴────────┴───────┴───────┘
+  Margin badge: green ≥20% · amber 10–20% · red &lt;10%   (● won  ▲ review)
+```
+
+Kanban columns = stages (Draft · Submitted · Approval · Won · Lost), each card:
+customer, value, margin badge, validity countdown, salesperson avatar.
+
+---
+
+## 5. PROPOSAL FORM (header + tabs)
+
+```
+┌ PROP00231 · Ministry of Health — Cleaning (v2) ────────────────────────────────┐
+│ [Submit] [Send ✉] [Approve] [Reject] [Won] · [Duplicate] [New Revision] [⋯]    │
+│ Stage:  Draft ─ Submitted ─ ●Approval ─ Approved ─ Won            margin 24% ●  │
+├────────────────────────────────────────────────────────────────────────────────┤
+│ Customer  Ministry of Health ▾        │ Service Type  Cleaning ▾                 │
+│ Contact   Ahmed Ali / +965 …          │ Site / City   Sabah Hospital / Kuwait    │
+│ Proposal# PROP00231   Date 22-Jun     │ Mobilization  01-Aug-2026                │
+│ Valid to  12-Jul-2026  (20 days) ⏳   │ Period        12 months   Billing Monthly│
+│ CRM Lead  OPP/Cleaning MoH ↗          │ Currency      KWD                        │
+│ Salesperson  ◐ Sara                   │ Revision of   PROP00231 v1 ↗             │
+├── Tabs ────────────────────────────────────────────────────────────────────────┤
+│  ▸ Pricing   ▸ Services   ▸ Manpower   ▸ Materials &amp; Equip   ▸ Transport         │
+│  ▸ Scope     ▸ Terms      ▸ Approvals  ▸ Print Options       ▸ Analysis          │
+├────────────────────────────────────────────────────────────────────────────────┤
+│  ┌ Totals (always-visible side panel) ───────────────────────────────────────┐  │
+│  │  Cost   KWD 159,600     Margin  KWD 50,400  (24%)     Price  KWD 210,000   │  │
+│  │  Commission  2,100      Expected (×win 60%)  KWD 30,240                    │  │
+│  └────────────────────────────────────────────────────────────────────────────┘  │
+│  💬 Chatter / activities / followers                                            │
+└────────────────────────────────────────────────────────────────────────────────┘
+```
+
+Notes vs today: currency everywhere, revision lineage, always-visible Totals
+panel, "Duplicate"/"New Revision" buttons, CRM lead inline, salesperson.
+
+---
+
+## 6. PRICING WORKSPACE  (the new core screen — replaces tangled Pricing tab)
+
+```
+┌ Pricing Workspace — PROP00231 ─────────────────────── [↻ Re-sync catalog] [⚙] ┐
+│ Strategy: ( ) Cost-plus %   (•) Target margin %   ( ) Target price   ( ) Manual │
+│ Global margin ▸ [ 24 % ]   Round to ▸ [ 1 KWD ]   Apply to ▸ [All lines ▾]      │
+├──────────────────────────────────────────────────────────────────────────────────┤
+│ Service line        Qty │  Unit cost  │ +Mat +Equip +Trans │ Cost/u │ Margin │ Price/u │ Total   │
+│ (snapshot, frozen)      │  (frozen)   │  (allocated)       │        │        │         │         │
+├─────────────────────┼─────┼───────────┼────────────────────┼────────┼────────┼─────────┼─────────┤
+│ Cleaner – day shift  60 │   180.000   │  +12  +4   +6      │ 202.0  │ 24% ▸ │ 250.5   │ 15,030  │
+│ Cleaner – night      20 │   195.000   │  +12  +4   +9      │ 220.0  │ 18% ▸ │ 259.6   │  5,192  │
+│ Supervisor            4 │   420.000   │  +0   +0   +6      │ 426.0  │ 30% ▸ │ 554.0   │  2,216  │
+├─────────────────────┴─────┴───────────┴────────────────────┴────────┴────────┴─────────┴─────────┤
+│  ⚠ "Cleaner – night" margin 18% &lt; threshold 20% → manager approval on submit     │
+│                                                                                    │
+│  Cost build-up (selected line) ───────────┐   Scenarios ─────────────────────┐    │
+│  Salary        140.0                       │   Economy   margin 15%  198,000  │    │
+│  Residency      18.0                       │ ● Standard  margin 24%  210,000  │    │
+│  Accommodation  12.0    Mat allocated 12   │   Premium   margin 32%  228,000  │    │
+│  Uniform         6.0    Equip alloc.   4   │   [Save scenario] [Compare]      │    │
+│  Insurance       4.0    Trans alloc.   6   └──────────────────────────────────┘    │
+│  ── component snapshot (editable per-proposal, never touches catalog) ──            │
+└──────────────────────────────────────────────────────────────────────────────────┘
+```
+
+Ideas baked in: 4 margin strategies (cost-plus / target-margin / target-price /
+manual), per-line margin override, round-to, allocation of material/equipment/
+transport shown inline, **cost build-up panel** from the *frozen snapshot*,
+**price scenarios** (Economy/Standard/Premium), margin-guard warning, and the
+explicit **Re-sync catalog** (the only path for master changes to enter).
+
+---
+
+## 7. SERVICE CATALOG (master — definition only)
+
+```
+┌ Service Catalog ─────────────────────────────────────────── [New service] ┐
+│ Cleaner – day shift   ·  type: Manpower  ·  code CLN-D  ·  UoM: worker      │
+├────────────────────────────────────────────────────────────────────────────┤
+│ Default cost components (template)        Cost books:  [Default] [+ customer]│
+│  Salary         140.0                     ┌ Books for this service ────────┐ │
+│  Residency       18.0                     │ Default            140 base    │ │
+│  Accommodation   12.0                     │ Ministry of Health  155  (eff  │ │
+│  Uniform          6.0                     │                     01-Jan-26) │ │
+│  Insurance        4.0                     │ KOC                 132        │ │
+│  [+ component]   ── types are CONFIG ──   └────────────────────────────────┘ │
+│                                                                              │
+│  ⓘ Editing here changes only NEW proposals / books. Existing proposals are  │
+│     frozen. Use "Re-sync" inside a proposal to pull new costs deliberately.  │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 8. CUSTOMER COST BOOK (per-customer pricing — solves the per-customer pain)
+
+```
+┌ Cost Book · Ministry of Health ───────────────────────────── [New version] ┐
+│ Service: Cleaner – day shift          Effective: 01-Jan-2026   Currency KWD  │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Component      │ Default │ This customer │ Δ      │ Note                       │
+│ Salary         │ 140.0   │ 155.0         │ +15.0  │ site allowance             │
+│ Residency      │  18.0   │  18.0         │  —     │                            │
+│ Accommodation  │  12.0   │  20.0         │  +8.0  │ on-site housing            │
+│ Uniform        │   6.0   │   6.0         │  —     │                            │
+│ ───────────────┼─────────┼───────────────┼────────┼──────────────────────────  │
+│ Total / worker │ 176.0   │ 199.0         │ +23.0  │                            │
+│                                                                              │
+│ Version history:  v3 (01-Jan-26 active) · v2 (01-Jul-25) · v1 (01-Jan-25)    │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+Same service, different cost per customer, with dated versions. A proposal
+picks the active version for its customer &amp; date, then **freezes** it.
+
+---
+
+## 9. CRM LEAD — stronger integration
+
+```
+┌ Opportunity · Cleaning MoH ─────────── Stage: ●Proposition ──────────────────┐
+│ [Create Proposal ▾]  [New Revision]                Proposals ⬚ 2   Won ⬚ 1   │
+│  ▾ menu: blank · from template · copy winning bid                            │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Expected revenue  KWD 210,000  ⟵ auto from winning/best proposal             │
+│ Proposals on this opportunity:                                              │
+│   PROP00231 v2  Cleaning  210,000  24%  ●Approval   [★ mark winning]          │
+│   PROP00231 v1  Cleaning  198,000  19%  Superseded                           │
+│   PROP00188     Security   88,200   9%  Lost                                 │
+│                                                                              │
+│  Sync rules:  proposal Won → lead Won + revenue ·  lead Lost → proposals     │
+│  Lost ·  winning_proposal_id ★ drives expected_revenue · activities mirrored │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+Adds: stage/win-loss sync both ways, `winning_proposal_id`, expected_revenue
+rollup, create-from-template wizard, mirrored activities/timeline.
+
+---
+
+## 10. DUPLICATE / NEW REVISION dialog
+
+```
+┌ Duplicate proposal ───────────────────────────────┐
+│ ( ) Exact copy (new ref, Draft)                    │
+│ (•) New revision of PROP00231  → becomes v3        │
+│ ( ) Copy to another customer ▸ [ select… ]         │
+│      └ re-price using that customer's Cost Book     │
+│ [x] copy services   [x] cost lines   [ ] manual    │
+│     price overrides   [x] scope/terms              │
+│                              [Cancel]  [Create →]   │
+└────────────────────────────────────────────────────┘
+```
+
+---
+
+## 11. CUSTOMER PROPOSAL PDF (per-company, service-type-aware)
+
+```
+┌─────────────── [ COMPANY LOGO from res.company ] ──────────────┐
+│  Proposal for: Ministry of Health           Ref PROP00231 v2   │
+│  Valid until 12-Jul-2026                    Date 22-Jun-2026   │
+├────────────────────────────────────────────────────────────────┤
+│  SCOPE OF WORK …                                               │
+│                                                                │
+│  PRICE TABLE — rendered PER SERVICE TYPE (fixes column bug):   │
+│                                                                │
+│  ▸ Manpower services                                          │
+│   # │ Location │ Role        │ Hrs/d │ Days/wk │ Qty │ Price │ Total │
+│   1 │ Sabah H. │ Cleaner day │   8   │    6    │ 60  │ 250.5 │ 15,030│
+│                                                                │
+│  ▸ Fixed services (no hrs/days columns shown)                 │
+│   # │ Location │ Service          │ Unit  │ Qty │ Price │ Total │
+│   1 │ Sabah H. │ Deep disinfection│ visit │  4  │ 900   │ 3,600 │
+│                                                                │
+│  ▸ Materials &amp; Equipment (if included)                        │
+│                                              GRAND TOTAL  210,000│
+├────────────────────────────────────────────────────────────────┤
+│  TERMS · ACCEPTANCE (signature)   [ COMPANY footer + QR ]      │
+└────────────────────────────────────────────────────────────────┘
+```
+
+Fixes: columns chosen by `service.type` (manpower vs fixed vs unit-based);
+header/footer/logo pulled from `res.company` (or a per-company report profile);
+xlsx invalid `cleaning`/`commission` rows removed and driven by config types.
+
+---
+
+## 12. SETTINGS
+
+```
+┌ Proposal Settings ─────────────────────────────────────────────┐
+│ Pricing                                                        │
+│   Default margin strategy ▸ Target margin   Default 20 %       │
+│   Margin-guard threshold ▸ 10 %  → require manager approval    │
+│   Round customer price to ▸ 1.000                              │
+│ Cost components (configurable types) ▸ [salary, residency, …] │
+│ Approval matrix ▸ by amount (≤50k auto · 50–200k mgr · &gt;200k GM)│
+│ CRM ▸ [x] sync stage  [x] rollup revenue  [x] mark lead won    │
+│ Reports ▸ per-company branding profiles  [Manage]             │
+│ Numbering ▸ PROP##### · Revisions as vN                       │
+└────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 13. Genius / value-add ideas list (to discuss)
+
+- **Margin strategies** (cost-plus / target-margin / target-price / manual) + round-to.
+- **Price scenarios** Economy/Standard/Premium with one-click compare.
+- **Margin guard** → auto-route to manager approval below threshold.
+- **Approval matrix by amount** (auto / manager / GM).
+- **Expected value** = margin × win-probability (feeds dashboard &amp; CRM).
+- **Customer Cost Book** with dated versions (per-customer cost, frozen snapshots).
+- **Re-sync from catalog** = the only, explicit way master edits enter a live proposal.
+- **Revisions (vN)** with side-by-side compare of two revisions.
+- **Duplicate to another customer** → auto re-price from their Cost Book.
+- **One-click → Contract (care.experience)** — consistent with the tender module flow.
+- **Customer portal e-acceptance** (sign online; auto-move to Won).
+- **Per-company report profiles** (logo/header/footer/colors/terms text).
+- **Service-type-aware tables** in both PDF and xlsx.
+- **Auto follow-up activities** on send + before expiry.
+- **Cost templates per service type** to auto-build component rows.
+
+---
+
+## 14. Build phases (after mockup sign-off)
+
+1. Data model: Service Catalog + Cost Book + snapshot fields + currency + configurable component types.
+2. Snapshot engine + Pricing Workspace + margin strategies + scenarios.
+3. Duplicate / revisions.
+4. CRM sync (stage/revenue/win-loss/winning_proposal_id + create wizard).
+5. Dashboard (OWL) + KPIs.
+6. Reports: per-company branding + service-type-aware tables (PDF + xlsx fixes).
+7. Approval matrix + margin guard.
+8. Standing policy (perms matrix + chatter tracking) applied throughout.
+```
+</pre></div>
+</div>
+<textarea id="md" style="display:none"># Care Proposal — Redesign &amp; Full-Screen Mockup (v1 Draft)
+
+&gt; Goal: a fast, easy, accurate, deep pricing &amp; proposal system with a strong
+&gt; dashboard, strong CRM link, per-customer service costs, frozen historical
+&gt; pricing, duplication/revisions, and per-company service-type-aware reports.
+
+---
+
+## 0. Root problems found in the current module (why we redesign)
+
+| # | Problem | Evidence |
+|---|---------|----------|
+| 1 | **Old proposals change when a service cost is edited** | `proposal.service.line.total_cost` is a `related` live-link (proposal_service_line.py:18-20); `compute_service_amounts()` reads the **live master** `line_ids` (proposal.py:270-298) |
+| 2 | **Same service can't cost differently per customer** | `proposal.service` is global, has no `partner_id` (proposal_service.py) |
+| 3 | **No duplicate / revision feature** | no `copy()` / action |
+| 4 | **No dashboard / analytics** | no OWL dashboard in static/ |
+| 5 | **Weak CRM link** | only `lead_id` + count; no stage/revenue/win-loss sync (crm_lead.py) |
+| 6 | **Report price table mismatched to service type** | hard-coded manpower columns for all rows (customer_proposal.xml:164-210) |
+| 7 | **Reports not per-company** | hard-coded logos (customer_proposal.xml:39-42) |
+| 8 | Tangled totals, duplicate material/equipment models, hard-coded 10 cost types in 3 files, no currency, no search view, unreachable `contracted` state, manual `total_commission_amount`, barcode collision bug | multiple |
+
+---
+
+## 1. New architecture (the backbone of the mockup)
+
+```
+                         ┌─────────────────────────────┐
+                         │  SERVICE CATALOG (master)   │   definition only:
+                         │  proposal.service           │   name, type, UoM,
+                         │  + cost COMPONENT template   │   default structure
+                         └──────────────┬──────────────┘
+                                        │ has many dated cost versions /
+                                        │ per-customer overrides
+                         ┌──────────────▼──────────────┐
+                         │  COST BOOK (per customer)   │   proposal.service.cost
+                         │  partner_id (or "default"), │   effective_date, currency
+                         │  component rows + amounts    │   → "this service costs X
+                         └──────────────┬──────────────┘     for THIS customer"
+                                        │  pick + FREEZE (snapshot)
+                                        ▼
+   ┌───────────────────────────────────────────────────────────────────────┐
+   │  PROPOSAL  (proposal.proposal)                                          │
+   │   service lines → SNAPSHOT of component costs (frozen, never re-reads)  │
+   │   cost lines (unified material/equipment/...) → snapshot                │
+   │   pricing = cost  +  margin strategy  →  customer price                 │
+   │   revision_of_id / version, duplicate(), currency_id (Monetary)        │
+   └───────────────────────────────────────────────────────────────────────┘
+```
+
+**Three rules that kill the #1 bug:**
+1. The proposal stores its **own copy** of every cost component (snapshot at add-time).
+2. Totals compute **only** from proposal-local snapshots — never from the master.
+3. A "Re-sync from catalog" button is the *only* way master changes enter an existing proposal (explicit, never silent).
+
+**Per-customer cost:** the Cost Book keyed by `(service, partner, effective_date)`; a "default" book is the fallback. Picking a service in a proposal pulls the right book for that customer &amp; date, then freezes it.
+
+---
+
+## 2. SCREEN MAP (all screens to mock)
+
+1. Dashboard (landing)
+2. Proposals — list / kanban / calendar
+3. Proposal form — header + tabs
+4. Pricing Workspace (the new pricing screen)
+5. Service Catalog (master)
+6. Customer Cost Book (per-customer pricing)
+7. CRM Lead — proposal integration
+8. Duplicate / New Revision dialog
+9. Customer Proposal PDF (service-type-aware, per-company)
+10. Settings / configuration
+
+---
+
+## 3. DASHBOARD  (OWL, landing screen)
+
+```
+┌ PROPOSALS ───────────────────────────── [Company ▾] [This Quarter ▾] [⟳] ┐
+│                                                                            │
+│  ┌ Pipeline Value ┐ ┌ Win Rate ┐ ┌ Avg Margin ┐ ┌ Expiring ≤7d ┐ ┌ Await ┐│
+│  │  KWD 1,240,500 │ │  38 %    │ │   22.4 %   │ │     6        │ │ Appr 4││
+│  │  ▲ 12% vs LQ   │ │ 19/50 won│ │ ▼ 1.1 pts  │ │  KWD 88,200 │ │       ││
+│  └────────────────┘ └──────────┘ └────────────┘ └─────────────┘ └───────┘│
+│                                                                            │
+│  ┌ Pipeline by Stage ──────────────┐  ┌ Value by Service Type ──────────┐ │
+│  │ Draft     ███████ 14  120k       │  │ Cleaning    ████████████ 540k   │ │
+│  │ Submitted ████ 8     90k         │  │ Security    ███████ 320k        │ │
+│  │ Approval  ██ 4       62k         │  │ Manpower    █████ 210k          │ │
+│  │ Won       █████████ 19  410k     │  │ Hospitality ███ 95k             │ │
+│  │ Lost      ███ 7      80k         │  │ Other       ██ 75k              │ │
+│  └──────────────────────────────────┘  └──────────────────────────────────┘ │
+│                                                                            │
+│  ┌ Monthly Trend (value &amp; count) ───────────────────────────────────────┐ │
+│  │  600k ┤            ╭─╮                                                 │ │
+│  │  400k ┤     ╭─╮   ╭╯ ╰╮   ╭─╮     proposals ●  won ●                   │ │
+│  │  200k ┤  ╭─╮│ │╭─╮│   │╭─╮│ │                                          │ │
+│  │       └──┴─┴┴─┴┴─┴┴───┴┴─┴┴─┴──  Jan Feb Mar Apr May Jun              │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                            │
+│  ┌ Top Customers (value) ──────────┐  ┌ Needs Attention ────────────────┐ │
+│  │ 1 Ministry of Health   210k 4   │  │ ⚠ 6 expiring in 7 days          │ │
+│  │ 2 KOC                  180k 3   │  │ ⏳ 4 awaiting your approval       │ │
+│  │ 3 Amiri Diwan          145k 2   │  │ ✎ 3 with margin &lt; 10% (review)  │ │
+│  │ 4 Municipality          98k 5   │  │ ↻ 2 reference cost outdated      │ │
+│  └──────────────────────────────────┘  └──────────────────────────────────┘ │
+│                                                                            │
+│  KPIs row: Avg cycle draft→won 9.4d │ Approval SLA 1.8d │ Expected value  │
+│            (Σ margin×win%) KWD 286k │ Revisions/proposal 1.7              │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+Every card is clickable → filtered list. KPIs: pipeline value, win rate, avg
+margin, expiring, awaiting approval, avg cycle time, approval SLA, expected
+value (margin × win-probability), revisions per proposal.
+
+---
+
+## 4. PROPOSALS — LIST / KANBAN
+
+```
+┌ Proposals ───── [New] ───────────── Filters: [My] [Awaiting me] [Expiring] [Won] ┐
+│ Search ▸ customer, ref, service type, salesperson…           [≣ List][▦ Kanban] │
+├──────┬───────────────┬──────────────┬─────────┬────────┬────────┬───────┬───────┤
+│ Ref  │ Customer      │ Service Type │ Value   │ Margin │ Valid  │ Stage │ Rev   │
+├──────┼───────────────┼──────────────┼─────────┼────────┼────────┼───────┼───────┤
+│PROP… │ Ministry Health│ Cleaning    │ 210,000 │ 24% ●  │ 12 Jul │ Won ● │ v2    │
+│PROP… │ KOC           │ Security     │  88,200 │  9% ▲  │ 28 Jun │ Appr ●│ v1    │
+│PROP… │ Amiri Diwan   │ Hospitality  │  41,000 │ 31% ●  │ 05 Jul │ Draft │ v1    │
+└──────┴───────────────┴──────────────┴─────────┴────────┴────────┴───────┴───────┘
+  Margin badge: green ≥20% · amber 10–20% · red &lt;10%   (● won  ▲ review)
+```
+
+Kanban columns = stages (Draft · Submitted · Approval · Won · Lost), each card:
+customer, value, margin badge, validity countdown, salesperson avatar.
+
+---
+
+## 5. PROPOSAL FORM (header + tabs)
+
+```
+┌ PROP00231 · Ministry of Health — Cleaning (v2) ────────────────────────────────┐
+│ [Submit] [Send ✉] [Approve] [Reject] [Won] · [Duplicate] [New Revision] [⋯]    │
+│ Stage:  Draft ─ Submitted ─ ●Approval ─ Approved ─ Won            margin 24% ●  │
+├────────────────────────────────────────────────────────────────────────────────┤
+│ Customer  Ministry of Health ▾        │ Service Type  Cleaning ▾                 │
+│ Contact   Ahmed Ali / +965 …          │ Site / City   Sabah Hospital / Kuwait    │
+│ Proposal# PROP00231   Date 22-Jun     │ Mobilization  01-Aug-2026                │
+│ Valid to  12-Jul-2026  (20 days) ⏳   │ Period        12 months   Billing Monthly│
+│ CRM Lead  OPP/Cleaning MoH ↗          │ Currency      KWD                        │
+│ Salesperson  ◐ Sara                   │ Revision of   PROP00231 v1 ↗             │
+├── Tabs ────────────────────────────────────────────────────────────────────────┤
+│  ▸ Pricing   ▸ Services   ▸ Manpower   ▸ Materials &amp; Equip   ▸ Transport         │
+│  ▸ Scope     ▸ Terms      ▸ Approvals  ▸ Print Options       ▸ Analysis          │
+├────────────────────────────────────────────────────────────────────────────────┤
+│  ┌ Totals (always-visible side panel) ───────────────────────────────────────┐  │
+│  │  Cost   KWD 159,600     Margin  KWD 50,400  (24%)     Price  KWD 210,000   │  │
+│  │  Commission  2,100      Expected (×win 60%)  KWD 30,240                    │  │
+│  └────────────────────────────────────────────────────────────────────────────┘  │
+│  💬 Chatter / activities / followers                                            │
+└────────────────────────────────────────────────────────────────────────────────┘
+```
+
+Notes vs today: currency everywhere, revision lineage, always-visible Totals
+panel, "Duplicate"/"New Revision" buttons, CRM lead inline, salesperson.
+
+---
+
+## 6. PRICING WORKSPACE  (the new core screen — replaces tangled Pricing tab)
+
+```
+┌ Pricing Workspace — PROP00231 ─────────────────────── [↻ Re-sync catalog] [⚙] ┐
+│ Strategy: ( ) Cost-plus %   (•) Target margin %   ( ) Target price   ( ) Manual │
+│ Global margin ▸ [ 24 % ]   Round to ▸ [ 1 KWD ]   Apply to ▸ [All lines ▾]      │
+├──────────────────────────────────────────────────────────────────────────────────┤
+│ Service line        Qty │  Unit cost  │ +Mat +Equip +Trans │ Cost/u │ Margin │ Price/u │ Total   │
+│ (snapshot, frozen)      │  (frozen)   │  (allocated)       │        │        │         │         │
+├─────────────────────┼─────┼───────────┼────────────────────┼────────┼────────┼─────────┼─────────┤
+│ Cleaner – day shift  60 │   180.000   │  +12  +4   +6      │ 202.0  │ 24% ▸ │ 250.5   │ 15,030  │
+│ Cleaner – night      20 │   195.000   │  +12  +4   +9      │ 220.0  │ 18% ▸ │ 259.6   │  5,192  │
+│ Supervisor            4 │   420.000   │  +0   +0   +6      │ 426.0  │ 30% ▸ │ 554.0   │  2,216  │
+├─────────────────────┴─────┴───────────┴────────────────────┴────────┴────────┴─────────┴─────────┤
+│  ⚠ "Cleaner – night" margin 18% &lt; threshold 20% → manager approval on submit     │
+│                                                                                    │
+│  Cost build-up (selected line) ───────────┐   Scenarios ─────────────────────┐    │
+│  Salary        140.0                       │   Economy   margin 15%  198,000  │    │
+│  Residency      18.0                       │ ● Standard  margin 24%  210,000  │    │
+│  Accommodation  12.0    Mat allocated 12   │   Premium   margin 32%  228,000  │    │
+│  Uniform         6.0    Equip alloc.   4   │   [Save scenario] [Compare]      │    │
+│  Insurance       4.0    Trans alloc.   6   └──────────────────────────────────┘    │
+│  ── component snapshot (editable per-proposal, never touches catalog) ──            │
+└──────────────────────────────────────────────────────────────────────────────────┘
+```
+
+Ideas baked in: 4 margin strategies (cost-plus / target-margin / target-price /
+manual), per-line margin override, round-to, allocation of material/equipment/
+transport shown inline, **cost build-up panel** from the *frozen snapshot*,
+**price scenarios** (Economy/Standard/Premium), margin-guard warning, and the
+explicit **Re-sync catalog** (the only path for master changes to enter).
+
+---
+
+## 7. SERVICE CATALOG (master — definition only)
+
+```
+┌ Service Catalog ─────────────────────────────────────────── [New service] ┐
+│ Cleaner – day shift   ·  type: Manpower  ·  code CLN-D  ·  UoM: worker      │
+├────────────────────────────────────────────────────────────────────────────┤
+│ Default cost components (template)        Cost books:  [Default] [+ customer]│
+│  Salary         140.0                     ┌ Books for this service ────────┐ │
+│  Residency       18.0                     │ Default            140 base    │ │
+│  Accommodation   12.0                     │ Ministry of Health  155  (eff  │ │
+│  Uniform          6.0                     │                     01-Jan-26) │ │
+│  Insurance        4.0                     │ KOC                 132        │ │
+│  [+ component]   ── types are CONFIG ──   └────────────────────────────────┘ │
+│                                                                              │
+│  ⓘ Editing here changes only NEW proposals / books. Existing proposals are  │
+│     frozen. Use "Re-sync" inside a proposal to pull new costs deliberately.  │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 8. CUSTOMER COST BOOK (per-customer pricing — solves the per-customer pain)
+
+```
+┌ Cost Book · Ministry of Health ───────────────────────────── [New version] ┐
+│ Service: Cleaner – day shift          Effective: 01-Jan-2026   Currency KWD  │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Component      │ Default │ This customer │ Δ      │ Note                       │
+│ Salary         │ 140.0   │ 155.0         │ +15.0  │ site allowance             │
+│ Residency      │  18.0   │  18.0         │  —     │                            │
+│ Accommodation  │  12.0   │  20.0         │  +8.0  │ on-site housing            │
+│ Uniform        │   6.0   │   6.0         │  —     │                            │
+│ ───────────────┼─────────┼───────────────┼────────┼──────────────────────────  │
+│ Total / worker │ 176.0   │ 199.0         │ +23.0  │                            │
+│                                                                              │
+│ Version history:  v3 (01-Jan-26 active) · v2 (01-Jul-25) · v1 (01-Jan-25)    │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+Same service, different cost per customer, with dated versions. A proposal
+picks the active version for its customer &amp; date, then **freezes** it.
+
+---
+
+## 9. CRM LEAD — stronger integration
+
+```
+┌ Opportunity · Cleaning MoH ─────────── Stage: ●Proposition ──────────────────┐
+│ [Create Proposal ▾]  [New Revision]                Proposals ⬚ 2   Won ⬚ 1   │
+│  ▾ menu: blank · from template · copy winning bid                            │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Expected revenue  KWD 210,000  ⟵ auto from winning/best proposal             │
+│ Proposals on this opportunity:                                              │
+│   PROP00231 v2  Cleaning  210,000  24%  ●Approval   [★ mark winning]          │
+│   PROP00231 v1  Cleaning  198,000  19%  Superseded                           │
+│   PROP00188     Security   88,200   9%  Lost                                 │
+│                                                                              │
+│  Sync rules:  proposal Won → lead Won + revenue ·  lead Lost → proposals     │
+│  Lost ·  winning_proposal_id ★ drives expected_revenue · activities mirrored │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+Adds: stage/win-loss sync both ways, `winning_proposal_id`, expected_revenue
+rollup, create-from-template wizard, mirrored activities/timeline.
+
+---
+
+## 10. DUPLICATE / NEW REVISION dialog
+
+```
+┌ Duplicate proposal ───────────────────────────────┐
+│ ( ) Exact copy (new ref, Draft)                    │
+│ (•) New revision of PROP00231  → becomes v3        │
+│ ( ) Copy to another customer ▸ [ select… ]         │
+│      └ re-price using that customer's Cost Book     │
+│ [x] copy services   [x] cost lines   [ ] manual    │
+│     price overrides   [x] scope/terms              │
+│                              [Cancel]  [Create →]   │
+└────────────────────────────────────────────────────┘
+```
+
+---
+
+## 11. CUSTOMER PROPOSAL PDF (per-company, service-type-aware)
+
+```
+┌─────────────── [ COMPANY LOGO from res.company ] ──────────────┐
+│  Proposal for: Ministry of Health           Ref PROP00231 v2   │
+│  Valid until 12-Jul-2026                    Date 22-Jun-2026   │
+├────────────────────────────────────────────────────────────────┤
+│  SCOPE OF WORK …                                               │
+│                                                                │
+│  PRICE TABLE — rendered PER SERVICE TYPE (fixes column bug):   │
+│                                                                │
+│  ▸ Manpower services                                          │
+│   # │ Location │ Role        │ Hrs/d │ Days/wk │ Qty │ Price │ Total │
+│   1 │ Sabah H. │ Cleaner day │   8   │    6    │ 60  │ 250.5 │ 15,030│
+│                                                                │
+│  ▸ Fixed services (no hrs/days columns shown)                 │
+│   # │ Location │ Service          │ Unit  │ Qty │ Price │ Total │
+│   1 │ Sabah H. │ Deep disinfection│ visit │  4  │ 900   │ 3,600 │
+│                                                                │
+│  ▸ Materials &amp; Equipment (if included)                        │
+│                                              GRAND TOTAL  210,000│
+├────────────────────────────────────────────────────────────────┤
+│  TERMS · ACCEPTANCE (signature)   [ COMPANY footer + QR ]      │
+└────────────────────────────────────────────────────────────────┘
+```
+
+Fixes: columns chosen by `service.type` (manpower vs fixed vs unit-based);
+header/footer/logo pulled from `res.company` (or a per-company report profile);
+xlsx invalid `cleaning`/`commission` rows removed and driven by config types.
+
+---
+
+## 12. SETTINGS
+
+```
+┌ Proposal Settings ─────────────────────────────────────────────┐
+│ Pricing                                                        │
+│   Default margin strategy ▸ Target margin   Default 20 %       │
+│   Margin-guard threshold ▸ 10 %  → require manager approval    │
+│   Round customer price to ▸ 1.000                              │
+│ Cost components (configurable types) ▸ [salary, residency, …] │
+│ Approval matrix ▸ by amount (≤50k auto · 50–200k mgr · &gt;200k GM)│
+│ CRM ▸ [x] sync stage  [x] rollup revenue  [x] mark lead won    │
+│ Reports ▸ per-company branding profiles  [Manage]             │
+│ Numbering ▸ PROP##### · Revisions as vN                       │
+└────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 13. Genius / value-add ideas list (to discuss)
+
+- **Margin strategies** (cost-plus / target-margin / target-price / manual) + round-to.
+- **Price scenarios** Economy/Standard/Premium with one-click compare.
+- **Margin guard** → auto-route to manager approval below threshold.
+- **Approval matrix by amount** (auto / manager / GM).
+- **Expected value** = margin × win-probability (feeds dashboard &amp; CRM).
+- **Customer Cost Book** with dated versions (per-customer cost, frozen snapshots).
+- **Re-sync from catalog** = the only, explicit way master edits enter a live proposal.
+- **Revisions (vN)** with side-by-side compare of two revisions.
+- **Duplicate to another customer** → auto re-price from their Cost Book.
+- **One-click → Contract (care.experience)** — consistent with the tender module flow.
+- **Customer portal e-acceptance** (sign online; auto-move to Won).
+- **Per-company report profiles** (logo/header/footer/colors/terms text).
+- **Service-type-aware tables** in both PDF and xlsx.
+- **Auto follow-up activities** on send + before expiry.
+- **Cost templates per service type** to auto-build component rows.
+
+---
+
+## 14. Build phases (after mockup sign-off)
+
+1. Data model: Service Catalog + Cost Book + snapshot fields + currency + configurable component types.
+2. Snapshot engine + Pricing Workspace + margin strategies + scenarios.
+3. Duplicate / revisions.
+4. CRM sync (stage/revenue/win-loss/winning_proposal_id + create wizard).
+5. Dashboard (OWL) + KPIs.
+6. Reports: per-company branding + service-type-aware tables (PDF + xlsx fixes).
+7. Approval matrix + margin guard.
+8. Standing policy (perms matrix + chatter tracking) applied throughout.
+```
+</textarea>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+  try { if (window.marked) {
+    document.getElementById('out').innerHTML = marked.parse(document.getElementById('md').value);
+  } } catch(e){}
+</script>
+</body>
+</html>

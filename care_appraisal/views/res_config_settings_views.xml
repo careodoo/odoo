@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_perf_config_settings" model="ir.ui.view">
+        <field name="name">care.performance.config.settings</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority">900</field>
+        <field name="arch" type="xml">
+            <form string="إعدادات تقييم الأداء" class="oe_form_configuration">
+                <header>
+                    <button string="حفظ" type="object" name="execute" class="btn-primary"/>
+                    <button string="إلغاء" type="object" name="cancel" class="btn-secondary" special="cancel"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1>إعدادات نقاط تقييم الأداء</h1></div>
+                    <p class="text-muted">القيم الموجبة مكافأة، والسالبة خصم. تُطبَّق على كل الأحداث الجديدة.</p>
+                    <group>
+                        <group string="التاسكات والمواعيد">
+                            <field name="perf_task_ontime"/>
+                            <field name="perf_task_overdue"/>
+                        </group>
+                        <group string="الحضور والانصراف">
+                            <field name="perf_att_present"/>
+                            <field name="perf_att_short"/>
+                            <field name="perf_att_min_hours"/>
+                            <field name="perf_att_overtime_bonus"/>
+                        </group>
+                        <group string="الجزاءات والمكافآت">
+                            <field name="perf_penalty_points"/>
+                            <field name="perf_bonus_points"/>
+                        </group>
+                        <group string="الإشعارات">
+                            <field name="perf_notify_disabled"/>
+                            <field name="perf_notify_threshold"/>
+                        </group>
+                        <group string="اقتراح المكافأة">
+                            <field name="perf_reward_threshold"/>
+                            <field name="perf_reward_per_point"/>
+                        </group>
+                        <group string="متابعة الأداء المنخفض">
+                            <field name="perf_low_threshold"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_perf_config" model="ir.actions.act_window">
+        <field name="name">إعدادات الأداء</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_id" ref="view_perf_config_settings"/>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module': 'care_appraisal'}</field>
+    </record>
+
+    <menuitem id="menu_perf_config" name="إعدادات الأداء" parent="menu_perf_root"
+              action="action_perf_config" sequence="90" groups="hr.group_hr_manager"/>
+</odoo>

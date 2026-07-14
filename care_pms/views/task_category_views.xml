@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_task_category_tree" model="ir.ui.view">
+        <field name="name">care.task.category.tree</field>
+        <field name="model">care.task.category</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="task_count"/>
+                <field name="color" widget="color_picker"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_task_category" model="ir.actions.act_window">
+        <field name="name">البنود والفئات</field>
+        <field name="res_model">care.task.category</field>
+        <field name="view_mode">tree</field>
+    </record>
+</odoo>

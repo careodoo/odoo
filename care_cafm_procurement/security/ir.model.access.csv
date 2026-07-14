@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+acc_cat_u,catalog.item.u,model_care_cafm_catalog_item,base.group_user,1,0,0,0
+acc_cat_m,catalog.item.m,model_care_cafm_catalog_item,hr.group_hr_manager,1,1,1,1
+acc_req_u,cafm.request.u,model_care_cafm_request,base.group_user,1,1,1,0
+acc_req_m,cafm.request.m,model_care_cafm_request,hr.group_hr_manager,1,1,1,1
+acc_reql_u,cafm.request.line.u,model_care_cafm_request_line,base.group_user,1,1,1,1
+acc_reql_m,cafm.request.line.m,model_care_cafm_request_line,hr.group_hr_manager,1,1,1,1

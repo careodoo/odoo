@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_care_passport" model="report.paperformat">
+        <field name="name">Care Passport A4</field>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">3</field>
+        <field name="margin_bottom">3</field>
+        <field name="margin_left">4</field>
+        <field name="margin_right">4</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">110</field>
+    </record>
+
+    <!-- Passport custody receipt (on movement) -->
+    <record id="action_report_passport_receipt" model="ir.actions.report">
+        <field name="name">Passport Custody Receipt</field>
+        <field name="model">care.passport.movement</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_hr.report_passport_receipt</field>
+        <field name="report_file">care_hr.report_passport_receipt</field>
+        <field name="print_report_name">'Passport Custody - %s' % (object.name or '')</field>
+        <field name="binding_model_id" ref="model_care_passport_movement"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_care_passport"/>
+    </record>
+
+    <template id="report_passport_receipt">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <div class="page rtl" style="font-family:Arial,Helvetica,sans-serif !important;color:#1f2937;">
+                    <img src="/care_hr/static/src/img/header.png" class="w-100" style="width:100%;display:block;"/>
+                    <table style="width:100%;border-top:1px solid #eef2f7;border-bottom:2px solid #0f2b5b;background:#fbfcfe;">
+                        <tr>
+                            <td style="width:33%;text-align:left;padding:6px 12px;">
+                                <img t-if="o.qr_src" t-att-src="o.qr_src" style="height:60px;"/>
+                                <div style="font-size:8px;color:#7b8794;">امسح للوصول · Scan</div></td>
+                            <td style="width:34%;text-align:center;">
+                                <div style="font-size:16px;font-weight:bold;color:#0f2b5b;">إيصال عُهدة جوازات</div>
+                                <div style="font-size:10px;color:#64748b;letter-spacing:1px;">PASSPORT CUSTODY RECEIPT</div></td>
+                            <td style="width:33%;text-align:right;padding:6px 12px;">
+                                <img t-if="o.barcode_src" t-att-src="o.barcode_src" style="height:40px;"/>
+                                <div style="font-size:10px;font-weight:bold;"><span t-field="o.name"/></div></td>
+                        </tr>
+                    </table>
+                    <div style="padding:12px 36px;direction:rtl;">
+                        <div style="display:flex;justify-content:space-between;font-size:11.5px;color:#64748b;margin-bottom:8px;">
+                            <span>التاريخ: <span t-esc="o.date and o.date.strftime('%Y-%m-%d %H:%M') or ''"/></span>
+                            <span>المرجع: <span t-field="o.name"/></span>
+                        </div>
+                        <div style="text-align:center;font-weight:bold;font-size:14px;color:#fff;background:#0f2b5b;border-radius:6px;padding:6px;margin:6px 0 12px;">
+                            <span t-field="o.movement_type"/> — <span t-field="o.reason"/>
+                        </div>
+                        <div style="font-size:12.5px;margin:5px 0;">
+                            <b>المستلم / Custodian:</b> <span t-field="o.custodian_id"/> ·
+                            <b>الجهة / Authority:</b> <span t-field="o.authority"/> ·
+                            <b>العودة المتوقعة:</b> <span t-field="o.expected_return"/>
+                        </div>
+                        <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;">
+                            <tr>
+                                <th style="background:#0f2b5b;color:#fff;border:1px solid #0f2b5b;padding:7px;width:40px;">#</th>
+                                <th style="background:#0f2b5b;color:#fff;border:1px solid #0f2b5b;padding:7px;">باركود الجواز</th>
+                                <th style="background:#0f2b5b;color:#fff;border:1px solid #0f2b5b;padding:7px;">الموظف</th>
+                                <th style="background:#0f2b5b;color:#fff;border:1px solid #0f2b5b;padding:7px;">رقم الجواز</th>
+                                <th style="background:#0f2b5b;color:#fff;border:1px solid #0f2b5b;padding:7px;">الجنسية</th>
+                            </tr>
+                            <t t-set="i" t-value="0"/>
+                            <t t-foreach="o.passport_ids" t-as="p">
+                                <t t-set="i" t-value="i+1"/>
+                                <tr>
+                                    <td style="border:1px solid #cbd5e1;padding:8px;text-align:center;"><span t-esc="i"/></td>
+                                    <td style="border:1px solid #cbd5e1;padding:6px;text-align:center;">
+                                        <img t-if="p.barcode_src" t-att-src="p.barcode_src" style="height:34px;"/>
+                                        <div style="font-size:9px;"><span t-field="p.name"/></div></td>
+                                    <td style="border:1px solid #cbd5e1;padding:8px;"><span t-esc="p.employee_english_name or p.employee_id.name"/></td>
+                                    <td style="border:1px solid #cbd5e1;padding:8px;text-align:center;"><span t-field="p.passport_no"/></td>
+                                    <td style="border:1px solid #cbd5e1;padding:8px;text-align:center;"><span t-field="p.country_id"/></td>
+                                </tr>
+                            </t>
+                        </table>
+                        <div style="display:flex;justify-content:space-between;margin-top:28px;font-size:12px;">
+                            <div style="text-align:center;width:30%;"><div style="border-top:1px solid #94a3b8;margin-top:28px;padding-top:4px;">تسليم: موظف الأرشيف</div></div>
+                            <div style="text-align:center;width:30%;"><div style="border-top:1px solid #94a3b8;margin-top:28px;padding-top:4px;">استلام: <span t-field="o.custodian_id"/></div></div>
+                            <div style="text-align:center;width:30%;"><div style="border-top:1px solid #94a3b8;margin-top:28px;padding-top:4px;">اعتماد: المدير</div></div>
+                        </div>
+                    </div>
+                    <img src="/care_hr/static/src/img/footer.png" class="w-100" style="width:100%;display:block;margin-top:10px;"/>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- Passport barcode label (small) -->
+    <record id="action_report_passport_label" model="ir.actions.report">
+        <field name="name">Passport Barcode Label</field>
+        <field name="model">care.passport</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_hr.report_passport_label</field>
+        <field name="report_file">care_hr.report_passport_label</field>
+        <field name="binding_model_id" ref="model_care_passport"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_passport_label">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <div class="page rtl" style="font-family:Arial,Helvetica,sans-serif !important;text-align:center;padding:8px;border:1px solid #999;width:300px;">
+                    <div style="font-weight:bold;color:#0f2b5b;font-size:13px;">CARE — Passport</div>
+                    <img t-if="o.barcode_src" t-att-src="o.barcode_src" style="height:54px;margin:4px 0;"/>
+                    <div style="font-size:12px;"><b><span t-esc="o.employee_english_name or o.employee_id.name"/></b></div>
+                    <div style="font-size:11px;">Passport: <span t-field="o.passport_no"/> · <span t-field="o.country_id"/></div>
+                    <div style="font-size:10px;color:#64748b;">Expiry: <span t-field="o.expiry_date"/></div>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============ مكافآتي (read-only) ============ -->
+    <record id="view_my_bonus_tree" model="ir.ui.view">
+        <field name="name">my.bonus.tree</field>
+        <field name="model">care.bonus</field>
+        <field name="arch" type="xml">
+            <tree string="مكافآتي" create="false" edit="false" delete="false" decoration-success="state in ('approved','paid','done')">
+                <field name="currency_id" column_invisible="1"/>
+                <field name="name"/>
+                <field name="date"/>
+                <field name="bonus_type"/>
+                <field name="amount" sum="الإجمالي"/>
+                <field name="payment_method"/>
+                <field name="cash_paid" widget="boolean_toggle" readonly="1"/>
+                <field name="state" widget="badge"
+                       decoration-success="state in ('approved','paid','done')"
+                       decoration-info="state=='confirmed'" decoration-muted="state=='draft'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_my_bonus_form" model="ir.ui.view">
+        <field name="name">my.bonus.form</field>
+        <field name="model">care.bonus</field>
+        <field name="arch" type="xml">
+            <form string="مكافأة" create="false" edit="false" delete="false">
+                <sheet>
+                    <field name="currency_id" invisible="1"/>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="date"/>
+                            <field name="bonus_type"/>
+                            <field name="amount"/>
+                        </group>
+                        <group>
+                            <field name="payment_method"/>
+                            <field name="cash_paid"/>
+                            <field name="approved_by"/>
+                            <field name="payslip_id"/>
+                            <field name="state" widget="badge"/>
+                        </group>
+                    </group>
+                    <separator string="السبب"/>
+                    <field name="reason"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============ جزاءاتي (read-only) ============ -->
+    <record id="view_my_penalty_tree" model="ir.ui.view">
+        <field name="name">my.penalty.tree</field>
+        <field name="model">care.penalty</field>
+        <field name="arch" type="xml">
+            <tree string="جزاءاتي" create="false" edit="false" delete="false" decoration-danger="state in ('approved','applied','done')">
+                <field name="currency_id" column_invisible="1"/>
+                <field name="name"/>
+                <field name="date"/>
+                <field name="penalty_type_id"/>
+                <field name="project_id"/>
+                <field name="amount" sum="الإجمالي"/>
+                <field name="state" widget="badge"
+                       decoration-danger="state in ('approved','applied','done')"
+                       decoration-info="state=='confirmed'" decoration-muted="state=='draft'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_my_penalty_form" model="ir.ui.view">
+        <field name="name">my.penalty.form</field>
+        <field name="model">care.penalty</field>
+        <field name="arch" type="xml">
+            <form string="جزاء" create="false" edit="false" delete="false">
+                <sheet>
+                    <field name="currency_id" invisible="1"/>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="date"/>
+                            <field name="penalty_type_id"/>
+                        </group>
+                        <group>
+                            <field name="amount"/>
+                            <field name="project_id"/>
+                            <field name="approved_by"/>
+                            <field name="payslip_id"/>
+                            <field name="state" widget="badge"/>
+                        </group>
+                    </group>
+                    <separator string="السبب"/>
+                    <field name="reason"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============ أدائي (read-only) ============ -->
+    <record id="view_my_performance_tree" model="ir.ui.view">
+        <field name="name">my.performance.tree</field>
+        <field name="model">care.performance.log</field>
+        <field name="arch" type="xml">
+            <tree string="أدائي" create="false" edit="false" delete="false"
+                  decoration-success="polarity=='pos'" decoration-danger="polarity=='neg'">
+                <field name="date"/>
+                <field name="source"/>
+                <field name="name"/>
+                <field name="points" sum="الإجمالي"/>
+                <field name="polarity" widget="badge"
+                       decoration-success="polarity=='pos'" decoration-danger="polarity=='neg'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ============ عُهدي (read-only) ============ -->
+    <record id="view_my_custody_tree" model="ir.ui.view">
+        <field name="name">my.custody.tree</field>
+        <field name="model">care.custody</field>
+        <field name="arch" type="xml">
+            <tree string="عُهدي" create="false" edit="false" delete="false" decoration-muted="state=='returned'">
+                <field name="currency_id" column_invisible="1"/>
+                <field name="name"/>
+                <field name="description"/>
+                <field name="item_type"/>
+                <field name="issue_date"/>
+                <field name="return_date"/>
+                <field name="value" sum="الإجمالي"/>
+                <field name="state" widget="badge"
+                       decoration-success="state in ('assigned','active','issued')"
+                       decoration-muted="state=='returned'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_my_custody_form" model="ir.ui.view">
+        <field name="name">my.custody.form</field>
+        <field name="model">care.custody</field>
+        <field name="arch" type="xml">
+            <form string="عهدة" create="false" edit="false" delete="false">
+                <sheet>
+                    <field name="currency_id" invisible="1"/>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="description"/>
+                            <field name="item_type"/>
+                            <field name="value"/>
+                        </group>
+                        <group>
+                            <field name="issue_date"/>
+                            <field name="return_date"/>
+                            <field name="department_id"/>
+                            <field name="state" widget="badge"/>
+                        </group>
+                    </group>
+                    <separator string="ملاحظات"/>
+                    <field name="note"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

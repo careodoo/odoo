@@ -1,0 +1,2 @@
+# -*- coding: utf-8 -*-
+{'name':"Care CAFM — External Media",'summary':"Store CAFM photos/videos on external object storage (S3/R2) via presigned direct upload — only URLs kept in Odoo, keeping the server light.",'author':"care-kw",'category':'Services/Facility Management','version':'17.0.1.0.0','license':'LGPL-3','depends':['care_cafm','base_setup'],'data':['security/ir.model.access.csv','views/media_views.xml'],'installable':True}

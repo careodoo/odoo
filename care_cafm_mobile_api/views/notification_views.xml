@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Each user only sees their own notifications -->
+    <record id="rule_notif_own" model="ir.rule">
+        <field name="name">إشعاراتي فقط</field>
+        <field name="model_id" ref="model_care_cafm_notification"/>
+        <field name="domain_force">[('user_id','=',user.id)]</field>
+        <field name="groups" eval="[(4, ref('base.group_user')), (4, ref('base.group_portal'))]"/>
+    </record>
+
+    <!-- Compose & send panel -->
+    <record id="view_notif_compose_form" model="ir.ui.view">
+        <field name="name">care.cafm.notification.compose.form</field>
+        <field name="model">care.cafm.notification.compose</field>
+        <field name="arch" type="xml">
+            <form string="إرسال إشعار">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="title" placeholder="عنوان الإشعار"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="audience"/>
+                            <field name="user_id" invisible="audience != 'user'" required="audience == 'user'"/>
+                            <field name="user_ids" widget="many2many_tags" invisible="audience != 'users'" required="audience == 'users'"/>
+                            <field name="service_id" invisible="audience != 'service'" required="audience == 'service'"/>
+                        </group>
+                        <group>
+                            <field name="ntype"/>
+                        </group>
+                    </group>
+                    <field name="body" placeholder="نص الإشعار..."/>
+                </sheet>
+                <footer>
+                    <button name="action_send" type="object" string="📤 إرسال" class="btn-primary"/>
+                    <button string="إلغاء" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="action_notif_compose" model="ir.actions.act_window">
+        <field name="name">إرسال إشعار</field>
+        <field name="res_model">care.cafm.notification.compose</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Sent/all notifications log (admins) -->
+    <record id="view_notif_tree" model="ir.ui.view">
+        <field name="name">care.cafm.notification.tree</field>
+        <field name="model">care.cafm.notification</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="create_date"/>
+                <field name="title"/>
+                <field name="ntype"/>
+                <field name="user_id"/>
+                <field name="author_id"/>
+                <field name="is_read"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_notif_log" model="ir.actions.act_window">
+        <field name="name">سجل الإشعارات</field>
+        <field name="res_model">care.cafm.notification</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{}</field>
+    </record>
+
+    <!-- Menu under CAFM root -->
+    <menuitem id="menu_cafm_notif" name="🔔 الإشعارات" parent="care_cafm.menu_cafm_root" sequence="45"/>
+    <menuitem id="menu_cafm_notif_send" name="إرسال إشعار" parent="menu_cafm_notif"
+              action="action_notif_compose" sequence="10"/>
+    <menuitem id="menu_cafm_notif_log" name="سجل الإشعارات" parent="menu_cafm_notif"
+              action="action_notif_log" groups="base.group_erp_manager" sequence="20"/>
+</odoo>

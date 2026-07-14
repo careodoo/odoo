@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_cafm_asset_label" model="ir.actions.report">
+        <field name="name">ملصق الأصل (باركود/QR)</field>
+        <field name="model">care.cafm.asset</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_cafm.report_asset_label</field>
+        <field name="report_file">care_cafm.report_asset_label</field>
+        <field name="binding_model_id" ref="model_care_cafm_asset"/>
+        <field name="binding_type">report</field>
+        <field name="print_report_name">'ملصق-%s' % (object.code or object.id)</field>
+    </record>
+
+    <template id="report_asset_label">
+        <t t-call="web.basic_layout">
+            <t t-foreach="docs" t-as="o">
+                <div class="page" style="padding:18px;font-family:sans-serif">
+                    <div style="border:2px solid #0b2a4a;border-radius:14px;padding:20px;max-width:420px;margin:auto;text-align:center">
+                        <div style="font-size:12px;color:#64748b;letter-spacing:1px;font-weight:bold">CARE — إدارة المرافق</div>
+                        <h2 style="margin:8px 0 2px;color:#0f172a" t-esc="o.name"/>
+                        <div style="color:#475569;font-size:13px" t-esc="o.code"/>
+                        <div style="display:flex;justify-content:center;gap:24px;align-items:center;margin:16px 0">
+                            <div style="text-align:center">
+                                <img t-att-src="'/report/barcode/?barcode_type=QR&amp;value=%s&amp;width=220&amp;height=220' % ((o.qr_value or o.code) or 'CAFM')" style="width:130px;height:130px"/>
+                                <div style="font-size:10px;color:#94a3b8">امسح للوصول للأصل</div>
+                            </div>
+                            <div style="text-align:center">
+                                <img t-if="o.barcode" t-att-src="'/report/barcode/?barcode_type=Code128&amp;value=%s&amp;width=500&amp;height=120' % o.barcode" style="width:150px;height:52px"/>
+                                <div style="font-size:12px;color:#334;font-weight:bold" t-esc="o.barcode or o.code"/>
+                            </div>
+                        </div>
+                        <table style="width:100%;font-size:12px;color:#334;border-collapse:collapse">
+                            <tr><td style="text-align:right;color:#64748b;padding:3px">الفئة</td><td style="text-align:left;font-weight:bold" t-esc="dict(o._fields['category'].selection).get(o.category, o.category) if o.category else '—'"/></tr>
+                            <tr><td style="text-align:right;color:#64748b;padding:3px">المرفق</td><td style="text-align:left;font-weight:bold" t-esc="o.facility_id.name or '—'"/></tr>
+                            <tr><td style="text-align:right;color:#64748b;padding:3px">الموقع</td><td style="text-align:left;font-weight:bold" t-esc="o.location_id.name or '—'"/></tr>
+                            <tr><td style="text-align:right;color:#64748b;padding:3px">الملكية</td><td style="text-align:left;font-weight:bold" t-esc="dict(o._fields['ownership'].selection).get(o.ownership, o.ownership)"/></tr>
+                        </table>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

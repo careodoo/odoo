@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Sequence -->
+        <record id="seq_care_dms_document" model="ir.sequence">
+            <field name="name">CARE DMS Document</field>
+            <field name="code">care.dms.document</field>
+            <field name="prefix">DOC-</field>
+            <field name="padding">6</field>
+        </record>
+
+        <!-- Dashboard singleton -->
+        <record id="dms_dashboard_main" model="care.dms.dashboard">
+            <field name="name">DMS</field>
+        </record>
+
+        <!-- Retention categories (mockup 90) -->
+        <record id="cat_employee_files" model="care.dms.category">
+            <field name="sequence">10</field>
+            <field name="name">عقود وملفات الموظفين</field>
+            <field name="retention_rule">طوال الخدمة + 5 سنوات</field>
+            <field name="retention_years">5</field>
+            <field name="access_scope">المدير + HR</field>
+            <field name="state">active</field>
+        </record>
+        <record id="cat_residency" model="care.dms.category">
+            <field name="sequence">20</field>
+            <field name="name">إقامات/أذونات</field>
+            <field name="retention_rule">حتى الانتهاء + سنة</field>
+            <field name="retention_years">1</field>
+            <field name="access_scope">امتثال + HR</field>
+            <field name="state">active</field>
+        </record>
+        <record id="cat_financial" model="care.dms.category">
+            <field name="sequence">30</field>
+            <field name="name">مستندات مالية/رواتب</field>
+            <field name="retention_rule">10 سنوات</field>
+            <field name="retention_years">10</field>
+            <field name="access_scope">مالية</field>
+            <field name="state">active</field>
+        </record>
+        <record id="cat_gov_corr" model="care.dms.category">
+            <field name="sequence">40</field>
+            <field name="name">مراسلات حكومية</field>
+            <field name="retention_rule">حسب الجهة</field>
+            <field name="retention_years">0</field>
+            <field name="access_scope">امتثال + PRO</field>
+            <field name="state">review_disposal</field>
+        </record>
+    </data>
+
+    <data noupdate="0">
+        <record id="cron_care_dms_refresh" model="ir.cron">
+            <field name="name">CARE DMS: Refresh retention state</field>
+            <field name="model_id" ref="model_care_dms_document"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_refresh_state()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>

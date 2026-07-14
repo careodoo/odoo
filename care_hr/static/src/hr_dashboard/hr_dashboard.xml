@@ -24,19 +24,19 @@
                         <div class="k-ico"><i class="fa fa-users"/></div>
                         <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.total)"/><div class="k-lbl">إجمالي الموظفين</div></div>
                     </div>
-                    <div class="o_hr_kpi k-green">
+                    <div class="o_hr_kpi k-green" t-on-click="() => this.openEmployees([['joining_date','>=', state.data.year + '-01-01']], 'التحاقات هذا العام')">
                         <div class="k-ico"><i class="fa fa-user-plus"/></div>
                         <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.new_joiners_year)"/><div class="k-lbl">التحاقات هذا العام</div></div>
                     </div>
-                    <div class="o_hr_kpi k-blue">
+                    <div class="o_hr_kpi k-blue" t-on-click="() => this.openModel('hr.attendance', [], 'الحضور')">
                         <div class="k-ico"><i class="fa fa-check-circle"/></div>
                         <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.present_today)"/><div class="k-lbl">حضور اليوم</div></div>
                     </div>
-                    <div class="o_hr_kpi k-orange">
+                    <div class="o_hr_kpi k-orange" t-on-click="() => this.openModel('hr.leave', [['state','=','validate']], 'الإجازات')">
                         <div class="k-ico"><i class="fa fa-plane"/></div>
                         <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.on_leave_today)"/><div class="k-lbl">في إجازة اليوم</div></div>
                     </div>
-                    <div class="o_hr_kpi k-purple">
+                    <div class="o_hr_kpi k-purple" t-on-click="() => this.openModel('hr.leave', [['state','in',['confirm','validate1']]], 'بانتظار الاعتماد')">
                         <div class="k-ico"><i class="fa fa-hourglass-half"/></div>
                         <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.pending_approvals)"/><div class="k-lbl">بانتظار الاعتماد</div></div>
                     </div>
@@ -44,13 +44,97 @@
                         <div class="k-ico"><i class="fa fa-ban"/></div>
                         <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.suspended)"/><div class="k-lbl">موقوفون</div></div>
                     </div>
-                    <div class="o_hr_kpi k-teal">
+                    <div class="o_hr_kpi k-teal" t-on-click="() => this.openModel('hr.department', [], 'الأقسام')">
                         <div class="k-ico"><i class="fa fa-sitemap"/></div>
                         <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.departments)"/><div class="k-lbl">الأقسام</div></div>
                     </div>
-                    <div class="o_hr_kpi k-cyan">
+                    <div class="o_hr_kpi k-cyan" t-on-click="() => this.openModel('hr.loan', [['state','=','approve']], 'القروض النشطة')">
                         <div class="k-ico"><i class="fa fa-money"/></div>
                         <div class="k-body"><div class="k-val" t-esc="fmt(state.data.kpi.active_loans)"/><div class="k-lbl">قروض نشطة</div></div>
+                    </div>
+                </div>
+
+                <!-- Care HR KPIs (manpower / payroll / compliance) — clickable -->
+                <div class="o_hr_kpis" t-if="state.data.care">
+                    <div class="o_hr_kpi k-teal" t-on-click="() => this.openModel('care.manpower.file', [], 'ملفات القوى العاملة')">
+                        <div class="k-ico"><i class="fa fa-id-card"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.care.quota_available)"/><div class="k-lbl">حصص تأشيرات متاحة</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-red" t-on-click="() => this.openModel('care.coverage.alert', [['state','=','open']], 'مراقب التغطية')">
+                        <div class="k-ico"><i class="fa fa-exclamation-triangle"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.care.coverage_alerts)"/><div class="k-lbl">تنبيهات تغطية الحضور</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-orange" t-on-click="() => this.openModel('care.penalty', [['state','in',['submitted','approved']]], 'الجزاءات')">
+                        <div class="k-ico"><i class="fa fa-gavel"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.care.pending_penalties)"/><div class="k-lbl">جزاءات معلّقة</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-purple" t-on-click="() => this.openModel('care.allowance', [['state','in',['submitted','dept']]], 'البدلات')">
+                        <div class="k-ico"><i class="fa fa-plus-circle"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.care.pending_allowances)"/><div class="k-lbl">بدلات بانتظار الاعتماد</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-blue" t-on-click="() => this.openModel('care.traffic.violation', [['state','in',['submitted','approved']]], 'المخالفات المرورية')">
+                        <div class="k-ico"><i class="fa fa-car"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.care.open_violations)"/><div class="k-lbl">مخالفات مفتوحة</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-red" t-on-click="() => this.openModel('care.gov.transaction', [['overdue','=',true]], 'معاملات المندوب')">
+                        <div class="k-ico"><i class="fa fa-clock-o"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.care.gov_tx_overdue)"/><div class="k-lbl">معاملات متأخرة (SLA)</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-orange" t-on-click="() => this.openModel('care.grievance', [['state','not in',['closed','refused']]], 'التظلّمات')">
+                        <div class="k-ico"><i class="fa fa-comments"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.care.open_grievances)"/><div class="k-lbl">تظلّمات مفتوحة</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-teal" t-on-click="() => this.openModel('care.site.permit', [['state','in',['expired','revoked']]], 'تصاريح المواقع')">
+                        <div class="k-ico"><i class="fa fa-shield"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.care.permits_invalid)"/><div class="k-lbl">تصاريح منتهية/ملغاة</div></div>
+                    </div>
+                </div>
+
+                <!-- Passport Archive KPIs — clickable -->
+                <div class="o_hr_kpis" t-if="state.data.care and state.data.care.passports_total !== undefined">
+                    <div class="o_hr_kpi k-odoo" t-on-click="() => this.openModel('care.passport', [], 'الجوازات')">
+                        <div class="k-ico"><i class="fa fa-id-card-o"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.care.passports_total)"/><div class="k-lbl">إجمالي الجوازات</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-green" t-on-click="() => this.openModel('care.passport', [['state','=','in_archive']], 'داخل الأرشيف')">
+                        <div class="k-ico"><i class="fa fa-archive"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.care.passports_in_archive)"/><div class="k-lbl">داخل الأرشيف</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-orange" t-on-click="() => this.openModel('care.passport', [['state','=','out']], 'جوازات خارجة')">
+                        <div class="k-ico"><i class="fa fa-sign-out"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.care.passports_out)"/><div class="k-lbl">خارج (سفر/إجازة)</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-purple" t-on-click="() => this.openModel('care.passport', [['state','=','out'],['out_reason','=','pro_residency']], 'مع المندوب')">
+                        <div class="k-ico"><i class="fa fa-user-circle"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.care.passports_with_pro)"/><div class="k-lbl">مع المندوب (إقامات)</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-orange" t-on-click="() => this.openModel('care.passport', [['expiry_state','=','expiring']], 'تنتهي قريباً')">
+                        <div class="k-ico"><i class="fa fa-hourglass-half"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.care.passports_expiring)"/><div class="k-lbl">تنتهي ≤90 يوم</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-red" t-on-click="() => this.openModel('care.passport', [['expiry_state','=','expired']], 'جوازات منتهية')">
+                        <div class="k-ico"><i class="fa fa-exclamation-triangle"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.care.passports_expired)"/><div class="k-lbl">جوازات منتهية</div></div>
+                    </div>
+                </div>
+
+                <!-- Residency & documents KPIs -->
+                <div class="o_hr_kpis" t-if="state.data.care and state.data.care.residency_expiring !== undefined">
+                    <div class="o_hr_kpi k-orange" t-on-click="() => this.openEmployees([['residency_end_date','&gt;=', state.data.today], ['residency_end_date','&lt;=', state.data.today_60]], 'إقامات تنتهي قريباً')">
+                        <div class="k-ico"><i class="fa fa-id-badge"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.care.residency_expiring)"/><div class="k-lbl">إقامات تنتهي ≤60ي</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-red" t-on-click="() => this.openEmployees([['residency_end_date','&lt;', state.data.today]], 'إقامات منتهية')">
+                        <div class="k-ico"><i class="fa fa-id-badge"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.care.residency_expired)"/><div class="k-lbl">إقامات منتهية</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-purple" t-on-click="() => this.openModel('care.custody', [['state','=','issued']], 'العُهد القائمة')">
+                        <div class="k-ico"><i class="fa fa-handshake-o"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.care.custody_outstanding)"/><div class="k-lbl">عُهد غير مُعادة</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-teal" t-on-click="() => this.openModel('hr.employee.resignation', [['state','in',['submit','hr_dept','finance_dept']]], 'استقالات قيد المعالجة')">
+                        <div class="k-ico"><i class="fa fa-sign-out"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.care.eos_pending)"/><div class="k-lbl">استقالات قيد المعالجة</div></div>
                     </div>
                 </div>
 
@@ -63,6 +147,50 @@
                     <div class="o_hr_card">
                         <div class="o_hr_card_t">التوزيع حسب الجنس</div>
                         <div class="o_hr_canvas"><canvas id="hrGender"/></div>
+                    </div>
+                </div>
+
+                <!-- nationality distribution -->
+                <div class="o_hr_grid" t-if="state.data.by_nationality and state.data.by_nationality.length">
+                    <div class="o_hr_card c-2">
+                        <div class="o_hr_card_t">التوزيع حسب الجنسية</div>
+                        <div class="o_hr_canvas"><canvas id="hrByNat"/></div>
+                    </div>
+                </div>
+
+                <!-- Skills KPIs -->
+                <div class="o_hr_kpis" t-if="state.data.care and state.data.care.emp_skills_total !== undefined">
+                    <div class="o_hr_kpi k-odoo" t-on-click="() => this.openModel('hr.employee.skill', [], 'مهارات الموظفين')">
+                        <div class="k-ico"><i class="fa fa-star"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.care.emp_skills_total)"/><div class="k-lbl">إجمالي مهارات الموظفين</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-blue" t-on-click="() => this.openModel('hr.skill', [], 'كتالوج المهارات')">
+                        <div class="k-ico"><i class="fa fa-list"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.care.skills_catalog)"/><div class="k-lbl">المهارات بالكتالوج</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-teal" t-on-click="() => this.openModel('hr.skill.type', [], 'أنواع المهارات')">
+                        <div class="k-ico"><i class="fa fa-cubes"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.care.skill_types)"/><div class="k-lbl">أنواع المهارات</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-green" t-on-click="() => this.openEmployees([['employee_skill_ids','!=',false]], 'موظفون لديهم مهارات')">
+                        <div class="k-ico"><i class="fa fa-users"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="fmt(state.data.care.emp_with_skills)"/><div class="k-lbl">موظفون لديهم مهارات</div></div>
+                    </div>
+                    <div class="o_hr_kpi k-purple">
+                        <div class="k-ico"><i class="fa fa-bar-chart"/></div>
+                        <div class="k-body"><div class="k-val" t-esc="state.data.care.avg_skills_per_emp"/><div class="k-lbl">متوسط المهارات للموظف</div></div>
+                    </div>
+                </div>
+
+                <!-- Skills charts -->
+                <div class="o_hr_grid" t-if="state.data.top_skills and state.data.top_skills.length">
+                    <div class="o_hr_card">
+                        <div class="o_hr_card_t">المهارات حسب النوع</div>
+                        <div class="o_hr_canvas"><canvas id="hrSkillType"/></div>
+                    </div>
+                    <div class="o_hr_card c-2">
+                        <div class="o_hr_card_t">أكثر المهارات شيوعاً</div>
+                        <div class="o_hr_canvas"><canvas id="hrTopSkills"/></div>
                     </div>
                 </div>
 

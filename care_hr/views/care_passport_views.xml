@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- PASSPORT -->
+    <record id="view_care_passport_tree" model="ir.ui.view">
+        <field name="name">care.passport.tree</field>
+        <field name="model">care.passport</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="expiry_state == 'expired'" decoration-warning="expiry_state == 'expiring'"
+                  decoration-info="state == 'out'">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="passport_no"/>
+                <field name="country_id"/>
+                <field name="expiry_date"/>
+                <field name="days_to_expiry"/>
+                <field name="state" widget="badge" decoration-success="state == 'in_archive'"
+                       decoration-info="state == 'out'"/>
+                <field name="shelf_location" optional="show"/>
+                <field name="holder_id" optional="show"/>
+                <field name="out_reason" optional="hide"/>
+                <field name="expiry_state" widget="badge" decoration-success="expiry_state == 'valid'"
+                       decoration-warning="expiry_state == 'expiring'" decoration-danger="expiry_state == 'expired'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_care_passport_form" model="ir.ui.view">
+        <field name="name">care.passport.form</field>
+        <field name="model">care.passport</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <widget name="web_ribbon" title="Out" bg_color="bg-info" invisible="state != 'out'"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="passport_no"/>
+                            <field name="country_id"/>
+                        </group>
+                        <group>
+                            <field name="issue_date"/>
+                            <field name="expiry_date"/>
+                            <field name="days_to_expiry"/>
+                            <field name="expiry_state"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Archive">
+                            <field name="state"/>
+                            <field name="shelf_location"/>
+                        </group>
+                        <group string="When Out" invisible="state != 'out'">
+                            <field name="out_reason"/>
+                            <field name="holder_id"/>
+                            <field name="expected_return"/>
+                            <field name="last_movement_id"/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/><field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_care_passport_search" model="ir.ui.view">
+        <field name="name">care.passport.search</field>
+        <field name="model">care.passport</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="passport_no"/>
+                <filter name="in_archive" string="In Archive" domain="[('state','=','in_archive')]"/>
+                <filter name="out" string="Out" domain="[('state','=','out')]"/>
+                <filter name="expiring" string="Expiring ≤90d" domain="[('expiry_state','=','expiring')]"/>
+                <filter name="expired" string="Expired" domain="[('expiry_state','=','expired')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="g_state" string="Status" context="{'group_by':'state'}"/>
+                    <filter name="g_country" string="Nationality" context="{'group_by':'country_id'}"/>
+                    <filter name="g_holder" string="Holder" context="{'group_by':'holder_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_care_passport" model="ir.actions.act_window">
+        <field name="name">Passports</field>
+        <field name="res_model">care.passport</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_care_passport_search"/>
+    </record>
+
+    <!-- MOVEMENT -->
+    <record id="view_care_passport_movement_form" model="ir.ui.view">
+        <field name="name">care.passport.movement.form</field>
+        <field name="model">care.passport.movement</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_confirm" type="object" string="Confirm Movement"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_reset" type="object" string="Reset" invisible="state != 'done'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="movement_type"/>
+                            <field name="reason"/>
+                            <field name="custodian_id"/>
+                        </group>
+                        <group>
+                            <field name="date"/>
+                            <field name="expected_return" invisible="movement_type != 'out'"/>
+                            <field name="authority" invisible="movement_type != 'out'"/>
+                            <field name="shelf_location" invisible="movement_type != 'in'"/>
+                            <field name="passport_count"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="scan_barcode" placeholder="📷 Scan passport barcode here..."
+                               readonly="state == 'done'"/>
+                    </group>
+                    <field name="passport_ids" readonly="state == 'done'">
+                        <tree>
+                            <field name="name"/>
+                            <field name="employee_id"/>
+                            <field name="passport_no"/>
+                            <field name="country_id"/>
+                            <field name="state"/>
+                        </tree>
+                    </field>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/><field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_care_passport_movement_tree" model="ir.ui.view">
+        <field name="name">care.passport.movement.tree</field>
+        <field name="model">care.passport.movement</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'done'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="movement_type"/>
+                <field name="reason"/>
+                <field name="custodian_id"/>
+                <field name="passport_count"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_care_passport_movement" model="ir.actions.act_window">
+        <field name="name">Passport Movements</field>
+        <field name="res_model">care.passport.movement</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Archive section menu under Employees -->
+    <menuitem id="menu_care_archive_root" name="Travel Archive" parent="hr.menu_hr_root"
+              sequence="54" groups="hr.group_hr_user"/>
+    <menuitem id="menu_care_passport" name="Passports" parent="menu_care_archive_root"
+              action="action_care_passport" sequence="1"/>
+    <menuitem id="menu_care_passport_movement" name="Movements (Check-Out/In)"
+              parent="menu_care_archive_root" action="action_care_passport_movement" sequence="2"/>
+
+    <record id="cron_care_passport_expiry" model="ir.cron">
+        <field name="name">Care HR: Passport Renewal Reminder</field>
+        <field name="model_id" ref="model_care_passport"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_expiry_reminder()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

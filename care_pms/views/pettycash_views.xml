@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_pms_petty_form" model="ir.ui.view">
+        <field name="name">care.pms.petty.cash.form</field>
+        <field name="model">care.pms.petty.cash</field>
+        <field name="arch" type="xml">
+            <form string="عُهدة نقدية">
+                <header>
+                    <button name="action_request" type="object" string="تقديم الطلب" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_approve" type="object" string="اعتماد الطلب" class="btn-primary"
+                            invisible="state != 'requested'"/>
+                    <button name="action_disburse" type="object" string="صرف العهدة (تنزيل على الحساب)" class="btn-primary"
+                            invisible="state != 'approved'"/>
+                    <button name="action_new_settlement" type="object" string="➕ تسوية جديدة" class="btn-primary"
+                            invisible="state not in ('disbursed','settled')"/>
+                    <button name="action_return_close" type="object" string="إرجاع المتبقي وإغلاق" class="btn-success"
+                            invisible="state not in ('disbursed','settled')"
+                            confirm="سيتم تسجيل إرجاع المبلغ المتبقي وإغلاق العهدة. متابعة؟"/>
+                    <button name="action_reopen" type="object" string="إعادة فتح" invisible="state != 'closed'"/>
+                    <button name="action_print_request" type="object" string="🖨️ طلب العهدة"/>
+                    <button name="action_print_summary" type="object" string="🖨️ ملخص العهدة"
+                            invisible="state in ('draft','requested','approved')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,requested,approved,disbursed,settled,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_settlements" type="object" class="oe_stat_button" icon="fa-list-alt">
+                            <field name="settlement_count" widget="statinfo" string="التسويات"/>
+                        </button>
+                        <button name="action_view_moves" type="object" class="oe_stat_button" icon="fa-book"
+                                invisible="move_count == 0" groups="account.group_account_user">
+                            <field name="move_count" widget="statinfo" string="قيود محاسبية"/>
+                        </button>
+                    </div>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="manager_id"/>
+                            <field name="assigned_user_ids" widget="many2many_tags"
+                                   options="{'no_create': True}"/>
+                            <field name="request_date"/>
+                            <field name="disbursed_date" invisible="not disbursed_date"/>
+                        </group>
+                        <group>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="amount"/>
+                            <field name="spent"/>
+                            <field name="remaining"/>
+                            <field name="returned_amount" invisible="state != 'closed'"/>
+                            <field name="return_date" invisible="state != 'closed'"/>
+                        </group>
+                    </group>
+                    <group string="سبب العهدة / الغرض">
+                        <field name="reason" nolabel="1" placeholder="اذكر سبب العهدة والغرض من الصرف..."/>
+                    </group>
+                    <group string="جهة الصرف">
+                        <group>
+                            <field name="beneficiary_type" widget="radio" options="{'horizontal': True}"/>
+                            <field name="beneficiary_department_id"
+                                   invisible="beneficiary_type != 'department'"
+                                   required="beneficiary_type == 'department'"/>
+                        </group>
+                        <group>
+                            <field name="recipient_id" required="beneficiary_type == 'person'"/>
+                        </group>
+                    </group>
+                    <group string="الربط المحاسبي" groups="account.group_account_user">
+                        <group>
+                            <field name="journal_id"/>
+                            <field name="advance_account_id"/>
+                        </group>
+                        <group>
+                            <field name="move_id" readonly="1"/>
+                            <field name="return_move_id" readonly="1" invisible="not return_move_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="سجل التسويات" name="settlements">
+                            <field name="settlement_ids" readonly="1">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="date"/>
+                                    <field name="amount_total" sum="الإجمالي"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                    <field name="state" widget="badge"
+                                           decoration-info="state == 'submitted'"
+                                           decoration-success="state == 'approved'"
+                                           decoration-danger="state == 'rejected'"
+                                           decoration-muted="state == 'draft'"/>
+                                </tree>
+                            </field>
+                            <div class="text-muted" invisible="state not in ('disbursed','settled')">
+                                استخدم زر «➕ تسوية جديدة» بالأعلى لإضافة تسوية أخرى بالمبلغ المتبقّي.
+                            </div>
+                        </page>
+                    </notebook>
+                    <group class="oe_subtotal_footer">
+                        <field name="spent"/>
+                        <field name="remaining"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    <record id="view_pms_petty_tree" model="ir.ui.view">
+        <field name="name">care.pms.petty.cash.tree</field>
+        <field name="model">care.pms.petty.cash</field>
+        <field name="arch" type="xml">
+            <tree string="العُهد النقدية">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="manager_id"/>
+                <field name="reason" optional="hide"/>
+                <field name="amount"/>
+                <field name="spent"/>
+                <field name="remaining"/>
+                <field name="returned_amount" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-info="state in ('requested','approved')"
+                       decoration-warning="state in ('disbursed','settled')"
+                       decoration-success="state == 'closed'"
+                       decoration-muted="state == 'draft'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_pms_petty" model="ir.actions.act_window">
+        <field name="name">العُهد النقدية</field>
+        <field name="res_model">care.pms.petty.cash</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- ===== Settlement (تسوية) ===== -->
+    <record id="view_pms_settlement_form" model="ir.ui.view">
+        <field name="name">care.pms.petty.settlement.form</field>
+        <field name="model">care.pms.petty.settlement</field>
+        <field name="arch" type="xml">
+            <form string="تسوية عهدة">
+                <header>
+                    <button name="action_submit" type="object" string="تقديم التسوية" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_approve" type="object" string="اعتماد" class="btn-success"
+                            invisible="state != 'submitted'"/>
+                    <button name="action_reject" type="object" string="رفض" invisible="state != 'submitted'"/>
+                    <button name="action_reset" type="object" string="إعادة لمسودة"
+                            invisible="state == 'draft'"/>
+                    <button name="action_print" type="object" string="🖨️ تقرير التسوية"/>
+                    <button name="action_view_move" type="object" string="📗 قيد التسوية"
+                            invisible="not move_id" groups="account.group_account_user"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved"/>
+                </header>
+                <sheet>
+                    <field name="move_id" invisible="1"/>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="cash_id" readonly="1"/>
+                            <field name="project_id" readonly="1"/>
+                            <field name="date"/>
+                        </group>
+                        <group>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="amount_total"/>
+                            <field name="cash_remaining"/>
+                        </group>
+                    </group>
+                    <field name="expense_ids" readonly="state != 'draft'">
+                        <tree editable="bottom">
+                            <field name="date"/>
+                            <field name="invoice_number"/>
+                            <field name="partner_id"/>
+                            <field name="name"/>
+                            <field name="category"/>
+                            <field name="foreign_currency_id" string="العملة"/>
+                            <field name="foreign_amount" string="المبلغ بالعملة"/>
+                            <field name="rate" string="سعر الصرف"/>
+                            <field name="amount" string="المبلغ (د.ك)" readonly="1" force_save="1"/>
+                            <field name="currency_id" column_invisible="1"/>
+                            <field name="attachment" widget="binary" filename="attachment_name"/>
+                            <field name="attachment_name" column_invisible="1"/>
+                            <field name="cash_id" column_invisible="1"/>
+                            <field name="note" optional="hide"/>
+                        </tree>
+                    </field>
+                    <group class="oe_subtotal_footer">
+                        <field name="amount_total"/>
+                    </group>
+                    <field name="note" placeholder="ملاحظات..."/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    <record id="view_pms_settlement_tree" model="ir.ui.view">
+        <field name="name">care.pms.petty.settlement.tree</field>
+        <field name="model">care.pms.petty.settlement</field>
+        <field name="arch" type="xml">
+            <tree string="التسويات">
+                <field name="name"/>
+                <field name="cash_id"/>
+                <field name="date"/>
+                <field name="amount_total" sum="الإجمالي"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'submitted'"
+                       decoration-success="state == 'approved'"
+                       decoration-danger="state == 'rejected'"
+                       decoration-muted="state == 'draft'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_pms_settlement" model="ir.actions.act_window">
+        <field name="name">التسويات</field>
+        <field name="res_model">care.pms.petty.settlement</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

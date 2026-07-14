@@ -37,3 +37,8 @@ access_purchase_tender_checklist_m,purchase.tender.checklist.m,model_purchase_te
 
 access_purchase_tender_requirement_u,purchase.tender.requirement.u,model_purchase_tender_requirement,purchase_tender.group_tender_user,1,1,1,1
 access_purchase_tender_requirement_m,purchase.tender.requirement.m,model_purchase_tender_requirement,purchase_tender.group_tender_manager,1,1,1,1
+
+access_purchase_tender_notify_line_u,purchase.tender.notify.line.u,model_purchase_tender_notify_line,purchase_tender.group_tender_user,1,0,0,0
+access_purchase_tender_notify_line_admin,purchase.tender.notify.line.admin,model_purchase_tender_notify_line,purchase_tender.group_tender_notify_admin,1,1,1,1
+access_tender_classification_user,tender.classification.user,model_purchase_tender_classification,base.group_user,1,0,0,0
+access_tender_classification_mgr,tender.classification.mgr,model_purchase_tender_classification,base.group_system,1,1,1,1

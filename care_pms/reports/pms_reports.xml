@@ -1,0 +1,538 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Delivery Note -->
+    <record id="action_report_delivery_note" model="ir.actions.report">
+        <field name="name">سند تسليم مواد</field>
+        <field name="model">care.pms.delivery.note</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_pms.report_delivery_note</field>
+        <field name="report_file">care_pms.report_delivery_note</field>
+        <field name="print_report_name">'DeliveryNote-%s' % (object.name)</field>
+        <field name="binding_model_id" ref="model_care_pms_delivery_note"/>
+        <field name="binding_type">report</field>
+    </record>
+    <template id="report_delivery_note">
+        <t t-call="web.html_container">
+            <t t-call="web.basic_layout">
+                <t t-foreach="docs" t-as="o">
+                    <div class="page" style="direction:rtl; font-family:Arial,Helvetica,sans-serif !important; padding:0 12px;">
+                        <div style="display:flex; justify-content:space-between; border-bottom:3px solid #f0663c; padding-bottom:8px; margin-bottom:14px;">
+                            <div><span style="color:#f0663c; font-weight:bold; font-size:22px;">CARE</span>
+                                <div style="font-size:12px;">سند تسليم مواد</div></div>
+                            <div style="text-align:left; font-size:12px;">
+                                المرجع: <span t-esc="o.name"/><br/>
+                                التاريخ: <span t-esc="o.date and o.date.strftime('%Y-%m-%d') or ''"/>
+                            </div>
+                        </div>
+                        <table style="width:100%; font-size:13px; margin-bottom:12px;">
+                            <tr><td><b>المشروع:</b> <span t-esc="o.project_id.name"/></td>
+                                <td><b>الموقع:</b> <span t-esc="o.location or ''"/></td></tr>
+                        </table>
+                        <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                            <thead><tr style="background:#f6f8fc;">
+                                <th style="border:1px solid #ddd; padding:6px; text-align:right;">الصنف</th>
+                                <th style="border:1px solid #ddd; padding:6px;">الكمية</th>
+                                <th style="border:1px solid #ddd; padding:6px;">الوحدة</th>
+                            </tr></thead>
+                            <tbody>
+                                <tr t-foreach="o.line_ids" t-as="l">
+                                    <td style="border:1px solid #ddd; padding:6px;" t-esc="l.material_id.name"/>
+                                    <td style="border:1px solid #ddd; padding:6px; text-align:center;" t-esc="l.qty"/>
+                                    <td style="border:1px solid #ddd; padding:6px; text-align:center;" t-esc="l.material_id.uom_name"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div style="margin-top:40px; display:flex; justify-content:space-between; font-size:13px;">
+                            <div>المُسلِّم: ....................</div>
+                            <div>المستلِم: <span t-esc="o.receiver_name or '....................'"/><br/><br/>التوقيع: ....................</div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Project consolidated statement -->
+    <record id="action_report_project_statement" model="ir.actions.report">
+        <field name="name">كشف حساب المشروع</field>
+        <field name="model">project.project</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_pms.report_project_statement</field>
+        <field name="report_file">care_pms.report_project_statement</field>
+        <field name="print_report_name">'ProjectStatement-%s' % (object.name)</field>
+        <field name="binding_model_id" ref="project.model_project_project"/>
+        <field name="binding_type">report</field>
+    </record>
+    <template id="report_project_statement">
+        <t t-call="web.html_container">
+            <t t-call="web.basic_layout">
+                <t t-foreach="docs" t-as="o">
+                    <div class="page" style="direction:rtl; font-family:Arial,Helvetica,sans-serif !important; padding:0 12px;">
+                        <div style="display:flex; justify-content:space-between; border-bottom:3px solid #f0663c; padding-bottom:8px; margin-bottom:14px;">
+                            <div><span style="color:#f0663c; font-weight:bold; font-size:24px;">CARE</span>
+                                <div style="font-size:13px;">كشف حساب المشروع</div></div>
+                            <div style="text-align:left; font-size:12px;">
+                                المشروع: <span t-esc="o.name"/><br/>
+                                الإدارة: <span t-esc="o.pms_department_id.name or '—'"/>
+                            </div>
+                        </div>
+                        <h4 style="background:#f6f8fc; padding:6px;">المخزون</h4>
+                        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                            <thead><tr style="background:#f6f8fc;">
+                                <th style="border:1px solid #ddd; padding:5px; text-align:right;">الصنف</th>
+                                <th style="border:1px solid #ddd; padding:5px;">مستلَم</th>
+                                <th style="border:1px solid #ddd; padding:5px;">مسحوب</th>
+                                <th style="border:1px solid #ddd; padding:5px;">متاح</th>
+                            </tr></thead>
+                            <tbody>
+                                <tr t-foreach="o.material_ids" t-as="m">
+                                    <td style="border:1px solid #ddd; padding:5px;" t-esc="m.name"/>
+                                    <td style="border:1px solid #ddd; padding:5px; text-align:center;" t-esc="m.received_qty"/>
+                                    <td style="border:1px solid #ddd; padding:5px; text-align:center;" t-esc="m.issued_qty"/>
+                                    <td style="border:1px solid #ddd; padding:5px; text-align:center;" t-esc="m.available_qty"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <h4 style="background:#f6f8fc; padding:6px; margin-top:14px;">العُهد النقدية</h4>
+                        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                            <thead><tr style="background:#f6f8fc;">
+                                <th style="border:1px solid #ddd; padding:5px; text-align:right;">المرجع</th>
+                                <th style="border:1px solid #ddd; padding:5px;">القيمة</th>
+                                <th style="border:1px solid #ddd; padding:5px;">مصروف</th>
+                                <th style="border:1px solid #ddd; padding:5px;">متبقّي</th>
+                                <th style="border:1px solid #ddd; padding:5px;">الحالة</th>
+                            </tr></thead>
+                            <tbody>
+                                <tr t-foreach="o.pettycash_ids" t-as="c">
+                                    <td style="border:1px solid #ddd; padding:5px;" t-esc="c.name"/>
+                                    <td style="border:1px solid #ddd; padding:5px; text-align:center;" t-esc="c.amount"/>
+                                    <td style="border:1px solid #ddd; padding:5px; text-align:center;" t-esc="c.spent"/>
+                                    <td style="border:1px solid #ddd; padding:5px; text-align:center;" t-esc="c.remaining"/>
+                                    <td style="border:1px solid #ddd; padding:5px; text-align:center;" t-esc="c.state"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div style="margin-top:14px; font-size:13px;">
+                            <b>ملخّص التاسكات:</b> مفتوحة <span t-esc="o.pms_task_open"/> ·
+                            متأخرة <span t-esc="o.pms_task_overdue"/> ·
+                            <b>عمال:</b> <span t-esc="o.worker_count"/> ·
+                            <b>سيارات:</b> <span t-esc="o.vehicle_count"/> ·
+                            <b>أصول:</b> <span t-esc="o.asset_count"/>
+                        </div>
+                        <div style="margin-top:30px; font-size:12px;">اعتماد: .................... &#160;&#160; التاريخ: ....................</div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Clearance certificate (handover) -->
+    <record id="action_report_project_clearance" model="ir.actions.report">
+        <field name="name">إخلاء طرف — المشروع</field>
+        <field name="model">project.project</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_pms.report_project_clearance</field>
+        <field name="report_file">care_pms.report_project_clearance</field>
+        <field name="print_report_name">'Clearance-%s' % (object.name)</field>
+        <field name="binding_model_id" ref="project.model_project_project"/>
+        <field name="binding_type">report</field>
+    </record>
+    <template id="report_project_clearance">
+        <t t-call="web.html_container">
+            <t t-call="web.basic_layout">
+                <t t-foreach="docs" t-as="o">
+                    <div class="page" style="direction:rtl; font-family:Arial,Helvetica,sans-serif !important; padding:0 12px;">
+                        <div style="text-align:center; border-bottom:3px solid #f0663c; padding-bottom:8px; margin-bottom:16px;">
+                            <span style="color:#f0663c; font-weight:bold; font-size:26px;">CARE</span>
+                            <div style="font-size:18px; font-weight:bold;">كشف إخلاء طرف — تسليم مسؤوليات المشروع</div>
+                        </div>
+                        <table style="width:100%; font-size:13px; margin-bottom:12px;">
+                            <tr><td><b>المشروع:</b> <span t-esc="o.name"/></td>
+                                <td><b>المدير الحالي:</b> <span t-esc="o.project_manager_id.name or '—'"/></td></tr>
+                            <tr><td><b>الإدارة:</b> <span t-esc="o.pms_department_id.name or '—'"/></td>
+                                <td><b>التاريخ:</b> ....................</td></tr>
+                        </table>
+                        <p style="font-size:13px;">يُقرّ الطرفان بأن المسؤوليات المفتوحة أدناه قد سُلّمت واستُلمت:</p>
+                        <div style="font-size:13px; line-height:2;">
+                            🧰 <b>الأصول في العهدة:</b> <span t-esc="o.asset_count"/> أصل &#160;·&#160;
+                            🗄️ <b>العُهد:</b> <span t-esc="o.custody_count"/> &#160;·&#160;
+                            💰 <b>عُهد نقدية مفتوحة:</b> <span t-esc="len(o.pettycash_ids.filtered(lambda c: c.state != 'closed'))"/>
+                        </div>
+                        <h5 style="margin-top:10px;">أرصدة المخزون غير المُصرفة</h5>
+                        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                            <thead><tr style="background:#f6f8fc;">
+                                <th style="border:1px solid #ddd; padding:5px; text-align:right;">الصنف</th>
+                                <th style="border:1px solid #ddd; padding:5px;">المتاح</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="o.material_ids.filtered(lambda m: m.available_qty)" t-as="m">
+                                    <td style="border:1px solid #ddd; padding:5px;" t-esc="m.name"/>
+                                    <td style="border:1px solid #ddd; padding:5px; text-align:center;" t-esc="m.available_qty"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div style="margin-top:40px; display:flex; justify-content:space-between; font-size:13px;">
+                            <div>المدير المُسلِّم: ....................<br/><br/>التوقيع: ....................</div>
+                            <div>المدير المُستلِم: ....................<br/><br/>التوقيع: ....................</div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Petty Cash statement + cover -->
+    <record id="paperformat_care_petty" model="report.paperformat">
+        <field name="name">Care Petty Cash A4</field>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">5</field>
+        <field name="margin_bottom">22</field>
+        <field name="margin_left">4</field>
+        <field name="margin_right">4</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">110</field>
+    </record>
+    <!-- ============ Custody REQUEST report (طلب عهدة) ============ -->
+    <record id="action_report_petty_cash_request" model="ir.actions.report">
+        <field name="name">طلب عهدة نقدية</field>
+        <field name="model">care.pms.petty.cash</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_pms.report_petty_cash_request</field>
+        <field name="report_file">care_pms.report_petty_cash_request</field>
+        <field name="print_report_name">'Request-%s' % (object.name)</field>
+        <field name="paperformat_id" ref="paperformat_care_petty"/>
+        <field name="binding_model_id" ref="model_care_pms_petty_cash"/>
+        <field name="binding_type">report</field>
+    </record>
+    <template id="report_petty_cash_request">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+            <t t-call="web.basic_layout">
+                <t t-set="benef" t-value="{'department': o.beneficiary_department_id.name, 'project': o.project_id.name, 'person': o.recipient_id.name}.get(o.beneficiary_type) or ''"/>
+                <div class="page rtl" style="font-family:Arial,'Noto Sans',Helvetica,sans-serif !important; color:#1f2937; font-size:15px;">
+                    <img src="/care_hr/static/src/img/header.png" class="w-100" style="width:100%; display:block;"/>
+                    <table style="width:100%; background:#fbfcfe;">
+                        <tr>
+                            <td style="width:22%; text-align:left; padding:6px 10px; vertical-align:middle;">
+                                <img t-att-src="'/report/barcode/QR/%s?width=150&amp;height=150' % (o.name)" style="height:82px;"/>
+                                <div style="font-size:10px;color:#7b8794;">امسح للوصول للسجل · Scan</div>
+                            </td>
+                            <td style="width:56%; text-align:center; vertical-align:middle;">
+                                <div style="font-size:24px;font-weight:bold;color:#0f2b5b;">طلب عهدة نقدية</div>
+                                <div style="font-size:14px;color:#64748b;letter-spacing:1px;">PETTY CASH REQUEST</div>
+                            </td>
+                            <td style="width:22%; text-align:right; padding:6px 10px; vertical-align:middle;">
+                                <div style="font-size:14px;letter-spacing:1px;color:#334155;font-weight:bold;"><span t-field="o.name"/></div>
+                                <div style="font-size:10px;color:#7b8794;">المرجع · Ref</div>
+                            </td>
+                        </tr>
+                    </table>
+                    <div style="padding:14px 30px;">
+                        <table style="width:100%; border-collapse:collapse; font-size:15px; margin-bottom:14px;">
+                            <tr>
+                                <td style="border:1px solid #cbd5e1; background:#f1f5f9; padding:9px 11px; font-weight:bold; color:#0f2b5b; width:150px;">المشروع / Project</td>
+                                <td style="border:1px solid #cbd5e1; padding:9px 11px;" t-esc="o.project_id.name"/>
+                                <td style="border:1px solid #cbd5e1; background:#f1f5f9; padding:9px 11px; font-weight:bold; color:#0f2b5b; width:150px;">مقدّم الطلب / Requester</td>
+                                <td style="border:1px solid #cbd5e1; padding:9px 11px;" t-esc="o.manager_id.name"/>
+                            </tr>
+                            <tr>
+                                <td style="border:1px solid #cbd5e1; background:#f1f5f9; padding:9px 11px; font-weight:bold; color:#0f2b5b;">صرف إلى / To</td>
+                                <td style="border:1px solid #cbd5e1; padding:9px 11px;"><t t-esc="{'department':'إدارة','project':'مشروع','person':'شخص'}.get(o.beneficiary_type) or ''"/><t t-if="benef"> — <b t-esc="benef"/></t></td>
+                                <td style="border:1px solid #cbd5e1; background:#f1f5f9; padding:9px 11px; font-weight:bold; color:#0f2b5b;">الشخص المستلم / Recipient</td>
+                                <td style="border:1px solid #cbd5e1; padding:9px 11px;" t-esc="o.recipient_id.name or '—'"/>
+                            </tr>
+                            <tr>
+                                <td style="border:1px solid #cbd5e1; background:#f1f5f9; padding:9px 11px; font-weight:bold; color:#0f2b5b;">تاريخ الطلب / Date</td>
+                                <td style="border:1px solid #cbd5e1; padding:9px 11px;" t-esc="o.request_date"/>
+                                <td style="border:1px solid #cbd5e1; background:#fff7ed; padding:9px 11px; font-weight:bold; color:#c2410c;">المبلغ المطلوب / Amount</td>
+                                <td style="border:1px solid #cbd5e1; padding:9px 11px; font-weight:bold; font-size:17px;"><span t-esc="o.amount"/> د.ك</td>
+                            </tr>
+                        </table>
+                        <div style="font-weight:bold; color:#0f2b5b; margin-bottom:4px; font-size:16px;">سبب العهدة / Reason</div>
+                        <div style="border:1px solid #cbd5e1; border-radius:6px; padding:12px 14px; min-height:70px; font-size:15px; line-height:1.9; background:#fbfcfe;">
+                            <span t-field="o.reason"/>
+                        </div>
+                        <table style="width:100%; margin-top:44px; font-size:15px;">
+                            <tr>
+                                <td style="width:50%; text-align:center; padding:0 20px;">
+                                    <div style="font-weight:bold; color:#0f2b5b;">توقيع مقدّم الطلب</div>
+                                    <div style="font-size:12px; color:#64748b;">Requester Signature</div>
+                                    <div style="margin-top:38px;"><span t-esc="o.manager_id.name"/></div>
+                                </td>
+                                <td style="width:50%; text-align:center; padding:0 20px;">
+                                    <div style="font-weight:bold; color:#0f2b5b;">اعتماد الصرف / الإدارة المالية</div>
+                                    <div style="font-size:12px; color:#64748b;">Disbursement Approval</div>
+                                    <div style="margin-top:38px;">.........................</div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="footer" style="width:100%;">
+                    <img src="/care_hr/static/src/img/footer.png" style="width:100%; display:block;"/>
+                    <div style="text-align:center; font-size:9px; color:#64748b; padding-top:2px;">
+                        صفحة <span class="page"/> من <span class="topage"/> · Page <span class="page"/> / <span class="topage"/>
+                    </div>
+                </div>
+            </t>
+            </t>
+        </t>
+    </template>
+
+    <record id="action_report_petty_cash" model="ir.actions.report">
+        <field name="name">تسوية عهدة مالية</field>
+        <field name="model">care.pms.petty.settlement</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_pms.report_petty_cash</field>
+        <field name="report_file">care_pms.report_petty_cash</field>
+        <field name="print_report_name">'Settlement-%s' % (object.name)</field>
+        <field name="paperformat_id" ref="paperformat_care_petty"/>
+        <field name="binding_model_id" ref="model_care_pms_petty_settlement"/>
+        <field name="binding_type">report</field>
+    </record>
+    <template id="report_petty_cash">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+            <t t-call="web.basic_layout">
+                <t t-set="cash" t-value="o.cash_id"/>
+                <t t-set="benef" t-value="{'department': cash.beneficiary_department_id.name, 'project': cash.project_id.name, 'person': cash.recipient_id.name}.get(cash.beneficiary_type) or ''"/>
+                <t t-set="benef_label" t-value="{'department': 'إدارة / Department', 'project': 'مشروع / Project', 'person': 'شخص / Person'}.get(cash.beneficiary_type) or ''"/>
+                <div class="page rtl" style="font-family:Arial,'Noto Sans',Helvetica,sans-serif !important; color:#1f2937; font-size:14.5px;">
+                    <!-- Agreed letterhead header -->
+                    <img src="/care_hr/static/src/img/header.png" class="w-100" style="width:100%; display:block;"/>
+
+                    <!-- QR (left) · title (center) · serial (right) -->
+                    <table style="width:100%; background:#fbfcfe;">
+                        <tr>
+                            <td style="width:22%; text-align:left; padding:6px 10px; vertical-align:middle;">
+                                <img t-att-src="'/report/barcode/QR/%s?width=150&amp;height=150' % (o.name)" style="height:78px;"/>
+                                <div style="font-size:8px;color:#7b8794;">امسح للوصول للسجل · Scan</div>
+                            </td>
+                            <td style="width:56%; text-align:center; vertical-align:middle;">
+                                <div style="font-size:23px;font-weight:bold;color:#0f2b5b;">تسوية عهدة مالية</div>
+                                <div style="font-size:14px;color:#64748b;letter-spacing:1px;">FINANCIAL CUSTODY SETTLEMENT</div>
+                            </td>
+                            <td style="width:22%; text-align:right; padding:6px 10px; vertical-align:middle;">
+                                <div style="font-size:12px;letter-spacing:1px;color:#334155;font-weight:bold;"><span t-field="o.name"/></div>
+                                <div style="font-size:8px;color:#7b8794;">المرجع · Ref</div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div style="padding:10px 26px;">
+                        <!-- Data box (right) · nothing on left of it besides the QR above -->
+                        <table style="width:100%; border-collapse:collapse; font-size:15px; margin-bottom:10px;">
+                            <tr>
+                                <td style="border:1px solid #cbd5e1; background:#f1f5f9; padding:6px 9px; font-weight:bold; color:#0f2b5b; width:130px;">المشروع / Project</td>
+                                <td style="border:1px solid #cbd5e1; padding:6px 9px;" t-esc="cash.project_id.name"/>
+                                <td style="border:1px solid #cbd5e1; background:#f1f5f9; padding:6px 9px; font-weight:bold; color:#0f2b5b; width:130px;">العهدة باسم / Custodian</td>
+                                <td style="border:1px solid #cbd5e1; padding:6px 9px;" t-esc="cash.manager_id.name"/>
+                            </tr>
+                            <tr>
+                                <td style="border:1px solid #cbd5e1; background:#f1f5f9; padding:6px 9px; font-weight:bold; color:#0f2b5b;">صرف إلى / To</td>
+                                <td style="border:1px solid #cbd5e1; padding:6px 9px;"><span t-esc="benef_label"/><t t-if="benef"> — <b t-esc="benef"/></t></td>
+                                <td style="border:1px solid #cbd5e1; background:#f1f5f9; padding:6px 9px; font-weight:bold; color:#0f2b5b;">الشخص المستلم / Recipient</td>
+                                <td style="border:1px solid #cbd5e1; padding:6px 9px;" t-esc="cash.recipient_id.name or '—'"/>
+                            </tr>
+                            <tr>
+                                <td style="border:1px solid #cbd5e1; background:#f1f5f9; padding:6px 9px; font-weight:bold; color:#0f2b5b;">قيمة العهدة / Custody</td>
+                                <td style="border:1px solid #cbd5e1; padding:6px 9px;"><span t-esc="cash.amount"/> د.ك</td>
+                                <td style="border:1px solid #cbd5e1; background:#f1f5f9; padding:6px 9px; font-weight:bold; color:#0f2b5b;">إجمالي هذه التسوية / This Settlement</td>
+                                <td style="border:1px solid #cbd5e1; padding:6px 9px; font-weight:bold;"><span t-esc="o.amount_total"/> د.ك</td>
+                            </tr>
+                            <tr>
+                                <td style="border:1px solid #cbd5e1; background:#f1f5f9; padding:6px 9px; font-weight:bold; color:#0f2b5b;">تاريخ التسوية / Date</td>
+                                <td style="border:1px solid #cbd5e1; padding:6px 9px;" t-esc="o.date"/>
+                                <td style="border:1px solid #cbd5e1; background:#fff7ed; padding:6px 9px; font-weight:bold; color:#c2410c;">المتبقّي في العهدة / Remaining</td>
+                                <td style="border:1px solid #cbd5e1; padding:6px 9px; font-weight:bold;"><span t-esc="cash.remaining"/> د.ك</td>
+                            </tr>
+                        </table>
+
+                        <!-- Expenses -->
+                        <table style="width:100%; border-collapse:collapse; font-size:13.5px;">
+                            <thead><tr style="background:#0f2b5b; color:#fff;">
+                                <th style="border:1px solid #0f2b5b; padding:6px; width:80px;">التاريخ<br/>Date</th>
+                                <th style="border:1px solid #0f2b5b; padding:6px; width:90px;">رقم الفاتورة<br/>Invoice #</th>
+                                <th style="border:1px solid #0f2b5b; padding:6px;">الجهة<br/>Party</th>
+                                <th style="border:1px solid #0f2b5b; padding:6px;">البيان<br/>Description</th>
+                                <th style="border:1px solid #0f2b5b; padding:6px; width:70px;">التصنيف<br/>Category</th>
+                                <th style="border:1px solid #0f2b5b; padding:6px; width:95px;">المبلغ بالعملة<br/>Invoice Amount</th>
+                                <th style="border:1px solid #0f2b5b; padding:6px; width:65px;">بالدينار<br/>KWD</th>
+                                <th style="border:1px solid #0f2b5b; padding:6px; width:45px;">مرفق<br/>Att.</th>
+                            </tr></thead>
+                            <tbody>
+                                <tr t-foreach="o.expense_ids" t-as="e">
+                                    <td style="border:1px solid #cbd5e1; padding:5px;" t-esc="e.date"/>
+                                    <td style="border:1px solid #cbd5e1; padding:5px; text-align:center;" t-esc="e.invoice_number or '—'"/>
+                                    <td style="border:1px solid #cbd5e1; padding:5px;" t-esc="e.partner_id.name or '—'"/>
+                                    <td style="border:1px solid #cbd5e1; padding:5px;" t-esc="e.name"/>
+                                    <td style="border:1px solid #cbd5e1; padding:5px; text-align:center;" t-esc="e.category"/>
+                                    <td style="border:1px solid #cbd5e1; padding:5px; text-align:center;">
+                                        <span t-esc="e.foreign_amount"/> <span t-esc="e.foreign_currency_id.name or ''"/>
+                                        <div t-if="e.foreign_currency_id != o.currency_id" style="font-size:9.5px;color:#64748b;">سعر الصرف × <span t-esc="e.rate"/></div>
+                                    </td>
+                                    <td style="border:1px solid #cbd5e1; padding:5px; text-align:center; font-weight:bold;" t-esc="e.amount"/>
+                                    <td style="border:1px solid #cbd5e1; padding:5px; text-align:center;">
+                                        <span t-if="e.attachment" style="color:#047857;">✔</span>
+                                        <span t-else="" style="color:#9ca3af;">—</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot><tr style="background:#f6f8fc;">
+                                <td colspan="6" style="border:1px solid #cbd5e1; padding:6px; text-align:left;"><b>إجمالي هذه التسوية بالدينار / Settlement Total (KWD)</b></td>
+                                <td style="border:1px solid #cbd5e1; padding:6px; text-align:center;"><b t-esc="o.amount_total"/></td>
+                                <td style="border:1px solid #cbd5e1;"></td>
+                            </tr></tfoot>
+                        </table>
+
+                        <!-- Signatures: submitter (right) · finance (left) -->
+                        <table style="width:100%; margin-top:40px; font-size:15px;">
+                            <tr>
+                                <td style="width:50%; text-align:center; padding:0 20px;">
+                                    <div style="font-weight:bold; color:#0f2b5b;">توقيع مقدم التسوية</div>
+                                    <div style="font-size:10px; color:#64748b;">Settlement Submitter</div>
+                                    <div style="margin-top:34px;"><span t-esc="cash.manager_id.name"/></div>
+                                </td>
+                                <td style="width:50%; text-align:center; padding:0 20px;">
+                                    <div style="font-weight:bold; color:#0f2b5b;">اعتماد الإدارة المالية</div>
+                                    <div style="font-size:10px; color:#64748b;">Finance Approval</div>
+                                    <div style="margin-top:34px;">.........................</div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                </div>
+
+                <!-- Fixed running footer (repeats at page bottom) + page numbers -->
+                <div class="footer" style="width:100%;">
+                    <img src="/care_hr/static/src/img/footer.png" style="width:100%; display:block;"/>
+                    <div style="text-align:center; font-size:8.5px; color:#64748b; padding-top:2px;">
+                        صفحة <span class="page"/> من <span class="topage"/> · Page <span class="page"/> / <span class="topage"/>
+                    </div>
+                </div>
+            </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- ============ Custody SUMMARY report (ملخص العهدة) ============ -->
+    <record id="action_report_petty_cash_summary" model="ir.actions.report">
+        <field name="name">ملخص عهدة نقدية</field>
+        <field name="model">care.pms.petty.cash</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_pms.report_petty_cash_summary</field>
+        <field name="report_file">care_pms.report_petty_cash_summary</field>
+        <field name="print_report_name">'Summary-%s' % (object.name)</field>
+        <field name="paperformat_id" ref="paperformat_care_petty"/>
+        <field name="binding_model_id" ref="model_care_pms_petty_cash"/>
+        <field name="binding_type">report</field>
+    </record>
+    <template id="report_petty_cash_summary">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+            <t t-call="web.basic_layout">
+                <t t-set="benef" t-value="{'department': o.beneficiary_department_id.name, 'project': o.project_id.name, 'person': o.recipient_id.name}.get(o.beneficiary_type) or ''"/>
+                <div class="page rtl" style="font-family:Arial,'Noto Sans',Helvetica,sans-serif !important; color:#1f2937; font-size:14.5px;">
+                    <img src="/care_hr/static/src/img/header.png" class="w-100" style="width:100%; display:block;"/>
+                    <table style="width:100%; background:#fbfcfe;">
+                        <tr>
+                            <td style="width:22%; text-align:left; padding:6px 10px; vertical-align:middle;">
+                                <img t-att-src="'/report/barcode/QR/%s?width=150&amp;height=150' % (o.name)" style="height:78px;"/>
+                                <div style="font-size:8px;color:#7b8794;">امسح للوصول للسجل · Scan</div>
+                            </td>
+                            <td style="width:56%; text-align:center; vertical-align:middle;">
+                                <div style="font-size:23px;font-weight:bold;color:#0f2b5b;">ملخص عهدة نقدية</div>
+                                <div style="font-size:14px;color:#64748b;letter-spacing:1px;">CUSTODY SUMMARY</div>
+                            </td>
+                            <td style="width:22%; text-align:right; padding:6px 10px; vertical-align:middle;">
+                                <div style="font-size:12px;letter-spacing:1px;color:#334155;font-weight:bold;"><span t-field="o.name"/></div>
+                                <div style="font-size:8px;color:#7b8794;">المرجع · Ref</div>
+                            </td>
+                        </tr>
+                    </table>
+                    <div style="padding:10px 26px;">
+                        <table style="width:100%; border-collapse:collapse; font-size:15px; margin-bottom:10px;">
+                            <tr>
+                                <td style="border:1px solid #cbd5e1; background:#f1f5f9; padding:6px 9px; font-weight:bold; color:#0f2b5b; width:130px;">المشروع / Project</td>
+                                <td style="border:1px solid #cbd5e1; padding:6px 9px;" t-esc="o.project_id.name"/>
+                                <td style="border:1px solid #cbd5e1; background:#f1f5f9; padding:6px 9px; font-weight:bold; color:#0f2b5b; width:130px;">العهدة باسم / Custodian</td>
+                                <td style="border:1px solid #cbd5e1; padding:6px 9px;" t-esc="o.manager_id.name"/>
+                            </tr>
+                            <tr>
+                                <td style="border:1px solid #cbd5e1; background:#f1f5f9; padding:6px 9px; font-weight:bold; color:#0f2b5b;">صرف إلى / To</td>
+                                <td style="border:1px solid #cbd5e1; padding:6px 9px;"><t t-esc="{'department':'إدارة','project':'مشروع','person':'شخص'}.get(o.beneficiary_type) or ''"/><t t-if="benef"> — <b t-esc="benef"/></t></td>
+                                <td style="border:1px solid #cbd5e1; background:#f1f5f9; padding:6px 9px; font-weight:bold; color:#0f2b5b;">الشخص المستلم / Recipient</td>
+                                <td style="border:1px solid #cbd5e1; padding:6px 9px;" t-esc="o.recipient_id.name or '—'"/>
+                            </tr>
+                        </table>
+                        <t t-if="o.reason">
+                            <div style="font-weight:bold; color:#0f2b5b; margin:6px 0 3px;">سبب العهدة / Reason</div>
+                            <div style="border:1px solid #cbd5e1; border-radius:6px; padding:8px 12px; background:#fbfcfe; margin-bottom:10px;"><span t-field="o.reason"/></div>
+                        </t>
+
+                        <!-- Settlements -->
+                        <div style="font-weight:bold; color:#0f2b5b; margin:8px 0 4px; font-size:16px;">التسويات / Settlements</div>
+                        <table style="width:100%; border-collapse:collapse; font-size:13.5px;">
+                            <thead><tr style="background:#0f2b5b; color:#fff;">
+                                <th style="border:1px solid #0f2b5b; padding:6px;">المرجع<br/>Ref</th>
+                                <th style="border:1px solid #0f2b5b; padding:6px;">التاريخ<br/>Date</th>
+                                <th style="border:1px solid #0f2b5b; padding:6px;">عدد الفواتير<br/>Invoices</th>
+                                <th style="border:1px solid #0f2b5b; padding:6px;">الإجمالي (د.ك)<br/>Total (KWD)</th>
+                                <th style="border:1px solid #0f2b5b; padding:6px;">الحالة<br/>Status</th>
+                            </tr></thead>
+                            <tbody>
+                                <tr t-foreach="o.settlement_ids" t-as="s">
+                                    <td style="border:1px solid #cbd5e1; padding:5px; text-align:center;" t-esc="s.name"/>
+                                    <td style="border:1px solid #cbd5e1; padding:5px; text-align:center;" t-esc="s.date"/>
+                                    <td style="border:1px solid #cbd5e1; padding:5px; text-align:center;" t-esc="len(s.expense_ids)"/>
+                                    <td style="border:1px solid #cbd5e1; padding:5px; text-align:center; font-weight:bold;" t-esc="s.amount_total"/>
+                                    <td style="border:1px solid #cbd5e1; padding:5px; text-align:center;" t-esc="dict(s._fields['state'].selection).get(s.state)"/>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Grand totals -->
+                        <table style="width:100%; border-collapse:collapse; font-size:15px; margin-top:12px;">
+                            <tr>
+                                <td style="border:1px solid #cbd5e1; background:#f1f5f9; padding:8px 10px; font-weight:bold; color:#0f2b5b; width:25%;">قيمة العهدة / Custody</td>
+                                <td style="border:1px solid #cbd5e1; padding:8px 10px; width:25%;"><span t-esc="o.amount"/> د.ك</td>
+                                <td style="border:1px solid #cbd5e1; background:#f1f5f9; padding:8px 10px; font-weight:bold; color:#0f2b5b; width:25%;">إجمالي المصروف / Total Spent</td>
+                                <td style="border:1px solid #cbd5e1; padding:8px 10px; font-weight:bold; width:25%;"><span t-esc="o.spent"/> د.ك</td>
+                            </tr>
+                            <tr>
+                                <td style="border:1px solid #cbd5e1; background:#fff7ed; padding:8px 10px; font-weight:bold; color:#c2410c;">المتبقّي / Remaining</td>
+                                <td style="border:1px solid #cbd5e1; padding:8px 10px; font-weight:bold;"><span t-esc="o.remaining"/> د.ك</td>
+                                <td style="border:1px solid #cbd5e1; background:#ecfdf5; padding:8px 10px; font-weight:bold; color:#047857;">المُرجَع / Returned</td>
+                                <td style="border:1px solid #cbd5e1; padding:8px 10px; font-weight:bold;"><span t-esc="o.returned_amount"/> د.ك</td>
+                            </tr>
+                        </table>
+
+                        <table style="width:100%; margin-top:40px; font-size:15px;">
+                            <tr>
+                                <td style="width:50%; text-align:center; padding:0 20px;">
+                                    <div style="font-weight:bold; color:#0f2b5b;">العهدة باسم</div>
+                                    <div style="font-size:11px; color:#64748b;">Custodian</div>
+                                    <div style="margin-top:34px;"><span t-esc="o.manager_id.name"/></div>
+                                </td>
+                                <td style="width:50%; text-align:center; padding:0 20px;">
+                                    <div style="font-weight:bold; color:#0f2b5b;">اعتماد الإدارة المالية</div>
+                                    <div style="font-size:11px; color:#64748b;">Finance Approval</div>
+                                    <div style="margin-top:34px;">.........................</div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="footer" style="width:100%;">
+                    <img src="/care_hr/static/src/img/footer.png" style="width:100%; display:block;"/>
+                    <div style="text-align:center; font-size:8.5px; color:#64748b; padding-top:2px;">
+                        صفحة <span class="page"/> من <span class="topage"/> · Page <span class="page"/> / <span class="topage"/>
+                    </div>
+                </div>
+            </t>
+            </t>
+        </t>
+    </template>
+</odoo>

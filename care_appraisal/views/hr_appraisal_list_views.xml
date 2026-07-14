@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hr_appraisal_tree_performance" model="ir.ui.view">
+        <field name="name">hr.appraisal.tree.performance</field>
+        <field name="model">hr.appraisal</field>
+        <field name="inherit_id" ref="hr_appraisal.view_hr_appraisal_tree"/>
+        <field name="arch" type="xml">
+            <field name="state" position="before">
+                <field name="performance_score" optional="show"
+                       decoration-success="performance_score &gt;= 5"
+                       decoration-danger="performance_score &lt; -5"/>
+                <field name="performance_rating" optional="show" widget="badge"
+                       decoration-success="performance_rating == 'excellent'"
+                       decoration-info="performance_rating == 'good'"
+                       decoration-warning="performance_rating == 'fair'"
+                       decoration-danger="performance_rating == 'weak'"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_hr_appraisal_search_performance" model="ir.ui.view">
+        <field name="name">hr.appraisal.search.performance</field>
+        <field name="model">hr.appraisal</field>
+        <field name="inherit_id" ref="hr_appraisal.hr_appraisal_search"/>
+        <field name="arch" type="xml">
+            <filter name="groupby_state" position="after">
+                <filter name="group_perf_rating" string="التقدير التلقائي"
+                        context="{'group_by': 'performance_rating'}"/>
+            </filter>
+        </field>
+    </record>
+</odoo>

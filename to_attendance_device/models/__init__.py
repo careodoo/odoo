@@ -7,5 +7,9 @@ from . import user_attendance
 from . import attendance_device_location
 from . import hr_attendance
 from . import finger_template
+from . import attendance_device_ft_import
 from . import attendance_command_to_device
 from . import attendance_datalog_from_device
+from . import care_fast_fetch
+from . import care_map_helper
+from . import care_device_health

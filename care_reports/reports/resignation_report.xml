@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_resignation_submit" model="ir.actions.report">
+        <field name="name">Resignation Request</field>
+        <field name="model">hr.employee.resignation</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_reports.report_resignation_submit</field>
+        <field name="report_file">care_reports.report_resignation_submit</field>
+        <field name="print_report_name">'Resignation - %s' % (object.name or '')</field>
+        <field name="binding_model_id" ref="nthub_hr_resignation.model_hr_employee_resignation"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_care_resignation"/>
+    </record>
+
+    <template id="report_resignation_submit">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-set="navy" t-value="'#0f2b5b'"/>
+                <div class="page rtl" style="font-family:Arial,'Noto Sans Devanagari','Noto Sans Bengali',Helvetica,sans-serif !important;color:#1f2937;">
+                    <!-- Official letterhead header -->
+                    <img src="/care_hr/static/src/img/header.png"
+                         class="w-100" style="width:100%; display:block;"/>
+
+                    <!-- barcode (right) · title (center) · QR (left) -->
+                    <table style="width:100%; border-top:1px solid #eef2f7; border-bottom:2px solid #0f2b5b; background:#fbfcfe;">
+                        <tr>
+                            <td style="width:33%; text-align:left; padding:6px 10px;">
+                                <img t-if="o.qr_src" t-att-src="o.qr_src" style="height:62px;"/>
+                                <div style="font-size:8px;color:#7b8794;">امسح للوصول للسجل · Scan</div>
+                            </td>
+                            <td style="width:34%; text-align:center;">
+                                <div style="font-size:17px;font-weight:bold;color:#0f2b5b;">طلب استقالة</div>
+                                <div style="font-size:11px;color:#64748b;letter-spacing:1px;">RESIGNATION REQUEST</div>
+                            </td>
+                            <td style="width:33%; text-align:right; padding:6px 10px;">
+                                <img t-if="o.barcode_src" t-att-src="o.barcode_src" style="height:42px;"/>
+                                <div style="font-size:10px;letter-spacing:1px;color:#334155;font-weight:bold;">
+                                    <span t-field="o.name"/></div>
+                                <div style="font-size:8px;color:#7b8794;">الرقم التسلسلي · Serial No.</div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div style="padding:12px 40px; direction:rtl;">
+                        <div style="display:flex; justify-content:space-between; font-size:11.5px; color:#64748b; margin-bottom:6px;">
+                            <span>التاريخ / Date:
+                                <span t-esc="o.create_date and o.create_date.strftime('%Y-%m-%d') or ''"/></span>
+                            <span>المرجع / Ref: <span t-field="o.name"/></span>
+                        </div>
+
+                        <div style="font-size:13.5px; line-height:1.9;">
+                            <div style="display:flex; justify-content:space-between;">
+                                <span><b style="color:#0f2b5b;">السادة /</b> شركة الرعاية لمقاولات تنظيف المباني والمدن</span>
+                                <span><b>المحترمين</b></span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between;">
+                                <span><b style="color:#0f2b5b;">عناية /</b> إدارة المـــوارد البشريــة</span>
+                                <span><b>المحترمين</b></span>
+                            </div>
+                            <div style="margin:6px 0;">تحية طيبة وبعد ،،،</div>
+                        </div>
+
+                        <div style="text-align:center; font-weight:bold; font-size:15px; color:#fff; background:#0f2b5b; border-radius:6px; padding:7px; margin:12px 0 14px;">
+                            الموضوع / طلب استقالة
+                        </div>
+
+                        <!-- Trilingual letter: Arabic uses the reason (or default), EN + native -->
+                        <p style="font-size:13.5px; line-height:2.1; text-align:justify; margin:9px 2px;">
+                            برجاء الموافقة على إشعار تقديم استقالتي من العمل بشركة الرعاية بوظيفة
+                            <b><span t-field="o.rep_job"/></b>، على أن يكون آخر يوم عمل لي هو
+                            <b><span t-field="o.rep_date"/></b>، وذلك <b><span t-field="o.rep_reason_ar"/></b>.
+                            وأنتهز الفرصة لأعبّر عن خالص شكري وتقديري للشركة على فترة عملي معكم.
+                        </p>
+                        <p style="font-size:13.5px; line-height:2.1; text-align:left; direction:ltr; margin:9px 2px;">
+                            Kindly accept my resignation from CARE company, job title
+                            <b><span t-field="o.rep_job"/></b>, and my last working day will be
+                            <b><span t-field="o.rep_date"/></b>, for <b><span t-field="o.rep_reason_en"/></b>.
+                            I take this opportunity to express my sincere thanks and appreciation to the company.
+                        </p>
+                        <p t-if="o.native_text"
+                           t-attf-style="font-size:13.5px; line-height:2; background:#f5f9ff; border:1px solid #dbeafe; border-#{'right' if o.native_rtl else 'left'}:4px solid #0f2b5b; border-radius:6px; padding:9px 13px; margin:9px 2px; direction:#{'rtl' if o.native_rtl else 'ltr'}; text-align:#{'right' if o.native_rtl else 'left'};">
+                            <span style="font-size:9.5px;color:#1d4ed8;font-weight:bold;display:block;margin-bottom:3px;direction:rtl;text-align:right;">
+                                لغة العامل — تلقائياً حسب الجنسية (<span t-field="o.native_label"/>)
+                            </span>
+                            <span t-field="o.native_text"/>
+                        </p>
+
+                        <!-- Reason box (also shown explicitly) -->
+                        <table style="width:100%; border-collapse:collapse; font-size:12.5px; margin:6px 0 14px;">
+                            <tr>
+                                <td style="background:#f1f5f9; border:1px solid #cbd5e1; padding:8px; width:170px; font-weight:bold; color:#0f2b5b;">
+                                    أسباب الاستقالة / Reason</td>
+                                <td style="border:1px solid #cbd5e1; padding:8px;">
+                                    <span t-field="o.rep_reason_ar"/></td>
+                            </tr>
+                        </table>
+
+                        <table style="width:100%; border-collapse:collapse; margin:8px 0 14px; font-size:12.5px;">
+                            <tr>
+                                <th style="background:#0f2b5b;color:#fff;padding:8px;border:1px solid #0f2b5b;width:140px;">الرقم الوظيفي</th>
+                                <th style="background:#0f2b5b;color:#fff;padding:8px;border:1px solid #0f2b5b;">الاسم</th>
+                                <th style="background:#0f2b5b;color:#fff;padding:8px;border:1px solid #0f2b5b;">المشروع / الإدارة</th>
+                                <th style="background:#0f2b5b;color:#fff;padding:8px;border:1px solid #0f2b5b;width:120px;">الجنسية</th>
+                            </tr>
+                            <tr>
+                                <td style="border:1px solid #cbd5e1;padding:11px;text-align:center;"><span t-field="o.employee_id.barcode"/></td>
+                                <td style="border:1px solid #cbd5e1;padding:11px;text-align:center;"><span t-field="o.employee_name"/></td>
+                                <td style="border:1px solid #cbd5e1;padding:11px;text-align:center;"><span t-field="o.department_id"/></td>
+                                <td style="border:1px solid #cbd5e1;padding:11px;text-align:center;"><span t-field="o.rep_nationality"/></td>
+                            </tr>
+                        </table>
+
+                        <div style="font-size:13px; font-weight:bold; color:#0f2b5b; margin:14px 2px 4px;">
+                            توقيع مقدم الطلب / Applicant Signature: ...................................</div>
+                        <div style="text-align:center; font-size:12.5px; color:#475569; margin:8px 0 14px;">
+                            وتفضلوا بقبول فائق الاحترام والتقدير ،،</div>
+
+                        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                            <tr>
+                                <th style="background:#eef2f7;border:1px solid #cbd5e1;padding:7px;color:#0f2b5b;width:210px;">الاعتماد / Approval</th>
+                                <th style="background:#eef2f7;border:1px solid #cbd5e1;padding:7px;color:#0f2b5b;">التوقيع / Signature</th>
+                                <th style="background:#eef2f7;border:1px solid #cbd5e1;padding:7px;color:#0f2b5b;">الملاحظات / Remarks</th>
+                                <th style="background:#eef2f7;border:1px solid #cbd5e1;padding:7px;color:#0f2b5b;width:110px;">التاريخ / Date</th>
+                            </tr>
+                            <t t-foreach="['المدير المباشر','مدير الإدارة المعني','مدير الإدارة المالية','مدير الموارد البشرية']" t-as="role">
+                                <tr>
+                                    <td style="background:#f8fafc;border:1px solid #cbd5e1;height:38px;padding:6px 9px;font-weight:bold;color:#334155;"><span t-esc="role"/></td>
+                                    <td style="border:1px solid #cbd5e1;"></td>
+                                    <td style="border:1px solid #cbd5e1;"></td>
+                                    <td style="border:1px solid #cbd5e1;"></td>
+                                </tr>
+                            </t>
+                        </table>
+
+                        <div style="margin-top:12px; border:1px dashed #d8232a; background:#fff7f7; border-radius:6px; padding:7px 12px; font-size:10px; color:#7f1d1d; line-height:1.7;">
+                            <b>🔒 للاستخدام الرسمي فقط:</b> رقم القيد <span t-field="o.name"/> · الحالة <span t-field="o.state"/> ·
+                            المسار: مُقدَّمة ← المدير المباشر ← مدير الإدارة ← المالية ← الموارد البشرية ← اعتماد نهائي ·
+                            يُرفق بعد الاعتماد كشف نهاية الخدمة وإخلاء الطرف. &#160;|&#160;
+                            الباركود (يمين) = الرقم التسلسلي · رمز QR (يسار) يفتح السجل في النظام عند مسحه.
+                        </div>
+                    </div>
+
+                    <!-- Official letterhead footer -->
+                    <img src="/care_hr/static/src/img/footer.png"
+                         class="w-100" style="width:100%; display:block; margin-top:10px;"/>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

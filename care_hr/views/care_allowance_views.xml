@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Allowance Type catalogue -->
+    <record id="view_care_allowance_type_tree" model="ir.ui.view">
+        <field name="name">care.allowance.type.tree</field>
+        <field name="model">care.allowance.type</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="default_amount"/>
+                <field name="payment_method"/>
+                <field name="currency_id" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_care_allowance_type" model="ir.actions.act_window">
+        <field name="name">Allowance Types</field>
+        <field name="res_model">care.allowance.type</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Allowance record -->
+    <record id="view_care_allowance_tree" model="ir.ui.view">
+        <field name="name">care.allowance.tree</field>
+        <field name="model">care.allowance</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'done'" decoration-muted="state == 'refused'"
+                  decoration-info="state == 'approved'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="employee_id"/>
+                <field name="allowance_type_id"/>
+                <field name="payment_method"/>
+                <field name="frequency" optional="show"/>
+                <field name="scope" optional="show"/>
+                <field name="next_accrual_date" optional="show"/>
+                <field name="stop_state" widget="badge" optional="show"
+                       decoration-success="stop_state=='running'"
+                       decoration-warning="stop_state in ('stop_requested','resume_requested')"
+                       decoration-danger="stop_state=='stopped'"/>
+                <field name="amount"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'approved'"
+                       decoration-success="state == 'done'"
+                       decoration-danger="state == 'refused'"/>
+                <field name="currency_id" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_care_allowance_form" model="ir.ui.view">
+        <field name="name">care.allowance.form</field>
+        <field name="model">care.allowance</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_submit" type="object" string="Submit"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_dept_approve" type="object" string="Dept. Approve"
+                            class="btn-primary" invisible="state != 'submitted'"/>
+                    <button name="action_senior_approve" type="object" string="Senior Approve"
+                            class="btn-primary" invisible="state != 'dept'"
+                            groups="care_hr.group_care_senior_approver"/>
+                    <button name="action_mark_cash_paid" type="object" string="Mark Cash Paid"
+                            class="btn-primary"
+                            invisible="state != 'approved' or payment_method != 'cash'"/>
+                    <button name="action_refuse" type="object" string="Refuse"
+                            invisible="state in ('draft','done','refused')"/>
+                    <button name="action_reset" type="object" string="Reset to Draft"
+                            invisible="state in ('draft','done')"/>
+                    <button name="action_request_stop" type="object" string="🛑 طلب إيقاف البدل"
+                            invisible="not is_recurring or stop_state in ('stop_requested','stopped')"/>
+                    <button name="action_approve_stop" type="object" string="اعتماد الإيقاف"
+                            class="btn-primary" invisible="stop_state != 'stop_requested'"/>
+                    <button name="action_reject_stop" type="object" string="رفض الإيقاف"
+                            invisible="stop_state != 'stop_requested'"/>
+                    <button name="action_request_resume" type="object" string="▶️ طلب استمرار البدل"
+                            invisible="stop_state != 'stopped'"/>
+                    <button name="action_approve_resume" type="object" string="اعتماد الاستمرار"
+                            class="btn-primary" invisible="stop_state != 'resume_requested'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted,dept,approved,done"/>
+                </header>
+                <sheet>
+                    <field name="cash_paid" invisible="1"/>
+                    <field name="is_recurring" invisible="1"/>
+                    <field name="stop_state" invisible="1"/>
+                    <widget name="web_ribbon" title="Cash Paid" bg_color="bg-success"
+                            invisible="not cash_paid"/>
+                    <widget name="web_ribbon" text="بدل موقوف" bg_color="bg-danger"
+                            invisible="stop_state != 'stopped'"/>
+                    <widget name="web_ribbon" text="طلب إيقاف" bg_color="bg-warning"
+                            invisible="stop_state != 'stop_requested'"/>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="allowance_type_id"/>
+                            <field name="payment_method"/>
+                        </group>
+                        <group>
+                            <field name="date"/>
+                            <field name="amount"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="is_recurring"/>
+                            <field name="needs_senior"/>
+                            <field name="dept_approved_by" readonly="1"/>
+                            <field name="senior_approved_by" readonly="1"/>
+                            <field name="payslip_id" readonly="1"
+                                   invisible="payment_method != 'in_payslip'"/>
+                            <field name="cash_paid_date" readonly="1"
+                                   invisible="payment_method != 'cash'"/>
+                        </group>
+                    </group>
+                    <field name="reason" placeholder="Reason / justification..."/>
+                    <notebook>
+                        <page string="التكرار والاستحقاق" name="accrual">
+                            <group>
+                                <group string="النطاق والتكرار">
+                                    <field name="scope"/>
+                                    <field name="frequency"/>
+                                    <field name="project_id" readonly="1"/>
+                                    <field name="auto_renew"/>
+                                </group>
+                                <group string="تواريخ الاستحقاق">
+                                    <field name="start_date"/>
+                                    <field name="end_date"/>
+                                    <field name="next_accrual_date" readonly="1"/>
+                                    <field name="last_accrual_date" readonly="1"/>
+                                    <field name="annualized_amount" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="خيارات إضافية" name="options">
+                            <group>
+                                <group>
+                                    <field name="pro_rated"/>
+                                    <field name="gosi_included"/>
+                                    <field name="taxable"/>
+                                </group>
+                                <group>
+                                    <field name="conditional"/>
+                                    <field name="condition_note" invisible="not conditional"/>
+                                    <field name="max_cap"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                    <group string="إيقاف/استمرار البدل" invisible="not is_recurring and stop_state == 'running'">
+                        <group>
+                            <field name="stop_state"/>
+                            <field name="stop_effective_date"/>
+                        </group>
+                        <group>
+                            <field name="stop_request_date" readonly="1"/>
+                            <field name="stop_requested_by" readonly="1"/>
+                            <field name="stop_approved_by" readonly="1"/>
+                        </group>
+                        <field name="stop_reason" placeholder="سبب طلب إيقاف البدل..."/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_care_allowance" model="ir.actions.act_window">
+        <field name="name">Allowances</field>
+        <field name="res_model">care.allowance</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Grant a worker allowance</p>
+            <p>Allowances are routed through the approval matrix (department manager +
+               senior management) then reflected in the payslip or paid as cash.</p>
+        </field>
+    </record>
+</odoo>

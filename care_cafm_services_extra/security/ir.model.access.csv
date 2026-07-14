@@ -1,0 +1,11 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+acc_pest_st_u,pest.station.u,model_care_cafm_pest_station,base.group_user,1,1,1,0
+acc_pest_st_m,pest.station.m,model_care_cafm_pest_station,hr.group_hr_manager,1,1,1,1
+acc_pest_v_u,pest.visit.u,model_care_cafm_pest_visit,base.group_user,1,1,1,0
+acc_pest_v_m,pest.visit.m,model_care_cafm_pest_visit,hr.group_hr_manager,1,1,1,1
+acc_waste_u,waste.pickup.u,model_care_cafm_waste_pickup,base.group_user,1,1,1,0
+acc_waste_m,waste.pickup.m,model_care_cafm_waste_pickup,hr.group_hr_manager,1,1,1,1
+acc_pool_u,pool.reading.u,model_care_cafm_pool_reading,base.group_user,1,1,1,0
+acc_pool_m,pool.reading.m,model_care_cafm_pool_reading,hr.group_hr_manager,1,1,1,1
+acc_tank_u,watertank.u,model_care_cafm_watertank,base.group_user,1,1,1,0
+acc_tank_m,watertank.m,model_care_cafm_watertank,hr.group_hr_manager,1,1,1,1

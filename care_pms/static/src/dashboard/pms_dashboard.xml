@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+  <t t-name="care_pms.PmsDashboard">
+    <div class="o_pms_dashboard o_action" dir="rtl" t-ref="root">
+      <div class="pm-toolbar">
+        <div class="pm-title"><span class="pm-brand">CARE</span> · مركز إدارة المشاريع</div>
+        <button class="pm-refresh" t-on-click="() => this.loadData()">↻ تحديث</button>
+      </div>
+      <div class="pm-scroll">
+        <t t-if="state.loading"><div class="pm-loading">⏳ جارٍ التحميل...</div></t>
+        <t t-if="!state.loading and state.data">
+          <div class="pm-kpis">
+            <div class="pm-kpi" t-on-click="() => this.openProjects([], 'كل المشاريع')">
+              <div class="bar" style="background:#2f6df6"/><div class="ic">🏗️</div>
+              <div class="v" t-esc="fmt(state.data.kpi.projects)"/><div class="l">المشاريع</div>
+            </div>
+            <div class="pm-kpi" t-on-click="() => this.openProjects([['experience_count','>',0]], 'ذات عقود')">
+              <div class="bar" style="background:#017e84"/><div class="ic">📄</div>
+              <div class="v" t-esc="fmt(state.data.kpi.contracts)"/><div class="l">العقود</div>
+            </div>
+            <div class="pm-kpi" t-on-click="() => this.openTasks([['stage_id.fold','=',false]], 'تاسكات مفتوحة')">
+              <div class="bar" style="background:#7a5cf0"/><div class="ic">📋</div>
+              <div class="v" t-esc="fmt(state.data.kpi.tasks_open)"/><div class="l">تاسكات مفتوحة</div>
+            </div>
+            <div class="pm-kpi pm-danger" t-on-click="() => this.openTasks([['is_overdue','=',true]], 'متأخرة')">
+              <div class="bar" style="background:#e2513f"/><div class="ic">🚨</div>
+              <div class="v" t-esc="fmt(state.data.kpi.tasks_overdue)"/><div class="l">متأخرة</div>
+            </div>
+            <div class="pm-kpi pm-danger" t-on-click="() => this.openProjects([], 'المشاريع')">
+              <div class="bar" style="background:#c0392b"/><div class="ic">⚠️</div>
+              <div class="v" t-esc="fmt(state.data.kpi.at_risk)"/><div class="l">مشاريع في خطر</div>
+            </div>
+            <div class="pm-kpi" t-on-click="() => this.openTasks([['forward_state','=','pending']], 'إحالات معلّقة')">
+              <div class="bar" style="background:#e08a00"/><div class="ic">➡️</div>
+              <div class="v" t-esc="fmt(state.data.kpi.forwards_pending)"/><div class="l">إحالات معلّقة</div>
+            </div>
+            <div class="pm-kpi">
+              <div class="bar" style="background:#1a9f6d"/><div class="ic">👷</div>
+              <div class="v" t-esc="fmt(state.data.kpi.workers)"/><div class="l">العمال</div>
+            </div>
+          </div>
+
+          <div class="pm-charts">
+            <div class="pm-card pm-c4"><div class="pm-ch-t">التاسكات حسب النوع</div><div class="pm-cv"><canvas id="pmsKind"/></div></div>
+            <div class="pm-card pm-c4"><div class="pm-ch-t">متأخرات حسب البند</div><div class="pm-cv"><canvas id="pmsCat"/></div></div>
+            <div class="pm-card pm-c4"><div class="pm-ch-t">متأخرات حسب الإدارة</div><div class="pm-cv"><canvas id="pmsDept"/></div></div>
+          </div>
+
+          <div class="pm-card">
+            <div class="pm-ch-t">المشاريع (الأكثر تأخّراً)</div>
+            <table class="pm-table">
+              <thead><tr><th>المشروع</th><th>الخطر</th><th>عمال</th><th>سيارات</th><th>مفتوح</th><th>متأخر</th></tr></thead>
+              <tbody>
+                <t t-foreach="state.data.top_projects" t-as="p" t-key="p.id">
+                  <tr t-on-click="() => this.openTasks([['project_id','=',p.id]], p.name)" style="cursor:pointer;">
+                    <td t-esc="p.name"/>
+                    <td>
+                      <span t-if="p.risk == 'high'" class="pm-badge-red">عالٍ</span>
+                      <span t-elif="p.risk == 'medium'" style="background:#fff3e0;color:#c47f00;padding:2px 9px;border-radius:20px;font-weight:800;">متوسط</span>
+                      <span t-else="" style="background:#e6f7ef;color:#12945f;padding:2px 9px;border-radius:20px;font-weight:800;">منخفض</span>
+                    </td>
+                    <td t-esc="p.workers"/><td t-esc="p.vehicles"/>
+                    <td t-esc="p.open"/>
+                    <td><span t-att-class="p.overdue ? 'pm-badge-red' : 'pm-badge-grey'" t-esc="p.overdue"/></td>
+                  </tr>
+                </t>
+              </tbody>
+            </table>
+          </div>
+        </t>
+      </div>
+    </div>
+  </t>
+</templates>

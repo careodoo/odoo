@@ -21,3 +21,6 @@ access_device_confirm_wizard_grp_manager,device.confirm.wizard.manager,model_dev
 access_attendance_device_trans_flag,attendance.device.trans.flag.user,model_attendance_device_trans_flag,base.group_user,1,0,0,0
 access_attendance_command_device,attendance.command.device.manager,model_attendance_command_device,group_attendance_devices_manager,1,1,1,1
 access_attendance_data_log_device,attendance.data.log.device.manager,model_attendance_data_log_device,group_attendance_devices_manager,1,1,1,1
+access_ft_import_line_user,attendance.device.ft.import.line.user,model_attendance_device_ft_import_line,hr_attendance.group_hr_attendance_officer,1,0,0,0
+access_ft_import_line_manager,attendance.device.ft.import.line.manager,model_attendance_device_ft_import_line,group_attendance_devices_manager,1,1,1,1
+care_att_monthly_user,care.attendance.monthly,model_care_attendance_monthly,base.group_user,1,0,0,0

@@ -1,0 +1,61 @@
+/* Self-hosted Tajawal font (no external dependency). */
+@font-face {
+    font-family: 'Tajawal';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/care_arabic_font/static/fonts/Tajawal-400.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Tajawal';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('/care_arabic_font/static/fonts/Tajawal-500.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Tajawal';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('/care_arabic_font/static/fonts/Tajawal-700.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Tajawal';
+    font-style: normal;
+    font-weight: 800;
+    font-display: swap;
+    src: url('/care_arabic_font/static/fonts/Tajawal-800.ttf') format('truetype');
+}
+
+/* Apply Tajawal across the UI. Odoo's backend <html> carries no lang attribute,
+   so we set the font on the web-client text containers directly. Icon fonts
+   (.fa / .oi) keep their own font-family because an element's own font-family
+   always wins over an inherited one — icons are unaffected. */
+:root {
+    --o-system-font: 'Tajawal', 'Segoe UI', Tahoma, sans-serif;
+}
+body,
+.o_web_client,
+.o_action_manager,
+.o_main_navbar,
+.o_form_view,
+.o_list_view,
+.o_kanban_view,
+.o_list_table,
+.o_searchview,
+.o_control_panel,
+.o_cp_bottom,
+.modal,
+.dropdown-menu,
+.popover,
+.o_notification,
+.o_datetime_picker,
+input, select, textarea,
+.btn,
+label,
+.o_field_widget,
+.o_dropdown_title,
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Tajawal', 'Segoe UI', Tahoma, sans-serif !important;
+}

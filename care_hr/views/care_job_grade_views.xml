@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_care_job_grade_tree" model="ir.ui.view">
+        <field name="name">care.job.grade.tree</field>
+        <field name="model">care.job.grade</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="base_wage"/>
+                <field name="wage_min"/>
+                <field name="wage_max"/>
+                <field name="employee_count"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="active" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_care_job_grade_form" model="ir.ui.view">
+        <field name="name">care.job.grade.form</field>
+        <field name="model">care.job.grade</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="e.g. Grade 6 - Labour"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="sequence"/>
+                            <field name="active" widget="boolean_toggle"/>
+                        </group>
+                        <group>
+                            <field name="base_wage"/>
+                            <field name="wage_min"/>
+                            <field name="wage_max"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="Scope / notes..."/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_care_job_grade" model="ir.actions.act_window">
+        <field name="name">Job Grades / Wage Tiers</field>
+        <field name="res_model">care.job.grade</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create your job grades and wage tiers</p>
+            <p>Define the base wage tiers (e.g. 75 / 80 / 85) used across payroll and planning.</p>
+        </field>
+    </record>
+</odoo>

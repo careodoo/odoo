@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============ FORM ============ -->
+    <record id="view_letter_form_care" model="ir.ui.view">
+        <field name="name">care.letter.form</field>
+        <field name="model">letter.file</field>
+        <field name="priority">1</field>
+        <field name="arch" type="xml">
+            <form string="كتاب">
+                <header>
+                    <button name="action_send_to_sign" type="object" string="إرسال للتوقيع"
+                            class="oe_highlight" invisible="letter_state != 'draft'"/>
+                    <button name="action_sign" type="object" string="توقيع"
+                            class="oe_highlight" invisible="letter_state != 'to_sign'"/>
+                    <button name="action_scan" type="object" string="تسجيل المسح الضوئي"
+                            class="oe_highlight" invisible="letter_state != 'signed'"/>
+                    <button name="action_handover_delegate" type="object" string="تسليم للمندوب"
+                            class="oe_highlight" invisible="letter_state != 'scanned'"/>
+                    <button name="action_confirm_delivery" type="object" string="تأكيد التوصيل"
+                            class="oe_highlight" invisible="letter_state != 'with_delegate'"/>
+                    <button name="action_acknowledge" type="object" string="إقرار الاستلام"
+                            class="oe_highlight" invisible="letter_state != 'delivered'"/>
+                    <button name="action_archive_letter" type="object" string="أرشفة"
+                            invisible="letter_state != 'acknowledged'"/>
+                    <button name="action_print_official" type="object" string="طباعة الكتاب (ترويسة)" class="btn-secondary"/>
+                    <button name="action_print_label" type="object" string="ليبل QR" class="btn-secondary"/>
+                    <button name="action_print_ref_label" type="object" string="ليبل المرجع" class="btn-secondary"/>
+                    <field name="letter_state" widget="statusbar" clickable="1"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_replies" type="object" class="oe_stat_button" icon="fa-reply-all">
+                            <field name="reply_count" widget="statinfo" string="ردود"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="متأخّر" bg_color="text-bg-danger" invisible="not is_overdue"/>
+                    <field name="image_letter" widget="image" class="oe_avatar" options="{'size': [48, 48]}"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="اسم الكتاب..."/></h1>
+                        <h3><field name="ref" readonly="1"/></h3>
+                    </div>
+                    <group>
+                        <group string="بيانات الكتاب">
+                            <field name="direction"/>
+                            <field name="classification_id"/>
+                            <field name="partner_id"/>
+                            <field name="department_id"/>
+                            <field name="issue_date"/>
+                            <field name="tag_id" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                            <field name="is_confidential"/>
+                        </group>
+                        <group string="المتابعة والربط">
+                            <field name="requester_id"/>
+                            <field name="reply_to_id"/>
+                            <field name="response_deadline"/>
+                            <field name="deadline_state"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="سجل التسليم">
+                            <group>
+                                <group string="المندوب والتوصيل">
+                                    <field name="delivery_mode" widget="radio"/>
+                                    <field name="delegate_id"/>
+                                    <field name="delegate_handover_date"/>
+                                    <field name="delivered_date"/>
+                                    <field name="deli_date"/>
+                                    <field name="days_with_delegate"/>
+                                    <field name="is_overdue"/>
+                                </group>
+                                <group string="إقرار الاستلام" invisible="delivery_mode == 'no_ack'">
+                                    <field name="receiver_name"/>
+                                    <field name="receiver_signature" widget="image"/>
+                                    <field name="receipt_scan" widget="image"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="المحتوى">
+                            <field name="letter_contain" placeholder="نص الكتاب..."/>
+                        </page>
+                        <page string="صورة الكتاب">
+                            <field name="image_letter" widget="scan_upload" nolabel="1"/>
+                        </page>
+                        <page string="الأرشيف والقراءة">
+                            <group>
+                                <group string="موقع النسخة الورقية">
+                                    <field name="archive_building"/>
+                                    <field name="archive_cabinet"/>
+                                    <field name="archive_file"/>
+                                    <field name="archive_shelf"/>
+                                </group>
+                                <group string="قراءة المرفق (OCR)">
+                                    <field name="ocr_state"/>
+                                </group>
+                            </group>
+                            <separator string="النص المقروء من المرفق"/>
+                            <field name="ocr_text" readonly="1" placeholder="يُملأ تلقائياً بعد المسح..."/>
+                        </page>
+                        <page string="ملاحظات">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============ TREE ============ -->
+    <record id="view_letter_tree_care" model="ir.ui.view">
+        <field name="name">care.letter.tree</field>
+        <field name="model">letter.file</field>
+        <field name="priority">1</field>
+        <field name="arch" type="xml">
+            <tree string="الكتب" default_order="id desc" multi_edit="1" sample="1"
+                  decoration-danger="is_overdue"
+                  decoration-muted="letter_state == 'archived'"
+                  decoration-bf="letter_state in ['to_sign','with_delegate']">
+                <field name="is_overdue" column_invisible="1"/>
+                <field name="ref" string="المرجع"/>
+                <field name="direction" widget="badge"
+                       decoration-info="direction == 'outgoing'" decoration-warning="direction == 'incoming'"/>
+                <field name="name" string="الموضوع"/>
+                <field name="partner_id" string="الجهة" optional="show" widget="many2one_avatar"/>
+                <field name="classification_id" string="التصنيف" optional="show" widget="badge"/>
+                <field name="letter_state" string="الحالة" widget="badge"
+                       decoration-muted="letter_state in ['draft','archived']"
+                       decoration-warning="letter_state in ['to_sign','with_delegate']"
+                       decoration-info="letter_state in ['signed','scanned','delivered']"
+                       decoration-success="letter_state == 'acknowledged'"/>
+                <field name="delivery_mode" string="نوع التسليم" optional="hide" widget="badge"
+                       decoration-info="delivery_mode == 'ack_required'"
+                       decoration-muted="delivery_mode == 'no_ack'"/>
+                <field name="delegate_id" string="المندوب" optional="show" widget="many2one_avatar"/>
+                <field name="days_with_delegate" string="أيام" optional="hide"/>
+                <field name="issue_date" string="الإصدار" optional="show"/>
+                <field name="deli_date" string="التسليم" optional="show"/>
+                <field name="response_deadline" string="مهلة الرد" optional="hide"/>
+                <field name="fee_unpaid" string="رسوم مستحقة" optional="hide" sum="مستحق"/>
+                <field name="ocr_state" string="القراءة" optional="hide" widget="badge"
+                       decoration-success="ocr_state == 'done'" decoration-muted="ocr_state == 'none'"
+                       decoration-warning="ocr_state == 'pending'" decoration-danger="ocr_state == 'failed'"/>
+                <field name="department_id" string="القسم" optional="hide"/>
+                <field name="requester_id" string="مُقدّم الطلب" optional="hide" widget="many2one_avatar_user"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ============ KANBAN (lifecycle) ============ -->
+    <record id="view_letter_kanban_care" model="ir.ui.view">
+        <field name="name">care.letter.kanban</field>
+        <field name="model">letter.file</field>
+        <field name="priority">1</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="letter_state" class="o_kanban_small_column">
+                <field name="letter_state"/>
+                <field name="is_overdue"/>
+                <field name="ref"/>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="delegate_id"/>
+                <field name="requester_id"/>
+                <field name="classification_id"/>
+                <field name="direction"/>
+                <field name="issue_date"/>
+                <field name="days_with_delegate"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <t t-set="scolor" t-value="{'draft':'#9aa4bd','to_sign':'#e08a00','signed':'#2f6df6','scanned':'#7a5cf0','with_delegate':'#e08a00','delivered':'#2f6df6','acknowledged':'#1a9f6d','archived':'#9aa4bd'}[record.letter_state.raw_value] || '#2f6df6'"/>
+                        <div class="oe_kanban_global_click" t-attf-style="border-right:4px solid {{scolor}};padding:0;">
+                            <div style="display:flex;align-items:center;gap:10px;padding:10px 12px 6px;">
+                                <img t-att-src="kanban_image('res.partner', 'image_128', record.partner_id.raw_value)"
+                                     alt="logo" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:1px solid #e4e8f0;background:#fff;"/>
+                                <div style="flex:1;min-width:0;">
+                                    <strong style="color:#1e2a44;font-size:13px;"><field name="ref"/></strong>
+                                    <div class="text-truncate" style="font-size:12.5px;color:#374151;"><field name="name"/></div>
+                                </div>
+                                <span t-attf-style="background:{{scolor}};color:#fff;padding:2px 9px;border-radius:20px;font-size:10.5px;font-weight:bold;">
+                                    <field name="direction"/>
+                                </span>
+                            </div>
+                            <div style="padding:0 12px 10px;">
+                                <div class="text-muted text-truncate" style="font-size:12px;margin-bottom:8px;">
+                                    <i class="fa fa-university" style="margin-left:4px;"/><field name="partner_id"/>
+                                </div>
+                                <div style="display:flex;align-items:center;justify-content:space-between;">
+                                    <div style="display:flex;align-items:center;gap:6px;">
+                                        <img t-att-src="kanban_image('hr.employee', 'image_128', record.delegate_id.raw_value)"
+                                             alt="delegate" title="المندوب"
+                                             style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:1px solid #e4e8f0;"/>
+                                        <span style="font-size:11.5px;color:#555;"><field name="delegate_id"/></span>
+                                    </div>
+                                    <img t-att-src="kanban_image('res.users', 'image_128', record.requester_id.raw_value)"
+                                         alt="requester" title="مُقدّم الطلب"
+                                         style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:2px solid #2f6df6;"/>
+                                </div>
+                                <div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between;">
+                                    <span t-if="record.classification_id.raw_value" class="badge" style="background:#eef1f6;color:#4b5563;font-weight:bold;">
+                                        <field name="classification_id"/>
+                                    </span>
+                                    <span t-if="record.is_overdue.raw_value" class="badge text-bg-danger" style="font-weight:bold;">
+                                        <i class="fa fa-exclamation-triangle"/> متأخّر <t t-esc="record.days_with_delegate.raw_value"/> يوم
+                                    </span>
+                                    <span t-else="" class="text-muted" style="font-size:11px;"><field name="issue_date"/></span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ============ SEARCH ============ -->
+    <record id="view_letter_search_care" model="ir.ui.view">
+        <field name="name">care.letter.search</field>
+        <field name="model">letter.file</field>
+        <field name="priority">1</field>
+        <field name="arch" type="xml">
+            <search string="بحث الكتب">
+                <field name="ref"/>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="delegate_id"/>
+                <field name="ocr_text" string="بحث داخل النص الممسوح"/>
+                <filter name="f_outgoing" string="صادر" domain="[('direction','=','outgoing')]"/>
+                <filter name="f_incoming" string="وارد" domain="[('direction','=','incoming')]"/>
+                <separator/>
+                <filter name="f_to_sign" string="بانتظار التوقيع" domain="[('letter_state','=','to_sign')]"/>
+                <filter name="f_to_scan" string="بانتظار المسح" domain="[('letter_state','=','signed')]"/>
+                <filter name="f_with_delegate" string="مع المندوب" domain="[('letter_state','=','with_delegate')]"/>
+                <filter name="f_overdue" string="متأخّر التسليم" domain="[('is_overdue','=',True)]"/>
+                <filter name="f_deadline_soon" string="مهلة رد تستحق قريباً" domain="[('deadline_state','=','due_soon')]"/>
+                <filter name="f_deadline_over" string="مهلة رد متأخرة" domain="[('deadline_state','=','overdue')]"/>
+                <separator/>
+                <filter name="f_no_deli" string="بلا تاريخ تسليم" domain="[('deli_date','=',False)]"/>
+                <filter name="f_no_scan" string="بلا مسح" domain="[('image_letter','=',False)]"/>
+                <filter name="f_no_stage" string="بلا مرحلة" domain="[('out_going_stage','=',False)]"/>
+                <filter name="f_no_partner" string="بلا جهة" domain="[('partner_id','=',False)]"/>
+                <filter name="f_confidential" string="سرّي" domain="[('is_confidential','=',True)]"/>
+                <filter name="f_no_ack" string="بلا إقرار (أرشفة مباشرة)" domain="[('delivery_mode','=','no_ack')]"/>
+                <group expand="0" string="تجميع">
+                    <filter name="g_direction" string="الاتجاه" context="{'group_by':'direction'}"/>
+                    <filter name="g_state" string="الحالة" context="{'group_by':'letter_state'}"/>
+                    <filter name="g_class" string="التصنيف" context="{'group_by':'classification_id'}"/>
+                    <filter name="g_delegate" string="المندوب" context="{'group_by':'delegate_id'}"/>
+                    <filter name="g_dept" string="القسم" context="{'group_by':'department_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Pivot & graph for delegate performance -->
+    <record id="view_letter_pivot_care" model="ir.ui.view">
+        <field name="name">care.letter.pivot</field>
+        <field name="model">letter.file</field>
+        <field name="arch" type="xml">
+            <pivot string="أداء المندوبين">
+                <field name="delegate_id" type="row"/>
+                <field name="letter_state" type="col"/>
+            </pivot>
+        </field>
+    </record>
+    <record id="view_letter_graph_care" model="ir.ui.view">
+        <field name="name">care.letter.graph</field>
+        <field name="model">letter.file</field>
+        <field name="arch" type="xml">
+            <graph string="المراسلات">
+                <field name="classification_id"/>
+                <field name="letter_state"/>
+            </graph>
+        </field>
+    </record>
+</odoo>

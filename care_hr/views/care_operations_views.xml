@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ===== Deployment ===== -->
+    <record id="view_care_deployment_tree" model="ir.ui.view">
+        <field name="name">care.deployment.tree</field>
+        <field name="model">care.deployment</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'active'" decoration-muted="state == 'ended'">
+                <field name="name"/><field name="employee_id"/><field name="department_id"/>
+                <field name="project_id"/><field name="site_location"/>
+                <field name="start_date"/><field name="end_date"/>
+                <field name="state" widget="badge" decoration-success="state == 'active'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_care_deployment_form" model="ir.ui.view">
+        <field name="name">care.deployment.form</field>
+        <field name="model">care.deployment</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_end" type="object" string="End Deployment"
+                            invisible="state == 'ended'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group><field name="employee_id"/><field name="project_id"/>
+                            <field name="site_location"/></group>
+                        <group><field name="start_date"/><field name="end_date"/></group>
+                    </group>
+                    <field name="note"/>
+                </sheet>
+                <div class="oe_chatter"><field name="message_follower_ids"/><field name="message_ids"/></div>
+            </form>
+        </field>
+    </record>
+    <record id="view_care_deployment_search" model="ir.ui.view">
+        <field name="name">care.deployment.search</field>
+        <field name="model">care.deployment</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/><field name="project_id"/>
+                <filter name="active" string="Active" domain="[('state','=','active')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="g_proj" string="Project" context="{'group_by':'project_id'}"/>
+                    <filter name="g_dept" string="Department" context="{'group_by':'department_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_care_deployment" model="ir.actions.act_window">
+        <field name="name">Deployment</field>
+        <field name="res_model">care.deployment</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_care_deployment_search"/>
+    </record>
+
+    <!-- ===== Worker Quality ===== -->
+    <record id="view_care_quality_tree" model="ir.ui.view">
+        <field name="name">care.worker.quality.tree</field>
+        <field name="model">care.worker.quality</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="tier == 'a'" decoration-info="tier == 'b'"
+                  decoration-warning="tier == 'c'" decoration-danger="tier == 'd'">
+                <field name="name"/><field name="employee_id"/><field name="date"/>
+                <field name="attendance_score"/><field name="discipline_score"/>
+                <field name="skill_score"/><field name="appearance_score"/>
+                <field name="overall"/><field name="tier" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_care_quality_form" model="ir.ui.view">
+        <field name="name">care.worker.quality.form</field>
+        <field name="model">care.worker.quality</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group><field name="employee_id"/><field name="date"/>
+                            <field name="evaluator_id"/></group>
+                        <group>
+                            <field name="attendance_score"/><field name="discipline_score"/>
+                            <field name="skill_score"/><field name="appearance_score"/>
+                            <field name="overall"/><field name="tier"/>
+                        </group>
+                    </group>
+                    <field name="notes"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_care_quality" model="ir.actions.act_window">
+        <field name="name">Worker Quality</field>
+        <field name="res_model">care.worker.quality</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- ===== Requests Hub ===== -->
+    <record id="view_care_request_tree" model="ir.ui.view">
+        <field name="name">care.request.tree</field>
+        <field name="model">care.request</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'done'" decoration-muted="state == 'rejected'"
+                  decoration-info="state == 'approved'">
+                <field name="name"/><field name="date"/><field name="employee_id"/>
+                <field name="request_type"/><field name="subject"/><field name="handler_id"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'"
+                       decoration-danger="state == 'rejected'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_care_request_form" model="ir.ui.view">
+        <field name="name">care.request.form</field>
+        <field name="model">care.request</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_progress" type="object" string="Start"
+                            class="btn-primary" invisible="state != 'submitted'"/>
+                    <button name="action_approve" type="object" string="Approve"
+                            invisible="state not in ('submitted','in_progress')"/>
+                    <button name="action_reject" type="object" string="Reject"
+                            invisible="state in ('done','rejected')"/>
+                    <button name="action_done" type="object" string="Done"
+                            invisible="state not in ('approved','in_progress')"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group><field name="employee_id"/><field name="request_type"/>
+                            <field name="subject"/></group>
+                        <group><field name="date"/><field name="handler_id"/></group>
+                    </group>
+                    <field name="description" placeholder="Request details..."/>
+                    <field name="response" placeholder="Response / resolution..."/>
+                </sheet>
+                <div class="oe_chatter"><field name="message_follower_ids"/>
+                    <field name="activity_ids"/><field name="message_ids"/></div>
+            </form>
+        </field>
+    </record>
+    <record id="view_care_request_search" model="ir.ui.view">
+        <field name="name">care.request.search</field>
+        <field name="model">care.request</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/><field name="subject"/>
+                <filter name="open" string="Open" domain="[('state','not in',('done','rejected'))]"/>
+                <group expand="0" string="Group By">
+                    <filter name="g_type" string="Type" context="{'group_by':'request_type'}"/>
+                    <filter name="g_state" string="Status" context="{'group_by':'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_care_request" model="ir.actions.act_window">
+        <field name="name">Requests Hub</field>
+        <field name="res_model">care.request</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_care_request_search"/>
+    </record>
+
+    <!-- menus -->
+    <menuitem id="menu_care_deployment" name="Deployment"
+              parent="care_hr.menu_sec_welfare" action="action_care_deployment" sequence="5"/>
+    <menuitem id="menu_care_quality" name="Worker Quality"
+              parent="care_hr.menu_sec_people" action="action_care_quality" sequence="10"/>
+    <menuitem id="menu_care_request" name="Requests Hub"
+              parent="care_hr.menu_care_hr_relations_root" action="action_care_request" sequence="4"/>
+</odoo>

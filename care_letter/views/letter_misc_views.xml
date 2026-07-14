@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Classification -->
+    <record id="view_letter_classification_tree" model="ir.ui.view">
+        <field name="name">letter.classification.tree</field>
+        <field name="model">letter.classification</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="default_delivery_mode"/>
+                <field name="letter_count"/>
+                <field name="color" widget="color_picker"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_letter_classification" model="ir.actions.act_window">
+        <field name="name">التصنيفات</field>
+        <field name="res_model">letter.classification</field>
+        <field name="view_mode">tree</field>
+    </record>
+
+    <!-- Template -->
+    <record id="view_letter_template_form" model="ir.ui.view">
+        <field name="name">letter.template.form</field>
+        <field name="model">letter.template</field>
+        <field name="arch" type="xml">
+            <form string="قالب">
+                <header>
+                    <button name="action_create_letter" type="object" string="إنشاء كتاب من القالب" class="oe_highlight"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" placeholder="اسم القالب..."/></h1></div>
+                    <group>
+                        <field name="direction"/>
+                        <field name="classification_id"/>
+                        <field name="subject"/>
+                    </group>
+                    <separator string="النص"/>
+                    <field name="body" placeholder="استخدم [Employee] · [Salary] · [Job] ..."/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_letter_template_tree" model="ir.ui.view">
+        <field name="name">letter.template.tree</field>
+        <field name="model">letter.template</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="direction"/>
+                <field name="classification_id"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_letter_template" model="ir.actions.act_window">
+        <field name="name">القوالب</field>
+        <field name="res_model">letter.template</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Dashboard -->
+    <record id="view_letter_dashboard_form" model="ir.ui.view">
+        <field name="name">letter.dashboard.form</field>
+        <field name="model">letter.dashboard</field>
+        <field name="arch" type="xml">
+            <form string="لوحة المراسلات" class="o_letter_dashboard">
+                <sheet style="max-width:1200px;">
+                    <div style="background:#1e2a44;color:#fff;border-radius:12px;padding:14px 20px;margin-bottom:16px;">
+                        <span style="color:#e8564e;font-weight:800;font-size:20px;">CARE</span>
+                        <span style="font-weight:700;font-size:16px;"> · لوحة المراسلات</span>
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
+                        <div style="flex:1;min-width:150px;background:#fff;border:1px solid #e4e8f0;border-radius:12px;padding:14px;text-align:center;">
+                            <div style="font-size:28px;font-weight:800;color:#2f6df6;"><field name="total"/></div>
+                            <div style="color:#7b8499;font-weight:700;font-size:13px;">إجمالي الكتب</div></div>
+                        <div style="flex:1;min-width:150px;background:#fff;border:1px solid #e4e8f0;border-radius:12px;padding:14px;text-align:center;">
+                            <div style="font-size:28px;font-weight:800;"><field name="outgoing"/></div>
+                            <div style="color:#7b8499;font-weight:700;font-size:13px;">صادر</div></div>
+                        <div style="flex:1;min-width:150px;background:#fff;border:1px solid #e4e8f0;border-radius:12px;padding:14px;text-align:center;">
+                            <div style="font-size:28px;font-weight:800;"><field name="incoming"/></div>
+                            <div style="color:#7b8499;font-weight:700;font-size:13px;">وارد</div></div>
+                        <div style="flex:1;min-width:150px;background:#fff;border:1px solid #ffe0b3;border-radius:12px;padding:14px;text-align:center;">
+                            <div style="font-size:28px;font-weight:800;color:#e08a00;"><field name="to_sign"/></div>
+                            <div style="color:#7b8499;font-weight:700;font-size:13px;">بانتظار التوقيع</div></div>
+                        <div style="flex:1;min-width:150px;background:#fff;border:1px solid #e0d5ff;border-radius:12px;padding:14px;text-align:center;">
+                            <div style="font-size:28px;font-weight:800;color:#7a5cf0;"><field name="to_scan"/></div>
+                            <div style="color:#7b8499;font-weight:700;font-size:13px;">بانتظار المسح</div></div>
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:12px;">
+                        <div style="flex:1;min-width:150px;background:#fff;border:1px solid #ffcdc4;border-radius:12px;padding:14px;text-align:center;cursor:pointer;">
+                            <div style="font-size:28px;font-weight:800;color:#e2513f;"><field name="overdue"/></div>
+                            <button name="open_overdue" type="object" string="متأخّر التسليم ←" class="btn btn-link text-danger" style="font-weight:700;"/></div>
+                        <div style="flex:1;min-width:150px;background:#fff;border:1px solid #e4e8f0;border-radius:12px;padding:14px;text-align:center;">
+                            <div style="font-size:28px;font-weight:800;color:#e08a00;"><field name="with_delegate"/></div>
+                            <button name="open_with_delegate" type="object" string="مع المندوب ←" class="btn btn-link" style="font-weight:700;"/></div>
+                        <div style="flex:1;min-width:150px;background:#fff;border:1px solid #bfe8d2;border-radius:12px;padding:14px;text-align:center;">
+                            <div style="font-size:28px;font-weight:800;color:#1a9f6d;"><field name="acknowledged"/></div>
+                            <div style="color:#7b8499;font-weight:700;font-size:13px;">مُستلَم/مؤرشف</div></div>
+                        <div style="flex:1;min-width:150px;background:#fff;border:1px solid #e4e8f0;border-radius:12px;padding:14px;text-align:center;">
+                            <div style="font-size:28px;font-weight:800;color:#c0392b;"><field name="no_delivery"/></div>
+                            <button name="open_no_delivery" type="object" string="بلا تاريخ تسليم ←" class="btn btn-link" style="font-weight:700;"/></div>
+                        <div style="flex:1;min-width:150px;background:#fff;border:1px solid #e4e8f0;border-radius:12px;padding:14px;text-align:center;">
+                            <div style="font-size:28px;font-weight:800;color:#7a5cf0;"><field name="no_scan"/></div>
+                            <div style="color:#7b8499;font-weight:700;font-size:13px;">بلا مسح ضوئي</div></div>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <!-- Delegate performance — clickable KPI cards -->
+    <record id="view_letter_delegate_stat_kanban" model="ir.ui.view">
+        <field name="name">letter.delegate.stat.kanban</field>
+        <field name="model">letter.delegate.stat</field>
+        <field name="arch" type="xml">
+            <kanban create="false" class="o_kanban_dashboard" default_order="overdue_count desc, current_count desc">
+                <field name="delegate_id"/>
+                <field name="total"/>
+                <field name="current_count"/>
+                <field name="overdue_count"/>
+                <field name="delivered_count"/>
+                <field name="avg_days"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card" style="padding:0;border-radius:12px;overflow:hidden;">
+                            <div style="display:flex;align-items:center;gap:10px;padding:12px;background:#1e2a44;color:#fff;">
+                                <img t-att-src="kanban_image('hr.employee','image_128', record.delegate_id.raw_value)"
+                                     alt="d" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.3);"/>
+                                <strong style="font-size:14px;"><field name="delegate_id"/></strong>
+                            </div>
+                            <div style="display:flex;flex-wrap:wrap;">
+                                <button type="object" name="action_open_all" class="ldg-tile" style="flex:1;min-width:33%;border:0;background:#fff;padding:12px 6px;cursor:pointer;text-align:center;">
+                                    <div style="font-size:22px;font-weight:800;color:#2f6df6;"><field name="total"/></div>
+                                    <div style="font-size:11px;color:#7b8499;font-weight:700;">إجمالي</div>
+                                </button>
+                                <button type="object" name="action_open_current" class="ldg-tile" style="flex:1;min-width:33%;border:0;border-right:1px solid #eef1f6;background:#fff;padding:12px 6px;cursor:pointer;text-align:center;">
+                                    <div style="font-size:22px;font-weight:800;color:#e08a00;"><field name="current_count"/></div>
+                                    <div style="font-size:11px;color:#7b8499;font-weight:700;">مع المندوب</div>
+                                </button>
+                                <button type="object" name="action_open_overdue" class="ldg-tile" style="flex:1;min-width:33%;border:0;border-right:1px solid #eef1f6;background:#fff;padding:12px 6px;cursor:pointer;text-align:center;">
+                                    <div style="font-size:22px;font-weight:800;color:#e2513f;"><field name="overdue_count"/></div>
+                                    <div style="font-size:11px;color:#7b8499;font-weight:700;">متأخّر</div>
+                                </button>
+                                <button type="object" name="action_open_delivered" class="ldg-tile" style="flex:1;min-width:50%;border:0;border-top:1px solid #eef1f6;background:#fff;padding:12px 6px;cursor:pointer;text-align:center;">
+                                    <div style="font-size:22px;font-weight:800;color:#1a9f6d;"><field name="delivered_count"/></div>
+                                    <div style="font-size:11px;color:#7b8499;font-weight:700;">مُسلَّم</div>
+                                </button>
+                                <div style="flex:1;min-width:50%;border-top:1px solid #eef1f6;border-right:1px solid #eef1f6;background:#fff;padding:12px 6px;text-align:center;">
+                                    <div style="font-size:22px;font-weight:800;color:#7a5cf0;"><field name="avg_days"/></div>
+                                    <div style="font-size:11px;color:#7b8499;font-weight:700;">متوسط الأيام</div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="action_letter_dashboard" model="ir.actions.act_window">
+        <field name="name">لوحة المراسلات</field>
+        <field name="res_model">letter.dashboard</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="view_id" ref="view_letter_dashboard_form"/>
+    </record>
+</odoo>

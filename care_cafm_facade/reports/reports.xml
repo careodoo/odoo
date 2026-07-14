@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_permit" model="ir.actions.report">
+        <field name="name">تصريح العمل على الارتفاع (PDF)</field>
+        <field name="model">care.cafm.facade.permit</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_cafm_facade.report_permit</field>
+        <field name="report_file">care_cafm_facade.report_permit</field>
+        <field name="binding_model_id" ref="model_care_cafm_facade_permit"/>
+        <field name="binding_type">report</field>
+    </record>
+    <template id="report_permit">
+        <t t-call="web.html_container"><t t-foreach="docs" t-as="o"><t t-call="web.basic_layout">
+            <div class="page" style="direction:rtl;text-align:right;font-family:Arial,sans-serif;color:#1a2330;font-size:12px">
+                <div style="background:linear-gradient(135deg,#38bdf8,#0b6ea8);color:#fff;padding:16px 18px;border-radius:10px">
+                    <div style="font-size:12px;opacity:.9">تصريح عمل على الارتفاع · Height Work Permit</div>
+                    <div style="font-size:20px;font-weight:800"><span t-field="o.name"/></div>
+                    <div style="font-size:12px"><span t-field="o.facility_id"/> · <span t-field="o.zone_id"/> · الحالة: <span t-field="o.state"/></div>
+                </div>
+                <div t-if="not o.is_safe" style="background:#fdecea;border:1px solid #f2603f;color:#b02a1c;border-radius:8px;padding:10px;margin-top:12px;font-weight:700">⛔ الرياح تتجاوز الحدّ الآمن — لا يُسمح بالعمل</div>
+                <table style="width:100%;border-collapse:collapse;margin-top:14px">
+                    <tr><td style="padding:6px 10px;color:#5a6472">الطريقة</td><td style="padding:6px 10px;font-weight:700"><span t-field="o.method"/></td>
+                        <td style="padding:6px 10px;color:#5a6472">التاريخ</td><td style="padding:6px 10px"><span t-field="o.date"/></td></tr>
+                    <tr><td style="padding:6px 10px;color:#5a6472">صلاحية (ساعات)</td><td style="padding:6px 10px"><span t-field="o.valid_hours"/></td>
+                        <td style="padding:6px 10px;color:#5a6472">مشرف السلامة</td><td style="padding:6px 10px"><span t-field="o.supervisor_id"/></td></tr>
+                    <tr><td style="padding:6px 10px;color:#5a6472">سرعة الرياح</td><td style="padding:6px 10px;font-weight:700"><span t-field="o.wind_speed"/> كم/س</td>
+                        <td style="padding:6px 10px;color:#5a6472">الحدّ الآمن</td><td style="padding:6px 10px"><span t-field="o.wind_limit"/> كم/س</td></tr>
+                </table>
+                <h4 style="margin:14px 0 6px;color:#0b6ea8;border-bottom:2px solid #eef1f5;padding-bottom:4px">قائمة السلامة</h4>
+                <ul style="font-size:13px">
+                    <li>تقييم المخاطر مرفق: <b><span t-esc="'✔ نعم' if o.risk_assessed else '✘ لا'"/></b></li>
+                    <li>فحص المعدّات/الحبال: <b><span t-esc="'✔ نعم' if o.equipment_checked else '✘ لا'"/></b></li>
+                    <li>الرياح ضمن الآمن: <b><span t-esc="'✔ نعم' if o.is_safe else '✘ لا'"/></b></li>
+                </ul>
+                <h4 style="margin:14px 0 6px;color:#0b6ea8">العمّال المصرّح لهم</h4>
+                <p><t t-foreach="o.worker_ids" t-as="w"><span t-field="w.name"/><t t-if="not w_last">، </t></t></p>
+                <div style="margin-top:36px;display:flex;justify-content:space-between;font-size:11px;color:#555"><div>مصدر التصريح: ________</div><div>مشرف السلامة: ________</div><div>مدير الموقع: ________</div></div>
+            </div>
+        </t></t></t>
+    </template>
+</odoo>

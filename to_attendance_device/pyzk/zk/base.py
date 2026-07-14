@@ -1101,23 +1101,59 @@ class ZK(object):
             if not users:
                 return False
             uid = users[0].uid
-        for _retries in range(3):
-            command = 88  # command secret!!! GET_USER_TEMPLATE
-            command_string = pack('hb', uid, temp_id)
-            response_size = 1024 + 8
-            cmd_response = self.__send_command(command, command_string, response_size)
-            data = self.__recieve_chunk()
-            if data is not None:
-                resp = data[:-1]
-                if resp[-6:] == b'\x00\x00\x00\x00\x00\x00':  # padding? bug?
-                    resp = resp[:-6]
-                return Finger(uid, temp_id, 1, resp)
-            if self.verbose: print("retry get_user_template")
-        else:
-            if self.verbose: print("Can't read/find finger")
+        command = 88  # command secret!!! GET_USER_TEMPLATE
+        command_string = pack('hb', uid, temp_id)
+        response_size = 1024 + 8
+        cmd_response = self.__send_command(command, command_string, response_size)
+        # If the device NAKs (empty/not-enrolled finger slot) do NOT wait for a
+        # data chunk that will never arrive -- that wait is what made the
+        # per-user template fallback appear to hang on devices such as the
+        # ZKTeco Horus E1-FP (no buffered/RWB read support).
+        if not cmd_response.get('status'):
+            if self.verbose: print("no finger at slot %s for uid %s" % (temp_id, uid))
             return None
+        data = self.__recieve_chunk()
+        if data is not None:
+            resp = data[:-1]
+            if resp[-6:] == b'\x00\x00\x00\x00\x00\x00':  # padding? bug?
+                resp = resp[:-6]
+            return Finger(uid, temp_id, 1, resp)
+        if self.verbose: print("Can't read/find finger")
+        return None
 
-    def _get_templates_per_user(self):
+    def get_user_templates(self, uid, slots=10, read_timeout=None):
+        """Read every enrolled finger template for a SINGLE user without
+        hanging on empty slots.  Used by the staged/background import for
+        devices that do not support buffered template reads (RWB).
+
+        ``read_timeout`` (seconds) temporarily lowers the socket timeout so a
+        non-responding empty slot costs at most that, instead of the full
+        device timeout, keeping each user's read fast and bounded."""
+        fingers = []
+        old_timeout = self.__timeout
+        if read_timeout:
+            try:
+                self.__sock.settimeout(read_timeout)
+            except Exception:
+                pass
+        try:
+            for temp_id in range(slots):
+                try:
+                    finger = self.get_user_template(uid=uid, temp_id=temp_id)
+                except Exception:
+                    finger = None
+                # empty slots come back as None or a 0-length template -> skip
+                if finger and getattr(finger, 'template', b'') and len(finger.template) > 0:
+                    fingers.append(finger)
+        finally:
+            if read_timeout:
+                try:
+                    self.__sock.settimeout(old_timeout)
+                except Exception:
+                    pass
+        return fingers
+
+    def _get_templates_per_user(self, read_timeout=None):
         """Fallback used when the device does not support buffered reads
         (read_with_buffer -> "RWB Not supported", e.g. ZKTeco Horus E1-FP).
         Reads each enrolled user's fingers one by one via GET_USER_TEMPLATE."""
@@ -1127,14 +1163,7 @@ class ZK(object):
         except Exception:
             users = []
         for user in users:
-            for temp_id in range(10):  # up to 10 finger slots per user
-                try:
-                    finger = self.get_user_template(uid=user.uid, temp_id=temp_id)
-                except Exception:
-                    finger = None
-                # empty slots come back with a 0-length template -> skip them
-                if finger and getattr(finger, 'template', b'') and len(finger.template) > 0:
-                    templates.append(finger)
+            templates.extend(self.get_user_templates(user.uid, read_timeout=read_timeout))
         return templates
 
     def get_templates(self):

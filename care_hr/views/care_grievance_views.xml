@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_care_grievance_tree" model="ir.ui.view">
+        <field name="name">care.grievance.tree</field>
+        <field name="model">care.grievance</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="overdue" decoration-success="state == 'closed'"
+                  decoration-muted="state == 'refused'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="employee_id"/>
+                <field name="department_id" optional="show"/>
+                <field name="category"/>
+                <field name="channel" optional="show"/>
+                <field name="deadline"/>
+                <field name="overdue" optional="hide"/>
+                <field name="assigned_to" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'investigation'"
+                       decoration-success="state in ('resolved','closed')"
+                       decoration-danger="state == 'refused'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_care_grievance_form" model="ir.ui.view">
+        <field name="name">care.grievance.form</field>
+        <field name="model">care.grievance</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_triage" type="object" string="Triage"
+                            class="btn-primary" invisible="state != 'submitted'"/>
+                    <button name="action_investigate" type="object" string="Investigate"
+                            class="btn-primary" invisible="state != 'triage'"/>
+                    <button name="action_resolve" type="object" string="Resolve"
+                            class="btn-primary" invisible="state != 'investigation'"/>
+                    <button name="action_close" type="object" string="Close"
+                            class="btn-primary" invisible="state != 'resolved'"/>
+                    <button name="action_refuse" type="object" string="Refuse"
+                            invisible="state in ('closed','refused')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="submitted,triage,investigation,resolved,closed"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Overdue" bg_color="bg-danger"
+                            invisible="not overdue"/>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="category"/>
+                            <field name="channel"/>
+                            <field name="assigned_to"/>
+                        </group>
+                        <group>
+                            <field name="date"/>
+                            <field name="sla_days"/>
+                            <field name="deadline" readonly="1"/>
+                            <field name="overdue" invisible="1"/>
+                            <field name="satisfaction"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Complaint" name="complaint">
+                            <field name="description" placeholder="What is the complaint about?"/>
+                        </page>
+                        <page string="Resolution" name="resolution">
+                            <field name="resolution" placeholder="How was it resolved?"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_care_grievance_search" model="ir.ui.view">
+        <field name="name">care.grievance.search</field>
+        <field name="model">care.grievance</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <field name="name"/>
+                <filter name="open" string="Open" domain="[('state','not in',('closed','refused'))]"/>
+                <filter name="overdue" string="Overdue" domain="[('overdue','=',True)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="g_cat" string="Category" context="{'group_by':'category'}"/>
+                    <filter name="g_state" string="Status" context="{'group_by':'state'}"/>
+                    <filter name="g_dept" string="Department" context="{'group_by':'department_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_care_grievance" model="ir.actions.act_window">
+        <field name="name">Grievances</field>
+        <field name="res_model">care.grievance</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_care_grievance_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Log a grievance</p>
+            <p>Worker complaints with SLA tracking, investigation and resolution.</p>
+        </field>
+    </record>
+</odoo>

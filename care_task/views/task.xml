@@ -16,22 +16,11 @@
                 </p>
             </field>
         </record>
-        <record id="care_view_task_form2" model="ir.ui.view">
-            <field name="name">care_view_task_form2</field>
-            <field name="model">project.task</field>
-            <field name="inherit_id" ref="project.view_task_form2"/>
-            <field name="arch" type="xml">
-                <xpath expr="//header" position="inside">
-                    <button name="button_forward" type="object" string="Forward"/>
-                </xpath>
-                <xpath expr="//notebook" position="inside">
-                    <page name="forward" string="Forward History">
-                        <field name="forward_ids" context="{'tree_view_ref': 'care_task.project_task_forward_view_tree'}"/>
-                    </page>
-                </xpath>
-
-            </field>
-        </record>
+        <!-- care_view_task_form2 removed: its Forward button + history page conflicted
+             with care_pms forwarding. `forward_ids` on project.task resolves to
+             care.task.forward (care_pms), so this legacy page rendered an incompatible
+             tree (project_id column) and crashed every task form. Forwarding is provided
+             by care_pms; care_task's forward UI is superseded. -->
 
         <menuitem id="my_tasks_root" name="My Tasks" sequence="15" groups="project.group_project_user" web_icon="fa fa-calendar,#FFFFFF,#BC4242"/>
         <menuitem id="my_tasks_menu" name="My Tasks" sequence="1" parent="my_tasks_root" groups="project.group_project_user"

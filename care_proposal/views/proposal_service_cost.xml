@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+    <record id="proposal_service_cost_view_tree" model="ir.ui.view">
+      <field name="name">proposal.service.cost.tree</field>
+      <field name="model">proposal.service.cost</field>
+      <field name="arch" type="xml">
+        <tree decoration-success="state == 'active'" decoration-muted="state == 'archived'">
+          <field name="service_id"/>
+          <field name="partner_id" placeholder="Default"/>
+          <field name="is_default" optional="hide"/>
+          <field name="effective_date"/>
+          <field name="total_cost"/>
+          <field name="currency_id" groups="base.group_multi_company"/>
+          <field name="state" widget="badge"
+                 decoration-success="state == 'active'" decoration-warning="state == 'draft'"/>
+        </tree>
+      </field>
+    </record>
+
+    <record id="proposal_service_cost_view_form" model="ir.ui.view">
+      <field name="name">proposal.service.cost.form</field>
+      <field name="model">proposal.service.cost</field>
+      <field name="arch" type="xml">
+        <form>
+          <header>
+            <button name="action_activate" type="object" string="Activate"
+                    class="oe_highlight" invisible="state == 'active'"/>
+            <button name="action_draft" type="object" string="Set to Draft"
+                    invisible="state == 'draft'"/>
+            <button name="action_archive_book" type="object" string="Archive"
+                    invisible="state == 'archived'"/>
+            <field name="state" widget="statusbar" statusbar_visible="draft,active,archived"/>
+          </header>
+          <sheet>
+            <div class="oe_title">
+              <h1><field name="display_name" readonly="1"/></h1>
+            </div>
+            <group>
+              <group>
+                <field name="service_id"/>
+                <field name="partner_id" placeholder="Leave empty = Default book for all customers"/>
+                <field name="effective_date"/>
+              </group>
+              <group>
+                <field name="currency_id" groups="base.group_multi_company"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="total_cost"/>
+                <field name="note"/>
+              </group>
+            </group>
+            <notebook>
+              <page string="Cost Components">
+                <field name="line_ids">
+                  <tree editable="bottom">
+                    <field name="sequence" widget="handle"/>
+                    <field name="component_id"/>
+                    <field name="amount"/>
+                    <field name="currency_id" column_invisible="1"/>
+                    <field name="note"/>
+                  </tree>
+                </field>
+              </page>
+            </notebook>
+          </sheet>
+          <div class="oe_chatter">
+            <field name="message_follower_ids"/>
+            <field name="activity_ids"/>
+            <field name="message_ids"/>
+          </div>
+        </form>
+      </field>
+    </record>
+
+    <record id="proposal_service_cost_view_search" model="ir.ui.view">
+      <field name="name">proposal.service.cost.search</field>
+      <field name="model">proposal.service.cost</field>
+      <field name="arch" type="xml">
+        <search>
+          <field name="service_id"/>
+          <field name="partner_id"/>
+          <filter name="f_active" string="Active" domain="[('state','=','active')]"/>
+          <filter name="f_default" string="Default books" domain="[('partner_id','=',False)]"/>
+          <group expand="0" string="Group By">
+            <filter name="g_service" string="Service" context="{'group_by':'service_id'}"/>
+            <filter name="g_partner" string="Customer" context="{'group_by':'partner_id'}"/>
+            <filter name="g_state" string="Status" context="{'group_by':'state'}"/>
+          </group>
+        </search>
+      </field>
+    </record>
+
+    <record id="proposal_service_cost_action" model="ir.actions.act_window">
+      <field name="name">Cost Books</field>
+      <field name="res_model">proposal.service.cost</field>
+      <field name="view_mode">tree,form</field>
+      <field name="search_view_id" ref="proposal_service_cost_view_search"/>
+      <field name="context">{'search_default_f_active': 1}</field>
+    </record>
+
+    <menuitem id="proposal_service_cost_menu" name="Customer Cost Books"
+      parent="proposal_config" action="proposal_service_cost_action"
+      sequence="41" groups="care_proposal.group_proposal_cost_admin"/>
+  </data>
+</odoo>

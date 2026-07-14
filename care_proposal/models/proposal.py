@@ -2,7 +2,7 @@ from odoo import fields, models, api, _
 from .qr_generator import generateQrCode
 from odoo.http import request
 from datetime import datetime
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 
 
 class Proposal(models.Model):
@@ -56,13 +56,14 @@ class Proposal(models.Model):
         default='draft',
         tracking=True,
     )
-    service_ids = fields.One2many('proposal.service.line', 'proposal_id')
-    scope_ids = fields.One2many('proposal.scope.line', 'proposal_id')
-    manpower_ids = fields.One2many('proposal.manpower.line', 'proposal_id')
-    material_ids = fields.One2many('proposal.material.line', 'proposal_id')
-    equipment_ids = fields.One2many('proposal.equipment.line', 'proposal_id')
-    transportation_ids = fields.One2many('proposal.transportation.line', 'proposal_id')
-    term_ids = fields.One2many('proposal.term.line', 'proposal_id')
+    service_ids = fields.One2many('proposal.service.line', 'proposal_id', copy=True)
+    scope_ids = fields.One2many('proposal.scope.line', 'proposal_id', copy=True)
+    manpower_ids = fields.One2many('proposal.manpower.line', 'proposal_id', copy=True)
+    material_ids = fields.One2many('proposal.material.line', 'proposal_id', copy=True)
+    equipment_ids = fields.One2many('proposal.equipment.line', 'proposal_id', copy=True)
+    transportation_ids = fields.One2many('proposal.transportation.line', 'proposal_id', copy=True)
+    term_ids = fields.One2many('proposal.term.line', 'proposal_id', copy=True)
+    # pricing is regenerated on the copy, not duplicated
     pricing_ids = fields.One2many('proposal.pricing.line', 'proposal_id')
     service_quantity = fields.Integer(compute='compute_service_quantity', store=True)
     manpower_quantity = fields.Integer(compute='compute_manpower_quantity', store=True)
@@ -133,7 +134,7 @@ class Proposal(models.Model):
         "Our Price doesn't include materials or equipments and machiners. We provided you with list of the most used items for the cleaning services with individual unit price allowing you to choose your preferred items and customize your cost",
     )
     # commission
-    commission_ids = fields.One2many('proposal.commission.line', 'proposal_id')
+    commission_ids = fields.One2many('proposal.commission.line', 'proposal_id', copy=True)
     apply_commission = fields.Boolean(string='Apply Profit Commission')
     commission_type = fields.Selection([
         ('percentage', 'Percentage'),
@@ -356,6 +357,400 @@ class Proposal(models.Model):
                 if rec.expire_date < rec.proposal_date:
                     raise ValidationError(_('Expire date cannot be earlier than proposal date!'))
 
+    # --- Snapshot / freeze costs (Phase 2) -------------------------------
+    frozen_service_count = fields.Integer(
+        compute='_compute_frozen_service_count', string='Frozen services')
+    service_count_total = fields.Integer(
+        compute='_compute_frozen_service_count', string='Services')
+
+    @api.depends('service_ids.frozen')
+    def _compute_frozen_service_count(self):
+        for rec in self:
+            rec.service_count_total = len(rec.service_ids)
+            rec.frozen_service_count = len(rec.service_ids.filtered('frozen'))
+
+    def action_resync_costs(self):
+        """Freeze / re-sync every service line's cost from the customer's
+        active Cost Books (the only, explicit way catalog costs enter a
+        proposal). Existing proposals never change unless this is pressed."""
+        for rec in self:
+            if not rec.partner_id:
+                raise UserError(_("Select a customer before freezing costs from the cost books."))
+            rec.service_ids._freeze_from_book()
+            rec.message_post(body=_("Service costs frozen / re-synced from the customer cost books."))
+        return True
+
+    # --- Duplicate / Revisions / Currency (Phase 4) ----------------------
+    currency_id = fields.Many2one(
+        'res.currency', string='Currency',
+        default=lambda self: self.env.company.currency_id, tracking=True)
+    revision_of_id = fields.Many2one(
+        'proposal.proposal', string='Revision of', copy=False, index=True)
+    version = fields.Integer(default=1, copy=False, tracking=True)
+    revision_ids = fields.One2many(
+        'proposal.proposal', 'revision_of_id', string='Revisions')
+    revision_count = fields.Integer(compute='_compute_revision_count')
+    superseded = fields.Boolean(copy=False, tracking=True)
+
+    # Validity countdown (for the professional list view)
+    days_to_expire = fields.Integer(compute='_compute_validity', store=True)
+    validity_state = fields.Selection([
+        ('none', '—'), ('valid', 'Valid'), ('expiring', 'Expiring soon'), ('expired', 'Expired'),
+    ], compute='_compute_validity', store=True)
+
+    @api.depends('expire_date', 'state')
+    def _compute_validity(self):
+        today = fields.Date.context_today(self)
+        for rec in self:
+            if rec.expire_date and rec.state in ('draft', 'submit', 'waiting', 'approve'):
+                delta = (rec.expire_date - today).days
+                rec.days_to_expire = delta
+                rec.validity_state = 'expired' if delta < 0 else ('expiring' if delta <= 7 else 'valid')
+            else:
+                rec.days_to_expire = 0
+                rec.validity_state = 'none'
+
+    def _compute_revision_count(self):
+        for rec in self:
+            root = rec.revision_of_id or rec
+            rec.revision_count = len(root.revision_ids) + (1 if rec.revision_of_id else 0)
+
+    def copy(self, default=None):
+        default = dict(default or {})
+        default.setdefault('state', 'draft')
+        default.setdefault('superseded', False)
+        default.setdefault('approval_ids', [(5, 0, 0)])
+        return super().copy(default)
+
+    def action_duplicate(self):
+        """Exact copy of this quotation (new ref, Draft). Frozen snapshot costs
+        are carried over (copy=True on the snapshot lines)."""
+        self.ensure_one()
+        new = self.copy()
+        return self._open_proposal(new)
+
+    def action_new_revision(self):
+        """Create the next revision (vN+1) of this quotation and mark the
+        current one as superseded."""
+        self.ensure_one()
+        root = self.revision_of_id or self
+        versions = root.revision_ids.mapped('version') + [root.version]
+        new = self.copy({'revision_of_id': root.id, 'version': max(versions) + 1})
+        self.superseded = True
+        return self._open_proposal(new)
+
+    def action_view_revisions(self):
+        self.ensure_one()
+        root = self.revision_of_id or self
+        return {
+            'name': _('Revisions'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'proposal.proposal',
+            'view_mode': 'tree,form',
+            'domain': ['|', ('id', '=', root.id), ('revision_of_id', '=', root.id)],
+        }
+
+    def _open_proposal(self, proposal):
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'proposal.proposal',
+            'res_id': proposal.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
+    def _email_settings(self):
+        """Email customization (read from settings) + formatted values, used by
+        the customer email template (mail QWeb can't call get_param directly)."""
+        self.ensure_one()
+        ICP = self.env['ir.config_parameter'].sudo()
+
+        def g(key, default):
+            return ICP.get_param('care_proposal.%s' % key, default)
+
+        def flag(key):
+            return str(g(key, 'True')).lower() not in ('false', '0', '')
+
+        return {
+            'accent': g('email_accent', '#875a7b') or '#875a7b',
+            'show_header': flag('email_show_header'),
+            'show_summary': flag('email_show_summary'),
+            'intro': g('email_intro', "It's great to send you our proposal today; we hope you will "
+                       "be our valued customer."),
+            'footer': g('email_footer', 'We look forward to hearing from you soon.'),
+            'signature': g('email_signature', 'Care Cleaning Co. — Sales Team'),
+            'total': '{:,.3f}'.format(self.total_amount or 0.0),
+            'currency': self.currency_id.name or '',
+            'base_url': self.get_base_url(),
+        }
+
+    def action_open_self(self):
+        self.ensure_one()
+        return self._open_proposal(self)
+
+    def action_open_decision(self):
+        """Open a compact decision dialog (pricing summary + workflow buttons)
+        straight from the list, without navigating into the full record."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Pricing Decision — %s') % (self.name or self.ref or ''),
+            'res_model': 'proposal.proposal',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'views': [(self.env.ref('care_proposal.proposal_decision_form').id, 'form')],
+            'target': 'new',
+        }
+
+    # --- Pricing Workspace: margin strategy / scenarios / guard (Phase 3) -
+    pricing_strategy = fields.Selection([
+        ('cost_plus', 'Cost-plus %'),
+        ('target_margin', 'Target margin %'),
+        ('target_price', 'Target price'),
+        ('manual', 'Manual'),
+    ], default='target_margin', tracking=True)
+    target_margin_pct = fields.Float(string='Margin %', default=20.0, tracking=True)
+    target_price = fields.Float(string='Target price', tracking=True)
+    price_round = fields.Float(string='Round to', default=1.0,
+                               help="Round customer unit prices to this step (0 = no rounding).")
+    margin_guard_pct = fields.Float(string='Margin guard %', default=10.0, tracking=True,
+                                    help="Lines whose profit % is below this are flagged for review/approval.")
+    below_guard = fields.Boolean(string='Below margin guard',
+                                 compute='_compute_below_guard', store=True)
+    # Scenarios
+    scenario_economy_pct = fields.Float(string='Economy %', default=15.0)
+    scenario_standard_pct = fields.Float(string='Standard %', default=22.0)
+    scenario_premium_pct = fields.Float(string='Premium %', default=32.0)
+    scenario_economy_price = fields.Float(compute='_compute_scenarios')
+    scenario_standard_price = fields.Float(compute='_compute_scenarios')
+    scenario_premium_price = fields.Float(compute='_compute_scenarios')
+
+    @api.depends('pricing_ids.below_guard')
+    def _compute_below_guard(self):
+        for rec in self:
+            rec.below_guard = any(rec.pricing_ids.mapped('below_guard'))
+
+    @api.depends('total_pricing_cost', 'scenario_economy_pct',
+                 'scenario_standard_pct', 'scenario_premium_pct')
+    def _compute_scenarios(self):
+        for rec in self:
+            cost = rec.total_pricing_cost or 0.0
+            rec.scenario_economy_price = rec._price_for_margin(cost, rec.scenario_economy_pct)
+            rec.scenario_standard_price = rec._price_for_margin(cost, rec.scenario_standard_pct)
+            rec.scenario_premium_price = rec._price_for_margin(cost, rec.scenario_premium_pct)
+
+    @staticmethod
+    def _price_for_margin(cost, margin_pct):
+        """Selling price that yields ``margin_pct`` margin-on-price."""
+        if margin_pct and margin_pct < 100:
+            return cost / (1.0 - margin_pct / 100.0)
+        return cost
+
+    def _round_price(self, value):
+        rnd = self.price_round or 0.0
+        if rnd and rnd > 0:
+            return round(value / rnd) * rnd
+        return value
+
+    def action_apply_margin(self):
+        """Set every pricing line's unit sales price from its (cost+commission)
+        using the chosen strategy, then round. 'manual' leaves prices alone."""
+        for rec in self:
+            if not rec.pricing_ids:
+                rec.generate_pricing()
+            strat = rec.pricing_strategy
+            if strat == 'manual':
+                continue
+            lines = rec.pricing_ids
+            if strat == 'target_price' and rec.target_price:
+                base_total = sum(l.individual_cost_after_commission * l.service_quantity for l in lines)
+                if base_total:
+                    factor = rec.target_price / base_total
+                    for l in lines:
+                        l.individual_sales_price = rec._round_price(l.individual_cost_after_commission * factor)
+                continue
+            m = rec.target_margin_pct or 0.0
+            for l in lines:
+                base = l.individual_cost_after_commission
+                if strat == 'cost_plus':
+                    price = base * (1.0 + m / 100.0)
+                else:  # target_margin
+                    price = rec._price_for_margin(base, m)
+                l.individual_sales_price = rec._round_price(price)
+        return True
+
+    def _apply_scenario(self, pct):
+        self.write({'pricing_strategy': 'target_margin', 'target_margin_pct': pct})
+        return self.action_apply_margin()
+
+    def action_apply_economy(self):
+        return self._apply_scenario(self.scenario_economy_pct)
+
+    def action_apply_standard(self):
+        return self._apply_scenario(self.scenario_standard_pct)
+
+    def action_apply_premium(self):
+        return self._apply_scenario(self.scenario_premium_pct)
+
+    @api.model
+    def get_dashboard_data(self, year=None):
+        """Aggregate KPIs + chart series for the OWL proposal dashboard."""
+        domain = []
+        if year and str(year) != 'all':
+            domain += [('proposal_date', '>=', '%s-01-01' % year),
+                       ('proposal_date', '<=', '%s-12-31' % year)]
+        props = self.search(domain)
+        WON = ('won', 'contracted')
+        ACTIVE = ('draft', 'submit', 'waiting', 'approve')
+        LOST = ('reject', 'cancel')
+        won = props.filtered(lambda p: p.state in WON)
+        lost = props.filtered(lambda p: p.state in LOST)
+        active = props.filtered(lambda p: p.state in ACTIVE)
+        decided = len(won) + len(lost)
+        win_rate = round(len(won) / decided * 100, 1) if decided else 0.0
+        margins = [p.margin_percentage for p in props if p.margin_percentage]
+        avg_margin = round(sum(margins) / len(margins), 1) if margins else 0.0
+
+        labels = dict(self._fields['state'].selection)
+        sd = {}
+        for p in props:
+            sd[p.state] = sd.get(p.state, 0) + 1
+        status_dist = [{'key': k, 'label': labels.get(k, k), 'value': v} for k, v in sd.items()]
+
+        twon, tlost, tact, cval = [0] * 12, [0] * 12, [0] * 12, [0.0] * 12
+        for p in props:
+            if not p.proposal_date:
+                continue
+            m = p.proposal_date.month - 1
+            if p.state in WON:
+                twon[m] += 1
+                cval[m] += p.total_amount or 0.0
+            elif p.state in LOST:
+                tlost[m] += 1
+            elif p.state in ACTIVE:
+                tact[m] += 1
+        run, cumulative = 0.0, []
+        for v in cval:
+            run += v
+            cumulative.append(round(run, 2))
+
+        st = {}
+        for p in props:
+            n = p.service_type_id.name or 'غير محدد'
+            st[n] = st.get(n, 0.0) + (p.total_amount or 0.0)
+        by_service = [{'label': k, 'value': round(v, 2)}
+                      for k, v in sorted(st.items(), key=lambda x: x[1], reverse=True)[:8]]
+
+        slabels = dict(self._fields['pricing_strategy'].selection)
+        strat = {}
+        for p in props:
+            k = p.pricing_strategy or 'manual'
+            strat[k] = strat.get(k, 0) + 1
+        strategy_dist = [{'label': slabels.get(k, k), 'value': v} for k, v in strat.items()]
+
+        cust = {}
+        for p in props:
+            n = p.partner_id.name or 'غير محدد'
+            r = cust.setdefault(n, {'count': 0, 'amount': 0.0})
+            r['count'] += 1
+            r['amount'] += p.total_amount or 0.0
+        top_customers = [{'name': k, 'amount': round(v['amount'], 2), 'count': v['count']}
+                         for k, v in sorted(cust.items(), key=lambda x: x[1]['amount'], reverse=True)[:6]]
+
+        years = sorted({p.proposal_date.year for p in self.search([]) if p.proposal_date}, reverse=True)
+
+        # --- extra KPIs ---
+        total_value = sum(props.mapped('total_amount'))
+        awarded_value = sum(won.mapped('total_amount'))
+        avg_deal = round(awarded_value / len(won), 2) if won else 0.0
+        margin_value = round(sum(won.mapped('margin_amount')), 2)
+        pending = len(props.filtered(lambda p: p.state in ('submit', 'waiting', 'approve')))
+        superseded = len(props.filtered('superseded'))
+        today = fields.Date.context_today(self)
+        this_month = len(props.filtered(
+            lambda p: p.proposal_date and p.proposal_date.year == today.year
+            and p.proposal_date.month == today.month))
+
+        # --- by company ---
+        # sudo: cross-company dashboard reads company names of proposals whose
+        # company may not be in the user's currently-selected companies, which
+        # the res.company record rule would otherwise deny (AccessError).
+        comp = {}
+        for p in props:
+            n = p.company_id.sudo().name or '-'
+            r = comp.setdefault(n, {'count': 0, 'won': 0})
+            r['count'] += 1
+            if p.state in WON:
+                r['won'] += 1
+        by_company = [{'company': k, 'count': v['count'], 'won': v['won']} for k, v in comp.items()]
+
+        # --- margin distribution buckets ---
+        buckets = {'<10%': 0, '10-20%': 0, '20-30%': 0, '30-40%': 0, '40%+': 0}
+        for p in props:
+            m = p.margin_percentage or 0
+            if m < 10:
+                buckets['<10%'] += 1
+            elif m < 20:
+                buckets['10-20%'] += 1
+            elif m < 30:
+                buckets['20-30%'] += 1
+            elif m < 40:
+                buckets['30-40%'] += 1
+            else:
+                buckets['40%+'] += 1
+        margin_buckets = [{'label': k, 'value': v} for k, v in buckets.items()]
+
+        # --- avg margin by service type ---
+        svc_m = {}
+        for p in props:
+            if not p.margin_percentage:
+                continue
+            n = p.service_type_id.name or 'غير محدد'
+            r = svc_m.setdefault(n, {'sum': 0.0, 'n': 0})
+            r['sum'] += p.margin_percentage
+            r['n'] += 1
+        avg_margin_service = [{'label': k, 'value': round(v['sum'] / v['n'], 1)}
+                              for k, v in sorted(svc_m.items(), key=lambda x: x[1]['sum'] / x[1]['n'], reverse=True)[:8]]
+
+        # --- service requests (portal intake) funnel ---
+        SR = self.env['proposal.service.request'].sudo()
+        sr_labels = dict(SR._fields['state'].selection)
+        sr_status = []
+        for k in ('new', 'under_review', 'approved', 'quoted', 'declined'):
+            sr_status.append({'key': k, 'label': sr_labels.get(k, k),
+                              'value': SR.search_count([('state', '=', k)])})
+        sr_open = SR.search_count([('state', 'in', ('new', 'under_review', 'approved'))])
+
+        return {
+            'years': years,
+            'kpi': {
+                'total': len(props), 'won': len(won), 'win_rate': win_rate,
+                'pipeline_value': round(sum(active.mapped('total_amount')), 2),
+                'awarded_value': round(awarded_value, 2),
+                'avg_margin': avg_margin,
+                'below_guard': len(props.filtered('below_guard')),
+                'draft': len(props.filtered(lambda p: p.state == 'draft')),
+                'lost': len(lost),
+                'total_value': round(total_value, 2),
+                'avg_deal': avg_deal,
+                'margin_value': margin_value,
+                'pending': pending,
+                'this_month': this_month,
+                'superseded': superseded,
+                'sr_open': sr_open,
+            },
+            'status_dist': status_dist,
+            'trend': {'won': twon, 'lost': tlost, 'active': tact},
+            'cumulative': cumulative,
+            'by_service': by_service,
+            'strategy_dist': strategy_dist,
+            'top_customers': top_customers,
+            'by_company': by_company,
+            'margin_buckets': margin_buckets,
+            'avg_margin_service': avg_margin_service,
+            'sr_status': sr_status,
+        }
+
     def generate_pricing(self):
         self.pricing_ids = [(5, 0, 0)]
         vals = []
@@ -381,7 +776,10 @@ class Proposal(models.Model):
                         transportation_cost = tl.cost / total_transportation_service_qty
                 else:
                     transportation_cost = tl.cost
-            individual_cost = service_line.total_cost + material_cost + equipment_cost + transportation_cost
+            # Snapshot-aware (Phase 2/3): use the frozen cost when the line is
+            # frozen, else the live catalog cost (effective_* falls back).
+            unit_cost = service_line.effective_unit_cost
+            individual_cost = unit_cost + material_cost + equipment_cost + transportation_cost
             # commission
             cl = self.commission_ids.filtered(lambda c: service_line.id in c.service_ids.ids)
             if cl:
@@ -394,8 +792,8 @@ class Proposal(models.Model):
                 'name': 'service',
                 'service_id': service_line.id,
                 'service_quantity': service_line.quantity,
-                'service_individual_cost': service_line.total_cost,
-                'service_total_cost': service_line.total,
+                'service_individual_cost': unit_cost,
+                'service_total_cost': service_line.effective_total,
                 'material_cost': material_cost,
                 'equipment_cost': equipment_cost,
                 'transportation_cost': transportation_cost,
@@ -405,6 +803,9 @@ class Proposal(models.Model):
                 'cost': (individual_cost + commission_amount) * service_line.quantity,
             }))
         self.write({'pricing_ids': vals, 'total_commission_amount': total_commission})
+        # Auto-price using the chosen margin strategy (skip 'manual').
+        if self.pricing_strategy and self.pricing_strategy != 'manual':
+            self.action_apply_margin()
 
     def get_commission_amount(self, commission, commission_type, commission_rate, individual_cost):
         commission_amount = 0
@@ -414,6 +815,25 @@ class Proposal(models.Model):
             else:
                 commission_amount = commission_rate
         return commission_amount
+
+    # Standing policy: every field change is logged in the chatter.
+    _TRACK_EXCLUDE = {
+        'id', 'display_name', '__last_update', 'create_date', 'create_uid',
+        'write_date', 'write_uid', 'access_token', 'access_url', 'access_warning',
+        'qr_image', 'logo', 'barcode', 'qr_url',
+    }
+
+    def _setup_complete(self):
+        super()._setup_complete()
+        for name, field in self._fields.items():
+            if name in self._TRACK_EXCLUDE or name.startswith(('message_', 'activity_')):
+                continue
+            if not getattr(field, 'store', False):
+                continue
+            if field.type in ('one2many', 'many2many', 'binary'):
+                continue
+            if not getattr(field, 'tracking', False):
+                field.tracking = True
 
     @api.model
     def create(self, vals):
@@ -475,6 +895,21 @@ class Proposal(models.Model):
             email_layout_xmlid='mail.mail_notification_light',
         )
         self.state = 'won'
+        # CRM sync: record winning quote, roll up revenue, mark opportunity won.
+        if self.lead_id:
+            self.lead_id._sync_won_proposal(self)
+
+    def action_mark_winning(self):
+        """Pick this proposal as the winning quotation on its CRM opportunity
+        (rolls its amount up to the lead's expected revenue) without changing
+        the proposal workflow state."""
+        self.ensure_one()
+        if not self.lead_id:
+            raise UserError(_("This proposal is not linked to a CRM opportunity."))
+        self.lead_id.winning_proposal_id = self.id
+        self.lead_id.expected_revenue = self.total_amount
+        self.message_post(body=_("Marked as the winning proposal for %s.") % self.lead_id.display_name)
+        return True
 
     def action_send_email(self):
         self.ensure_one()

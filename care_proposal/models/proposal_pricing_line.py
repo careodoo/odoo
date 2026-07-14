@@ -43,6 +43,15 @@ class ProposalPricingLine(models.Model):
         store=True,
         string='Sales',
     )
+    below_guard = fields.Boolean(
+        string='Below guard', compute='_compute_below_guard', store=True,
+        help="Profit % is below the proposal's margin guard threshold.")
+
+    @api.depends('profit_percentage', 'proposal_id.margin_guard_pct')
+    def _compute_below_guard(self):
+        for rec in self:
+            guard = rec.proposal_id.margin_guard_pct or 0.0
+            rec.below_guard = bool(rec.individual_sales_price) and rec.profit_percentage < guard
 
     @api.depends('commission_amount', 'individual_cost')
     def compute_individual_cost_after_commission(self):

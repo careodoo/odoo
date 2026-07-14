@@ -16,6 +16,16 @@
 						<button name="action_check_connection" type="object"
 							string="Check connection" invisible="protocol == 'icloud'"
 							groups="hr_attendance.group_hr_attendance_officer" />
+						<field name="ft_import_state" invisible="1" />
+						<button name="action_ft_import_start" type="object"
+							string="Import Finger Templates"
+							invisible="protocol == 'icloud' or state != 'confirmed' or ft_import_state in ['queued','running']"
+							help="Read all finger templates from the machine in the background, in stages, with progress shown below."
+							groups="hr_attendance.group_hr_attendance_officer" />
+						<button name="action_ft_import_stop" type="object"
+							string="Stop Import" class="btn-warning"
+							invisible="ft_import_state not in ['queued','running']"
+							groups="hr_attendance.group_hr_attendance_officer" />
 						<button name="action_upload_setting" type="object"
 							string="Upload Settings" invisible="protocol != 'icloud'"
 							help="This will upload settings from software to device"
@@ -81,6 +91,12 @@
 								<field name="location_id" options="{'no_quick_create': True}"
 									readonly="state in ['confirmed', 'cancelled']" />
 								<field name="last_attendance_download" />
+								<field name="health_alert_hours" />
+								<field name="is_stalled" invisible="1" />
+								<div class="alert alert-danger" role="alert" colspan="2"
+									invisible="not is_stalled or state != 'confirmed'">
+									⚠️ الجهاز لا يستجيب — آخر مزامنة ناجحة قبل <field name="hours_since_download" widget="float_time" nolabel="1" class="oe_inline"/> ساعة. تحقق من الكهرباء والشبكة والـ IP ميدانياً.
+								</div>
 								<field name="company_id" groups="base.group_multi_company"
 									readonly="state in ['confirmed', 'cancelled']"
 									options="{'no_create': True}" />
@@ -211,6 +227,44 @@
 									</group>
 								</group>
 							</page>
+							<page name="ft_import" string="Finger Template Import"
+									invisible="protocol == 'icloud'">
+								<group>
+									<group string="Status">
+										<field name="ft_import_state" readonly="1"/>
+										<label for="ft_import_progress"/>
+										<div>
+											<field name="ft_import_progress" widget="progressbar"/>
+										</div>
+										<field name="ft_import_done" readonly="1"/>
+										<field name="ft_import_total" readonly="1"/>
+										<field name="ft_import_pending_count" readonly="1"/>
+										<field name="ft_import_error_count" readonly="1"/>
+										<field name="ft_import_message" readonly="1"/>
+									</group>
+									<group string="Timing">
+										<field name="ft_import_started" readonly="1"/>
+										<field name="ft_import_last_run" readonly="1"/>
+										<field name="ft_import_finished" readonly="1"/>
+										<field name="ft_import_runs_today" readonly="1"/>
+										<field name="ft_import_runs_date" readonly="1"/>
+									</group>
+								</group>
+								<separator string="Per-user queue"/>
+								<field name="ft_import_line_ids" readonly="1">
+									<tree decoration-success="state == 'done'"
+											decoration-danger="state == 'error'"
+											decoration-muted="state in ['skipped']">
+										<field name="sequence"/>
+										<field name="uid"/>
+										<field name="user_name"/>
+										<field name="state"/>
+										<field name="fingers_count"/>
+										<field name="message"/>
+										<field name="processed_on"/>
+									</tree>
+								</field>
+							</page>
 						</notebook>
 					</sheet>
 					<div class="oe_chatter">
@@ -228,8 +282,10 @@
 			<field name="arch" type="xml">
 				<tree string="Attendance Machines"
 					decoration-bf="message_needaction==True"
+					decoration-danger="is_stalled==True"
 					decoration-muted="state=='cancelled'" sample="1">
 					<field name="message_needaction" column_invisible="1" />
+					<field name="is_stalled" column_invisible="1" />
 					<field name="name" />
 					<field name="oem_vendor" />
 					<field name="device_name" />
@@ -237,6 +293,7 @@
 					<field name="port" />
 					<field name="protocol" />
 					<field name="last_attendance_download" />
+					<field name="hours_since_download" widget="float_time" optional="show" string="Since Sync (h)"/>
 					<field name="location_id" />
 					<field name="tz" />
 					<field name="device_users_count" />

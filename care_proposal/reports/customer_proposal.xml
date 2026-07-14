@@ -199,8 +199,14 @@
                                             <td class="text-center" style="font-weight:bold"><span t-esc="sequence"/></td>
                                             <td class="text-center" style="font-weight:bold"><span t-field="service.location_id"/></td>
                                             <td class="text-center" style="font-weight:bold"><span t-field="service.proposal_service_id.short_code"/></td>
-                                            <td class="text-center" style="font-weight:bold"><span t-field="service.daily_hours"/></td>
-                                            <td class="text-center" style="font-weight:bold"><span t-field="service.weekly_days"/></td>
+                                            <td class="text-center" style="font-weight:bold">
+                                                <t t-if="service.proposal_service_id.type == 'manpower'"><span t-field="service.daily_hours"/></t>
+                                                <t t-else="">—</t>
+                                            </td>
+                                            <td class="text-center" style="font-weight:bold">
+                                                <t t-if="service.proposal_service_id.type == 'manpower'"><span t-field="service.weekly_days"/></t>
+                                                <t t-else="">—</t>
+                                            </td>
                                             <td class="text-center" style="font-weight:bold"><span t-field="service.unit_id"/></td>
                                             <td class="text-center" style="font-weight:bold"><span t-field="service.quantity"/></td>
                                             <td class="text-center" style="font-weight:bold"><span t-esc="round(pricing.individual_sales_price, 2)"/></td>

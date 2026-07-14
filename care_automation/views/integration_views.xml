@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ===== Integrations — status cards ===== -->
+    <record id="care_integration_kanban" model="ir.ui.view">
+        <field name="name">care.integration.kanban</field>
+        <field name="model">care.integration</field>
+        <field name="arch" type="xml">
+            <kanban default_order="sequence">
+                <field name="status"/>
+                <field name="icon"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click"
+                             style="padding:16px; border-radius:12px; border:1px solid #e5e7eb; margin:6px;">
+                            <div class="d-flex align-items-center mb-2">
+                                <span style="font-size:26px;" class="me-2"><field name="icon"/></span>
+                                <strong style="font-size:15px;"><field name="name"/></strong>
+                            </div>
+                            <div class="mb-2">
+                                <span t-attf-class="badge {{ ['connected','linked'].indexOf(record.status.raw_value) > -1 ? 'text-bg-success' : (record.status.raw_value == 'pending' ? 'text-bg-warning' : 'text-bg-secondary') }}">
+                                    <field name="status"/>
+                                </span>
+                            </div>
+                            <div class="text-muted" style="font-size:13px;"><field name="description"/></div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="care_integration_tree" model="ir.ui.view">
+        <field name="name">care.integration.tree</field>
+        <field name="model">care.integration</field>
+        <field name="arch" type="xml">
+            <tree default_order="sequence">
+                <field name="sequence" widget="handle"/>
+                <field name="icon"/>
+                <field name="name"/>
+                <field name="status" widget="badge"
+                       decoration-success="status in ('connected','linked')"
+                       decoration-warning="status=='pending'"/>
+                <field name="description"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="care_integration_form" model="ir.ui.view">
+        <field name="name">care.integration.form</field>
+        <field name="model">care.integration</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" placeholder="اسم التكامل"/></h1></div>
+                    <group>
+                        <group><field name="icon"/><field name="status"/></group>
+                        <group><field name="description"/></group>
+                    </group>
+                    <field name="note" placeholder="تفاصيل..."/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="care_integration_action" model="ir.actions.act_window">
+        <field name="name">مركز التكامل</field>
+        <field name="res_model">care.integration</field>
+        <field name="view_mode">kanban,tree,form</field>
+    </record>
+</odoo>

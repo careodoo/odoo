@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_perf_log_hr_user,perf.log.hr.user,model_care_performance_log,hr.group_hr_user,1,1,1,1
+access_perf_log_employee,perf.log.employee,model_care_performance_log,base.group_user,1,0,0,0

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_fzone_tree" model="ir.ui.view"><field name="name">facade.zone.tree</field><field name="model">care.cafm.facade.zone</field>
+    <field name="arch" type="xml"><tree editable="bottom" decoration-warning="is_due==True"><field name="name"/><field name="facility_id"/><field name="method"/><field name="frequency"/><field name="last_cleaned"/><field name="next_due"/><field name="is_due"/></tree></field></record>
+  <record id="action_fzone" model="ir.actions.act_window"><field name="name">واجهات المباني</field><field name="res_model">care.cafm.facade.zone</field><field name="view_mode">tree</field></record>
+  <record id="view_fpermit_form" model="ir.ui.view"><field name="name">facade.permit.form</field><field name="model">care.cafm.facade.permit</field>
+    <field name="arch" type="xml"><form><header>
+      <button name="action_submit" type="object" string="تقديم" invisible="state!='draft'"/>
+      <button name="action_approve" type="object" string="✔ اعتماد" class="oe_highlight" invisible="state!='submitted'"/>
+      <button name="action_start" type="object" string="▶ بدء" invisible="state!='approved'"/>
+      <button name="action_close" type="object" string="إنهاء" invisible="state!='active'"/>
+      <button name="action_deny" type="object" string="رفض" invisible="state in ('closed','denied')"/>
+      <field name="state" widget="statusbar"/></header><sheet>
+      <widget name="web_ribbon" text="⛔ رياح غير آمنة" bg_color="bg-danger" invisible="is_safe"/>
+      <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+      <group><group><field name="facility_id"/><field name="zone_id"/><field name="method"/><field name="date"/><field name="valid_hours"/></group>
+        <group><field name="wind_speed"/><field name="wind_limit"/><field name="is_safe" readonly="1"/><field name="risk_assessed"/><field name="equipment_checked"/><field name="supervisor_id"/></group></group>
+      <field name="worker_ids" widget="many2many_tags"/></sheet></form></field></record>
+  <record id="view_fpermit_tree" model="ir.ui.view"><field name="name">facade.permit.tree</field><field name="model">care.cafm.facade.permit</field>
+    <field name="arch" type="xml"><tree decoration-danger="is_safe==False" decoration-success="state=='closed'"><field name="is_safe" column_invisible="1"/><field name="name"/><field name="facility_id"/><field name="zone_id"/><field name="date"/><field name="wind_speed"/><field name="state" widget="badge"/></tree></field></record>
+  <record id="action_fpermit" model="ir.actions.act_window"><field name="name">تصاريح العمل على الارتفاع</field><field name="res_model">care.cafm.facade.permit</field><field name="view_mode">tree,form</field></record>
+  <menuitem id="menu_facade" name="غسيل الواجهات" parent="care_cafm.menu_cafm_services" sequence="14"/>
+  <menuitem id="menu_fpermit" name="تصاريح الارتفاع" parent="menu_facade" action="action_fpermit" sequence="10"/>
+  <menuitem id="menu_fzone" name="واجهات المباني" parent="menu_facade" action="action_fzone" sequence="20"/>
+</odoo>

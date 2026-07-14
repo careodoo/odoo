@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="cron_sla_escalate" model="ir.cron">
+        <field name="name">CAFM: SLA Escalation (Work Orders)</field>
+        <field name="model_id" ref="model_care_cafm_workorder"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_sla_escalate()</field>
+        <field name="interval_number">30</field><field name="interval_type">minutes</field>
+        <field name="numbercall">-1</field><field eval="False" name="doall"/>
+    </record>
+    <record id="cron_obs_escalate" model="ir.cron">
+        <field name="name">CAFM: Observation Escalation</field>
+        <field name="model_id" ref="model_care_cafm_observation"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_obs_escalate()</field>
+        <field name="interval_number">1</field><field name="interval_type">hours</field>
+        <field name="numbercall">-1</field><field eval="False" name="doall"/>
+    </record>
+    <record id="cron_schedule_run" model="ir.cron">
+        <field name="name">CAFM: Work Schedules (generate/notify/flag late)</field>
+        <field name="model_id" ref="model_care_cafm_schedule"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_run()</field>
+        <field name="interval_number">5</field><field name="interval_type">minutes</field>
+        <field name="numbercall">-1</field><field eval="False" name="doall"/>
+    </record>
+    <record id="cron_ppm_generate" model="ir.cron">
+        <field name="name">CAFM: Generate Preventive Maintenance Work Orders</field>
+        <field name="model_id" ref="model_care_cafm_ppm"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_generate()</field>
+        <field name="interval_number">1</field><field name="interval_type">days</field>
+        <field name="numbercall">-1</field><field eval="False" name="doall"/>
+    </record>
+</odoo>

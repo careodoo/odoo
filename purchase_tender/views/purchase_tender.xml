@@ -5,11 +5,11 @@
       <field name="name">purchase.tender.view.tree</field>
       <field name="model">purchase.tender</field>
       <field name="arch" type="xml">
-        <tree string="المناقصات" default_order="days_to_close asc, importance desc, id desc"
+        <tree string="المناقصات" default_order="close_sort_key asc, id desc"
           decoration-success="state in ['winner','purchased','in_progress','completed']"
           decoration-danger="state in ['cancelled','lost','excepted']"
           decoration-warning="days_to_close &gt;= 0 and days_to_close &lt;= 7 and state in ['new','under_study','docs_purchased','interested','preparing','participated']"
-          decoration-muted="state == 'closed'">
+          decoration-muted="state in ['closed','expired']">
           <field name="currency_id" column_invisible="1" />
           <field name="image_128" widget="image" options="{'size': [24, 24]}" />
           <field name="short_name" string="المناقصة" />
@@ -25,6 +25,7 @@
           <field name="ai_analyzed" string="حُلّل" widget="boolean_toggle" optional="hide" />
           <field name="closing_date" string="موعد الإغلاق" optional="show" />
           <field name="new_closing_date" string="موعد الإغلاق الجديد" optional="hide" />
+          <field name="classification_id" string="التصنيف" optional="show" widget="badge"/>
           <field name="days_to_close" string="باقٍ (يوم)" optional="show" />
           <field name="winner" optional="hide" />
           <field name="winner_price" widget="monetary" optional="hide" />
@@ -55,7 +56,7 @@
       <field name="name">purchase.tender.view.kanban</field>
       <field name="model">purchase.tender</field>
       <field name="arch" type="xml">
-        <kanban class="o_tender_kanban" default_order="days_to_close asc, importance desc" limit="10">
+        <kanban class="o_tender_kanban" default_order="close_sort_key asc" limit="10">
           <field name="tender_no" />
           <field name="short_name" />
           <field name="organization" />
@@ -141,7 +142,18 @@
             <button name="action_set_winner" string="فائزة" type="object"
               class="btn-success" invisible="state not in ['participated']" />
             <button name="action_set_purchased" string="تمت الترسية" type="object"
-              class="btn-success" invisible="state not in ['winner']" />
+              class="btn-success" invisible="state not in ['winner']"
+              groups="purchase_tender.group_tender_contract" />
+            <field name="contracted" invisible="1" />
+            <field name="experience_id" invisible="1" groups="purchase_tender.group_tender_contract" />
+            <button name="action_set_contracted" string="تم التعاقد" type="object"
+              class="btn-success" icon="fa-handshake-o"
+              invisible="state != 'purchased' or contracted"
+              groups="purchase_tender.group_tender_contract" />
+            <button name="action_create_contract" string="إنشاء عقد" type="object"
+              class="btn-primary" icon="fa-file-text-o"
+              invisible="not contracted or experience_id"
+              groups="purchase_tender.group_tender_contract" />
             <button name="action_set_in_progress" string="قيد التنفيذ" type="object"
               class="btn-success" invisible="state not in ['purchased']" />
             <button name="action_set_completed" string="منجزة" type="object"
@@ -152,6 +164,8 @@
               invisible="state in ['excepted','winner','purchased','in_progress','completed','lost','closed','cancelled']" />
             <button name="action_set_postponed" string="تأجيل" type="object"
               invisible="state in ['postponed','purchased','in_progress','completed','lost','closed','cancelled']" />
+            <button name="action_set_expired" string="منتهية" type="object" icon="fa-hourglass-end"
+              invisible="state in ['expired','excepted','participated','winner','purchased','in_progress','completed','lost','closed','cancelled']" />
             <button name="action_reset_new" string="إعادة" type="object"
               invisible="state in ['new']" />
             <field widget="statusbar" options="{'clickable': '1'}" name="state"
@@ -175,6 +189,7 @@
                 <field name="tender_name" />
                 <field name="issue_date" />
                 <field name="closing_date" />
+                <field name="classification_id" string="التصنيف"/>
                 <field name="new_closing_date" invisible="state != 'postponed'" />
                 <field name="initial_meeting_date" />
                 <field name="bid_type" />
@@ -187,7 +202,8 @@
                 <field name="guarantee" widget="monetary" />
                 <field name="guarantee_bank" />
                 <field name="guarantee_ref" />
-                <field name="expiry_date" />
+                <field name="guarantee_renewable" widget="radio" options="{'horizontal': True}"/>
+                <field name="expiry_date" string="تاريخ انتهاء الكفالة"/>
                 <field name="guarantee_status" />
                 <field name="period" />
                 <field name="manpower" />
@@ -241,6 +257,33 @@
                 </group>
                 <separator string="الملخّص التنفيذي" />
                 <field name="ai_summary" placeholder="يظهر هنا ملخّص المناقصة بعد التحليل الآلي..." />
+              </page>
+              <page string="🤝 العقد والإشعارات" name="contract_notify">
+                <group>
+                  <group string="مستندات الحالات">
+                    <field name="doc_docs_purchased" filename="doc_docs_purchased_name"
+                      string="مستند شراء الكراسة" />
+                    <field name="doc_docs_purchased_name" invisible="1" />
+                    <field name="doc_winner" filename="doc_winner_name" string="مستند الفوز" />
+                    <field name="doc_winner_name" invisible="1" />
+                    <field name="doc_award" filename="doc_award_name" string="مستند الترسية (إلزامي)"
+                      groups="purchase_tender.group_tender_contract" />
+                    <field name="doc_award_name" invisible="1"
+                      groups="purchase_tender.group_tender_contract" />
+                    <field name="doc_contract" filename="doc_contract_name" string="مستند العقد الموقّع (إلزامي)"
+                      groups="purchase_tender.group_tender_contract" />
+                    <field name="doc_contract_name" invisible="1"
+                      groups="purchase_tender.group_tender_contract" />
+                  </group>
+                  <group string="حالة التعاقد" groups="purchase_tender.group_tender_contract">
+                    <field name="contracted" readonly="1" />
+                    <field name="contracted_date" readonly="1" />
+                    <field name="experience_id" readonly="1" />
+                  </group>
+                </group>
+                <separator string="جهات ثالثة لإشعار الحالة (الشركة الأم / غيرها)" />
+                <field name="third_party_ids" widget="many2many_tags"
+                  placeholder="اختر الجهات الخارجية التي تستقبل إشعارات حالة المناقصة..." />
               </page>
               <page string="📄 المستندات المطلوبة">
                 <field name="requirement_ids" domain="[('category','=','document')]" context="{'default_category':'document'}">
@@ -373,6 +416,11 @@
       <field name="model">purchase.tender</field>
       <field name="arch" type="xml">
         <search>
+          <field name="classification_id"/>
+          <filter name="f_cleaning" string="نظافة" domain="[('classification_id.name','=','نظافة')]"/>
+          <filter name="f_security" string="حراسة" domain="[('classification_id.name','=','حراسة')]"/>
+          <filter name="f_agri" string="زراعة" domain="[('classification_id.name','=','زراعة')]"/>
+          <separator/>
           <field name="name" string="Tender"
             filter_domain="['|','|',('name','ilike',self),('tender_no','ilike',self),('tender_name','ilike',self)]" />
           <field name="organization" />
@@ -385,6 +433,7 @@
           <separator />
           <filter name="f_won" string="فائزة" domain="[('state','in',['winner','purchased','in_progress','completed'])]" />
           <filter name="f_lost" string="خاسرة" domain="[('state','=','lost')]" />
+          <filter name="f_expired" string="منتهية (لم نشارك)" domain="[('state','=','expired')]" />
           <separator />
           <filter name="f_under_study" string="تحت الدراسة" domain="[('state','=','under_study')]" />
           <filter name="f_docs" string="شُريت الكراسة" domain="[('state','=','docs_purchased')]" />
@@ -408,6 +457,7 @@
             <filter name="g_company" string="الشركة" context="{'group_by':'company_id'}" />
             <filter name="g_org" string="الجهة" context="{'group_by':'organization'}" />
             <filter name="g_bid" string="النشاط" context="{'group_by':'bid_type'}" />
+            <filter name="g_classification" string="التصنيف" context="{'group_by':'classification_id'}" />
             <filter name="g_winner" string="الفائز" context="{'group_by':'winner'}" />
             <filter name="g_loss" string="سبب الخسارة" context="{'group_by':'loss_reason'}" />
             <filter name="g_month" string="شهر الإصدار" context="{'group_by':'issue_date:month'}" />
@@ -424,6 +474,14 @@
       <field name="search_view_id" ref="purchase_tender_view_search" />
       <field name="context">{'search_default_f_active': 1}</field>
     </record>
+    <!-- Active Tenders entry point: builds its domain from the configurable
+         active states (Settings) and orders by nearest closing date. -->
+    <record id="action_open_active_tenders_server" model="ir.actions.server">
+      <field name="name">Active Tenders</field>
+      <field name="model_id" ref="purchase_tender.model_purchase_tender" />
+      <field name="state">code</field>
+      <field name="code">action = model.action_open_active_tenders()</field>
+    </record>
     <record id="purchase_tender_action_concluded" model="ir.actions.act_window">
       <field name="name">Concluded Tenders</field>
       <field name="type">ir.actions.act_window</field>
@@ -435,7 +493,7 @@
     <menuitem id="purchase_tender_root" name="Our Tenders" sequence="10"
       web_icon="fa fa-pie-chart,#f1c40f,#34495e" />
     <menuitem id="purchase_tender_menu" name="Active Tenders" parent="purchase_tender_root" sequence="2"
-      action="purchase_tender_action" />
+      action="action_open_active_tenders_server" />
     <menuitem id="purchase_tender_menu_concluded" name="Concluded Tenders" parent="purchase_tender_root" sequence="3"
       action="purchase_tender_action_concluded" />
   </data>

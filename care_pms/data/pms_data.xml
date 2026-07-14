@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="cat_hr" model="care.task.category">
+            <field name="name">Human Resources</field><field name="code">HR</field>
+            <field name="sequence">1</field><field name="color">1</field>
+        </record>
+        <record id="cat_equipment" model="care.task.category">
+            <field name="name">Equipment &amp; Maintenance</field><field name="code">EQP</field>
+            <field name="sequence">2</field><field name="color">2</field>
+        </record>
+        <record id="cat_procurement" model="care.task.category">
+            <field name="name">Procurement</field><field name="code">PRC</field>
+            <field name="sequence">3</field><field name="color">4</field>
+        </record>
+        <record id="cat_finance" model="care.task.category">
+            <field name="name">Finance</field><field name="code">FIN</field>
+            <field name="sequence">4</field><field name="color">5</field>
+        </record>
+        <record id="cat_admin" model="care.task.category">
+            <field name="name">Administrative</field><field name="code">ADM</field>
+            <field name="sequence">5</field><field name="color">3</field>
+        </record>
+        <record id="cat_compliance" model="care.task.category">
+            <field name="name">Compliance / Permits</field><field name="code">CMP</field>
+            <field name="sequence">6</field><field name="color">9</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Dedicated label paperformat: wide enough to fit one page, no header/footer -->
+    <record id="paperformat_ref_label" model="report.paperformat">
+        <field name="name">Ref Label 50x25</field>
+        <field name="format">custom</field>
+        <field name="page_width">50</field>
+        <field name="page_height">25</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">0</field>
+        <field name="margin_bottom">0</field>
+        <field name="margin_left">0</field>
+        <field name="margin_right">0</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">96</field>
+    </record>
+
+    <!-- Legacy small label (Date + REF): renamed + fixed UTF-8/Arabic + one page -->
+    <record id="sp_letter_v15.outgoing_report" model="ir.actions.report">
+        <field name="name">ليبل المرجع</field>
+        <field name="report_name">care_letter.report_ref_label</field>
+        <field name="report_file">care_letter.report_ref_label</field>
+        <field name="print_report_name">'Ref-Label - %s' % (object.ref or object.id)</field>
+        <field name="paperformat_id" ref="paperformat_ref_label"/>
+    </record>
+
+    <template id="report_ref_label">
+        <t t-call="web.html_container">
+            <t t-call="web.basic_layout">
+                <t t-foreach="docs" t-as="o">
+                    <div class="page" style="direction:ltr; text-align:center; margin:0; padding-top:6mm; font-family:Arial,Helvetica,sans-serif !important;">
+                        <div style="font-size:15px; font-weight:bold; white-space:nowrap;">Date: <span t-esc="o.issue_date and o.issue_date.strftime('%Y-%m-%d') or ''"/></div>
+                        <div style="font-size:18px; font-weight:900; white-space:nowrap; margin-top:4px;">REF: <span t-esc="o.ref or ''"/></div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <record id="action_report_letter_label" model="ir.actions.report">
+        <field name="name">الليبل (QR)</field>
+        <field name="model">letter.file</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_letter.report_letter_label</field>
+        <field name="report_file">care_letter.report_letter_label</field>
+        <field name="print_report_name">'Label - %s' % (object.ref or object.id)</field>
+        <field name="binding_model_id" ref="sp_letter_v15.model_letter_file"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+    </record>
+
+    <template id="report_letter_label">
+        <t t-call="web.basic_layout">
+            <t t-foreach="docs" t-as="o">
+                <div class="page" style="font-family:'Noto Naskh Arabic','Amiri','Arial',sans-serif; direction:rtl; padding:16px; border:2px dashed #555; width:320px; text-align:center;">
+                    <div style="font-weight:bold; font-size:18px; color:#e8564e;">CARE — مراسلات</div>
+                    <div style="margin:10px 0;">
+                        <img t-att-src="'/report/barcode/QR/%s?width=180&amp;height=180' % (o.ref or str(o.id))" style="width:150px;height:150px;"/>
+                    </div>
+                    <div style="font-weight:bold; font-size:20px;" t-esc="o.ref"/>
+                    <div style="font-weight:bold; color:#555; font-size:13px;">
+                        <span t-field="o.direction"/> · <span t-field="o.issue_date"/>
+                    </div>
+                    <div style="color:#555; font-size:12px;" t-esc="o.partner_id.name or ''"/>
+                    <div t-if="o.classification_id" style="margin-top:6px; font-size:12px; font-weight:bold;" t-esc="o.classification_id.name"/>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- ===== Official letter print (letterhead) ===== -->
+    <record id="action_report_letter_official" model="ir.actions.report">
+        <field name="name">طباعة الكتاب (ترويسة رسمية)</field>
+        <field name="model">letter.file</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_letter.report_letter_official</field>
+        <field name="report_file">care_letter.report_letter_official</field>
+        <field name="print_report_name">'Letter - %s' % (object.ref or object.id)</field>
+        <field name="binding_model_id" ref="sp_letter_v15.model_letter_file"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_letter_official">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <div class="page" style="direction:rtl; font-family:'Noto Naskh Arabic','Arial',sans-serif; padding:0 14px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #e8564e; padding-bottom:10px; margin-bottom:20px;">
+                        <div>
+                            <span style="color:#e8564e; font-weight:bold; font-size:26px;">CARE</span><br/>
+                            <span style="color:#1e2a44; font-size:12px;">شركة كير للخدمات</span>
+                        </div>
+                        <div style="text-align:left; font-size:12px; color:#555;">
+                            المرجع: <span t-out="o.ref"/><br/>
+                            التاريخ: <span t-out="o.issue_date" t-options="{'widget': 'date'}"/>
+                        </div>
+                    </div>
+                    <div style="font-weight:bold; font-size:15px; margin-bottom:6px;">
+                        السادة / <span t-out="o.partner_id.name or '............'"/> المحترمين
+                    </div>
+                    <div style="font-size:13px; margin-bottom:14px;">تحية طيبة وبعد،،</div>
+                    <div t-if="o.name" style="font-weight:bold; text-decoration:underline; margin-bottom:12px; font-size:14px;">
+                        الموضوع: <span t-out="o.name"/>
+                    </div>
+                    <div style="font-size:14px; line-height:2; white-space:pre-wrap;" t-out="o.letter_contain or ''"/>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:48px;">
+                        <div style="text-align:center;">
+                            <img t-att-src="'/report/barcode/QR/%s?width=120&amp;height=120' % (o.ref or str(o.id))" style="width:95px; height:95px;"/>
+                            <div style="font-size:10px; color:#888;">رمز التحقق</div>
+                        </div>
+                        <div style="text-align:center; font-size:13px; font-weight:bold;">
+                            وتفضلوا بقبول فائق الاحترام،<br/><br/>الإدارة<br/><br/>....................<br/>التوقيع والختم
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

@@ -1,0 +1,42 @@
+.o_pms_dashboard {
+    height: 100%;
+    background: #eef1f6;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Cairo', 'Tahoma', sans-serif;
+
+    .pm-toolbar {
+        display: flex; align-items: center; justify-content: space-between;
+        background: #15213b; color: #fff; padding: 12px 20px;
+        .pm-title { font-weight: 700; font-size: 17px; }
+        .pm-brand { color: #f0663c; font-weight: 800; }
+        .pm-refresh { background: rgba(255,255,255,.12); color: #fff; border: 0; border-radius: 8px; padding: 6px 14px; font-weight: 700; cursor: pointer; }
+    }
+    .pm-scroll { flex: 1; overflow-y: auto; padding: 16px; }
+    .pm-loading { text-align: center; padding: 60px; color: #7b8499; font-weight: 700; }
+
+    .pm-kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 14px;
+        @media (max-width: 1200px) { grid-template-columns: repeat(3, 1fr); }
+        @media (max-width: 768px) { grid-template-columns: repeat(2, 1fr); } }
+    .pm-kpi { position: relative; background: #fff; border: 1px solid #e4e8f0; border-radius: 12px; padding: 14px; text-align: center; cursor: pointer; overflow: hidden; transition: transform .12s, box-shadow .12s;
+        &:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(21,33,59,.12); }
+        .bar { position: absolute; top: 0; right: 0; left: 0; height: 4px; }
+        .ic { font-size: 20px; }
+        .v { font-size: 26px; font-weight: 800; color: #15213b; }
+        .l { color: #7b8499; font-weight: 700; font-size: 12.5px; }
+        &.pm-danger .v { color: #e2513f; } }
+
+    .pm-charts { display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; margin-bottom: 14px; }
+    .pm-card { background: #fff; border: 1px solid #e4e8f0; border-radius: 14px; padding: 14px;
+        .pm-ch-t { font-weight: 800; font-size: 14px; color: #15213b; margin-bottom: 10px; }
+        .pm-cv { position: relative; height: 250px; } }
+    .pm-c4 { grid-column: span 4; }
+    @media (max-width: 992px) { .pm-c4 { grid-column: span 12; } }
+
+    .pm-table { width: 100%; border-collapse: collapse; font-size: 13px;
+        th { background: #f6f8fc; color: #66708a; text-align: right; padding: 8px 10px; font-weight: 800; font-size: 12px; }
+        td { padding: 8px 10px; border-bottom: 1px solid #eef1f6; font-weight: 600; }
+        tr:hover td { background: #f6f8fc; } }
+    .pm-badge-red { background: #fdeceb; color: #c0392b; padding: 2px 9px; border-radius: 20px; font-weight: 800; }
+    .pm-badge-grey { background: #eef1f6; color: #66708a; padding: 2px 9px; border-radius: 20px; font-weight: 800; }
+}

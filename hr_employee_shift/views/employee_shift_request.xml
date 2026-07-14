@@ -73,35 +73,75 @@
                                 invisible="approver_2 != uid or state != 'approval_1'"/>
                         <button name="third_approve" type="object" string="Approve" class="oe_highlight"
                                 invisible="approver_3 != uid or state != 'approval_2'"/>
-                        <button name="shift_department" type="object" string="Shift" class="oe_highlight"
+                        <button name="shift_department" type="object" string="موافقة المدير الجديد" class="oe_highlight"
                                 invisible="new_department_manager != uid or not show_shift_department"/>
+                        <button name="action_hr_approve" type="object" string="✅ اعتماد الموارد البشرية النهائي" class="oe_highlight"
+                                invisible="state != 'hr_review'" groups="hr.group_hr_manager"/>
+                        <button name="action_hr_refuse" type="object" string="رفض HR" class="btn btn-danger"
+                                invisible="state != 'hr_review'" groups="hr.group_hr_manager"/>
                         <button name="first_refuse" type="object" string="Refuse" class="btn btn-danger"
                                 invisible="approver_1 != uid or state != 'confirm'"/>
                         <button name="first_refuse" type="object" string="Refuse" class="btn btn-danger"
                                 invisible="approver_2 != uid or state != 'approval_1'"/>
                         <button name="first_refuse" type="object" string="Refuse" class="btn btn-danger"
                                 invisible="approver_3 != uid or state != 'approval_2'"/>
-                        <field name="state" widget="statusbar" statusbar_visible="draft,confirm,done"/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,sent,confirm,hr_review,done"/>
                     </header>
                     <sheet>
+                        <field name="active" invisible="1"/>
+                        <field name="show_shift_department" invisible="1"/>
+                        <widget name="web_ribbon" text="تم النقل" bg_color="bg-success" invisible="state != 'done'"/>
+                        <widget name="web_ribbon" text="مرفوض" bg_color="bg-danger"
+                                invisible="state not in ['refuse_1','refuse_2','refuse_3','hr_refuse']"/>
+                        <div class="oe_title">
+                            <h1><field name="employee_id" readonly="state != 'draft'" options="{'no_create': True}"/></h1>
+                        </div>
                         <group>
-                            <field name="active" invisible="1"/>
-                            <field name="show_shift_department" invisible="1"/>
-                            <field name="employee_id" readonly="state != 'draft'"/>
-                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
-                            <field name="current_department" readonly="1" force_save="1"/>
-                            <field name="new_department" readonly="state != 'draft'"/>
-                            <field name="date" readonly="state not in ['draft', 'sent']"/>
-                            <field name="refuse_reason" invisible="state not in ['refuse_1','refuse_2','refuse_3']" readonly="1" force_save="1"/>
-                            <field name="working_hours" invisible="working_hours_modifier != uid or state != 'confirm'"/>
-                            <field name="approver_1" invisible="0"/>
-                            <field name="approver_2" invisible="0"/>
-                            <field name="approver_3" invisible="0"/>
-                            <field name="working_hours_modifier" invisible="1"/>
-                            <field name="company_id" invisible="1"/>
-                            <field name="old_department_manager" invisible="0"/>
-                            <field name="new_department_manager" invisible="0"/>
+                            <group string="بيانات النقل">
+                                <field name="current_department" readonly="1" force_save="1"/>
+                                <field name="new_department" readonly="state != 'draft'" options="{'no_create': True}"/>
+                                <field name="date" readonly="state not in ['draft', 'sent']"/>
+                                <field name="working_hours" invisible="working_hours_modifier != uid or state != 'confirm'"/>
+                                <field name="refuse_reason" invisible="state not in ['refuse_1','refuse_2','refuse_3','hr_refuse']" readonly="1" force_save="1"/>
+                            </group>
+                            <group string="المعتمِدون">
+                                <field name="old_department_manager" readonly="1"/>
+                                <field name="new_department_manager" readonly="1"/>
+                                <field name="approver_1" readonly="1"/>
+                                <field name="approver_2" readonly="1"/>
+                                <field name="approver_3" readonly="1"/>
+                                <field name="hr_approved" readonly="1"/>
+                                <field name="hr_approved_by" readonly="1" invisible="not hr_approved"/>
+                                <field name="hr_approved_date" readonly="1" invisible="not hr_approved"/>
+                            </group>
                         </group>
+                        <field name="working_hours_modifier" invisible="1"/>
+                        <field name="company_id" invisible="1"/>
+                        <notebook>
+                            <page string="الأثر المالي" name="financial">
+                                <field name="currency_id" invisible="1"/>
+                                <group>
+                                    <group string="الوضع الحالي">
+                                        <field name="current_wage"/>
+                                        <field name="total_allowance"/>
+                                        <field name="allowance_count"/>
+                                    </group>
+                                    <group string="الأثر على الراتب/البدلات في المشروع الجديد">
+                                        <field name="salary_same"/>
+                                        <field name="new_wage" invisible="salary_same"
+                                               required="not salary_same"/>
+                                        <field name="allowances_same"/>
+                                    </group>
+                                </group>
+                                <separator string="البدلات الحالية للعامل"/>
+                                <field name="allowance_summary" readonly="1"/>
+                                <field name="impact_notes" placeholder="ملاحظات على الأثر المالي للنقل..."/>
+                                <div class="text-muted" style="font-size:12px;">
+                                    ملاحظة: البدلات ذات النطاق «خاص بالمشروع» ستتوقف تلقائياً عند اعتماد النقل.
+                                </div>
+                            </page>
+                        </notebook>
                     </sheet>
                     <div class="oe_chatter">
                         <field name="message_follower_ids" groups="base.group_user"/>
@@ -122,9 +162,10 @@
                     <field name="current_department"/>
                     <field name="new_department"/>
                     <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
-                    <field name="state" decoration-success="state in ['done', 'approval_1', 'approval_2', 'approval_3']"
-                           decoration-info="state in ['draft', 'sent', 'confirm']"
-                           decoration-danger="state in ['refuse_3', 'refuse_2', 'refuse_1']" widget="badge" optional="show"/>
+                    <field name="state" decoration-success="state == 'done'"
+                           decoration-info="state in ['draft', 'sent', 'confirm', 'approval_1', 'approval_2', 'approval_3']"
+                           decoration-warning="state == 'hr_review'"
+                           decoration-danger="state in ['refuse_3', 'refuse_2', 'refuse_1', 'hr_refuse']" widget="badge" optional="show"/>
                 </tree>
             </field>
         </record>
@@ -158,7 +199,9 @@
                  ('state', '=', 'approval_3'),
             ]</field>
         </record>
-        <menuitem id="employee_shift_request_root" name="Request for Shifting" sequence="11"
+        <!-- Nested inside the HR (Employees) app — not a separate top-level menu. -->
+        <menuitem id="employee_shift_request_root" name="نقل العمالة (Shifting)" sequence="80"
+            parent="hr.menu_hr_root"
             groups="hr_employee_shift.group_shift_request_user,hr_employee_shift.group_shift_request_manager,hr_employee_shift.group_shift_request_approver"/>
         <!-- This Menu Item must have a parent and an action -->
         <menuitem id="employee_shift_request_menu" name="Request for Shifting" parent="employee_shift_request_root"

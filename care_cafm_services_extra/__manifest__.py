@@ -1,0 +1,2 @@
+# -*- coding: utf-8 -*-
+{'name':"Care CAFM — Extra Services & API",'summary':"Extra service lines (pest control, waste, pools, water-tank cleaning) plus a JSON API for a standalone headless client portal.",'author':"care-kw",'category':'Services/Facility Management','version':'17.0.1.0.0','license':'LGPL-3','depends':['care_cafm'],'data':['security/ir.model.access.csv','views/extra_views.xml','data/demo_data.xml'],'installable':True}

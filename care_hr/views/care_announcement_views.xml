@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_care_announcement_tree" model="ir.ui.view">
+        <field name="name">care.announcement.tree</field>
+        <field name="model">care.announcement</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'published'" decoration-muted="state == 'archived'">
+                <field name="name"/>
+                <field name="kind"/>
+                <field name="audience"/>
+                <field name="publish_date"/>
+                <field name="ack_done"/>
+                <field name="ack_required"/>
+                <field name="ack_pending"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'published'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_care_announcement_form" model="ir.ui.view">
+        <field name="name">care.announcement.form</field>
+        <field name="model">care.announcement</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_publish" type="object" string="Publish"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_archive_ann" type="object" string="Archive"
+                            invisible="state != 'published'"/>
+                    <button name="action_reset" type="object" string="Reset to Draft"
+                            invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" icon="fa-check-square-o" type="object"
+                                name="action_publish" disabled="1" invisible="kind != 'policy'">
+                            <field name="ack_done" widget="statinfo" string="Acknowledged"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-clock-o" type="object"
+                                name="action_publish" disabled="1" invisible="kind != 'policy'">
+                            <field name="ack_pending" widget="statinfo" string="Pending"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Title..."/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="kind"/>
+                            <field name="audience"/>
+                            <field name="department_ids" widget="many2many_tags"
+                                   invisible="audience != 'department'"/>
+                        </group>
+                        <group>
+                            <field name="publish_date" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Content" name="content">
+                            <field name="body"/>
+                        </page>
+                        <page string="Acknowledgments" name="acks" invisible="kind != 'policy'">
+                            <field name="ack_ids">
+                                <tree>
+                                    <field name="employee_id"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'acked'"/>
+                                    <field name="ack_date"/>
+                                    <button name="action_acknowledge" type="object"
+                                            string="Acknowledge" class="btn-link"
+                                            invisible="state == 'acked'"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_care_announcement" model="ir.actions.act_window">
+        <field name="name">Announcements &amp; Policies</field>
+        <field name="res_model">care.announcement</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Publish an announcement</p>
+            <p>Announcements and policies. Policies require an electronic acknowledgment
+               from targeted workers, recorded with name and time as proof.</p>
+        </field>
+    </record>
+</odoo>

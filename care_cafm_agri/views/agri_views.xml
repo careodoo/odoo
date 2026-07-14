@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- ============ SPECIES CATALOGUE ============ -->
+  <record id="view_species_tree" model="ir.ui.view">
+    <field name="name">agri.species.tree</field>
+    <field name="model">care.cafm.agri.species</field>
+    <field name="arch" type="xml">
+      <tree>
+        <field name="name"/><field name="scientific_name"/><field name="category"/>
+        <field name="water_need"/><field name="sun_exposure"/>
+        <field name="prune_interval_days"/><field name="fertilize_interval_days"/>
+        <field name="heat_tolerant"/><field name="plant_count"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_species_form" model="ir.ui.view">
+    <field name="name">agri.species.form</field>
+    <field name="model">care.cafm.agri.species</field>
+    <field name="arch" type="xml">
+      <form>
+        <sheet>
+          <div class="oe_button_box" name="button_box">
+            <button name="action_view_plants" type="object" class="oe_stat_button" icon="fa-tree">
+              <field name="plant_count" widget="statinfo" string="نباتات"/>
+            </button>
+          </div>
+          <field name="image" widget="image" class="oe_avatar"/>
+          <div class="oe_title">
+            <label for="name"/><h1><field name="name" placeholder="مثال: نخيل الواشنطونيا"/></h1>
+            <field name="scientific_name" placeholder="Washingtonia robusta"/>
+          </div>
+          <group>
+            <group string="التصنيف">
+              <field name="category"/>
+              <field name="heat_tolerant"/>
+              <field name="salt_tolerant"/>
+            </group>
+            <group string="متطلبات العناية">
+              <field name="water_need"/>
+              <field name="sun_exposure"/>
+              <field name="prune_interval_days"/>
+              <field name="fertilize_interval_days"/>
+            </group>
+          </group>
+          <group string="دليل العناية">
+            <field name="care_guide" nolabel="1" placeholder="إرشادات الريّ والتقليم والتسميد الخاصة بهذا النوع..."/>
+          </group>
+        </sheet>
+        <div class="oe_chatter"><field name="message_follower_ids"/><field name="message_ids"/></div>
+      </form>
+    </field>
+  </record>
+  <record id="view_species_search" model="ir.ui.view">
+    <field name="name">agri.species.search</field>
+    <field name="model">care.cafm.agri.species</field>
+    <field name="arch" type="xml">
+      <search>
+        <field name="name"/><field name="scientific_name"/>
+        <filter name="heat" string="يتحمّل الحرارة 🇰🇼" domain="[('heat_tolerant','=',True)]"/>
+        <filter name="salt" string="يتحمّل الملوحة" domain="[('salt_tolerant','=',True)]"/>
+        <group expand="0" string="تجميع">
+          <filter name="g_cat" string="التصنيف" context="{'group_by':'category'}"/>
+          <filter name="g_water" string="احتياج الماء" context="{'group_by':'water_need'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+  <record id="action_species" model="ir.actions.act_window">
+    <field name="name">أنواع النباتات</field>
+    <field name="res_model">care.cafm.agri.species</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- ============ IRRIGATION ZONES ============ -->
+  <record id="view_zone_tree" model="ir.ui.view">
+    <field name="name">agri.zone.tree</field><field name="model">care.cafm.agri.zone</field>
+    <field name="arch" type="xml">
+      <tree decoration-warning="is_due==True" decoration-danger="valve_state=='fault'">
+        <field name="name"/><field name="facility_id"/><field name="method"/><field name="frequency"/>
+        <field name="duration_min"/><field name="weather_based"/><field name="valve_state"/>
+        <field name="moisture_pct"/><field name="plant_count"/>
+        <field name="last_run"/><field name="next_run"/><field name="is_due" invisible="1"/>
+        <field name="water_month_m3"/><field name="water_m3"/>
+        <button name="action_run" type="object" string="ريّ الآن" icon="fa-tint" class="btn-link"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_zone_form" model="ir.ui.view">
+    <field name="name">agri.zone.form</field><field name="model">care.cafm.agri.zone</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="action_run" type="object" string="💧 ريّ الآن" class="btn-primary"/>
+          <field name="valve_state" widget="statusbar"/>
+        </header>
+        <sheet>
+          <div class="oe_button_box" name="button_box">
+            <button name="action_view_plants" type="object" class="oe_stat_button" icon="fa-leaf">
+              <field name="plant_count" widget="statinfo" string="نباتات"/>
+            </button>
+          </div>
+          <div class="oe_title"><label for="name"/><h1><field name="name" placeholder="منطقة الحديقة الأمامية"/></h1></div>
+          <group>
+            <group string="التعريف">
+              <field name="facility_id"/><field name="location_id"/><field name="area_m2"/>
+            </group>
+            <group string="نظام الريّ">
+              <field name="method"/><field name="frequency"/>
+              <field name="start_time" widget="float_time"/>
+              <field name="duration_min"/><field name="flow_lpm"/>
+              <field name="weather_based"/>
+            </group>
+          </group>
+          <group>
+            <group string="الحالة الحيّة">
+              <field name="valve_state"/><field name="moisture_pct"/>
+              <field name="last_run"/><field name="next_run"/><field name="is_due"/>
+            </group>
+            <group string="استهلاك المياه">
+              <field name="water_month_m3"/><field name="water_m3"/>
+            </group>
+          </group>
+          <group string="موافقة العميل على خطة الريّ">
+            <field name="client_plan_state"/>
+            <field name="client_plan_comment"/>
+            <field name="client_plan_date"/>
+          </group>
+          <notebook>
+            <page string="سجل الريّ">
+              <field name="log_ids">
+                <tree editable="bottom">
+                  <field name="date"/><field name="duration_min"/><field name="water_m3"/>
+                  <field name="moisture_before"/><field name="moisture_after"/>
+                  <field name="done_by"/><field name="note"/>
+                </tree>
+              </field>
+            </page>
+          </notebook>
+        </sheet>
+        <div class="oe_chatter"><field name="message_follower_ids"/><field name="message_ids"/></div>
+      </form>
+    </field>
+  </record>
+  <record id="view_zone_search" model="ir.ui.view">
+    <field name="name">agri.zone.search</field><field name="model">care.cafm.agri.zone</field>
+    <field name="arch" type="xml">
+      <search>
+        <field name="name"/><field name="facility_id"/>
+        <filter name="due" string="مستحقّة الريّ" domain="[('is_due','=',True)]"/>
+        <filter name="smart" string="ذكية 🇰🇼" domain="[('weather_based','=',True)]"/>
+        <filter name="fault" string="أعطال المحابس" domain="[('valve_state','=','fault')]"/>
+        <group expand="0" string="تجميع">
+          <filter name="g_fac" string="المرفق" context="{'group_by':'facility_id'}"/>
+          <filter name="g_method" string="طريقة الريّ" context="{'group_by':'method'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+  <record id="action_zone" model="ir.actions.act_window">
+    <field name="name">مناطق الريّ</field><field name="res_model">care.cafm.agri.zone</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- ============ PLANTS / TREES ============ -->
+  <record id="view_plant_tree" model="ir.ui.view">
+    <field name="name">agri.plant.tree</field><field name="model">care.cafm.agri.plant</field>
+    <field name="arch" type="xml">
+      <tree decoration-danger="health in ('poor','dead')" decoration-warning="inspection_overdue==True">
+        <field name="code" optional="show"/><field name="name"/><field name="species_id"/>
+        <field name="category" optional="hide"/><field name="facility_id"/><field name="zone_id"/>
+        <field name="location_id" optional="hide"/><field name="health"/>
+        <field name="height_m" optional="hide"/><field name="age_years" optional="hide"/>
+        <field name="last_inspection" optional="show"/><field name="next_inspection" optional="show"/>
+        <field name="inspection_overdue" invisible="1"/><field name="operation_count" optional="hide"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_plant_kanban" model="ir.ui.view">
+    <field name="name">agri.plant.kanban</field><field name="model">care.cafm.agri.plant</field>
+    <field name="arch" type="xml">
+      <kanban>
+        <field name="health"/><field name="species_id"/><field name="facility_id"/>
+        <field name="image"/><field name="operation_count"/>
+        <templates><t t-name="kanban-box">
+          <div class="oe_kanban_global_click o_kanban_record_has_image_fill">
+            <div class="o_kanban_image_fill_left" t-attf-style="background-image:url('#{kanban_image('care.cafm.agri.plant','image',record.id.raw_value)}')"/>
+            <div class="oe_kanban_details">
+              <strong><field name="name"/></strong>
+              <div><field name="species_id"/></div>
+              <div class="text-muted"><field name="facility_id"/></div>
+              <div>
+                <span t-attf-class="badge #{record.health.raw_value=='good' ? 'text-bg-success' : record.health.raw_value=='dead' ? 'text-bg-dark' : record.health.raw_value=='poor' ? 'text-bg-danger' : 'text-bg-warning'}">
+                  <field name="health"/>
+                </span>
+                <span class="badge text-bg-light">أعمال: <field name="operation_count"/></span>
+              </div>
+            </div>
+          </div>
+        </t></templates>
+      </kanban>
+    </field>
+  </record>
+  <record id="view_plant_form" model="ir.ui.view">
+    <field name="name">agri.plant.form</field><field name="model">care.cafm.agri.plant</field>
+    <field name="arch" type="xml">
+      <form>
+        <sheet>
+          <div class="oe_button_box" name="button_box">
+            <button name="action_view_operations" type="object" class="oe_stat_button" icon="fa-wrench">
+              <field name="operation_count" widget="statinfo" string="أعمال"/>
+            </button>
+          </div>
+          <field name="image" widget="image" class="oe_avatar"/>
+          <div class="oe_title">
+            <label for="name"/><h1><field name="name" placeholder="نخلة رقم 12"/></h1>
+            <field name="code" placeholder="الوسم/الباركود"/>
+          </div>
+          <group>
+            <group string="التصنيف والموقع">
+              <field name="species_id"/><field name="category" readonly="1"/>
+              <field name="facility_id"/><field name="location_id"/>
+              <field name="zone_id"/><field name="gps"/>
+            </group>
+            <group string="القياسات والصحة">
+              <field name="health"/>
+              <field name="planted_date"/><field name="age_years"/>
+              <field name="height_m"/><field name="trunk_cm"/>
+            </group>
+          </group>
+          <group>
+            <group string="الفحص">
+              <field name="last_inspection"/><field name="next_inspection"/>
+              <field name="inspection_overdue"/>
+            </group>
+            <group string="جدول العناية">
+              <field name="last_prune"/><field name="next_prune"/>
+              <field name="last_fertilize"/><field name="next_fertilize"/>
+            </group>
+          </group>
+          <field name="care_note" placeholder="ملاحظات العناية..."/>
+          <notebook>
+            <page string="سجل الأعمال">
+              <field name="operation_ids" context="{'default_facility_id': facility_id}">
+                <tree editable="bottom">
+                  <field name="date"/><field name="operation_type"/><field name="done_by"/>
+                  <field name="material"/><field name="quantity"/><field name="unit"/>
+                  <field name="cost"/><field name="result"/><field name="next_due"/>
+                </tree>
+              </field>
+            </page>
+          </notebook>
+        </sheet>
+        <div class="oe_chatter"><field name="message_follower_ids"/><field name="message_ids"/></div>
+      </form>
+    </field>
+  </record>
+  <record id="view_plant_search" model="ir.ui.view">
+    <field name="name">agri.plant.search</field><field name="model">care.cafm.agri.plant</field>
+    <field name="arch" type="xml">
+      <search>
+        <field name="name"/><field name="code"/><field name="species_id"/><field name="facility_id"/>
+        <filter name="overdue" string="فحص متأخّر" domain="[('inspection_overdue','=',True)]"/>
+        <filter name="poor" string="حالة ضعيفة" domain="[('health','in',('poor','fair'))]"/>
+        <separator/>
+        <filter name="prune_due" string="تقليم مستحقّ" domain="[('next_prune','&lt;=',context_today().strftime('%Y-%m-%d'))]"/>
+        <filter name="fert_due" string="تسميد مستحقّ" domain="[('next_fertilize','&lt;=',context_today().strftime('%Y-%m-%d'))]"/>
+        <group expand="0" string="تجميع">
+          <filter name="g_fac" string="المرفق" context="{'group_by':'facility_id'}"/>
+          <filter name="g_sp" string="النوع" context="{'group_by':'species_id'}"/>
+          <filter name="g_zone" string="منطقة الريّ" context="{'group_by':'zone_id'}"/>
+          <filter name="g_health" string="الحالة" context="{'group_by':'health'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+  <record id="action_plant" model="ir.actions.act_window">
+    <field name="name">سجل الأشجار والنباتات</field><field name="res_model">care.cafm.agri.plant</field>
+    <field name="view_mode">tree,kanban,form</field>
+  </record>
+
+  <!-- ============ OPERATIONS / TREE WORKS ============ -->
+  <record id="view_op_tree" model="ir.ui.view">
+    <field name="name">agri.op.tree</field><field name="model">care.cafm.agri.operation</field>
+    <field name="arch" type="xml">
+      <tree decoration-danger="result=='failed'" decoration-muted="result=='partial'">
+        <field name="date"/><field name="operation_type"/><field name="plant_id"/>
+        <field name="facility_id"/><field name="done_by"/><field name="material"/>
+        <field name="quantity"/><field name="unit"/><field name="cost" sum="التكلفة"/>
+        <field name="result"/><field name="next_due"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_op_form" model="ir.ui.view">
+    <field name="name">agri.op.form</field><field name="model">care.cafm.agri.operation</field>
+    <field name="arch" type="xml">
+      <form>
+        <sheet>
+          <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+          <group>
+            <group string="العمل">
+              <field name="operation_type"/><field name="date"/><field name="done_by"/>
+              <field name="result"/><field name="next_due"/>
+            </group>
+            <group string="الهدف">
+              <field name="plant_id"/><field name="facility_id"/><field name="zone_id"/>
+            </group>
+          </group>
+          <group>
+            <group string="المواد والتكلفة">
+              <field name="material"/><field name="quantity"/><field name="unit"/><field name="cost"/>
+            </group>
+          </group>
+          <group string="إثبات العمل (قبل / بعد)">
+            <field name="photo_before" widget="image" class="oe_avatar"/>
+            <field name="photo_after" widget="image" class="oe_avatar"/>
+          </group>
+          <field name="note" placeholder="ملاحظات..."/>
+        </sheet>
+        <div class="oe_chatter"><field name="message_follower_ids"/><field name="message_ids"/></div>
+      </form>
+    </field>
+  </record>
+  <record id="view_op_search" model="ir.ui.view">
+    <field name="name">agri.op.search</field><field name="model">care.cafm.agri.operation</field>
+    <field name="arch" type="xml">
+      <search>
+        <field name="plant_id"/><field name="facility_id"/><field name="done_by"/>
+        <filter name="this_month" string="هذا الشهر" domain="[('date','&gt;=',(context_today().replace(day=1)).strftime('%Y-%m-%d'))]"/>
+        <filter name="failed" string="متعذّرة" domain="[('result','=','failed')]"/>
+        <group expand="0" string="تجميع">
+          <filter name="g_type" string="نوع العمل" context="{'group_by':'operation_type'}"/>
+          <filter name="g_fac" string="المرفق" context="{'group_by':'facility_id'}"/>
+          <filter name="g_month" string="الشهر" context="{'group_by':'date:month'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+  <record id="action_op" model="ir.actions.act_window">
+    <field name="name">أعمال الأشجار</field><field name="res_model">care.cafm.agri.operation</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- ============ TREATMENTS ============ -->
+  <record id="view_treat_tree" model="ir.ui.view">
+    <field name="name">agri.treatment.tree</field><field name="model">care.cafm.agri.treatment</field>
+    <field name="arch" type="xml">
+      <tree editable="bottom">
+        <field name="date"/><field name="facility_id"/><field name="location_id"/>
+        <field name="treatment_type"/><field name="product"/><field name="quantity"/>
+        <field name="unit"/><field name="applied_by"/>
+      </tree>
+    </field>
+  </record>
+  <record id="action_treat" model="ir.actions.act_window">
+    <field name="name">سجل المعالجات</field><field name="res_model">care.cafm.agri.treatment</field>
+    <field name="view_mode">tree</field>
+  </record>
+
+  <!-- ============ MENUS ============ -->
+  <menuitem id="menu_agri" name="الزراعة والحدائق" parent="care_cafm.menu_cafm_services" sequence="13"/>
+  <menuitem id="menu_plant" name="الأشجار والنباتات" parent="menu_agri" action="action_plant" sequence="10"/>
+  <menuitem id="menu_op" name="أعمال الأشجار" parent="menu_agri" action="action_op" sequence="20"/>
+  <menuitem id="menu_zone" name="مناطق الريّ" parent="menu_agri" action="action_zone" sequence="30"/>
+  <menuitem id="menu_species" name="أنواع النباتات" parent="menu_agri" action="action_species" sequence="40"/>
+  <menuitem id="menu_treat" name="سجل المعالجات" parent="menu_agri" action="action_treat" sequence="50"/>
+</odoo>

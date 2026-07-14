@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="class_gov" model="letter.classification">
+            <field name="name">Government</field><field name="code">GOV</field>
+            <field name="sequence">1</field><field name="color">4</field>
+        </record>
+        <record id="class_bank" model="letter.classification">
+            <field name="name">Bank</field><field name="code">BNK</field>
+            <field name="sequence">2</field><field name="color">10</field>
+        </record>
+        <record id="class_internal" model="letter.classification">
+            <field name="name">Internal</field><field name="code">INT</field>
+            <field name="sequence">3</field><field name="color">3</field>
+        </record>
+        <record id="class_legal" model="letter.classification">
+            <field name="name">Legal</field><field name="code">LEG</field>
+            <field name="sequence">4</field><field name="color">1</field>
+        </record>
+        <record id="class_other" model="letter.classification">
+            <field name="name">Other</field><field name="code">OTH</field>
+            <field name="sequence">99</field><field name="color">8</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_expiry_tree" model="ir.ui.view">
+        <field name="name">hr.employee.expiry.tree</field>
+        <field name="model">hr.employee</field>
+        <field name="arch" type="xml">
+            <tree string="مستندات قرب الانتهاء" create="false"
+                  default_order="doc_expiry_next asc"
+                  decoration-danger="doc_expiry_days &lt; 15"
+                  decoration-warning="doc_expiry_days &gt;= 15 and doc_expiry_days &lt; 30">
+                <field name="doc_expiry_days" column_invisible="1"/>
+                <field name="name"/>
+                <field name="barcode" string="رقم العامل"/>
+                <field name="department_id"/>
+                <field name="doc_expiry_next"/>
+                <field name="doc_expiry_days" string="أيام متبقية"/>
+                <field name="residency_end_date" optional="show"/>
+                <field name="affairs_permit_end_date" optional="show"/>
+                <field name="work_permit_expiration_date" optional="hide"/>
+                <field name="visa_expire" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_expiry_search" model="ir.ui.view">
+        <field name="name">hr.employee.expiry.search</field>
+        <field name="model">hr.employee</field>
+        <field name="arch" type="xml">
+            <search string="انتهاء المستندات">
+                <field name="name"/>
+                <field name="barcode"/>
+                <field name="department_id"/>
+                <filter name="soon15" string="خلال 15 يوم"
+                        domain="[('doc_expiry_next','&gt;=', context_today().strftime('%Y-%m-%d')),('doc_expiry_next','&lt;=', (context_today()+relativedelta(days=15)).strftime('%Y-%m-%d'))]"/>
+                <filter name="soon30" string="خلال 30 يوم"
+                        domain="[('doc_expiry_next','&gt;=', context_today().strftime('%Y-%m-%d')),('doc_expiry_next','&lt;=', (context_today()+relativedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                <filter name="soon60" string="خلال 60 يوم"
+                        domain="[('doc_expiry_next','&gt;=', context_today().strftime('%Y-%m-%d')),('doc_expiry_next','&lt;=', (context_today()+relativedelta(days=60)).strftime('%Y-%m-%d'))]"/>
+                <filter name="expired" string="منتهية"
+                        domain="[('doc_expiry_next','!=',False),('doc_expiry_next','&lt;', context_today().strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="تجميع">
+                    <filter name="g_dept" string="الإدارة" context="{'group_by':'department_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_expiry" model="ir.actions.act_window">
+        <field name="name">مستندات قرب الانتهاء</field>
+        <field name="res_model">hr.employee</field>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="view_expiry_tree"/>
+        <field name="search_view_id" ref="view_expiry_search"/>
+        <field name="domain">[('doc_expiry_next','!=',False)]</field>
+        <field name="context">{'search_default_soon30': 1}</field>
+    </record>
+
+    <menuitem id="menu_expiry_root" name="متابعة المستندات" parent="hr.menu_hr_root"
+              sequence="70" groups="hr.group_hr_user"/>
+    <menuitem id="menu_expiry" name="مستندات قرب الانتهاء" parent="menu_expiry_root"
+              action="action_expiry" sequence="10"/>
+</odoo>

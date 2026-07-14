@@ -89,7 +89,7 @@ class SecurityTeam(models.Model):
                     try:
                         if 'security.patrol.log' in self.env:
                             latest_patrol = self.env['security.patrol.log'].search([
-                                ('guard_id', '=', employee.security_employee_id.guard_id.id)
+                                ('security_employee_id', '=', employee.id)
                             ], limit=1, order='date desc, create_date desc')
                             
                             if latest_patrol:
@@ -226,7 +226,7 @@ class SecurityTeam(models.Model):
     def _compute_patrol_count(self):
         for team in self:
             team.patrol_count = self.env['security.patrol.log'].search_count([
-                ('guard_id', 'in', team.member_ids.security_employee_id.guard_id.ids)
+                ('security_employee_id', 'in', team.member_ids.ids)
             ])
 
     @api.depends('member_ids')
@@ -281,7 +281,7 @@ class SecurityTeam(models.Model):
             'name': _('Patrol Logs'),
             'view_mode': 'tree,form',
             'res_model': 'security.patrol.log',
-            'domain': [('guard_id', 'in', self.member_ids.security_employee_id.guard_id.ids)],
+            'domain': [('security_employee_id', 'in', self.member_ids.ids)],
             'type': 'ir.actions.act_window',
         }
 

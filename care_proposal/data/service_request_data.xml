@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data noupdate="1">
+    <record id="seq_service_request" model="ir.sequence">
+      <field name="name">Service Request</field>
+      <field name="code">proposal.service.request</field>
+      <field name="prefix">SR-</field>
+      <field name="padding">5</field>
+      <field name="company_id" eval="False"/>
+    </record>
+
+    <!-- Acknowledgement email (on submit) -->
+    <record id="mail_tpl_service_request_ack" model="mail.template">
+      <field name="name">Service Request: Acknowledgement</field>
+      <field name="model_id" ref="care_proposal.model_proposal_service_request"/>
+      <field name="subject">We received your request {{ object.name }}</field>
+      <field name="email_from">{{ (object.company_id.email or user.email_formatted) }}</field>
+      <field name="email_to">{{ object._recipient_email() }}</field>
+      <field name="body_html" type="html">
+        <div style="font-family:Arial,sans-serif;color:#1f2733">
+          <p>Dear <t t-out="object.contact_name or object.partner_id.name or 'Customer'"/>,</p>
+          <p>Thank you — we have received your service request.</p>
+          <table style="border-collapse:collapse;margin:12px 0">
+            <tr><td style="padding:4px 10px"><b>Request #</b></td><td style="padding:4px 10px"><t t-out="object.name"/></td></tr>
+            <tr><td style="padding:4px 10px"><b>Service</b></td><td style="padding:4px 10px"><t t-out="object.service_type_id.name or '-'"/></td></tr>
+            <tr><td style="padding:4px 10px"><b>Site</b></td><td style="padding:4px 10px"><t t-out="object.site_location or '-'"/></td></tr>
+            <tr><td style="padding:4px 10px"><b>Status</b></td><td style="padding:4px 10px"><t t-out="dict(object._fields['state'].selection).get(object.state)"/></td></tr>
+          </table>
+          <p>Our team will review it and prepare a tailored quotation. You can track it anytime using
+             your request number <b><t t-out="object.name"/></b> and your email.</p>
+          <p style="color:#7a8499;font-size:12px">Care Services</p>
+        </div>
+      </field>
+      <field name="auto_delete" eval="True"/>
+    </record>
+
+    <!-- Status update email -->
+    <record id="mail_tpl_service_request_status" model="mail.template">
+      <field name="name">Service Request: Status Update</field>
+      <field name="model_id" ref="care_proposal.model_proposal_service_request"/>
+      <field name="subject">Update on your request {{ object.name }}</field>
+      <field name="email_from">{{ (object.company_id.email or user.email_formatted) }}</field>
+      <field name="email_to">{{ object._recipient_email() }}</field>
+      <field name="body_html" type="html">
+        <div style="font-family:Arial,sans-serif;color:#1f2733">
+          <p>Dear <t t-out="object.contact_name or object.partner_id.name or 'Customer'"/>,</p>
+          <p>The status of your request <b><t t-out="object.name"/></b> is now:
+             <b><t t-out="dict(object._fields['state'].selection).get(object.state)"/></b>.</p>
+          <t t-if="object.proposal_id">
+            <p>Your quotation is ready. Our team will share the details shortly.</p>
+          </t>
+          <p style="color:#7a8499;font-size:12px">Care Services</p>
+        </div>
+      </field>
+      <field name="auto_delete" eval="True"/>
+    </record>
+  </data>
+</odoo>

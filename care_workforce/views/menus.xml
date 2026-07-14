@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Root nested under the HR (Employees) app -->
+    <menuitem id="menu_workforce_root" name="القوى العاملة والامتثال"
+              parent="hr.menu_hr_root" sequence="85"
+              groups="hr.group_hr_user"/>
+
+    <!-- Roster -->
+    <menuitem id="menu_roster" name="جداول الورديات" parent="menu_workforce_root"
+              action="action_roster" sequence="10"/>
+    <!-- Discipline -->
+    <menuitem id="menu_disc_action" name="الإجراءات التأديبية" parent="menu_workforce_root"
+              action="action_disc_action" sequence="20"/>
+    <!-- Succession (HSE & Workforce-Planning already exist in care_hr) -->
+    <menuitem id="menu_succession" name="خطط الإحلال (Succession)" parent="menu_workforce_root"
+              action="action_succession" sequence="45"/>
+    <!-- Agencies -->
+    <menuitem id="menu_agency" name="وكالات الاستقدام" parent="menu_workforce_root"
+              action="action_agency" sequence="50"/>
+    <menuitem id="menu_agency_supply" name="دفعات الاستقدام" parent="menu_workforce_root"
+              action="action_agency_supply" sequence="55"/>
+
+    <!-- Configuration -->
+    <menuitem id="menu_wf_config" name="الإعدادات" parent="menu_workforce_root" sequence="90"
+              groups="hr.group_hr_manager"/>
+    <menuitem id="menu_shift_template" name="قوالب الورديات" parent="menu_wf_config"
+              action="action_shift_template" sequence="10"/>
+    <menuitem id="menu_disc_type" name="أنواع المخالفات" parent="menu_wf_config"
+              action="action_disc_type" sequence="20"/>
+</odoo>

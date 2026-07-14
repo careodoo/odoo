@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+  <t t-name="care_letter.ScanUpload">
+    <div class="o_scan_upload" dir="rtl">
+      <div t-if="imgSrc and !state.camera" class="mb-2">
+        <img t-att-src="imgSrc" style="max-width:280px;max-height:340px;border:1px solid #d4dae6;border-radius:10px;"/>
+      </div>
+
+      <input type="file" accept="image/*,application/pdf" t-ref="file" style="display:none" t-on-change="onFile"/>
+
+      <div t-if="!state.camera and !props.readonly" style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button type="button" class="btn btn-primary btn-sm" t-on-click="startCamera">
+          <i class="fa fa-camera me-1"/> سكان بالكاميرا / السكانر
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" t-on-click="triggerFile">
+          <i class="fa fa-folder-open me-1"/> اختيار ملف
+        </button>
+        <button t-if="imgSrc" type="button" class="btn btn-light btn-sm text-danger" t-on-click="clearImg">
+          <i class="fa fa-trash me-1"/> حذف
+        </button>
+      </div>
+
+      <div t-if="state.camera">
+        <video t-ref="video" autoplay="autoplay" playsinline="playsinline" muted="muted"
+               style="width:100%;max-width:420px;border-radius:10px;background:#000;"></video>
+        <div class="mt-2" style="display:flex;gap:8px;">
+          <button type="button" class="btn btn-success btn-sm" t-on-click="capture">
+            <i class="fa fa-camera me-1"/> التقاط الصورة
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" t-on-click="_stopCamera">إلغاء</button>
+        </div>
+      </div>
+
+      <div t-if="state.error" class="text-danger small mt-1" t-esc="state.error"/>
+      <div t-if="!imgSrc and !state.camera" class="text-muted small mt-1">
+        التقط صورة الكتاب مباشرة بالكاميرا/السكانر أو اختر ملفاً من الجهاز.
+      </div>
+    </div>
+  </t>
+</templates>

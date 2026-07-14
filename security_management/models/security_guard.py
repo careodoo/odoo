@@ -116,7 +116,7 @@ class SecurityGuard(models.Model):
                 ]) if 'security.shift.assignment' in self.env else 0
 
                 guard.completed_tasks_count = self.env['security.task.assignment'].search_count([
-                    ('security_employee_id', '=', guard.security_employee_id.id),
+                    ('employee_id', '=', guard.security_employee_id.id),
                     ('state', '=', 'completed')
                 ]) if 'security.task.assignment' in self.env else 0
 

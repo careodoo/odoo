@@ -35,7 +35,7 @@
                         </div>
                         <div class="row">
                             <div class="col-12">
-                                <strong>Team:</strong> <span t-field="o.team_id.name"/>
+                                <strong>Team:</strong> <span t-esc="', '.join(o.team_ids.mapped('name'))"/>
                             </div>
                         </div>
                     </div>
@@ -57,12 +57,12 @@
                         </div>
                         <div class="row">
                             <div class="col-12">
-                                <strong>Shifts Completed:</strong> <span t-esc="len(o.env['security.shift'].search([('employee_id', '=', o.id), ('state', 'in', ['checked_out', 'confirmed'])]))"/>
+                                <strong>Shifts Completed:</strong> <span t-esc="len(o.env['security.shift.assignment'].search([('security_employee_id', '=', o.id), ('state', 'in', ['checked_out', 'confirmed'])]))"/>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-12">
-                                <strong>Shifts Missed:</strong> <span t-esc="len(o.env['security.shift'].search([('employee_id', '=', o.id), ('state', '=', 'missed')]))"/>
+                                <strong>Shifts Missed:</strong> <span t-esc="len(o.env['security.shift.assignment'].search([('security_employee_id', '=', o.id), ('state', '=', 'missed')]))"/>
                             </div>
                         </div>
                     </div>
@@ -112,10 +112,10 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <t t-foreach="o.env['security.shift'].search([('employee_id', '=', o.id)], limit=5, order='date desc')" t-as="shift">
+                                <t t-foreach="o.env['security.shift.assignment'].search([('security_employee_id', '=', o.id)], limit=5, order='date desc')" t-as="shift">
                                     <tr>
                                         <td><span t-field="shift.date"/></td>
-                                        <td><span t-field="shift.location_id.name"/></td>
+                                        <td><span t-field="shift.shift_id.name"/></td>
                                         <td><span t-field="shift.state"/></td>
                                     </tr>
                                 </t>
