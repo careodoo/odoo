@@ -206,7 +206,9 @@ class MobileApi(http.Controller):
                                or (_cp and _cp.sudo().cafm_can_add_workers))
         # role hint drives the app's default face: a security guard opens the
         # security app, a cleaner the cleaning app, etc.
-        if not emp:
+        is_cafm_member = ('care.cafm.client' in env
+                          and bool(env['care.cafm.client'].sudo().search_count([('user_ids', 'in', [user.id])])))
+        if not emp or is_cafm_member:
             role = 'client'
         elif 'security' in my_types:
             role = 'security'
