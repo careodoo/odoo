@@ -93,10 +93,37 @@ class C2CBooking(models.Model):
                 v['duration_min'] = (pkg.duration_min if pkg else 0) or (svc.duration_min if svc else 60)
         return super().create(vals_list)
 
+    # friendly customer-facing message per booking state (app notification)
+    _CUST_MSG = {
+        'confirmed': ('✅ تم تأكيد حجزك', 'تم تأكيد حجز خدمة %s لموعد %s.'),
+        'assigned': ('👷 تم تعيين الفني', 'تم تعيين فني لخدمة %s. سيصل في الموعد المحدد.'),
+        'in_progress': ('🔧 بدأ التنفيذ', 'بدأ تنفيذ خدمة %s الآن.'),
+        'done': ('🎉 اكتملت الخدمة', 'اكتملت خدمة %s. نتمنى أن تكون راضيًا — قيّم تجربتك.'),
+        'cancelled': ('✖ تم إلغاء الحجز', 'تم إلغاء حجز خدمة %s.'),
+    }
+
+    def _notify_customer(self, state):
+        self.ensure_one()
+        msg = self._CUST_MSG.get(state)
+        if not msg or 'care.cafm.notification' not in self.env or not self.partner_id:
+            return
+        users = self.env['res.users'].sudo().search([('partner_id', '=', self.partner_id.id)])
+        if not users:
+            return
+        title, tpl = msg
+        svc = self.service_id.name or ''
+        body = tpl % (svc, self.visit_datetime or '') if state == 'confirmed' else tpl % svc
+        try:
+            self.env['care.cafm.notification'].sudo().push(
+                users, title, body, ntype='info', action_url='c2c/booking/%s' % self.id)
+        except Exception:
+            pass
+
     def action_confirm(self):
         self.write({'state': 'confirmed'})
         for b in self:
             b.message_post(body=_('✅ تم تأكيد الحجز لموعد %s') % (b.visit_datetime or ''))
+            b._notify_customer('confirmed')
 
     def action_assign(self, provider=None):
         for b in self:
@@ -105,17 +132,22 @@ class C2CBooking(models.Model):
             if not b.provider_id:
                 raise UserError(_('اختر مقدّم خدمة أولاً.'))
             b.state = 'assigned'
+            b._notify_customer('assigned')
 
     def action_start(self):
         for b in self:
             b.write({'state': 'in_progress', 'started_at': b.started_at or fields.Datetime.now()})
+            b._notify_customer('in_progress')
 
     def action_done(self):
         for b in self:
             b.write({'state': 'done', 'finished_at': fields.Datetime.now()})
+            b._notify_customer('done')
 
     def action_cancel(self):
         self.write({'state': 'cancelled'})
+        for b in self:
+            b._notify_customer('cancelled')
 
     def action_pay(self):
         self.write({'payment_state': 'paid'})
