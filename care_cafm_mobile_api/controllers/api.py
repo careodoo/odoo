@@ -179,6 +179,35 @@ class MobileApi(http.Controller):
         return _ok(self._me_payload(request.env(user=uid)), token=tok.token,
                    expiry=str(tok.expiry))
 
+    @http.route(API + '/auth/signup', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def signup(self, **kw):
+        """Public self-registration → a CARE 2 CARE customer (portal user).
+        Extra permissions (CAFM/PMS/…) are granted by an admin later."""
+        b = _body()
+        name = (b.get('name') or '').strip()
+        email = (b.get('email') or '').strip().lower()
+        phone = (b.get('phone') or '').strip()
+        pw = b.get('password') or ''
+        if not name or not (email or phone):
+            return _err('الاسم والبريد أو الهاتف مطلوبان', 422)
+        if len(pw) < 6:
+            return _err('كلمة المرور 6 أحرف على الأقل', 422)
+        login = email or phone
+        Users = request.env['res.users'].sudo()
+        if Users.with_context(active_test=False).search_count([('login', '=', login)]):
+            return _err('يوجد حساب بهذا البريد/الهاتف بالفعل', 409)
+        try:
+            portal = request.env.ref('base.group_portal')
+            user = Users.with_context(no_reset_password=True, mail_create_nosubscribe=True).create({
+                'name': name, 'login': login,
+                'email': email or False, 'phone': phone or False,
+                'password': pw, 'groups_id': [(6, 0, [portal.id])],
+            })
+        except Exception as e:
+            return _err('تعذّر إنشاء الحساب: %s' % e, 422)
+        tok = request.env['care.cafm.mobile.token'].sudo().issue(user, b.get('device'))
+        return _ok(self._me_payload(request.env(user=user.id)), token=tok.token, expiry=str(tok.expiry))
+
     @http.route(API + '/auth/logout', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
     def logout(self, **kw):
         rec = request.env['care.cafm.mobile.token'].sudo().search(

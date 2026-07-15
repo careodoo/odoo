@@ -48,7 +48,7 @@ class ClientApi(Controller):
         return _ok({
             'company': co.name,
             'logo': _logo_data_uri(co),
-            'app_name': 'CARE FM',
+            'app_name': 'CARE',
         })
 
     def _client_partners(self, env):
