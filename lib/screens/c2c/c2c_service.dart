@@ -356,12 +356,69 @@ class C2CBookingSheet extends StatefulWidget {
 
 class _C2CBookingSheetState extends State<C2CBookingSheet> {
   DateTime _date = DateTime.now().add(const Duration(days: 1));
-  TimeOfDay _time = const TimeOfDay(hour: 10, minute: 0);
+  String? _slot; // selected 'HH:MM'
+  List<dynamic> _slots = [];
+  List<int> _openWeekdays = const [0, 1, 2, 3, 4, 5, 6];
+  int _horizon = 30;
+  bool _loadingSlots = false;
   final _addr = TextEditingController();
   final _area = TextEditingController();
   final _phone = TextEditingController();
+  final _coupon = TextEditingController();
+  int _discountPct = 0;
+  String? _couponMsg;
   String _pay = 'cash';
   bool _busy = false;
+
+  double get _basePrice => (widget.service['price'] is num) ? (widget.service['price'] as num).toDouble() : 0.0;
+  double get _total => _basePrice * (1 - _discountPct / 100);
+
+  Future<void> _applyCoupon() async {
+    final c = _coupon.text.trim();
+    if (c.isEmpty) return;
+    try {
+      final r = await context.read<AuthProvider>().api.c2cCoupon(c);
+      if (!mounted) return;
+      setState(() {
+        if (r['valid'] == true) { _discountPct = (r['discount_pct'] as int?) ?? 0; _couponMsg = '✅ ${r['title'] ?? ''} · -$_discountPct%'; }
+        else { _discountPct = 0; _couponMsg = tr('كود غير صالح', 'Invalid code'); }
+      });
+    } catch (_) {}
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSlots();
+  }
+
+  Future<void> _loadSlots() async {
+    setState(() { _loadingSlots = true; _slot = null; });
+    final ds = '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}';
+    try {
+      final r = await context.read<AuthProvider>().api.c2cSlots(widget.service['id'] as int, ds);
+      if (!mounted) return;
+      setState(() {
+        _slots = (r['slots'] as List?) ?? [];
+        _openWeekdays = ((r['open_weekdays'] as List?) ?? const [0, 1, 2, 3, 4, 5, 6]).map((e) => e as int).toList();
+        _horizon = (r['horizon_days'] as int?) ?? 30;
+        final firstAvail = _slots.firstWhere((s) => s['available'] == true, orElse: () => null);
+        _slot = firstAvail != null ? firstAvail['time'] as String : null;
+        _loadingSlots = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() { _slots = []; _loadingSlots = false; });
+    }
+  }
+
+  Future<void> _pickDate() async {
+    final d = await showDatePicker(
+      context: context, initialDate: _date, firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(Duration(days: _horizon)),
+      selectableDayPredicate: (day) => _openWeekdays.contains(day.weekday - 1), // Mon=1→0
+    );
+    if (d != null) { setState(() => _date = d); _loadSlots(); }
+  }
 
   static const _pays = [
     ['cash', '💵', 'نقدًا', 'Cash'],
@@ -380,19 +437,23 @@ class _C2CBookingSheetState extends State<C2CBookingSheet> {
           const SizedBox(height: 14),
           Text('${tr('حجز', 'Book')}: ${widget.service['name']}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: C2C.navy)),
           const SizedBox(height: 16),
-          Text(tr('موعد الزيارة', 'Visit date & time'), style: const TextStyle(fontWeight: FontWeight.w800)),
+          Text(tr('اختر اليوم', 'Choose the day'), style: const TextStyle(fontWeight: FontWeight.w800)),
           const SizedBox(height: 8),
+          _pick(Icons.calendar_today_rounded, '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')} · ${_weekdayName(_date.weekday)}', _pickDate),
+          const SizedBox(height: 14),
           Row(children: [
-            Expanded(child: _pick(Icons.calendar_today_rounded, '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}', () async {
-              final d = await showDatePicker(context: context, initialDate: _date, firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 60)));
-              if (d != null) setState(() => _date = d);
-            })),
-            const SizedBox(width: 10),
-            Expanded(child: _pick(Icons.access_time_rounded, _time.format(context), () async {
-              final t = await showTimePicker(context: context, initialTime: _time);
-              if (t != null) setState(() => _time = t);
-            })),
+            Text(tr('المواعيد المتاحة', 'Available times'), style: const TextStyle(fontWeight: FontWeight.w800)),
+            const Spacer(),
+            if (_loadingSlots) const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
           ]),
+          const SizedBox(height: 8),
+          if (!_loadingSlots && _slots.isEmpty)
+            Container(width: double.infinity, padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: C2C.bg, borderRadius: BorderRadius.circular(12)), child: Text(tr('لا مواعيد متاحة في هذا اليوم، اختر يومًا آخر.', 'No slots this day — pick another day.'), style: const TextStyle(color: Colors.grey)))
+          else
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              for (final s in _slots)
+                _slotChip(s as Map),
+            ]),
           const SizedBox(height: 14),
           _field(_area, tr('المنطقة', 'Area'), Icons.map_outlined),
           const SizedBox(height: 10),
@@ -411,14 +472,31 @@ class _C2CBookingSheetState extends State<C2CBookingSheet> {
                 onSelected: (_) => setState(() => _pay = p[0]),
               ),
           ]),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
+          Text(tr('كود الخصم', 'Promo code'), style: const TextStyle(fontWeight: FontWeight.w800)),
+          const SizedBox(height: 8),
+          Row(children: [
+            Expanded(child: TextField(controller: _coupon, textCapitalization: TextCapitalization.characters, decoration: InputDecoration(hintText: 'WELCOME20', prefixIcon: const Icon(Icons.local_offer_outlined), filled: true, fillColor: C2C.bg, isDense: true, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)))),
+            const SizedBox(width: 8),
+            SizedBox(height: 46, child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: C2C.navy, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), onPressed: _applyCoupon, child: Text(tr('تطبيق', 'Apply')))),
+          ]),
+          if (_couponMsg != null) Padding(padding: const EdgeInsets.only(top: 6), child: Text(_couponMsg!, style: TextStyle(color: _discountPct > 0 ? const Color(0xFF16A34A) : C2C.red, fontSize: 12, fontWeight: FontWeight.w700))),
+          const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(color: C2C.bg, borderRadius: BorderRadius.circular(12)),
-            child: Row(children: [
-              Text(tr('الإجمالي', 'Total'), style: const TextStyle(fontWeight: FontWeight.w700)),
-              const Spacer(),
-              Text('${widget.service['price']} ${widget.service['currency'] ?? ''}', style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w900, fontSize: 18)),
+            child: Column(children: [
+              if (_discountPct > 0) ...[
+                Row(children: [Text(tr('السعر', 'Price'), style: const TextStyle(color: Colors.grey)), const Spacer(), Text('$_basePrice ${widget.service['currency'] ?? ''}', style: const TextStyle(color: Colors.grey, decoration: TextDecoration.lineThrough))]),
+                const SizedBox(height: 4),
+                Row(children: [Text(tr('الخصم', 'Discount'), style: const TextStyle(color: Color(0xFF16A34A))), const Spacer(), Text('-$_discountPct%', style: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w700))]),
+                const Divider(height: 14),
+              ],
+              Row(children: [
+                Text(tr('الإجمالي', 'Total'), style: const TextStyle(fontWeight: FontWeight.w800)),
+                const Spacer(),
+                Text('${_total.toStringAsFixed(_total.truncateToDouble() == _total ? 0 : 2)} ${widget.service['currency'] ?? ''}', style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w900, fontSize: 19)),
+              ]),
             ]),
           ),
           const SizedBox(height: 14),
@@ -439,11 +517,39 @@ class _C2CBookingSheetState extends State<C2CBookingSheet> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
+          width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
           decoration: BoxDecoration(color: C2C.bg, borderRadius: BorderRadius.circular(12)),
-          child: Row(children: [Icon(ic, size: 18, color: C2C.navy), const SizedBox(width: 8), Flexible(child: Text(label, overflow: TextOverflow.ellipsis))]),
+          child: Row(children: [Icon(ic, size: 18, color: C2C.navy), const SizedBox(width: 8), Flexible(child: Text(label, overflow: TextOverflow.ellipsis)), const Spacer(), const Icon(Icons.expand_more, size: 18, color: Colors.grey)]),
         ),
       );
+
+  Widget _slotChip(Map s) {
+    final available = s['available'] == true;
+    final sel = _slot == s['time'];
+    return GestureDetector(
+      onTap: available ? () => setState(() => _slot = s['time'] as String) : null,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          color: !available ? Colors.grey.shade200 : sel ? C2C.navy : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: sel ? C2C.navy : Colors.black12),
+        ),
+        child: Text('${s['time']}', style: TextStyle(
+          fontWeight: FontWeight.w700, fontSize: 13,
+          color: !available ? Colors.grey : sel ? Colors.white : C2C.navy,
+          decoration: available ? null : TextDecoration.lineThrough,
+        )),
+      ),
+    );
+  }
+
+  String _weekdayName(int wd) {
+    const ar = ['الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد'];
+    const en = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return gLang == 'en' ? en[wd - 1] : ar[wd - 1];
+  }
 
   Widget _field(TextEditingController c, String hint, IconData ic, {bool phone = false}) => TextField(
         controller: c,
@@ -452,9 +558,13 @@ class _C2CBookingSheetState extends State<C2CBookingSheet> {
       );
 
   Future<void> _confirm() async {
+    if (_slot == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('اختر موعدًا متاحًا أولاً', 'Pick an available time first'))));
+      return;
+    }
     setState(() => _busy = true);
-    final dt = DateTime(_date.year, _date.month, _date.day, _time.hour, _time.minute);
-    final visit = '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}:00';
+    final parts = _slot!.split(':');
+    final visit = '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')} ${parts[0].padLeft(2, '0')}:${parts[1].padLeft(2, '0')}:00';
     try {
       await context.read<AuthProvider>().api.c2cBook({
         'service_id': widget.service['id'],
@@ -462,6 +572,7 @@ class _C2CBookingSheetState extends State<C2CBookingSheet> {
         'visit': visit,
         'address': _addr.text, 'area': _area.text, 'phone': _phone.text,
         'payment_method': _pay,
+        if (_coupon.text.trim().isNotEmpty) 'code': _coupon.text.trim(),
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ ${tr('تم تأكيد حجزك', 'Booking confirmed')}'), backgroundColor: const Color(0xFF16A34A)));
