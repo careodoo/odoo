@@ -9,6 +9,7 @@ from . import facade_client_api
 from . import inventory_client_api
 from . import waste_client_api
 from . import c2c_client_api
+from . import web_sso
 from . import notif_api
 from . import admin_api
 from . import service_api

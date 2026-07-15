@@ -1,26 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
   <!-- Custom employee views for the PMS "workers" action — avoid HR-Officer-only
-       fields (current_leave_id) so any project member can browse workers, and
-       expose all the search methods (badge, civil id, English name, …). -->
+       fields (current_leave_id) so any project member can browse workers, with a
+       rich card (badge, civil id, residency, passport, housing…) and full search. -->
 
   <record id="pms_employee_search" model="ir.ui.view">
     <field name="name">pms.hr.employee.search</field>
     <field name="model">hr.employee</field>
     <field name="arch" type="xml">
       <search>
-        <field name="name" string="الاسم" filter_domain="['|','|','|','|',('name','ilike',self),('english_name','ilike',self),('barcode','ilike',self),('identification_id','ilike',self),('passport_id','ilike',self)]"/>
+        <field name="barcode" string="الرقم الوظيفي (Badge ID)"
+               filter_domain="['|','|','|','|','|',('barcode','ilike',self),('name','ilike',self),('english_name','ilike',self),('civil_code','ilike',self),('passport_no','ilike',self),('mobile_phone','ilike',self)]"/>
+        <field name="name" string="الاسم"/>
         <field name="english_name" string="الاسم بالإنجليزية"/>
-        <field name="barcode" string="رقم البادج (Badge)"/>
-        <field name="identification_id" string="الرقم المدني"/>
-        <field name="passport_id" string="جواز السفر"/>
+        <field name="civil_code" string="الرقم المدني"/>
+        <field name="passport_no" string="رقم الجواز"/>
         <field name="job_title" string="المسمى الوظيفي"/>
         <field name="department_id"/>
+        <field name="housing_hostel_id" string="السكن"/>
         <field name="mobile_phone" string="الجوال"/>
-        <field name="work_phone" string="هاتف العمل"/>
+        <separator/>
+        <filter name="f_resid_soon" string="إقامة تنتهي خلال 60 يومًا"
+                domain="[('residency_end_date','&lt;=',(context_today()+relativedelta(days=60)).strftime('%Y-%m-%d')),('residency_end_date','&gt;=',context_today().strftime('%Y-%m-%d'))]"/>
+        <filter name="f_resid_exp" string="إقامة منتهية"
+                domain="[('residency_end_date','&lt;',context_today().strftime('%Y-%m-%d'))]"/>
         <separator/>
         <filter name="grp_dept" string="القسم" context="{'group_by':'department_id'}"/>
         <filter name="grp_job" string="الوظيفة" context="{'group_by':'job_id'}"/>
+        <filter name="grp_house" string="السكن" context="{'group_by':'housing_hostel_id'}"/>
+        <filter name="grp_nat" string="الجنسية" context="{'group_by':'country_id'}"/>
       </search>
     </field>
   </record>
@@ -32,13 +40,21 @@
       <kanban>
         <templates>
           <t t-name="kanban-box">
-            <div class="oe_kanban_global_click" style="display:flex;gap:10px;padding:12px;align-items:center">
-              <field name="avatar_128" widget="image" options="{'size':[54,54],'img_class':'rounded-circle'}"/>
-              <div style="min-width:0">
-                <strong><field name="name"/></strong>
+            <div class="oe_kanban_global_click" style="display:flex;gap:12px;padding:12px">
+              <field name="avatar_128" widget="image" options="{'size':[64,64],'img_class':'rounded-circle'}"/>
+              <div style="min-width:0;flex:1">
+                <strong style="font-size:14px"><field name="name"/></strong>
                 <div class="text-muted" style="font-size:12px"><field name="english_name"/></div>
-                <div style="font-size:12px"><field name="job_title"/> · <field name="department_id"/></div>
-                <div class="text-muted" style="font-size:12px">🪪 <field name="barcode"/>  📱 <field name="mobile_phone"/></div>
+                <div style="font-size:12px;margin-top:3px"><field name="job_title"/> · <field name="department_id"/></div>
+                <table style="font-size:11.5px;margin-top:5px;color:#334155">
+                  <tr><td style="padding-left:8px">🪪 الرقم الوظيفي</td><td><b><field name="barcode"/></b></td></tr>
+                  <tr><td style="padding-left:8px">🆔 المدني</td><td><field name="civil_code"/></td></tr>
+                  <tr><td style="padding-left:8px">🛂 الجواز</td><td><field name="passport_no"/></td></tr>
+                  <tr><td style="padding-left:8px">📅 انتهاء الإقامة</td><td><field name="residency_end_date"/></td></tr>
+                  <tr><td style="padding-left:8px">🌍 الجنسية</td><td><field name="country_id"/></td></tr>
+                  <tr><td style="padding-left:8px">🏠 السكن</td><td><field name="housing_hostel_id"/> <field name="housing_room_id"/></td></tr>
+                  <tr><td style="padding-left:8px">📱 الجوال</td><td><field name="mobile_phone"/></td></tr>
+                </table>
               </div>
             </div>
           </t>
@@ -52,14 +68,18 @@
     <field name="model">hr.employee</field>
     <field name="arch" type="xml">
       <tree>
+        <field name="barcode" string="الرقم الوظيفي"/>
         <field name="name"/>
         <field name="english_name" optional="show"/>
-        <field name="barcode" string="البادج" optional="show"/>
-        <field name="identification_id" string="الرقم المدني" optional="show"/>
+        <field name="civil_code" string="الرقم المدني" optional="show"/>
+        <field name="passport_no" string="الجواز" optional="show"/>
+        <field name="residency_end_date" string="انتهاء الإقامة" optional="show"/>
+        <field name="country_id" string="الجنسية" optional="hide"/>
         <field name="job_title" optional="show"/>
         <field name="department_id" optional="show"/>
+        <field name="housing_hostel_id" string="السكن" optional="show"/>
+        <field name="housing_room_id" string="الغرفة" optional="hide"/>
         <field name="mobile_phone" optional="show"/>
-        <field name="work_phone" optional="hide"/>
       </tree>
     </field>
   </record>
