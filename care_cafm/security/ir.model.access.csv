@@ -49,3 +49,7 @@ acc_cafm_stockitem_u,care.cafm.stock.item.u,model_care_cafm_stock_item,base.grou
 acc_cafm_stockitem_m,care.cafm.stock.item.m,model_care_cafm_stock_item,hr.group_hr_manager,1,1,1,1
 acc_cafm_stockmove_u,care.cafm.stock.move.u,model_care_cafm_stock_move,base.group_user,1,1,1,0
 acc_cafm_stockmove_m,care.cafm.stock.move.m,model_care_cafm_stock_move,hr.group_hr_manager,1,1,1,1
+acc_cafm_issue_u,care.cafm.stock.issue.u,model_care_cafm_stock_issue,base.group_user,1,1,1,0
+acc_cafm_issue_m,care.cafm.stock.issue.m,model_care_cafm_stock_issue,hr.group_hr_manager,1,1,1,1
+acc_cafm_issueline_u,care.cafm.stock.issue.line.u,model_care_cafm_stock_issue_line,base.group_user,1,1,1,1
+acc_cafm_issueline_m,care.cafm.stock.issue.line.m,model_care_cafm_stock_issue_line,hr.group_hr_manager,1,1,1,1

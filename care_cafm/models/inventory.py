@@ -137,10 +137,12 @@ class CafmStockMove(models.Model):
     uom_name = fields.Char(related='product_id.uom_id.name', string='الوحدة')
     # destinations
     dest_store_id = fields.Many2one('care.cafm.store', string='المخزن المستلِم (تحويل)')
-    facility_id = fields.Many2one('care.cafm.facility', string='المرفق (صرف)', tracking=True)
-    location_id = fields.Many2one('care.cafm.location', string='الموقع (مكتب/حمّام…)', tracking=True,
+    facility_id = fields.Many2one('care.cafm.facility', string='المرفق (صرف)', tracking=True, index=True)
+    location_id = fields.Many2one('care.cafm.location', string='الموقع (مكتب/حمّام…)', tracking=True, index=True,
                                   domain="[('facility_id','=',facility_id)]")
-    employee_id = fields.Many2one('hr.employee', string='المنفّذ/المستلِم', tracking=True)
+    building_id = fields.Many2one(related='location_id.building_id', store=True, string='المبنى', index=True)
+    issue_id = fields.Many2one('care.cafm.stock.issue', string='سند الصرف', ondelete='set null', index=True)
+    employee_id = fields.Many2one('hr.employee', string='المنفّذ/المستلِم', tracking=True, index=True)
     workorder_id = fields.Many2one('care.cafm.workorder', string='أمر العمل', ondelete='set null')
     partner_id = fields.Many2one('res.partner', string='المورّد/الجهة (استلام)')
     order_ref = fields.Char(string='مرجع الطلب')
@@ -235,3 +237,92 @@ class CafmStockMove(models.Model):
         })
         move.action_done()
         return move
+
+
+class CafmStockIssue(models.Model):
+    """A stock issue voucher/request (سند صرف): an employee requests materials
+    from a store to a specific destination (building → floor → office/bathroom).
+    On confirm it posts issue moves and can be printed as a professional voucher."""
+    _name = 'care.cafm.stock.issue'
+    _description = 'CAFM Stock Issue Voucher'
+    _inherit = ['mail.thread']
+    _order = 'date desc, id desc'
+
+    name = fields.Char(string='رقم السند', default='/', copy=False, readonly=True)
+    store_id = fields.Many2one('care.cafm.store', string='المخزن', required=True, tracking=True)
+    facility_id = fields.Many2one('care.cafm.facility', string='المرفق', tracking=True)
+    building_id = fields.Many2one(related='location_id.building_id', store=True, string='المبنى')
+    location_id = fields.Many2one('care.cafm.location', string='الموقع (دور/مكتب/حمّام)', tracking=True,
+                                  domain="[('facility_id','=',facility_id)]")
+    recipient_id = fields.Many2one('hr.employee', string='المستلِم', tracking=True)
+    requested_by = fields.Many2one('res.users', string='مقدّم الطلب', default=lambda s: s.env.user, tracking=True)
+    date = fields.Datetime(string='التاريخ', default=fields.Datetime.now, required=True)
+    purpose = fields.Char(string='الغرض')
+    line_ids = fields.One2many('care.cafm.stock.issue.line', 'issue_id', string='الأصناف')
+    total_qty = fields.Float(string='إجمالي الكمية', compute='_compute_totals', store=True)
+    total_value = fields.Float(string='القيمة التقديرية', compute='_compute_totals', store=True)
+    state = fields.Selection([
+        ('draft', 'طلب'), ('issued', 'تم الصرف'), ('cancelled', 'ملغى'),
+    ], string='الحالة', default='draft', required=True, tracking=True)
+    note = fields.Char(string='ملاحظات')
+    company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
+
+    @api.depends('line_ids.quantity', 'line_ids.unit_cost')
+    def _compute_totals(self):
+        for r in self:
+            r.total_qty = sum(r.line_ids.mapped('quantity'))
+            r.total_value = sum(l.quantity * (l.unit_cost or 0.0) for l in r.line_ids)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        recs = super().create(vals_list)
+        for r in recs:
+            if not r.name or r.name == '/':
+                r.name = 'ISV/%06d' % r.id
+        return recs
+
+    def action_issue(self):
+        Move = self.env['care.cafm.stock.move']
+        for r in self:
+            if r.state == 'issued':
+                continue
+            if not r.line_ids:
+                raise UserError(_('أضف أصنافًا للصرف أولاً.'))
+            for l in r.line_ids:
+                mv = Move.create({
+                    'move_type': 'issue', 'store_id': r.store_id.id, 'product_id': l.product_id.id,
+                    'quantity': l.quantity, 'facility_id': r.facility_id.id or r.store_id.facility_id.id,
+                    'location_id': r.location_id.id, 'employee_id': r.recipient_id.id,
+                    'issue_id': r.id, 'unit_cost': l.unit_cost, 'note': r.purpose,
+                })
+                mv.action_done()
+            r.state = 'issued'
+            r.message_post(body=_('📤 تم صرف %d صنف إلى %s') % (len(r.line_ids), r.location_id.display_name or '-'))
+
+    def action_cancel(self):
+        self.write({'state': 'cancelled'})
+
+    def action_print(self):
+        return self.env.ref('care_cafm.action_report_stock_issue').report_action(self)
+
+
+class CafmStockIssueLine(models.Model):
+    _name = 'care.cafm.stock.issue.line'
+    _description = 'CAFM Stock Issue Line'
+
+    issue_id = fields.Many2one('care.cafm.stock.issue', required=True, ondelete='cascade')
+    product_id = fields.Many2one('product.product', string='المنتج', required=True)
+    quantity = fields.Float(string='الكمية', default=1.0, required=True)
+    uom_name = fields.Char(related='product_id.uom_id.name', string='الوحدة')
+    on_hand = fields.Float(string='الرصيد', compute='_compute_on_hand')
+    unit_cost = fields.Float(string='تكلفة الوحدة')
+    note = fields.Char(string='ملاحظة')
+
+    @api.depends('product_id', 'issue_id.store_id')
+    def _compute_on_hand(self):
+        Item = self.env['care.cafm.stock.item']
+        for l in self:
+            it = Item.search([('store_id', '=', l.issue_id.store_id.id), ('product_id', '=', l.product_id.id)], limit=1) if l.issue_id.store_id and l.product_id else None
+            l.on_hand = it.on_hand if it else 0.0
+            if it and not l.unit_cost:
+                l.unit_cost = it.unit_cost

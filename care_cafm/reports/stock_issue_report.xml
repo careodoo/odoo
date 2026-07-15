@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="action_report_stock_issue" model="ir.actions.report">
+    <field name="name">سند صرف مخزني</field>
+    <field name="model">care.cafm.stock.issue</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">care_cafm.report_stock_issue_doc</field>
+    <field name="report_file">care_cafm.report_stock_issue_doc</field>
+    <field name="binding_model_id" ref="model_care_cafm_stock_issue"/>
+    <field name="binding_type">report</field>
+  </record>
+
+  <template id="report_stock_issue_doc">
+    <t t-call="web.html_container">
+      <t t-foreach="docs" t-as="o">
+        <t t-call="web.external_layout">
+          <div class="page" style="font-family:'Tajawal',sans-serif;direction:rtl;text-align:right">
+            <div style="text-align:center;margin-bottom:12px">
+              <h2 style="margin:0;color:#0b2a4a">سند صرف مخزني</h2>
+              <div style="color:#64748b">Stock Issue Voucher</div>
+            </div>
+            <table class="table table-sm" style="width:100%;margin-bottom:10px">
+              <tr>
+                <td style="width:25%"><strong>رقم السند:</strong> <span t-field="o.name"/></td>
+                <td style="width:25%"><strong>التاريخ:</strong> <span t-field="o.date"/></td>
+                <td style="width:25%"><strong>الحالة:</strong>
+                  <span t-if="o.state=='issued'">تم الصرف</span>
+                  <span t-elif="o.state=='draft'">طلب صرف</span>
+                  <span t-else="">ملغى</span>
+                </td>
+                <td style="width:25%"><strong>المخزن:</strong> <span t-field="o.store_id.name"/></td>
+              </tr>
+              <tr>
+                <td><strong>المرفق:</strong> <span t-field="o.facility_id.name"/></td>
+                <td><strong>المبنى:</strong> <span t-field="o.building_id.name"/></td>
+                <td><strong>الموقع:</strong> <span t-field="o.location_id.name"/></td>
+                <td><strong>المستلِم:</strong> <span t-field="o.recipient_id.name"/></td>
+              </tr>
+              <tr>
+                <td colspan="2"><strong>مقدّم الطلب:</strong> <span t-field="o.requested_by.name"/></td>
+                <td colspan="2"><strong>الغرض:</strong> <span t-field="o.purpose"/></td>
+              </tr>
+            </table>
+            <table class="table table-bordered" style="width:100%;border-collapse:collapse" border="1">
+              <thead style="background:#0b2a4a;color:#fff">
+                <tr>
+                  <th style="padding:6px">#</th>
+                  <th style="padding:6px">الصنف</th>
+                  <th style="padding:6px">الرمز/الباركود</th>
+                  <th style="padding:6px">الكمية</th>
+                  <th style="padding:6px">الوحدة</th>
+                  <th style="padding:6px">تكلفة الوحدة</th>
+                  <th style="padding:6px">الإجمالي</th>
+                </tr>
+              </thead>
+              <tbody>
+                <t t-set="i" t-value="0"/>
+                <tr t-foreach="o.line_ids" t-as="l">
+                  <t t-set="i" t-value="i+1"/>
+                  <td style="padding:6px;text-align:center"><span t-esc="i"/></td>
+                  <td style="padding:6px"><span t-field="l.product_id.display_name"/></td>
+                  <td style="padding:6px"><span t-esc="l.product_id.barcode or l.product_id.default_code or ''"/></td>
+                  <td style="padding:6px;text-align:center"><span t-field="l.quantity"/></td>
+                  <td style="padding:6px;text-align:center"><span t-field="l.uom_name"/></td>
+                  <td style="padding:6px;text-align:center"><span t-esc="'%.3f' % (l.unit_cost or 0)"/></td>
+                  <td style="padding:6px;text-align:center"><span t-esc="'%.3f' % ((l.unit_cost or 0)*l.quantity)"/></td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr style="background:#f1f5f9;font-weight:bold">
+                  <td colspan="3" style="padding:6px;text-align:left">الإجمالي</td>
+                  <td style="padding:6px;text-align:center"><span t-field="o.total_qty"/></td>
+                  <td colspan="2"></td>
+                  <td style="padding:6px;text-align:center"><span t-esc="'%.3f' % o.total_value"/></td>
+                </tr>
+              </tfoot>
+            </table>
+            <p t-if="o.note" style="margin-top:8px"><strong>ملاحظات:</strong> <span t-field="o.note"/></p>
+            <div style="margin-top:50px;display:flex;justify-content:space-between">
+              <div style="text-align:center;width:45%">
+                <div style="border-top:1px solid #333;padding-top:6px">أمين المخزن</div>
+                <div style="color:#64748b"><span t-field="o.store_id.keeper_id.name"/></div>
+              </div>
+              <div style="text-align:center;width:45%">
+                <div style="border-top:1px solid #333;padding-top:6px">توقيع المستلِم</div>
+                <div style="color:#64748b"><span t-field="o.recipient_id.name"/></div>
+              </div>
+            </div>
+          </div>
+        </t>
+      </t>
+    </t>
+  </template>
+</odoo>
