@@ -252,6 +252,31 @@ class WasteClientApi(Controller):
             'state': t.states, 'state_label': st.get(t.states, t.states or ''),
         } for t in recs])
 
+    # ---- driver: my assigned trips ----------------------------------------
+    @route(API + '/waste/driver/trips', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def waste_driver_trips(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'cafm.waste.trip' not in env:
+            return _ok([])
+        T = env['cafm.waste.trip'].sudo()
+        dom = [('driver_id', '=', env.user.id)]
+        if not kw.get('all'):
+            dom.append(('states', 'in', ('scheduled', 'pickuped', 'arrived', 'processing')))
+        recs = T.search(dom, order='sequence desc', limit=100)
+        st = _sel(T, 'states')
+        return _ok([{
+            'id': t.id, 'sequence': t.sequence,
+            'project': t.project_id.name or None,
+            'pickup': t.pickup_location_id.name if t.pickup_location_id else None,
+            'center': t.center_id.name if t.center_id else None,
+            'date': _d(t.trip_date),
+            'total_quantity': t.total_quantity, 'total_qty_weight': t.total_qty_weight,
+            'sharing': bool(t.driver_lat or t.driver_lng),
+            'state': t.states, 'state_label': st.get(t.states, t.states or ''),
+        } for t in recs])
+
     # ---- live driver location (driver posts, client polls) ----------------
     @route(API + '/waste/trip/<int:tid>/location', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
     def waste_trip_set_location(self, tid, **kw):
