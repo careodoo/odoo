@@ -55,7 +55,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
       appBar: AppBar(
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
           Text(tr('نقل ومعالجة النفايات', 'Waste')),
-          const Text('v1.2.0 · تصميم جديد', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Color(0xFF9AE6B4))),
+          const Text('v1.3.0 · الموديول الجديد', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Color(0xFF9AE6B4))),
         ]),
         actions: [
           IconButton(
@@ -123,8 +123,11 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
     );
   }
 
+  String get _portalPath => (_summary?['portal_path'] as String?) ?? '/service_orders';
+  String get _createPath => (_summary?['create_path'] as String?) ?? '/service_order/create';
+
   void _openPortal() => Navigator.push(context, MaterialPageRoute(
-        builder: (_) => const OdooBackendScreen(path: '/service_orders', title: 'لوحة تحكم النفايات'),
+        builder: (_) => OdooBackendScreen(path: _portalPath, title: 'لوحة تحكم النفايات'),
       ));
 
   /// Prominent entry to the exact web portal dashboard (same data, reports,
@@ -406,7 +409,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
       ])),
     );
     if (choice == 'portal') {
-      if (mounted) Navigator.push(context, MaterialPageRoute(builder: (_) => const OdooBackendScreen(path: '/service_order/create', title: 'طلب نقل جديد')));
+      if (mounted) Navigator.push(context, MaterialPageRoute(builder: (_) => OdooBackendScreen(path: _createPath, title: 'طلب نقل جديد')));
     } else if (choice == 'quick') {
       _newOrder();
     }
