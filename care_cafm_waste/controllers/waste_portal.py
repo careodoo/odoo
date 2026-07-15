@@ -131,6 +131,33 @@ class WastePortal(CustomerPortal):
             'driver': t.driver_id.name if t.driver_id else None}
         return request.make_response(json.dumps(data), headers=[('Content-Type', 'application/json')])
 
+    def _scoped_ids(self, model):
+        return request.env[model].sudo().search(
+            [('project_id', 'in', request.env['cafm.waste.project'].sudo().search(
+                [('contact_id', 'in', self._scope_partner_ids())]).ids)]).ids
+
+    @http.route(['/waste/order/<int:oid>/report'], type='http', auth='user', website=True)
+    def waste_order_report(self, oid, **kw):
+        is_mgr = request.env.user.has_group('base.group_erp_manager')
+        if not is_mgr and int(oid) not in self._scoped_ids('cafm.waste.order'):
+            return request.redirect('/waste/orders')
+        report = request.env.ref('care_cafm_waste.action_report_waste_order').with_user(SUPERUSER_ID)
+        pdf = request.env['ir.actions.report'].sudo()._render_qweb_pdf(report, res_ids=[int(oid)])[0]
+        o = request.env['cafm.waste.order'].sudo().browse(int(oid))
+        return request.make_response(pdf, headers=[('Content-Type', 'application/pdf'),
+            ('Content-Disposition', content_disposition('%s.pdf' % (o.serial or oid)).replace('attachment', 'inline'))])
+
+    @http.route(['/waste/trip/<int:tid>/report'], type='http', auth='user', website=True)
+    def waste_trip_report(self, tid, **kw):
+        is_mgr = request.env.user.has_group('base.group_erp_manager')
+        if not is_mgr and int(tid) not in self._scoped_ids('cafm.waste.trip'):
+            return request.redirect('/waste/orders')
+        report = request.env.ref('care_cafm_waste.action_report_waste_trip').with_user(SUPERUSER_ID)
+        pdf = request.env['ir.actions.report'].sudo()._render_qweb_pdf(report, res_ids=[int(tid)])[0]
+        t = request.env['cafm.waste.trip'].sudo().browse(int(tid))
+        return request.make_response(pdf, headers=[('Content-Type', 'application/pdf'),
+            ('Content-Disposition', content_disposition('%s.pdf' % (t.sequence or tid)).replace('attachment', 'inline'))])
+
     @http.route(['/waste/print'], type='http', auth='user', website=True)
     def waste_print(self, date_from=None, date_to=None, **kw):
         ds = fields.Datetime.from_string(date_from)

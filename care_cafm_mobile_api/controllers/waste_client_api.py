@@ -150,7 +150,7 @@ class WasteClientApi(Controller):
             'notes': g_(o, 'notes') or None,
             'proof': _abs('/api/v1/waste/proof/%s' % o.id) if g_(o, 'proof_image') else None,
             'media': self._media_list(g_(o, 'media_ids')),
-            'report_path': ('/waste/order/%s' if _wm(env)['order'] == 'cafm.waste.order' else '/service_order/%s/') % o.id,
+            'report_path': ('/waste/order/%s/report' if _wm(env)['order'] == 'cafm.waste.order' else '/service_order/%s/') % o.id,
             'state': o.states, 'state_label': st.get(o.states, o.states or ''),
         } for o in recs])
 
@@ -179,6 +179,7 @@ class WasteClientApi(Controller):
         it = line.item_id
         return {
             'item': it.name if it else None,
+            'item_id': it.id if it else None,
             'qty': line.quantity,
             'uom': it.uom_id.name if (it and 'uom_id' in it._fields and it.uom_id) else None,
             'image': _abs('/api/v1/waste/item/%s/image' % it.id) if (it and getattr(it, 'image', False)) else None,
@@ -248,9 +249,80 @@ class WasteClientApi(Controller):
                        'image': _abs('/api/v1/waste/item/%s/image' % l.item_id.id) if ('item_id' in l._fields and l.item_id and getattr(l.item_id, 'image', False)) else None}
                       for l in t.trip_line_ids] if 'trip_line_ids' in t._fields else [],
             'order_count': len(t.order_ids) if 'order_ids' in t._fields else (1 if ('order_id' in t._fields and t.order_id) else 0),
-            'report_path': ('/report/pdf/care_cafm_waste.report_waste_trip_doc/%s' % t.id) if _wm(env)['trip'] == 'cafm.waste.trip' else None,
+            'report_path': ('/waste/trip/%s/report' % t.id) if _wm(env)['trip'] == 'cafm.waste.trip' else None,
             'state': t.states, 'state_label': st.get(t.states, t.states or ''),
         } for t in recs])
+
+    # ---- treatment-center receiver: incoming orders + confirm -------------
+    @route(API + '/waste/receiver/orders', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def waste_receiver_orders(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'cafm.waste.order' not in env:
+            return _ok([])
+        O = env['cafm.waste.order'].sudo()
+        dom = [('receiver_id', '=', env.user.id)]
+        if not kw.get('all'):
+            dom.append(('states', 'in', ('pickuped', 'arrived', 'processing')))
+        recs = O.search(dom, order='serial desc', limit=100)
+        st = _sel(O, 'states')
+        return _ok([{
+            'id': o.id, 'serial': o.serial, 'project': o.project_id.name or None,
+            'pickup': o.pickup_location_id.name if o.pickup_location_id else None,
+            'center': o.trip_id.center_id.name if (o.trip_id and o.trip_id.center_id) else None,
+            'final_weight': o.final_weight, 'final_note': o.final_note or None,
+            'items': [self._item_dict(l) for l in (o.order_line_ids or (o.trip_id.trip_line_ids if o.trip_id else o.order_line_ids))],
+            'media_count': len(o.media_ids),
+            'state': o.states, 'state_label': st.get(o.states, o.states or ''),
+        } for o in recs])
+
+    @route(API + '/waste/order/<int:oid>/receive', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def waste_order_receive(self, oid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'cafm.waste.order' not in env:
+            return _err('غير متاح', 404)
+        o = env['cafm.waste.order'].sudo().browse(int(oid)).exists()
+        if not o:
+            return _err('غير موجود', 404)
+        b = _body()
+        vals = {}
+        if b.get('final_weight') is not None:
+            vals['final_weight'] = float(b['final_weight'] or 0)
+        if b.get('final_note') is not None:
+            vals['final_note'] = b['final_note']
+        vals['receiver_id'] = env.user.id
+        o.write(vals)
+        # update item types/quantities on the order (what the center actually received)
+        if b.get('items') is not None:
+            o.order_line_ids.unlink()
+            o.write({'order_line_ids': [(0, 0, {'item_id': int(it['item_id']), 'quantity': float(it.get('quantity') or 0)})
+                                        for it in b['items'] if it.get('item_id')]})
+        # attach uploaded media (base64 images/videos) to the order + its trip
+        for m in (b.get('media') or []):
+            data = m.get('data') or ''
+            if ',' in data:
+                data = data.split(',', 1)[1]
+            if not data:
+                continue
+            att = env['ir.attachment'].sudo().create({
+                'name': m.get('name') or 'media', 'datas': data,
+                'mimetype': m.get('mimetype') or 'image/jpeg',
+                'res_model': 'cafm.waste.order', 'res_id': o.id})
+            o.write({'media_ids': [(4, att.id)]})
+            if o.trip_id:
+                o.trip_id.write({'media_ids': [(4, att.id)]})
+        # confirm completion → advance state
+        act = b.get('confirm')
+        if act == 'delivered':
+            o.action_to_delivered()
+        elif act == 'completed':
+            o.action_to_completed()
+        elif act == 'processing':
+            o.action_to_processing()
+        return _ok({'id': o.id, 'state': o.states, 'media_count': len(o.media_ids)})
 
     # ---- driver: my assigned trips ----------------------------------------
     @route(API + '/waste/driver/trips', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
@@ -329,29 +401,30 @@ class WasteClientApi(Controller):
         total_qty = total_weight = 0.0
         done_states = ('completed', 'delivered')
         completed = 0
+        def elines(o):
+            return o.order_line_ids or (o.trip_id.trip_line_ids if ('trip_id' in o._fields and o.trip_id) else o.order_line_ids)
         for o in recs:
             state = o.states or 'draft'
             by_state[state] = by_state.get(state, 0) + 1
             if state in done_states:
                 completed += 1
-            fw = getattr(o, 'final_weight', 0.0) or 0.0
-            total_weight += fw
-            odt = getattr(o, 'order_datetime', False)
-            if odt:
-                mk = odt.strftime('%Y-%m')
-                m = by_month.setdefault(mk, {'orders': 0, 'weight': 0.0, 'qty': 0.0})
-                m['orders'] += 1
-                m['weight'] += fw
-            for l in o.order_line_ids:
+            odt = getattr(o, 'order_datetime', False) or getattr(o, 'request_datetime', False)
+            mk = odt.strftime('%Y-%m') if odt else '—'
+            m = by_month.setdefault(mk, {'orders': 0, 'weight': 0.0, 'qty': 0.0})
+            m['orders'] += 1
+            for l in elines(o):
                 q = l.quantity or 0
+                # weight = quantity × unit (piece) weight, summed
+                w = q * (getattr(l, 'weight', 0) or 0)
                 total_qty += q
+                total_weight += w
+                m['qty'] += q
+                m['weight'] += w
                 nm = l.item_id.name if l.item_id else '—'
                 bi = by_item.setdefault(nm, {'qty': 0.0, 'orders': 0,
                                              'image': _abs('/api/v1/waste/item/%s/image' % l.item_id.id) if (l.item_id and getattr(l.item_id, 'image', False)) else None})
                 bi['qty'] += q
                 bi['orders'] += 1
-                if odt:
-                    by_month[odt.strftime('%Y-%m')]['qty'] += q
         top_items = sorted(([k, v] for k, v in by_item.items()), key=lambda x: -x[1]['qty'])[:8]
         months = sorted(by_month.items())
         return _ok({
@@ -362,7 +435,7 @@ class WasteClientApi(Controller):
             'total_weight': round(total_weight, 1),
             'total_quantity': round(total_qty, 1),
             'by_state': [{'state': k, 'label': st.get(k, k), 'count': v} for k, v in by_state.items()],
-            'by_item': [{'name': k, 'qty': v['qty'], 'orders': v['orders'], 'image': v['image']} for k, v in top_items],
+            'by_item': [{'name': k, 'qty': round(v['qty'], 1), 'orders': v['orders'], 'image': v['image']} for k, v in top_items],
             'by_month': [{'month': k, 'orders': v['orders'], 'weight': round(v['weight'], 1), 'qty': round(v['qty'], 1)} for k, v in months],
             'print_path': ('/waste/print' if _wm(env)['order'] == 'cafm.waste.order' else '/service_order/print') + '?date_from=%s&date_to=%s' % (df or '', dt or ''),
         })

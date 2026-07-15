@@ -200,7 +200,30 @@ class WasteTrip(models.Model):
         for v in vals_list:
             if not v.get('sequence'):
                 v['sequence'] = self.env['ir.sequence'].next_by_code('cafm.waste.trip') or '/'
-        return super().create(vals_list)
+        trips = super().create(vals_list)
+        for t in trips:
+            t._notify_driver()
+        return trips
+
+    def write(self, vals):
+        res = super().write(vals)
+        if vals.get('driver_id'):
+            for t in self:
+                t._notify_driver()
+        return res
+
+    def _notify_driver(self):
+        self.ensure_one()
+        if not self.driver_id or 'care.cafm.notification' not in self.env:
+            return
+        try:
+            self.env['care.cafm.notification'].sudo().push(
+                self.driver_id, _('🚛 رحلة نفايات جديدة %s') % (self.sequence or ''),
+                _('أُسندت إليك رحلة %s — الالتقاط من %s. افتح «رحلات النفايات» لمشاركة موقعك.')
+                % (self.sequence or '', self.pickup_location_id.name or '—'),
+                ntype='task')
+        except Exception:
+            pass
 
     def _get_report_base_filename(self):
         self.ensure_one()
@@ -412,19 +435,20 @@ class WasteOrder(models.Model):
             by_state[o.states] = by_state.get(o.states, 0) + 1
             if o.states in ('completed', 'delivered'):
                 completed += 1
-            fw = o.final_weight or 0.0
-            tw += fw
-            dt = o.request_datetime
+            dt = o.request_datetime or o.order_datetime
             mk = dt.strftime('%Y-%m') if dt else '—'
             m = by_month.setdefault(mk, {'orders': 0, 'weight': 0.0, 'qty': 0.0})
             m['orders'] += 1
-            m['weight'] += fw
             for l in o.effective_lines():
-                tq += l.quantity or 0
-                m['qty'] += l.quantity or 0
+                q = l.quantity or 0
+                w = q * (l.weight or 0)  # quantity × unit weight
+                tq += q
+                tw += w
+                m['qty'] += q
+                m['weight'] += w
                 it = by_item.setdefault(l.item_id.name or '—',
                                         {'qty': 0.0, 'orders': 0, 'item_id': l.item_id.id})
-                it['qty'] += l.quantity or 0
+                it['qty'] += q
                 it['orders'] += 1
         months = sorted(by_month.items())
         maxm = max([v['orders'] for _, v in months], default=1) or 1

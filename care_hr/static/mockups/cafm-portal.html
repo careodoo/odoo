@@ -495,7 +495,13 @@ function renderNav(){
         +'<div class="svc-items">'+items+'</div></div>';
     });
   }
-  html+=NAV_TAIL.filter(x=>!x.need||(x.need==='manage'&&ME&&ME.can_add_workers))
+  // waste-only clients don't need facilities-centric tools (3D preview, live activity)
+  const wasteOnly=SERVICES.length && SERVICES.every(s=>s.type==='waste');
+  html+=NAV_TAIL.filter(x=>{
+      if(x.need) return x.need==='manage'&&ME&&ME.can_add_workers;
+      if(wasteOnly && ['occupancy','activity'].includes(x.id)) return false;
+      return true;
+    })
     .map(x=>x.grp?'<div class="grp">'+esc(T(x.grp[0],x.grp[1]))+'</div>':navAnchor(x)).join('');
   document.getElementById('nav').innerHTML=html;
   setActive(CUR);}
