@@ -30,6 +30,13 @@ class FacadeClientApi(Controller):
             pids.add(p.commercial_partner_id.id)
             pids.update(env['res.partner'].sudo().search(
                 [('commercial_partner_id', '=', p.commercial_partner_id.id)]).ids)
+        # CAFM client sub-users: bridge to the client company's partner
+        if 'care.cafm.client' in env:
+            clients = env['care.cafm.client'].sudo().search([('user_ids', 'in', [env.user.id])])
+            for cp in clients.mapped('partner_id'):
+                pids.add(cp.id)
+                pids.update(env['res.partner'].sudo().search(
+                    [('commercial_partner_id', '=', cp.id)]).ids)
         return env['care.cafm.facility'].sudo().search([('partner_id', 'in', list(pids))])
 
     def _fac_ids(self, env):
