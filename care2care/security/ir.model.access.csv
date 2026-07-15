@@ -21,3 +21,7 @@ acc_c2c_contract_u,c2c.contract.request.u,model_c2c_contract_request,base.group_
 acc_c2c_contract_m,c2c.contract.request.m,model_c2c_contract_request,hr.group_hr_manager,1,1,1,1
 acc_c2c_settings_u,c2c.settings.u,model_c2c_settings,base.group_user,1,0,0,0
 acc_c2c_settings_m,c2c.settings.m,model_c2c_settings,hr.group_hr_manager,1,1,1,1
+acc_c2c_porder_u,c2c.product.order.u,model_c2c_product_order,base.group_user,1,1,1,0
+acc_c2c_porder_m,c2c.product.order.m,model_c2c_product_order,hr.group_hr_manager,1,1,1,1
+acc_c2c_porderline_u,c2c.product.order.line.u,model_c2c_product_order_line,base.group_user,1,1,1,1
+acc_c2c_porderline_m,c2c.product.order.line.m,model_c2c_product_order_line,hr.group_hr_manager,1,1,1,1

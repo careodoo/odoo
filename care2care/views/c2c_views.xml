@@ -279,6 +279,42 @@
     <field name="name">طلبات التعاقد</field><field name="res_model">c2c.contract.request</field><field name="view_mode">tree,form</field>
   </record>
 
+  <!-- ===== PRODUCT ORDERS (shop) ===== -->
+  <record id="view_c2c_porder_tree" model="ir.ui.view">
+    <field name="name">c2c.product.order.tree</field><field name="model">c2c.product.order</field>
+    <field name="arch" type="xml">
+      <tree decoration-success="state=='delivered'" decoration-muted="state=='cancelled'">
+        <field name="name"/><field name="partner_id"/><field name="item_count"/>
+        <field name="amount_total"/><field name="payment_state"/><field name="state"/><field name="create_date"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_c2c_porder_form" model="ir.ui.view">
+    <field name="name">c2c.product.order.form</field><field name="model">c2c.product.order</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="action_confirm" type="object" string="تأكيد" class="btn-primary" invisible="state!='draft'"/>
+          <button name="action_cancel" type="object" string="إلغاء" invisible="state in ('delivered','cancelled')"/>
+          <field name="state" widget="statusbar"/>
+        </header>
+        <sheet>
+          <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+          <group>
+            <group><field name="partner_id"/><field name="phone"/><field name="area"/><field name="address"/></group>
+            <group><field name="payment_method"/><field name="payment_state"/><field name="amount_total"/><field name="item_count"/></group>
+          </group>
+          <field name="line_ids"><tree editable="bottom"><field name="product_id"/><field name="quantity"/><field name="price_unit"/><field name="subtotal"/></tree></field>
+          <field name="note"/>
+        </sheet>
+        <div class="oe_chatter"><field name="message_follower_ids"/><field name="message_ids"/></div>
+      </form>
+    </field>
+  </record>
+  <record id="action_c2c_porder" model="ir.actions.act_window">
+    <field name="name">طلبات المتجر</field><field name="res_model">c2c.product.order</field><field name="view_mode">tree,form</field>
+  </record>
+
   <!-- ===== BOOKING SETTINGS (availability) ===== -->
   <record id="view_c2c_settings_form" model="ir.ui.view">
     <field name="name">c2c.settings.form</field><field name="model">c2c.settings</field>

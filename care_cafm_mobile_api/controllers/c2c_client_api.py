@@ -204,6 +204,100 @@ class C2CClientApi(Controller):
         } for p in (team or [])]
         return _ok(d)
 
+    # ---- PRODUCT SHOP (buy materials) -------------------------------------
+    def _product(self, p, pl=None):
+        try:
+            price = pl._get_product_price(p, 1.0) if pl else p.lst_price
+        except Exception:
+            price = p.lst_price
+        return {
+            'id': p.id, 'name': p.display_name, 'code': p.default_code or None,
+            'price': round(price, 3), 'currency': self._cur().name,
+            'uom': p.uom_id.name or None, 'category': p.categ_id.name or None,
+            'category_id': p.categ_id.id,
+            'image': _abs('/api/v1/product/%s/image' % p.id),
+        }
+
+    def _cur(self):
+        return request.env.company.currency_id
+
+    @route(API + '/c2c/products', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def c2c_products(self, **kw):
+        env = _auth() or request.env
+        Prod = env['product.product'].sudo()
+        dom = [('sale_ok', '=', True), ('active', '=', True)]
+        q = (request.httprequest.args.get('q') or '').strip()
+        if q:
+            dom += ['|', ('name', 'ilike', q), ('default_code', 'ilike', q)]
+        cid = request.httprequest.args.get('category_id')
+        if cid and cid.isdigit():
+            dom.append(('categ_id', 'child_of', int(cid)))
+        prods = Prod.search(dom, limit=300)
+        cats = {}
+        for p in prods:
+            c = p.categ_id
+            if c:
+                cats[c.id] = {'id': c.id, 'name': c.name, 'count': cats.get(c.id, {}).get('count', 0) + 1}
+        return _ok({
+            'products': [self._product(p) for p in prods],
+            'categories': sorted(cats.values(), key=lambda c: -c['count']),
+        })
+
+    @route(API + '/c2c/product/<int:pid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def c2c_product(self, pid, **kw):
+        env = _auth() or request.env
+        p = env['product.product'].sudo().browse(pid).exists()
+        if not p:
+            return _err('غير موجود', 404)
+        d = self._product(p)
+        d['description'] = (p.description_sale or '') or None
+        return _ok(d)
+
+    @route(API + '/c2c/order/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def c2c_order_create(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('سجّل الدخول لإتمام الشراء', 401)
+        if 'c2c.product.order' not in env:
+            return _err('غير متاح', 404)
+        from .api import _body
+        b = _body()
+        lines = []
+        for it in (b.get('items') or []):
+            if it.get('product_id'):
+                p = env['product.product'].sudo().browse(int(it['product_id'])).exists()
+                if p:
+                    lines.append((0, 0, {'product_id': p.id, 'quantity': float(it.get('quantity') or 1),
+                                         'price_unit': float(it.get('price') or p.lst_price)}))
+        if not lines:
+            return _err('السلة فارغة', 422)
+        rec = env['c2c.product.order'].sudo().create({
+            'partner_id': env.user.partner_id.id, 'line_ids': lines,
+            'address': b.get('address') or None, 'area': b.get('area') or None,
+            'phone': b.get('phone') or env.user.partner_id.phone or None,
+            'payment_method': b.get('payment_method') or 'cash',
+        })
+        rec.action_confirm()
+        return _ok({'id': rec.id, 'name': rec.name, 'amount_total': rec.amount_total, 'state': rec.state})
+
+    @route(API + '/c2c/orders', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def c2c_orders(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'c2c.product.order' not in env:
+            return _ok([])
+        st, ps = _sel(env['c2c.product.order'], 'state'), _sel(env['c2c.product.order'], 'payment_state')
+        recs = env['c2c.product.order'].sudo().search([('partner_id', 'in', self._my_partner_ids(env))], order='id desc', limit=100)
+        return _ok([{
+            'id': o.id, 'name': o.name, 'amount_total': o.amount_total, 'item_count': o.item_count,
+            'payment_label': ps.get(o.payment_state, o.payment_state or ''),
+            'state': o.state, 'state_label': st.get(o.state, o.state or ''),
+            'date': _d(o.create_date),
+            'lines': [{'product': l.product_id.display_name, 'qty': l.quantity, 'subtotal': l.subtotal,
+                       'image': _abs('/api/v1/product/%s/image' % l.product_id.id)} for l in o.line_ids],
+        } for o in recs])
+
     # ---- available time slots (bookings + team schedule) ------------------
     @route(API + '/c2c/slots', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def c2c_slots(self, **kw):
