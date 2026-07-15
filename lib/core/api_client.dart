@@ -528,6 +528,27 @@ class ApiClient {
                 'unit_cost': unitCost, 'order_ref': orderRef,
               }))))['data'] as Map);
 
+  Future<List<dynamic>> clientInvLocations({int? storeId}) async {
+    final path = '/client/inv/locations${storeId != null ? '?store_id=$storeId' : ''}';
+    return List<dynamic>.from((await _handle(await http.get(_u(path), headers: await _headers())))['data'] as List);
+  }
+
+  /// Issue a product to a destination location (any employee, from the app).
+  Future<Map<String, dynamic>> clientInvIssue(int storeId, {int? productId, String? barcode, double quantity = 1.0, int? locationId, String note = ''}) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/client/inv/issue'),
+              headers: await _headers(),
+              body: jsonEncode({
+                'store_id': storeId, 'quantity': quantity,
+                if (productId != null) 'product_id': productId,
+                if (barcode != null) 'barcode': barcode,
+                if (locationId != null) 'location_id': locationId,
+                if (note.isNotEmpty) 'note': note,
+              }))))['data'] as Map);
+
+  Future<Map<String, dynamic>> clientInvConsumption({String period = 'month'}) async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/inv/consumption?period=$period'), headers: await _headers())))['data'] as Map);
+
   // ---- client-scoped waste transfer & treatment ----------------------------
   Future<Map<String, dynamic>> clientWasteSummary() async =>
       Map<String, dynamic>.from((await _handle(

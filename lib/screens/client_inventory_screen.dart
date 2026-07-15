@@ -15,6 +15,7 @@ class ClientInventoryScreen extends StatefulWidget {
 class _ClientInventoryScreenState extends State<ClientInventoryScreen> {
   Map<String, dynamic>? _summary;
   List<dynamic> _stores = [];
+  List<dynamic> _locations = [];
   int? _storeId;
   String _kind = 'items';
   Future<List<dynamic>>? _list;
@@ -36,7 +37,9 @@ class _ClientInventoryScreenState extends State<ClientInventoryScreen> {
     try {
       final s = await api.clientInvSummary();
       final st = await api.clientInvStores();
-      if (mounted) setState(() { _summary = s; _stores = st; _storeId = st.isNotEmpty ? st.first['id'] as int : null; });
+      List<dynamic> locs = [];
+      try { locs = await api.clientInvLocations(); } catch (_) {}
+      if (mounted) setState(() { _summary = s; _stores = st; _locations = locs; _storeId = st.isNotEmpty ? st.first['id'] as int : null; });
     } catch (_) {}
     _load();
   }
@@ -52,12 +55,14 @@ class _ClientInventoryScreenState extends State<ClientInventoryScreen> {
   Widget build(BuildContext context) {
     final s = _summary;
     return Scaffold(
-      appBar: AppBar(title: Text(tr('المخزون الداخلي', 'Inventory'))),
+      appBar: AppBar(title: Text(tr('المخزون الداخلي', 'Inventory')), actions: [
+        IconButton(icon: const Icon(Icons.insights_rounded), tooltip: tr('تحليلات الاستهلاك', 'Consumption'), onPressed: _showConsumption),
+      ]),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: const Color(0xFF0E3A5F),
         onPressed: _storeId == null ? null : _scanIssue,
         icon: const Icon(Icons.qr_code_scanner),
-        label: Text(tr('صرف بالمسح', 'Scan-issue')),
+        label: Text(tr('صرف', 'Issue')),
       ),
       body: Column(children: [
         if (s != null && s['available'] == true)
@@ -162,28 +167,41 @@ class _ClientInventoryScreenState extends State<ClientInventoryScreen> {
     final code = await Navigator.push<String>(context, MaterialPageRoute(builder: (_) => const _ScanPage()));
     if (code == null || code.isEmpty || !mounted) return;
     final qtyCtrl = TextEditingController(text: '1');
-    final go = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(tr('صرف من المخزون', 'Issue from stock')),
-        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('${tr('الباركود', 'Barcode')}: $code', style: const TextStyle(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 10),
+    int? locId;
+    final go = await showModalBottomSheet<bool>(
+      context: context, isScrollControlled: true, showDragHandle: true,
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setSt) => Padding(
+        padding: EdgeInsets.fromLTRB(18, 4, 18, MediaQuery.of(ctx).viewInsets.bottom + 18),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(tr('صرف من المخزون', 'Issue from stock'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0E3A5F))),
+          const SizedBox(height: 4),
+          Text('${tr('الباركود', 'Barcode')}: $code', style: const TextStyle(color: Colors.grey, fontSize: 13)),
+          const SizedBox(height: 14),
+          DropdownButtonFormField<int>(
+            initialValue: locId,
+            isExpanded: true,
+            decoration: InputDecoration(labelText: tr('وجهة الصرف (مبنى › دور › مكتب)', 'Destination (building › floor › office)'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.place_outlined)),
+            items: [for (final l in _locations) DropdownMenuItem(value: l['id'] as int, child: Text('${l['path'] ?? l['name']}', overflow: TextOverflow.ellipsis))],
+            onChanged: (v) => setSt(() => locId = v),
+          ),
+          const SizedBox(height: 12),
           TextField(controller: qtyCtrl, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: tr('الكمية', 'Quantity'), border: const OutlineInputBorder())),
+          const SizedBox(height: 16),
+          SizedBox(width: double.infinity, height: 50, child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0E3A5F), foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx, true), icon: const Icon(Icons.check), label: Text(tr('تأكيد الصرف', 'Confirm issue')),
+          )),
         ]),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('إلغاء', 'Cancel'))),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('صرف', 'Issue'))),
-        ],
-      ),
+      )),
     );
     if (go != true || !mounted) return;
     try {
       final qty = double.tryParse(qtyCtrl.text) ?? 1.0;
-      final res = await context.read<AuthProvider>().api.clientInvScanIssue(_storeId!, code, quantity: qty);
+      final res = await context.read<AuthProvider>().api.clientInvIssue(_storeId!, barcode: code, quantity: qty, locationId: locId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('✅ ${res['product']} · ${tr('المتبقّي', 'remaining')}: ${res['on_hand']}${res['low_stock'] == true ? ' ⚠️' : ''}'),
+          content: Text('✅ ${res['product']} → ${res['location'] ?? '—'} · ${tr('المتبقّي', 'left')}: ${res['on_hand']}'),
+          backgroundColor: const Color(0xFF16A34A),
         ));
         _boot();
       }
@@ -191,6 +209,63 @@ class _ClientInventoryScreenState extends State<ClientInventoryScreen> {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: const Color(0xFFE11D48)));
     }
   }
+
+  Future<void> _showConsumption() async {
+    Map<String, dynamic>? data;
+    String period = 'month';
+    await showModalBottomSheet(
+      context: context, isScrollControlled: true, showDragHandle: true,
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setSt) {
+        Future<void> load() async {
+          try { final d = await context.read<AuthProvider>().api.clientInvConsumption(period: period); setSt(() => data = d); } catch (_) {}
+        }
+        if (data == null) load();
+        Widget topList(String title, String emoji, List rows) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Padding(padding: const EdgeInsets.only(top: 14, bottom: 6), child: Text('$emoji $title', style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0E3A5F)))),
+          if (rows.isEmpty) const Text('—', style: TextStyle(color: Colors.grey)),
+          for (int i = 0; i < rows.length && i < 6; i++)
+            Padding(padding: const EdgeInsets.symmetric(vertical: 3), child: Row(children: [
+              Container(width: 22, height: 22, alignment: Alignment.center, decoration: BoxDecoration(color: const Color(0xFF0E3A5F).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)), child: Text('${i + 1}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF0E3A5F)))),
+              const SizedBox(width: 8),
+              Expanded(child: Text('${rows[i]['label']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
+              Text('${rows[i]['qty']}', style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFFC0392B))),
+            ])),
+        ]);
+        return DraggableScrollableSheet(expand: false, initialChildSize: 0.8, maxChildSize: 0.95, builder: (_, ctrl) => ListView(controller: ctrl, padding: const EdgeInsets.fromLTRB(18, 0, 18, 20), children: [
+          Text(tr('تحليلات الاستهلاك', 'Consumption analytics'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0E3A5F))),
+          const SizedBox(height: 10),
+          Wrap(spacing: 8, children: [
+            for (final p in const [['day', 'اليوم', 'Day'], ['month', 'الشهر', 'Month'], ['year', 'السنة', 'Year'], ['all', 'الكل', 'All']])
+              ChoiceChip(label: Text(gLang == 'en' ? p[2] : p[1]), selected: period == p[0], onSelected: (_) { period = p[0]; data = null; setSt(() {}); }),
+          ]),
+          if (data == null) const Padding(padding: EdgeInsets.all(40), child: Center(child: CircularProgressIndicator()))
+          else ...[
+            const SizedBox(height: 12),
+            Row(children: [
+              Expanded(child: _cstat('${data!['total_qty'] ?? 0}', tr('إجمالي المصروف', 'Total issued'), const Color(0xFF0891B2))),
+              const SizedBox(width: 8),
+              Expanded(child: _cstat('${data!['total_value'] ?? 0}', tr('القيمة', 'Value'), const Color(0xFF16A34A))),
+              const SizedBox(width: 8),
+              Expanded(child: _cstat('${data!['issues'] ?? 0}', tr('عمليات', 'Issues'), const Color(0xFFF59E0B))),
+            ]),
+            topList(tr('أكثر المواد استهلاكًا', 'Top materials'), '📦', (data!['top_materials'] as List?) ?? []),
+            topList(tr('أكثر المواقع استهلاكًا', 'Top locations'), '📍', (data!['top_locations'] as List?) ?? []),
+            topList(tr('أكثر المباني', 'Top buildings'), '🏢', (data!['top_buildings'] as List?) ?? []),
+            topList(tr('أكثر الموظفين صرفًا', 'Top employees'), '👷', (data!['top_employees'] as List?) ?? []),
+          ],
+        ]));
+      }),
+    );
+  }
+
+  Widget _cstat(String v, String l, Color c) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+        decoration: BoxDecoration(color: c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+        child: Column(children: [
+          Text(v, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: c)),
+          Text(l, style: const TextStyle(fontSize: 10, color: Colors.grey), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+        ]),
+      );
 }
 
 /// Minimal full-screen barcode scanner that pops the scanned code.
