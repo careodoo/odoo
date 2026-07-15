@@ -7,9 +7,10 @@ import '../core/i18n.dart';
 /// Full Odoo web backend inside the app via seamless token→session SSO.
 /// Odoo's own groups gate what the signed-in user can see.
 class OdooBackendScreen extends StatefulWidget {
-  const OdooBackendScreen({super.key, this.path = '/web', this.title});
+  const OdooBackendScreen({super.key, this.path = '/web', this.title, this.showSwitch = false});
   final String path;
   final String? title;
+  final bool showSwitch;
   @override
   State<OdooBackendScreen> createState() => _OdooBackendScreenState();
 }
@@ -48,6 +49,8 @@ class _OdooBackendScreenState extends State<OdooBackendScreen> {
         foregroundColor: Colors.white,
         title: Text(widget.title ?? tr('لوحة أودو الكاملة', 'Odoo backend')),
         actions: [
+          if (widget.showSwitch)
+            IconButton(icon: const Icon(Icons.swap_horiz_rounded), tooltip: tr('تبديل الوضع', 'Switch mode'), onPressed: () => context.read<AuthProvider>().setAppMode(null)),
           IconButton(icon: const Icon(Icons.refresh), onPressed: () => _wc?.reload()),
         ],
       ),

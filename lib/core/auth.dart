@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'api_client.dart';
 import '../models/models.dart';
 
@@ -14,6 +15,23 @@ class AuthProvider extends ChangeNotifier {
   String? error;
   String? _adminToken; // saved while impersonating
   Timer? _poll;
+
+  // ---- app interface mode (multi-portal switcher) ----
+  static const _modeStore = FlutterSecureStorage();
+  String? appMode; // 'c2c' | 'cafm' | 'pms' | 'backend' | null (unchosen)
+  Map<String, dynamic>? interfaces; // from /whoami
+
+  Future<void> setAppMode(String? m) async {
+    appMode = m;
+    if (m == null) {
+      await _modeStore.delete(key: 'c2c_app_mode');
+    } else {
+      await _modeStore.write(key: 'c2c_app_mode', value: m);
+    }
+    notifyListeners();
+  }
+
+  Future<String?> loadAppMode() async => appMode = await _modeStore.read(key: 'c2c_app_mode');
 
   bool get isLoggedIn => profile != null;
   bool get isImpersonating => _adminToken != null;
@@ -101,6 +119,8 @@ class AuthProvider extends ChangeNotifier {
     _poll = null;
     await api.logout();
     profile = null;
+    interfaces = null;
+    await setAppMode(null);
     notifyListeners();
   }
 

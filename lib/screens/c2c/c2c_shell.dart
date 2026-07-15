@@ -20,9 +20,10 @@ class C2C {
 /// The CARE 2 CARE customer storefront shell (Home · Bookings · Account).
 /// Shown as the app's default face; CAFM clients get a switch into the CAFM app.
 class C2CShell extends StatefulWidget {
-  const C2CShell({super.key, this.canSwitchCafm = false, this.guest = false});
+  const C2CShell({super.key, this.canSwitchCafm = false, this.guest = false, this.showModeSwitch = false});
   final bool canSwitchCafm;
   final bool guest;
+  final bool showModeSwitch;
   @override
   State<C2CShell> createState() => _C2CShellState();
 }
@@ -36,7 +37,7 @@ class _C2CShellState extends State<C2CShell> {
       C2CHomeScreen(canSwitchCafm: widget.canSwitchCafm, guest: widget.guest),
       const C2CShopScreen(),
       widget.guest ? const _GuestGate() : const C2CBookingsScreen(),
-      widget.guest ? const _GuestGate() : C2CAccountScreen(canSwitchCafm: widget.canSwitchCafm),
+      widget.guest ? const _GuestGate() : C2CAccountScreen(canSwitchCafm: widget.canSwitchCafm, showModeSwitch: widget.showModeSwitch),
     ];
     return Scaffold(
       backgroundColor: C2C.bg,
