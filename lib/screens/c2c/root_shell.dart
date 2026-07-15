@@ -5,6 +5,7 @@ import '../main_shell.dart';
 import '../odoo_backend_screen.dart';
 import 'c2c_shell.dart';
 import 'mode_switch.dart';
+import 'staff/staff_shell.dart';
 
 /// Routes the logged-in user to their chosen interface:
 ///   • one interface → straight in
@@ -56,6 +57,8 @@ class _RootShellState extends State<RootShell> {
         if (auth.appMode == null) return ModeChooserScreen(modes: modes);
         // route to chosen mode
         switch (auth.appMode) {
+          case 'c2c_staff':
+            return const StaffShell();
           case 'cafm':
             return const _ModeScaffold(child: MainShell());
           case 'pms':

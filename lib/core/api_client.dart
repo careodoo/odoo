@@ -660,6 +660,37 @@ class ApiClient {
   Future<List<dynamic>> c2cShopOrders() async =>
       List<dynamic>.from((await _handle(
               await http.get(_u('/c2c/orders'), headers: await _headers())))['data'] as List);
+
+  // ---- CARE 2 CARE staff (crew roles) -------------------------------------
+  Future<Map<String, dynamic>> c2cStaffWhoami() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/c2c/staff/whoami'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> c2cStaffOverview() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/c2c/staff/overview'), headers: await _headers())))['data'] as Map);
+
+  Future<List<dynamic>> c2cStaffJobs({String filter = ''}) async {
+    final path = '/c2c/staff/jobs${filter.isEmpty ? '' : '?filter=$filter'}';
+    return List<dynamic>.from((await _handle(await http.get(_u(path), headers: await _headers())))['data'] as List);
+  }
+
+  Future<Map<String, dynamic>> c2cStaffJob(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/c2c/staff/job/$id'), headers: await _headers())))['data'] as Map);
+
+  /// act: start | complete | proof | assign | reassign | quality | approve | note
+  Future<Map<String, dynamic>> c2cStaffJobAction(int id, String act, {Map<String, dynamic>? body}) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/c2c/staff/job/$id/$act'),
+              headers: await _headers(), body: jsonEncode(body ?? {}))))['data'] as Map);
+
+  Future<List<dynamic>> c2cStaffTeam() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/c2c/staff/team'), headers: await _headers())))['data'] as List);
+
+  Future<Map<String, dynamic>> c2cStaffAvailable(bool available) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/c2c/staff/available'),
+              headers: await _headers(), body: jsonEncode({'available': available}))))['data'] as Map);
 }
 
 class ApiException implements Exception {
