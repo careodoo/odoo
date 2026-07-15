@@ -15,6 +15,13 @@
         'views/c2c_views.xml',
         'views/c2c_menus.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'care2care/static/src/dashboard/c2c_dashboard.scss',
+            'care2care/static/src/dashboard/c2c_dashboard.js',
+            'care2care/static/src/dashboard/c2c_dashboard.xml',
+        ],
+    },
     'installable': True,
     'application': True,
 }

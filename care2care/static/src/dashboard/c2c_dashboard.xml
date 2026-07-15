@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+  <t t-name="care2care.Dashboard">
+    <div class="c2c-dash" dir="rtl">
+      <div class="c2c-dash-head">
+        <div>
+          <h1>🎛️ لوحة تحكم تطبيق CARE 2 CARE</h1>
+          <div class="sub">نظرة شاملة على كل ما يجري في التطبيق</div>
+        </div>
+        <button class="btn btn-light" t-on-click="reload">🔄 تحديث</button>
+      </div>
+
+      <div t-if="state.loading" class="c2c-load">جارٍ التحميل…</div>
+      <div t-elif="state.error" class="c2c-err" t-esc="state.error"/>
+      <t t-else="">
+        <!-- KPI grid -->
+        <div class="c2c-kpis">
+          <div class="kpi clk" t-on-click="() => this.open('c2c.booking','الحجوزات')">
+            <div class="ic" style="background:#0e3a5f">📅</div>
+            <div><div class="v" t-esc="k.bookings"/><div class="l">إجمالي الحجوزات</div></div>
+          </div>
+          <div class="kpi clk" t-on-click="() => this.open('c2c.booking','حجوزات اليوم')">
+            <div class="ic" style="background:#f59e0b">⏰</div>
+            <div><div class="v" t-esc="k.bookings_today"/><div class="l">حجوزات اليوم</div></div>
+          </div>
+          <div class="kpi"><div class="ic" style="background:#6366f1">🔧</div>
+            <div><div class="v" t-esc="k.bookings_active"/><div class="l">قيد التنفيذ</div></div></div>
+          <div class="kpi clk" t-on-click="() => this.open('c2c.product.order','طلبات المتجر')">
+            <div class="ic" style="background:#0891b2">🛒</div>
+            <div><div class="v" t-esc="k.orders"/><div class="l">طلبات المتجر</div></div></div>
+          <div class="kpi clk" t-on-click="() => this.open('c2c.contract.request','طلبات التعاقد')">
+            <div class="ic" style="background:#8b5cf6">📄</div>
+            <div><div class="v" t-esc="k.contracts_new"/><div class="l">طلبات تعاقد جديدة</div></div></div>
+          <div class="kpi"><div class="ic" style="background:#16a34a">💰</div>
+            <div><div class="v"><t t-esc="k.revenue"/> <span class="cur" t-esc="k.currency"/></div><div class="l">الإيرادات (مدفوعة)</div></div></div>
+          <div class="kpi"><div class="ic" style="background:#0ea5e9">👥</div>
+            <div><div class="v" t-esc="k.customers"/><div class="l">العملاء</div></div></div>
+          <div class="kpi clk" t-on-click="() => this.open('c2c.service','الخدمات')">
+            <div class="ic" style="background:#c0392b">🧩</div>
+            <div><div class="v" t-esc="k.services"/><div class="l">الخدمات</div></div></div>
+        </div>
+
+        <!-- charts row -->
+        <div class="c2c-row">
+          <div class="c2c-card">
+            <h3>📈 الحجوزات آخر ١٤ يومًا</h3>
+            <div class="bars">
+              <div class="bar" t-foreach="series" t-as="s" t-key="s_index">
+                <div class="fill" t-attf-style="height:{{s.pct}}%"/>
+                <div class="bl" t-esc="s.label"/>
+              </div>
+            </div>
+          </div>
+          <div class="c2c-card">
+            <h3>⭐ أكثر الخدمات طلبًا</h3>
+            <div class="tops">
+              <div class="top" t-foreach="topServices" t-as="t" t-key="t_index">
+                <div class="tn" t-esc="t.name"/>
+                <div class="tbar"><div class="tfill" t-attf-style="width:{{t.pct}}%"/></div>
+                <div class="tc" t-esc="t.count"/>
+              </div>
+              <div t-if="!topServices.length" class="muted">لا بيانات بعد</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- booking states -->
+        <div class="c2c-card">
+          <h3>🗂️ الحجوزات حسب الحالة</h3>
+          <div class="pills">
+            <span class="pill" t-foreach="state.data.booking_states" t-as="bs" t-key="bs_index"
+                  t-attf-style="background:{{stateColor(bs.state)}}1f;color:{{stateColor(bs.state)}}"
+                  t-on-click="() => this.open('c2c.booking', bs.label, [['state','=',bs.state]])">
+              <t t-esc="bs.label"/>: <b t-esc="bs.count"/>
+            </span>
+          </div>
+        </div>
+
+        <!-- recent activity -->
+        <div class="c2c-row">
+          <div class="c2c-card">
+            <h3>🕐 أحدث الحجوزات</h3>
+            <div class="rec" t-foreach="state.data.recent_bookings" t-as="r" t-key="r_index"
+                 t-on-click="() => this.openRecord('c2c.booking', r.id)">
+              <div class="rl"><b t-esc="r.name"/> — <t t-esc="r.title"/><div class="rs" t-esc="r.sub"/></div>
+              <span class="rst" t-attf-style="background:{{stateColor(r.state)}}"><t t-esc="r.amount"/></span>
+            </div>
+          </div>
+          <div class="c2c-card">
+            <h3>🛒 أحدث طلبات المتجر</h3>
+            <div class="rec" t-foreach="state.data.recent_orders" t-as="r" t-key="r_index"
+                 t-on-click="() => this.openRecord('c2c.product.order', r.id)">
+              <div class="rl"><b t-esc="r.name"/> — <t t-esc="r.title"/><div class="rs" t-esc="r.sub"/></div>
+              <span class="rst" t-attf-style="background:{{stateColor(r.state)}}"><t t-esc="r.amount"/></span>
+            </div>
+            <div t-if="!state.data.recent_orders.length" class="muted">لا طلبات</div>
+          </div>
+        </div>
+
+        <!-- control shortcuts -->
+        <div class="c2c-card">
+          <h3>⚙️ التحكّم في التطبيق</h3>
+          <div class="ctrls">
+            <button class="ctrl" t-on-click="() => this.open('c2c.service','الخدمات')">🧩 إدارة الخدمات</button>
+            <button class="ctrl" t-on-click="() => this.open('c2c.category','الفئات')">🗂️ الفئات</button>
+            <button class="ctrl" t-on-click="() => this.open('c2c.offer','العروض')">🎉 العروض</button>
+            <button class="ctrl" t-on-click="() => this.open('c2c.subscription.plan','الاشتراكات')">💳 الاشتراكات</button>
+            <button class="ctrl" t-on-click="() => this.open('c2c.provider','مقدّمو الخدمة')">👷 الفريق</button>
+            <button class="ctrl" t-on-click="() => this.open('c2c.review','التقييمات')">⭐ التقييمات</button>
+            <button class="ctrl" t-on-click="() => this.open('c2c.work.sample','أعمال قبل/بعد')">🖼️ أعمال سابقة</button>
+            <button class="ctrl" t-on-click="() => this.open('c2c.booking','الحجوزات')">📅 الحجوزات</button>
+            <button class="ctrl" t-on-click="() => this.open('c2c.product.order','طلبات المتجر')">🛒 طلبات المتجر</button>
+            <button class="ctrl" t-on-click="() => this.open('c2c.contract.request','التعاقدات')">📄 التعاقدات</button>
+            <button class="ctrl" t-on-click="() => this.open('c2c.settings','إعدادات الحجز')">⚙️ إعدادات الحجز والمواعيد</button>
+          </div>
+        </div>
+      </t>
+    </div>
+  </t>
+</templates>

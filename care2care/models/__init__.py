@@ -5,3 +5,4 @@ from . import c2c_extra
 from . import c2c_contract
 from . import c2c_settings
 from . import c2c_shop
+from . import c2c_dashboard
