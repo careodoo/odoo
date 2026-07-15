@@ -152,9 +152,19 @@
         <field name="image" widget="image" class="oe_avatar"/>
         <div class="oe_title"><h1><field name="name"/></h1></div>
         <group>
-          <group><field name="employee_id"/><field name="phone"/><field name="available"/></group>
-          <group><field name="category_ids" widget="many2many_tags"/><field name="booking_count"/><field name="rating_avg"/></group>
+          <group string="الهوية والدور">
+            <field name="role"/><field name="user_id"/><field name="employee_id"/><field name="phone"/><field name="available"/>
+          </group>
+          <group string="الهيكل والأداء">
+            <field name="leader_id"/><field name="supervisor_id"/><field name="team_size"/>
+            <field name="category_ids" widget="many2many_tags"/><field name="booking_count"/><field name="rating_avg"/>
+          </group>
         </group>
+        <notebook>
+          <page string="أعضاء الفريق" invisible="role not in ('team_leader','supervisor')">
+            <field name="team_member_ids"><tree><field name="name"/><field name="role"/><field name="phone"/><field name="available"/></tree></field>
+          </page>
+        </notebook>
       </sheet></form>
     </field>
   </record>
