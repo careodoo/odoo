@@ -110,6 +110,28 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Public self-registration → CARE 2 CARE customer; auto-logs in on success.
+  Future<bool> signup({required String name, String? email, String? phone, required String password}) async {
+    error = null;
+    notifyListeners();
+    try {
+      interfaces = null;
+      await setAppMode(null);
+      profile = Profile.fromJson(await api.signup(name: name, email: email, phone: phone, password: password));
+      _startPolling();
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      error = e.message;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      error = 'تعذّر إنشاء الحساب';
+      notifyListeners();
+      return false;
+    }
+  }
+
   Future<void> logout() async {
     if (_adminToken != null) {
       // exit impersonation instead of a full logout

@@ -68,10 +68,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     _logo(),
                     const SizedBox(height: 18),
-                    const Text('CARE FM',
-                        style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w900, letterSpacing: 3)),
+                    const Text('CARE',
+                        style: TextStyle(color: Colors.white, fontSize: 38, fontWeight: FontWeight.w900, letterSpacing: 4)),
                     const SizedBox(height: 4),
-                    Text(tr('نظام إدارة المرافق المتكامل', 'Integrated Facility Management'),
+                    Text(tr('منصّتك المتكاملة — خدمات وإدارة', 'Your all-in-one services platform'),
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: Colors.white70, fontSize: 13, letterSpacing: .3)),
                     const SizedBox(height: 30),
@@ -167,10 +167,104 @@ class _LoginScreenState extends State<LoginScreen> {
                 ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                 : Text(tr('دخول', 'Log in')),
           ),
+          const SizedBox(height: 14),
+          Row(children: [
+            const Expanded(child: Divider()),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: Text(tr('جديد على كير؟', 'New to CARE?'), style: const TextStyle(color: Colors.grey, fontSize: 12))),
+            const Expanded(child: Divider()),
+          ]),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: _busy ? null : () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SignupScreen())),
+            icon: const Icon(Icons.person_add_alt_1_rounded, color: Color(0xFF16A34A)),
+            label: Text(tr('إنشاء عضوية جديدة', 'Create a new account'), style: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w800)),
+            style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48), side: const BorderSide(color: Color(0xFF16A34A))),
+          ),
         ],
       ),
     );
   }
+}
+
+/// Public self-registration → a CARE 2 CARE customer account.
+class SignupScreen extends StatefulWidget {
+  const SignupScreen({super.key});
+  @override
+  State<SignupScreen> createState() => _SignupScreenState();
+}
+
+class _SignupScreenState extends State<SignupScreen> {
+  final _name = TextEditingController();
+  final _email = TextEditingController();
+  final _phone = TextEditingController();
+  final _pass = TextEditingController();
+  bool _busy = false, _obscure = true;
+
+  Future<void> _submit() async {
+    if (_name.text.trim().isEmpty || (_email.text.trim().isEmpty && _phone.text.trim().isEmpty) || _pass.text.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('أكمل البيانات (كلمة مرور ٦ أحرف على الأقل)', 'Complete the fields (min 6-char password)'))));
+      return;
+    }
+    setState(() => _busy = true);
+    final ok = await context.read<AuthProvider>().signup(name: _name.text.trim(), email: _email.text.trim(), phone: _phone.text.trim(), password: _pass.text);
+    if (mounted) setState(() => _busy = false);
+    if (ok && mounted) {
+      Navigator.of(context)..pop()..maybePop();
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.read<AuthProvider>().error ?? tr('تعذّر إنشاء الحساب', 'Signup failed'))));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(children: [
+        const _Backdrop(),
+        SafeArea(child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+          child: Column(children: [
+            Align(alignment: Alignment.centerLeft, child: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.pop(context))),
+            const SizedBox(height: 8),
+            const Text('CARE 2 CARE', style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: 2)),
+            const SizedBox(height: 4),
+            Text(tr('أنشئ عضويتك واحجز خدماتك المنزلية', 'Create your account & book home services'), style: const TextStyle(color: Colors.white70, fontSize: 13)),
+            const SizedBox(height: 24),
+            Container(
+              constraints: const BoxConstraints(maxWidth: 420),
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(22), boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 30, offset: Offset(0, 12))]),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Text(tr('عضوية جديدة', 'New account'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 16),
+                _f(_name, tr('الاسم الكامل', 'Full name'), Icons.person_outline),
+                const SizedBox(height: 12),
+                _f(_email, tr('البريد الإلكتروني', 'Email'), Icons.email_outlined, keyboard: TextInputType.emailAddress),
+                const SizedBox(height: 12),
+                _f(_phone, tr('رقم الهاتف', 'Phone'), Icons.phone_outlined, keyboard: TextInputType.phone),
+                const SizedBox(height: 12),
+                TextField(controller: _pass, obscureText: _obscure, decoration: InputDecoration(
+                  labelText: tr('كلمة المرور', 'Password'), prefixIcon: const Icon(Icons.lock_outline),
+                  suffixIcon: IconButton(icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off), onPressed: () => setState(() => _obscure = !_obscure)),
+                  border: const OutlineInputBorder())),
+                const SizedBox(height: 20),
+                FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A), minimumSize: const Size.fromHeight(50)),
+                  onPressed: _busy ? null : _submit,
+                  child: _busy ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : Text(tr('إنشاء الحساب', 'Create account'), style: const TextStyle(fontWeight: FontWeight.w800))),
+                const SizedBox(height: 10),
+                Text(tr('بإنشائك الحساب فأنت توافق على الشروط وسياسة الخصوصية.', 'By signing up you agree to the Terms & Privacy Policy.'), textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey, fontSize: 11)),
+              ]),
+            ),
+          ]),
+        )),
+      ]),
+    );
+  }
+
+  Widget _f(TextEditingController c, String label, IconData ic, {TextInputType? keyboard}) => TextField(
+        controller: c, keyboardType: keyboard,
+        decoration: InputDecoration(labelText: label, prefixIcon: Icon(ic), border: const OutlineInputBorder()),
+      );
 }
 
 /// A layered gradient + soft floating shapes — brand-forward, no assets needed.

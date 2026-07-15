@@ -60,6 +60,16 @@ class ApiClient {
     return Map<String, dynamic>.from(body['data'] as Map);
   }
 
+  /// Public self-registration → CARE 2 CARE customer; auto-logs in.
+  Future<Map<String, dynamic>> signup({required String name, String? email, String? phone, required String password, String? device}) async {
+    final r = await http.post(_u('/auth/signup'),
+        headers: await _headers(),
+        body: jsonEncode({'name': name, 'email': email, 'phone': phone, 'password': password, 'device': device}));
+    final body = await _handle(r) as Map;
+    await _setToken(body['token'] as String?);
+    return Map<String, dynamic>.from(body['data'] as Map);
+  }
+
   Future<void> logout() async {
     try {
       await http.post(_u('/auth/logout'), headers: await _headers());
