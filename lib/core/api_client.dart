@@ -608,6 +608,11 @@ class ApiClient {
       List<dynamic>.from((await _handle(
               await http.get(_u('/c2c/contracts'), headers: await _headers())))['data'] as List);
 
+  /// decision: approve | reject
+  Future<Map<String, dynamic>> c2cContractDecide(int id, String decision) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/c2c/contract/$id/$decision'),
+              headers: await _headers(), body: jsonEncode({}))))['data'] as Map);
+
   /// Available booking slots + rules for a service on a date (YYYY-MM-DD).
   Future<Map<String, dynamic>> c2cSlots(int serviceId, String date) async =>
       Map<String, dynamic>.from((await _handle(

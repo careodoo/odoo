@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'c2c_shell.dart';
+import 'c2c_booking_detail.dart';
 
 class C2CBookingsScreen extends StatefulWidget {
   const C2CBookingsScreen({super.key});
@@ -57,7 +58,12 @@ class _C2CBookingsScreenState extends State<C2CBookingsScreen> {
     final c = _stC[st] ?? Colors.grey;
     final canCancel = st != 'done' && st != 'cancelled';
     final canRate = st == 'done' && (b['rating'] == null || b['rating'] == false);
-    return Container(
+    return GestureDetector(
+      onTap: () async {
+        await Navigator.push(context, MaterialPageRoute(builder: (_) => C2CBookingDetailScreen(booking: b)));
+        _load();
+      },
+      child: Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))]),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -95,6 +101,7 @@ class _C2CBookingsScreenState extends State<C2CBookingsScreen> {
           ]),
         ),
       ]),
+    ),
     );
   }
 

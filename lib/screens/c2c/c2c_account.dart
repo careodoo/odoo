@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'c2c_shell.dart';
+import 'c2c_contracts.dart';
 
 class C2CAccountScreen extends StatefulWidget {
   const C2CAccountScreen({super.key, this.canSwitchCafm = false});
@@ -55,6 +56,7 @@ class _C2CAccountScreenState extends State<C2CAccountScreen> {
               ]),
             ),
             _tile(Icons.event_note_rounded, tr('حجوزاتي', 'My bookings'), () {}),
+            _tile(Icons.description_outlined, tr('طلبات التعاقد وعروض الأسعار', 'Contracts & quotes'), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const C2CContractsScreen()))),
             if (widget.canSwitchCafm)
               _tile(Icons.apartment_rounded, tr('التحويل إلى إدارة المرافق (CAFM)', 'Switch to CAFM'), () => openCafm(context), color: C2C.navy),
             _tile(Icons.language_rounded, tr('اللغة', 'Language'), _langSheet),
