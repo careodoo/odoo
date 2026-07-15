@@ -68,7 +68,7 @@ class WastePortal(CustomerPortal):
         domain = base + filters.get(filterby, [])
         total = SO.search_count(domain)
         pager = portal_pager(url='/waste/orders', url_args={'filterby': filterby}, total=total, page=page, step=ITEMS)
-        orders = SO.search(domain, limit=ITEMS, offset=pager['offset'], order='id desc')
+        orders = SO.search(domain, limit=ITEMS, offset=pager['offset'], order='serial desc, id desc')
         stats = SO.dashboard_stats(base)
         return request.render('care_cafm_waste.portal_waste_orders', {
             'orders': orders, 'pager': pager, 'page_name': 'waste', 'default_url': '/waste/orders',

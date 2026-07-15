@@ -15,6 +15,7 @@
           <button name="action_to_completed" string="إكمال" type="object" class="oe_highlight" invisible="states != 'delivered'"/>
           <button name="action_to_cancelled" string="إلغاء" type="object" invisible="states in ('completed','cancelled')" groups="care_cafm_waste.group_waste_manager"/>
           <button name="action_to_draft" string="إعادة لمسودة" type="object" invisible="states == 'draft'" groups="care_cafm_waste.group_waste_manager"/>
+          <button name="%(action_report_waste_order)d" string="🖨️ طباعة التقرير" type="action" class="btn-secondary"/>
           <field name="states" widget="statusbar" statusbar_visible="draft,scheduled,pickuped,arrived,processing,delivered,completed"/>
         </header>
         <sheet>
@@ -43,6 +44,15 @@
                   <field name="item_id"/>
                   <field name="quantity"/>
                   <field name="weight" readonly="1"/>
+                </tree>
+              </field>
+            </page>
+            <page string="أصناف الرحلة (المُنفّذة)" name="trip_items" invisible="not trip_id">
+              <field name="trip_line_ids" readonly="1">
+                <tree>
+                  <field name="item_id"/>
+                  <field name="quantity"/>
+                  <field name="weight"/>
                 </tree>
               </field>
             </page>
@@ -174,6 +184,7 @@
     <field name="arch" type="xml">
       <form>
         <header>
+          <button name="%(action_report_waste_trip)d" string="🖨️ طباعة تقرير الرحلة" type="action" class="btn-secondary"/>
           <field name="states" widget="statusbar"/>
         </header>
         <sheet>

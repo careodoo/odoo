@@ -113,9 +113,10 @@
           </div>
 
           <h5 class="fw-bold mt-4" style="color:#0E3A5F">الأصناف</h5>
+          <t t-set="lines" t-value="o.order_line_ids or (o.trip_id.trip_line_ids if o.trip_id else o.order_line_ids)"/>
           <table class="table table-sm">
             <thead class="bg-light"><tr><th>صورة</th><th>الصنف</th><th>الكمية</th><th>الوزن الكلي</th></tr></thead>
-            <tbody><tr t-foreach="o.order_line_ids" t-as="l">
+            <tbody><tr t-foreach="lines" t-as="l">
               <td><img t-if="l.item_id.image" t-att-src="image_data_uri(l.item_id.image)" style="max-height:3rem;border-radius:6px"/></td>
               <td t-esc="l.item_id.name"/><td t-esc="l.quantity"/><td t-esc="round(l.quantity*l.weight,2)"/>
             </tr></tbody>

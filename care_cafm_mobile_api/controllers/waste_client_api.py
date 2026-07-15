@@ -114,9 +114,13 @@ class WasteClientApi(Controller):
         dom = self._order_domain(env)
         if kw.get('state'):
             dom.append(('states', '=', kw['state']))
-        recs = SO.search(dom, order='id desc', limit=200)
+        order_by = 'serial desc' if _wm(env)['order'] == 'cafm.waste.order' else 'id desc'
+        recs = SO.search(dom, order=order_by, limit=200)
         def g_(o, f):
             return getattr(o, f) if f in o._fields else False
+        def lines(o):
+            # items live on the order, or fall back to the trip (legacy layout)
+            return o.order_line_ids or (o.trip_id.trip_line_ids if ('trip_id' in o._fields and o.trip_id) else o.order_line_ids)
         return _ok([{
             'id': o.id, 'serial': o.serial or o.display_name,
             'project': o.project_id.name or None,
@@ -124,7 +128,7 @@ class WasteClientApi(Controller):
             'type': o.type_id.name if 'type_id' in o._fields and o.type_id else None,
             'order_date': _d(getattr(o, 'order_datetime', False)),
             'request_date': _d(getattr(o, 'request_datetime', False)),
-            'items': [self._item_dict(l) for l in o.order_line_ids],
+            'items': [self._item_dict(l) for l in lines(o)],
             'trip': o.trip_id.sequence if 'trip_id' in o._fields and o.trip_id else None,
             'ops_manager': g_(o, 'ops_manager_id').name if g_(o, 'ops_manager_id') else None,
             'driver': g_(o, 'driver_id').name if g_(o, 'driver_id') else None,
@@ -176,7 +180,8 @@ class WasteClientApi(Controller):
             return _ok([])
         T = env[_wm(env)['trip']].sudo()
         st = _sel(T, 'states')
-        recs = T.search([('project_id', 'in', self._projects(env).ids)], order='id desc', limit=200)
+        torder = 'sequence desc' if _wm(env)['trip'] == 'cafm.waste.trip' else 'id desc'
+        recs = T.search([('project_id', 'in', self._projects(env).ids)], order=torder, limit=200)
         return _ok([{
             'id': t.id, 'sequence': t.sequence or t.display_name,
             'pickup': t.pickup_location_id.name if t.pickup_location_id else None,
@@ -190,7 +195,8 @@ class WasteClientApi(Controller):
                        'qty': getattr(l, 'quantity', 0), 'weight': getattr(l, 'weight', 0),
                        'image': _abs('/api/v1/waste/item/%s/image' % l.item_id.id) if ('item_id' in l._fields and l.item_id and getattr(l.item_id, 'image', False)) else None}
                       for l in t.trip_line_ids] if 'trip_line_ids' in t._fields else [],
-            'order_count': len(t.order_ids) if 'order_ids' in t._fields else 0,
+            'order_count': len(t.order_ids) if 'order_ids' in t._fields else (1 if ('order_id' in t._fields and t.order_id) else 0),
+            'report_path': ('/report/pdf/care_cafm_waste.report_waste_trip_doc/%s' % t.id) if _wm(env)['trip'] == 'cafm.waste.trip' else None,
             'state': t.states, 'state_label': st.get(t.states, t.states or ''),
         } for t in recs])
 
@@ -288,6 +294,10 @@ class WasteClientApi(Controller):
             vals['pickup_location_id'] = int(b['pickup_location_id'])
         if b.get('type_id'):
             vals['type_id'] = int(b['type_id'])
+        if b.get('request_datetime'):
+            vals['request_datetime'] = b['request_datetime']
+        if b.get('notes'):
+            vals['notes'] = b['notes']
         lines = []
         for it in (b.get('items') or []):
             if it.get('item_id'):
@@ -313,8 +323,10 @@ class WasteClientApi(Controller):
         Pick = env[_wm(env)['pickup']].sudo()
         picks = Pick.search([('project_id', 'in', projs.ids)]) if _wm(env)['pickup'] in env else Pick.browse()
         items = env[_wm(env)['item']].sudo().search([]) if _wm(env)['item'] in env else None
+        types = env['cafm.waste.type'].sudo().search([]) if 'cafm.waste.type' in env else None
         return _ok({
             'projects': [{'id': p.id, 'name': p.name} for p in projs],
             'pickups': [{'id': p.id, 'name': p.name, 'project_id': p.project_id.id} for p in picks],
             'items': [{'id': i.id, 'name': i.name} for i in items] if items is not None else [],
+            'types': [{'id': t.id, 'name': t.name} for t in types] if types is not None else [],
         })

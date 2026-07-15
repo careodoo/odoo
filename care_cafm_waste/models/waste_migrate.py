@@ -149,8 +149,28 @@ class WasteOrderMigrate(models.Model):
             if t.order_id and order_map.get(t.order_id.id):
                 Order.browse(order_map[t.order_id.id]).write({'trip_id': new.id})
 
+        # advance the sequences past the highest migrated serial to avoid
+        # collisions with newly-created records
+        self._bump_sequence('cafm.waste.order', S('cafm.waste.order').search([]), 'serial')
+        self._bump_sequence('cafm.waste.trip', S('cafm.waste.trip').search([]), 'sequence')
+        self._bump_sequence('cafm.waste.project', S('cafm.waste.project').search([]), 'sequence')
+
         env.cr.commit()
         result = {'orders': n_orders, 'trips': n_trips, 'projects': len(project_map),
                   'items': len(item_map)}
         _logger.info('CAFM waste migration done: %s', result)
         return result
+
+    @api.model
+    def _bump_sequence(self, code, records, field):
+        """Set the ir.sequence next number above the max numeric suffix in the
+        migrated records' serials so new records never collide."""
+        import re
+        mx = 0
+        for r in records:
+            m = re.search(r'(\d+)$', r[field] or '')
+            if m:
+                mx = max(mx, int(m.group(1)))
+        seq = self.env['ir.sequence'].sudo().search([('code', '=', code)], limit=1)
+        if seq and mx >= seq.number_next_actual:
+            seq.sudo().write({'number_next': mx + 1})

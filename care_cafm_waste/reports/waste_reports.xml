@@ -28,10 +28,11 @@
               <tr><td><strong>مستلم الكميات</strong></td><td t-esc="o.receiver_id.name or ''"/><td><strong>الوزن النهائي</strong></td><td><span t-esc="o.final_weight"/> كجم</td></tr>
             </table>
             <h4 style="color:#0E3A5F;margin-top:16px">الأصناف</h4>
+            <t t-set="lines" t-value="o.order_line_ids or (o.trip_id.trip_line_ids if o.trip_id else o.order_line_ids)"/>
             <table class="table table-sm table-bordered">
               <thead style="background:#f1f5f9"><tr><th>الصنف</th><th>الكمية</th><th>وزن الوحدة</th><th>الوزن الكلي</th></tr></thead>
               <tbody>
-                <tr t-foreach="o.order_line_ids" t-as="l">
+                <tr t-foreach="lines" t-as="l">
                   <td t-esc="l.item_id.name"/><td t-esc="l.quantity"/><td t-esc="l.weight"/>
                   <td t-esc="round(l.quantity * l.weight, 2)"/>
                 </tr>

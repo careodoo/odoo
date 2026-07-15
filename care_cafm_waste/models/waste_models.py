@@ -154,7 +154,7 @@ class WasteTrip(models.Model):
     _name = 'cafm.waste.trip'
     _description = 'رحلة نقل نفايات'
     _inherit = ['mail.thread', 'mail.activity.mixin']
-    _order = 'id desc'
+    _order = 'sequence desc, id desc'
     _rec_name = 'sequence'
 
     sequence = fields.Char(string='الرقم التسلسلي', readonly=True, copy=False)
@@ -204,7 +204,7 @@ class WasteOrder(models.Model):
     _name = 'cafm.waste.order'
     _description = 'طلب نقل ومعالجة نفايات'
     _inherit = ['mail.thread', 'mail.activity.mixin', 'portal.mixin']
-    _order = 'id desc'
+    _order = 'serial desc, id desc'
     _rec_name = 'serial'
 
     serial = fields.Char(string='الرقم التسلسلي', readonly=True, copy=False)
@@ -233,11 +233,19 @@ class WasteOrder(models.Model):
     total_weight = fields.Float(compute='_compute_totals', string='الوزن الكلي')
     qr_url = fields.Char(compute='_compute_qr_url', string='QR')
 
-    @api.depends('order_line_ids.quantity', 'order_line_ids.weight')
+    def effective_lines(self):
+        """Items to display for the order: its own lines, or the trip's lines
+        (legacy data kept the items on the trip, not the order)."""
+        self.ensure_one()
+        return self.order_line_ids or (self.trip_id.trip_line_ids if self.trip_id else self.order_line_ids)
+
+    @api.depends('order_line_ids.quantity', 'order_line_ids.weight',
+                 'trip_id.trip_line_ids.quantity', 'trip_id.trip_line_ids.weight')
     def _compute_totals(self):
         for o in self:
-            o.total_quantity = sum(o.order_line_ids.mapped('quantity'))
-            o.total_weight = sum(l.quantity * l.weight for l in o.order_line_ids)
+            lines = o.effective_lines()
+            o.total_quantity = sum(lines.mapped('quantity'))
+            o.total_weight = sum(l.quantity * l.weight for l in lines)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -401,7 +409,7 @@ class WasteOrder(models.Model):
             m = by_month.setdefault(mk, {'orders': 0, 'weight': 0.0, 'qty': 0.0})
             m['orders'] += 1
             m['weight'] += fw
-            for l in o.order_line_ids:
+            for l in o.effective_lines():
                 tq += l.quantity or 0
                 m['qty'] += l.quantity or 0
                 it = by_item.setdefault(l.item_id.name or '—',
