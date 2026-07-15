@@ -100,7 +100,7 @@ class _C2CShopScreenState extends State<C2CShopScreen> {
           Expanded(child: ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
             child: p['image'] != null
-                ? Image.network('${context.read<AuthProvider>().api.baseUrl}${p['image']}', width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: C2C.bg, child: const Icon(Icons.inventory_2_outlined, color: Colors.grey, size: 40)))
+                ? Image.network('${p['image']}', width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: C2C.bg, child: const Icon(Icons.inventory_2_outlined, color: Colors.grey, size: 40)))
                 : Container(color: C2C.bg, child: const Icon(Icons.inventory_2_outlined, color: Colors.grey, size: 40)),
           )),
           Padding(
