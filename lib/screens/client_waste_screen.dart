@@ -56,6 +56,11 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
         title: Text(tr('نقل ومعالجة النفايات', 'Waste')),
         actions: [
           IconButton(
+            tooltip: tr('التقارير والإحصائيات', 'Reports & statistics'),
+            icon: const Icon(Icons.insights_rounded),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WasteStatsScreen())),
+          ),
+          IconButton(
             tooltip: tr('لوحة التحكم الكاملة', 'Full dashboard'),
             icon: const Icon(Icons.dashboard_rounded),
             onPressed: _openPortal,
@@ -64,7 +69,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: const Color(0xFF16A34A),
-        onPressed: _newOrder,
+        onPressed: _newOrderMenu,
         icon: const Icon(Icons.add),
         label: Text(tr('طلب نقل', 'New order')),
       ),
@@ -191,46 +196,89 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
 
   static const _flow = ['draft', 'scheduled', 'pickuped', 'arrived', 'processing', 'delivered', 'completed'];
 
+  void _openReport(String? path, String title) {
+    if (path == null) return;
+    Navigator.push(context, MaterialPageRoute(builder: (_) => OdooBackendScreen(path: path, title: title)));
+  }
+
+  void _zoom(String url) => showDialog(context: context, builder: (_) => Dialog(
+        backgroundColor: Colors.black, insetPadding: const EdgeInsets.all(12),
+        child: Stack(children: [
+          InteractiveViewer(child: Image.network(url, errorBuilder: (_, __, ___) => const SizedBox(height: 200))),
+          Positioned(top: 4, right: 4, child: IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(context))),
+        ]),
+      ));
+
   void _openOrder(Map r) {
     final st = '${r['state']}';
     final cur = _flow.indexOf(st);
     final cancelled = st == 'cancelled';
     final items = (r['items'] as List?) ?? [];
+    final c = _stC[st] ?? Colors.blueGrey;
     showModalBottomSheet(
-      context: context, isScrollControlled: true, showDragHandle: true, backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
       builder: (_) => DraggableScrollableSheet(
-        expand: false, initialChildSize: 0.85, maxChildSize: 0.95,
-        builder: (_, ctrl) => ListView(controller: ctrl, padding: const EdgeInsets.all(18), children: [
-          Text('♻️ ${r['serial']}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0E3A5F))),
-          if (r['project'] != null) Text('${r['project']}', style: const TextStyle(color: Colors.grey)),
-          const SizedBox(height: 14),
-          _secTitle(tr('حالة الطلب', 'Order status')),
-          if (cancelled)
-            const Text('✖ تم إلغاء الطلب', style: TextStyle(color: Color(0xFFE11D48), fontWeight: FontWeight.w700))
-          else
-            Column(children: [for (int i = 0; i < _flow.length; i++) _step(i, cur)]),
-          _secTitle(tr('فريق العملية', 'Operation team')),
-          _kv(Icons.manage_accounts, tr('مدير العمليات', 'Ops manager'), r['ops_manager']),
-          _kv(Icons.local_shipping_outlined, tr('السائق', 'Driver'), r['driver']),
-          _kv(Icons.how_to_reg_outlined, tr('مستلم الكميات', 'Receiver'), r['receiver']),
-          if ((r['final_weight'] ?? 0) != 0) _kv(Icons.scale_outlined, tr('الوزن النهائي', 'Final weight'), '${r['final_weight']} كجم'),
-          if (r['final_note'] != null) _kv(Icons.sticky_note_2_outlined, tr('ملاحظة الاستلام', 'Receipt note'), r['final_note']),
-          _secTitle(tr('التفاصيل', 'Details')),
-          _kv(Icons.place_outlined, tr('موقع الالتقاط', 'Pickup'), r['pickup']),
-          _kv(Icons.route_outlined, tr('الرحلة', 'Trip'), r['trip']),
-          _kv(Icons.event_outlined, tr('التاريخ', 'Date'), r['order_date']),
-          if (items.isNotEmpty) ...[
-            _secTitle(tr('الأصناف', 'Items')),
-            for (final i in items) Padding(padding: const EdgeInsets.symmetric(vertical: 2), child: Row(children: [Expanded(child: Text('${i['item'] ?? '—'}')), Text('×${i['qty']}', style: const TextStyle(fontWeight: FontWeight.w700))])),
-          ],
-          if (r['proof'] != null) ...[
-            _secTitle(tr('صورة الإثبات', 'Proof photo')),
-            ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.network('${r['proof']}', errorBuilder: (_, __, ___) => const SizedBox())),
-          ],
-          if (r['notes'] != null) ...[_secTitle(tr('ملاحظات', 'Notes')), Text('${r['notes']}')],
-          const SizedBox(height: 20),
-        ]),
+        expand: false, initialChildSize: 0.9, maxChildSize: 0.96, minChildSize: 0.5,
+        builder: (_, ctrl) => Container(
+          decoration: const BoxDecoration(color: Color(0xFFF4F7FB), borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          clipBehavior: Clip.antiAlias,
+          child: Column(children: [
+            // gradient hero
+            Container(
+              padding: const EdgeInsets.fromLTRB(18, 12, 18, 16),
+              decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF115E4B), Color(0xFF16A34A)], begin: Alignment.topRight, end: Alignment.bottomLeft)),
+              child: Column(children: [
+                Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white54, borderRadius: BorderRadius.circular(3))),
+                const SizedBox(height: 12),
+                Row(children: [
+                  const Text('♻️', style: TextStyle(fontSize: 26)),
+                  const SizedBox(width: 10),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('${r['serial']}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 19)),
+                    if (r['project'] != null) Text('${r['project']}', style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 12.5)),
+                  ])),
+                  Container(padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)), child: Text(tr(_stL[st] ?? st, st), style: TextStyle(color: c, fontWeight: FontWeight.w900, fontSize: 12))),
+                ]),
+              ]),
+            ),
+            Expanded(child: ListView(controller: ctrl, padding: const EdgeInsets.all(16), children: [
+              _card(tr('حالة الطلب', 'Order status'), [
+                if (cancelled)
+                  const Text('✖ تم إلغاء الطلب', style: TextStyle(color: Color(0xFFE11D48), fontWeight: FontWeight.w700))
+                else
+                  Column(children: [for (int i = 0; i < _flow.length; i++) _step(i, cur)]),
+              ]),
+              _card(tr('فريق العملية', 'Operation team'), [
+                _kv(Icons.manage_accounts, tr('مدير العمليات', 'Ops manager'), r['ops_manager']),
+                _kv(Icons.local_shipping_outlined, tr('السائق', 'Driver'), r['driver']),
+                _kv(Icons.how_to_reg_outlined, tr('مستلم الكميات', 'Receiver'), r['receiver']),
+                if ((r['final_weight'] ?? 0) != 0) _kv(Icons.scale_outlined, tr('الوزن النهائي', 'Final weight'), '${r['final_weight']} كجم'),
+                if (r['final_note'] != null) _kv(Icons.sticky_note_2_outlined, tr('ملاحظة الاستلام', 'Receipt note'), r['final_note']),
+              ]),
+              _card(tr('التفاصيل', 'Details'), [
+                _kv(Icons.place_outlined, tr('موقع الالتقاط', 'Pickup'), r['pickup']),
+                _kv(Icons.route_outlined, tr('الرحلة', 'Trip'), r['trip']),
+                _kv(Icons.event_outlined, tr('التاريخ', 'Date'), r['order_date']),
+                _kv(Icons.category_outlined, tr('النوع', 'Type'), r['type']),
+              ]),
+              if (items.isNotEmpty) _card(tr('الأصناف', 'Items'), [for (final i in items) _itemRow(i as Map)]),
+              if (r['proof'] != null) _card(tr('صورة الإثبات', 'Proof photo'), [
+                GestureDetector(onTap: () => _zoom('${r['proof']}'), child: ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.network('${r['proof']}', width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox()))),
+              ]),
+              if (r['notes'] != null) _card(tr('ملاحظات', 'Notes'), [Text('${r['notes']}', style: const TextStyle(fontSize: 13, height: 1.4))]),
+              const SizedBox(height: 80),
+            ])),
+            SafeArea(top: false, child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
+              child: SizedBox(height: 50, child: ElevatedButton.icon(
+                onPressed: () => _openReport(r['report_path'] as String?, '${r['serial']}'),
+                icon: const Icon(Icons.picture_as_pdf_rounded),
+                label: Text(tr('عرض / طباعة التقرير', 'View / print report'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0E3A5F), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+              )),
+            )),
+          ]),
+        ),
       ),
     );
   }
@@ -238,33 +286,74 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
   void _openTrip(Map r) {
     final items = (r['items'] as List?) ?? [];
     showModalBottomSheet(
-      context: context, isScrollControlled: true, showDragHandle: true, backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('🚛 ${r['sequence']}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0E3A5F))),
-          const SizedBox(height: 12),
-          Row(children: [
-            Expanded(child: _tstat('⚖️', '${r['total_weight'] ?? 0}', tr('الوزن الكلي', 'Weight'), const Color(0xFF0891B2))),
-            const SizedBox(width: 8),
-            Expanded(child: _tstat('📦', '${r['total_quantity'] ?? 0}', tr('الكمية', 'Qty'), const Color(0xFF6366F1))),
-            const SizedBox(width: 8),
-            Expanded(child: _tstat('📋', '${r['order_count'] ?? 0}', tr('الأوامر', 'Orders'), const Color(0xFF16A34A))),
+      context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+      builder: (_) => DraggableScrollableSheet(
+        expand: false, initialChildSize: 0.82, maxChildSize: 0.95, minChildSize: 0.4,
+        builder: (_, ctrl) => Container(
+          decoration: const BoxDecoration(color: Color(0xFFF4F7FB), borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          clipBehavior: Clip.antiAlias,
+          child: ListView(controller: ctrl, children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(18, 12, 18, 16),
+              decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF334155), Color(0xFF0E3A5F)], begin: Alignment.topRight, end: Alignment.bottomLeft)),
+              child: Column(children: [
+                Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white54, borderRadius: BorderRadius.circular(3))),
+                const SizedBox(height: 12),
+                Row(children: [const Text('🚛', style: TextStyle(fontSize: 26)), const SizedBox(width: 10), Expanded(child: Text('${r['sequence']}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 19)))]),
+                const SizedBox(height: 14),
+                Row(children: [
+                  Expanded(child: _tstat('⚖️', '${r['total_weight'] ?? 0}', tr('الوزن الكلي', 'Weight'), const Color(0xFF38BDF8))),
+                  const SizedBox(width: 8),
+                  Expanded(child: _tstat('📦', '${r['total_quantity'] ?? 0}', tr('الكمية', 'Qty'), const Color(0xFFA5B4FC))),
+                  const SizedBox(width: 8),
+                  Expanded(child: _tstat('📋', '${r['order_count'] ?? 0}', tr('الأوامر', 'Orders'), const Color(0xFF6EE7B7))),
+                ]),
+              ]),
+            ),
+            Padding(padding: const EdgeInsets.all(16), child: Column(children: [
+              _card(tr('المسار', 'Route'), [
+                _kv(Icons.place_outlined, tr('الالتقاط', 'Pickup'), r['pickup']),
+                _kv(Icons.factory_outlined, tr('مركز المعالجة', 'Center'), r['center']),
+                _kv(Icons.groups_outlined, tr('الفريق', 'Team'), r['team']),
+                _kv(Icons.event_outlined, tr('التاريخ', 'Date'), r['date']),
+              ]),
+              if (items.isNotEmpty) _card(tr('الأصناف المنقولة', 'Transported items'), [for (final i in items) _itemRow(i as Map, trip: true)]),
+              const SizedBox(height: 20),
+            ])),
           ]),
-          const SizedBox(height: 8),
-          _kv(Icons.place_outlined, tr('الالتقاط', 'Pickup'), r['pickup']),
-          _kv(Icons.factory_outlined, tr('مركز المعالجة', 'Center'), r['center']),
-          _kv(Icons.groups_outlined, tr('الفريق', 'Team'), r['team']),
-          _kv(Icons.event_outlined, tr('التاريخ', 'Date'), r['date']),
-          if (items.isNotEmpty) ...[
-            _secTitle(tr('الأصناف المنقولة', 'Transported items')),
-            for (final i in items) Padding(padding: const EdgeInsets.symmetric(vertical: 2), child: Row(children: [Expanded(child: Text('${i['item'] ?? '—'}')), Text('×${i['qty']} · ${i['weight']}kg', style: const TextStyle(fontWeight: FontWeight.w700))])),
-          ],
-        ]),
+        ),
       ),
     );
   }
+
+  Widget _card(String title, List<Widget> children) => Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))]),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [Container(width: 4, height: 16, decoration: BoxDecoration(color: const Color(0xFF16A34A), borderRadius: BorderRadius.circular(3))), const SizedBox(width: 8), Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF0E3A5F)))]),
+          const SizedBox(height: 10),
+          ...children,
+        ]),
+      );
+
+  Widget _itemRow(Map i, {bool trip = false}) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Row(children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: i['image'] != null
+                ? Image.network('${i['image']}', width: 40, height: 40, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _itemPh())
+                : _itemPh(),
+          ),
+          const SizedBox(width: 10),
+          Expanded(child: Text('${i['item'] ?? '—'}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5))),
+          Container(padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4), decoration: BoxDecoration(color: const Color(0xFF16A34A).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+              child: Text(trip ? '×${i['qty']} · ${i['weight']}kg' : '×${i['qty']}', style: const TextStyle(color: Color(0xFF15803D), fontWeight: FontWeight.w800, fontSize: 12))),
+        ]),
+      );
+
+  Widget _itemPh() => Container(width: 40, height: 40, color: const Color(0xFF16A34A).withValues(alpha: 0.1), alignment: Alignment.center, child: const Text('📦', style: TextStyle(fontSize: 18)));
 
   Widget _step(int i, int cur) {
     final done = cur >= i && cur >= 0;
@@ -280,17 +369,45 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
     ]));
   }
 
-  Widget _secTitle(String t) => Padding(padding: const EdgeInsets.only(top: 16, bottom: 8), child: Row(children: [Container(width: 4, height: 16, decoration: BoxDecoration(color: const Color(0xFF16A34A), borderRadius: BorderRadius.circular(3))), const SizedBox(width: 8), Text(t, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF0E3A5F)))]));
-
   Widget _kv(IconData ic, String k, dynamic v) => (v == null || '$v'.isEmpty) ? const SizedBox.shrink() : Padding(
         padding: const EdgeInsets.symmetric(vertical: 3),
         child: Row(children: [Icon(ic, size: 17, color: Colors.grey), const SizedBox(width: 8), SizedBox(width: 110, child: Text(k, style: const TextStyle(color: Colors.grey, fontSize: 12.5))), Expanded(child: Text('$v', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)))]),
       );
 
   Widget _tstat(String ic, String v, String l, Color c) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 12), decoration: BoxDecoration(color: c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-        child: Column(children: [Text('$ic $v', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: c)), Text(l, style: const TextStyle(fontSize: 10, color: Colors.grey))]),
+        padding: const EdgeInsets.symmetric(vertical: 12), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.13), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withValues(alpha: 0.18))),
+        child: Column(children: [Text('$ic $v', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: c)), Text(l, style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.85)))]),
       );
+
+  Future<void> _newOrderMenu() async {
+    final choice = await showModalBottomSheet<String>(
+      context: context, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        const SizedBox(height: 8),
+        Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(3))),
+        const SizedBox(height: 10),
+        ListTile(
+          leading: Container(padding: const EdgeInsets.all(9), decoration: BoxDecoration(color: const Color(0xFF0E3A5F).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(11)), child: const Icon(Icons.description_rounded, color: Color(0xFF0E3A5F))),
+          title: Text(tr('نموذج احترافي كامل', 'Full professional form'), style: const TextStyle(fontWeight: FontWeight.w800)),
+          subtitle: Text(tr('نفس نموذج البورتال — أصناف متعددة وتفاصيل', 'Same as portal — multiple items & details')),
+          onTap: () => Navigator.pop(ctx, 'portal'),
+        ),
+        ListTile(
+          leading: Container(padding: const EdgeInsets.all(9), decoration: BoxDecoration(color: const Color(0xFF16A34A).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(11)), child: const Icon(Icons.bolt_rounded, color: Color(0xFF16A34A))),
+          title: Text(tr('طلب سريع', 'Quick order'), style: const TextStyle(fontWeight: FontWeight.w800)),
+          subtitle: Text(tr('صنف واحد وكمية — مباشر', 'One item & quantity — fast')),
+          onTap: () => Navigator.pop(ctx, 'quick'),
+        ),
+        const SizedBox(height: 10),
+      ])),
+    );
+    if (choice == 'portal') {
+      if (mounted) Navigator.push(context, MaterialPageRoute(builder: (_) => const OdooBackendScreen(path: '/service_order/create', title: 'طلب نقل جديد')));
+    } else if (choice == 'quick') {
+      _newOrder();
+    }
+  }
 
   Future<void> _newOrder() async {
     Map<String, dynamic> opt;
@@ -360,4 +477,147 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     }
   }
+}
+
+/// Waste statistics & reports — filter by period (month/year/custom), see
+/// detailed aggregates + breakdowns, and print the monthly report (exact
+/// service_order PDF) via the portal.
+class WasteStatsScreen extends StatefulWidget {
+  const WasteStatsScreen({super.key});
+  @override
+  State<WasteStatsScreen> createState() => _WasteStatsScreenState();
+}
+
+class _WasteStatsScreenState extends State<WasteStatsScreen> {
+  static const _navy = Color(0xFF0E3A5F);
+  static const _green = Color(0xFF16A34A);
+  Future<Map<String, dynamic>>? _stats;
+  DateTime _from = DateTime(DateTime.now().year, DateTime.now().month, 1);
+  DateTime _to = DateTime.now();
+  String _preset = 'month';
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  String _fmt(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  void _load() => setState(() => _stats = context.read<AuthProvider>().api.clientWasteStats(dateFrom: _fmt(_from), dateTo: _fmt(_to)));
+
+  void _setPreset(String p) {
+    final now = DateTime.now();
+    setState(() {
+      _preset = p;
+      if (p == 'month') { _from = DateTime(now.year, now.month, 1); _to = now; }
+      else if (p == 'last') { _from = DateTime(now.year, now.month - 1, 1); _to = DateTime(now.year, now.month, 0); }
+      else if (p == 'year') { _from = DateTime(now.year, 1, 1); _to = now; }
+      else if (p == 'all') { _from = DateTime(2020, 1, 1); _to = now; }
+    });
+    _load();
+  }
+
+  Future<void> _pickRange() async {
+    final r = await showDateRangePicker(context: context, firstDate: DateTime(2020), lastDate: DateTime(2100), initialDateRange: DateTimeRange(start: _from, end: _to));
+    if (r != null) { setState(() { _preset = 'custom'; _from = r.start; _to = r.end; }); _load(); }
+  }
+
+  void _printMonthly(String? path) {
+    if (path == null) return;
+    Navigator.push(context, MaterialPageRoute(builder: (_) => OdooBackendScreen(path: path, title: 'التقرير الشهري')));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F7FB),
+      appBar: AppBar(backgroundColor: _navy, foregroundColor: Colors.white, title: Text(tr('التقارير والإحصائيات', 'Reports & statistics'))),
+      body: Column(children: [
+        // period selector
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+          child: Column(children: [
+            SizedBox(height: 38, child: ListView(scrollDirection: Axis.horizontal, children: [
+              for (final p in [['month', tr('هذا الشهر', 'This month')], ['last', tr('الشهر الماضي', 'Last month')], ['year', tr('هذه السنة', 'This year')], ['all', tr('الكل', 'All')]])
+                Padding(padding: const EdgeInsets.only(right: 6), child: ChoiceChip(label: Text(p[1]), selected: _preset == p[0], onSelected: (_) => _setPreset(p[0]), selectedColor: _green, labelStyle: TextStyle(color: _preset == p[0] ? Colors.white : _navy, fontWeight: FontWeight.w700, fontSize: 12.5))),
+              Padding(padding: const EdgeInsets.only(right: 6), child: ActionChip(avatar: const Icon(Icons.date_range, size: 16), label: Text(tr('مخصص', 'Custom')), onPressed: _pickRange)),
+            ])),
+            const SizedBox(height: 4),
+            Text('${_fmt(_from)}  →  ${_fmt(_to)}', style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w600)),
+          ]),
+        ),
+        Expanded(child: FutureBuilder<Map<String, dynamic>>(
+          future: _stats,
+          builder: (_, snap) {
+            if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: _green));
+            final d = snap.data!;
+            final byItem = (d['by_item'] as List?) ?? [];
+            final byMonth = (d['by_month'] as List?) ?? [];
+            final maxM = byMonth.isEmpty ? 1.0 : byMonth.map((m) => (m['orders'] as num).toDouble()).reduce((a, b) => a > b ? a : b);
+            return ListView(padding: const EdgeInsets.all(14), children: [
+              GridView.count(crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), childAspectRatio: 1.7, crossAxisSpacing: 12, mainAxisSpacing: 12, children: [
+                _kpi('📋', '${d['total_orders'] ?? 0}', tr('إجمالي الطلبات', 'Total orders'), _navy),
+                _kpi('✅', '${d['completed'] ?? 0}', tr('مكتملة', 'Completed'), _green),
+                _kpi('⚖️', '${d['total_weight'] ?? 0}', tr('الوزن (كجم)', 'Weight (kg)'), const Color(0xFF0891B2)),
+                _kpi('📦', '${d['total_quantity'] ?? 0}', tr('إجمالي الكمية', 'Total qty'), const Color(0xFF6366F1)),
+              ]),
+              const SizedBox(height: 8),
+              if (byMonth.isNotEmpty) _panel(tr('حسب الشهر', 'By month'), Column(children: [
+                for (final m in byMonth.reversed) Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Row(children: [
+                  SizedBox(width: 62, child: Text('${m['month']}', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: _navy))),
+                  Expanded(child: Stack(children: [
+                    Container(height: 22, decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(6))),
+                    FractionallySizedBox(widthFactor: ((m['orders'] as num).toDouble() / maxM).clamp(0.04, 1.0), child: Container(height: 22, decoration: BoxDecoration(gradient: const LinearGradient(colors: [_green, Color(0xFF15803D)]), borderRadius: BorderRadius.circular(6)))),
+                  ])),
+                  const SizedBox(width: 8),
+                  Text('${m['orders']} · ${m['weight']}kg', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.grey)),
+                ])),
+              ])),
+              if (byItem.isNotEmpty) _panel(tr('أكثر الأصناف', 'Top items'), Column(children: [
+                for (final i in byItem) Padding(padding: const EdgeInsets.symmetric(vertical: 5), child: Row(children: [
+                  ClipRRect(borderRadius: BorderRadius.circular(9), child: i['image'] != null ? Image.network('${i['image']}', width: 38, height: 38, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _ph()) : _ph()),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text('${i['name']}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5))),
+                  Text('${i['qty']}', style: const TextStyle(fontWeight: FontWeight.w900, color: _green, fontSize: 15)),
+                  Text('  (${i['orders']})', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                ])),
+              ])),
+              const SizedBox(height: 12),
+              SizedBox(height: 52, child: ElevatedButton.icon(
+                onPressed: () => _printMonthly(d['print_path'] as String?),
+                icon: const Icon(Icons.print_rounded),
+                label: Text(tr('طباعة التقرير الشهري', 'Print monthly report'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                style: ElevatedButton.styleFrom(backgroundColor: _navy, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+              )),
+              const SizedBox(height: 24),
+            ]);
+          },
+        )),
+      ]),
+    );
+  }
+
+  Widget _ph() => Container(width: 38, height: 38, color: _green.withValues(alpha: 0.1), alignment: Alignment.center, child: const Text('📦', style: TextStyle(fontSize: 17)));
+
+  Widget _kpi(String ic, String v, String l, Color c) => Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))], border: Border(left: BorderSide(color: c, width: 4))),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+          Row(children: [Text(ic, style: const TextStyle(fontSize: 19)), const Spacer(), Text(v, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: c))]),
+          const SizedBox(height: 3),
+          Text(l, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey)),
+        ]),
+      );
+
+  Widget _panel(String title, Widget child) => Container(
+        margin: const EdgeInsets.only(top: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))]),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [Container(width: 4, height: 16, decoration: BoxDecoration(color: _green, borderRadius: BorderRadius.circular(3))), const SizedBox(width: 8), Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: _navy))]),
+          const SizedBox(height: 10),
+          child,
+        ]),
+      );
 }

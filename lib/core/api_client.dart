@@ -563,6 +563,15 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/client/waste/options'), headers: await _headers())))['data'] as Map);
 
+  /// Period statistics (dateFrom/dateTo = YYYY-MM-DD) → aggregates + breakdowns.
+  Future<Map<String, dynamic>> clientWasteStats({String? dateFrom, String? dateTo}) async {
+    final qs = <String>[];
+    if (dateFrom != null) qs.add('date_from=$dateFrom');
+    if (dateTo != null) qs.add('date_to=$dateTo');
+    final path = '/client/waste/stats${qs.isEmpty ? '' : '?${qs.join('&')}'}';
+    return Map<String, dynamic>.from((await _handle(await http.get(_u(path), headers: await _headers())))['data'] as Map);
+  }
+
   Future<Map<String, dynamic>> clientWasteCreate(int projectId, {int? pickupId, int? itemId, double qty = 1.0}) async =>
       Map<String, dynamic>.from((await _handle(await http.post(_u('/client/waste/order/create'),
               headers: await _headers(),
