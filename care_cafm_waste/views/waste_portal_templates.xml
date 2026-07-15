@@ -47,13 +47,25 @@
         </div>
       </t>
 
-      <div class="d-flex flex-wrap gap-2 mb-3">
+      <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
         <a class="btn text-white fw-bold" style="background:linear-gradient(120deg,#115E4B,#16A34A);border-radius:10px" href="/waste/order/create"><i class="fa fa-plus"/> طلب جديد</a>
-        <form class="d-flex align-items-center gap-2" action="/waste/print" method="get" target="_blank">
+        <form class="d-flex align-items-center gap-1" action="/waste/orders" method="get">
+          <input type="search" name="search" t-att-value="search" placeholder="بحث بالرقم أو الموقع…" class="form-control form-control-sm" style="max-width:220px"/>
+          <input type="hidden" name="filterby" t-att-value="filterby"/>
+          <button class="btn btn-outline-secondary btn-sm" type="submit"><i class="fa fa-search"/></button>
+        </form>
+        <form class="d-flex align-items-center gap-2 ms-auto" action="/waste/print" method="get" target="_blank">
           <label class="small text-muted mb-0">من</label><input type="date" class="form-control form-control-sm" name="date_from" required="True" style="max-width:150px"/>
           <label class="small text-muted mb-0">إلى</label><input type="date" class="form-control form-control-sm" name="date_to" required="True" style="max-width:150px"/>
           <button class="btn btn-outline-primary btn-sm" type="submit"><i class="fa fa-print"/> طباعة التقرير</button>
         </form>
+      </div>
+      <div class="d-flex flex-wrap gap-1 mb-3">
+        <t t-foreach="[('all','الكل'),('open','مفتوحة'),('completed','مكتملة'),('cancelled','ملغاة')]" t-as="f">
+          <a t-attf-href="/waste/orders?filterby=#{f[0]}&amp;search=#{search or ''}"
+             t-attf-class="btn btn-sm #{'btn-success' if filterby == f[0] else 'btn-outline-secondary'}"
+             style="border-radius:20px" t-esc="f[1]"/>
+        </t>
       </div>
 
       <t t-if="orders" t-call="portal.portal_table">
@@ -121,6 +133,41 @@
               <td t-esc="l.item_id.name"/><td t-esc="l.quantity"/><td t-esc="round(l.quantity*l.weight,2)"/>
             </tr></tbody>
           </table>
+
+          <t t-set="media" t-value="o.media_ids or (o.trip_id.media_ids if o.trip_id else o.media_ids)"/>
+          <div t-if="media" class="mt-4">
+            <h5 class="fw-bold" style="color:#0E3A5F">📷 صور وفيديوهات الإثبات</h5>
+            <div class="d-flex flex-wrap gap-2">
+              <t t-foreach="media" t-as="m">
+                <a t-if="(m.mimetype or '').startswith('video')" t-attf-href="/api/v1/waste/media/#{m.id}" target="_blank" class="d-inline-block position-relative" style="width:150px;height:110px;background:#0E3A5F;border-radius:10px;color:#fff;display:flex;align-items:center;justify-content:center;text-decoration:none"><i class="fa fa-play-circle fa-2x"/></a>
+                <a t-else="" t-attf-href="/api/v1/waste/media/#{m.id}" target="_blank"><img t-attf-src="/api/v1/waste/media/#{m.id}" style="width:150px;height:110px;object-fit:cover;border-radius:10px"/></a>
+              </t>
+            </div>
+          </div>
+
+          <div t-if="o.trip_id and (o.trip_id.driver_lat or o.trip_id.driver_lng)" class="mt-4">
+            <h5 class="fw-bold" style="color:#0E3A5F">🗺️ تتبّع السائق المباشر</h5>
+            <div id="wmap" style="height:320px;border-radius:14px;overflow:hidden"/>
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"/>
+            <script t-attf-text="/*js*/
+              (function(){
+                var lat=#{o.trip_id.driver_lat}, lng=#{o.trip_id.driver_lng}, tid=#{o.trip_id.id};
+                function init(){
+                  if(!window.L){return setTimeout(init,200);}
+                  var map=L.map('wmap').setView([lat,lng],14);
+                  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+                  var mk=L.marker([lat,lng]).addTo(map).bindPopup('السائق').openPopup();
+                  setInterval(function(){
+                    fetch('/waste/track/'+tid).then(function(r){return r.json();}).then(function(d){
+                      if(d &amp;&amp; (d.lat||d.lng)){var ll=[d.lat,d.lng];mk.setLatLng(ll);map.panTo(ll);}
+                    }).catch(function(){});
+                  },15000);
+                }
+                init();
+              })();
+            "/>
+          </div>
         </div>
       </div>
       <div class="mt-3"><t t-call="portal.message_thread"><t t-set="object" t-value="o"/></t></div>

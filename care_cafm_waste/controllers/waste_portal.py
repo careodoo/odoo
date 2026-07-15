@@ -58,7 +58,7 @@ class WastePortal(CustomerPortal):
         return values
 
     @http.route(['/waste/orders', '/waste/orders/page/<int:page>'], type='http', auth='user', website=True)
-    def waste_orders(self, page=1, filterby='all', **kw):
+    def waste_orders(self, page=1, filterby='all', search='', **kw):
         SO = request.env['cafm.waste.order'].sudo()
         base = self._order_domain()
         filters = {
@@ -66,13 +66,15 @@ class WastePortal(CustomerPortal):
             'completed': [('states', 'in', ('completed', 'delivered'))], 'cancelled': [('states', '=', 'cancelled')],
         }
         domain = base + filters.get(filterby, [])
+        if search:
+            domain += ['|', ('serial', 'ilike', search), ('pickup_location_id.name', 'ilike', search)]
         total = SO.search_count(domain)
-        pager = portal_pager(url='/waste/orders', url_args={'filterby': filterby}, total=total, page=page, step=ITEMS)
+        pager = portal_pager(url='/waste/orders', url_args={'filterby': filterby, 'search': search}, total=total, page=page, step=ITEMS)
         orders = SO.search(domain, limit=ITEMS, offset=pager['offset'], order='serial desc, id desc')
         stats = SO.dashboard_stats(base)
         return request.render('care_cafm_waste.portal_waste_orders', {
             'orders': orders, 'pager': pager, 'page_name': 'waste', 'default_url': '/waste/orders',
-            'filterby': filterby, 'waste_stats': stats,
+            'filterby': filterby, 'search': search, 'waste_stats': stats,
             'searchbar_filters': {k: {'label': k} for k in filters},
         })
 
@@ -116,6 +118,18 @@ class WastePortal(CustomerPortal):
             vals['order_line_ids'] = lines
         o = request.env['cafm.waste.order'].sudo().create(vals)
         return request.redirect('/waste/order/%s' % o.id)
+
+    @http.route(['/waste/track/<int:tid>'], type='http', auth='user', website=True, csrf=False)
+    def waste_track(self, tid, **kw):
+        import json
+        t = request.env['cafm.waste.trip'].sudo().browse(int(tid)).exists()
+        allowed = request.env.user.has_group('base.group_erp_manager') or (t and t.id in request.env['cafm.waste.trip'].sudo().search(
+            [('project_id', 'in', request.env['cafm.waste.project'].sudo().search(
+                [('contact_id', 'in', self._scope_partner_ids())]).ids)]).ids)
+        data = {} if not (t and allowed) else {
+            'lat': t.driver_lat, 'lng': t.driver_lng, 'time': str(t.driver_loc_time or ''),
+            'driver': t.driver_id.name if t.driver_id else None}
+        return request.make_response(json.dumps(data), headers=[('Content-Type', 'application/json')])
 
     @http.route(['/waste/print'], type='http', auth='user', website=True)
     def waste_print(self, date_from=None, date_to=None, **kw):
