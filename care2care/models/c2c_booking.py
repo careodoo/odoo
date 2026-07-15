@@ -54,6 +54,15 @@ class C2CBooking(models.Model):
     feedback = fields.Text(string='ملاحظات التقييم')
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
 
+    # ---- field-execution (filled by the crew from the app) ----------------
+    started_at = fields.Datetime(string='بدء التنفيذ', readonly=True, copy=False)
+    finished_at = fields.Datetime(string='انتهاء التنفيذ', readonly=True, copy=False)
+    staff_note = fields.Text(string='ملاحظة الفريق')
+    proof_before = fields.Image(string='صورة قبل', max_width=1280, max_height=1280)
+    proof_after = fields.Image(string='صورة بعد', max_width=1280, max_height=1280)
+    quality_ok = fields.Boolean(string='اعتماد الجودة', tracking=True)
+    quality_by = fields.Many2one('c2c.provider', string='اعتمد الجودة', readonly=True, copy=False)
+
     @api.depends('visit_datetime', 'duration_min')
     def _compute_end(self):
         for b in self:
@@ -98,10 +107,12 @@ class C2CBooking(models.Model):
             b.state = 'assigned'
 
     def action_start(self):
-        self.write({'state': 'in_progress'})
+        for b in self:
+            b.write({'state': 'in_progress', 'started_at': b.started_at or fields.Datetime.now()})
 
     def action_done(self):
-        self.write({'state': 'done'})
+        for b in self:
+            b.write({'state': 'done', 'finished_at': fields.Datetime.now()})
 
     def action_cancel(self):
         self.write({'state': 'cancelled'})

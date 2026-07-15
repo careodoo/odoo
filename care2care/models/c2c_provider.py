@@ -48,17 +48,31 @@ class C2CProvider(models.Model):
         self.ensure_one()
         return self._CAPS.get(self.role, self._CAPS['worker'])
 
+    def team_ids(self):
+        """Providers whose work this member can see (self + subordinates)."""
+        self.ensure_one()
+        scope = self.capabilities()['scope']
+        if scope == 'all':
+            return self.search([])
+        if scope == 'area':  # supervisor: direct reports + their teams
+            subs = self.search(['|', ('supervisor_id', '=', self.id), ('leader_id', '=', self.id)])
+            members = subs.mapped('team_member_ids')
+            return self | subs | members
+        if scope == 'team':  # team leader: own crew
+            return self | self.team_member_ids
+        return self  # worker / driver: only self
+
+    def booking_domain(self):
+        """Domain over c2c.booking this member is allowed to see."""
+        self.ensure_one()
+        if self.capabilities()['scope'] == 'all':
+            return []
+        return [('provider_id', 'in', self.team_ids().ids)]
+
     @api.depends('booking_ids', 'booking_ids.rating', 'team_member_ids')
     def _compute_stats(self):
         for p in self:
             p.booking_count = len(p.booking_ids)
             p.team_size = len(p.team_member_ids)
-            rated = p.booking_ids.filtered(lambda b: b.rating)
-            p.rating_avg = round(sum(int(b.rating) for b in rated) / len(rated), 1) if rated else 0.0
-
-    @api.depends('booking_ids', 'booking_ids.rating')
-    def _compute_stats(self):
-        for p in self:
-            p.booking_count = len(p.booking_ids)
             rated = p.booking_ids.filtered(lambda b: b.rating)
             p.rating_avg = round(sum(int(b.rating) for b in rated) / len(rated), 1) if rated else 0.0

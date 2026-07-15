@@ -77,6 +77,14 @@ class C2CClientApi(Controller):
                 dom = ['|', '|', ('message_partner_ids', 'in', [p.id]), ('user_id', '=', u.id)]
                 dom += [('member_ids', 'in', [u.id])] if 'member_ids' in Proj._fields else [('id', '=', 0)]
                 pms = bool(Proj.search_count(dom))
+        # CARE 2 CARE crew member (worker/leader/supervisor/driver/ops manager)
+        prov = None
+        if 'c2c.provider' in env:
+            pr = env['c2c.provider'].sudo().search([('user_id', '=', u.id)], limit=1)
+            if pr:
+                prov = {'id': pr.id, 'name': pr.name, 'role': pr.role,
+                        'role_label': dict(pr._fields['role'].selection).get(pr.role, pr.role),
+                        'caps': pr.capabilities()}
         return _ok({
             'user': {'id': u.id, 'name': u.name, 'login': u.login, 'email': u.email or None,
                      'partner_id': p.id, 'avatar': _img('res.users', u.id, 'avatar_128') if u.image_128 else None},
@@ -87,7 +95,9 @@ class C2CClientApi(Controller):
                 'pms': pms,
                 'staff': is_staff,
                 'admin': is_admin,
+                'c2c_staff': bool(prov),
             },
+            'provider': prov,
             'default': 'cafm' if cafm else 'c2c',
         })
 
