@@ -1284,9 +1284,30 @@ const ROUTES={
     p.innerHTML='<div class="kpis">'+card('♻️',d.orders,T('إجمالي الأوامر','Total orders'),'#16a34a')+card('⏳',d.open,T('قيد التنفيذ','In progress'),'#f59e0b')+card('✅',d.completed,T('مكتملة','Completed'),'#0891b2')+card('🚛',d.trips,T('الرحلات','Trips'),'#6366f1')+card('🏭',d.centers,T('مراكز المعالجة','Centers'),'#334155')+'</div>'
       +'<div class="panel" style="margin-top:14px;padding:12px"><button class="btn p" onclick="wasteNew()">➕ '+T('طلب نقل جديد','New collection order')+'</button></div>'
       +'<div class="panel" style="margin-top:14px"><div id="woList"></div></div>';
+    window.__wOrders=rs;window.__wST=ST;window.__wSTL=STL;
     const head='<thead><tr><th>'+T('الرقم','Serial')+'</th><th>'+T('المشروع','Project')+'</th><th>'+T('موقع الالتقاط','Pickup')+'</th><th>'+T('الأصناف','Items')+'</th><th>'+T('الرحلة','Trip')+'</th><th>'+T('التاريخ','Date')+'</th><th>'+T('الحالة','Status')+'</th></tr></thead>';
-    const row=x=>{const c=ST[x.state]||'#64748b';const items=(x.items||[]).map(i=>esc(i.item||'')+' ×'+i.qty).join('، ');return '<tr><td><b>'+esc(x.serial)+'</b></td><td class="muted">'+esc(x.project||'—')+'</td><td>'+esc(x.pickup||'—')+'</td><td class="muted" style="font-size:12px">'+esc(items||'—')+'</td><td>'+esc(x.trip||'—')+'</td><td class="muted">'+dshort(x.order_date)+'</td><td><span class="pill" style="background:'+c+'1f;color:'+c+'">'+esc(STL[x.state]||x.state_label)+'</span></td></tr>';};
+    const row=x=>{const c=ST[x.state]||'#64748b';const items=(x.items||[]).map(i=>esc(i.item||'')+' ×'+i.qty).join('، ');return '<tr class="clk" onclick="__wOrd('+x.id+')"><td><b>'+esc(x.serial)+'</b></td><td class="muted">'+esc(x.project||'—')+'</td><td>'+esc(x.pickup||'—')+'</td><td class="muted" style="font-size:12px">'+esc(items||'—')+'</td><td>'+esc(x.trip||'—')+'</td><td class="muted">'+dshort(x.order_date)+'</td><td><span class="pill" style="background:'+c+'1f;color:'+c+'">'+esc(STL[x.state]||x.state_label)+'</span></td></tr>';};
     pgReset('wo');pagedTable('woList',rs,head,row,'wo',()=>{},20);
+  window.__wOrd=id=>{const x=(window.__wOrders||[]).find(y=>y.id===id);if(!x)return;
+    const flow=['draft','scheduled','pickuped','arrived','processing','delivered','completed'];
+    const cur=flow.indexOf(x.state);const cancelled=x.state==='cancelled';
+    const steps=cancelled?'<div style="color:#e11d48;font-weight:700;padding:8px">✖ '+T('أُلغي الطلب','Order cancelled')+'</div>'
+      :'<div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0">'+flow.map((s,i)=>{const done=cur>=i;const c=done?'#16a34a':'#cbd5e1';return '<span style="display:flex;align-items:center;gap:4px;font-size:11px;color:'+(done?'#0f172a':'#94a3b8')+'"><span style="width:16px;height:16px;border-radius:50%;background:'+c+';color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px">'+(done?'✓':(i+1))+'</span>'+esc(STL[s])+(i<flow.length-1?' <span style="color:#cbd5e1">›</span>':'')+'</span>';}).join('')+'</div>';
+    const items=(x.items||[]).length?'<table style="width:100%;font-size:12.5px;margin-top:6px"><thead><tr><th style="text-align:right">'+T('الصنف','Item')+'</th><th>'+T('الكمية','Qty')+'</th></tr></thead><tbody>'+x.items.map(i=>'<tr><td>'+esc(i.item||'—')+'</td><td class="num">'+i.qty+'</td></tr>').join('')+'</tbody></table>':'<div class="muted">—</div>';
+    const kv=(k,v)=>v?'<tr><td>'+k+'</td><td>'+esc(v)+'</td></tr>':'';
+    openDrawer('♻️ '+x.serial,
+      '<div class="sec-t">'+T('حالة الطلب','Order status')+'</div>'+steps
+      +'<table class="kv" style="margin-top:8px">'
+      +kv(T('المشروع','Project'),x.project)+kv(T('موقع الالتقاط','Pickup'),x.pickup)+kv(T('النوع','Type'),x.type)
+      +kv(T('الرحلة','Trip'),x.trip)+kv(T('تاريخ الطلب','Order date'),dshort(x.order_date))
+      +'</table>'
+      +'<div class="sec-t">'+T('فريق العملية','Operation team')+'</div><table class="kv">'
+      +kv(T('مدير العمليات','Ops manager'),x.ops_manager)+kv(T('السائق','Driver'),x.driver)+kv(T('مستلم الكميات','Receiver'),x.receiver)
+      +kv(T('الوزن النهائي','Final weight'),x.final_weight?(x.final_weight+' كجم'):null)+kv(T('ملاحظة الاستلام','Receipt note'),x.final_note)
+      +'</table>'
+      +'<div class="sec-t">'+T('الأصناف','Items')+'</div>'+items
+      +(x.proof?'<div class="sec-t">'+T('صورة الإثبات','Proof photo')+'</div><img src="'+esc(x.proof)+'" style="width:100%;border-radius:12px;margin-top:6px">':'')
+      +(x.notes?'<div class="sec-t">'+T('ملاحظات','Notes')+'</div>'+esc(x.notes):''));};
   window.wasteNew=async()=>{const o=await api('/client/waste/options').catch(()=>({projects:[],pickups:[],items:[]}));
     if(!o.projects.length){toast(T('لا يوجد مشروع نفايات مرتبط','No waste project linked'));return;}
     openDrawer(T('طلب نقل جديد','New collection order'),
@@ -1300,8 +1321,14 @@ const ROUTES={
   },
   async waste_trips(p){CUR='waste_trips';const rs=await api('/client/waste/trips').catch(()=>[]);
     const STL={draft:'مسودة',scheduled:'مجدول',pickuped:'تم الالتقاط',arrived:'وصل',processing:'قيد المعالجة',delivered:'تم التسليم',completed:'مكتمل',cancelled:'ملغى'};
+    window.__wTrips=rs;
     p.innerHTML='<div class="panel">'+(rs.length?'<table><thead><tr><th>'+T('الرحلة','Trip')+'</th><th>'+T('موقع الالتقاط','Pickup')+'</th><th>'+T('مركز المعالجة','Center')+'</th><th>'+T('الوزن','Weight')+'</th><th>'+T('الكمية','Qty')+'</th><th>'+T('التاريخ','Date')+'</th><th>'+T('الحالة','Status')+'</th></tr></thead><tbody>'
-      +rs.map(x=>'<tr><td><b>'+esc(x.sequence)+'</b></td><td>'+esc(x.pickup||'—')+'</td><td>'+esc(x.center||'—')+'</td><td class="num">'+(x.total_weight||0)+'</td><td class="num">'+(x.total_quantity||0)+'</td><td class="muted">'+dshort(x.date)+'</td><td><span class="pill">'+esc(STL[x.state]||x.state_label||'')+'</span></td></tr>').join('')+'</tbody></table>':emptyState(T('لا رحلات','No trips')))+'</div>';
+      +rs.map(x=>'<tr class="clk" onclick="__wTrip('+x.id+')"><td><b>'+esc(x.sequence)+'</b></td><td>'+esc(x.pickup||'—')+'</td><td>'+esc(x.center||'—')+'</td><td class="num">'+(x.total_weight||0)+'</td><td class="num">'+(x.total_quantity||0)+'</td><td class="muted">'+dshort(x.date)+'</td><td><span class="pill">'+esc(STL[x.state]||x.state_label||'')+'</span></td></tr>').join('')+'</tbody></table>':emptyState(T('لا رحلات','No trips')))+'</div>';
+  window.__wTrip=id=>{const x=(window.__wTrips||[]).find(y=>y.id===id);if(!x)return;const kv=(k,v)=>v?'<tr><td>'+k+'</td><td>'+esc(v)+'</td></tr>':'';
+    const items=(x.items||[]).length?'<table style="width:100%;font-size:12.5px;margin-top:6px"><thead><tr><th style="text-align:right">'+T('الصنف','Item')+'</th><th>'+T('الكمية','Qty')+'</th><th>'+T('الوزن','Weight')+'</th></tr></thead><tbody>'+x.items.map(i=>'<tr><td>'+esc(i.item||'—')+'</td><td class="num">'+i.qty+'</td><td class="num">'+i.weight+'</td></tr>').join('')+'</tbody></table>':'<div class="muted">—</div>';
+    openDrawer('🚛 '+x.sequence,'<div class="kpis" style="grid-template-columns:1fr 1fr"><div class="kpi"><div class="top"><div class="ic" style="background:#0891b2">⚖️</div><div><div class="v num">'+(x.total_weight||0)+'</div><div class="l">'+T('الوزن الكلي','Total weight')+'</div></div></div></div><div class="kpi"><div class="top"><div class="ic" style="background:#6366f1">📦</div><div><div class="v num">'+(x.total_quantity||0)+'</div><div class="l">'+T('الكمية','Quantity')+'</div></div></div></div></div>'
+      +'<table class="kv" style="margin-top:8px">'+kv(T('موقع الالتقاط','Pickup'),x.pickup)+kv(T('مركز المعالجة','Center'),x.center)+kv(T('الفريق','Team'),x.team)+kv(T('التاريخ','Date'),dshort(x.date))+kv(T('وقت الالتقاط','Pickup time'),dshort(x.pickuped))+kv(T('عدد الأوامر','Orders'),x.order_count)+'<tr><td>'+T('الحالة','Status')+'</td><td><span class="pill">'+esc(STL[x.state]||x.state_label||'')+'</span></td></tr></table>'
+      +'<div class="sec-t">'+T('الأصناف المنقولة','Transported items')+'</div>'+items);};
   },
   // ================= INTERNAL INVENTORY SUITE =================
   async inv_overview(p){CUR='inv_overview';const d=await api('/client/inv/summary').catch(()=>({available:false}));
@@ -1315,10 +1342,31 @@ const ROUTES={
       +card('💰',(d.stock_value||0),T('قيمة المخزون','Stock value'),'','#16a34a')
       +card('🔄',d.moves_month,T('حركات الشهر','Moves (month)'),'inv_moves','#f59e0b')
       +'</div>'
+      +'<div class="panel" style="margin-top:14px;padding:12px"><button class="btn p" onclick="invIssue()">📤 '+T('صرف من المخزون','Issue from stock')+'</button></div>'
       +'<div class="panel" style="margin-top:14px"><div id="invList"></div></div>';
+    window.__invItems=rs;
+    try{window.__invLocs=await api('/client/inv/locations').catch(()=>[]);}catch(e){window.__invLocs=[];}
     const head='<thead><tr><th>'+T('المنتج','Product')+'</th><th>'+T('المخزن','Store')+'</th><th>'+T('الباركود','Barcode')+'</th><th>'+T('الرصيد','On hand')+'</th><th>'+T('حد الطلب','Min')+'</th><th>'+T('القيمة','Value')+'</th><th>'+T('الحالة','Status')+'</th></tr></thead>';
     const row=x=>'<tr'+(x.low_stock?' style="background:#fff1f2"':'')+'><td><b>'+esc(x.product)+'</b></td><td class="muted">'+esc(x.store||'—')+'</td><td class="muted">'+esc(x.barcode||'—')+'</td><td class="num" style="font-weight:700'+(x.low_stock?';color:#e11d48':'')+'">'+x.on_hand+' '+esc(x.uom||'')+'</td><td class="num muted">'+x.min_qty+'</td><td class="num">'+x.stock_value+'</td><td>'+(x.low_stock?'<span class="pill" style="background:#fde8ec;color:#e11d48">⚠️ '+T('اطلب','reorder')+' '+x.to_reorder+'</span>':'<span class="pill" style="background:#dcfce7;color:#16a34a">'+T('كافٍ','OK')+'</span>')+'</td></tr>';
     pgReset('inv2');pagedTable('invList',rs,head,row,'inv2',()=>{},20);
+  window.invIssue=()=>{const items=window.__invItems||[],locs=window.__invLocs||[];
+    if(!items.length){toast(T('لا أصناف','No items'));return;}
+    openDrawer(T('صرف من المخزون','Issue from stock'),
+      '<label class="lbl">'+T('المنتج','Product')+'</label><select class="inp" id="isP">'+items.map(x=>'<option value="'+x.id+'" data-store="'+x.store_id+'" data-name="'+esc(x.product)+'">'+esc(x.product)+' ('+T('الرصيد','on hand')+': '+x.on_hand+')</option>').join('')+'</select>'
+      +'<label class="lbl">'+T('وجهة الصرف (مبنى › دور › مكتب)','Destination')+'</label><select class="inp" id="isL"><option value="">—</option>'+locs.map(l=>'<option value="'+l.id+'">'+esc(l.path||l.name)+'</option>').join('')+'</select>'
+      +'<label class="lbl">'+T('الكمية','Quantity')+'</label><input class="inp" id="isQ" type="number" value="1" min="1">'
+      +'<button class="btn p" style="margin-top:12px" onclick="invIssueSend()">📤 '+T('تأكيد الصرف','Confirm issue')+'</button>');};
+  window.invIssueSend=async()=>{const sel=document.getElementById('isP');const opt=sel.options[sel.selectedIndex];
+    const pid=+sel.value,store=+opt.dataset.store,pname=opt.dataset.name,loc=document.getElementById('isL').value,locName=document.getElementById('isL').selectedOptions[0].text,qty=+document.getElementById('isQ').value||1;
+    try{const r=await api('/client/inv/issue',{method:'POST',body:{store_id:store,product_id:pid,quantity:qty,location_id:loc?+loc:null}});
+      toast(T('تم الصرف','Issued'));closeDrawer();
+      invVoucher({product:pname,qty:qty,location:locName,remaining:r.on_hand,name:r.name});
+      go('inv_overview');
+    }catch(e){toast(e.message);}};
+  window.invVoucher=v=>{printHTML(T('سند صرف مخزني','Stock issue voucher'),
+    '<table style="width:100%"><tr><td><b>'+T('رقم السند','Voucher')+':</b> '+esc(v.name||'')+'</td><td><b>'+T('التاريخ','Date')+':</b> '+new Date().toLocaleString('ar')+'</td></tr></table>'
+    +'<table style="width:100%;border-collapse:collapse;margin-top:10px" border="1"><thead><tr style="background:#0b2a4a;color:#fff"><th style="padding:8px">'+T('الصنف','Item')+'</th><th style="padding:8px">'+T('الكمية','Qty')+'</th><th style="padding:8px">'+T('الوجهة','Destination')+'</th><th style="padding:8px">'+T('الرصيد المتبقّي','Remaining')+'</th></tr></thead><tbody><tr><td style="padding:8px">'+esc(v.product)+'</td><td style="padding:8px;text-align:center">'+v.qty+'</td><td style="padding:8px">'+esc(v.location||'—')+'</td><td style="padding:8px;text-align:center">'+v.remaining+'</td></tr></tbody></table>'
+    +'<div style="margin-top:50px;display:flex;justify-content:space-between"><div style="text-align:center;width:45%"><div style="border-top:1px solid #333;padding-top:6px">'+T('أمين المخزن','Storekeeper')+'</div></div><div style="text-align:center;width:45%"><div style="border-top:1px solid #333;padding-top:6px">'+T('توقيع المستلِم','Recipient')+'</div></div></div>');};
   },
   async inv_low(p){CUR='inv_low';const rs=await api('/client/inv/items?low=1').catch(()=>[]);
     p.innerHTML='<div class="panel">'+(rs.length?'<table><thead><tr><th>'+T('المنتج','Product')+'</th><th>'+T('المخزن','Store')+'</th><th>'+T('الرصيد','On hand')+'</th><th>'+T('حد الطلب','Min')+'</th><th>'+T('الكمية المقترحة','Suggested')+'</th></tr></thead><tbody>'

@@ -5,7 +5,7 @@ service, scoped to the client's partner via service.project.contact_id.
 Read + create a new collection order, mirroring the existing portal form."""
 from odoo.http import request, Controller, route
 
-from .api import _auth, _ok, _err, _body, API
+from .api import _auth, _ok, _err, _body, _abs, API
 
 
 def _sel(Model, field):
@@ -84,6 +84,8 @@ class WasteClientApi(Controller):
         if kw.get('state'):
             dom.append(('states', '=', kw['state']))
         recs = SO.search(dom, order='id desc', limit=200)
+        def g_(o, f):
+            return getattr(o, f) if f in o._fields else False
         return _ok([{
             'id': o.id, 'serial': o.serial or o.display_name,
             'project': o.project_id.name or None,
@@ -94,6 +96,13 @@ class WasteClientApi(Controller):
             'items': [{'item': l.item_id.name if l.item_id else None,
                        'qty': l.quantity} for l in o.order_line_ids],
             'trip': o.trip_id.sequence if 'trip_id' in o._fields and o.trip_id else None,
+            'ops_manager': g_(o, 'ops_manager_id').name if g_(o, 'ops_manager_id') else None,
+            'driver': g_(o, 'driver_id').name if g_(o, 'driver_id') else None,
+            'receiver': g_(o, 'receiver_id').name if g_(o, 'receiver_id') else None,
+            'final_weight': g_(o, 'final_weight') or 0.0,
+            'final_note': g_(o, 'final_note') or None,
+            'notes': g_(o, 'notes') or None,
+            'proof': _abs('/web/image/service.order/%s/proof_image' % o.id) if g_(o, 'proof_image') else None,
             'state': o.states, 'state_label': st.get(o.states, o.states or ''),
         } for o in recs])
 
@@ -120,6 +129,10 @@ class WasteClientApi(Controller):
             'total_weight': getattr(t, 'total_weight', 0.0),
             'total_quantity': getattr(t, 'total_quantity', 0.0),
             'team': t.team_id.name if 'team_id' in t._fields and t.team_id else None,
+            'items': [{'item': l.item_id.name if ('item_id' in l._fields and l.item_id) else None,
+                       'qty': getattr(l, 'quantity', 0), 'weight': getattr(l, 'weight', 0)}
+                      for l in t.trip_line_ids] if 'trip_line_ids' in t._fields else [],
+            'order_count': len(t.order_ids) if 'order_ids' in t._fields else 0,
             'state': t.states, 'state_label': st.get(t.states, t.states or ''),
         } for t in recs])
 
