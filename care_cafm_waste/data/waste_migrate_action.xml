@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="action_migrate_waste" model="ir.actions.server">
+    <field name="name">ترحيل بيانات النفايات من service_order</field>
+    <field name="model_id" ref="model_cafm_waste_order"/>
+    <field name="state">code</field>
+    <field name="code">
+res = env['cafm.waste.order'].migrate_from_service_order()
+action = {'type': 'ir.actions.client', 'tag': 'display_notification',
+          'params': {'title': 'تم الترحيل', 'message': 'طلبات: %s · رحلات: %s' % (res.get('orders'), res.get('trips')),
+                     'type': 'success', 'sticky': False}}
+    </field>
+  </record>
+
+  <menuitem id="menu_waste_migrate" name="⤵️ ترحيل من service_order"
+            parent="menu_waste_config" action="action_migrate_waste"
+            groups="base.group_erp_manager" sequence="90"/>
+</odoo>

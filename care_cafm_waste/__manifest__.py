@@ -16,6 +16,7 @@
         'views/waste_views.xml',
         'views/waste_portal_templates.xml',
         'views/waste_menus.xml',
+        'data/waste_migrate_action.xml',
     ],
     'application': True,
     'installable': True,
