@@ -84,6 +84,43 @@ class NotifApi(Controller):
         return _ok({'sent': True})
 
     # ---- account & data deletion (Google Play requirement) ----------------
+    @route(API + '/account/info', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def account_info(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        u = env.user
+        p = u.partner_id
+        # account type
+        atype = 'عميل' if u.has_group('base.group_portal') else ('مدير' if u.has_group('base.group_system') else 'مستخدم داخلي')
+        clients = env['care.cafm.client'].sudo().search([('user_ids', 'in', [u.id])]) if 'care.cafm.client' in env else None
+        stats = {}
+        if clients:
+            stats['company'] = clients[:1].partner_id.name
+            stats['projects'] = len(clients.mapped('project_ids')) if 'project_ids' in clients._fields else 0
+        return _ok({
+            'name': u.name, 'login': u.login, 'email': u.email or None,
+            'phone': p.phone or p.mobile or None, 'company': stats.get('company') or (p.commercial_partner_id.name if p.commercial_partner_id != p else None),
+            'account_type': atype, 'projects': stats.get('projects', 0),
+            'unread': env['care.cafm.notification'].search_count([('user_id', '=', u.id), ('is_read', '=', False)]),
+        })
+
+    @route(API + '/account/change_password', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def account_change_password(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        b = _body()
+        old, new = b.get('old'), b.get('new')
+        if not new or len(new) < 6:
+            return _err('كلمة المرور الجديدة قصيرة (6 أحرف على الأقل)', 422)
+        try:
+            env['res.users'].sudo().authenticate(env.cr.dbname, env.user.login, old, {'interactive': False})
+        except Exception:
+            return _err('كلمة المرور الحالية غير صحيحة', 403)
+        env.user.sudo().write({'password': new})
+        return _ok({'changed': True})
+
     @route(API + '/account/delete_request', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
     def account_delete_request(self, **kw):
         env = _auth()
