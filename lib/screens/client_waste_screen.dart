@@ -133,6 +133,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
         title: Text('${r['sequence']}', style: const TextStyle(fontWeight: FontWeight.w700)),
         subtitle: Text('${r['pickup'] ?? ''} → ${r['center'] ?? ''} · ${r['total_weight'] ?? 0}kg', maxLines: 2, overflow: TextOverflow.ellipsis),
         trailing: _pill(tr(_stL[st] ?? st, st), c),
+        onTap: () => _openTrip(r),
       );
     }
     final items = (r['items'] as List?) ?? [];
@@ -141,8 +142,112 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
       subtitle: Text([r['pickup'], items.map((i) => '${i['item'] ?? ''}×${i['qty']}').join('، ')].where((x) => x != null && '$x'.isNotEmpty).join(' · '),
           maxLines: 2, overflow: TextOverflow.ellipsis),
       trailing: _pill(tr(_stL[st] ?? st, st), c),
+      onTap: () => _openOrder(r),
     );
   }
+
+  static const _flow = ['draft', 'scheduled', 'pickuped', 'arrived', 'processing', 'delivered', 'completed'];
+
+  void _openOrder(Map r) {
+    final st = '${r['state']}';
+    final cur = _flow.indexOf(st);
+    final cancelled = st == 'cancelled';
+    final items = (r['items'] as List?) ?? [];
+    showModalBottomSheet(
+      context: context, isScrollControlled: true, showDragHandle: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => DraggableScrollableSheet(
+        expand: false, initialChildSize: 0.85, maxChildSize: 0.95,
+        builder: (_, ctrl) => ListView(controller: ctrl, padding: const EdgeInsets.all(18), children: [
+          Text('♻️ ${r['serial']}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0E3A5F))),
+          if (r['project'] != null) Text('${r['project']}', style: const TextStyle(color: Colors.grey)),
+          const SizedBox(height: 14),
+          _secTitle(tr('حالة الطلب', 'Order status')),
+          if (cancelled)
+            const Text('✖ تم إلغاء الطلب', style: TextStyle(color: Color(0xFFE11D48), fontWeight: FontWeight.w700))
+          else
+            Column(children: [for (int i = 0; i < _flow.length; i++) _step(i, cur)]),
+          _secTitle(tr('فريق العملية', 'Operation team')),
+          _kv(Icons.manage_accounts, tr('مدير العمليات', 'Ops manager'), r['ops_manager']),
+          _kv(Icons.local_shipping_outlined, tr('السائق', 'Driver'), r['driver']),
+          _kv(Icons.how_to_reg_outlined, tr('مستلم الكميات', 'Receiver'), r['receiver']),
+          if ((r['final_weight'] ?? 0) != 0) _kv(Icons.scale_outlined, tr('الوزن النهائي', 'Final weight'), '${r['final_weight']} كجم'),
+          if (r['final_note'] != null) _kv(Icons.sticky_note_2_outlined, tr('ملاحظة الاستلام', 'Receipt note'), r['final_note']),
+          _secTitle(tr('التفاصيل', 'Details')),
+          _kv(Icons.place_outlined, tr('موقع الالتقاط', 'Pickup'), r['pickup']),
+          _kv(Icons.route_outlined, tr('الرحلة', 'Trip'), r['trip']),
+          _kv(Icons.event_outlined, tr('التاريخ', 'Date'), r['order_date']),
+          if (items.isNotEmpty) ...[
+            _secTitle(tr('الأصناف', 'Items')),
+            for (final i in items) Padding(padding: const EdgeInsets.symmetric(vertical: 2), child: Row(children: [Expanded(child: Text('${i['item'] ?? '—'}')), Text('×${i['qty']}', style: const TextStyle(fontWeight: FontWeight.w700))])),
+          ],
+          if (r['proof'] != null) ...[
+            _secTitle(tr('صورة الإثبات', 'Proof photo')),
+            ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.network('${r['proof']}', errorBuilder: (_, __, ___) => const SizedBox())),
+          ],
+          if (r['notes'] != null) ...[_secTitle(tr('ملاحظات', 'Notes')), Text('${r['notes']}')],
+          const SizedBox(height: 20),
+        ]),
+      ),
+    );
+  }
+
+  void _openTrip(Map r) {
+    final items = (r['items'] as List?) ?? [];
+    showModalBottomSheet(
+      context: context, isScrollControlled: true, showDragHandle: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('🚛 ${r['sequence']}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0E3A5F))),
+          const SizedBox(height: 12),
+          Row(children: [
+            Expanded(child: _tstat('⚖️', '${r['total_weight'] ?? 0}', tr('الوزن الكلي', 'Weight'), const Color(0xFF0891B2))),
+            const SizedBox(width: 8),
+            Expanded(child: _tstat('📦', '${r['total_quantity'] ?? 0}', tr('الكمية', 'Qty'), const Color(0xFF6366F1))),
+            const SizedBox(width: 8),
+            Expanded(child: _tstat('📋', '${r['order_count'] ?? 0}', tr('الأوامر', 'Orders'), const Color(0xFF16A34A))),
+          ]),
+          const SizedBox(height: 8),
+          _kv(Icons.place_outlined, tr('الالتقاط', 'Pickup'), r['pickup']),
+          _kv(Icons.factory_outlined, tr('مركز المعالجة', 'Center'), r['center']),
+          _kv(Icons.groups_outlined, tr('الفريق', 'Team'), r['team']),
+          _kv(Icons.event_outlined, tr('التاريخ', 'Date'), r['date']),
+          if (items.isNotEmpty) ...[
+            _secTitle(tr('الأصناف المنقولة', 'Transported items')),
+            for (final i in items) Padding(padding: const EdgeInsets.symmetric(vertical: 2), child: Row(children: [Expanded(child: Text('${i['item'] ?? '—'}')), Text('×${i['qty']} · ${i['weight']}kg', style: const TextStyle(fontWeight: FontWeight.w700))])),
+          ],
+        ]),
+      ),
+    );
+  }
+
+  Widget _step(int i, int cur) {
+    final done = cur >= i && cur >= 0;
+    final s = _flow[i];
+    final color = done ? const Color(0xFF16A34A) : Colors.grey.shade300;
+    return IntrinsicHeight(child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Column(children: [
+        Container(width: 28, height: 28, decoration: BoxDecoration(color: done ? color : Colors.white, shape: BoxShape.circle, border: Border.all(color: color, width: 2)), child: Icon(done ? Icons.check : Icons.circle_outlined, size: 15, color: done ? Colors.white : Colors.grey)),
+        if (i < _flow.length - 1) Expanded(child: Container(width: 2, color: cur > i ? const Color(0xFF16A34A) : Colors.grey.shade300)),
+      ]),
+      const SizedBox(width: 12),
+      Padding(padding: const EdgeInsets.only(top: 3, bottom: 14), child: Text(tr(_stL[s] ?? s, s), style: TextStyle(fontWeight: cur == i ? FontWeight.w900 : FontWeight.w600, color: done ? const Color(0xFF0E3A5F) : Colors.grey))),
+    ]));
+  }
+
+  Widget _secTitle(String t) => Padding(padding: const EdgeInsets.only(top: 16, bottom: 8), child: Row(children: [Container(width: 4, height: 16, decoration: BoxDecoration(color: const Color(0xFF16A34A), borderRadius: BorderRadius.circular(3))), const SizedBox(width: 8), Text(t, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF0E3A5F)))]));
+
+  Widget _kv(IconData ic, String k, dynamic v) => (v == null || '$v'.isEmpty) ? const SizedBox.shrink() : Padding(
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        child: Row(children: [Icon(ic, size: 17, color: Colors.grey), const SizedBox(width: 8), SizedBox(width: 110, child: Text(k, style: const TextStyle(color: Colors.grey, fontSize: 12.5))), Expanded(child: Text('$v', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)))]),
+      );
+
+  Widget _tstat(String ic, String v, String l, Color c) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 12), decoration: BoxDecoration(color: c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+        child: Column(children: [Text('$ic $v', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: c)), Text(l, style: const TextStyle(fontSize: 10, color: Colors.grey))]),
+      );
 
   Future<void> _newOrder() async {
     Map<String, dynamic> opt;
