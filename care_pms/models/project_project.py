@@ -188,9 +188,23 @@ class ProjectProject(models.Model):
         }
 
     def action_pms_workers(self):
-        # open the project's workers in Kanban by default
-        return self._open_domain('hr.employee', [('department_id', 'child_of', self.pms_department_id.id)],
-                                 _('عمال %s') % (self.name or ''), view_mode='kanban,tree,form')
+        # open the project's workers in Kanban by default, using safe custom
+        # views (no HR-Officer-only fields) + a rich search (badge/civil/…)
+        self.ensure_one()
+        kanban = self.env.ref('care_pms.pms_employee_kanban', False)
+        tree = self.env.ref('care_pms.pms_employee_tree', False)
+        search = self.env.ref('care_pms.pms_employee_search', False)
+        return {
+            'type': 'ir.actions.act_window', 'name': _('عمال %s') % (self.name or ''),
+            'res_model': 'hr.employee',
+            'domain': [('department_id', 'child_of', self.pms_department_id.id)],
+            'view_mode': 'kanban,tree,form',
+            'views': [(kanban.id if kanban else False, 'kanban'),
+                      (tree.id if tree else False, 'tree'),
+                      (False, 'form')],
+            'search_view_id': [search.id] if search else False,
+            'context': {},
+        }
 
     def action_pms_vehicles(self):
         return self._open_domain('fleet.vehicle', [('department_id', '=', self.pms_department_id.id)],

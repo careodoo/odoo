@@ -13,6 +13,7 @@
         'data/pms_data.xml',
         'reports/pms_reports.xml',
         'views/task_category_views.xml',
+        'views/pms_employee_views.xml',
         'views/task_group_views.xml',
         'views/materials_views.xml',
         'views/pettycash_views.xml',

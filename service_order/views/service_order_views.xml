@@ -27,6 +27,18 @@
             <field name="trip_id" readonly="states == 'completed'"/>
             <field name="notes" readonly="states == 'completed'"/>
           </group>
+          <group string="فريق العملية والمسؤوليات">
+            <group>
+              <field name="ops_manager_id"/>
+              <field name="driver_id"/>
+              <field name="receiver_id"/>
+            </group>
+            <group string="الاستلام النهائي">
+              <field name="final_weight"/>
+              <field name="final_note"/>
+              <field name="proof_image" widget="image" class="oe_avatar"/>
+            </group>
+          </group>
           <notebook>
             <page name="lines" string="Lines">
               <field name="trip_line_ids">
