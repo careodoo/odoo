@@ -55,8 +55,8 @@ class _MainShellState extends State<MainShell> {
       // waste-only client → a waste-tailored nav (orders / trips / stats)
       if (_serviceSections.length == 1 && _serviceSections.first == 'waste') {
         return [
-          _Tab(Icons.recycling_rounded, tr('طلبات النقل', 'Collection'), const ClientWasteScreen(initialKind: 'orders', embedded: true)),
-          _Tab(Icons.local_shipping_rounded, tr('الرحلات', 'Trips'), const ClientWasteScreen(initialKind: 'trips', embedded: true)),
+          _Tab(Icons.recycling_rounded, tr('طلبات النقل', 'Collection'), const ClientWasteScreen(key: ValueKey('w_orders'), initialKind: 'orders', embedded: true)),
+          _Tab(Icons.local_shipping_rounded, tr('الرحلات', 'Trips'), const ClientWasteScreen(key: ValueKey('w_trips'), initialKind: 'trips', embedded: true)),
           _Tab(Icons.insights_rounded, tr('الإحصائيات', 'Statistics'), const WasteStatsScreen()),
           notif, more,
         ];

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/auth.dart';
 import '../../../core/i18n.dart';
 import '../../driver_waste_trips.dart';
+import '../../receiver_waste.dart';
 import 'staff_jobs.dart';
 import 'staff_team.dart';
 import 'staff_dashboard.dart';
@@ -76,6 +77,8 @@ class _StaffShellState extends State<StaffShell> {
           _StaffTab(Icons.assignment_rounded, tr('المهام', 'Jobs'), StaffJobsScreen(me: me, embedded: true)),
           if (me['role'] == 'driver' || me['role'] == 'ops_manager')
             _StaffTab(Icons.local_shipping_rounded, tr('رحلات النفايات', 'Waste trips'), const DriverWasteTripsScreen()),
+          if (me['role'] == 'worker' || me['role'] == 'supervisor' || me['role'] == 'ops_manager')
+            _StaffTab(Icons.factory_rounded, tr('استلام بالمركز', 'Center intake'), const ReceiverWasteScreen()),
           if (hasTeam) _StaffTab(Icons.groups_rounded, tr('الفريق', 'Team'), StaffTeamScreen(me: me)),
           _StaffTab(Icons.person_rounded, tr('حسابي', 'Me'), _AccountTab(me: me, onChanged: _reload)),
         ];
@@ -170,7 +173,7 @@ class _AccountTabState extends State<_AccountTab> {
         ),
         const SizedBox(height: 14),
         OutlinedButton.icon(
-          onPressed: () => context.read<AuthProvider>().setAppMode(null),
+          onPressed: () => context.read<AuthProvider>().setAppMode('choose'),
           icon: const Icon(Icons.swap_horiz_rounded, color: Crew.teal),
           label: Text(tr('تبديل الوضع', 'Switch workspace'), style: const TextStyle(color: Crew.teal, fontWeight: FontWeight.w800)),
           style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(50), side: const BorderSide(color: Crew.teal), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),

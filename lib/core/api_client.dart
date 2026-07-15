@@ -569,6 +569,17 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/client/waste/options'), headers: await _headers())))['data'] as Map);
 
+  /// Treatment-center receiver: incoming orders assigned to me.
+  Future<List<dynamic>> wasteReceiverOrders({bool all = false}) async =>
+      List<dynamic>.from((await _handle(await http.get(
+              _u('/waste/receiver/orders${all ? '?all=1' : ''}'), headers: await _headers())))['data'] as List);
+
+  /// Receiver submits final data + media + confirmation for an order.
+  /// media: [{name, mimetype, data(base64)}], items: [{item_id, quantity}], confirm: delivered|completed|processing
+  Future<Map<String, dynamic>> wasteOrderReceive(int orderId, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/waste/order/$orderId/receive'),
+              headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
   /// Driver's assigned waste trips (active by default; all=1 for history).
   Future<List<dynamic>> wasteDriverTrips({bool all = false}) async =>
       List<dynamic>.from((await _handle(await http.get(

@@ -54,6 +54,8 @@ class _RootShellState extends State<RootShell> {
         final cafmSwitch = auth.interfaces?['cafm'] == true;
         // single interface → storefront
         if (modes.length <= 1) return C2CShell(canSwitchCafm: cafmSwitch);
+        // explicit request to pick a mode (the switch button) → show the chooser
+        if (auth.appMode == 'choose') return ModeChooserScreen(modes: modes);
         // decide the active mode: an explicit user choice wins; otherwise a
         // client/projects user auto-enters their PRIMARY interface (whoami
         // 'default') so a waste-only client lands on their portal — not the
@@ -94,13 +96,14 @@ class _ModeScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: child,
-      floatingActionButtonLocation: FloatingActionButtonLocation.miniEndTop,
+      floatingActionButtonLocation: FloatingActionButtonLocation.miniStartTop,
       floatingActionButton: SafeArea(
         child: FloatingActionButton.small(
           heroTag: 'modeSwitch',
-          backgroundColor: const Color(0xFF7C3AED),
-          tooltip: 'تبديل الوضع',
-          onPressed: () => context.read<AuthProvider>().setAppMode(null),
+          backgroundColor: const Color(0xFFF5A623),
+          foregroundColor: const Color(0xFF0E3A5F),
+          tooltip: 'تبديل الوضع / العودة إلى CARE 2 CARE',
+          onPressed: () => context.read<AuthProvider>().setAppMode('choose'),
           child: const Icon(Icons.swap_horiz_rounded),
         ),
       ),

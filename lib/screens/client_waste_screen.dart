@@ -85,14 +85,6 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
           ),
         ],
       ),
-      floatingActionButton: _kind == 'orders'
-          ? FloatingActionButton.extended(
-              backgroundColor: const Color(0xFF16A34A),
-              onPressed: _newOrderMenu,
-              icon: const Icon(Icons.add),
-              label: Text(tr('طلب نقل', 'New order')),
-            )
-          : null,
       body: Column(children: [
         _portalBanner(),
         if (s != null && s['available'] == true)
@@ -122,8 +114,8 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
                 ),
             ]),
           ),
-        // search + status filter (orders/trips only)
-        if (_kind != 'centers') _searchBar(),
+        // top actions: new-order button + search/filter icon
+        if (_kind != 'centers') _actionBar(),
         Expanded(
           child: FutureBuilder<List<dynamic>>(
             future: _list,
@@ -179,40 +171,88 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
         ),
       );
 
-  Widget _searchBar() {
-    const states = [
-      ['', 'الكل', 'All'], ['scheduled', 'مجدول', 'Scheduled'], ['pickuped', 'تم الالتقاط', 'Picked'],
-      ['processing', 'معالجة', 'Processing'], ['delivered', 'تسليم', 'Delivered'], ['completed', 'مكتمل', 'Done'],
-    ];
-    return Column(children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(10, 4, 10, 0),
-        child: TextField(
-          onChanged: (v) => _q = v,
-          onSubmitted: (_) => _load(),
-          textInputAction: TextInputAction.search,
-          decoration: InputDecoration(
-            hintText: tr('بحث بالرقم أو الموقع…', 'Search by serial or location…'),
-            prefixIcon: const Icon(Icons.search, size: 20),
-            suffixIcon: IconButton(icon: const Icon(Icons.tune, size: 20), onPressed: _load),
-            isDense: true, filled: true, fillColor: const Color(0xFFF1F5F9),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-          ),
-        ),
-      ),
-      SizedBox(
-        height: 40,
-        child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), children: [
-          for (final st in states)
-            Padding(padding: const EdgeInsets.only(right: 6), child: ChoiceChip(
-              label: Text(gLang == 'en' ? st[2] : st[1], style: const TextStyle(fontSize: 12)),
-              selected: (_stateFilter ?? '') == st[0],
-              visualDensity: VisualDensity.compact,
-              onSelected: (_) { setState(() => _stateFilter = st[0].isEmpty ? null : st[0]); _load(); },
-            )),
+  static const _states = [
+    ['', 'الكل', 'All'], ['scheduled', 'مجدول', 'Scheduled'], ['pickuped', 'تم الالتقاط', 'Picked'],
+    ['arrived', 'وصل', 'Arrived'], ['processing', 'معالجة', 'Processing'], ['delivered', 'تسليم', 'Delivered'], ['completed', 'مكتمل', 'Done'], ['cancelled', 'ملغى', 'Cancelled'],
+  ];
+
+  bool get _filterActive => _q.isNotEmpty || (_stateFilter != null && _stateFilter!.isNotEmpty);
+
+  Widget _actionBar() => Padding(
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
+        child: Row(children: [
+          if (_kind == 'orders')
+            Expanded(child: SizedBox(height: 48, child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Color(0xFF115E4B), Color(0xFF16A34A)], begin: Alignment.topRight, end: Alignment.bottomLeft),
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [BoxShadow(color: const Color(0xFF16A34A).withValues(alpha: 0.35), blurRadius: 10, offset: const Offset(0, 4))],
+              ),
+              child: Material(color: Colors.transparent, child: InkWell(
+                borderRadius: BorderRadius.circular(14), onTap: _newOrderMenu,
+                child: const Center(child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.add_circle_outline_rounded, color: Colors.white), SizedBox(width: 8),
+                  Text('طلب نقل جديد', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
+                ])),
+              )),
+            ))),
+          if (_kind == 'orders') const SizedBox(width: 10),
+          // search / filter icon button (badge when active)
+          Stack(clipBehavior: Clip.none, children: [
+            Container(
+              width: 48, height: 48,
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFE2E8F0)), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, offset: Offset(0, 2))]),
+              child: Material(color: Colors.transparent, child: InkWell(
+                borderRadius: BorderRadius.circular(14), onTap: _openSearchDialog,
+                child: const Icon(Icons.tune_rounded, color: Color(0xFF0E3A5F)),
+              )),
+            ),
+            if (_filterActive) Positioned(top: -3, right: -3, child: Container(width: 14, height: 14, decoration: BoxDecoration(color: const Color(0xFFC0392B), shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)))),
+          ]),
         ]),
-      ),
-    ]);
+      );
+
+  void _openSearchDialog() {
+    final qCtrl = TextEditingController(text: _q);
+    String? tmpState = _stateFilter;
+    showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setSt) => Padding(
+        padding: EdgeInsets.fromLTRB(18, 16, 18, MediaQuery.of(ctx).viewInsets.bottom + 18),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.tune_rounded, color: Color(0xFF0E3A5F)), const SizedBox(width: 8),
+            const Text('بحث وفلترة', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: Color(0xFF0E3A5F))),
+            const Spacer(),
+            TextButton(onPressed: () { qCtrl.clear(); setSt(() => tmpState = null); }, child: const Text('مسح')),
+          ]),
+          const SizedBox(height: 12),
+          TextField(controller: qCtrl, autofocus: true, decoration: InputDecoration(
+            hintText: tr('بحث بالرقم أو الموقع…', 'Search by serial or location…'),
+            prefixIcon: const Icon(Icons.search), filled: true, fillColor: const Color(0xFFF1F5F9),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none))),
+          const SizedBox(height: 14),
+          const Text('الحالة', style: TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF64748B))),
+          const SizedBox(height: 8),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            for (final st in _states) ChoiceChip(
+              label: Text(gLang == 'en' ? st[2] : st[1], style: const TextStyle(fontSize: 12.5)),
+              selected: (tmpState ?? '') == st[0],
+              selectedColor: const Color(0xFF16A34A),
+              labelStyle: TextStyle(color: (tmpState ?? '') == st[0] ? Colors.white : const Color(0xFF0E3A5F), fontWeight: FontWeight.w700),
+              onSelected: (_) => setSt(() => tmpState = st[0].isEmpty ? null : st[0]),
+            ),
+          ]),
+          const SizedBox(height: 18),
+          SizedBox(width: double.infinity, height: 50, child: ElevatedButton.icon(
+            onPressed: () { setState(() { _q = qCtrl.text; _stateFilter = tmpState; }); _load(); Navigator.pop(ctx); },
+            icon: const Icon(Icons.check_rounded),
+            label: const Text('تطبيق', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0E3A5F), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))))),
+        ]),
+      )),
+    );
   }
 
   Widget _stat(String ic, String v, String l, Color c) => Container(

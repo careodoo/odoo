@@ -84,6 +84,8 @@ class MoreScreen extends StatelessWidget {
     final lang = context.watch<LangProvider>();
     tile(Icons.language, lang.isArabic ? 'English' : 'العربية', null, c: const Color(0xFF0B6EA8),
         onTap: () => context.read<LangProvider>().toggle());
+    tile(Icons.swap_horiz_rounded, tr('العودة إلى CARE 2 CARE / تبديل الوضع', 'Back to CARE 2 CARE / switch'), null, c: const Color(0xFFF5A623),
+        onTap: () => context.read<AuthProvider>().setAppMode('choose'));
     tile(Icons.logout, tr('تسجيل الخروج', 'Sign out'), null, c: const Color(0xFFE5484D),
         onTap: () => context.read<AuthProvider>().logout());
 

@@ -50,7 +50,7 @@ class _OdooBackendScreenState extends State<OdooBackendScreen> {
         title: Text(widget.title ?? tr('لوحة أودو الكاملة', 'Odoo backend')),
         actions: [
           if (widget.showSwitch)
-            IconButton(icon: const Icon(Icons.swap_horiz_rounded), tooltip: tr('تبديل الوضع', 'Switch mode'), onPressed: () => context.read<AuthProvider>().setAppMode(null)),
+            IconButton(icon: const Icon(Icons.swap_horiz_rounded), tooltip: tr('تبديل الوضع', 'Switch mode'), onPressed: () => context.read<AuthProvider>().setAppMode('choose')),
           IconButton(icon: const Icon(Icons.refresh), onPressed: () => _wc?.reload()),
         ],
       ),

@@ -73,7 +73,7 @@ class _C2CAccountScreenState extends State<C2CAccountScreen> {
             _tile(Icons.event_note_rounded, tr('حجوزاتي', 'My bookings'), () {}, ic: const Color(0xFF0EA5E9)),
             _tile(Icons.description_outlined, tr('طلبات التعاقد وعروض الأسعار', 'Contracts & quotes'), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const C2CContractsScreen())), ic: const Color(0xFF8B5CF6)),
             if (widget.showModeSwitch)
-              _tile(Icons.swap_horiz_rounded, tr('تبديل الوضع (الأنظمة الأخرى)', 'Switch mode (other systems)'), () => context.read<AuthProvider>().setAppMode(null), ic: const Color(0xFF7C3AED))
+              _tile(Icons.swap_horiz_rounded, tr('تبديل الوضع (الأنظمة الأخرى)', 'Switch mode (other systems)'), () => context.read<AuthProvider>().setAppMode('choose'), ic: const Color(0xFF7C3AED))
             else if (widget.canSwitchCafm)
               _tile(Icons.apartment_rounded, tr('التحويل إلى إدارة المرافق (CAFM)', 'Switch to CAFM'), () => openCafm(context), ic: C2C.navy),
             _tile(Icons.language_rounded, tr('اللغة', 'Language'), _langSheet, ic: const Color(0xFF16A34A)),

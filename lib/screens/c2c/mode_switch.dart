@@ -127,7 +127,7 @@ class ManagementLauncherScreen extends StatelessWidget {
         backgroundColor: const Color(0xFF0E3A5F), foregroundColor: Colors.white,
         title: Text(tr('الإدارة', 'Management')),
         actions: [
-          IconButton(icon: const Icon(Icons.swap_horiz_rounded), tooltip: tr('تبديل الوضع', 'Switch mode'), onPressed: () => context.read<AuthProvider>().setAppMode(null)),
+          IconButton(icon: const Icon(Icons.swap_horiz_rounded), tooltip: tr('تبديل الوضع', 'Switch mode'), onPressed: () => context.read<AuthProvider>().setAppMode('choose')),
           IconButton(icon: const Icon(Icons.logout_rounded), tooltip: tr('خروج', 'Logout'), onPressed: () => context.read<AuthProvider>().logout()),
         ],
       ),
