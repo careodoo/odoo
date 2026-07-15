@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- portal home card -->
+  <template id="portal_my_home_waste" name="Portal My Home : waste" inherit_id="portal.portal_my_home" priority="30">
+    <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+      <t t-call="portal.portal_docs_entry">
+        <t t-set="title">نقل ومعالجة النفايات</t>
+        <t t-set="url" t-value="'/waste/orders'"/>
+        <t t-set="text">طلباتكم ورحلاتكم وتقاريركم</t>
+        <t t-set="config_card" t-value="True"/>
+        <t t-set="show_count" t-value="True"/>
+        <t t-set="count" t-value="waste_count"/>
+      </t>
+    </xpath>
+  </template>
+
+  <!-- ORDERS LIST + STATS DASHBOARD -->
+  <template id="portal_waste_orders" name="Waste Orders">
+    <t t-call="portal.portal_layout">
+      <t t-set="pager" t-value="pager"/>
+      <t t-set="breadcrumbs_searchbar" t-value="True"/>
+      <t t-call="portal.portal_searchbar"><t t-set="title">طلبات النفايات</t></t>
+
+      <t t-if="waste_stats">
+        <div class="row g-2 mb-3">
+          <div class="col-6 col-md-3"><div class="card border-0 shadow-sm"><div class="card-body py-2 px-3"><div class="text-muted small">📋 الطلبات</div><div class="h4 mb-0 fw-bold" style="color:#0E3A5F"><t t-esc="waste_stats['total_orders']"/></div></div></div></div>
+          <div class="col-6 col-md-3"><div class="card border-0 shadow-sm"><div class="card-body py-2 px-3"><div class="text-muted small">✅ المكتملة</div><div class="h4 mb-0 fw-bold" style="color:#16A34A"><t t-esc="waste_stats['completed']"/></div></div></div></div>
+          <div class="col-6 col-md-3"><div class="card border-0 shadow-sm"><div class="card-body py-2 px-3"><div class="text-muted small">⚖️ الوزن (كجم)</div><div class="h4 mb-0 fw-bold" style="color:#0891B2"><t t-esc="waste_stats['total_weight']"/></div></div></div></div>
+          <div class="col-6 col-md-3"><div class="card border-0 shadow-sm"><div class="card-body py-2 px-3"><div class="text-muted small">📦 الكمية</div><div class="h4 mb-0 fw-bold" style="color:#6366F1"><t t-esc="waste_stats['total_quantity']"/></div></div></div></div>
+        </div>
+        <div class="row g-2 mb-3">
+          <div class="col-md-7" t-if="waste_stats['by_month']"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h6 class="fw-bold mb-3" style="color:#0E3A5F">📈 حسب الشهر</h6>
+            <t t-foreach="waste_stats['by_month'][-8:]" t-as="m"><div class="d-flex align-items-center mb-2">
+              <div style="width:64px" class="small fw-bold"><t t-esc="m['month']"/></div>
+              <div class="flex-grow-1 mx-2" style="background:#eef2f6;border-radius:6px;height:20px"><div t-attf-style="width:#{m['pct']}%;height:20px;border-radius:6px;background:linear-gradient(90deg,#16A34A,#15803D)"/></div>
+              <div class="small text-muted" style="width:110px"><t t-esc="m['orders']"/> طلب · <t t-esc="m['weight']"/>kg</div>
+            </div></t>
+          </div></div></div>
+          <div class="col-md-5" t-if="waste_stats['by_item']"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h6 class="fw-bold mb-3" style="color:#0E3A5F">🏆 أكثر الأصناف</h6>
+            <t t-foreach="waste_stats['by_item']" t-as="it"><div class="d-flex align-items-center mb-2">
+              <img t-if="it['item_id']" t-attf-src="/api/v1/cafmwaste/item/#{it['item_id']}/image" style="width:34px;height:34px;object-fit:cover;border-radius:8px" class="me-2"/>
+              <span t-else="" class="me-2" style="font-size:20px">📦</span>
+              <div class="flex-grow-1 small fw-bold"><t t-esc="it['name']"/></div>
+              <span class="badge rounded-pill" style="background:#16A34A"><t t-esc="it['qty']"/></span>
+            </div></t>
+          </div></div></div>
+        </div>
+      </t>
+
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <a class="btn text-white fw-bold" style="background:linear-gradient(120deg,#115E4B,#16A34A);border-radius:10px" href="/waste/order/create"><i class="fa fa-plus"/> طلب جديد</a>
+        <form class="d-flex align-items-center gap-2" action="/waste/print" method="get" target="_blank">
+          <label class="small text-muted mb-0">من</label><input type="date" class="form-control form-control-sm" name="date_from" required="True" style="max-width:150px"/>
+          <label class="small text-muted mb-0">إلى</label><input type="date" class="form-control form-control-sm" name="date_to" required="True" style="max-width:150px"/>
+          <button class="btn btn-outline-primary btn-sm" type="submit"><i class="fa fa-print"/> طباعة التقرير</button>
+        </form>
+      </div>
+
+      <t t-if="orders" t-call="portal.portal_table">
+        <thead><tr><th>الرقم</th><th>موقع الالتقاط</th><th>تاريخ الطلب</th><th>الكمية</th><th>الوزن</th><th>الحالة</th></tr></thead>
+        <tbody>
+          <tr t-foreach="orders" t-as="o">
+            <td><a t-attf-href="/waste/order/#{o.id}"><t t-esc="o.serial"/></a></td>
+            <td t-esc="o.pickup_location_id.name or ''"/>
+            <td><span t-field="o.request_datetime" t-options="{'widget':'datetime','format':'Y-MM-dd HH:mm'}"/></td>
+            <td t-esc="o.total_quantity"/>
+            <td t-esc="o.final_weight"/>
+            <td><span class="badge rounded-pill" t-attf-style="background:#{'#16A34A' if o.states in ('completed','delivered') else '#0891B2' if o.states=='cancelled' else '#64748b'}"><span t-field="o.states"/></span></td>
+          </tr>
+        </tbody>
+      </t>
+      <p t-else="" class="text-muted">لا توجد طلبات بعد.</p>
+    </t>
+  </template>
+
+  <!-- ORDER DETAIL -->
+  <template id="portal_waste_order_detail" name="Waste Order Detail">
+    <t t-call="portal.portal_layout">
+      <div class="card border-0 shadow-sm mb-3" style="border-radius:16px;overflow:hidden">
+        <div class="p-4 text-white" style="background:linear-gradient(120deg,#115E4B,#16A34A)">
+          <div class="d-flex justify-content-between align-items-center">
+            <div><h3 class="mb-0 fw-bold">♻️ <span t-esc="o.serial"/></h3><div style="opacity:.9" t-esc="o.contact_id.name or ''"/></div>
+            <a class="btn btn-light btn-sm" t-att-href="o.get_portal_url(report_type='pdf', download=True)"><i class="fa fa-download"/> تحميل التقرير</a>
+          </div>
+        </div>
+        <div class="card-body p-4">
+          <!-- timeline -->
+          <t t-set="flow" t-value="['draft','scheduled','pickuped','arrived','processing','delivered','completed']"/>
+          <t t-set="labels" t-value="{'draft':'مسودة','scheduled':'مجدول','pickuped':'تم الالتقاط','arrived':'وصل','processing':'معالجة','delivered':'المحرقة','completed':'مكتمل'}"/>
+          <t t-set="cur" t-value="flow.index(o.states) if o.states in flow else -1"/>
+          <div class="d-flex flex-wrap align-items-center p-3 mb-3" style="background:#f4f7fb;border-radius:14px" t-if="o.states != 'cancelled'">
+            <t t-foreach="flow" t-as="s"><div class="d-flex align-items-center">
+              <div t-attf-style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;background:#{'#16A34A' if cur &gt;= s_index else '#cbd5e1'}"><t t-if="cur &gt;= s_index">✓</t><t t-else="">·</t></div>
+              <span t-attf-style="margin:0 6px;font-size:12px;color:#{'#0E3A5F' if cur &gt;= s_index else '#94a3b8'}"><t t-esc="labels.get(s,s)"/></span>
+              <span t-if="not s_last" style="color:#cbd5e1">→</span>
+            </div></t>
+          </div>
+          <div t-else="" class="alert alert-danger">✖ تم إلغاء الطلب</div>
+
+          <div class="row g-3">
+            <div class="col-md-6"><div class="card border-0 shadow-sm h-100"><div class="card-body">
+              <h6 class="fw-bold mb-3" style="color:#0E3A5F">👷 فريق العملية</h6>
+              <div t-if="o.ops_manager_id" class="d-flex justify-content-between mb-2"><span class="text-muted small">مدير العمليات</span><span class="fw-bold small" t-field="o.ops_manager_id.name"/></div>
+              <div t-if="o.driver_id" class="d-flex justify-content-between mb-2"><span class="text-muted small">السائق</span><span class="fw-bold small" t-field="o.driver_id.name"/></div>
+              <div t-if="o.receiver_id" class="d-flex justify-content-between mb-2"><span class="text-muted small">مستلم الكميات</span><span class="fw-bold small" t-field="o.receiver_id.name"/></div>
+              <div t-if="o.final_weight" class="d-flex justify-content-between mb-2"><span class="text-muted small">الوزن النهائي</span><span class="fw-bold small"><t t-esc="o.final_weight"/> كجم</span></div>
+              <div class="d-flex justify-content-between"><span class="text-muted small">المشروع</span><span class="fw-bold small" t-field="o.project_id.name"/></div>
+            </div></div></div>
+            <div class="col-md-6" t-if="o.proof_image"><div class="card border-0 shadow-sm h-100"><div class="card-body">
+              <h6 class="fw-bold mb-3" style="color:#0E3A5F">📸 صورة الإثبات</h6>
+              <img t-att-src="image_data_uri(o.proof_image)" style="width:100%;max-height:200px;object-fit:cover;border-radius:12px"/>
+            </div></div></div>
+          </div>
+
+          <h5 class="fw-bold mt-4" style="color:#0E3A5F">الأصناف</h5>
+          <table class="table table-sm">
+            <thead class="bg-light"><tr><th>صورة</th><th>الصنف</th><th>الكمية</th><th>الوزن الكلي</th></tr></thead>
+            <tbody><tr t-foreach="o.order_line_ids" t-as="l">
+              <td><img t-if="l.item_id.image" t-att-src="image_data_uri(l.item_id.image)" style="max-height:3rem;border-radius:6px"/></td>
+              <td t-esc="l.item_id.name"/><td t-esc="l.quantity"/><td t-esc="round(l.quantity*l.weight,2)"/>
+            </tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="mt-3"><t t-call="portal.message_thread"><t t-set="object" t-value="o"/></t></div>
+    </t>
+  </template>
+
+  <!-- CREATE FORM -->
+  <template id="portal_waste_create" name="Waste Create">
+    <t t-call="portal.portal_layout">
+      <div class="row justify-content-center my-4"><div class="col-lg-8">
+        <div class="card border-0 shadow-sm" style="border-radius:18px;overflow:hidden">
+          <div class="p-4 text-white" style="background:linear-gradient(120deg,#115E4B,#16A34A)">
+            <div class="d-flex align-items-center"><span style="font-size:32px" class="me-3">♻️</span>
+              <div><h3 class="mb-0 fw-bold">طلب رفع نفايات جديد</h3><div style="opacity:.9;font-size:13px">اطلب رفع المخلفات من موقعك وسنتولّى الباقي</div></div></div>
+          </div>
+          <div class="card-body p-4">
+            <form method="post" action="/waste/order/submit">
+              <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+              <div class="row g-3">
+                <div class="col-md-6"><label class="form-label fw-bold small text-muted">🗂️ المشروع</label>
+                  <select class="form-select" name="project_id"><t t-foreach="projects" t-as="p"><option t-att-value="p[0]" t-esc="p[1]"/></t></select></div>
+                <div class="col-md-6"><label class="form-label fw-bold small text-muted">📋 النوع</label>
+                  <select class="form-select" name="type_id"><t t-foreach="types" t-as="t"><option t-att-value="t[0]" t-esc="t[1]"/></t></select></div>
+                <div class="col-md-6"><label class="form-label fw-bold small text-muted">📍 موقع الالتقاط</label>
+                  <select class="form-select" name="pickup_location_id"><t t-foreach="pickups" t-as="pl"><option t-att-value="pl[0]" t-esc="pl[1]"/></t></select></div>
+                <div class="col-md-6"><label class="form-label fw-bold small text-muted">📅 التاريخ والوقت</label>
+                  <input type="datetime-local" class="form-control" name="request_datetime" required="True"/></div>
+                <div class="col-md-8"><label class="form-label fw-bold small text-muted">♻️ الصنف</label>
+                  <select class="form-select" name="item_id"><t t-foreach="items" t-as="i"><option t-att-value="i[0]" t-esc="i[1]"/></t></select></div>
+                <div class="col-md-4"><label class="form-label fw-bold small text-muted">الكمية</label>
+                  <input type="number" class="form-control" name="quantity" value="1" min="1"/></div>
+                <div class="col-12"><label class="form-label fw-bold small text-muted">📝 ملاحظات</label>
+                  <textarea class="form-control" name="notes" rows="2"/></div>
+                <div class="col-12 d-flex gap-2 mt-2">
+                  <button type="submit" class="btn btn-lg text-white fw-bold flex-grow-1" style="background:linear-gradient(120deg,#115E4B,#16A34A);border-radius:12px"><i class="fa fa-paper-plane me-2"/> إرسال الطلب</button>
+                  <a href="/waste/orders" class="btn btn-lg btn-outline-secondary" style="border-radius:12px">إلغاء</a>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div></div>
+    </t>
+  </template>
+</odoo>

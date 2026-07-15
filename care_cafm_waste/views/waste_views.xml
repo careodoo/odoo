@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- ==================== ORDER ==================== -->
+  <record id="view_waste_order_form" model="ir.ui.view">
+    <field name="name">cafm.waste.order.form</field>
+    <field name="model">cafm.waste.order</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="action_to_schedule" string="جدولة" type="object" class="oe_highlight" invisible="states != 'draft'"/>
+          <button name="action_to_pickuped" string="تم الالتقاط" type="object" class="oe_highlight" invisible="states != 'scheduled'"/>
+          <button name="action_to_arrived" string="وصل للمعالجة" type="object" invisible="states != 'pickuped'"/>
+          <button name="action_to_processing" string="بدء المعالجة" type="object" invisible="states != 'arrived'"/>
+          <button name="action_to_delivered" string="تسليم للمحرقة" type="object" invisible="states != 'processing'"/>
+          <button name="action_to_completed" string="إكمال" type="object" class="oe_highlight" invisible="states != 'delivered'"/>
+          <button name="action_to_cancelled" string="إلغاء" type="object" invisible="states in ('completed','cancelled')"/>
+          <button name="action_to_draft" string="إعادة لمسودة" type="object" invisible="states == 'draft'"/>
+          <field name="states" widget="statusbar" statusbar_visible="draft,scheduled,pickuped,arrived,processing,delivered,completed"/>
+        </header>
+        <sheet>
+          <div class="oe_title">
+            <h1><field name="serial" readonly="1"/></h1>
+          </div>
+          <group>
+            <group>
+              <field name="project_id"/>
+              <field name="contact_id" readonly="1"/>
+              <field name="type_id"/>
+              <field name="pickup_location_id"/>
+            </group>
+            <group>
+              <field name="request_datetime"/>
+              <field name="order_datetime"/>
+              <field name="trip_id" readonly="1"/>
+              <field name="total_quantity"/>
+              <field name="total_weight"/>
+            </group>
+          </group>
+          <notebook>
+            <page string="الأصناف" name="items">
+              <field name="order_line_ids">
+                <tree editable="bottom">
+                  <field name="item_id"/>
+                  <field name="quantity"/>
+                  <field name="weight" readonly="1"/>
+                </tree>
+              </field>
+            </page>
+            <page string="فريق العملية والإثبات" name="ops">
+              <group>
+                <group>
+                  <field name="ops_manager_id"/>
+                  <field name="driver_id"/>
+                  <field name="receiver_id"/>
+                </group>
+                <group>
+                  <field name="final_weight"/>
+                  <field name="final_note"/>
+                  <field name="proof_image" widget="image" options="{'size':[150,150]}"/>
+                </group>
+              </group>
+            </page>
+            <page string="ملاحظات" name="notes"><field name="notes"/></page>
+          </notebook>
+        </sheet>
+        <div class="oe_chatter">
+          <field name="message_follower_ids"/>
+          <field name="activity_ids"/>
+          <field name="message_ids"/>
+        </div>
+      </form>
+    </field>
+  </record>
+
+  <record id="view_waste_order_tree" model="ir.ui.view">
+    <field name="name">cafm.waste.order.tree</field>
+    <field name="model">cafm.waste.order</field>
+    <field name="arch" type="xml">
+      <tree decoration-success="states=='completed'" decoration-info="states in ('scheduled','pickuped')" decoration-muted="states=='cancelled'">
+        <field name="serial"/>
+        <field name="project_id"/>
+        <field name="contact_id"/>
+        <field name="pickup_location_id"/>
+        <field name="request_datetime"/>
+        <field name="total_quantity"/>
+        <field name="final_weight"/>
+        <field name="states" widget="badge"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_waste_order_kanban" model="ir.ui.view">
+    <field name="name">cafm.waste.order.kanban</field>
+    <field name="model">cafm.waste.order</field>
+    <field name="arch" type="xml">
+      <kanban default_group_by="states">
+        <field name="serial"/><field name="states"/>
+        <templates>
+          <t t-name="kanban-box">
+            <div class="oe_kanban_global_click o_kanban_record_has_image_fill" style="padding:10px">
+              <strong>♻️ <field name="serial"/></strong>
+              <div class="text-muted"><field name="contact_id"/></div>
+              <div><field name="pickup_location_id"/></div>
+              <div class="mt-1"><field name="total_quantity"/> صنف · <field name="request_datetime" widget="date"/></div>
+            </div>
+          </t>
+        </templates>
+      </kanban>
+    </field>
+  </record>
+
+  <record id="view_waste_order_search" model="ir.ui.view">
+    <field name="name">cafm.waste.order.search</field>
+    <field name="model">cafm.waste.order</field>
+    <field name="arch" type="xml">
+      <search>
+        <field name="serial"/>
+        <field name="project_id"/>
+        <field name="contact_id"/>
+        <filter name="f_open" string="مفتوحة" domain="[('states','in',('draft','scheduled','pickuped','arrived','processing'))]"/>
+        <filter name="f_done" string="مكتملة" domain="[('states','in',('completed','delivered'))]"/>
+        <separator/>
+        <filter name="grp_state" string="الحالة" context="{'group_by':'states'}"/>
+        <filter name="grp_project" string="المشروع" context="{'group_by':'project_id'}"/>
+        <filter name="grp_client" string="العميل" context="{'group_by':'contact_id'}"/>
+      </search>
+    </field>
+  </record>
+
+  <record id="action_waste_orders" model="ir.actions.act_window">
+    <field name="name">طلبات النفايات</field>
+    <field name="res_model">cafm.waste.order</field>
+    <field name="view_mode">tree,kanban,form</field>
+    <field name="search_view_id" ref="view_waste_order_search"/>
+  </record>
+
+  <!-- ==================== TRIP ==================== -->
+  <record id="view_waste_trip_form" model="ir.ui.view">
+    <field name="name">cafm.waste.trip.form</field>
+    <field name="model">cafm.waste.trip</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <field name="states" widget="statusbar"/>
+        </header>
+        <sheet>
+          <div class="oe_title"><h1><field name="sequence" readonly="1"/></h1><field name="reference" readonly="1"/></div>
+          <group>
+            <group>
+              <field name="project_id"/><field name="order_id"/>
+              <field name="pickup_location_id"/><field name="center_id"/>
+              <field name="team_id"/>
+            </group>
+            <group>
+              <field name="trip_date"/><field name="pickuped_datetime"/>
+              <field name="total_quantity"/><field name="total_qty_weight"/>
+            </group>
+          </group>
+          <notebook>
+            <page string="الأصناف المنقولة" name="items">
+              <field name="trip_line_ids">
+                <tree editable="bottom"><field name="item_id"/><field name="quantity"/><field name="weight" readonly="1"/></tree>
+              </field>
+            </page>
+          </notebook>
+        </sheet>
+        <div class="oe_chatter"><field name="message_follower_ids"/><field name="activity_ids"/><field name="message_ids"/></div>
+      </form>
+    </field>
+  </record>
+
+  <record id="view_waste_trip_tree" model="ir.ui.view">
+    <field name="name">cafm.waste.trip.tree</field>
+    <field name="model">cafm.waste.trip</field>
+    <field name="arch" type="xml">
+      <tree>
+        <field name="sequence"/><field name="project_id"/><field name="pickup_location_id"/>
+        <field name="center_id"/><field name="trip_date"/><field name="total_quantity"/>
+        <field name="total_qty_weight"/><field name="states" widget="badge"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="action_waste_trips" model="ir.actions.act_window">
+    <field name="name">رحلات النفايات</field>
+    <field name="res_model">cafm.waste.trip</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- ==================== CONFIG MODELS ==================== -->
+  <record id="view_waste_project_form" model="ir.ui.view">
+    <field name="name">cafm.waste.project.form</field>
+    <field name="model">cafm.waste.project</field>
+    <field name="arch" type="xml">
+      <form><sheet>
+        <div class="oe_title"><h1><field name="name"/></h1><field name="sequence" readonly="1"/></div>
+        <group>
+          <group><field name="cafm_client_id"/><field name="contact_id"/></group>
+          <group><field name="start_date"/><field name="end_date"/></group>
+        </group>
+        <notebook>
+          <page string="مواقع الالتقاط"><field name="pickup_location_ids"><tree editable="bottom"><field name="name"/><field name="address"/></tree></field></page>
+          <page string="الفرق"><field name="team_ids"><tree editable="bottom"><field name="name"/><field name="employee_ids" widget="many2many_tags"/></tree></field></page>
+          <page string="ملاحظات"><field name="notes"/></page>
+        </notebook>
+      </sheet></form>
+    </field>
+  </record>
+  <record id="action_waste_projects" model="ir.actions.act_window">
+    <field name="name">مشاريع النفايات</field><field name="res_model">cafm.waste.project</field><field name="view_mode">tree,form</field>
+  </record>
+
+  <record id="action_waste_items" model="ir.actions.act_window">
+    <field name="name">أصناف النفايات</field><field name="res_model">cafm.waste.item</field><field name="view_mode">tree,form</field>
+  </record>
+  <record id="view_waste_item_tree" model="ir.ui.view">
+    <field name="name">cafm.waste.item.tree</field><field name="model">cafm.waste.item</field>
+    <field name="arch" type="xml"><tree editable="bottom"><field name="image" widget="image" options="{'size':[32,32]}"/><field name="name"/><field name="type_id"/><field name="weight"/></tree></field>
+  </record>
+
+  <record id="action_waste_centers" model="ir.actions.act_window">
+    <field name="name">مراكز المعالجة</field><field name="res_model">cafm.waste.center</field><field name="view_mode">tree,form</field>
+  </record>
+  <record id="view_waste_center_tree" model="ir.ui.view">
+    <field name="name">cafm.waste.center.tree</field><field name="model">cafm.waste.center</field>
+    <field name="arch" type="xml"><tree editable="bottom"><field name="name"/><field name="is_incinerator"/><field name="address"/></tree></field>
+  </record>
+
+  <record id="action_waste_types" model="ir.actions.act_window">
+    <field name="name">أنواع الطلبات</field><field name="res_model">cafm.waste.type</field><field name="view_mode">tree,form</field>
+  </record>
+  <record id="view_waste_type_tree" model="ir.ui.view">
+    <field name="name">cafm.waste.type.tree</field><field name="model">cafm.waste.type</field>
+    <field name="arch" type="xml"><tree editable="bottom"><field name="name"/></tree></field>
+  </record>
+
+  <record id="action_waste_pickups" model="ir.actions.act_window">
+    <field name="name">مواقع الالتقاط</field><field name="res_model">cafm.waste.pickup.location</field><field name="view_mode">tree,form</field>
+  </record>
+  <record id="view_waste_pickup_tree" model="ir.ui.view">
+    <field name="name">cafm.waste.pickup.tree</field><field name="model">cafm.waste.pickup.location</field>
+    <field name="arch" type="xml"><tree editable="bottom"><field name="name"/><field name="project_id"/><field name="address"/></tree></field>
+  </record>
+
+  <record id="action_waste_teams" model="ir.actions.act_window">
+    <field name="name">الفرق</field><field name="res_model">cafm.waste.team</field><field name="view_mode">tree,form</field>
+  </record>
+  <record id="view_waste_team_tree" model="ir.ui.view">
+    <field name="name">cafm.waste.team.tree</field><field name="model">cafm.waste.team</field>
+    <field name="arch" type="xml"><tree editable="bottom"><field name="name"/><field name="project_id"/><field name="employee_ids" widget="many2many_tags"/></tree></field>
+  </record>
+</odoo>

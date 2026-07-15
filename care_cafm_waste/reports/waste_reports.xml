@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- ORDER report -->
+  <record id="action_report_waste_order" model="ir.actions.report">
+    <field name="name">تقرير طلب النفايات</field>
+    <field name="model">cafm.waste.order</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">care_cafm_waste.report_waste_order_doc</field>
+    <field name="report_file">care_cafm_waste.report_waste_order_doc</field>
+    <field name="print_report_name">'%s' % object.serial</field>
+    <field name="binding_model_id" ref="model_cafm_waste_order"/>
+    <field name="binding_type">report</field>
+  </record>
+
+  <template id="report_waste_order_doc">
+    <t t-call="web.html_container">
+      <t t-foreach="docs" t-as="o">
+        <t t-call="web.external_layout">
+          <div class="page">
+            <div style="border-bottom:3px solid #16A34A;padding-bottom:8px;margin-bottom:16px">
+              <h2 style="color:#0E3A5F;margin:0">♻️ تقرير طلب نقل ومعالجة نفايات</h2>
+              <div style="color:#64748b">الرقم: <strong t-esc="o.serial"/> · الحالة: <span t-field="o.states"/></div>
+            </div>
+            <table class="table table-sm">
+              <tr><td><strong>العميل</strong></td><td t-esc="o.contact_id.name or ''"/><td><strong>المشروع</strong></td><td t-esc="o.project_id.name or ''"/></tr>
+              <tr><td><strong>موقع الالتقاط</strong></td><td t-esc="o.pickup_location_id.name or ''"/><td><strong>تاريخ الطلب</strong></td><td t-esc="o.request_datetime"/></tr>
+              <tr><td><strong>مدير العمليات</strong></td><td t-esc="o.ops_manager_id.name or ''"/><td><strong>السائق</strong></td><td t-esc="o.driver_id.name or ''"/></tr>
+              <tr><td><strong>مستلم الكميات</strong></td><td t-esc="o.receiver_id.name or ''"/><td><strong>الوزن النهائي</strong></td><td><span t-esc="o.final_weight"/> كجم</td></tr>
+            </table>
+            <h4 style="color:#0E3A5F;margin-top:16px">الأصناف</h4>
+            <table class="table table-sm table-bordered">
+              <thead style="background:#f1f5f9"><tr><th>الصنف</th><th>الكمية</th><th>وزن الوحدة</th><th>الوزن الكلي</th></tr></thead>
+              <tbody>
+                <tr t-foreach="o.order_line_ids" t-as="l">
+                  <td t-esc="l.item_id.name"/><td t-esc="l.quantity"/><td t-esc="l.weight"/>
+                  <td t-esc="round(l.quantity * l.weight, 2)"/>
+                </tr>
+              </tbody>
+            </table>
+            <div t-if="o.proof_image" style="margin-top:16px">
+              <h4 style="color:#0E3A5F">صورة الإثبات</h4>
+              <img t-att-src="image_data_uri(o.proof_image)" style="max-width:60%;max-height:250px;border-radius:8px"/>
+            </div>
+          </div>
+        </t>
+      </t>
+    </t>
+  </template>
+
+  <!-- TRIP report -->
+  <record id="action_report_waste_trip" model="ir.actions.report">
+    <field name="name">تقرير رحلة النفايات</field>
+    <field name="model">cafm.waste.trip</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">care_cafm_waste.report_waste_trip_doc</field>
+    <field name="report_file">care_cafm_waste.report_waste_trip_doc</field>
+    <field name="print_report_name">'%s' % (object.reference or object.sequence)</field>
+    <field name="binding_model_id" ref="model_cafm_waste_trip"/>
+    <field name="binding_type">report</field>
+  </record>
+
+  <template id="report_waste_trip_doc">
+    <t t-call="web.html_container">
+      <t t-foreach="docs" t-as="t">
+        <t t-call="web.external_layout">
+          <div class="page">
+            <div style="border-bottom:3px solid #0E3A5F;padding-bottom:8px;margin-bottom:16px">
+              <h2 style="color:#0E3A5F;margin:0">🚛 تقرير رحلة نقل نفايات</h2>
+              <div style="color:#64748b">المرجع: <strong t-esc="t.reference"/></div>
+            </div>
+            <table class="table table-sm">
+              <tr><td><strong>المشروع</strong></td><td t-esc="t.project_id.name or ''"/><td><strong>مركز المعالجة</strong></td><td t-esc="t.center_id.name or ''"/></tr>
+              <tr><td><strong>الالتقاط</strong></td><td t-esc="t.pickup_location_id.name or ''"/><td><strong>التاريخ</strong></td><td t-esc="t.trip_date"/></tr>
+              <tr><td><strong>الوزن الكلي</strong></td><td><span t-esc="t.total_qty_weight"/> كجم</td><td><strong>الكمية</strong></td><td t-esc="t.total_quantity"/></tr>
+            </table>
+            <table class="table table-sm table-bordered">
+              <thead style="background:#f1f5f9"><tr><th>الصنف</th><th>الكمية</th><th>الوزن</th></tr></thead>
+              <tbody><tr t-foreach="t.trip_line_ids" t-as="l"><td t-esc="l.item_id.name"/><td t-esc="l.quantity"/><td t-esc="round(l.quantity*l.weight,2)"/></tr></tbody>
+            </table>
+          </div>
+        </t>
+      </t>
+    </t>
+  </template>
+</odoo>

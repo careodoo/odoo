@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data noupdate="1">
+    <!-- register the waste service in the CAFM service catalogue -->
+    <record id="cafm_service_waste" model="care.cafm.service">
+      <field name="name">نقل ومعالجة النفايات</field>
+      <field name="service_type">waste</field>
+      <field name="icon">♻️</field>
+    </record>
+  </data>
+</odoo>

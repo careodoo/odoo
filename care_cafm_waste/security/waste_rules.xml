@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- Portal clients see only their own orders/trips (by project contact).
+       Internal users see everything. Controller adds client-membership scope. -->
+  <record id="waste_order_portal_rule" model="ir.rule">
+    <field name="name">Waste orders: portal own-only</field>
+    <field name="model_id" ref="model_cafm_waste_order"/>
+    <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+    <field name="domain_force">['|',('contact_id','=',user.partner_id.commercial_partner_id.id),('contact_id','=',user.partner_id.id)]</field>
+  </record>
+
+  <record id="waste_trip_portal_rule" model="ir.rule">
+    <field name="name">Waste trips: portal own-only</field>
+    <field name="model_id" ref="model_cafm_waste_trip"/>
+    <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+    <field name="domain_force">['|',('contact_id','=',user.partner_id.commercial_partner_id.id),('contact_id','=',user.partner_id.id)]</field>
+  </record>
+</odoo>
