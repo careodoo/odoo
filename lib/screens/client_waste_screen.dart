@@ -53,7 +53,10 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
     final s = _summary;
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr('نقل ومعالجة النفايات', 'Waste')),
+        title: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+          Text(tr('نقل ومعالجة النفايات', 'Waste')),
+          const Text('v1.2.0 · تصميم جديد', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Color(0xFF9AE6B4))),
+        ]),
         actions: [
           IconButton(
             tooltip: tr('التقارير والإحصائيات', 'Reports & statistics'),
