@@ -817,11 +817,27 @@ class ClientApi(Controller):
 
     # ---- services available to this client (drives the segmented menu) ------
     def _client_service_types(self, env):
-        """Which service lines this client actually has — from their facilities'
-        work orders and the teams assigned to those facilities."""
+        """Which service lines this client actually has. Priority driver: the
+        services explicitly assigned to the client's PROJECTS (project.service_ids).
+        Falls back to facilities' work orders + teams for legacy setups."""
         facs = self._facilities(env)
-        WO = env['care.cafm.workorder'].sudo()
         types = set()
+        is_mgr = env.user.has_group('base.group_erp_manager') or env.user.has_group('base.group_system')
+        # 1) explicit per-project service assignment — the AUTHORITATIVE driver.
+        #    Once any of the client's projects lists services, those alone decide
+        #    which service sections show (add/remove on the project ⇒ show/hide).
+        proj_types = set()
+        if 'care.cafm.project' in env:
+            projs = env['care.cafm.project'].sudo().search(
+                ['|', ('partner_id', 'in', self._client_partners(env)),
+                 ('client_id.user_ids', 'in', [env.user.id])])
+            for s in projs.mapped('service_ids'):
+                if s.service_type:
+                    proj_types.add(s.service_type)
+        if proj_types:
+            return facs, proj_types
+        # 2) legacy fallback: derive from facilities' work orders + teams
+        WO = env['care.cafm.workorder'].sudo()
         if facs:
             for w in WO.search([('facility_id', 'in', facs.ids)]):
                 if w.service_type:
@@ -830,8 +846,8 @@ class ClientApi(Controller):
                 for t in env['care.cafm.team'].sudo().search([('facility_id', 'in', facs.ids)]):
                     if t.service_id.service_type:
                         types.add(t.service_id.service_type)
-        # managers see every configured service line
-        if env.user.has_group('base.group_erp_manager') or env.user.has_group('base.group_system'):
+        # managers with no explicit setup see every configured service line
+        if is_mgr:
             types.update(env['care.cafm.service'].sudo().search([]).mapped('service_type'))
         return facs, types
 

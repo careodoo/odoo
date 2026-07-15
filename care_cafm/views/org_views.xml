@@ -195,6 +195,14 @@
                         <group string="مراقبة الجودة"><field name="quality_ids" widget="many2many_tags"/></group>
                     </group>
                     <notebook>
+                        <page string="🧩 الخدمات" name="services">
+                            <div class="alert alert-info" role="alert">
+                                اختر الخدمات المُفعّلة لهذا المشروع. تظهر تلقائيًا للعميل في التطبيق والبورتال مع إحصائياتها وقوائمها،
+                                وتختفي فور إزالتها من هنا.
+                            </div>
+                            <field name="service_ids" widget="many2many_tags"
+                                   options="{'color_field': 'color', 'no_create': True}"/>
+                        </page>
                         <page string="🏢 المرافق" name="facilities">
                             <field name="facility_ids"><tree><field name="name"/><field name="partner_id"/></tree></field>
                         </page>

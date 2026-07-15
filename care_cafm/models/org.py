@@ -150,6 +150,10 @@ class CafmProject(models.Model):
     user_ids = fields.Many2many('res.users', 'cafm_proj_user_rel', 'project_id', 'user_id', string='مستخدمون آخرون')
     team_ids = fields.One2many('care.cafm.team', 'cafm_project_id', string='الفرق')
     facility_ids = fields.Many2many('care.cafm.facility', 'cafm_proj_fac_rel', 'project_id', 'facility_id', string='المرافق')
+    service_ids = fields.Many2many('care.cafm.service', 'cafm_proj_service_rel', 'project_id', 'service_id',
+                                   string='خدمات المشروع', tracking=True,
+                                   help='الخدمات المُفعّلة لهذا المشروع. تظهر تلقائيًا للعميل في التطبيق والبورتال، '
+                                        'وتختفي إحصائياتها وقوائمها عند إزالتها.')
     material_ids = fields.Many2many('product.product', 'cafm_proj_material_rel', 'project_id', 'product_id',
                                     string='مواد المشروع', help='المواد المختارة من المخزون لهذا المشروع.')
     logo = fields.Image(string='شعار المشروع', max_width=1024, max_height=1024,
