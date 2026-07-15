@@ -661,6 +661,11 @@ class ApiClient {
       List<dynamic>.from((await _handle(
               await http.get(_u('/c2c/orders'), headers: await _headers())))['data'] as List);
 
+  /// Which portal/app sections this CAFM client may see → set of codes.
+  Future<Map<String, dynamic>> clientSections() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/sections'), headers: await _headers())))['data'] as Map);
+
   // ---- CARE 2 CARE staff (crew roles) -------------------------------------
   Future<Map<String, dynamic>> c2cStaffWhoami() async =>
       Map<String, dynamic>.from((await _handle(

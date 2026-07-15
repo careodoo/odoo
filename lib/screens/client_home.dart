@@ -38,14 +38,27 @@ class ClientHome extends StatefulWidget {
 
 class _ClientHomeState extends State<ClientHome> {
   late Future<Map<String, dynamic>> _future;
+  Set<String> _sections = {}; // enabled portal-section codes for this client
 
   @override
   void initState() {
     super.initState();
     _load();
+    _loadSections();
   }
 
   void _load() => _future = context.read<AuthProvider>().api.clientOverview();
+
+  Future<void> _loadSections() async {
+    try {
+      final s = await context.read<AuthProvider>().api.clientSections();
+      if (mounted) setState(() => _sections = Set<String>.from((s['codes'] as List?)?.map((e) => '$e') ?? const []));
+    } catch (_) {/* on failure, show everything (no restriction) */}
+  }
+
+  /// Section gate — before sections load (empty set) everything shows; once
+  /// loaded, only enabled codes show. Always-on codes are included by the API.
+  bool _has(String code) => _sections.isEmpty || _sections.contains(code);
 
   @override
   Widget build(BuildContext context) {
@@ -103,17 +116,23 @@ class _ClientHomeState extends State<ClientHome> {
                 const SizedBox(height: 16),
                 _kpiGrid(k),
                 const SizedBox(height: 20),
-                _section(tr('مبانيي ومرافقي', 'My buildings & facilities')),
-                for (final f in (d['facilities'] as List)) _facilityCard(f as Map, cs),
-                const SizedBox(height: 16),
+                if (_has('facilities')) ...[
+                  _section(tr('مبانيي ومرافقي', 'My buildings & facilities')),
+                  for (final f in (d['facilities'] as List)) _facilityCard(f as Map, cs),
+                  const SizedBox(height: 16),
+                ],
                 _section(tr('الخدمات المقدَّمة', 'Services provided')),
                 _servicesWrap(d['services'] as List),
                 const SizedBox(height: 16),
-                _section(tr('فِرَق العمل', 'Teams')),
-                for (final t in (d['teams'] as List)) _teamCard(t as Map, cs),
-                const SizedBox(height: 16),
-                _section(tr('آخر الأعمال', 'Recent work')),
-                for (final w in (d['recent_workorders'] as List)) _woCard(w as Map, cs),
+                if (_has('team')) ...[
+                  _section(tr('فِرَق العمل', 'Teams')),
+                  for (final t in (d['teams'] as List)) _teamCard(t as Map, cs),
+                  const SizedBox(height: 16),
+                ],
+                if (_has('workorders')) ...[
+                  _section(tr('آخر الأعمال', 'Recent work')),
+                  for (final w in (d['recent_workorders'] as List)) _woCard(w as Map, cs),
+                ],
                 const SizedBox(height: 24),
               ],
             );
@@ -144,72 +163,49 @@ class _ClientHomeState extends State<ClientHome> {
   void _go(Widget s) => Navigator.push(context, MaterialPageRoute(builder: (_) => s));
 
   Widget _quickAccess(ColorScheme cs) {
-    Widget btn(String emoji, String label, Color c, VoidCallback onTap) => Expanded(
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: onTap,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(16)),
-              child: Column(children: [
-                Text(emoji, style: const TextStyle(fontSize: 24)),
-                const SizedBox(height: 6),
-                Text(label, style: TextStyle(color: c, fontWeight: FontWeight.w800, fontSize: 12), textAlign: TextAlign.center),
-              ]),
-            ),
-          ),
-        );
-    return Column(children: [
-      Row(children: [
-        btn('📥', tr('طلب خدمة', 'Request'), const Color(0xFFE6295C), () => _go(const RequestsScreen())),
-        const SizedBox(width: 10),
-        btn('👷', tr('الفريق', 'Team'), const Color(0xFF2F6DF6), () => _go(const ClientTeamScreen())),
-        const SizedBox(width: 10),
-        btn('📡', tr('النشاط', 'Live'), const Color(0xFF16A34A), () => _go(const ClientActivityScreen())),
-        const SizedBox(width: 10),
-        btn('🏢', tr('المباني', 'Buildings'), const Color(0xFF6366F1), () => _go(const ClientStructureScreen())),
-      ]),
-      const SizedBox(height: 10),
-      Row(children: [
-        btn('🛒', tr('المتجر', 'Shop'), const Color(0xFF0EA5E9), () => _go(const ShopScreen())),
-        const SizedBox(width: 10),
-        btn('📦', tr('طلباتي', 'Orders'), const Color(0xFFF59E0B), () => _go(const OrdersScreen())),
-        const SizedBox(width: 10),
-        btn('💳', tr('الفواتير', 'Invoices'), const Color(0xFF7A1340), () => _go(const InvoicesScreen())),
-        const SizedBox(width: 10),
-        btn('✅', tr('الجودة', 'Quality'), const Color(0xFF16A34A), () => _go(const QualityScreen())),
-      ]),
-      const SizedBox(height: 10),
-      Row(children: [
-        btn('🛡️', tr('الأمن', 'Security'), const Color(0xFFE11D48), () => _go(const ClientSecurityScreen())),
-        const SizedBox(width: 10),
-        btn('🔁', tr('الجدولة', 'Schedules'), const Color(0xFF0D9488), () => _go(const SchedulesScreen())),
-        const SizedBox(width: 10),
-        btn('🕐', tr('الحضور', 'Attendance'), const Color(0xFF0891B2), () => _go(const AttendanceScreen())),
-        const SizedBox(width: 10),
-        btn('📣', tr('إشعار', 'Notify'), const Color(0xFF6366F1), () => _go(const NotifySendScreen())),
-      ]),
-      const SizedBox(height: 10),
-      Row(children: [
-        btn('🧼', tr('النظافة', 'Cleaning'), const Color(0xFF0891B2), () => _go(const ClientCleaningScreen())),
-        const SizedBox(width: 10),
-        btn('🌳', tr('الزراعة', 'Landscape'), const Color(0xFF15803D), () => _go(const ClientAgriScreen())),
-        const SizedBox(width: 10),
-        btn('🏙️', tr('الواجهات', 'Facade'), const Color(0xFF8B5CF6), () => _go(const ClientFacadeScreen())),
-        const SizedBox(width: 10),
-        btn('📦', tr('المخزون', 'Inventory'), const Color(0xFF0E3A5F), () => _go(const ClientInventoryScreen())),
-      ]),
-      const SizedBox(height: 10),
-      Row(children: [
-        btn('♻️', tr('النفايات', 'Waste'), const Color(0xFF16A34A), () => _go(const ClientWasteScreen())),
-        const SizedBox(width: 10),
-        const Expanded(child: SizedBox()),
-        const SizedBox(width: 10),
-        const Expanded(child: SizedBox()),
-        const SizedBox(width: 10),
-        const Expanded(child: SizedBox()),
-      ]),
-    ]);
+    // (emoji, ar, en, color, screen, sectionCode) — sectionCode null = always
+    final specs = <(String, String, String, int, Widget, String?)>[
+      ('📥', 'طلب خدمة', 'Request', 0xFFE6295C, const RequestsScreen(), null),
+      ('👷', 'الفريق', 'Team', 0xFF2F6DF6, const ClientTeamScreen(), 'team'),
+      ('📡', 'النشاط', 'Live', 0xFF16A34A, const ClientActivityScreen(), 'workorders'),
+      ('🏢', 'المباني', 'Buildings', 0xFF6366F1, const ClientStructureScreen(), 'facilities'),
+      ('🛒', 'المتجر', 'Shop', 0xFF0EA5E9, const ShopScreen(), 'shop'),
+      ('📦', 'طلباتي', 'Orders', 0xFFF59E0B, const OrdersScreen(), null),
+      ('💳', 'الفواتير', 'Invoices', 0xFF7A1340, const InvoicesScreen(), null),
+      ('✅', 'الجودة', 'Quality', 0xFF16A34A, const QualityScreen(), null),
+      ('🛡️', 'الأمن', 'Security', 0xFFE11D48, const ClientSecurityScreen(), 'security'),
+      ('🔁', 'الجدولة', 'Schedules', 0xFF0D9488, const SchedulesScreen(), 'workorders'),
+      ('🕐', 'الحضور', 'Attendance', 0xFF0891B2, const AttendanceScreen(), 'team'),
+      ('📣', 'إشعار', 'Notify', 0xFF6366F1, const NotifySendScreen(), null),
+      ('🧼', 'النظافة', 'Cleaning', 0xFF0891B2, const ClientCleaningScreen(), 'cleaning'),
+      ('🌳', 'الزراعة', 'Landscape', 0xFF15803D, const ClientAgriScreen(), 'agriculture'),
+      ('🏙️', 'الواجهات', 'Facade', 0xFF8B5CF6, const ClientFacadeScreen(), 'facade'),
+      ('📦', 'المخزون', 'Inventory', 0xFF0E3A5F, const ClientInventoryScreen(), 'inventory'),
+      ('♻️', 'النفايات', 'Waste', 0xFF16A34A, const ClientWasteScreen(), 'waste'),
+    ];
+    final shown = specs.where((s) => s.$6 == null || _has(s.$6!)).toList();
+    Widget tile((String, String, String, int, Widget, String?) s) {
+      final c = Color(s.$4);
+      return InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => _go(s.$5),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(16)),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text(s.$1, style: const TextStyle(fontSize: 24)),
+            const SizedBox(height: 6),
+            Text(tr(s.$2, s.$3), style: TextStyle(color: c, fontWeight: FontWeight.w800, fontSize: 12), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+          ]),
+        ),
+      );
+    }
+
+    return GridView.count(
+      crossAxisCount: 4, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 0.92,
+      children: [for (final s in shown) tile(s)],
+    );
   }
 
   Widget _kpiGrid(Map k) {
