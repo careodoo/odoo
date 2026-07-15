@@ -55,7 +55,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
       appBar: AppBar(
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
           Text(tr('نقل ومعالجة النفايات', 'Waste')),
-          const Text('v1.3.0 · الموديول الجديد', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Color(0xFF9AE6B4))),
+          const Text('v1.5.0 · نقل النفايات', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Color(0xFF9AE6B4))),
         ]),
         actions: [
           IconButton(
@@ -244,6 +244,17 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
                     if (r['project'] != null) Text('${r['project']}', style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 12.5)),
                   ])),
                   Container(padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)), child: Text(tr(_stL[st] ?? st, st), style: TextStyle(color: c, fontWeight: FontWeight.w900, fontSize: 12))),
+                  const SizedBox(width: 8),
+                  if (r['report_path'] != null)
+                    InkWell(
+                      onTap: () => _openReport(r['report_path'] as String?, '${r['serial']}'),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.all(9),
+                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withValues(alpha: 0.35))),
+                        child: const Icon(Icons.print_rounded, color: Colors.white, size: 22),
+                      ),
+                    ),
                 ]),
               ]),
             ),
@@ -305,7 +316,20 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
               child: Column(children: [
                 Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white54, borderRadius: BorderRadius.circular(3))),
                 const SizedBox(height: 12),
-                Row(children: [const Text('🚛', style: TextStyle(fontSize: 26)), const SizedBox(width: 10), Expanded(child: Text('${r['sequence']}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 19)))]),
+                Row(children: [
+                  const Text('🚛', style: TextStyle(fontSize: 26)), const SizedBox(width: 10),
+                  Expanded(child: Text('${r['sequence']}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 19))),
+                  if (r['report_path'] != null)
+                    InkWell(
+                      onTap: () => _openReport(r['report_path'] as String?, '${r['sequence']}'),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.all(9),
+                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withValues(alpha: 0.35))),
+                        child: const Icon(Icons.print_rounded, color: Colors.white, size: 22),
+                      ),
+                    ),
+                ]),
                 const SizedBox(height: 14),
                 Row(children: [
                   Expanded(child: _tstat('⚖️', '${r['total_weight'] ?? 0}', tr('الوزن الكلي', 'Weight'), const Color(0xFF38BDF8))),
@@ -416,9 +440,10 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
   }
 
   Future<void> _newOrder() async {
+    final api = context.read<AuthProvider>().api;
     Map<String, dynamic> opt;
     try {
-      opt = await context.read<AuthProvider>().api.clientWasteOptions();
+      opt = await api.clientWasteOptions();
     } catch (_) { return; }
     final projects = (opt['projects'] as List?) ?? [];
     if (projects.isEmpty) {
@@ -427,55 +452,86 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
     }
     final pickups = (opt['pickups'] as List?) ?? [];
     final items = (opt['items'] as List?) ?? [];
+    final types = (opt['types'] as List?) ?? [];
     int projId = projects.first['id'] as int;
-    int? pickId, itemId;
+    int? pickId, itemId, typeId;
+    DateTime when = DateTime.now();
     final qtyCtrl = TextEditingController(text: '1');
+    final notesCtrl = TextEditingController();
+    String fmt(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}  ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
     if (!mounted) return;
+    InputDecoration dec(String label, IconData ic) => InputDecoration(labelText: label, prefixIcon: Icon(ic, size: 20, color: const Color(0xFF16A34A)), filled: true, fillColor: const Color(0xFFF4F7FB), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none), isDense: true);
     final ok = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
+      context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSt) => Padding(
-          padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.of(ctx).viewInsets.bottom + 16),
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(tr('طلب نقل جديد', 'New collection order'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<int>(
-              initialValue: projId,
-              decoration: InputDecoration(labelText: tr('المشروع', 'Project'), border: const OutlineInputBorder()),
-              items: [for (final p in projects) DropdownMenuItem(value: p['id'] as int, child: Text('${p['name']}'))],
-              onChanged: (v) => setSt(() => projId = v ?? projId),
+        builder: (ctx, setSt) => Container(
+          decoration: const BoxDecoration(color: Color(0xFFF4F7FB), borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          clipBehavior: Clip.antiAlias,
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
+              decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF115E4B), Color(0xFF16A34A)], begin: Alignment.topRight, end: Alignment.bottomLeft)),
+              child: Column(children: [
+                Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white54, borderRadius: BorderRadius.circular(3))),
+                const SizedBox(height: 12),
+                Row(children: [const Text('♻️', style: TextStyle(fontSize: 26)), const SizedBox(width: 10), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(tr('طلب رفع نفايات جديد', 'New collection order'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+                  Text(tr('اطلب رفع المخلفات من موقعك', 'Request pickup from your site'), style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 12)),
+                ]))]),
+              ]),
             ),
-            const SizedBox(height: 10),
-            if (pickups.isNotEmpty)
-              DropdownButtonFormField<int>(
-                initialValue: pickId,
-                decoration: InputDecoration(labelText: tr('موقع الالتقاط', 'Pickup location'), border: const OutlineInputBorder()),
-                items: [for (final p in pickups) DropdownMenuItem(value: p['id'] as int, child: Text('${p['name']}'))],
-                onChanged: (v) => setSt(() => pickId = v),
-              ),
-            const SizedBox(height: 10),
-            if (items.isNotEmpty)
-              DropdownButtonFormField<int>(
-                initialValue: itemId,
-                decoration: InputDecoration(labelText: tr('الصنف', 'Item'), border: const OutlineInputBorder()),
-                items: [for (final it in items) DropdownMenuItem(value: it['id'] as int, child: Text('${it['name']}'))],
-                onChanged: (v) => setSt(() => itemId = v),
-              ),
-            const SizedBox(height: 10),
-            TextField(controller: qtyCtrl, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: tr('الكمية', 'Quantity'), border: const OutlineInputBorder())),
-            const SizedBox(height: 14),
-            SizedBox(width: double.infinity, child: ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('إرسال الطلب', 'Submit')))),
+            Flexible(child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(ctx).viewInsets.bottom + 16),
+              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                DropdownButtonFormField<int>(initialValue: projId, decoration: dec(tr('المشروع', 'Project'), Icons.folder_outlined),
+                  items: [for (final p in projects) DropdownMenuItem(value: p['id'] as int, child: Text('${p['name']}'))], onChanged: (v) => setSt(() => projId = v ?? projId)),
+                const SizedBox(height: 12),
+                if (types.isNotEmpty) ...[
+                  DropdownButtonFormField<int>(initialValue: typeId, decoration: dec(tr('نوع الطلب', 'Type'), Icons.category_outlined),
+                    items: [for (final t in types) DropdownMenuItem(value: t['id'] as int, child: Text('${t['name']}'))], onChanged: (v) => setSt(() => typeId = v)),
+                  const SizedBox(height: 12),
+                ],
+                if (pickups.isNotEmpty) ...[
+                  DropdownButtonFormField<int>(initialValue: pickId, decoration: dec(tr('موقع الالتقاط', 'Pickup location'), Icons.place_outlined),
+                    items: [for (final p in pickups) DropdownMenuItem(value: p['id'] as int, child: Text('${p['name']}'))], onChanged: (v) => setSt(() => pickId = v)),
+                  const SizedBox(height: 12),
+                ],
+                // date & time picker
+                InkWell(
+                  onTap: () async {
+                    final d = await showDatePicker(context: ctx, initialDate: when, firstDate: DateTime(2020), lastDate: DateTime(2100));
+                    if (d == null) return;
+                    final t = await showTimePicker(context: ctx, initialTime: TimeOfDay.fromDateTime(when));
+                    setSt(() => when = DateTime(d.year, d.month, d.day, t?.hour ?? when.hour, t?.minute ?? when.minute));
+                  },
+                  child: InputDecorator(decoration: dec(tr('تاريخ ووقت الطلب', 'Request date & time'), Icons.event_outlined), child: Text(fmt(when), style: const TextStyle(fontWeight: FontWeight.w600))),
+                ),
+                const SizedBox(height: 12),
+                Row(children: [
+                  if (items.isNotEmpty) Expanded(flex: 2, child: DropdownButtonFormField<int>(initialValue: itemId, isExpanded: true, decoration: dec(tr('الصنف', 'Item'), Icons.recycling_outlined),
+                    items: [for (final it in items) DropdownMenuItem(value: it['id'] as int, child: Text('${it['name']}', overflow: TextOverflow.ellipsis))], onChanged: (v) => setSt(() => itemId = v))),
+                  if (items.isNotEmpty) const SizedBox(width: 10),
+                  Expanded(child: TextField(controller: qtyCtrl, keyboardType: TextInputType.number, decoration: dec(tr('الكمية', 'Qty'), Icons.tag))),
+                ]),
+                const SizedBox(height: 12),
+                TextField(controller: notesCtrl, maxLines: 2, decoration: dec(tr('ملاحظات', 'Notes'), Icons.sticky_note_2_outlined)),
+                const SizedBox(height: 16),
+                SizedBox(width: double.infinity, height: 52, child: ElevatedButton.icon(
+                  onPressed: () => Navigator.pop(ctx, true), icon: const Icon(Icons.send_rounded),
+                  label: Text(tr('إرسال الطلب', 'Submit request'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))))),
+              ]),
+            )),
           ]),
         ),
       ),
     );
     if (ok != true || !mounted) return;
     try {
-      final res = await context.read<AuthProvider>().api.clientWasteCreate(projId, pickupId: pickId, itemId: itemId, qty: double.tryParse(qtyCtrl.text) ?? 1.0);
+      final iso = '${when.year}-${when.month.toString().padLeft(2, '0')}-${when.day.toString().padLeft(2, '0')} ${when.hour.toString().padLeft(2, '0')}:${when.minute.toString().padLeft(2, '0')}:00';
+      final res = await api.clientWasteCreate(projId, pickupId: pickId, typeId: typeId, itemId: itemId, qty: double.tryParse(qtyCtrl.text) ?? 1.0, requestDatetime: iso, notes: notesCtrl.text);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ ${res['serial']}')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ ${res['serial']}'), backgroundColor: const Color(0xFF16A34A)));
         _load();
         _loadSummary();
       }

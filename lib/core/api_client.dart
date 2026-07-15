@@ -572,12 +572,15 @@ class ApiClient {
     return Map<String, dynamic>.from((await _handle(await http.get(_u(path), headers: await _headers())))['data'] as Map);
   }
 
-  Future<Map<String, dynamic>> clientWasteCreate(int projectId, {int? pickupId, int? itemId, double qty = 1.0}) async =>
+  Future<Map<String, dynamic>> clientWasteCreate(int projectId, {int? pickupId, int? typeId, int? itemId, double qty = 1.0, String? requestDatetime, String? notes}) async =>
       Map<String, dynamic>.from((await _handle(await http.post(_u('/client/waste/order/create'),
               headers: await _headers(),
               body: jsonEncode({
                 'project_id': projectId,
                 if (pickupId != null) 'pickup_location_id': pickupId,
+                if (typeId != null) 'type_id': typeId,
+                if (requestDatetime != null) 'request_datetime': requestDatetime,
+                if (notes != null && notes.isNotEmpty) 'notes': notes,
                 'items': itemId != null ? [{'item_id': itemId, 'quantity': qty}] : [],
               }))))['data'] as Map);
 

@@ -94,12 +94,15 @@ class _ModeScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: child,
-      floatingActionButton: FloatingActionButton.small(
-        heroTag: 'modeSwitch',
-        backgroundColor: const Color(0xFF7C3AED),
-        tooltip: 'تبديل الوضع',
-        onPressed: () => context.read<AuthProvider>().setAppMode(null),
-        child: const Icon(Icons.swap_horiz_rounded),
+      floatingActionButtonLocation: FloatingActionButtonLocation.miniEndTop,
+      floatingActionButton: SafeArea(
+        child: FloatingActionButton.small(
+          heroTag: 'modeSwitch',
+          backgroundColor: const Color(0xFF7C3AED),
+          tooltip: 'تبديل الوضع',
+          onPressed: () => context.read<AuthProvider>().setAppMode(null),
+          child: const Icon(Icons.swap_horiz_rounded),
+        ),
       ),
     );
   }
