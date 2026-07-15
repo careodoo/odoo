@@ -27,23 +27,53 @@ class _C2CBookingsScreenState extends State<C2CBookingsScreen> {
 
   void _load() => setState(() => _list = context.read<AuthProvider>().api.c2cBookings());
 
+  String _filter = 'all';
+  static const _filters = [
+    ['all', 'الكل', 'All'], ['active', 'نشطة', 'Active'], ['done', 'منجزة', 'Done'], ['cancelled', 'ملغاة', 'Cancelled'],
+  ];
+
+  bool _match(Map b) {
+    final s = '${b['state']}';
+    if (_filter == 'all') return true;
+    if (_filter == 'active') return ['confirmed', 'assigned', 'in_progress'].contains(s);
+    return s == _filter;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: C2C.bg,
-      appBar: AppBar(backgroundColor: C2C.navy, foregroundColor: Colors.white, title: Text(tr('حجوزاتي', 'My bookings'))),
+      appBar: AppBar(
+        backgroundColor: C2C.navy, foregroundColor: Colors.white, elevation: 0,
+        flexibleSpace: const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF17547F), C2C.navy], begin: Alignment.topRight, end: Alignment.bottomLeft))),
+        title: Text(tr('حجوزاتي', 'My bookings')),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: SizedBox(height: 48, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 10), children: [
+            for (final f in _filters)
+              Padding(padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 7), child: ChoiceChip(
+                label: Text(gLang == 'en' ? f[2] : f[1]),
+                selected: _filter == f[0],
+                backgroundColor: Colors.white.withValues(alpha: 0.15),
+                selectedColor: Colors.white,
+                labelStyle: TextStyle(color: _filter == f[0] ? C2C.navy : Colors.white, fontWeight: FontWeight.w800, fontSize: 12.5),
+                onSelected: (_) => setState(() => _filter = f[0]),
+              )),
+          ])),
+        ),
+      ),
       body: RefreshIndicator(
         onRefresh: () async => _load(),
         child: FutureBuilder<List<dynamic>>(
           future: _list,
           builder: (_, snap) {
             if (!snap.hasData) return const Center(child: CircularProgressIndicator());
-            final rows = snap.data!;
+            final rows = (snap.data!).where((b) => _match(b as Map)).toList();
             if (rows.isEmpty) {
               return ListView(children: [
-                const SizedBox(height: 100),
+                const SizedBox(height: 90),
                 const Center(child: Text('🗓️', style: TextStyle(fontSize: 60))),
-                Center(child: Padding(padding: const EdgeInsets.all(12), child: Text(tr('لا حجوزات بعد', 'No bookings yet'), style: const TextStyle(color: Colors.grey, fontSize: 16)))),
+                Center(child: Padding(padding: const EdgeInsets.all(12), child: Text(tr('لا حجوزات هنا', 'No bookings here'), style: const TextStyle(color: Colors.grey, fontSize: 16)))),
               ]);
             }
             return ListView(padding: const EdgeInsets.all(12), children: [for (final b in rows) _card(b as Map)]);
