@@ -670,6 +670,11 @@ class ApiClient {
       List<dynamic>.from((await _handle(
               await http.get(_u('/c2c/orders'), headers: await _headers())))['data'] as List);
 
+  /// Request account & data deletion (Google Play requirement).
+  Future<Map<String, dynamic>> accountDeleteRequest({String reason = ''}) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/account/delete_request'),
+              headers: await _headers(), body: jsonEncode({'reason': reason}))))['data'] as Map);
+
   /// Which portal/app sections this CAFM client may see → set of codes.
   Future<Map<String, dynamic>> clientSections() async =>
       Map<String, dynamic>.from((await _handle(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'c2c_shell.dart';
@@ -76,7 +77,10 @@ class _C2CAccountScreenState extends State<C2CAccountScreen> {
             else if (widget.canSwitchCafm)
               _tile(Icons.apartment_rounded, tr('التحويل إلى إدارة المرافق (CAFM)', 'Switch to CAFM'), () => openCafm(context), ic: C2C.navy),
             _tile(Icons.language_rounded, tr('اللغة', 'Language'), _langSheet, ic: const Color(0xFF16A34A)),
+            _tile(Icons.privacy_tip_outlined, tr('سياسة الخصوصية', 'Privacy policy'), () => _openUrl('https://ecare.care-kw.com/care_hr/static/legal/privacy.html'), ic: const Color(0xFF0891B2)),
+            _tile(Icons.article_outlined, tr('شروط الاستخدام', 'Terms of use'), () => _openUrl('https://ecare.care-kw.com/care_hr/static/legal/terms.html'), ic: const Color(0xFF64748B)),
             _tile(Icons.logout_rounded, tr('تسجيل الخروج', 'Sign out'), () => context.read<AuthProvider>().logout(), ic: C2C.red, danger: true),
+            _tile(Icons.delete_forever_outlined, tr('طلب حذف الحساب', 'Delete account'), _deleteAccount, ic: const Color(0xFFB91C1C), danger: true),
             const SizedBox(height: 20),
             Center(child: Text('CARE 2 CARE', style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w900, letterSpacing: 1))),
             const SizedBox(height: 30),
@@ -84,6 +88,52 @@ class _C2CAccountScreenState extends State<C2CAccountScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _openUrl(String url) async {
+    final u = Uri.parse(url);
+    if (!await launchUrl(u, mode: LaunchMode.externalApplication)) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('تعذّر فتح الرابط', 'Could not open link'))));
+    }
+  }
+
+  Future<void> _deleteAccount() async {
+    final auth = context.read<AuthProvider>();
+    final reason = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('طلب حذف الحساب', 'Delete account')),
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(tr('سيتم حذف حسابك وبياناتك نهائيًا خلال 30 يومًا. لا يمكن التراجع.',
+              'Your account and data will be permanently deleted within 30 days. This cannot be undone.'),
+              style: const TextStyle(fontSize: 13.5)),
+          const SizedBox(height: 12),
+          TextField(controller: reason, maxLines: 2, decoration: InputDecoration(
+              hintText: tr('السبب (اختياري)', 'Reason (optional)'), border: const OutlineInputBorder())),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('إلغاء', 'Cancel'))),
+          ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB91C1C)),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(tr('تأكيد الحذف', 'Confirm'), style: const TextStyle(color: Colors.white))),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await auth.api.accountDeleteRequest(reason: reason.text);
+      if (!mounted) return;
+      await showDialog(context: context, builder: (ctx) => AlertDialog(
+        title: Text(tr('تم استلام طلبك', 'Request received')),
+        content: Text(tr('سنحذف حسابك وبياناتك خلال 30 يومًا. سيتم تسجيل خروجك الآن.',
+            'We will delete your account and data within 30 days. You will be signed out now.')),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('حسنًا', 'OK')))],
+      ));
+      auth.logout();
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
   }
 
   Widget _blob(double size, Color color) => Container(width: size, height: size, decoration: BoxDecoration(color: color, shape: BoxShape.circle));
