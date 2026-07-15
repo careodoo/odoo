@@ -8,6 +8,7 @@
     'author': 'CARE',
     'depends': ['base', 'mail', 'hr', 'portal', 'website', 'care_cafm', 'care_cafm_mobile_api'],
     'data': [
+        'security/waste_groups.xml',
         'security/ir.model.access.csv',
         'security/waste_rules.xml',
         'data/waste_sequences.xml',

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data noupdate="0">
+    <!-- App category -->
+    <record id="module_category_waste" model="ir.module.category">
+      <field name="name">نقل ومعالجة النفايات</field>
+      <field name="sequence">21</field>
+    </record>
+
+    <!-- User: view + create orders, and move the workflow forward -->
+    <record id="group_waste_user" model="res.groups">
+      <field name="name">مستخدم — نقل النفايات</field>
+      <field name="category_id" ref="module_category_waste"/>
+    </record>
+
+    <!-- Manager: everything above + cancel/reset + configuration -->
+    <record id="group_waste_manager" model="res.groups">
+      <field name="name">مدير — نقل النفايات</field>
+      <field name="category_id" ref="module_category_waste"/>
+      <field name="implied_ids" eval="[(4, ref('group_waste_user'))]"/>
+    </record>
+
+    <!-- every internal user gets the base app; admins get the manager role -->
+    <record id="base.group_user" model="res.groups">
+      <field name="implied_ids" eval="[(4, ref('group_waste_user'))]"/>
+    </record>
+    <record id="base.group_system" model="res.groups">
+      <field name="implied_ids" eval="[(4, ref('group_waste_manager'))]"/>
+    </record>
+  </data>
+</odoo>

@@ -2,11 +2,12 @@
 <odoo>
   <menuitem id="menu_waste_root" name="♻️ نقل ومعالجة النفايات" parent="care_cafm.menu_cafm_root" sequence="27"/>
 
+  <menuitem id="menu_waste_dashboard" name="📊 لوحة الإحصائيات" parent="menu_waste_root" action="action_waste_dashboard" sequence="5"/>
   <menuitem id="menu_waste_orders" name="الطلبات" parent="menu_waste_root" action="action_waste_orders" sequence="10"/>
   <menuitem id="menu_waste_trips" name="الرحلات" parent="menu_waste_root" action="action_waste_trips" sequence="20"/>
   <menuitem id="menu_waste_projects" name="المشاريع" parent="menu_waste_root" action="action_waste_projects" sequence="30"/>
 
-  <menuitem id="menu_waste_config" name="⚙️ الإعداد" parent="menu_waste_root" sequence="90"/>
+  <menuitem id="menu_waste_config" name="⚙️ الإعداد" parent="menu_waste_root" sequence="90" groups="care_cafm_waste.group_waste_manager"/>
   <menuitem id="menu_waste_items" name="أصناف النفايات" parent="menu_waste_config" action="action_waste_items" sequence="10"/>
   <menuitem id="menu_waste_centers" name="مراكز المعالجة" parent="menu_waste_config" action="action_waste_centers" sequence="20"/>
   <menuitem id="menu_waste_pickups" name="مواقع الالتقاط" parent="menu_waste_config" action="action_waste_pickups" sequence="30"/>
