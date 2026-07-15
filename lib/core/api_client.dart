@@ -705,6 +705,16 @@ class ApiClient {
       List<dynamic>.from((await _handle(
               await http.get(_u('/c2c/orders'), headers: await _headers())))['data'] as List);
 
+  /// Account profile info + stats.
+  Future<Map<String, dynamic>> accountInfo() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/account/info'), headers: await _headers())))['data'] as Map);
+
+  /// Change password (verifies the current one).
+  Future<Map<String, dynamic>> accountChangePassword(String oldPw, String newPw) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/account/change_password'),
+              headers: await _headers(), body: jsonEncode({'old': oldPw, 'new': newPw}))))['data'] as Map);
+
   /// Request account & data deletion (Google Play requirement).
   Future<Map<String, dynamic>> accountDeleteRequest({String reason = ''}) async =>
       Map<String, dynamic>.from((await _handle(await http.post(_u('/account/delete_request'),

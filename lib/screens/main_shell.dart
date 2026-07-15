@@ -11,6 +11,7 @@ import 'more_screen.dart';
 import 'client_analytics_screen.dart';
 import 'client_workorders_screen.dart';
 import 'client_waste_screen.dart';
+import 'client_account_screen.dart';
 
 class _Tab {
   const _Tab(this.icon, this.label, this.screen);
@@ -58,7 +59,7 @@ class _MainShellState extends State<MainShell> {
           _Tab(Icons.recycling_rounded, tr('طلبات النقل', 'Collection'), const ClientWasteScreen(key: ValueKey('w_orders'), initialKind: 'orders', embedded: true)),
           _Tab(Icons.local_shipping_rounded, tr('الرحلات', 'Trips'), const ClientWasteScreen(key: ValueKey('w_trips'), initialKind: 'trips', embedded: true)),
           _Tab(Icons.insights_rounded, tr('الإحصائيات', 'Statistics'), const WasteStatsScreen()),
-          notif, more,
+          _Tab(Icons.person_rounded, tr('حسابي', 'Account'), const ClientAccountScreen()),
         ];
       }
       return [
