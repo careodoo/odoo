@@ -554,14 +554,25 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/client/waste/summary'), headers: await _headers())))['data'] as Map);
 
-  /// kind: orders | trips | centers
-  Future<List<dynamic>> clientWaste(String kind) async =>
-      List<dynamic>.from((await _handle(
-              await http.get(_u('/client/waste/$kind'), headers: await _headers())))['data'] as List);
+  /// kind: orders | trips | centers (+ optional search/filter)
+  Future<List<dynamic>> clientWaste(String kind, {String? q, String? state, String? dateFrom, String? dateTo}) async {
+    final p = <String>[];
+    if (q != null && q.isNotEmpty) p.add('q=${Uri.encodeQueryComponent(q)}');
+    if (state != null && state.isNotEmpty) p.add('state=$state');
+    if (dateFrom != null) p.add('date_from=$dateFrom');
+    if (dateTo != null) p.add('date_to=$dateTo');
+    final path = '/client/waste/$kind${p.isEmpty ? '' : '?${p.join('&')}'}';
+    return List<dynamic>.from((await _handle(await http.get(_u(path), headers: await _headers())))['data'] as List);
+  }
 
   Future<Map<String, dynamic>> clientWasteOptions() async =>
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/client/waste/options'), headers: await _headers())))['data'] as Map);
+
+  /// Live driver location for a waste trip.
+  Future<Map<String, dynamic>> wasteTripTrack(int tripId) async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/waste/trip/$tripId/track'), headers: await _headers())))['data'] as Map);
 
   /// Period statistics (dateFrom/dateTo = YYYY-MM-DD) → aggregates + breakdowns.
   Future<Map<String, dynamic>> clientWasteStats({String? dateFrom, String? dateTo}) async {

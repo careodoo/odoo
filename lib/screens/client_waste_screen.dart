@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import 'odoo_backend_screen.dart';
+import 'waste_trip_map.dart';
 
 /// Client waste transfer & treatment: collection orders + trips, with a
 /// new-order form. Scoped to the client's waste projects.
@@ -18,6 +20,14 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
   Map<String, dynamic>? _summary;
   late String _kind = widget.initialKind;
   Future<List<dynamic>>? _list;
+  String _q = '';
+  String? _stateFilter;
+
+  // clean number formatting (removes float artifacts like 6.548000000000001)
+  static String _n(dynamic v) {
+    if (v is num) return v == v.roundToDouble() ? v.toInt().toString() : v.toStringAsFixed(1);
+    return '$v';
+  }
 
   static const _kinds = [
     ['orders', '♻️ الأوامر', 'Orders'],
@@ -48,7 +58,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
     } catch (_) {}
   }
 
-  void _load() => setState(() => _list = context.read<AuthProvider>().api.clientWaste(_kind));
+  void _load() => setState(() => _list = context.read<AuthProvider>().api.clientWaste(_kind, q: _q, state: _stateFilter));
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +70,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
           Text(widget.embedded
               ? (_kind == 'trips' ? tr('الرحلات', 'Trips') : _kind == 'centers' ? tr('المراكز', 'Centers') : tr('طلبات النقل', 'Collection orders'))
               : tr('نقل ومعالجة النفايات', 'Waste')),
-          const Text('v1.6.0 · نقل النفايات', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Color(0xFF9AE6B4))),
+          const Text('v1.7.0 · نقل النفايات', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Color(0xFF9AE6B4))),
         ]),
         actions: [
           IconButton(
@@ -112,6 +122,8 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
                 ),
             ]),
           ),
+        // search + status filter (orders/trips only)
+        if (_kind != 'centers') _searchBar(),
         Expanded(
           child: FutureBuilder<List<dynamic>>(
             future: _list,
@@ -122,7 +134,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
               return ListView.separated(
                 padding: const EdgeInsets.all(8),
                 itemCount: rows.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
+                separatorBuilder: (_, __) => _kind == 'orders' ? const SizedBox.shrink() : const Divider(height: 1),
                 itemBuilder: (_, i) => _row(rows[i] as Map),
               );
             },
@@ -167,6 +179,42 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
         ),
       );
 
+  Widget _searchBar() {
+    const states = [
+      ['', 'الكل', 'All'], ['scheduled', 'مجدول', 'Scheduled'], ['pickuped', 'تم الالتقاط', 'Picked'],
+      ['processing', 'معالجة', 'Processing'], ['delivered', 'تسليم', 'Delivered'], ['completed', 'مكتمل', 'Done'],
+    ];
+    return Column(children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(10, 4, 10, 0),
+        child: TextField(
+          onChanged: (v) => _q = v,
+          onSubmitted: (_) => _load(),
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            hintText: tr('بحث بالرقم أو الموقع…', 'Search by serial or location…'),
+            prefixIcon: const Icon(Icons.search, size: 20),
+            suffixIcon: IconButton(icon: const Icon(Icons.tune, size: 20), onPressed: _load),
+            isDense: true, filled: true, fillColor: const Color(0xFFF1F5F9),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          ),
+        ),
+      ),
+      SizedBox(
+        height: 40,
+        child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), children: [
+          for (final st in states)
+            Padding(padding: const EdgeInsets.only(right: 6), child: ChoiceChip(
+              label: Text(gLang == 'en' ? st[2] : st[1], style: const TextStyle(fontSize: 12)),
+              selected: (_stateFilter ?? '') == st[0],
+              visualDensity: VisualDensity.compact,
+              onSelected: (_) { setState(() => _stateFilter = st[0].isEmpty ? null : st[0]); _load(); },
+            )),
+        ]),
+      ),
+    ]);
+  }
+
   Widget _stat(String ic, String v, String l, Color c) => Container(
         width: 128,
         margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -194,20 +242,39 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
       return ListTile(
         leading: const Text('🚛', style: TextStyle(fontSize: 22)),
         title: Text('${r['sequence']}', style: const TextStyle(fontWeight: FontWeight.w700)),
-        subtitle: Text('${r['pickup'] ?? ''} → ${r['center'] ?? ''} · ${r['total_weight'] ?? 0}kg', maxLines: 2, overflow: TextOverflow.ellipsis),
+        subtitle: Text('${r['pickup'] ?? ''} → ${r['center'] ?? ''} · ${_n(r['total_weight'] ?? 0)} كجم', maxLines: 2, overflow: TextOverflow.ellipsis),
         trailing: _pill(tr(_stL[st] ?? st, st), c),
         onTap: () => _openTrip(r),
       );
     }
-    final items = (r['items'] as List?) ?? [];
-    return ListTile(
-      title: Text('${r['serial']}', style: const TextStyle(fontWeight: FontWeight.w700)),
-      subtitle: Text([r['pickup'], items.map((i) => '${i['item'] ?? ''}×${i['qty']}').join('، ')].where((x) => x != null && '$x'.isNotEmpty).join(' · '),
-          maxLines: 2, overflow: TextOverflow.ellipsis),
-      trailing: _pill(tr(_stL[st] ?? st, st), c),
-      onTap: () => _openOrder(r),
+    // ORDER row — professional summary (date, pickup, qty/weight, trip) instead of raw item list
+    final cnt = r['items_count'] ?? 0;
+    final qty = r['qty_total'] ?? 0;
+    final wt = (r['weight_total'] ?? 0) is num ? (r['weight_total'] ?? 0) : 0;
+    final date = _shortDate('${r['order_date'] ?? r['request_date'] ?? ''}');
+    final meta = <String>[
+      if (r['pickup'] != null) '📍 ${r['pickup']}',
+      if (cnt != 0) '📦 $cnt ${tr('صنف', 'items')}',
+      if ((wt as num) != 0) '⚖️ $wt كجم' else if (qty != 0) '×$qty',
+      if (r['trip'] != null) '🚛 ${r['trip']}',
+    ].join('  ·  ');
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))]),
+      child: ListTile(
+        onTap: () => _openOrder(r),
+        leading: Container(width: 44, height: 44, decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)), alignment: Alignment.center, child: const Text('♻️', style: TextStyle(fontSize: 20))),
+        title: Row(children: [
+          Expanded(child: Text('${r['serial']}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5))),
+          if (date.isNotEmpty) Text(date, style: const TextStyle(fontSize: 11.5, color: Colors.grey, fontWeight: FontWeight.w600)),
+        ]),
+        subtitle: Padding(padding: const EdgeInsets.only(top: 3), child: Text(meta.isEmpty ? (r['project'] ?? '') : meta, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)))),
+        trailing: _pill(tr(_stL[st] ?? st, st), c),
+      ),
     );
   }
+
+  String _shortDate(String dt) => dt.length >= 10 ? dt.substring(0, 10) : dt;
 
   static const _flow = ['draft', 'scheduled', 'pickuped', 'arrived', 'processing', 'delivered', 'completed'];
 
@@ -278,7 +345,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
                 _kv(Icons.manage_accounts, tr('مدير العمليات', 'Ops manager'), r['ops_manager']),
                 _kv(Icons.local_shipping_outlined, tr('السائق', 'Driver'), r['driver']),
                 _kv(Icons.how_to_reg_outlined, tr('مستلم الكميات', 'Receiver'), r['receiver']),
-                if ((r['final_weight'] ?? 0) != 0) _kv(Icons.scale_outlined, tr('الوزن النهائي', 'Final weight'), '${r['final_weight']} كجم'),
+                if ((r['final_weight'] ?? 0) != 0) _kv(Icons.scale_outlined, tr('الوزن النهائي', 'Final weight'), '${_n(r['final_weight'])} كجم'),
                 if (r['final_note'] != null) _kv(Icons.sticky_note_2_outlined, tr('ملاحظة الاستلام', 'Receipt note'), r['final_note']),
               ]),
               _card(tr('التفاصيل', 'Details'), [
@@ -291,6 +358,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
               if (r['proof'] != null) _card(tr('صورة الإثبات', 'Proof photo'), [
                 GestureDetector(onTap: () => _zoom('${r['proof']}'), child: ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.network('${r['proof']}', width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox()))),
               ]),
+              if ((r['media'] as List?)?.isNotEmpty ?? false) _card(tr('صور وفيديوهات', 'Photos & videos'), [_mediaGallery(r['media'] as List)]),
               if (r['notes'] != null) _card(tr('ملاحظات', 'Notes'), [Text('${r['notes']}', style: const TextStyle(fontSize: 13, height: 1.4))]),
               const SizedBox(height: 80),
             ])),
@@ -341,22 +409,32 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
                 ]),
                 const SizedBox(height: 14),
                 Row(children: [
-                  Expanded(child: _tstat('⚖️', '${r['total_weight'] ?? 0}', tr('الوزن الكلي', 'Weight'), const Color(0xFF38BDF8))),
+                  Expanded(child: _tstat('⚖️', _n(r['total_weight'] ?? 0), tr('الوزن الكلي', 'Weight'), const Color(0xFF38BDF8))),
                   const SizedBox(width: 8),
-                  Expanded(child: _tstat('📦', '${r['total_quantity'] ?? 0}', tr('الكمية', 'Qty'), const Color(0xFFA5B4FC))),
+                  Expanded(child: _tstat('📦', _n(r['total_quantity'] ?? 0), tr('الكمية', 'Qty'), const Color(0xFFA5B4FC))),
                   const SizedBox(width: 8),
                   Expanded(child: _tstat('📋', '${r['order_count'] ?? 0}', tr('الأوامر', 'Orders'), const Color(0xFF6EE7B7))),
                 ]),
               ]),
             ),
             Padding(padding: const EdgeInsets.all(16), child: Column(children: [
+              // live driver tracking
+              SizedBox(width: double.infinity, height: 48, child: ElevatedButton.icon(
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => WasteTripMapScreen(tripId: r['id'] as int, title: '${r['sequence']}'))),
+                icon: const Icon(Icons.map_rounded),
+                label: Text(tr('تتبّع السائق على الخريطة', 'Track driver on map'), style: const TextStyle(fontWeight: FontWeight.w800)),
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0E3A5F), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+              )),
+              const SizedBox(height: 12),
               _card(tr('المسار', 'Route'), [
                 _kv(Icons.place_outlined, tr('الالتقاط', 'Pickup'), r['pickup']),
                 _kv(Icons.factory_outlined, tr('مركز المعالجة', 'Center'), r['center']),
+                _kv(Icons.local_shipping_outlined, tr('السائق', 'Driver'), r['driver']),
                 _kv(Icons.groups_outlined, tr('الفريق', 'Team'), r['team']),
                 _kv(Icons.event_outlined, tr('التاريخ', 'Date'), r['date']),
               ]),
               if (items.isNotEmpty) _card(tr('الأصناف المنقولة', 'Transported items'), [for (final i in items) _itemRow(i as Map, trip: true)]),
+              if ((r['media'] as List?)?.isNotEmpty ?? false) _card(tr('صور وفيديوهات', 'Photos & videos'), [_mediaGallery(r['media'] as List)]),
               const SizedBox(height: 20),
             ])),
           ]),
@@ -393,6 +471,38 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
       );
 
   Widget _itemPh() => Container(width: 40, height: 40, color: const Color(0xFF16A34A).withValues(alpha: 0.1), alignment: Alignment.center, child: const Text('📦', style: TextStyle(fontSize: 18)));
+
+  Widget _mediaGallery(List media) => SizedBox(
+        height: 96,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: media.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 8),
+          itemBuilder: (_, i) {
+            final m = media[i] as Map;
+            final isVideo = m['is_video'] == true;
+            return GestureDetector(
+              onTap: () async {
+                if (isVideo) {
+                  final u = Uri.parse('${m['url']}');
+                  if (await canLaunchUrl(u)) launchUrl(u, mode: LaunchMode.externalApplication);
+                } else {
+                  _zoom('${m['url']}');
+                }
+              },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Stack(alignment: Alignment.center, children: [
+                  isVideo
+                      ? Container(width: 128, height: 96, color: const Color(0xFF0E3A5F))
+                      : Image.network('${m['url']}', width: 128, height: 96, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(width: 128, height: 96, color: const Color(0xFFE2E8F0))),
+                  if (isVideo) const Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 40),
+                ]),
+              ),
+            );
+          },
+        ),
+      );
 
   Widget _step(int i, int cur) {
     final done = cur >= i && cur >= 0;
