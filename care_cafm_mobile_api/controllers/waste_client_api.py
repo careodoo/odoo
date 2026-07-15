@@ -86,6 +86,7 @@ class WasteClientApi(Controller):
         SO = env[_wm(env)['order']].sudo()
         dom = self._order_domain(env)
         open_states = ('draft', 'scheduled', 'pickuped', 'arrived', 'processing')
+        is_cafm = _wm(env)['order'] == 'cafm.waste.order'
         return _ok({
             'available': True,
             'orders': SO.search_count(dom),
@@ -94,6 +95,9 @@ class WasteClientApi(Controller):
             'trips': env[_wm(env)['trip']].sudo().search_count(
                 [('project_id', 'in', self._projects(env).ids)]) if _wm(env)['trip'] in env else 0,
             'centers': env[_wm(env)['center']].sudo().search_count([]) if _wm(env)['center'] in env else 0,
+            # source-aware web-portal paths the app opens via SSO WebView
+            'portal_path': '/waste/orders' if is_cafm else '/service_orders',
+            'create_path': '/waste/order/create' if is_cafm else '/service_order/create',
         })
 
     # ---- collection orders ------------------------------------------------

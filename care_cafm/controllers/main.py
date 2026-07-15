@@ -306,12 +306,15 @@ class CafmMobile(http.Controller):
         for tm in teams:
             if tm.service_id.service_type:
                 team_by_type.setdefault(tm.service_id.service_type, tm)
+        # waste portal points to the active source (new CAFM module vs legacy)
+        waste_base = '/waste/orders' if env['ir.config_parameter'].sudo().get_param(
+            'care.waste.source', 'legacy') == 'cafm' else '/service_orders'
         cards = Markup('')
         for s in svc_secs:
             tm = team_by_type.get(s.service_type)
             sub = (Markup('الفريق %s · <span class="pill ok">نشطة</span>') % tm.member_count) if tm \
                 else Markup('<span class="pill ok">متاحة</span>')
-            href = ' href="/service_orders"' if s.code == 'waste' else ''
+            href = (' href="%s"' % waste_base) if s.code == 'waste' else ''
             tag = 'a' if href else 'div'
             cards += Markup('<%s class="tile"%s><div class="i">%s</div><div class="n">%s</div><div class="s">%s</div></%s>'
                             ) % (Markup(tag), Markup(href), esc(s.icon or '🧩'), esc(s.name), sub, Markup(tag))
@@ -322,7 +325,7 @@ class CafmMobile(http.Controller):
         # action buttons — gated by section visibility
         actions = Markup('')
         if 'waste' in codes:
-            actions += Markup('<a class="btn g" href="/service_orders">♻️ نقل ومعالجة النفايات — طلباتي ورحلاتي ←</a>')
+            actions += Markup('<a class="btn g" href="%s">♻️ نقل ومعالجة النفايات — طلباتي ورحلاتي ←</a>') % Markup(waste_base)
         if 'shop' in codes:
             actions += Markup('<a class="btn g" href="/cafm/m/order">🛒 مشترياتي — طلب من الكتالوج ←</a>')
         if 'workorders' in codes:
