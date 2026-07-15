@@ -33,6 +33,7 @@ class _RootShellState extends State<RootShell> {
       try {
         final w = await auth.api.whoami();
         auth.interfaces = (w['interfaces'] as Map?)?.cast<String, dynamic>() ?? {};
+        auth.defaultMode = w['default'] as String?;
       } catch (_) {
         auth.interfaces = {'c2c': true};
       }
@@ -53,10 +54,22 @@ class _RootShellState extends State<RootShell> {
         final cafmSwitch = auth.interfaces?['cafm'] == true;
         // single interface → storefront
         if (modes.length <= 1) return C2CShell(canSwitchCafm: cafmSwitch);
-        // not chosen yet → chooser
-        if (auth.appMode == null) return ModeChooserScreen(modes: modes);
+        // decide the active mode: an explicit user choice wins; otherwise a
+        // client/projects user auto-enters their PRIMARY interface (whoami
+        // 'default') so a waste-only client lands on their portal — not the
+        // storefront. Storefront-first users (default 'c2c') still get the
+        // chooser so they can opt into management. Switchable from account.
+        var mode = auth.appMode;
+        if (mode == null) {
+          final def = auth.defaultMode;
+          if (def != null && def != 'c2c' && modes.any((m) => m.key == def)) {
+            mode = def;
+          } else {
+            return ModeChooserScreen(modes: modes);
+          }
+        }
         // route to chosen mode
-        switch (auth.appMode) {
+        switch (mode) {
           case 'c2c_staff':
             return const StaffShell();
           case 'cafm':

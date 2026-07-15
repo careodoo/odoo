@@ -20,6 +20,7 @@ class AuthProvider extends ChangeNotifier {
   static const _modeStore = FlutterSecureStorage();
   String? appMode; // 'c2c' | 'cafm' | 'pms' | 'backend' | null (unchosen)
   Map<String, dynamic>? interfaces; // from /whoami
+  String? defaultMode; // whoami 'default' — the user's primary interface
 
   Future<void> setAppMode(String? m) async {
     appMode = m;
