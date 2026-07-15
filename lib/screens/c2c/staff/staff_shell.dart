@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/auth.dart';
 import '../../../core/i18n.dart';
+import '../../driver_waste_trips.dart';
 import 'staff_jobs.dart';
 import 'staff_team.dart';
 import 'staff_dashboard.dart';
@@ -73,6 +74,8 @@ class _StaffShellState extends State<StaffShell> {
             isManager ? StaffDashboard(me: me, onOpenJobs: () => setState(() => _tab = 1)) : StaffJobsScreen(me: me, embedded: true, defaultFilter: 'today'),
           ),
           _StaffTab(Icons.assignment_rounded, tr('المهام', 'Jobs'), StaffJobsScreen(me: me, embedded: true)),
+          if (me['role'] == 'driver' || me['role'] == 'ops_manager')
+            _StaffTab(Icons.local_shipping_rounded, tr('رحلات النفايات', 'Waste trips'), const DriverWasteTripsScreen()),
           if (hasTeam) _StaffTab(Icons.groups_rounded, tr('الفريق', 'Team'), StaffTeamScreen(me: me)),
           _StaffTab(Icons.person_rounded, tr('حسابي', 'Me'), _AccountTab(me: me, onChanged: _reload)),
         ];

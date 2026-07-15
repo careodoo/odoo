@@ -70,7 +70,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
           Text(widget.embedded
               ? (_kind == 'trips' ? tr('الرحلات', 'Trips') : _kind == 'centers' ? tr('المراكز', 'Centers') : tr('طلبات النقل', 'Collection orders'))
               : tr('نقل ومعالجة النفايات', 'Waste')),
-          const Text('v1.7.0 · نقل النفايات', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Color(0xFF9AE6B4))),
+          const Text('v1.8.0 · نقل النفايات', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Color(0xFF9AE6B4))),
         ]),
         actions: [
           IconButton(

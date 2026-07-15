@@ -569,6 +569,16 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/client/waste/options'), headers: await _headers())))['data'] as Map);
 
+  /// Driver's assigned waste trips (active by default; all=1 for history).
+  Future<List<dynamic>> wasteDriverTrips({bool all = false}) async =>
+      List<dynamic>.from((await _handle(await http.get(
+              _u('/waste/driver/trips${all ? '?all=1' : ''}'), headers: await _headers())))['data'] as List);
+
+  /// Driver posts their live location for a trip.
+  Future<void> wasteTripSetLocation(int tripId, double lat, double lng) async =>
+      _handle(await http.post(_u('/waste/trip/$tripId/location'),
+          headers: await _headers(), body: jsonEncode({'lat': lat, 'lng': lng})));
+
   /// Live driver location for a waste trip.
   Future<Map<String, dynamic>> wasteTripTrack(int tripId) async =>
       Map<String, dynamic>.from((await _handle(
