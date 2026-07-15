@@ -93,6 +93,10 @@ class ServiceOrderPortal(CustomerPortal):
       groupby='none',
       **kw,
   ):
+    # transition: when the new CAFM waste module is the active source, send
+    # clients to the new portal so both surfaces stay consistent.
+    if http.request.env['ir.config_parameter'].sudo().get_param('care.waste.source') == 'cafm':
+      return http.request.redirect('/waste/orders')
     if not http.request.env['service.order'].check_access_rights('read', raise_exception=False):
       # users without access shouldn't land here (card is hidden for them);
       # if reached directly, send them back to the portal home gracefully.
@@ -227,6 +231,8 @@ class ServiceOrderPortal(CustomerPortal):
       website=True,
   )
   def portal_service_order_create(self, **kw):
+    if http.request.env['ir.config_parameter'].sudo().get_param('care.waste.source') == 'cafm':
+      return http.request.redirect('/waste/order/create')
     return http.request.render(
         'service_order.portal_service_order_create',
         {
@@ -298,6 +304,9 @@ class ServiceOrderPortal(CustomerPortal):
       download=None,
       **kw,
   ):
+    # transition redirect (HTML view only; keep PDF/report links working)
+    if not report_type and http.request.env['ir.config_parameter'].sudo().get_param('care.waste.source') == 'cafm':
+      return http.request.redirect('/waste/order/%s' % order_id)
     order = http.request.env['service.order'].browse(order_id)
     try:
       order_sudo = self._document_check_access(

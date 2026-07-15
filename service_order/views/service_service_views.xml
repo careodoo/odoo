@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-  <!-- module main menu -->
-  <menuitem id="menu_service_order" name="Service Order" />
+  <!-- module main menu — retired: superseded by CAFM «نقل ومعالجة النفايات».
+       Restricted to system admins only (kept as a data backup / rollback). -->
+  <menuitem id="menu_service_order" name="Service Order (Legacy)" groups="base.group_system"/>
 
   <!-- configuration menu -->
   <menuitem id="menu_service_order_config" name="Configuration" sequence="100"
