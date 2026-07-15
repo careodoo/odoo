@@ -13,8 +13,11 @@ import 'c2c_shop.dart';
 class C2C {
   static const navy = Color(0xFF0E3A5F);
   static const navy2 = Color(0xFF17547F);
+  static const deep = Color(0xFF08243B);
   static const red = Color(0xFFC0392B);
   static const bg = Color(0xFFF4F7FB);
+  static const ink = Color(0xFF1E293B);
+  static const slate = Color(0xFF64748B);
 }
 
 /// The CARE 2 CARE customer storefront shell (Home · Bookings · Account).
