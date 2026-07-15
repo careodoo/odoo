@@ -109,45 +109,63 @@ class _C2CServiceScreenState extends State<C2CServiceScreen> {
           final packages = (s['packages'] as List?) ?? [];
           return CustomScrollView(slivers: [
             SliverAppBar(
-              backgroundColor: C2C.navy, foregroundColor: Colors.white, pinned: true, expandedHeight: 190,
+              backgroundColor: C2C.navy, foregroundColor: Colors.white, pinned: true, expandedHeight: 230,
               flexibleSpace: FlexibleSpaceBar(
-                title: Text('${s['name']}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
-                background: s['image'] != null
-                    ? Image.network('${s['image']}', fit: BoxFit.cover, color: Colors.black26, colorBlendMode: BlendMode.darken)
-                    : Container(
-                        decoration: const BoxDecoration(gradient: LinearGradient(colors: [C2C.navy, C2C.navy2])),
-                        alignment: Alignment.center,
-                        child: Text('${s['category_icon'] ?? '🧩'}', style: const TextStyle(fontSize: 70)),
-                      ),
+                titlePadding: const EdgeInsets.only(right: 16, bottom: 46, left: 16),
+                title: Text('${s['name']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, shadows: [Shadow(color: Colors.black54, blurRadius: 6)])),
+                background: Stack(fit: StackFit.expand, children: [
+                  s['image'] != null
+                      ? Image.network('${s['image']}', fit: BoxFit.cover)
+                      : Container(decoration: const BoxDecoration(gradient: LinearGradient(colors: [C2C.navy, C2C.navy2])), alignment: Alignment.center, child: Text('${s['category_icon'] ?? '🧩'}', style: const TextStyle(fontSize: 80))),
+                  const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.transparent, Color(0xCC0E3A5F)]))),
+                ]),
               ),
             ),
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Row(children: [
-                    _chip('${s['category']}', C2C.navy),
-                    const SizedBox(width: 8),
-                    if ((s['rating'] ?? 0) > 0) _chip('⭐ ${s['rating']} (${s['bookings']})', const Color(0xFFF5A623)),
-                    const Spacer(),
-                    Text('${s['price']} ${s['currency'] ?? ''}', style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w900, fontSize: 22)),
+              child: Transform.translate(
+                offset: const Offset(0, -20),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    // floating info card
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 12, offset: Offset(0, 4))]),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Row(children: [
+                          _chip('${s['category']}', C2C.navy),
+                          const SizedBox(width: 6),
+                          if ((s['rating'] ?? 0) > 0) _chip('⭐ ${s['rating']} (${s['bookings']})', const Color(0xFFF5A623)),
+                          const Spacer(),
+                          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                            Text('${s['price']} ${s['currency'] ?? ''}', style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w900, fontSize: 22)),
+                            Text('${tr('لكل', 'per')} ${s['price_unit'] ?? ''}', style: const TextStyle(color: Colors.grey, fontSize: 10)),
+                          ]),
+                        ]),
+                        const SizedBox(height: 12),
+                        Row(children: [
+                          _pillIcon(Icons.schedule_rounded, '${s['duration_min']} ${tr('دقيقة', 'min')}', const Color(0xFF0891B2)),
+                          const SizedBox(width: 8),
+                          _pillIcon(Icons.verified_rounded, tr('فنّي معتمد', 'Vetted pro'), const Color(0xFF16A34A)),
+                          const SizedBox(width: 8),
+                          _pillIcon(Icons.shield_rounded, tr('ضمان', 'Warranty'), const Color(0xFF8B5CF6)),
+                        ]),
+                      ]),
+                    ),
+                    if (s['description'] != null) ...[
+                      _secTitle(tr('عن الخدمة', 'About the service')),
+                      Text('${s['description']}', style: const TextStyle(fontSize: 14, height: 1.6, color: Color(0xFF475569))),
+                    ],
+                    if (packages.isNotEmpty) ...[
+                      _secTitle(tr('اختر باقة', 'Choose a package')),
+                      for (final p in packages) _pkgTile(p as Map),
+                    ],
+                    _gallery((s['work_samples'] as List?) ?? []),
+                    _team((s['team'] as List?) ?? []),
+                    _reviews((s['reviews'] as List?) ?? [], s),
+                    const SizedBox(height: 90),
                   ]),
-                  Text('${tr('لكل', 'per')} ${s['price_unit'] ?? ''} · ${s['duration_min']} ${tr('دقيقة', 'min')}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                  if (s['description'] != null) ...[
-                    const SizedBox(height: 14),
-                    Text('${s['description']}', style: const TextStyle(fontSize: 14, height: 1.5)),
-                  ],
-                  if (packages.isNotEmpty) ...[
-                    const SizedBox(height: 18),
-                    Text(tr('اختر باقة', 'Choose a package'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: C2C.navy)),
-                    const SizedBox(height: 8),
-                    for (final p in packages) _pkgTile(p as Map),
-                  ],
-                  _gallery((s['work_samples'] as List?) ?? []),
-                  _team((s['team'] as List?) ?? []),
-                  _reviews((s['reviews'] as List?) ?? [], s),
-                  const SizedBox(height: 90),
-                ]),
+                ),
               ),
             ),
           ]);
@@ -160,13 +178,20 @@ class _C2CServiceScreenState extends State<C2CServiceScreen> {
           return SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(12),
-              child: SizedBox(
-                width: double.infinity, height: 52,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(backgroundColor: C2C.red, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-                  onPressed: () => _book(snap.data!),
-                  icon: const Icon(Icons.event_available_rounded),
-                  label: Text(tr('احجز الآن', 'Book now'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+              child: GestureDetector(
+                onTap: () => _book(snap.data!),
+                child: Container(
+                  height: 54,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [Color(0xFFE05545), C2C.red], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [BoxShadow(color: C2C.red.withValues(alpha: 0.4), blurRadius: 12, offset: const Offset(0, 4))],
+                  ),
+                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    const Icon(Icons.event_available_rounded, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Text('${tr('احجز الآن', 'Book now')} · ${snap.data!['price']} ${snap.data!['currency'] ?? ''}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+                  ]),
                 ),
               ),
             ),
@@ -184,7 +209,17 @@ class _C2CServiceScreenState extends State<C2CServiceScreen> {
 
   Widget _secTitle(String t) => Padding(
         padding: const EdgeInsets.only(top: 20, bottom: 10),
-        child: Text(t, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: C2C.navy)),
+        child: Row(children: [
+          Container(width: 4, height: 18, decoration: BoxDecoration(gradient: const LinearGradient(colors: [C2C.red, Color(0xFFE05545)], begin: Alignment.topCenter, end: Alignment.bottomCenter), borderRadius: BorderRadius.circular(3))),
+          const SizedBox(width: 8),
+          Text(t, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: C2C.navy)),
+        ]),
+      );
+
+  Widget _pillIcon(IconData ic, String t, Color c) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+        decoration: BoxDecoration(color: c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(ic, size: 14, color: c), const SizedBox(width: 4), Text(t, style: TextStyle(color: c, fontWeight: FontWeight.w700, fontSize: 11))]),
       );
 
   // ---- before / after gallery ----

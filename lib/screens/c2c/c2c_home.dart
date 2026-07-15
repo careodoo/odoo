@@ -86,8 +86,12 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
       automaticallyImplyLeading: false,
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          decoration: const BoxDecoration(gradient: LinearGradient(colors: [C2C.navy, C2C.navy2], begin: Alignment.topRight, end: Alignment.bottomLeft)),
-          child: SafeArea(
+          decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF17547F), C2C.navy, Color(0xFF0A2A44)], begin: Alignment.topRight, end: Alignment.bottomLeft)),
+          child: Stack(children: [
+            Positioned(top: -30, left: -20, child: _blob(120, Colors.white.withValues(alpha: 0.06))),
+            Positioned(bottom: -40, right: -10, child: _blob(140, C2C.red.withValues(alpha: 0.10))),
+            Positioned(top: 30, right: 60, child: _blob(50, Colors.white.withValues(alpha: 0.05))),
+            SafeArea(
             bottom: false,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -117,6 +121,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
               ]),
             ),
           ),
+          ]),
         ),
       ),
       bottom: PreferredSize(
@@ -141,6 +146,8 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
     );
   }
 
+  Widget _blob(double size, Color color) => Container(width: size, height: size, decoration: BoxDecoration(color: color, shape: BoxShape.circle));
+
   Widget _iconBtn(IconData i, VoidCallback onTap) => InkWell(
         onTap: onTap, borderRadius: BorderRadius.circular(20),
         child: Container(padding: const EdgeInsets.all(7), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(10)), child: Icon(i, color: Colors.white, size: 19)),
@@ -148,14 +155,24 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
 
   Widget _rowTitle(String t, String? action, VoidCallback? onAction) => SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 2),
           child: Row(children: [
-            Text(t, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: C2C.navy)),
+            Container(width: 4, height: 18, decoration: BoxDecoration(gradient: const LinearGradient(colors: [C2C.red, Color(0xFFE05545)], begin: Alignment.topCenter, end: Alignment.bottomCenter), borderRadius: BorderRadius.circular(3))),
+            const SizedBox(width: 8),
+            Text(t, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: C2C.navy)),
             const Spacer(),
-            if (action != null) GestureDetector(onTap: onAction, child: Text(action, style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w800, fontSize: 13))),
+            if (action != null) GestureDetector(onTap: onAction, child: Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: C2C.red.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)), child: Text(action, style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w800, fontSize: 12)))),
           ]),
         ),
       );
+
+  // vibrant palette rotation for category tiles
+  static const _catGrads = [
+    [Color(0xFF0EA5E9), Color(0xFF0369A1)], [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
+    [Color(0xFF16A34A), Color(0xFF15803D)], [Color(0xFFF59E0B), Color(0xFFB45309)],
+    [Color(0xFFEC4899), Color(0xFFBE185D)], [Color(0xFF0891B2), Color(0xFF0E7490)],
+    [Color(0xFFEF4444), Color(0xFFB91C1C)], [Color(0xFF6366F1), Color(0xFF4338CA)],
+  ];
 
   // ============ PROMO CAROUSEL ============
   Widget _promoCarousel(List offers) {
@@ -205,27 +222,30 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
 
   // ============ CATEGORIES (tight grid) ============
   Widget _catGrid(List cats) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
         child: GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, childAspectRatio: 0.86, crossAxisSpacing: 4, mainAxisSpacing: 8),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, childAspectRatio: 0.80, crossAxisSpacing: 8, mainAxisSpacing: 10),
           itemCount: cats.length,
           itemBuilder: (_, i) {
             final c = cats[i] as Map;
-            final col = _hex(c['color'] as String?, C2C.navy);
-            return InkWell(
+            final g = _catGrads[i % _catGrads.length];
+            return GestureDetector(
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => C2CServiceListScreen(title: '${c['name']}', categoryId: c['id'] as int))),
-              borderRadius: BorderRadius.circular(14),
               child: Column(children: [
                 Container(
-                  width: 54, height: 54,
-                  decoration: BoxDecoration(color: col.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(16)),
+                  width: 58, height: 58,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: g, begin: Alignment.topLeft, end: Alignment.bottomRight),
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [BoxShadow(color: g[0].withValues(alpha: 0.4), blurRadius: 8, offset: const Offset(0, 4))],
+                  ),
                   alignment: Alignment.center,
-                  child: Text('${c['icon'] ?? '🧩'}', style: const TextStyle(fontSize: 26)),
+                  child: Text('${c['icon'] ?? '🧩'}', style: const TextStyle(fontSize: 27)),
                 ),
-                const SizedBox(height: 5),
-                Text('${c['name']}', textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, height: 1.15)),
+                const SizedBox(height: 6),
+                Text('${c['name']}', textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, height: 1.12, color: Color(0xFF334155))),
               ]),
             );
           },
