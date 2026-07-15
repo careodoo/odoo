@@ -5,6 +5,7 @@ service, scoped to the client's partner via service.project.contact_id.
 Read + create a new collection order, mirroring the existing portal form."""
 import base64
 
+from odoo import fields
 from odoo.http import request, Controller, route
 
 from .api import _auth, _ok, _err, _body, _abs, API
@@ -114,6 +115,14 @@ class WasteClientApi(Controller):
         dom = self._order_domain(env)
         if kw.get('state'):
             dom.append(('states', '=', kw['state']))
+        if kw.get('q'):
+            q = kw['q']
+            dom += ['|', '|', ('serial', 'ilike', q), ('project_id.name', 'ilike', q),
+                    ('pickup_location_id.name', 'ilike', q)]
+        if kw.get('date_from'):
+            dom.append(('request_datetime', '>=', '%s 00:00:00' % kw['date_from']))
+        if kw.get('date_to'):
+            dom.append(('request_datetime', '<=', '%s 23:59:59' % kw['date_to']))
         order_by = 'serial desc' if _wm(env)['order'] == 'cafm.waste.order' else 'id desc'
         recs = SO.search(dom, order=order_by, limit=200)
         def g_(o, f):
@@ -129,6 +138,9 @@ class WasteClientApi(Controller):
             'order_date': _d(getattr(o, 'order_datetime', False)),
             'request_date': _d(getattr(o, 'request_datetime', False)),
             'items': [self._item_dict(l) for l in lines(o)],
+            'items_count': len(lines(o)),
+            'qty_total': sum((l.quantity or 0) for l in lines(o)),
+            'weight_total': round(sum((l.quantity or 0) * (getattr(l, 'weight', 0) or 0) for l in lines(o)), 1),
             'trip': o.trip_id.sequence if 'trip_id' in o._fields and o.trip_id else None,
             'ops_manager': g_(o, 'ops_manager_id').name if g_(o, 'ops_manager_id') else None,
             'driver': g_(o, 'driver_id').name if g_(o, 'driver_id') else None,
@@ -137,9 +149,31 @@ class WasteClientApi(Controller):
             'final_note': g_(o, 'final_note') or None,
             'notes': g_(o, 'notes') or None,
             'proof': _abs('/api/v1/waste/proof/%s' % o.id) if g_(o, 'proof_image') else None,
+            'media': self._media_list(g_(o, 'media_ids')),
             'report_path': ('/waste/order/%s' if _wm(env)['order'] == 'cafm.waste.order' else '/service_order/%s/') % o.id,
             'state': o.states, 'state_label': st.get(o.states, o.states or ''),
         } for o in recs])
+
+    def _media_list(self, attachments):
+        if not attachments:
+            return []
+        out = []
+        for a in attachments:
+            mt = a.mimetype or ''
+            out.append({'id': a.id, 'url': _abs('/api/v1/waste/media/%s' % a.id),
+                        'mimetype': mt, 'is_video': mt.startswith('video'),
+                        'name': a.name})
+        return out
+
+    @route(API + '/waste/media/<int:aid>', type='http', auth='public', csrf=False, cors='*')
+    def waste_media(self, aid, **kw):
+        a = request.env['ir.attachment'].sudo().browse(int(aid)).exists()
+        if not a or a.res_model not in ('cafm.waste.order', 'cafm.waste.trip'):
+            return request.not_found()
+        raw = base64.b64decode(a.datas) if a.datas else b''
+        return request.make_response(raw, headers=[
+            ('Content-Type', a.mimetype or 'application/octet-stream'),
+            ('Content-Length', str(len(raw))), ('Cache-Control', 'public, max-age=3600')])
 
     def _item_dict(self, line):
         it = line.item_id
@@ -181,7 +215,22 @@ class WasteClientApi(Controller):
         T = env[_wm(env)['trip']].sudo()
         st = _sel(T, 'states')
         torder = 'sequence desc' if _wm(env)['trip'] == 'cafm.waste.trip' else 'id desc'
-        recs = T.search([('project_id', 'in', self._projects(env).ids)], order=torder, limit=200)
+        tdom = [('project_id', 'in', self._projects(env).ids)]
+        if kw.get('state'):
+            tdom.append(('states', '=', kw['state']))
+        if kw.get('q'):
+            tdom += ['|', ('sequence', 'ilike', kw['q']), ('center_id.name', 'ilike', kw['q'])]
+        if kw.get('date_from'):
+            tdom.append(('trip_date', '>=', kw['date_from']))
+        if kw.get('date_to'):
+            tdom.append(('trip_date', '<=', kw['date_to']))
+        recs = T.search(tdom, order=torder, limit=200)
+
+        def dloc(t):
+            if 'driver_lat' in t._fields and (t.driver_lat or t.driver_lng):
+                return {'lat': t.driver_lat, 'lng': t.driver_lng, 'time': _d(t.driver_loc_time),
+                        'driver': t.driver_id.name if ('driver_id' in t._fields and t.driver_id) else None}
+            return None
         return _ok([{
             'id': t.id, 'sequence': t.sequence or t.display_name,
             'pickup': t.pickup_location_id.name if t.pickup_location_id else None,
@@ -191,6 +240,9 @@ class WasteClientApi(Controller):
             'total_weight': getattr(t, 'total_weight', 0.0),
             'total_quantity': getattr(t, 'total_quantity', 0.0),
             'team': t.team_id.name if 'team_id' in t._fields and t.team_id else None,
+            'driver': t.driver_id.name if ('driver_id' in t._fields and t.driver_id) else None,
+            'location': dloc(t),
+            'media': self._media_list(t.media_ids if 'media_ids' in t._fields else None),
             'items': [{'item': l.item_id.name if ('item_id' in l._fields and l.item_id) else None,
                        'qty': getattr(l, 'quantity', 0), 'weight': getattr(l, 'weight', 0),
                        'image': _abs('/api/v1/waste/item/%s/image' % l.item_id.id) if ('item_id' in l._fields and l.item_id and getattr(l.item_id, 'image', False)) else None}
@@ -199,6 +251,35 @@ class WasteClientApi(Controller):
             'report_path': ('/report/pdf/care_cafm_waste.report_waste_trip_doc/%s' % t.id) if _wm(env)['trip'] == 'cafm.waste.trip' else None,
             'state': t.states, 'state_label': st.get(t.states, t.states or ''),
         } for t in recs])
+
+    # ---- live driver location (driver posts, client polls) ----------------
+    @route(API + '/waste/trip/<int:tid>/location', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def waste_trip_set_location(self, tid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'cafm.waste.trip' not in env:
+            return _err('غير متاح', 404)
+        b = _body()
+        t = env['cafm.waste.trip'].sudo().browse(int(tid)).exists()
+        if not t:
+            return _err('غير موجود', 404)
+        t.write({'driver_lat': float(b.get('lat') or 0), 'driver_lng': float(b.get('lng') or 0),
+                 'driver_loc_time': fields.Datetime.now(), 'driver_id': env.user.id})
+        return _ok({'ok': True})
+
+    @route(API + '/waste/trip/<int:tid>/track', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def waste_trip_track(self, tid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        t = env['cafm.waste.trip'].sudo().browse(int(tid)).exists() if 'cafm.waste.trip' in env else None
+        if not t:
+            return _err('غير موجود', 404)
+        return _ok({'lat': t.driver_lat, 'lng': t.driver_lng, 'time': _d(t.driver_loc_time),
+                    'driver': t.driver_id.name if t.driver_id else None,
+                    'center': {'name': t.center_id.name} if t.center_id else None,
+                    'state': t.states})
 
     # ---- statistics over a period (client-scoped) -------------------------
     @route(API + '/client/waste/stats', type='http', auth='public', methods=['GET'], csrf=False, cors='*')

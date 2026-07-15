@@ -171,6 +171,13 @@ class WasteTrip(models.Model):
     states = fields.Selection(STATES, string='الحالة', default='draft', tracking=True)
     team_id = fields.Many2one('cafm.waste.team', string='الفريق', tracking=True)
     order_id = fields.Many2one('cafm.waste.order', string='الطلب')
+    media_ids = fields.Many2many('ir.attachment', 'cafm_waste_trip_media_rel', 'trip_id', 'attachment_id',
+                                 string='صور وفيديوهات الرحلة')
+    # live driver GPS tracking
+    driver_id = fields.Many2one('res.users', string='السائق', tracking=True)
+    driver_lat = fields.Float(string='خط العرض', digits=(10, 7))
+    driver_lng = fields.Float(string='خط الطول', digits=(10, 7))
+    driver_loc_time = fields.Datetime(string='آخر تحديث للموقع')
     total_weight = fields.Float(compute='_compute_totals', string='مجموع أوزان الأصناف')
     total_quantity = fields.Float(compute='_compute_totals', string='إجمالي الكمية')
     total_qty_weight = fields.Float(compute='_compute_totals', string='الوزن الكلي')
@@ -179,9 +186,9 @@ class WasteTrip(models.Model):
     @api.depends('trip_line_ids.quantity', 'trip_line_ids.weight')
     def _compute_totals(self):
         for t in self:
-            t.total_weight = sum(t.trip_line_ids.mapped('weight'))
-            t.total_quantity = sum(t.trip_line_ids.mapped('quantity'))
-            t.total_qty_weight = sum(l.quantity * l.weight for l in t.trip_line_ids)
+            t.total_weight = round(sum(t.trip_line_ids.mapped('weight')), 1)
+            t.total_quantity = round(sum(t.trip_line_ids.mapped('quantity')), 1)
+            t.total_qty_weight = round(sum(l.quantity * l.weight for l in t.trip_line_ids), 1)
 
     @api.depends('sequence', 'project_id.sequence')
     def _compute_reference(self):
@@ -226,6 +233,9 @@ class WasteOrder(models.Model):
     driver_id = fields.Many2one('res.users', string='السائق', tracking=True)
     receiver_id = fields.Many2one('res.users', string='مستلم الكميات', tracking=True)
     proof_image = fields.Image(string='صورة إثبات', max_width=1920, max_height=1920)
+    media_ids = fields.Many2many('ir.attachment', 'cafm_waste_order_media_rel', 'order_id', 'attachment_id',
+                                 string='صور وفيديوهات الإثبات',
+                                 help='صور وفيديوهات إضافية دالة على تنفيذ الرفع والمعالجة.')
     final_weight = fields.Float(string='الوزن النهائي المستلم')
     final_note = fields.Char(string='ملاحظة الاستلام')
 
@@ -244,8 +254,8 @@ class WasteOrder(models.Model):
     def _compute_totals(self):
         for o in self:
             lines = o.effective_lines()
-            o.total_quantity = sum(lines.mapped('quantity'))
-            o.total_weight = sum(l.quantity * l.weight for l in lines)
+            o.total_quantity = round(sum(lines.mapped('quantity')), 1)
+            o.total_weight = round(sum(l.quantity * l.weight for l in lines), 1)
 
     @api.model_create_multi
     def create(self, vals_list):
