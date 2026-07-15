@@ -264,6 +264,22 @@ class C2CClientApi(Controller):
         rec = env['c2c.contract.request'].sudo().create(vals)
         return _ok({'id': rec.id, 'name': rec.name, 'state': rec.state})
 
+    @route(API + '/c2c/contract/<int:cid>/<string:decision>', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def c2c_contract_decide(self, cid, decision, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        r = env['c2c.contract.request'].sudo().browse(cid).exists()
+        if not r or r.partner_id.id not in self._my_partner_ids(env):
+            return _err('غير موجود', 404)
+        if decision == 'approve' and r.state == 'quoted':
+            r.action_approve()
+        elif decision == 'reject' and r.state in ('quoted', 'new', 'reviewing'):
+            r.action_reject()
+        else:
+            return _err('لا يمكن تنفيذ الإجراء', 422)
+        return _ok({'id': r.id, 'state': r.state})
+
     @route(API + '/c2c/contracts', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def c2c_contracts(self, **kw):
         env = _auth()
