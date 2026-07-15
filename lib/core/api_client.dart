@@ -622,6 +622,23 @@ class ApiClient {
   Future<Map<String, dynamic>> c2cCoupon(String code) async =>
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/c2c/coupon?code=${Uri.encodeQueryComponent(code)}'), headers: await _headers())))['data'] as Map);
+
+  // ---- CARE 2 CARE product shop -------------------------------------------
+  Future<Map<String, dynamic>> c2cProducts({int? categoryId, String q = ''}) async {
+    final qs = <String>[];
+    if (categoryId != null) qs.add('category_id=$categoryId');
+    if (q.isNotEmpty) qs.add('q=${Uri.encodeQueryComponent(q)}');
+    final path = '/c2c/products${qs.isEmpty ? '' : '?${qs.join('&')}'}';
+    return Map<String, dynamic>.from((await _handle(await http.get(_u(path), headers: await _headers())))['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> c2cShopOrderCreate(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/c2c/order/create'),
+              headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<List<dynamic>> c2cShopOrders() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/c2c/orders'), headers: await _headers())))['data'] as List);
 }
 
 class ApiException implements Exception {
