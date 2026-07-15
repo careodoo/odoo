@@ -34,7 +34,15 @@ class CafmNotification(models.Model):
             'title': title, 'body': body, 'ntype': ntype, 'user_id': u.id,
             'author_id': (author or self.env.user).id, 'action_url': action_url, 'batch': batch,
         } for u in users]
-        return self.sudo().create(vals)
+        recs = self.sudo().create(vals)
+        # fan out an OS-level device push (best-effort; no-op if FCM unset)
+        try:
+            if 'care.cafm.device' in self.env:
+                self.env['care.cafm.device'].send_to_users(
+                    users, title, body, data={'action_url': action_url or '', 'ntype': ntype})
+        except Exception:
+            pass
+        return recs
 
 
 class CafmNotificationCompose(models.TransientModel):

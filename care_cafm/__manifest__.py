@@ -12,6 +12,7 @@
     'data': [
         'security/ir.model.access.csv',
         'data/sequences.xml',
+        'data/portal_sections.xml',
         'data/cron.xml',
         'data/report_qr.xml',
         'reports/reports.xml',

@@ -58,6 +58,27 @@ class CafmClient(models.Model):
     color = fields.Integer()
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
 
+    # ---- which app/portal sections this client sees --------------------------
+    portal_mode = fields.Selection([
+        ('auto', 'تلقائي (حسب الخدمات المقدَّمة)'),
+        ('custom', 'مخصّص (اختيار يدوي للقوائم)'),
+    ], string='قوائم البوابة', default='auto', required=True, tracking=True,
+        help='تلقائي: تظهر القوائم حسب الخدمات الفعلية للعميل. مخصّص: تختار أنت بالضبط أي القوائم تظهر له.')
+    portal_section_ids = fields.Many2many(
+        'care.cafm.portal.section', 'cafm_client_section_rel', 'client_id', 'section_id',
+        string='القوائم الظاهرة للعميل',
+        help='في الوضع المخصّص: القوائم/الخدمات التي يراها هذا العميل داخل التطبيق فقط.')
+
+    def visible_section_codes(self, service_types=None):
+        """The set of section codes this client may see in the app/portal."""
+        self.ensure_one()
+        Section = self.env['care.cafm.portal.section'].sudo()
+        if self.portal_mode == 'custom':
+            codes = set(self.portal_section_ids.mapped('code'))
+            codes |= set(Section.search([('always_on', '=', True)]).mapped('code'))
+            return codes
+        return Section.auto_codes_for_types(service_types or set())
+
     project_count = fields.Integer(compute='_compute_counts', string='المشاريع')
     user_count = fields.Integer(compute='_compute_counts', string='المستخدمون')
     facility_count = fields.Integer(compute='_compute_counts', string='المرافق')

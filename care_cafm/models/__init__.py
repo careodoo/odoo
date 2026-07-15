@@ -13,6 +13,7 @@ from . import request_asset_ppm
 from . import sla
 from . import dashboard
 from . import org
+from . import portal_section
 from . import work_schedule
 from . import account_invoice
 from . import offboard

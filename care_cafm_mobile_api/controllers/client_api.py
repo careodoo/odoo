@@ -59,6 +59,15 @@ class ClientApi(Controller):
             # include sibling contacts of the same company
             ids.update(env['res.partner'].sudo().search(
                 [('commercial_partner_id', '=', p.commercial_partner_id.id)]).ids)
+        # ALSO: any CAFM client this user is a member of (user_ids) — a portal
+        # sub-user whose own partner isn't a contact of the client company still
+        # gets the client's partner (and its contacts) in scope.
+        if 'care.cafm.client' in env:
+            clients = env['care.cafm.client'].sudo().search([('user_ids', 'in', [env.user.id])])
+            for cp in clients.mapped('partner_id'):
+                ids.add(cp.id)
+                ids.update(env['res.partner'].sudo().search(
+                    [('commercial_partner_id', '=', cp.id)]).ids)
         return list(ids)
 
     def _facilities(self, env):
@@ -847,6 +856,45 @@ class ClientApi(Controller):
                         'type_label': type_lbl.get(s.service_type, s.service_type),
                         'icon': s.icon or '🧩', 'open': open_cnt})
         return _ok({'services': out})
+
+    # ---- which portal/app sections this client may see ----------------------
+    def _cafm_clients(self, env):
+        """care.cafm.client records for the logged-in user/partner."""
+        if 'care.cafm.client' not in env:
+            return None
+        p = env.user.partner_id
+        pids = {p.id}
+        if p.commercial_partner_id:
+            pids.add(p.commercial_partner_id.id)
+        return env['care.cafm.client'].sudo().search(
+            ['|', ('partner_id', 'in', list(pids)), ('user_ids', 'in', [env.user.id])])
+
+    @route(API + '/client/sections', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def client_sections(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        Section = env['care.cafm.portal.section'].sudo()
+        is_mgr = env.user.has_group('base.group_erp_manager') or env.user.has_group('base.group_system')
+        codes = None
+        if is_mgr:
+            codes = set(Section.search([]).mapped('code'))
+        else:
+            _, types = self._client_service_types(env)
+            clients = self._cafm_clients(env)
+            if clients:
+                # union of each client's visible codes (custom allow-list or auto)
+                codes = set()
+                for c in clients:
+                    codes |= c.visible_section_codes(types)
+            else:
+                codes = Section.auto_codes_for_types(types)
+        secs = Section.search([('code', 'in', list(codes)), ('active', '=', True)], order='sequence')
+        return _ok({
+            'codes': [s.code for s in secs],
+            'sections': [{'code': s.code, 'name': s.name, 'icon': s.icon or '🧩',
+                          'service_type': s.service_type or None} for s in secs],
+        })
 
     # ---- shop: products (with the client's pricelist) → cart → sale order ----
     def _pricelist(self, env):

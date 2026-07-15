@@ -28,6 +28,13 @@ class WasteClientApi(Controller):
             ids.add(p.commercial_partner_id.id)
             ids.update(env['res.partner'].sudo().search(
                 [('commercial_partner_id', '=', p.commercial_partner_id.id)]).ids)
+        # include CAFM clients this user belongs to (portal sub-users)
+        if 'care.cafm.client' in env:
+            clients = env['care.cafm.client'].sudo().search([('user_ids', 'in', [env.user.id])])
+            for cp in clients.mapped('partner_id'):
+                ids.add(cp.id)
+                ids.update(env['res.partner'].sudo().search(
+                    [('commercial_partner_id', '=', cp.id)]).ids)
         return list(ids)
 
     def _is_mgr(self, env):

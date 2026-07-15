@@ -92,6 +92,21 @@
                                 </tree>
                             </field>
                         </page>
+                        <page string="📱 القوائم الظاهرة للعميل" name="sections">
+                            <group>
+                                <field name="portal_mode" widget="radio"/>
+                            </group>
+                            <div class="text-muted" style="margin:6px 0">
+                                <b>تلقائي:</b> تظهر القوائم حسب الخدمات المقدَّمة فعليًا للعميل (أوامر العمل/الفرق).
+                                <b>مخصّص:</b> تختار أنت بالضبط أي القوائم تظهر له — مثال: عميل خدمة النفائات فقط يرى «نقل ومعالجة النفايات» فقط.
+                                القوائم «الظاهرة دائمًا» (نظرة عامة/التقارير) تظهر للجميع.
+                            </div>
+                            <field name="portal_section_ids" widget="many2many_checkboxes"
+                                   invisible="portal_mode != 'custom'"/>
+                            <div class="alert alert-info" role="alert" invisible="portal_mode == 'custom'">
+                                في الوضع التلقائي لا حاجة لاختيار — القوائم تُحسب تلقائيًا. اختر «مخصّص» للتحكم اليدوي.
+                            </div>
+                        </page>
                         <page string="ملاحظات" name="notes"><field name="notes"/></page>
                     </notebook>
                 </sheet>
@@ -496,4 +511,35 @@
             </xpath>
         </field>
     </record>
+
+    <!-- Portal section registry (so admins can add/rename app menus) -->
+    <record id="view_cafm_portal_section_tree" model="ir.ui.view">
+        <field name="name">care.cafm.portal.section.tree</field>
+        <field name="model">care.cafm.portal.section</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="icon"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="service_type"/>
+                <field name="always_on" widget="boolean_toggle"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_cafm_portal_sections" model="ir.actions.act_window">
+        <field name="name">📱 قوائم البوابة/التطبيق</field>
+        <field name="res_model">care.cafm.portal.section</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">عرّف الأقسام التي يمكن أن تظهر لعملاء البوابة</p>
+            <p>كل قسم تضيفه هنا يصبح متاحًا للاختيار داخل بطاقة العميل (وضع «مخصّص»).</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_cafm_portal_sections" name="📱 قوائم البوابة"
+              parent="menu_cafm_setup" action="action_cafm_portal_sections"
+              groups="base.group_erp_manager" sequence="60"/>
 </odoo>

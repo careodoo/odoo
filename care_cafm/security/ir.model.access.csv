@@ -33,6 +33,8 @@ acc_cafm_sla_line_u,care.cafm.sla.line.u,model_care_cafm_sla_line,base.group_use
 acc_cafm_sla_line_m,care.cafm.sla.line.m,model_care_cafm_sla_line,hr.group_hr_manager,1,1,1,1
 acc_cafm_client_u,care.cafm.client.u,model_care_cafm_client,base.group_user,1,1,1,0
 acc_cafm_client_m,care.cafm.client.m,model_care_cafm_client,hr.group_hr_manager,1,1,1,1
+acc_cafm_psec_u,care.cafm.portal.section.u,model_care_cafm_portal_section,base.group_user,1,0,0,0
+acc_cafm_psec_m,care.cafm.portal.section.m,model_care_cafm_portal_section,base.group_erp_manager,1,1,1,1
 acc_cafm_project_u,care.cafm.project.u,model_care_cafm_project,base.group_user,1,1,1,0
 acc_cafm_project_m,care.cafm.project.m,model_care_cafm_project,hr.group_hr_manager,1,1,1,1
 acc_cafm_team_member_u,care.cafm.team.member.u,model_care_cafm_team_member,base.group_user,1,1,1,1

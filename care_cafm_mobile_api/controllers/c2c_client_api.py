@@ -58,9 +58,12 @@ class C2CClientApi(Controller):
         p = u.partner_id
         is_staff = u.has_group('base.group_user')  # internal user
         is_admin = u.has_group('base.group_erp_manager') or u.has_group('base.group_system')
-        # CAFM client: partner (or its company) owns a CAFM facility
+        # CAFM client: a member of a care.cafm.client, OR a partner that owns a
+        # CAFM facility (covers clients with no facilities yet — e.g. waste-only).
         cafm = False
-        if 'care.cafm.facility' in env:
+        if 'care.cafm.client' in env:
+            cafm = bool(env['care.cafm.client'].sudo().search_count([('user_ids', 'in', [u.id])]))
+        if not cafm and 'care.cafm.facility' in env:
             pids = {p.id}
             if p.commercial_partner_id:
                 pids.add(p.commercial_partner_id.id)

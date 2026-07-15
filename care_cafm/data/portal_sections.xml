@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- Registry of every section the CAFM app/portal can show. Adding a record
+       here (or from the UI) makes it selectable per-client automatically. -->
+  <data noupdate="1">
+
+    <!-- universal / base sections -->
+    <record id="psec_overview" model="care.cafm.portal.section">
+      <field name="name">نظرة عامة</field><field name="code">overview</field>
+      <field name="icon">📊</field><field name="sequence">1</field><field name="always_on">1</field>
+    </record>
+    <record id="psec_facilities" model="care.cafm.portal.section">
+      <field name="name">المرافق والمباني</field><field name="code">facilities</field>
+      <field name="icon">🏢</field><field name="sequence">5</field>
+    </record>
+    <record id="psec_workorders" model="care.cafm.portal.section">
+      <field name="name">أوامر العمل</field><field name="code">workorders</field>
+      <field name="icon">🛠️</field><field name="sequence">10</field>
+    </record>
+    <record id="psec_inventory" model="care.cafm.portal.section">
+      <field name="name">المخزون والصرف</field><field name="code">inventory</field>
+      <field name="icon">📦</field><field name="sequence">60</field>
+    </record>
+    <record id="psec_shop" model="care.cafm.portal.section">
+      <field name="name">المتجر</field><field name="code">shop</field>
+      <field name="icon">🛒</field><field name="sequence">65</field>
+    </record>
+    <record id="psec_team" model="care.cafm.portal.section">
+      <field name="name">الفرق والعمّال</field><field name="code">team</field>
+      <field name="icon">👷</field><field name="sequence">70</field>
+    </record>
+    <record id="psec_reports" model="care.cafm.portal.section">
+      <field name="name">التقارير</field><field name="code">reports</field>
+      <field name="icon">📈</field><field name="sequence">90</field><field name="always_on">1</field>
+    </record>
+
+    <!-- service sections (auto-shown to clients delivered that service) -->
+    <record id="psec_cleaning" model="care.cafm.portal.section">
+      <field name="name">النظافة</field><field name="code">cleaning</field>
+      <field name="icon">🧹</field><field name="sequence">20</field><field name="service_type">cleaning</field>
+    </record>
+    <record id="psec_security" model="care.cafm.portal.section">
+      <field name="name">الأمن والحراسة</field><field name="code">security</field>
+      <field name="icon">🛡️</field><field name="sequence">21</field><field name="service_type">security</field>
+    </record>
+    <record id="psec_agri" model="care.cafm.portal.section">
+      <field name="name">الزراعة وتنسيق الحدائق</field><field name="code">agriculture</field>
+      <field name="icon">🌿</field><field name="sequence">22</field><field name="service_type">agriculture</field>
+    </record>
+    <record id="psec_facade" model="care.cafm.portal.section">
+      <field name="name">غسيل الواجهات</field><field name="code">facade</field>
+      <field name="icon">🧼</field><field name="sequence">23</field><field name="service_type">facade</field>
+    </record>
+    <record id="psec_maintenance" model="care.cafm.portal.section">
+      <field name="name">الصيانة</field><field name="code">maintenance</field>
+      <field name="icon">🔧</field><field name="sequence">24</field><field name="service_type">maintenance</field>
+    </record>
+    <record id="psec_pest" model="care.cafm.portal.section">
+      <field name="name">مكافحة الحشرات</field><field name="code">pest</field>
+      <field name="icon">🐜</field><field name="sequence">25</field><field name="service_type">pest</field>
+    </record>
+    <record id="psec_waste" model="care.cafm.portal.section">
+      <field name="name">نقل ومعالجة النفايات</field><field name="code">waste</field>
+      <field name="icon">♻️</field><field name="sequence">26</field><field name="service_type">waste</field>
+    </record>
+    <record id="psec_disinfection" model="care.cafm.portal.section">
+      <field name="name">التعقيم</field><field name="code">disinfection</field>
+      <field name="icon">💨</field><field name="sequence">27</field><field name="service_type">disinfection</field>
+    </record>
+    <record id="psec_pool" model="care.cafm.portal.section">
+      <field name="name">صيانة المسابح</field><field name="code">pool</field>
+      <field name="icon">🏊</field><field name="sequence">28</field><field name="service_type">pool</field>
+    </record>
+    <record id="psec_watertank" model="care.cafm.portal.section">
+      <field name="name">تنظيف خزانات المياه</field><field name="code">watertank</field>
+      <field name="icon">🚰</field><field name="sequence">29</field><field name="service_type">watertank</field>
+    </record>
+
+  </data>
+</odoo>
