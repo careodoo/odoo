@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo><data noupdate="1">
 
+  <!-- default booking availability settings (singleton) -->
+  <record id="c2c_settings_default" model="c2c.settings">
+    <field name="work_start">8.0</field><field name="work_end">22.0</field>
+    <field name="slot_minutes">60</field><field name="capacity_per_slot">3</field>
+    <field name="use_team_capacity">1</field><field name="lead_hours">3</field><field name="horizon_days">30</field>
+  </record>
+
+
   <!-- Categories -->
   <record id="cat_cleaning" model="c2c.category">
     <field name="name">تنظيف منازل</field><field name="icon">🧹</field><field name="color">#0ea5e9</field><field name="sequence">10</field>

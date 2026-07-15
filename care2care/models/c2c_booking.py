@@ -42,6 +42,8 @@ class C2CBooking(models.Model):
     payment_state = fields.Selection([
         ('unpaid', 'غير مدفوع'), ('paid', 'مدفوع'), ('refunded', 'مُسترجع'),
     ], string='حالة الدفع', default='unpaid', tracking=True)
+    discount_code = fields.Char(string='كود الخصم')
+    discount_amount = fields.Float(string='قيمة الخصم')
     state = fields.Selection([
         ('draft', 'مسودة'), ('confirmed', 'مؤكّد'), ('assigned', 'مُسند'),
         ('in_progress', 'قيد التنفيذ'), ('done', 'منجز'), ('cancelled', 'ملغى'),

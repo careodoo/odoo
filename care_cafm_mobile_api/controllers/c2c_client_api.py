@@ -204,6 +204,27 @@ class C2CClientApi(Controller):
         } for p in (team or [])]
         return _ok(d)
 
+    # ---- available time slots (bookings + team schedule) ------------------
+    @route(API + '/c2c/slots', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def c2c_slots(self, **kw):
+        env = _auth() or request.env
+        if 'c2c.settings' not in env:
+            return _ok({'slots': [], 'available_days': []})
+        sid = request.httprequest.args.get('service_id')
+        date = request.httprequest.args.get('date')
+        svc = env['c2c.service'].sudo().browse(int(sid)).exists() if sid and sid.isdigit() else None
+        cfg = env['c2c.settings'].sudo().get_settings()
+        slots = cfg.compute_slots(svc, date) if date else []
+        # which weekdays are open (0=Mon..6=Sun) + horizon, so the app can gate the calendar
+        open_days = [i for i in range(7) if cfg._working_day(i)]
+        return _ok({
+            'slots': slots,
+            'open_weekdays': open_days,
+            'lead_hours': cfg.lead_hours,
+            'horizon_days': cfg.horizon_days,
+            'slot_minutes': cfg.slot_minutes,
+        })
+
     # ---- offers / subscriptions -------------------------------------------
     @route(API + '/c2c/offers', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def c2c_offers(self, **kw):
@@ -313,10 +334,29 @@ class C2CClientApi(Controller):
             vals['package_id'] = int(b['package_id'])
         try:
             rec = env['c2c.booking'].sudo().create(vals)
+            # apply a promo/offer code if valid
+            code = (b.get('code') or '').strip()
+            if code and 'c2c.offer' in env:
+                off = env['c2c.offer'].sudo().search([('code', '=ilike', code), ('is_live', '=', True)], limit=1)
+                if off and off.discount_pct and rec.amount:
+                    disc = round(rec.amount * off.discount_pct / 100.0, 2)
+                    rec.write({'discount_code': off.code, 'discount_amount': disc, 'amount': rec.amount - disc})
             rec.action_confirm()
         except Exception as e:
             return _err(str(e), 422)
         return _ok(self._booking(rec))
+
+    @route(API + '/c2c/coupon', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def c2c_coupon(self, **kw):
+        """Validate a coupon code and return its discount %, for a live preview."""
+        env = _auth() or request.env
+        code = (request.httprequest.args.get('code') or '').strip()
+        if not code or 'c2c.offer' not in env:
+            return _ok({'valid': False})
+        off = env['c2c.offer'].sudo().search([('code', '=ilike', code), ('is_live', '=', True)], limit=1)
+        if not off:
+            return _ok({'valid': False})
+        return _ok({'valid': True, 'code': off.code, 'discount_pct': off.discount_pct, 'title': off.title})
 
     @route(API + '/c2c/bookings', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def c2c_bookings(self, **kw):

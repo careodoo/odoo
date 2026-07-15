@@ -279,4 +279,42 @@
     <field name="name">طلبات التعاقد</field><field name="res_model">c2c.contract.request</field><field name="view_mode">tree,form</field>
   </record>
 
+  <!-- ===== BOOKING SETTINGS (availability) ===== -->
+  <record id="view_c2c_settings_form" model="ir.ui.view">
+    <field name="name">c2c.settings.form</field><field name="model">c2c.settings</field>
+    <field name="arch" type="xml">
+      <form>
+        <sheet>
+          <div class="oe_title"><h1>⚙️ <field name="name" readonly="1"/></h1></div>
+          <group>
+            <group string="ساعات العمل والمواعيد">
+              <field name="work_start" widget="float_time"/>
+              <field name="work_end" widget="float_time"/>
+              <field name="slot_minutes"/>
+              <field name="capacity_per_slot"/>
+              <field name="use_team_capacity"/>
+            </group>
+            <group string="قواعد الحجز">
+              <field name="lead_hours"/>
+              <field name="horizon_days"/>
+            </group>
+          </group>
+          <group string="أيام العمل">
+            <group>
+              <field name="day_sun"/><field name="day_mon"/><field name="day_tue"/><field name="day_wed"/>
+            </group>
+            <group>
+              <field name="day_thu"/><field name="day_fri"/><field name="day_sat"/>
+            </group>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+  <record id="action_c2c_settings" model="ir.actions.act_window">
+    <field name="name">إعدادات الحجز والمواعيد</field><field name="res_model">c2c.settings</field>
+    <field name="view_mode">form</field><field name="target">current</field>
+    <field name="res_id" ref="c2c_settings_default"/>
+  </record>
+
 </odoo>
