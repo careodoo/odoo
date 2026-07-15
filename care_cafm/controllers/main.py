@@ -262,41 +262,80 @@ class CafmMobile(http.Controller):
         return _shell('تم', body, ACCENTS['pest'])
 
     # ---------------- client portal home ----------------
+    def _client_scope(self, env):
+        """Resolve a client portal user → (partner_ids, facilities, service
+        types, visible section codes, display name). Mirrors the app's
+        /client/sections so the portal shows exactly the same menus. Scopes via
+        care.cafm.client membership (a sub-user's own partner is often not the
+        company that owns the records)."""
+        user = env.user
+        Section = env['care.cafm.portal.section'].sudo()
+        is_mgr = user.has_group('base.group_erp_manager') or user.has_group('base.group_system')
+        pids = {user.partner_id.id}
+        if user.partner_id.commercial_partner_id:
+            pids.add(user.partner_id.commercial_partner_id.id)
+        clients = env['care.cafm.client'].sudo().search([('user_ids', 'in', [user.id])])
+        for cp in clients.mapped('partner_id'):
+            pids.add(cp.id)
+            pids.update(env['res.partner'].sudo().search([('commercial_partner_id', '=', cp.id)]).ids)
+        facs = env['care.cafm.facility'].sudo().search([('partner_id', 'in', list(pids))])
+        types = set()
+        for tm in env['care.cafm.team'].sudo().search([('facility_id', 'in', facs.ids)]):
+            if tm.service_id.service_type:
+                types.add(tm.service_id.service_type)
+        if is_mgr:
+            codes = set(Section.search([]).mapped('code'))
+        elif clients:
+            codes = set()
+            for c in clients:
+                codes |= c.visible_section_codes(types)
+        else:
+            codes = Section.auto_codes_for_types(types)
+        name = clients[:1].partner_id.name if clients else (facs[:1].partner_id.name if facs else user.name)
+        return list(pids), facs, types, codes, name
+
     @http.route('/cafm/m/client', type='http', auth='user', website=False)
     def client(self, **kw):
         env = request.env
-        partner = env.user.partner_id
-        facs = env['care.cafm.facility'].search(
-            ['|', ('partner_id', '=', partner.id), ('partner_id', 'child_of', partner.commercial_partner_id.id)])
-        if not facs:
-            facs = env['care.cafm.facility'].search([], limit=3)  # demo fallback
-        svc_types = {}
-        for f in facs:
-            for t in f.mapped('building_ids'):
-                pass
-        # services active for these facilities (from teams)
-        teams = env['care.cafm.team'].search([('facility_id', 'in', facs.ids)])
-        cards = Markup('')
-        seen = set()
+        pids, facs, types, codes, name = self._client_scope(env)
+        Section = env['care.cafm.portal.section'].sudo()
+        # only the service sections this client may see (respects auto/custom mode)
+        svc_secs = Section.search([('code', 'in', list(codes)), ('is_service', '=', True)], order='sequence')
+        teams = env['care.cafm.team'].sudo().search([('facility_id', 'in', facs.ids)])
+        team_by_type = {}
         for tm in teams:
-            if tm.service_id.id in seen:
-                continue
-            seen.add(tm.service_id.id)
-            cards += Markup('<div class="tile"><div class="i">%s</div><div class="n">%s</div>'
-                            '<div class="s">الفريق %s · <span class="pill ok">نشطة</span></div></div>'
-                            ) % (esc(tm.service_id.icon or '🧩'), esc(tm.service_id.name), tm.member_count)
+            if tm.service_id.service_type:
+                team_by_type.setdefault(tm.service_id.service_type, tm)
+        cards = Markup('')
+        for s in svc_secs:
+            tm = team_by_type.get(s.service_type)
+            sub = (Markup('الفريق %s · <span class="pill ok">نشطة</span>') % tm.member_count) if tm \
+                else Markup('<span class="pill ok">متاحة</span>')
+            href = ' href="/service_orders"' if s.code == 'waste' else ''
+            tag = 'a' if href else 'div'
+            cards += Markup('<%s class="tile"%s><div class="i">%s</div><div class="n">%s</div><div class="s">%s</div></%s>'
+                            ) % (Markup(tag), Markup(href), esc(s.icon or '🧩'), esc(s.name), sub, Markup(tag))
         if not cards:
             cards = Markup('<div class="card muted">لا خدمات معرّفة بعد.</div>')
-        wo_open = env['care.cafm.workorder'].search_count(
-            [('facility_id', 'in', facs.ids), ('state', 'not in', ('done', 'verified', 'cancelled'))])
+        wo_open = env['care.cafm.workorder'].sudo().search_count(
+            [('facility_id', 'in', facs.ids), ('state', 'not in', ('done', 'verified', 'cancelled'))]) if 'workorders' in codes else 0
+        # action buttons — gated by section visibility
+        actions = Markup('')
+        if 'waste' in codes:
+            actions += Markup('<a class="btn g" href="/service_orders">♻️ نقل ومعالجة النفايات — طلباتي ورحلاتي ←</a>')
+        if 'shop' in codes:
+            actions += Markup('<a class="btn g" href="/cafm/m/order">🛒 مشترياتي — طلب من الكتالوج ←</a>')
+        if 'workorders' in codes:
+            actions += Markup('<a class="btn" href="/cafm/m/quality">＋ طلب خدمة / بلاغ</a>')
+        kpi = Markup('')
+        if 'workorders' in codes:
+            kpi = Markup('<div class="kpi" style="margin-top:12px"><div><div class="n">%s</div>'
+                         '<div class="l">بلاغات مفتوحة</div></div>'
+                         '<div><div class="n">★4.6</div><div class="l">تقييمكم</div></div></div>') % wo_open
         body = Markup(
             '<div class="card"><div class="h4">%s</div><div class="muted">الخدمات المقدّمة لكم</div></div>'
-            '<div class="grid">%s</div>'
-            '<div class="kpi" style="margin-top:12px"><div><div class="n">%s</div><div class="l">بلاغات مفتوحة</div></div>'
-            '<div><div class="n">★4.6</div><div class="l">تقييمكم</div></div></div>'
-            '<a class="btn g" href="/cafm/m/order">🛒 مشترياتي — طلب من الكتالوج ←</a>'
-            '<a class="btn" href="/cafm/m/quality">＋ طلب خدمة / بلاغ</a>'
-        ) % (esc(facs[:1].name or 'عميلنا الكريم'), cards, wo_open)
+            '<div class="grid">%s</div>%s%s'
+        ) % (esc(name or 'عميلنا الكريم'), cards, kpi, actions)
         return _shell('بوابة العميل', body, ACCENTS['disinfection'])
 
     # ---------------- actions: scan / start / done ----------------
