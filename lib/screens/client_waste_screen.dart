@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import 'odoo_backend_screen.dart';
 
 /// Client waste transfer & treatment: collection orders + trips, with a
 /// new-order form. Scoped to the client's waste projects.
@@ -51,7 +52,16 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
   Widget build(BuildContext context) {
     final s = _summary;
     return Scaffold(
-      appBar: AppBar(title: Text(tr('نقل ومعالجة النفايات', 'Waste'))),
+      appBar: AppBar(
+        title: Text(tr('نقل ومعالجة النفايات', 'Waste')),
+        actions: [
+          IconButton(
+            tooltip: tr('لوحة التحكم الكاملة', 'Full dashboard'),
+            icon: const Icon(Icons.dashboard_rounded),
+            onPressed: _openPortal,
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: const Color(0xFF16A34A),
         onPressed: _newOrder,
@@ -59,6 +69,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
         label: Text(tr('طلب نقل', 'New order')),
       ),
       body: Column(children: [
+        _portalBanner(),
         if (s != null && s['available'] == true)
           SizedBox(
             height: 96,
@@ -103,6 +114,38 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
       ]),
     );
   }
+
+  void _openPortal() => Navigator.push(context, MaterialPageRoute(
+        builder: (_) => const OdooBackendScreen(path: '/service_orders', title: 'لوحة تحكم النفايات'),
+      ));
+
+  /// Prominent entry to the exact web portal dashboard (same data, reports,
+  /// printing and colours as https://ecare.care-kw.com/service_orders).
+  Widget _portalBanner() => Padding(
+        padding: const EdgeInsets.fromLTRB(10, 10, 10, 2),
+        child: InkWell(
+          onTap: _openPortal,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [Color(0xFF115E4B), Color(0xFF16A34A)], begin: Alignment.topRight, end: Alignment.bottomLeft),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [BoxShadow(color: const Color(0xFF16A34A).withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 5))],
+            ),
+            child: Row(children: [
+              Container(padding: const EdgeInsets.all(9), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.insert_chart_rounded, color: Colors.white, size: 24)),
+              const SizedBox(width: 12),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(tr('لوحة التحكم الكاملة', 'Full control dashboard'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14.5)),
+                const SizedBox(height: 2),
+                Text(tr('كل الطلبات والرحلات والتقارير والطباعة', 'All orders, trips, reports & printing'), style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 11.5)),
+              ])),
+              const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 15),
+            ]),
+          ),
+        ),
+      );
 
   Widget _stat(String ic, String v, String l, Color c) => Container(
         width: 128,
