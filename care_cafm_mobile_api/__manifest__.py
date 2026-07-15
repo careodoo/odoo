@@ -13,6 +13,7 @@
         'security/ir.model.access.csv',
         'data/ir_cron.xml',
         'views/notification_views.xml',
+        'views/account_deletion_views.xml',
     ],
     'installable': True,
     'application': False,

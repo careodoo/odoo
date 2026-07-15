@@ -82,3 +82,13 @@ class NotifApi(Controller):
         env['care.cafm.notification'].push(
             env.user, '🔔 اختبار الإشعارات', 'وصلك هذا الإشعار بنجاح من CARE.', ntype='info')
         return _ok({'sent': True})
+
+    # ---- account & data deletion (Google Play requirement) ----------------
+    @route(API + '/account/delete_request', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def account_delete_request(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        reason = _body().get('reason')
+        rec = env['care.account.deletion'].sudo().submit(env.user, reason)
+        return _ok({'requested': True, 'id': rec.id, 'state': rec.state})

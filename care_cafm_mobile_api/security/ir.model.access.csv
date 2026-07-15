@@ -4,3 +4,7 @@ access_mobile_token_system,mobile.token.system,model_care_cafm_mobile_token,base
 access_cafm_notif_user,cafm.notif.user,model_care_cafm_notification,base.group_user,1,1,1,1
 access_cafm_notif_portal,cafm.notif.portal,model_care_cafm_notification,base.group_portal,1,1,0,0
 access_cafm_notif_compose,cafm.notif.compose,model_care_cafm_notification_compose,base.group_user,1,1,1,1
+access_cafm_device_user,cafm.device.user,model_care_cafm_device,base.group_user,1,1,1,1
+access_cafm_device_portal,cafm.device.portal,model_care_cafm_device,base.group_portal,1,1,1,1
+access_acct_del_mgr,acct.del.mgr,model_care_account_deletion,base.group_system,1,1,1,1
+access_acct_del_user,acct.del.user,model_care_account_deletion,base.group_user,1,0,0,0

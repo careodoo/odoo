@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_account_deletion_tree" model="ir.ui.view">
+    <field name="name">care.account.deletion.tree</field>
+    <field name="model">care.account.deletion</field>
+    <field name="arch" type="xml">
+      <tree decoration-warning="state=='pending'" decoration-muted="state=='done'">
+        <field name="request_date"/>
+        <field name="partner_name"/>
+        <field name="email"/>
+        <field name="user_id"/>
+        <field name="reason" optional="show"/>
+        <field name="state" widget="badge"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_account_deletion_form" model="ir.ui.view">
+    <field name="name">care.account.deletion.form</field>
+    <field name="model">care.account.deletion</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <field name="state" widget="statusbar"/>
+        </header>
+        <sheet>
+          <group>
+            <group><field name="user_id"/><field name="partner_name"/><field name="email"/></group>
+            <group><field name="request_date"/></group>
+          </group>
+          <field name="reason"/>
+        </sheet>
+        <div class="oe_chatter"><field name="message_ids"/></div>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_account_deletion" model="ir.actions.act_window">
+    <field name="name">🗑️ طلبات حذف الحسابات</field>
+    <field name="res_model">care.account.deletion</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <menuitem id="menu_account_deletion" name="🗑️ طلبات حذف الحسابات"
+            parent="care_cafm.menu_cafm_root" action="action_account_deletion"
+            groups="base.group_system" sequence="95"/>
+</odoo>

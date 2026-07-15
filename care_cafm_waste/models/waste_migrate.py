@@ -47,7 +47,8 @@ class WasteOrderMigrate(models.Model):
             _logger.warning('service_order not installed — nothing to migrate')
             return {'skipped': True}
 
-        S = lambda m: env[m].sudo()
+        # include ARCHIVED records too (some lines reference inactive items)
+        S = lambda m: env[m].sudo().with_context(active_test=False)
         # ---- reference data (dedupe by name) --------------------------------
         type_map = self._map_by_name(S('service.type').search([]), 'cafm.waste.type')
         center_map = self._map_by_name(
