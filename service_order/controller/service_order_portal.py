@@ -137,7 +137,7 @@ class ServiceOrderPortal(CustomerPortal):
     if not groupby:
       groupby = 'none'
 
-    service_orders_counter = http.request.env['service.order'].search_count([])
+    service_orders_counter = http.request.env['service.order'].search_count(domain)
     pager = portal_pager(
         url="/service_orders",
         url_args={
@@ -160,6 +160,7 @@ class ServiceOrderPortal(CustomerPortal):
         order=order,
     )
     sortby = 'name'
+    stats = self._waste_stats(self._get_portal_default_domain())
     return http.request.render(
         'service_order.portal_service_orders',
         {
@@ -175,8 +176,48 @@ class ServiceOrderPortal(CustomerPortal):
             'search_in': search_in,
             'search': search,
             'timzone_offset': self.get_timezone_offset(),
+            'waste_stats': stats,
         },
     )
+
+  def _waste_stats(self, base_domain):
+    """Aggregate stats over the client's orders — mirrors the app's
+    /client/waste/stats so the portal shows the same KPIs & breakdowns."""
+    SO = http.request.env['service.order'].sudo()
+    recs = SO.search(base_domain)
+    done = ('completed', 'delivered')
+    by_month, by_item = {}, {}
+    total_w = total_q = completed = 0.0
+    for o in recs:
+      if o.states in done:
+        completed += 1
+      fw = getattr(o, 'final_weight', 0.0) or 0.0
+      total_w += fw
+      odt = getattr(o, 'order_datetime', False)
+      mk = odt.strftime('%Y-%m') if odt else '—'
+      m = by_month.setdefault(mk, {'orders': 0, 'weight': 0.0, 'qty': 0.0})
+      m['orders'] += 1
+      m['weight'] += fw
+      for l in o.order_line_ids:
+        q = l.quantity or 0
+        total_q += q
+        m['qty'] += q
+        nm = l.item_id.name if l.item_id else '—'
+        it = by_item.setdefault(nm, {'qty': 0.0, 'orders': 0, 'item_id': l.item_id.id if l.item_id else 0})
+        it['qty'] += q
+        it['orders'] += 1
+    months = sorted(by_month.items())
+    max_m = max([v['orders'] for _, v in months], default=1) or 1
+    top = sorted(by_item.items(), key=lambda x: -x[1]['qty'])[:6]
+    return {
+        'total_orders': len(recs),
+        'completed': int(completed),
+        'total_weight': round(total_w, 1),
+        'total_quantity': round(total_q, 1),
+        'by_month': [{'month': k, 'orders': v['orders'], 'weight': round(v['weight'], 1), 'qty': round(v['qty'], 1),
+                      'pct': max(3, int(v['orders'] * 100 / max_m))} for k, v in months],
+        'by_item': [{'name': k, 'qty': v['qty'], 'orders': v['orders'], 'item_id': v['item_id']} for k, v in top],
+    }
 
   # create order
   @http.route(

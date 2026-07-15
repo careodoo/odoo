@@ -33,6 +33,76 @@
         <t t-set="title">Service Orders</t>
       </t>
       <t t-set="wrapwrap_classes" t-value="'o_portal_bg_dark'" />
+      <!-- ===== Statistics dashboard (parity with the mobile app) ===== -->
+      <t t-if="waste_stats">
+        <div class="row g-2 mb-3" id="waste_stats_kpis">
+          <div class="col-6 col-md-3">
+            <div class="card h-100 border-0 shadow-sm" style="border-left:4px solid #0E3A5F !important;border-left-width:4px !important">
+              <div class="card-body py-2 px-3">
+                <div class="text-muted small">📋 إجمالي الطلبات</div>
+                <div class="h4 mb-0 fw-bold" style="color:#0E3A5F"><t t-esc="waste_stats['total_orders']"/></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body py-2 px-3">
+                <div class="text-muted small">✅ المكتملة</div>
+                <div class="h4 mb-0 fw-bold" style="color:#16A34A"><t t-esc="waste_stats['completed']"/></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body py-2 px-3">
+                <div class="text-muted small">⚖️ الوزن (كجم)</div>
+                <div class="h4 mb-0 fw-bold" style="color:#0891B2"><t t-esc="waste_stats['total_weight']"/></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body py-2 px-3">
+                <div class="text-muted small">📦 إجمالي الكمية</div>
+                <div class="h4 mb-0 fw-bold" style="color:#6366F1"><t t-esc="waste_stats['total_quantity']"/></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row g-2 mb-3">
+          <div class="col-md-7" t-if="waste_stats['by_month']">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-body">
+                <h6 class="fw-bold mb-3" style="color:#0E3A5F">📈 حسب الشهر</h6>
+                <t t-foreach="waste_stats['by_month'][-8:]" t-as="m">
+                  <div class="d-flex align-items-center mb-2">
+                    <div style="width:64px" class="small fw-bold text-nowrap"><t t-esc="m['month']"/></div>
+                    <div class="flex-grow-1 mx-2" style="background:#eef2f6;border-radius:6px;height:20px;position:relative">
+                      <div t-attf-style="width:#{m['pct']}%;height:20px;border-radius:6px;background:linear-gradient(90deg,#16A34A,#15803D)"/>
+                    </div>
+                    <div class="small text-muted text-nowrap" style="width:110px"><t t-esc="m['orders']"/> طلب · <t t-esc="m['weight']"/>kg</div>
+                  </div>
+                </t>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-5" t-if="waste_stats['by_item']">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-body">
+                <h6 class="fw-bold mb-3" style="color:#0E3A5F">🏆 أكثر الأصناف</h6>
+                <t t-foreach="waste_stats['by_item']" t-as="it">
+                  <div class="d-flex align-items-center mb-2">
+                    <img t-if="it['item_id']" t-attf-src="/api/v1/waste/item/#{it['item_id']}/image" style="width:34px;height:34px;object-fit:cover;border-radius:8px" class="me-2"/>
+                    <span t-else="" class="me-2" style="font-size:20px">📦</span>
+                    <div class="flex-grow-1 small fw-bold"><t t-esc="it['name']"/></div>
+                    <span class="badge rounded-pill" style="background:#16A34A"><t t-esc="it['qty']"/></span>
+                  </div>
+                </t>
+              </div>
+            </div>
+          </div>
+        </div>
+      </t>
       <div class="row " id="print_list_report">
         <div class="col-8 btn-group  flex-grow-1 me-1 mb-1">
           <a style="max-width:150px;min-width:70px"
