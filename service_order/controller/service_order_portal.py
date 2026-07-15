@@ -50,6 +50,15 @@ class ServiceOrderPortal(CustomerPortal):
       pids.add(p.commercial_partner_id.id)
       pids.update(http.request.env['res.partner'].sudo().search(
           [('commercial_partner_id', '=', p.commercial_partner_id.id)]).ids)
+    # portal sub-users of a CAFM client: bridge to the client company's partner
+    # (their own partner is often themselves, not the company that owns the orders)
+    if 'care.cafm.client' in http.request.env:
+      clients = http.request.env['care.cafm.client'].sudo().search(
+          [('user_ids', 'in', [user.id])])
+      for cp in clients.mapped('partner_id'):
+        pids.add(cp.id)
+        pids.update(http.request.env['res.partner'].sudo().search(
+            [('commercial_partner_id', '=', cp.id)]).ids)
     projects = http.request.env['service.project'].sudo().search(
         [('contact_id', 'in', list(pids))])
     return [('project_id', 'in', projects.ids)]
