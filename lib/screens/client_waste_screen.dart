@@ -55,8 +55,11 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
     final s = _summary;
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: !widget.embedded,
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-          Text(tr('نقل ومعالجة النفايات', 'Waste')),
+          Text(widget.embedded
+              ? (_kind == 'trips' ? tr('الرحلات', 'Trips') : _kind == 'centers' ? tr('المراكز', 'Centers') : tr('طلبات النقل', 'Collection orders'))
+              : tr('نقل ومعالجة النفايات', 'Waste')),
           const Text('v1.6.0 · نقل النفايات', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Color(0xFF9AE6B4))),
         ]),
         actions: [
@@ -72,12 +75,14 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF16A34A),
-        onPressed: _newOrderMenu,
-        icon: const Icon(Icons.add),
-        label: Text(tr('طلب نقل', 'New order')),
-      ),
+      floatingActionButton: _kind == 'orders'
+          ? FloatingActionButton.extended(
+              backgroundColor: const Color(0xFF16A34A),
+              onPressed: _newOrderMenu,
+              icon: const Icon(Icons.add),
+              label: Text(tr('طلب نقل', 'New order')),
+            )
+          : null,
       body: Column(children: [
         _portalBanner(),
         if (s != null && s['available'] == true)
@@ -91,20 +96,22 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
               _stat('🏭', '${s['centers'] ?? 0}', tr('المراكز', 'Centers'), const Color(0xFF334155)),
             ]),
           ),
-        SizedBox(
-          height: 46,
-          child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 8), children: [
-            for (final k in _kinds)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                child: ChoiceChip(
-                  label: Text(gLang == 'en' ? k[2] : k[1]),
-                  selected: _kind == k[0],
-                  onSelected: (_) { setState(() => _kind = k[0]); _load(); },
+        // chip selector — hidden when embedded as a focused nav tab
+        if (!widget.embedded)
+          SizedBox(
+            height: 46,
+            child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 8), children: [
+              for (final k in _kinds)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                  child: ChoiceChip(
+                    label: Text(gLang == 'en' ? k[2] : k[1]),
+                    selected: _kind == k[0],
+                    onSelected: (_) { setState(() => _kind = k[0]); _load(); },
+                  ),
                 ),
-              ),
-          ]),
-        ),
+            ]),
+          ),
         Expanded(
           child: FutureBuilder<List<dynamic>>(
             future: _list,
