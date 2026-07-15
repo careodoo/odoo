@@ -13,6 +13,21 @@ _PLACEHOLDER = ('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk'
                 'YPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==')
 
 
+def _wm(env):
+    """Model map for the waste API. Flip system parameter
+    ``care.waste.source`` to ``cafm`` (after migrating data) to serve the app
+    from the new independent CAFM waste module instead of legacy service_order.
+    Field names are identical across both, so only the model names change."""
+    src = env['ir.config_parameter'].sudo().get_param('care.waste.source', 'legacy')
+    if src == 'cafm' and 'cafm.waste.order' in env:
+        return {'order': 'cafm.waste.order', 'trip': 'cafm.waste.trip',
+                'center': 'cafm.waste.center', 'pickup': 'cafm.waste.pickup.location',
+                'item': 'cafm.waste.item', 'project': 'cafm.waste.project'}
+    return {'order': 'service.order', 'trip': 'service.trip',
+            'center': 'service.center', 'pickup': 'service.pickup.location',
+            'item': 'service.item', 'project': 'service.project'}
+
+
 def _sel(Model, field):
     try:
         return dict(Model.fields_get([field])[field].get('selection') or [])
@@ -47,7 +62,7 @@ class WasteClientApi(Controller):
 
     def _projects(self, env):
         """service.project records belonging to this client."""
-        Proj = env['service.project'].sudo()
+        Proj = env[_wm(env)['project']].sudo()
         if self._is_mgr(env):
             return Proj.search([])
         return Proj.search([('contact_id', 'in', self._partner_ids(env))])
@@ -56,7 +71,7 @@ class WasteClientApi(Controller):
         return [('project_id', 'in', self._projects(env).ids)]
 
     def _guard(self, env):
-        if 'service.order' not in env:
+        if _wm(env)['order'] not in env:
             return _err('خدمة نقل ومعالجة النفايات غير مفعّلة', 404)
         return None
 
@@ -66,9 +81,9 @@ class WasteClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        if 'service.order' not in env:
+        if _wm(env)['order'] not in env:
             return _ok({'available': False})
-        SO = env['service.order'].sudo()
+        SO = env[_wm(env)['order']].sudo()
         dom = self._order_domain(env)
         open_states = ('draft', 'scheduled', 'pickuped', 'arrived', 'processing')
         return _ok({
@@ -76,9 +91,9 @@ class WasteClientApi(Controller):
             'orders': SO.search_count(dom),
             'open': SO.search_count(dom + [('states', 'in', open_states)]),
             'completed': SO.search_count(dom + [('states', 'in', ('completed', 'delivered'))]),
-            'trips': env['service.trip'].sudo().search_count(
-                [('project_id', 'in', self._projects(env).ids)]) if 'service.trip' in env else 0,
-            'centers': env['service.center'].sudo().search_count([]) if 'service.center' in env else 0,
+            'trips': env[_wm(env)['trip']].sudo().search_count(
+                [('project_id', 'in', self._projects(env).ids)]) if _wm(env)['trip'] in env else 0,
+            'centers': env[_wm(env)['center']].sudo().search_count([]) if _wm(env)['center'] in env else 0,
         })
 
     # ---- collection orders ------------------------------------------------
@@ -90,7 +105,7 @@ class WasteClientApi(Controller):
         g = self._guard(env)
         if g:
             return g
-        SO = env['service.order'].sudo()
+        SO = env[_wm(env)['order']].sudo()
         st = _sel(SO, 'states')
         dom = self._order_domain(env)
         if kw.get('state'):
@@ -114,7 +129,7 @@ class WasteClientApi(Controller):
             'final_note': g_(o, 'final_note') or None,
             'notes': g_(o, 'notes') or None,
             'proof': _abs('/api/v1/waste/proof/%s' % o.id) if g_(o, 'proof_image') else None,
-            'report_path': '/service_order/%s/' % o.id,
+            'report_path': ('/waste/order/%s' if _wm(env)['order'] == 'cafm.waste.order' else '/service_order/%s/') % o.id,
             'state': o.states, 'state_label': st.get(o.states, o.states or ''),
         } for o in recs])
 
@@ -138,11 +153,11 @@ class WasteClientApi(Controller):
 
     @route(API + '/waste/item/<int:iid>/image', type='http', auth='public', csrf=False, cors='*')
     def waste_item_image(self, iid, **kw):
-        return self._img_response('service.item', iid, 'image')
+        return self._img_response(_wm(request.env)['item'], iid, 'image')
 
     @route(API + '/waste/proof/<int:oid>', type='http', auth='public', csrf=False, cors='*')
     def waste_proof_image(self, oid, **kw):
-        return self._img_response('service.order', oid, 'proof_image')
+        return self._img_response(_wm(request.env)['order'], oid, 'proof_image')
 
     # ---- trips ------------------------------------------------------------
     @route(API + '/client/waste/trips', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
@@ -153,9 +168,9 @@ class WasteClientApi(Controller):
         g = self._guard(env)
         if g:
             return g
-        if 'service.trip' not in env:
+        if _wm(env)['trip'] not in env:
             return _ok([])
-        T = env['service.trip'].sudo()
+        T = env[_wm(env)['trip']].sudo()
         st = _sel(T, 'states')
         recs = T.search([('project_id', 'in', self._projects(env).ids)], order='id desc', limit=200)
         return _ok([{
@@ -184,7 +199,7 @@ class WasteClientApi(Controller):
         g = self._guard(env)
         if g:
             return g
-        SO = env['service.order'].sudo()
+        SO = env[_wm(env)['order']].sudo()
         dom = self._order_domain(env)
         df, dt = kw.get('date_from'), kw.get('date_to')
         if df:
@@ -233,7 +248,7 @@ class WasteClientApi(Controller):
             'by_state': [{'state': k, 'label': st.get(k, k), 'count': v} for k, v in by_state.items()],
             'by_item': [{'name': k, 'qty': v['qty'], 'orders': v['orders'], 'image': v['image']} for k, v in top_items],
             'by_month': [{'month': k, 'orders': v['orders'], 'weight': round(v['weight'], 1), 'qty': round(v['qty'], 1)} for k, v in months],
-            'print_path': '/service_order/print?date_from=%s&date_to=%s' % (df or '', dt or ''),
+            'print_path': ('/waste/print' if _wm(env)['order'] == 'cafm.waste.order' else '/service_order/print') + '?date_from=%s&date_to=%s' % (df or '', dt or ''),
         })
 
     # ---- treatment centers ------------------------------------------------
@@ -245,9 +260,9 @@ class WasteClientApi(Controller):
         g = self._guard(env)
         if g:
             return g
-        if 'service.center' not in env:
+        if _wm(env)['center'] not in env:
             return _ok([])
-        recs = env['service.center'].sudo().search([])
+        recs = env[_wm(env)['center']].sudo().search([])
         return _ok([{'id': c.id, 'name': c.name} for c in recs])
 
     # ---- create a collection order ----------------------------------------
@@ -276,7 +291,7 @@ class WasteClientApi(Controller):
         if lines:
             vals['order_line_ids'] = lines
         try:
-            o = env['service.order'].sudo().create(vals)
+            o = env[_wm(env)['order']].sudo().create(vals)
         except Exception as e:
             return _err(str(e), 422)
         return _ok({'id': o.id, 'serial': o.serial or o.display_name, 'state': o.states})
@@ -291,9 +306,9 @@ class WasteClientApi(Controller):
         if g:
             return g
         projs = self._projects(env)
-        Pick = env['service.pickup.location'].sudo()
-        picks = Pick.search([('project_id', 'in', projs.ids)]) if 'service.pickup.location' in env else Pick.browse()
-        items = env['service.item'].sudo().search([]) if 'service.item' in env else None
+        Pick = env[_wm(env)['pickup']].sudo()
+        picks = Pick.search([('project_id', 'in', projs.ids)]) if _wm(env)['pickup'] in env else Pick.browse()
+        items = env[_wm(env)['item']].sudo().search([]) if _wm(env)['item'] in env else None
         return _ok({
             'projects': [{'id': p.id, 'name': p.name} for p in projs],
             'pickups': [{'id': p.id, 'name': p.name, 'project_id': p.project_id.id} for p in picks],
