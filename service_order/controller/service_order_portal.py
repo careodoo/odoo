@@ -334,7 +334,9 @@ class ServiceOrderPortal(CustomerPortal):
   ):
     date_start = fields.Datetime.from_string(date_from)
     date_end = fields.Datetime.from_string(date_to).replace(hour=23, minute=59, second=59)
-    orders = http.request.env['service.order'].search([
+    # scope to the logged-in client's own orders (portal users must not see others)
+    scope = self._get_portal_default_domain()
+    orders = http.request.env['service.order'].search(scope + [
         ('order_datetime', '>=', date_start),
         ('order_datetime', '<=', date_end),
     ])

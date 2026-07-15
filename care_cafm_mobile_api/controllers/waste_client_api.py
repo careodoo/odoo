@@ -3,9 +3,14 @@
 service_order module (collection orders → trips → treatment centers) as a CAFM
 service, scoped to the client's partner via service.project.contact_id.
 Read + create a new collection order, mirroring the existing portal form."""
+import base64
+
 from odoo.http import request, Controller, route
 
 from .api import _auth, _ok, _err, _body, _abs, API
+
+_PLACEHOLDER = ('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk'
+                'YPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==')
 
 
 def _sel(Model, field):
@@ -100,8 +105,7 @@ class WasteClientApi(Controller):
             'type': o.type_id.name if 'type_id' in o._fields and o.type_id else None,
             'order_date': _d(getattr(o, 'order_datetime', False)),
             'request_date': _d(getattr(o, 'request_datetime', False)),
-            'items': [{'item': l.item_id.name if l.item_id else None,
-                       'qty': l.quantity} for l in o.order_line_ids],
+            'items': [self._item_dict(l) for l in o.order_line_ids],
             'trip': o.trip_id.sequence if 'trip_id' in o._fields and o.trip_id else None,
             'ops_manager': g_(o, 'ops_manager_id').name if g_(o, 'ops_manager_id') else None,
             'driver': g_(o, 'driver_id').name if g_(o, 'driver_id') else None,
@@ -109,9 +113,36 @@ class WasteClientApi(Controller):
             'final_weight': g_(o, 'final_weight') or 0.0,
             'final_note': g_(o, 'final_note') or None,
             'notes': g_(o, 'notes') or None,
-            'proof': _abs('/web/image/service.order/%s/proof_image' % o.id) if g_(o, 'proof_image') else None,
+            'proof': _abs('/api/v1/waste/proof/%s' % o.id) if g_(o, 'proof_image') else None,
+            'report_path': '/service_order/%s/' % o.id,
             'state': o.states, 'state_label': st.get(o.states, o.states or ''),
         } for o in recs])
+
+    def _item_dict(self, line):
+        it = line.item_id
+        return {
+            'item': it.name if it else None,
+            'qty': line.quantity,
+            'uom': it.uom_id.name if (it and 'uom_id' in it._fields and it.uom_id) else None,
+            'image': _abs('/api/v1/waste/item/%s/image' % it.id) if (it and getattr(it, 'image', False)) else None,
+        }
+
+    # public images (served via sudo so <img> renders without a token) ---------
+    def _img_response(self, model, rid, field):
+        rec = request.env[model].sudo().browse(int(rid)).exists()
+        data = rec[field] if rec and field in rec._fields else None
+        raw = base64.b64decode(data) if data else base64.b64decode(_PLACEHOLDER)
+        return request.make_response(raw, headers=[
+            ('Content-Type', 'image/png'), ('Content-Length', str(len(raw))),
+            ('Cache-Control', 'public, max-age=3600')])
+
+    @route(API + '/waste/item/<int:iid>/image', type='http', auth='public', csrf=False, cors='*')
+    def waste_item_image(self, iid, **kw):
+        return self._img_response('service.item', iid, 'image')
+
+    @route(API + '/waste/proof/<int:oid>', type='http', auth='public', csrf=False, cors='*')
+    def waste_proof_image(self, oid, **kw):
+        return self._img_response('service.order', oid, 'proof_image')
 
     # ---- trips ------------------------------------------------------------
     @route(API + '/client/waste/trips', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
@@ -137,11 +168,73 @@ class WasteClientApi(Controller):
             'total_quantity': getattr(t, 'total_quantity', 0.0),
             'team': t.team_id.name if 'team_id' in t._fields and t.team_id else None,
             'items': [{'item': l.item_id.name if ('item_id' in l._fields and l.item_id) else None,
-                       'qty': getattr(l, 'quantity', 0), 'weight': getattr(l, 'weight', 0)}
+                       'qty': getattr(l, 'quantity', 0), 'weight': getattr(l, 'weight', 0),
+                       'image': _abs('/api/v1/waste/item/%s/image' % l.item_id.id) if ('item_id' in l._fields and l.item_id and getattr(l.item_id, 'image', False)) else None}
                       for l in t.trip_line_ids] if 'trip_line_ids' in t._fields else [],
             'order_count': len(t.order_ids) if 'order_ids' in t._fields else 0,
             'state': t.states, 'state_label': st.get(t.states, t.states or ''),
         } for t in recs])
+
+    # ---- statistics over a period (client-scoped) -------------------------
+    @route(API + '/client/waste/stats', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def waste_stats(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        g = self._guard(env)
+        if g:
+            return g
+        SO = env['service.order'].sudo()
+        dom = self._order_domain(env)
+        df, dt = kw.get('date_from'), kw.get('date_to')
+        if df:
+            dom.append(('order_datetime', '>=', '%s 00:00:00' % df))
+        if dt:
+            dom.append(('order_datetime', '<=', '%s 23:59:59' % dt))
+        recs = SO.search(dom)
+        st = _sel(SO, 'states')
+        # aggregates
+        by_state, by_item, by_month = {}, {}, {}
+        total_qty = total_weight = 0.0
+        done_states = ('completed', 'delivered')
+        completed = 0
+        for o in recs:
+            state = o.states or 'draft'
+            by_state[state] = by_state.get(state, 0) + 1
+            if state in done_states:
+                completed += 1
+            fw = getattr(o, 'final_weight', 0.0) or 0.0
+            total_weight += fw
+            odt = getattr(o, 'order_datetime', False)
+            if odt:
+                mk = odt.strftime('%Y-%m')
+                m = by_month.setdefault(mk, {'orders': 0, 'weight': 0.0, 'qty': 0.0})
+                m['orders'] += 1
+                m['weight'] += fw
+            for l in o.order_line_ids:
+                q = l.quantity or 0
+                total_qty += q
+                nm = l.item_id.name if l.item_id else '—'
+                bi = by_item.setdefault(nm, {'qty': 0.0, 'orders': 0,
+                                             'image': _abs('/api/v1/waste/item/%s/image' % l.item_id.id) if (l.item_id and getattr(l.item_id, 'image', False)) else None})
+                bi['qty'] += q
+                bi['orders'] += 1
+                if odt:
+                    by_month[odt.strftime('%Y-%m')]['qty'] += q
+        top_items = sorted(([k, v] for k, v in by_item.items()), key=lambda x: -x[1]['qty'])[:8]
+        months = sorted(by_month.items())
+        return _ok({
+            'total_orders': len(recs),
+            'completed': completed,
+            'open': len(recs) - completed - by_state.get('cancelled', 0),
+            'cancelled': by_state.get('cancelled', 0),
+            'total_weight': round(total_weight, 1),
+            'total_quantity': round(total_qty, 1),
+            'by_state': [{'state': k, 'label': st.get(k, k), 'count': v} for k, v in by_state.items()],
+            'by_item': [{'name': k, 'qty': v['qty'], 'orders': v['orders'], 'image': v['image']} for k, v in top_items],
+            'by_month': [{'month': k, 'orders': v['orders'], 'weight': round(v['weight'], 1), 'qty': round(v['qty'], 1)} for k, v in months],
+            'print_path': '/service_order/print?date_from=%s&date_to=%s' % (df or '', dt or ''),
+        })
 
     # ---- treatment centers ------------------------------------------------
     @route(API + '/client/waste/centers', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
