@@ -122,6 +122,18 @@
       </search>
     </field>
   </record>
+  <record id="view_c2c_book_calendar" model="ir.ui.view">
+    <field name="name">c2c.booking.calendar</field><field name="model">c2c.booking</field>
+    <field name="arch" type="xml">
+      <calendar string="مواعيد الحجوزات" date_start="visit_datetime" date_stop="end_datetime"
+                color="service_id" mode="month" event_open_popup="1">
+        <field name="partner_id"/>
+        <field name="service_id"/>
+        <field name="state"/>
+        <field name="provider_id"/>
+      </calendar>
+    </field>
+  </record>
   <record id="action_c2c_book" model="ir.actions.act_window">
     <field name="name">الحجوزات</field><field name="res_model">c2c.booking</field><field name="view_mode">tree,form,calendar</field>
   </record>

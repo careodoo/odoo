@@ -67,6 +67,16 @@ class C2CClientApi(Controller):
                 pids.update(env['res.partner'].sudo().search(
                     [('commercial_partner_id', '=', p.commercial_partner_id.id)]).ids)
             cafm = bool(env['care.cafm.facility'].sudo().search_count([('partner_id', 'in', list(pids))]))
+        # PMS access: internal project users, or a member/manager/follower of any project
+        pms = False
+        if 'project.project' in env:
+            if u.has_group('project.group_project_user') or u.has_group('project.group_project_manager'):
+                pms = True
+            else:
+                Proj = env['project.project'].sudo()
+                dom = ['|', '|', ('message_partner_ids', 'in', [p.id]), ('user_id', '=', u.id)]
+                dom += [('member_ids', 'in', [u.id])] if 'member_ids' in Proj._fields else [('id', '=', 0)]
+                pms = bool(Proj.search_count(dom))
         return _ok({
             'user': {'id': u.id, 'name': u.name, 'login': u.login, 'email': u.email or None,
                      'partner_id': p.id, 'avatar': _img('res.users', u.id, 'avatar_128') if u.image_128 else None},
@@ -74,6 +84,7 @@ class C2CClientApi(Controller):
             'interfaces': {
                 'c2c': True,
                 'cafm': cafm,
+                'pms': pms,
                 'staff': is_staff,
                 'admin': is_admin,
             },

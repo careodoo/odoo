@@ -1,5 +1,6 @@
 .c2c-dash {
-    padding: 18px; background: #f4f7fb; min-height: 100%;
+    padding: 18px; background: #f4f7fb;
+    height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch;
     font-family: "Tajawal", sans-serif;
 
     .c2c-dash-head {
