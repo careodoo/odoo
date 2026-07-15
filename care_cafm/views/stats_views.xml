@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- shared stat group snippet is inlined per view -->
+
+  <!-- ===== FACILITY: rolled-up stats page ===== -->
+  <record id="view_facility_form_stats" model="ir.ui.view">
+    <field name="name">care.cafm.facility.form.stats</field>
+    <field name="model">care.cafm.facility</field>
+    <field name="inherit_id" ref="care_cafm.view_facility_form"/>
+    <field name="arch" type="xml">
+      <notebook position="inside">
+        <page string="📊 الإحصائيات (شاملة)">
+          <group>
+            <group string="الهيكل">
+              <field name="stat_buildings"/><field name="stat_floors"/>
+              <field name="stat_locations"/><field name="stat_offices"/><field name="stat_restrooms"/>
+            </group>
+            <group string="التشغيل">
+              <field name="stat_wo_total"/><field name="stat_wo_open"/><field name="stat_wo_overdue"/>
+              <field name="stat_requests_open"/><field name="stat_assets"/>
+            </group>
+          </group>
+          <group string="استهلاك المخزون في هذا المرفق">
+            <field name="stat_consumption_qty"/><field name="stat_consumption_value"/>
+          </group>
+        </page>
+      </notebook>
+    </field>
+  </record>
+  <record id="view_facility_tree_stats" model="ir.ui.view">
+    <field name="name">care.cafm.facility.tree.stats</field>
+    <field name="model">care.cafm.facility</field>
+    <field name="inherit_id" ref="care_cafm.view_facility_tree"/>
+    <field name="arch" type="xml">
+      <field name="workorder_count" position="after">
+        <field name="stat_wo_open" optional="show"/>
+        <field name="stat_wo_overdue" optional="show"/>
+        <field name="stat_assets" optional="show"/>
+        <field name="stat_consumption_value" optional="hide"/>
+      </field>
+    </field>
+  </record>
+
+  <!-- ===== LOCATION: own stats page ===== -->
+  <record id="view_location_form_stats" model="ir.ui.view">
+    <field name="name">care.cafm.location.form.stats</field>
+    <field name="model">care.cafm.location</field>
+    <field name="inherit_id" ref="care_cafm.view_location_form"/>
+    <field name="arch" type="xml">
+      <sheet position="inside">
+        <group string="📊 إحصائيات هذا الموقع">
+          <group>
+            <field name="stat_wo_total"/><field name="stat_wo_open"/><field name="stat_wo_overdue"/>
+          </group>
+          <group>
+            <field name="stat_assets"/><field name="stat_requests_open"/>
+            <field name="stat_consumption_qty"/><field name="stat_consumption_value"/>
+          </group>
+        </group>
+      </sheet>
+    </field>
+  </record>
+
+  <!-- ===== BUILDING: standalone stats tree/form ===== -->
+  <record id="view_building_stats_tree" model="ir.ui.view">
+    <field name="name">care.cafm.building.stats.tree</field><field name="model">care.cafm.building</field>
+    <field name="arch" type="xml">
+      <tree>
+        <field name="name"/><field name="facility_id"/><field name="stat_floors"/><field name="stat_locations"/>
+        <field name="stat_offices"/><field name="stat_restrooms"/><field name="stat_wo_open"/>
+        <field name="stat_wo_overdue"/><field name="stat_assets"/><field name="stat_consumption_value"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_building_stats_form" model="ir.ui.view">
+    <field name="name">care.cafm.building.stats.form</field><field name="model">care.cafm.building</field>
+    <field name="arch" type="xml">
+      <form><sheet>
+        <div class="oe_title"><h1><field name="name"/></h1></div>
+        <group><group><field name="facility_id"/><field name="stat_floors"/><field name="stat_locations"/></group>
+          <group><field name="stat_offices"/><field name="stat_restrooms"/></group></group>
+        <group string="📊 إحصائيات المبنى (مجموع أدواره)">
+          <group><field name="stat_wo_total"/><field name="stat_wo_open"/><field name="stat_wo_overdue"/></group>
+          <group><field name="stat_assets"/><field name="stat_requests_open"/><field name="stat_consumption_qty"/><field name="stat_consumption_value"/></group>
+        </group>
+        <field name="floor_ids"><tree><field name="name"/></tree></field>
+      </sheet></form>
+    </field>
+  </record>
+  <record id="action_building_stats" model="ir.actions.act_window">
+    <field name="name">إحصائيات المباني</field><field name="res_model">care.cafm.building</field>
+    <field name="view_mode">tree,form</field>
+    <field name="view_id" ref="view_building_stats_tree"/>
+  </record>
+
+  <!-- ===== FLOOR: standalone stats tree/form ===== -->
+  <record id="view_floor_stats_tree" model="ir.ui.view">
+    <field name="name">care.cafm.floor.stats.tree</field><field name="model">care.cafm.floor</field>
+    <field name="arch" type="xml">
+      <tree>
+        <field name="name"/><field name="building_id"/><field name="facility_id"/><field name="stat_locations"/>
+        <field name="stat_offices"/><field name="stat_restrooms"/><field name="stat_wo_open"/>
+        <field name="stat_wo_overdue"/><field name="stat_assets"/><field name="stat_consumption_value"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_floor_stats_form" model="ir.ui.view">
+    <field name="name">care.cafm.floor.stats.form</field><field name="model">care.cafm.floor</field>
+    <field name="arch" type="xml">
+      <form><sheet>
+        <div class="oe_title"><h1><field name="name"/></h1></div>
+        <group><group><field name="building_id"/><field name="facility_id"/></group>
+          <group><field name="stat_locations"/><field name="stat_offices"/><field name="stat_restrooms"/></group></group>
+        <group string="📊 إحصائيات الدور (مجموع مواقعه)">
+          <group><field name="stat_wo_total"/><field name="stat_wo_open"/><field name="stat_wo_overdue"/></group>
+          <group><field name="stat_assets"/><field name="stat_requests_open"/><field name="stat_consumption_qty"/><field name="stat_consumption_value"/></group>
+        </group>
+        <field name="location_ids"><tree><field name="code"/><field name="name"/><field name="location_type"/></tree></field>
+      </sheet></form>
+    </field>
+  </record>
+  <record id="action_floor_stats" model="ir.actions.act_window">
+    <field name="name">إحصائيات الأدوار</field><field name="res_model">care.cafm.floor</field>
+    <field name="view_mode">tree,form</field>
+    <field name="view_id" ref="view_floor_stats_tree"/>
+  </record>
+
+  <!-- menus under the facilities directory -->
+  <menuitem id="menu_cafm_stats_buildings" name="📊 إحصائيات المباني" parent="care_cafm.menu_cafm_directory" action="action_building_stats" sequence="60"/>
+  <menuitem id="menu_cafm_stats_floors" name="📊 إحصائيات الأدوار" parent="care_cafm.menu_cafm_directory" action="action_floor_stats" sequence="61"/>
+</odoo>

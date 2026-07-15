@@ -25,6 +25,7 @@
         'views/org_views.xml',
         'views/schedule_views.xml',
         'views/inventory_views.xml',
+        'views/stats_views.xml',
         'data/demo_data.xml',
         'views/cafm_menus.xml',
     ],
