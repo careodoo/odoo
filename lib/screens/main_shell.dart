@@ -10,6 +10,7 @@ import 'supervisor_screen.dart';
 import 'more_screen.dart';
 import 'client_analytics_screen.dart';
 import 'client_workorders_screen.dart';
+import 'client_waste_screen.dart';
 
 class _Tab {
   const _Tab(this.icon, this.label, this.screen);
@@ -27,12 +28,39 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _idx = 0;
+  List<String> _serviceSections = []; // client's visible SERVICE section codes
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSections();
+  }
+
+  Future<void> _loadSections() async {
+    try {
+      final s = await context.read<AuthProvider>().api.clientSections();
+      final svc = <String>[];
+      for (final sec in (s['sections'] as List? ?? [])) {
+        if ((sec as Map)['service_type'] != null) svc.add('${sec['code']}');
+      }
+      if (mounted) setState(() { _serviceSections = svc; _idx = 0; });
+    } catch (_) {}
+  }
 
   List<_Tab> _tabs(profile) {
     final home = _Tab(Icons.home_rounded, tr('الرئيسية', 'Home'), const HomeScreen());
     final notif = _Tab(Icons.notifications_rounded, tr('الإشعارات', 'Alerts'), const NotificationsScreen());
     final more = _Tab(Icons.grid_view_rounded, tr('المزيد', 'More'), const MoreScreen());
     if (profile.role == 'client') {
+      // waste-only client → a waste-tailored nav (orders / trips / stats)
+      if (_serviceSections.length == 1 && _serviceSections.first == 'waste') {
+        return [
+          _Tab(Icons.recycling_rounded, tr('طلبات النقل', 'Collection'), const ClientWasteScreen(initialKind: 'orders', embedded: true)),
+          _Tab(Icons.local_shipping_rounded, tr('الرحلات', 'Trips'), const ClientWasteScreen(initialKind: 'trips', embedded: true)),
+          _Tab(Icons.insights_rounded, tr('الإحصائيات', 'Statistics'), const WasteStatsScreen()),
+          notif, more,
+        ];
+      }
       return [
         home,
         _Tab(Icons.assignment_rounded, tr('أوامر العمل', 'Work orders'), const ClientWorkOrdersScreen()),

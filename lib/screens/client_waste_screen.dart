@@ -7,14 +7,16 @@ import 'odoo_backend_screen.dart';
 /// Client waste transfer & treatment: collection orders + trips, with a
 /// new-order form. Scoped to the client's waste projects.
 class ClientWasteScreen extends StatefulWidget {
-  const ClientWasteScreen({super.key});
+  const ClientWasteScreen({super.key, this.initialKind = 'orders', this.embedded = false});
+  final String initialKind;
+  final bool embedded; // shown as a nav tab (hide its own AppBar back)
   @override
   State<ClientWasteScreen> createState() => _ClientWasteScreenState();
 }
 
 class _ClientWasteScreenState extends State<ClientWasteScreen> {
   Map<String, dynamic>? _summary;
-  String _kind = 'orders';
+  late String _kind = widget.initialKind;
   Future<List<dynamic>>? _list;
 
   static const _kinds = [
@@ -55,7 +57,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
       appBar: AppBar(
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
           Text(tr('نقل ومعالجة النفايات', 'Waste')),
-          const Text('v1.5.0 · نقل النفايات', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Color(0xFF9AE6B4))),
+          const Text('v1.6.0 · نقل النفايات', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Color(0xFF9AE6B4))),
         ]),
         actions: [
           IconButton(
