@@ -4,11 +4,15 @@ import 'core/api_client.dart';
 import 'core/auth.dart';
 import 'core/theme.dart';
 import 'core/i18n.dart';
+import 'core/app_version.dart';
 import 'screens/c2c/root_shell.dart';
 import 'screens/c2c/c2c_shell.dart';
 import 'screens/language_onboarding.dart';
 
-void main() {
+void main() async {
+  // PackageInfo talks over a platform channel, so the binding must exist first
+  WidgetsFlutterBinding.ensureInitialized();
+  await AppVersion.load(); // real version, never a hardcoded string
   final api = ApiClient();
   runApp(
     MultiProvider(

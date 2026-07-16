@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import '../core/app_version.dart';
 import 'pdf_report_screen.dart';
 import 'waste_trip_map.dart';
 
@@ -70,7 +71,8 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
           Text(widget.embedded
               ? (_kind == 'trips' ? tr('الرحلات', 'Trips') : _kind == 'centers' ? tr('المراكز', 'Centers') : tr('طلبات النقل', 'Collection orders'))
               : tr('نقل ومعالجة النفايات', 'Waste')),
-          const Text('v1.8.0 · نقل النفايات', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Color(0xFF9AE6B4))),
+          Text('v${AppVersion.value} · ${tr('نقل النفايات', 'Waste')}',
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Color(0xFF9AE6B4))),
         ]),
         actions: [
           IconButton(

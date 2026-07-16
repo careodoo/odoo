@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
+import '../../core/app_version.dart';
 import '../notifications_screen.dart';
 import 'c2c_shell.dart';
 import 'c2c_contracts.dart';
@@ -90,6 +91,9 @@ class _C2CAccountScreenState extends State<C2CAccountScreen> {
             _tile(Icons.delete_forever_outlined, tr('طلب حذف الحساب', 'Delete account'), _deleteAccount, ic: const Color(0xFFB91C1C), danger: true),
             const SizedBox(height: 20),
             Center(child: Text('CARE 2 CARE', style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w900, letterSpacing: 1))),
+            const SizedBox(height: 4),
+            Center(child: Text('v${AppVersion.value}',
+                style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontWeight: FontWeight.w600))),
             const SizedBox(height: 30),
           ]);
         },
