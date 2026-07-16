@@ -474,7 +474,7 @@ function renderNav(){
     SERVICES.forEach((s,i)=>{
       const col=SVC_COLORS[s.type]||'#64748b';
       const items=s.type==='waste'
-        ? [{id:'waste_overview',ic:'♻️',t:['أوامر النقل','Collection orders']},{id:'waste_trips',ic:'🚛',t:['الرحلات','Trips']}].map(it=>navAnchor(it)).join('')
+        ? [{id:'waste_dash',ic:'📊',t:['لوحة النفايات','Waste dashboard']},{id:'waste_overview',ic:'♻️',t:['أوامر النقل','Collection orders']},{id:'waste_trips',ic:'🚛',t:['الرحلات','Trips']}].map(it=>navAnchor(it)).join('')
         : s.type==='security'
         ? SEC_ITEMS.map(it=>navAnchor(it)).join('')
         : s.type==='cleaning'
@@ -532,6 +532,7 @@ Object.assign(TITLES,{
   inv_overview:[['المخزون الداخلي','Internal inventory'],['أرصدة المخازن والأصناف','Store balances & items']],
   inv_low:[['أصناف منخفضة المخزون','Low stock'],['ما يحتاج إعادة طلب','Needs reordering']],
   inv_moves:[['حركات المخزون','Stock movements'],['واردات وصرف وتحويل','Receipts, issues & transfers']],
+  waste_dash:[['لوحة النفايات','Waste dashboard'],['مؤشرات وفلاتر وتقارير','KPIs, filters & reports']],
   waste_overview:[['نقل ومعالجة النفايات','Waste transfer & treatment'],['أوامر النقل وحالتها','Collection orders & status']],
   waste_trips:[['رحلات النقل','Collection trips'],['من موقع الالتقاط إلى مركز المعالجة','Pickup → treatment center']],
 });
@@ -636,6 +637,104 @@ async function dl(url,name){try{const full=url.startsWith('http')?url:((location
 
 // ======================= PAGES =======================
 let CUR='dashboard';
+  // ===== waste dialog helpers =====
+  // Items table: quantity, weight per piece and the LINE total (qty x piece),
+  // plus a totals row — the old table showed the piece weight next to the
+  // quantity, which read as if 157 bags weighed 2.1 kg.
+  window.wItemsTable=(items)=>{
+    if(!items||!items.length) return '<div class="muted" style="padding:8px 0">'+T('لا أصناف','No items')+'</div>';
+    const n=v=>{const x=+v||0;return x===Math.round(x)?x:(+x.toFixed(2));};
+    let tq=0,tw=0;
+    const rows=items.map(i=>{const q=+i.qty||0,u=+(i.unit_weight!=null?i.unit_weight:0),w=+(i.weight!=null?i.weight:q*u);
+      tq+=q;tw+=w;
+      return '<tr>'
+        +'<td style="display:flex;align-items:center;gap:8px">'
+          +(i.image?'<img src="'+esc(i.image)+'" style="width:30px;height:30px;border-radius:7px;object-fit:cover;background:#f1f5f9">':'')
+          +'<span>'+esc(i.item||'—')+'</span></td>'
+        +'<td class="num"><b>'+n(q)+'</b></td>'
+        +'<td class="num muted">'+n(u)+'</td>'
+        +'<td class="num" style="color:#0891b2;font-weight:700">'+n(w)+'</td></tr>';}).join('');
+    return '<table style="width:100%;font-size:12.5px;margin-top:6px">'
+      +'<thead><tr><th style="text-align:right">'+T('الصنف','Item')+'</th><th>'+T('الكمية','Qty')+'</th>'
+      +'<th>'+T('وزن القطعة','Unit kg')+'</th><th>'+T('الإجمالي (كجم)','Total kg')+'</th></tr></thead>'
+      +'<tbody>'+rows+'</tbody>'
+      +'<tfoot><tr style="border-top:2px solid #e2e8f0;font-weight:800">'
+      +'<td>'+T('الإجمالي','Total')+'</td><td class="num">'+n(tq)+'</td><td></td>'
+      +'<td class="num" style="color:#0891b2">'+n(tw)+'</td></tr></tfoot></table>';};
+
+  // Operation team: never render an empty section — show who is missing.
+  window.wTeamBlock=(x)=>{
+    const row=(ic,k,v,pending)=>'<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9">'
+      +'<div style="width:30px;height:30px;border-radius:9px;background:'+(v?'#ecfdf5':'#f8fafc')+';display:flex;align-items:center;justify-content:center;font-size:14px">'+ic+'</div>'
+      +'<div style="flex:1"><div class="muted" style="font-size:11px">'+k+'</div>'
+      +'<div style="font-weight:700;font-size:12.5px;color:'+(v?'#0f172a':'#94a3b8')+'">'+(v?esc(v):pending)+'</div></div></div>';
+    let h='<div style="margin-top:6px">'
+      +row('👨‍💼',T('مدير العمليات','Ops manager'),x.ops_manager,T('لم يُحدَّد','Not set'))
+      +row('🚛',T('السائق','Driver'),x.driver,T('بانتظار الإسناد','Awaiting assignment'))
+      +row('🏭',T('مستلم الكميات','Receiver'),x.receiver,T('لم يُحدَّد','Not set'));
+    if(x.final_weight) h+=row('⚖️',T('الوزن النهائي المستلم','Final weight'),x.final_weight+' '+T('كجم','kg'),'');
+    if(x.final_note) h+=row('📝',T('ملاحظة الاستلام','Receipt note'),x.final_note,'');
+    return h+'</div>';};
+
+
+
+  // ===== proof media gallery (photos + videos) =====
+  window.wMediaBlock=(x)=>{
+    const media=(x.media||[]).slice();
+    if(x.proof) media.unshift({url:x.proof,is_video:false,name:'proof'});
+    if(!media.length) return '';
+    const cells=media.map((m,i)=>{
+      const t='window.wMediaOpen('+JSON.stringify(JSON.stringify(m)).replace(/"/g,'&quot;')+')';
+      return '<div onclick='+"'"+'wMediaOpen('+i+')'+"'"+' style="position:relative;cursor:pointer;border-radius:10px;overflow:hidden;background:#0f172a;aspect-ratio:1">'
+        +(m.is_video
+          ? '<video src="'+esc(m.url)+'#t=0.1" preload="metadata" style="width:100%;height:100%;object-fit:cover"></video>'
+            +'<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25);color:#fff;font-size:22px">▶</div>'
+          : '<img src="'+esc(m.url)+'" loading="lazy" style="width:100%;height:100%;object-fit:cover">')
+        +'</div>';}).join('');
+    window.__wMedia=media;
+    return '<div class="sec-t">'+T('صور وفيديوهات الإثبات','Proof photos & videos')+' <span class="muted">('+media.length+')</span></div>'
+      +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px">'+cells+'</div>';};
+
+  // full-screen viewer; videos stream via HTTP Range
+  window.wMediaOpen=(i)=>{const m=(window.__wMedia||[])[i];if(!m)return;
+    const box=document.createElement('div');
+    box.style.cssText='position:fixed;inset:0;background:rgba(2,6,23,.94);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    box.innerHTML=(m.is_video
+        ? '<video src="'+esc(m.url)+'" controls autoplay playsinline style="max-width:100%;max-height:90vh;border-radius:12px"></video>'
+        : '<img src="'+esc(m.url)+'" style="max-width:100%;max-height:90vh;border-radius:12px">')
+      +'<a href="'+esc(m.url)+'" download target="_blank" style="position:absolute;top:16px;left:60px;color:#fff;background:rgba(255,255,255,.15);padding:8px 12px;border-radius:10px;text-decoration:none;font-size:13px">⬇ '+T('تنزيل','Download')+'</a>'
+      +'<div style="position:absolute;top:16px;left:16px;color:#fff;font-size:26px;cursor:pointer">✕</div>';
+    box.onclick=(e)=>{if(e.target===box||e.target.textContent==='✕')box.remove();};
+    document.body.appendChild(box);};
+
+  // report button — the PDF opens with the portal session
+  window.wReportBtn=(x)=>{
+    if(!x.report_path) return '';
+    return '<a href="'+esc(x.report_path)+'" target="_blank" class="btn p" '
+      +'style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;text-decoration:none">'
+      +'🖨️ '+T('عرض / طباعة التقرير','View / print report')+'</a>';};
+
+
+  // ===== waste dashboard filter actions =====
+  window.wfApply=()=>{const V=id=>(document.getElementById(id)||{}).value||'';
+    window.__wF={from:V('wfFrom'),to:V('wfTo'),state:V('wfState'),q:V('wfQ')};go('waste_dash');};
+  window.wfClear=()=>{window.__wF={from:'',to:'',state:'',q:''};go('waste_dash');};
+  window.wfQuick=(days)=>{const to=new Date();const from=new Date(Date.now()-days*864e5);
+    const f=d=>d.toISOString().slice(0,10);
+    window.__wF=Object.assign({},window.__wF,{from:f(from),to:f(to)});go('waste_dash');};
+  window.wfPrint=()=>{const F=window.__wF||{};
+    if(!F.from||!F.to){toast(T('اختر الفترة أولًا (من/إلى)','Pick a date range first'));return;}
+    window.open('/waste/print?date_from='+encodeURIComponent(F.from)+'&date_to='+encodeURIComponent(F.to),'_blank');};
+  window.wfCsv=async()=>{const F=window.__wF||{};
+    const qs=Object.entries({date_from:F.from,date_to:F.to,state:F.state,q:F.q}).filter(([,v])=>v).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
+    const rs=await api('/client/waste/orders'+(qs?'?'+qs:'')).catch(()=>[]);
+    const head=['Serial','Project','Pickup','Type','Request date','Qty','Weight(kg)','Status'];
+    const rows=rs.map(o=>[o.serial,o.project||'',o.pickup||'',o.type||'',(o.request_date||'').slice(0,10),o.qty_total||0,o.weight_total||0,o.state_label||o.state]);
+    const csv=[head].concat(rows).map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));
+    a.download='waste-orders.csv';a.click();};
+
 const ROUTES={
   async dashboard(p){CUR='dashboard';
     let period='all',svc='all';
@@ -1278,7 +1377,77 @@ const ROUTES={
       +rs.map(r=>'<tr><td><b>'+esc(r.name||'—')+'</b></td><td>'+esc(r.premise||'—')+'</td><td>'+esc(r.holder||'—')+'</td><td><span class="pill">'+esc(r.state_label||'—')+'</span></td></tr>').join('')+'</tbody></table>':emptyState(T('لا مفاتيح','No keys')))+'</div>';
   },
   // ================= WASTE TRANSFER & TREATMENT =================
-  async waste_overview(p){CUR='waste_overview';const d=await api('/client/waste/summary').catch(()=>({available:false}));
+  async waste_dash(p){CUR='waste_dash';
+    const d=await api('/client/waste/summary').catch(()=>({available:false}));
+    if(!d.available){p.innerHTML=emptyState(T('خدمة نقل النفايات غير مفعّلة لموقعك','Waste service not enabled for your site'));return;}
+    const F=window.__wF||(window.__wF={from:'',to:'',state:'',q:''});
+    const qs=Object.entries({date_from:F.from,date_to:F.to,state:F.state,q:F.q}).filter(([,v])=>v).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
+    const rs=await api('/client/waste/orders'+(qs?'?'+qs:'')).catch(()=>[]);
+    const STL={draft:'مسودة',scheduled:'مجدول',pickuped:'تم الالتقاط',arrived:'وصل',processing:'قيد المعالجة',delivered:'تم التسليم',completed:'مكتمل',cancelled:'ملغى'};
+    const ST={draft:'#94a3b8',scheduled:'#3b82f6',pickuped:'#0891b2',arrived:'#6366f1',processing:'#f59e0b',delivered:'#16a34a',completed:'#16a34a',cancelled:'#e11d48'};
+    // aggregate the filtered set
+    let qty=0,wt=0;const byState={},byItem={};
+    rs.forEach(o=>{qty+=(+o.qty_total||0);wt+=(+o.weight_total||0);
+      byState[o.state]=(byState[o.state]||0)+1;
+      (o.items||[]).forEach(i=>{const k=i.item||'—';byItem[k]=(byItem[k]||0)+(+i.qty||0);});});
+    const n=v=>{const x=+v||0;return x===Math.round(x)?x:(+x.toFixed(1));};
+    const card=(ic,v,l,c)=>'<div class="kpi"><div class="top"><div class="ic" style="background:'+c+'">'+ic+'</div><div><div class="v num">'+v+'</div><div class="l">'+l+'</div></div></div></div>';
+    // state distribution bar
+    const total=rs.length||1;
+    const bar=Object.entries(byState).sort((a,b)=>b[1]-a[1]).map(([k,v])=>
+      '<div style="flex:'+v+';background:'+(ST[k]||'#cbd5e1')+';height:10px" title="'+esc(STL[k]||k)+': '+v+'"></div>').join('');
+    const legend=Object.entries(byState).sort((a,b)=>b[1]-a[1]).map(([k,v])=>
+      '<span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;margin-left:12px">'
+      +'<span style="width:9px;height:9px;border-radius:50%;background:'+(ST[k]||'#cbd5e1')+'"></span>'
+      +esc(STL[k]||k)+' <b>'+v+'</b> <span class="muted">('+Math.round(v*100/total)+'%)</span></span>').join('');
+    // top items
+    const top=Object.entries(byItem).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const mx=top.length?top[0][1]:1;
+    const bars=top.map(([k,v])=>'<div style="margin-bottom:7px">'
+      +'<div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px"><span>'+esc(k)+'</span><b class="num">'+n(v)+'</b></div>'
+      +'<div style="background:#f1f5f9;border-radius:6px;height:7px"><div style="width:'+Math.max(4,Math.round(v*100/mx))+'%;height:7px;border-radius:6px;background:linear-gradient(90deg,#16a34a,#0891b2)"></div></div></div>').join('')
+      ||'<div class="muted">—</div>';
+
+    p.innerHTML='<div class="kpis">'
+        +card('♻️',rs.length,T('أوامر (بعد الفلترة)','Orders (filtered)'),'#16a34a')
+        +card('📦',n(qty),T('إجمالي الكمية','Total quantity'),'#6366f1')
+        +card('⚖️',n(wt),T('إجمالي الوزن (كجم)','Total weight (kg)'),'#0891b2')
+        +card('🚛',d.trips,T('الرحلات','Trips'),'#f59e0b')
+        +card('🏭',d.centers,T('مراكز المعالجة','Centers'),'#334155')
+      +'</div>'
+      // filters
+      +'<div class="panel" style="margin-top:14px;padding:12px">'
+        +'<div class="sec-t" style="margin-top:0">'+T('الفلاتر','Filters')+'</div>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">'
+          +'<div style="flex:1;min-width:130px"><label class="lbl">'+T('من تاريخ','From')+'</label><input class="inp" type="date" id="wfFrom" value="'+esc(F.from)+'"></div>'
+          +'<div style="flex:1;min-width:130px"><label class="lbl">'+T('إلى تاريخ','To')+'</label><input class="inp" type="date" id="wfTo" value="'+esc(F.to)+'"></div>'
+          +'<div style="flex:1;min-width:130px"><label class="lbl">'+T('الحالة','Status')+'</label><select class="inp" id="wfState">'
+            +'<option value="">'+T('الكل','All')+'</option>'
+            +Object.keys(STL).map(k=>'<option value="'+k+'"'+(F.state===k?' selected':'')+'>'+esc(STL[k])+'</option>').join('')
+          +'</select></div>'
+          +'<div style="flex:1.4;min-width:150px"><label class="lbl">'+T('بحث','Search')+'</label><input class="inp" id="wfQ" value="'+esc(F.q)+'" placeholder="'+T('رقم الأمر أو الموقع','Order no. or location')+'"></div>'
+          +'<button class="btn p" style="height:38px" onclick="wfApply()">🔎 '+T('تطبيق','Apply')+'</button>'
+          +'<button class="btn" style="height:38px" onclick="wfClear()">✕ '+T('مسح','Clear')+'</button>'
+        +'</div>'
+        +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">'
+          +[['7',T('آخر 7 أيام','Last 7d')],['30',T('آخر 30 يومًا','Last 30d')],['90',T('آخر 90 يومًا','Last 90d')],['365',T('هذه السنة','This year')]]
+            .map(([k,l])=>'<button class="btn" style="font-size:11.5px;padding:5px 10px" onclick="wfQuick('+k+')">'+l+'</button>').join('')
+        +'</div>'
+        +'<div style="display:flex;gap:8px;margin-top:12px">'
+          +'<button class="btn p" style="flex:1" onclick="wfPrint()">🖨️ '+T('طباعة تقرير الفترة','Print period report')+'</button>'
+          +'<button class="btn" style="flex:1" onclick="wfCsv()">⬇️ '+T('تصدير CSV','Export CSV')+'</button>'
+        +'</div>'
+      +'</div>'
+      // distribution
+      +'<div class="panel" style="margin-top:14px;padding:12px">'
+        +'<div class="sec-t" style="margin-top:0">'+T('توزيع الحالات','Status distribution')+'</div>'
+        +(rs.length?'<div style="display:flex;border-radius:6px;overflow:hidden;margin:8px 0">'+bar+'</div><div>'+legend+'</div>':'<div class="muted">—</div>')
+      +'</div>'
+      +'<div class="panel" style="margin-top:14px;padding:12px">'
+        +'<div class="sec-t" style="margin-top:0">'+T('أكثر الأصناف نقلًا','Top transported items')+'</div>'+bars
+      +'</div>';
+  },
+    async waste_overview(p){CUR='waste_overview';const d=await api('/client/waste/summary').catch(()=>({available:false}));
     if(!d.available){p.innerHTML=emptyState(T('خدمة نقل النفايات غير مفعّلة لموقعك','Waste service not enabled for your site'));return;}
     const rs=await api('/client/waste/orders').catch(()=>[]);
     const ST={draft:'#94a3b8',scheduled:'#3b82f6',pickuped:'#0891b2',arrived:'#6366f1',processing:'#f59e0b',delivered:'#16a34a',completed:'#16a34a',cancelled:'#e11d48'};
@@ -1306,8 +1475,9 @@ const ROUTES={
       +'</table>'
       +'<div class="sec-t">'+T('فريق العملية','Operation team')+'</div>'+wTeamBlock(x)
       +'<div class="sec-t">'+T('الأصناف','Items')+'</div>'+items
-      +(x.proof?'<div class="sec-t">'+T('صورة الإثبات','Proof photo')+'</div><img src="'+esc(x.proof)+'" style="width:100%;border-radius:12px;margin-top:6px">':'')
-      +(x.notes?'<div class="sec-t">'+T('ملاحظات','Notes')+'</div>'+esc(x.notes):''));};
+      +wMediaBlock(x)
+      +(x.notes?'<div class="sec-t">'+T('ملاحظات','Notes')+'</div>'+esc(x.notes):'')
+      +wReportBtn(x));};
   window.wasteNew=async()=>{const o=await api('/client/waste/options').catch(()=>({projects:[],pickups:[],items:[]}));
     if(!o.projects.length){toast(T('لا يوجد مشروع نفايات مرتبط','No waste project linked'));return;}
     window.__wOpts=o;
@@ -1357,45 +1527,6 @@ const ROUTES={
     try{await api('/client/waste/order/create',{method:'POST',body:{project_id:+V('wProj'),pickup_location_id:V('wPick')?+V('wPick'):null,items:items}});toast(T('أُرسل طلب النقل','Order submitted'));closeDrawer();go('waste_overview');}catch(e){toast(e.message);}};
   },
 
-  // ===== waste dialog helpers =====
-  // Items table: quantity, weight per piece and the LINE total (qty x piece),
-  // plus a totals row — the old table showed the piece weight next to the
-  // quantity, which read as if 157 bags weighed 2.1 kg.
-  window.wItemsTable=(items)=>{
-    if(!items||!items.length) return '<div class="muted" style="padding:8px 0">'+T('لا أصناف','No items')+'</div>';
-    const n=v=>{const x=+v||0;return x===Math.round(x)?x:(+x.toFixed(2));};
-    let tq=0,tw=0;
-    const rows=items.map(i=>{const q=+i.qty||0,u=+(i.unit_weight!=null?i.unit_weight:0),w=+(i.weight!=null?i.weight:q*u);
-      tq+=q;tw+=w;
-      return '<tr>'
-        +'<td style="display:flex;align-items:center;gap:8px">'
-          +(i.image?'<img src="'+esc(i.image)+'" style="width:30px;height:30px;border-radius:7px;object-fit:cover;background:#f1f5f9">':'')
-          +'<span>'+esc(i.item||'—')+'</span></td>'
-        +'<td class="num"><b>'+n(q)+'</b></td>'
-        +'<td class="num muted">'+n(u)+'</td>'
-        +'<td class="num" style="color:#0891b2;font-weight:700">'+n(w)+'</td></tr>';}).join('');
-    return '<table style="width:100%;font-size:12.5px;margin-top:6px">'
-      +'<thead><tr><th style="text-align:right">'+T('الصنف','Item')+'</th><th>'+T('الكمية','Qty')+'</th>'
-      +'<th>'+T('وزن القطعة','Unit kg')+'</th><th>'+T('الإجمالي (كجم)','Total kg')+'</th></tr></thead>'
-      +'<tbody>'+rows+'</tbody>'
-      +'<tfoot><tr style="border-top:2px solid #e2e8f0;font-weight:800">'
-      +'<td>'+T('الإجمالي','Total')+'</td><td class="num">'+n(tq)+'</td><td></td>'
-      +'<td class="num" style="color:#0891b2">'+n(tw)+'</td></tr></tfoot></table>';};
-
-  // Operation team: never render an empty section — show who is missing.
-  window.wTeamBlock=(x)=>{
-    const row=(ic,k,v,pending)=>'<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9">'
-      +'<div style="width:30px;height:30px;border-radius:9px;background:'+(v?'#ecfdf5':'#f8fafc')+';display:flex;align-items:center;justify-content:center;font-size:14px">'+ic+'</div>'
-      +'<div style="flex:1"><div class="muted" style="font-size:11px">'+k+'</div>'
-      +'<div style="font-weight:700;font-size:12.5px;color:'+(v?'#0f172a':'#94a3b8')+'">'+(v?esc(v):pending)+'</div></div></div>';
-    let h='<div style="margin-top:6px">'
-      +row('👨‍💼',T('مدير العمليات','Ops manager'),x.ops_manager,T('لم يُحدَّد','Not set'))
-      +row('🚛',T('السائق','Driver'),x.driver,T('بانتظار الإسناد','Awaiting assignment'))
-      +row('🏭',T('مستلم الكميات','Receiver'),x.receiver,T('لم يُحدَّد','Not set'));
-    if(x.final_weight) h+=row('⚖️',T('الوزن النهائي المستلم','Final weight'),x.final_weight+' '+T('كجم','kg'),'');
-    if(x.final_note) h+=row('📝',T('ملاحظة الاستلام','Receipt note'),x.final_note,'');
-    return h+'</div>';};
-
   async waste_trips(p){CUR='waste_trips';const rs=await api('/client/waste/trips').catch(()=>[]);
     const STL={draft:'مسودة',scheduled:'مجدول',pickuped:'تم الالتقاط',arrived:'وصل',processing:'قيد المعالجة',delivered:'تم التسليم',completed:'مكتمل',cancelled:'ملغى'};
     window.__wTrips=rs;
@@ -1405,7 +1536,9 @@ const ROUTES={
     const items=wItemsTable(x.items);
     openDrawer('🚛 '+x.sequence,'<div class="kpis" style="grid-template-columns:1fr 1fr"><div class="kpi"><div class="top"><div class="ic" style="background:#0891b2">⚖️</div><div><div class="v num">'+(x.total_weight||0)+'</div><div class="l">'+T('الوزن الكلي','Total weight')+'</div></div></div></div><div class="kpi"><div class="top"><div class="ic" style="background:#6366f1">📦</div><div><div class="v num">'+(x.total_quantity||0)+'</div><div class="l">'+T('الكمية','Quantity')+'</div></div></div></div></div>'
       +'<table class="kv" style="margin-top:8px">'+kv(T('موقع الالتقاط','Pickup'),x.pickup)+kv(T('مركز المعالجة','Center'),x.center)+kv(T('الفريق','Team'),x.team)+kv(T('التاريخ','Date'),dshort(x.date))+kv(T('وقت الالتقاط','Pickup time'),dshort(x.pickuped))+kv(T('عدد الأوامر','Orders'),x.order_count)+'<tr><td>'+T('الحالة','Status')+'</td><td><span class="pill">'+esc(STL[x.state]||x.state_label||'')+'</span></td></tr></table>'
-      +'<div class="sec-t">'+T('الأصناف المنقولة','Transported items')+'</div>'+items);};
+      +'<div class="sec-t">'+T('الأصناف المنقولة','Transported items')+'</div>'+items
+      +wMediaBlock(x)
+      +wReportBtn(x));};
   },
   // ================= INTERNAL INVENTORY SUITE =================
   async inv_overview(p){CUR='inv_overview';const d=await api('/client/inv/summary').catch(()=>({available:false}));

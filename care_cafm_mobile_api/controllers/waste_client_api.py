@@ -302,13 +302,26 @@ class WasteClientApi(Controller):
         o = env['cafm.waste.order'].sudo().browse(int(oid)).exists()
         if not o:
             return _err('غير موجود', 404)
+        # Only the people responsible for this order may record an intake —
+        # without this any authenticated user could rewrite quantities, weights
+        # and push the state forward on someone else's order.
+        uid = env.user.id
+        allowed = (
+            o.receiver_id.id == uid
+            or o.project_id.default_receiver_id.id == uid
+            or o.ops_manager_id.id == uid
+            or self._is_mgr(env)
+        )
+        if not allowed:
+            return _err('غير مصرّح — لست مستلم هذا الطلب', 403)
         b = _body()
         vals = {}
         if b.get('final_weight') is not None:
             vals['final_weight'] = float(b['final_weight'] or 0)
         if b.get('final_note') is not None:
             vals['final_note'] = b['final_note']
-        vals['receiver_id'] = env.user.id
+        if not o.receiver_id:
+            vals['receiver_id'] = uid  # first responder claims it, if unset
         o.write(vals)
         # update item types/quantities on the order (what the center actually received)
         if b.get('items') is not None:
