@@ -164,8 +164,12 @@ class WastePortal(CustomerPortal):
         de = fields.Datetime.from_string(date_to).replace(hour=23, minute=59, second=59)
         orders = request.env['cafm.waste.order'].sudo().search(
             self._order_domain() + [('request_datetime', '>=', ds), ('request_datetime', '<=', de)])
-        report = request.env.ref('care_cafm_waste.action_report_waste_order').with_user(SUPERUSER_ID)
-        pdf = request.env['ir.actions.report'].sudo()._render_qweb_pdf(report, res_ids=orders.ids)[0]
+        # SUMMARY report: totals + breakdowns + one row per order. The per-order
+        # report here produced a page per order — 200 pages for a month, no totals.
+        report = request.env.ref('care_cafm_waste.action_report_waste_period').with_user(SUPERUSER_ID)
+        pdf = request.env['ir.actions.report'].sudo()._render_qweb_pdf(
+            report, res_ids=orders.ids,
+            data={'date_from': str(ds.date()), 'date_to': str(de.date())})[0]
         fname = re.sub(r'\W+', '-', 'waste-report-%s-%s' % (ds.date(), de.date())) + '.pdf'
         return request.make_response(pdf, headers=[('Content-Type', 'application/pdf'),
                                                     ('Content-Disposition', content_disposition(fname))])

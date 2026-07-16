@@ -604,3 +604,59 @@ class WasteAssignDriver(models.TransientModel):
         self.ensure_one()
         self.order_id.assign_driver(self.driver_id)
         return {'type': 'ir.actions.act_window_close'}
+
+
+class WastePeriodReport(models.AbstractModel):
+    """Data for the period SUMMARY report (totals + breakdowns), as opposed to
+    the per-order report — printing one page per order for a whole month is a
+    200-page document with no totals."""
+    _name = 'report.care_cafm_waste.report_waste_period_doc'
+    _description = 'تقرير النفايات الإجمالي للفترة'
+
+    @api.model
+    def _get_report_values(self, docids, data=None):
+        data = data or {}
+        orders = self.env['cafm.waste.order'].browse(docids or []).exists()
+        by_state, by_item, by_project = {}, {}, {}
+        tq = tw = 0.0
+        states = dict(STATES)
+        for o in orders:
+            lines = o.effective_lines()
+            q = sum(l.quantity or 0 for l in lines)
+            w = sum((l.quantity or 0) * (l.weight or 0) for l in lines)
+            tq += q
+            tw += w
+            s = by_state.setdefault(o.states, {'label': states.get(o.states, o.states), 'orders': 0, 'qty': 0.0, 'weight': 0.0})
+            s['orders'] += 1
+            s['qty'] += q
+            s['weight'] += w
+            p = by_project.setdefault(o.project_id.id or 0, {'label': o.project_id.name or '—', 'orders': 0, 'qty': 0.0, 'weight': 0.0})
+            p['orders'] += 1
+            p['qty'] += q
+            p['weight'] += w
+            for l in lines:
+                if not l.item_id:
+                    continue
+                it = by_item.setdefault(l.item_id.id, {'label': l.item_id.name, 'qty': 0.0, 'weight': 0.0})
+                it['qty'] += l.quantity or 0
+                it['weight'] += (l.quantity or 0) * (l.weight or 0)
+
+        def rnd(rows, key='weight'):
+            for r in rows:
+                r['qty'] = round(r['qty'], 1)
+                r['weight'] = round(r['weight'], 1)
+            return sorted(rows, key=lambda r: -r[key])
+
+        return {
+            'doc_ids': orders.ids,
+            'doc_model': 'cafm.waste.order',
+            'docs': orders,
+            'date_from': data.get('date_from'),
+            'date_to': data.get('date_to'),
+            'company': self.env.company,
+            'totals': {'orders': len(orders), 'qty': round(tq, 1), 'weight': round(tw, 1)},
+            'by_state': rnd(list(by_state.values()), 'orders'),
+            'by_item': rnd(list(by_item.values())),
+            'by_project': rnd(list(by_project.values()), 'orders'),
+            'states': states,
+        }

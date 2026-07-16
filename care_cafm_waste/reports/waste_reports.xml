@@ -83,4 +83,118 @@
       </t>
     </t>
   </template>
+
+  <!-- ============ PERIOD SUMMARY REPORT (dashboard) ============ -->
+  <record id="action_report_waste_period" model="ir.actions.report">
+    <field name="name">تقرير النفايات الإجمالي</field>
+    <field name="model">cafm.waste.order</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">care_cafm_waste.report_waste_period_doc</field>
+    <field name="report_file">care_cafm_waste.report_waste_period_doc</field>
+    <field name="binding_model_id" ref="model_cafm_waste_order"/>
+    <field name="binding_type">report</field>
+  </record>
+
+  <template id="report_waste_period_doc">
+    <t t-call="web.html_container">
+      <t t-call="web.external_layout">
+        <div class="page">
+          <!-- title -->
+          <div style="border-bottom:3px solid #16A34A;padding-bottom:6px;margin-bottom:10px">
+            <h2 style="margin:0;color:#14532D">♻ تقرير نقل ومعالجة النفايات — الإجمالي</h2>
+            <div style="color:#64748B;font-size:12px">
+              <t t-if="date_from and date_to">
+                الفترة من <strong t-esc="date_from"/> إلى <strong t-esc="date_to"/>
+              </t>
+              <t t-else="">كل الفترات</t>
+            </div>
+          </div>
+
+          <!-- headline totals -->
+          <table class="table table-sm" style="margin-bottom:14px">
+            <tr>
+              <td style="background:#F0FDF4;text-align:center;padding:10px">
+                <div style="font-size:22px;font-weight:bold;color:#16A34A" t-esc="totals['orders']"/>
+                <div style="font-size:11px;color:#64748B">عدد الأوامر</div>
+              </td>
+              <td style="background:#EEF2FF;text-align:center;padding:10px">
+                <div style="font-size:22px;font-weight:bold;color:#4F46E5" t-esc="totals['qty']"/>
+                <div style="font-size:11px;color:#64748B">إجمالي الكمية</div>
+              </td>
+              <td style="background:#ECFEFF;text-align:center;padding:10px">
+                <div style="font-size:22px;font-weight:bold;color:#0891B2" t-esc="totals['weight']"/>
+                <div style="font-size:11px;color:#64748B">إجمالي الوزن (كجم)</div>
+              </td>
+            </tr>
+          </table>
+
+          <!-- by status -->
+          <h4 style="color:#14532D;margin-bottom:4px">التوزيع حسب الحالة</h4>
+          <table class="table table-sm table-bordered" style="margin-bottom:14px">
+            <thead style="background:#F1F5F9">
+              <tr><th>الحالة</th><th class="text-end">الأوامر</th><th class="text-end">الكمية</th><th class="text-end">الوزن (كجم)</th></tr>
+            </thead>
+            <tbody>
+              <tr t-foreach="by_state" t-as="s">
+                <td t-esc="s['label']"/><td class="text-end" t-esc="s['orders']"/>
+                <td class="text-end" t-esc="s['qty']"/><td class="text-end" t-esc="s['weight']"/>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- by project -->
+          <h4 style="color:#14532D;margin-bottom:4px" t-if="len(by_project) &gt; 1">التوزيع حسب المشروع</h4>
+          <table class="table table-sm table-bordered" style="margin-bottom:14px" t-if="len(by_project) &gt; 1">
+            <thead style="background:#F1F5F9">
+              <tr><th>المشروع</th><th class="text-end">الأوامر</th><th class="text-end">الكمية</th><th class="text-end">الوزن (كجم)</th></tr>
+            </thead>
+            <tbody>
+              <tr t-foreach="by_project" t-as="p">
+                <td t-esc="p['label']"/><td class="text-end" t-esc="p['orders']"/>
+                <td class="text-end" t-esc="p['qty']"/><td class="text-end" t-esc="p['weight']"/>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- by item -->
+          <h4 style="color:#14532D;margin-bottom:4px">الأصناف المنقولة</h4>
+          <table class="table table-sm table-bordered" style="margin-bottom:14px">
+            <thead style="background:#F1F5F9">
+              <tr><th>الصنف</th><th class="text-end">الكمية</th><th class="text-end">الوزن الكلي (كجم)</th></tr>
+            </thead>
+            <tbody>
+              <tr t-foreach="by_item" t-as="i">
+                <td t-esc="i['label']"/><td class="text-end" t-esc="i['qty']"/><td class="text-end" t-esc="i['weight']"/>
+              </tr>
+              <tr style="background:#F0FDF4;font-weight:bold">
+                <td>الإجمالي</td><td class="text-end" t-esc="totals['qty']"/><td class="text-end" t-esc="totals['weight']"/>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- order detail: ONE ROW each, not one page each -->
+          <h4 style="color:#14532D;margin-bottom:4px">تفصيل الأوامر</h4>
+          <table class="table table-sm table-bordered" style="font-size:11px">
+            <thead style="background:#F1F5F9">
+              <tr>
+                <th>الرقم</th><th>المشروع</th><th>موقع الالتقاط</th><th>التاريخ</th>
+                <th class="text-end">الكمية</th><th class="text-end">الوزن</th><th>الحالة</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr t-foreach="docs" t-as="o">
+                <td><span t-field="o.serial"/></td>
+                <td><span t-field="o.project_id.name"/></td>
+                <td><span t-field="o.pickup_location_id.name"/></td>
+                <td><span t-esc="o.request_datetime and str(o.request_datetime)[:10]"/></td>
+                <td class="text-end" t-esc="o.total_quantity"/>
+                <td class="text-end" t-esc="o.total_weight"/>
+                <td t-esc="states.get(o.states, o.states)"/>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </t>
+    </t>
+  </template>
 </odoo>
