@@ -26,6 +26,21 @@ class C2CSettings(models.Model):
     day_fri = fields.Boolean(string='الجمعة', default=False)
     day_sat = fields.Boolean(string='السبت', default=True)
     day_sun = fields.Boolean(string='الأحد', default=True)
+    order_notify_user_ids = fields.Many2many(
+        'res.users', 'c2c_settings_order_notify_rel', 'settings_id', 'user_id',
+        string='المنبَّهون بطلبات المتجر',
+        help='المستخدمون الذين يصلهم تنبيه عند وصول طلب متجر جديد أو طلب إلغاء. '
+             'إذا تُرك فارغًا لا يُرسَل أي تنبيه.')
+    booking_notify_user_ids = fields.Many2many(
+        'res.users', 'c2c_settings_booking_notify_rel', 'settings_id', 'user_id',
+        string='المنبَّهون بالحجوزات',
+        help='المستخدمون الذين يصلهم تنبيه عند وصول حجز خدمة جديد أو إلغاء حجز. '
+             'إذا تُرك فارغًا لا يُرسَل أي تنبيه.')
+    contract_notify_user_ids = fields.Many2many(
+        'res.users', 'c2c_settings_contract_notify_rel', 'settings_id', 'user_id',
+        string='المنبَّهون بطلبات التعاقد',
+        help='المستخدمون الذين يصلهم تنبيه عند وصول طلب تعاقد / عرض سعر جديد. '
+             'إذا تُرك فارغًا لا يُرسَل أي تنبيه.')
 
     @api.model
     def get_settings(self):

@@ -25,3 +25,6 @@ acc_c2c_porder_u,c2c.product.order.u,model_c2c_product_order,base.group_user,1,1
 acc_c2c_porder_m,c2c.product.order.m,model_c2c_product_order,hr.group_hr_manager,1,1,1,1
 acc_c2c_porderline_u,c2c.product.order.line.u,model_c2c_product_order_line,base.group_user,1,1,1,1
 acc_c2c_porderline_m,c2c.product.order.line.m,model_c2c_product_order_line,hr.group_hr_manager,1,1,1,1
+acc_c2c_addr_u,c2c.delivery.address.u,model_c2c_delivery_address,base.group_user,1,1,1,1
+acc_c2c_addr_m,c2c.delivery.address.m,model_c2c_delivery_address,hr.group_hr_manager,1,1,1,1
+acc_c2c_addr_portal,c2c.delivery.address.portal,model_c2c_delivery_address,base.group_portal,1,1,1,1

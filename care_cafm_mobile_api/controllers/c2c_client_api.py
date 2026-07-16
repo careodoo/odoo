@@ -295,14 +295,23 @@ class C2CClientApi(Controller):
                                          'price_unit': float(it.get('price') or p.lst_price)}))
         if not lines:
             return _err('السلة فارغة', 422)
-        rec = env['c2c.product.order'].sudo().create({
+        vals = {
             'partner_id': env.user.partner_id.id, 'line_ids': lines,
             'address': b.get('address') or None, 'area': b.get('area') or None,
             'phone': b.get('phone') or env.user.partner_id.phone or None,
             'payment_method': b.get('payment_method') or 'cash',
-        })
+            'note': b.get('note') or None,
+        }
+        # a saved delivery address wins over free-text fields
+        aid = b.get('address_id')
+        if aid and 'c2c.delivery.address' in env:
+            addr = env['c2c.delivery.address'].sudo().browse(int(aid)).exists()
+            if addr and addr.partner_id.id in self._my_partner_ids(env):
+                vals.update({'address_id': addr.id, 'address': addr.full_address,
+                             'area': addr.area or vals['area'], 'phone': addr.phone or vals['phone']})
+        rec = env['c2c.product.order'].sudo().create(vals)
         rec.action_confirm()
-        return _ok({'id': rec.id, 'name': rec.name, 'amount_total': rec.amount_total, 'state': rec.state})
+        return _ok(self._order_detail(rec))
 
     @route(API + '/c2c/orders', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def c2c_orders(self, **kw):
@@ -317,10 +326,114 @@ class C2CClientApi(Controller):
             'id': o.id, 'name': o.name, 'amount_total': o.amount_total, 'item_count': o.item_count,
             'payment_label': ps.get(o.payment_state, o.payment_state or ''),
             'state': o.state, 'state_label': st.get(o.state, o.state or ''),
+            'progress': o.progress_index(), 'cancel_requested': o.cancel_requested,
+            'cancellable': o.state in ('draft', 'confirmed', 'shipped') and not o.cancel_requested,
             'date': _d(o.create_date),
             'lines': [{'product': l.product_id.display_name, 'qty': l.quantity, 'subtotal': l.subtotal,
                        'image': _abs('/api/v1/product/%s/image' % l.product_id.id)} for l in o.line_ids],
         } for o in recs])
+
+    # ---- order detail + timeline + customer cancel ------------------------
+    def _order_detail(self, o):
+        env = o.env
+        st = _sel(env['c2c.product.order'], 'state')
+        ps = _sel(env['c2c.product.order'], 'payment_state')
+        pm = _sel(env['c2c.product.order'], 'payment_method')
+        idx = o.progress_index()
+        flow = ['confirmed', 'shipped', 'delivered']
+        steps = [{'key': k, 'label': st.get(k, k),
+                  'done': (idx >= 0 and env['c2c.product.order'].STAGE_FLOW.index(k) <= idx)}
+                 for k in flow]
+        return {
+            'id': o.id, 'name': o.name, 'amount_total': o.amount_total, 'item_count': o.item_count,
+            'currency': o.currency_id.name or 'KWD',
+            'state': o.state, 'state_label': st.get(o.state, o.state or ''), 'progress': idx,
+            'cancellable': o.state in ('draft', 'confirmed', 'shipped') and not o.cancel_requested,
+            'cancel_requested': o.cancel_requested, 'cancel_reason': o.cancel_reason or None,
+            'payment_method': o.payment_method, 'payment_method_label': pm.get(o.payment_method, ''),
+            'payment_state': o.payment_state, 'payment_label': ps.get(o.payment_state, o.payment_state or ''),
+            'address': o.address or None, 'area': o.area or None, 'phone': o.phone or None,
+            'note': o.note or None, 'date': _d(o.create_date), 'steps': steps,
+            'lines': [{'product': l.product_id.display_name, 'qty': l.quantity,
+                       'price': l.price_unit, 'subtotal': l.subtotal,
+                       'image': _abs('/api/v1/product/%s/image' % l.product_id.id)} for l in o.line_ids],
+        }
+
+    @route(API + '/c2c/order/<int:oid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def c2c_order(self, oid, **kw):
+        env = _auth()
+        if not env or 'c2c.product.order' not in env:
+            return _err('غير مصرّح', 401)
+        o = env['c2c.product.order'].sudo().browse(oid).exists()
+        if not o or o.partner_id.id not in self._my_partner_ids(env):
+            return _err('غير موجود', 404)
+        return _ok(self._order_detail(o))
+
+    @route(API + '/c2c/order/<int:oid>/cancel', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def c2c_order_cancel(self, oid, **kw):
+        env = _auth()
+        if not env or 'c2c.product.order' not in env:
+            return _err('غير مصرّح', 401)
+        o = env['c2c.product.order'].sudo().browse(oid).exists()
+        if not o or o.partner_id.id not in self._my_partner_ids(env):
+            return _err('غير موجود', 404)
+        from .api import _body
+        b = _body()
+        if not o.request_cancel(reason=b.get('reason')):
+            return _err('لا يمكن إلغاء هذا الطلب', 422)
+        return _ok(self._order_detail(o))
+
+    # ---- delivery addresses (customer-managed) ----------------------------
+    def _addr(self, a):
+        return {'id': a.id, 'label': a.label, 'area': a.area or None, 'block': a.block or None,
+                'street': a.street or None, 'building': a.building or None, 'floor': a.floor or None,
+                'apartment': a.apartment or None, 'landmark': a.landmark or None,
+                'phone': a.phone or None, 'notes': a.notes or None, 'is_default': a.is_default,
+                'full_address': a.full_address or None}
+
+    @route(API + '/c2c/addresses', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def c2c_addresses(self, **kw):
+        env = _auth()
+        if not env or 'c2c.delivery.address' not in env:
+            return _ok([])
+        recs = env['c2c.delivery.address'].sudo().search(
+            [('partner_id', 'in', self._my_partner_ids(env))])
+        return _ok([self._addr(a) for a in recs])
+
+    @route(API + '/c2c/address/save', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def c2c_address_save(self, **kw):
+        env = _auth()
+        if not env or 'c2c.delivery.address' not in env:
+            return _err('غير مصرّح', 401)
+        from .api import _body
+        b = _body()
+        if not (b.get('label') or '').strip():
+            return _err('اسم العنوان مطلوب', 422)
+        vals = {k: (b.get(k) or None) for k in
+                ('label', 'area', 'block', 'street', 'building', 'floor', 'apartment', 'landmark', 'phone', 'notes')}
+        vals['is_default'] = bool(b.get('is_default'))
+        Addr = env['c2c.delivery.address'].sudo()
+        aid = b.get('id')
+        if aid:
+            a = Addr.browse(int(aid)).exists()
+            if not a or a.partner_id.id not in self._my_partner_ids(env):
+                return _err('غير موجود', 404)
+            a.write(vals)
+        else:
+            vals['partner_id'] = env.user.partner_id.id
+            a = Addr.create(vals)
+        return _ok(self._addr(a))
+
+    @route(API + '/c2c/address/<int:aid>/delete', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def c2c_address_delete(self, aid, **kw):
+        env = _auth()
+        if not env or 'c2c.delivery.address' not in env:
+            return _err('غير مصرّح', 401)
+        a = env['c2c.delivery.address'].sudo().browse(aid).exists()
+        if not a or a.partner_id.id not in self._my_partner_ids(env):
+            return _err('غير موجود', 404)
+        a.unlink()
+        return _ok({'deleted': True})
 
     # ---- available time slots (bookings + team schedule) ------------------
     @route(API + '/c2c/slots', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
@@ -525,7 +638,9 @@ class C2CClientApi(Controller):
             return _err('غير موجود', 404)
         if b.state in ('done', 'cancelled'):
             return _err('لا يمكن الإلغاء', 422)
-        b.action_cancel()
+        from .api import _body
+        # customer path → alerts the back-office (action_cancel is the staff path)
+        b.request_cancel(reason=(_body() or {}).get('reason'))
         return _ok(self._booking(b))
 
     @route(API + '/c2c/booking/<int:bid>/rate', type='http', auth='public', methods=['POST'], csrf=False, cors='*')

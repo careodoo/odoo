@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Portal customers only ever see / manage their own saved addresses -->
+    <record id="rule_c2c_addr_own" model="ir.rule">
+        <field name="name">Delivery address: own only (portal)</field>
+        <field name="model_id" ref="model_c2c_delivery_address"/>
+        <field name="domain_force">[('partner_id','=',user.partner_id.id)]</field>
+        <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+    </record>
+
+</odoo>

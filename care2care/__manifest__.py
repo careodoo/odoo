@@ -10,6 +10,7 @@
     'depends': ['base', 'mail', 'hr'],
     'data': [
         'security/ir.model.access.csv',
+        'security/c2c_rules.xml',
         'data/sequences.xml',
         'data/demo_data.xml',
         'views/c2c_views.xml',

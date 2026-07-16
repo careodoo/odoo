@@ -10,8 +10,10 @@ from odoo.exceptions import UserError
 class C2CBooking(models.Model):
     _name = 'c2c.booking'
     _description = 'CARE 2 CARE Booking'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'c2c.team.notify.mixin']
     _order = 'visit_datetime desc, id desc'
+    _notify_setting_field = 'booking_notify_user_ids'
+    _notify_action_prefix = 'c2c/booking'
 
     name = fields.Char(string='رقم الحجز', default='/', copy=False, readonly=True)
     partner_id = fields.Many2one('res.partner', string='العميل', required=True, tracking=True,
@@ -91,7 +93,14 @@ class C2CBooking(models.Model):
                 pkg = self.env['c2c.service.package'].browse(v['package_id']) if v.get('package_id') else None
                 svc = self.env['c2c.service'].browse(v['service_id']) if v.get('service_id') else None
                 v['duration_min'] = (pkg.duration_min if pkg else 0) or (svc.duration_min if svc else 60)
-        return super().create(vals_list)
+        recs = super().create(vals_list)
+        # a customer just booked — make sure the back-office actually hears about it
+        for b in recs:
+            b._notify_team(_('📅 حجز خدمة جديد'),
+                           _('حجز جديد %s: %s من %s لموعد %s') % (
+                               b.name or '', b.service_id.name or '',
+                               b.partner_id.display_name or '', b.visit_datetime or ''))
+        return recs
 
     # friendly customer-facing message per booking state (app notification)
     _CUST_MSG = {
@@ -148,6 +157,25 @@ class C2CBooking(models.Model):
         self.write({'state': 'cancelled'})
         for b in self:
             b._notify_customer('cancelled')
+
+    def request_cancel(self, reason=None):
+        """Customer-initiated cancellation (app/portal) — unlike action_cancel
+        (used by staff) this alerts the back-office, since a crew may already
+        be scheduled."""
+        self.ensure_one()
+        if self.state in ('done', 'cancelled'):
+            return False
+        # crew already committed → needs a human to unwind the assignment
+        needs_review = self.state in ('assigned', 'in_progress')
+        self.action_cancel()
+        self.message_post(body=_('ألغى العميل الحجز%s') % ((': %s' % reason) if reason else ''))
+        self._notify_team(_('✖ ألغى عميل حجزه'),
+                          _('ألغى %s الحجز %s (%s) لموعد %s%s') % (
+                              self.partner_id.display_name or '', self.name or '',
+                              self.service_id.name or '', self.visit_datetime or '',
+                              (' — %s' % reason) if reason else ''),
+                          activity=needs_review)
+        return True
 
     def action_pay(self):
         self.write({'payment_state': 'paid'})

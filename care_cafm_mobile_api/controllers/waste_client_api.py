@@ -238,8 +238,11 @@ class WasteClientApi(Controller):
             'center': t.center_id.name if t.center_id else None,
             'date': _d(getattr(t, 'trip_date', False)),
             'pickuped': _d(getattr(t, 'pickuped_datetime', False)),
-            'total_weight': getattr(t, 'total_weight', 0.0),
-            'total_quantity': getattr(t, 'total_quantity', 0.0),
+            # total weight = Σ(quantity × piece weight) — NOT the bare sum of piece weights
+            'total_weight': round(sum((getattr(l, 'quantity', 0) or 0) * (getattr(l, 'weight', 0) or 0)
+                                      for l in (t.trip_line_ids if 'trip_line_ids' in t._fields else [])), 1),
+            'total_quantity': round(sum((getattr(l, 'quantity', 0) or 0)
+                                        for l in (t.trip_line_ids if 'trip_line_ids' in t._fields else [])), 1),
             'team': t.team_id.name if 'team_id' in t._fields and t.team_id else None,
             'driver': t.driver_id.name if ('driver_id' in t._fields and t.driver_id) else None,
             'location': dloc(t),

@@ -9,8 +9,10 @@ from odoo.exceptions import UserError
 class C2CContractRequest(models.Model):
     _name = 'c2c.contract.request'
     _description = 'CARE 2 CARE Contract Request'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'c2c.team.notify.mixin']
     _order = 'create_date desc, id desc'
+    _notify_setting_field = 'contract_notify_user_ids'
+    _notify_action_prefix = 'c2c/contract'
 
     name = fields.Char(string='رقم الطلب', default='/', copy=False, readonly=True)
     partner_id = fields.Many2one('res.partner', string='العميل',
@@ -42,7 +44,15 @@ class C2CContractRequest(models.Model):
         for v in vals_list:
             if v.get('name', '/') == '/':
                 v['name'] = self.env['ir.sequence'].next_by_code('c2c.contract.request') or _('طلب تعاقد')
-        return super().create(vals_list)
+        recs = super().create(vals_list)
+        # a sales lead just landed — it must reach someone, so raise a To-Do too
+        for r in recs:
+            r._notify_team(_('📄 طلب تعاقد جديد'),
+                           _('طلب تعاقد جديد %s: %s من %s (%s)%s') % (
+                               r.name or '', r.title or '', r.customer_name or '',
+                               r.phone or '', (' — %s' % r.category_id.name) if r.category_id else ''),
+                           activity=True)
+        return recs
 
     def action_send_quote(self):
         for r in self:

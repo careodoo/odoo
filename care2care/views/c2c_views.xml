@@ -317,24 +317,62 @@
       <form>
         <header>
           <button name="action_confirm" type="object" string="تأكيد" class="btn-primary" invisible="state!='draft'"/>
-          <button name="action_cancel" type="object" string="إلغاء" invisible="state in ('delivered','cancelled')"/>
-          <field name="state" widget="statusbar"/>
+          <button name="action_ship" type="object" string="🚚 خروج للتوصيل" class="btn-primary" invisible="state!='confirmed'"/>
+          <button name="action_deliver" type="object" string="🎉 تم التسليم" class="btn-primary" invisible="state!='shipped'"/>
+          <button name="action_cancel" type="object" string="موافقة على الإلغاء" class="btn-danger" invisible="not cancel_requested"/>
+          <button name="action_reject_cancel" type="object" string="رفض طلب الإلغاء" invisible="not cancel_requested"/>
+          <button name="action_cancel" type="object" string="إلغاء" invisible="state in ('delivered','cancelled') or cancel_requested"/>
+          <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,shipped,delivered"/>
         </header>
         <sheet>
+          <widget name="web_ribbon" title="طلب إلغاء" bg_color="text-bg-danger" invisible="not cancel_requested"/>
           <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
           <group>
-            <group><field name="partner_id"/><field name="phone"/><field name="area"/><field name="address"/></group>
+            <group><field name="partner_id"/><field name="phone"/><field name="address_id"/><field name="area"/><field name="address"/></group>
             <group><field name="payment_method"/><field name="payment_state"/><field name="amount_total"/><field name="item_count"/></group>
           </group>
+          <group invisible="not cancel_requested"><field name="cancel_requested" invisible="1"/><field name="cancel_reason" readonly="1"/></group>
           <field name="line_ids"><tree editable="bottom"><field name="product_id"/><field name="quantity"/><field name="price_unit"/><field name="subtotal"/></tree></field>
           <field name="note"/>
         </sheet>
-        <div class="oe_chatter"><field name="message_follower_ids"/><field name="message_ids"/></div>
+        <div class="oe_chatter"><field name="message_follower_ids"/><field name="activity_ids"/><field name="message_ids"/></div>
       </form>
     </field>
   </record>
   <record id="action_c2c_porder" model="ir.actions.act_window">
     <field name="name">طلبات المتجر</field><field name="res_model">c2c.product.order</field><field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- ===== DELIVERY ADDRESSES ===== -->
+  <record id="view_c2c_addr_tree" model="ir.ui.view">
+    <field name="name">c2c.delivery.address.tree</field><field name="model">c2c.delivery.address</field>
+    <field name="arch" type="xml">
+      <tree>
+        <field name="label"/><field name="partner_id"/><field name="full_address"/>
+        <field name="phone"/><field name="is_default"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_c2c_addr_form" model="ir.ui.view">
+    <field name="name">c2c.delivery.address.form</field><field name="model">c2c.delivery.address</field>
+    <field name="arch" type="xml">
+      <form>
+        <sheet>
+          <div class="oe_title"><h1><field name="label" placeholder="المنزل / العمل"/></h1></div>
+          <group>
+            <group><field name="partner_id"/><field name="phone"/><field name="is_default"/></group>
+            <group><field name="area"/><field name="block"/><field name="street"/></group>
+          </group>
+          <group>
+            <group><field name="building"/><field name="floor"/><field name="apartment"/></group>
+            <group><field name="landmark"/><field name="notes"/><field name="full_address" readonly="1"/></group>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+  <record id="action_c2c_addr" model="ir.actions.act_window">
+    <field name="name">عناوين التوصيل</field><field name="res_model">c2c.delivery.address</field><field name="view_mode">tree,form</field>
   </record>
 
   <!-- ===== BOOKING SETTINGS (availability) ===== -->
@@ -364,6 +402,17 @@
             <group>
               <field name="day_thu"/><field name="day_fri"/><field name="day_sat"/>
             </group>
+          </group>
+          <group string="التنبيهات (اتركه فارغًا = لا تنبيه)">
+            <field name="booking_notify_user_ids" widget="many2many_tags"
+                   options="{'no_create': True}"
+                   placeholder="من يصله تنبيه الحجوزات الجديدة وإلغاءات العملاء…"/>
+            <field name="order_notify_user_ids" widget="many2many_tags"
+                   options="{'no_create': True}"
+                   placeholder="من يصله تنبيه طلبات المتجر الجديدة وطلبات الإلغاء…"/>
+            <field name="contract_notify_user_ids" widget="many2many_tags"
+                   options="{'no_create': True}"
+                   placeholder="من يصله تنبيه طلبات التعاقد وعروض الأسعار…"/>
           </group>
         </sheet>
       </form>
