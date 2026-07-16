@@ -1,4 +1,5 @@
 from . import api
+from . import management_api
 from . import security_api
 from . import supervisor_api
 from . import client_api
