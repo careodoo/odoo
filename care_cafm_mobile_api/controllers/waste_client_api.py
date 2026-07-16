@@ -173,8 +173,13 @@ class WasteClientApi(Controller):
         # Stream it: players need HTTP Range (206) to play/seek a video, which a
         # plain make_response can't do — it also avoids base64-decoding a whole
         # 12MB clip into memory on every request.
-        stream = request.env['ir.binary']._get_stream_from(a)
-        res = stream.get_response(as_attachment=False)
+        try:
+            stream = request.env['ir.binary']._get_stream_from(a)
+            res = stream.get_response(as_attachment=False)
+        except FileNotFoundError:
+            # the row exists but its filestore file is gone — 404 rather than a
+            # 500 traceback (reading from disk can fail where base64 could not)
+            return request.not_found()
         res.headers['Cache-Control'] = 'public, max-age=3600'
         res.headers.setdefault('Accept-Ranges', 'bytes')
         return res
