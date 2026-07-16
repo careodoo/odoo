@@ -756,6 +756,12 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await http.get(
               _u('/management/$key/$id'), headers: await _headers())))['data'] as Map);
 
+  /// Run a whitelisted workflow action (server gates by state + permissions).
+  Future<Map<String, dynamic>> managementAction(String key, int id, String action) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/management/$key/$id/action'),
+              headers: await _headers(), body: jsonEncode({'action': action}))))['data'] as Map);
+
   // ---- waste operations (ops manager) -------------------------------------
   /// Orders this ops manager owns. filter: unassigned | open | done
   Future<List<dynamic>> wasteOpsOrders({String filter = 'open'}) async =>
