@@ -3,7 +3,12 @@
     <template id="care_sale_order_report" inherit_id="sale.report_saleorder_document"
               customize_show="True">
         <xpath expr="//t[@t-call='web.external_layout']" position="replace">
-            <t t-call="web.basic_layout">
+            <!-- external_layout, not basic_layout: basic_layout has no header or
+                 footer, so the sale order was the ONE report printing without the
+                 CARE letterhead (the images sat unused in this module's static/).
+                 external_layout renders the company's letterhead around the same
+                 custom page below. -->
+            <t t-call="web.external_layout">
                 <t t-set="o" t-value="doc.with_context(lang=doc.partner_id.lang)"/>
 
                 <div class="page">
