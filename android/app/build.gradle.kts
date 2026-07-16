@@ -25,8 +25,11 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.carekw.care_mobile"
+        // The Play Console listing was created as "care.app", and a published
+        // package name can never change — so this MUST stay care.app.
+        // (`namespace` above is only the internal Kotlin/R package and is
+        // intentionally left as com.carekw.care_mobile.)
+        applicationId = "care.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
