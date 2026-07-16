@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
+import '../notifications_screen.dart';
 import 'c2c_shell.dart';
 import 'c2c_service.dart';
 
@@ -28,6 +29,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
   void initState() {
     super.initState();
     _home = context.read<AuthProvider>().api.c2cHome();
+    _loadUnread();
     _anim = AnimationController(vsync: this, duration: const Duration(seconds: 16))..repeat();
     _promoCtrl.addListener(() {
       final p = _promoCtrl.page?.round() ?? 0;
@@ -51,6 +53,22 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
   Color _hex(String? s, Color fb) {
     if (s == null || !s.startsWith('#')) return fb;
     return Color(int.parse('FF${s.substring(1)}', radix: 16));
+  }
+
+  // real unread count drives the header bell dot (guests have none)
+  int _unread = 0;
+
+  Future<void> _loadUnread() async {
+    if (widget.guest) return;
+    try {
+      final (_, n) = await context.read<AuthProvider>().api.notifications();
+      if (mounted) setState(() => _unread = n);
+    } catch (_) {}
+  }
+
+  Future<void> _openNotifications() async {
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+    _loadUnread(); // refresh the dot after the user reads them
   }
 
   @override
@@ -147,7 +165,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
                   else ...[
                     if (widget.canSwitchCafm) _iconBtn(Icons.apartment_rounded, () => openCafm(context)),
                     const SizedBox(width: 6),
-                    _iconBtn(Icons.notifications_none_rounded, () {}, dot: true),
+                    _iconBtn(Icons.notifications_none_rounded, _openNotifications, dot: _unread > 0),
                   ],
                 ]),
                 const SizedBox(height: 12),
@@ -218,17 +236,6 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
 
   // curated, harmonious tints for category tiles (soft, not garish)
   // each: [accent icon-ring color, soft tile background]
-  static const _catTints = [
-    [Color(0xFF2563EB), Color(0xFFEAF1FE)], // blue
-    [Color(0xFF0D9488), Color(0xFFE4F5F2)], // teal
-    [Color(0xFF7C3AED), Color(0xFFF1EBFD)], // violet
-    [Color(0xFFD97706), Color(0xFFFDF2E2)], // amber
-    [Color(0xFFDB2777), Color(0xFFFCE9F2)], // rose
-    [Color(0xFF0891B2), Color(0xFFE3F5FA)], // cyan
-    [Color(0xFF16A34A), Color(0xFFE7F6EC)], // green
-    [Color(0xFF4F46E5), Color(0xFFEBEBFC)], // indigo
-  ];
-
   // ============ PROMO CAROUSEL (image-capable) ============
   Widget _promoCarousel(List offers) {
     final items = offers.isNotEmpty
@@ -308,23 +315,17 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
           itemCount: cats.length,
           itemBuilder: (_, i) {
             final c = cats[i] as Map;
-            final t = _catTints[i % _catTints.length];
-            final accent = t[0], soft = t[1];
             return GestureDetector(
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => C2CServiceListScreen(title: '${c['name']}', categoryId: c['id'] as int))),
               child: Column(children: [
-                Container(
-                  width: 60, height: 60,
-                  decoration: BoxDecoration(
-                    color: soft,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: accent.withValues(alpha: 0.18)),
-                    boxShadow: [BoxShadow(color: accent.withValues(alpha: 0.12), blurRadius: 10, offset: const Offset(0, 5))],
-                  ),
-                  alignment: Alignment.center,
-                  child: Text('${c['icon'] ?? '🧩'}', style: const TextStyle(fontSize: 26)),
+                // icon shown directly — no frame/box
+                SizedBox(
+                  width: 62, height: 62,
+                  child: c['image'] != null
+                      ? ClipRRect(borderRadius: BorderRadius.circular(16), child: Image.network('${c['image']}', fit: BoxFit.cover, errorBuilder: (_, __, ___) => Center(child: Text('${c['icon'] ?? '🧩'}', style: const TextStyle(fontSize: 42)))))
+                      : Center(child: Text('${c['icon'] ?? '🧩'}', style: const TextStyle(fontSize: 42))),
                 ),
-                const SizedBox(height: 7),
+                const SizedBox(height: 6),
                 Text('${c['name']}', textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, height: 1.15, color: C2C.ink)),
               ]),
             );

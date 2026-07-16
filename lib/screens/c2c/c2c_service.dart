@@ -109,23 +109,21 @@ class _C2CServiceScreenState extends State<C2CServiceScreen> {
           final packages = (s['packages'] as List?) ?? [];
           return CustomScrollView(slivers: [
             SliverAppBar(
-              backgroundColor: C2C.navy, foregroundColor: Colors.white, pinned: true, expandedHeight: 230,
+              backgroundColor: C2C.navy, foregroundColor: Colors.white, pinned: true, expandedHeight: 172,
               flexibleSpace: FlexibleSpaceBar(
-                titlePadding: const EdgeInsets.only(right: 16, bottom: 46, left: 16),
-                title: Text('${s['name']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, shadows: [Shadow(color: Colors.black54, blurRadius: 6)])),
+                titlePadding: const EdgeInsets.only(right: 16, bottom: 14, left: 56),
+                title: Text('${s['name']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w900, shadows: [Shadow(color: Colors.black54, blurRadius: 6)])),
                 background: Stack(fit: StackFit.expand, children: [
                   s['image'] != null
                       ? Image.network('${s['image']}', fit: BoxFit.cover)
-                      : Container(decoration: const BoxDecoration(gradient: LinearGradient(colors: [C2C.navy, C2C.navy2])), alignment: Alignment.center, child: Text('${s['category_icon'] ?? '🧩'}', style: const TextStyle(fontSize: 80))),
-                  const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.transparent, Color(0xCC0E3A5F)]))),
+                      : Container(decoration: const BoxDecoration(gradient: LinearGradient(colors: [C2C.navy, C2C.navy2])), alignment: Alignment.center, child: Text('${s['category_icon'] ?? '🧩'}', style: const TextStyle(fontSize: 64))),
+                  const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Color(0x220E3A5F), Color(0xDD0E3A5F)]))),
                 ]),
               ),
             ),
             SliverToBoxAdapter(
-              child: Transform.translate(
-                offset: const Offset(0, -20),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+              child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     // floating info card
                     Container(
@@ -167,7 +165,6 @@ class _C2CServiceScreenState extends State<C2CServiceScreen> {
                   ]),
                 ),
               ),
-            ),
           ]);
         },
       ),
@@ -601,7 +598,7 @@ class _C2CBookingSheetState extends State<C2CBookingSheet> {
     final parts = _slot!.split(':');
     final visit = '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')} ${parts[0].padLeft(2, '0')}:${parts[1].padLeft(2, '0')}:00';
     try {
-      await context.read<AuthProvider>().api.c2cBook({
+      final res = await context.read<AuthProvider>().api.c2cBook({
         'service_id': widget.service['id'],
         if (widget.packageId != null) 'package_id': widget.packageId,
         'visit': visit,
@@ -610,8 +607,8 @@ class _C2CBookingSheetState extends State<C2CBookingSheet> {
         if (_coupon.text.trim().isNotEmpty) 'code': _coupon.text.trim(),
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ ${tr('تم تأكيد حجزك', 'Booking confirmed')}'), backgroundColor: const Color(0xFF16A34A)));
-        Navigator.pop(context, true);
+        await _bookingConfirmed(res, visit);
+        if (mounted) Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
@@ -620,4 +617,63 @@ class _C2CBookingSheetState extends State<C2CBookingSheet> {
       }
     }
   }
+
+  /// Professional booking-confirmation dialog.
+  Future<void> _bookingConfirmed(Map res, String visit) async {
+    final svcName = '${widget.service['name'] ?? ''}';
+    final total = res['amount_total'] ?? res['total'] ?? res['price'];
+    final ref = res['name'] ?? res['reference'] ?? '';
+    final payLabel = {'cash': tr('نقدًا', 'Cash'), 'knet': tr('كي نت', 'KNET'), 'card': tr('بطاقة', 'Card')}[_pay] ?? _pay;
+    await showDialog(
+      context: context, barrierDismissible: false,
+      builder: (dctx) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(20, 26, 20, 20),
+            decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF16A34A), Color(0xFF15803D)], begin: Alignment.topLeft, end: Alignment.bottomRight), borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+            child: Column(children: [
+              Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle), child: const Icon(Icons.event_available_rounded, color: Colors.white, size: 44)),
+              const SizedBox(height: 12),
+              Text(tr('تم تأكيد حجزك!', 'Booking confirmed!'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20)),
+              if ('$ref'.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 4), child: Text('$ref', style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700, fontSize: 13))),
+            ]),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+            child: Column(children: [
+              _row(Icons.cleaning_services_rounded, tr('الخدمة', 'Service'), svcName),
+              _row(Icons.calendar_today_rounded, tr('الموعد', 'Appointment'), visit.substring(0, 16).replaceAll('-', '/')),
+              if (_addr.text.trim().isNotEmpty) _row(Icons.location_on_outlined, tr('العنوان', 'Address'), _addr.text.trim()),
+              _row(Icons.payments_outlined, tr('الدفع', 'Payment'), payLabel),
+              if (total != null) ...[
+                const Divider(height: 20),
+                Row(children: [Text(tr('الإجمالي', 'Total'), style: const TextStyle(fontWeight: FontWeight.w800, color: C2C.ink)), const Spacer(), Text('${(total as num).toStringAsFixed(2)} KWD', style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w900, fontSize: 18))]),
+              ],
+            ]),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
+            child: SizedBox(width: double.infinity, height: 48, child: ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: C2C.navy, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+              onPressed: () => Navigator.pop(dctx),
+              child: Text(tr('رائع', 'Great'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+            )),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Widget _row(IconData ic, String k, String v) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(ic, size: 18, color: C2C.slate),
+          const SizedBox(width: 9),
+          SizedBox(width: 66, child: Text(k, style: const TextStyle(color: C2C.slate, fontSize: 12.5))),
+          Expanded(child: Text(v, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: C2C.ink))),
+        ]),
+      );
 }

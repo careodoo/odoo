@@ -1,8 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../core/i18n.dart';
 import '../screens/notifications_screen.dart';
 import '../screens/workorders_screen.dart';
+
+/// Shared language picker — lists every supported UI language.
+void showLanguagePicker(BuildContext context, {VoidCallback? onChanged}) {
+  showModalBottomSheet(
+    context: context, backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+    builder: (_) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
+      const SizedBox(height: 10),
+      Container(width: 42, height: 4, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(4))),
+      Padding(padding: const EdgeInsets.all(14), child: Text(tr('اختر اللغة', 'Choose language'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16))),
+      for (final l in context.read<LangProvider>().languages)
+        ListTile(
+          title: Text(l[1], style: const TextStyle(fontWeight: FontWeight.w600)),
+          trailing: gLang == l[0] ? const Icon(Icons.check_circle_rounded, color: Color(0xFF2F6DF6)) : null,
+          onTap: () { context.read<LangProvider>().setLang(l[0]); Navigator.pop(context); onChanged?.call(); },
+        ),
+      const SizedBox(height: 8),
+    ])),
+  );
+}
 
 /// Work-order state → colour + Arabic/English label (shared across screens).
 const Map<String, Color> kWoStateColor = {

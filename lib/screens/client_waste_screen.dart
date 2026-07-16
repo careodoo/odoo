@@ -318,9 +318,16 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
 
   static const _flow = ['draft', 'scheduled', 'pickuped', 'arrived', 'processing', 'delivered', 'completed'];
 
-  void _openReport(String? path, String title) {
+  Future<void> _openReport(String? path, String title) async {
     if (path == null) return;
-    Navigator.push(context, MaterialPageRoute(builder: (_) => OdooBackendScreen(path: path, title: title)));
+    // PDFs don't render inside the in-app WebView → open via SSO in the
+    // external browser (Chrome), which displays/downloads the PDF properly.
+    final api = context.read<AuthProvider>().api;
+    final token = await api.token;
+    final url = '${api.baseUrl}/web/sso?token=${Uri.encodeQueryComponent(token ?? '')}&redirect=${Uri.encodeQueryComponent(path)}';
+    final u = Uri.parse(url);
+    if (await launchUrl(u, mode: LaunchMode.externalApplication)) return;
+    if (mounted) Navigator.push(context, MaterialPageRoute(builder: (_) => OdooBackendScreen(path: path, title: title)));
   }
 
   void _zoom(String url) => showDialog(context: context, builder: (_) => Dialog(
@@ -524,8 +531,16 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
             return GestureDetector(
               onTap: () async {
                 if (isVideo) {
+                  // canLaunchUrl can report false even with a handler present,
+                  // so attempt the launch and surface a real failure.
                   final u = Uri.parse('${m['url']}');
-                  if (await canLaunchUrl(u)) launchUrl(u, mode: LaunchMode.externalApplication);
+                  try {
+                    if (await launchUrl(u, mode: LaunchMode.externalApplication)) return;
+                  } catch (_) {}
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(tr('تعذّر فتح الفيديو', 'Could not open video'))));
+                  }
                 } else {
                   _zoom('${m['url']}');
                 }
@@ -743,9 +758,13 @@ class _WasteStatsScreenState extends State<WasteStatsScreen> {
     if (r != null) { setState(() { _preset = 'custom'; _from = r.start; _to = r.end; }); _load(); }
   }
 
-  void _printMonthly(String? path) {
+  Future<void> _printMonthly(String? path) async {
     if (path == null) return;
-    Navigator.push(context, MaterialPageRoute(builder: (_) => OdooBackendScreen(path: path, title: 'التقرير الشهري')));
+    final api = context.read<AuthProvider>().api;
+    final token = await api.token;
+    final url = '${api.baseUrl}/web/sso?token=${Uri.encodeQueryComponent(token ?? '')}&redirect=${Uri.encodeQueryComponent(path)}';
+    if (await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)) return;
+    if (mounted) Navigator.push(context, MaterialPageRoute(builder: (_) => OdooBackendScreen(path: path, title: 'التقرير الشهري')));
   }
 
   @override

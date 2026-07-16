@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'c2c_shell.dart';
+import 'c2c_addresses.dart';
+import 'c2c_orders.dart';
 
 /// CARE 2 CARE product shop — browse & buy materials.
 class C2CShopScreen extends StatefulWidget {
@@ -94,30 +96,44 @@ class _C2CShopScreenState extends State<C2CShopScreen> {
     );
   }
 
-  Widget _card(Map p) => Container(
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, offset: Offset(0, 2))]),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Expanded(child: ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+  Widget _card(Map p) {
+    final id = p['id'] as int;
+    final inCart = _cart[id]?['qty'] as int? ?? 0;
+    return Container(
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), boxShadow: [BoxShadow(color: C2C.navy.withValues(alpha: 0.07), blurRadius: 14, offset: const Offset(0, 6))]),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Expanded(child: Stack(children: [
+          Positioned.fill(child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
             child: p['image'] != null
                 ? Image.network('${p['image']}', width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: C2C.bg, child: const Icon(Icons.inventory_2_outlined, color: Colors.grey, size: 40)))
                 : Container(color: C2C.bg, child: const Icon(Icons.inventory_2_outlined, color: Colors.grey, size: 40)),
           )),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('${p['name']}', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, height: 1.2)),
-              const SizedBox(height: 4),
-              Row(children: [
-                Text('${p['price']}', style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w900, fontSize: 14)),
-                Text(' ${p['currency'] ?? ''}', style: const TextStyle(color: Colors.grey, fontSize: 9)),
-                const Spacer(),
-                InkWell(onTap: () => _add(p), child: Container(padding: const EdgeInsets.all(6), decoration: const BoxDecoration(color: C2C.navy, shape: BoxShape.circle), child: const Icon(Icons.add, color: Colors.white, size: 16))),
-              ]),
+          if (inCart > 0) Positioned(top: 8, right: 8, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: C2C.navy, borderRadius: BorderRadius.circular(20)), child: Text(tr('في السلة $inCart', '$inCart in cart'), style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w800)))),
+        ])),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(11, 9, 11, 10),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('${p['name']}', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, height: 1.2, color: C2C.ink)),
+            const SizedBox(height: 8),
+            Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(tr('السعر', 'Price'), style: const TextStyle(color: Colors.grey, fontSize: 8.5, fontWeight: FontWeight.w600)),
+                Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                  Text('${p['price']}', style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w900, fontSize: 15.5)),
+                  Padding(padding: const EdgeInsets.only(bottom: 2, left: 2), child: Text('${p['currency'] ?? 'KWD'}', style: const TextStyle(color: Colors.grey, fontSize: 8.5))),
+                ]),
+              ])),
+              Material(
+                color: C2C.navy, borderRadius: BorderRadius.circular(12),
+                child: InkWell(borderRadius: BorderRadius.circular(12), onTap: () => _add(p), child: const Padding(padding: EdgeInsets.all(8), child: Icon(Icons.add_shopping_cart_rounded, color: Colors.white, size: 17))),
+              ),
             ]),
-          ),
-        ]),
-      );
+          ]),
+        ),
+      ]),
+    );
+  }
 
   Widget _cartBar() => SafeArea(
         child: GestureDetector(
@@ -186,14 +202,42 @@ class _C2CShopScreenState extends State<C2CShopScreen> {
     final area = TextEditingController();
     final phone = TextEditingController();
     String pay = 'cash';
+    Map? selAddr; // a chosen saved address
     final ok = await showModalBottomSheet<bool>(
       context: context, isScrollControlled: true, backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
       builder: (ctx) => StatefulBuilder(builder: (ctx, setSt) => Padding(
-        padding: EdgeInsets.fromLTRB(18, 16, 18, MediaQuery.of(ctx).viewInsets.bottom + 18),
+        padding: EdgeInsets.fromLTRB(18, 14, 18, MediaQuery.of(ctx).viewInsets.bottom + 18),
         child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Center(child: Container(width: 42, height: 4, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(4)))),
+          const SizedBox(height: 12),
           Text(tr('بيانات التوصيل', 'Delivery details'), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: C2C.navy)),
           const SizedBox(height: 12),
+          // saved-address picker
+          Material(
+            color: C2C.navy.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(14),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: () async {
+                final a = await Navigator.push<Map?>(context, MaterialPageRoute(builder: (_) => const C2CAddressesScreen(picking: true)));
+                if (a != null) setSt(() {
+                  selAddr = a;
+                  area.text = a['area']?.toString() ?? '';
+                  addr.text = a['full_address']?.toString() ?? '';
+                  if ((a['phone']?.toString() ?? '').isNotEmpty) phone.text = a['phone'].toString();
+                });
+              },
+              child: Padding(padding: const EdgeInsets.all(13), child: Row(children: [
+                const Icon(Icons.bookmark_added_rounded, color: C2C.navy, size: 20),
+                const SizedBox(width: 10),
+                Expanded(child: Text(selAddr == null ? tr('اختر من عناوينك المحفوظة', 'Choose a saved address') : '${selAddr!['label']} · ${selAddr!['full_address'] ?? ''}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: C2C.navy))),
+                const Icon(Icons.chevron_left_rounded, color: C2C.navy),
+              ])),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(children: [Expanded(child: Divider(color: Colors.grey.shade300)), Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Text(tr('أو أدخل يدويًا', 'or enter manually'), style: const TextStyle(color: C2C.slate, fontSize: 11))), Expanded(child: Divider(color: Colors.grey.shade300))]),
+          const SizedBox(height: 10),
           _f(area, tr('المنطقة', 'Area'), Icons.map_outlined),
           const SizedBox(height: 9),
           _f(addr, tr('العنوان', 'Address'), Icons.home_outlined),
@@ -213,14 +257,86 @@ class _C2CShopScreenState extends State<C2CShopScreen> {
     if (ok != true || !mounted) return;
     try {
       final items = _cart.values.map((e) => {'product_id': e['product']['id'], 'quantity': e['qty'], 'price': e['product']['price']}).toList();
-      final res = await context.read<AuthProvider>().api.c2cShopOrderCreate({'items': items, 'address': addr.text, 'area': area.text, 'phone': phone.text, 'payment_method': pay});
+      final body = {'items': items, 'address': addr.text, 'area': area.text, 'phone': phone.text, 'payment_method': pay};
+      if (selAddr != null) body['address_id'] = selAddr!['id'];
+      final res = await context.read<AuthProvider>().api.c2cShopOrderCreate(body);
       if (mounted) {
         setState(() => _cart.clear());
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ ${res['name']} · ${res['amount_total']} KWD'), backgroundColor: const Color(0xFF16A34A)));
+        await _orderConfirmed(res);
       }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: C2C.red));
     }
+  }
+
+  /// Professional post-order confirmation dialog with a track-order CTA.
+  Future<void> _orderConfirmed(Map res) async {
+    final lines = (res['lines'] as List?) ?? [];
+    await showDialog(
+      context: context, barrierDismissible: false,
+      builder: (dctx) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          // success header
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(20, 26, 20, 20),
+            decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF16A34A), Color(0xFF15803D)], begin: Alignment.topLeft, end: Alignment.bottomRight), borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+            child: Column(children: [
+              Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle), child: const Icon(Icons.check_circle_rounded, color: Colors.white, size: 46)),
+              const SizedBox(height: 12),
+              Text(tr('تم استلام طلبك!', 'Order placed!'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20)),
+              const SizedBox(height: 4),
+              Text('${res['name']}', style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700, fontSize: 13)),
+            ]),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+            child: Column(children: [
+              if (lines.isNotEmpty) ...[
+                ...lines.take(3).map((l) => Padding(padding: const EdgeInsets.symmetric(vertical: 3), child: Row(children: [
+                  const Icon(Icons.check_rounded, size: 15, color: C2C.slate),
+                  const SizedBox(width: 6),
+                  Expanded(child: Text('${(l as Map)['product']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12.5, color: C2C.ink))),
+                  Text('×${(l['qty'] as num).toStringAsFixed(0)}', style: const TextStyle(color: C2C.slate, fontSize: 12, fontWeight: FontWeight.w700)),
+                ]))),
+                if (lines.length > 3) Align(alignment: Alignment.centerRight, child: Text(tr('+${lines.length - 3} أصناف أخرى', '+${lines.length - 3} more'), style: const TextStyle(color: C2C.slate, fontSize: 11.5))),
+                const Divider(height: 20),
+              ],
+              Row(children: [
+                Text(tr('الإجمالي', 'Total'), style: const TextStyle(fontWeight: FontWeight.w800, color: C2C.ink)),
+                const Spacer(),
+                Text('${(res['amount_total'] as num).toStringAsFixed(2)} ${res['currency'] ?? 'KWD'}', style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w900, fontSize: 18)),
+              ]),
+              const SizedBox(height: 6),
+              Row(children: [
+                const Icon(Icons.info_outline_rounded, size: 15, color: C2C.slate),
+                const SizedBox(width: 6),
+                Expanded(child: Text(tr('سنتواصل معك لتأكيد موعد التوصيل', 'We\'ll contact you to confirm delivery'), style: const TextStyle(color: C2C.slate, fontSize: 11.5))),
+              ]),
+            ]),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
+            child: Row(children: [
+              Expanded(child: OutlinedButton(
+                style: OutlinedButton.styleFrom(foregroundColor: C2C.navy, side: const BorderSide(color: C2C.navy), padding: const EdgeInsets.symmetric(vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+                onPressed: () => Navigator.pop(dctx),
+                child: Text(tr('تم', 'Done'), style: const TextStyle(fontWeight: FontWeight.w800)),
+              )),
+              const SizedBox(width: 10),
+              Expanded(child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(backgroundColor: C2C.navy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+                onPressed: () { Navigator.pop(dctx); Navigator.push(context, MaterialPageRoute(builder: (_) => const C2COrdersScreen())); },
+                icon: const Icon(Icons.local_shipping_rounded, size: 18),
+                label: Text(tr('تتبّع الطلب', 'Track order'), style: const TextStyle(fontWeight: FontWeight.w800)),
+              )),
+            ]),
+          ),
+        ]),
+      ),
+    );
   }
 
   Widget _f(TextEditingController c, String hint, IconData ic, {bool phone = false}) => TextField(

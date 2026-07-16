@@ -39,6 +39,12 @@ class _C2CBookingsScreenState extends State<C2CBookingsScreen> {
     return s == _filter;
   }
 
+  int _count(List all, String key) {
+    if (key == 'all') return all.length;
+    if (key == 'active') return all.where((b) => ['confirmed', 'assigned', 'in_progress'].contains('${(b as Map)['state']}')).length;
+    return all.where((b) => '${(b as Map)['state']}' == key).length;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -47,20 +53,6 @@ class _C2CBookingsScreenState extends State<C2CBookingsScreen> {
         backgroundColor: C2C.navy, foregroundColor: Colors.white, elevation: 0,
         flexibleSpace: const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF17547F), C2C.navy], begin: Alignment.topRight, end: Alignment.bottomLeft))),
         title: Text(tr('حجوزاتي', 'My bookings')),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: SizedBox(height: 48, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 10), children: [
-            for (final f in _filters)
-              Padding(padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 7), child: ChoiceChip(
-                label: Text(gLang == 'en' ? f[2] : f[1]),
-                selected: _filter == f[0],
-                backgroundColor: Colors.white.withValues(alpha: 0.15),
-                selectedColor: Colors.white,
-                labelStyle: TextStyle(color: _filter == f[0] ? C2C.navy : Colors.white, fontWeight: FontWeight.w800, fontSize: 12.5),
-                onSelected: (_) => setState(() => _filter = f[0]),
-              )),
-          ])),
-        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async => _load(),
@@ -68,17 +60,56 @@ class _C2CBookingsScreenState extends State<C2CBookingsScreen> {
           future: _list,
           builder: (_, snap) {
             if (!snap.hasData) return const Center(child: CircularProgressIndicator());
-            final rows = (snap.data!).where((b) => _match(b as Map)).toList();
-            if (rows.isEmpty) {
-              return ListView(children: [
-                const SizedBox(height: 90),
-                const Center(child: Text('🗓️', style: TextStyle(fontSize: 60))),
-                Center(child: Padding(padding: const EdgeInsets.all(12), child: Text(tr('لا حجوزات هنا', 'No bookings here'), style: const TextStyle(color: Colors.grey, fontSize: 16)))),
-              ]);
-            }
-            return ListView(padding: const EdgeInsets.all(12), children: [for (final b in rows) _card(b as Map)]);
+            final all = snap.data!;
+            final rows = all.where((b) => _match(b as Map)).toList();
+            return Column(children: [
+              _filterBar(all),
+              Expanded(child: rows.isEmpty
+                  ? ListView(children: [
+                      const SizedBox(height: 70),
+                      Center(child: Container(padding: const EdgeInsets.all(22), decoration: BoxDecoration(color: C2C.navy.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(26)), child: const Icon(Icons.event_busy_rounded, size: 46, color: C2C.navy))),
+                      const SizedBox(height: 14),
+                      Center(child: Text(tr('لا حجوزات هنا', 'No bookings here'), style: const TextStyle(color: C2C.navy, fontSize: 15, fontWeight: FontWeight.w800))),
+                    ])
+                  : ListView(padding: const EdgeInsets.fromLTRB(12, 4, 12, 20), children: [for (final b in rows) _card(b as Map)])),
+            ]);
           },
         ),
+      ),
+    );
+  }
+
+  // professional filter pill bar on the light surface (clear contrast)
+  Widget _filterBar(List all) => Container(
+        color: Colors.white,
+        padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
+        child: SizedBox(height: 38, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 12), children: [
+          for (final f in _filters) ...[
+            _pill(f[0], gLang == 'en' ? f[2] : f[1], _count(all, f[0])),
+            const SizedBox(width: 8),
+          ],
+        ])),
+      );
+
+  Widget _pill(String key, String label, int count) {
+    final sel = _filter == key;
+    return GestureDetector(
+      onTap: () => setState(() => _filter = key),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          gradient: sel ? const LinearGradient(colors: [Color(0xFF17547F), C2C.navy]) : null,
+          color: sel ? null : C2C.bg,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: sel ? Colors.transparent : Colors.black12),
+          boxShadow: sel ? [BoxShadow(color: C2C.navy.withValues(alpha: 0.25), blurRadius: 8, offset: const Offset(0, 3))] : null,
+        ),
+        child: Row(children: [
+          Text(label, style: TextStyle(color: sel ? Colors.white : C2C.slate, fontWeight: FontWeight.w800, fontSize: 12.5)),
+          const SizedBox(width: 6),
+          Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1), decoration: BoxDecoration(color: sel ? Colors.white.withValues(alpha: 0.25) : Colors.black.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(10)), child: Text('$count', style: TextStyle(color: sel ? Colors.white : C2C.slate, fontWeight: FontWeight.w900, fontSize: 11))),
+        ]),
       ),
     );
   }

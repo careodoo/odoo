@@ -28,7 +28,7 @@ class _OdooBackendScreenState extends State<OdooBackendScreen> {
   Future<void> _boot() async {
     final api = context.read<AuthProvider>().api;
     final token = await api.token;
-    final url = '${api.baseUrl}/api/v1/web/sso?token=${Uri.encodeQueryComponent(token ?? '')}'
+    final url = '${api.baseUrl}/web/sso?token=${Uri.encodeQueryComponent(token ?? '')}'
         '&redirect=${Uri.encodeQueryComponent(widget.path)}';
     final c = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)

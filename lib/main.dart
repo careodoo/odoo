@@ -6,6 +6,7 @@ import 'core/theme.dart';
 import 'core/i18n.dart';
 import 'screens/c2c/root_shell.dart';
 import 'screens/c2c/c2c_shell.dart';
+import 'screens/language_onboarding.dart';
 
 void main() {
   final api = ApiClient();
@@ -26,22 +27,25 @@ class CareApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-    context.watch<LangProvider>(); // rebuild on language change
+    final lang = context.watch<LangProvider>(); // rebuild on language change
     final theme = ServiceTheme.of(auth.profile?.role ?? 'worker');
     return MaterialApp(
-      title: 'CARE FM',
+      title: 'CARE',
       debugShowCheckedModeBanner: false,
       locale: Locale(gLang),
       theme: buildTheme(theme),
       builder: (ctx, child) => Directionality(
-        textDirection: gLang == 'ar' ? TextDirection.rtl : TextDirection.ltr,
+        textDirection: gIsRtl ? TextDirection.rtl : TextDirection.ltr,
         child: child!,
       ),
       home: auth.loading
           ? const _Splash()
-          // Public app: guests land on the CARE 2 CARE storefront; login is
-          // only prompted on demand (booking / my account).
-          : (auth.isLoggedIn ? const RootShell() : const C2CShell(guest: true)),
+          : lang.firstRun
+              // first launch → let the user pick a language before anything else
+              ? const LanguageOnboardingScreen()
+              // Public app: guests land on the CARE 2 CARE storefront; login is
+              // only prompted on demand (booking / my account).
+              : (auth.isLoggedIn ? const RootShell() : const C2CShell(guest: true)),
     );
   }
 }

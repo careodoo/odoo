@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import '../core/widgets.dart';
 import 'notifications_screen.dart';
 
 /// Professional account page for CAFM/waste clients — a gradient identity
@@ -69,7 +70,7 @@ class _ClientAccountScreenState extends State<ClientAccountScreen> {
             _sectionTitle(tr('الحساب والأمان', 'Account & security')),
             _actionTile(Icons.lock_reset_rounded, tr('تغيير كلمة المرور', 'Change password'), _changePassword, const Color(0xFF0891B2)),
             _actionTile(Icons.notifications_rounded, tr('الإشعارات', 'Notifications'), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())), const Color(0xFF6366F1)),
-            _actionTile(Icons.language_rounded, context.watch<LangProvider>().isArabic ? 'English' : 'العربية', () => context.read<LangProvider>().toggle(), _green),
+            _actionTile(Icons.language_rounded, tr('اللغة', 'Language'), () => showLanguagePicker(context, onChanged: () { if (mounted) setState(() {}); }), _green),
             _actionTile(Icons.swap_horiz_rounded, tr('العودة إلى CARE 2 CARE / تبديل الوضع', 'Back to CARE 2 CARE / switch'), () => context.read<AuthProvider>().setAppMode('choose'), const Color(0xFFF5A623)),
             _sectionTitle(tr('قانوني', 'Legal')),
             _actionTile(Icons.privacy_tip_outlined, tr('سياسة الخصوصية', 'Privacy policy'), () => _url('https://ecare.care-kw.com/care_hr/static/legal/privacy.html'), const Color(0xFF64748B)),

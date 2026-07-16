@@ -715,6 +715,26 @@ class ApiClient {
       List<dynamic>.from((await _handle(
               await http.get(_u('/c2c/orders'), headers: await _headers())))['data'] as List);
 
+  Future<Map<String, dynamic>> c2cShopOrder(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/c2c/order/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> c2cShopOrderCancel(int id, {String reason = ''}) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/c2c/order/$id/cancel'),
+              headers: await _headers(), body: jsonEncode({'reason': reason}))))['data'] as Map);
+
+  // ---- delivery addresses --------------------------------------------------
+  Future<List<dynamic>> c2cAddresses() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/c2c/addresses'), headers: await _headers())))['data'] as List);
+
+  Future<Map<String, dynamic>> c2cAddressSave(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/c2c/address/save'),
+              headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<void> c2cAddressDelete(int id) async =>
+      _handle(await http.post(_u('/c2c/address/$id/delete'), headers: await _headers()));
+
   /// Account profile info + stats.
   Future<Map<String, dynamic>> accountInfo() async =>
       Map<String, dynamic>.from((await _handle(

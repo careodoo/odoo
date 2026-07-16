@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import '../core/widgets.dart';
 import 'workorders_screen.dart';
 import 'scan_screen.dart';
 import 'notifications_screen.dart';
@@ -80,10 +81,10 @@ class MoreScreen extends StatelessWidget {
     tile(Icons.apartment, tr('المبنى ثلاثي الأبعاد — إشغال حيّ', '3D building — live'), const OccupancyScreen(), c: const Color(0xFF6366F1));
     header(tr('الحساب', 'Account'));
     tile(Icons.notifications, tr('الإشعارات', 'Notifications'), const NotificationsScreen());
-    // language toggle
-    final lang = context.watch<LangProvider>();
-    tile(Icons.language, lang.isArabic ? 'English' : 'العربية', null, c: const Color(0xFF0B6EA8),
-        onTap: () => context.read<LangProvider>().toggle());
+    // language picker
+    context.watch<LangProvider>();
+    tile(Icons.language, tr('اللغة', 'Language'), null, c: const Color(0xFF0B6EA8),
+        onTap: () => showLanguagePicker(context));
     tile(Icons.swap_horiz_rounded, tr('العودة إلى CARE 2 CARE / تبديل الوضع', 'Back to CARE 2 CARE / switch'), null, c: const Color(0xFFF5A623),
         onTap: () => context.read<AuthProvider>().setAppMode('choose'));
     tile(Icons.logout, tr('تسجيل الخروج', 'Sign out'), null, c: const Color(0xFFE5484D),

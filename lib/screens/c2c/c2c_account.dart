@@ -3,8 +3,12 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
+import '../notifications_screen.dart';
 import 'c2c_shell.dart';
 import 'c2c_contracts.dart';
+import 'c2c_bookings.dart';
+import 'c2c_orders.dart';
+import 'c2c_addresses.dart';
 
 class C2CAccountScreen extends StatefulWidget {
   const C2CAccountScreen({super.key, this.canSwitchCafm = false, this.showModeSwitch = false});
@@ -70,7 +74,10 @@ class _C2CAccountScreenState extends State<C2CAccountScreen> {
               ]),
             ),
             const Padding(padding: EdgeInsets.fromLTRB(18, 8, 18, 4), child: Align(alignment: Alignment.centerRight, child: Text('الحساب', style: TextStyle(fontWeight: FontWeight.w900, color: C2C.navy, fontSize: 15)))),
-            _tile(Icons.event_note_rounded, tr('حجوزاتي', 'My bookings'), () {}, ic: const Color(0xFF0EA5E9)),
+            _tile(Icons.notifications_rounded, tr('الإشعارات', 'Notifications'), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())), ic: const Color(0xFF6366F1)),
+            _tile(Icons.event_note_rounded, tr('حجوزاتي', 'My bookings'), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const C2CBookingsScreen())), ic: const Color(0xFF0EA5E9)),
+            _tile(Icons.receipt_long_rounded, tr('طلباتي (المتجر)', 'My orders (shop)'), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const C2COrdersScreen())), ic: const Color(0xFFF59E0B)),
+            _tile(Icons.location_on_outlined, tr('عناوين التوصيل', 'Delivery addresses'), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const C2CAddressesScreen())), ic: const Color(0xFF16A34A)),
             _tile(Icons.description_outlined, tr('طلبات التعاقد وعروض الأسعار', 'Contracts & quotes'), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const C2CContractsScreen())), ic: const Color(0xFF8B5CF6)),
             if (widget.showModeSwitch)
               _tile(Icons.swap_horiz_rounded, tr('تبديل الوضع (الأنظمة الأخرى)', 'Switch mode (other systems)'), () => context.read<AuthProvider>().setAppMode('choose'), ic: const Color(0xFF7C3AED))
@@ -169,10 +176,14 @@ class _C2CAccountScreenState extends State<C2CAccountScreen> {
         ),
       );
 
-  void _langSheet() => showModalBottomSheet(context: context, builder: (_) => SafeArea(
+  void _langSheet() => showModalBottomSheet(context: context, backgroundColor: Colors.white, shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))), builder: (_) => SafeArea(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          for (final l in const [['ar', '🇰🇼 العربية'], ['en', '🇬🇧 English']])
-            ListTile(title: Text(l[1]), trailing: gLang == l[0] ? const Icon(Icons.check, color: C2C.navy) : null, onTap: () { context.read<LangProvider>().setLang(l[0]); Navigator.pop(context); setState(() {}); }),
+          const SizedBox(height: 10),
+          Container(width: 42, height: 4, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(4))),
+          Padding(padding: const EdgeInsets.all(14), child: Text(tr('اختر اللغة', 'Choose language'), style: const TextStyle(fontWeight: FontWeight.w900, color: C2C.navy, fontSize: 16))),
+          for (final l in context.read<LangProvider>().languages)
+            ListTile(title: Text(l[1], style: const TextStyle(fontWeight: FontWeight.w600)), trailing: gLang == l[0] ? const Icon(Icons.check_circle_rounded, color: C2C.navy) : null, onTap: () { context.read<LangProvider>().setLang(l[0]); Navigator.pop(context); setState(() {}); }),
+          const SizedBox(height: 8),
         ]),
       ));
 }

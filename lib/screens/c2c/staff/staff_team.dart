@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/auth.dart';
 import '../../../core/i18n.dart';
 import 'staff_shell.dart';
@@ -89,8 +90,17 @@ class _StaffTeamScreenState extends State<StaffTeamScreen> {
           const SizedBox(height: 2),
           Text(tr('مهام', 'jobs'), style: const TextStyle(fontSize: 9.5, color: Crew.slate)),
         ]),
-        if (m['phone'] != null) IconButton(icon: const Icon(Icons.phone, color: Crew.teal, size: 20), onPressed: () {}),
+        if (m['phone'] != null)
+          IconButton(icon: const Icon(Icons.phone, color: Crew.teal, size: 20), onPressed: () => _dial('${m['phone']}')),
       ]),
     );
+  }
+
+  /// Place a real call to the crew member.
+  Future<void> _dial(String phone) async {
+    final u = Uri(scheme: 'tel', path: phone.replaceAll(RegExp(r'[\s-]'), ''));
+    try {
+      await launchUrl(u, mode: LaunchMode.externalApplication);
+    } catch (_) {}
   }
 }

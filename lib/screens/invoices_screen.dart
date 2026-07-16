@@ -32,8 +32,16 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
   void _load() => _future = context.read<AuthProvider>().api.clientInvoices();
 
   Future<void> _open(String url) async {
+    // don't gate on canLaunchUrl — it can report false even when a handler
+    // exists; just try, and tell the user if it genuinely fails.
     final u = Uri.parse(url);
-    if (await canLaunchUrl(u)) await launchUrl(u, mode: LaunchMode.externalApplication);
+    try {
+      if (await launchUrl(u, mode: LaunchMode.externalApplication)) return;
+    } catch (_) {}
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(tr('تعذّر فتح الرابط', 'Could not open link'))));
+    }
   }
 
   Future<void> _detail(int id) async {
