@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import 'pdf_report_screen.dart';
 
 /// Client invoices — totals, list (paid/unpaid + period + approval), and a
 /// detail sheet with pay/PDF links and accept/reject.
@@ -72,7 +73,11 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                 if (m['pay_url'] != null && (m['amount_residual'] as num) > 0) const SizedBox(width: 8),
                 if (m['pdf_url'] != null)
                   OutlinedButton.icon(
-                      onPressed: () => _open('${m['pdf_url']}'),
+                      onPressed: () => Navigator.push(context, MaterialPageRoute(
+                          builder: (_) => PdfReportScreen(
+                              url: '${m['pdf_url']}',
+                              title: tr('فاتورة ${m['name'] ?? ''}', 'Invoice ${m['name'] ?? ''}'),
+                              fileName: 'invoice-${m['name'] ?? ''}.pdf'))),
                       icon: const Icon(Icons.picture_as_pdf),
                       label: const Text('PDF')),
               ]),

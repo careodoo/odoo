@@ -12,10 +12,15 @@ import '../core/i18n.dart';
 /// the PDF must be downloaded here) and renders it inside the app with share
 /// and print actions.
 class PdfReportScreen extends StatefulWidget {
-  const PdfReportScreen({super.key, required this.path, required this.title, this.fileName});
+  const PdfReportScreen({super.key, this.path, this.url, required this.title, this.fileName})
+      : assert(path != null || url != null, 'give either an Odoo path or a full url');
 
-  /// Odoo path, e.g. /waste/order/219/report — fetched via SSO with the token.
-  final String path;
+  /// Odoo path, e.g. /waste/order/219/report — fetched via the SSO bridge.
+  final String? path;
+
+  /// A full, already-authenticated URL (e.g. a portal link carrying an
+  /// access_token). Fetched as-is — no SSO needed.
+  final String? url;
   final String title;
   final String? fileName;
 
@@ -37,14 +42,19 @@ class _PdfReportScreenState extends State<PdfReportScreen> {
     setState(() { _error = null; _bytes = null; });
     try {
       final api = context.read<AuthProvider>().api;
-      final token = await api.token;
-      // Reuse the SSO bridge: it establishes a session for the token and
-      // redirects to the report, so the PDF comes back on the same request.
-      // NOTE: api.baseUrl already ends with /api/v1 — never re-add it.
-      final url = '${api.baseUrl}/web/sso'
-          '?token=${Uri.encodeQueryComponent(token ?? '')}'
-          '&redirect=${Uri.encodeQueryComponent(widget.path)}';
-      final res = await http.get(Uri.parse(url));
+      String target;
+      if (widget.url != null) {
+        target = widget.url!; // already carries its own auth (access_token)
+      } else {
+        final token = await api.token;
+        // Reuse the SSO bridge: it establishes a session for the token and
+        // redirects to the report, so the PDF comes back on the same request.
+        // NOTE: api.baseUrl already ends with /api/v1 — never re-add it.
+        target = '${api.baseUrl}/web/sso'
+            '?token=${Uri.encodeQueryComponent(token ?? '')}'
+            '&redirect=${Uri.encodeQueryComponent(widget.path!)}';
+      }
+      final res = await http.get(Uri.parse(target));
       final body = res.bodyBytes;
       final isPdf = body.length > 4 &&
           body[0] == 0x25 && body[1] == 0x50 && body[2] == 0x44 && body[3] == 0x46; // %PDF
