@@ -92,10 +92,93 @@ REGISTRY = {
 }
 
 
+# Whitelisted workflow actions per system. A client sends an action KEY, never a
+# method name, and the method must appear here — arbitrary calls are impossible.
+# `states` gates when the button shows; empty = always. Execution uses the
+# caller's env, so Odoo still refuses if they lack write access.
+ACTIONS = {
+    'purchases': [
+        {'key': 'confirm', 'method': 'button_confirm', 'ar': 'تأكيد الطلب', 'en': 'Confirm order',
+         'states': ['draft', 'sent', 'to approve'], 'style': 'primary'},
+        {'key': 'approve', 'method': 'button_approve', 'ar': 'اعتماد', 'en': 'Approve',
+         'states': ['to approve'], 'style': 'primary'},
+        {'key': 'cancel', 'method': 'button_cancel', 'ar': 'إلغاء', 'en': 'Cancel',
+         'states': ['draft', 'sent', 'to approve', 'purchase'], 'style': 'danger', 'confirm': True},
+        {'key': 'draft', 'method': 'button_draft', 'ar': 'إعادة لمسودة', 'en': 'Reset to draft',
+         'states': ['cancel'], 'style': 'plain'},
+    ],
+    'sales': [
+        {'key': 'confirm', 'method': 'action_confirm', 'ar': 'تأكيد', 'en': 'Confirm',
+         'states': ['draft', 'sent'], 'style': 'primary'},
+        {'key': 'cancel', 'method': 'action_cancel', 'ar': 'إلغاء', 'en': 'Cancel',
+         'states': ['draft', 'sent', 'sale'], 'style': 'danger', 'confirm': True},
+        {'key': 'draft', 'method': 'action_draft', 'ar': 'إعادة لمسودة', 'en': 'Reset to draft',
+         'states': ['cancel'], 'style': 'plain'},
+    ],
+    'invoices': [
+        {'key': 'post', 'method': 'action_post', 'ar': 'ترحيل القيد', 'en': 'Post',
+         'states': ['draft'], 'style': 'primary', 'confirm': True},
+        {'key': 'draft', 'method': 'button_draft', 'ar': 'إعادة لمسودة', 'en': 'Reset to draft',
+         'states': ['posted', 'cancel'], 'style': 'plain'},
+    ],
+    'crm': [
+        {'key': 'won', 'method': 'action_set_won_rainbowman', 'ar': 'كسبت', 'en': 'Mark won',
+         'states': [], 'style': 'primary'},
+        {'key': 'lost', 'method': 'action_set_lost', 'ar': 'خسرت', 'en': 'Mark lost',
+         'states': [], 'style': 'danger', 'confirm': True},
+    ],
+    'tenders': [
+        {'key': 'under_study', 'method': 'action_set_under_study', 'ar': 'قيد الدراسة', 'en': 'Under study',
+         'states': ['new'], 'style': 'primary'},
+        {'key': 'interested', 'method': 'action_set_interested', 'ar': 'مهتمون', 'en': 'Interested',
+         'states': ['new', 'under_study', 'docs_purchased'], 'style': 'primary'},
+        {'key': 'preparing', 'method': 'action_set_preparing', 'ar': 'جارٍ التحضير', 'en': 'Preparing',
+         'states': ['interested', 'docs_purchased', 'under_study'], 'style': 'primary'},
+        {'key': 'participated', 'method': 'action_set_participated', 'ar': 'تم التقديم', 'en': 'Submitted',
+         'states': ['preparing'], 'style': 'primary'},
+        {'key': 'winner', 'method': 'action_set_winner', 'ar': '🏆 فزنا', 'en': 'Won',
+         'states': ['participated'], 'style': 'primary'},
+        {'key': 'lost', 'method': 'action_set_lost', 'ar': 'خسرنا', 'en': 'Lost',
+         'states': ['participated'], 'style': 'danger', 'confirm': True},
+        {'key': 'cancelled', 'method': 'action_set_cancelled', 'ar': 'إلغاء', 'en': 'Cancel',
+         'states': [], 'style': 'danger', 'confirm': True},
+    ],
+}
+
+
 class ManagementApi(Controller):
 
     def _spec(self, key):
         return REGISTRY.get(key)
+
+    def _raw_state(self, rec, spec):
+        """The stored state value (not its label), for gating actions."""
+        f = spec.get('state')
+        if not f or f not in rec._fields:
+            return None
+        v = rec[f]
+        return v.id if rec._fields[f].type == 'many2one' else v
+
+    def _actions_for(self, env, rec, key, spec):
+        """Actions available on THIS record for THIS user."""
+        out = []
+        defs = ACTIONS.get(key) or []
+        if not defs:
+            return out
+        # no write access → offer nothing rather than fail on tap
+        try:
+            env[spec['model']].check_access_rights('write', raise_exception=True)
+        except Exception:
+            return out
+        st = self._raw_state(rec, spec)
+        for a in defs:
+            if not hasattr(rec, a['method']):
+                continue
+            if a['states'] and st not in a['states']:
+                continue
+            out.append({'key': a['key'], 'ar': a['ar'], 'en': a['en'],
+                        'style': a.get('style', 'plain'), 'confirm': bool(a.get('confirm'))})
+        return out
 
     def _val(self, rec, fname):
         """Read a field for display, tolerating missing fields across versions."""
@@ -224,4 +307,41 @@ class ManagementApi(Controller):
             'ar': spec['ar'], 'en': spec['en'], 'icon': spec['icon'],
             'state': self._val(rec, spec.get('state')),
             'fields': fields[:40],
+            'actions': self._actions_for(env, rec, key, spec),
         })
+
+    # ---- run a whitelisted workflow action --------------------------------
+    @route(API + '/management/<string:key>/<int:rid>/action', type='http', auth='public',
+           methods=['POST'], csrf=False, cors='*')
+    def management_action(self, key, rid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        spec = self._spec(key)
+        if not spec:
+            return _err('نظام غير معروف', 404)
+        from .api import _body
+        akey = (_body() or {}).get('action')
+        adef = next((a for a in (ACTIONS.get(key) or []) if a['key'] == akey), None)
+        if not adef:
+            return _err('إجراء غير معروف', 422)
+        try:
+            rec = env[spec['model']].browse(rid)  # caller's env → Odoo enforces
+            rec.check_access_rule('write')
+            rec.read(['id'])
+        except Exception:
+            return _err('غير موجود أو غير مصرّح', 403)
+        st = self._raw_state(rec, spec)
+        if adef['states'] and st not in adef['states']:
+            return _err('لا يمكن تنفيذ هذا الإجراء في الحالة الحالية', 422)
+        if not hasattr(rec, adef['method']):
+            return _err('الإجراء غير متاح', 422)
+        try:
+            getattr(rec, adef['method'])()  # may return an ir.actions dict — ignored
+        except AccessError:
+            return _err('لا تملك صلاحية تنفيذ هذا الإجراء', 403)
+        except Exception as e:
+            return _err(str(e) or 'تعذّر تنفيذ الإجراء', 422)
+        rec.invalidate_recordset()
+        return _ok({'id': rec.id, 'state': self._val(rec, spec.get('state')),
+                    'actions': self._actions_for(env, rec, key, spec)})
