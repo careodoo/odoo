@@ -105,10 +105,18 @@ class PmsApi(Controller):
             dom += ['|', ('name', 'ilike', q), ('partner_id.name', 'ilike', q)]
         recs = P.search(dom, order='name', limit=200)
         T = env['project.task']
+        # Two grouped queries instead of two search_counts per project — the loop
+        # was ~244 queries for 122 projects and took 1.5s on the list screen.
+        def _by_project(extra):
+            rows = T.read_group([('project_id', 'in', recs.ids)] + extra,
+                                ['project_id'], ['project_id'])
+            return {r['project_id'][0]: r['project_id_count'] for r in rows if r['project_id']}
+        totals = _by_project([])
+        dones = _by_project(DOM_DONE)
         out = []
         for p in recs:
-            total = T.search_count([('project_id', '=', p.id)])
-            done = T.search_count([('project_id', '=', p.id)] + DOM_DONE)
+            total = totals.get(p.id, 0)
+            done = dones.get(p.id, 0)
             out.append({
                 'id': p.id, 'name': p.name,
                 'partner': _m2o(p.partner_id),
