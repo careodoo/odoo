@@ -16,7 +16,8 @@ class DriverWasteTripsScreen extends StatefulWidget {
 
 class _DriverWasteTripsScreenState extends State<DriverWasteTripsScreen> {
   Future<List<dynamic>>? _trips;
-  int? _sharingTripId; // trip currently broadcasting
+  int? _sharingTripId;
+  int? _busyTripId; // trip whose action is in flight
   StreamSubscription<Position>? _sub;
   Timer? _throttle;
   Position? _last;
@@ -123,6 +124,12 @@ class _DriverWasteTripsScreenState extends State<DriverWasteTripsScreen> {
         _kv(Icons.place_outlined, tr('الالتقاط', 'Pickup'), t['pickup']),
         _kv(Icons.factory_outlined, tr('مركز المعالجة', 'Center'), t['center']),
         _kv(Icons.event_outlined, tr('التاريخ', 'Date'), t['date']),
+        if ((t['total_quantity'] ?? 0) != 0)
+          _kv(Icons.inventory_2_outlined, tr('الحمولة', 'Load'),
+              tr('${t['total_quantity']} قطعة · ${t['total_qty_weight']} كجم',
+                 '${t['total_quantity']} pcs · ${t['total_qty_weight']} kg')),
+        // ---- accept + status progression (the actual job) ----
+        _driverActions(t),
         const SizedBox(height: 10),
         SizedBox(width: double.infinity, height: 48, child: ElevatedButton.icon(
           onPressed: () => _toggleShare(t['id'] as int),
@@ -136,6 +143,109 @@ class _DriverWasteTripsScreenState extends State<DriverWasteTripsScreen> {
         ])),
       ]),
     );
+  }
+
+  /// Accept the trip, then advance it step by step. The server decides which
+  /// single action is valid now and returns it as `next`.
+  Widget _driverActions(Map t) {
+    final accepted = t['accepted'] == true;
+    final next = t['next'] as Map?;
+    final busy = _busyTripId == t['id'];
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const SizedBox(height: 10),
+      // progress trail: accepted → loaded → at center
+      Row(children: [
+        _step(tr('مقبولة', 'Accepted'), accepted),
+        _bar(t['state'] == 'pickuped' || t['state'] == 'arrived' || t['state'] == 'processing'),
+        _step(tr('حُمِّلت', 'Loaded'), ['pickuped', 'arrived', 'processing'].contains('${t['state']}')),
+        _bar(t['state'] == 'arrived' || t['state'] == 'processing'),
+        _step(tr('بالمركز', 'At center'), ['arrived', 'processing'].contains('${t['state']}')),
+      ]),
+      if (next != null) ...[
+        const SizedBox(height: 12),
+        SizedBox(width: double.infinity, height: 48, child: ElevatedButton.icon(
+          onPressed: busy ? null : () => _doAction(t['id'] as int, '${next['action']}'),
+          icon: busy
+              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : Icon(next['action'] == 'accept'
+                  ? Icons.check_circle_rounded
+                  : (next['action'] == 'pickuped' ? Icons.local_shipping_rounded : Icons.flag_rounded)),
+          label: Text(gLang == 'en' ? '${next['label_en']}' : '${next['label']}',
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: next['action'] == 'accept' ? const Color(0xFF2563EB) : _green,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
+          ),
+        )),
+      ] else if (accepted) ...[
+        const SizedBox(height: 10),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(color: _green.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(12)),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            const Icon(Icons.verified_rounded, color: _green, size: 18),
+            const SizedBox(width: 6),
+            Text(tr('انتهى دورك في هذه الرحلة', 'Your part is done'),
+                style: const TextStyle(color: _green, fontWeight: FontWeight.w800, fontSize: 12.5)),
+          ]),
+        ),
+      ],
+    ]);
+  }
+
+  Widget _step(String label, bool done) => Column(children: [
+        Container(
+          width: 22, height: 22,
+          decoration: BoxDecoration(
+            color: done ? _green : Colors.white, shape: BoxShape.circle,
+            border: Border.all(color: done ? _green : Colors.black26, width: 2)),
+          child: done ? const Icon(Icons.check_rounded, size: 13, color: Colors.white) : null,
+        ),
+        const SizedBox(height: 3),
+        Text(label, style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: done ? _green : Colors.grey)),
+      ]);
+
+  Widget _bar(bool on) => Expanded(
+      child: Container(height: 3, margin: const EdgeInsets.only(bottom: 14), color: on ? _green : Colors.black12));
+
+  Future<void> _doAction(int tripId, String action) async {
+    // a status step is hard to undo in the field → confirm first
+    if (action != 'accept') {
+      final ok = await showDialog<bool>(context: context, builder: (c) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text(tr('تأكيد', 'Confirm'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+        content: Text(action == 'pickuped'
+            ? tr('هل حمّلت الكمية فعلًا وانطلقت؟', 'Have you loaded and departed?')
+            : tr('هل وصلت إلى مركز المعالجة؟', 'Have you arrived at the center?')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('تراجع', 'Back'))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: _green, foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(c, true), child: Text(tr('نعم', 'Yes'))),
+        ],
+      ));
+      if (ok != true) return;
+    }
+    if (!mounted) return;
+    setState(() => _busyTripId = tripId);
+    try {
+      await context.read<AuthProvider>().api.wasteDriverAction(tripId, action);
+      if (!mounted) return;
+      _load();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(action == 'accept' ? tr('✅ قبلت الرحلة', '✅ Trip accepted') : tr('✅ تم تحديث الحالة', '✅ Status updated')),
+        backgroundColor: _green));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('$e'), backgroundColor: const Color(0xFFC0392B)));
+      }
+    } finally {
+      if (mounted) setState(() => _busyTripId = null);
+    }
   }
 
   Widget _kv(IconData ic, String k, dynamic v) => (v == null || '$v'.isEmpty) ? const SizedBox.shrink() : Padding(

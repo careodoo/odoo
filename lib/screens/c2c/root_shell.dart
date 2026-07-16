@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../main_shell.dart';
 import '../odoo_backend_screen.dart';
+import '../waste_ops_shell.dart';
 import 'c2c_shell.dart';
 import 'mode_switch.dart';
 import 'staff/staff_shell.dart';
@@ -33,6 +34,9 @@ class _RootShellState extends State<RootShell> {
       try {
         final w = await auth.api.whoami();
         auth.interfaces = (w['interfaces'] as Map?)?.cast<String, dynamic>() ?? {};
+        // waste_role rides at the top level of whoami — keep it with the
+        // interfaces so the shell knows which waste workspace to open.
+        auth.interfaces!['waste_role'] = w['waste_role'];
         auth.defaultMode = w['default'] as String?;
       } catch (_) {
         auth.interfaces = {'c2c': true};
@@ -74,6 +78,8 @@ class _RootShellState extends State<RootShell> {
         switch (mode) {
           case 'c2c_staff':
             return const StaffShell();
+          case 'waste_ops':
+            return WasteOpsShell(role: '${auth.interfaces?['waste_role'] ?? 'driver'}');
           case 'cafm':
             return const _ModeScaffold(child: MainShell());
           case 'pms':

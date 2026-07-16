@@ -735,6 +735,29 @@ class ApiClient {
   Future<void> c2cAddressDelete(int id) async =>
       _handle(await http.post(_u('/c2c/address/$id/delete'), headers: await _headers()));
 
+  /// Driver: accept the trip / advance its status (accept|pickuped|arrived).
+  Future<Map<String, dynamic>> wasteDriverAction(int tripId, String action) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/waste/driver/trip/$tripId/action'),
+              headers: await _headers(), body: jsonEncode({'action': action}))))['data'] as Map);
+
+  // ---- waste operations (ops manager) -------------------------------------
+  /// Orders this ops manager owns. filter: unassigned | open | done
+  Future<List<dynamic>> wasteOpsOrders({String filter = 'open'}) async =>
+      List<dynamic>.from((await _handle(await http.get(
+              _u('/waste/ops/orders?filter=$filter'), headers: await _headers())))['data'] as List);
+
+  /// Drivers registered on this order's project (the assignable pool).
+  Future<List<dynamic>> wasteOpsDrivers(int orderId) async =>
+      List<dynamic>.from((await _handle(await http.get(
+              _u('/waste/ops/drivers?order_id=$orderId'), headers: await _headers())))['data'] as List);
+
+  /// Assign a driver — this is where the operation starts.
+  Future<Map<String, dynamic>> wasteOpsAssign(int orderId, int driverId) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/waste/ops/order/$orderId/assign'),
+              headers: await _headers(), body: jsonEncode({'driver_id': driverId}))))['data'] as Map);
+
   /// Account profile info + stats.
   Future<Map<String, dynamic>> accountInfo() async =>
       Map<String, dynamic>.from((await _handle(

@@ -17,6 +17,7 @@ class AppMode {
 const _allModes = [
   AppMode('c2c', Icons.storefront_rounded, 'CARE 2 CARE', 'CARE 2 CARE', 'الخدمات المنزلية والمتجر', [Color(0xFF17547F), C2C.navy]),
   AppMode('c2c_staff', Icons.badge_rounded, 'فريق العمل', 'Crew workspace', 'مهامك الميدانية وفريقك', [Color(0xFF0D9488), Color(0xFF115E59)]),
+  AppMode('waste_ops', Icons.recycling_rounded, 'عمليات النفايات', 'Waste operations', 'طلبات النقل وإسناد السائقين والاستلام', [Color(0xFF16A34A), Color(0xFF14532D)]),
   AppMode('cafm', Icons.apartment_rounded, 'إدارة المرافق', 'Facilities (CAFM)', 'المرافق والمباني وأوامر العمل', [Color(0xFF0891B2), Color(0xFF0E7490)]),
   AppMode('pms', Icons.account_tree_rounded, 'إدارة المشاريع', 'Projects (PMS)', 'المشاريع والمهام', [Color(0xFF7C3AED), Color(0xFF5B21B6)]),
   AppMode('management', Icons.dashboard_customize_rounded, 'الإدارة', 'Management', 'كل أنظمة الشركة (أودو)', [Color(0xFFC0392B), Color(0xFF8E2A20)]),
@@ -30,6 +31,8 @@ List<AppMode> availableModes(Map<String, dynamic>? itf) {
         return true;
       case 'c2c_staff':
         return i['c2c_staff'] == true;
+      case 'waste_ops':
+        return i['waste_ops'] == true;
       case 'cafm':
         return i['cafm'] == true;
       case 'pms':
