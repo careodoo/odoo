@@ -240,6 +240,8 @@ class _WasteOpsInboxState extends State<WasteOpsInbox> {
             _kv(Icons.inventory_2_outlined,
                 tr('${o['items_count']} صنف · ${o['qty_total']} قطعة · ${o['weight_total']} كجم',
                    '${o['items_count']} items · ${o['qty_total']} pcs · ${o['weight_total']} kg')),
+            if (o['pickup_at'] != null)
+              _kv(Icons.schedule_rounded, '${o['pickup_at']}'.replaceRange(16, null, '')),
             const SizedBox(height: 10),
             if (unassigned)
               SizedBox(width: double.infinity, height: 42, child: ElevatedButton.icon(
@@ -441,7 +443,9 @@ class _OrderSheet extends StatelessWidget {
             _row(Icons.business_rounded, tr('العميل', 'Client'), '${o['client'] ?? '—'}'),
             _row(Icons.location_on_outlined, tr('الالتقاط', 'Pickup'), '${o['pickup'] ?? '—'}'),
             _row(Icons.category_outlined, tr('النوع', 'Type'), '${o['type'] ?? '—'}'),
-            _row(Icons.schedule_rounded, tr('وقت الطلب', 'Requested'), '${o['date'] ?? '—'}'),
+            _row(Icons.schedule_rounded, tr('🕒 موعد الرفع المطلوب', '🕒 Requested pickup'),
+                '${o['pickup_at'] ?? o['date'] ?? '—'}'),
+            _row(Icons.event_note_outlined, tr('وقت تقديم الطلب', 'Filed on'), '${o['date'] ?? '—'}'),
             _row(Icons.inventory_2_outlined, tr('الأصناف', 'Items'),
                 tr('${o['items_count']} صنف · ${o['qty_total']} قطعة · ${o['weight_total']} كجم',
                    '${o['items_count']} items · ${o['qty_total']} pcs · ${o['weight_total']} kg')),

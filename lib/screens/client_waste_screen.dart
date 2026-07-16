@@ -394,7 +394,8 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
               _card(tr('التفاصيل', 'Details'), [
                 _kv(Icons.place_outlined, tr('موقع الالتقاط', 'Pickup'), r['pickup']),
                 _kv(Icons.route_outlined, tr('الرحلة', 'Trip'), r['trip']),
-                _kv(Icons.event_outlined, tr('التاريخ', 'Date'), r['order_date']),
+                _kv(Icons.schedule_rounded, tr('🕒 موعد الرفع المطلوب', '🕒 Requested pickup'),
+                    r['order_date'] ?? r['request_date']),
                 _kv(Icons.category_outlined, tr('النوع', 'Type'), r['type']),
               ]),
               if (items.isNotEmpty) _card(tr('الأصناف', 'Items'), [for (final i in items) _itemRow(i as Map)]),

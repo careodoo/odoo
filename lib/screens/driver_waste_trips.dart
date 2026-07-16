@@ -123,7 +123,30 @@ class _DriverWasteTripsScreenState extends State<DriverWasteTripsScreen> {
         const SizedBox(height: 8),
         _kv(Icons.place_outlined, tr('الالتقاط', 'Pickup'), t['pickup']),
         _kv(Icons.factory_outlined, tr('مركز المعالجة', 'Center'), t['center']),
-        _kv(Icons.event_outlined, tr('التاريخ', 'Date'), t['date']),
+        // requested pickup date + TIME — what the driver must show up for
+        if (t['pickup_at'] != null)
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(color: _navy.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(10)),
+            child: Row(children: [
+              const Icon(Icons.schedule_rounded, size: 17, color: _navy),
+              const SizedBox(width: 7),
+              Text(tr('موعد الرفع', 'Pickup'), style: const TextStyle(fontSize: 11.5, color: Colors.grey)),
+              const Spacer(),
+              Text('${t['pickup_at']}'.substring(0, 10),
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: _navy)),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(color: _navy, borderRadius: BorderRadius.circular(8)),
+                child: Text('🕒 ${'${t['pickup_at']}'.substring(11, 16)}',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
+              ),
+            ]),
+          )
+        else
+          _kv(Icons.event_outlined, tr('التاريخ', 'Date'), t['date']),
         if ((t['total_quantity'] ?? 0) != 0)
           _kv(Icons.inventory_2_outlined, tr('الحمولة', 'Load'),
               tr('${t['total_quantity']} قطعة · ${t['total_qty_weight']} كجم',
