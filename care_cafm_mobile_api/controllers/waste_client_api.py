@@ -170,17 +170,26 @@ class WasteClientApi(Controller):
         a = request.env['ir.attachment'].sudo().browse(int(aid)).exists()
         if not a or a.res_model not in ('cafm.waste.order', 'cafm.waste.trip'):
             return request.not_found()
-        raw = base64.b64decode(a.datas) if a.datas else b''
-        return request.make_response(raw, headers=[
-            ('Content-Type', a.mimetype or 'application/octet-stream'),
-            ('Content-Length', str(len(raw))), ('Cache-Control', 'public, max-age=3600')])
+        # Stream it: players need HTTP Range (206) to play/seek a video, which a
+        # plain make_response can't do — it also avoids base64-decoding a whole
+        # 12MB clip into memory on every request.
+        stream = request.env['ir.binary']._get_stream_from(a)
+        res = stream.get_response(as_attachment=False)
+        res.headers['Cache-Control'] = 'public, max-age=3600'
+        res.headers.setdefault('Accept-Ranges', 'bytes')
+        return res
 
     def _item_dict(self, line):
         it = line.item_id
+        qty = line.quantity or 0
+        unit = (getattr(line, 'weight', 0) or 0)  # weight of ONE piece
         return {
             'item': it.name if it else None,
             'item_id': it.id if it else None,
-            'qty': line.quantity,
+            'qty': qty,
+            # unit_weight = per piece, weight = the line total (qty × piece)
+            'unit_weight': round(unit, 3),
+            'weight': round(qty * unit, 1),
             'uom': it.uom_id.name if (it and 'uom_id' in it._fields and it.uom_id) else None,
             'image': _abs('/api/v1/waste/item/%s/image' % it.id) if (it and getattr(it, 'image', False)) else None,
         }
@@ -247,8 +256,11 @@ class WasteClientApi(Controller):
             'driver': t.driver_id.name if ('driver_id' in t._fields and t.driver_id) else None,
             'location': dloc(t),
             'media': self._media_list(t.media_ids if 'media_ids' in t._fields else None),
+            # weight = the LINE total (qty × piece); unit_weight = per piece
             'items': [{'item': l.item_id.name if ('item_id' in l._fields and l.item_id) else None,
-                       'qty': getattr(l, 'quantity', 0), 'weight': getattr(l, 'weight', 0),
+                       'qty': getattr(l, 'quantity', 0),
+                       'unit_weight': round(getattr(l, 'weight', 0) or 0, 3),
+                       'weight': round((getattr(l, 'quantity', 0) or 0) * (getattr(l, 'weight', 0) or 0), 1),
                        'image': _abs('/api/v1/waste/item/%s/image' % l.item_id.id) if ('item_id' in l._fields and l.item_id and getattr(l.item_id, 'image', False)) else None}
                       for l in t.trip_line_ids] if 'trip_line_ids' in t._fields else [],
             'order_count': len(t.order_ids) if 'order_ids' in t._fields else (1 if ('order_id' in t._fields and t.order_id) else 0),
@@ -669,6 +681,10 @@ class WasteClientApi(Controller):
         return _ok({
             'projects': [{'id': p.id, 'name': p.name} for p in projs],
             'pickups': [{'id': p.id, 'name': p.name, 'project_id': p.project_id.id} for p in picks],
-            'items': [{'id': i.id, 'name': i.name} for i in items] if items is not None else [],
+            # weight = per piece, so the form can preview the estimated total
+            'items': [{'id': i.id, 'name': i.name,
+                       'weight': round(getattr(i, 'weight', 0) or 0, 3),
+                       'image': _abs('/api/v1/waste/item/%s/image' % i.id) if getattr(i, 'image', False) else None}
+                      for i in items] if items is not None else [],
             'types': [{'id': t.id, 'name': t.name} for t in types] if types is not None else [],
         })

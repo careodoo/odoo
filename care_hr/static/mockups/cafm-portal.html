@@ -1296,7 +1296,7 @@ const ROUTES={
     const cur=flow.indexOf(x.state);const cancelled=x.state==='cancelled';
     const steps=cancelled?'<div style="color:#e11d48;font-weight:700;padding:8px">✖ '+T('أُلغي الطلب','Order cancelled')+'</div>'
       :'<div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0">'+flow.map((s,i)=>{const done=cur>=i;const c=done?'#16a34a':'#cbd5e1';return '<span style="display:flex;align-items:center;gap:4px;font-size:11px;color:'+(done?'#0f172a':'#94a3b8')+'"><span style="width:16px;height:16px;border-radius:50%;background:'+c+';color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px">'+(done?'✓':(i+1))+'</span>'+esc(STL[s])+(i<flow.length-1?' <span style="color:#cbd5e1">›</span>':'')+'</span>';}).join('')+'</div>';
-    const items=(x.items||[]).length?'<table style="width:100%;font-size:12.5px;margin-top:6px"><thead><tr><th style="text-align:right">'+T('الصنف','Item')+'</th><th>'+T('الكمية','Qty')+'</th></tr></thead><tbody>'+x.items.map(i=>'<tr><td>'+esc(i.item||'—')+'</td><td class="num">'+i.qty+'</td></tr>').join('')+'</tbody></table>':'<div class="muted">—</div>';
+    const items=wItemsTable(x.items);
     const kv=(k,v)=>v?'<tr><td>'+k+'</td><td>'+esc(v)+'</td></tr>':'';
     openDrawer('♻️ '+x.serial,
       '<div class="sec-t">'+T('حالة الطلب','Order status')+'</div>'+steps
@@ -1304,31 +1304,105 @@ const ROUTES={
       +kv(T('المشروع','Project'),x.project)+kv(T('موقع الالتقاط','Pickup'),x.pickup)+kv(T('النوع','Type'),x.type)
       +kv(T('الرحلة','Trip'),x.trip)+kv(T('تاريخ الطلب','Order date'),dshort(x.order_date))
       +'</table>'
-      +'<div class="sec-t">'+T('فريق العملية','Operation team')+'</div><table class="kv">'
-      +kv(T('مدير العمليات','Ops manager'),x.ops_manager)+kv(T('السائق','Driver'),x.driver)+kv(T('مستلم الكميات','Receiver'),x.receiver)
-      +kv(T('الوزن النهائي','Final weight'),x.final_weight?(x.final_weight+' كجم'):null)+kv(T('ملاحظة الاستلام','Receipt note'),x.final_note)
-      +'</table>'
+      +'<div class="sec-t">'+T('فريق العملية','Operation team')+'</div>'+wTeamBlock(x)
       +'<div class="sec-t">'+T('الأصناف','Items')+'</div>'+items
       +(x.proof?'<div class="sec-t">'+T('صورة الإثبات','Proof photo')+'</div><img src="'+esc(x.proof)+'" style="width:100%;border-radius:12px;margin-top:6px">':'')
       +(x.notes?'<div class="sec-t">'+T('ملاحظات','Notes')+'</div>'+esc(x.notes):''));};
   window.wasteNew=async()=>{const o=await api('/client/waste/options').catch(()=>({projects:[],pickups:[],items:[]}));
     if(!o.projects.length){toast(T('لا يوجد مشروع نفايات مرتبط','No waste project linked'));return;}
-    openDrawer(T('طلب نقل جديد','New collection order'),
-      '<label class="lbl">'+T('المشروع','Project')+'</label><select class="inp" id="wProj">'+o.projects.map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join('')+'</select>'
-      +'<label class="lbl">'+T('موقع الالتقاط','Pickup location')+'</label><select class="inp" id="wPick"><option value="">—</option>'+o.pickups.map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join('')+'</select>'
-      +'<label class="lbl">'+T('الصنف','Item')+'</label><select class="inp" id="wItem"><option value="">—</option>'+o.items.map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join('')+'</select>'
-      +'<label class="lbl">'+T('الكمية','Quantity')+'</label><input class="inp" id="wQty" type="number" value="1">'
-      +'<button class="btn p" style="margin-top:10px" onclick="wasteSend()">📤 '+T('إرسال الطلب','Submit')+'</button>');};
-  window.wasteSend=async()=>{const V=id=>(document.getElementById(id)||{}).value;const it=V('wItem');
-    try{await api('/client/waste/order/create',{method:'POST',body:{project_id:+V('wProj'),pickup_location_id:V('wPick')?+V('wPick'):null,items:it?[{item_id:+it,quantity:+V('wQty')||1}]:[]}});toast(T('أُرسل طلب النقل','Order submitted'));closeDrawer();go('waste_overview');}catch(e){toast(e.message);}};
+    window.__wOpts=o;
+    const opt=(a,ph)=>(ph?'<option value="">'+ph+'</option>':'')+a.map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join('');
+    openDrawer('♻️ '+T('طلب نقل جديد','New collection order'),
+      '<div style="background:linear-gradient(120deg,#115E4B,#16A34A);border-radius:14px;padding:14px;color:#fff;margin-bottom:12px">'
+        +'<div style="font-weight:800;font-size:14px">'+T('اطلب رفع النفايات','Request a waste pickup')+'</div>'
+        +'<div style="opacity:.85;font-size:11.5px;margin-top:2px">'+T('سيصل الطلب لمسؤول العمليات ويُسنَد لسائق فورًا','Your request reaches the ops manager and gets a driver assigned')+'</div></div>'
+      +'<div class="panel" style="padding:12px">'
+      +'<label class="lbl">🏢 '+T('المشروع','Project')+'</label><select class="inp" id="wProj">'+opt(o.projects)+'</select>'
+      +'<label class="lbl">📍 '+T('موقع الالتقاط','Pickup location')+'</label><select class="inp" id="wPick">'+opt(o.pickups,'—')+'</select>'
+      +'<div class="sec-t" style="margin-top:12px">'+T('الأصناف المطلوب رفعها','Items to collect')+'</div>'
+      +'<div id="wLines"></div>'
+      +'<button class="btn" style="width:100%;margin-top:8px;border:1px dashed #cbd5e1;background:#f8fafc" onclick="wAddLine()">➕ '+T('إضافة صنف','Add item')+'</button>'
+      +'<div id="wTotals" style="display:flex;gap:10px;margin-top:12px"></div>'
+      +'<button class="btn p" style="width:100%;margin-top:12px" onclick="wasteSend()">📤 '+T('إرسال الطلب','Submit request')+'</button>'
+      +'</div>');
+    wAddLine();};
+
+  // one editable line per item, with a live weight preview
+  window.wAddLine=()=>{const o=window.__wOpts||{items:[]};const box=document.getElementById('wLines');if(!box)return;
+    const i=box.children.length;
+    const d=document.createElement('div');
+    d.className='wline';
+    d.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:6px';
+    d.innerHTML='<select class="inp wItem" style="flex:2;margin:0" onchange="wCalc()"><option value="">'+T('اختر صنفًا','Choose item')+'</option>'
+      +o.items.map(x=>'<option value="'+x.id+'" data-w="'+(x.weight||0)+'">'+esc(x.name)+'</option>').join('')+'</select>'
+      +'<input class="inp wQty" type="number" min="1" value="1" style="flex:1;margin:0" oninput="wCalc()">'
+      +'<span class="wSub muted num" style="min-width:58px;text-align:center;font-size:11.5px">0 '+T('كجم','kg')+'</span>'
+      +'<button class="btn" style="padding:6px 9px;background:#fee2e2;color:#b91c1c" onclick="this.parentNode.remove();wCalc()">✕</button>';
+    box.appendChild(d);wCalc();};
+
+  window.wCalc=()=>{let tq=0,tw=0;
+    document.querySelectorAll('.wline').forEach(l=>{
+      const sel=l.querySelector('.wItem'),q=+(l.querySelector('.wQty')||{}).value||0;
+      const u=+((sel&&sel.selectedOptions[0])?sel.selectedOptions[0].dataset.w:0)||0;
+      const w=q*u;tq+=q;tw+=w;
+      const sub=l.querySelector('.wSub');if(sub)sub.textContent=(Math.round(w*10)/10)+' '+T('كجم','kg');});
+    const t=document.getElementById('wTotals');if(!t)return;
+    const card=(ic,v,l,c)=>'<div class="kpi" style="flex:1"><div class="top"><div class="ic" style="background:'+c+'">'+ic+'</div><div><div class="v num">'+v+'</div><div class="l">'+l+'</div></div></div></div>';
+    t.innerHTML=card('📦',Math.round(tq*10)/10,T('إجمالي الكمية','Total qty'),'#6366f1')
+               +card('⚖️',Math.round(tw*10)/10,T('الوزن التقديري (كجم)','Est. weight (kg)'),'#0891b2');};
+
+  window.wasteSend=async()=>{const V=id=>(document.getElementById(id)||{}).value;
+    const items=[];document.querySelectorAll('.wline').forEach(l=>{const it=+(l.querySelector('.wItem')||{}).value||0;const q=+(l.querySelector('.wQty')||{}).value||0;if(it&&q>0)items.push({item_id:it,quantity:q});});
+    if(!items.length){toast(T('أضف صنفًا واحدًا على الأقل','Add at least one item'));return;}
+    try{await api('/client/waste/order/create',{method:'POST',body:{project_id:+V('wProj'),pickup_location_id:V('wPick')?+V('wPick'):null,items:items}});toast(T('أُرسل طلب النقل','Order submitted'));closeDrawer();go('waste_overview');}catch(e){toast(e.message);}};
   },
+
+  // ===== waste dialog helpers =====
+  // Items table: quantity, weight per piece and the LINE total (qty x piece),
+  // plus a totals row — the old table showed the piece weight next to the
+  // quantity, which read as if 157 bags weighed 2.1 kg.
+  window.wItemsTable=(items)=>{
+    if(!items||!items.length) return '<div class="muted" style="padding:8px 0">'+T('لا أصناف','No items')+'</div>';
+    const n=v=>{const x=+v||0;return x===Math.round(x)?x:(+x.toFixed(2));};
+    let tq=0,tw=0;
+    const rows=items.map(i=>{const q=+i.qty||0,u=+(i.unit_weight!=null?i.unit_weight:0),w=+(i.weight!=null?i.weight:q*u);
+      tq+=q;tw+=w;
+      return '<tr>'
+        +'<td style="display:flex;align-items:center;gap:8px">'
+          +(i.image?'<img src="'+esc(i.image)+'" style="width:30px;height:30px;border-radius:7px;object-fit:cover;background:#f1f5f9">':'')
+          +'<span>'+esc(i.item||'—')+'</span></td>'
+        +'<td class="num"><b>'+n(q)+'</b></td>'
+        +'<td class="num muted">'+n(u)+'</td>'
+        +'<td class="num" style="color:#0891b2;font-weight:700">'+n(w)+'</td></tr>';}).join('');
+    return '<table style="width:100%;font-size:12.5px;margin-top:6px">'
+      +'<thead><tr><th style="text-align:right">'+T('الصنف','Item')+'</th><th>'+T('الكمية','Qty')+'</th>'
+      +'<th>'+T('وزن القطعة','Unit kg')+'</th><th>'+T('الإجمالي (كجم)','Total kg')+'</th></tr></thead>'
+      +'<tbody>'+rows+'</tbody>'
+      +'<tfoot><tr style="border-top:2px solid #e2e8f0;font-weight:800">'
+      +'<td>'+T('الإجمالي','Total')+'</td><td class="num">'+n(tq)+'</td><td></td>'
+      +'<td class="num" style="color:#0891b2">'+n(tw)+'</td></tr></tfoot></table>';};
+
+  // Operation team: never render an empty section — show who is missing.
+  window.wTeamBlock=(x)=>{
+    const row=(ic,k,v,pending)=>'<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9">'
+      +'<div style="width:30px;height:30px;border-radius:9px;background:'+(v?'#ecfdf5':'#f8fafc')+';display:flex;align-items:center;justify-content:center;font-size:14px">'+ic+'</div>'
+      +'<div style="flex:1"><div class="muted" style="font-size:11px">'+k+'</div>'
+      +'<div style="font-weight:700;font-size:12.5px;color:'+(v?'#0f172a':'#94a3b8')+'">'+(v?esc(v):pending)+'</div></div></div>';
+    let h='<div style="margin-top:6px">'
+      +row('👨‍💼',T('مدير العمليات','Ops manager'),x.ops_manager,T('لم يُحدَّد','Not set'))
+      +row('🚛',T('السائق','Driver'),x.driver,T('بانتظار الإسناد','Awaiting assignment'))
+      +row('🏭',T('مستلم الكميات','Receiver'),x.receiver,T('لم يُحدَّد','Not set'));
+    if(x.final_weight) h+=row('⚖️',T('الوزن النهائي المستلم','Final weight'),x.final_weight+' '+T('كجم','kg'),'');
+    if(x.final_note) h+=row('📝',T('ملاحظة الاستلام','Receipt note'),x.final_note,'');
+    return h+'</div>';};
+
   async waste_trips(p){CUR='waste_trips';const rs=await api('/client/waste/trips').catch(()=>[]);
     const STL={draft:'مسودة',scheduled:'مجدول',pickuped:'تم الالتقاط',arrived:'وصل',processing:'قيد المعالجة',delivered:'تم التسليم',completed:'مكتمل',cancelled:'ملغى'};
     window.__wTrips=rs;
     p.innerHTML='<div class="panel">'+(rs.length?'<table><thead><tr><th>'+T('الرحلة','Trip')+'</th><th>'+T('موقع الالتقاط','Pickup')+'</th><th>'+T('مركز المعالجة','Center')+'</th><th>'+T('الوزن','Weight')+'</th><th>'+T('الكمية','Qty')+'</th><th>'+T('التاريخ','Date')+'</th><th>'+T('الحالة','Status')+'</th></tr></thead><tbody>'
       +rs.map(x=>'<tr class="clk" onclick="__wTrip('+x.id+')"><td><b>'+esc(x.sequence)+'</b></td><td>'+esc(x.pickup||'—')+'</td><td>'+esc(x.center||'—')+'</td><td class="num">'+(x.total_weight||0)+'</td><td class="num">'+(x.total_quantity||0)+'</td><td class="muted">'+dshort(x.date)+'</td><td><span class="pill">'+esc(STL[x.state]||x.state_label||'')+'</span></td></tr>').join('')+'</tbody></table>':emptyState(T('لا رحلات','No trips')))+'</div>';
   window.__wTrip=id=>{const x=(window.__wTrips||[]).find(y=>y.id===id);if(!x)return;const kv=(k,v)=>v?'<tr><td>'+k+'</td><td>'+esc(v)+'</td></tr>':'';
-    const items=(x.items||[]).length?'<table style="width:100%;font-size:12.5px;margin-top:6px"><thead><tr><th style="text-align:right">'+T('الصنف','Item')+'</th><th>'+T('الكمية','Qty')+'</th><th>'+T('الوزن','Weight')+'</th></tr></thead><tbody>'+x.items.map(i=>'<tr><td>'+esc(i.item||'—')+'</td><td class="num">'+i.qty+'</td><td class="num">'+i.weight+'</td></tr>').join('')+'</tbody></table>':'<div class="muted">—</div>';
+    const items=wItemsTable(x.items);
     openDrawer('🚛 '+x.sequence,'<div class="kpis" style="grid-template-columns:1fr 1fr"><div class="kpi"><div class="top"><div class="ic" style="background:#0891b2">⚖️</div><div><div class="v num">'+(x.total_weight||0)+'</div><div class="l">'+T('الوزن الكلي','Total weight')+'</div></div></div></div><div class="kpi"><div class="top"><div class="ic" style="background:#6366f1">📦</div><div><div class="v num">'+(x.total_quantity||0)+'</div><div class="l">'+T('الكمية','Quantity')+'</div></div></div></div></div>'
       +'<table class="kv" style="margin-top:8px">'+kv(T('موقع الالتقاط','Pickup'),x.pickup)+kv(T('مركز المعالجة','Center'),x.center)+kv(T('الفريق','Team'),x.team)+kv(T('التاريخ','Date'),dshort(x.date))+kv(T('وقت الالتقاط','Pickup time'),dshort(x.pickuped))+kv(T('عدد الأوامر','Orders'),x.order_count)+'<tr><td>'+T('الحالة','Status')+'</td><td><span class="pill">'+esc(STL[x.state]||x.state_label||'')+'</span></td></tr></table>'
       +'<div class="sec-t">'+T('الأصناف المنقولة','Transported items')+'</div>'+items);};
