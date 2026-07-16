@@ -379,6 +379,7 @@ class WasteClientApi(Controller):
             'pickup': o.pickup_location_id.name if o.pickup_location_id else None,
             'type': o.type_id.name if o.type_id else None,
             'date': _d(o.request_datetime),
+            'pickup_at': _d(o.order_datetime or o.request_datetime),
             'driver': o.driver_id.name if o.driver_id else None,
             'driver_id': o.driver_id.id or None,
             'receiver': o.receiver_id.name if o.receiver_id else None,
@@ -449,6 +450,10 @@ class WasteClientApi(Controller):
             'pickup': t.pickup_location_id.name if t.pickup_location_id else None,
             'center': t.center_id.name if t.center_id else None,
             'date': _d(t.trip_date),
+            # trip_date is a DATE — the driver needs the requested TIME, which
+            # lives on the order. Without this he cannot know when to show up.
+            'pickup_at': _d((t.order_id.order_datetime or t.order_id.request_datetime)
+                            if t.order_id else False),
             'total_quantity': t.total_quantity, 'total_qty_weight': t.total_qty_weight,
             'sharing': bool(t.driver_lat or t.driver_lng),
             'accepted': t.driver_accepted,
