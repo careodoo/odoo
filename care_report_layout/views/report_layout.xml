@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- The CARE letterhead. Structured like Odoo's own external layouts so it
+       can be selected as the company's report layout: every report that calls
+       web.external_layout then renders with this header/footer. -->
+  <template id="external_layout_care" name="CARE Letterhead">
+    <!-- state badge colours, inline: web.report_assets_common no longer exists in 17 -->
+    <style>
+      .completed-state { background:#1e7e34; }
+      .delivered-state { background:#28a745; }
+      .processing-state{ background:#0d6efd; }
+      .arrived-state   { background:#6c757d; }
+      .pickuped-state  { background:#fd7e14; }
+      .scheduled-state { background:#a855f7; }
+      .draft-state     { background:#94a3b8; }
+      .cancelled-state { background:#dc3545; }
+    </style>
+    <div class="header">
+      <img src="/care_report_layout/static/src/img/header.png"
+           alt="CARE" class="w-100"/>
+    </div>
+
+    <div class="article o_report_layout_care"
+         t-att-data-oe-model="doc and doc._name"
+         t-att-data-oe-id="doc and doc.id"
+         t-att-data-oe-lang="doc and doc.env.context.get('lang')">
+      <t t-out="0"/>
+    </div>
+
+    <div class="footer o_standard_footer">
+      <img src="/care_report_layout/static/src/img/footer.png"
+           alt="CARE" class="w-100"/>
+      <div class="text-center" style="font-size:9px;color:#888;margin-top:2px">
+        <span class="page"/> / <span class="topage"/>
+      </div>
+    </div>
+  </template>
+
+  <!-- Offer it in Settings → Configure Document Layout -->
+  <record id="report_layout_care" model="report.layout">
+    <field name="name">CARE Letterhead</field>
+    <field name="sequence">1</field>
+    <field name="view_id" ref="external_layout_care"/>
+  </record>
+
+</odoo>
