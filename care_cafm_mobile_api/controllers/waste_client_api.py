@@ -436,7 +436,9 @@ class WasteClientApi(Controller):
         if 'cafm.waste.trip' not in env:
             return _ok([])
         T = env['cafm.waste.trip'].sudo()
-        dom = [('driver_id', '=', env.user.id)]
+        # match on the trip OR its order: the two driver fields can drift if one
+        # is edited in the back-office, and the driver must never lose his work.
+        dom = ['|', ('driver_id', '=', env.user.id), ('order_id.driver_id', '=', env.user.id)]
         if not kw.get('all'):
             dom.append(('states', 'in', ('scheduled', 'pickuped', 'arrived', 'processing')))
         recs = T.search(dom, order='sequence desc', limit=100)
@@ -662,7 +664,14 @@ class WasteClientApi(Controller):
         if b.get('type_id'):
             vals['type_id'] = int(b['type_id'])
         if b.get('request_datetime'):
-            vals['request_datetime'] = b['request_datetime']
+            # the requested pickup date+TIME; order_datetime mirrors it, as the
+            # legacy form did (both carry meaningful times like 08:00)
+            vals['request_datetime'] = b['request_datetime'].replace('T', ' ')
+            if len(vals['request_datetime']) == 16:
+                vals['request_datetime'] += ':00'
+            vals.setdefault('order_datetime', vals['request_datetime'])
+        if b.get('order_datetime'):
+            vals['order_datetime'] = b['order_datetime'].replace('T', ' ')
         if b.get('notes'):
             vals['notes'] = b['notes']
         lines = []

@@ -409,6 +409,14 @@ class WasteOrder(models.Model):
         if {'ops_manager_id', 'driver_id', 'receiver_id'} & set(vals):
             for o in self:
                 o._notify_roles()
+        # keep the trip's driver in step with the order's. They are separate
+        # fields, so editing one in the back-office silently drifted them apart —
+        # and the driver's workspace filters trips by trip.driver_id, so the
+        # assigned driver would stop seeing his own trip.
+        if vals.get('driver_id'):
+            for o in self:
+                if o.trip_id and o.trip_id.driver_id.id != vals['driver_id']:
+                    o.trip_id.driver_id = vals['driver_id']
         return res
 
     # ---- state machine (order drives; trip follows) ----------------------

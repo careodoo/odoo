@@ -735,6 +735,12 @@ let CUR='dashboard';
     a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));
     a.download='waste-orders.csv';a.click();};
 
+
+  // default requested slot: tomorrow 08:00 (local), in datetime-local format
+  window.wDefaultWhen=()=>{const d=new Date();d.setDate(d.getDate()+1);d.setHours(8,0,0,0);
+    const p=n=>String(n).padStart(2,'0');
+    return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes());};
+
 const ROUTES={
   async dashboard(p){CUR='dashboard';
     let period='all',svc='all';
@@ -1458,7 +1464,7 @@ const ROUTES={
       +'<div class="panel" style="margin-top:14px"><div id="woList"></div></div>';
     window.__wOrders=rs;window.__wST=ST;window.__wSTL=STL;
     const head='<thead><tr><th>'+T('الرقم','Serial')+'</th><th>'+T('المشروع','Project')+'</th><th>'+T('موقع الالتقاط','Pickup')+'</th><th>'+T('الأصناف','Items')+'</th><th>'+T('الرحلة','Trip')+'</th><th>'+T('التاريخ','Date')+'</th><th>'+T('الحالة','Status')+'</th></tr></thead>';
-    const row=x=>{const c=ST[x.state]||'#64748b';const items=(x.items||[]).map(i=>esc(i.item||'')+' ×'+i.qty).join('، ');return '<tr class="clk" onclick="__wOrd('+x.id+')"><td><b>'+esc(x.serial)+'</b></td><td class="muted">'+esc(x.project||'—')+'</td><td>'+esc(x.pickup||'—')+'</td><td class="muted" style="font-size:12px">'+esc(items||'—')+'</td><td>'+esc(x.trip||'—')+'</td><td class="muted">'+dshort(x.order_date)+'</td><td><span class="pill" style="background:'+c+'1f;color:'+c+'">'+esc(STL[x.state]||x.state_label)+'</span></td></tr>';};
+    const row=x=>{const c=ST[x.state]||'#64748b';const items=(x.items||[]).map(i=>esc(i.item||'')+' ×'+i.qty).join('، ');return '<tr class="clk" onclick="__wOrd('+x.id+')"><td><b>'+esc(x.serial)+'</b></td><td class="muted">'+esc(x.project||'—')+'</td><td>'+esc(x.pickup||'—')+'</td><td class="muted" style="font-size:12px">'+esc(items||'—')+'</td><td>'+esc(x.trip||'—')+'</td><td class="muted">'+'<div style="font-weight:600">'+dshort(x.order_date||x.request_date).slice(0,10)+'</div><div class="muted" style="font-size:11px">🕒 '+dshort(x.order_date||x.request_date).slice(11)+'</div>'+'</td><td><span class="pill" style="background:'+c+'1f;color:'+c+'">'+esc(STL[x.state]||x.state_label)+'</span></td></tr>';};
     pgReset('wo');pagedTable('woList',rs,head,row,'wo',()=>{},20);
   window.__wOrd=id=>{const x=(window.__wOrders||[]).find(y=>y.id===id);if(!x)return;
     const flow=['draft','scheduled','pickuped','arrived','processing','delivered','completed'];
@@ -1471,7 +1477,9 @@ const ROUTES={
       '<div class="sec-t">'+T('حالة الطلب','Order status')+'</div>'+steps
       +'<table class="kv" style="margin-top:8px">'
       +kv(T('المشروع','Project'),x.project)+kv(T('موقع الالتقاط','Pickup'),x.pickup)+kv(T('النوع','Type'),x.type)
-      +kv(T('الرحلة','Trip'),x.trip)+kv(T('تاريخ الطلب','Order date'),dshort(x.order_date))
+      +kv(T('🕒 تاريخ ووقت الرفع المطلوب','🕒 Requested pickup'),dshort(x.order_date||x.request_date))
+      +kv(T('تاريخ تقديم الطلب','Requested on'),dshort(x.request_date))
+      +kv(T('الرحلة','Trip'),x.trip)
       +'</table>'
       +'<div class="sec-t">'+T('فريق العملية','Operation team')+'</div>'+wTeamBlock(x)
       +'<div class="sec-t">'+T('الأصناف','Items')+'</div>'+items
@@ -1489,6 +1497,9 @@ const ROUTES={
       +'<div class="panel" style="padding:12px">'
       +'<label class="lbl">🏢 '+T('المشروع','Project')+'</label><select class="inp" id="wProj">'+opt(o.projects)+'</select>'
       +'<label class="lbl">📍 '+T('موقع الالتقاط','Pickup location')+'</label><select class="inp" id="wPick">'+opt(o.pickups,'—')+'</select>'
+      +'<label class="lbl">📅 '+T('تاريخ ووقت الرفع المطلوب','Requested date & time')+'</label>'
+      +'<input class="inp" type="datetime-local" id="wWhen" value="'+wDefaultWhen()+'">'
+      +'<div class="muted" style="font-size:11px;margin-top:-4px">'+T('الوقت مهم — يظهر لفريق العمليات والسائق','The time matters — ops and the driver see it')+'</div>'
       +'<div class="sec-t" style="margin-top:12px">'+T('الأصناف المطلوب رفعها','Items to collect')+'</div>'
       +'<div id="wLines"></div>'
       +'<button class="btn" style="width:100%;margin-top:8px;border:1px dashed #cbd5e1;background:#f8fafc" onclick="wAddLine()">➕ '+T('إضافة صنف','Add item')+'</button>'
@@ -1524,7 +1535,9 @@ const ROUTES={
   window.wasteSend=async()=>{const V=id=>(document.getElementById(id)||{}).value;
     const items=[];document.querySelectorAll('.wline').forEach(l=>{const it=+(l.querySelector('.wItem')||{}).value||0;const q=+(l.querySelector('.wQty')||{}).value||0;if(it&&q>0)items.push({item_id:it,quantity:q});});
     if(!items.length){toast(T('أضف صنفًا واحدًا على الأقل','Add at least one item'));return;}
-    try{await api('/client/waste/order/create',{method:'POST',body:{project_id:+V('wProj'),pickup_location_id:V('wPick')?+V('wPick'):null,items:items}});toast(T('أُرسل طلب النقل','Order submitted'));closeDrawer();go('waste_overview');}catch(e){toast(e.message);}};
+    const when=V('wWhen');
+    if(!when){toast(T('اختر تاريخ ووقت الرفع','Pick the requested date & time'));return;}
+    try{await api('/client/waste/order/create',{method:'POST',body:{project_id:+V('wProj'),pickup_location_id:V('wPick')?+V('wPick'):null,request_datetime:when,items:items}});toast(T('أُرسل طلب النقل','Order submitted'));closeDrawer();go('waste_overview');}catch(e){toast(e.message);}};
   },
 
   async waste_trips(p){CUR='waste_trips';const rs=await api('/client/waste/trips').catch(()=>[]);
