@@ -18,3 +18,5 @@ acc_waste_orderline_p,cafm.waste.order.line.p,model_cafm_waste_order_line,base.g
 acc_waste_tripline_p,cafm.waste.trip.line.p,model_cafm_waste_trip_line,base.group_portal,1,0,0,0
 acc_waste_trip_p,cafm.waste.trip.p,model_cafm_waste_trip,base.group_portal,1,0,0,0
 acc_waste_order_p,cafm.waste.order.p,model_cafm_waste_order,base.group_portal,1,0,1,0
+acc_waste_assign_u,cafm.waste.assign.driver.u,model_cafm_waste_assign_driver,care_cafm_waste.group_waste_user,1,1,1,1
+acc_waste_assign_m,cafm.waste.assign.driver.m,model_cafm_waste_assign_driver,care_cafm_waste.group_waste_manager,1,1,1,1

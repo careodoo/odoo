@@ -101,6 +101,21 @@ class WasteProject(models.Model):
     notes = fields.Html()
     pickup_location_ids = fields.One2many('cafm.waste.pickup.location', 'project_id', string='مواقع الالتقاط')
     team_ids = fields.One2many('cafm.waste.team', 'project_id', string='الفرق')
+    # ---- default operation team (new orders inherit these; still editable) ----
+    default_ops_manager_id = fields.Many2one(
+        'res.users', string='مسؤول العمليات الافتراضي', tracking=True,
+        help='يُنبَّه فور وصول أي طلب نقل جديد في هذا المشروع، ويقوم بإسناد السائق.')
+    driver_user_ids = fields.Many2many(
+        'res.users', 'cafm_waste_project_driver_rel', 'project_id', 'user_id',
+        string='السائقون المسجّلون في الخدمة', tracking=True,
+        help='مجموعة السائقين التي يختار منها مسؤول العمليات عند إسناد الطلب.')
+    default_driver_id = fields.Many2one(
+        'res.users', string='السائق الافتراضي', tracking=True,
+        domain="[('id','in',driver_user_ids)]",
+        help='اختياري — يُسنَد تلقائيًا للطلبات الجديدة. اتركه فارغًا ليقوم مسؤول العمليات بالإسناد يدويًا.')
+    default_receiver_id = fields.Many2one(
+        'res.users', string='مستلم الكميات الافتراضي', tracking=True,
+        help='مستلم مركز المعالجة الذي يسجّل الكميات المستلمة.')
     order_ids = fields.One2many('cafm.waste.order', 'project_id', string='الطلبات')
     trip_ids = fields.One2many('cafm.waste.trip', 'project_id', string='الرحلات')
     order_count = fields.Integer(compute='_compute_counts')
@@ -175,20 +190,24 @@ class WasteTrip(models.Model):
                                  string='صور وفيديوهات الرحلة')
     # live driver GPS tracking
     driver_id = fields.Many2one('res.users', string='السائق', tracking=True)
+    # driver acknowledgement — the crew accepts the job before moving
+    driver_accepted = fields.Boolean(string='قبِل السائق', copy=False, tracking=True)
+    driver_accepted_at = fields.Datetime(string='وقت القبول', copy=False)
     driver_lat = fields.Float(string='خط العرض', digits=(10, 7))
     driver_lng = fields.Float(string='خط الطول', digits=(10, 7))
     driver_loc_time = fields.Datetime(string='آخر تحديث للموقع')
-    total_weight = fields.Float(compute='_compute_totals', string='مجموع أوزان الأصناف')
-    total_quantity = fields.Float(compute='_compute_totals', string='إجمالي الكمية')
-    total_qty_weight = fields.Float(compute='_compute_totals', string='الوزن الكلي')
+    # stored so they can be grouped/sorted/aggregated (same reason as the order)
+    total_weight = fields.Float(compute='_compute_totals', store=True, string='مجموع أوزان الأصناف')
+    total_quantity = fields.Float(compute='_compute_totals', store=True, string='إجمالي الكمية')
+    total_qty_weight = fields.Float(compute='_compute_totals', store=True, string='الوزن الكلي')
     active = fields.Boolean(default=True)
 
-    @api.depends('trip_line_ids.quantity', 'trip_line_ids.weight')
+    @api.depends('trip_line_ids.quantity', 'trip_line_ids.weight', 'trip_line_ids.item_id.weight')
     def _compute_totals(self):
         for t in self:
             t.total_weight = round(sum(t.trip_line_ids.mapped('weight')), 1)
-            t.total_quantity = round(sum(t.trip_line_ids.mapped('quantity')), 1)
-            t.total_qty_weight = round(sum(l.quantity * l.weight for l in t.trip_line_ids), 1)
+            t.total_quantity = round(sum((l.quantity or 0) for l in t.trip_line_ids), 1)
+            t.total_qty_weight = round(sum((l.quantity or 0) * (l.weight or 0) for l in t.trip_line_ids), 1)
 
     @api.depends('sequence', 'project_id.sequence')
     def _compute_reference(self):
@@ -252,9 +271,15 @@ class WasteOrder(models.Model):
     trip_line_ids = fields.One2many(related='trip_id.trip_line_ids', string='أصناف الرحلة')
 
     # operation roles + proof (live on the order — smarter than the legacy split)
+    # defaulted from the project's team on create, but always editable afterwards.
     ops_manager_id = fields.Many2one('res.users', string='مسؤول العمليات', tracking=True)
-    driver_id = fields.Many2one('res.users', string='السائق', tracking=True)
+    driver_id = fields.Many2one('res.users', string='السائق', tracking=True,
+                                domain="[('id','in',available_driver_ids)]")
     receiver_id = fields.Many2one('res.users', string='مستلم الكميات', tracking=True)
+    # the project's driver pool — drives the driver_id domain in the form
+    available_driver_ids = fields.Many2many(
+        'res.users', string='السائقون المتاحون',
+        compute='_compute_available_drivers', help='السائقون المسجّلون في مشروع هذا الطلب.')
     proof_image = fields.Image(string='صورة إثبات', max_width=1920, max_height=1920)
     media_ids = fields.Many2many('ir.attachment', 'cafm_waste_order_media_rel', 'order_id', 'attachment_id',
                                  string='صور وفيديوهات الإثبات',
@@ -262,8 +287,11 @@ class WasteOrder(models.Model):
     final_weight = fields.Float(string='الوزن النهائي المستلم')
     final_note = fields.Char(string='ملاحظة الاستلام')
 
-    total_quantity = fields.Float(compute='_compute_totals', string='إجمالي الكمية')
-    total_weight = fields.Float(compute='_compute_totals', string='الوزن الكلي')
+    # stored: the graph/pivot dashboards aggregate these as measures, which is a
+    # read_group → they must exist as real columns or Odoo raises
+    # "Cannot convert field ... to SQL".
+    total_quantity = fields.Float(compute='_compute_totals', store=True, string='إجمالي الكمية')
+    total_weight = fields.Float(compute='_compute_totals', store=True, string='الوزن الكلي')
     qr_url = fields.Char(compute='_compute_qr_url', string='QR')
 
     def effective_lines(self):
@@ -272,23 +300,109 @@ class WasteOrder(models.Model):
         self.ensure_one()
         return self.order_line_ids or (self.trip_id.trip_line_ids if self.trip_id else self.order_line_ids)
 
-    @api.depends('order_line_ids.quantity', 'order_line_ids.weight',
-                 'trip_id.trip_line_ids.quantity', 'trip_id.trip_line_ids.weight')
+    # depend on item_id.weight too: line.weight is a *related non-stored* field,
+    # so the stored total must follow the underlying source to stay correct.
+    @api.depends('order_line_ids.quantity', 'order_line_ids.weight', 'order_line_ids.item_id.weight',
+                 'trip_id', 'trip_id.trip_line_ids.quantity', 'trip_id.trip_line_ids.weight',
+                 'trip_id.trip_line_ids.item_id.weight')
     def _compute_totals(self):
         for o in self:
             lines = o.effective_lines()
             o.total_quantity = round(sum(lines.mapped('quantity')), 1)
-            o.total_weight = round(sum(l.quantity * l.weight for l in lines), 1)
+            o.total_weight = round(sum((l.quantity or 0) * (l.weight or 0) for l in lines), 1)
+
+    @api.depends('project_id', 'project_id.driver_user_ids')
+    def _compute_available_drivers(self):
+        for o in self:
+            o.available_driver_ids = o.project_id.driver_user_ids
+
+    @api.onchange('project_id')
+    def _onchange_project_team(self):
+        """Pull the project's default team in as soon as the project is picked."""
+        for o in self:
+            p = o.project_id
+            if not p:
+                continue
+            o.ops_manager_id = o.ops_manager_id or p.default_ops_manager_id
+            o.receiver_id = o.receiver_id or p.default_receiver_id
+            o.driver_id = o.driver_id or p.default_driver_id
 
     @api.model_create_multi
     def create(self, vals_list):
         for v in vals_list:
             if not v.get('serial'):
                 v['serial'] = self.env['ir.sequence'].next_by_code('cafm.waste.order') or '/'
+            # inherit the project's default team (app/portal orders never pass these)
+            if v.get('project_id'):
+                p = self.env['cafm.waste.project'].browse(v['project_id'])
+                v.setdefault('ops_manager_id', p.default_ops_manager_id.id or False)
+                v.setdefault('receiver_id', p.default_receiver_id.id or False)
+                if p.default_driver_id:
+                    v.setdefault('driver_id', p.default_driver_id.id)
         orders = super().create(vals_list)
         for o in orders:
             o._notify_roles()
+            o._notify_new_order()
         return orders
+
+    def _notify_new_order(self):
+        """Tell the ops manager a request landed so they can assign a driver."""
+        self.ensure_one()
+        mgr = self.ops_manager_id or self.project_id.default_ops_manager_id
+        if not mgr:
+            return
+        if mgr.partner_id:
+            self.message_subscribe(partner_ids=mgr.partner_id.ids)
+        body = _('طلب نقل جديد %s — %s%s') % (
+            self.serial or '', self.project_id.name or '',
+            _(' · بانتظار إسناد سائق') if not self.driver_id else '')
+        self.message_post(body=body, partner_ids=mgr.partner_id.ids if mgr.partner_id else None)
+        if 'care.cafm.notification' in self.env:
+            try:
+                self.env['care.cafm.notification'].sudo().push(
+                    mgr, _('🗑️ طلب نقل نفايات جديد'), body, ntype='task',
+                    action_url='waste/order/%s' % self.id)
+            except Exception:
+                pass
+        # no driver yet → raise a real To-Do so the assignment can't be missed
+        if not self.driver_id:
+            try:
+                self.activity_schedule('mail.mail_activity_data_todo', user_id=mgr.id,
+                                       summary=_('إسناد سائق للطلب %s') % (self.serial or ''),
+                                       note=body)
+            except Exception:
+                pass
+
+    def action_assign_driver(self):
+        """Open the assign-driver wizard (ops manager picks from the pool)."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('إسناد سائق'),
+            'res_model': 'cafm.waste.assign.driver',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_order_id': self.id, 'default_driver_id': self.driver_id.id or False},
+        }
+
+    def assign_driver(self, driver):
+        """Assign the driver and start the operation (order → scheduled)."""
+        self.ensure_one()
+        self.driver_id = driver.id
+        # assignment is where the operation actually begins
+        if self.states == 'draft':
+            self.action_to_schedule()
+        if self.trip_id:
+            self.trip_id.driver_id = driver.id
+        self.message_post(body=_('🚛 تم إسناد الطلب إلى السائق %s') % driver.name)
+        # close the "assign a driver" to-do
+        try:
+            self.activity_ids.filtered(
+                lambda a: a.user_id == self.ops_manager_id).action_feedback(
+                    feedback=_('تم إسناد السائق %s') % driver.name)
+        except Exception:
+            pass
+        return True
 
     def write(self, vals):
         res = super().write(vals)
@@ -466,3 +580,27 @@ class WasteOrder(models.Model):
             'by_item': [{'name': k, 'qty': v['qty'], 'orders': v['orders'], 'item_id': v['item_id']}
                         for k, v in top],
         }
+
+
+class WasteAssignDriver(models.TransientModel):
+    """Ops-manager wizard: pick a driver from the project's registered pool."""
+    _name = 'cafm.waste.assign.driver'
+    _description = 'إسناد سائق لطلب نقل'
+
+    order_id = fields.Many2one('cafm.waste.order', string='الطلب', required=True, ondelete='cascade')
+    project_id = fields.Many2one(related='order_id.project_id', string='المشروع')
+    available_driver_ids = fields.Many2many(
+        'res.users', string='السائقون المتاحون',
+        compute='_compute_available', help='السائقون المسجّلون في مشروع هذا الطلب.')
+    driver_id = fields.Many2one('res.users', string='السائق', required=True,
+                                domain="[('id','in',available_driver_ids)]")
+
+    @api.depends('order_id')
+    def _compute_available(self):
+        for w in self:
+            w.available_driver_ids = w.order_id.project_id.driver_user_ids
+
+    def action_confirm(self):
+        self.ensure_one()
+        self.order_id.assign_driver(self.driver_id)
+        return {'type': 'ir.actions.act_window_close'}

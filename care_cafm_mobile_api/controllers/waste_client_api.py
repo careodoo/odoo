@@ -328,6 +328,81 @@ class WasteClientApi(Controller):
         return _ok({'id': o.id, 'state': o.states, 'media_count': len(o.media_ids)})
 
     # ---- driver: my assigned trips ----------------------------------------
+    # ---- ops manager: inbox + native driver assignment --------------------
+    @route(API + '/waste/ops/orders', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def waste_ops_orders(self, **kw):
+        """Orders this ops manager is responsible for (unassigned first)."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'cafm.waste.order' not in env:
+            return _ok([])
+        O = env['cafm.waste.order'].sudo()
+        dom = [('ops_manager_id', '=', env.user.id)]
+        f = kw.get('filter') or 'open'
+        if f == 'unassigned':
+            dom += [('driver_id', '=', False), ('states', 'not in', ('completed', 'cancelled'))]
+        elif f == 'open':
+            dom.append(('states', 'in', ('draft', 'scheduled', 'pickuped', 'arrived', 'processing')))
+        elif f == 'done':
+            dom.append(('states', 'in', ('delivered', 'completed')))
+        recs = O.search(dom, order='serial desc', limit=100)
+        st = _sel(O, 'states')
+        return _ok([{
+            'id': o.id, 'serial': o.serial, 'project': o.project_id.name or None,
+            'client': o.contact_id.name or None,
+            'pickup': o.pickup_location_id.name if o.pickup_location_id else None,
+            'type': o.type_id.name if o.type_id else None,
+            'date': _d(o.request_datetime),
+            'driver': o.driver_id.name if o.driver_id else None,
+            'driver_id': o.driver_id.id or None,
+            'receiver': o.receiver_id.name if o.receiver_id else None,
+            'trip': o.trip_id.sequence if o.trip_id else None,
+            'items_count': len(o.effective_lines()),
+            'qty_total': round(sum(l.quantity or 0 for l in o.effective_lines()), 1),
+            'weight_total': round(sum((l.quantity or 0) * (l.weight or 0) for l in o.effective_lines()), 1),
+            'state': o.states, 'state_label': st.get(o.states, o.states or ''),
+        } for o in recs])
+
+    @route(API + '/waste/ops/drivers', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def waste_ops_drivers(self, **kw):
+        """Drivers registered on the order's project — the assignable pool."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        oid = kw.get('order_id')
+        if not (oid and str(oid).isdigit()):
+            return _err('order_id مطلوب', 422)
+        o = env['cafm.waste.order'].sudo().browse(int(oid)).exists()
+        if not o or o.ops_manager_id.id != env.user.id:
+            return _err('غير مصرّح', 403)
+        return _ok([{'id': d.id, 'name': d.name,
+                     'busy': env['cafm.waste.trip'].sudo().search_count(
+                         [('driver_id', '=', d.id),
+                          ('states', 'in', ('scheduled', 'pickuped', 'arrived', 'processing'))]),
+                     'image': _abs('/web/image/res.users/%s/avatar_128' % d.id)}
+                    for d in o.project_id.driver_user_ids])
+
+    @route(API + '/waste/ops/order/<int:oid>/assign', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def waste_ops_assign(self, oid, **kw):
+        """Assign a driver from the app — this is where the operation starts."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        o = env['cafm.waste.order'].sudo().browse(oid).exists()
+        if not o or o.ops_manager_id.id != env.user.id:
+            return _err('غير مصرّح', 403)
+        from .api import _body
+        b = _body()
+        did = b.get('driver_id')
+        if not did:
+            return _err('اختر سائقًا', 422)
+        driver = env['res.users'].sudo().browse(int(did)).exists()
+        if not driver or driver.id not in o.project_id.driver_user_ids.ids:
+            return _err('هذا السائق غير مسجّل في المشروع', 422)
+        o.assign_driver(driver)
+        return _ok({'id': o.id, 'driver': driver.name, 'state': o.states})
+
     @route(API + '/waste/driver/trips', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def waste_driver_trips(self, **kw):
         env = _auth()
@@ -349,10 +424,95 @@ class WasteClientApi(Controller):
             'date': _d(t.trip_date),
             'total_quantity': t.total_quantity, 'total_qty_weight': t.total_qty_weight,
             'sharing': bool(t.driver_lat or t.driver_lng),
+            'accepted': t.driver_accepted,
+            'accepted_at': _d(t.driver_accepted_at),
+            # the one action the driver can take right now (null = nothing to do)
+            'next': self._driver_next(t),
+            'items': [{'item': l.item_id.name if l.item_id else None, 'qty': l.quantity,
+                       'weight': l.weight} for l in t.trip_line_ids],
             'state': t.states, 'state_label': st.get(t.states, t.states or ''),
         } for t in recs])
 
     # ---- live driver location (driver posts, client polls) ----------------
+    # ---- driver: accept the job + push the operation forward --------------
+    # The order drives the state machine and the trip follows, so a driver
+    # action is applied to the trip's order(s).
+    _DRIVER_STEPS = {
+        'pickuped': ('action_to_pickuped', ('scheduled',), '📦 حمّل السائق الكمية وانطلق'),
+        'arrived': ('action_to_arrived', ('pickuped',), '📍 وصل السائق إلى مركز المعالجة'),
+    }
+
+    @route(API + '/waste/driver/trip/<int:tid>/action', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def waste_driver_action(self, tid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'cafm.waste.trip' not in env:
+            return _err('غير متاح', 404)
+        t = env['cafm.waste.trip'].sudo().browse(tid).exists()
+        if not t or t.driver_id.id != env.user.id:
+            return _err('غير مصرّح', 403)
+        act = (_body() or {}).get('action')
+
+        if act == 'accept':
+            if t.driver_accepted:
+                return _err('سبق قبول هذه الرحلة', 422)
+            t.write({'driver_accepted': True, 'driver_accepted_at': fields.Datetime.now()})
+            t.message_post(body='✅ قبِل السائق %s الرحلة' % env.user.name)
+            self._tell_ops(t, '✅ قبِل السائق الرحلة',
+                           '%s قبِل الرحلة %s' % (env.user.name, t.sequence or ''))
+            return _ok(self._driver_trip_state(t))
+
+        step = self._DRIVER_STEPS.get(act)
+        if not step:
+            return _err('إجراء غير معروف', 422)
+        method, allowed, msg = step
+        if not t.driver_accepted:
+            return _err('اقبل الرحلة أولًا', 422)
+        orders = t.order_ids if 'order_ids' in t._fields and t.order_ids else (
+            t.order_id if 'order_id' in t._fields and t.order_id else env['cafm.waste.order'])
+        orders = orders.exists()
+        if not orders:
+            return _err('لا يوجد طلب مرتبط', 422)
+        moved = env['cafm.waste.order']
+        for o in orders:
+            if o.states in allowed:
+                getattr(o, method)()
+                moved |= o
+        if not moved:
+            return _err('لا يمكن تنفيذ هذا الإجراء في الحالة الحالية', 422)
+        t.message_post(body=msg)
+        self._tell_ops(t, msg, '%s — %s' % (msg, t.sequence or ''))
+        return _ok(self._driver_trip_state(t))
+
+    def _driver_trip_state(self, t):
+        st = _sel(t, 'states')
+        return {'id': t.id, 'state': t.states, 'state_label': st.get(t.states, t.states or ''),
+                'accepted': t.driver_accepted,
+                'next': self._driver_next(t)}
+
+    def _driver_next(self, t):
+        """The single action the driver can take right now."""
+        if not t.driver_accepted:
+            return {'action': 'accept', 'label': 'قبول الرحلة', 'label_en': 'Accept trip'}
+        if t.states == 'scheduled':
+            return {'action': 'pickuped', 'label': 'حمّلت الكمية وانطلقت', 'label_en': 'Loaded & departed'}
+        if t.states == 'pickuped':
+            return {'action': 'arrived', 'label': 'وصلت إلى مركز المعالجة', 'label_en': 'Arrived at center'}
+        return None
+
+    def _tell_ops(self, t, title, body):
+        """Keep the ops manager informed of every driver move."""
+        try:
+            o = (t.order_ids[:1] if 'order_ids' in t._fields and t.order_ids
+                 else (t.order_id if 'order_id' in t._fields else None))
+            mgr = o.ops_manager_id if o else None
+            if mgr and 'care.cafm.notification' in t.env:
+                t.env['care.cafm.notification'].sudo().push(
+                    mgr, title, body, ntype='info', action_url='waste/order/%s' % o.id)
+        except Exception:
+            pass
+
     @route(API + '/waste/trip/<int:tid>/location', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
     def waste_trip_set_location(self, tid, **kw):
         env = _auth()

@@ -80,6 +80,26 @@ class C2CClientApi(Controller):
                 dom = ['|', '|', ('message_partner_ids', 'in', [p.id]), ('user_id', '=', u.id)]
                 dom += [('member_ids', 'in', [u.id])] if 'member_ids' in Proj._fields else [('id', '=', 0)]
                 pms = bool(Proj.search_count(dom))
+        # CAFM waste operations. These are STAFF roles that are often portal
+        # users (no employee record, no internal licence), so they can't be
+        # detected via groups — read them off the waste records themselves.
+        # Precedence: ops manager > driver > receiver.
+        waste_role = None
+        if 'cafm.waste.order' in env:
+            WP = env['cafm.waste.project'].sudo()
+            WO = env['cafm.waste.order'].sudo()
+            WT = env['cafm.waste.trip'].sudo()
+            if (WP.search_count([('default_ops_manager_id', '=', u.id)])
+                    or WO.search_count([('ops_manager_id', '=', u.id)])):
+                waste_role = 'ops_manager'
+            elif (WP.search_count([('driver_user_ids', 'in', [u.id])])
+                  or WO.search_count([('driver_id', '=', u.id)])
+                  or WT.search_count([('driver_id', '=', u.id)])):
+                waste_role = 'driver'
+            elif (WP.search_count([('default_receiver_id', '=', u.id)])
+                  or WO.search_count([('receiver_id', '=', u.id)])):
+                waste_role = 'receiver'
+
         # CARE 2 CARE crew member (worker/leader/supervisor/driver/ops manager)
         prov = None
         if 'c2c.provider' in env:
@@ -99,9 +119,12 @@ class C2CClientApi(Controller):
                 'staff': is_staff,
                 'admin': is_admin,
                 'c2c_staff': bool(prov),
+                'waste_ops': bool(waste_role),
             },
             'provider': prov,
-            'default': 'cafm' if cafm else 'c2c',
+            'waste_role': waste_role,
+            # waste staff land straight in their workspace, not the storefront
+            'default': 'cafm' if cafm else ('waste_ops' if waste_role else 'c2c'),
         })
 
     # ---- public image (sudo, no token needed) -----------------------------

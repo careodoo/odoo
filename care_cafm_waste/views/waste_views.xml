@@ -7,7 +7,9 @@
     <field name="arch" type="xml">
       <form>
         <header>
-          <button name="action_to_schedule" string="جدولة" type="object" class="oe_highlight" invisible="states != 'draft'"/>
+          <button name="action_assign_driver" string="🚛 إسناد سائق" type="object" class="oe_highlight"
+                  invisible="states in ('completed','cancelled')"/>
+          <button name="action_to_schedule" string="جدولة" type="object" class="oe_highlight" invisible="states != 'draft' or driver_id"/>
           <button name="action_to_pickuped" string="تم الالتقاط" type="object" class="oe_highlight" invisible="states != 'scheduled'"/>
           <button name="action_to_arrived" string="وصل للمعالجة" type="object" invisible="states != 'pickuped'"/>
           <button name="action_to_processing" string="بدء المعالجة" type="object" invisible="states != 'arrived'"/>
@@ -57,10 +59,11 @@
               </field>
             </page>
             <page string="فريق العملية والإثبات" name="ops">
+              <field name="available_driver_ids" invisible="1"/>
               <group>
                 <group>
                   <field name="ops_manager_id"/>
-                  <field name="driver_id"/>
+                  <field name="driver_id" options="{'no_create': True}"/>
                   <field name="receiver_id"/>
                 </group>
                 <group>
@@ -251,6 +254,23 @@
           <group><field name="start_date"/><field name="end_date"/></group>
         </group>
         <notebook>
+          <page string="♻️ فريق نقل النفايات" name="waste_team">
+            <div class="alert alert-info" role="alert">
+              يُسنَد هذا الفريق تلقائيًا لكل طلب نقل جديد في هذا المشروع، ويمكن تغييره داخل أي طلب لاحقًا.
+              مسؤول العمليات يصله تنبيه فور وصول الطلب ليقوم بإسناد السائق.
+            </div>
+            <group>
+              <group string="المسؤولون">
+                <field name="default_ops_manager_id" options="{'no_create': True}"/>
+                <field name="default_receiver_id" options="{'no_create': True}"/>
+              </group>
+              <group string="السائقون">
+                <field name="driver_user_ids" widget="many2many_tags" options="{'no_create': True}"
+                       placeholder="اختر السائقين المسجّلين في خدمة نقل النفايات…"/>
+                <field name="default_driver_id" options="{'no_create': True}"/>
+              </group>
+            </group>
+          </page>
           <page string="مواقع الالتقاط"><field name="pickup_location_ids"><tree editable="bottom"><field name="name"/><field name="address"/></tree></field></page>
           <page string="الفرق"><field name="team_ids"><tree editable="bottom"><field name="name"/><field name="employee_ids" widget="many2many_tags"/></tree></field></page>
           <page string="ملاحظات"><field name="notes"/></page>
@@ -300,5 +320,29 @@
   <record id="view_waste_team_tree" model="ir.ui.view">
     <field name="name">cafm.waste.team.tree</field><field name="model">cafm.waste.team</field>
     <field name="arch" type="xml"><tree editable="bottom"><field name="name"/><field name="project_id"/><field name="employee_ids" widget="many2many_tags"/></tree></field>
+  </record>
+
+  <!-- ===== ASSIGN DRIVER WIZARD (ops manager) ===== -->
+  <record id="view_waste_assign_driver_form" model="ir.ui.view">
+    <field name="name">cafm.waste.assign.driver.form</field>
+    <field name="model">cafm.waste.assign.driver</field>
+    <field name="arch" type="xml">
+      <form string="إسناد سائق">
+        <field name="available_driver_ids" invisible="1"/>
+        <group>
+          <field name="order_id" readonly="1"/>
+          <field name="project_id" readonly="1"/>
+          <field name="driver_id" options="{'no_create': True}"
+                 placeholder="اختر من السائقين المسجّلين في المشروع…"/>
+        </group>
+        <div class="alert alert-warning" role="alert" invisible="available_driver_ids">
+          لا يوجد سائقون مسجّلون في هذا المشروع — أضِفهم من تبويب «♻️ فريق نقل النفايات» في المشروع.
+        </div>
+        <footer>
+          <button name="action_confirm" string="إسناد وبدء العملية" type="object" class="btn-primary"/>
+          <button string="إلغاء" class="btn-secondary" special="cancel"/>
+        </footer>
+      </form>
+    </field>
   </record>
 </odoo>
