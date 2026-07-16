@@ -4,6 +4,7 @@ import '../../core/auth.dart';
 import '../main_shell.dart';
 import '../odoo_backend_screen.dart';
 import '../waste_ops_shell.dart';
+import '../management/management_home.dart';
 import 'c2c_shell.dart';
 import 'mode_switch.dart';
 import 'staff/staff_shell.dart';
@@ -85,7 +86,7 @@ class _RootShellState extends State<RootShell> {
           case 'pms':
             return const OdooBackendScreen(path: '/my/pm', title: 'إدارة المشاريع', showSwitch: true);
           case 'management':
-            return const ManagementLauncherScreen();
+            return const ManagementHome();
           default:
             return C2CShell(canSwitchCafm: cafmSwitch, showModeSwitch: true);
         }

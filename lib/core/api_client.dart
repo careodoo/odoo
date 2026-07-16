@@ -741,6 +741,21 @@ class ApiClient {
               _u('/waste/driver/trip/$tripId/action'),
               headers: await _headers(), body: jsonEncode({'action': action}))))['data'] as Map);
 
+  // ---- management (native back-office) -------------------------------------
+  /// Systems this user may access (server applies Odoo permissions).
+  Future<List<dynamic>> managementApps() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/management/apps'), headers: await _headers())))['data'] as List);
+
+  Future<Map<String, dynamic>> managementList(String key, {String q = ''}) async =>
+      Map<String, dynamic>.from((await _handle(await http.get(
+              _u('/management/$key/list${q.isEmpty ? '' : '?q=${Uri.encodeQueryComponent(q)}'}'),
+              headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> managementDetail(String key, int id) async =>
+      Map<String, dynamic>.from((await _handle(await http.get(
+              _u('/management/$key/$id'), headers: await _headers())))['data'] as Map);
+
   // ---- waste operations (ops manager) -------------------------------------
   /// Orders this ops manager owns. filter: unassigned | open | done
   Future<List<dynamic>> wasteOpsOrders({String filter = 'open'}) async =>

@@ -507,9 +507,17 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
                 : _itemPh(),
           ),
           const SizedBox(width: 10),
-          Expanded(child: Text('${i['item'] ?? '—'}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5))),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+            Text('${i['item'] ?? '—'}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5)),
+            // unit weight, so "×186 · 390.6kg" can't be read as one piece = 390kg
+            if ((i['unit_weight'] ?? 0) != 0)
+              Text(tr('وزن القطعة ${_n(i['unit_weight'])} كجم', '${_n(i['unit_weight'])} kg/pc'),
+                  style: const TextStyle(color: Colors.grey, fontSize: 10.5)),
+          ])),
           Container(padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4), decoration: BoxDecoration(color: const Color(0xFF16A34A).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-              child: Text(trip ? '×${i['qty']} · ${i['weight']}kg' : '×${i['qty']}', style: const TextStyle(color: Color(0xFF15803D), fontWeight: FontWeight.w800, fontSize: 12))),
+              // `weight` is the LINE total (qty × piece) for orders and trips alike
+              child: Text((i['weight'] ?? 0) != 0 ? '×${_n(i['qty'])} · ${_n(i['weight'])}kg' : '×${_n(i['qty'])}',
+                  style: const TextStyle(color: Color(0xFF15803D), fontWeight: FontWeight.w800, fontSize: 12))),
         ]),
       );
 
