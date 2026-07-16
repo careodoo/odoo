@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import 'pdf_report_screen.dart';
 import 'odoo_backend_screen.dart';
 import 'waste_trip_map.dart';
 
@@ -320,14 +321,9 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
 
   Future<void> _openReport(String? path, String title) async {
     if (path == null) return;
-    // PDFs don't render inside the in-app WebView → open via SSO in the
-    // external browser (Chrome), which displays/downloads the PDF properly.
-    final api = context.read<AuthProvider>().api;
-    final token = await api.token;
-    final url = '${api.baseUrl}/web/sso?token=${Uri.encodeQueryComponent(token ?? '')}&redirect=${Uri.encodeQueryComponent(path)}';
-    final u = Uri.parse(url);
-    if (await launchUrl(u, mode: LaunchMode.externalApplication)) return;
-    if (mounted) Navigator.push(context, MaterialPageRoute(builder: (_) => OdooBackendScreen(path: path, title: title)));
+    // Rendered inside the app (with share/print) — no browser hand-off.
+    Navigator.push(context, MaterialPageRoute(
+        builder: (_) => PdfReportScreen(path: path, title: title, fileName: '${title.replaceAll(' ', '-')}.pdf')));
   }
 
   void _zoom(String url) => showDialog(context: context, builder: (_) => Dialog(
@@ -760,12 +756,11 @@ class _WasteStatsScreenState extends State<WasteStatsScreen> {
 
   Future<void> _printMonthly(String? path) async {
     if (path == null) return;
-    final api = context.read<AuthProvider>().api;
-    final token = await api.token;
-    final url = '${api.baseUrl}/web/sso?token=${Uri.encodeQueryComponent(token ?? '')}&redirect=${Uri.encodeQueryComponent(path)}';
-    if (await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)) return;
-    if (mounted) Navigator.push(context, MaterialPageRoute(builder: (_) => OdooBackendScreen(path: path, title: 'التقرير الشهري')));
+    Navigator.push(context, MaterialPageRoute(
+        builder: (_) => PdfReportScreen(
+            path: path, title: tr('تقرير النفايات', 'Waste report'), fileName: 'waste-report.pdf')));
   }
+
 
   @override
   Widget build(BuildContext context) {
