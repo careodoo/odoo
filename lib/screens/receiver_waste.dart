@@ -78,14 +78,18 @@ class _ReceiverWasteScreenState extends State<ReceiverWasteScreen> {
         ]),
       );
 
-  void _openIntake(Map o) {
+  void _openIntake(Map o) async {
     final weight = TextEditingController(text: '${o['final_weight'] ?? ''}');
     final note = TextEditingController(text: '${o['final_note'] ?? ''}');
     final items = <Map<String, dynamic>>[for (final i in (o['items'] as List? ?? [])) {'item_id': i['item_id'], 'item': i['item'], 'qty': (i['qty'] ?? 0).toString()}];
+    // one controller per line, created ONCE — building them inside build()
+    // re-created them on every setState (adding a photo), resetting the cursor
+    // to the start mid-typing, and leaked them.
+    final qtyCtrls = [for (final it in items) TextEditingController(text: '${it['qty']}')];
     final media = <Map<String, String>>[]; // {name, mimetype, data}
     bool busy = false;
 
-    showModalBottomSheet(
+    await showModalBottomSheet(
       context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(builder: (ctx, setSt) {
         Future<void> pick(ImageSource src, {bool video = false}) async {
@@ -132,10 +136,10 @@ class _ReceiverWasteScreenState extends State<ReceiverWasteScreen> {
               for (int i = 0; i < items.length; i++) Padding(padding: const EdgeInsets.only(bottom: 8), child: Row(children: [
                 Expanded(flex: 2, child: Text('${items[i]['item'] ?? '—'}', style: const TextStyle(fontWeight: FontWeight.w600))),
                 SizedBox(width: 90, child: TextField(
-                  controller: TextEditingController(text: '${items[i]['qty']}'),
+                  controller: qtyCtrls[i],
                   keyboardType: TextInputType.number, textAlign: TextAlign.center,
                   onChanged: (v) => items[i]['qty'] = v,
-                  decoration: const InputDecoration(isDense: true, border: OutlineInputBorder(), hintText: 'الكمية'))),
+                  decoration: InputDecoration(isDense: true, border: const OutlineInputBorder(), hintText: tr('الكمية', 'Qty')))),
               ])),
               const SizedBox(height: 6),
               _sec(tr('صور وفيديوهات الإثبات', 'Proof photos & videos')),
@@ -165,6 +169,12 @@ class _ReceiverWasteScreenState extends State<ReceiverWasteScreen> {
         );
       }),
     );
+    // the sheet is closed → release the controllers
+    for (final c in qtyCtrls) {
+      c.dispose();
+    }
+    weight.dispose();
+    note.dispose();
   }
 
   Widget _sec(String t) => Padding(padding: const EdgeInsets.only(bottom: 6), child: Text(t, style: const TextStyle(fontWeight: FontWeight.w800, color: _navy, fontSize: 14)));
