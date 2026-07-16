@@ -741,6 +741,47 @@ class ApiClient {
               _u('/waste/driver/trip/$tripId/action'),
               headers: await _headers(), body: jsonEncode({'action': action}))))['data'] as Map);
 
+  // ---- PMS (native project management) ------------------------------------
+  Future<Map<String, dynamic>> pmsOverview() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/pms/overview'), headers: await _headers())))['data'] as Map);
+
+  Future<List<dynamic>> pmsProjects({String q = ''}) async =>
+      List<dynamic>.from((await _handle(await http.get(
+              _u('/pms/projects${q.isEmpty ? '' : '?q=${Uri.encodeQueryComponent(q)}'}'),
+              headers: await _headers())))['data'] as List);
+
+  Future<Map<String, dynamic>> pmsProject(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/pms/project/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsTasks({int? projectId, int? stageId, String filter = '', String q = ''}) async {
+    final qs = <String>[];
+    if (projectId != null) qs.add('project_id=$projectId');
+    if (stageId != null) qs.add('stage_id=$stageId');
+    if (filter.isNotEmpty) qs.add('filter=$filter');
+    if (q.isNotEmpty) qs.add('q=${Uri.encodeQueryComponent(q)}');
+    return Map<String, dynamic>.from((await _handle(await http.get(
+            _u('/pms/tasks${qs.isEmpty ? '' : '?${qs.join('&')}'}'),
+            headers: await _headers())))['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> pmsTask(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/pms/task/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsTaskStage(int id, int stageId) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/pms/task/$id/stage'),
+              headers: await _headers(), body: jsonEncode({'stage_id': stageId}))))['data'] as Map);
+
+  Future<void> pmsTaskNote(int id, String note) async =>
+      _handle(await http.post(_u('/pms/task/$id/note'),
+          headers: await _headers(), body: jsonEncode({'note': note})));
+
+  Future<Map<String, dynamic>> pmsTaskPriority(int id, bool starred) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/pms/task/$id/priority'),
+              headers: await _headers(), body: jsonEncode({'priority': starred}))))['data'] as Map);
+
   // ---- management (native back-office) -------------------------------------
   /// Systems this user may access (server applies Odoo permissions).
   Future<List<dynamic>> managementApps() async =>

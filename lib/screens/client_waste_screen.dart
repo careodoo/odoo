@@ -4,7 +4,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import 'pdf_report_screen.dart';
-import 'odoo_backend_screen.dart';
 import 'waste_trip_map.dart';
 
 /// Client waste transfer & treatment: collection orders + trips, with a
@@ -137,11 +136,10 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
     );
   }
 
-  String get _portalPath => (_summary?['portal_path'] as String?) ?? '/service_orders';
-  String get _createPath => (_summary?['create_path'] as String?) ?? '/service_order/create';
 
+  // native stats screen — this used to open the web portal in a WebView
   void _openPortal() => Navigator.push(context, MaterialPageRoute(
-        builder: (_) => OdooBackendScreen(path: _portalPath, title: 'لوحة تحكم النفايات'),
+        builder: (_) => const WasteStatsScreen(),
       ));
 
   /// Prominent entry to the exact web portal dashboard (same data, reports,
@@ -190,7 +188,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
                 boxShadow: [BoxShadow(color: const Color(0xFF16A34A).withValues(alpha: 0.35), blurRadius: 10, offset: const Offset(0, 4))],
               ),
               child: Material(color: Colors.transparent, child: InkWell(
-                borderRadius: BorderRadius.circular(14), onTap: _newOrderMenu,
+                borderRadius: BorderRadius.circular(14), onTap: _newOrder,
                 child: const Center(child: Row(mainAxisSize: MainAxisSize.min, children: [
                   Icon(Icons.add_circle_outline_rounded, color: Colors.white), SizedBox(width: 8),
                   Text('طلب نقل جديد', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
@@ -588,35 +586,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
         child: Column(children: [Text('$ic $v', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: c)), Text(l, style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.85)))]),
       );
 
-  Future<void> _newOrderMenu() async {
-    final choice = await showModalBottomSheet<String>(
-      context: context, backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const SizedBox(height: 8),
-        Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(3))),
-        const SizedBox(height: 10),
-        ListTile(
-          leading: Container(padding: const EdgeInsets.all(9), decoration: BoxDecoration(color: const Color(0xFF0E3A5F).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(11)), child: const Icon(Icons.description_rounded, color: Color(0xFF0E3A5F))),
-          title: Text(tr('نموذج احترافي كامل', 'Full professional form'), style: const TextStyle(fontWeight: FontWeight.w800)),
-          subtitle: Text(tr('نفس نموذج البورتال — أصناف متعددة وتفاصيل', 'Same as portal — multiple items & details')),
-          onTap: () => Navigator.pop(ctx, 'portal'),
-        ),
-        ListTile(
-          leading: Container(padding: const EdgeInsets.all(9), decoration: BoxDecoration(color: const Color(0xFF16A34A).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(11)), child: const Icon(Icons.bolt_rounded, color: Color(0xFF16A34A))),
-          title: Text(tr('طلب سريع', 'Quick order'), style: const TextStyle(fontWeight: FontWeight.w800)),
-          subtitle: Text(tr('صنف واحد وكمية — مباشر', 'One item & quantity — fast')),
-          onTap: () => Navigator.pop(ctx, 'quick'),
-        ),
-        const SizedBox(height: 10),
-      ])),
-    );
-    if (choice == 'portal') {
-      if (mounted) Navigator.push(context, MaterialPageRoute(builder: (_) => OdooBackendScreen(path: _createPath, title: 'طلب نقل جديد')));
-    } else if (choice == 'quick') {
-      _newOrder();
-    }
-  }
+
 
   Future<void> _newOrder() async {
     final api = context.read<AuthProvider>().api;

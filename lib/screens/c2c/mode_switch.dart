@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'c2c_shell.dart';
-import '../odoo_backend_screen.dart';
 
 /// One selectable interface/mode.
 class AppMode {
@@ -101,58 +100,3 @@ class ModeChooserScreen extends StatelessWidget {
 
 /// Management mode — a launcher of every Odoo app the user is permitted to use,
 /// each opening the real backend (SSO) exactly as on the web.
-class ManagementLauncherScreen extends StatelessWidget {
-  const ManagementLauncherScreen({super.key});
-
-  // (label_ar, label_en, emoji, backend path) — Odoo enforces per-user access.
-  static const _apps = [
-    ['المشتريات', 'Purchases', '🛒', '/web#model=purchase.order&view_type=list'],
-    ['المبيعات', 'Sales', '💰', '/web#model=sale.order&view_type=list'],
-    ['المناقصات', 'Tenders', '📑', '/web#model=purchase.tender&view_type=list'],
-    ['عروض الأسعار', 'Proposals', '📊', '/web#model=proposal.proposal&view_type=list'],
-    ['المراسلات', 'Correspondence', '✉️', '/odoo'],
-    ['الموظفين', 'Employees', '👥', '/web#model=hr.employee&view_type=kanban'],
-    ['المستندات', 'Documents', '📁', '/web#model=care.dms.document&view_type=list'],
-    ['المخزون', 'Inventory', '📦', '/web#model=care.cafm.store&view_type=list'],
-    ['القانونية', 'Legal', '⚖️', '/odoo'],
-    ['الخبرات', 'Experience', '🏆', '/web#model=care.experience&view_type=list'],
-    ['الأسطول', 'Fleet', '🚗', '/web#model=fleet.vehicle&view_type=list'],
-    ['CRM', 'CRM', '🎯', '/web#model=crm.lead&view_type=list'],
-    ['إدارة المرافق', 'CAFM', '🏢', '/odoo'],
-    ['أودو الكامل', 'Full Odoo', '🧩', '/odoo'],
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: C2C.bg,
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0E3A5F), foregroundColor: Colors.white,
-        title: Text(tr('الإدارة', 'Management')),
-        actions: [
-          IconButton(icon: const Icon(Icons.swap_horiz_rounded), tooltip: tr('تبديل الوضع', 'Switch mode'), onPressed: () => context.read<AuthProvider>().setAppMode('choose')),
-          IconButton(icon: const Icon(Icons.logout_rounded), tooltip: tr('خروج', 'Logout'), onPressed: () => context.read<AuthProvider>().logout()),
-        ],
-      ),
-      body: GridView.builder(
-        padding: const EdgeInsets.all(14),
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 130, childAspectRatio: 0.92, crossAxisSpacing: 12, mainAxisSpacing: 12),
-        itemCount: _apps.length,
-        itemBuilder: (_, i) {
-          final a = _apps[i];
-          return GestureDetector(
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => OdooBackendScreen(path: a[3], title: gLang == 'en' ? a[1] : a[0]))),
-            child: Container(
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))]),
-              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Text(a[2], style: const TextStyle(fontSize: 34)),
-                const SizedBox(height: 8),
-                Text(gLang == 'en' ? a[1] : a[0], textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: Color(0xFF0E3A5F))),
-              ]),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}

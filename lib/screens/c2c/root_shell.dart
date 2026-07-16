@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../main_shell.dart';
-import '../odoo_backend_screen.dart';
 import '../waste_ops_shell.dart';
 import '../management/management_home.dart';
+import '../pms/pms_shell.dart';
 import 'c2c_shell.dart';
 import 'mode_switch.dart';
 import 'staff/staff_shell.dart';
@@ -84,7 +84,7 @@ class _RootShellState extends State<RootShell> {
           case 'cafm':
             return const _ModeScaffold(child: MainShell());
           case 'pms':
-            return const OdooBackendScreen(path: '/my/pm', title: 'إدارة المشاريع', showSwitch: true);
+            return const PmsShell();
           case 'management':
             return const ManagementHome();
           default:
