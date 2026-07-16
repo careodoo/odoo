@@ -9,10 +9,20 @@ Security model: every read runs with the CALLER's env — never sudo — so Odoo
 own record rules and ACLs decide what each user may see. A system that raises
 AccessError is simply reported as unavailable to that user.
 """
+import re
+
 from odoo.exceptions import AccessError
 from odoo.http import request, Controller, route
 
 from .api import _auth, _ok, _err, API
+
+
+# Never surface these, whatever Odoo would technically allow the caller to read.
+SENSITIVE_RE = re.compile(
+    r'salary|wage|bank|acc_number|iban|ssnid|sinid|passport|identification|'
+    r'private|pin$|barcode|birthday|children|marital|gender|emergency|'
+    r'km_home|permit|visa|study_|certificate|country_of_birth|place_of_birth|'
+    r'password|token|secret', re.I)
 
 
 def _d(v):
@@ -51,6 +61,12 @@ REGISTRY = {
         'order': 'name', 'search': ['name', 'work_email', 'job_title'],
         'title': 'name', 'subtitle': 'job_title', 'amount': None,
         'date': None, 'state': None, 'image': 'avatar_128',
+        # WORK data only. Never the private HR block (identification_id/civil ID,
+        # birthday, marital, gender, permits, bank) — a directory in a phone app
+        # has no business carrying it, even for users Odoo would let read it.
+        'fields': ['name', 'job_title', 'department_id', 'parent_id', 'coach_id',
+                   'work_phone', 'mobile_phone', 'work_email', 'work_location_id',
+                   'company_id', 'resource_calendar_id', 'employee_type'],
     },
     'documents': {
         'model': 'care.dms.document', 'icon': '📁', 'ar': 'المستندات', 'en': 'Documents',
@@ -290,15 +306,29 @@ class ManagementApi(Controller):
             rec.read(['id'])
         except Exception:
             return _err('غير موجود أو غير مصرّح', 404)
-        # a readable, human field set — skip technical/binary noise
+        # Only the fields this system declares. Dumping every readable field
+        # leaked private HR data (civil ID, birthday, marital status) and would
+        # also blow up on group-restricted fields.
         skip_types = ('binary', 'image', 'one2many', 'many2many', 'html')
+        allowed = spec.get('fields')
+        if allowed:
+            names = [f for f in allowed if f in rec._fields]
+        else:
+            names = [fname for fname, f in rec._fields.items()
+                     if f.type not in skip_types
+                     and not fname.startswith(('message_', 'activity_', 'website_'))
+                     and fname not in ('id', 'display_name', '__last_update',
+                                       'create_uid', 'write_uid', 'write_date')
+                     and not SENSITIVE_RE.search(fname)]
         fields = []
-        for fname, f in rec._fields.items():
-            if f.type in skip_types or fname.startswith(('message_', 'activity_', 'website_')):
+        for fname in names:
+            f = rec._fields[fname]
+            if f.type in skip_types:
                 continue
-            if fname in ('id', 'display_name', '__last_update', 'create_uid', 'write_uid', 'write_date'):
+            try:
+                v = self._val(rec, fname)   # a group-restricted field raises here
+            except Exception:
                 continue
-            v = self._val(rec, fname)
             if v in (None, '', False):
                 continue
             fields.append({'name': fname, 'label': f.string, 'value': v})
