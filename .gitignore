@@ -9,12 +9,21 @@ pubspec.lock
 .pub/
 
 # Generated platform folders (recreated by `flutter create` / CI)
-/android/
+# NOTE: android/ IS tracked — it carries hand-made config that `flutter create`
+# would NOT regenerate (release signingConfigs, url_launcher <queries>, app id).
+# Its secrets stay out via the "release signing" rules at the bottom.
 /ios/
 /linux/
 /macos/
 /windows/
 /web/
+
+# android build output / local machine paths (never the config itself)
+/android/.gradle/
+/android/app/build/
+/android/build/
+/android/local.properties
+/android/.cxx/
 
 # IDE
 .idea/
