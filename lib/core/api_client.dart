@@ -762,6 +762,14 @@ class ApiClient {
   Future<void> c2cSubscriptionCancel(int id) async =>
       _handle(await http.post(_u('/c2c/subscription/$id/cancel'), headers: await _headers()));
 
+  Future<List<dynamic>> c2cRfqOptions() async =>
+      List<dynamic>.from((await _handle(
+          await http.get(_u('/c2c/rfq/options'), headers: await _headers())))['data'] as List);
+
+  Future<List<dynamic>> c2cCategoriesList() async =>
+      List<dynamic>.from((await _handle(
+          await http.get(_u('/c2c/categories'), headers: await _headers())))['data'] as List);
+
   Future<Map<String, dynamic>> c2cContractCreate(Map<String, dynamic> body) async =>
       Map<String, dynamic>.from((await _handle(await http.post(_u('/c2c/contract/create'),
               headers: await _headers(), body: jsonEncode(body))))['data'] as Map);

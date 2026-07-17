@@ -10,6 +10,7 @@ import 'c2c_orders.dart';
 import 'c2c_bookings.dart';
 import 'c2c_subscriptions.dart';
 import 'c2c_contracts.dart';
+import 'c2c_rfq_dialog.dart';
 
 /// CARE 2 CARE storefront home — premium, image-led, animated header.
 class C2CHomeScreen extends StatefulWidget {
@@ -433,22 +434,34 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
         for (final it in items) ...[
           Expanded(child: GestureDetector(
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => it.$5)),
-            child: Column(children: [
-              Container(
-                height: 54,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: it.$4, begin: Alignment.topRight, end: Alignment.bottomLeft),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [BoxShadow(color: it.$4[1].withValues(alpha: 0.35), blurRadius: 8, offset: const Offset(0, 4))],
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              // A softly tinted square with a small coloured icon badge —
+              // balanced proportions rather than a tall capsule.
+              AspectRatio(
+                aspectRatio: 1,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: it.$4[1].withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: it.$4[1].withValues(alpha: 0.18)),
+                  ),
+                  child: Center(child: Container(
+                    width: 40, height: 40,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(colors: it.$4, begin: Alignment.topRight, end: Alignment.bottomLeft),
+                      borderRadius: BorderRadius.circular(13),
+                      boxShadow: [BoxShadow(color: it.$4[1].withValues(alpha: 0.35), blurRadius: 7, offset: const Offset(0, 3))],
+                    ),
+                    child: Icon(it.$1, color: Colors.white, size: 21),
+                  )),
                 ),
-                child: Icon(it.$1, color: Colors.white, size: 24),
               ),
-              const SizedBox(height: 5),
+              const SizedBox(height: 6),
               Text(tr(it.$2, it.$3), maxLines: 1, overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: C2C.ink)),
             ]),
           )),
-          if (it != items.last) const SizedBox(width: 9),
+          if (it != items.last) const SizedBox(width: 10),
         ],
       ]),
     );
@@ -629,7 +642,9 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
   Widget _planCard(Map s, bool showSave, {bool full = false}) {
     final col = _hex(s['color'] as String?, C2C.navy);
     final feats = (s['features'] as List?) ?? [];
-    return Container(
+    return GestureDetector(
+      onTap: () => _planDetails(s, col),
+      child: Container(
       width: full ? double.infinity : 224,
       margin: EdgeInsets.symmetric(horizontal: full ? 0 : 5, vertical: full ? 5 : 4),
       padding: const EdgeInsets.all(14),
@@ -694,6 +709,114 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
           ),
         ),
       ]),
+    ),
+    );
+  }
+
+  void _planDetails(Map plan, Color col) {
+    final feats = (plan['features'] as List?) ?? [];
+    showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false, initialChildSize: 0.8, minChildSize: 0.5, maxChildSize: 0.95,
+        builder: (_, scroll) => Container(
+          decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+          child: Column(children: [
+            // gradient header
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [col, Color.lerp(col, Colors.black, 0.4)!],
+                    begin: Alignment.topRight, end: Alignment.bottomLeft),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+              ),
+              child: SafeArea(bottom: false, child: Padding(
+                padding: const EdgeInsets.fromLTRB(18, 10, 8, 16),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Align(alignment: Alignment.centerLeft,
+                      child: IconButton(icon: const Icon(Icons.close_rounded, color: Colors.white),
+                          onPressed: () => Navigator.pop(ctx))),
+                  Row(children: [
+                    Expanded(child: Text('${plan['name']}',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20))),
+                    if (plan['popular'] == true)
+                      Container(padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+                          child: Text(tr('الأفضل قيمة', 'Best value'),
+                              style: TextStyle(color: col, fontSize: 10, fontWeight: FontWeight.w900))),
+                  ]),
+                  const SizedBox(height: 8),
+                  Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                    Text('${plan['price']}',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 34)),
+                    const SizedBox(width: 4),
+                    Padding(padding: const EdgeInsets.only(bottom: 6), child: Text(
+                        'KWD/${plan['period'] == 'yearly' ? tr('سنة', 'yr') : (plan['period'] == 'quarterly' ? tr('ربع', 'qtr') : tr('شهر', 'mo'))}',
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12))),
+                    if ((plan['save_pct'] ?? 0) > 0) ...[
+                      const SizedBox(width: 8),
+                      Padding(padding: const EdgeInsets.only(bottom: 6), child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(color: const Color(0xFFFFC107), borderRadius: BorderRadius.circular(20)),
+                        child: Text('-${plan['save_pct']}%',
+                            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 11)))),
+                    ],
+                  ]),
+                  if ((plan['visits'] ?? 0) > 0)
+                    Text(tr('${plan['visits']} زيارة ضمن الباقة', '${plan['visits']} visits included'),
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 12)),
+                ]),
+              )),
+            ),
+            Expanded(child: ListView(controller: scroll, padding: const EdgeInsets.fromLTRB(18, 16, 18, 16), children: [
+              Text(tr('ماذا تشمل الباقة', "What's included"),
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: C2C.navy)),
+              const SizedBox(height: 10),
+              for (final f in feats)
+                Padding(padding: const EdgeInsets.only(bottom: 8), child: Row(children: [
+                  Icon(Icons.check_circle_rounded, color: col, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text('$f', style: const TextStyle(fontSize: 13.5, height: 1.4))),
+                ])),
+              const SizedBox(height: 14),
+              // cancellation terms
+              Container(
+                padding: const EdgeInsets.all(13),
+                decoration: BoxDecoration(color: C2C.bg, borderRadius: BorderRadius.circular(14)),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: const [
+                    Icon(Icons.gavel_rounded, size: 15, color: C2C.slate),
+                    SizedBox(width: 6),
+                    Text('شروط الإلغاء', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: C2C.ink)),
+                  ]),
+                  const SizedBox(height: 8),
+                  for (final t in const [
+                    'يمكن إلغاء الاشتراك في أي وقت من صفحة «اشتراكاتي».',
+                    'الإلغاء قبل بدء أول زيارة: استرداد كامل.',
+                    'بعد بدء الخدمة: تُحتسب الزيارات المنفّذة ويُسترد الباقي.',
+                    'لا رسوم إلغاء خفية — الشفافية أساس تعاملنا.',
+                  ])
+                    Padding(padding: const EdgeInsets.only(bottom: 5), child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        const Text('• ', style: TextStyle(color: C2C.slate, fontWeight: FontWeight.w900)),
+                        Expanded(child: Text(t, style: TextStyle(fontSize: 11.5, height: 1.5, color: Colors.grey.shade700))),
+                      ])),
+                ]),
+              ),
+            ])),
+            SafeArea(top: false, child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 6, 18, 12),
+              child: SizedBox(height: 52, width: double.infinity, child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(backgroundColor: col, foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                onPressed: () { Navigator.pop(ctx); _subscribe(plan, col); },
+                icon: const Icon(Icons.card_membership_rounded),
+                label: Text(tr('اشترك الآن', 'Subscribe'),
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+              )),
+            )),
+          ]),
+        ),
+      ),
     );
   }
 
@@ -782,49 +905,9 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
             Text(tr('اطلب عرض سعر ونحوّلك لعميل إدارة مرافق', 'Request a quote → become a facilities client'), style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 11)),
           ])),
           const SizedBox(width: 8),
-          ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: C2C.navy, visualDensity: VisualDensity.compact, padding: const EdgeInsets.symmetric(horizontal: 12)), onPressed: _contractSheet, child: Text(tr('عرض سعر', 'Quote'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12))),
+          ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: C2C.navy, visualDensity: VisualDensity.compact, padding: const EdgeInsets.symmetric(horizontal: 12)), onPressed: () => openRfqSheet(context), child: Text(tr('عرض سعر', 'Quote'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12))),
         ]),
       );
-
-  void _contractSheet() {
-    final title = TextEditingController();
-    final name = TextEditingController(text: context.read<AuthProvider>().profile?.name ?? '');
-    final phone = TextEditingController();
-    final desc = TextEditingController();
-    showModalBottomSheet(
-      context: context, isScrollControlled: true, backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(18, 16, 18, MediaQuery.of(ctx).viewInsets.bottom + 18),
-        child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(tr('طلب تعاقد / خدمة طويلة الأمد', 'Long-term / contract request'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: C2C.navy)),
-          const SizedBox(height: 12),
-          _f(title, tr('عنوان الطلب', 'Request title'), Icons.title),
-          const SizedBox(height: 9),
-          _f(name, tr('الاسم', 'Name'), Icons.person_outline),
-          const SizedBox(height: 9),
-          _f(phone, tr('الهاتف', 'Phone'), Icons.phone_outlined, phone: true),
-          const SizedBox(height: 9),
-          _f(desc, tr('وصف الاحتياج', 'Describe your needs'), Icons.notes, lines: 3),
-          const SizedBox(height: 14),
-          SizedBox(width: double.infinity, height: 48, child: ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: C2C.red, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-            onPressed: () async {
-              if (title.text.isEmpty || name.text.isEmpty || phone.text.isEmpty) return;
-              try {
-                await context.read<AuthProvider>().api.c2cContractCreate({'title': title.text, 'customer_name': name.text, 'phone': phone.text, 'description': desc.text, 'audience': 'company'});
-                if (ctx.mounted) Navigator.pop(ctx);
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('تم استلام طلبك، سنرسل عرض السعر قريبًا', 'Received — we will send a quote soon')), backgroundColor: const Color(0xFF16A34A)));
-              } catch (e) {
-                if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('$e')));
-              }
-            },
-            child: Text(tr('إرسال الطلب', 'Submit request'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-          )),
-        ])),
-      ),
-    );
-  }
 
   Widget _f(TextEditingController c, String hint, IconData ic, {bool phone = false, int lines = 1}) => TextField(
         controller: c, keyboardType: phone ? TextInputType.phone : TextInputType.text, maxLines: lines,

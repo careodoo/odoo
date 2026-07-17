@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'c2c_shell.dart';
+import 'c2c_rfq_dialog.dart';
 
 /// The customer's long-term / contract requests, with quotes to approve.
 class C2CContractsScreen extends StatefulWidget {
@@ -31,7 +32,13 @@ class _C2CContractsScreenState extends State<C2CContractsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: C2C.bg,
-      appBar: AppBar(backgroundColor: C2C.red, foregroundColor: Colors.white, title: Text(tr('طلبات التعاقد وعروض الأسعار', 'My contracts & quotes'))),
+      appBar: AppBar(backgroundColor: C2C.red, foregroundColor: Colors.white, title: Text(tr('عروض الأسعار', 'My quotes'))),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: C2C.red, foregroundColor: Colors.white,
+        icon: const Icon(Icons.request_quote_rounded),
+        label: Text(tr('طلب عرض سعر', 'Request a quote'), style: const TextStyle(fontWeight: FontWeight.w800)),
+        onPressed: () async { if (await openRfqSheet(context) == true && mounted) _load(); },
+      ),
       body: RefreshIndicator(
         onRefresh: () async => _load(),
         child: FutureBuilder<List<dynamic>>(
