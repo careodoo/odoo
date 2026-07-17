@@ -5,14 +5,18 @@ import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/widgets.dart';
 import 'work_order_detail_screen.dart';
+import 'client_workorder_create.dart';
 
 /// Every work order across the client's facilities: the numbers first, then the
 /// cuts that explain them (how late, whose, which role), then the records.
 class ClientWorkOrdersScreen extends StatefulWidget {
-  const ClientWorkOrdersScreen({super.key, this.initialFilter = 'all'});
+  const ClientWorkOrdersScreen({super.key, this.initialFilter = 'all', this.serviceType});
 
   /// Lets the home cockpit deep-link straight into a cut ('overdue', 'urgent'…).
   final String initialFilter;
+
+  /// Optional: open pre-filtered to one service type.
+  final String? serviceType;
 
   @override
   State<ClientWorkOrdersScreen> createState() => _ClientWorkOrdersScreenState();
@@ -21,7 +25,7 @@ class ClientWorkOrdersScreen extends StatefulWidget {
 class _ClientWorkOrdersScreenState extends State<ClientWorkOrdersScreen> {
   late String _state = widget.initialFilter;
   String _period = 'all';
-  String _service = 'all';
+  late String _service = widget.serviceType ?? 'all';
   String _priority = 'all';
   int? _employeeId;
   int? _facilityId;
@@ -88,6 +92,16 @@ class _ClientWorkOrdersScreenState extends State<ClientWorkOrdersScreen> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: const Color(0xFFC0392B), foregroundColor: Colors.white,
+        icon: const Icon(Icons.add_task_rounded),
+        label: Text(tr('أمر عمل', 'New order'), style: const TextStyle(fontWeight: FontWeight.w900)),
+        onPressed: () async {
+          final created = await ClientWorkorderCreateSheet.open(context,
+              presetServiceType: _service == 'all' ? null : _service);
+          if (created == true && mounted) setState(_load);
+        },
+      ),
       appBar: AppBar(
         title: Text(tr('أوامر العمل', 'Work orders')),
         actions: [

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import 'employee_profile_screen.dart';
 import '../core/widgets.dart';
 import 'media_viewer_screen.dart';
 import 'presence_scan_screen.dart';
@@ -113,6 +114,9 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
               : ListView(padding: const EdgeInsets.all(16), children: [
                   _header(cs),
                   if (_d!['state'] == 'in_progress') _timerCard(),
+                  if (_d!['state'] == 'done' || _d!['state'] == 'verified') ...[
+                    const SizedBox(height: 12), _completionCard(),
+                  ],
                   const SizedBox(height: 12),
                   if (_d!['instructions'] != null) ...[_instructionsCard(cs), const SizedBox(height: 12)],
                   _infoCard(cs),
@@ -146,6 +150,111 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(20)),
         child: Text(t, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+      );
+
+  /// When a task is finished, show how it landed against its SLA — early / on
+  /// time / late — with the actual duration and the executor (tap → profile).
+  Widget _completionCard() {
+    DateTime? p(String? v) => v == null ? null : DateTime.tryParse('$v'.replaceFirst(' ', 'T'));
+    final done = p(_d!['done_datetime'] as String?);
+    final deadline = p(_d!['deadline'] as String?);
+    final start = p(_d!['start_datetime'] as String?);
+    final reqd = p(_d!['request_datetime'] as String?);
+    // achievement vs deadline
+    String verdict; Color vc; IconData vi;
+    if (done != null && deadline != null) {
+      final diff = deadline.difference(done); // +ve = before deadline
+      if (diff.inMinutes >= 0) {
+        verdict = diff.inHours >= 1
+            ? tr('قبل الموعد بـ ${diff.inHours} س ${diff.inMinutes % 60} د', '${diff.inHours}h ${diff.inMinutes % 60}m early')
+            : tr('قبل الموعد بـ ${diff.inMinutes} د', '${diff.inMinutes}m early');
+        vc = const Color(0xFF16A34A); vi = Icons.verified_rounded;
+      } else {
+        final late = diff.abs();
+        verdict = late.inHours >= 1
+            ? tr('متأخر ${late.inHours} س ${late.inMinutes % 60} د', '${late.inHours}h ${late.inMinutes % 60}m late')
+            : tr('متأخر ${late.inMinutes} د', '${late.inMinutes}m late');
+        vc = const Color(0xFFE5484D); vi = Icons.running_with_errors_rounded;
+      }
+    } else {
+      verdict = tr('أُنجزت', 'Completed'); vc = const Color(0xFF16A34A); vi = Icons.check_circle_rounded;
+    }
+    // actual duration
+    final durMin = (_d!['duration_minutes'] ?? 0) is num ? (_d!['duration_minutes'] as num).toInt() : 0;
+    final dur = durMin > 0
+        ? (durMin >= 60 ? tr('${durMin ~/ 60} س ${durMin % 60} د', '${durMin ~/ 60}h ${durMin % 60}m') : tr('$durMin د', '${durMin}m'))
+        : (start != null && done != null ? tr('${done.difference(start).inMinutes} د', '${done.difference(start).inMinutes}m') : '—');
+    final empId = _d!['employee_id'];
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white, borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: vc.withValues(alpha: 0.3)),
+        boxShadow: [BoxShadow(color: vc.withValues(alpha: 0.12), blurRadius: 10, offset: const Offset(0, 5))],
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(vi, color: vc, size: 22),
+          const SizedBox(width: 8),
+          Expanded(child: Text(tr('نتيجة الإنجاز', 'Completion result'),
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15))),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(color: vc, borderRadius: BorderRadius.circular(20)),
+            child: Text(verdict, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900)),
+          ),
+        ]),
+        const SizedBox(height: 12),
+        Row(children: [
+          _cStat(Icons.timer_outlined, tr('مدة التنفيذ', 'Duration'), dur, const Color(0xFF0891B2)),
+          _cStat(Icons.flag_rounded, tr('الموعد', 'Deadline'),
+              deadline != null ? '${deadline.toLocal()}'.substring(5, 16) : '—', const Color(0xFF8B5CF6)),
+          _cStat(Icons.task_alt_rounded, tr('الإنجاز', 'Done at'),
+              done != null ? '${done.toLocal()}'.substring(5, 16) : '—', const Color(0xFF16A34A)),
+        ]),
+        if (reqd != null && done != null) ...[
+          const SizedBox(height: 8),
+          Text(tr('من الطلب للإنجاز: ${done.difference(reqd).inHours} ساعة',
+                  'Request → done: ${done.difference(reqd).inHours}h'),
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
+        ],
+        if (_d!['employee'] != null) ...[
+          const Divider(height: 20),
+          InkWell(
+            onTap: empId == null ? null : () => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => EmployeeProfileScreen(employeeId: empId as int, name: '${_d!['employee']}'))),
+            borderRadius: BorderRadius.circular(10),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(children: [
+                CircleAvatar(radius: 16, backgroundColor: vc.withValues(alpha: 0.12),
+                    child: Text('${_d!['employee']}'.characters.first,
+                        style: TextStyle(color: vc, fontWeight: FontWeight.w900, fontSize: 13))),
+                const SizedBox(width: 9),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(tr('المنفّذ', 'Executed by'),
+                      style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
+                  Text('${_d!['employee']}',
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: Color(0xFF0E3A5F))),
+                ])),
+                if (empId != null) const Icon(Icons.chevron_left_rounded, color: Colors.grey),
+              ]),
+            ),
+          ),
+        ],
+      ]),
+    );
+  }
+
+  Widget _cStat(IconData ic, String label, String v, Color c) => Expanded(
+        child: Column(children: [
+          Icon(ic, size: 15, color: c),
+          const SizedBox(height: 3),
+          Text(v, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
+          Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 8.5, color: Colors.grey.shade500, fontWeight: FontWeight.w700)),
+        ]),
       );
 
   Widget _timerCard() {

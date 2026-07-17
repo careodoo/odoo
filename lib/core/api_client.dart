@@ -109,6 +109,16 @@ class ApiClient {
       List<dynamic>.from((await _handle(
               await http.get(_u('/services'), headers: await _headers())))['data'] as List);
 
+  /// Options for the client's "new work order" form (facilities+locations,
+  /// services, teams, workers, priorities).
+  Future<Map<String, dynamic>> clientWorkorderOptions() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/workorder/options'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> clientWorkorderCreate(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/client/workorder/create'), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
   Future<void> workOrderPhoto(int id, String base64Data, String filename, String mediaType) async =>
       _handle(await http.post(_u('/workorders/$id/photo'),
           headers: await _headers(),
@@ -506,6 +516,19 @@ class ApiClient {
   Future<List<dynamic>> notifySent() async =>
       List<dynamic>.from((await _handle(
               await http.get(_u('/client/notify/sent'), headers: await _headers())))['data'] as List);
+
+  /// How many recipients the current audience selection resolves to.
+  Future<int> notifyPreview(Map<String, dynamic> body) async =>
+      ((Map<String, dynamic>.from((await _handle(await http.post(_u('/client/notify/preview'),
+              headers: await _headers(), body: jsonEncode(body))))['data'] as Map))['count'] ?? 0) as int;
+
+  Future<List<dynamic>> notifyScheduled() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/client/notify/scheduled'), headers: await _headers())))['data'] as List);
+
+  Future<void> notifyScheduledCancel(int id) async =>
+      _handle(await http.post(_u('/client/notify/scheduled/cancel'),
+          headers: await _headers(), body: jsonEncode({'id': id})));
 
   // ---- client-scoped security suite ----------------------------------------
   Future<Map<String, dynamic>> clientSecuritySummary() async =>

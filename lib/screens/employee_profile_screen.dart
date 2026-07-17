@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import 'employee_attendance_screen.dart';
 
 /// Full worker profile (data sourced from the HR Employees module) plus rich
 /// statistics for the client — filterable by day / month / year / all time.
@@ -17,6 +18,7 @@ class EmployeeProfileScreen extends StatefulWidget {
 class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
   String _period = 'month';
   Future<Map<String, dynamic>>? _future;
+  Future<Map<String, dynamic>>? _attFuture;
 
   static const _periods = [
     ('day', 'اليوم', 'Today'),
@@ -32,7 +34,15 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
     _load();
   }
 
-  void _load() => _future = context.read<AuthProvider>().api.clientEmployee(widget.employeeId, period: _period);
+  void _load() {
+    final api = context.read<AuthProvider>().api;
+    _future = api.clientEmployee(widget.employeeId, period: _period);
+    _attFuture = api.clientEmployeeAttendance(widget.employeeId, period: _period)
+        .catchError((_) => <String, dynamic>{});
+  }
+
+  void _openAttendance() => Navigator.push(context, MaterialPageRoute(
+      builder: (_) => EmployeeAttendanceScreen(employeeId: widget.employeeId, name: widget.name)));
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +82,8 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
               return ListView(padding: const EdgeInsets.all(16), children: [
                 _profileCard(p, cs),
                 const SizedBox(height: 14),
+                _attendanceSummary(),
+                const SizedBox(height: 14),
                 Text(tr('إحصائيات — ${d['period'] ?? ''}', 'Statistics — ${d['period'] ?? ''}'),
                     style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
                 const SizedBox(height: 8),
@@ -102,6 +114,106 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
         ),
       ]),
     );
+  }
+
+  /// Compact attendance snapshot inside the profile, with a button through to
+  /// the full filterable/printable/exportable records page.
+  Widget _attendanceSummary() {
+    const navy = Color(0xFF0E3A5F);
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _attFuture,
+      builder: (_, snap) {
+        final d = snap.data ?? const {};
+        final t = (d['totals'] as Map?) ?? const {};
+        final workers = ((d['workers'] as List?) ?? const []).cast<Map>();
+        final w = workers.isNotEmpty ? workers.first : const {};
+        final records = ((d['records'] as List?) ?? const []).cast<Map>();
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white, borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: navy.withValues(alpha: 0.1)),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 3))],
+          ),
+          child: Column(children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
+              child: Row(children: [
+                const Icon(Icons.fingerprint_rounded, size: 18, color: navy),
+                const SizedBox(width: 7),
+                Text(tr('الحضور والانصراف', 'Attendance'),
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: navy)),
+                const Spacer(),
+                if (snap.connectionState == ConnectionState.waiting)
+                  const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
+              ]),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              child: Row(children: [
+                _aStat('${w['days'] ?? t['days_covered'] ?? 0}', tr('يوم', 'Days'), const Color(0xFF6366F1)),
+                _aStat('${w['shifts'] ?? t['records'] ?? 0}', tr('وردية', 'Shifts'), const Color(0xFF0891B2)),
+                _aStat('${w['hours'] ?? t['total_hours'] ?? 0}', tr('ساعة', 'Hours'), const Color(0xFF16A34A)),
+                _aStat('${w['avg_hours'] ?? t['avg_hours'] ?? 0}', tr('متوسط', 'Avg'), const Color(0xFFF7A23B)),
+              ]),
+            ),
+            if (records.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+                child: Column(children: [
+                  for (final r in records.take(3)) Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: Row(children: [
+                      Container(width: 6, height: 6, decoration: BoxDecoration(
+                          color: r['open'] == true ? const Color(0xFF16A34A) : Colors.grey.shade400, shape: BoxShape.circle)),
+                      const SizedBox(width: 7),
+                      Text('${r['date'] ?? '—'}', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                      const Spacer(),
+                      Text('${_hm(r['check_in'])} → ${_hm(r['check_out'])}',
+                          style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                      const SizedBox(width: 8),
+                      Text(tr('${r['hours'] ?? 0}س', '${r['hours'] ?? 0}h'),
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF0891B2))),
+                    ]),
+                  ),
+                ]),
+              ),
+            const Divider(height: 1),
+            InkWell(
+              onTap: _openAttendance,
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 11),
+                child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  const Icon(Icons.list_alt_rounded, size: 16, color: Color(0xFFC0392B)),
+                  const SizedBox(width: 7),
+                  Text(tr('عرض كل سجلات الحضور', 'View all attendance records'),
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: Color(0xFFC0392B))),
+                  const Icon(Icons.chevron_left_rounded, size: 18, color: Color(0xFFC0392B)),
+                ]),
+              ),
+            ),
+          ]),
+        );
+      },
+    );
+  }
+
+  Widget _aStat(String v, String l, Color c) => Expanded(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          padding: const EdgeInsets.symmetric(vertical: 9),
+          decoration: BoxDecoration(color: c.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(11)),
+          child: Column(children: [
+            Text(v, style: TextStyle(color: c, fontSize: 16, fontWeight: FontWeight.w900)),
+            Text(l, style: TextStyle(fontSize: 9.5, color: Colors.grey.shade600, fontWeight: FontWeight.w700)),
+          ]),
+        ),
+      );
+
+  String _hm(dynamic v) {
+    final s = '${v ?? ''}';
+    if (s.length < 16) return '—';
+    return s.substring(11, 16);
   }
 
   Widget _profileCard(Map p, ColorScheme cs) {

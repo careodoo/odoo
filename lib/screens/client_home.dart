@@ -10,6 +10,7 @@ import 'client_team_screen.dart';
 import 'client_activity_screen.dart';
 import 'client_structure_screen.dart';
 import 'client_analytics_screen.dart';
+import 'client_services_screen.dart';
 import 'client_workorders_screen.dart';
 import 'contracts_screen.dart';
 import 'manage_screen.dart';
@@ -108,12 +109,12 @@ class _ClientHomeState extends State<ClientHome> {
                 _servicesWrap(d['services'] as List),
                 const SizedBox(height: 16),
                 if (_has('team')) ...[
-                  _section(tr('فِرَق العمل', 'Teams')),
+                  _section(tr('فِرَق العمل', 'Teams'), onMore: () => _go(const ClientTeamScreen())),
                   for (final t in (d['teams'] as List)) _teamCard(t as Map, cs),
                   const SizedBox(height: 16),
                 ],
                 if (_has('workorders')) ...[
-                  _section(tr('آخر الأعمال', 'Recent work')),
+                  _section(tr('آخر الأعمال', 'Recent work'), onMore: () => _go(const ClientWorkOrdersScreen(initialFilter: 'all'))),
                   for (final w in (d['recent_workorders'] as List)) _woCard(w as Map, cs),
                 ],
                 const SizedBox(height: 24),
@@ -134,15 +135,19 @@ class _ClientHomeState extends State<ClientHome> {
     final overdue = (k['overdue'] ?? 0) as int;
     final present = (k['present_now'] ?? 0) as int;
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 15, 16, 14),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-            colors: [Color(0xFF17547F), Color(0xFF0E3A5F), Color(0xFF092B45)],
+            colors: [Color(0xFFE24A3B), Color(0xFFC0392B), Color(0xFF8E241B)],
             begin: Alignment.topRight, end: Alignment.bottomLeft),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: const Color(0xFF0E3A5F).withValues(alpha: 0.30), blurRadius: 14, offset: const Offset(0, 6))],
+        boxShadow: [BoxShadow(color: const Color(0xFFC0392B).withValues(alpha: 0.32), blurRadius: 14, offset: const Offset(0, 6))],
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      clipBehavior: Clip.antiAlias,
+      child: CustomPaint(
+        painter: const BrandPattern(opacity: 0.07),
+        child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 15, 16, 14),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Container(
             width: 48, height: 48, alignment: Alignment.center,
@@ -219,6 +224,8 @@ class _ClientHomeState extends State<ClientHome> {
           ),
         ],
       ]),
+        ),
+      ),
     );
   }
 
@@ -421,12 +428,12 @@ class _ClientHomeState extends State<ClientHome> {
 
   Widget _kpiGrid(Map k) {
     final items = [
-      (tr('المرافق', 'Facilities'), k['facilities'] ?? 0, const Color(0xFF2F6DF6), Icons.location_city, () => _openEstate()),
-      (tr('المباني', 'Buildings'), k['buildings'] ?? 0, const Color(0xFF6366F1), Icons.apartment, () => _openEstate()),
-      (tr('المواقع', 'Locations'), k['locations'] ?? 0, const Color(0xFF0EA5E9), Icons.qr_code, () => _openEstate()),
-      (tr('العمال', 'Workers'), k['workers'] ?? 0, const Color(0xFF0D9488), Icons.engineering, () => _go(const ClientTeamScreen())),
-      (tr('الخدمات', 'Services'), k['services'] ?? 0, const Color(0xFF37C98A), Icons.design_services, () => _go(const ClientAnalyticsScreen())),
-      (tr('الفِرَق', 'Teams'), k['teams'] ?? 0, const Color(0xFF14B8A6), Icons.groups, () => _go(const ClientTeamScreen())),
+      (tr('المرافق', 'Facilities'), k['facilities'] ?? 0, const Color(0xFFC0392B), Icons.location_city_rounded, () => _go(const ClientStructureScreen(focus: 'facilities'))),
+      (tr('المباني', 'Buildings'), k['buildings'] ?? 0, const Color(0xFFE67E22), Icons.apartment_rounded, () => _go(const ClientStructureScreen(focus: 'buildings'))),
+      (tr('المواقع', 'Locations'), k['locations'] ?? 0, const Color(0xFF0EA5E9), Icons.pin_drop_rounded, () => _go(const ClientStructureScreen(focus: 'locations'))),
+      (tr('العمال', 'Workers'), k['workers'] ?? 0, const Color(0xFF0D9488), Icons.engineering_rounded, () => _go(const ClientTeamScreen())),
+      (tr('الخدمات', 'Services'), k['services'] ?? 0, const Color(0xFF16A34A), Icons.design_services_rounded, () => _go(const ClientServicesScreen())),
+      (tr('الفِرَق', 'Teams'), k['teams'] ?? 0, const Color(0xFF14B8A6), Icons.groups_rounded, () => _go(const ClientTeamScreen())),
     ];
     return GridView.count(
       crossAxisCount: 3,
@@ -451,9 +458,27 @@ class _ClientHomeState extends State<ClientHome> {
     }
   }
 
-  Widget _section(String t) => Padding(
+  Widget _section(String t, {VoidCallback? onMore}) => Padding(
         padding: const EdgeInsets.only(bottom: 8, top: 4),
-        child: Text(t, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
+        child: Row(children: [
+          Text(t, style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w900)),
+          const Spacer(),
+          if (onMore != null)
+            GestureDetector(
+              onTap: onMore,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
+                decoration: BoxDecoration(
+                    color: const Color(0xFFC0392B).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20)),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Text(tr('المزيد', 'More'),
+                      style: const TextStyle(color: Color(0xFFC0392B), fontWeight: FontWeight.w800, fontSize: 11.5)),
+                  const Icon(Icons.chevron_left_rounded, color: Color(0xFFC0392B), size: 16),
+                ]),
+              ),
+            ),
+        ]),
       );
 
   Widget _facilityCard(Map f, ColorScheme cs) => Card(
@@ -523,6 +548,10 @@ class _ClientHomeState extends State<ClientHome> {
           title: Text('${t['name']}', style: const TextStyle(fontWeight: FontWeight.w700)),
           subtitle: Text('${t['service'] ?? ''} · مشرف: ${t['supervisor'] ?? '—'} · أعضاء: ${t['members']}',
               style: TextStyle(color: cs.outline, fontSize: 12)),
+          trailing: const Icon(Icons.chevron_left_rounded, color: Colors.grey),
+          // Open the team page focused on this team's service block.
+          onTap: () => Navigator.push(context, MaterialPageRoute(
+              builder: (_) => ClientTeamScreen(focusTeamId: t['id'] as int?))),
         ),
       );
 

@@ -83,12 +83,32 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               pinned: true,
               backgroundColor: _navy,
               foregroundColor: Colors.white,
+              // The gallery background is white, so a plain white arrow would
+              // vanish — give the back button its own dark scrim so it always
+              // reads against any image.
+              leading: Padding(
+                padding: const EdgeInsets.all(6),
+                child: CircleAvatar(
+                  backgroundColor: Colors.black.withValues(alpha: 0.35),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+                    tooltip: tr('رجوع', 'Back'),
+                    onPressed: () => Navigator.maybePop(context),
+                  ),
+                ),
+              ),
               actions: [
-                IconButton(
-                  icon: Icon(fav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                      color: fav ? const Color(0xFFE5484D) : Colors.white),
-                  tooltip: tr('المفضلة', 'Favourite'),
-                  onPressed: () => _toggleFav(p),
+                Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.black.withValues(alpha: 0.35),
+                    child: IconButton(
+                      icon: Icon(fav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                          color: fav ? const Color(0xFFE5484D) : Colors.white, size: 20),
+                      tooltip: tr('المفضلة', 'Favourite'),
+                      onPressed: () => _toggleFav(p),
+                    ),
+                  ),
                 ),
               ],
               flexibleSpace: FlexibleSpaceBar(background: _gallery(images)),

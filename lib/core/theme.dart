@@ -17,7 +17,7 @@ class ServiceTheme {
     'facade': ServiceTheme('الواجهات', Color(0xFF38BDF8), '🪟', false),
     'maintenance': ServiceTheme('الصيانة', Color(0xFFF7A23B), '❄️', false),
     'worker': ServiceTheme('العامل', Color(0xFFF7A23B), '👷', false),
-    'client': ServiceTheme('العميل', Color(0xFF6366F1), '🧑‍💼', false),
+    'client': ServiceTheme('العميل', Color(0xFFC0392B), '🧑‍💼', false),
   };
 
   static ServiceTheme of(String type) =>

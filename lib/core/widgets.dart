@@ -1,9 +1,27 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../core/i18n.dart';
 import '../screens/notifications_screen.dart';
 import '../screens/workorders_screen.dart';
+
+/// Resolves an employee/photo value that may be a base64 `data:` URI (as the API
+/// sends) OR a plain http URL into an [ImageProvider]. Returns null when absent
+/// or unparseable, so callers can fall back to initials. `NetworkImage` cannot
+/// render `data:` URIs — this is the correct path for API photos.
+ImageProvider? avatarImage(String? photo) {
+  if (photo == null || photo.isEmpty) return null;
+  if (photo.startsWith('data:image')) {
+    try {
+      return MemoryImage(base64Decode(photo.split(',').last));
+    } catch (_) {
+      return null;
+    }
+  }
+  if (photo.startsWith('http')) return NetworkImage(photo);
+  return null;
+}
 
 /// Shared language picker — lists every supported UI language.
 void showLanguagePicker(BuildContext context, {VoidCallback? onChanged}) {
@@ -142,4 +160,37 @@ class MyStatsRow extends StatelessWidget {
       ],
     );
   }
+}
+
+/// A subtle, professional geometric pattern for coloured header surfaces —
+/// faint diagonal hairlines with a sparse dot grid. Draw it behind content in
+/// a Stack/CustomPaint so branded panels read as designed, not flat.
+class BrandPattern extends CustomPainter {
+  const BrandPattern({this.color = Colors.white, this.opacity = 0.06, this.gap = 26});
+  final Color color;
+  final double opacity;
+  final double gap;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final line = Paint()
+      ..color = color.withValues(alpha: opacity)
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+    // diagonal hairlines (top-right → bottom-left, RTL-friendly)
+    for (double x = -size.height; x < size.width; x += gap) {
+      canvas.drawLine(Offset(x, 0), Offset(x + size.height, size.height), line);
+    }
+    // sparse dot grid on the crossings
+    final dot = Paint()..color = color.withValues(alpha: opacity * 1.6);
+    for (double y = gap / 2; y < size.height; y += gap) {
+      for (double x = gap / 2; x < size.width; x += gap) {
+        canvas.drawCircle(Offset(x, y), 1.1, dot);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(BrandPattern old) =>
+      old.color != color || old.opacity != opacity || old.gap != gap;
 }

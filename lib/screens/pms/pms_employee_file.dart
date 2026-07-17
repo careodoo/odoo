@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/widgets.dart';
 import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
@@ -85,7 +86,7 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
           Row(children: [
             CircleAvatar(
               radius: 30, backgroundColor: Colors.white.withValues(alpha: 0.18),
-              backgroundImage: e['photo'] != null ? NetworkImage('${e['photo']}') : null,
+              backgroundImage: avatarImage(e['photo'] as String?),
               child: e['photo'] == null
                   ? Text('${e['name']}'.characters.first,
                       style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900))

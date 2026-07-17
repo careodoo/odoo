@@ -1,0 +1,320 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../core/auth.dart';
+import '../core/i18n.dart';
+import '../core/widgets.dart';
+
+/// Professional "raise a work order" sheet for the client: pick facility +
+/// location, target a service or a team, set priority, describe the job, and
+/// optionally assign it directly to a specific worker.
+class ClientWorkorderCreateSheet extends StatefulWidget {
+  const ClientWorkorderCreateSheet({super.key, this.presetServiceType});
+  final String? presetServiceType;
+
+  /// Returns true via Navigator.pop when a work order was created.
+  static Future<bool?> open(BuildContext context, {String? presetServiceType}) =>
+      showModalBottomSheet<bool>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => ClientWorkorderCreateSheet(presetServiceType: presetServiceType),
+      );
+
+  @override
+  State<ClientWorkorderCreateSheet> createState() => _ClientWorkorderCreateSheetState();
+}
+
+class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet> {
+  Map<String, dynamic>? _opts;
+  String? _error;
+  final _title = TextEditingController();
+  final _desc = TextEditingController();
+  int? _facilityId;
+  int? _locationId;
+  int? _serviceId;
+  int? _teamId;
+  int? _workerId;
+  String _priority = '1';
+  bool _assign = false;
+  bool _submitting = false;
+
+  static const _navy = Color(0xFF0E3A5F);
+  static const _accent = Color(0xFFC0392B);
+  static const _prio = {
+    '0': (Color(0xFF64748B), Icons.low_priority_rounded, 'منخفضة', 'Low'),
+    '1': (Color(0xFF0891B2), Icons.horizontal_rule_rounded, 'عادية', 'Normal'),
+    '2': (Color(0xFFF7A23B), Icons.priority_high_rounded, 'عالية', 'High'),
+    '3': (Color(0xFFE5484D), Icons.local_fire_department_rounded, 'عاجلة', 'Urgent'),
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOptions();
+  }
+
+  @override
+  void dispose() {
+    _title.dispose();
+    _desc.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadOptions() async {
+    try {
+      final o = await context.read<AuthProvider>().api.clientWorkorderOptions();
+      if (!mounted) return;
+      setState(() {
+        _opts = o;
+        final facs = (o['facilities'] as List?) ?? const [];
+        if (facs.isNotEmpty) _facilityId = facs.first['id'] as int;
+        if (widget.presetServiceType != null) {
+          final svc = (o['services'] as List?)?.cast<Map>().firstWhere(
+              (s) => '${s['type']}' == widget.presetServiceType, orElse: () => const {});
+          if (svc != null && svc.isNotEmpty) _serviceId = svc['id'] as int;
+        }
+      });
+    } catch (e) {
+      if (mounted) setState(() => _error = '$e');
+    }
+  }
+
+  List<Map> get _locations {
+    final facs = (_opts?['facilities'] as List?)?.cast<Map>() ?? const [];
+    final f = facs.firstWhere((x) => x['id'] == _facilityId, orElse: () => const {});
+    return ((f['locations'] as List?) ?? const []).cast<Map>();
+  }
+
+  List<Map> get _teams {
+    final teams = (_opts?['teams'] as List?)?.cast<Map>() ?? const [];
+    return teams.where((t) => _facilityId == null || t['facility_id'] == _facilityId).toList();
+  }
+
+  Future<void> _submit() async {
+    if (_title.text.trim().isEmpty) {
+      _snack(tr('أدخل عنوان أمر العمل', 'Enter a work-order title'));
+      return;
+    }
+    if (_serviceId == null && _teamId == null) {
+      _snack(tr('اختر الخدمة أو الفريق', 'Choose a service or team'));
+      return;
+    }
+    setState(() => _submitting = true);
+    final body = <String, dynamic>{
+      'title': _title.text.trim(),
+      'facility_id': _facilityId,
+      'service_id': _serviceId,
+      'team_id': _teamId,
+      'location_id': _locationId,
+      'priority': _priority,
+      'description': _desc.text.trim(),
+      if (_assign && _workerId != null) 'employee_id': _workerId,
+    };
+    try {
+      await context.read<AuthProvider>().api.clientWorkorderCreate(body);
+      if (!mounted) return;
+      Navigator.pop(context, true);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(tr('تم إنشاء أمر العمل بنجاح', 'Work order created')),
+        backgroundColor: const Color(0xFF16A34A), behavior: SnackBarBehavior.floating));
+    } catch (e) {
+      if (mounted) {
+        setState(() => _submitting = false);
+        _snack('$e');
+      }
+    }
+  }
+
+  void _snack(String m) => ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(m), backgroundColor: _accent, behavior: SnackBarBehavior.floating));
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.9,
+      minChildSize: 0.5,
+      maxChildSize: 0.96,
+      builder: (_, sc) => Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFFF6F7F9),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(children: [
+          // header
+          CustomPaint(
+            painter: const BrandPattern(opacity: 0.07),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(colors: [Color(0xFFE24A3B), Color(0xFFC0392B), Color(0xFF8E241B)],
+                    begin: Alignment.topRight, end: Alignment.bottomLeft),
+              ),
+              child: Column(children: [
+                Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(color: Colors.white54, borderRadius: BorderRadius.circular(3)))),
+                Row(children: [
+                  Container(
+                    width: 42, height: 42, alignment: Alignment.center,
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
+                    child: const Icon(Icons.add_task_rounded, color: Colors.white, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(tr('أمر عمل جديد', 'New work order'),
+                        style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+                    Text(tr('أسنِد لأي خدمة أو فريق أو عامل', 'Assign to any service, team or worker'),
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 11.5)),
+                  ])),
+                  IconButton(icon: const Icon(Icons.close_rounded, color: Colors.white), onPressed: () => Navigator.pop(context)),
+                ]),
+              ]),
+            ),
+          ),
+          Expanded(child: _opts == null
+              ? Center(child: _error != null
+                  ? Text(_error!, style: const TextStyle(color: Colors.grey))
+                  : const CircularProgressIndicator(color: _accent))
+              : ListView(controller: sc, padding: const EdgeInsets.all(16), children: _form())),
+          // submit bar
+          if (_opts != null)
+            SafeArea(top: false, child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: SizedBox(height: 52, child: FilledButton.icon(
+                style: FilledButton.styleFrom(backgroundColor: _accent,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                onPressed: _submitting ? null : _submit,
+                icon: _submitting
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.send_rounded),
+                label: Text(tr('إنشاء أمر العمل', 'Create work order'),
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+              )),
+            )),
+        ]),
+      ),
+    );
+  }
+
+  List<Widget> _form() {
+    final services = (_opts!['services'] as List?)?.cast<Map>() ?? const [];
+    return [
+      _label(Icons.title_rounded, tr('عنوان المهمة', 'Task title')),
+      const SizedBox(height: 8),
+      _field(_title, tr('مثال: صيانة مكيّف الدور الثاني', 'e.g. Fix 2nd floor AC')),
+      const SizedBox(height: 16),
+      _label(Icons.apartment_rounded, tr('المرفق والموقع', 'Facility & location')),
+      const SizedBox(height: 8),
+      _dd<int?>(tr('المرفق', 'Facility'), _facilityId,
+          [for (final f in (_opts!['facilities'] as List).cast<Map>()) DropdownMenuItem(value: f['id'] as int, child: Text('${f['name']}'))],
+          (v) => setState(() { _facilityId = v; _locationId = null; _teamId = null; })),
+      if (_locations.isNotEmpty) ...[
+        const SizedBox(height: 10),
+        _dd<int?>(tr('الموقع (اختياري)', 'Location (optional)'), _locationId,
+            [const DropdownMenuItem(value: null, child: Text('—')),
+             for (final l in _locations) DropdownMenuItem(value: l['id'] as int, child: Text('${l['name']}'))],
+            (v) => setState(() => _locationId = v)),
+      ],
+      const SizedBox(height: 16),
+      _label(Icons.design_services_rounded, tr('الخدمة', 'Service')),
+      const SizedBox(height: 8),
+      _dd<int?>(tr('نوع الخدمة', 'Service type'), _serviceId,
+          [const DropdownMenuItem(value: null, child: Text('—')),
+           for (final s in services) DropdownMenuItem(value: s['id'] as int, child: Text('${s['name']} · ${s['type_label'] ?? ''}'))],
+          (v) => setState(() => _serviceId = v)),
+      if (_teams.isNotEmpty) ...[
+        const SizedBox(height: 10),
+        _dd<int?>(tr('توجيه لفريق (اختياري)', 'Route to team (optional)'), _teamId,
+            [const DropdownMenuItem(value: null, child: Text('—')),
+             for (final t in _teams) DropdownMenuItem(value: t['id'] as int, child: Text('${t['name']}${t['service'] != null ? ' · ${t['service']}' : ''}'))],
+            (v) => setState(() => _teamId = v)),
+      ],
+      const SizedBox(height: 16),
+      _label(Icons.flag_rounded, tr('الأولوية', 'Priority')),
+      const SizedBox(height: 8),
+      Row(children: [for (final e in _prio.entries) Expanded(child: _prioChip(e.key))]),
+      const SizedBox(height: 16),
+      // direct assignment
+      Container(
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: _assign ? _navy : Colors.grey.shade300)),
+        child: Column(children: [
+          SwitchListTile(
+            value: _assign,
+            activeColor: _navy,
+            onChanged: (v) => setState(() => _assign = v),
+            title: Text(tr('إسناد مباشر لعامل', 'Assign directly to a worker'),
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
+            subtitle: Text(tr('يبدأ الأمر كمُسنَد لهذا العامل', 'Starts assigned to this worker'),
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+          ),
+          if (_assign) Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+            child: _dd<int?>(tr('العامل', 'Worker'), _workerId,
+                [const DropdownMenuItem(value: null, child: Text('—')),
+                 for (final w in (_opts!['workers'] as List).cast<Map>())
+                   DropdownMenuItem(value: w['id'] as int, child: Text('${w['name']}${w['job'] != null ? ' · ${w['job']}' : ''}'))],
+                (v) => setState(() => _workerId = v)),
+          ),
+        ]),
+      ),
+      const SizedBox(height: 16),
+      _label(Icons.notes_rounded, tr('تفاصيل إضافية', 'Extra details')),
+      const SizedBox(height: 8),
+      _field(_desc, tr('وصف المشكلة، الملاحظات، المتطلبات…', 'Describe the issue, notes, requirements…'), lines: 4),
+      const SizedBox(height: 8),
+    ];
+  }
+
+  Widget _label(IconData ic, String t) => Row(children: [
+        Icon(ic, size: 16, color: _accent),
+        const SizedBox(width: 7),
+        Text(t, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: _navy)),
+      ]);
+
+  Widget _field(TextEditingController c, String hint, {int lines = 1}) => TextField(
+        controller: c, maxLines: lines,
+        decoration: InputDecoration(
+          hintText: hint, filled: true, fillColor: Colors.white,
+          hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _accent, width: 1.6)),
+        ),
+      );
+
+  Widget _dd<T>(String label, T value, List<DropdownMenuItem<T>> items, ValueChanged<T?> onCh) =>
+      DropdownButtonFormField<T>(
+        value: value, isExpanded: true,
+        decoration: InputDecoration(
+          labelText: label, filled: true, fillColor: Colors.white,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+        ),
+        items: items, onChanged: onCh,
+      );
+
+  Widget _prioChip(String key) {
+    final s = _prio[key]!;
+    final on = _priority == key;
+    return GestureDetector(
+      onTap: () => setState(() => _priority = key),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        margin: const EdgeInsets.symmetric(horizontal: 3),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: on ? s.$1 : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: on ? s.$1 : Colors.grey.shade300),
+        ),
+        child: Column(children: [
+          Icon(s.$2, size: 18, color: on ? Colors.white : s.$1),
+          const SizedBox(height: 3),
+          Text(tr(s.$3, s.$4), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: on ? Colors.white : _navy)),
+        ]),
+      ),
+    );
+  }
+}

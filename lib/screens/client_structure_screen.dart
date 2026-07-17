@@ -6,7 +6,9 @@ import '../core/i18n.dart';
 /// Buildings / floors / facilities statistics for the client, period-aware —
 /// expandable tree: facility → building → floor, each with its work-order KPIs.
 class ClientStructureScreen extends StatefulWidget {
-  const ClientStructureScreen({super.key});
+  const ClientStructureScreen({super.key, this.focus});
+  /// 'facilities' | 'buildings' | 'locations' — just tunes the title.
+  final String? focus;
   @override
   State<ClientStructureScreen> createState() => _ClientStructureScreenState();
 }
@@ -31,7 +33,11 @@ class _ClientStructureScreenState extends State<ClientStructureScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(tr('المباني والمرافق', 'Buildings & facilities'))),
+      appBar: AppBar(title: Text(
+        widget.focus == 'buildings' ? tr('المباني', 'Buildings')
+        : widget.focus == 'locations' ? tr('المواقع', 'Locations')
+        : widget.focus == 'facilities' ? tr('المرافق', 'Facilities')
+        : tr('المباني والمرافق', 'Buildings & facilities'))),
       body: Column(children: [
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,

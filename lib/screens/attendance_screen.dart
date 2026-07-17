@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import '../core/widgets.dart';
 import 'pdf_report_screen.dart';
 import 'employee_profile_screen.dart';
+import 'excel_export.dart';
 
 /// الحضور والانصراف — who is expected on each shift, who actually turned up,
 /// who is missing, and every punch behind those numbers. Printable.
@@ -47,6 +49,16 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     )));
   }
 
+  void _exportExcel({int? employeeId}) {
+    final q = StringBuffer('/cafm/attendance/export?period=$_period');
+    if (employeeId != null) q.write('&employee_id=$employeeId');
+    if (_facilityId != null) q.write('&facility_id=$_facilityId');
+    exportExcelFile(context,
+        path: q.toString(),
+        fileName: 'attendance-$_period.xlsx',
+        shareText: tr('سجل الحضور والانصراف', 'Attendance records'));
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -54,6 +66,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       appBar: AppBar(
         title: Text(tr('الحضور والانصراف', 'Attendance')),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.grid_on_rounded),
+            tooltip: tr('تصدير Excel', 'Export Excel'),
+            onPressed: () => _exportExcel(),
+          ),
           IconButton(
             icon: const Icon(Icons.print_rounded),
             tooltip: tr('طباعة التقرير', 'Print report'),
@@ -321,15 +338,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         child: Row(children: [
           Container(width: 7, height: 7, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
           const SizedBox(width: 8),
-          CircleAvatar(
-            radius: 14,
-            backgroundColor: c.withValues(alpha: 0.14),
-            backgroundImage: m['photo'] != null ? NetworkImage('${m['photo']}') : null,
-            child: m['photo'] == null
-                ? Text('${m['name']}'.characters.first,
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: c))
-                : null,
-          ),
+          Builder(builder: (_) {
+            final img = avatarImage(m['photo'] as String?);
+            return CircleAvatar(
+              radius: 14,
+              backgroundColor: c.withValues(alpha: 0.14),
+              backgroundImage: img,
+              child: img == null
+                  ? Text('${m['name']}'.characters.first,
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: c))
+                  : null,
+            );
+          }),
           const SizedBox(width: 8),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('${m['name']}', maxLines: 1, overflow: TextOverflow.ellipsis,
@@ -359,15 +379,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           child: Padding(
             padding: const EdgeInsets.all(10),
             child: Row(children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: _navy.withValues(alpha: 0.1),
-                backgroundImage: w['photo'] != null ? NetworkImage('${w['photo']}') : null,
-                child: w['photo'] == null
-                    ? Text('${w['name']}'.characters.first,
-                        style: const TextStyle(fontWeight: FontWeight.w900, color: _navy))
-                    : null,
-              ),
+              Builder(builder: (_) {
+                final img = avatarImage(w['photo'] as String?);
+                return CircleAvatar(
+                  radius: 18,
+                  backgroundColor: _navy.withValues(alpha: 0.1),
+                  backgroundImage: img,
+                  child: img == null
+                      ? Text('${w['name']}'.characters.first,
+                          style: const TextStyle(fontWeight: FontWeight.w900, color: _navy))
+                      : null,
+                );
+              }),
               const SizedBox(width: 10),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
@@ -396,11 +419,21 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   _b('${w['avg_hours']}', tr('متوسط/يوم', 'avg/day'), Colors.grey.shade600),
                 ]),
               ])),
-              IconButton(
-                icon: const Icon(Icons.print_outlined, size: 18),
-                tooltip: tr('طباعة سجل هذا العامل', 'Print this worker'),
-                onPressed: () => _print(employeeId: w['id'] as int),
-              ),
+              Column(mainAxisSize: MainAxisSize.min, children: [
+                IconButton(
+                  padding: EdgeInsets.zero, constraints: const BoxConstraints(),
+                  icon: const Icon(Icons.grid_on_outlined, size: 17, color: Color(0xFF16A34A)),
+                  tooltip: tr('تصدير Excel لهذا العامل', 'Export this worker'),
+                  onPressed: () => _exportExcel(employeeId: w['id'] as int),
+                ),
+                const SizedBox(height: 8),
+                IconButton(
+                  padding: EdgeInsets.zero, constraints: const BoxConstraints(),
+                  icon: const Icon(Icons.print_outlined, size: 17),
+                  tooltip: tr('طباعة سجل هذا العامل', 'Print this worker'),
+                  onPressed: () => _print(employeeId: w['id'] as int),
+                ),
+              ]),
             ]),
           ),
         ),

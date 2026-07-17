@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/widgets.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
@@ -25,7 +26,9 @@ String statusLabel(String s) => {
 /// service, the teams inside it, the people inside those. Every level carries
 /// its own numbers, so a manager can stop at whichever level they care about.
 class ClientTeamScreen extends StatefulWidget {
-  const ClientTeamScreen({super.key});
+  const ClientTeamScreen({super.key, this.focusTeamId});
+  /// When set, the matching team's block starts expanded.
+  final int? focusTeamId;
   @override
   State<ClientTeamScreen> createState() => _ClientTeamScreenState();
 }
@@ -211,7 +214,7 @@ class _ClientTeamScreenState extends State<ClientTeamScreen> {
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          initiallyExpanded: teams.length <= 2,
+          initiallyExpanded: teams.length <= 2 || (widget.focusTeamId != null && teams.any((t) => (t as Map)['id'] == widget.focusTeamId)),
           tilePadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 4),
           childrenPadding: const EdgeInsets.fromLTRB(11, 0, 11, 11),
           leading: Container(
@@ -360,7 +363,7 @@ class _ClientTeamScreenState extends State<ClientTeamScreen> {
             CircleAvatar(
               radius: 17,
               backgroundColor: c.withValues(alpha: 0.15),
-              backgroundImage: m['photo'] != null ? NetworkImage('${m['photo']}') : null,
+              backgroundImage: avatarImage(m['photo'] as String?),
               child: m['photo'] == null
                   ? Text('${m['name']}'.characters.first,
                       style: TextStyle(fontWeight: FontWeight.w900, color: c, fontSize: 13))
