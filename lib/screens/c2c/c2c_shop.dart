@@ -48,8 +48,8 @@ class _C2CShopScreenState extends State<C2CShopScreen> {
         title: Text(tr('المتجر', 'Shop')),
         actions: [
           Stack(alignment: Alignment.center, children: [
-            IconButton(icon: const Icon(Icons.shopping_cart_outlined), onPressed: _cartCount == 0 ? null : _openCart),
-            if (_cartCount > 0) Positioned(right: 6, top: 8, child: Container(padding: const EdgeInsets.all(4), decoration: const BoxDecoration(color: C2C.red, shape: BoxShape.circle), child: Text('$_cartCount', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)))),
+            IconButton(icon: const Icon(Icons.shopping_cart_outlined, color: Colors.white), onPressed: _cartCount == 0 ? null : _openCart),
+            if (_cartCount > 0) Positioned(right: 5, top: 6, child: Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: const Color(0xFFFFC107), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white, width: 1.5)), child: Text('$_cartCount', style: const TextStyle(color: Colors.black, fontSize: 10.5, fontWeight: FontWeight.w900)))),
           ]),
         ],
       ),
@@ -96,6 +96,64 @@ class _C2CShopScreenState extends State<C2CShopScreen> {
     );
   }
 
+  /// Full product detail — gallery, description, price, add-to-cart. Opens as a
+  /// draggable sheet from the product image/name.
+  void _openProduct(Map p) {
+    final images = ((p['images'] as List?) ?? (p['image'] != null ? [p['image']] : [])).cast();
+    showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+      builder: (_) => DraggableScrollableSheet(
+        expand: false, initialChildSize: 0.85, minChildSize: 0.5, maxChildSize: 0.95,
+        builder: (ctx, scroll) => Container(
+          decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+          child: Column(children: [
+            const SizedBox(height: 9),
+            Center(child: Container(width: 42, height: 4, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(4)))),
+            Align(alignment: Alignment.centerLeft, child: IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(ctx))),
+            Expanded(child: ListView(controller: scroll, padding: const EdgeInsets.fromLTRB(16, 0, 16, 16), children: [
+              // gallery
+              if (images.isNotEmpty)
+                SizedBox(height: 220, child: PageView(children: [
+                  for (final img in images)
+                    ClipRRect(borderRadius: BorderRadius.circular(16),
+                        child: Image.network('$img', fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(color: C2C.bg, child: const Icon(Icons.inventory_2_outlined, size: 60, color: Colors.grey)))),
+                ]))
+              else
+                Container(height: 200, decoration: BoxDecoration(color: C2C.bg, borderRadius: BorderRadius.circular(16)), child: const Icon(Icons.inventory_2_outlined, size: 60, color: Colors.grey)),
+              const SizedBox(height: 14),
+              Text('${p['name']}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: C2C.navy)),
+              if (p['category'] != null) Padding(padding: const EdgeInsets.only(top: 4), child: Text('${p['category']}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5))),
+              const SizedBox(height: 10),
+              Row(children: [
+                Text('${p['price']}', style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w900, fontSize: 26)),
+                const SizedBox(width: 4),
+                Text('${p['currency'] ?? 'KWD'}', style: TextStyle(color: Colors.grey.shade500, fontSize: 12, fontWeight: FontWeight.w700)),
+                if (p['uom'] != null) Text(' / ${p['uom']}', style: TextStyle(color: Colors.grey.shade400, fontSize: 11)),
+              ]),
+              if ((p['description'] ?? '').toString().trim().isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Text(tr('الوصف', 'Description'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: C2C.navy)),
+                const SizedBox(height: 6),
+                Text('${p['description']}', style: const TextStyle(fontSize: 13, height: 1.7, color: Color(0xFF334155))),
+              ],
+              if (p['code'] != null) Padding(padding: const EdgeInsets.only(top: 10), child: Text('${tr('الكود', 'Code')}: ${p['code']}', style: TextStyle(color: Colors.grey.shade500, fontSize: 11))),
+            ])),
+            SafeArea(top: false, child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
+              child: SizedBox(height: 50, width: double.infinity, child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(backgroundColor: C2C.red, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                onPressed: () { _add(p); Navigator.pop(ctx); },
+                icon: const Icon(Icons.add_shopping_cart_rounded),
+                label: Text(tr('أضف إلى السلة', 'Add to cart'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+              )),
+            )),
+          ]),
+        ),
+      ),
+    );
+  }
+
   Widget _card(Map p) {
     final id = p['id'] as int;
     final inCart = _cart[id]?['qty'] as int? ?? 0;
@@ -103,18 +161,20 @@ class _C2CShopScreenState extends State<C2CShopScreen> {
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), boxShadow: [BoxShadow(color: C2C.navy.withValues(alpha: 0.07), blurRadius: 14, offset: const Offset(0, 6))]),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(child: Stack(children: [
-          Positioned.fill(child: ClipRRect(
+          Positioned.fill(child: GestureDetector(
+            onTap: () => _openProduct(p),
+            child: ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
             child: p['image'] != null
                 ? Image.network('${p['image']}', width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: C2C.bg, child: const Icon(Icons.inventory_2_outlined, color: Colors.grey, size: 40)))
                 : Container(color: C2C.bg, child: const Icon(Icons.inventory_2_outlined, color: Colors.grey, size: 40)),
-          )),
+          ))),
           if (inCart > 0) Positioned(top: 8, right: 8, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: C2C.navy, borderRadius: BorderRadius.circular(20)), child: Text(tr('في السلة $inCart', '$inCart in cart'), style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w800)))),
         ])),
         Padding(
           padding: const EdgeInsets.fromLTRB(11, 9, 11, 10),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('${p['name']}', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, height: 1.2, color: C2C.ink)),
+            GestureDetector(onTap: () => _openProduct(p), child: Text('${p['name']}', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, height: 1.2, color: C2C.ink))),
             const SizedBox(height: 8),
             Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

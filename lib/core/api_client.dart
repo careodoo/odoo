@@ -984,6 +984,11 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await http.post(_u('/account/update'),
               headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
 
+  /// Set my profile photo from base64 (data URI or raw).
+  Future<Map<String, dynamic>> accountSetPhoto(String base64Image) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/account/photo'),
+              headers: await _headers(), body: jsonEncode({'image': base64Image}))))['data'] as Map);
+
   /// Change password (verifies the current one).
   Future<Map<String, dynamic>> accountChangePassword(String oldPw, String newPw) async =>
       Map<String, dynamic>.from((await _handle(await http.post(_u('/account/change_password'),

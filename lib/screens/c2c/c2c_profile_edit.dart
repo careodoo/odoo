@@ -1,4 +1,7 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
@@ -18,6 +21,31 @@ class _C2CProfileEditScreenState extends State<C2CProfileEditScreen> {
   late final TextEditingController _phone;
   bool _busy = false;
   bool _dirty = false;
+
+  File? _photo;
+  bool _photoBusy = false;
+
+  Future<void> _pickPhoto() async {
+    final x = await ImagePicker().pickImage(
+        source: ImageSource.gallery, maxWidth: 1024, maxHeight: 1024, imageQuality: 85);
+    if (x == null) return;
+    setState(() { _photo = File(x.path); _photoBusy = true; });
+    try {
+      final bytes = await x.readAsBytes();
+      await context.read<AuthProvider>().api.accountSetPhoto(base64Encode(bytes));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(tr('✅ تم تحديث الصورة', '✅ Photo updated')),
+            backgroundColor: const Color(0xFF16A34A)));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: C2C.red));
+      }
+    } finally {
+      if (mounted) setState(() => _photoBusy = false);
+    }
+  }
 
   @override
   void initState() {
@@ -64,6 +92,39 @@ class _C2CProfileEditScreenState extends State<C2CProfileEditScreen> {
         title: Text(tr('إدارة الحساب', 'Manage account')),
       ),
       body: ListView(padding: const EdgeInsets.fromLTRB(14, 14, 14, 30), children: [
+        // ---- profile photo ----
+        Center(child: Stack(children: [
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(shape: BoxShape.circle,
+                border: Border.all(color: C2C.red.withValues(alpha: 0.35), width: 2)),
+            child: CircleAvatar(
+              radius: 44, backgroundColor: C2C.redSoft,
+              backgroundImage: _photo != null ? FileImage(_photo!) : null,
+              child: _photo == null
+                  ? Text((_name.text.isNotEmpty ? _name.text : '?').trim().characters.first,
+                      style: const TextStyle(color: C2C.red, fontSize: 34, fontWeight: FontWeight.w900))
+                  : null,
+            ),
+          ),
+          Positioned(bottom: 0, left: 0, child: Material(
+            color: C2C.red, shape: const CircleBorder(), elevation: 3,
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: _photoBusy ? null : _pickPhoto,
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: _photoBusy
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 16),
+              ),
+            ),
+          )),
+        ])),
+        const SizedBox(height: 6),
+        Center(child: Text(tr('اضغط الكاميرا لتغيير صورتك', 'Tap the camera to change your photo'),
+            style: TextStyle(color: Colors.grey.shade500, fontSize: 11))),
+        const SizedBox(height: 16),
         _card(tr('بياناتي', 'My details'), Icons.person_rounded, C2C.navy, [
           _f(_name, tr('الاسم', 'Full name'), Icons.badge_outlined),
           const SizedBox(height: 10),

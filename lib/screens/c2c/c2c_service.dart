@@ -433,9 +433,22 @@ class _C2CServiceScreenState extends State<C2CServiceScreen> {
     final ok = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
-      builder: (_) => C2CBookingSheet(service: s, packageId: _pkgId),
+      isDismissible: true,
+      enableDrag: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.9,
+        minChildSize: 0.5,
+        maxChildSize: 0.96,
+        builder: (_, scroll) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+          ),
+          child: C2CBookingSheet(service: s, packageId: _pkgId, scroll: scroll),
+        ),
+      ),
     );
     if (ok == true && mounted) Navigator.pop(context);
   }
@@ -443,9 +456,10 @@ class _C2CServiceScreenState extends State<C2CServiceScreen> {
 
 /// Booking sheet: pick date/time, address, payment → confirm.
 class C2CBookingSheet extends StatefulWidget {
-  const C2CBookingSheet({super.key, required this.service, this.packageId});
+  const C2CBookingSheet({super.key, required this.service, this.packageId, this.scroll});
   final Map service;
   final int? packageId;
+  final ScrollController? scroll;
   @override
   State<C2CBookingSheet> createState() => _C2CBookingSheetState();
 }
@@ -460,11 +474,61 @@ class _C2CBookingSheetState extends State<C2CBookingSheet> {
   final _addr = TextEditingController();
   final _area = TextEditingController();
   final _phone = TextEditingController();
+  List<dynamic> _addresses = const [];
+  int? _addressId;
+  bool _loadingAddr = true;
   final _coupon = TextEditingController();
   int _discountPct = 0;
   String? _couponMsg;
   String _pay = 'cash';
   bool _busy = false;
+
+  Future<void> _loadAddresses() async {
+    try {
+      final a = await context.read<AuthProvider>().api.c2cAddresses();
+      if (mounted) setState(() {
+        _addresses = a;
+        _addressId = a.isNotEmpty ? a.first['id'] as int : null;
+        _loadingAddr = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingAddr = false);
+    }
+  }
+
+  Future<void> _addAddress() async {
+    final label = TextEditingController();
+    final area = TextEditingController();
+    final full = TextEditingController();
+    final phone = TextEditingController(text: _phone.text);
+    final saved = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      title: Text(tr('عنوان جديد', 'New address')),
+      content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        TextField(controller: label, decoration: InputDecoration(labelText: tr('الاسم (منزل/عمل)', 'Label'))),
+        TextField(controller: area, decoration: InputDecoration(labelText: tr('المنطقة', 'Area'))),
+        TextField(controller: full, decoration: InputDecoration(labelText: tr('العنوان بالتفصيل', 'Full address'))),
+        TextField(controller: phone, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: tr('الهاتف', 'Phone'))),
+      ])),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('إلغاء', 'Cancel'))),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: C2C.red),
+          onPressed: () => Navigator.pop(ctx, true), child: Text(tr('حفظ', 'Save'))),
+      ],
+    ));
+    if (saved != true) return;
+    try {
+      final r = await context.read<AuthProvider>().api.c2cAddressSave({
+        'name': label.text.trim().isEmpty ? tr('عنوان', 'Address') : label.text.trim(),
+        'area': area.text.trim(), 'address': full.text.trim(), 'phone': phone.text.trim(),
+      });
+      await _loadAddresses();
+      if (mounted && r['id'] != null) setState(() => _addressId = r['id'] as int);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
 
   double get _basePrice => (widget.service['price'] is num) ? (widget.service['price'] as num).toDouble() : 0.0;
   double get _total => _basePrice * (1 - _discountPct / 100);
@@ -486,6 +550,7 @@ class _C2CBookingSheetState extends State<C2CBookingSheet> {
   void initState() {
     super.initState();
     _loadSlots();
+    _loadAddresses();
   }
 
   Future<void> _loadSlots() async {
@@ -525,14 +590,32 @@ class _C2CBookingSheetState extends State<C2CBookingSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      // ---- grab handle + closable header ----
+      const SizedBox(height: 9),
+      Center(child: Container(width: 42, height: 4, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(4)))),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(18, 8, 10, 4),
+        child: Row(children: [
+          const Icon(Icons.event_available_rounded, color: C2C.red, size: 20),
+          const SizedBox(width: 8),
+          Expanded(child: Text('${tr('حجز', 'Book')}: ${widget.service['name']}',
+              maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w900, color: C2C.navy))),
+          IconButton(
+            icon: const Icon(Icons.close_rounded),
+            tooltip: tr('إغلاق', 'Close'),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ]),
+      ),
+      const Divider(height: 1),
+      Expanded(child: Padding(
       padding: EdgeInsets.fromLTRB(18, 14, 18, MediaQuery.of(context).viewInsets.bottom + 18),
-      child: SingleChildScrollView(
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Center(child: Container(width: 42, height: 4, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(4)))),
-          const SizedBox(height: 14),
-          Text('${tr('حجز', 'Book')}: ${widget.service['name']}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: C2C.navy)),
-          const SizedBox(height: 16),
+      child: ListView(
+        controller: widget.scroll,
+        children: [
+          Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(tr('اختر اليوم', 'Choose the day'), style: const TextStyle(fontWeight: FontWeight.w800)),
           const SizedBox(height: 8),
           _pick(Icons.calendar_today_rounded, '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')} · ${_weekdayName(_date.weekday)}', _pickDate),
@@ -551,9 +634,64 @@ class _C2CBookingSheetState extends State<C2CBookingSheet> {
                 _slotChip(s as Map),
             ]),
           const SizedBox(height: 14),
-          _field(_area, tr('المنطقة', 'Area'), Icons.map_outlined),
-          const SizedBox(height: 10),
-          _field(_addr, tr('العنوان بالتفصيل', 'Full address'), Icons.home_outlined),
+          Row(children: [
+            Text(tr('عنوان الخدمة', 'Service address'), style: const TextStyle(fontWeight: FontWeight.w800)),
+            const Spacer(),
+            TextButton.icon(
+              onPressed: _addAddress,
+              icon: const Icon(Icons.add_location_alt_rounded, size: 17),
+              label: Text(tr('إضافة', 'Add')),
+              style: TextButton.styleFrom(foregroundColor: C2C.red),
+            ),
+          ]),
+          const SizedBox(height: 4),
+          if (_loadingAddr)
+            const Padding(padding: EdgeInsets.all(12), child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))))
+          else if (_addresses.isEmpty)
+            InkWell(
+              onTap: _addAddress,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                    color: C2C.redSoft, borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: C2C.red.withValues(alpha: 0.3))),
+                child: Row(children: [
+                  const Icon(Icons.add_location_alt_rounded, color: C2C.red),
+                  const SizedBox(width: 8),
+                  Text(tr('أضف عنوان التوصيل', 'Add a delivery address'),
+                      style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w800)),
+                ]),
+              ),
+            )
+          else
+            for (final a in _addresses)
+              GestureDetector(
+                onTap: () => setState(() => _addressId = a['id'] as int),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: _addressId == a['id'] ? C2C.redSoft : C2C.bg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: _addressId == a['id'] ? C2C.red : Colors.transparent, width: 1.5),
+                  ),
+                  child: Row(children: [
+                    Icon(_addressId == a['id'] ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
+                        color: _addressId == a['id'] ? C2C.red : Colors.grey, size: 20),
+                    const SizedBox(width: 9),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('${a['name'] ?? tr('عنوان', 'Address')}',
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                      if ((a['address'] ?? a['area']) != null)
+                        Text([a['area'], a['address']].where((x) => x != null && '$x'.isNotEmpty).join('، '),
+                            maxLines: 2, overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                    ])),
+                  ]),
+                ),
+              ),
           const SizedBox(height: 10),
           _field(_phone, tr('رقم الهاتف', 'Phone'), Icons.phone_outlined, phone: true),
           const SizedBox(height: 16),
@@ -605,8 +743,9 @@ class _C2CBookingSheetState extends State<C2CBookingSheet> {
             ),
           ),
         ]),
-      ),
-    );
+        ]),
+      )),
+    ]);
   }
 
   Widget _pick(IconData ic, String label, VoidCallback onTap) => InkWell(
@@ -666,6 +805,7 @@ class _C2CBookingSheetState extends State<C2CBookingSheet> {
         'service_id': widget.service['id'],
         if (widget.packageId != null) 'package_id': widget.packageId,
         'visit': visit,
+        if (_addressId != null) 'address_id': _addressId,
         'address': _addr.text, 'area': _area.text, 'phone': _phone.text,
         'payment_method': _pay,
         if (_coupon.text.trim().isNotEmpty) 'code': _coupon.text.trim(),
