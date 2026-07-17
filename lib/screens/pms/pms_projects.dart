@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'pms_shell.dart' show Pms;
+import 'pms_section.dart';
 import 'pms_tasks.dart';
 
 /// Projects the user may see (Odoo record rules decide), with real progress.
@@ -183,6 +184,61 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
 
   void _reload() => setState(() => _f = context.read<AuthProvider>().api.pmsProject(widget.projectId));
 
+  Future<Map<String, dynamic>>? _sectionsF;
+
+  Widget _sections() {
+    _sectionsF ??= context.read<AuthProvider>().api.pmsSections(widget.projectId);
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _sectionsF,
+      builder: (_, snap) {
+        final list = (snap.data?['sections'] as List?) ?? const [];
+        if (list.isEmpty) return const SizedBox.shrink();
+        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(tr('إدارة المشروع', 'Manage project'),
+              style: const TextStyle(fontWeight: FontWeight.w900, color: Pms.ink, fontSize: 15)),
+          const SizedBox(height: 8),
+          GridView.count(
+            crossAxisCount: 4, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 8, crossAxisSpacing: 8, childAspectRatio: 0.86,
+            children: [
+              for (final x in list)
+                Builder(builder: (ctx) {
+                  final code = '${(x as Map)['code']}';
+                  final c = kPmsSectionColors[code] ?? Pms.violet;
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () => Navigator.push(ctx, MaterialPageRoute(
+                        builder: (_) => PmsSectionScreen(
+                            projectId: widget.projectId, code: code, label: '${x['label']}'))),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: c.withValues(alpha: 0.2)),
+                      ),
+                      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        Container(
+                          width: 32, height: 32, alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                              color: c.withValues(alpha: 0.11), borderRadius: BorderRadius.circular(10)),
+                          child: Icon(kPmsSectionIcons[code] ?? Icons.folder_rounded, size: 16, color: c),
+                        ),
+                        const SizedBox(height: 5),
+                        Text('${x['label']}',
+                            maxLines: 2, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: c, height: 1.2)),
+                      ]),
+                    ),
+                  );
+                }),
+            ],
+          ),
+        ]);
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -235,6 +291,10 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
                   if (d['date_end'] != null) _kv(Icons.flag_rounded, tr('النهاية', 'End'), '${d['date_end']}'),
                 ]),
               ),
+              const SizedBox(height: 14),
+              // Everything the portal exposes for a project — materials, team,
+              // fuel, compliance… — reachable from the project itself.
+              _sections(),
               const SizedBox(height: 14),
               Row(children: [
                 Text(tr('المراحل', 'Stages'), style: const TextStyle(fontWeight: FontWeight.w900, color: Pms.ink, fontSize: 15)),

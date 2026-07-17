@@ -831,6 +831,16 @@ class ApiClient {
               _u('/pms/projects${q.isEmpty ? '' : '?q=${Uri.encodeQueryComponent(q)}'}'),
               headers: await _headers())))['data'] as List);
 
+  /// The sections available for a project (materials, team, fuel, …).
+  Future<Map<String, dynamic>> pmsSections(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+          await http.get(_u('/pms/project/$id/sections'), headers: await _headers())))['data'] as Map);
+
+  /// One section's rows + stats.
+  Future<Map<String, dynamic>> pmsSection(int id, String code) async =>
+      Map<String, dynamic>.from((await _handle(
+          await http.get(_u('/pms/project/$id/section/$code'), headers: await _headers())))['data'] as Map);
+
   Future<Map<String, dynamic>> pmsProject(int id) async =>
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/pms/project/$id'), headers: await _headers())))['data'] as Map);
