@@ -835,6 +835,11 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/account/info'), headers: await _headers())))['data'] as Map);
 
+  /// Edit my own profile (name / email / phone). Server only ever writes env.user.
+  Future<Map<String, dynamic>> accountUpdate(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/account/update'),
+              headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
   /// Change password (verifies the current one).
   Future<Map<String, dynamic>> accountChangePassword(String oldPw, String newPw) async =>
       Map<String, dynamic>.from((await _handle(await http.post(_u('/account/change_password'),

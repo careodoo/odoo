@@ -73,6 +73,14 @@ class AuthProvider extends ChangeNotifier {
 
   Future<List<dynamic>> impersonatableUsers() => api.adminUsers();
 
+  /// Re-read the profile after the user edits their own details.
+  Future<void> refreshProfile() async {
+    try {
+      profile = Profile.fromJson(await api.me());
+      notifyListeners();
+    } catch (_) {}
+  }
+
   /// Called once at startup: if a token is stored, fetch the profile.
   Future<void> bootstrap() async {
     loading = true;

@@ -10,6 +10,7 @@ import 'c2c_contracts.dart';
 import 'c2c_bookings.dart';
 import 'c2c_orders.dart';
 import 'c2c_addresses.dart';
+import 'c2c_profile_edit.dart';
 
 class C2CAccountScreen extends StatefulWidget {
   const C2CAccountScreen({super.key, this.canSwitchCafm = false, this.showModeSwitch = false});
@@ -85,6 +86,10 @@ class _C2CAccountScreenState extends State<C2CAccountScreen> {
               ]),
             ),
             const Padding(padding: EdgeInsets.fromLTRB(18, 8, 18, 4), child: Align(alignment: Alignment.centerRight, child: Text('الحساب', style: TextStyle(fontWeight: FontWeight.w900, color: C2C.navy, fontSize: 15)))),
+            _tile(Icons.manage_accounts_rounded, tr('إدارة الحساب', 'Manage account'), () async {
+              await Navigator.push(context, MaterialPageRoute(builder: (_) => const C2CProfileEditScreen()));
+              if (mounted) setState(() => _acc = context.read<AuthProvider>().api.c2cAccount());
+            }, ic: const Color(0xFF0891B2)),
             _tile(Icons.notifications_rounded, tr('الإشعارات', 'Notifications'), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())), ic: const Color(0xFF6366F1)),
             _tile(Icons.event_note_rounded, tr('حجوزاتي', 'My bookings'), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const C2CBookingsScreen())), ic: const Color(0xFF0EA5E9)),
             _tile(Icons.receipt_long_rounded, tr('طلباتي (المتجر)', 'My orders (shop)'), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const C2COrdersScreen())), ic: const Color(0xFFF59E0B)),
