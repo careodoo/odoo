@@ -841,6 +841,20 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
           await http.get(_u('/pms/project/$id/section/$code'), headers: await _headers())))['data'] as Map);
 
+  /// Pick-lists a section's create form needs.
+  Future<Map<String, dynamic>> pmsSectionOptions(int id, String code) async =>
+      Map<String, dynamic>.from((await _handle(await http.get(
+          _u('/pms/project/$id/section/$code/options'), headers: await _headers())))['data'] as Map);
+
+  Future<void> pmsSupplyReceive(int supplyId) async =>
+      _handle(await http.post(_u('/pms/supply/$supplyId/receive'), headers: await _headers()));
+
+  /// Create a record in a section (delivery / expense / timesheet / docrequest).
+  Future<Map<String, dynamic>> pmsSectionCreate(int id, String action, Map<String, dynamic> vals) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+          _u('/pms/project/$id/$action/create'), headers: await _headers(),
+          body: jsonEncode(vals))))['data'] as Map);
+
   Future<Map<String, dynamic>> pmsProject(int id) async =>
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/pms/project/$id'), headers: await _headers())))['data'] as Map);

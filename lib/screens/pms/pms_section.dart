@@ -74,12 +74,25 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Sections that accept a new record → an action label for the FAB.
+    final createAction = const {
+      'deliveries': 'delivery', 'petty': 'expense',
+      'timesheet': 'timesheet', 'requests': 'docrequest',
+    }[widget.code];
     return Scaffold(
       backgroundColor: Pms.bg,
       appBar: AppBar(
         backgroundColor: _c, foregroundColor: Colors.white, elevation: 0,
         title: Text(widget.label, overflow: TextOverflow.ellipsis),
       ),
+      floatingActionButton: createAction == null
+          ? null
+          : FloatingActionButton.extended(
+              backgroundColor: _c, foregroundColor: Colors.white,
+              icon: const Icon(Icons.add_rounded),
+              label: Text(_createLabel(), style: const TextStyle(fontWeight: FontWeight.w800)),
+              onPressed: () => _create(createAction),
+            ),
       body: RefreshIndicator(
         onRefresh: () async => setState(_load),
         child: FutureBuilder<Map<String, dynamic>>(
@@ -210,6 +223,65 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
     }
   }
 
+  String _createLabel() => {
+        'deliveries': tr('تسليم جديد', 'New delivery'),
+        'petty': tr('مصروف جديد', 'New expense'),
+        'timesheet': tr('كشف جديد', 'New sheet'),
+        'requests': tr('طلب مستند', 'Doc request'),
+      }[widget.code] ?? tr('إضافة', 'Add');
+
+  /// The create sheet, built per-section from its options endpoint.
+  Future<void> _create(String action) async {
+    Map<String, dynamic> opts = const {};
+    try {
+      opts = await context.read<AuthProvider>().api.pmsSectionOptions(widget.projectId, widget.code);
+    } catch (_) {/* petty/timesheet need no options */}
+    if (!mounted) return;
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context, isScrollControlled: true, showDragHandle: true,
+      builder: (ctx) => _CreateSheet(code: widget.code, color: _c, options: opts),
+    );
+    if (result == null) return;
+    try {
+      await context.read<AuthProvider>().api.pmsSectionCreate(widget.projectId, action, result);
+      if (!mounted) return;
+      setState(_load);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تم الحفظ', 'Saved')), backgroundColor: const Color(0xFF16A34A)));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('$e'), backgroundColor: const Color(0xFFE5484D)));
+      }
+    }
+  }
+
+  Future<void> _receiveSupply(Map r) async {
+    final ok = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+      title: Text(tr('تأكيد الاستلام', 'Confirm receipt')),
+      content: Text(tr('تأكيد استلام «${r['title']}»؟', 'Confirm receiving "${r['title']}"?')),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('إلغاء', 'Cancel'))),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
+          onPressed: () => Navigator.pop(ctx, true), child: Text(tr('استلام', 'Receive'))),
+      ],
+    ));
+    if (ok != true) return;
+    try {
+      await context.read<AuthProvider>().api.pmsSupplyReceive(r['id'] as int);
+      if (!mounted) return;
+      setState(_load);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تم الاستلام', 'Received')), backgroundColor: const Color(0xFF16A34A)));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('$e'), backgroundColor: const Color(0xFFE5484D)));
+      }
+    }
+  }
+
   Widget _row(Map r) {
     final badges = (r['badges'] as List?) ?? const [];
     final sc = _stateColors(r['state'] as String?);
@@ -276,6 +348,23 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
             ],
           ]),
         ]),
+        if (r['can_receive'] == true) ...[
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF16A34A),
+                side: const BorderSide(color: Color(0xFF16A34A)),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+              ),
+              icon: const Icon(Icons.inventory_rounded, size: 16),
+              label: Text(tr('تأكيد الاستلام', 'Confirm receipt'),
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+              onPressed: () => _receiveSupply(r),
+            ),
+          ),
+        ],
         if (badges.isNotEmpty) ...[
           const SizedBox(height: 8),
           Wrap(spacing: 5, runSpacing: 5, children: [
@@ -292,5 +381,184 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
         ],
       ]),
     );
+  }
+}
+
+/// The per-section create form. Each section needs different fields, so this
+/// picks the right ones from the section code and returns the values map the
+/// create endpoint expects (or null on cancel).
+class _CreateSheet extends StatefulWidget {
+  const _CreateSheet({required this.code, required this.color, required this.options});
+  final String code;
+  final Color color;
+  final Map<String, dynamic> options;
+  @override
+  State<_CreateSheet> createState() => _CreateSheetState();
+}
+
+class _CreateSheetState extends State<_CreateSheet> {
+  final _a = TextEditingController();
+  final _b = TextEditingController();
+  final _c = TextEditingController();
+  int? _pick1;
+  String? _pick2;
+  DateTime? _from, _to;
+
+  @override
+  void dispose() {
+    _a.dispose(); _b.dispose(); _c.dispose();
+    super.dispose();
+  }
+
+  String _fmtDate(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start,
+          children: _fields()),
+    );
+  }
+
+  Widget _title(String t) => Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Text(t, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: widget.color)),
+      );
+
+  Widget _text(TextEditingController c, String label, {int lines = 1, TextInputType? type}) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: TextField(
+          controller: c, maxLines: lines, keyboardType: type,
+          decoration: InputDecoration(labelText: label, border: const OutlineInputBorder(), isDense: true),
+        ),
+      );
+
+  Widget _dropInt(String label, List opts, String idKey, String labelKey) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: DropdownButtonFormField<int>(
+          initialValue: _pick1,
+          decoration: InputDecoration(labelText: label, border: const OutlineInputBorder(), isDense: true),
+          isExpanded: true,
+          items: [for (final o in opts) DropdownMenuItem(value: o[idKey] as int,
+              child: Text('${o[labelKey]}', maxLines: 1, overflow: TextOverflow.ellipsis))],
+          onChanged: (v) => setState(() => _pick1 = v),
+        ),
+      );
+
+  Widget _dropStr(String label, List opts) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: DropdownButtonFormField<String>(
+          initialValue: _pick2,
+          decoration: InputDecoration(labelText: label, border: const OutlineInputBorder(), isDense: true),
+          isExpanded: true,
+          items: [for (final o in opts) DropdownMenuItem(value: '${o['value']}',
+              child: Text('${o['label']}'))],
+          onChanged: (v) => setState(() => _pick2 = v),
+        ),
+      );
+
+  Widget _dateField(String label, DateTime? value, ValueChanged<DateTime> onPick) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: InkWell(
+          onTap: () async {
+            final now = DateTime.now();
+            final d = await showDatePicker(
+              context: context, initialDate: value ?? now,
+              firstDate: DateTime(now.year - 2), lastDate: DateTime(now.year + 1));
+            if (d != null) onPick(d);
+          },
+          child: InputDecorator(
+            decoration: InputDecoration(labelText: label, border: const OutlineInputBorder(), isDense: true),
+            child: Text(value == null ? tr('اختر', 'Pick') : _fmtDate(value),
+                style: TextStyle(color: value == null ? Colors.grey : null)),
+          ),
+        ),
+      );
+
+  Widget _submit(bool enabled, Map<String, dynamic> Function() build) => SizedBox(
+        width: double.infinity,
+        child: FilledButton.icon(
+          style: FilledButton.styleFrom(backgroundColor: widget.color),
+          onPressed: enabled ? () => Navigator.pop(context, build()) : null,
+          icon: const Icon(Icons.check_rounded),
+          label: Text(tr('حفظ', 'Save')),
+        ),
+      );
+
+  List<Widget> _fields() {
+    switch (widget.code) {
+      case 'deliveries':
+        final materials = (widget.options['materials'] as List?) ?? const [];
+        return [
+          _title(tr('تسليم مواد جديد', 'New material delivery')),
+          if (materials.isEmpty)
+            Padding(padding: const EdgeInsets.only(bottom: 10),
+                child: Text(tr('لا مواد مسجّلة في هذا المشروع.', 'No materials registered on this project.'),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)))
+          else
+            _dropInt(tr('المادة', 'Material'), materials, 'id', 'name'),
+          _text(_a, tr('الكمية', 'Quantity'), type: TextInputType.number),
+          _text(_b, tr('الموقع', 'Location')),
+          _text(_c, tr('اسم المستلم', 'Receiver name')),
+          _submit(_pick1 != null && _a.text.trim().isNotEmpty, () => {
+            'material_id': _pick1, 'qty': double.tryParse(_a.text.trim()) ?? 0,
+            'location': _b.text.trim(), 'receiver_name': _c.text.trim(),
+          }),
+        ];
+      case 'petty':
+        final cats = (widget.options['categories'] as List?) ?? const [];
+        final cash = (widget.options['cash'] as List?) ?? const [];
+        return [
+          _title(tr('مصروف نقدي جديد', 'New petty-cash expense')),
+          _text(_a, tr('البيان', 'Description')),
+          _text(_b, tr('المبلغ', 'Amount'), type: TextInputType.number),
+          if (cats.isNotEmpty) _dropStr(tr('التصنيف', 'Category'), cats),
+          if (cash.isNotEmpty)
+            _dropInt(tr('من عهدة (اختياري)', 'From cash (optional)'), cash, 'id', 'name')
+          else
+            _text(_c, tr('قيمة العهدة الجديدة', 'New cash amount'), type: TextInputType.number),
+          _submit((double.tryParse(_b.text.trim()) ?? 0) > 0, () => {
+            'name': _a.text.trim(), 'amount': double.tryParse(_b.text.trim()) ?? 0,
+            if (_pick2 != null) 'category': _pick2,
+            if (_pick1 != null) 'cash_id': _pick1
+            else if (_c.text.trim().isNotEmpty) 'cash_amount': double.tryParse(_c.text.trim()),
+          }),
+        ];
+      case 'timesheet':
+        return [
+          _title(tr('كشف ساعات جديد', 'New timesheet')),
+          Padding(padding: const EdgeInsets.only(bottom: 10),
+              child: Text(tr('يُولَّد آليًا من حضور البصمة للفترة المحددة ثم يُرسَل للاعتماد.',
+                  'Generated from biometric attendance for the period, then submitted for approval.'),
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 11.5, height: 1.5))),
+          _dateField(tr('من', 'From'), _from, (d) => setState(() => _from = d)),
+          _dateField(tr('إلى', 'To'), _to, (d) => setState(() => _to = d)),
+          _submit(_from != null && _to != null, () => {
+            'date_from': _fmtDate(_from!), 'date_to': _fmtDate(_to!),
+          }),
+        ];
+      case 'requests':
+        final emps = (widget.options['employees'] as List?) ?? const [];
+        final types = (widget.options['doc_types'] as List?) ?? const [];
+        return [
+          _title(tr('طلب مستند', 'Document request')),
+          if (emps.isEmpty)
+            Padding(padding: const EdgeInsets.only(bottom: 10),
+                child: Text(tr('لا موظفين في قسم هذا المشروع.', 'No employees in this project department.'),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)))
+          else
+            _dropInt(tr('الموظف', 'Employee'), emps, 'id', 'name'),
+          if (types.isNotEmpty) _dropStr(tr('نوع المستند', 'Document type'), types),
+          _text(_a, tr('ملاحظات (اختياري)', 'Notes (optional)'), lines: 2),
+          _submit(_pick1 != null, () => {
+            'employee_id': _pick1, if (_pick2 != null) 'doc_type': _pick2,
+            'description': _a.text.trim(),
+          }),
+        ];
+      default:
+        return [const SizedBox.shrink()];
+    }
   }
 }
