@@ -329,6 +329,15 @@ class CafmMobile(http.Controller):
         if 'shop' in codes:
             actions += Markup('<a class="btn g" href="/cafm/m/order">🛒 مشترياتي — طلب من الكتالوج ←</a>')
         if 'workorders' in codes:
+            actions += Markup('<a class="btn g" href="/cafm/m/workorders">🧰 أوامر العمل — القائمة والتفاصيل ←</a>')
+        # Invoices are always relevant to a client; approval lives only here.
+        inv_pending = env['account.move'].sudo().search_count(
+            [('partner_id', 'in', pids), ('move_type', 'in', ('out_invoice', 'out_refund')),
+             ('state', '=', 'posted'), ('cafm_client_approval', '=', 'pending')]
+        ) if 'cafm_client_approval' in env['account.move']._fields else 0
+        inv_badge = (' — %s بانتظار ردّك' % inv_pending) if inv_pending else ''
+        actions += Markup('<a class="btn g" href="/cafm/m/invoices">💳 الفواتير%s ←</a>') % esc(inv_badge)
+        if 'workorders' in codes:
             actions += Markup('<a class="btn" href="/cafm/m/quality">＋ طلب خدمة / بلاغ</a>')
         kpi = Markup('')
         if 'workorders' in codes:
@@ -340,6 +349,248 @@ class CafmMobile(http.Controller):
             '<div class="grid">%s</div>%s%s'
         ) % (esc(name or 'عميلنا الكريم'), cards, kpi, actions)
         return _shell('بوابة العميل', body, ACCENTS['disinfection'])
+
+    # ==================== client web pages (portal parity) ================
+    def _fmt(self, n):
+        """Money with a thousands separator, always 3 decimals (KWD)."""
+        try:
+            return '{:,.3f}'.format(float(n or 0))
+        except Exception:
+            return str(n)
+
+    @http.route('/cafm/m/invoices', type='http', auth='user', website=False)
+    def m_invoices(self, **kw):
+        """Client invoices + approve/reject — the one client action with no
+        other web path. Same data & guard as the app's /client/invoices."""
+        env = request.env
+        pids, facs, types, codes, name = self._client_scope(env)
+        Move = env['account.move'].sudo()
+        moves = Move.search([('partner_id', 'in', pids),
+                             ('move_type', 'in', ('out_invoice', 'out_refund')),
+                             ('state', '=', 'posted')], order='invoice_date desc, id desc', limit=200)
+        pay_lbl = {'not_paid': 'غير مدفوعة', 'in_payment': 'قيد الدفع', 'paid': 'مدفوعة',
+                   'partial': 'مدفوعة جزئياً', 'reversed': 'معكوسة'}
+        has_appr = 'cafm_client_approval' in Move._fields
+        total = sum(moves.mapped('amount_total'))
+        residual = sum(moves.mapped('amount_residual'))
+        cur = moves[:1].currency_id.name if moves else env.company.currency_id.name
+        pending = sum(1 for m in moves if has_appr and m.cafm_client_approval == 'pending')
+        body = Markup('<div class="kpi"><div><div class="n">%s</div><div class="l">إجمالي (%s)</div></div>'
+                      '<div><div class="n">%s</div><div class="l">المتبقّي</div></div>'
+                      '<div><div class="n">%s</div><div class="l">بانتظار ردّك</div></div></div>'
+                      ) % (esc(self._fmt(total)), esc(cur), esc(self._fmt(residual)), pending)
+        if not moves:
+            body += Markup('<div class="card muted" style="margin-top:11px">لا فواتير.</div>')
+        for m in moves:
+            appr = m.cafm_client_approval if has_appr else 'none'
+            appr_pill = {'pending': ('<span class="pill warn">بانتظار ردّك</span>'),
+                         'accepted': ('<span class="pill ok">قبلتَها</span>'),
+                         'rejected': ('<span class="pill crit">رفضتَها</span>')}.get(appr, '')
+            overdue = bool(m.invoice_date_due and m.amount_residual > 0
+                           and m.invoice_date_due < fields.Date.today())
+            body += Markup(
+                '<div class="card stripe" style="margin-top:11px">'
+                '<div class="row"><div><b>%s</b><div class="muted">%s%s</div></div>'
+                '<div style="text-align:end"><div class="big" style="font-size:19px">%s</div>'
+                '<div class="muted">%s %s</div></div></div>'
+                '<div class="row" style="margin-top:8px">%s '
+                '<span class="pill %s">%s</span>%s</div>'
+                '<a class="btn g" style="margin-top:9px" href="/cafm/m/invoice/%s">التفاصيل ←</a>'
+                '</div>'
+            ) % (esc(m.name), esc(str(m.invoice_date or '')),
+                 Markup(' · استحقاق %s') % esc(str(m.invoice_date_due)) if m.invoice_date_due else Markup(''),
+                 esc(self._fmt(m.amount_total)), esc(cur),
+                 Markup('· متبقٍّ %s') % esc(self._fmt(m.amount_residual)) if m.amount_residual else Markup('مدفوعة'),
+                 Markup(appr_pill),
+                 'crit' if m.payment_state == 'not_paid' else ('ok' if m.payment_state == 'paid' else 'info'),
+                 esc(pay_lbl.get(m.payment_state, m.payment_state)),
+                 Markup(' <span class="pill crit">متأخّرة</span>') if overdue else Markup(''),
+                 m.id)
+        return _shell('الفواتير', body, '#7a1340')
+
+    @http.route('/cafm/m/invoice/<int:mid>', type='http', auth='user', website=False)
+    def m_invoice(self, mid, **kw):
+        env = request.env
+        pids, facs, types, codes, name = self._client_scope(env)
+        m = env['account.move'].sudo().browse(int(mid)).exists()
+        is_mgr = env.user.has_group('base.group_erp_manager') or env.user.has_group('base.group_system')
+        if not m or (m.partner_id.commercial_partner_id.id not in pids and not is_mgr):
+            return request.redirect('/cafm/m/invoices')
+        cur = m.currency_id.name
+        lines = Markup('')
+        for l in m.invoice_line_ids.filtered(lambda x: not x.display_type):
+            lines += Markup('<div class="row" style="padding:6px 0;border-top:1px solid #294059">'
+                            '<div><b>%s</b><div class="muted">%s × %s</div></div>'
+                            '<div style="text-align:end"><b>%s</b></div></div>'
+                            ) % (esc(l.name or l.product_id.display_name), esc(self._fmt(l.quantity)),
+                                 esc(self._fmt(l.price_unit)), esc(self._fmt(l.price_subtotal)))
+        appr = m.cafm_client_approval if 'cafm_client_approval' in m._fields else 'none'
+        comment = m.cafm_client_comment if 'cafm_client_comment' in m._fields else False
+        body = Markup(
+            '<div class="card"><div class="row"><div><h3>%s</h3><div class="muted">%s</div></div>'
+            '<div style="text-align:end"><div class="big" style="font-size:22px">%s</div>'
+            '<div class="muted">%s</div></div></div></div>'
+            '<div class="card"><div class="h4">البنود</div>%s'
+            '<div class="row" style="padding-top:9px;margin-top:6px;border-top:2px solid #294059">'
+            '<b>الإجمالي</b><b>%s %s</b></div>'
+            '<div class="row muted"><span>المتبقّي</span><span>%s</span></div></div>'
+        ) % (esc(m.name), esc(str(m.invoice_date or '')), esc(self._fmt(m.amount_total)), esc(cur),
+             lines, esc(self._fmt(m.amount_total)), esc(cur), esc(self._fmt(m.amount_residual)))
+        # approval block
+        if appr == 'accepted':
+            body += Markup('<div class="card"><span class="pill ok">✅ قبلتَ هذه الفاتورة</span>%s</div>'
+                           ) % (Markup('<div class="muted" style="margin-top:6px">%s</div>') % esc(comment) if comment else Markup(''))
+        elif appr == 'rejected':
+            body += Markup('<div class="card"><span class="pill crit">✋ رفضتَ هذه الفاتورة</span>%s</div>'
+                           ) % (Markup('<div class="muted" style="margin-top:6px">%s</div>') % esc(comment) if comment else Markup(''))
+        elif appr == 'pending':
+            body += Markup(
+                '<form class="card" method="post" action="/cafm/m/invoice/%s/decide">'
+                '<input type="hidden" name="csrf_token" value="%s">'
+                '<div class="h4">مراجعة الفاتورة</div>'
+                '<label>ملاحظات (اختياري)</label><textarea name="comment" rows="2"></textarea>'
+                '<button class="btn" name="decision" value="accept">✅ قبول الفاتورة</button>'
+                '<button class="btn crit" name="decision" value="reject">✋ رفض الفاتورة</button>'
+                '</form>'
+            ) % (m.id, request.csrf_token())
+        return _shell(m.name or 'فاتورة', body, '#7a1340', back='/cafm/m/invoices')
+
+    @http.route('/cafm/m/invoice/<int:mid>/decide', type='http', auth='user', website=False,
+                methods=['POST'], csrf=True)
+    def m_invoice_decide(self, mid, decision=None, comment=None, **kw):
+        env = request.env
+        pids, facs, types, codes, name = self._client_scope(env)
+        m = env['account.move'].sudo().browse(int(mid)).exists()
+        is_mgr = env.user.has_group('base.group_erp_manager') or env.user.has_group('base.group_system')
+        if not m or (m.partner_id.commercial_partner_id.id not in pids and not is_mgr):
+            return request.redirect('/cafm/m/invoices')
+        if 'cafm_client_approval' in m._fields and decision in ('accept', 'reject'):
+            state = 'accepted' if decision == 'accept' else 'rejected'
+            m.write({'cafm_client_approval': state, 'cafm_client_comment': (comment or '').strip() or False,
+                     'cafm_client_approval_date': fields.Datetime.now(), 'cafm_needs_resend': False})
+            try:
+                verb = 'قَبِل' if decision == 'accept' else 'رفض'
+                m.message_post(body='%s العميل الفاتورة%s' % (verb, ((': ' + comment) if comment else '.')))
+            except Exception:
+                pass
+        return request.redirect('/cafm/m/invoice/%s' % mid)
+
+    @http.route('/cafm/m/workorders', type='http', auth='user', website=False)
+    def m_workorders(self, state='open', **kw):
+        env = request.env
+        pids, facs, types, codes, name = self._client_scope(env)
+        WO = env['care.cafm.workorder'].sudo()
+        dom = [('facility_id', 'in', facs.ids)]
+        if state == 'open':
+            dom.append(('state', 'not in', ('done', 'verified', 'cancelled')))
+        elif state == 'overdue':
+            dom.append(('state', 'not in', ('done', 'verified', 'cancelled')))
+        elif state and state != 'all':
+            dom.append(('state', '=', state))
+        wos = WO.search(dom, order='request_datetime desc', limit=200)
+        if state == 'overdue':
+            wos = wos.filtered('is_overdue')
+        state_lbl = dict(WO._fields['state'].selection)
+        # filter tabs
+        tabs = Markup('')
+        for code, lbl in (('open', 'مفتوحة'), ('overdue', 'متأخرة'), ('done', 'منجزة'), ('all', 'الكل')):
+            cls = 'pill info' if state == code else 'pill'
+            tabs += Markup('<a class="%s" style="margin-inline-end:6px" href="/cafm/m/workorders?state=%s">%s</a>'
+                           ) % (Markup(cls), Markup(code), esc(lbl))
+        body = Markup('<div class="card"><div class="row"><b>أوامر العمل</b>'
+                      '<span class="muted">%s سجل</span></div>'
+                      '<div style="margin-top:9px">%s</div></div>') % (len(wos), tabs)
+        if not wos:
+            body += Markup('<div class="card muted">لا أوامر عمل.</div>')
+        for w in wos:
+            sev = ''
+            if w.priority == '3':
+                sev = '<span class="pill crit">عاجل</span>'
+            elif w.priority == '2':
+                sev = '<span class="pill warn">مرتفع</span>'
+            od = Markup(' <span class="pill crit">متأخر</span>') if w.is_overdue else Markup('')
+            body += Markup(
+                '<a class="card stripe" style="display:block" href="/cafm/m/workorder/%s">'
+                '<div class="row"><div><b>%s</b><div class="muted">%s · %s%s</div></div>'
+                '<span class="pill info">%s</span></div>%s%s</a>'
+            ) % (w.id, esc(w.title or w.name), esc(w.name), esc(w.facility_id.name or ''),
+                 Markup(' · %s') % esc(w.location_id.name) if w.location_id else Markup(''),
+                 esc(state_lbl.get(w.state, w.state)),
+                 Markup('<div style="margin-top:7px">%s%s</div>') % (Markup(sev), od) if (sev or w.is_overdue) else Markup(''),
+                 Markup(''))
+        return _shell('أوامر العمل', body, ACCENTS.get('maintenance', '#f7a23b'))
+
+    @http.route('/cafm/m/workorder/<int:wid>', type='http', auth='user', website=False)
+    def m_workorder(self, wid, **kw):
+        env = request.env
+        pids, facs, types, codes, name = self._client_scope(env)
+        w = env['care.cafm.workorder'].sudo().browse(int(wid)).exists()
+        is_mgr = env.user.has_group('base.group_erp_manager') or env.user.has_group('base.group_system')
+        if not w or (w.facility_id.id not in facs.ids and not is_mgr):
+            return request.redirect('/cafm/m/workorders')
+        state_lbl = dict(w._fields['state'].selection)
+        rows = Markup('')
+        def _kv(k, v):
+            return Markup('<div class="row" style="padding:6px 0;border-top:1px solid #294059">'
+                          '<span class="muted">%s</span><b>%s</b></div>') % (esc(k), esc(v))
+        rows += _kv('المرفق', w.facility_id.name or '—')
+        if w.location_id:
+            rows += _kv('الموقع', w.location_id.name)
+        rows += _kv('الخدمة', w.service_id.name or '—')
+        if w.employee_id:
+            rows += _kv('المُسنَد إليه', w.employee_id.name)
+        rows += _kv('الحالة', state_lbl.get(w.state, w.state))
+        if w.request_datetime:
+            rows += _kv('وقت الطلب', str(w.request_datetime))
+        if w.deadline:
+            rows += _kv('الموعد النهائي', str(w.deadline))
+        if w.done_datetime:
+            rows += _kv('وقت الإنجاز', str(w.done_datetime))
+        body = Markup('<div class="card"><h3>%s</h3><div class="muted">%s</div>%s</div>'
+                      ) % (esc(w.title or w.name), esc(w.name), rows)
+        if w.description:
+            body += Markup('<div class="card"><div class="h4">الوصف</div><div class="muted">%s</div></div>'
+                           ) % esc(w.description)
+        # client verify/rate when the work is done and awaiting the client
+        if w.state == 'done':
+            body += Markup(
+                '<form class="card" method="post" action="/cafm/m/workorder/%s/verify">'
+                '<input type="hidden" name="csrf_token" value="%s">'
+                '<div class="h4">اعتماد العمل</div>'
+                '<label>التقييم (1–5)</label><select name="rating">'
+                '<option value="5">★★★★★ ممتاز</option><option value="4">★★★★ جيد جدًا</option>'
+                '<option value="3">★★★ جيد</option><option value="2">★★ مقبول</option>'
+                '<option value="1">★ ضعيف</option></select>'
+                '<label>ملاحظات (اختياري)</label><textarea name="note" rows="2"></textarea>'
+                '<button class="btn" name="ok" value="1">✅ اعتماد العمل</button></form>'
+            ) % (w.id, request.csrf_token())
+        return _shell(w.name or 'أمر عمل', body, ACCENTS.get('maintenance', '#f7a23b'),
+                      back='/cafm/m/workorders')
+
+    @http.route('/cafm/m/workorder/<int:wid>/verify', type='http', auth='user', website=False,
+                methods=['POST'], csrf=True)
+    def m_workorder_verify(self, wid, rating=None, note=None, **kw):
+        env = request.env
+        pids, facs, types, codes, name = self._client_scope(env)
+        w = env['care.cafm.workorder'].sudo().browse(int(wid)).exists()
+        is_mgr = env.user.has_group('base.group_erp_manager') or env.user.has_group('base.group_system')
+        if not w or (w.facility_id.id not in facs.ids and not is_mgr):
+            return request.redirect('/cafm/m/workorders')
+        try:
+            vals = {}
+            if 'client_rating' in w._fields and rating:
+                vals['client_rating'] = str(rating)
+            if 'client_note' in w._fields and note:
+                vals['client_note'] = note
+            if vals:
+                w.write(vals)
+            if hasattr(w, 'action_verify'):
+                w.action_verify()
+            elif 'verified' in dict(w._fields['state'].selection):
+                w.write({'state': 'verified'})
+        except Exception:
+            pass
+        return request.redirect('/cafm/m/workorder/%s' % wid)
 
     # ---------------- actions: scan / start / done ----------------
     @http.route('/cafm/m/scan', type='http', auth='user', website=False)
