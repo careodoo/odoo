@@ -950,31 +950,79 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
 
   // ============ HOW IT WORKS ============
   Widget _howItWorks() {
-    const steps = [['🧭', 'اختر الخدمة', 'Pick'], ['📅', 'حدّد الموعد', 'Schedule'], ['😌', 'استرخِ', 'Relax']];
+    final steps = <(IconData, String, String, String, List<Color>)>[
+      (Icons.touch_app_rounded, '١', 'اختر الخدمة', 'Pick a service', C2C.gradFor(0)),
+      (Icons.event_available_rounded, '٢', 'حدّد الموعد والعنوان', 'Schedule', C2C.gradFor(2)),
+      (Icons.verified_rounded, '٣', 'يصلك محترف موثوق', 'Trusted pro arrives', C2C.gradFor(3)),
+      (Icons.sentiment_very_satisfied_rounded, '٤', 'استرخِ وقيّم', 'Relax & rate', C2C.gradFor(6)),
+    ];
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(children: [
-        for (int i = 0; i < steps.length; i++) ...[
-          Expanded(child: Column(children: [
-            CircleAvatar(radius: 24, backgroundColor: C2C.navy.withValues(alpha: 0.08), child: Text(steps[i][0], style: const TextStyle(fontSize: 22))),
-            const SizedBox(height: 5),
-            Text(gLang == 'en' ? steps[i][2] : steps[i][1], textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-          ])),
-          if (i < steps.length - 1) const Padding(padding: EdgeInsets.only(bottom: 18), child: Icon(Icons.arrow_forward_rounded, color: Colors.grey, size: 16)),
-        ],
+      padding: const EdgeInsets.fromLTRB(14, 4, 14, 0),
+      child: Column(children: [
+        for (int i = 0; i < steps.length; i++) Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          child: Row(children: [
+            Column(children: [
+              Container(
+                width: 46, height: 46, alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: steps[i].$5, begin: Alignment.topRight, end: Alignment.bottomLeft),
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [BoxShadow(color: steps[i].$5[1].withValues(alpha: 0.35), blurRadius: 8, offset: const Offset(0, 4))],
+                ),
+                child: Icon(steps[i].$1, color: Colors.white, size: 22),
+              ),
+              if (i < steps.length - 1)
+                Container(width: 2, height: 20, color: Colors.grey.withValues(alpha: 0.2)),
+            ]),
+            const SizedBox(width: 12),
+            Expanded(child: Container(
+              margin: EdgeInsets.only(bottom: i < steps.length - 1 ? 20 : 0),
+              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+              decoration: BoxDecoration(
+                color: Colors.white, borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+              ),
+              child: Row(children: [
+                Container(
+                  width: 24, height: 24, alignment: Alignment.center,
+                  decoration: BoxDecoration(color: steps[i].$5[1].withValues(alpha: 0.12), shape: BoxShape.circle),
+                  child: Text(steps[i].$2, style: TextStyle(color: steps[i].$5[1], fontWeight: FontWeight.w900, fontSize: 12)),
+                ),
+                const SizedBox(width: 10),
+                Expanded(child: Text(gLang == 'en' ? steps[i].$4 : steps[i].$3,
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: C2C.ink))),
+              ]),
+            )),
+          ]),
+        ),
       ]),
     );
   }
 
   // ============ SOCIAL PROOF ============
   Widget _socialProof() => Container(
-        margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(gradient: const LinearGradient(colors: [C2C.navy, C2C.navy2]), borderRadius: BorderRadius.circular(16)),
-        child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: const [
-          _Metric('12K+', 'عميل سعيد', 'Clients'),
-          _Metric('48K+', 'خدمة منجزة', 'Jobs'),
-          _Metric('4.9★', 'التقييم', 'Rating'),
+        margin: const EdgeInsets.fromLTRB(16, 18, 16, 0),
+        padding: const EdgeInsets.fromLTRB(10, 16, 10, 16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(colors: [C2C.redBright, C2C.red, C2C.redDeep],
+              begin: Alignment.topRight, end: Alignment.bottomLeft),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: C2C.red.withValues(alpha: 0.3), blurRadius: 14, offset: const Offset(0, 6))],
+        ),
+        child: Column(children: [
+          Text(tr('أرقام تتحدّث عنّا', 'The numbers speak'),
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14)),
+          const SizedBox(height: 12),
+          Row(children: const [
+            _StatCell(Icons.people_alt_rounded, '12K+', 'عميل سعيد', 'Happy clients'),
+            _StatDivider(),
+            _StatCell(Icons.task_alt_rounded, '48K+', 'خدمة منجزة', 'Jobs done'),
+            _StatDivider(),
+            _StatCell(Icons.star_rounded, '4.9', 'متوسط التقييم', 'Avg rating'),
+            _StatDivider(),
+            _StatCell(Icons.verified_user_rounded, '100%', 'محترفون موثوقون', 'Vetted pros'),
+          ]),
         ]),
       );
 
@@ -1017,15 +1065,26 @@ class _Trust extends StatelessWidget {
       ]);
 }
 
-class _Metric extends StatelessWidget {
-  const _Metric(this.value, this.ar, this.en);
+class _StatCell extends StatelessWidget {
+  const _StatCell(this.icon, this.value, this.ar, this.en);
+  final IconData icon;
   final String value, ar, en;
   @override
-  Widget build(BuildContext context) => Column(mainAxisSize: MainAxisSize.min, children: [
-        Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 19)),
-        const SizedBox(height: 1),
-        Text(gLang == 'en' ? en : ar, style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 10.5)),
-      ]);
+  Widget build(BuildContext context) => Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, color: Colors.white.withValues(alpha: 0.9), size: 18),
+        const SizedBox(height: 4),
+        Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 17)),
+        const SizedBox(height: 2),
+        Text(gLang == 'en' ? en : ar, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 8.5, fontWeight: FontWeight.w600)),
+      ]));
+}
+
+class _StatDivider extends StatelessWidget {
+  const _StatDivider();
+  @override
+  Widget build(BuildContext context) =>
+      Container(width: 1, height: 34, color: Colors.white.withValues(alpha: 0.18));
 }
 
 /// Animated, softly-glowing aurora pattern for the header. Floating light orbs

@@ -132,13 +132,25 @@ class _C2CBookingsScreenState extends State<C2CBookingsScreen> {
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))]),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Container(
-          decoration: BoxDecoration(color: c.withValues(alpha: 0.10), borderRadius: const BorderRadius.vertical(top: Radius.circular(16))),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [c.withValues(alpha: 0.16), c.withValues(alpha: 0.05)],
+                begin: Alignment.centerRight, end: Alignment.centerLeft),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
           child: Row(children: [
-            Text('${b['category_icon'] ?? '🧩'} ', style: const TextStyle(fontSize: 16)),
-            Text('${b['name']}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-            const Spacer(),
-            Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3), decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(20)), child: Text('${b['state_label']}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800))),
+            Container(width: 30, height: 30, alignment: Alignment.center,
+                decoration: BoxDecoration(color: c.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(9)),
+                child: Text('${b['category_icon'] ?? '🧩'}', style: const TextStyle(fontSize: 15))),
+            const SizedBox(width: 8),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+              Text('${b['name']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: C2C.navy)),
+              Text('#${b['id']}', style: TextStyle(color: Colors.grey.shade500, fontSize: 9.5, fontWeight: FontWeight.w600)),
+            ])),
+            Container(padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(20)),
+                child: Text('${b['state_label']}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900))),
           ]),
         ),
         Padding(
@@ -153,13 +165,13 @@ class _C2CBookingsScreenState extends State<C2CBookingsScreen> {
             _kv(Icons.payments_outlined, '${b['amount']} ${b['currency'] ?? ''} · ${b['payment_method']} · ${b['payment_label']}'),
             if (b['rating'] != null && b['rating'] != false) Padding(padding: const EdgeInsets.only(top: 6), child: Text('★' * int.parse('${b['rating']}'), style: const TextStyle(color: Color(0xFFF5A623), fontSize: 16))),
             if (canCancel || canRate) ...[
-              const Divider(height: 20),
-              Row(children: [
+              const SizedBox(height: 10),
+              Row(mainAxisAlignment: MainAxisAlignment.end, children: [
                 if (canRate)
-                  Expanded(child: OutlinedButton.icon(onPressed: () => _rate(b['id'] as int), icon: const Icon(Icons.star_rounded, color: Color(0xFFF5A623)), label: Text(tr('قيّم الخدمة', 'Rate')))),
-                if (canRate && canCancel) const SizedBox(width: 10),
+                  _miniBtn(Icons.star_rounded, tr('قيّم', 'Rate'), const Color(0xFFF5A623), () => _rate(b['id'] as int)),
+                if (canRate && canCancel) const SizedBox(width: 8),
                 if (canCancel)
-                  Expanded(child: OutlinedButton.icon(style: OutlinedButton.styleFrom(foregroundColor: C2C.red), onPressed: () => _cancel(b['id'] as int), icon: const Icon(Icons.close_rounded), label: Text(tr('إلغاء', 'Cancel')))),
+                  _miniBtn(Icons.close_rounded, tr('إلغاء', 'Cancel'), C2C.red, () => _cancel(b['id'] as int)),
               ]),
             ],
           ]),
@@ -168,6 +180,23 @@ class _C2CBookingsScreenState extends State<C2CBookingsScreen> {
     ),
     );
   }
+
+  Widget _miniBtn(IconData ic, String label, Color c, VoidCallback onTap) => Material(
+        color: c.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(9),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(9),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(ic, size: 14, color: c),
+              const SizedBox(width: 4),
+              Text(label, style: TextStyle(color: c, fontWeight: FontWeight.w800, fontSize: 11.5)),
+            ]),
+          ),
+        ),
+      );
 
   Widget _kv(IconData ic, String v) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 2),
