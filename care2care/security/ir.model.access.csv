@@ -31,3 +31,5 @@ acc_c2c_addr_portal,c2c.delivery.address.portal,model_c2c_delivery_address,base.
 acc_c2c_subreq_u,c2c.subscription.request.u,model_c2c_subscription_request,base.group_user,1,1,1,0
 acc_c2c_subreq_m,c2c.subscription.request.m,model_c2c_subscription_request,hr.group_hr_manager,1,1,1,1
 acc_c2c_subreq_portal,c2c.subscription.request.portal,model_c2c_subscription_request,base.group_portal,1,0,0,0
+acc_c2c_rfqopt_u,c2c.rfq.option.u,model_c2c_rfq_option,base.group_user,1,0,0,0
+acc_c2c_rfqopt_m,c2c.rfq.option.m,model_c2c_rfq_option,hr.group_hr_manager,1,1,1,1

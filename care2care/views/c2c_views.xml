@@ -493,4 +493,17 @@
     <field name="res_id" ref="c2c_settings_default"/>
   </record>
 
+  <!-- ===== RFQ OPTIONS ===== -->
+  <record id="view_c2c_rfqopt_tree" model="ir.ui.view">
+    <field name="name">c2c.rfq.option.tree</field><field name="model">c2c.rfq.option</field>
+    <field name="arch" type="xml">
+      <tree editable="bottom">
+        <field name="sequence" widget="handle"/><field name="icon"/><field name="name"/>
+        <field name="description"/><field name="category_id"/><field name="active"/>
+      </tree>
+    </field>
+  </record>
+  <record id="action_c2c_rfqopt" model="ir.actions.act_window">
+    <field name="name">خيارات عرض السعر</field><field name="res_model">c2c.rfq.option</field><field name="view_mode">tree</field>
+  </record>
 </odoo>

@@ -589,6 +589,15 @@ class C2CClientApi(Controller):
         return _ok({'id': r.id, 'state': r.state})
 
     # ---- long-term / contract requests ------------------------------------
+    @route(API + '/c2c/rfq/options', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def c2c_rfq_options(self, **kw):
+        env = _auth() or request.env
+        if 'c2c.rfq.option' not in env:
+            return _ok([])
+        return _ok([{'id': o.id, 'name': o.name, 'description': o.description or None, 'icon': o.icon or '✅',
+                     'category_id': o.category_id.id or None}
+                    for o in env['c2c.rfq.option'].sudo().search([], order='sequence')])
+
     @route(API + '/c2c/contract/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
     def c2c_contract_create(self, **kw):
         env = _auth() or request.env
@@ -606,7 +615,13 @@ class C2CClientApi(Controller):
             'duration_months': int(b.get('duration_months') or 12),
             'category_id': int(b['category_id']) if b.get('category_id') else False,
             'service_id': int(b['service_id']) if b.get('service_id') else False,
+            'sector': b.get('sector') or False,
+            'budget_range': b.get('budget_range') or False,
+            'preferred_time': b.get('preferred_time') or False,
         }
+        opt_ids = b.get('option_ids') or []
+        if opt_ids and 'c2c.rfq.option' in env:
+            vals['option_ids'] = [(6, 0, [int(x) for x in opt_ids])]
         if env2:
             vals['partner_id'] = env2.user.partner_id.id
         rec = env['c2c.contract.request'].sudo().create(vals)

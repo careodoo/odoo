@@ -134,4 +134,11 @@
 خط دعم أولوية</field>
   </record>
 
+  <record id="rfq_opt_visit" model="c2c.rfq.option"><field name="name">زيارة معاينة مجانية</field><field name="icon">🔍</field><field name="sequence">10</field></record>
+  <record id="rfq_opt_materials" model="c2c.rfq.option"><field name="name">توريد المواد والمعدّات</field><field name="icon">📦</field><field name="sequence">20</field></record>
+  <record id="rfq_opt_team" model="c2c.rfq.option"><field name="name">فريق ثابت مخصّص</field><field name="icon">👷</field><field name="sequence">30</field></record>
+  <record id="rfq_opt_night" model="c2c.rfq.option"><field name="name">عمل خارج أوقات الدوام</field><field name="icon">🌙</field><field name="sequence">40</field></record>
+  <record id="rfq_opt_report" model="c2c.rfq.option"><field name="name">تقارير دورية</field><field name="icon">📊</field><field name="sequence">50</field></record>
+  <record id="rfq_opt_emergency" model="c2c.rfq.option"><field name="name">استجابة طوارئ 24/7</field><field name="icon">🚨</field><field name="sequence">60</field></record>
+
 </data></odoo>

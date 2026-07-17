@@ -27,6 +27,10 @@ class C2CContractRequest(models.Model):
     audience = fields.Selection([('home', 'منزل'), ('company', 'شركة/منشأة')], string='الجهة', default='company')
     site_address = fields.Char(string='الموقع/العنوان')
     duration_months = fields.Integer(string='المدة (أشهر)', default=12)
+    sector = fields.Char(string='القطاع/النشاط')
+    budget_range = fields.Char(string='الميزانية التقديرية')
+    preferred_time = fields.Char(string='الوقت المفضّل للتواصل')
+    option_ids = fields.Many2many('c2c.rfq.option', string='الخيارات المطلوبة')
     # quote
     quote_amount = fields.Float(string='قيمة العرض')
     quote_period = fields.Selection([('once', 'إجمالي'), ('monthly', 'شهري'), ('yearly', 'سنوي')],
@@ -91,3 +95,18 @@ class C2CContractRequest(models.Model):
             r.state = 'converted'
             r.message_post(body=_('✅ تم تحويل العميل إلى نظام إدارة المرافق (CAFM).'))
         return True
+
+
+class C2CRfqOption(models.Model):
+    """Admin-addable options that appear in the app's "request a quote" form —
+    the client picks which extras/services their quote should cover."""
+    _name = 'c2c.rfq.option'
+    _description = 'CARE 2 CARE RFQ Option'
+    _order = 'sequence, id'
+
+    name = fields.Char(string='الخيار', required=True, translate=True)
+    description = fields.Char(string='وصف مختصر', translate=True)
+    icon = fields.Char(string='أيقونة', default='✅')
+    category_id = fields.Many2one('c2c.category', string='ضمن مجال (اختياري)')
+    sequence = fields.Integer(default=10)
+    active = fields.Boolean(default=True)
