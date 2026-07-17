@@ -240,6 +240,56 @@
     <field name="name">الاشتراكات</field><field name="res_model">c2c.subscription.plan</field><field name="view_mode">tree,form</field>
   </record>
 
+  <!-- ===== SUBSCRIPTION REQUESTS (customer sign-ups) ===== -->
+  <record id="view_c2c_subreq_tree" model="ir.ui.view">
+    <field name="name">c2c.subscription.request.tree</field><field name="model">c2c.subscription.request</field>
+    <field name="arch" type="xml">
+      <tree decoration-info="state=='new'" decoration-success="state=='active'" decoration-muted="state in ('cancelled','converted')">
+        <field name="name"/><field name="customer_name"/><field name="plan_id"/>
+        <field name="period"/><field name="price"/><field name="phone"/>
+        <field name="create_date"/><field name="state" widget="badge"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_c2c_subreq_form" model="ir.ui.view">
+    <field name="name">c2c.subscription.request.form</field><field name="model">c2c.subscription.request</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="action_activate" string="تفعيل" type="object" class="btn-primary"
+                  invisible="state != 'new'"/>
+          <button name="action_pause" string="إيقاف" type="object"
+                  invisible="state != 'active'"/>
+          <button name="action_cancel" string="إلغاء" type="object"
+                  invisible="state in ('cancelled','converted')"/>
+          <field name="state" widget="statusbar" statusbar_visible="new,active,converted"/>
+        </header>
+        <sheet>
+          <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+          <group>
+            <group>
+              <field name="plan_id"/><field name="period" readonly="1"/>
+              <field name="price" readonly="1"/><field name="visits" readonly="1"/>
+              <field name="start_date"/>
+            </group>
+            <group>
+              <field name="partner_id"/><field name="customer_name"/>
+              <field name="phone"/><field name="address_id"/>
+            </group>
+          </group>
+          <field name="note" placeholder="ملاحظات العميل…"/>
+        </sheet>
+        <div class="oe_chatter">
+          <field name="message_follower_ids"/><field name="activity_ids"/><field name="message_ids"/>
+        </div>
+      </form>
+    </field>
+  </record>
+  <record id="action_c2c_subreq" model="ir.actions.act_window">
+    <field name="name">طلبات الاشتراك</field><field name="res_model">c2c.subscription.request</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
   <!-- ===== OFFERS ===== -->
   <record id="view_c2c_offer_tree" model="ir.ui.view">
     <field name="name">c2c.offer.tree</field><field name="model">c2c.offer</field>
@@ -413,6 +463,14 @@
             <group>
               <field name="day_thu"/><field name="day_fri"/><field name="day_sat"/>
             </group>
+          </group>
+          <group string="تصميم كتلة باقات الاشتراك (في رئيسية التطبيق)">
+            <field name="subs_show"/>
+            <field name="subs_layout"/>
+            <field name="subs_title"/>
+            <field name="subs_subtitle"/>
+            <field name="subs_accent" widget="color"/>
+            <field name="subs_show_save"/>
           </group>
           <group string="التنبيهات (اتركه فارغًا = لا تنبيه)">
             <field name="booking_notify_user_ids" widget="many2many_tags"

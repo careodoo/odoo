@@ -26,6 +26,17 @@ class C2CSettings(models.Model):
     day_fri = fields.Boolean(string='الجمعة', default=False)
     day_sat = fields.Boolean(string='السبت', default=True)
     day_sun = fields.Boolean(string='الأحد', default=True)
+
+    # ---- home subscriptions block: the design controls the user asked to own
+    subs_show = fields.Boolean(string='إظهار كتلة الباقات', default=True)
+    subs_title = fields.Char(string='عنوان الكتلة', default='باقات الاشتراك', translate=True)
+    subs_subtitle = fields.Char(string='وصف الكتلة',
+                                default='وفّر أكثر مع اشتراك دوري', translate=True)
+    subs_layout = fields.Selection([
+        ('carousel', 'شريط أفقي'), ('grid', 'شبكة'), ('featured', 'بطاقة مميّزة + بقية')],
+        string='تصميم الكتلة', default='carousel')
+    subs_accent = fields.Char(string='لون الكتلة', default='#0e3a5f')
+    subs_show_save = fields.Boolean(string='إظهار نسبة التوفير', default=True)
     order_notify_user_ids = fields.Many2many(
         'res.users', 'c2c_settings_order_notify_rel', 'settings_id', 'user_id',
         string='المنبَّهون بطلبات المتجر',

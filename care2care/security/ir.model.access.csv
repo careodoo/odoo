@@ -28,3 +28,6 @@ acc_c2c_porderline_m,c2c.product.order.line.m,model_c2c_product_order_line,hr.gr
 acc_c2c_addr_u,c2c.delivery.address.u,model_c2c_delivery_address,base.group_user,1,1,1,1
 acc_c2c_addr_m,c2c.delivery.address.m,model_c2c_delivery_address,hr.group_hr_manager,1,1,1,1
 acc_c2c_addr_portal,c2c.delivery.address.portal,model_c2c_delivery_address,base.group_portal,1,1,1,1
+acc_c2c_subreq_u,c2c.subscription.request.u,model_c2c_subscription_request,base.group_user,1,1,1,0
+acc_c2c_subreq_m,c2c.subscription.request.m,model_c2c_subscription_request,hr.group_hr_manager,1,1,1,1
+acc_c2c_subreq_portal,c2c.subscription.request.portal,model_c2c_subscription_request,base.group_portal,1,0,0,0

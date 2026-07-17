@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """CARE 2 CARE professional extras: customer reviews, before/after work
 galleries, monthly subscription plans and time-boxed offers/promotions."""
-from odoo import api, fields, models
+from odoo import api, fields, models, _
 
 
 class C2CReview(models.Model):
@@ -97,3 +97,62 @@ class C2COffer(models.Model):
             lambda o: not o.date_to or o.date_to >= today)
         want = (operator == '=' and value) or (operator == '!=' and not value)
         return [('id', 'in' if want else 'not in', recs.ids)]
+
+
+class C2CSubscriptionRequest(models.Model):
+    """A customer subscribes to a plan → a request the team reviews and can turn
+    into an active subscription (and, later, a CAFM contract). Same lifecycle
+    shape as c2c.contract.request so the back office handles both the same way."""
+    _name = 'c2c.subscription.request'
+    _description = 'CARE 2 CARE Subscription Request'
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'c2c.team.notify.mixin']
+    _order = 'create_date desc, id desc'
+    _notify_setting_field = 'contract_notify_user_ids'
+    _notify_action_prefix = 'c2c/subscription'
+
+    name = fields.Char(string='رقم الطلب', default='/', copy=False, readonly=True)
+    partner_id = fields.Many2one('res.partner', string='العميل',
+                                 default=lambda s: s.env.user.partner_id if not s.env.user._is_public() else False)
+    plan_id = fields.Many2one('c2c.subscription.plan', string='الباقة', required=True, ondelete='restrict')
+    customer_name = fields.Char(string='الاسم', required=True)
+    phone = fields.Char(string='الهاتف', required=True)
+    address_id = fields.Many2one('c2c.delivery.address', string='العنوان')
+    note = fields.Text(string='ملاحظات')
+    # snapshot of the plan at subscribe time, so a later price change doesn't
+    # silently rewrite what the customer signed up for
+    period = fields.Selection(related='plan_id.period', store=True, readonly=True)
+    price = fields.Float(string='السعر', readonly=True)
+    visits = fields.Integer(string='عدد الزيارات', readonly=True)
+    start_date = fields.Date(string='تاريخ البدء', default=fields.Date.context_today)
+    state = fields.Selection([
+        ('new', 'جديد'), ('active', 'مُفعَّل'), ('paused', 'موقوف'),
+        ('converted', 'محوّل لعقد'), ('cancelled', 'ملغى'),
+    ], string='الحالة', default='new', required=True, tracking=True)
+    company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for v in vals_list:
+            if v.get('name', '/') == '/':
+                v['name'] = self.env['ir.sequence'].next_by_code('c2c.subscription.request') or _('طلب اشتراك')
+            # snapshot the plan's price/visits at subscribe time
+            if v.get('plan_id') and not v.get('price'):
+                plan = self.env['c2c.subscription.plan'].browse(v['plan_id'])
+                v.setdefault('price', plan.price)
+                v.setdefault('visits', plan.visits)
+        recs = super().create(vals_list)
+        for r in recs:
+            r._notify_team(_('🔔 طلب اشتراك جديد'),
+                           _('اشتراك جديد %s في باقة «%s» من %s (%s)') % (
+                               r.name or '', r.plan_id.name or '', r.customer_name or '', r.phone or ''),
+                           activity=True)
+        return recs
+
+    def action_activate(self):
+        self.write({'state': 'active'})
+
+    def action_pause(self):
+        self.write({'state': 'paused'})
+
+    def action_cancel(self):
+        self.write({'state': 'cancelled'})

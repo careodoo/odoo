@@ -18,4 +18,11 @@
     <field name="name">CARE 2 CARE Product Order</field><field name="code">c2c.product.order</field>
     <field name="prefix">C2C-SHOP-</field><field name="padding">5</field><field name="company_id" eval="False"/>
   </record>
+  <record id="seq_c2c_subscription" model="ir.sequence">
+    <field name="name">CARE 2 CARE Subscription Request</field>
+    <field name="code">c2c.subscription.request</field>
+    <field name="prefix">C2C-SUB-</field>
+    <field name="padding">5</field>
+    <field name="company_id" eval="False"/>
+  </record>
 </odoo>

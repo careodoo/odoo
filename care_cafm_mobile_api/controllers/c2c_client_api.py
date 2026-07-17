@@ -159,13 +159,25 @@ class C2CClientApi(Controller):
         offers = env['c2c.offer'].sudo().search([('is_live', '=', True)], order='sequence', limit=8) if 'c2c.offer' in env else []
         featured = env['c2c.review'].sudo().search([('featured', '=', True)], limit=8) if 'c2c.review' in env else []
         subs = env['c2c.subscription.plan'].sudo().search([], order='sequence', limit=6) if 'c2c.subscription.plan' in env else []
+        # The subscriptions block's design is owned from settings, so the client
+        # controls its title/layout/accent without an app rebuild.
+        cfg = env['c2c.settings'].sudo().search([], limit=1) if 'c2c.settings' in env else None
+        subs_design = {
+            'show': (cfg.subs_show if cfg and 'subs_show' in cfg._fields else True),
+            'title': (cfg.subs_title if cfg and 'subs_title' in cfg._fields else 'باقات الاشتراك'),
+            'subtitle': (cfg.subs_subtitle if cfg and 'subs_subtitle' in cfg._fields else None),
+            'layout': (cfg.subs_layout if cfg and 'subs_layout' in cfg._fields else 'carousel'),
+            'accent': (cfg.subs_accent if cfg and 'subs_accent' in cfg._fields else '#0e3a5f'),
+            'show_save': (cfg.subs_show_save if cfg and 'subs_show_save' in cfg._fields else True),
+        }
         return _ok({
             'available': True,
             'categories': [self._cat(c) for c in cats],
             'popular': [self._svc(s) for s in popular],
             'offers': [self._offer(o) for o in offers],
             'reviews': [self._review(r) for r in featured],
-            'subscriptions': [self._sub(p) for p in subs],
+            'subscriptions': [self._sub(p) for p in subs] if subs_design['show'] else [],
+            'subs_design': subs_design,
         })
 
     def _offer(self, o):
@@ -184,7 +196,10 @@ class C2CClientApi(Controller):
                 'price': p.price, 'old_price': p.old_price or None, 'save_pct': p.save_pct,
                 'features': (p.features or '').split('\n') if p.features else [],
                 'color': p.color or '#0e3a5f', 'popular': p.popular, 'category': p.category_id.name or None,
-                'image': _c2c_img('sub', p.id)}
+                'service_id': p.service_id.id or None,
+                # null when the plan has no image, so the card shows its colour
+                # rather than a blank 1x1 placeholder (same trap as _cat/_svc).
+                'image': _c2c_img('sub', p.id) if p.image else None}
 
     def _cat(self, c):
         return {'id': c.id, 'name': c.name, 'icon': c.icon or '🧩', 'color': c.color or '#0e3a5f',
@@ -498,6 +513,71 @@ class C2CClientApi(Controller):
         if 'c2c.subscription.plan' not in env:
             return _ok([])
         return _ok([self._sub(p) for p in env['c2c.subscription.plan'].sudo().search([], order='sequence')])
+
+    @route(API + '/c2c/subscribe', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def c2c_subscribe(self, **kw):
+        """The customer subscribes to a plan → a request the team activates."""
+        env = _auth()
+        if not env:
+            return _err('سجّل الدخول للاشتراك', 401)
+        if 'c2c.subscription.request' not in env:
+            return _err('غير متاح', 404)
+        from .api import _body
+        b = _body()
+        if not b.get('plan_id'):
+            return _err('اختر الباقة', 422)
+        plan = env['c2c.subscription.plan'].sudo().browse(int(b['plan_id'])).exists()
+        if not plan:
+            return _err('الباقة غير موجودة', 404)
+        partner = env.user.partner_id
+        vals = {
+            'plan_id': plan.id, 'partner_id': partner.id,
+            'customer_name': b.get('customer_name') or partner.name,
+            'phone': b.get('phone') or partner.phone or partner.mobile or '',
+            'note': b.get('note') or None,
+        }
+        # An address may be attached, but only one that belongs to this customer.
+        if b.get('address_id') and 'c2c.delivery.address' in env:
+            addr = env['c2c.delivery.address'].sudo().browse(int(b['address_id'])).exists()
+            if addr and addr.partner_id.id == partner.id:
+                vals['address_id'] = addr.id
+        rec = env['c2c.subscription.request'].sudo().create(vals)
+        return _ok({'id': rec.id, 'name': rec.name, 'state': rec.state})
+
+    @route(API + '/c2c/my-subscriptions', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def c2c_my_subscriptions(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'c2c.subscription.request' not in env:
+            return _ok([])
+        pids = self._my_partner_ids(env)
+        recs = env['c2c.subscription.request'].sudo().search(
+            [('partner_id', 'in', pids)], order='create_date desc', limit=100)
+        st_lbl = dict(recs._fields['state'].selection) if recs else {}
+        return _ok([{
+            'id': r.id, 'name': r.name,
+            'plan': r.plan_id.name or None,
+            'plan_id': r.plan_id.id or None,
+            'period': r.period, 'visits': r.visits, 'price': r.price,
+            'state': r.state, 'state_label': st_lbl.get(r.state, r.state),
+            'start_date': str(r.start_date) if r.start_date else None,
+            'created': str(r.create_date)[:16] if r.create_date else None,
+            'can_cancel': r.state in ('new', 'active', 'paused'),
+        } for r in recs])
+
+    @route(API + '/c2c/subscription/<int:sid>/cancel', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def c2c_subscription_cancel(self, sid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        r = env['c2c.subscription.request'].sudo().browse(int(sid)).exists()
+        if not r or r.partner_id.id not in self._my_partner_ids(env):
+            return _err('غير موجود', 404)
+        if r.state not in ('new', 'active', 'paused'):
+            return _err('لا يمكن الإلغاء في هذه الحالة', 422)
+        r.action_cancel()
+        return _ok({'id': r.id, 'state': r.state})
 
     # ---- long-term / contract requests ------------------------------------
     @route(API + '/c2c/contract/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')

@@ -88,4 +88,50 @@
     <field name="category_ids" eval="[(6,0,[ref('cat_maint'),ref('cat_ac')])]"/>
   </record>
 
+  <!-- ===== Subscription plans (seed) ===== -->
+  <record id="plan_clean_basic" model="c2c.subscription.plan">
+    <field name="name">تنظيف منزلي — أساسي</field>
+    <field name="category_id" ref="cat_cleaning"/>
+    <field name="period">monthly</field>
+    <field name="visits">4</field>
+    <field name="price">45.0</field>
+    <field name="old_price">60.0</field>
+    <field name="color">#0e3a5f</field>
+    <field name="sequence">10</field>
+    <field name="features">4 زيارات شهريًا
+فريق ثابت مدرّب
+مواد تنظيف مشمولة
+جدولة مرنة</field>
+  </record>
+  <record id="plan_clean_plus" model="c2c.subscription.plan">
+    <field name="name">تنظيف منزلي — بلس</field>
+    <field name="category_id" ref="cat_cleaning"/>
+    <field name="period">monthly</field>
+    <field name="visits">8</field>
+    <field name="price">80.0</field>
+    <field name="old_price">120.0</field>
+    <field name="color">#c0392b</field>
+    <field name="popular">1</field>
+    <field name="sequence">20</field>
+    <field name="features">8 زيارات شهريًا
+فريق ثابت + مشرف جودة
+مواد ومعدّات مشمولة
+تنظيف عميق شهري
+أولوية في الحجز</field>
+  </record>
+  <record id="plan_maint_year" model="c2c.subscription.plan">
+    <field name="name">صيانة دورية — سنوي</field>
+    <field name="category_id" ref="cat_maint"/>
+    <field name="period">yearly</field>
+    <field name="visits">12</field>
+    <field name="price">240.0</field>
+    <field name="old_price">360.0</field>
+    <field name="color">#17547f</field>
+    <field name="sequence">30</field>
+    <field name="features">زيارة صيانة شهرية
+فحص شامل للتكييف والسباكة
+خصم على قطع الغيار
+خط دعم أولوية</field>
+  </record>
+
 </data></odoo>
