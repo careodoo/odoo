@@ -90,9 +90,10 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
             return CustomScrollView(slivers: [
               _header(context),
               SliverToBoxAdapter(child: _promoCarousel(offers)),
-              _rowTitle(tr('الخدمات', 'Services'), tr('عرض الكل', 'All'), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const C2CServiceListScreen(title: 'كل الخدمات')))),
-              SliverToBoxAdapter(child: _catGrid(cats)),
+              // trust strip sits directly under the slider, no gap
               SliverToBoxAdapter(child: _trustStrip()),
+              _servicesHeader(),
+              SliverToBoxAdapter(child: _catGrid(cats)),
               if (popular.isNotEmpty) _rowTitle(tr('الأكثر طلبًا', 'Most popular'), null, null),
               if (popular.isNotEmpty) SliverToBoxAdapter(child: _popularRail(popular)),
               if (subs.isNotEmpty) _rowTitle(tr('الاشتراكات الشهرية', 'Monthly plans'), null, null),
@@ -147,7 +148,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
                       gradient: const LinearGradient(colors: [Colors.white, Color(0xFFEAF2F8)]),
                       borderRadius: BorderRadius.circular(11),
                       boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 8, offset: const Offset(0, 3))]),
-                    child: const Text('C2', style: TextStyle(color: C2C.navy, fontWeight: FontWeight.w900, fontSize: 15, height: 1)),
+                    child: const Text('C2C', style: TextStyle(color: C2C.navy, fontWeight: FontWeight.w900, fontSize: 13.5, height: 1)),
                   ),
                   const SizedBox(width: 9),
                   Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
@@ -169,7 +170,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
                   ],
                 ]),
                 const SizedBox(height: 12),
-                Text(first.isNotEmpty ? '${tr('مرحبًا', 'Hi')} $first 👋' : tr('خدمات منزلية عند بابك', 'Home services at your door'),
+                Text(first.isNotEmpty ? '${tr('مرحبًا', 'Hi')} $first 👋' : tr('كير تو كير … لأننا نهتم', 'CARE 2 CARE … because we care'),
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 19, letterSpacing: 0.2, shadows: [Shadow(color: Colors.black26, blurRadius: 6)])),
               ]),
             ),
@@ -219,6 +220,49 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
             child: Icon(i, color: Colors.white, size: 19)),
           if (dot) Positioned(top: 4, right: 4, child: Container(width: 8, height: 8, decoration: BoxDecoration(color: const Color(0xFFFF5A4D), shape: BoxShape.circle, border: Border.all(color: C2C.navy, width: 1.4)))),
         ]),
+      );
+
+
+  /// A deliberately distinctive band for the services section — it is the
+  /// heart of the storefront, so it should not look like every other row title.
+  Widget _servicesHeader() => SliverToBoxAdapter(
+        child: Container(
+          margin: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+          padding: const EdgeInsets.fromLTRB(14, 11, 10, 11),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [C2C.navy, Color(0xFF17547F)],
+              begin: Alignment.centerRight, end: Alignment.centerLeft),
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [BoxShadow(color: C2C.navy.withValues(alpha: 0.25), blurRadius: 10, offset: const Offset(0, 4))],
+          ),
+          child: Row(children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(color: C2C.red, borderRadius: BorderRadius.circular(9)),
+              child: const Icon(Icons.grid_view_rounded, color: Colors.white, size: 15),
+            ),
+            const SizedBox(width: 9),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+              Text(tr('خدماتنا', 'Our services'),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15.5, height: 1.1)),
+              Text(tr('اختر ما تحتاجه واحجز في دقيقة', 'Pick what you need — book in a minute'),
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 10.5)),
+            ])),
+            GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => const C2CServiceListScreen(title: 'كل الخدمات'))),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(20)),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Text(tr('عرض الكل', 'All'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 11.5)),
+                  const Icon(Icons.chevron_left_rounded, color: Colors.white, size: 16),
+                ]),
+              ),
+            ),
+          ]),
+        ),
       );
 
   Widget _rowTitle(String t, String? action, VoidCallback? onAction) => SliverToBoxAdapter(
@@ -307,7 +351,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
 
   // ============ CATEGORIES (calm, organised soft-tint grid) ============
   Widget _catGrid(List cats) => Padding(
-        padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
         child: GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),

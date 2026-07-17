@@ -6,7 +6,10 @@ import 'c2c_shell.dart';
 import 'c2c_booking_detail.dart';
 
 class C2CBookingsScreen extends StatefulWidget {
-  const C2CBookingsScreen({super.key});
+  const C2CBookingsScreen({super.key, this.initialFilter = 'all'});
+
+  /// all | active | done | cancelled — lets the account stats deep-link here.
+  final String initialFilter;
   @override
   State<C2CBookingsScreen> createState() => _C2CBookingsScreenState();
 }
@@ -27,7 +30,7 @@ class _C2CBookingsScreenState extends State<C2CBookingsScreen> {
 
   void _load() => setState(() => _list = context.read<AuthProvider>().api.c2cBookings());
 
-  String _filter = 'all';
+  late String _filter = widget.initialFilter;
   static const _filters = [
     ['all', 'الكل', 'All'], ['active', 'نشطة', 'Active'], ['done', 'منجزة', 'Done'], ['cancelled', 'ملغاة', 'Cancelled'],
   ];

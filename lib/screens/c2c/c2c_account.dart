@@ -37,6 +37,10 @@ class _C2CAccountScreenState extends State<C2CAccountScreen> {
         future: _acc,
         builder: (_, snap) {
           final d = snap.data ?? {};
+          // Showing "0" while the request is still in flight displays a WRONG
+          // number that then jumps — which is what made this feel slow. Show a
+          // loading dash until the real value arrives.
+          final loading = snap.connectionState != ConnectionState.done;
           return ListView(padding: EdgeInsets.zero, children: [
             // ===== vibrant header =====
             SizedBox(
@@ -67,11 +71,17 @@ class _C2CAccountScreenState extends State<C2CAccountScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 4, 14, 8),
               child: Row(children: [
-                _stat('${d['total_bookings'] ?? 0}', tr('الحجوزات', 'Bookings'), Icons.event_note_rounded, const [Color(0xFF17547F), C2C.navy]),
+                _stat(loading ? null : '${d['total_bookings'] ?? 0}', tr('الحجوزات', 'Bookings'),
+                    Icons.event_note_rounded, const [Color(0xFF17547F), C2C.navy],
+                    onTap: () => _openBookings('all')),
                 const SizedBox(width: 10),
-                _stat('${d['upcoming'] ?? 0}', tr('قادمة', 'Upcoming'), Icons.upcoming_rounded, const [Color(0xFFF59E0B), Color(0xFFB45309)]),
+                _stat(loading ? null : '${d['upcoming'] ?? 0}', tr('قادمة', 'Upcoming'),
+                    Icons.upcoming_rounded, const [Color(0xFFF59E0B), Color(0xFFB45309)],
+                    onTap: () => _openBookings('active')),
                 const SizedBox(width: 10),
-                _stat('${d['total_spent'] ?? 0}', tr('أنفقت', 'Spent'), Icons.payments_rounded, const [Color(0xFF16A34A), Color(0xFF15803D)]),
+                _stat(loading ? null : '${d['total_spent'] ?? 0}', tr('أنفقت', 'Spent'),
+                    Icons.payments_rounded, const [Color(0xFF16A34A), Color(0xFF15803D)],
+                    onTap: () => _openBookings('done')),
               ]),
             ),
             const Padding(padding: EdgeInsets.fromLTRB(18, 8, 18, 4), child: Align(alignment: Alignment.centerRight, child: Text('الحساب', style: TextStyle(fontWeight: FontWeight.w900, color: C2C.navy, fontSize: 15)))),
@@ -149,8 +159,17 @@ class _C2CAccountScreenState extends State<C2CAccountScreen> {
 
   Widget _blob(double size, Color color) => Container(width: size, height: size, decoration: BoxDecoration(color: color, shape: BoxShape.circle));
 
-  Widget _stat(String v, String l, IconData ic, List<Color> g) => Expanded(
-        child: Container(
+  Future<void> _openBookings(String filter) async {
+    await Navigator.push(context, MaterialPageRoute(
+        builder: (_) => C2CBookingsScreen(initialFilter: filter)));
+    if (mounted) setState(() => _acc = context.read<AuthProvider>().api.c2cAccount());
+  }
+
+  /// [v] null while loading — never render a placeholder 0 as if it were real.
+  Widget _stat(String? v, String l, IconData ic, List<Color> g, {VoidCallback? onTap}) => Expanded(
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
           decoration: BoxDecoration(
             gradient: LinearGradient(colors: g, begin: Alignment.topLeft, end: Alignment.bottomRight),
@@ -160,9 +179,13 @@ class _C2CAccountScreenState extends State<C2CAccountScreen> {
           child: Column(children: [
             Icon(ic, color: Colors.white, size: 22),
             const SizedBox(height: 6),
-            Text(v, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Colors.white)),
+            v == null
+                ? const SizedBox(height: 22, width: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70))
+                : Text(v, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Colors.white)),
             Text(l, style: TextStyle(fontSize: 10.5, color: Colors.white.withValues(alpha: 0.9)), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
           ]),
+          ),
         ),
       );
 
