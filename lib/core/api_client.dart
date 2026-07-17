@@ -251,9 +251,16 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/client/employee/$id?period=$period'), headers: await _headers())))['data'] as Map);
 
-  Future<Map<String, dynamic>> clientActivity() async =>
-      Map<String, dynamic>.from((await _handle(
-              await http.get(_u('/client/activity'), headers: await _headers())))['data'] as Map);
+  Future<Map<String, dynamic>> clientActivity({
+    String period = 'all', String kind = 'all', int? employeeId, int? facilityId,
+  }) async {
+    final p = <String, String>{'period': period, 'kind': kind};
+    if (employeeId != null) p['employee_id'] = '$employeeId';
+    if (facilityId != null) p['facility_id'] = '$facilityId';
+    final qs = p.entries.map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}').join('&');
+    return Map<String, dynamic>.from((await _handle(
+        await http.get(_u('/client/activity?$qs'), headers: await _headers())))['data'] as Map);
+  }
 
   Future<Map<String, dynamic>> clientStructure({String period = 'all'}) async =>
       Map<String, dynamic>.from((await _handle(
@@ -444,9 +451,22 @@ class ApiClient {
               await http.get(_u('/client/schedules'), headers: await _headers())))['data']
           as Map)['schedules'] as List);
 
-  Future<Map<String, dynamic>> clientAttendanceData() async =>
-      Map<String, dynamic>.from((await _handle(
-              await http.get(_u('/client/attendance'), headers: await _headers())))['data'] as Map);
+  Future<Map<String, dynamic>> clientAttendanceData({
+    String period = 'all', int? employeeId, int? facilityId,
+  }) async {
+    final p = <String, String>{'period': period};
+    if (employeeId != null) p['employee_id'] = '$employeeId';
+    if (facilityId != null) p['facility_id'] = '$facilityId';
+    final qs = p.entries.map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}').join('&');
+    return Map<String, dynamic>.from((await _handle(
+        await http.get(_u('/client/attendance?$qs'), headers: await _headers())))['data'] as Map);
+  }
+
+  /// Every attendance record for one worker on this client's sites.
+  Future<Map<String, dynamic>> clientEmployeeAttendance(int eid, {String period = 'all'}) async =>
+      Map<String, dynamic>.from((await _handle(await http.get(
+          _u('/client/employee/$eid/attendance?period=$period'),
+          headers: await _headers())))['data'] as Map);
 
   Future<Map<String, dynamic>> notifyOptions() async =>
       Map<String, dynamic>.from((await _handle(
