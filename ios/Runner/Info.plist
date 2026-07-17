@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>CARE</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>CARE</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(FLUTTER_BUILD_NAME)</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneClassName</key>
+					<string>UIWindowScene</string>
+					<key>UISceneConfigurationName</key>
+					<string>flutter</string>
+					<key>UISceneDelegateClassName</key>
+					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+					<key>UISceneStoryboardFile</key>
+					<string>Main</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<!-- Why each permission is needed. iOS CRASHES on first use without these,
+	     and App Store review rejects the build. Keep in step with pubspec. -->
+	<key>NSCameraUsageDescription</key>
+	<string>لالتقاط صور إثبات تنفيذ الأعمال وقراءة الباركود — Used to capture proof-of-work photos and scan barcodes.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>لإرفاق صور وفيديوهات الإثبات من معرض الصور — Used to attach proof photos and videos.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>لحفظ التقارير والصور على جهازك — Used to save reports and images to your device.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>لتسجيل الصوت مع فيديوهات الإثبات — Used to record audio with proof videos.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>لمشاركة موقع السائق المباشر مع العميل أثناء الرحلة — Used to share the driver's live location during a trip.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>لمتابعة موقع الرحلة أثناء التوصيل — Used to follow a trip's location during delivery.</string>
+	<key>NFCReaderUsageDescription</key>
+	<string>لقراءة بطاقات المواقع أثناء الجولات — Used to read location tags during patrols.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>لتأمين الدخول إلى حسابك — Used to secure access to your account.</string>
+	<!-- push notifications -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<true/>
+</dict>
+</plist>

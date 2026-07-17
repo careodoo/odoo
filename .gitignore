@@ -12,11 +12,20 @@ pubspec.lock
 # NOTE: android/ IS tracked — it carries hand-made config that `flutter create`
 # would NOT regenerate (release signingConfigs, url_launcher <queries>, app id).
 # Its secrets stay out via the "release signing" rules at the bottom.
-/ios/
 /linux/
 /macos/
 /windows/
 /web/
+
+# ios: the project IS tracked (bundle id care.app, Info.plist permission
+# strings, push background mode) — only its build output and pods are not.
+/ios/build/
+/ios/Pods/
+/ios/.symlinks/
+/ios/Flutter/Flutter.framework
+/ios/Flutter/Flutter.podspec
+/ios/Flutter/flutter_export_environment.sh
+/ios/Runner/GoogleService-Info.plist
 
 # android build output / local machine paths (never the config itself)
 /android/.gradle/
