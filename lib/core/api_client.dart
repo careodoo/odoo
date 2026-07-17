@@ -741,6 +741,16 @@ class ApiClient {
               _u('/waste/driver/trip/$tripId/action'),
               headers: await _headers(), body: jsonEncode({'action': action}))))['data'] as Map);
 
+  // ---- push device registration -------------------------------------------
+  Future<void> registerDevice(String token, {String platform = 'android', String? deviceName}) async =>
+      _handle(await http.post(_u('/notifications/register'),
+          headers: await _headers(),
+          body: jsonEncode({'token': token, 'platform': platform, 'device_name': deviceName})));
+
+  Future<void> unregisterDevice(String token) async =>
+      _handle(await http.post(_u('/notifications/unregister'),
+          headers: await _headers(), body: jsonEncode({'token': token})));
+
   // ---- PMS (native project management) ------------------------------------
   Future<Map<String, dynamic>> pmsOverview() async =>
       Map<String, dynamic>.from((await _handle(

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'api_client.dart';
+import 'push.dart';
 import '../models/models.dart';
 
 /// Holds session state for the app. Restores a stored token on launch so a
@@ -80,6 +81,7 @@ class AuthProvider extends ChangeNotifier {
       if (await api.token != null) {
         profile = Profile.fromJson(await api.me());
         _startPolling();
+        Push.registerWith(api); // attach this device to the signed-in user
       }
     } catch (_) {
       // stale/expired token → drop it silently, show login
@@ -97,6 +99,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       profile = Profile.fromJson(await api.login(login, password));
       _startPolling();
+      Push.registerWith(api); // this device now belongs to this user
       notifyListeners();
       return true;
     } on ApiException catch (e) {
@@ -118,6 +121,7 @@ class AuthProvider extends ChangeNotifier {
       interfaces = null;
       await setAppMode(null);
       profile = Profile.fromJson(await api.signup(name: name, email: email, phone: phone, password: password));
+      Push.registerWith(api); // new account → attach this device
       _startPolling();
       notifyListeners();
       return true;
@@ -140,6 +144,8 @@ class AuthProvider extends ChangeNotifier {
     }
     _poll?.cancel();
     _poll = null;
+    // detach this device first, or its alerts would follow the next user in
+    await Push.unregister();
     await api.logout();
     profile = null;
     interfaces = null;

@@ -40,3 +40,4 @@ dist/*.keep
 # release signing (keep secret)
 android/key.properties
 android/care-release.jks
+android/app/google-services.json
