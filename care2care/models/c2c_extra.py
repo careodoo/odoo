@@ -7,6 +7,7 @@ from odoo import api, fields, models, _
 class C2CReview(models.Model):
     _name = 'c2c.review'
     _description = 'CARE 2 CARE Review'
+    _inherit = ['mail.thread']
     _order = 'featured desc, date desc, id desc'
 
     service_id = fields.Many2one('c2c.service', string='الخدمة', ondelete='cascade', index=True)
@@ -17,7 +18,19 @@ class C2CReview(models.Model):
     comment = fields.Text(string='التعليق')
     date = fields.Date(string='التاريخ', default=fields.Date.context_today)
     featured = fields.Boolean(string='مميّز (يظهر في الرئيسية)')
+    partner_id = fields.Many2one('res.partner', string='صاحب التقييم')
+    booking_id = fields.Many2one('c2c.booking', string='الحجز', ondelete='set null')
+    state = fields.Selection([
+        ('pending', 'بانتظار الاعتماد'), ('approved', 'معتمد'), ('rejected', 'مرفوض'),
+    ], string='الحالة', default='pending', required=True, tracking=True)
+    moderated_by = fields.Many2one('res.users', string='اعتمده', readonly=True)
     active = fields.Boolean(default=True)
+
+    def action_approve(self):
+        self.write({'state': 'approved', 'moderated_by': self.env.uid})
+
+    def action_reject(self):
+        self.write({'state': 'rejected', 'moderated_by': self.env.uid})
 
 
 class C2CWorkSample(models.Model):
@@ -156,3 +169,22 @@ class C2CSubscriptionRequest(models.Model):
 
     def action_cancel(self):
         self.write({'state': 'cancelled'})
+
+
+class C2CServiceMedia(models.Model):
+    """Photos and videos shown inside a service page — the professional gallery
+    the customer browses before booking."""
+    _name = 'c2c.service.media'
+    _description = 'CARE 2 CARE Service Media'
+    _order = 'sequence, id'
+
+    service_id = fields.Many2one('c2c.service', string='الخدمة', ondelete='cascade', index=True)
+    name = fields.Char(string='العنوان', translate=True)
+    kind = fields.Selection([('image', 'صورة'), ('video', 'فيديو')], string='النوع',
+                            default='image', required=True)
+    image = fields.Image(string='الصورة', max_width=1600, max_height=1200)
+    video_url = fields.Char(string='رابط الفيديو (mp4/youtube)')
+    poster = fields.Image(string='صورة الغلاف (للفيديو)', max_width=1280, max_height=720)
+    featured = fields.Boolean(string='يظهر في بلوك الفيديوهات بالرئيسية')
+    sequence = fields.Integer(default=10)
+    active = fields.Boolean(default=True)

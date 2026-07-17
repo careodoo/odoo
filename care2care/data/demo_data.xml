@@ -141,4 +141,26 @@
   <record id="rfq_opt_report" model="c2c.rfq.option"><field name="name">تقارير دورية</field><field name="icon">📊</field><field name="sequence">50</field></record>
   <record id="rfq_opt_emergency" model="c2c.rfq.option"><field name="name">استجابة طوارئ 24/7</field><field name="icon">🚨</field><field name="sequence">60</field></record>
 
+  <!-- ===== Service videos (defaults, featured on home) ===== -->
+  <record id="media_vid_clean" model="c2c.service.media">
+    <field name="service_id" ref="svc_deep_clean"/><field name="kind">video</field>
+    <field name="name">تنظيف عميق احترافي</field><field name="featured">1</field><field name="sequence">10</field>
+    <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4</field>
+  </record>
+  <record id="media_vid_ac" model="c2c.service.media">
+    <field name="service_id" ref="svc_ac_service"/><field name="kind">video</field>
+    <field name="name">صيانة وتنظيف المكيفات</field><field name="featured">1</field><field name="sequence">20</field>
+    <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4</field>
+  </record>
+  <record id="media_vid_sofa" model="c2c.service.media">
+    <field name="service_id" ref="svc_sofa"/><field name="kind">video</field>
+    <field name="name">غسيل الكنب والسجاد بالبخار</field><field name="featured">1</field><field name="sequence">30</field>
+    <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4</field>
+  </record>
+  <record id="media_vid_plumb" model="c2c.service.media">
+    <field name="service_id" ref="svc_plumbing"/><field name="kind">video</field>
+    <field name="name">سباكة وإصلاح التسريبات</field><field name="featured">1</field><field name="sequence">40</field>
+    <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4</field>
+  </record>
+
 </data></odoo>

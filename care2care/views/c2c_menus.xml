@@ -19,6 +19,7 @@
   <menuitem id="menu_c2c_subs" name="الاشتراكات" parent="menu_c2c_marketing" action="action_c2c_sub" sequence="20"/>
   <menuitem id="menu_c2c_rfqopt" name="خيارات عرض السعر" parent="menu_c2c_marketing" action="action_c2c_rfqopt" sequence="22"/>
   <menuitem id="menu_c2c_subreq" name="طلبات الاشتراك" parent="menu_c2c_marketing" action="action_c2c_subreq" sequence="21"/>
+  <menuitem id="menu_c2c_media" name="صور وفيديوهات الخدمات" parent="menu_c2c_marketing" action="action_c2c_media" sequence="31"/>
   <menuitem id="menu_c2c_reviews" name="التقييمات" parent="menu_c2c_marketing" action="action_c2c_review" sequence="30"/>
   <menuitem id="menu_c2c_works" name="أعمال سابقة" parent="menu_c2c_marketing" action="action_c2c_work" sequence="40"/>
   <menuitem id="menu_c2c_settings" name="⚙️ إعدادات الحجز" parent="menu_c2c_root" action="action_c2c_settings" sequence="90"/>

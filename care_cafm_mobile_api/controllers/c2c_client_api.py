@@ -39,6 +39,8 @@ _C2C_IMG_MODELS = {
     'provider': ('c2c.provider', 'image'),
     'wbefore': ('c2c.work.sample', 'before_image'),
     'wafter': ('c2c.work.sample', 'after_image'),
+    'smedia': ('c2c.service.media', 'image'),
+    'sposter': ('c2c.service.media', 'poster'),
 }
 
 
@@ -157,7 +159,7 @@ class C2CClientApi(Controller):
         cats = Cat.search(home_dom, order='sequence, name')
         popular = Svc.search([('popular', '=', True)], limit=8)
         offers = env['c2c.offer'].sudo().search([('is_live', '=', True)], order='sequence', limit=8) if 'c2c.offer' in env else []
-        featured = env['c2c.review'].sudo().search([('featured', '=', True)], limit=8) if 'c2c.review' in env else []
+        featured = env['c2c.review'].sudo().search([('featured', '=', True), ('state', '=', 'approved')], limit=8) if 'c2c.review' in env else []
         subs = env['c2c.subscription.plan'].sudo().search([], order='sequence', limit=6) if 'c2c.subscription.plan' in env else []
         # The subscriptions block's design is owned from settings, so the client
         # controls its title/layout/accent without an app rebuild.
@@ -249,10 +251,27 @@ class C2CClientApi(Controller):
         d['audience'] = s.audience
         d['packages'] = [{'id': p.id, 'name': p.name, 'description': p.description or None,
                           'price': p.price, 'duration_min': p.duration_min} for p in s.package_ids]
-        # reviews  (note: a bare model recordset is falsy, so test `is not None`)
+        # reviews — only approved ones ever reach the app
         Rev = env['c2c.review'].sudo() if 'c2c.review' in env else None
-        d['reviews'] = [self._review(r) for r in Rev.search([('service_id', '=', s.id)], limit=20)] if Rev is not None else []
-        d['rating_count'] = len(d['reviews'])
+        revs = Rev.search([('service_id', '=', s.id), ('state', '=', 'approved')], order='date desc, id desc') if Rev is not None else []
+        d['reviews'] = [self._review(r) for r in revs[:20]]
+        d['rating_count'] = len(revs)
+        d['rating_avg'] = round(sum(int(r.rating or 0) for r in revs) / len(revs), 1) if revs else 0.0
+        # can this caller review? only if they have a completed booking not yet reviewed
+        d['can_review'] = False
+        if env.get('c2c.booking') is not None and not env.user._is_public():
+            done = env['c2c.booking'].sudo().search_count([
+                ('partner_id', '=', env.user.partner_id.id), ('service_id', '=', s.id), ('state', '=', 'done')])
+            already = Rev.search_count([('partner_id', '=', env.user.partner_id.id), ('service_id', '=', s.id)]) if Rev is not None else 0
+            d['can_review'] = bool(done and not already)
+        # photos & videos gallery
+        Media = env['c2c.service.media'].sudo() if 'c2c.service.media' in env else None
+        d['media'] = [{
+            'id': m.id, 'kind': m.kind, 'name': m.name or None,
+            'image': _c2c_img('smedia', m.id) if m.image else None,
+            'video_url': m.video_url or None,
+            'poster': _c2c_img('sposter', m.id) if m.poster else (m.video_url or None),
+        } for m in Media.search([('service_id', '=', s.id)], order='sequence')] if Media is not None else []
         # before/after gallery
         WS = env['c2c.work.sample'].sudo() if 'c2c.work.sample' in env else None
         d['work_samples'] = [{
@@ -589,6 +608,56 @@ class C2CClientApi(Controller):
         return _ok({'id': r.id, 'state': r.state})
 
     # ---- long-term / contract requests ------------------------------------
+    @route(API + '/c2c/review/submit', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def c2c_review_submit(self, **kw):
+        """A customer rates a service they actually completed. It lands as
+        pending and only shows in the app once the team approves it."""
+        env = _auth()
+        if not env:
+            return _err('سجّل الدخول', 401)
+        if 'c2c.review' not in env:
+            return _err('غير متاح', 404)
+        from .api import _body
+        b = _body()
+        sid = b.get('service_id')
+        rating = str(b.get('rating') or '')
+        if not sid or rating not in ('1', '2', '3', '4', '5'):
+            return _err('اختر الخدمة والتقييم', 422)
+        partner = env.user.partner_id
+        # must have a completed booking for this service
+        if 'c2c.booking' in env:
+            done = env['c2c.booking'].sudo().search_count(
+                [('partner_id', '=', partner.id), ('service_id', '=', int(sid)), ('state', '=', 'done')])
+            if not done:
+                return _err('يمكنك التقييم بعد إتمام الخدمة', 422)
+        # one review per service per customer
+        if env['c2c.review'].sudo().search_count(
+                [('partner_id', '=', partner.id), ('service_id', '=', int(sid))]):
+            return _err('لقد قيّمت هذه الخدمة من قبل', 422)
+        rec = env['c2c.review'].sudo().create({
+            'service_id': int(sid), 'partner_id': partner.id,
+            'author_name': partner.name or 'عميل',
+            'rating': rating, 'comment': (b.get('comment') or '').strip() or False,
+            'state': 'pending',
+        })
+        return _ok({'id': rec.id, 'state': rec.state,
+                    'message': 'شكرًا! تقييمك قيد المراجعة وسيظهر بعد الاعتماد.'})
+
+    @route(API + '/c2c/videos', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def c2c_videos(self, **kw):
+        """Featured service videos for the home video block."""
+        env = _auth() or request.env
+        if 'c2c.service.media' not in env:
+            return _ok([])
+        vids = env['c2c.service.media'].sudo().search(
+            [('kind', '=', 'video'), ('featured', '=', True)], order='sequence', limit=12)
+        return _ok([{
+            'id': m.id, 'name': m.name or (m.service_id.name or None),
+            'service_id': m.service_id.id or None, 'service': m.service_id.name or None,
+            'video_url': m.video_url or None,
+            'poster': _c2c_img('sposter', m.id) if m.poster else None,
+        } for m in vids])
+
     @route(API + '/c2c/rfq/options', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def c2c_rfq_options(self, **kw):
         env = _auth() or request.env

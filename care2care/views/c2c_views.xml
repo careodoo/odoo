@@ -187,7 +187,30 @@
   <record id="view_c2c_review_tree" model="ir.ui.view">
     <field name="name">c2c.review.tree</field><field name="model">c2c.review</field>
     <field name="arch" type="xml">
-      <tree><field name="author_name"/><field name="service_id"/><field name="rating"/><field name="comment"/><field name="date"/><field name="featured"/></tree>
+      <tree decoration-warning="state=='pending'" decoration-success="state=='approved'" decoration-muted="state=='rejected'">
+        <field name="author_name"/><field name="service_id"/><field name="rating" widget="badge"/>
+        <field name="comment"/><field name="date"/><field name="state" widget="badge"/><field name="featured"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_c2c_review_form" model="ir.ui.view">
+    <field name="name">c2c.review.form</field><field name="model">c2c.review</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="action_approve" string="اعتماد ونشر" type="object" class="btn-primary" invisible="state=='approved'"/>
+          <button name="action_reject" string="رفض" type="object" invisible="state=='rejected'"/>
+          <field name="state" widget="statusbar" statusbar_visible="pending,approved"/>
+        </header>
+        <sheet>
+          <group>
+            <group><field name="service_id"/><field name="author_name"/><field name="partner_id"/><field name="rating"/></group>
+            <group><field name="date"/><field name="featured"/><field name="moderated_by"/><field name="booking_id"/></group>
+          </group>
+          <field name="comment"/>
+        </sheet>
+        <div class="oe_chatter"><field name="message_follower_ids"/><field name="message_ids"/></div>
+      </form>
     </field>
   </record>
   <record id="action_c2c_review" model="ir.actions.act_window">
@@ -505,5 +528,30 @@
   </record>
   <record id="action_c2c_rfqopt" model="ir.actions.act_window">
     <field name="name">خيارات عرض السعر</field><field name="res_model">c2c.rfq.option</field><field name="view_mode">tree</field>
+  </record>
+  <!-- ===== SERVICE MEDIA ===== -->
+  <record id="view_c2c_media_tree" model="ir.ui.view">
+    <field name="name">c2c.service.media.tree</field><field name="model">c2c.service.media</field>
+    <field name="arch" type="xml">
+      <tree><field name="sequence" widget="handle"/><field name="service_id"/><field name="kind"/><field name="name"/><field name="video_url"/><field name="featured"/></tree>
+    </field>
+  </record>
+  <record id="view_c2c_media_form" model="ir.ui.view">
+    <field name="name">c2c.service.media.form</field><field name="model">c2c.service.media</field>
+    <field name="arch" type="xml">
+      <form><sheet>
+        <group>
+          <group><field name="service_id"/><field name="kind"/><field name="name"/><field name="featured"/></group>
+          <group><field name="video_url" invisible="kind!='video'"/></group>
+        </group>
+        <group>
+          <field name="image" widget="image" invisible="kind!='image'"/>
+          <field name="poster" widget="image" invisible="kind!='video'"/>
+        </group>
+      </sheet></form>
+    </field>
+  </record>
+  <record id="action_c2c_media" model="ir.actions.act_window">
+    <field name="name">صور وفيديوهات الخدمات</field><field name="res_model">c2c.service.media</field><field name="view_mode">tree,form</field>
   </record>
 </odoo>
