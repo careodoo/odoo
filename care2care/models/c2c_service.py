@@ -14,6 +14,10 @@ class C2CCategory(models.Model):
     image = fields.Image(string='صورة', max_width=1024, max_height=1024)
     color = fields.Char(string='لون', default='#0e3a5f')
     sequence = fields.Integer(default=10)
+    show_on_home = fields.Boolean(
+        string='تظهر في الرئيسية', default=True,
+        help='تحكّم في أي الفئات تظهر ضمن أيقونات الصفحة الرئيسية للتطبيق. '
+             'أزل العلامة لإخفائها من الرئيسية مع إبقائها متاحة داخل «كل الخدمات».')
     service_ids = fields.One2many('c2c.service', 'category_id', string='الخدمات')
     service_count = fields.Integer(compute='_compute_count')
     active = fields.Boolean(default=True)

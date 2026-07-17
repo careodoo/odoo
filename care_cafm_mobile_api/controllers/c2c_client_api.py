@@ -151,7 +151,10 @@ class C2CClientApi(Controller):
             return _ok({'available': False})
         Cat = env['c2c.category'].sudo()
         Svc = env['c2c.service'].sudo()
-        cats = Cat.search([], order='sequence, name')
+        # only what the back-office flagged for the home grid (field may not
+        # exist on older installs, so degrade gracefully)
+        home_dom = [('show_on_home', '=', True)] if 'show_on_home' in Cat._fields else []
+        cats = Cat.search(home_dom, order='sequence, name')
         popular = Svc.search([('popular', '=', True)], limit=8)
         offers = env['c2c.offer'].sudo().search([('is_live', '=', True)], order='sequence', limit=8) if 'c2c.offer' in env else []
         featured = env['c2c.review'].sudo().search([('featured', '=', True)], limit=8) if 'c2c.review' in env else []
@@ -186,7 +189,9 @@ class C2CClientApi(Controller):
     def _cat(self, c):
         return {'id': c.id, 'name': c.name, 'icon': c.icon or '🧩', 'color': c.color or '#0e3a5f',
                 'service_count': c.service_count,
-                'image': _c2c_img('cat', c.id)}
+                # null when there is no image, so the app shows the emoji rather
+                # than a blank 1x1 placeholder
+                'image': _c2c_img('cat', c.id) if c.image else None}
 
     def _svc(self, s):
         pu = _sel(s, 'price_unit')

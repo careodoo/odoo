@@ -121,6 +121,45 @@ class NotifApi(Controller):
         env.user.sudo().write({'password': new})
         return _ok({'changed': True})
 
+    @route(API + '/account/update', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def account_update(self, **kw):
+        """Edit my own profile: name / email / phone.
+
+        Writes on the PARTNER (and the login when the email changes) with sudo,
+        but only ever for env.user — a caller can never name someone else.
+        """
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        b = _body()
+        p = env.user.partner_id
+        vals = {}
+        name = (b.get('name') or '').strip()
+        if name:
+            if len(name) < 3:
+                return _err('الاسم قصير جدًا', 422)
+            vals['name'] = name
+        if 'phone' in b:
+            vals['phone'] = (b.get('phone') or '').strip() or False
+        if 'mobile' in b:
+            vals['mobile'] = (b.get('mobile') or '').strip() or False
+        email = (b.get('email') or '').strip()
+        if email:
+            if '@' not in email or '.' not in email.split('@')[-1]:
+                return _err('البريد غير صالح', 422)
+            # the login is the email — refuse a duplicate rather than corrupt it
+            clash = env['res.users'].sudo().search(
+                [('login', '=ilike', email), ('id', '!=', env.user.id)], limit=1)
+            if clash:
+                return _err('هذا البريد مستخدم بحساب آخر', 422)
+            vals['email'] = email
+        if vals:
+            p.sudo().write(vals)
+        if email and env.user.login != email:
+            env.user.sudo().write({'login': email})
+        return _ok({'name': p.name, 'email': p.email or None,
+                    'phone': p.phone or None, 'mobile': p.mobile or None})
+
     @route(API + '/account/delete_request', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
     def account_delete_request(self, **kw):
         env = _auth()
