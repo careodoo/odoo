@@ -227,6 +227,13 @@ class PmsApi(Controller):
             'children': [{'id': c.id, 'name': c.name, 'stage': c.stage_id.name,
                           'done': c.state in DONE_STATES} for c in t.child_ids] if 'child_ids' in t._fields else [],
             'can_write': can_write,
+            'forward_to': _m2o(t.forward_to_id) if 'forward_to_id' in t._fields else None,
+            'forward_from': _m2o(t.forward_from_id) if 'forward_from_id' in t._fields else None,
+            'forward_state': (t.forward_state if 'forward_state' in t._fields else None),
+            'forward_reason': (t.forward_reason or None) if 'forward_reason' in t._fields else None,
+            # Whether THIS caller is the one being asked to accept/reject.
+            'is_recipient': bool('forward_to_id' in t._fields and t.forward_to_id
+                                 and t.forward_to_id.id == env.uid),
             'stages': [{'id': s.id, 'name': s.name, 'fold': s.fold}
                        for s in env['project.task.type'].search(
                            [('project_ids', 'in', [t.project_id.id])] if t.project_id else [])],
@@ -287,6 +294,114 @@ class PmsApi(Controller):
             return _err(str(e) or 'غير مصرّح', 403)
         t.invalidate_recordset()
         return _ok(self._task_row(t))
+
+    @route(API + '/pms/task/<int:tid>/forward', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_task_forward(self, tid, **kw):
+        """Route a task to another internal user — the portal's forward action."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        from .api import _body
+        b = _body() or {}
+        to_uid = b.get('forward_to_id')
+        if not to_uid:
+            return _err('اختر المستخدم', 422)
+        t = env['project.task'].browse(tid)
+        try:
+            t.check_access_rule('write')
+            t.write({'forward_to_id': int(to_uid), 'forward_reason': b.get('reason') or ''})
+            if hasattr(t, 'action_request_forward'):
+                t.action_request_forward()
+        except Exception as e:
+            return _err(str(e) or 'تعذّرت الإحالة', 403)
+        t.invalidate_recordset()
+        return _ok(self._task_row(t))
+
+    @route(API + '/pms/task/<int:tid>/accept', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_task_accept(self, tid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        t = env['project.task'].browse(tid)
+        try:
+            t.check_access_rule('read')
+            # Only the person the task was forwarded TO may accept it — mirrors
+            # the portal's own guard.
+            if not ('forward_to_id' in t._fields and t.forward_to_id and t.forward_to_id.id == env.uid):
+                return _err('هذه الإحالة ليست موجَّهة إليك', 403)
+            if hasattr(t, 'action_accept_forward'):
+                t.action_accept_forward()
+        except Exception as e:
+            return _err(str(e) or 'تعذّر القبول', 403)
+        t.invalidate_recordset()
+        return _ok(self._task_row(t))
+
+    @route(API + '/pms/task/<int:tid>/reject', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_task_reject(self, tid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        from .api import _body
+        t = env['project.task'].browse(tid)
+        try:
+            t.check_access_rule('read')
+            if not ('forward_to_id' in t._fields and t.forward_to_id and t.forward_to_id.id == env.uid):
+                return _err('هذه الإحالة ليست موجَّهة إليك', 403)
+            reason = (_body() or {}).get('reason')
+            if reason:
+                t.sudo().forward_reason = reason
+            if hasattr(t, 'action_reject_forward'):
+                t.action_reject_forward()
+        except Exception as e:
+            return _err(str(e) or 'تعذّر الرفض', 403)
+        t.invalidate_recordset()
+        return _ok(self._task_row(t))
+
+    @route(API + '/pms/project/<int:pid>/task/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_task_create(self, pid, **kw):
+        """Create a task in a project the caller may write to."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        from .api import _body
+        b = _body() or {}
+        name = (b.get('name') or '').strip()
+        if not name:
+            return _err('اكتب عنوان المهمة', 422)
+        proj = env['project.project'].browse(int(pid))
+        try:
+            proj.check_access_rule('read')
+        except Exception:
+            return _err('لا صلاحية على هذا المشروع', 403)
+        vals = {'name': name, 'project_id': proj.id}
+        if b.get('description'):
+            vals['description'] = b['description']
+        if b.get('date_deadline'):
+            vals['date_deadline'] = b['date_deadline']
+        if b.get('priority') in ('0', '1'):
+            vals['priority'] = b['priority']
+        if b.get('user_id'):
+            # Odoo 17: assignees are a many2many.
+            vals['user_ids'] = [(6, 0, [int(b['user_id'])])]
+        if b.get('category_id') and 'pms_category_id' in env['project.task']._fields:
+            vals['pms_category_id'] = int(b['category_id'])
+        try:
+            # The task is created as the caller, so create-rights are enforced.
+            t = env['project.task'].create(vals)
+        except Exception as e:
+            return _err(str(e) or 'تعذّر الإنشاء', 403)
+        return _ok(self._task_row(t))
+
+    @route(API + '/pms/project/<int:pid>/forward-users', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_forward_users(self, pid, **kw):
+        """Internal users a task may be forwarded to (mirrors the portal list)."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        users = env['res.users'].sudo().search(
+            [('share', '=', False), ('active', '=', True)], order='name', limit=400)
+        return _ok([{'id': u.id, 'name': u.name} for u in users])
+
 
 
 # ---------------------------------------------------------------------------
