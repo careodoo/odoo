@@ -24,6 +24,43 @@ class C2C {
   static const bg = Color(0xFFF6F7FB);
   static const ink = Color(0xFF1E293B);
   static const slate = Color(0xFF64748B);
+
+  // ---- shared visual language for categories & services ----
+  // A coordinated set of gradients that all sit next to the brand red.
+  static const catGrads = <List<Color>>[
+    [Color(0xFFE24A3B), Color(0xFFC0392B)],
+    [Color(0xFFF39C4B), Color(0xFFE67E22)],
+    [Color(0xFF20BFA9), Color(0xFF16A085)],
+    [Color(0xFF4A90D9), Color(0xFF2980B9)],
+    [Color(0xFFB06AB3), Color(0xFF8E44AD)],
+    [Color(0xFFFF7B54), Color(0xFFE24A3B)],
+    [Color(0xFF52C77E), Color(0xFF27AE60)],
+    [Color(0xFFEC5F8E), Color(0xFFC2185B)],
+  ];
+
+  static List<Color> gradFor(int i) => catGrads[i % catGrads.length];
+
+  /// A clean Material icon per category/service, chosen by keyword — used as a
+  /// faint watermark so cards read as designed, not as pasted emoji.
+  static IconData iconFor(String name) {
+    bool has(List<String> ks) => ks.any(name.contains);
+    if (has(['تكييف', 'تبريد'])) return Icons.ac_unit_rounded;
+    if (has(['سباك'])) return Icons.plumbing_rounded;
+    if (has(['كهرب'])) return Icons.electrical_services_rounded;
+    if (has(['تنظيف', 'منازل'])) return Icons.cleaning_services_rounded;
+    if (has(['سجاد', 'كنب'])) return Icons.weekend_rounded;
+    if (has(['مغسلة', 'غسيل ملابس'])) return Icons.local_laundry_service_rounded;
+    if (has(['حديقة', 'حدائق', 'تنسيق'])) return Icons.grass_rounded;
+    if (has(['مسبح', 'سباحة', 'حمامات'])) return Icons.pool_rounded;
+    if (has(['نقل', 'عفش', 'تغليف'])) return Icons.local_shipping_rounded;
+    if (has(['معدّات', 'معدات', 'سيارات', 'تأجير'])) return Icons.agriculture_rounded;
+    if (has(['حشرات', 'مكافحة'])) return Icons.pest_control_rounded;
+    if (has(['صيانة', 'ترميم'])) return Icons.handyman_rounded;
+    if (has(['دهان', 'صبغ'])) return Icons.format_paint_rounded;
+    if (has(['نجار'])) return Icons.carpenter_rounded;
+    if (has(['أمن', 'حراسة'])) return Icons.shield_rounded;
+    return Icons.home_repair_service_rounded;
+  }
 }
 
 /// The CARE 2 CARE customer storefront shell (Home · Bookings · Account).

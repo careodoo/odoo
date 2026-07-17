@@ -6,9 +6,10 @@ import 'c2c_shell.dart';
 
 /// A filtered list of services (by category or search).
 class C2CServiceListScreen extends StatefulWidget {
-  const C2CServiceListScreen({super.key, required this.title, this.categoryId});
+  const C2CServiceListScreen({super.key, required this.title, this.categoryId, this.gradIndex = 0});
   final String title;
   final int? categoryId;
+  final int gradIndex;
   @override
   State<C2CServiceListScreen> createState() => _C2CServiceListScreenState();
 }
@@ -27,18 +28,63 @@ class _C2CServiceListScreenState extends State<C2CServiceListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final g = C2C.gradFor(widget.gradIndex);
     return Scaffold(
       backgroundColor: C2C.bg,
-      appBar: AppBar(backgroundColor: C2C.red, foregroundColor: Colors.white, title: Text(widget.title)),
       body: Column(children: [
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: TextField(
-            decoration: InputDecoration(
-              hintText: tr('ابحث…', 'Search…'), prefixIcon: const Icon(Icons.search),
-              filled: true, fillColor: Colors.white, border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-            ),
-            onSubmitted: (v) { _q = v; _load(); },
+        // ---- gradient hero, same language as the category card ----
+        Container(
+          decoration: BoxDecoration(gradient: LinearGradient(
+              colors: g, begin: Alignment.topRight, end: Alignment.bottomLeft)),
+          child: SafeArea(
+            bottom: false,
+            child: Stack(clipBehavior: Clip.none, children: [
+              Positioned(bottom: -6, left: -14,
+                  child: Icon(C2C.iconFor(widget.title), size: 110,
+                      color: Colors.white.withValues(alpha: 0.16))),
+              Positioned(top: -14, right: -18, child: Container(width: 90, height: 90,
+                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.12), shape: BoxShape.circle))),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 4, 8, 20),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    IconButton(
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                        onPressed: () => Navigator.pop(context)),
+                    Expanded(child: Text(widget.title,
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 19))),
+                  ]),
+                  const SizedBox(height: 2),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: FutureBuilder<List<dynamic>>(
+                      future: _list,
+                      builder: (_, snap) => Text(
+                          snap.hasData ? tr('${snap.data!.length} خدمة متاحة', '${snap.data!.length} services') : ' ',
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 12.5, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // search floats inside the hero
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Material(
+                      color: Colors.white, borderRadius: BorderRadius.circular(14), elevation: 4,
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: tr('ابحث في هذه الخدمات…', 'Search…'),
+                          prefixIcon: Icon(Icons.search_rounded, color: g[1]),
+                          filled: true, fillColor: Colors.white, isDense: true,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                        ),
+                        onSubmitted: (v) { _q = v; _load(); },
+                      ),
+                    ),
+                  ),
+                ]),
+              ),
+            ]),
           ),
         ),
         Expanded(
@@ -62,14 +108,17 @@ class _C2CServiceListScreenState extends State<C2CServiceListScreen> {
           color: Colors.white, borderRadius: BorderRadius.circular(16), elevation: 1, shadowColor: Colors.black12,
           child: ListTile(
             contentPadding: const EdgeInsets.all(10),
-            leading: Container(
-              width: 56, height: 56,
-              decoration: BoxDecoration(color: C2C.navy.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(14)),
-              alignment: Alignment.center,
-              child: s['image'] != null
-                  ? ClipRRect(borderRadius: BorderRadius.circular(14), child: Image.network('${s['image']}', width: 56, height: 56, fit: BoxFit.cover))
-                  : Text('${s['category_icon'] ?? '🧩'}', style: const TextStyle(fontSize: 26)),
-            ),
+            leading: Builder(builder: (_) {
+              final g = C2C.gradFor(('${s['category'] ?? s['name']}').hashCode.abs());
+              return Container(
+                width: 56, height: 56,
+                decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: g, begin: Alignment.topRight, end: Alignment.bottomLeft),
+                    borderRadius: BorderRadius.circular(14)),
+                alignment: Alignment.center,
+                child: Icon(C2C.iconFor('${s['category'] ?? s['name']}'), color: Colors.white, size: 26),
+              );
+            }),
             title: Text('${s['name']}', style: const TextStyle(fontWeight: FontWeight.w800)),
             subtitle: Text('${s['category'] ?? ''} · ${s['duration_min']} ${tr('د', 'min')}${(s['rating'] ?? 0) > 0 ? ' · ⭐ ${s['rating']}' : ''}', style: const TextStyle(fontSize: 12)),
             trailing: Text('${s['price']} ${s['currency'] ?? ''}', style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w900)),
@@ -108,19 +157,34 @@ class _C2CServiceScreenState extends State<C2CServiceScreen> {
           final s = snap.data!;
           final packages = (s['packages'] as List?) ?? [];
           return CustomScrollView(slivers: [
-            SliverAppBar(
-              backgroundColor: C2C.red, foregroundColor: Colors.white, pinned: true, expandedHeight: 172,
-              flexibleSpace: FlexibleSpaceBar(
-                titlePadding: const EdgeInsets.only(right: 16, bottom: 14, left: 56),
-                title: Text('${s['name']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w900, shadows: [Shadow(color: Colors.black54, blurRadius: 6)])),
-                background: Stack(fit: StackFit.expand, children: [
-                  s['image'] != null
-                      ? Image.network('${s['image']}', fit: BoxFit.cover)
-                      : Container(decoration: const BoxDecoration(gradient: LinearGradient(colors: [C2C.navy, C2C.navy2])), alignment: Alignment.center, child: Text('${s['category_icon'] ?? '🧩'}', style: const TextStyle(fontSize: 64))),
-                  const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Color(0x220E3A5F), Color(0xDD0E3A5F)]))),
-                ]),
-              ),
-            ),
+            Builder(builder: (_) {
+              // Pick a gradient by the service's category so the header matches
+              // the card the user tapped in.
+              final g = C2C.gradFor(('${s['category'] ?? s['name']}').hashCode.abs());
+              return SliverAppBar(
+                backgroundColor: g[1], foregroundColor: Colors.white, pinned: true, expandedHeight: 176,
+                flexibleSpace: FlexibleSpaceBar(
+                  titlePadding: const EdgeInsets.only(right: 16, bottom: 14, left: 56),
+                  title: Text('${s['name']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w900, shadows: [Shadow(color: Colors.black54, blurRadius: 6)])),
+                  background: Stack(fit: StackFit.expand, clipBehavior: Clip.antiAlias, children: [
+                    DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(
+                        colors: g, begin: Alignment.topRight, end: Alignment.bottomLeft))),
+                    // clean icon watermark + sheen, exactly the card language
+                    Positioned(bottom: -18, left: -16,
+                        child: Icon(C2C.iconFor('${s['category'] ?? s['name']}'), size: 150,
+                            color: Colors.white.withValues(alpha: 0.18))),
+                    Positioned(top: -20, right: -20, child: Container(width: 130, height: 130,
+                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.10), shape: BoxShape.circle))),
+                    Positioned(top: 40, right: 40, child: Container(width: 54, height: 54,
+                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.08), shape: BoxShape.circle))),
+                    DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(
+                        begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Colors.black.withValues(alpha: 0.28)]))),
+                  ]),
+                ),
+              );
+            }),
             SliverToBoxAdapter(
               child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),

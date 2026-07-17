@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/auth.dart';
@@ -7,6 +6,10 @@ import '../../core/i18n.dart';
 import '../notifications_screen.dart';
 import 'c2c_shell.dart';
 import 'c2c_service.dart';
+import 'c2c_orders.dart';
+import 'c2c_bookings.dart';
+import 'c2c_subscriptions.dart';
+import 'c2c_contracts.dart';
 
 /// CARE 2 CARE storefront home — premium, image-led, animated header.
 class C2CHomeScreen extends StatefulWidget {
@@ -88,6 +91,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
             return CustomScrollView(slivers: [
               SliverToBoxAdapter(child: _premiumHeader(context, offers)),
               SliverToBoxAdapter(child: _trustStrip()),
+              SliverToBoxAdapter(child: _quickActions()),
               _sectionRow(tr('التصنيفات', 'Categories'),
                   () => Navigator.push(context, MaterialPageRoute(
                       builder: (_) => const C2CServiceListScreen(title: 'كل الخدمات')))),
@@ -260,7 +264,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
         child: Padding(
           padding: EdgeInsets.fromLTRB(18, top, 18, 4),
           child: Row(children: [
-            Text(title, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: C2C.ink, letterSpacing: -0.3)),
+            Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: C2C.ink, letterSpacing: -0.3)),
             const Spacer(),
             GestureDetector(
               onTap: onAll,
@@ -360,20 +364,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
   }
 
   // ============ CATEGORIES (calm, organised soft-tint grid) ============
-  // A coordinated set of gradients that all sit next to the brand red — warm
-  // and bright, like the reference category cards.
-  static const _catGrads = [
-    [Color(0xFFE24A3B), Color(0xFFC0392B)],
-    [Color(0xFFF39C4B), Color(0xFFE67E22)],
-    [Color(0xFF20BFA9), Color(0xFF16A085)],
-    [Color(0xFF4A90D9), Color(0xFF2980B9)],
-    [Color(0xFFB06AB3), Color(0xFF8E44AD)],
-    [Color(0xFFFF7B54), Color(0xFFE24A3B)],
-    [Color(0xFF52C77E), Color(0xFF27AE60)],
-    [Color(0xFFEC5F8E), Color(0xFFC2185B)],
-  ];
-
-  /// Categories as bold gradient cards — white title top-start, a faint icon
+    /// Categories as bold gradient cards — white title top-start, a faint icon
   /// watermark bottom-end, exactly the reference's language but in our palette.
   Widget _categoryCards(List cats) => SizedBox(
         height: 128,
@@ -383,10 +374,10 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
           itemCount: cats.length,
           itemBuilder: (_, i) {
             final c = cats[i] as Map;
-            final g = _catGrads[i % _catGrads.length];
+            final g = C2C.gradFor(i);
             return GestureDetector(
               onTap: () => Navigator.push(context, MaterialPageRoute(
-                  builder: (_) => C2CServiceListScreen(title: '${c['name']}', categoryId: c['id'] as int))),
+                  builder: (_) => C2CServiceListScreen(title: '${c['name']}', categoryId: c['id'] as int, gradIndex: i))),
               child: Container(
                 width: 150,
                 margin: const EdgeInsets.symmetric(horizontal: 5),
@@ -396,25 +387,21 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
                   boxShadow: [BoxShadow(color: g[1].withValues(alpha: 0.4), blurRadius: 14, offset: const Offset(0, 7))],
                 ),
                 child: Stack(clipBehavior: Clip.antiAlias, children: [
-                  // faint icon watermark bottom-end
+                  // clean, transparent icon watermark bottom-start
                   Positioned(
-                    bottom: -6, left: -6,
-                    child: c['image'] != null
-                        ? Opacity(opacity: 0.9, child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: Image.network('${c['image']}', width: 72, height: 72, fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => _catWatermark(c))))
-                        : _catWatermark(c),
+                    bottom: -12, left: -8,
+                    child: Icon(C2C.iconFor('${c['name']}'), size: 84,
+                        color: Colors.white.withValues(alpha: 0.20)),
                   ),
                   // a soft sheen circle top-end
                   Positioned(top: -18, right: -14, child: _bloom(70, 0.14)),
                   // title
                   Padding(
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(13),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text('${c['name']}',
                           maxLines: 3, overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16, height: 1.2, shadows: [Shadow(color: Colors.black26, blurRadius: 4)])),
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14.5, height: 1.2, shadows: [Shadow(color: Colors.black26, blurRadius: 4)])),
                       const SizedBox(height: 4),
                       if ((c['service_count'] ?? 0) > 0)
                         Container(
@@ -432,13 +419,43 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
         ),
       );
 
-  Widget _catWatermark(Map c) => Opacity(
-        opacity: 0.28,
-        child: Text('${c['icon'] ?? '🧰'}', style: const TextStyle(fontSize: 62)),
-      );
+  /// Fast lanes to the things a returning customer opens most.
+  Widget _quickActions() {
+    final items = <(IconData, String, String, List<Color>, Widget)>[
+      (Icons.event_available_rounded, 'احجز خدمة', 'Book', C2C.gradFor(0), const C2CServiceListScreen(title: 'كل الخدمات')),
+      (Icons.card_membership_rounded, 'باقة اشتراك', 'Plans', C2C.gradFor(4), const C2CSubscriptionsScreen()),
+      (Icons.receipt_long_rounded, 'طلباتي', 'Orders', C2C.gradFor(1), const C2COrdersScreen()),
+      (Icons.description_rounded, 'عرض سعر', 'Quote', C2C.gradFor(3), const C2CContractsScreen()),
+    ];
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+      child: Row(children: [
+        for (final it in items) ...[
+          Expanded(child: GestureDetector(
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => it.$5)),
+            child: Column(children: [
+              Container(
+                height: 54,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: it.$4, begin: Alignment.topRight, end: Alignment.bottomLeft),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [BoxShadow(color: it.$4[1].withValues(alpha: 0.35), blurRadius: 8, offset: const Offset(0, 4))],
+                ),
+                child: Icon(it.$1, color: Colors.white, size: 24),
+              ),
+              const SizedBox(height: 5),
+              Text(tr(it.$2, it.$3), maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: C2C.ink)),
+            ]),
+          )),
+          if (it != items.last) const SizedBox(width: 9),
+        ],
+      ]),
+    );
+  }
 
     Widget _trustStrip() => Container(
-        margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        margin: const EdgeInsets.fromLTRB(16, 42, 16, 0),
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, offset: Offset(0, 2))]),
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: const [
@@ -456,14 +473,14 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           itemCount: popular.length,
-          itemBuilder: (_, i) => _popularCard(popular[i] as Map),
+          itemBuilder: (_, i) => _popularCard(popular[i] as Map, i),
         ),
       );
 
   /// A popular service. Everything on it is real: the rating and the booking
   /// count come from the service's own bookings, so nothing here is decoration
   /// pretending to be data.
-  Widget _popularCard(Map s) {
+  Widget _popularCard(Map s, int idx) {
     final rating = (s['rating'] ?? 0) is num ? (s['rating'] as num).toDouble() : 0.0;
     final bookings = (s['bookings'] ?? 0) is num ? (s['bookings'] as num).toInt() : 0;
     final mins = (s['duration_min'] ?? 0) is num ? (s['duration_min'] as num).toInt() : 0;
@@ -480,37 +497,40 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
           boxShadow: [BoxShadow(color: C2C.navy.withValues(alpha: 0.10), blurRadius: 14, offset: const Offset(0, 5))],
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          // ---- image + scrim ----
-          Stack(children: [
-            ClipRRect(
+          // ---- gradient header + clean icon watermark (matches categories) ----
+          Builder(builder: (_) {
+            final g = C2C.gradFor(idx);
+            return ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-              child: s['image'] != null
-                  ? Image.network('${s['image']}', height: 126, width: 204, fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _popularFallback(s))
-                  : _popularFallback(s),
-            ),
-            Positioned(bottom: 0, left: 0, right: 0, child: Container(
-              height: 54,
-              decoration: BoxDecoration(gradient: LinearGradient(
-                  begin: Alignment.bottomCenter, end: Alignment.topCenter,
-                  colors: [Colors.black.withValues(alpha: 0.55), Colors.transparent])),
-            )),
-            if (rating > 0)
-              Positioned(top: 9, left: 9, child: _glassPill(
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.star_rounded, size: 12, color: Color(0xFFFBBF24)),
-                    const SizedBox(width: 2),
-                    Text(rating.toStringAsFixed(1),
-                        style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w900)),
-                  ]))),
-            if ((s['category'] ?? '').toString().isNotEmpty)
-              Positioned(bottom: 8, right: 9, child: Row(children: [
-                Text('${s['category_icon'] ?? ''}', style: const TextStyle(fontSize: 11)),
-                const SizedBox(width: 3),
-                Text('${s['category']}',
-                    style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w700)),
-              ])),
-          ]),
+              child: Container(
+                height: 116, width: 204,
+                decoration: BoxDecoration(gradient: LinearGradient(
+                    colors: g, begin: Alignment.topRight, end: Alignment.bottomLeft)),
+                child: Stack(clipBehavior: Clip.antiAlias, children: [
+                  Positioned(bottom: -14, left: -10, child: Icon(
+                      C2C.iconFor('${s['category'] ?? s['name']}'), size: 92,
+                      color: Colors.white.withValues(alpha: 0.22))),
+                  Positioned(top: -16, right: -12, child: _bloom(64, 0.14)),
+                  if (rating > 0)
+                    Positioned(top: 9, left: 9, child: _glassPill(
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          const Icon(Icons.star_rounded, size: 12, color: Color(0xFFFBBF24)),
+                          const SizedBox(width: 2),
+                          Text(rating.toStringAsFixed(1),
+                              style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w900)),
+                        ]))),
+                  if ((s['category'] ?? '').toString().isNotEmpty)
+                    Positioned(top: 9, right: 9, child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.22),
+                          borderRadius: BorderRadius.circular(20)),
+                      child: Text('${s['category']}',
+                          style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w800)),
+                    )),
+                ]),
+              ),
+            );
+          }),
           // ---- body ----
           Expanded(child: Padding(
             padding: const EdgeInsets.fromLTRB(11, 9, 11, 9),
@@ -559,15 +579,6 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
       ),
     );
   }
-
-  Widget _popularFallback(Map s) => Container(
-        height: 126, width: 204,
-        decoration: BoxDecoration(gradient: LinearGradient(
-            colors: [C2C.navy.withValues(alpha: 0.10), C2C.navy.withValues(alpha: 0.20)],
-            begin: Alignment.topRight, end: Alignment.bottomLeft)),
-        alignment: Alignment.center,
-        child: Text('${s['category_icon'] ?? '🧩'}', style: const TextStyle(fontSize: 44)),
-      );
 
   Widget _glassPill({required Widget child}) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
