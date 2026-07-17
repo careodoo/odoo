@@ -1459,6 +1459,24 @@ class ClientApi(Controller):
             ('Cache-Control', 'public, max-age=86400'),
         ])
 
+    @route(API + '/product/extra-image/<int:iid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def product_extra_image(self, iid, **kw):
+        """One of a product's additional gallery images."""
+        size = request.httprequest.args.get('s') or '512'
+        field = 'image_%s' % size if size in ('128', '256', '512', '1024', '1920') else 'image_512'
+        rec = request.env['product.image'].sudo().browse(int(iid)).exists() \
+            if 'product.image' in request.env else None
+        data = (rec[field] or rec.image_1920) if rec else None
+        if not data:
+            data = ('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk'
+                    'YPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==')
+        raw = base64.b64decode(data)
+        return request.make_response(raw, headers=[
+            ('Content-Type', 'image/png'),
+            ('Content-Length', str(len(raw))),
+            ('Cache-Control', 'public, max-age=86400'),
+        ])
+
     @route(API + '/client/products', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def products(self, **kw):
         env = _auth()
@@ -1536,6 +1554,24 @@ class ClientApi(Controller):
             'description': desc or None,
             'favorite': p.id in self._fav_ids(env),
             'image': _abs('/api/v1/product/%s/image?s=512' % p.id),
+            # The gallery: the main image first, then any extra template images.
+            # A product with no image must NOT contribute a URL — that endpoint
+            # answers 200 with a transparent 1x1, which the app would render as
+            # a blank slide instead of falling back to its placeholder.
+            'images': ([_abs('/api/v1/product/%s/image?s=1024' % p.id)]
+                       if (p.image_1920 or p.product_tmpl_id.image_1920) else []) + [
+                _abs('/api/v1/product/extra-image/%s?s=1024' % i.id)
+                for i in (p.product_tmpl_id.product_template_image_ids
+                          if 'product_template_image_ids' in p.product_tmpl_id._fields else [])
+                if i.image_1920
+            ],
+            'has_image': bool(p.image_1920 or p.product_tmpl_id.image_1920),
+            'attributes': [
+                {'name': v.attribute_id.name, 'value': v.name}
+                for v in (p.product_template_attribute_value_ids
+                          if 'product_template_attribute_value_ids' in p._fields else [])
+            ],
+            'in_stock': bool(p.qty_available > 0) if p.type == 'product' else True,
         })
 
     @route(API + '/client/favorite/toggle', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
@@ -1593,12 +1629,60 @@ class ClientApi(Controller):
         vals = {'partner_id': partner.id,
                 'order_line': [(0, 0, {'product_id': int(l['product_id']),
                                        'product_uom_qty': float(l.get('qty') or 1)}) for l in lines]}
+        # Deliver-to: only an address that actually belongs to this client, so a
+        # crafted id can never ship this order to someone else's door.
+        addr_id = b.get('address_id')
+        if addr_id:
+            allowed = self._delivery_addresses(env)
+            if int(addr_id) in [a['id'] for a in allowed]:
+                vals['partner_shipping_id'] = int(addr_id)
+            else:
+                return _err('عنوان غير صالح', 422)
+        when = b.get('delivery_date')
+        if when:
+            vals['commitment_date'] = when
+        note = (b.get('note') or '').strip()
+        if note:
+            vals['note'] = note
         pl = self._pricelist(env)
         if pl:
             vals['pricelist_id'] = pl.id
         so = SO.create(vals)
         return _ok({'id': so.id, 'name': so.name, 'amount_total': so.amount_total,
                     'currency': so.currency_id.name, 'state': so.state})
+
+    def _delivery_addresses(self, env):
+        """Addresses this client may ship to: their own partner, its delivery
+        children, and their facilities' addresses."""
+        partner = env.user.partner_id.commercial_partner_id or env.user.partner_id
+        out, seen = [], set()
+
+        def _add(p, kind):
+            if not p or p.id in seen:
+                return
+            seen.add(p.id)
+            parts = [p.street, p.street2, p.city, p.state_id.name, p.country_id.name]
+            out.append({
+                'id': p.id, 'name': p.name or partner.name,
+                'kind': kind,
+                'address': '، '.join([x for x in parts if x]) or None,
+                'phone': p.phone or p.mobile or None,
+            })
+
+        _add(partner, 'main')
+        for c in partner.child_ids.filtered(lambda c: c.type == 'delivery'):
+            _add(c, 'delivery')
+        for f in self._facilities(env):
+            if f.partner_id:
+                _add(f.partner_id, 'facility')
+        return out
+
+    @route(API + '/client/addresses', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def client_addresses(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        return _ok(self._delivery_addresses(env))
 
     @route(API + '/client/orders', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def orders(self, **kw):
@@ -1658,8 +1742,13 @@ class ClientApi(Controller):
                               'date': pk.scheduled_date and str(pk.scheduled_date) or None,
                               'done': pk.state == 'done'})
             if picks:
-                steps.append({'key': 'delivery', 'label': 'التسليم',
-                              'done': all(p['done'] for p in picks)})
+                # "التسليم" is only honest when every picking is done; a partial
+                # delivery must not render as complete.
+                done_n = sum(1 for p in picks if p['done'])
+                steps.append({'key': 'delivery',
+                              'label': ('التسليم' if done_n == len(picks)
+                                        else 'تسليم جزئي (%s/%s)' % (done_n, len(picks))),
+                              'done': done_n == len(picks)})
         except Exception:
             pass
         steps.append({'key': 'invoiced', 'label': 'مفوترة', 'done': s.invoice_status == 'invoiced'})
@@ -1694,9 +1783,20 @@ class ClientApi(Controller):
             'amount_total': s.amount_total, 'currency': s.currency_id.name,
             'state': s.state, 'state_label': state_lbl.get(s.state),
             'invoice_status': s.invoice_status, 'can_cancel': s.state in ('draft', 'sent'),
-            'lines': [{'product': l.product_id.display_name, 'qty': l.product_uom_qty,
+            'lines': [{'product': l.product_id.display_name,
+                       'product_id': l.product_id.id,
+                       'code': l.product_id.default_code or None,
+                       'image': (_abs('/api/v1/product/%s/image?s=256' % l.product_id.id)
+                                 if (l.product_id.image_1920 or l.product_id.product_tmpl_id.image_1920)
+                                 else None),
+                       'qty': l.product_uom_qty,
                        'uom': l.product_uom.name, 'price': l.price_unit,
                        'subtotal': l.price_subtotal} for l in s.order_line if not l.display_type],
+            'delivery_address': s.partner_shipping_id.contact_address_complete
+                                if s.partner_shipping_id and 'contact_address_complete' in s.partner_shipping_id._fields
+                                else (s.partner_shipping_id.name if s.partner_shipping_id else None),
+            'delivery_date': s.commitment_date or None,
+            'note': s.note or None,
             'tracking': self._sale_track(s),
             'invoices': invs,
         })
