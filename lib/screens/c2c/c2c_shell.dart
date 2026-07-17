@@ -5,17 +5,23 @@ import '../../core/i18n.dart';
 import '../main_shell.dart';
 import '../login_screen.dart';
 import 'c2c_home.dart';
+import 'c2c_services_tab.dart';
 import 'c2c_bookings.dart';
 import 'c2c_account.dart';
 import 'c2c_shop.dart';
 
 /// Brand palette for CARE 2 CARE.
 class C2C {
-  static const navy = Color(0xFF0E3A5F);
+  // Brand: red in its shades, with navy as the complementary deep tone.
+  static const red = Color(0xFFC0392B);       // primary
+  static const redDeep = Color(0xFF8E241B);   // pressed / gradients
+  static const redBright = Color(0xFFE24A3B); // highlights
+  static const redSoft = Color(0xFFFDECEA);   // tinted surfaces
+  static const navy = Color(0xFF0E3A5F);       // complementary deep (text, secondary)
   static const navy2 = Color(0xFF17547F);
   static const deep = Color(0xFF08243B);
-  static const red = Color(0xFFC0392B);
-  static const bg = Color(0xFFF4F7FB);
+  static const amber = Color(0xFFF5A623);      // warm accent that pairs with red
+  static const bg = Color(0xFFF6F7FB);
   static const ink = Color(0xFF1E293B);
   static const slate = Color(0xFF64748B);
 }
@@ -38,6 +44,7 @@ class _C2CShellState extends State<C2CShell> {
   Widget build(BuildContext context) {
     final pages = [
       C2CHomeScreen(canSwitchCafm: widget.canSwitchCafm, guest: widget.guest),
+      const C2CServicesTab(),
       const C2CShopScreen(),
       widget.guest ? const _GuestGate() : const C2CBookingsScreen(),
       widget.guest ? const _GuestGate() : C2CAccountScreen(canSwitchCafm: widget.canSwitchCafm, showModeSwitch: widget.showModeSwitch),
@@ -48,12 +55,13 @@ class _C2CShellState extends State<C2CShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _idx,
         onDestinationSelected: (i) => setState(() => _idx = i),
-        indicatorColor: C2C.navy.withValues(alpha: 0.12),
+        indicatorColor: C2C.red.withValues(alpha: 0.14),
         destinations: [
-          NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home_rounded, color: C2C.navy), label: tr('الرئيسية', 'Home')),
-          NavigationDestination(icon: const Icon(Icons.storefront_outlined), selectedIcon: const Icon(Icons.storefront_rounded, color: C2C.navy), label: tr('المتجر', 'Shop')),
-          NavigationDestination(icon: const Icon(Icons.event_note_outlined), selectedIcon: const Icon(Icons.event_note_rounded, color: C2C.navy), label: tr('حجوزاتي', 'Bookings')),
-          NavigationDestination(icon: const Icon(Icons.person_outline_rounded), selectedIcon: const Icon(Icons.person_rounded, color: C2C.navy), label: tr('حسابي', 'Account')),
+          NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home_rounded, color: C2C.red), label: tr('الرئيسية', 'Home')),
+          NavigationDestination(icon: const Icon(Icons.grid_view_outlined), selectedIcon: const Icon(Icons.grid_view_rounded, color: C2C.red), label: tr('الخدمات', 'Services')),
+          NavigationDestination(icon: const Icon(Icons.storefront_outlined), selectedIcon: const Icon(Icons.storefront_rounded, color: C2C.red), label: tr('المتجر', 'Shop')),
+          NavigationDestination(icon: const Icon(Icons.event_note_outlined), selectedIcon: const Icon(Icons.event_note_rounded, color: C2C.red), label: tr('حجوزاتي', 'Bookings')),
+          NavigationDestination(icon: const Icon(Icons.person_outline_rounded), selectedIcon: const Icon(Icons.person_rounded, color: C2C.red), label: tr('حسابي', 'Account')),
         ],
       ),
     );

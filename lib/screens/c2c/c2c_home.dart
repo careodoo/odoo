@@ -134,7 +134,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
         background: Stack(fit: StackFit.expand, children: [
           // base brand gradient (harmonised navy→teal-navy)
           const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(
-            colors: [Color(0xFF1A6187), C2C.navy, Color(0xFF08243B)],
+            colors: [C2C.redBright, C2C.red, C2C.redDeep],
             stops: [0.0, 0.55, 1.0], begin: Alignment.topRight, end: Alignment.bottomLeft))),
           // animated aurora pattern
           AnimatedBuilder(
@@ -156,7 +156,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
                       gradient: const LinearGradient(colors: [Colors.white, Color(0xFFEAF2F8)]),
                       borderRadius: BorderRadius.circular(11),
                       boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 8, offset: const Offset(0, 3))]),
-                    child: const Text('C2C', style: TextStyle(color: C2C.navy, fontWeight: FontWeight.w900, fontSize: 13.5, height: 1)),
+                    child: const Text('C2C', style: TextStyle(color: C2C.red, fontWeight: FontWeight.w900, fontSize: 13.5, height: 1)),
                   ),
                   const SizedBox(width: 9),
                   Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
@@ -226,7 +226,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.white.withValues(alpha: 0.22))),
             child: Icon(i, color: Colors.white, size: 19)),
-          if (dot) Positioned(top: 4, right: 4, child: Container(width: 8, height: 8, decoration: BoxDecoration(color: const Color(0xFFFF5A4D), shape: BoxShape.circle, border: Border.all(color: C2C.navy, width: 1.4)))),
+          if (dot) Positioned(top: 4, right: 4, child: Container(width: 8, height: 8, decoration: BoxDecoration(color: const Color(0xFFFF5A4D), shape: BoxShape.circle, border: Border.all(color: C2C.red, width: 1.4)))),
         ]),
       );
 
