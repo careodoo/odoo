@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+  <!-- A mobile token IS a credential: whoever reads it can call the API as its
+       owner. The model had ACLs but NO record rules, so every internal user
+       could read every token in the database and impersonate anyone.
+       Everyone sees only their own; only system admins see them all. -->
+  <record id="rule_mobile_token_own" model="ir.rule">
+    <field name="name">Mobile session: own only</field>
+    <field name="model_id" ref="model_care_cafm_mobile_token"/>
+    <field name="domain_force">[('user_id','=',user.id)]</field>
+    <field name="groups" eval="[(4, ref('base.group_user')), (4, ref('base.group_portal'))]"/>
+  </record>
+  <record id="rule_mobile_token_admin" model="ir.rule">
+    <field name="name">Mobile session: admins see all</field>
+    <field name="model_id" ref="model_care_cafm_mobile_token"/>
+    <field name="domain_force">[(1,'=',1)]</field>
+    <field name="groups" eval="[(4, ref('base.group_system'))]"/>
+  </record>
+
+  <!-- Same for push devices: a device token lets you send notifications to
+       that person's phone. -->
+  <record id="rule_cafm_device_own" model="ir.rule">
+    <field name="name">Push device: own only</field>
+    <field name="model_id" ref="model_care_cafm_device"/>
+    <field name="domain_force">[('user_id','=',user.id)]</field>
+    <field name="groups" eval="[(4, ref('base.group_user')), (4, ref('base.group_portal'))]"/>
+  </record>
+  <record id="rule_cafm_device_admin" model="ir.rule">
+    <field name="name">Push device: admins see all</field>
+    <field name="model_id" ref="model_care_cafm_device"/>
+    <field name="domain_force">[(1,'=',1)]</field>
+    <field name="groups" eval="[(4, ref('base.group_system'))]"/>
+  </record>
+
+</odoo>

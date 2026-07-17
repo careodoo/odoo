@@ -16,6 +16,8 @@ import time
 
 import requests
 
+from datetime import timedelta
+
 from odoo import api, fields, models
 
 _logger = logging.getLogger(__name__)
@@ -37,16 +39,33 @@ class CafmDevice(models.Model):
     platform = fields.Selection([('android', 'Android'), ('ios', 'iOS'), ('web', 'Web')],
                                 string='المنصّة', default='android')
     device_name = fields.Char(string='اسم الجهاز')
+    app_version = fields.Char(string='إصدار التطبيق', index=True,
+                              help='النسخة المثبَّتة على هذا الجهاز — تكشف من لم يحدّث بعد.')
+    last_seen = fields.Datetime(string='آخر ظهور', index=True)
+    online = fields.Boolean(string='نشط مؤخرًا', compute='_compute_online', search='_search_online')
     active = fields.Boolean(default=True)
 
+    def _compute_online(self):
+        limit = fields.Datetime.now() - timedelta(days=7)
+        for d in self:
+            d.online = bool(d.last_seen and d.last_seen >= limit)
+
+    def _search_online(self, operator, value):
+        limit = fields.Datetime.now() - timedelta(days=7)
+        op = '>=' if (operator == '=') == bool(value) else '<'
+        return [('last_seen', op, limit)]
+
     @api.model
-    def register(self, user, token, platform='android', device_name=None):
+    def register(self, user, token, platform='android', device_name=None, app_version=None):
         """Upsert a device token for a user (idempotent)."""
         if not token:
             return self.browse()
         dev = self.sudo().search([('token', '=', token)], limit=1)
         vals = {'user_id': user.id, 'platform': platform or 'android',
-                'device_name': device_name, 'active': True}
+                'device_name': device_name, 'active': True,
+                'last_seen': fields.Datetime.now()}
+        if app_version:
+            vals['app_version'] = app_version
         if dev:
             dev.write(vals)
         else:

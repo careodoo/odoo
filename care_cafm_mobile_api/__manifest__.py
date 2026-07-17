@@ -11,10 +11,12 @@
     'depends': ['care_cafm', 'care_cafm_security'],
     'data': [
         'security/ir.model.access.csv',
+        'security/mobile_rules.xml',
         'data/ir_cron.xml',
+        'views/app_center_views.xml',
         'views/notification_views.xml',
         'views/account_deletion_views.xml',
     ],
     'installable': True,
-    'application': False,
+    'application': True,  # it has its own control centre now
 }
