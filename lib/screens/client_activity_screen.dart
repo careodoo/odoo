@@ -116,7 +116,7 @@ class _ClientActivityScreenState extends State<ClientActivityScreen> {
   /// The "right now" band — what a client checks before anything else.
   Widget _pulse(Map st) {
     final byHour = (st['by_hour'] as Map?) ?? const {};
-    final maxH = byHour.values.fold<int>(1, (a, v) => (v as int) > a ? v as int : a);
+    final maxH = byHour.values.fold<int>(1, (a, v) => (v as int) > a ? v : a);
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(

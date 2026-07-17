@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../core/auth.dart';
 import '../core/i18n.dart';
 
 /// First-launch language chooser — the very first screen anyone sees, so it

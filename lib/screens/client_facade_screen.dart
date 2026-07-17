@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import '../core/service_ui.dart';
 
 /// Client-facing facade-cleaning suite: overview + elevation zones (schedule
 /// compliance) and height-work permits (wind-lockout safety), scoped to the
@@ -17,9 +18,11 @@ class _ClientFacadeScreenState extends State<ClientFacadeScreen> {
   String _kind = 'permits';
   Future<List<dynamic>>? _list;
 
-  static const _kinds = [
-    ['permits', '🦺 التصاريح', 'Permits'],
-    ['zones', '🧱 الواجهات', 'Elevations'],
+  static const _c = Color(0xFF7C3AED);
+  String _q = '';
+  static const _kinds = <(String, String, IconData)>[
+    ('permits', 'التصاريح', Icons.health_and_safety_rounded),
+    ('zones', 'الواجهات', Icons.location_city_rounded),
   ];
 
   @override
@@ -38,86 +41,89 @@ class _ClientFacadeScreenState extends State<ClientFacadeScreen> {
 
   void _loadKind(String k) => setState(() {
         _kind = k;
+        _q = '';
         _list = context.read<AuthProvider>().api.clientFacade(k);
       });
 
   @override
   Widget build(BuildContext context) {
-    final s = _summary;
-    final unsafe = (s?['wind_unsafe'] ?? 0);
+    final s = _summary ?? const {};
+    final label = _kinds.firstWhere((k) => k.$1 == _kind).$2;
     return Scaffold(
-      appBar: AppBar(title: Text(tr('غسيل الواجهات', 'Facade cleaning'))),
-      body: Column(children: [
-        if (s != null && s['available'] == true) ...[
-          SizedBox(
-            height: 96,
-            child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.all(8), children: [
-              _stat('🧱', '${s['zones'] ?? 0}', tr('الواجهات', 'Elevations'), const Color(0xFF8B5CF6)),
-              _stat('🕒', '${s['zones_due'] ?? 0}', tr('تنظيف مستحقّ', 'Due'), const Color(0xFFE11D48)),
-              _stat('🦺', '${s['permits_active'] ?? 0}', tr('تصاريح فعّالة', 'Active permits'), const Color(0xFF0891B2)),
-              _stat('💨', '${s['wind_unsafe'] ?? 0}', tr('رياح غير آمنة', 'Wind unsafe'), const Color(0xFFE11D48)),
-            ]),
+      appBar: AppBar(
+        title: Text(tr('الواجهات', 'Facade')),
+        actions: [IconButton(icon: const Icon(Icons.refresh_rounded),
+            onPressed: () { _loadSummary(); _loadKind(_kind); })],
+      ),
+      body: RefreshIndicator(
+        onRefresh: () async { await _loadSummary(); _loadKind(_kind); },
+        child: ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 24), children: [
+          ServiceHero(
+            title: tr('الواجهات', 'Facade'),
+            subtitle: tr('${s['zones'] ?? 0} واجهة · ${s['permits_total'] ?? 0} تصريح', '${s['zones'] ?? 0} elevations · ${s['permits_total'] ?? 0} permits'),
+            icon: Icons.location_city_rounded,
+            color: _c,
+            stats: [
+              (tr('الواجهات', 'elevations'), '${s['zones'] ?? 0}', null),
+              (tr('تنظيف مستحقّ', 'due'), '${s['zones_due'] ?? 0}',
+                  ((s['zones_due'] ?? 0) as int) > 0 ? const Color(0xFFF59E0B) : null),
+              (tr('تصريح فعّال', 'active'), '${s['permits_active'] ?? 0}', null),
+              (tr('إجمالي التصاريح', 'permits'), '${s['permits_total'] ?? 0}', null),
+              (tr('رياح غير آمنة', 'wind'), '${s['wind_unsafe'] ?? 0}',
+                  ((s['wind_unsafe'] ?? 0) as int) > 0 ? const Color(0xFFDC2626) : null),
+            ],
+            onStatTap: (i) => _loadKind(const ['zones', 'zones', 'permits', 'permits', 'permits'][i]),
           ),
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.fromLTRB(10, 0, 10, 6),
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-                color: (unsafe is num && unsafe > 0) ? const Color(0xFFFEF2F2) : const Color(0xFFF0FDF4),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: (unsafe is num && unsafe > 0) ? const Color(0xFFFECACA) : const Color(0xFFBBF7D0))),
-            child: Text(
-              (unsafe is num && unsafe > 0)
-                  ? '⛔ ${tr('يوجد عمل على ارتفاع بسرعة رياح غير آمنة — العمل موقوف', 'A height-work permit exceeds the safe wind limit — work halted')}'
-                  : '✅ ${tr('كل تصاريح الارتفاع ضمن حدود الرياح الآمنة', 'All height-work permits within safe wind limits')}',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: (unsafe is num && unsafe > 0) ? const Color(0xFFE11D48) : const Color(0xFF16A34A)),
-            ),
-          ),
-        ],
-        SizedBox(
-          height: 46,
-          child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 8), children: [
-            for (final k in _kinds)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                child: ChoiceChip(
-                  label: Text(gLang == 'en' ? k[2] : k[1]),
-                  selected: _kind == k[0],
-                  onSelected: (_) => _loadKind(k[0]),
-                ),
-              ),
-          ]),
-        ),
-        Expanded(
-          child: FutureBuilder<List<dynamic>>(
+          const SizedBox(height: 12),
+          ServiceTabs(kinds: _kinds, current: _kind, onSelect: _loadKind, color: _c),
+          const SizedBox(height: 10),
+          FutureBuilder<List<dynamic>>(
             future: _list,
             builder: (_, snap) {
-              if (!snap.hasData) return const Center(child: CircularProgressIndicator());
-              final rows = snap.data!;
-              if (rows.isEmpty) return Center(child: Text(tr('لا سجلات', 'No records')));
-              return ListView.separated(
-                padding: const EdgeInsets.all(8),
-                itemCount: rows.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (_, i) => _row(rows[i] as Map),
-              );
+              if (snap.connectionState == ConnectionState.waiting) {
+                return const Padding(padding: EdgeInsets.symmetric(vertical: 50),
+                    child: Center(child: CircularProgressIndicator()));
+              }
+              final all = snap.data ?? const [];
+              final rows = _q.isEmpty
+                  ? all
+                  : all.where((r) => (r as Map).values.map((v) => '$v').join(' ').toLowerCase()
+                      .contains(_q.toLowerCase())).toList();
+              return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                if (all.length > 6) ...[
+                  TextField(
+                    onChanged: (v) => setState(() => _q = v),
+                    decoration: InputDecoration(
+                      hintText: tr('ابحث في $label…', 'Search $label…'),
+                      prefixIcon: const Icon(Icons.search_rounded, size: 19),
+                      isDense: true, filled: true,
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                MoreList(
+                  items: rows,
+                  color: _c,
+                  header: label,
+                  emptyText: tr('لا سجلات في $label.', 'No $label records.'),
+                  itemBuilder: (_, r, __) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Material(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                      child: _row(r as Map),
+                    ),
+                  ),
+                ),
+              ]);
             },
           ),
-        ),
-      ]),
+        ]),
+      ),
     );
   }
-
-  Widget _stat(String ic, String v, String l, Color c) => Container(
-        width: 132,
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(color: c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(14)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-          Text('$ic $v', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: c)),
-          Text(l, style: const TextStyle(fontSize: 11, color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis),
-        ]),
-      );
 
   Widget _pill(String t, Color c) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

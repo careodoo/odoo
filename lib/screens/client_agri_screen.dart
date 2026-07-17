@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import '../core/service_ui.dart';
 
 /// Client-facing landscaping/agriculture suite: overview + trees/plants,
 /// tree works, irrigation zones and the species care guide (scoped to the
@@ -17,11 +18,13 @@ class _ClientAgriScreenState extends State<ClientAgriScreen> {
   String _kind = 'plants';
   Future<List<dynamic>>? _list;
 
-  static const _kinds = [
-    ['plants', '🌳 الأشجار', 'Trees'],
-    ['operations', '✂️ الأعمال', 'Works'],
-    ['zones', '💧 الريّ', 'Irrigation'],
-    ['species', '📖 الأنواع', 'Species'],
+  static const _c = Color(0xFF16A34A);
+  String _q = '';
+  static const _kinds = <(String, String, IconData)>[
+    ('plants', 'الأشجار', Icons.park_rounded),
+    ('operations', 'الأعمال', Icons.content_cut_rounded),
+    ('zones', 'الريّ', Icons.water_drop_rounded),
+    ('species', 'الأنواع', Icons.menu_book_rounded),
   ];
 
   @override
@@ -40,79 +43,115 @@ class _ClientAgriScreenState extends State<ClientAgriScreen> {
 
   void _loadKind(String k) => setState(() {
         _kind = k;
+        _q = '';
         _list = context.read<AuthProvider>().api.clientAgri(k);
       });
 
   @override
   Widget build(BuildContext context) {
-    final s = _summary;
+    final s = _summary ?? const {};
+    final label = _kinds.firstWhere((k) => k.$1 == _kind).$2;
     return Scaffold(
-      appBar: AppBar(title: Text(tr('الزراعة والحدائق', 'Landscaping'))),
-      body: Column(children: [
-        if (s != null && s['available'] == true)
-          SizedBox(
-            height: 96,
-            child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.all(8), children: [
-              _stat('🌳', '${s['plants'] ?? 0}', tr('أشجار ونباتات', 'Trees & plants'), const Color(0xFF16A34A)),
-              _stat('🩺', '${s['plants_poor'] ?? 0}', tr('تحتاج عناية', 'Needs care'), const Color(0xFFF59E0B)),
-              _stat('🔎', '${s['inspections_overdue'] ?? 0}', tr('فحص متأخّر', 'Overdue insp.'), const Color(0xFFE11D48)),
-              _stat('✂️', '${s['prune_due'] ?? 0}', tr('تقليم مستحقّ', 'Pruning due'), const Color(0xFF0891B2)),
-              _stat('💧', '${s['zones'] ?? 0}', tr('مناطق ريّ', 'Zones'), const Color(0xFF0EA5E9)),
-              _stat('💦', '${s['water_month_m3'] ?? 0}', tr('م³ هذا الشهر', 'm³ month'), const Color(0xFF3B82F6)),
-            ]),
+      appBar: AppBar(
+        title: Text(tr('الزراعة والحدائق', 'Landscaping')),
+        actions: [IconButton(icon: const Icon(Icons.refresh_rounded),
+            onPressed: () { _loadSummary(); _loadKind(_kind); })],
+      ),
+      body: RefreshIndicator(
+        onRefresh: () async { await _loadSummary(); _loadKind(_kind); },
+        child: ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 24), children: [
+          ServiceHero(
+            title: tr('الزراعة والحدائق', 'Landscaping'),
+            subtitle: tr('${s['zones'] ?? 0} منطقة ريّ · ${s['plants'] ?? 0} شجرة', '${s['zones'] ?? 0} zones · ${s['plants'] ?? 0} plants'),
+            icon: Icons.park_rounded,
+            color: _c,
+            stats: [
+              (tr('أشجار ونباتات', 'plants'), '${s['plants'] ?? 0}', null),
+              (tr('تحتاج عناية', 'poor'), '${s['plants_poor'] ?? 0}',
+                  ((s['plants_poor'] ?? 0) as int) > 0 ? const Color(0xFFF59E0B) : null),
+              (tr('فحص متأخّر', 'overdue'), '${s['inspections_overdue'] ?? 0}',
+                  ((s['inspections_overdue'] ?? 0) as int) > 0 ? const Color(0xFFDC2626) : null),
+              (tr('تقليم مستحقّ', 'prune'), '${s['prune_due'] ?? 0}', null),
+              (tr('تسميد مستحقّ', 'fertilize'), '${s['fertilize_due'] ?? 0}', null),
+              (tr('مناطق ريّ', 'zones'), '${s['zones'] ?? 0}', null),
+              (tr('م³ الشهر', 'm³ mo'), '${s['water_month_m3'] ?? 0}', null),
+            ],
+            onStatTap: (i) => _loadKind(const [
+              'plants', 'plants', 'plants', 'plants', 'plants', 'zones', 'zones'][i]),
           ),
-        SizedBox(
-          height: 46,
-          child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 8), children: [
-            for (final k in _kinds)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                child: ChoiceChip(
-                  label: Text(gLang == 'en' ? k[2] : k[1]),
-                  selected: _kind == k[0],
-                  onSelected: (_) => _loadKind(k[0]),
-                ),
-              ),
-          ]),
-        ),
-        Expanded(
-          child: FutureBuilder<List<dynamic>>(
+          const SizedBox(height: 12),
+          ServiceTabs(kinds: _kinds, current: _kind, onSelect: _loadKind, color: _c),
+          const SizedBox(height: 10),
+          FutureBuilder<List<dynamic>>(
             future: _list,
             builder: (_, snap) {
-              if (!snap.hasData) return const Center(child: CircularProgressIndicator());
-              final rows = snap.data!;
-              if (rows.isEmpty) return Center(child: Text(tr('لا سجلات', 'No records')));
-              if (_kind == 'species') {
-                return GridView.builder(
-                  padding: const EdgeInsets.all(10),
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 320, childAspectRatio: 1.55, crossAxisSpacing: 10, mainAxisSpacing: 10),
-                  itemCount: rows.length,
-                  itemBuilder: (_, i) => _speciesCard(rows[i] as Map),
-                );
+              if (snap.connectionState == ConnectionState.waiting) {
+                return const Padding(padding: EdgeInsets.symmetric(vertical: 50),
+                    child: Center(child: CircularProgressIndicator()));
               }
-              return ListView.separated(
-                padding: const EdgeInsets.all(8),
-                itemCount: rows.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (_, i) => _row(rows[i] as Map),
-              );
+              final all = snap.data ?? const [];
+              final rows = _q.isEmpty
+                  ? all
+                  : all.where((r) => (r as Map).values.map((v) => '$v').join(' ').toLowerCase()
+                      .contains(_q.toLowerCase())).toList();
+              // Species is a catalogue — cards, not list rows.
+              if (_kind == 'species') {
+                return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  if (all.length > 6) ...[_searchField(label), const SizedBox(height: 10)],
+                  if (rows.isEmpty)
+                    _emptyBox(label)
+                  else
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
+                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 320, childAspectRatio: 1.55,
+                          crossAxisSpacing: 10, mainAxisSpacing: 10),
+                      itemCount: rows.length,
+                      itemBuilder: (_, i) => _speciesCard(rows[i] as Map),
+                    ),
+                ]);
+              }
+              return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                if (all.length > 6) ...[_searchField(label), const SizedBox(height: 10)],
+                MoreList(
+                  items: rows,
+                  color: _c,
+                  header: label,
+                  emptyText: tr('لا سجلات في $label.', 'No $label records.'),
+                  itemBuilder: (_, r, __) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Material(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                      child: _row(r as Map),
+                    ),
+                  ),
+                ),
+              ]);
             },
           ),
-        ),
-      ]),
+        ]),
+      ),
     );
   }
 
-  Widget _stat(String ic, String v, String l, Color c) => Container(
-        width: 132,
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(color: c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(14)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-          Text('$ic $v', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: c)),
-          Text(l, style: const TextStyle(fontSize: 11, color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis),
-        ]),
+  Widget _searchField(String label) => TextField(
+        onChanged: (v) => setState(() => _q = v),
+        decoration: InputDecoration(
+          hintText: tr('ابحث في $label…', 'Search $label…'),
+          prefixIcon: const Icon(Icons.search_rounded, size: 19),
+          isDense: true, filled: true,
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+        ),
+      );
+
+  Widget _emptyBox(String label) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 42),
+        child: Center(child: Text(tr('لا سجلات في $label.', 'No $label records.'),
+            style: TextStyle(color: Colors.grey.shade500))),
       );
 
   static const _healthColors = {

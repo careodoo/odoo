@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import '../core/service_ui.dart';
 
 /// Client-facing cleaning suite: overview + quality audits (accept/dispute),
 /// schedule compliance, cleaning rounds and consumables ledger (scoped to the
@@ -17,11 +18,13 @@ class _ClientCleaningScreenState extends State<ClientCleaningScreen> {
   String _kind = 'audits';
   Future<List<dynamic>>? _list;
 
-  static const _kinds = [
-    ['audits', '✅ التدقيق', 'Audits'],
-    ['schedules', '🕒 الجداول', 'Schedules'],
-    ['rounds', '🚶 الجولات', 'Rounds'],
-    ['consumables', '🧴 المواد', 'Supplies'],
+  static const _c = Color(0xFF0EA5E9);
+  String _q = '';
+  static const _kinds = <(String, String, IconData)>[
+    ('audits', 'التدقيق', Icons.fact_check_rounded),
+    ('schedules', 'الجداول', Icons.event_repeat_rounded),
+    ('rounds', 'الجولات', Icons.directions_walk_rounded),
+    ('consumables', 'المواد', Icons.cleaning_services_rounded),
   ];
 
   @override
@@ -40,77 +43,100 @@ class _ClientCleaningScreenState extends State<ClientCleaningScreen> {
 
   void _loadKind(String k) => setState(() {
         _kind = k;
+        _q = '';
         _list = context.read<AuthProvider>().api.clientClean(k);
       });
 
   @override
   Widget build(BuildContext context) {
-    final s = _summary;
-    final sc = (s?['avg_score'] ?? 0);
+    final s = _summary ?? const {};
+    final sc = (s['avg_score'] ?? 0);
+    final label = _kinds.firstWhere((k) => k.$1 == _kind).$2;
     return Scaffold(
-      appBar: AppBar(title: Text(tr('النظافة', 'Cleaning'))),
-      body: Column(children: [
-        if (s != null && s['available'] == true)
-          SizedBox(
-            height: 96,
-            child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.all(8), children: [
-              _stat('📊', '$sc%', tr('متوسط الجودة', 'Avg score'), _scoreColor(sc)),
-              _stat('✅', '${s['audits'] ?? 0}', tr('تدقيقات', 'Audits'), const Color(0xFF0891B2)),
-              _stat('🔔', '${s['audits_pending_ack'] ?? 0}', tr('بانتظار إقرارك', 'Pending ack'), const Color(0xFFF59E0B)),
-              _stat('🕒', '${s['schedules_due'] ?? 0}', tr('تنظيف مستحقّ', 'Due'), const Color(0xFFE11D48)),
-              _stat('🧴', '${s['consumables'] ?? 0}', tr('مواد', 'Supplies'), const Color(0xFF6366F1)),
-              _stat('⚠️', '${s['low_stock'] ?? 0}', tr('مخزون منخفض', 'Low stock'), const Color(0xFFE11D48)),
-            ]),
+      appBar: AppBar(
+        title: Text(tr('النظافة', 'Cleaning')),
+        actions: [IconButton(icon: const Icon(Icons.refresh_rounded),
+            onPressed: () { _loadSummary(); _loadKind(_kind); })],
+      ),
+      body: RefreshIndicator(
+        onRefresh: () async { await _loadSummary(); _loadKind(_kind); },
+        child: ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 24), children: [
+          ServiceHero(
+            title: tr('النظافة', 'Cleaning'),
+            subtitle: tr('متوسط الجودة $sc%', 'Avg quality $sc%'),
+            icon: Icons.cleaning_services_rounded,
+            color: _c,
+            stats: [
+              (tr('الجودة', 'quality'), '$sc%',
+                  _scoreColor(sc) == const Color(0xFF16A34A) ? null : _scoreColor(sc)),
+              (tr('تدقيق', 'audits'), '${s['audits'] ?? 0}', null),
+              (tr('بانتظار إقرارك', 'pending'), '${s['audits_pending_ack'] ?? 0}',
+                  ((s['audits_pending_ack'] ?? 0) as int) > 0 ? const Color(0xFFF59E0B) : null),
+              (tr('تنظيف مستحقّ', 'due'), '${s['schedules_due'] ?? 0}', null),
+              (tr('مواد', 'supplies'), '${s['consumables'] ?? 0}', null),
+              (tr('مخزون منخفض', 'low'), '${s['low_stock'] ?? 0}',
+                  ((s['low_stock'] ?? 0) as int) > 0 ? const Color(0xFFDC2626) : null),
+            ],
+            onStatTap: (i) => _loadKind(const [
+              'audits', 'audits', 'audits', 'schedules', 'consumables', 'consumables'][i]),
           ),
-        SizedBox(
-          height: 46,
-          child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 8), children: [
-            for (final k in _kinds)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                child: ChoiceChip(
-                  label: Text(gLang == 'en' ? k[2] : k[1]),
-                  selected: _kind == k[0],
-                  onSelected: (_) => _loadKind(k[0]),
-                ),
-              ),
-          ]),
-        ),
-        Expanded(
-          child: FutureBuilder<List<dynamic>>(
+          const SizedBox(height: 12),
+          ServiceTabs(kinds: _kinds, current: _kind, onSelect: _loadKind, color: _c),
+          const SizedBox(height: 10),
+          FutureBuilder<List<dynamic>>(
             future: _list,
             builder: (_, snap) {
-              if (!snap.hasData) return const Center(child: CircularProgressIndicator());
-              final rows = snap.data!;
-              if (rows.isEmpty) return Center(child: Text(tr('لا سجلات', 'No records')));
-              return ListView.separated(
-                padding: const EdgeInsets.all(8),
-                itemCount: rows.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (_, i) => _row(rows[i] as Map),
-              );
+              if (snap.connectionState == ConnectionState.waiting) {
+                return const Padding(padding: EdgeInsets.symmetric(vertical: 50),
+                    child: Center(child: CircularProgressIndicator()));
+              }
+              final all = snap.data ?? const [];
+              final rows = _q.isEmpty
+                  ? all
+                  : all.where((r) => (r as Map).values.map((v) => '$v').join(' ').toLowerCase()
+                      .contains(_q.toLowerCase())).toList();
+              return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                if (all.length > 6) ...[
+                  TextField(
+                    onChanged: (v) => setState(() => _q = v),
+                    decoration: InputDecoration(
+                      hintText: tr('ابحث في $label…', 'Search $label…'),
+                      prefixIcon: const Icon(Icons.search_rounded, size: 19),
+                      isDense: true, filled: true,
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                MoreList(
+                  items: rows,
+                  color: _c,
+                  header: label,
+                  emptyText: tr('لا سجلات في $label.', 'No $label records.'),
+                  itemBuilder: (_, r, __) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Material(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                      child: _row(r as Map),
+                    ),
+                  ),
+                ),
+              ]);
             },
           ),
-        ),
-      ]),
+        ]),
+      ),
     );
   }
 
   Color _scoreColor(dynamic v) {
-    final s = (v is num) ? v : 0;
-    return s >= 90 ? const Color(0xFF16A34A) : s >= 75 ? const Color(0xFF0891B2) : s >= 60 ? const Color(0xFFF59E0B) : const Color(0xFFE11D48);
+    final n = (v is num) ? v.toDouble() : double.tryParse('$v') ?? 0;
+    if (n >= 85) return const Color(0xFF16A34A);
+    if (n >= 70) return const Color(0xFFF59E0B);
+    return const Color(0xFFE11D48);
   }
-
-  Widget _stat(String ic, String v, String l, Color c) => Container(
-        width: 132,
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(color: c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(14)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-          Text('$ic $v', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: c)),
-          Text(l, style: const TextStyle(fontSize: 11, color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis),
-        ]),
-      );
 
   Widget _pill(String t, Color c) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
