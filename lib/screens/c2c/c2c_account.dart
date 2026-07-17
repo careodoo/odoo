@@ -9,6 +9,7 @@ import 'c2c_shell.dart';
 import 'c2c_contracts.dart';
 import 'c2c_bookings.dart';
 import 'c2c_orders.dart';
+import 'c2c_subscriptions.dart';
 import 'c2c_addresses.dart';
 import 'c2c_profile_edit.dart';
 import 'mode_switch.dart';
@@ -97,6 +98,7 @@ class _C2CAccountScreenState extends State<C2CAccountScreen> {
             _tile(Icons.notifications_rounded, tr('الإشعارات', 'Notifications'), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())), ic: const Color(0xFF6366F1)),
             _tile(Icons.event_note_rounded, tr('حجوزاتي', 'My bookings'), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const C2CBookingsScreen())), ic: const Color(0xFF0EA5E9)),
             _tile(Icons.receipt_long_rounded, tr('طلباتي (المتجر)', 'My orders (shop)'), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const C2COrdersScreen())), ic: const Color(0xFFF59E0B)),
+            _tile(Icons.card_membership_rounded, tr('اشتراكاتي', 'My subscriptions'), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const C2CSubscriptionsScreen())), ic: const Color(0xFF7C3AED)),
             _tile(Icons.location_on_outlined, tr('عناوين التوصيل', 'Delivery addresses'), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const C2CAddressesScreen())), ic: const Color(0xFF16A34A)),
             _tile(Icons.description_outlined, tr('طلبات التعاقد وعروض الأسعار', 'Contracts & quotes'), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const C2CContractsScreen())), ic: const Color(0xFF8B5CF6)),
             if (!widget.showModeSwitch && widget.canSwitchCafm)

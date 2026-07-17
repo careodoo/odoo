@@ -86,6 +86,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
             final popular = (d['popular'] as List?) ?? [];
             final offers = (d['offers'] as List?) ?? [];
             final subs = (d['subscriptions'] as List?) ?? [];
+            final subsDesign = (d['subs_design'] as Map?) ?? const {};
             final reviews = (d['reviews'] as List?) ?? [];
             return CustomScrollView(slivers: [
               _header(context),
@@ -96,8 +97,15 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
               SliverToBoxAdapter(child: _catGrid(cats)),
               if (popular.isNotEmpty) _rowTitle(tr('الأكثر طلبًا', 'Most popular'), null, null),
               if (popular.isNotEmpty) SliverToBoxAdapter(child: _popularRail(popular)),
-              if (subs.isNotEmpty) _rowTitle(tr('الاشتراكات الشهرية', 'Monthly plans'), null, null),
-              if (subs.isNotEmpty) SliverToBoxAdapter(child: _subscriptions(subs)),
+              if (subs.isNotEmpty)
+                _rowTitle('${subsDesign['title'] ?? tr('الاشتراكات الشهرية', 'Monthly plans')}', null, null),
+              if (subs.isNotEmpty && subsDesign['subtitle'] != null)
+                SliverToBoxAdapter(child: Padding(
+                  padding: const EdgeInsets.fromLTRB(28, 0, 16, 2),
+                  child: Text('${subsDesign['subtitle']}',
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 12, fontWeight: FontWeight.w600)),
+                )),
+              if (subs.isNotEmpty) SliverToBoxAdapter(child: _subscriptions(subs, subsDesign)),
               SliverToBoxAdapter(child: _contractCta()),
               _rowTitle(tr('كيف يعمل', 'How it works'), null, null),
               SliverToBoxAdapter(child: _howItWorks()),
@@ -535,44 +543,167 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
     return m == 0 ? hs : '$hs ${tr('$m د', '${m}m')}';
   }
 
-  Widget _subscriptions(List subs) => SizedBox(
-        height: 194,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 11),
-          itemCount: subs.length,
-          itemBuilder: (_, i) {
-            final s = subs[i] as Map;
-            final col = _hex(s['color'] as String?, C2C.navy);
-            final feats = (s['features'] as List?) ?? [];
-            return Container(
-              width: 218,
-              margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [col, Color.lerp(col, Colors.black, 0.4)!], begin: Alignment.topRight, end: Alignment.bottomLeft),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [BoxShadow(color: col.withValues(alpha: 0.35), blurRadius: 8, offset: const Offset(0, 3))],
-              ),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: [
-                  Expanded(child: Text('${s['name']}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14), maxLines: 2, overflow: TextOverflow.ellipsis)),
-                  if (s['popular'] == true) Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)), child: Text(tr('الأفضل', 'Best'), style: TextStyle(color: col, fontSize: 9, fontWeight: FontWeight.w900))),
-                ]),
-                const SizedBox(height: 8),
-                Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                  Text('${s['price']}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 24)),
-                  const SizedBox(width: 3),
-                  Padding(padding: const EdgeInsets.only(bottom: 3), child: Text('KWD/${s['period'] == 'yearly' ? tr('سنة', 'yr') : tr('شهر', 'mo')}', style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 10))),
-                  if ((s['save_pct'] ?? 0) > 0) ...[const SizedBox(width: 5), Padding(padding: const EdgeInsets.only(bottom: 3), child: Text('-${s['save_pct']}%', style: const TextStyle(color: Color(0xFFFFD54F), fontWeight: FontWeight.w900, fontSize: 11)))],
-                ]),
-                const SizedBox(height: 8),
-                for (final f in feats.take(3)) Padding(padding: const EdgeInsets.only(bottom: 3), child: Row(children: [const Icon(Icons.check_circle, color: Colors.white70, size: 13), const SizedBox(width: 5), Expanded(child: Text('$f', style: const TextStyle(color: Colors.white, fontSize: 10.5), maxLines: 1, overflow: TextOverflow.ellipsis))])),
-              ]),
-            );
-          },
-        ),
+  Widget _subscriptions(List subs, Map design) {
+    final showSave = design['show_save'] != false;
+    // layout: 'grid' stacks them vertically; anything else is the horizontal rail.
+    if (design['layout'] == 'grid') {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        child: Column(children: [for (final s in subs) _planCard(s as Map, showSave, full: true)]),
       );
+    }
+    return SizedBox(
+      height: 232,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 11),
+        itemCount: subs.length,
+        itemBuilder: (_, i) => _planCard(subs[i] as Map, showSave),
+      ),
+    );
+  }
+
+  Widget _planCard(Map s, bool showSave, {bool full = false}) {
+    final col = _hex(s['color'] as String?, C2C.navy);
+    final feats = (s['features'] as List?) ?? [];
+    return Container(
+      width: full ? double.infinity : 224,
+      margin: EdgeInsets.symmetric(horizontal: full ? 0 : 5, vertical: full ? 5 : 4),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [col, Color.lerp(col, Colors.black, 0.4)!],
+            begin: Alignment.topRight, end: Alignment.bottomLeft),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: col.withValues(alpha: 0.35), blurRadius: 8, offset: const Offset(0, 3))],
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+        Row(children: [
+          Expanded(child: Text('${s['name']}',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14),
+              maxLines: 2, overflow: TextOverflow.ellipsis)),
+          if (s['popular'] == true)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+              child: Text(tr('الأفضل', 'Best'),
+                  style: TextStyle(color: col, fontSize: 9, fontWeight: FontWeight.w900))),
+        ]),
+        const SizedBox(height: 8),
+        Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Text('${s['price']}',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 24)),
+          const SizedBox(width: 3),
+          Padding(padding: const EdgeInsets.only(bottom: 3),
+              child: Text('KWD/${s['period'] == 'yearly' ? tr('سنة', 'yr') : (s['period'] == 'quarterly' ? tr('ربع', 'qtr') : tr('شهر', 'mo'))}',
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 10))),
+          if (showSave && (s['save_pct'] ?? 0) > 0) ...[
+            const SizedBox(width: 5),
+            Padding(padding: const EdgeInsets.only(bottom: 3),
+                child: Text('-${s['save_pct']}%',
+                    style: const TextStyle(color: Color(0xFFFFD54F), fontWeight: FontWeight.w900, fontSize: 11))),
+          ],
+        ]),
+        if ((s['visits'] ?? 0) > 0)
+          Text(tr('${s['visits']} زيارة', '${s['visits']} visits'),
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 10)),
+        const SizedBox(height: 8),
+        for (final f in feats.take(full ? 6 : 3))
+          Padding(padding: const EdgeInsets.only(bottom: 3),
+              child: Row(children: [
+                const Icon(Icons.check_circle, color: Colors.white70, size: 13),
+                const SizedBox(width: 5),
+                Expanded(child: Text('$f',
+                    style: const TextStyle(color: Colors.white, fontSize: 10.5),
+                    maxLines: 1, overflow: TextOverflow.ellipsis)),
+              ])),
+        const SizedBox(height: 9),
+        SizedBox(
+          width: double.infinity, height: 36,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white, foregroundColor: col,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+              padding: EdgeInsets.zero,
+            ),
+            onPressed: () => _subscribe(s, col),
+            child: Text(tr('اشترك الآن', 'Subscribe'),
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5)),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Future<void> _subscribe(Map plan, Color col) async {
+    final auth = context.read<AuthProvider>();
+    // Subscribing needs an identified customer.
+    if (auth.profile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('سجّل الدخول للاشتراك', 'Sign in to subscribe'))));
+      return;
+    }
+    final note = TextEditingController();
+    final ok = await showModalBottomSheet<bool>(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(18, 16, 18, MediaQuery.of(ctx).viewInsets.bottom + 18),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Container(width: 42, height: 4, margin: const EdgeInsets.only(bottom: 14),
+              decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(4))),
+          Text(tr('تأكيد الاشتراك', 'Confirm subscription'),
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: C2C.navy)),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(13),
+            decoration: BoxDecoration(color: col.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(13), border: Border.all(color: col.withValues(alpha: 0.25))),
+            child: Row(children: [
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('${plan['name']}', style: TextStyle(fontWeight: FontWeight.w900, color: col, fontSize: 14)),
+                Text(tr('${plan['visits']} زيارة · ${plan['period'] == 'yearly' ? 'سنوي' : (plan['period'] == 'quarterly' ? 'ربع سنوي' : 'شهري')}',
+                        '${plan['visits']} visits'),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 11)),
+              ])),
+              Text('${plan['price']} KWD',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: col, fontSize: 16)),
+            ]),
+          ),
+          const SizedBox(height: 12),
+          TextField(controller: note, maxLines: 2,
+              decoration: InputDecoration(
+                  hintText: tr('ملاحظات (اختياري)', 'Notes (optional)'),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(11)), isDense: true)),
+          const SizedBox(height: 8),
+          Text(tr('سيتواصل معك فريقنا لتأكيد المواعيد وبدء الاشتراك.',
+                  'Our team will contact you to schedule and start your subscription.'),
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 10.5, height: 1.5)),
+          const SizedBox(height: 14),
+          SizedBox(width: double.infinity, height: 48,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(backgroundColor: col, foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+              onPressed: () => Navigator.pop(ctx, true),
+              icon: const Icon(Icons.check_circle_rounded),
+              label: Text(tr('تأكيد الاشتراك', 'Confirm'),
+                  style: const TextStyle(fontWeight: FontWeight.w900)),
+            )),
+        ]),
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await auth.api.c2cSubscribe(plan['id'] as int, note: note.text);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('✅ تم استلام طلب اشتراكك', '✅ Subscription requested')),
+          backgroundColor: const Color(0xFF16A34A)));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: C2C.red));
+      }
+    }
+  }
 
   // ============ CONTRACT CTA ============
   Widget _contractCta() => Container(

@@ -745,6 +745,23 @@ class ApiClient {
       List<dynamic>.from((await _handle(
               await http.get(_u('/c2c/subscriptions'), headers: await _headers())))['data'] as List);
 
+  /// Subscribe to a plan → creates a request the team activates.
+  Future<Map<String, dynamic>> c2cSubscribe(int planId, {String? note, int? addressId}) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/c2c/subscribe'),
+          headers: await _headers(),
+          body: jsonEncode({
+            'plan_id': planId,
+            if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+            if (addressId != null) 'address_id': addressId,
+          })))) ['data'] as Map);
+
+  Future<List<dynamic>> c2cMySubscriptions() async =>
+      List<dynamic>.from((await _handle(
+          await http.get(_u('/c2c/my-subscriptions'), headers: await _headers())))['data'] as List);
+
+  Future<void> c2cSubscriptionCancel(int id) async =>
+      _handle(await http.post(_u('/c2c/subscription/$id/cancel'), headers: await _headers()));
+
   Future<Map<String, dynamic>> c2cContractCreate(Map<String, dynamic> body) async =>
       Map<String, dynamic>.from((await _handle(await http.post(_u('/c2c/contract/create'),
               headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
