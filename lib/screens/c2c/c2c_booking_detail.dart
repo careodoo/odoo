@@ -33,7 +33,7 @@ class _C2CBookingDetailScreenState extends State<C2CBookingDetailScreen> {
     final curIdx = _flow.indexOf(st);
     return Scaffold(
       backgroundColor: C2C.bg,
-      appBar: AppBar(backgroundColor: C2C.navy, foregroundColor: Colors.white, title: Text('${_b['name']}')),
+      appBar: AppBar(backgroundColor: C2C.red, foregroundColor: Colors.white, title: Text('${_b['name']}')),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         // header card
         Container(

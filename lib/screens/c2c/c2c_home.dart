@@ -546,7 +546,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFF17547F), C2C.navy]),
+                    gradient: const LinearGradient(colors: [C2C.red, C2C.redDeep]),
                     borderRadius: BorderRadius.circular(11),
                   ),
                   child: Text(tr('احجز', 'Book'),

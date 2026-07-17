@@ -58,9 +58,9 @@ class _C2CProfileEditScreenState extends State<C2CProfileEditScreen> {
     return Scaffold(
       backgroundColor: C2C.bg,
       appBar: AppBar(
-        backgroundColor: C2C.navy, foregroundColor: Colors.white, elevation: 0,
+        backgroundColor: C2C.red, foregroundColor: Colors.white, elevation: 0,
         flexibleSpace: const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(
-            colors: [Color(0xFF17547F), C2C.navy], begin: Alignment.topRight, end: Alignment.bottomLeft))),
+            colors: [C2C.red, C2C.redDeep], begin: Alignment.topRight, end: Alignment.bottomLeft))),
         title: Text(tr('إدارة الحساب', 'Manage account')),
       ),
       body: ListView(padding: const EdgeInsets.fromLTRB(14, 14, 14, 30), children: [
@@ -181,7 +181,7 @@ class _C2CProfileEditScreenState extends State<C2CProfileEditScreen> {
       actions: [
         TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('إلغاء', 'Cancel'))),
         ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: C2C.navy, foregroundColor: Colors.white),
+          style: ElevatedButton.styleFrom(backgroundColor: C2C.red, foregroundColor: Colors.white),
           onPressed: () => Navigator.pop(ctx, true), child: Text(tr('تغيير', 'Change'))),
       ],
     ));

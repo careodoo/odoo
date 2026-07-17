@@ -51,7 +51,7 @@ class _C2CAccountScreenState extends State<C2CAccountScreen> {
               child: Stack(children: [
                 Container(
                   height: 190,
-                  decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF17547F), C2C.navy, Color(0xFF0A2A44)], begin: Alignment.topRight, end: Alignment.bottomLeft), borderRadius: BorderRadius.vertical(bottom: Radius.circular(30))),
+                  decoration: const BoxDecoration(gradient: LinearGradient(colors: [C2C.redBright, C2C.red, C2C.redDeep], begin: Alignment.topRight, end: Alignment.bottomLeft), borderRadius: BorderRadius.vertical(bottom: Radius.circular(30))),
                 ),
                 Positioned(top: -20, right: -20, child: _blob(120, Colors.white.withValues(alpha: 0.06))),
                 Positioned(top: 60, left: -30, child: _blob(110, C2C.red.withValues(alpha: 0.10))),

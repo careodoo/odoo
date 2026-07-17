@@ -29,7 +29,7 @@ class _C2CServiceListScreenState extends State<C2CServiceListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: C2C.bg,
-      appBar: AppBar(backgroundColor: C2C.navy, foregroundColor: Colors.white, title: Text(widget.title)),
+      appBar: AppBar(backgroundColor: C2C.red, foregroundColor: Colors.white, title: Text(widget.title)),
       body: Column(children: [
         Padding(
           padding: const EdgeInsets.all(12),
@@ -109,7 +109,7 @@ class _C2CServiceScreenState extends State<C2CServiceScreen> {
           final packages = (s['packages'] as List?) ?? [];
           return CustomScrollView(slivers: [
             SliverAppBar(
-              backgroundColor: C2C.navy, foregroundColor: Colors.white, pinned: true, expandedHeight: 172,
+              backgroundColor: C2C.red, foregroundColor: Colors.white, pinned: true, expandedHeight: 172,
               flexibleSpace: FlexibleSpaceBar(
                 titlePadding: const EdgeInsets.only(right: 16, bottom: 14, left: 56),
                 title: Text('${s['name']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w900, shadows: [Shadow(color: Colors.black54, blurRadius: 6)])),
@@ -510,7 +510,7 @@ class _C2CBookingSheetState extends State<C2CBookingSheet> {
           Row(children: [
             Expanded(child: TextField(controller: _coupon, textCapitalization: TextCapitalization.characters, decoration: InputDecoration(hintText: 'WELCOME20', prefixIcon: const Icon(Icons.local_offer_outlined), filled: true, fillColor: C2C.bg, isDense: true, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)))),
             const SizedBox(width: 8),
-            SizedBox(height: 46, child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: C2C.navy, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), onPressed: _applyCoupon, child: Text(tr('تطبيق', 'Apply')))),
+            SizedBox(height: 46, child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: C2C.red, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), onPressed: _applyCoupon, child: Text(tr('تطبيق', 'Apply')))),
           ]),
           if (_couponMsg != null) Padding(padding: const EdgeInsets.only(top: 6), child: Text(_couponMsg!, style: TextStyle(color: _discountPct > 0 ? const Color(0xFF16A34A) : C2C.red, fontSize: 12, fontWeight: FontWeight.w700))),
           const SizedBox(height: 16),
@@ -657,7 +657,7 @@ class _C2CBookingSheetState extends State<C2CBookingSheet> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
             child: SizedBox(width: double.infinity, height: 48, child: ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: C2C.navy, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+              style: ElevatedButton.styleFrom(backgroundColor: C2C.red, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
               onPressed: () => Navigator.pop(dctx),
               child: Text(tr('رائع', 'Great'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
             )),

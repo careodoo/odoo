@@ -36,7 +36,7 @@ class _C2COrdersScreenState extends State<C2COrdersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: C2C.bg,
-      appBar: AppBar(backgroundColor: C2C.navy, foregroundColor: Colors.white, elevation: 0, title: Text(tr('طلباتي', 'My orders'))),
+      appBar: AppBar(backgroundColor: C2C.red, foregroundColor: Colors.white, elevation: 0, title: Text(tr('طلباتي', 'My orders'))),
       body: RefreshIndicator(
         onRefresh: () async => _reload(),
         child: FutureBuilder<List<dynamic>>(

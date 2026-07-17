@@ -31,7 +31,7 @@ class _C2CContractsScreenState extends State<C2CContractsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: C2C.bg,
-      appBar: AppBar(backgroundColor: C2C.navy, foregroundColor: Colors.white, title: Text(tr('طلبات التعاقد وعروض الأسعار', 'My contracts & quotes'))),
+      appBar: AppBar(backgroundColor: C2C.red, foregroundColor: Colors.white, title: Text(tr('طلبات التعاقد وعروض الأسعار', 'My contracts & quotes'))),
       body: RefreshIndicator(
         onRefresh: () async => _load(),
         child: FutureBuilder<List<dynamic>>(

@@ -44,7 +44,7 @@ class _C2CShopScreenState extends State<C2CShopScreen> {
     return Scaffold(
       backgroundColor: C2C.bg,
       appBar: AppBar(
-        backgroundColor: C2C.navy, foregroundColor: Colors.white,
+        backgroundColor: C2C.red, foregroundColor: Colors.white,
         title: Text(tr('المتجر', 'Shop')),
         actions: [
           Stack(alignment: Alignment.center, children: [
@@ -327,7 +327,7 @@ class _C2CShopScreenState extends State<C2CShopScreen> {
               )),
               const SizedBox(width: 10),
               Expanded(child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(backgroundColor: C2C.navy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+                style: ElevatedButton.styleFrom(backgroundColor: C2C.red, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
                 onPressed: () { Navigator.pop(dctx); Navigator.push(context, MaterialPageRoute(builder: (_) => const C2COrdersScreen())); },
                 icon: const Icon(Icons.local_shipping_rounded, size: 18),
                 label: Text(tr('تتبّع الطلب', 'Track order'), style: const TextStyle(fontWeight: FontWeight.w800)),

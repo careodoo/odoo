@@ -31,7 +31,7 @@ class _C2CAddressesScreenState extends State<C2CAddressesScreen> {
     return Scaffold(
       backgroundColor: C2C.bg,
       appBar: AppBar(
-        backgroundColor: C2C.navy, foregroundColor: Colors.white, elevation: 0,
+        backgroundColor: C2C.red, foregroundColor: Colors.white, elevation: 0,
         title: Text(widget.picking ? tr('اختر عنوان التوصيل', 'Choose address') : tr('عناوين التوصيل', 'Delivery addresses')),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -211,7 +211,7 @@ class _AddressFormState extends State<_AddressForm> {
           ),
           const SizedBox(height: 8),
           SizedBox(width: double.infinity, height: 50, child: ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: C2C.navy, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+            style: ElevatedButton.styleFrom(backgroundColor: C2C.red, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
             onPressed: _busy ? null : _save,
             child: _busy ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : Text(tr('حفظ', 'Save'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
           )),

@@ -53,8 +53,8 @@ class _C2CBookingsScreenState extends State<C2CBookingsScreen> {
     return Scaffold(
       backgroundColor: C2C.bg,
       appBar: AppBar(
-        backgroundColor: C2C.navy, foregroundColor: Colors.white, elevation: 0,
-        flexibleSpace: const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF17547F), C2C.navy], begin: Alignment.topRight, end: Alignment.bottomLeft))),
+        backgroundColor: C2C.red, foregroundColor: Colors.white, elevation: 0,
+        flexibleSpace: const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(colors: [C2C.red, C2C.redDeep], begin: Alignment.topRight, end: Alignment.bottomLeft))),
         title: Text(tr('حجوزاتي', 'My bookings')),
       ),
       body: RefreshIndicator(
@@ -102,7 +102,7 @@ class _C2CBookingsScreenState extends State<C2CBookingsScreen> {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          gradient: sel ? const LinearGradient(colors: [Color(0xFF17547F), C2C.navy]) : null,
+          gradient: sel ? const LinearGradient(colors: [C2C.red, C2C.redDeep]) : null,
           color: sel ? null : C2C.bg,
           borderRadius: BorderRadius.circular(22),
           border: Border.all(color: sel ? Colors.transparent : Colors.black12),

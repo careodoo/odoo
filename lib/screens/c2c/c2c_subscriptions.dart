@@ -53,9 +53,9 @@ class _C2CSubscriptionsScreenState extends State<C2CSubscriptionsScreen> {
     return Scaffold(
       backgroundColor: C2C.bg,
       appBar: AppBar(
-        backgroundColor: C2C.navy, foregroundColor: Colors.white, elevation: 0,
+        backgroundColor: C2C.red, foregroundColor: Colors.white, elevation: 0,
         flexibleSpace: const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(
-            colors: [Color(0xFF17547F), C2C.navy], begin: Alignment.topRight, end: Alignment.bottomLeft))),
+            colors: [C2C.red, C2C.redDeep], begin: Alignment.topRight, end: Alignment.bottomLeft))),
         title: Text(tr('اشتراكاتي', 'My subscriptions')),
       ),
       body: RefreshIndicator(
