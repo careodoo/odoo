@@ -849,6 +849,14 @@ class ApiClient {
   Future<void> pmsSupplyReceive(int supplyId) async =>
       _handle(await http.post(_u('/pms/supply/$supplyId/receive'), headers: await _headers()));
 
+  Future<Map<String, dynamic>> pmsEmployeeFile(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+          await http.get(_u('/pms/employee/$id/file'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsVehicleFile(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+          await http.get(_u('/pms/vehicle/$id/file'), headers: await _headers())))['data'] as Map);
+
   /// Create a record in a section (delivery / expense / timesheet / docrequest).
   Future<Map<String, dynamic>> pmsSectionCreate(int id, String action, Map<String, dynamic> vals) async =>
       Map<String, dynamic>.from((await _handle(await http.post(

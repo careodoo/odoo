@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'pms_shell.dart';
+import 'pms_employee_file.dart';
+import 'pms_vehicle_file.dart';
 
 /// Icons for the section codes the API advertises. Kept here rather than sent
 /// from the server: the server names the section, the app decides how it looks.
@@ -285,7 +287,9 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
   Widget _row(Map r) {
     final badges = (r['badges'] as List?) ?? const [];
     final sc = _stateColors(r['state'] as String?);
-    return Container(
+    // team rows open an employee file; fuel rows open a vehicle file.
+    final opens = '${r['open'] ?? ''}';
+    final inner = Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
@@ -380,6 +384,21 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
           ]),
         ],
       ]),
+    );
+    if (opens.isEmpty) return inner;
+    // Give a tappable row an affordance and open the right file.
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () {
+        if (opens == 'employee') {
+          Navigator.push(context, MaterialPageRoute(
+              builder: (_) => PmsEmployeeFileScreen(employeeId: r['id'] as int, name: '${r['title']}')));
+        } else if (opens == 'vehicle' && r['vehicle_id'] != null) {
+          Navigator.push(context, MaterialPageRoute(
+              builder: (_) => PmsVehicleFileScreen(vehicleId: r['vehicle_id'] as int, name: '${r['title']}')));
+        }
+      },
+      child: inner,
     );
   }
 }

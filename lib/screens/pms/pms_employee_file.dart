@@ -1,0 +1,255 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../core/auth.dart';
+import '../../core/i18n.dart';
+import '../../core/service_ui.dart';
+import 'pms_shell.dart';
+
+/// The employee file a project manager sees: identity, wage, compliance dates,
+/// docs, loans, penalties, bonuses and recent attendance. Server-scoped to the
+/// manager's own project departments.
+class PmsEmployeeFileScreen extends StatefulWidget {
+  const PmsEmployeeFileScreen({super.key, required this.employeeId, required this.name});
+  final int employeeId;
+  final String name;
+  @override
+  State<PmsEmployeeFileScreen> createState() => _PmsEmployeeFileScreenState();
+}
+
+class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
+  Future<Map<String, dynamic>>? _f;
+  static const _c = Color(0xFF0D9488);
+
+  @override
+  void initState() {
+    super.initState();
+    _f = context.read<AuthProvider>().api.pmsEmployeeFile(widget.employeeId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Pms.bg,
+      appBar: AppBar(
+        backgroundColor: _c, foregroundColor: Colors.white, elevation: 0,
+        title: Text(widget.name, overflow: TextOverflow.ellipsis),
+      ),
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _f,
+        builder: (_, snap) {
+          if (snap.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snap.hasError) {
+            return Center(child: Padding(
+              padding: const EdgeInsets.all(30),
+              child: Text('${snap.error}', textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.grey)),
+            ));
+          }
+          final d = snap.data ?? const {};
+          final e = (d['employee'] as Map?) ?? const {};
+          final compliance = (d['compliance'] as List?) ?? const [];
+          final docs = (d['docs'] as List?) ?? const [];
+          final loans = (d['loans'] as List?) ?? const [];
+          final penalties = (d['penalties'] as List?) ?? const [];
+          final bonuses = (d['bonuses'] as List?) ?? const [];
+          final att = (d['attendance'] as List?) ?? const [];
+          return ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 24), children: [
+            _identity(e),
+            const SizedBox(height: 12),
+            if (compliance.isNotEmpty) ...[_compliance(compliance), const SizedBox(height: 12)],
+            _recordBlock(tr('طلبات المستندات', 'Document requests'), Icons.description_rounded,
+                const Color(0xFF8B5CF6), docs, showState: true),
+            _recordBlock(tr('السُّلف', 'Loans'), Icons.savings_rounded,
+                const Color(0xFF0891B2), loans, amountKey: 'amount'),
+            _recordBlock(tr('الجزاءات', 'Penalties'), Icons.gavel_rounded,
+                const Color(0xFFE5484D), penalties, amountKey: 'amount', showState: true),
+            _recordBlock(tr('المكافآت', 'Bonuses'), Icons.emoji_events_rounded,
+                const Color(0xFF16A34A), bonuses, amountKey: 'amount', showState: true),
+            if (att.isNotEmpty) ...[const SizedBox(height: 4), _attendance(att)],
+          ]);
+        },
+      ),
+    );
+  }
+
+  Widget _identity(Map e) => Container(
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(colors: [_c, Color.lerp(_c, Colors.black, 0.3)!],
+              begin: Alignment.topRight, end: Alignment.bottomLeft),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Column(children: [
+          Row(children: [
+            CircleAvatar(
+              radius: 30, backgroundColor: Colors.white.withValues(alpha: 0.18),
+              backgroundImage: e['photo'] != null ? NetworkImage('${e['photo']}') : null,
+              child: e['photo'] == null
+                  ? Text('${e['name']}'.characters.first,
+                      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900))
+                  : null,
+            ),
+            const SizedBox(width: 13),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('${e['name']}', style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900)),
+              if (e['job'] != null)
+                Text('${e['job']}', style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12.5, fontWeight: FontWeight.w600)),
+              if (e['department'] != null)
+                Text('${e['department']}', style: TextStyle(color: Colors.white.withValues(alpha: 0.65), fontSize: 10.5)),
+            ])),
+          ]),
+          const SizedBox(height: 12),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            if (e['phone'] != null) _chip(Icons.phone_rounded, '${e['phone']}'),
+            if (e['nationality'] != null) _chip(Icons.public_rounded, '${e['nationality']}'),
+            if (e['manager'] != null) _chip(Icons.supervisor_account_rounded, '${e['manager']}'),
+            if (e['wage'] != null) _chip(Icons.payments_rounded, tr('الأجر: ${e['wage']}', 'Wage: ${e['wage']}')),
+          ]),
+        ]),
+      );
+
+  Widget _chip(IconData ic, String t) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(9)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(ic, size: 12, color: Colors.white),
+          const SizedBox(width: 5),
+          Text(t, style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w700)),
+        ]),
+      );
+
+  Widget _compliance(List items) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: const [
+            Icon(Icons.verified_user_rounded, size: 15, color: Color(0xFFE5484D)),
+            SizedBox(width: 6),
+            Text('الوثائق والامتثال', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Pms.ink)),
+          ]),
+          const SizedBox(height: 10),
+          for (final i in items) Builder(builder: (_) {
+            final days = (i['days'] ?? 0) as int;
+            final c = days < 0 ? const Color(0xFFE5484D)
+                : days <= 60 ? const Color(0xFFF7A23B) : const Color(0xFF16A34A);
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(children: [
+                Container(width: 8, height: 8, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
+                const SizedBox(width: 8),
+                Expanded(child: Text('${i['label']}',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700))),
+                Text('${i['date']}', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(7)),
+                  child: Text(
+                      days < 0 ? tr('منتهية ${-days} يوم', '${-days}d ago')
+                               : tr('$days يوم', '${days}d'),
+                      style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w900, color: c)),
+                ),
+              ]),
+            );
+          }),
+        ]),
+      );
+
+  Widget _recordBlock(String title, IconData ic, Color c, List rows,
+      {String? amountKey, bool showState = false}) {
+    if (rows.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(ic, size: 15, color: c),
+            const SizedBox(width: 6),
+            Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Pms.ink)),
+            const SizedBox(width: 6),
+            Text('${rows.length}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: c)),
+          ]),
+          const SizedBox(height: 8),
+          for (final r in rows) Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(children: [
+              Expanded(child: Text('${r['name']}',
+                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700))),
+              if (amountKey != null && r[amountKey] != null)
+                Text('${r[amountKey]}',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: c)),
+              if (showState && r['state_label'] != null) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(color: c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+                  child: Text('${r['state_label']}',
+                      style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: c)),
+                ),
+              ],
+            ]),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Widget _attendance(List att) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: const [
+            Icon(Icons.schedule_rounded, size: 15, color: Color(0xFF2F6DF6)),
+            SizedBox(width: 6),
+            Text('آخر الحضور', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Pms.ink)),
+          ]),
+          const SizedBox(height: 4),
+          // The file lists the last 30 punches; paging keeps it readable.
+          MoreList(
+            items: att,
+            color: const Color(0xFF2F6DF6),
+            pageSize: 7,
+            itemBuilder: (_, r, __) {
+              final m = r as Map;
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(children: [
+                  Container(width: 7, height: 7,
+                      decoration: BoxDecoration(
+                          color: m['open'] == true ? const Color(0xFF16A34A) : Colors.grey.shade400,
+                          shape: BoxShape.circle)),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text('${m['date'] ?? '—'}',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700))),
+                  Text('${_hm(m['check_in'])} → ${_hm(m['check_out'])}',
+                      style: TextStyle(fontSize: 10.5, color: Colors.grey.shade600)),
+                  const SizedBox(width: 8),
+                  Text(tr('${m['hours']} س', '${m['hours']}h'),
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF0891B2))),
+                ]),
+              );
+            },
+          ),
+        ]),
+      );
+
+  String _hm(dynamic v) {
+    final s = '${v ?? ''}';
+    return s.length >= 16 ? s.substring(11, 16) : '—';
+  }
+}
