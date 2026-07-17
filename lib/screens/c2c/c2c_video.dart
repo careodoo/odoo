@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import '../../core/i18n.dart';
 import 'c2c_shell.dart';
 
-/// A full-screen in-app player for a service video (mp4 URL).
+/// A full-screen in-app player for a service video (mp4 URL). Uses an embedded
+/// WebView with an HTML5 <video> element — reliable across builds, native
+/// controls, no extra native plugins.
 class C2CVideoPlayer extends StatefulWidget {
   const C2CVideoPlayer({super.key, required this.url, this.title});
   final String url;
@@ -13,30 +15,26 @@ class C2CVideoPlayer extends StatefulWidget {
 }
 
 class _C2CVideoPlayerState extends State<C2CVideoPlayer> {
-  VideoPlayerController? _c;
-  bool _ready = false;
-  bool _error = false;
+  late final WebViewController _c;
+  bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _c = VideoPlayerController.networkUrl(Uri.parse(widget.url))
-      ..initialize().then((_) {
-        if (!mounted) return;
-        setState(() => _ready = true);
-        _c!.play();
-        _c!.setLooping(true);
-      }).catchError((_) {
-        if (mounted) setState(() => _error = true);
-      });
-    _c!.addListener(() { if (mounted) setState(() {}); });
+    _c = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(Colors.black)
+      ..setNavigationDelegate(NavigationDelegate(
+        onPageFinished: (_) { if (mounted) setState(() => _loading = false); },
+      ))
+      ..loadHtmlString(_html(widget.url));
   }
 
-  @override
-  void dispose() {
-    _c?.dispose();
-    super.dispose();
-  }
+  String _html(String url) => '''
+<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>html,body{margin:0;height:100%;background:#000;display:flex;align-items:center;justify-content:center}
+video{width:100%;height:100%;object-fit:contain}</style></head>
+<body><video src="$url" controls autoplay playsinline></video></body></html>''';
 
   @override
   Widget build(BuildContext context) {
@@ -46,34 +44,10 @@ class _C2CVideoPlayerState extends State<C2CVideoPlayer> {
         backgroundColor: Colors.black, foregroundColor: Colors.white, elevation: 0,
         title: Text(widget.title ?? tr('فيديو', 'Video'), style: const TextStyle(fontSize: 15)),
       ),
-      body: Center(
-        child: _error
-            ? Column(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(Icons.error_outline_rounded, color: Colors.white54, size: 48),
-                const SizedBox(height: 10),
-                Text(tr('تعذّر تشغيل الفيديو', 'Could not play the video'),
-                    style: const TextStyle(color: Colors.white54)),
-              ])
-            : !_ready
-                ? const CircularProgressIndicator(color: C2C.red)
-                : GestureDetector(
-                    onTap: () => setState(() => _c!.value.isPlaying ? _c!.pause() : _c!.play()),
-                    child: AspectRatio(
-                      aspectRatio: _c!.value.aspectRatio == 0 ? 16 / 9 : _c!.value.aspectRatio,
-                      child: Stack(alignment: Alignment.center, children: [
-                        VideoPlayer(_c!),
-                        VideoProgressIndicator(_c!, allowScrubbing: true,
-                            colors: const VideoProgressColors(playedColor: C2C.red)),
-                        if (!_c!.value.isPlaying)
-                          Container(
-                            decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.35), shape: BoxShape.circle),
-                            padding: const EdgeInsets.all(14),
-                            child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 44),
-                          ),
-                      ]),
-                    ),
-                  ),
-      ),
+      body: Stack(children: [
+        WebViewWidget(controller: _c),
+        if (_loading) const Center(child: CircularProgressIndicator(color: C2C.red)),
+      ]),
     );
   }
 }

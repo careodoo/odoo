@@ -32,18 +32,6 @@ class _C2CServicesTabState extends State<C2CServicesTab> {
       .api
       .c2cServices(categoryId: _catFilter, q: _q);
 
-  // A warm, cheerful set of tints that all sit next to the brand red.
-  static const _tints = [
-    [Color(0xFFC0392B), Color(0xFFFDECEA)],
-    [Color(0xFFE67E22), Color(0xFFFDF0E3)],
-    [Color(0xFF16A085), Color(0xFFE6F5F1)],
-    [Color(0xFF2980B9), Color(0xFFE7F1FA)],
-    [Color(0xFF8E44AD), Color(0xFFF3EAF7)],
-    [Color(0xFFD35400), Color(0xFFFBEBE0)],
-    [Color(0xFF27AE60), Color(0xFFE7F6EC)],
-    [Color(0xFFC2185B), Color(0xFFFCE7EF)],
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -154,7 +142,7 @@ class _C2CServicesTabState extends State<C2CServicesTab> {
                     borderRadius: BorderRadius.circular(3))),
             const SizedBox(width: 9),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(t, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: C2C.navy)),
+              Text(t, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: C2C.navy)),
               if (sub != null)
                 Text(sub, style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
             ])),
@@ -181,7 +169,7 @@ class _C2CServicesTabState extends State<C2CServicesTab> {
           itemCount: popular.length,
           itemBuilder: (_, i) {
             final s = popular[i] as Map;
-            final tint = _tints[i % _tints.length];
+            final tint = C2C.gradFor(i);
             return GestureDetector(
               onTap: () => Navigator.push(context, MaterialPageRoute(
                   builder: (_) => C2CServiceScreen(serviceId: s['id'] as int))),
@@ -238,10 +226,10 @@ class _C2CServicesTabState extends State<C2CServicesTab> {
   Widget _railFallback(Map s, List<Color> tint) => Container(
         height: 92, width: 158,
         decoration: BoxDecoration(gradient: LinearGradient(
-            colors: [tint[0].withValues(alpha: 0.85), tint[0]],
-            begin: Alignment.topRight, end: Alignment.bottomLeft)),
+            colors: tint, begin: Alignment.topRight, end: Alignment.bottomLeft)),
         alignment: Alignment.center,
-        child: Text('${s['category_icon'] ?? '🧰'}', style: const TextStyle(fontSize: 38)),
+        child: Icon(C2C.iconFor('${s['category'] ?? s['name']}'),
+            color: Colors.white.withValues(alpha: 0.85), size: 40),
       );
 
   // ---------------- category strip ----------------
@@ -253,7 +241,7 @@ class _C2CServicesTabState extends State<C2CServicesTab> {
           itemCount: cats.length,
           itemBuilder: (_, i) {
             final c = cats[i] as Map;
-            final tint = _tints[i % _tints.length];
+            final tint = C2C.gradFor(i);
             final on = _catFilter == c['id'];
             return GestureDetector(
               onTap: () => setState(() {
@@ -278,12 +266,8 @@ class _C2CServicesTabState extends State<C2CServicesTab> {
                           ? [BoxShadow(color: tint[0].withValues(alpha: 0.4), blurRadius: 10, offset: const Offset(0, 4))]
                           : null,
                     ),
-                    child: c['image'] != null
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: Image.network('${c['image']}', width: 40, height: 40, fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Text('${c['icon'] ?? '🧩'}', style: const TextStyle(fontSize: 26))))
-                        : Text('${c['icon'] ?? '🧩'}', style: const TextStyle(fontSize: 26)),
+                    child: Icon(C2C.iconFor('${c['name']}'),
+                        color: on ? Colors.white : C2C.gradFor(i)[1], size: 27),
                   ),
                   const SizedBox(height: 5),
                   Text('${c['name']}', maxLines: 2, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis,
@@ -330,7 +314,7 @@ class _C2CServicesTabState extends State<C2CServicesTab> {
       );
 
   Widget _serviceCard(Map s, int i) {
-    final tint = _tints[i % _tints.length];
+    final tint = C2C.gradFor(i);
     return GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(
           builder: (_) => C2CServiceScreen(serviceId: s['id'] as int))),
@@ -394,9 +378,9 @@ class _C2CServicesTabState extends State<C2CServicesTab> {
 
   Widget _cardFallback(Map s, List<Color> tint) => Container(
         decoration: BoxDecoration(gradient: LinearGradient(
-            colors: [tint[1], tint[0].withValues(alpha: 0.3)],
-            begin: Alignment.topRight, end: Alignment.bottomLeft)),
+            colors: tint, begin: Alignment.topRight, end: Alignment.bottomLeft)),
         alignment: Alignment.center,
-        child: Text('${s['category_icon'] ?? '🧰'}', style: const TextStyle(fontSize: 34)),
+        child: Icon(C2C.iconFor('${s['category'] ?? s['name']}'),
+            color: Colors.white.withValues(alpha: 0.85), size: 32),
       );
 }
