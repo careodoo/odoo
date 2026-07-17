@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import 'product_detail_screen.dart';
 
 /// Client shop: products at the client's pricelist → categories, favorites,
 /// add to cart, checkout (creates a sale order). Mirrors the portal shop.
@@ -69,132 +70,417 @@ class _ShopScreenState extends State<ShopScreen> {
     } catch (_) {}
   }
 
+  /// Checkout details the client chooses: where it goes and when.
+  int? _addressId;
+  DateTime? _deliveryDate;
+  List<dynamic> _addresses = const [];
+  final _noteCtl = TextEditingController();
+  bool _busyCheckout = false;
+
+  Future<void> _loadAddresses() async {
+    try {
+      final a = await context.read<AuthProvider>().api.clientAddresses();
+      if (mounted) {
+        setState(() {
+          _addresses = a;
+          // Default to the client's main address so checkout is one tap.
+          _addressId ??= a.isNotEmpty ? a.first['id'] as int : null;
+        });
+      }
+    } catch (_) {/* checkout still works; the server uses the account default */}
+  }
+
+  String _addrKind(String k) => {
+        'main': tr('العنوان الرئيسي', 'Main'),
+        'delivery': tr('عنوان تسليم', 'Delivery'),
+        'facility': tr('مرفق', 'Facility'),
+      }[k] ?? k;
+
+  String _fmt(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-'
+      '${d.day.toString().padLeft(2, '0')} ${d.hour.toString().padLeft(2, '0')}:'
+      '${d.minute.toString().padLeft(2, '0')}';
+
   Future<void> _checkout() async {
     if (_cart.isEmpty) return;
+    setState(() => _busyCheckout = true);
     final lines = _cart.entries
         .map((e) => {'product_id': e.key, 'qty': e.value['qty']})
         .toList();
     try {
-      final r = await context.read<AuthProvider>().api.orderCreate(lines.cast<Map<String, dynamic>>());
+      final r = await context.read<AuthProvider>().api.orderCreate(
+        lines.cast<Map<String, dynamic>>(),
+        addressId: _addressId,
+        deliveryDate: _deliveryDate == null ? null : _fmt(_deliveryDate!),
+        note: _noteCtl.text,
+      );
       if (!mounted) return;
       Navigator.pop(context);
-      setState(() => _cart.clear());
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${tr('تم إنشاء الطلب', 'Order created')} ${r['name']}')));
+      setState(() {
+        _cart.clear();
+        _deliveryDate = null;
+        _noteCtl.clear();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('${tr('تم إنشاء الطلب', 'Order created')} ${r['name']}'),
+        backgroundColor: const Color(0xFF16A34A),
+      ));
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('$e'), backgroundColor: const Color(0xFFE5484D)));
+      }
+    } finally {
+      if (mounted) setState(() => _busyCheckout = false);
     }
   }
 
   void _openCart() {
+    if (_addresses.isEmpty) _loadAddresses();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (_) => StatefulBuilder(builder: (ctx, setSheet) {
+        void sync(VoidCallback fn) { setState(fn); setSheet(() {}); }
         return Padding(
           padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Row(children: [
-                Text(tr('سلة الشراء', 'Cart'),
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                const Spacer(),
-                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+          child: DraggableScrollableSheet(
+            expand: false,
+            initialChildSize: _cart.isEmpty ? 0.4 : 0.8,
+            maxChildSize: 0.95,
+            builder: (_, sc) => Container(
+              decoration: BoxDecoration(
+                color: Theme.of(ctx).scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+              ),
+              child: Column(children: [
+                const SizedBox(height: 9),
+                Container(width: 42, height: 4,
+                    decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(4))),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 8, 4),
+                  child: Row(children: [
+                    const Icon(Icons.shopping_cart_rounded, color: Color(0xFF0E3A5F), size: 19),
+                    const SizedBox(width: 8),
+                    Text(tr('سلة الشراء', 'Cart'),
+                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Color(0xFF0E3A5F))),
+                    const SizedBox(width: 7),
+                    if (_cart.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                            color: const Color(0xFF0E3A5F), borderRadius: BorderRadius.circular(20)),
+                        child: Text(tr('${_cart.length} صنف', '${_cart.length} items'),
+                            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)),
+                      ),
+                    const Spacer(),
+                    if (_cart.isNotEmpty)
+                      TextButton.icon(
+                        onPressed: () => sync(() => _cart.clear()),
+                        icon: const Icon(Icons.delete_outline_rounded, size: 16),
+                        label: Text(tr('إفراغ', 'Clear'), style: const TextStyle(fontSize: 11.5)),
+                        style: TextButton.styleFrom(foregroundColor: const Color(0xFFE5484D)),
+                      ),
+                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+                  ]),
+                ),
+                if (_cart.isEmpty)
+                  Expanded(child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.remove_shopping_cart_rounded, size: 44, color: Colors.grey.shade300),
+                    const SizedBox(height: 10),
+                    Text(tr('السلة فارغة', 'Your cart is empty'),
+                        style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w700)),
+                  ])))
+                else
+                  Expanded(child: ListView(controller: sc, padding: const EdgeInsets.fromLTRB(14, 4, 14, 10), children: [
+                    for (final e in _cart.entries.toList()) _cartLine(e, sync),
+                    const SizedBox(height: 12),
+                    _deliverySection(ctx, setSheet),
+                    const SizedBox(height: 12),
+                    _totalsBox(),
+                  ])),
+                if (_cart.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 16),
+                    decoration: BoxDecoration(
+                      color: Theme.of(ctx).cardColor,
+                      boxShadow: [BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, -3))],
+                    ),
+                    child: SizedBox(
+                      height: 50, width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        onPressed: _busyCheckout ? null : _checkout,
+                        icon: _busyCheckout
+                            ? const SizedBox(width: 17, height: 17,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : const Icon(Icons.check_circle_rounded),
+                        label: Text(
+                            tr('إتمام الطلب · ${_cartTotal.toStringAsFixed(3)}',
+                               'Place order · ${_cartTotal.toStringAsFixed(3)}'),
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5)),
+                      ),
+                    ),
+                  ),
               ]),
-              if (_cart.isEmpty)
-                Padding(padding: const EdgeInsets.all(24), child: Text(tr('السلة فارغة', 'Cart is empty')))
-              else ...[
-                ..._cart.entries.map((e) => ListTile(
-                      title: Text('${e.value['name']}'),
-                      subtitle: Text('${e.value['price']} × ${e.value['qty']}'),
-                      trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                        IconButton(
-                            icon: const Icon(Icons.remove_circle_outline),
-                            onPressed: () => setState(() {
-                                  final q = (e.value['qty'] as int) - 1;
-                                  if (q <= 0) {
-                                    _cart.remove(e.key);
-                                  } else {
-                                    e.value['qty'] = q;
-                                  }
-                                  setSheet(() {});
-                                })),
-                        Text('${e.value['qty']}'),
-                        IconButton(
-                            icon: const Icon(Icons.add_circle_outline),
-                            onPressed: () => setState(() {
-                                  e.value['qty'] = (e.value['qty'] as int) + 1;
-                                  setSheet(() {});
-                                })),
-                      ]),
-                    )),
-                const Divider(),
-                Row(children: [
-                  Text(tr('الإجمالي', 'Total'), style: const TextStyle(fontWeight: FontWeight.w800)),
-                  const Spacer(),
-                  Text(_cartTotal.toStringAsFixed(3),
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-                ]),
-                const SizedBox(height: 10),
-                SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                        onPressed: _checkout,
-                        icon: const Icon(Icons.check),
-                        label: Text(tr('إتمام الطلب', 'Checkout')))),
-              ],
-            ]),
+            ),
           ),
         );
       }),
     );
   }
 
-  void _info(Map p) async {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => FutureBuilder<Map<String, dynamic>>(
-        future: context.read<AuthProvider>().api.clientProduct(p['id'] as int),
-        builder: (ctx, snap) {
-          if (!snap.hasData) {
-            return const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()));
-          }
-          final m = snap.data!;
-          return Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-              if (m['image'] != null)
-                Center(child: Image.network('${m['image']}', height: 150, errorBuilder: (_, __, ___) => const SizedBox())),
-              const SizedBox(height: 10),
-              Text('${m['name']}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-              Text('${m['price']} ${m['currency'] ?? ''}',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF0B6EA8))),
-              const SizedBox(height: 8),
-              if (m['code'] != null) Text('${tr('الرمز', 'Code')}: ${m['code']}'),
-              if (m['category'] != null) Text('${tr('الفئة', 'Category')}: ${m['category']}'),
-              if (m['uom'] != null) Text('${tr('الوحدة', 'Unit')}: ${m['uom']}'),
-              if (m['qty_available'] != null) Text('${tr('المتوفر', 'In stock')}: ${m['qty_available']}'),
-              if (m['description'] != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text('${m['description']}')),
-              const SizedBox(height: 14),
-              SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                      onPressed: () {
-                        _add(m);
-                        Navigator.pop(ctx);
-                      },
-                      icon: const Icon(Icons.add_shopping_cart),
-                      label: Text(tr('أضف للسلة', 'Add to cart')))),
-            ]),
-          );
-        },
+  Widget _cartLine(MapEntry<int, Map<String, dynamic>> e, void Function(VoidCallback) sync) {
+    final v = e.value;
+    final qty = v['qty'] as int;
+    final price = (v['price'] as num).toDouble();
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(9),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
       ),
+      child: Row(children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            width: 52, height: 52, color: Colors.white,
+            child: v['image'] != null
+                ? Image.network('${v['image']}', fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => _fallback())
+                : _fallback(),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('${v['name']}', maxLines: 2, overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+          const SizedBox(height: 2),
+          Text([
+            if (v['code'] != null) '${v['code']}',
+            '$price${v['uom'] != null ? ' / ${v['uom']}' : ''}',
+          ].join(' · '),
+              maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
+          const SizedBox(height: 4),
+          Text((price * qty).toStringAsFixed(3),
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFFC0392B))),
+        ])),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF0E3A5F).withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            IconButton(
+              iconSize: 17,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              padding: EdgeInsets.zero,
+              icon: Icon(qty == 1 ? Icons.delete_outline_rounded : Icons.remove_rounded,
+                  color: qty == 1 ? const Color(0xFFE5484D) : null),
+              onPressed: () => sync(() {
+                if (qty <= 1) {
+                  _cart.remove(e.key);
+                } else {
+                  v['qty'] = qty - 1;
+                }
+              }),
+            ),
+            Text('$qty', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+            IconButton(
+              iconSize: 17,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              padding: EdgeInsets.zero,
+              icon: const Icon(Icons.add_rounded),
+              onPressed: () => sync(() => v['qty'] = qty + 1),
+            ),
+          ]),
+        ),
+      ]),
     );
   }
 
-  @override
+  /// Where and when — chosen by the client from the addresses already on their
+  /// account, so nothing has to be retyped.
+  Widget _deliverySection(BuildContext ctx, StateSetter setSheet) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.local_shipping_rounded, size: 15, color: Color(0xFF16A34A)),
+            const SizedBox(width: 6),
+            Text(tr('التسليم', 'Delivery'),
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF16A34A))),
+          ]),
+          const SizedBox(height: 10),
+          Text(tr('عنوان التسليم', 'Delivery address'),
+              style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
+          const SizedBox(height: 5),
+          if (_addresses.isEmpty)
+            Text(tr('يُستخدم العنوان الافتراضي لحسابك', 'Your default account address will be used'),
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade500))
+          else
+            for (final a in _addresses)
+              InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () { setState(() => _addressId = a['id'] as int); setSheet(() {}); },
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: _addressId == a['id']
+                        ? const Color(0xFF16A34A).withValues(alpha: 0.07)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                        color: _addressId == a['id']
+                            ? const Color(0xFF16A34A)
+                            : Colors.grey.withValues(alpha: 0.25)),
+                  ),
+                  child: Row(children: [
+                    Icon(
+                        _addressId == a['id']
+                            ? Icons.radio_button_checked_rounded
+                            : Icons.radio_button_unchecked_rounded,
+                        size: 16,
+                        color: _addressId == a['id'] ? const Color(0xFF16A34A) : Colors.grey),
+                    const SizedBox(width: 8),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Row(children: [
+                        Flexible(child: Text('${a['name']}',
+                            maxLines: 1, overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800))),
+                        const SizedBox(width: 5),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                          decoration: BoxDecoration(
+                              color: Colors.grey.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(4)),
+                          child: Text(_addrKind('${a['kind']}'),
+                              style: const TextStyle(fontSize: 7.5, fontWeight: FontWeight.w800)),
+                        ),
+                      ]),
+                      if (a['address'] != null)
+                        Text('${a['address']}',
+                            maxLines: 2, overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 9.5, color: Colors.grey.shade600)),
+                    ])),
+                  ]),
+                ),
+              ),
+          const SizedBox(height: 8),
+          Text(tr('موعد التسليم المطلوب', 'Requested delivery date'),
+              style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
+          const SizedBox(height: 5),
+          InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () async {
+              final now = DateTime.now();
+              final d = await showDatePicker(
+                context: ctx,
+                initialDate: _deliveryDate ?? now.add(const Duration(days: 1)),
+                // Asking for a delivery in the past is never meaningful.
+                firstDate: now,
+                lastDate: now.add(const Duration(days: 365)),
+              );
+              if (d == null) return;
+              if (!ctx.mounted) return;
+              final t = await showTimePicker(
+                context: ctx, initialTime: const TimeOfDay(hour: 9, minute: 0));
+              setState(() => _deliveryDate =
+                  DateTime(d.year, d.month, d.day, t?.hour ?? 9, t?.minute ?? 0));
+              setSheet(() {});
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.grey.withValues(alpha: 0.25)),
+              ),
+              child: Row(children: [
+                const Icon(Icons.event_rounded, size: 15, color: Color(0xFF0E3A5F)),
+                const SizedBox(width: 8),
+                Text(
+                    _deliveryDate == null
+                        ? tr('اختر التاريخ والوقت (اختياري)', 'Pick date & time (optional)')
+                        : _fmt(_deliveryDate!),
+                    style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: _deliveryDate == null ? FontWeight.w600 : FontWeight.w900,
+                        color: _deliveryDate == null ? Colors.grey.shade500 : null)),
+                const Spacer(),
+                if (_deliveryDate != null)
+                  InkWell(
+                    onTap: () { setState(() => _deliveryDate = null); setSheet(() {}); },
+                    child: const Icon(Icons.clear_rounded, size: 15, color: Colors.grey),
+                  ),
+              ]),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _noteCtl,
+            maxLines: 2,
+            style: const TextStyle(fontSize: 12),
+            decoration: InputDecoration(
+              hintText: tr('ملاحظات للطلب (اختياري)', 'Order notes (optional)'),
+              hintStyle: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+              isDense: true,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+        ]),
+      );
+
+  Widget _totalsBox() => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0E3A5F).withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(children: [
+          Row(children: [
+            Text(tr('عدد الأصناف', 'Items'),
+                style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
+            const Spacer(),
+            Text('${_cart.length}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+          ]),
+          const SizedBox(height: 4),
+          Row(children: [
+            Text(tr('إجمالي الكميات', 'Total qty'),
+                style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
+            const Spacer(),
+            Text('${_cart.values.fold<int>(0, (a, v) => a + (v['qty'] as int))}',
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+          ]),
+          const Divider(height: 16),
+          Row(children: [
+            Text(tr('الإجمالي', 'Total'),
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF0E3A5F))),
+            const Spacer(),
+            Text(_cartTotal.toStringAsFixed(3),
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: Color(0xFFC0392B))),
+          ]),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+                tr('لا يشمل الضريبة — تُحتسب على عرض السعر',
+                   'Excludes tax — added on the quotation'),
+                style: TextStyle(fontSize: 9, color: Colors.grey.shade500)),
+          ),
+        ]),
+      );
+
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -278,42 +564,89 @@ class _ShopScreenState extends State<ShopScreen> {
 
   Widget _card(Map p) => Card(
         clipBehavior: Clip.antiAlias,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Expanded(
-            child: Stack(children: [
-              Positioned.fill(
-                child: p['image'] != null
-                    ? Image.network('${p['image']}', fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.inventory_2, size: 40, color: Colors.black26))
-                    : const Icon(Icons.inventory_2, size: 40, color: Colors.black26),
-              ),
-              Positioned(
-                top: 2,
-                left: 2,
-                child: IconButton(
-                  iconSize: 20,
-                  icon: Icon(p['favorite'] == true ? Icons.favorite : Icons.favorite_border,
-                      color: p['favorite'] == true ? Colors.red : Colors.grey),
-                  onPressed: () => _toggleFav(p),
+        child: InkWell(
+          // The whole card opens the product; an info icon in a corner is a
+          // target you have to hunt for.
+          onTap: () => _openProduct(p),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Expanded(
+              child: Stack(children: [
+                Positioned.fill(child: Container(
+                  color: Colors.white,
+                  child: p['image'] != null
+                      ? Image.network('${p['image']}', fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => _fallback())
+                      : _fallback(),
+                )),
+                Positioned(
+                  top: 2, left: 2,
+                  child: IconButton(
+                    iconSize: 19,
+                    icon: Icon(p['favorite'] == true ? Icons.favorite : Icons.favorite_border,
+                        color: p['favorite'] == true ? Colors.red : Colors.grey),
+                    onPressed: () => _toggleFav(p),
+                  ),
                 ),
-              ),
-              Positioned(
-                top: 2,
-                right: 2,
-                child: IconButton(iconSize: 20, icon: const Icon(Icons.info_outline, color: Colors.blue), onPressed: () => _info(p)),
-              ),
-            ]),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text('${p['name']}', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 2, 4, 6),
-            child: Row(children: [
-              Expanded(child: Text('${p['price']} ${p['currency'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12))),
-              IconButton(iconSize: 22, icon: const Icon(Icons.add_circle, color: Color(0xFF0B6EA8)), onPressed: () => _add(p)),
-            ]),
-          ),
-        ]),
+                // How many of this product are already in the cart.
+                if (((_cart[p['id']]?['qty'] ?? 0) as int) > 0)
+                  Positioned(
+                    top: 6, right: 6,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                          color: const Color(0xFF16A34A), borderRadius: BorderRadius.circular(20)),
+                      child: Text('${_cart[p['id']]!['qty']}',
+                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)),
+                    ),
+                  ),
+              ]),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text('${p['name']}',
+                  maxLines: 2, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 2, 4, 6),
+              child: Row(children: [
+                Expanded(child: Text('${p['price']} ${p['currency'] ?? ''}',
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12))),
+                IconButton(
+                  iconSize: 22,
+                  icon: const Icon(Icons.add_circle, color: Color(0xFF0B6EA8)),
+                  onPressed: () => _add(p),
+                ),
+              ]),
+            ),
+          ]),
+        ),
       );
+
+  Widget _fallback() => Center(
+        child: Icon(Icons.inventory_2_outlined, size: 38, color: Colors.grey.shade300),
+      );
+
+  void _openProduct(Map p) => Navigator.push(context, MaterialPageRoute(
+        builder: (_) => ProductDetailScreen(
+          productId: p['id'] as int,
+          name: '${p['name']}',
+          inCart: (_cart[p['id']]?['qty'] ?? 0) as int,
+          onAdd: (prod, qty) => setState(() {
+            final id = p['id'] as int;
+            if (_cart.containsKey(id)) {
+              _cart[id]!['qty'] = (_cart[id]!['qty'] as int) + qty;
+            } else {
+              _cart[id] = {
+                'name': prod['name'], 'price': prod['price'], 'qty': qty,
+                'image': prod['image'], 'uom': prod['uom'], 'code': prod['code'],
+              };
+            }
+          }),
+        ),
+      )).then((_) {
+        // the favourite may have been toggled over on the detail screen
+        if (mounted) setState(() {});
+      });
 }

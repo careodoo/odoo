@@ -425,9 +425,25 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/client/favorites'), headers: await _headers())))['data'] as Map);
 
-  Future<Map<String, dynamic>> orderCreate(List<Map<String, dynamic>> lines) async =>
+  Future<Map<String, dynamic>> orderCreate(
+    List<Map<String, dynamic>> lines, {
+    int? addressId,
+    String? deliveryDate,
+    String? note,
+  }) async =>
       Map<String, dynamic>.from((await _handle(await http.post(_u('/client/order/create'),
-              headers: await _headers(), body: jsonEncode({'lines': lines})))) ['data'] as Map);
+          headers: await _headers(),
+          body: jsonEncode({
+            'lines': lines,
+            if (addressId != null) 'address_id': addressId,
+            if (deliveryDate != null) 'delivery_date': deliveryDate,
+            if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+          })))) ['data'] as Map);
+
+  /// Addresses this client may have an order delivered to.
+  Future<List<dynamic>> clientAddresses() async =>
+      List<dynamic>.from((await _handle(
+          await http.get(_u('/client/addresses'), headers: await _headers())))['data'] as List);
 
   Future<List<dynamic>> clientOrders() async =>
       List<dynamic>.from((await _handle(
