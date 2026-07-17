@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ===== Attendance / shift report (PDF) =====================
+         Printed from the client portal and the app. The data comes from the
+         same _attendance_data() the screens use, so the paper and the screen
+         can never disagree. -->
+    <record id="action_report_attendance" model="ir.actions.report">
+        <field name="name">تقرير الحضور والانصراف</field>
+        <field name="model">care.cafm.shift</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_cafm.report_attendance_doc</field>
+        <field name="report_file">care_cafm.report_attendance_doc</field>
+        <field name="print_report_name">'attendance-%s' % (context.get('period_label') or '')</field>
+    </record>
+
+    <template id="report_attendance_doc">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page" style="font-size:12px;">
+                    <style>
+                        .att-h { background:#0E3A5F; color:#fff; padding:8px 10px; border-radius:6px;
+                                 font-weight:700; font-size:13px; margin:10px 0 8px; }
+                        .att-t { width:100%; border-collapse:collapse; }
+                        .att-t th { background:#F1F5F9; border:1px solid #CBD5E1; padding:5px 6px;
+                                    font-size:10.5px; text-align:center; }
+                        .att-t td { border:1px solid #E2E8F0; padding:4px 6px; font-size:10.5px;
+                                    text-align:center; }
+                        .kpi { border:1px solid #CBD5E1; border-radius:6px; padding:6px 4px; text-align:center; }
+                        .kpi .v { font-size:16px; font-weight:700; color:#0E3A5F; }
+                        .kpi .l { font-size:9px; color:#64748B; }
+                        .ok { color:#16A34A; font-weight:700; }
+                        .no { color:#E5484D; font-weight:700; }
+                    </style>
+
+                    <div style="text-align:center; margin-bottom:6px;">
+                        <h3 style="margin:0; color:#0E3A5F; font-weight:800;">تقرير الحضور والانصراف</h3>
+                        <div style="font-size:11px; color:#64748B;">
+                            <span t-esc="d.get('client') or ''"/>
+                            <span t-if="d.get('period_label')"> — الفترة: <span t-esc="d['period_label']"/></span>
+                            <span t-if="d.get('employee_name')"> — الموظف: <span t-esc="d['employee_name']"/></span>
+                        </div>
+                        <div style="font-size:9.5px; color:#94A3B8;">
+                            صدر في <span t-esc="d.get('printed_on')"/>
+                        </div>
+                    </div>
+
+                    <!-- ===== totals ===== -->
+                    <table style="width:100%; margin:8px 0;">
+                        <tr>
+                            <td style="width:16.6%; padding:2px;"><div class="kpi">
+                                <div class="v" t-esc="d['totals'].get('workers', 0)"/><div class="l">عامل</div></div></td>
+                            <td style="width:16.6%; padding:2px;"><div class="kpi">
+                                <div class="v" t-esc="d['totals'].get('records', 0)"/><div class="l">سجل وردية</div></div></td>
+                            <td style="width:16.6%; padding:2px;"><div class="kpi">
+                                <div class="v" t-esc="d['totals'].get('total_hours', 0)"/><div class="l">إجمالي الساعات</div></div></td>
+                            <td style="width:16.6%; padding:2px;"><div class="kpi">
+                                <div class="v" t-esc="d['totals'].get('avg_hours', 0)"/><div class="l">متوسط/عامل</div></div></td>
+                            <td style="width:16.6%; padding:2px;"><div class="kpi">
+                                <div class="v" t-esc="d['totals'].get('days_covered', 0)"/><div class="l">أيام مغطاة</div></div></td>
+                            <td style="width:16.6%; padding:2px;"><div class="kpi">
+                                <div class="v" t-esc="d['totals'].get('present_now', 0)"/><div class="l">بالموقع الآن</div></div></td>
+                        </tr>
+                    </table>
+
+                    <!-- ===== per shift: expected vs here ===== -->
+                    <t t-if="d.get('shifts')">
+                        <div class="att-h">الحضور حسب الوردية (اليوم)</div>
+                        <table class="att-t">
+                            <thead><tr>
+                                <th style="width:22%;">الوردية</th>
+                                <th style="width:14%;">التوقيت</th>
+                                <th style="width:14%;">الأيام</th>
+                                <th>المتوقَّع</th><th>حضر</th><th>لم يحضر</th><th>بالموقع الآن</th><th>النسبة</th>
+                            </tr></thead>
+                            <tbody>
+                                <tr t-foreach="d['shifts']" t-as="s">
+                                    <td style="text-align:right; font-weight:700;" t-esc="s['name']"/>
+                                    <td>
+                                        <t t-if="s.get('start')"><span t-esc="s['start']"/> – <span t-esc="s.get('end') or ''"/></t>
+                                        <t t-else="">—</t>
+                                    </td>
+                                    <td t-esc="s.get('days') or '—'"/>
+                                    <td t-esc="s['expected']"/>
+                                    <td class="ok" t-esc="s['came']"/>
+                                    <td t-attf-class="#{'no' if s['absent'] else ''}" t-esc="s['absent']"/>
+                                    <td t-esc="s['present']"/>
+                                    <td><span t-esc="s['present_rate']"/>%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- who is missing, by name — the point of the report -->
+                        <t t-foreach="d['shifts']" t-as="s">
+                            <t t-set="absent" t-value="[m for m in s['members'] if not m['came_today']]"/>
+                            <t t-if="absent">
+                                <div style="margin-top:6px; font-size:10.5px;">
+                                    <b>لم يحضروا اليوم — <span t-esc="s['name']"/>:</b>
+                                    <span t-esc="'، '.join([m['name'] for m in absent])"/>
+                                </div>
+                            </t>
+                        </t>
+                    </t>
+
+                    <!-- ===== per worker summary ===== -->
+                    <t t-if="d.get('workers')">
+                        <div class="att-h">ملخّص العاملين</div>
+                        <table class="att-t">
+                            <thead><tr>
+                                <th style="width:30%;">العامل</th><th style="width:22%;">الوظيفة</th>
+                                <th>أيام</th><th>ورديات</th><th>الساعات</th><th>متوسط/يوم</th><th>الحالة</th>
+                            </tr></thead>
+                            <tbody>
+                                <tr t-foreach="d['workers']" t-as="w">
+                                    <td style="text-align:right; font-weight:700;" t-esc="w['name']"/>
+                                    <td style="text-align:right;" t-esc="w['job'] or '—'"/>
+                                    <td t-esc="w['days']"/>
+                                    <td t-esc="w['shifts']"/>
+                                    <td t-esc="w['hours']"/>
+                                    <td t-esc="w['avg_hours']"/>
+                                    <td t-attf-class="#{'ok' if w['open'] else ''}"
+                                        t-esc="'بالموقع' if w['open'] else 'خارج الوردية'"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </t>
+
+                    <!-- ===== the records themselves ===== -->
+                    <t t-if="d.get('records')">
+                        <div class="att-h">
+                            سجلات الحضور والانصراف
+                            <span style="font-weight:400; font-size:10px;"
+                                  t-if="d['totals'].get('records', 0) &gt; len(d['records'])">
+                                (عرض <span t-esc="len(d['records'])"/> من <span t-esc="d['totals']['records']"/>)
+                            </span>
+                        </div>
+                        <table class="att-t">
+                            <thead><tr>
+                                <th style="width:24%;">العامل</th><th style="width:13%;">التاريخ</th>
+                                <th>الدخول</th><th>الخروج</th><th>الساعات</th>
+                                <th style="width:20%;">المرفق</th><th>الحالة</th>
+                            </tr></thead>
+                            <tbody>
+                                <tr t-foreach="d['records']" t-as="r">
+                                    <td style="text-align:right;" t-esc="r['employee']"/>
+                                    <td t-esc="r['date'] or '—'"/>
+                                    <td t-esc="r.get('in_t') or '—'"/>
+                                    <td t-esc="r.get('out_t') or '—'"/>
+                                    <td t-esc="r['hours']"/>
+                                    <td style="text-align:right;" t-esc="r['facility'] or '—'"/>
+                                    <td t-attf-class="#{'ok' if r['open'] else ''}"
+                                        t-esc="'مفتوحة' if r['open'] else 'مغلقة'"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </t>
+
+                    <t t-if="not d.get('records') and not d.get('shifts')">
+                        <p style="text-align:center; color:#94A3B8; margin-top:40px;">
+                            لا سجلات حضور في هذه الفترة.
+                        </p>
+                    </t>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

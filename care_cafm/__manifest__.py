@@ -18,6 +18,7 @@
         'reports/reports.xml',
         'reports/asset_label.xml',
         'reports/stock_issue_report.xml',
+        'reports/attendance_report.xml',
         'views/cafm_views.xml',
         'views/cafm_backend_pro.xml',
         'views/building_designer.xml',

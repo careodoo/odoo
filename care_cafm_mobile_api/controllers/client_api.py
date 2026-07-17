@@ -3,10 +3,11 @@
 whatever exists in the module for this customer (buildings, services, teams,
 work orders) shows up automatically — nothing is hard-coded in the app."""
 import base64
+import re
 import uuid
 from datetime import timedelta
 from odoo import fields, SUPERUSER_ID
-from odoo.http import request, Controller, route
+from odoo.http import request, Controller, route, content_disposition
 
 from .api import _auth, _ok, _err, _body, _abs, API, _wo_dict
 
@@ -129,47 +130,217 @@ class ClientApi(Controller):
         } for o in occs]
         return _ok({'schedules': out, 'occurrences': occ_out})
 
-    @route(API + '/client/attendance', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
-    def client_attendance(self, **kw):
-        env = _auth()
-        if not env:
-            return _err('غير مصرّح', 401)
-        if 'care.cafm.shift' not in env:
-            return _ok({'records': [], 'workers': [], 'totals': {}})
+    def _attendance_data(self, env, a):
+        """Attendance for the client's sites, organised by shift: who was
+        expected, who actually punched in, who is missing, and every record.
+        Shared by the API and the printed report so the two can never disagree."""
         facs = self._facilities(env)
-        recs = env['care.cafm.shift'].sudo().search(
-            [('facility_id', 'in', facs.ids)], order='check_in desc', limit=800) if facs else env['care.cafm.shift'].sudo().browse()
+        empty = {'records': [], 'workers': [], 'totals': {}, 'shifts': [], 'facets': {'employees': [], 'facilities': []}}
+        if 'care.cafm.shift' not in env or not facs:
+            return empty
+        now = fields.Datetime.now()
+        dstart, dend, period_label = self._range(a)
+        fac_filter = a.get('facility_id')
+        fac_filter = int(fac_filter) if (fac_filter or '').isdigit() else None
+        fac_ids = [fac_filter] if fac_filter and fac_filter in facs.ids else facs.ids
+        emp_filter = a.get('employee_id')
+        emp_filter = int(emp_filter) if (emp_filter or '').isdigit() else None
+
+        dom = [('facility_id', 'in', fac_ids)]
+        if emp_filter:
+            dom.append(('employee_id', '=', emp_filter))
+        if dstart:
+            dom.append(('check_in', '>=', dstart))
+        if dend:
+            dom.append(('check_in', '<=', dend))
+        recs = env['care.cafm.shift'].sudo().search(dom, order='check_in desc', limit=2000)
+
         records, per_emp = [], {}
         for s in recs:
             eid = s.employee_id.id
-            g = per_emp.setdefault(eid, {'id': eid, 'name': s.employee_id.name,
-                                         'job': s.employee_id.job_title or None,
-                                         'days': set(), 'hours': 0.0, 'open': False})
+            g = per_emp.setdefault(eid, {
+                'id': eid, 'name': s.employee_id.name,
+                'job': s.employee_id.job_title or None,
+                'photo': _emp_photo(s.employee_id, 'image_128'),
+                'days': set(), 'hours': 0.0, 'open': False, 'shifts': 0, 'incomplete': 0,
+            })
+            g['shifts'] += 1
             if s.check_in:
                 g['days'].add(str(s.check_in)[:10])
                 g['hours'] += (s.duration_hours or 0.0)
             if s.state == 'open':
                 g['open'] = True
+            # A punch-in with no punch-out on a past day is a data gap worth
+            # surfacing rather than silently counting as zero hours.
+            if s.state == 'closed' and not s.check_out:
+                g['incomplete'] += 1
             records.append({
                 'id': s.id, 'employee': s.employee_id.name, 'employee_id': eid,
                 'job': s.employee_id.job_title or None,
+                'photo': _emp_photo(s.employee_id, 'image_128'),
                 'facility': s.facility_id.name or None, 'facility_id': s.facility_id.id or None,
                 'check_in': s.check_in or None, 'check_out': s.check_out or None,
+                'date': str(s.check_in)[:10] if s.check_in else None,
                 'hours': round(s.duration_hours or 0.0, 1),
                 'state': s.state, 'open': s.state == 'open',
                 'in_distance': s.in_distance or 0,
+                'within_hours': bool(s.within_hours),
             })
-        workers = [{'id': g['id'], 'name': g['name'], 'job': g['job'],
+
+        workers = [{'id': g['id'], 'name': g['name'], 'job': g['job'], 'photo': g['photo'],
                     'days': len(g['days']), 'hours': round(g['hours'], 1),
+                    'shifts': g['shifts'], 'incomplete': g['incomplete'],
+                    'avg_hours': round(g['hours'] / len(g['days']), 1) if g['days'] else 0.0,
                     'open': g['open']} for g in per_emp.values()]
         workers.sort(key=lambda w: -w['hours'])
+
+        # ---- roster by shift: expected vs actually here ---------------------
+        open_ids = set(env['care.cafm.shift'].sudo().search(
+            [('facility_id', 'in', fac_ids), ('state', '=', 'open')]).mapped('employee_id').ids)
+        day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        # "Turned up for this shift" cannot be a midnight cut: the night shift
+        # runs 23:00→07:00, so someone who punched in at 23:00 yesterday and is
+        # still on site is present now — counting them absent because their
+        # check-in has yesterday's date is exactly wrong. Anyone with an open
+        # shift counts as here, as does anyone who punched in since midnight.
+        today_ids = set(env['care.cafm.shift'].sudo().search(
+            [('facility_id', 'in', fac_ids), ('check_in', '>=', day_start)]).mapped('employee_id').ids)
+        today_ids |= open_ids
+
+        def _hhmm(f):
+            """Float 8.5 -> '08:30'. Odoo stores shift times as hours."""
+            if not f:
+                return None
+            h, m = int(f), int(round((f - int(f)) * 60))
+            return '%02d:%02d' % (h % 24, m)
+
+        shifts = []
+        if 'care.cafm.team.member' in env:
+            mem_dom = [('facility_id', 'in', fac_ids)]
+            if emp_filter:
+                mem_dom.append(('employee_id', '=', emp_filter))
+            by_shift = {}
+            for m in env['care.cafm.team.member'].sudo().search(mem_dom):
+                if not m.employee_id:
+                    continue
+                st = m.shift_type_id
+                key = st.id or 0
+                g = by_shift.setdefault(key, {
+                    'id': st.id or 0,
+                    'name': st.name if st else 'بدون وردية محددة',
+                    'code': (st.code if st else None),
+                    'start': _hhmm(st.start_time) if st else None,
+                    'end': _hhmm(st.end_time) if st else None,
+                    'days': (st.days if st else None),
+                    'members': [], 'seen': set(),
+                })
+                if m.employee_id.id in g['seen']:
+                    continue
+                g['seen'].add(m.employee_id.id)
+                g['members'].append({
+                    'id': m.employee_id.id, 'name': m.employee_id.name,
+                    'job': m.employee_id.job_title or None,
+                    'photo': _emp_photo(m.employee_id, 'image_128'),
+                    'team': m.team_id.name or None,
+                    'role': dict(m._fields['role'].selection).get(m.role, m.role),
+                    'present_now': m.employee_id.id in open_ids,
+                    'came_today': m.employee_id.id in today_ids,
+                    'hours': next((w['hours'] for w in workers if w['id'] == m.employee_id.id), 0.0),
+                    'days': next((w['days'] for w in workers if w['id'] == m.employee_id.id), 0),
+                })
+            for g in by_shift.values():
+                g.pop('seen', None)
+                g['members'].sort(key=lambda x: (not x['present_now'], not x['came_today'], x['name'] or ''))
+                g['expected'] = len(g['members'])
+                g['present'] = sum(1 for x in g['members'] if x['present_now'])
+                g['came'] = sum(1 for x in g['members'] if x['came_today'])
+                g['absent'] = g['expected'] - g['came']
+                g['present_rate'] = round(g['came'] * 100.0 / g['expected'], 1) if g['expected'] else 0.0
+            shifts = sorted(by_shift.values(), key=lambda g: (g['start'] or 'zz'))
+
         totals = {
             'records': len(records),
-            'present_now': sum(1 for g in per_emp.values() if g['open']),
+            'present_now': len(open_ids),
             'workers': len(per_emp),
             'total_hours': round(sum(g['hours'] for g in per_emp.values()), 1),
+            'avg_hours': round(sum(g['hours'] for g in per_emp.values()) / len(per_emp), 1) if per_emp else 0.0,
+            'days_covered': len({r['date'] for r in records if r['date']}),
+            'incomplete': sum(g['incomplete'] for g in per_emp.values()),
+            'expected': sum(s['expected'] for s in shifts),
+            'came_today': sum(s['came'] for s in shifts),
+            'absent_today': sum(s['absent'] for s in shifts),
+            'period_label': period_label,
         }
-        return _ok({'records': records, 'workers': workers, 'totals': totals})
+        emps = {w['id']: w['name'] for w in workers}
+        for s in shifts:
+            for m in s['members']:
+                emps.setdefault(m['id'], m['name'])
+        return {
+            'records': records[:800], 'workers': workers, 'totals': totals, 'shifts': shifts,
+            'facets': {
+                'employees': [{'value': k, 'label': v} for k, v in sorted(emps.items(), key=lambda i: i[1] or '')],
+                'facilities': [{'value': f.id, 'label': f.name} for f in facs],
+            },
+        }
+
+    @route(API + '/client/attendance', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def client_attendance(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        return _ok(self._attendance_data(env, request.httprequest.args))
+
+    @route(API + '/client/employee/<int:eid>/attendance', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def client_employee_attendance(self, eid, **kw):
+        """Every attendance record for one worker on this client's sites."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        a = dict(request.httprequest.args)
+        a['employee_id'] = str(eid)
+        d = self._attendance_data(env, a)
+        # A client must not be able to pull a worker who never served them.
+        if not d['records'] and not any(
+                m['id'] == eid for s in d['shifts'] for m in s['members']):
+            return _err('لا سجلات لهذا الموظف في منشآتك', 404)
+        emp = env['hr.employee'].sudo().browse(eid)
+        d['employee'] = {'id': emp.id, 'name': emp.name, 'job': emp.job_title or None,
+                         'photo': _emp_photo(emp, 'image_256')}
+        return _ok(d)
+
+    @route('/cafm/attendance/report', type='http', auth='user', methods=['GET'], csrf=False)
+    def attendance_report_pdf(self, **kw):
+        """The attendance PDF. auth='user' (not the bearer token) because the
+        app opens it through /web/sso, which establishes a real session — that
+        way the browser, the portal and the app all take the same path."""
+        env = request.env
+        a = request.httprequest.args
+        d = self._attendance_data(env, a)
+        d['client'] = env.user.partner_id.commercial_partner_id.name
+        d['period_label'] = d['totals'].get('period_label')
+        eid = a.get('employee_id')
+        if (eid or '').isdigit():
+            d['employee_name'] = env['hr.employee'].sudo().browse(int(eid)).name
+        # The PDF lists at most 400 rows; say so rather than let a cut read as
+        # the whole set.
+        d['records'] = d['records'][:400]
+        # The API hands these to json (which stringifies datetimes); the report
+        # renders the raw dicts, so times arrive as datetime objects. Format
+        # them here rather than slicing strings inside the template.
+        for r in d['records']:
+            for key, dest in (('check_in', 'in_t'), ('check_out', 'out_t')):
+                v = r.get(key)
+                r[dest] = fields.Datetime.to_string(v)[11:16] if v else '—'
+            if r.get('date') is None and r.get('check_in'):
+                r['date'] = fields.Datetime.to_string(r['check_in'])[:10]
+        report = request.env.ref('care_cafm.action_report_attendance').with_user(SUPERUSER_ID)
+        pdf = request.env['ir.actions.report'].sudo()._render_qweb_pdf(report, res_ids=[], data=d)[0]
+        label = re.sub(r'[^\w-]+', '-', (d.get('period_label') or 'all'))
+        fname = 'attendance-%s.pdf' % label
+        return request.make_response(pdf, headers=[
+            ('Content-Type', 'application/pdf'),
+            ('Content-Disposition', content_disposition(fname).replace('attachment', 'inline')),
+        ])
 
     @route(API + '/client/offboard/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
     def offboard_create(self, **kw):
@@ -761,36 +932,168 @@ class ClientApi(Controller):
     # ---- live activity feed + current worker locations ----------------------
     @route(API + '/client/activity', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def activity(self, **kw):
+        """A unified activity stream for the client's sites: QR check-ins,
+        shift punches and work-order milestones in one timeline, plus who is on
+        site right now. Filterable by period / kind / worker / facility."""
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
         facs = self._facilities(env)
-        Scan = env['care.cafm.scan'].sudo()
+        if not facs:
+            return _ok({'feed': [], 'live': [], 'stats': {}, 'facets': {'employees': [], 'facilities': []}})
+        a = request.httprequest.args
         now = fields.Datetime.now()
-        scans = Scan.search([('facility_id', 'in', facs.ids)], order='scan_datetime desc', limit=60)
+        day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        dstart, dend, period_label = self._range(a)
+        kind = a.get('kind') or 'all'
+        emp_filter = a.get('employee_id')
+        emp_filter = int(emp_filter) if (emp_filter or '').isdigit() else None
+        fac_filter = a.get('facility_id')
+        fac_filter = int(fac_filter) if (fac_filter or '').isdigit() else None
+        fac_ids = [fac_filter] if fac_filter and fac_filter in facs.ids else facs.ids
+
+        def _keep(when):
+            if dstart and when < dstart:
+                return False
+            if dend and when > dend:
+                return False
+            return True
+
+        events = []
+
+        # ---- QR check-ins -------------------------------------------------
+        Scan = env['care.cafm.scan'].sudo()
+        scan_dom = [('facility_id', 'in', fac_ids)]
+        if emp_filter:
+            scan_dom.append(('employee_id', '=', emp_filter))
+        scans = Scan.search(scan_dom, order='scan_datetime desc', limit=400)
         type_lbl = dict(Scan._fields['scan_type'].selection) if 'scan_type' in Scan._fields else {}
-        feed = [{
-            'employee': sc.employee_id.name or None,
-            'photo': _emp_photo(sc.employee_id, 'image_128') if sc.employee_id else None,
-            'location': sc.location_id.name or None,
-            'building': (sc.location_id.building_id.name if sc.location_id and sc.location_id.building_id else None),
-            'facility': sc.facility_id.name or None,
-            'type': type_lbl.get(sc.scan_type, sc.scan_type) if sc.scan_type else None,
-            'when': sc.scan_datetime or None,
-        } for sc in scans]
-        # current locations: last scan per worker
+        for sc in scans:
+            if not sc.scan_datetime or not _keep(sc.scan_datetime):
+                continue
+            events.append({
+                'kind': 'scan',
+                'title': type_lbl.get(sc.scan_type, sc.scan_type) or 'مسح موقع',
+                'employee': sc.employee_id.name or None,
+                'employee_id': sc.employee_id.id or None,
+                'photo': _emp_photo(sc.employee_id, 'image_128') if sc.employee_id else None,
+                'location': sc.location_id.name or None,
+                'building': (sc.location_id.building_id.name if sc.location_id and sc.location_id.building_id else None),
+                'facility': sc.facility_id.name or None,
+                'when': sc.scan_datetime,
+            })
+
+        # ---- shift punches -------------------------------------------------
+        if 'care.cafm.shift' in env:
+            sh_dom = [('facility_id', 'in', fac_ids)]
+            if emp_filter:
+                sh_dom.append(('employee_id', '=', emp_filter))
+            for sh in env['care.cafm.shift'].sudo().search(sh_dom, order='check_in desc', limit=300):
+                base = {
+                    'employee': sh.employee_id.name or None,
+                    'employee_id': sh.employee_id.id or None,
+                    'photo': _emp_photo(sh.employee_id, 'image_128') if sh.employee_id else None,
+                    'facility': sh.facility_id.name or None,
+                    'location': None, 'building': None,
+                }
+                if sh.check_in and _keep(sh.check_in):
+                    events.append({**base, 'kind': 'shift_in', 'title': 'بداية وردية', 'when': sh.check_in})
+                if sh.check_out and _keep(sh.check_out):
+                    events.append({**base, 'kind': 'shift_out', 'title': 'نهاية وردية',
+                                   'when': sh.check_out, 'hours': round(sh.duration_hours or 0.0, 1)})
+
+        # ---- work-order milestones ------------------------------------------
+        WO = env['care.cafm.workorder'].sudo()
+        wo_dom = [('facility_id', 'in', fac_ids)]
+        if emp_filter:
+            wo_dom.append(('employee_id', '=', emp_filter))
+        for w in WO.search(wo_dom, order='request_datetime desc', limit=300):
+            base = {
+                'employee': w.employee_id.name or None,
+                'employee_id': w.employee_id.id or None,
+                'photo': _emp_photo(w.employee_id, 'image_128') if w.employee_id else None,
+                'facility': w.facility_id.name or None,
+                'location': w.location_id.name or None,
+                'building': None,
+                'wo_id': w.id, 'wo_name': w.name, 'wo_title': w.title,
+                'service_type': w.service_type or None,
+            }
+            if w.request_datetime and _keep(w.request_datetime):
+                events.append({**base, 'kind': 'wo_new', 'title': 'أمر عمل جديد', 'when': w.request_datetime})
+            if w.start_datetime and _keep(w.start_datetime):
+                events.append({**base, 'kind': 'wo_start', 'title': 'بدء التنفيذ', 'when': w.start_datetime})
+            if w.done_datetime and _keep(w.done_datetime):
+                events.append({**base, 'kind': 'wo_done', 'title': 'إنجاز أمر عمل', 'when': w.done_datetime})
+
+        if kind != 'all':
+            events = [e for e in events if e['kind'] == kind]
+        events.sort(key=lambda e: e['when'], reverse=True)
+
+        # Stats describe the whole filtered stream, before the display cut.
+        def _count(k):
+            return sum(1 for e in events if e['kind'] == k)
+        today_events = [e for e in events if e['when'] >= day_start]
+        stats = {
+            'total': len(events),
+            'today': len(today_events),
+            'scans': _count('scan'),
+            'shift_in': _count('shift_in'),
+            'wo_new': _count('wo_new'),
+            'wo_done': _count('wo_done'),
+            'workers': len({e['employee_id'] for e in events if e['employee_id']}),
+            'period_label': period_label,
+            # Activity by hour of day — shows when the site is actually worked.
+            'by_hour': {str(h): sum(1 for e in today_events if e['when'].hour == h) for h in range(24)},
+        }
+
+        # ---- who is on site right now ---------------------------------------
+        open_emp_ids = set()
+        if 'care.cafm.shift' in env:
+            open_emp_ids = set(env['care.cafm.shift'].sudo().search(
+                [('facility_id', 'in', fac_ids), ('state', '=', 'open')]).mapped('employee_id').ids)
+        on_task = {}
+        for w in WO.search([('facility_id', 'in', fac_ids), ('state', '=', 'in_progress'),
+                            ('employee_id', '!=', False)]):
+            on_task.setdefault(w.employee_id.id, w)
         seen, live = set(), []
         for sc in scans:
             if sc.employee_id and sc.employee_id.id not in seen:
                 seen.add(sc.employee_id.id)
+                eid = sc.employee_id.id
+                w = on_task.get(eid)
                 live.append({
-                    'employee': sc.employee_id.name, 'photo': _emp_photo(sc.employee_id, 'image_128'),
+                    'employee': sc.employee_id.name, 'employee_id': eid,
+                    'photo': _emp_photo(sc.employee_id, 'image_128'),
+                    'job': sc.employee_id.job_title or None,
                     'location': sc.location_id.name or None,
                     'building': (sc.location_id.building_id.name if sc.location_id and sc.location_id.building_id else None),
+                    'facility': sc.facility_id.name or None,
                     'last_seen': sc.scan_datetime or None,
                     'fresh': bool(sc.scan_datetime and (now - sc.scan_datetime) <= timedelta(hours=2)),
+                    'on_shift': eid in open_emp_ids,
+                    'on_task': bool(w),
+                    'task': w.title if w else None,
+                    'task_id': w.id if w else None,
                 })
-        return _ok({'feed': feed, 'live': live})
+        live.sort(key=lambda l: (not l['on_task'], not l['fresh'], not l['on_shift']))
+        stats['live_now'] = sum(1 for l in live if l['fresh'])
+        stats['on_task_now'] = sum(1 for l in live if l['on_task'])
+        stats['on_shift_now'] = len(open_emp_ids)
+
+        emps = {}
+        for e in events:
+            if e['employee_id']:
+                emps[e['employee_id']] = e['employee']
+        return _ok({
+            'feed': events[:150],
+            'shown': min(len(events), 150),
+            'live': live,
+            'stats': stats,
+            'facets': {
+                'employees': [{'value': k, 'label': v} for k, v in sorted(emps.items(), key=lambda i: i[1] or '')],
+                'facilities': [{'value': f.id, 'label': f.name} for f in facs],
+            },
+        })
 
     # ---- building / floor / facility statistics (period-aware) --------------
     @route(API + '/client/structure', type='http', auth='public', methods=['GET'], csrf=False, cors='*')

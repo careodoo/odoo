@@ -169,3 +169,18 @@ class HrEmployeeAvailability(models.Model):
         if (operator == '=' and value) or (operator == '!=' and not value):
             return [('id', 'in', open_emp)]
         return [('id', 'not in', open_emp)]
+
+
+class AttendanceReport(models.AbstractModel):
+    """Feeds the attendance PDF. The values come from the same
+    _attendance_data() the portal and app read, passed in via `data`, so the
+    printed report can never drift from what the screen showed."""
+    _name = 'report.care_cafm.report_attendance_doc'
+    _description = 'تقرير الحضور والانصراف'
+
+    @api.model
+    def _get_report_values(self, docids, data=None):
+        d = dict(data or {})
+        d.setdefault('totals', {})
+        d.setdefault('printed_on', fields.Datetime.to_string(fields.Datetime.now())[:16])
+        return {'doc_ids': docids, 'doc_model': 'care.cafm.shift', 'docs': [], 'd': d}
