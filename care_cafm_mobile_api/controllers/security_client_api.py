@@ -5,9 +5,10 @@ care_cafm_security bridge (security.premise.cafm_facility_id → care.cafm.facil
 
 Everything is read with sudo() and hard-scoped to the caller's premises, so a
 client only ever sees security data for their own sites."""
+from odoo import fields, _
 from odoo.http import request, Controller, route
 
-from .api import _auth, _ok, _err, _abs, API
+from .api import _auth, _ok, _err, _body, _abs, API
 
 
 def _sel(Model, field):
@@ -245,6 +246,100 @@ class SecurityClientApi(Controller):
             'check_in': _dt(getattr(r, 'check_in', False)), 'check_out': _dt(getattr(r, 'check_out', False)),
             'state': r.state, 'state_label': st.get(r.state, r.state),
         } for r in recs])
+
+    # ---- issue a gate pass (client-issued "permit") -----------------------
+    @route(API + '/client/security/options', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def sec_options(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        g = self._guard(env)
+        if g:
+            return g
+        pids, cids = self._scope(env)
+        clients = env['security.client'].sudo().browse(cids).exists()
+        prem = env['security.premise'].sudo().browse(pids).exists()
+        routes = []
+        if 'security.patrol.route' in env:
+            routes = [{'id': r.id, 'name': r.name, 'premise_id': r.premise_id.id}
+                      for r in env['security.patrol.route'].sudo().search([('premise_id', 'in', pids)])]
+        return _ok({
+            'clients': [{'id': c.id, 'name': c.name} for c in clients],
+            'premises': [{'id': p.id, 'name': p.name,
+                          'client_id': p.client_id.id if 'client_id' in p._fields and p.client_id else None}
+                         for p in prem],
+            'routes': routes,
+        })
+
+    @route(API + '/client/security/gatepass/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def sec_gatepass_create(self, **kw):
+        """Client issues a gate pass (personal or vehicle) — starts as draft for
+        the security team to approve."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        g = self._guard(env)
+        if g:
+            return g
+        if 'security.gate.pass' not in env:
+            return _err('غير متاح', 404)
+        pids, cids = self._scope(env)
+        b = _body()
+        cid = int(b['client_id']) if b.get('client_id') else (cids[0] if cids else None)
+        if not cid or cid not in cids:
+            return _err('العميل الأمني غير محدد', 422)
+        if not (b.get('purpose') or '').strip():
+            return _err('الغرض مطلوب', 422)
+        if not b.get('start_date') or not b.get('end_date'):
+            return _err('تاريخ البداية والنهاية مطلوبان', 422)
+        GP = env['security.gate.pass'].sudo()
+        vals = {
+            'client_id': cid,
+            'start_date': fields.Date.to_date(b['start_date']),
+            'end_date': fields.Date.to_date(b['end_date']),
+            'purpose': b['purpose'].strip(),
+            'pass_type': b.get('pass_type') or 'personal',
+        }
+        if b.get('premise_id') and 'premise_id' in GP._fields and int(b['premise_id']) in pids:
+            vals['premise_id'] = int(b['premise_id'])
+        gp = GP.create(vals)
+        # personal pass → add the visitor person(s)
+        if vals['pass_type'] == 'personal' and 'security.gate.pass.person' in env:
+            persons = b.get('persons') or []
+            if not persons and b.get('person_name'):
+                persons = [{'name': b.get('person_name'), 'id_number': b.get('id_number'),
+                            'phone': b.get('phone'), 'company': b.get('company')}]
+            for pr in persons:
+                if not pr.get('name'):
+                    continue
+                env['security.gate.pass.person'].sudo().create({
+                    'gate_pass_id': gp.id, 'name': pr['name'],
+                    'id_number': pr.get('id_number') or '—',
+                    'phone': pr.get('phone') or None, 'company': pr.get('company') or None,
+                })
+        st = _sel(GP, 'state')
+        return _ok({'id': gp.id, 'name': gp.name, 'state': gp.state,
+                    'state_label': st.get(gp.state, gp.state)})
+
+    @route('/cafm/security/gatepasses/export', type='http', auth='user', methods=['GET'], csrf=False)
+    def sec_gatepasses_export(self, **kw):
+        from .client_api import _xlsx_response
+        env = request.env
+        pids, cids = self._scope(env)
+        M = env['security.gate.pass'].sudo()
+        st = _sel(M, 'state')
+        dom = [('premise_id', 'in', pids)] if 'premise_id' in M._fields else [('client_id', 'in', cids)]
+        recs = M.search(dom, order='id desc', limit=5000)
+        columns = [_('#'), _('المرجع'), _('النوع'), _('من'), _('إلى'), _('الغرض'), _('العدد'), _('الحالة')]
+        pt = _sel(M, 'pass_type')
+        rows = []
+        for i, r in enumerate(recs, 1):
+            rows.append([i, r.name, pt.get(r.pass_type, r.pass_type or ''),
+                         _dt(r.start_date) or '', _dt(r.end_date) or '',
+                         (r.purpose or '')[:80], r.person_count if 'person_count' in r._fields else '',
+                         st.get(r.state, r.state or '')])
+        meta = [(_('العميل'), env.user.partner_id.commercial_partner_id.name), (_('عدد التصاريح'), len(recs))]
+        return _xlsx_response(_('تصاريح الدخول'), columns, rows, 'gate-passes.xlsx', meta)
 
     # ---- key custody ------------------------------------------------------
     @route(API + '/client/security/keys', type='http', auth='public', methods=['GET'], csrf=False, cors='*')

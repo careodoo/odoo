@@ -9,4 +9,13 @@
         <field name="interval_type">days</field>
         <field name="numbercall">-1</field>
     </record>
+    <record id="cron_scheduled_notifications" model="ir.cron">
+        <field name="name">CAFM Mobile: إرسال الإشعارات المجدولة</field>
+        <field name="model_id" ref="model_care_cafm_notification_scheduled"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_dispatch()</field>
+        <field name="interval_number">5</field>
+        <field name="interval_type">minutes</field>
+        <field name="numbercall">-1</field>
+    </record>
 </odoo>

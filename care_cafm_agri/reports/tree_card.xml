@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Printable field card for a single tree/plant: identity, live care data,
+         and a QR that field crews scan to log attendance-at-tree / open the tree. -->
+    <record id="action_report_agri_tree_card" model="ir.actions.report">
+        <field name="name">بطاقة الشجرة (QR)</field>
+        <field name="model">care.cafm.agri.plant</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_cafm_agri.report_tree_card</field>
+        <field name="report_file">care_cafm_agri.report_tree_card</field>
+        <field name="binding_model_id" ref="model_care_cafm_agri_plant"/>
+        <field name="binding_type">report</field>
+        <field name="print_report_name">'بطاقة-شجرة-%s' % (object.code or object.id)</field>
+    </record>
+
+    <template id="report_tree_card">
+        <t t-call="web.basic_layout">
+            <t t-foreach="docs" t-as="o">
+                <t t-set="qr" t-value="o.code or ('TREE-%s' % o.id)"/>
+                <t t-set="health_map" t-value="dict(o._fields['health'].selection)"/>
+                <div class="page" style="padding:16px;font-family:sans-serif">
+                    <div style="border:2px solid #14713a;border-radius:16px;overflow:hidden;max-width:440px;margin:auto">
+                        <!-- header band -->
+                        <div style="background:linear-gradient(135deg,#1a8c48,#0e5c30);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between">
+                            <div>
+                                <div style="font-size:11px;opacity:.85;letter-spacing:1px;font-weight:bold">CARE — الزراعة والتشجير</div>
+                                <div style="font-size:20px;font-weight:bold" t-esc="o.name"/>
+                                <div style="font-size:12px;opacity:.9" t-esc="o.species_id.name or o.species or ''"/>
+                            </div>
+                            <div style="text-align:center">
+                                <div style="background:#fff;border-radius:10px;padding:6px">
+                                    <img t-att-src="'/report/barcode/?barcode_type=QR&amp;value=%s&amp;width=240&amp;height=240' % qr" style="width:104px;height:104px"/>
+                                </div>
+                                <div style="font-size:9px;margin-top:3px;opacity:.9">امسح للحضور/التعامل</div>
+                            </div>
+                        </div>
+                        <!-- code strip -->
+                        <div style="background:#ecf7f0;padding:6px 18px;text-align:center;font-weight:bold;color:#14713a;letter-spacing:2px" t-esc="qr"/>
+                        <!-- data grid -->
+                        <table style="width:100%;font-size:12px;color:#334;border-collapse:collapse;padding:8px">
+                            <tr>
+                                <td style="padding:7px 18px;color:#64748b">المرفق</td>
+                                <td style="padding:7px 18px;font-weight:bold;text-align:left" t-esc="o.facility_id.name or '—'"/>
+                            </tr>
+                            <tr style="background:#f7faf8">
+                                <td style="padding:7px 18px;color:#64748b">الموقع / المنطقة</td>
+                                <td style="padding:7px 18px;font-weight:bold;text-align:left" t-esc="(o.location_id.name or '—') + (' · ' + o.zone_id.name if o.zone_id else '')"/>
+                            </tr>
+                            <tr>
+                                <td style="padding:7px 18px;color:#64748b">الحالة الصحية</td>
+                                <td style="padding:7px 18px;font-weight:bold;text-align:left" t-esc="health_map.get(o.health, o.health or '—')"/>
+                            </tr>
+                            <tr style="background:#f7faf8">
+                                <td style="padding:7px 18px;color:#64748b">العمر / الارتفاع / قطر الجذع</td>
+                                <td style="padding:7px 18px;font-weight:bold;text-align:left">
+                                    <span t-esc="'%.0f سنة' % o.age_years if o.age_years else '—'"/> ·
+                                    <span t-esc="'%.1f م' % o.height_m if o.height_m else '—'"/> ·
+                                    <span t-esc="'%.0f سم' % o.trunk_cm if o.trunk_cm else '—'"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:7px 18px;color:#64748b">تاريخ الزرع</td>
+                                <td style="padding:7px 18px;font-weight:bold;text-align:left" t-esc="o.planted_date or '—'"/>
+                            </tr>
+                            <tr style="background:#f7faf8">
+                                <td style="padding:7px 18px;color:#64748b">التقليم القادم / التسميد القادم</td>
+                                <td style="padding:7px 18px;font-weight:bold;text-align:left">
+                                    <span t-esc="o.next_prune or '—'"/> · <span t-esc="o.next_fertilize or '—'"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:7px 18px;color:#64748b">الفحص القادم</td>
+                                <td style="padding:7px 18px;font-weight:bold;text-align:left" t-esc="o.next_inspection or '—'"/>
+                            </tr>
+                            <tr t-if="o.gps" style="background:#f7faf8">
+                                <td style="padding:7px 18px;color:#64748b">الإحداثيات (GPS)</td>
+                                <td style="padding:7px 18px;font-weight:bold;text-align:left" t-esc="o.gps"/>
+                            </tr>
+                        </table>
+                        <div t-if="o.species_id.care_guide" style="padding:8px 18px;font-size:11px;color:#475569;border-top:1px dashed #cbd5e1">
+                            <b style="color:#14713a">دليل العناية: </b><span t-esc="o.species_id.care_guide"/>
+                        </div>
+                        <div style="padding:8px 18px;text-align:center;font-size:9px;color:#94a3b8;border-top:1px solid #eef2f5">
+                            بطاقة تعريف ميدانية — CARE لإدارة المرافق · <span t-esc="o.facility_id.name or ''"/>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

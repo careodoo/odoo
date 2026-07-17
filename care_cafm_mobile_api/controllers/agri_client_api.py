@@ -5,6 +5,7 @@ tree works and species catalogue), hard-scoped to the caller's facilities so a
 client only ever sees the greenery ops for their own sites.
 
 Everything is read with sudo() and scoped through care.cafm.facility.partner_id."""
+from odoo import SUPERUSER_ID
 from odoo.http import request, Controller, route
 
 from .api import _auth, _ok, _err, _abs, _body, API
@@ -284,6 +285,8 @@ class AgriClientApi(Controller):
             if plant.zone_id:
                 desc_bits.append('منطقة الريّ: %s' % plant.zone_id.name)
         desc_bits.append('العمل المطلوب: %s' % label)
+        if b.get('preferred_date'):
+            desc_bits.append('التاريخ المفضّل: %s' % b['preferred_date'])
         if note:
             desc_bits.append('ملاحظات العميل: %s' % note)
         cp = env.user.partner_id.commercial_partner_id or env.user.partner_id
@@ -299,6 +302,23 @@ class AgriClientApi(Controller):
         r = env['care.cafm.service.request'].sudo().create(vals)
         return _ok({'id': r.id, 'name': getattr(r, 'name', False) or r.title, 'title': r.title,
                     'state': getattr(r, 'state', None)})
+
+    @route('/cafm/agri/tree/<int:pid>/card', type='http', auth='user', methods=['GET'], csrf=False)
+    def agri_tree_card(self, pid, **kw):
+        """Printable QR field-card for one tree/plant (via /web/sso like the other
+        reports). Scoped: only a plant on the caller's own facilities renders."""
+        env = request.env
+        plant = env['care.cafm.agri.plant'].sudo().browse(pid).exists()
+        if not plant or plant.facility_id.id not in self._fac_ids(env):
+            return request.not_found()
+        report = env.ref('care_cafm_agri.action_report_agri_tree_card').with_user(SUPERUSER_ID)
+        pdf = env['ir.actions.report'].sudo()._render_qweb_pdf(report, res_ids=[plant.id])[0]
+        from odoo.http import content_disposition
+        fname = 'tree-card-%s.pdf' % (plant.code or plant.id)
+        return request.make_response(pdf, headers=[
+            ('Content-Type', 'application/pdf'),
+            ('Content-Disposition', content_disposition(fname).replace('attachment', 'inline')),
+        ])
 
     # ---- species catalogue (global reference) -----------------------------
     @route(API + '/client/agri/species', type='http', auth='public', methods=['GET'], csrf=False, cors='*')

@@ -141,15 +141,31 @@ class InventoryClientApi(Controller):
             rows = [{'label': v['label'], 'qty': round(v['qty'], 1), 'value': round(v['value'], 2)} for v in agg.values()]
             return sorted(rows, key=lambda r: -r['qty'])[:limit]
 
+        def top_id(key_fn, label_fn, limit=30):
+            """Same as top() but keeps the entity id so the app can drill in."""
+            agg = {}
+            for m in moves:
+                k = key_fn(m)
+                if not k:
+                    continue
+                a = agg.setdefault(k, {'id': k, 'qty': 0.0, 'value': 0.0, 'issues': 0, 'label': label_fn(m)})
+                a['qty'] += m.quantity
+                a['value'] += m.total_cost
+                a['issues'] += 1
+            rows = [{'id': v['id'], 'label': v['label'], 'qty': round(v['qty'], 1),
+                     'value': round(v['value'], 2), 'issues': v['issues']} for v in agg.values()]
+            return sorted(rows, key=lambda r: -r['qty'])[:limit]
+
         return _ok({
             'available': True, 'period': period,
             'total_qty': round(sum(moves.mapped('quantity')), 1),
             'total_value': round(sum(moves.mapped('total_cost')), 2),
             'issues': len(moves),
-            'top_materials': top(lambda m: m.product_id.id, lambda m: m.product_id.display_name),
-            'top_locations': top(lambda m: m.location_id.id, lambda m: m.location_id.display_name or '—'),
-            'top_buildings': top(lambda m: m.building_id.id, lambda m: m.building_id.name or '—'),
-            'top_employees': top(lambda m: m.employee_id.id, lambda m: m.employee_id.name or '—'),
+            'top_materials': top_id(lambda m: m.product_id.id, lambda m: m.product_id.display_name),
+            'top_locations': top_id(lambda m: m.location_id.id, lambda m: m.location_id.display_name or '—'),
+            'top_buildings': top_id(lambda m: m.building_id.id, lambda m: m.building_id.name or '—'),
+            'by_facility': top_id(lambda m: m.facility_id.id, lambda m: m.facility_id.name or '—'),
+            'top_employees': top_id(lambda m: m.employee_id.id, lambda m: m.employee_id.name or '—'),
         })
 
     def _guard(self, env):
@@ -236,20 +252,68 @@ class InventoryClientApi(Controller):
         g = self._guard(env)
         if g:
             return g
+        recs = self._move_search(env, kw)
         M = env['care.cafm.stock.move'].sudo()
         mt = _sel(M, 'move_type')
-        dom = [('store_id', 'in', self._stores(env).ids)]
-        if kw.get('type'):
-            dom.append(('move_type', '=', kw['type']))
-        recs = M.search(dom, order='date desc, id desc', limit=200)
         return _ok([{
             'id': m.id, 'name': m.name, 'type': mt.get(m.move_type, m.move_type or ''),
             'type_raw': m.move_type, 'product': m.product_id.display_name,
             'store': m.store_id.name or None, 'quantity': m.quantity, 'uom': m.uom_name or None,
             'facility': m.facility_id.name or None, 'location': m.location_id.name or None,
+            'building': m.building_id.name or None,
             'employee': m.employee_id.name or None, 'date': _d(m.date),
             'total_cost': m.total_cost, 'state': m.state, 'note': m.note or None,
         } for m in recs])
+
+    def _move_search(self, env, kw, limit=400):
+        """Shared move query with drill-down filters used by /inv/moves and the
+        consumption Excel export: type, facility, building, location, product,
+        employee, period range, and a free-text search."""
+        from odoo import fields as F
+        M = env['care.cafm.stock.move'].sudo()
+        dom = [('store_id', 'in', self._stores(env).ids)]
+        if kw.get('type'):
+            dom.append(('move_type', '=', kw['type']))
+        for key, field in (('facility_id', 'facility_id'), ('building_id', 'building_id'),
+                           ('location_id', 'location_id'), ('product_id', 'product_id'),
+                           ('employee_id', 'employee_id')):
+            v = kw.get(key)
+            if v and str(v).isdigit():
+                dom.append((field, '=', int(v)))
+        period = kw.get('period')
+        if period and period != 'all':
+            tdy = F.Date.context_today(M)
+            since = tdy if period == 'day' else (tdy.replace(month=1, day=1) if period == 'year' else tdy.replace(day=1))
+            dom.append(('date', '>=', str(since)))
+        q = (kw.get('q') or '').strip()
+        if q:
+            dom += ['|', '|', ('product_id.name', 'ilike', q), ('name', 'ilike', q), ('location_id.name', 'ilike', q)]
+        return M.search(dom, order='date desc, id desc', limit=limit)
+
+    @route('/cafm/inv/consumption/export', type='http', auth='user', methods=['GET'], csrf=False)
+    def inv_consumption_export(self, **kw):
+        """Consumption movements as Excel (via /web/sso like the other exports)."""
+        from .client_api import _xlsx_response
+        env = request.env
+        a = dict(request.httprequest.args)
+        a.setdefault('type', 'issue')
+        recs = self._move_search(env, a, limit=5000)
+        mt = _sel(env['care.cafm.stock.move'].sudo(), 'move_type')
+        columns = [_('#'), _('التاريخ'), _('المرجع'), _('المادة'), _('الكمية'), _('الوحدة'),
+                   _('المرفق'), _('المبنى'), _('الموقع'), _('المنفّذ'), _('التكلفة'), _('النوع')]
+        rows = []
+        for i, m in enumerate(recs, 1):
+            rows.append([i, _d(m.date) or '', m.name, m.product_id.display_name, m.quantity,
+                         m.uom_name or '', m.facility_id.name or '', m.building_id.name or '',
+                         m.location_id.name or '', m.employee_id.name or '',
+                         round(m.total_cost, 2), mt.get(m.move_type, m.move_type or '')])
+        meta = [
+            (_('العميل'), env.user.partner_id.commercial_partner_id.name),
+            (_('عدد الحركات'), len(recs)),
+            (_('إجمالي الكمية'), round(sum(recs.mapped('quantity')), 1)),
+            (_('إجمالي القيمة'), round(sum(recs.mapped('total_cost')), 2)),
+        ]
+        return _xlsx_response(_('تحليلات الاستهلاك'), columns, rows, 'consumption.xlsx', meta)
 
     # ---- scan-to-issue (worker consumes a product) ------------------------
     @route(API + '/client/inv/scan-issue', type='http', auth='public', methods=['POST'], csrf=False, cors='*')

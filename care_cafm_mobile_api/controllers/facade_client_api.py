@@ -3,9 +3,10 @@
 module's elevation zones (frequency/compliance) and height-work permits (with
 wind-lockout safety), hard-scoped to the caller's facilities. Read-only:
 clients get full visibility into façade cleaning compliance and site safety."""
+from odoo import fields, _
 from odoo.http import request, Controller, route
 
-from .api import _auth, _ok, _err, API
+from .api import _auth, _ok, _err, _body, API
 
 
 def _sel(Model, field):
@@ -116,3 +117,91 @@ class FacadeClientApi(Controller):
             'workers': p.worker_ids.mapped('name'),
             'state': p.state, 'state_label': st.get(p.state, p.state or ''),
         } for p in recs])
+
+    # ---- options for the "issue permit" form ------------------------------
+    @route(API + '/client/facade/options', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def facade_options(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        g = self._guard(env)
+        if g:
+            return g
+        facs = self._facilities(env)
+        zones = env['care.cafm.facade.zone'].sudo().search([('facility_id', 'in', facs.ids)])
+        # workers on the client's sites (facade crews)
+        try:
+            from .client_api import ClientApi
+            emps = ClientApi()._client_workers(env, facs)
+        except Exception:
+            emps = env['hr.employee'].sudo().browse()
+        mth = _sel(env['care.cafm.facade.zone'].sudo(), 'method')
+        return _ok({
+            'facilities': [{'id': f.id, 'name': f.name} for f in facs],
+            'zones': [{'id': z.id, 'name': z.name, 'facility_id': z.facility_id.id,
+                       'method': z.method, 'method_label': mth.get(z.method, z.method or '')} for z in zones],
+            'methods': [{'v': k, 'l': v} for k, v in mth.items()],
+            'workers': [{'id': e.id, 'name': e.name} for e in emps],
+            'wind_limit_default': 40.0,
+        })
+
+    @route(API + '/client/facade/permit/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def facade_permit_create(self, **kw):
+        """Client issues a height-work permit (submitted for safety approval)."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        g = self._guard(env)
+        if g:
+            return g
+        b = _body()
+        fid = int(b['facility_id']) if b.get('facility_id') else (self._facilities(env)[:1].id or None)
+        if not fid or fid not in self._facilities(env).ids:
+            return _err('المرفق مطلوب', 422)
+        vals = {
+            'facility_id': fid,
+            'zone_id': int(b['zone_id']) if b.get('zone_id') else False,
+            'valid_hours': float(b.get('valid_hours') or 6.0),
+            'wind_speed': float(b.get('wind_speed') or 0.0),
+            'wind_limit': float(b.get('wind_limit') or 40.0),
+            'risk_assessed': bool(b.get('risk_assessed')),
+            'equipment_checked': bool(b.get('equipment_checked')),
+        }
+        if b.get('date'):
+            try:
+                vals['date'] = fields.Date.to_date(b['date'])
+            except Exception:
+                pass
+        if b.get('worker_ids'):
+            ids = [int(x) for x in b['worker_ids'] if str(x).isdigit()]
+            if ids:
+                vals['worker_ids'] = [(6, 0, ids)]
+        p = env['care.cafm.facade.permit'].sudo().create(vals)
+        # move to submitted when the safety pre-reqs are ticked
+        if vals['risk_assessed'] and vals['equipment_checked']:
+            try:
+                p.action_submit()
+            except Exception:
+                pass
+        st = _sel(env['care.cafm.facade.permit'].sudo(), 'state')
+        return _ok({'id': p.id, 'name': p.name, 'state': p.state,
+                    'state_label': st.get(p.state, p.state), 'is_safe': p.is_safe})
+
+    @route('/cafm/facade/permits/export', type='http', auth='user', methods=['GET'], csrf=False)
+    def facade_permits_export(self, **kw):
+        from .client_api import _xlsx_response
+        env = request.env
+        M = env['care.cafm.facade.permit'].sudo()
+        st, mth = _sel(M, 'state'), _sel(M, 'method')
+        recs = M.search([('facility_id', 'in', self._fac_ids(env))], order='date desc, id desc', limit=5000)
+        columns = [_('#'), _('المرجع'), _('التاريخ'), _('المرفق'), _('الواجهة'), _('الطريقة'),
+                   _('الرياح'), _('الحد الآمن'), _('آمن؟'), _('المشرف'), _('الحالة')]
+        rows = []
+        for i, p in enumerate(recs, 1):
+            rows.append([i, p.name, _d(p.date) or '', p.facility_id.name or '', p.zone_id.name or '',
+                         mth.get(p.method, p.method or ''), p.wind_speed, p.wind_limit,
+                         _('نعم') if p.is_safe else _('لا'), p.supervisor_id.name or '',
+                         st.get(p.state, p.state or '')])
+        meta = [(_('العميل'), env.user.partner_id.commercial_partner_id.name),
+                (_('عدد التصاريح'), len(recs))]
+        return _xlsx_response(_('تصاريح العمل على الارتفاع'), columns, rows, 'facade-permits.xlsx', meta)

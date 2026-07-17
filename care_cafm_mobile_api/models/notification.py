@@ -45,6 +45,52 @@ class CafmNotification(models.Model):
         return recs
 
 
+class CafmScheduledNotification(models.Model):
+    """A notification whose delivery is deferred to a future time. Recipients are
+    snapshotted at scheduling time (deterministic), and a cron dispatches any that
+    have come due."""
+    _name = 'care.cafm.notification.scheduled'
+    _description = 'إشعار مجدول'
+    _order = 'scheduled_datetime asc'
+
+    title = fields.Char(string='العنوان', required=True)
+    body = fields.Text(string='النص')
+    ntype = fields.Selection([
+        ('info', 'معلومة'), ('task', 'مهمة'), ('warning', 'تنبيه'), ('alert', 'طوارئ'),
+    ], string='النوع', default='info', required=True)
+    audience_label = fields.Char(string='الجمهور')
+    user_ids = fields.Many2many('res.users', string='المستلمون')
+    scheduled_datetime = fields.Datetime(string='موعد الإرسال', required=True, index=True)
+    author_id = fields.Many2one('res.users', string='المُرسِل', default=lambda s: s.env.user)
+    batch = fields.Char(string='دفعة الإرسال', index=True)
+    state = fields.Selection([
+        ('pending', 'بانتظار الإرسال'), ('sent', 'أُرسل'), ('cancelled', 'ملغى'),
+    ], string='الحالة', default='pending', index=True)
+    recipients_count = fields.Integer(string='عدد المستلمين', compute='_compute_rc', store=True)
+
+    @api.depends('user_ids')
+    def _compute_rc(self):
+        for r in self:
+            r.recipients_count = len(r.user_ids)
+
+    def action_cancel(self):
+        self.filtered(lambda r: r.state == 'pending').write({'state': 'cancelled'})
+
+    def _dispatch(self):
+        for r in self:
+            recips = r.user_ids.filtered('active')
+            if recips:
+                self.env['care.cafm.notification'].sudo().push(
+                    recips, r.title, r.body, ntype=r.ntype, author=r.author_id, batch=r.batch)
+            r.state = 'sent'
+
+    @api.model
+    def _cron_dispatch(self):
+        due = self.sudo().search([
+            ('state', '=', 'pending'), ('scheduled_datetime', '<=', fields.Datetime.now())])
+        due._dispatch()
+
+
 class CafmNotificationCompose(models.TransientModel):
     """Backend panel to compose and send a notification to any audience."""
     _name = 'care.cafm.notification.compose'

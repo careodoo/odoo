@@ -3,13 +3,58 @@
 whatever exists in the module for this customer (buildings, services, teams,
 work orders) shows up automatically — nothing is hard-coded in the app."""
 import base64
+import io
 import re
 import uuid
 from datetime import timedelta
-from odoo import fields, SUPERUSER_ID
+from odoo import fields, SUPERUSER_ID, _
 from odoo.http import request, Controller, route, content_disposition
 
 from .api import _auth, _ok, _err, _body, _abs, API, _wo_dict
+
+
+def _xlsx_response(title, columns, rows, filename, meta=None):
+    """Build a styled .xlsx and return it as an inline HTTP response. `columns`
+    is a list of header strings; `rows` a list of value-lists (same width).
+    `meta` is an optional list of (label, value) shown above the table. Shared by
+    every client export so they all look the same."""
+    import xlsxwriter
+    buf = io.BytesIO()
+    wb = xlsxwriter.Workbook(buf, {'in_memory': True})
+    ws = wb.add_worksheet((title or 'Report')[:31])
+    ws.right_to_left()
+    f_title = wb.add_format({'bold': True, 'font_size': 15, 'font_color': '#0E3A5F'})
+    f_meta = wb.add_format({'font_size': 10, 'font_color': '#555555'})
+    f_hdr = wb.add_format({'bold': True, 'font_color': 'white', 'bg_color': '#C0392B',
+                           'border': 1, 'align': 'center', 'valign': 'vcenter'})
+    f_cell = wb.add_format({'border': 1, 'font_size': 10, 'valign': 'vcenter'})
+    f_alt = wb.add_format({'border': 1, 'font_size': 10, 'valign': 'vcenter', 'bg_color': '#F4F6F8'})
+    r = 0
+    ws.merge_range(r, 0, r, max(len(columns) - 1, 1), title or 'Report', f_title)
+    r += 1
+    for lbl, val in (meta or []):
+        ws.write(r, 0, '%s: %s' % (lbl, val), f_meta)
+        r += 1
+    r += 1
+    for c, h in enumerate(columns):
+        ws.write(r, c, h, f_hdr)
+    ws.set_row(r, 22)
+    widths = [max(12, len(str(h)) + 2) for h in columns]
+    for i, row in enumerate(rows):
+        r += 1
+        fmt = f_alt if i % 2 else f_cell
+        for c, v in enumerate(row):
+            ws.write(r, c, '' if v is None else v, fmt)
+            widths[c] = min(48, max(widths[c], len(str('' if v is None else v)) + 2))
+    for c, w in enumerate(widths):
+        ws.set_column(c, c, w)
+    ws.freeze_panes(r - len(rows), 0)
+    wb.close()
+    buf.seek(0)
+    return request.make_response(buf.read(), headers=[
+        ('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
+        ('Content-Disposition', content_disposition(filename).replace('attachment', 'inline')),
+    ])
 
 
 def _logo_data_uri(company):
@@ -129,6 +174,88 @@ class ClientApi(Controller):
             'state': o.state, 'state_label': st_lbl.get(o.state, o.state),
         } for o in occs]
         return _ok({'schedules': out, 'occurrences': occ_out})
+
+    @route(API + '/client/schedule/options', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def schedule_options(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        facs = self._facilities(env)
+        Loc = env['care.cafm.location'].sudo()
+        locs_by_fac = {}
+        for l in Loc.search([('facility_id', 'in', facs.ids)]):
+            locs_by_fac.setdefault(l.facility_id.id, []).append({'id': l.id, 'name': l.name})
+        services = env['care.cafm.service'].sudo().search([])
+        _, allowed = self._client_service_types(env)
+        services = services.filtered(lambda s: not allowed or s.service_type in allowed)
+        workers = self._client_workers(env, facs)
+        return _ok({
+            'facilities': [{'id': f.id, 'name': f.name, 'locations': locs_by_fac.get(f.id, [])} for f in facs],
+            'services': [{'id': s.id, 'name': s.name, 'type': s.service_type} for s in services],
+            'workers': [{'id': e.id, 'name': e.name, 'job': e.job_title or None} for e in workers],
+        })
+
+    @route(API + '/client/schedule/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def schedule_create(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if not self._can_add_workers(env):
+            return _err('غير مسموح لك بإضافة جداول', 403)
+        if 'care.cafm.schedule' not in env:
+            return _err('غير متاح', 404)
+        b = _body()
+        name = (b.get('name') or '').strip()
+        if not name:
+            return _err('اسم الجدول مطلوب', 422)
+        fid = int(b['facility_id']) if b.get('facility_id') else None
+        if not fid or fid not in self._fac_ids(env):
+            return _err('المرفق مطلوب', 422)
+        if not b.get('service_id'):
+            return _err('الخدمة مطلوبة', 422)
+        if not b.get('employee_id'):
+            return _err('العامل المسنَد مطلوب', 422)
+        vals = {
+            'name': name, 'facility_id': fid, 'service_id': int(b['service_id']),
+            'employee_id': int(b['employee_id']),
+            'location_id': int(b['location_id']) if b.get('location_id') else False,
+            'every_minutes': int(b.get('every_minutes') or 60),
+            'window_start': float(b.get('window_start') or 7.0),
+            'window_end': float(b.get('window_end') or 19.0),
+            'require_presence': bool(b.get('require_presence', True)),
+            'require_photo': bool(b.get('require_photo', True)),
+        }
+        s = env['care.cafm.schedule'].with_user(SUPERUSER_ID).create(vals)
+        return _ok({'id': s.id, 'name': s.name, 'code': s.code})
+
+    @route(API + '/client/schedule/<int:sid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def schedule_detail(self, sid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        s = env['care.cafm.schedule'].sudo().browse(sid).exists()
+        if not s or s.facility_id.id not in self._fac_ids(env):
+            return _err('غير موجود', 404)
+        st_lbl = {'pending': 'قيد الانتظار', 'done': 'منجزة في الوقت', 'late': 'متأخرة', 'missed': 'فائتة'}
+        occs = env['care.cafm.schedule.occurrence'].sudo().search(
+            [('schedule_id', '=', s.id)], order='planned_time desc', limit=100)
+        return _ok({
+            'id': s.id, 'name': s.name, 'code': s.code, 'active': s.active,
+            'service': s.service_id.name or None, 'service_type': s.service_type,
+            'facility': s.facility_id.name or None,
+            'location': s.location_id.name or None, 'employee': s.employee_id.name or None,
+            'employee_id': s.employee_id.id or None,
+            'every_minutes': s.every_minutes, 'compliance': s.compliance,
+            'window': '%02d:00 – %02d:00' % (int(s.window_start), int(s.window_end)),
+            'done': s.occ_done, 'late': s.occ_late, 'missed': s.occ_missed, 'total': s.occ_total,
+            'require_photo': s.require_photo, 'require_presence': s.require_presence,
+            'occurrences': [{
+                'id': o.id, 'employee': o.employee_id.name or None, 'location': o.location_id.name or None,
+                'planned': o.planned_time or None, 'actual': o.actual_time or None,
+                'delay': o.response_delay_minutes, 'presence': o.presence_verified,
+                'state': o.state, 'state_label': st_lbl.get(o.state, o.state),
+            } for o in occs],
+        })
 
     def _attendance_data(self, env, a):
         """Attendance for the client's sites, organised by shift: who was
@@ -341,6 +468,34 @@ class ClientApi(Controller):
             ('Content-Type', 'application/pdf'),
             ('Content-Disposition', content_disposition(fname).replace('attachment', 'inline')),
         ])
+
+    @route('/cafm/attendance/export', type='http', auth='user', methods=['GET'], csrf=False)
+    def attendance_export_xlsx(self, **kw):
+        """Attendance records as Excel. auth='user' via /web/sso, same as the PDF."""
+        env = request.env
+        a = request.httprequest.args
+        d = self._attendance_data(env, a)
+        columns = [_('#'), _('الموظف'), _('المسمى'), _('المنشأة'), _('التاريخ'),
+                   _('الدخول'), _('الخروج'), _('الساعات'), _('الحالة')]
+
+        def _t(v):
+            return fields.Datetime.to_string(v)[11:16] if v else '—'
+        rows = []
+        for i, r in enumerate(d['records'], 1):
+            rows.append([i, r['employee'], r.get('job') or '', r.get('facility') or '',
+                         r.get('date') or '', _t(r.get('check_in')), _t(r.get('check_out')),
+                         r.get('hours') or 0, _('مفتوحة') if r.get('open') else _('مغلقة')])
+        t = d.get('totals', {})
+        meta = [
+            (_('العميل'), env.user.partner_id.commercial_partner_id.name),
+            (_('الفترة'), t.get('period_label') or ''),
+            (_('عدد السجلات'), t.get('records', 0)),
+            (_('إجمالي الساعات'), t.get('total_hours', 0)),
+            (_('عدد العاملين'), t.get('workers', 0)),
+        ]
+        label = re.sub(r'[^\w-]+', '-', (t.get('period_label') or 'all'))
+        return _xlsx_response(_('سجل الحضور والانصراف'), columns, rows,
+                              'attendance-%s.xlsx' % label, meta)
 
     @route(API + '/client/offboard/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
     def offboard_create(self, **kw):
@@ -2030,10 +2185,64 @@ class ClientApi(Controller):
         if not recips:
             return _err('لا مستلمين مطابقين', 422)
         batch = uuid.uuid4().hex[:16]
+        ntype = b.get('ntype') or 'info'
+        # Deferred delivery: snapshot the recipient set now, dispatch by cron.
+        sched = (b.get('scheduled_datetime') or '').strip()
+        if sched:
+            try:
+                when = fields.Datetime.to_datetime(sched)
+            except Exception:
+                when = None
+            if when and when > fields.Datetime.now():
+                env['care.cafm.notification.scheduled'].sudo().create({
+                    'title': title, 'body': b.get('body') or None, 'ntype': ntype,
+                    'audience_label': b.get('audience_label') or audience,
+                    'user_ids': [(6, 0, recips.ids)], 'scheduled_datetime': when,
+                    'author_id': env.user.id, 'batch': batch,
+                })
+                return _ok({'batch': batch, 'recipients': len(recips), 'scheduled': True,
+                            'scheduled_datetime': str(when)})
         env['care.cafm.notification'].sudo().push(
-            recips, title, b.get('body') or None, ntype=b.get('ntype') or 'info',
+            recips, title, b.get('body') or None, ntype=ntype,
             author=env.user, batch=batch)
-        return _ok({'batch': batch, 'recipients': len(recips)})
+        return _ok({'batch': batch, 'recipients': len(recips), 'scheduled': False})
+
+    @route(API + '/client/notify/preview', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def notify_preview(self, **kw):
+        """How many recipients the current audience selection resolves to — so the
+        sender sees the reach before pressing send."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        b = _body()
+        recips = self._notify_recipients(env, b.get('audience') or 'all', b)
+        recips = recips.filtered(lambda u: u.active) if recips else recips
+        return _ok({'count': len(recips) if recips else 0})
+
+    @route(API + '/client/notify/scheduled', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def notify_scheduled(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        S = env['care.cafm.notification.scheduled'].sudo()
+        rows = S.search([('author_id', '=', env.user.id), ('state', '=', 'pending')],
+                        order='scheduled_datetime asc')
+        return _ok([{'id': r.id, 'title': r.title, 'body': r.body, 'ntype': r.ntype,
+                     'audience': r.audience_label, 'recipients': r.recipients_count,
+                     'scheduled_datetime': str(r.scheduled_datetime)} for r in rows])
+
+    @route(API + '/client/notify/scheduled/cancel', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def notify_scheduled_cancel(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        b = _body()
+        rec = env['care.cafm.notification.scheduled'].sudo().search(
+            [('id', '=', int(b.get('id') or 0)), ('author_id', '=', env.user.id)])
+        if not rec:
+            return _err('غير موجود', 404)
+        rec.action_cancel()
+        return _ok({'ok': True})
 
     @route(API + '/client/notify/sent', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def notify_sent(self, **kw):
@@ -2203,6 +2412,87 @@ class ClientApi(Controller):
             return _err('غير موجود', 404)
         wo = p._generate_wo()
         return _ok({'workorder': wo.name})
+
+    @route(API + '/client/workorder/options', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def workorder_options(self, **kw):
+        """Everything the 'new work order' form needs: the client's facilities
+        (each with its locations), the services they receive, the teams, and the
+        workers — so the client can target a service/team or assign directly."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        facs = self._facilities(env)
+        Loc = env['care.cafm.location'].sudo()
+        locs_by_fac = {}
+        for l in Loc.search([('facility_id', 'in', facs.ids)]):
+            locs_by_fac.setdefault(l.facility_id.id, []).append({'id': l.id, 'name': l.name})
+        services = env['care.cafm.service'].sudo().search([])
+        # only services this client actually receives
+        _, allowed_types = self._client_service_types(env)
+        services = services.filtered(lambda s: not allowed_types or s.service_type in allowed_types)
+        svc_lbl = dict(env['care.cafm.service']._fields['service_type'].selection)
+        teams = env['care.cafm.team'].sudo().search([('facility_id', 'in', facs.ids)]) if 'care.cafm.team' in env else []
+        workers = self._client_workers(env, facs)
+        return _ok({
+            'facilities': [{'id': f.id, 'name': f.name, 'locations': locs_by_fac.get(f.id, [])} for f in facs],
+            'services': [{'id': s.id, 'name': s.name, 'type': s.service_type,
+                          'type_label': svc_lbl.get(s.service_type, s.service_type)} for s in services],
+            'teams': [{'id': t.id, 'name': t.name, 'facility_id': t.facility_id.id,
+                       'service': t.service_id.name or None,
+                       'service_id': t.service_id.id or None} for t in teams],
+            'workers': [{'id': e.id, 'name': e.name, 'job': e.job_title or None} for e in workers],
+            'priorities': [{'v': '0', 'l': 'منخفضة'}, {'v': '1', 'l': 'عادية'},
+                           {'v': '2', 'l': 'عالية'}, {'v': '3', 'l': 'عاجلة'}],
+        })
+
+    @route(API + '/client/workorder/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def workorder_create(self, **kw):
+        """Client raises a work order against a service, optionally targeting a
+        team's service line and/or assigning it directly to a worker."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if not self._can_add_workers(env):
+            return _err('غير مسموح لك بإنشاء أوامر عمل', 403)
+        b = _body()
+        title = (b.get('title') or '').strip()
+        if not title:
+            return _err('عنوان أمر العمل مطلوب', 422)
+        fid = int(b['facility_id']) if b.get('facility_id') else (self._facilities(env)[:1].id or None)
+        if not fid or fid not in self._fac_ids(env):
+            return _err('المرفق مطلوب', 422)
+        # service: explicit, or inferred from the chosen team
+        sid = int(b['service_id']) if b.get('service_id') else None
+        if not sid and b.get('team_id') and 'care.cafm.team' in env:
+            t = env['care.cafm.team'].sudo().browse(int(b['team_id'])).exists()
+            sid = t.service_id.id if t else None
+        if not sid:
+            return _err('الخدمة مطلوبة', 422)
+        vals = {
+            'title': title, 'facility_id': fid, 'service_id': sid,
+            'location_id': int(b['location_id']) if b.get('location_id') else False,
+            'priority': str(b.get('priority') or '1'),
+            'description': b.get('description') or None,
+        }
+        if b.get('employee_id'):
+            emp = env['hr.employee'].sudo().browse(int(b['employee_id'])).exists()
+            if emp:
+                vals['employee_id'] = emp.id
+        # deadline is SLA-computed from request time; honour an explicit request
+        # time when the client picks one so urgent jobs get an earlier deadline.
+        if b.get('request_datetime'):
+            try:
+                vals['request_datetime'] = fields.Datetime.to_datetime(b['request_datetime'])
+            except Exception:
+                pass
+        wo = env['care.cafm.workorder'].with_user(SUPERUSER_ID).create(vals)
+        # a direct assignment should move it out of the unassigned state
+        if wo.employee_id and wo.state == 'new':
+            try:
+                wo.state = 'assigned'
+            except Exception:
+                pass
+        return _ok(_wo_dict(wo))
 
     @route(API + '/client/workorders', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def workorders(self, **kw):
