@@ -43,6 +43,63 @@ class _PmsTasksScreenState extends State<PmsTasksScreen> {
   void _reload() => setState(() => _f = context.read<AuthProvider>().api.pmsTasks(
       projectId: widget.projectId, stageId: widget.stageId, filter: _filter, q: _q));
 
+  Future<void> _createTask() async {
+    final name = TextEditingController();
+    final desc = TextEditingController();
+    bool urgent = false;
+    final ok = await showModalBottomSheet<bool>(
+      context: context, isScrollControlled: true, showDragHandle: true,
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setSheet) => Padding(
+        padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.of(ctx).viewInsets.bottom + 16),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(tr('مهمة جديدة', 'New task'),
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Pms.ink)),
+          const SizedBox(height: 12),
+          TextField(
+            controller: name, autofocus: true,
+            decoration: InputDecoration(
+                labelText: tr('عنوان المهمة', 'Task title'), border: const OutlineInputBorder()),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: desc, maxLines: 3,
+            decoration: InputDecoration(
+                labelText: tr('الوصف (اختياري)', 'Description (optional)'),
+                border: const OutlineInputBorder()),
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: urgent, onChanged: (v) => setSheet(() => urgent = v),
+            title: Text(tr('عاجلة', 'Urgent'), style: const TextStyle(fontSize: 13.5)),
+            activeThumbColor: Pms.violet,
+          ),
+          const SizedBox(height: 4),
+          SizedBox(width: double.infinity, child: FilledButton.icon(
+            style: FilledButton.styleFrom(backgroundColor: Pms.violet),
+            onPressed: () => Navigator.pop(ctx, true),
+            icon: const Icon(Icons.check_rounded),
+            label: Text(tr('إنشاء', 'Create')),
+          )),
+        ]),
+      )),
+    );
+    if (ok != true || name.text.trim().isEmpty) return;
+    try {
+      await context.read<AuthProvider>().api.pmsTaskCreate(widget.projectId!, {
+        'name': name.text.trim(),
+        if (desc.text.trim().isNotEmpty) 'description': desc.text.trim(),
+        if (urgent) 'priority': '1',
+      });
+      if (!mounted) return;
+      _reload();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('أُنشئت المهمة', 'Task created')), backgroundColor: Pms.green));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
   void _onSearch(String v) {
     _deb?.cancel();
     _deb = Timer(const Duration(milliseconds: 400), () {
@@ -60,6 +117,16 @@ class _PmsTasksScreenState extends State<PmsTasksScreen> {
         backgroundColor: Pms.violet, foregroundColor: Colors.white, elevation: 0,
         title: Text(gLang == 'en' ? 'Tasks' : widget.title, overflow: TextOverflow.ellipsis),
       ),
+      // Creating a task needs a home project; only offer it when scoped to one.
+      floatingActionButton: widget.projectId == null
+          ? null
+          : FloatingActionButton.extended(
+              backgroundColor: Pms.violet, foregroundColor: Colors.white,
+              icon: const Icon(Icons.add_task_rounded),
+              label: Text(tr('مهمة جديدة', 'New task'),
+                  style: const TextStyle(fontWeight: FontWeight.w800)),
+              onPressed: _createTask,
+            ),
       body: Column(children: [
         Container(
           color: Colors.white,
@@ -358,6 +425,9 @@ class _PmsTaskDetailState extends State<PmsTaskDetail> {
                   ),
               ]),
             ],
+            // ---- forwarding / routing ----
+            const SizedBox(height: 12),
+            _forwardBlock(d),
             // chatter
             const SizedBox(height: 12),
             Row(children: [
@@ -414,6 +484,201 @@ class _PmsTaskDetailState extends State<PmsTaskDetail> {
           Expanded(child: Text(v, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: color ?? Pms.ink))),
         ]),
       );
+
+  /// The forwarding panel. When the task is forwarded TO me, I get
+  /// accept/reject; otherwise (if I can write) I can forward it onward.
+  Widget _forwardBlock(Map d) {
+    final state = '${d['forward_state'] ?? 'none'}';
+    final to = d['forward_to'] as Map?;
+    final from = d['forward_from'] as Map?;
+    final isRecipient = d['is_recipient'] == true;
+    final pending = state == 'pending';
+    if (state == 'none' && d['can_write'] != true) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: pending ? Pms.amber.withValues(alpha: 0.5) : Colors.black12),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Icon(Icons.alt_route_rounded, size: 16, color: Pms.violet),
+          const SizedBox(width: 6),
+          Text(tr('الإحالة', 'Forwarding'),
+              style: const TextStyle(fontWeight: FontWeight.w900, color: Pms.ink, fontSize: 13.5)),
+          const Spacer(),
+          if (state != 'none')
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                  color: _fwdColor(state).withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
+              child: Text(_fwdLabel(state),
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: _fwdColor(state))),
+            ),
+        ]),
+        if (to != null || from != null) ...[
+          const SizedBox(height: 8),
+          if (from != null) _fwdLine(Icons.person_outline_rounded, tr('أحالها', 'From'), '${from['name']}'),
+          if (to != null) _fwdLine(Icons.arrow_forward_rounded, tr('إلى', 'To'), '${to['name']}'),
+          if (d['forward_reason'] != null)
+            _fwdLine(Icons.notes_rounded, tr('السبب', 'Reason'), '${d['forward_reason']}'),
+        ],
+        const SizedBox(height: 10),
+        // I am the recipient of a pending forward → accept / reject.
+        if (isRecipient && pending)
+          Row(children: [
+            Expanded(child: FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: Pms.green),
+              onPressed: _busy ? null : _accept,
+              icon: const Icon(Icons.check_rounded, size: 17),
+              label: Text(tr('قبول', 'Accept')),
+            )),
+            const SizedBox(width: 8),
+            Expanded(child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFE5484D)),
+              onPressed: _busy ? null : _reject,
+              icon: const Icon(Icons.close_rounded, size: 17),
+              label: Text(tr('رفض', 'Reject')),
+            )),
+          ])
+        // Otherwise, if I can edit, I can forward it (onward).
+        else if (d['can_write'] == true)
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(foregroundColor: Pms.violet),
+              onPressed: _busy ? null : () => _forward(d),
+              icon: const Icon(Icons.alt_route_rounded, size: 17),
+              label: Text(pending ? tr('إعادة الإحالة', 'Re-forward') : tr('إحالة إلى مستخدم', 'Forward to user')),
+            ),
+          ),
+      ]),
+    );
+  }
+
+  Widget _fwdLine(IconData ic, String k, String v) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(ic, size: 12, color: Pms.slate),
+          const SizedBox(width: 6),
+          Text('$k: ', style: const TextStyle(fontSize: 11.5, color: Pms.slate, fontWeight: FontWeight.w600)),
+          Expanded(child: Text(v, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700))),
+        ]),
+      );
+
+  Color _fwdColor(String s) => {
+        'pending': Pms.amber, 'accepted': Pms.green, 'rejected': const Color(0xFFE5484D),
+      }[s] ?? Pms.slate;
+  String _fwdLabel(String s) => {
+        'pending': tr('بانتظار القبول', 'Pending'),
+        'accepted': tr('مقبولة', 'Accepted'),
+        'rejected': tr('مرفوضة', 'Rejected'),
+      }[s] ?? s;
+
+  Future<void> _forward(Map d) async {
+    final proj = d['project'] as Map?;
+    if (proj == null) return;
+    List<dynamic> users;
+    try {
+      users = await context.read<AuthProvider>().api.pmsForwardUsers(proj['id'] as int);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      return;
+    }
+    if (!mounted) return;
+    int? picked;
+    final reason = TextEditingController();
+    final ok = await showModalBottomSheet<bool>(
+      context: context, isScrollControlled: true, showDragHandle: true,
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setSheet) => Padding(
+        padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.of(ctx).viewInsets.bottom + 16),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(tr('إحالة المهمة إلى', 'Forward task to'),
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Pms.ink)),
+          const SizedBox(height: 10),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 280),
+            child: ListView(shrinkWrap: true, children: [
+              for (final u in users)
+                RadioListTile<int>(
+                  dense: true,
+                  value: u['id'] as int, groupValue: picked,
+                  onChanged: (v) => setSheet(() => picked = v),
+                  title: Text('${u['name']}', style: const TextStyle(fontSize: 13)),
+                ),
+            ]),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: reason,
+            decoration: InputDecoration(
+              hintText: tr('سبب الإحالة (اختياري)', 'Reason (optional)'),
+              border: const OutlineInputBorder(), isDense: true),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(width: double.infinity, child: FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Pms.violet),
+            onPressed: picked == null ? null : () => Navigator.pop(ctx, true),
+            child: Text(tr('إحالة', 'Forward')),
+          )),
+        ]),
+      )),
+    );
+    if (ok != true || picked == null) return;
+    setState(() => _busy = true);
+    try {
+      await context.read<AuthProvider>().api.pmsTaskForward(widget.taskId, picked!, reason: reason.text.trim());
+      _reload();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تمت الإحالة', 'Forwarded')), backgroundColor: Pms.green));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _accept() async {
+    setState(() => _busy = true);
+    try {
+      await context.read<AuthProvider>().api.pmsTaskAccept(widget.taskId);
+      _reload();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('قُبلت الإحالة', 'Accepted')), backgroundColor: Pms.green));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _reject() async {
+    final reason = TextEditingController();
+    final ok = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+      title: Text(tr('رفض الإحالة', 'Reject forward')),
+      content: TextField(controller: reason, maxLines: 2,
+          decoration: InputDecoration(hintText: tr('السبب (اختياري)', 'Reason (optional)'))),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('إلغاء', 'Cancel'))),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE5484D)),
+          onPressed: () => Navigator.pop(ctx, true), child: Text(tr('رفض', 'Reject'))),
+      ],
+    ));
+    if (ok != true) return;
+    setState(() => _busy = true);
+    try {
+      await context.read<AuthProvider>().api.pmsTaskReject(widget.taskId, reason: reason.text.trim());
+      _reload();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('رُفضت الإحالة', 'Rejected'))));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   Future<void> _move(int stageId) async {
     setState(() => _busy = true);

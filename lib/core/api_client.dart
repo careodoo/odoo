@@ -872,6 +872,31 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await http.post(_u('/pms/task/$id/priority'),
               headers: await _headers(), body: jsonEncode({'priority': starred}))))['data'] as Map);
 
+  /// Forward a task to another internal user (PMS routing).
+  Future<Map<String, dynamic>> pmsTaskForward(int id, int toUserId, {String? reason}) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/pms/task/$id/forward'),
+          headers: await _headers(),
+          body: jsonEncode({'forward_to_id': toUserId, if (reason != null) 'reason': reason}))))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsTaskAccept(int id) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/pms/task/$id/accept'),
+          headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsTaskReject(int id, {String? reason}) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/pms/task/$id/reject'),
+          headers: await _headers(),
+          body: jsonEncode({if (reason != null) 'reason': reason}))))['data'] as Map);
+
+  /// Internal users a task may be forwarded to.
+  Future<List<dynamic>> pmsForwardUsers(int projectId) async =>
+      List<dynamic>.from((await _handle(
+          await http.get(_u('/pms/project/$projectId/forward-users'), headers: await _headers())))['data'] as List);
+
+  /// Create a task in a project.
+  Future<Map<String, dynamic>> pmsTaskCreate(int projectId, Map<String, dynamic> vals) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/pms/project/$projectId/task/create'),
+          headers: await _headers(), body: jsonEncode(vals))))['data'] as Map);
+
   // ---- management (native back-office) -------------------------------------
   /// Systems this user may access (server applies Odoo permissions).
   Future<List<dynamic>> managementApps() async =>
