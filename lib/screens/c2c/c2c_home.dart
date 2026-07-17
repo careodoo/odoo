@@ -17,11 +17,10 @@ class C2CHomeScreen extends StatefulWidget {
   State<C2CHomeScreen> createState() => _C2CHomeScreenState();
 }
 
-class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProviderStateMixin {
+class _C2CHomeScreenState extends State<C2CHomeScreen> {
   Future<Map<String, dynamic>>? _home;
   final _promoCtrl = PageController(viewportFraction: 0.88);
   int _promoPage = 0;
-  late final AnimationController _anim;
   Timer? _promoTimer;
   int _promoCount = 1;
 
@@ -30,7 +29,6 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
     super.initState();
     _home = context.read<AuthProvider>().api.c2cHome();
     _loadUnread();
-    _anim = AnimationController(vsync: this, duration: const Duration(seconds: 16))..repeat();
     _promoCtrl.addListener(() {
       final p = _promoCtrl.page?.round() ?? 0;
       if (p != _promoPage) setState(() => _promoPage = p);
@@ -44,7 +42,6 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
 
   @override
   void dispose() {
-    _anim.dispose();
     _promoTimer?.cancel();
     _promoCtrl.dispose();
     super.dispose();
@@ -89,13 +86,16 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
             final subsDesign = (d['subs_design'] as Map?) ?? const {};
             final reviews = (d['reviews'] as List?) ?? [];
             return CustomScrollView(slivers: [
-              _header(context),
-              SliverToBoxAdapter(child: _promoCarousel(offers)),
-              // trust strip sits directly under the slider, no gap
+              SliverToBoxAdapter(child: _premiumHeader(context, offers)),
               SliverToBoxAdapter(child: _trustStrip()),
-              _servicesHeader(),
-              SliverToBoxAdapter(child: _catGrid(cats)),
-              if (popular.isNotEmpty) _rowTitle(tr('الأكثر طلبًا', 'Most popular'), null, null),
+              _sectionRow(tr('التصنيفات', 'Categories'),
+                  () => Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => const C2CServiceListScreen(title: 'كل الخدمات')))),
+              SliverToBoxAdapter(child: _categoryCards(cats)),
+              if (popular.isNotEmpty)
+                _sectionRow(tr('موصى به لك', 'Recommended for you'),
+                    () => Navigator.push(context, MaterialPageRoute(
+                        builder: (_) => const C2CServiceListScreen(title: 'كل الخدمات')))),
               if (popular.isNotEmpty) SliverToBoxAdapter(child: _popularRail(popular)),
               if (subs.isNotEmpty)
                 _rowTitle('${subsDesign['title'] ?? tr('الاشتراكات الشهرية', 'Monthly plans')}', null, null),
@@ -121,102 +121,123 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
   }
 
   // ============ HEADER (animated aurora, glass search) ============
-  Widget _header(BuildContext context) {
+  // ============ PREMIUM HEADER (red panel + promo + floating search) ============
+  Widget _premiumHeader(BuildContext context, List offers) {
     final name = context.read<AuthProvider>().profile?.name ?? '';
     final first = name.isNotEmpty ? name.split(' ').first : '';
-    return SliverAppBar(
-      pinned: true,
-      expandedHeight: 164,
-      backgroundColor: C2C.deep,
-      elevation: 0,
-      automaticallyImplyLeading: false,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Stack(fit: StackFit.expand, children: [
-          // base brand gradient (harmonised navy→teal-navy)
-          const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(
-            colors: [C2C.redBright, C2C.red, C2C.redDeep],
-            stops: [0.0, 0.55, 1.0], begin: Alignment.topRight, end: Alignment.bottomLeft))),
-          // animated aurora pattern
-          AnimatedBuilder(
-            animation: _anim,
-            builder: (_, __) => CustomPaint(painter: _AuroraPainter(_anim.value)),
-          ),
-          // gentle bottom fade for legibility of the search bar
-          const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(
-            colors: [Colors.transparent, Color(0x2200243B)], begin: Alignment.topCenter, end: Alignment.bottomCenter))),
-          SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: [
-                  Container(
-                    padding: const EdgeInsets.all(7),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [Colors.white, Color(0xFFEAF2F8)]),
-                      borderRadius: BorderRadius.circular(11),
-                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 8, offset: const Offset(0, 3))]),
-                    child: const Text('C2C', style: TextStyle(color: C2C.red, fontWeight: FontWeight.w900, fontSize: 13.5, height: 1)),
-                  ),
-                  const SizedBox(width: 9),
-                  Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                    const Text('CARE 2 CARE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15.5, letterSpacing: 1.2, height: 1)),
-                    const SizedBox(height: 2),
-                    Row(children: [
-                      const Icon(Icons.location_on, color: Color(0xFF7FD4E8), size: 12),
-                      const SizedBox(width: 2),
-                      Text(tr('الكويت', 'Kuwait'), style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 11, fontWeight: FontWeight.w600)),
-                    ]),
+    return Stack(clipBehavior: Clip.none, children: [
+      // rounded red panel
+      Container(
+        padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+              colors: [C2C.redBright, C2C.red, C2C.redDeep],
+              stops: [0.0, 0.5, 1.0], begin: Alignment.topRight, end: Alignment.bottomLeft),
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+        ),
+        child: Stack(children: [
+          // soft light bloom for depth
+          Positioned(top: -30, left: -20, child: _bloom(150, 0.10)),
+          Positioned(top: 40, right: -30, child: _bloom(120, 0.08)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 10, 18, 34),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              // ---- top row: greeting + location + bell ----
+              Row(children: [
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(
+                      first.isNotEmpty
+                          ? '${_greeting()}، $first 👋'
+                          : tr('كير تو كير 👋', 'CARE 2 CARE 👋'),
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+                  const SizedBox(height: 3),
+                  Row(children: [
+                    const Icon(Icons.location_on_rounded, color: Colors.white70, size: 13),
+                    const SizedBox(width: 3),
+                    Text(tr('توصيل إلى الكويت', 'Deliver to Kuwait'),
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 11.5, fontWeight: FontWeight.w600)),
+                    const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white70, size: 15),
                   ]),
-                  const Spacer(),
-                  if (widget.guest)
-                    _iconBtn(Icons.login_rounded, () => promptLogin(context))
-                  else ...[
-                    if (widget.canSwitchCafm) _iconBtn(Icons.apartment_rounded, () => openCafm(context)),
-                    const SizedBox(width: 6),
-                    _iconBtn(Icons.notifications_none_rounded, _openNotifications, dot: _unread > 0),
-                  ],
-                ]),
-                const SizedBox(height: 12),
-                Text(first.isNotEmpty ? '${tr('مرحبًا', 'Hi')} $first 👋' : tr('كير تو كير … لأننا نهتم', 'CARE 2 CARE … because we care'),
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 19, letterSpacing: 0.2, shadows: [Shadow(color: Colors.black26, blurRadius: 6)])),
+                ])),
+                if (widget.guest)
+                  _iconBtn(Icons.login_rounded, () => promptLogin(context))
+                else ...[
+                  if (widget.canSwitchCafm) _iconBtn(Icons.apartment_rounded, () => openCafm(context)),
+                  const SizedBox(width: 8),
+                  _iconBtn(Icons.notifications_none_rounded, _openNotifications, dot: _unread > 0),
+                ],
               ]),
-            ),
+              const SizedBox(height: 16),
+              // ---- promo banner carousel ----
+              _promoCarousel(offers),
+            ]),
           ),
         ]),
       ),
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(58),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          child: InkWell(
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const C2CServiceListScreen(title: 'كل الخدمات'))),
-            child: Container(
-              height: 46,
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.22), blurRadius: 12, offset: const Offset(0, 4))]),
-              child: Row(children: [
-                Container(
-                  width: 34, height: 34, margin: const EdgeInsets.symmetric(horizontal: 4),
-                  decoration: BoxDecoration(color: C2C.navy.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.search_rounded, color: C2C.navy, size: 20)),
-                const SizedBox(width: 6),
-                Text(tr('ابحث عن خدمة…', 'Search a service…'), style: TextStyle(color: Colors.grey.shade500, fontSize: 13.5, fontWeight: FontWeight.w500)),
-                const Spacer(),
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                  decoration: BoxDecoration(gradient: const LinearGradient(colors: [C2C.red, Color(0xFFE05545)]), borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.tune_rounded, color: Colors.white, size: 17)),
-              ]),
-            ),
-          ),
-        ),
-      ),
-    );
+      // ---- floating search + filter, overlapping the panel edge ----
+      Positioned(left: 16, right: 16, bottom: -26, child: _searchBar()),
+    ]);
   }
 
-  Widget _iconBtn(IconData i, VoidCallback onTap, {bool dot = false}) => InkWell(
+  Widget _searchBar() => Material(
+        color: Colors.white,
+        elevation: 8,
+        shadowColor: Colors.black.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(6),
+          child: Row(children: [
+            Expanded(child: InkWell(
+              onTap: () => Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => const C2CServiceListScreen(title: 'كل الخدمات'))),
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 11),
+                child: Row(children: [
+                  const Icon(Icons.search_rounded, color: C2C.red, size: 22),
+                  const SizedBox(width: 8),
+                  Text(tr('ابحث عن خدمة منزلية…', 'Search a home service…'),
+                      style: TextStyle(color: Colors.grey.shade500, fontSize: 13.5, fontWeight: FontWeight.w500)),
+                ]),
+              ),
+            )),
+            // filter pill, like the reference
+            InkWell(
+              onTap: () => Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => const C2CServiceListScreen(title: 'كل الخدمات'))),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [C2C.red, C2C.redDeep]),
+                    borderRadius: BorderRadius.circular(12)),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  const Icon(Icons.tune_rounded, color: Colors.white, size: 16),
+                  const SizedBox(width: 5),
+                  Text(tr('تصفية', 'Filter'),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12.5)),
+                ]),
+              ),
+            ),
+          ]),
+        ),
+      );
+
+  Widget _bloom(double size, double a) => Container(
+        width: size, height: size,
+        decoration: BoxDecoration(color: Colors.white.withValues(alpha: a), shape: BoxShape.circle),
+      );
+
+  String _greeting() {
+    // A time-aware greeting — small touch that reads as considered.
+    final h = DateTime.now().hour;
+    if (h < 12) return tr('صباح الخير', 'Good morning');
+    if (h < 17) return tr('طاب يومك', 'Good afternoon');
+    return tr('مساء الخير', 'Good evening');
+  }
+
+    Widget _iconBtn(IconData i, VoidCallback onTap, {bool dot = false}) => InkWell(
         onTap: onTap, borderRadius: BorderRadius.circular(12),
         child: Stack(clipBehavior: Clip.none, children: [
           Container(
@@ -233,47 +254,28 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
 
   /// A deliberately distinctive band for the services section — it is the
   /// heart of the storefront, so it should not look like every other row title.
-  Widget _servicesHeader() => SliverToBoxAdapter(
-        child: Container(
-          margin: const EdgeInsets.fromLTRB(14, 10, 14, 0),
-          padding: const EdgeInsets.fromLTRB(14, 11, 10, 11),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [C2C.navy, Color(0xFF17547F)],
-              begin: Alignment.centerRight, end: Alignment.centerLeft),
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [BoxShadow(color: C2C.navy.withValues(alpha: 0.25), blurRadius: 10, offset: const Offset(0, 4))],
-          ),
+  /// A clean "Title  ·  عرض الكل" row, like the reference. Extra top space on
+  /// the first one leaves room for the floating search bar to overlap.
+  Widget _sectionRow(String title, VoidCallback onAll, {double top = 16}) => SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(18, top, 18, 4),
           child: Row(children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(color: C2C.red, borderRadius: BorderRadius.circular(9)),
-              child: const Icon(Icons.grid_view_rounded, color: Colors.white, size: 15),
-            ),
-            const SizedBox(width: 9),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-              Text(tr('خدماتنا', 'Our services'),
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15.5, height: 1.1)),
-              Text(tr('اختر ما تحتاجه واحجز في دقيقة', 'Pick what you need — book in a minute'),
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 10.5)),
-            ])),
+            Text(title, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: C2C.ink, letterSpacing: -0.3)),
+            const Spacer(),
             GestureDetector(
-              onTap: () => Navigator.push(context, MaterialPageRoute(
-                  builder: (_) => const C2CServiceListScreen(title: 'كل الخدمات'))),
+              onTap: onAll,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(20)),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Text(tr('عرض الكل', 'All'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 11.5)),
-                  const Icon(Icons.chevron_left_rounded, color: Colors.white, size: 16),
-                ]),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(color: C2C.redSoft, borderRadius: BorderRadius.circular(20)),
+                child: Text(tr('عرض الكل', 'View All'),
+                    style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w800, fontSize: 12)),
               ),
             ),
           ]),
         ),
       );
 
-  Widget _rowTitle(String t, String? action, VoidCallback? onAction) => SliverToBoxAdapter(
+    Widget _rowTitle(String t, String? action, VoidCallback? onAction) => SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 2),
           child: Row(children: [
@@ -358,34 +360,84 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
   }
 
   // ============ CATEGORIES (calm, organised soft-tint grid) ============
-  Widget _catGrid(List cats) => Padding(
-        padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
-        child: GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, childAspectRatio: 0.78, crossAxisSpacing: 10, mainAxisSpacing: 14),
+  // A coordinated set of gradients that all sit next to the brand red — warm
+  // and bright, like the reference category cards.
+  static const _catGrads = [
+    [Color(0xFFE24A3B), Color(0xFFC0392B)],
+    [Color(0xFFF39C4B), Color(0xFFE67E22)],
+    [Color(0xFF20BFA9), Color(0xFF16A085)],
+    [Color(0xFF4A90D9), Color(0xFF2980B9)],
+    [Color(0xFFB06AB3), Color(0xFF8E44AD)],
+    [Color(0xFFFF7B54), Color(0xFFE24A3B)],
+    [Color(0xFF52C77E), Color(0xFF27AE60)],
+    [Color(0xFFEC5F8E), Color(0xFFC2185B)],
+  ];
+
+  /// Categories as bold gradient cards — white title top-start, a faint icon
+  /// watermark bottom-end, exactly the reference's language but in our palette.
+  Widget _categoryCards(List cats) => SizedBox(
+        height: 128,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
           itemCount: cats.length,
           itemBuilder: (_, i) {
             final c = cats[i] as Map;
+            final g = _catGrads[i % _catGrads.length];
             return GestureDetector(
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => C2CServiceListScreen(title: '${c['name']}', categoryId: c['id'] as int))),
-              child: Column(children: [
-                // icon shown directly — no frame/box
-                SizedBox(
-                  width: 62, height: 62,
-                  child: c['image'] != null
-                      ? ClipRRect(borderRadius: BorderRadius.circular(16), child: Image.network('${c['image']}', fit: BoxFit.cover, errorBuilder: (_, __, ___) => Center(child: Text('${c['icon'] ?? '🧩'}', style: const TextStyle(fontSize: 42)))))
-                      : Center(child: Text('${c['icon'] ?? '🧩'}', style: const TextStyle(fontSize: 42))),
+              onTap: () => Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => C2CServiceListScreen(title: '${c['name']}', categoryId: c['id'] as int))),
+              child: Container(
+                width: 150,
+                margin: const EdgeInsets.symmetric(horizontal: 5),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: g, begin: Alignment.topRight, end: Alignment.bottomLeft),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [BoxShadow(color: g[1].withValues(alpha: 0.4), blurRadius: 14, offset: const Offset(0, 7))],
                 ),
-                const SizedBox(height: 6),
-                Text('${c['name']}', textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, height: 1.15, color: C2C.ink)),
-              ]),
+                child: Stack(clipBehavior: Clip.antiAlias, children: [
+                  // faint icon watermark bottom-end
+                  Positioned(
+                    bottom: -6, left: -6,
+                    child: c['image'] != null
+                        ? Opacity(opacity: 0.9, child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.network('${c['image']}', width: 72, height: 72, fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => _catWatermark(c))))
+                        : _catWatermark(c),
+                  ),
+                  // a soft sheen circle top-end
+                  Positioned(top: -18, right: -14, child: _bloom(70, 0.14)),
+                  // title
+                  Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('${c['name']}',
+                          maxLines: 3, overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16, height: 1.2, shadows: [Shadow(color: Colors.black26, blurRadius: 4)])),
+                      const SizedBox(height: 4),
+                      if ((c['service_count'] ?? 0) > 0)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.24), borderRadius: BorderRadius.circular(20)),
+                          child: Text(tr('${c['service_count']} خدمة', '${c['service_count']} services'),
+                              style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w800)),
+                        ),
+                    ]),
+                  ),
+                ]),
+              ),
             );
           },
         ),
       );
 
-  Widget _trustStrip() => Container(
+  Widget _catWatermark(Map c) => Opacity(
+        opacity: 0.28,
+        child: Text('${c['icon'] ?? '🧰'}', style: const TextStyle(fontSize: 62)),
+      );
+
+    Widget _trustStrip() => Container(
         margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, offset: Offset(0, 2))]),
@@ -850,49 +902,3 @@ class _Metric extends StatelessWidget {
 
 /// Animated, softly-glowing aurora pattern for the header. Floating light orbs
 /// drift on sine paths and a faint diagonal sheen sweeps across — subtle, premium.
-class _AuroraPainter extends CustomPainter {
-  _AuroraPainter(this.t);
-  final double t; // 0..1 loop
-
-  // orb: base x%, base y%, radius, color, drift x, drift y, phase
-  static const _orbs = [
-    [0.20, 0.35, 90.0, 0xFF2E86B0, 0.06, 0.05, 0.0],
-    [0.82, 0.22, 70.0, 0x30FFFFFF, 0.05, 0.07, 1.8],
-    [0.68, 0.72, 100.0, 0xFF14808F, 0.07, 0.04, 3.1],
-    [0.10, 0.85, 60.0, 0x33C0392B, 0.05, 0.06, 4.6],
-  ];
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final tau = 2 * math.pi;
-    for (final o in _orbs) {
-      final phase = o[6] as double;
-      final dx = math.sin(tau * t + phase) * (o[4] as double) * size.width;
-      final dy = math.cos(tau * t + phase) * (o[5] as double) * size.height;
-      final cx = (o[0] as double) * size.width + dx;
-      final cy = (o[1] as double) * size.height + dy;
-      final r = o[2] as double;
-      final base = Color(o[3] as int);
-      // orbs with full alpha in hex get a soft opacity here
-      final col = base.a == 1.0 ? base.withValues(alpha: 0.16) : base;
-      final paint = Paint()
-        ..color = col
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 34);
-      canvas.drawCircle(Offset(cx, cy), r, paint);
-    }
-    // faint diagonal sheen sweeping left→right
-    final sweep = (t * 1.6 - 0.3) * size.width;
-    final sheen = Paint()
-      ..shader = LinearGradient(
-        colors: [Colors.transparent, Colors.white.withValues(alpha: 0.07), Colors.transparent],
-        stops: const [0.0, 0.5, 1.0],
-      ).createShader(Rect.fromLTWH(sweep - 80, 0, 160, size.height));
-    canvas.save();
-    canvas.translate(0, 0);
-    canvas.drawRect(Rect.fromLTWH(sweep - 80, -20, 160, size.height + 40), sheen);
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(_AuroraPainter old) => old.t != t;
-}
