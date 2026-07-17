@@ -273,8 +273,30 @@ class ClientApi(Controller):
                     'supervisor': t.supervisor_id.name or None,
                     'members': t.member_count}
 
+        # ---- a richer KPI set for the portal cockpit ----
+        now = fields.Datetime.now()
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        done_wos = wos.filtered(lambda w: w.state in ('done', 'verified'))
+        done_month = done_wos.filtered(lambda w: w.done_datetime and w.done_datetime >= month_start)
+        new_month = wos.filtered(lambda w: w.request_datetime and w.request_datetime >= month_start)
+        overdue = wos.filtered('is_overdue')
+        urgent = open_wos.filtered(lambda w: w.priority in ('2', '3'))
+        # Average time from request to done, in hours — only over orders that
+        # actually have both stamps, so a half-filled record can't skew it.
+        closed = [w for w in done_wos if w.done_datetime and w.request_datetime]
+        avg_hours = round(
+            sum((w.done_datetime - w.request_datetime).total_seconds() / 3600.0 for w in closed) / len(closed), 1
+        ) if closed else 0.0
+        # Workers on this client's sites + who is punched in right now.
+        workers = teams.mapped('member_ids')
+        present_now = 0
+        if 'care.cafm.shift' in env and facs:
+            present_now = env['care.cafm.shift'].sudo().search_count(
+                [('facility_id', 'in', facs.ids), ('state', '=', 'open')])
         return _ok({
             'client': env.user.partner_id.commercial_partner_id.name,
+            'client_ref': env.user.partner_id.commercial_partner_id.ref or None,
+            'contact': env.user.partner_id.name,
             'kpis': {
                 'facilities': len(facs),
                 'buildings': sum(len(f.building_ids) for f in facs),
@@ -282,6 +304,18 @@ class ClientApi(Controller):
                 'open_workorders': len(open_wos),
                 'services': len(svc_types),
                 'teams': len(teams),
+                'total_workorders': len(wos),
+                'overdue': len(overdue),
+                'urgent': len(urgent),
+                'done_month': len(done_month),
+                'new_month': len(new_month),
+                # Share of this client's orders that reached done/verified.
+                'completion_rate': round(len(done_wos) * 100.0 / len(wos), 1) if wos else 0.0,
+                # Of the orders with a deadline, the share that did not blow it.
+                'sla_rate': round((len(wos) - len(overdue)) * 100.0 / len(wos), 1) if wos else 0.0,
+                'avg_hours': avg_hours,
+                'workers': len(workers),
+                'present_now': present_now,
             },
             'facilities': [_fac(f) for f in facs],
             'services': [{'id': s.id, 'name': s.name, 'type': s.service_type, 'icon': s.icon} for s in services],
@@ -517,6 +551,108 @@ class ClientApi(Controller):
             })
         out.sort(key=lambda d: (d['status'] != 'on_task', d['status'] != 'recent', -d['open_tasks']))
         return _ok(out)
+
+    @route(API + '/client/teams', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def teams(self, **kw):
+        """Teams as blocks, grouped by service: each one carries its own head
+        count, who is on site now, hours worked and work-order load."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        facs = self._facilities(env)
+        if not facs:
+            return _ok({'groups': [], 'totals': {}})
+        Team = env['care.cafm.team'].sudo()
+        WO = env['care.cafm.workorder'].sudo()
+        now = fields.Datetime.now()
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        teams = Team.search([('facility_id', 'in', facs.ids)])
+        svc_lbl = dict(env['care.cafm.service']._fields['service_type'].selection)
+
+        # ---- attendance, in two grouped reads rather than per-member ----
+        hours_by_emp, open_shift_emps = {}, set()
+        if 'care.cafm.shift' in env:
+            Shift = env['care.cafm.shift'].sudo()
+            for sh in Shift.search([('facility_id', 'in', facs.ids),
+                                    ('check_in', '>=', month_start)]):
+                if sh.employee_id:
+                    hours_by_emp[sh.employee_id.id] = hours_by_emp.get(sh.employee_id.id, 0.0) + (sh.duration_hours or 0.0)
+            open_shift_emps = set(Shift.search(
+                [('facility_id', 'in', facs.ids), ('state', '=', 'open')]).mapped('employee_id').ids)
+
+        on_task = set(WO.search([('facility_id', 'in', facs.ids), ('state', '=', 'in_progress'),
+                                 ('employee_id', '!=', False)]).mapped('employee_id').ids)
+
+        def _member(e):
+            return {
+                'id': e.id, 'name': e.name, 'job': e.job_title or None,
+                'photo': _emp_photo(e, 'image_128'),
+                'present': e.id in open_shift_emps,
+                'on_task': e.id in on_task,
+                'hours_month': round(hours_by_emp.get(e.id, 0.0), 1),
+                'status': ('on_task' if e.id in on_task
+                           else 'available' if e.id in open_shift_emps else 'off'),
+            }
+
+        def _team(t):
+            members = t.member_ids
+            twos = WO.search([('facility_id', '=', t.facility_id.id), ('service_id', '=', t.service_id.id)])
+            open_wos = twos.filtered(lambda w: w.state not in ('done', 'verified', 'cancelled'))
+            done_wos = twos.filtered(lambda w: w.state in ('done', 'verified'))
+            present = [e for e in members if e.id in open_shift_emps]
+            return {
+                'id': t.id, 'name': t.name,
+                'service': t.service_id.name or None,
+                'service_type': t.service_type or None,
+                'facility': t.facility_id.name or None, 'facility_id': t.facility_id.id or None,
+                'supervisor': t.supervisor_id.name or None,
+                'quality_user': t.quality_user_id.name or None,
+                'members': len(members),
+                'reserves': len(t.reserve_ids),
+                'present_now': len(present),
+                # Attendance rate = who is punched in out of the whole team.
+                'present_rate': round(len(present) * 100.0 / len(members), 1) if members else 0.0,
+                'hours_month': round(sum(hours_by_emp.get(e.id, 0.0) for e in members), 1),
+                'open_workorders': len(open_wos),
+                'done_workorders': len(done_wos),
+                'overdue': len(twos.filtered('is_overdue')),
+                'on_task': len([e for e in members if e.id in on_task]),
+                'member_list': [_member(e) for e in members],
+            }
+
+        rows = [_team(t) for t in teams]
+        # group into service blocks
+        groups = {}
+        for r in rows:
+            key = r['service_type'] or 'other'
+            g = groups.setdefault(key, {
+                'service_type': key, 'service': svc_lbl.get(key, r['service'] or 'أخرى'),
+                'teams': [], 'members': 0, 'present_now': 0, 'hours_month': 0.0,
+                'open_workorders': 0, 'overdue': 0,
+            })
+            g['teams'].append(r)
+            g['members'] += r['members']
+            g['present_now'] += r['present_now']
+            g['hours_month'] += r['hours_month']
+            g['open_workorders'] += r['open_workorders']
+            g['overdue'] += r['overdue']
+        for g in groups.values():
+            g['hours_month'] = round(g['hours_month'], 1)
+            g['present_rate'] = round(g['present_now'] * 100.0 / g['members'], 1) if g['members'] else 0.0
+
+        out = sorted(groups.values(), key=lambda g: -g['members'])
+        totals = {
+            'teams': len(rows),
+            'members': sum(r['members'] for r in rows),
+            'present_now': sum(r['present_now'] for r in rows),
+            'hours_month': round(sum(r['hours_month'] for r in rows), 1),
+            'open_workorders': sum(r['open_workorders'] for r in rows),
+            'overdue': sum(r['overdue'] for r in rows),
+            'services': len(out),
+        }
+        totals['present_rate'] = round(
+            totals['present_now'] * 100.0 / totals['members'], 1) if totals['members'] else 0.0
+        return _ok({'groups': out, 'totals': totals})
 
     # ---- full employee profile + period statistics --------------------------
     @route(API + '/client/employee/<int:eid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
@@ -1576,14 +1712,123 @@ class ClientApi(Controller):
         if not env:
             return _err('غير مصرّح', 401)
         facs = self._facilities(env)
+        a = request.httprequest.args
         dom = [('facility_id', 'in', facs.ids)]
-        state = request.httprequest.args.get('state')
-        if state == 'open':
+        state = a.get('state')
+        # 'overdue' and 'urgent' are cuts across states, not states themselves.
+        if state in ('open', 'overdue', 'urgent'):
             dom.append(('state', 'not in', ('done', 'verified', 'cancelled')))
-        elif state and state != 'all':
+        elif state and state not in ('all', 'overdue', 'urgent'):
             dom.append(('state', '=', state))
-        wos = env['care.cafm.workorder'].sudo().search(dom, limit=300)
-        return _ok([_wo_dict(w) for w in wos])
+        for key, field in (('service_type', 'service_type'), ('priority', 'priority')):
+            v = a.get(key)
+            if v and v != 'all':
+                dom.append((field, '=', v))
+        for key, field in (('employee_id', 'employee_id'), ('facility_id', 'facility_id')):
+            v = a.get(key)
+            if v and v != 'all':
+                try:
+                    dom.append((field, '=', int(v)))
+                except ValueError:
+                    pass
+        q = (a.get('q') or '').strip()
+        if q:
+            dom += ['|', '|', ('title', 'ilike', q), ('name', 'ilike', q), ('description', 'ilike', q)]
+        dstart, dend, period_label = self._range(request.httprequest.args)
+
+        WO = env['care.cafm.workorder'].sudo()
+        # Stats must describe the whole filtered set, so they are computed
+        # before the display limit is applied — a "300 shown" cap must never
+        # silently become "300" in the totals.
+        allw = WO.search(dom, order='request_datetime desc')
+        if dstart or dend:
+            allw = self._in_range(allw, dstart, dend)
+        if state == 'overdue':
+            allw = allw.filtered('is_overdue')
+        elif state == 'urgent':
+            allw = allw.filtered(lambda w: w.priority in ('2', '3'))
+
+        now = fields.Datetime.now()
+
+        def _age_days(w):
+            """How many days past its deadline an order is (0 if not late)."""
+            if not w.deadline or w.state in ('done', 'verified', 'cancelled'):
+                return 0
+            d = (now - w.deadline).total_seconds() / 86400.0
+            return round(d, 1) if d > 0 else 0
+
+        overdue = allw.filtered('is_overdue')
+        # Overdue split into buckets, so "late" isn't one undifferentiated pile.
+        buckets = {'d1': 0, 'd3': 0, 'w1': 0, 'm1': 0, 'm1p': 0}
+        for w in overdue:
+            d = _age_days(w)
+            if d <= 1: buckets['d1'] += 1
+            elif d <= 3: buckets['d3'] += 1
+            elif d <= 7: buckets['w1'] += 1
+            elif d <= 30: buckets['m1'] += 1
+            else: buckets['m1p'] += 1
+
+        open_wos = allw.filtered(lambda w: w.state not in ('done', 'verified', 'cancelled'))
+        done_wos = allw.filtered(lambda w: w.state in ('done', 'verified'))
+        state_lbl = dict(WO._fields['state'].selection)
+        prio_lbl = dict(WO._fields['priority'].selection)
+        svc_lbl = dict(env['care.cafm.service']._fields['service_type'].selection)
+
+        # Per-worker and per-role rollups — "who is carrying the late work".
+        by_emp, by_job = {}, {}
+        for w in allw:
+            if w.employee_id:
+                e = by_emp.setdefault(w.employee_id.id, {
+                    'id': w.employee_id.id, 'name': w.employee_id.name,
+                    'job': w.employee_id.job_title or None, 'total': 0, 'open': 0, 'overdue': 0})
+                e['total'] += 1
+                if w.state not in ('done', 'verified', 'cancelled'): e['open'] += 1
+                if w.is_overdue: e['overdue'] += 1
+                jb = w.employee_id.job_title or 'بدون دور'
+                j = by_job.setdefault(jb, {'name': jb, 'total': 0, 'overdue': 0})
+                j['total'] += 1
+                if w.is_overdue: j['overdue'] += 1
+
+        recs = []
+        for w in allw[:300]:
+            d = _wo_dict(w)
+            d['overdue_days'] = _age_days(w)
+            recs.append(d)
+
+        return _ok({
+            'records': recs,
+            'count': len(allw),
+            'shown': len(recs),
+            'period_label': period_label,
+            'stats': {
+                'total': len(allw),
+                'open': len(open_wos),
+                'done': len(done_wos),
+                'overdue': len(overdue),
+                'urgent': len(open_wos.filtered(lambda w: w.priority in ('2', '3'))),
+                'unassigned': len(open_wos.filtered(lambda w: not w.employee_id)),
+                'completion_rate': round(len(done_wos) * 100.0 / len(allw), 1) if allw else 0.0,
+                'sla_rate': round((len(allw) - len(overdue)) * 100.0 / len(allw), 1) if allw else 0.0,
+                'overdue_buckets': buckets,
+                'by_state': {lbl: len(allw.filtered(lambda w, st=k: w.state == st)) for k, lbl in state_lbl.items()},
+                'by_priority': {lbl: len(allw.filtered(lambda w, p=k: w.priority == p)) for k, lbl in prio_lbl.items()},
+                'by_service': {svc_lbl.get(t, t): len(allw.filtered(lambda w, tt=t: w.service_type == tt))
+                               for t in sorted(set(allw.mapped('service_type')) - {False})},
+                'by_employee': sorted(by_emp.values(), key=lambda e: (-e['overdue'], -e['open']))[:20],
+                'by_job': sorted(by_job.values(), key=lambda j: -j['total'])[:12],
+            },
+            # Facet sources, so the app's dropdowns list only what this client
+            # actually has rather than every value in the system.
+            'facets': {
+                'services': [{'value': t, 'label': svc_lbl.get(t, t)}
+                             for t in sorted(set(facs and WO.search([('facility_id', 'in', facs.ids)]).mapped('service_type') or []) - {False})],
+                'facilities': [{'value': f.id, 'label': f.name} for f in facs],
+                'employees': [{'value': e['id'], 'label': e['name']} for e in
+                              sorted(by_emp.values(), key=lambda e: e['name'])],
+                'states': [{'value': k, 'label': v} for k, v in state_lbl.items()],
+                'priorities': [{'value': k, 'label': v} for k, v in prio_lbl.items()],
+            },
+        })
 
     # ---- add workers (client self-service, gated per-client or supervisor) ---
     def _can_add_workers(self, env):

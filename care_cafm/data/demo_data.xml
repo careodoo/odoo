@@ -8,7 +8,7 @@
             <field name="default_sla_hours">4</field><field name="sequence">1</field>
         </record>
         <record id="svc_security" model="care.cafm.service">
-            <field name="name">الأمن والحراسة</field><field name="code">SEC</field>
+            <field name="name">الأمن</field><field name="code">SEC</field>
             <field name="service_type">security</field><field name="icon">🛡️</field>
             <field name="default_sla_hours">1</field><field name="sequence">2</field>
         </record>

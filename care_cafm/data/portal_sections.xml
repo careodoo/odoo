@@ -40,7 +40,7 @@
       <field name="icon">🧹</field><field name="sequence">20</field><field name="service_type">cleaning</field>
     </record>
     <record id="psec_security" model="care.cafm.portal.section">
-      <field name="name">الأمن والحراسة</field><field name="code">security</field>
+      <field name="name">الأمن</field><field name="code">security</field>
       <field name="icon">🛡️</field><field name="sequence">21</field><field name="service_type">security</field>
     </record>
     <record id="psec_agri" model="care.cafm.portal.section">
@@ -48,7 +48,7 @@
       <field name="icon">🌿</field><field name="sequence">22</field><field name="service_type">agriculture</field>
     </record>
     <record id="psec_facade" model="care.cafm.portal.section">
-      <field name="name">غسيل الواجهات</field><field name="code">facade</field>
+      <field name="name">الواجهات</field><field name="code">facade</field>
       <field name="icon">🧼</field><field name="sequence">23</field><field name="service_type">facade</field>
     </record>
     <record id="psec_maintenance" model="care.cafm.portal.section">

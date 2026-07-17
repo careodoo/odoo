@@ -103,6 +103,8 @@ def _wo_dict(w):
         'service': w.service_id.name, 'service_type': w.service_type,
         'employee': w.employee_id.name or None, 'employee_id': w.employee_id.id or None,
         'priority': w.priority, 'state': w.state,
+        'job': w.employee_id.job_title or None,
+        'request_datetime': w.request_datetime or None,
         'deadline': w.deadline or None,
         'start_datetime': w.start_datetime or None,
         'done_datetime': w.done_datetime or None,

@@ -14,9 +14,9 @@ class CafmService(models.Model):
     sequence = fields.Integer(default=10)
     service_type = fields.Selection([
         ('cleaning', 'النظافة'),
-        ('security', 'الأمن والحراسة'),
+        ('security', 'الأمن'),
         ('agriculture', 'الزراعة وتنسيق الحدائق'),
-        ('facade', 'غسيل الواجهات'),
+        ('facade', 'الواجهات'),
         ('maintenance', 'الصيانة (تكييف/كهرباء/سباكة)'),
         ('pest', 'مكافحة الحشرات'),
         ('waste', 'إدارة النفايات'),
