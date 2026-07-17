@@ -831,10 +831,22 @@ class ClientApi(Controller):
         on_task = set(WO.search([('facility_id', 'in', facs.ids), ('state', '=', 'in_progress'),
                                  ('employee_id', '!=', False)]).mapped('employee_id').ids)
 
-        def _member(e):
+        # Members live in care.cafm.team.member (with role + shift); the team's
+        # own member_ids m2m is often empty, so read the membership model and
+        # fall back to the m2m only if it has nothing.
+        TMbr = env['care.cafm.team.member'].sudo() if 'care.cafm.team.member' in env else None
+        mbr_by_team = {}
+        if TMbr is not None:
+            for m in TMbr.search([('facility_id', 'in', facs.ids)]):
+                if m.employee_id:
+                    mbr_by_team.setdefault(m.team_id.id, []).append(m)
+
+        def _member(e, m=None):
             return {
                 'id': e.id, 'name': e.name, 'job': e.job_title or None,
                 'photo': _emp_photo(e, 'image_128'),
+                'role': (dict(m._fields['role'].selection).get(m.role, m.role) if (m and 'role' in m._fields) else None),
+                'shift': (m.shift_type_id.name if (m and m.shift_type_id) else None),
                 'present': e.id in open_shift_emps,
                 'on_task': e.id in on_task,
                 'hours_month': round(hours_by_emp.get(e.id, 0.0), 1),
@@ -843,7 +855,13 @@ class ClientApi(Controller):
             }
 
         def _team(t):
-            members = t.member_ids
+            tmbrs = mbr_by_team.get(t.id, [])
+            if tmbrs:
+                members = t.env['hr.employee'].browse([m.employee_id.id for m in tmbrs])
+                mbr_of = {m.employee_id.id: m for m in tmbrs}
+            else:
+                members = t.member_ids
+                mbr_of = {}
             twos = WO.search([('facility_id', '=', t.facility_id.id), ('service_id', '=', t.service_id.id)])
             open_wos = twos.filtered(lambda w: w.state not in ('done', 'verified', 'cancelled'))
             done_wos = twos.filtered(lambda w: w.state in ('done', 'verified'))
@@ -865,7 +883,7 @@ class ClientApi(Controller):
                 'done_workorders': len(done_wos),
                 'overdue': len(twos.filtered('is_overdue')),
                 'on_task': len([e for e in members if e.id in on_task]),
-                'member_list': [_member(e) for e in members],
+                'member_list': [_member(e, mbr_of.get(e.id)) for e in members],
             }
 
         rows = [_team(t) for t in teams]
