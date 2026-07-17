@@ -601,8 +601,10 @@ class PmsSectionsApi(Controller):
                    (u.quantity if 'quantity' in U._fields else 0.0)) or 0.0
             rows.append({
                 'id': u.id,
+                'vehicle_id': u.vehicle_id.id if u.vehicle_id else None,
                 'title': (u.vehicle_id.display_name if u.vehicle_id else u.display_name),
                 'subtitle': _d(u.datetime) if 'datetime' in U._fields else None,
+                'open': 'vehicle' if u.vehicle_id else None,
                 'value': round(qty, 1), 'value_label': 'لتر',
                 'badges': [x for x in [
                     ('العدّاد: %s' % int(u.odometer_value)) if 'odometer_value' in U._fields and u.odometer_value else None,
@@ -923,6 +925,119 @@ class PmsSectionsApi(Controller):
         except Exception as e:
             return _err(str(e) or 'تعذّر إنشاء الطلب', 422)
         return _ok({'id': r.id, 'name': r.display_name})
+
+    def _emp_in_scope(self, env, eid):
+        """The employee if they belong to a department of a project this user
+        manages — the portal's own guard (self._mgr_departments)."""
+        emp = env['hr.employee'].sudo().browse(int(eid))
+        if not emp.exists():
+            return None
+        # search([]) on the caller's env already applies the per-user project
+        # record rules, so this is the departments of THIS manager's projects.
+        my_depts = env['project.project'].search([]).mapped('pms_department_id')
+        return emp if emp.department_id and emp.department_id.id in my_depts.ids else None
+
+    @route(API + '/pms/employee/<int:eid>/file', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_employee_file(self, eid, **kw):
+        """The employee file a PM sees on the portal: identity, contract wage,
+        docs, loans, penalties, bonuses, recent attendance and compliance dates.
+        Scoped to the manager's own project departments."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        emp = self._emp_in_scope(env, eid)
+        if not emp:
+            return _err('هذا الموظف ليس ضمن مشاريعك', 403)
+
+        def _rows(model, extra=None):
+            if model not in env:
+                return []
+            recs = env[model].sudo().search([('employee_id', '=', emp.id)], limit=30)
+            out = []
+            for r in recs:
+                d = {'id': r.id, 'name': r.display_name}
+                if 'state' in r._fields:
+                    sel = dict(r._fields['state'].selection)
+                    d['state'] = r.state
+                    d['state_label'] = sel.get(r.state, r.state)
+                for f in (extra or []):
+                    if f in r._fields:
+                        v = r[f]
+                        d[f] = _d(v) if hasattr(v, 'strftime') else (round(v, 3) if isinstance(v, float) else v)
+                out.append(d)
+            return out
+
+        from odoo import fields as of
+        today = of.Date.today()
+        compliance = []
+        for fld, lbl in (('residency_end_date', 'الإقامة'), ('affairs_permit_end_date', 'إذن الشؤون'),
+                         ('visa_expire', 'التأشيرة'), ('work_permit_expiration_date', 'تصريح العمل'),
+                         ('passport_expiry_date', 'الجواز')):
+            if fld in emp._fields and emp[fld]:
+                compliance.append({'label': lbl, 'date': str(emp[fld]),
+                                   'days': (emp[fld] - today).days})
+
+        att = env['hr.attendance'].sudo().search(
+            [('employee_id', '=', emp.id)], order='check_in desc', limit=30)
+        return _ok({
+            'employee': {
+                'id': emp.id, 'name': emp.name, 'job': emp.job_title or None,
+                'department': emp.department_id.name or None,
+                'manager': emp.parent_id.name or None,
+                'phone': emp.work_phone or emp.mobile_phone or None,
+                'nationality': emp.country_id.name or None,
+                'photo': _abs('/api/v1/pms/employee/%s/photo' % emp.id),
+                # Wage is the reason a PM opens this file — the portal shows it,
+                # so parity does too; the whole endpoint is department-scoped.
+                'wage': round(emp.contract_id.wage, 3) if emp.contract_id else None,
+            },
+            'compliance': sorted(compliance, key=lambda c: c['days']),
+            'docs': _rows('care.pms.doc.request'),
+            'loans': _rows('hr.loan', ['amount']) + _rows('care.loan', ['amount']),
+            'penalties': _rows('penalty.request', ['amount']),
+            'bonuses': _rows('bonus.request', ['amount']),
+            'attendance': [{
+                'id': a.id, 'date': str(a.check_in)[:10] if a.check_in else None,
+                'check_in': _d(a.check_in), 'check_out': _d(a.check_out),
+                'hours': round(a.worked_hours or 0.0, 1),
+                'open': not a.check_out,
+            } for a in att],
+        })
+
+    @route(API + '/pms/vehicle/<int:vid>/file', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_vehicle_file(self, vid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'fleet.vehicle' not in env:
+            return _err('غير متاح', 404)
+        veh = env['fleet.vehicle'].sudo().browse(int(vid))
+        if not veh.exists():
+            return _err('غير موجود', 404)
+        my_depts = env['project.project'].search([]).mapped('pms_department_id')
+        if 'department_id' in veh._fields and veh.department_id and veh.department_id.id not in my_depts.ids:
+            return _err('هذه المركبة ليست ضمن مشاريعك', 403)
+        uses = []
+        if 'petrol.tank.use' in env:
+            U = env['petrol.tank.use'].sudo()
+            for u in U.search([('vehicle_id', '=', veh.id)], order='id desc', limit=60):
+                qty = (u.use_quantity if 'use_quantity' in U._fields else
+                       (u.quantity if 'quantity' in U._fields else 0.0)) or 0.0
+                uses.append({'id': u.id, 'date': _d(u.datetime) if 'datetime' in U._fields else None,
+                             'liters': round(qty, 1),
+                             'odometer': int(u.odometer_value) if 'odometer_value' in U._fields and u.odometer_value else None})
+        return _ok({
+            'vehicle': {
+                'id': veh.id, 'name': veh.display_name,
+                'plate': veh.license_plate or None,
+                'model': (veh.model_id.name if veh.model_id else None),
+                'driver': (veh.driver_id.name if veh.driver_id else None),
+                'department': (veh.department_id.name if 'department_id' in veh._fields and veh.department_id else None),
+                'odometer': int(veh.odometer) if 'odometer' in veh._fields and veh.odometer else None,
+            },
+            'fuel': uses,
+            'fuel_total': round(sum(u['liters'] for u in uses), 1),
+        })
 
     @route(API + '/pms/employee/<int:eid>/photo', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def pms_emp_photo(self, eid, **kw):
