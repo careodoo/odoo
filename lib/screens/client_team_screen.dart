@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import '../core/service_ui.dart';
 import 'employee_profile_screen.dart';
 import 'add_worker_screen.dart';
 import 'client_team_roster.dart';
@@ -245,7 +246,13 @@ class _ClientTeamScreenState extends State<ClientTeamScreen> {
               _mini(tr('متأخرة', 'Overdue'), '${g['overdue']}', Icons.warning_amber_rounded, const Color(0xFFE5484D)),
             ]),
             const SizedBox(height: 10),
-            for (final t in teams) _teamCard(t as Map, c),
+            MoreList(
+              items: teams,
+              color: c,
+              pageSize: 4,
+              emptyText: tr('لا فِرَق في هذه الخدمة.', 'No teams in this service.'),
+              itemBuilder: (_, t, __) => _teamCard(t as Map, c),
+            ),
           ],
         ),
       ),
@@ -318,14 +325,15 @@ class _ClientTeamScreenState extends State<ClientTeamScreen> {
               _mini(tr('متأخرة', 'Overdue'), '${t['overdue']}', Icons.warning_amber_rounded, const Color(0xFFE5484D)),
             ]),
             const SizedBox(height: 9),
-            if (members.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Text(tr('لا أعضاء مسجّلين في هذا الفريق.', 'No members registered on this team.'),
-                    style: TextStyle(fontSize: 11.5, color: Colors.grey.shade500)),
-              )
-            else
-              for (final m in members) _memberRow(m as Map),
+            // A team can hold dozens of members; show a page and let the
+            // reader ask for the rest.
+            MoreList(
+              items: members,
+              color: c,
+              pageSize: 6,
+              emptyText: tr('لا أعضاء مسجّلين في هذا الفريق.', 'No members registered on this team.'),
+              itemBuilder: (_, m, __) => _memberRow(m as Map),
+            ),
           ],
         ),
       ),
