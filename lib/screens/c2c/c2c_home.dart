@@ -11,6 +11,7 @@ import 'c2c_bookings.dart';
 import 'c2c_subscriptions.dart';
 import 'c2c_contracts.dart';
 import 'c2c_rfq_dialog.dart';
+import 'c2c_video.dart';
 
 /// CARE 2 CARE storefront home — premium, image-led, animated header.
 class C2CHomeScreen extends StatefulWidget {
@@ -33,6 +34,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
     super.initState();
     _home = context.read<AuthProvider>().api.c2cHome();
     _loadUnread();
+    _loadVideos();
     _promoCtrl.addListener(() {
       final p = _promoCtrl.page?.round() ?? 0;
       if (p != _promoPage) setState(() => _promoPage = p);
@@ -58,6 +60,14 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
 
   // real unread count drives the header bell dot (guests have none)
   int _unread = 0;
+  List<dynamic> _videos = const [];
+
+  Future<void> _loadVideos() async {
+    try {
+      final v = await context.read<AuthProvider>().api.c2cVideos();
+      if (mounted) setState(() => _videos = v);
+    } catch (_) {}
+  }
 
   Future<void> _loadUnread() async {
     if (widget.guest) return;
@@ -102,6 +112,9 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
                     () => Navigator.push(context, MaterialPageRoute(
                         builder: (_) => const C2CServiceListScreen(title: 'كل الخدمات')))),
               if (popular.isNotEmpty) SliverToBoxAdapter(child: _popularRail(popular)),
+              if (_videos.isNotEmpty)
+                _sectionRow(tr('شاهد خدماتنا', 'Watch our services'), () {}),
+              if (_videos.isNotEmpty) SliverToBoxAdapter(child: _videoRail()),
               if (subs.isNotEmpty)
                 _rowTitle('${subsDesign['title'] ?? tr('الاشتراكات الشهرية', 'Monthly plans')}', null, null),
               if (subs.isNotEmpty && subsDesign['subtitle'] != null)
@@ -466,6 +479,27 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
       ]),
     );
   }
+
+  Widget _videoRail() => SizedBox(
+        height: 160,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          itemCount: _videos.length,
+          itemBuilder: (_, i) {
+            final v = _videos[i] as Map;
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5),
+              child: C2CVideoThumb(
+                url: '${v['video_url']}',
+                poster: v['poster'] as String?,
+                title: v['name'] as String?,
+                subtitle: v['service'] as String?,
+              ),
+            );
+          },
+        ),
+      );
 
     Widget _trustStrip() => Container(
         margin: const EdgeInsets.fromLTRB(16, 42, 16, 0),

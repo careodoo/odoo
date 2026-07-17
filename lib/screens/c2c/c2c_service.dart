@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'c2c_shell.dart';
+import 'c2c_video.dart';
 
 /// A filtered list of services (by category or search).
 class C2CServiceListScreen extends StatefulWidget {
@@ -222,6 +223,7 @@ class _C2CServiceScreenState extends State<C2CServiceScreen> {
                       _secTitle(tr('اختر باقة', 'Choose a package')),
                       for (final p in packages) _pkgTile(p as Map),
                     ],
+                    _mediaGallery((s['media'] as List?) ?? []),
                     _gallery((s['work_samples'] as List?) ?? []),
                     _team((s['team'] as List?) ?? []),
                     _reviews((s['reviews'] as List?) ?? [], s),
@@ -367,17 +369,138 @@ class _C2CServiceScreenState extends State<C2CServiceScreen> {
 
   // ---- reviews ----
   Widget _reviews(List reviews, Map s) {
+    final avg = s['rating_avg'] ?? s['rating'] ?? 0;
+    final shown = reviews.take(3).toList();
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
         _secTitle(tr('تقييمات العملاء', 'Customer reviews')),
         const Spacer(),
-        if ((s['rating'] ?? 0) > 0) Padding(padding: const EdgeInsets.only(top: 14), child: Text('⭐ ${s['rating']} (${s['rating_count'] ?? reviews.length})', style: const TextStyle(fontWeight: FontWeight.w800, color: C2C.navy))),
+        if ((avg is num ? avg : 0) > 0) Padding(padding: const EdgeInsets.only(top: 14), child: Text('⭐ $avg (${s['rating_count'] ?? reviews.length})', style: const TextStyle(fontWeight: FontWeight.w800, color: C2C.navy))),
       ]),
+      if (s['can_review'] == true)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: SizedBox(width: double.infinity, child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(foregroundColor: C2C.red, side: BorderSide(color: C2C.red.withValues(alpha: 0.4))),
+            onPressed: () => _rateService(s),
+            icon: const Icon(Icons.rate_review_rounded, size: 18),
+            label: Text(tr('قيّم هذه الخدمة', 'Rate this service'), style: const TextStyle(fontWeight: FontWeight.w800)),
+          )),
+        ),
       if (reviews.isEmpty)
-        Text(tr('لا تقييمات بعد', 'No reviews yet'), style: const TextStyle(color: Colors.grey))
-      else
-        for (final r in reviews) _reviewTile(r as Map),
+        Text(tr('لا تقييمات بعد — كن أول من يقيّم!', 'No reviews yet — be the first!'), style: const TextStyle(color: Colors.grey))
+      else ...[
+        for (final r in shown) _reviewTile(r as Map),
+        if (reviews.length > 3)
+          Center(child: TextButton(
+            onPressed: () => _allReviews(reviews, s),
+            child: Text(tr('عرض كل التقييمات (${reviews.length})', 'See all reviews (${reviews.length})'),
+                style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w800)),
+          )),
+      ],
     ]);
+  }
+
+  /// Photos + videos of the service — the professional gallery.
+  Widget _mediaGallery(List media) {
+    if (media.isEmpty) return const SizedBox.shrink();
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _secTitle(tr('صور وفيديوهات', 'Photos & videos')),
+      SizedBox(
+        height: 150,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.only(top: 8),
+          itemCount: media.length,
+          itemBuilder: (_, i) {
+            final m = media[i] as Map;
+            if (m['kind'] == 'video' && m['video_url'] != null) {
+              return C2CVideoThumb(url: '${m['video_url']}', poster: m['poster'] as String?,
+                  title: m['name'] as String?, width: 220, height: 140);
+            }
+            return GestureDetector(
+              onTap: m['image'] != null ? () => _fullImage('${m['image']}') : null,
+              child: Container(
+                width: 200, height: 140, margin: const EdgeInsets.symmetric(horizontal: 5),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), color: C2C.bg),
+                clipBehavior: Clip.antiAlias,
+                child: m['image'] != null
+                    ? Image.network('${m['image']}', fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Icon(Icons.image_outlined, color: Colors.grey, size: 40))
+                    : const Icon(Icons.image_outlined, color: Colors.grey, size: 40),
+              ),
+            );
+          },
+        ),
+      ),
+    ]);
+  }
+
+  void _fullImage(String url) => showDialog(context: context, builder: (ctx) => Dialog(
+        backgroundColor: Colors.black, insetPadding: const EdgeInsets.all(12),
+        child: Stack(children: [
+          InteractiveViewer(child: Image.network(url, fit: BoxFit.contain)),
+          Positioned(top: 4, right: 4, child: IconButton(
+              icon: const Icon(Icons.close_rounded, color: Colors.white), onPressed: () => Navigator.pop(ctx))),
+        ]),
+      ));
+
+  void _allReviews(List reviews, Map s) => showModalBottomSheet(
+        context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+        builder: (_) => DraggableScrollableSheet(
+          expand: false, initialChildSize: 0.85, maxChildSize: 0.95,
+          builder: (_, scroll) => Container(
+            decoration: const BoxDecoration(color: C2C.bg, borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+            child: Column(children: [
+              const SizedBox(height: 10),
+              Text('${tr('كل التقييمات', 'All reviews')} (${reviews.length})',
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: C2C.navy)),
+              Expanded(child: ListView(controller: scroll, padding: const EdgeInsets.all(14),
+                  children: [for (final r in reviews) _reviewTile(r as Map)])),
+            ]),
+          ),
+        ),
+      );
+
+  Future<void> _rateService(Map s) async {
+    int rating = 5;
+    final comment = TextEditingController();
+    final ok = await showDialog<bool>(context: context, builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setD) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text(tr('قيّم الخدمة', 'Rate the service')),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            for (int i = 1; i <= 5; i++)
+              IconButton(
+                onPressed: () => setD(() => rating = i),
+                icon: Icon(i <= rating ? Icons.star_rounded : Icons.star_border_rounded,
+                    color: const Color(0xFFF5A623), size: 32),
+              ),
+          ]),
+          TextField(controller: comment, maxLines: 3,
+              decoration: InputDecoration(hintText: tr('اكتب رأيك (اختياري)', 'Your comment (optional)'),
+                  border: const OutlineInputBorder())),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('إلغاء', 'Cancel'))),
+          FilledButton(style: FilledButton.styleFrom(backgroundColor: C2C.red),
+              onPressed: () => Navigator.pop(ctx, true), child: Text(tr('إرسال', 'Submit'))),
+        ],
+      ),
+    ));
+    if (ok != true) return;
+    try {
+      final r = await context.read<AuthProvider>().api.c2cReviewSubmit(
+          s['id'] as int, rating, comment: comment.text.trim());
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('${r['message'] ?? tr('شكرًا لتقييمك', 'Thanks for your review')}'),
+            backgroundColor: const Color(0xFF16A34A)));
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: C2C.red));
+    }
   }
 
   Widget _reviewTile(Map r) => Container(
