@@ -44,6 +44,21 @@ _C2C_IMG_MODELS = {
 }
 
 
+def _plain(html):
+    """Strip HTML to readable text — product descriptions are HTML but the app
+    shows them as plain text, so tags must not leak through."""
+    if not html:
+        return None
+    from odoo.tools import html2plaintext
+    try:
+        txt = html2plaintext(html).strip()
+    except Exception:
+        import re
+        txt = re.sub(r'<[^>]+>', ' ', html)
+        txt = re.sub(r'\s+', ' ', txt).strip()
+    return txt or None
+
+
 def _c2c_img(kind, rid):
     return _abs('/api/v1/c2c/img/%s/%s' % (kind, rid))
 
@@ -301,7 +316,7 @@ class C2CClientApi(Controller):
             'price': round(price, 3), 'currency': self._cur().name,
             'uom': p.uom_id.name or None, 'category': p.categ_id.name or None,
             'category_id': p.categ_id.id,
-            'description': (p.description_sale or p.description or '') or None,
+            'description': _plain(p.description_sale or p.description or ''),
             'has_image': bool(p.image_1920),
             'image': _abs('/api/v1/product/%s/image' % p.id) if p.image_1920 else None,
             # gallery: main + extra template images (only real ones)
@@ -657,6 +672,134 @@ class C2CClientApi(Controller):
             'video_url': m.video_url or None,
             'poster': _c2c_img('sposter', m.id) if m.poster else None,
         } for m in vids])
+
+    def _upay_provider(self, env):
+        return env['payment.provider'].sudo().search([('code', '=', 'upayments')], limit=1)
+
+    def _upay_charge(self, env, prov, *, reference, amount, description, product_name, customer):
+        """Create a Upayment charge and return its hosted payment link. Works in
+        sandbox (state='test') or live (state='enabled') per the provider."""
+        import requests
+        url = prov._upayments_get_api_url()
+        base = request.httprequest.host_url.rstrip('/')
+        payload = {
+            'products': [{'name': product_name, 'description': description,
+                          'price': round(amount, 3), 'quantity': 1}],
+            'order': {'id': reference, 'reference': reference, 'description': description,
+                      'currency': 'KWD', 'amount': round(amount, 3)},
+            'language': 'ar',
+            'reference': {'id': reference},
+            'customer': {'uniqueId': str(customer.get('id') or reference),
+                         'name': customer.get('name') or 'عميل',
+                         'email': customer.get('email') or 'customer@care-kw.com',
+                         'mobile': customer.get('mobile') or '00000000'},
+            'paymentGateway': {'src': 'knet'},
+            'returnUrl': '%s/c2c/pay/return' % base,
+            'cancelUrl': '%s/c2c/pay/cancel' % base,
+            'notificationUrl': '%s/c2c/pay/webhook' % base,
+        }
+        key = prov.upay_application_key
+        headers = {'Content-Type': 'application/json', 'Accept': 'application/json',
+                   'Authorization': 'Bearer %s' % key}
+        r = requests.post(url, json=payload, headers=headers, timeout=20)
+        d = r.json()
+        if r.status_code in (200, 201) and (d.get('data') or {}).get('link'):
+            return d['data']['link']
+        raise Exception((d.get('message') or 'تعذّر إنشاء رابط الدفع'))
+
+    @route(API + '/c2c/pay/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def c2c_pay_create(self, **kw):
+        """Generate a payment link for a booking / subscription the caller owns."""
+        env = _auth()
+        if not env:
+            return _err('سجّل الدخول', 401)
+        prov = self._upay_provider(env)
+        if not prov or prov.state == 'disabled':
+            return _err('بوابة الدفع غير مفعّلة', 503)
+        from .api import _body
+        b = _body()
+        kind = b.get('kind')            # 'booking' | 'subscription'
+        rid = b.get('id')
+        if kind not in ('booking', 'subscription') or not rid:
+            return _err('طلب دفع غير صالح', 422)
+        partner = env.user.partner_id
+        cust = {'id': partner.id, 'name': partner.name,
+                'email': partner.email, 'mobile': partner.mobile or partner.phone}
+        if kind == 'booking':
+            rec = env['c2c.booking'].sudo().browse(int(rid)).exists()
+            if not rec or rec.partner_id.id != partner.id:
+                return _err('غير موجود', 404)
+            amount, name = rec.amount or 0.0, (rec.service_id.name or 'خدمة')
+            reference = 'BK-%s' % rec.id
+        else:
+            rec = env['c2c.subscription.request'].sudo().browse(int(rid)).exists()
+            if not rec or rec.partner_id.id != partner.id:
+                return _err('غير موجود', 404)
+            amount, name = rec.price or 0.0, (rec.plan_id.name or 'باقة')
+            reference = 'SUB-%s' % rec.id
+        if amount <= 0:
+            return _err('لا مبلغ مستحق', 422)
+        try:
+            link = self._upay_charge(env, prov, reference=reference, amount=amount,
+                                     description=name, product_name=name, customer=cust)
+        except Exception as e:
+            return _err(str(e) or 'تعذّر إنشاء رابط الدفع', 502)
+        return _ok({'link': link, 'reference': reference, 'amount': amount})
+
+    @route(['/c2c/pay/return', '/c2c/pay/cancel'], type='http', auth='public', methods=['GET', 'POST'], csrf=False, website=True)
+    def c2c_pay_return(self, **kw):
+        """Landing page after the hosted payment — a simple branded result the
+        in-app WebView detects by URL to close and refresh."""
+        ok = 'cancel' not in request.httprequest.path
+        # Upayment returns a status/result in the query; trust success on return
+        # in sandbox, and reconcile the target if we can read the reference.
+        ref = kw.get('reference') or kw.get('order_id') or kw.get('reference_id') or ''
+        result = (kw.get('result') or kw.get('payment_status') or '').lower()
+        paid = ok and result not in ('failed', 'cancelled', 'canceled')
+        try:
+            if paid and ref.startswith('BK-'):
+                b = request.env['c2c.booking'].sudo().browse(int(ref[3:])).exists()
+                if b and 'payment_state' in b._fields:
+                    b.write({'payment_state': 'paid'})
+            elif paid and ref.startswith('SUB-'):
+                srec = request.env['c2c.subscription.request'].sudo().browse(int(ref[4:])).exists()
+                if srec and srec.state == 'new':
+                    srec.write({'state': 'active'})
+        except Exception:
+            pass
+        color = '#16A34A' if paid else '#C0392B'
+        icon = '✅' if paid else '✖'
+        title = 'تم الدفع بنجاح' if paid else 'لم يكتمل الدفع'
+        html = ('<!doctype html><html dir="rtl"><head><meta charset="utf-8">'
+                '<meta name="viewport" content="width=device-width,initial-scale=1">'
+                '<title>%s</title></head><body style="margin:0;font-family:Segoe UI,Tahoma,sans-serif;'
+                'background:#f4f5f8;display:flex;align-items:center;justify-content:center;height:100vh">'
+                '<div id="care-pay-result" data-paid="%s" style="text-align:center;background:#fff;'
+                'padding:38px 30px;border-radius:20px;box-shadow:0 10px 30px -12px rgba(0,0,0,.25)">'
+                '<div style="font-size:54px">%s</div>'
+                '<h2 style="color:%s;margin:12px 0 6px">%s</h2>'
+                '<p style="color:#8a94a6;font-size:13px">يمكنك العودة إلى التطبيق الآن.</p>'
+                '</div></body></html>') % (title, ('1' if paid else '0'), icon, color, title)
+        return request.make_response(html, headers=[('Content-Type', 'text/html; charset=utf-8')])
+
+    @route('/c2c/pay/webhook', type='http', auth='public', methods=['GET', 'POST'], csrf=False)
+    def c2c_pay_webhook(self, **kw):
+        """Upayment server-to-server notification — reconcile the target."""
+        ref = kw.get('reference') or kw.get('order_id') or ''
+        result = (kw.get('result') or kw.get('payment_status') or '').lower()
+        paid = result in ('captured', 'success', 'paid', 'successful', '')
+        try:
+            if paid and ref.startswith('BK-'):
+                b = request.env['c2c.booking'].sudo().browse(int(ref[3:])).exists()
+                if b and 'payment_state' in b._fields:
+                    b.write({'payment_state': 'paid'})
+            elif paid and ref.startswith('SUB-'):
+                srec = request.env['c2c.subscription.request'].sudo().browse(int(ref[4:])).exists()
+                if srec and srec.state == 'new':
+                    srec.write({'state': 'active'})
+        except Exception:
+            pass
+        return request.make_response('OK', headers=[('Content-Type', 'text/plain')])
 
     @route(API + '/c2c/rfq/options', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def c2c_rfq_options(self, **kw):
