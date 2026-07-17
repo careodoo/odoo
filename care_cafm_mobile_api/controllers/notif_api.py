@@ -2,7 +2,7 @@
 """Notification inbox for the app: list, unread count, mark read."""
 from odoo.http import request, Controller, route
 
-from .api import _auth, _ok, _err, _body, API
+from .api import _auth, _ok, _err, _body, _abs, API
 
 
 def _notif_dict(n):
@@ -159,6 +159,30 @@ class NotifApi(Controller):
             env.user.sudo().write({'login': email})
         return _ok({'name': p.name, 'email': p.email or None,
                     'phone': p.phone or None, 'mobile': p.mobile or None})
+
+    @route(API + '/account/photo', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def account_photo(self, **kw):
+        """Set my own profile photo from a base64 image (data URI or raw b64).
+        Writes the partner + user avatar, only ever for env.user."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        b = _body()
+        img = (b.get('image') or '').strip()
+        if not img:
+            return _err('لا صورة', 422)
+        if ',' in img and img.startswith('data:'):
+            img = img.split(',', 1)[1]
+        import base64
+        try:
+            base64.b64decode(img)  # validate
+        except Exception:
+            return _err('صورة غير صالحة', 422)
+        try:
+            env.user.partner_id.sudo().write({'image_1920': img})
+        except Exception:
+            return _err('تعذّرت معالجة الصورة — جرّب صورة أخرى', 422)
+        return _ok({'ok': True, 'avatar': _abs('/web/image/res.users/%s/avatar_256' % env.user.id)})
 
     @route(API + '/account/delete_request', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
     def account_delete_request(self, **kw):

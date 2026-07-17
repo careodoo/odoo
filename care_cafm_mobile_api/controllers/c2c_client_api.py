@@ -282,7 +282,16 @@ class C2CClientApi(Controller):
             'price': round(price, 3), 'currency': self._cur().name,
             'uom': p.uom_id.name or None, 'category': p.categ_id.name or None,
             'category_id': p.categ_id.id,
-            'image': _abs('/api/v1/product/%s/image' % p.id),
+            'description': (p.description_sale or p.description or '') or None,
+            'has_image': bool(p.image_1920),
+            'image': _abs('/api/v1/product/%s/image' % p.id) if p.image_1920 else None,
+            # gallery: main + extra template images (only real ones)
+            'images': ([_abs('/api/v1/product/%s/image' % p.id)] if p.image_1920 else []) + [
+                _abs('/api/v1/product/extra-image/%s?s=1024' % i.id)
+                for i in (p.product_tmpl_id.product_template_image_ids
+                          if 'product_template_image_ids' in p.product_tmpl_id._fields else [])
+                if i.image_1920
+            ],
         }
 
     def _cur(self):
