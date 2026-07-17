@@ -506,9 +506,22 @@ class ClientApi(Controller):
         dstart, dend, period_label = self._range(kw)
         if dstart or dend:
             wos = self._in_range(wos, dstart, dend)
-        svc_filter = kw.get('service_type')
+        a = request.httprequest.args
+        svc_filter = a.get('service_type') or kw.get('service_type')
         if svc_filter and svc_filter != 'all':
             wos = wos.filtered(lambda w: w.service_type == svc_filter)
+        prio = a.get('priority')
+        if prio and prio != 'all':
+            wos = wos.filtered(lambda w: w.priority == prio)
+        st_f = a.get('state')
+        if st_f and st_f != 'all':
+            wos = wos.filtered(lambda w: w.state == st_f)
+        for key, getter in (('facility_id', lambda w: w.facility_id.id),
+                            ('employee_id', lambda w: w.employee_id.id)):
+            v = a.get(key)
+            if (v or '').isdigit():
+                iv = int(v)
+                wos = wos.filtered(lambda w, g=getter, iv=iv: g(w) == iv)
 
         def _is_open(w):
             return w.state not in ('done', 'verified', 'cancelled')
@@ -554,11 +567,64 @@ class ClientApi(Controller):
         resps = wos.filtered(lambda w: w.response_minutes).mapped('response_minutes')
 
         per_fac = [{
-            'name': f.name,
+            'id': f.id, 'name': f.name,
             'open': len(open_wos.filtered(lambda w, f=f: w.facility_id == f)),
             'done': len(done_wos.filtered(lambda w, f=f: w.facility_id == f)),
             'overdue': len(overdue.filtered(lambda w, f=f: w.facility_id == f)),
         } for f in facs]
+
+        # ---- where the work actually lands: the busiest locations ----
+        by_loc = {}
+        for w in wos:
+            if not w.location_id:
+                continue
+            d = by_loc.setdefault(w.location_id.id, {
+                'id': w.location_id.id, 'name': w.location_id.name,
+                'building': (w.location_id.building_id.name if w.location_id.building_id else None),
+                'total': 0, 'open': 0, 'overdue': 0})
+            d['total'] += 1
+            if _is_open(w): d['open'] += 1
+            if w.is_overdue: d['overdue'] += 1
+        top_locations = sorted(by_loc.values(), key=lambda d: -d['total'])[:12]
+
+        # ---- roles: which trades carry the load ----
+        by_job = {}
+        for w in wos:
+            if not w.employee_id:
+                continue
+            jb = w.employee_id.job_title or 'بدون دور'
+            d = by_job.setdefault(jb, {'name': jb, 'total': 0, 'overdue': 0, 'done': 0})
+            d['total'] += 1
+            if w.is_overdue: d['overdue'] += 1
+            if w.state in ('done', 'verified'): d['done'] += 1
+        by_job = sorted(by_job.values(), key=lambda d: -d['total'])[:12]
+
+        # ---- teams + workforce/attendance, so the analytics tab covers people
+        # as well as tickets ----
+        teams = env['care.cafm.team'].sudo().search([('facility_id', 'in', facs.ids)])
+        workforce = {'teams': len(teams), 'members': len(teams.mapped('member_ids')),
+                     'present_now': 0, 'hours_month': 0.0}
+        if 'care.cafm.shift' in env and facs:
+            Shift = env['care.cafm.shift'].sudo()
+            workforce['present_now'] = Shift.search_count(
+                [('facility_id', 'in', facs.ids), ('state', '=', 'open')])
+            month_start = fields.Datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            workforce['hours_month'] = round(sum(Shift.search(
+                [('facility_id', 'in', facs.ids), ('check_in', '>=', month_start)]
+            ).mapped('duration_hours')), 1)
+
+        # ---- how late the late work is ----
+        now_dt = fields.Datetime.now()
+        buckets = {'d1': 0, 'd3': 0, 'w1': 0, 'm1': 0, 'm1p': 0}
+        for w in overdue:
+            if not w.deadline:
+                continue
+            dd = (now_dt - w.deadline).total_seconds() / 86400.0
+            if dd <= 1: buckets['d1'] += 1
+            elif dd <= 3: buckets['d3'] += 1
+            elif dd <= 7: buckets['w1'] += 1
+            elif dd <= 30: buckets['m1'] += 1
+            else: buckets['m1p'] += 1
 
         return _ok({
             'kpis': {
@@ -591,8 +657,19 @@ class ClientApi(Controller):
             'by_service': by_service,
             'by_state': by_state,
             'by_priority': by_priority,
+            'by_job': by_job,
+            'top_locations': top_locations,
+            'overdue_buckets': buckets,
+            'workforce': workforce,
             'employees': employees,
             'facilities': per_fac,
+            # Facet sources so the filters list only what this client has.
+            'facets': {
+                'facilities': [{'value': f.id, 'label': f.name} for f in facs],
+                'employees': [{'value': e.id, 'label': e.name} for e in emps.sorted('name')],
+                'states': [{'value': k, 'label': v} for k, v in state_lbl.items()],
+                'priorities': [{'value': k, 'label': v} for k, v in prio_lbl.items()],
+            },
         })
 
     # ---- period helpers -----------------------------------------------------
