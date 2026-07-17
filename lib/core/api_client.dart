@@ -160,13 +160,36 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/client/facility/$id'), headers: await _headers())))['data'] as Map);
 
+  /// Teams as service-grouped blocks with their own attendance/workload stats.
+  Future<Map<String, dynamic>> clientTeams() async =>
+      Map<String, dynamic>.from((await _handle(
+          await http.get(_u('/client/teams'), headers: await _headers())))['data'] as Map);
+
   Future<List<dynamic>> clientTeam() async =>
       List<dynamic>.from((await _handle(
               await http.get(_u('/client/team'), headers: await _headers())))['data'] as List);
 
-  Future<List<dynamic>> clientWorkOrders({String state = 'all'}) async =>
-      List<dynamic>.from((await _handle(
-              await http.get(_u('/client/workorders?state=$state'), headers: await _headers())))['data'] as List);
+  /// Work orders plus the stats and facets for the whole filtered set (not
+  /// just the page shown) — see /client/workorders.
+  Future<Map<String, dynamic>> clientWorkOrders({
+    String state = 'all',
+    String period = 'all',
+    String? serviceType,
+    String? priority,
+    int? employeeId,
+    int? facilityId,
+    String? q,
+  }) async {
+    final p = <String, String>{'state': state, 'period': period};
+    if (serviceType != null && serviceType != 'all') p['service_type'] = serviceType;
+    if (priority != null && priority != 'all') p['priority'] = priority;
+    if (employeeId != null) p['employee_id'] = '$employeeId';
+    if (facilityId != null) p['facility_id'] = '$facilityId';
+    if (q != null && q.trim().isNotEmpty) p['q'] = q.trim();
+    final qs = p.entries.map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}').join('&');
+    return Map<String, dynamic>.from((await _handle(
+        await http.get(_u('/client/workorders?$qs'), headers: await _headers())))['data'] as Map);
+  }
 
   Future<Map<String, dynamic>> workerOptions() async =>
       Map<String, dynamic>.from((await _handle(

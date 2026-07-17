@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
+import '../models/models.dart';
 import '../core/i18n.dart';
 import '../core/widgets.dart';
 import 'facility_detail_screen.dart';
@@ -9,7 +10,7 @@ import 'client_team_screen.dart';
 import 'client_activity_screen.dart';
 import 'client_structure_screen.dart';
 import 'client_analytics_screen.dart';
-import 'add_worker_screen.dart';
+import 'client_workorders_screen.dart';
 import 'contracts_screen.dart';
 import 'manage_screen.dart';
 import 'requests_screen.dart';
@@ -39,6 +40,7 @@ class ClientHome extends StatefulWidget {
 class _ClientHomeState extends State<ClientHome> {
   late Future<Map<String, dynamic>> _future;
   Set<String> _sections = {}; // enabled portal-section codes for this client
+  List<dynamic> _facilities = const [];
 
   @override
   void initState() {
@@ -85,37 +87,18 @@ class _ClientHomeState extends State<ClientHome> {
             }
             final d = snap.data!;
             final k = (d['kpis'] as Map);
+            _facilities = (d['facilities'] as List?) ?? const [];
             return ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               children: [
-                _hero(d['client']?.toString() ?? '', cs),
+                _hero(d, k, cs),
+                const SizedBox(height: 10),
+                _miniBar(p),
+                const SizedBox(height: 14),
+                _cockpit(k),
                 const SizedBox(height: 14),
                 _quickAccess(cs),
-                const SizedBox(height: 12),
-                Row(children: [
-                  Expanded(child: OutlinedButton.icon(onPressed: () => _go(const QualityScreen()),
-                      icon: const Icon(Icons.fact_check), label: Text(tr('الجودة', 'Quality')))),
-                  const SizedBox(width: 10),
-                  Expanded(child: OutlinedButton.icon(onPressed: () => _go(const ContractsScreen()),
-                      icon: const Icon(Icons.description), label: Text(tr('العقود', 'Contracts')))),
-                  if (p.canAddWorkers) ...[
-                    const SizedBox(width: 10),
-                    Expanded(child: OutlinedButton.icon(onPressed: () => _go(const ManageScreen()),
-                        icon: const Icon(Icons.settings_suggest), label: Text(tr('إدارة المنشأة', 'Manage')))),
-                  ],
-                ]),
-                if (p.canAddWorkers) ...[
-                  const SizedBox(height: 10),
-                  SizedBox(width: double.infinity, child: FilledButton.icon(
-                    onPressed: () => _go(const AddWorkerScreen()),
-                    icon: const Icon(Icons.person_add),
-                    label: Text(tr('➕ إضافة عامل', '➕ Add worker')),
-                    style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A), minimumSize: const Size.fromHeight(46)),
-                  )),
-                ],
-                const SizedBox(height: 16),
-                _kpiGrid(k),
-                const SizedBox(height: 20),
+                const SizedBox(height: 18),
                 if (_has('facilities')) ...[
                   _section(tr('مبانيي ومرافقي', 'My buildings & facilities')),
                   for (final f in (d['facilities'] as List)) _facilityCard(f as Map, cs),
@@ -142,22 +125,250 @@ class _ClientHomeState extends State<ClientHome> {
     );
   }
 
-  Widget _hero(String client, ColorScheme cs) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [cs.primary, cs.primary.withValues(alpha: 0.6)]),
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Row(children: [
-          const CircleAvatar(radius: 24, backgroundColor: Colors.white24, child: Text('🏢', style: TextStyle(fontSize: 24))),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(tr('مرحباً بك', 'Welcome'), style: TextStyle(color: Colors.white70, fontSize: 13)),
-              Text(client, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),
+  /// The client identity band. It carries what the account actually is —
+  /// contact, sites, and whether anything is on fire right now — instead of
+  /// just repeating the name.
+  Widget _hero(Map d, Map k, ColorScheme cs) {
+    final client = d['client']?.toString() ?? '';
+    final contact = d['contact']?.toString() ?? '';
+    final overdue = (k['overdue'] ?? 0) as int;
+    final present = (k['present_now'] ?? 0) as int;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 15, 16, 14),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+            colors: [Color(0xFF17547F), Color(0xFF0E3A5F), Color(0xFF092B45)],
+            begin: Alignment.topRight, end: Alignment.bottomLeft),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: const Color(0xFF0E3A5F).withValues(alpha: 0.30), blurRadius: 14, offset: const Offset(0, 6))],
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Container(
+            width: 48, height: 48, alignment: Alignment.center,
+            decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.22))),
+            child: Text(client.isNotEmpty ? client.trim().characters.first : '🏢',
+                style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(client, maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.white, fontSize: 17.5, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 2),
+            Row(children: [
+              Icon(Icons.person_outline_rounded, size: 11, color: Colors.white.withValues(alpha: 0.6)),
+              const SizedBox(width: 3),
+              Flexible(child: Text(contact.isEmpty ? tr('بوابة العميل', 'Client portal') : contact,
+                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 11.5, fontWeight: FontWeight.w600))),
+              if ((d['client_ref'] ?? '').toString().isNotEmpty) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(5)),
+                  child: Text('${d['client_ref']}',
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 9, fontWeight: FontWeight.w700)),
+                ),
+              ],
+            ]),
+          ])),
+          // A live pulse of people actually on site — the thing a client asks
+          // first thing in the morning.
+          Column(children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+              decoration: BoxDecoration(
+                  color: (present > 0 ? const Color(0xFF16A34A) : Colors.white).withValues(alpha: present > 0 ? 0.9 : 0.14),
+                  borderRadius: BorderRadius.circular(20)),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
+                const SizedBox(width: 5),
+                Text('$present', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900)),
+              ]),
+            ),
+            const SizedBox(height: 2),
+            Text(tr('بالموقع', 'on site'),
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 8.5, fontWeight: FontWeight.w700)),
+          ]),
+        ]),
+        // Only surfaces when something is actually late — an always-on banner
+        // stops being read.
+        if (overdue > 0) ...[
+          const SizedBox(height: 11),
+          InkWell(
+            borderRadius: BorderRadius.circular(11),
+            onTap: () => _go(const ClientWorkOrdersScreen(initialFilter: 'overdue')),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+              decoration: BoxDecoration(
+                  color: const Color(0xFFE5484D).withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(11),
+                  border: Border.all(color: const Color(0xFFE5484D).withValues(alpha: 0.5))),
+              child: Row(children: [
+                const Icon(Icons.warning_amber_rounded, color: Color(0xFFFCA5A5), size: 15),
+                const SizedBox(width: 7),
+                Expanded(child: Text(tr('$overdue أمر عمل تجاوز موعده', '$overdue work orders overdue'),
+                    style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w800))),
+                const Icon(Icons.chevron_left_rounded, color: Colors.white70, size: 17),
+              ]),
+            ),
+          ),
+        ],
+      ]),
+    );
+  }
+
+  /// Quality / contracts / manage: secondary destinations, so they get a
+  /// compact bar under the header rather than three full-width buttons whose
+  /// labels collided on a small screen.
+  Widget _miniBar(Profile p) {
+    final items = <(IconData, String, String, Color, Widget)>[
+      (Icons.fact_check_outlined, 'الجودة', 'Quality', const Color(0xFF16A34A), const QualityScreen()),
+      (Icons.description_outlined, 'العقود', 'Contracts', const Color(0xFF6366F1), const ContractsScreen()),
+      if (p.canAddWorkers)
+        (Icons.settings_suggest_outlined, 'إدارة المنشأة', 'Manage', const Color(0xFFF59E0B), const ManageScreen()),
+    ];
+    return Row(children: [
+      for (final it in items) ...[
+        Expanded(child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => _go(it.$5),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            decoration: BoxDecoration(
+              color: it.$4.withValues(alpha: 0.09),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: it.$4.withValues(alpha: 0.22)),
+            ),
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Icon(it.$1, size: 15, color: it.$4),
+              const SizedBox(width: 5),
+              Flexible(child: Text(tr(it.$2, it.$3),
+                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: it.$4, fontSize: 10.5, fontWeight: FontWeight.w800))),
             ]),
           ),
-        ]),
+        )),
+        if (it != items.last) const SizedBox(width: 8),
+      ],
+    ]);
+  }
+
+  /// The cockpit strip: the numbers a client manager checks first, each one a
+  /// link to the records behind it.
+  Widget _cockpit(Map k) {
+    final open = (k['open_workorders'] ?? 0) as int;
+    final overdue = (k['overdue'] ?? 0) as int;
+    final urgent = (k['urgent'] ?? 0) as int;
+    final doneMonth = (k['done_month'] ?? 0) as int;
+    final sla = (k['sla_rate'] ?? 0) is num ? (k['sla_rate'] as num).toDouble() : 0.0;
+    final completion = (k['completion_rate'] ?? 0) is num ? (k['completion_rate'] as num).toDouble() : 0.0;
+    final avgH = (k['avg_hours'] ?? 0) is num ? (k['avg_hours'] as num).toDouble() : 0.0;
+    return Column(children: [
+      // headline row — work state
+      Row(children: [
+        _big(tr('أعمال مفتوحة', 'Open'), '$open', Icons.build_rounded, const Color(0xFFF7A23B),
+            () => _go(const ClientWorkOrdersScreen(initialFilter: 'open'))),
+        const SizedBox(width: 9),
+        _big(tr('متأخرة', 'Overdue'), '$overdue', Icons.running_with_errors_rounded, const Color(0xFFE5484D),
+            () => _go(const ClientWorkOrdersScreen(initialFilter: 'overdue'))),
+        const SizedBox(width: 9),
+        _big(tr('عاجلة', 'Urgent'), '$urgent', Icons.priority_high_rounded, const Color(0xFFDC2626),
+            () => _go(const ClientWorkOrdersScreen(initialFilter: 'urgent'))),
+        const SizedBox(width: 9),
+        _big(tr('أُنجزت (الشهر)', 'Done (mo.)'), '$doneMonth', Icons.task_alt_rounded, const Color(0xFF16A34A),
+            () => _go(const ClientWorkOrdersScreen(initialFilter: 'done'))),
+      ]),
+      const SizedBox(height: 9),
+      // rate row — quality of service
+      Row(children: [
+        _gauge(tr('التزام SLA', 'SLA'), sla, const Color(0xFF16A34A)),
+        const SizedBox(width: 9),
+        _gauge(tr('نسبة الإنجاز', 'Completion'), completion, const Color(0xFF2F6DF6)),
+        const SizedBox(width: 9),
+        Expanded(child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => _go(const ClientAnalyticsScreen()),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+            decoration: BoxDecoration(
+                color: const Color(0xFF0891B2).withValues(alpha: 0.09),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFF0891B2).withValues(alpha: 0.2))),
+            child: Column(children: [
+              const Icon(Icons.timer_outlined, size: 15, color: Color(0xFF0891B2)),
+              const SizedBox(height: 4),
+              Text(avgH >= 24 ? tr('${(avgH / 24).toStringAsFixed(1)} يوم', '${(avgH / 24).toStringAsFixed(1)}d')
+                              : tr('${avgH.toStringAsFixed(1)} س', '${avgH.toStringAsFixed(1)}h'),
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF0891B2))),
+              Text(tr('متوسط الإنجاز', 'Avg. close'),
+                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
+            ]),
+          ),
+        )),
+      ]),
+      const SizedBox(height: 9),
+      // estate row — what we look after. These open the records themselves.
+      _kpiGrid(k),
+    ]);
+  }
+
+  Widget _big(String label, String v, IconData ic, Color c, VoidCallback onTap) => Expanded(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [c, Color.lerp(c, Colors.black, 0.22)!],
+                  begin: Alignment.topRight, end: Alignment.bottomLeft),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [BoxShadow(color: c.withValues(alpha: 0.30), blurRadius: 7, offset: const Offset(0, 3))],
+            ),
+            child: Column(children: [
+              Icon(ic, size: 15, color: Colors.white.withValues(alpha: 0.9)),
+              const SizedBox(height: 3),
+              Text(v, style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900)),
+              Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 8.5, fontWeight: FontWeight.w700)),
+            ]),
+          ),
+        ),
+      );
+
+  Widget _gauge(String label, double pct, Color c) => Expanded(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => _go(const ClientAnalyticsScreen()),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+            decoration: BoxDecoration(
+                color: c.withValues(alpha: 0.09),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: c.withValues(alpha: 0.2))),
+            child: Column(children: [
+              SizedBox(
+                width: 30, height: 30,
+                child: Stack(alignment: Alignment.center, children: [
+                  CircularProgressIndicator(
+                      value: (pct / 100).clamp(0.0, 1.0), strokeWidth: 3.5,
+                      backgroundColor: c.withValues(alpha: 0.15),
+                      valueColor: AlwaysStoppedAnimation(c)),
+                  Text('${pct.round()}',
+                      style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w900, color: c)),
+                ]),
+              ),
+              const SizedBox(height: 4),
+              Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
+            ]),
+          ),
+        ),
       );
 
   void _go(Widget s) => Navigator.push(context, MaterialPageRoute(builder: (_) => s));
@@ -210,10 +421,10 @@ class _ClientHomeState extends State<ClientHome> {
 
   Widget _kpiGrid(Map k) {
     final items = [
-      (tr('المرافق', 'Facilities'), k['facilities'] ?? 0, const Color(0xFF2F6DF6), Icons.location_city, () => _go(const ClientStructureScreen())),
-      (tr('المباني', 'Buildings'), k['buildings'] ?? 0, const Color(0xFF6366F1), Icons.apartment, () => _go(const ClientStructureScreen())),
-      (tr('المواقع', 'Locations'), k['locations'] ?? 0, const Color(0xFF0EA5E9), Icons.qr_code, () => _go(const ClientStructureScreen())),
-      (tr('أعمال مفتوحة', 'Open work'), k['open_workorders'] ?? 0, const Color(0xFFF7A23B), Icons.build, () => _go(const ClientAnalyticsScreen())),
+      (tr('المرافق', 'Facilities'), k['facilities'] ?? 0, const Color(0xFF2F6DF6), Icons.location_city, () => _openEstate()),
+      (tr('المباني', 'Buildings'), k['buildings'] ?? 0, const Color(0xFF6366F1), Icons.apartment, () => _openEstate()),
+      (tr('المواقع', 'Locations'), k['locations'] ?? 0, const Color(0xFF0EA5E9), Icons.qr_code, () => _openEstate()),
+      (tr('العمال', 'Workers'), k['workers'] ?? 0, const Color(0xFF0D9488), Icons.engineering, () => _go(const ClientTeamScreen())),
       (tr('الخدمات', 'Services'), k['services'] ?? 0, const Color(0xFF37C98A), Icons.design_services, () => _go(const ClientAnalyticsScreen())),
       (tr('الفِرَق', 'Teams'), k['teams'] ?? 0, const Color(0xFF14B8A6), Icons.groups, () => _go(const ClientTeamScreen())),
     ];
@@ -221,11 +432,23 @@ class _ClientHomeState extends State<ClientHome> {
       crossAxisCount: 3,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 10,
-      crossAxisSpacing: 10,
-      childAspectRatio: 0.95,
+      mainAxisSpacing: 9,
+      crossAxisSpacing: 9,
+      childAspectRatio: 1.05,
       children: [for (final it in items) StatCard(label: it.$1, value: it.$2 as int, color: it.$3, icon: it.$4, onTap: it.$5)],
     );
+  }
+
+  /// Estate KPIs open the estate itself. With a single facility there is no
+  /// list worth showing — go straight to that record.
+  void _openEstate() {
+    if (_facilities.length == 1) {
+      final f = _facilities.first as Map;
+      Navigator.push(context, MaterialPageRoute(
+          builder: (_) => FacilityDetailScreen(facilityId: f['id'] as int, name: '${f['name']}')));
+    } else {
+      _go(const ClientStructureScreen());
+    }
   }
 
   Widget _section(String t) => Padding(

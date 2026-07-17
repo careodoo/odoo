@@ -11,6 +11,7 @@ import 'c2c_bookings.dart';
 import 'c2c_orders.dart';
 import 'c2c_addresses.dart';
 import 'c2c_profile_edit.dart';
+import 'mode_switch.dart';
 
 class C2CAccountScreen extends StatefulWidget {
   const C2CAccountScreen({super.key, this.canSwitchCafm = false, this.showModeSwitch = false});
@@ -68,6 +69,9 @@ class _C2CAccountScreenState extends State<C2CAccountScreen> {
                 ))),
               ]),
             ),
+            // The systems rail sits directly under the header: switching is a
+            // top-level action, not something to hunt for at the bottom.
+            if (widget.showModeSwitch) const ModeSwitchRail(current: 'c2c'),
             // ===== gradient stat cards =====
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 4, 14, 8),
@@ -95,9 +99,7 @@ class _C2CAccountScreenState extends State<C2CAccountScreen> {
             _tile(Icons.receipt_long_rounded, tr('طلباتي (المتجر)', 'My orders (shop)'), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const C2COrdersScreen())), ic: const Color(0xFFF59E0B)),
             _tile(Icons.location_on_outlined, tr('عناوين التوصيل', 'Delivery addresses'), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const C2CAddressesScreen())), ic: const Color(0xFF16A34A)),
             _tile(Icons.description_outlined, tr('طلبات التعاقد وعروض الأسعار', 'Contracts & quotes'), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const C2CContractsScreen())), ic: const Color(0xFF8B5CF6)),
-            if (widget.showModeSwitch)
-              _tile(Icons.swap_horiz_rounded, tr('تبديل الوضع (الأنظمة الأخرى)', 'Switch mode (other systems)'), () => context.read<AuthProvider>().setAppMode('choose'), ic: const Color(0xFF7C3AED))
-            else if (widget.canSwitchCafm)
+            if (!widget.showModeSwitch && widget.canSwitchCafm)
               _tile(Icons.apartment_rounded, tr('التحويل إلى إدارة المرافق (CAFM)', 'Switch to CAFM'), () => openCafm(context), ic: C2C.navy),
             _tile(Icons.language_rounded, tr('اللغة', 'Language'), _langSheet, ic: const Color(0xFF16A34A)),
             _tile(Icons.privacy_tip_outlined, tr('سياسة الخصوصية', 'Privacy policy'), () => _openUrl('https://ecare.care-kw.com/care_hr/static/legal/privacy.html'), ic: const Color(0xFF0891B2)),

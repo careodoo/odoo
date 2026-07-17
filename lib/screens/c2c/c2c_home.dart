@@ -391,53 +391,150 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> with SingleTickerProvider
 
   // ============ POPULAR (image rail) ============
   Widget _popularRail(List popular) => SizedBox(
-        height: 196,
+        height: 268,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 11),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           itemCount: popular.length,
-          itemBuilder: (_, i) {
-            final s = popular[i] as Map;
-            return GestureDetector(
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => C2CServiceScreen(serviceId: s['id'] as int))),
-              child: Container(
-                width: 168,
-                margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3))]),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Stack(children: [
-                    ClipRRect(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                      child: s['image'] != null
-                          ? Image.network('${s['image']}', height: 104, width: 168, fit: BoxFit.cover)
-                          : Container(height: 104, width: 168, color: C2C.navy.withValues(alpha: 0.08), alignment: Alignment.center, child: Text('${s['category_icon'] ?? '🧩'}', style: const TextStyle(fontSize: 40))),
-                    ),
-                    if ((s['rating'] ?? 0) > 0) Positioned(top: 8, left: 8, child: Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(20)), child: Text('⭐ ${s['rating']}', style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w700)))),
-                  ]),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('${s['name']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-                      const SizedBox(height: 2),
-                      Text('${s['category'] ?? ''}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.grey, fontSize: 11)),
-                      const SizedBox(height: 6),
-                      Row(children: [
-                        Text('${s['price']}', style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w900, fontSize: 15)),
-                        const SizedBox(width: 2),
-                        Text('${s['currency'] ?? ''}', style: const TextStyle(color: Colors.grey, fontSize: 9)),
-                        const Spacer(),
-                        Container(padding: const EdgeInsets.all(5), decoration: const BoxDecoration(color: C2C.navy, shape: BoxShape.circle), child: const Icon(Icons.add, color: Colors.white, size: 14)),
-                      ]),
-                    ]),
-                  ),
-                ]),
-              ),
-            );
-          },
+          itemBuilder: (_, i) => _popularCard(popular[i] as Map),
         ),
       );
 
-  // ============ SUBSCRIPTIONS ============
+  /// A popular service. Everything on it is real: the rating and the booking
+  /// count come from the service's own bookings, so nothing here is decoration
+  /// pretending to be data.
+  Widget _popularCard(Map s) {
+    final rating = (s['rating'] ?? 0) is num ? (s['rating'] as num).toDouble() : 0.0;
+    final bookings = (s['bookings'] ?? 0) is num ? (s['bookings'] as num).toInt() : 0;
+    final mins = (s['duration_min'] ?? 0) is num ? (s['duration_min'] as num).toInt() : 0;
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(
+          builder: (_) => C2CServiceScreen(serviceId: s['id'] as int))),
+      child: Container(
+        width: 204,
+        margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+          boxShadow: [BoxShadow(color: C2C.navy.withValues(alpha: 0.10), blurRadius: 14, offset: const Offset(0, 5))],
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          // ---- image + scrim ----
+          Stack(children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              child: s['image'] != null
+                  ? Image.network('${s['image']}', height: 126, width: 204, fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _popularFallback(s))
+                  : _popularFallback(s),
+            ),
+            Positioned(bottom: 0, left: 0, right: 0, child: Container(
+              height: 54,
+              decoration: BoxDecoration(gradient: LinearGradient(
+                  begin: Alignment.bottomCenter, end: Alignment.topCenter,
+                  colors: [Colors.black.withValues(alpha: 0.55), Colors.transparent])),
+            )),
+            if (rating > 0)
+              Positioned(top: 9, left: 9, child: _glassPill(
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.star_rounded, size: 12, color: Color(0xFFFBBF24)),
+                    const SizedBox(width: 2),
+                    Text(rating.toStringAsFixed(1),
+                        style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w900)),
+                  ]))),
+            if ((s['category'] ?? '').toString().isNotEmpty)
+              Positioned(bottom: 8, right: 9, child: Row(children: [
+                Text('${s['category_icon'] ?? ''}', style: const TextStyle(fontSize: 11)),
+                const SizedBox(width: 3),
+                Text('${s['category']}',
+                    style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w700)),
+              ])),
+          ]),
+          // ---- body ----
+          Expanded(child: Padding(
+            padding: const EdgeInsets.fromLTRB(11, 9, 11, 9),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('${s['name']}',
+                  maxLines: 2, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, height: 1.3, color: C2C.navy)),
+              const SizedBox(height: 5),
+              Row(children: [
+                if (bookings > 0) ...[
+                  _meta(Icons.people_alt_rounded, tr('$bookings حجز', '$bookings booked')),
+                  if (mins > 0) _metaDot(),
+                ],
+                if (mins > 0) _meta(Icons.schedule_rounded, _dur(mins)),
+              ]),
+              const Spacer(),
+              Divider(height: 1, color: Colors.grey.shade200),
+              const SizedBox(height: 8),
+              Row(children: [
+                Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                  Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
+                    Text('${s['price']}',
+                        style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w900, fontSize: 17)),
+                    const SizedBox(width: 3),
+                    Text('${s['currency'] ?? ''}',
+                        style: TextStyle(color: Colors.grey.shade500, fontSize: 9.5, fontWeight: FontWeight.w700)),
+                  ]),
+                  if ((s['price_unit'] ?? '').toString().isNotEmpty)
+                    Text('${s['price_unit']}',
+                        style: TextStyle(color: Colors.grey.shade400, fontSize: 8.5, fontWeight: FontWeight.w600)),
+                ]),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [Color(0xFF17547F), C2C.navy]),
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: Text(tr('احجز', 'Book'),
+                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900)),
+                ),
+              ]),
+            ]),
+          )),
+        ]),
+      ),
+    );
+  }
+
+  Widget _popularFallback(Map s) => Container(
+        height: 126, width: 204,
+        decoration: BoxDecoration(gradient: LinearGradient(
+            colors: [C2C.navy.withValues(alpha: 0.10), C2C.navy.withValues(alpha: 0.20)],
+            begin: Alignment.topRight, end: Alignment.bottomLeft)),
+        alignment: Alignment.center,
+        child: Text('${s['category_icon'] ?? '🧩'}', style: const TextStyle(fontSize: 44)),
+      );
+
+  Widget _glassPill({required Widget child}) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.55), borderRadius: BorderRadius.circular(20)),
+        child: child,
+      );
+
+  Widget _meta(IconData ic, String t) => Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(ic, size: 11, color: Colors.grey.shade500),
+        const SizedBox(width: 3),
+        Text(t, style: TextStyle(fontSize: 10, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
+      ]);
+
+  Widget _metaDot() => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 5),
+        child: Container(width: 2.5, height: 2.5,
+            decoration: BoxDecoration(color: Colors.grey.shade400, shape: BoxShape.circle)),
+      );
+
+  String _dur(int mins) {
+    if (mins < 60) return tr('$mins د', '$mins min');
+    final h = mins ~/ 60, m = mins % 60;
+    final hs = tr('$h س', '${h}h');
+    return m == 0 ? hs : '$hs ${tr('$m د', '${m}m')}';
+  }
+
   Widget _subscriptions(List subs) => SizedBox(
         height: 194,
         child: ListView.builder(

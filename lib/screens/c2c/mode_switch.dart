@@ -43,6 +43,98 @@ List<AppMode> availableModes(Map<String, dynamic>? itf) {
   }).toList();
 }
 
+
+/// A direct-switch rail of the systems this user actually has, shown at the top
+/// of the account page. Tapping a system enters it immediately — the chooser
+/// screen is only for the first pick after login.
+class ModeSwitchRail extends StatelessWidget {
+  const ModeSwitchRail({super.key, required this.current});
+
+  /// Key of the mode being displayed right now, so it reads as selected.
+  final String current;
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final modes = availableModes(auth.interfaces);
+    // With only one system there is nothing to switch between — showing a rail
+    // of one would just be noise.
+    if (modes.length < 2) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.fromLTRB(14, 10, 14, 2),
+      padding: const EdgeInsets.fromLTRB(12, 11, 12, 13),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3))],
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Icon(Icons.grid_view_rounded, size: 15, color: C2C.navy),
+          const SizedBox(width: 6),
+          Text(tr('التبديل بين أنظمتك', 'Switch between your systems'),
+              style: const TextStyle(fontWeight: FontWeight.w900, color: C2C.navy, fontSize: 13)),
+          const Spacer(),
+          Text('${modes.length}',
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: Colors.grey.shade400)),
+        ]),
+        const SizedBox(height: 11),
+        SizedBox(
+          height: 84,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: modes.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 9),
+            itemBuilder: (_, i) => _chip(context, modes[i]),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _chip(BuildContext context, AppMode m) {
+    final active = m.key == current;
+    return GestureDetector(
+      onTap: active ? null : () => context.read<AuthProvider>().setAppMode(m.key),
+      child: SizedBox(
+        width: 74,
+        child: Column(children: [
+          Stack(clipBehavior: Clip.none, children: [
+            Container(
+              width: 54,
+              height: 54,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                    colors: active ? m.colors : [Colors.grey.shade100, Colors.grey.shade200],
+                    begin: Alignment.topRight, end: Alignment.bottomLeft),
+                borderRadius: BorderRadius.circular(17),
+                boxShadow: active
+                    ? [BoxShadow(color: m.colors.first.withValues(alpha: 0.4), blurRadius: 9, offset: const Offset(0, 4))]
+                    : null,
+              ),
+              child: Icon(m.icon, color: active ? Colors.white : m.colors.first.withValues(alpha: 0.85), size: 25),
+            ),
+            if (active)
+              Positioned(bottom: -3, left: -3, child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                child: const Icon(Icons.check_circle_rounded, size: 15, color: Color(0xFF16A34A)),
+              )),
+          ]),
+          const SizedBox(height: 6),
+          Text(tr(m.ar, m.en),
+              maxLines: 2, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                  fontSize: 9.5, height: 1.25,
+                  fontWeight: active ? FontWeight.w900 : FontWeight.w600,
+                  color: active ? C2C.navy : Colors.grey.shade600)),
+        ]),
+      ),
+    );
+  }
+}
+
 /// Shown after login when the user has more than one interface — a full switch
 /// they can only change again from their account page.
 class ModeChooserScreen extends StatelessWidget {
