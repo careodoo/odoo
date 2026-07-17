@@ -472,7 +472,9 @@ class PmsSectionsApi(Controller):
             'state': (s.state if 'state' in s._fields else None),
             'state_label': state_lbl.get(s.state) if 'state' in s._fields else None,
             # Only offer "receive" on records that are actually awaiting receipt.
-            'can_receive': bool('state' in s._fields and s.state not in ('received', 'done', 'cancel')),
+            # Only a supply in transit can be received — matches the receive
+            # endpoint's own guard, so the button never leads to a 422.
+            'can_receive': bool('state' in s._fields and s.state == 'sent'),
             'badges': [('%s بند' % len(s.line_ids))] if 'line_ids' in s._fields else [],
         } for s in recs]
         return {'rows': rows, 'stats': {'الطلبات': len(rows),
@@ -756,6 +758,171 @@ class PmsSectionsApi(Controller):
         data.update({'code': code, 'label': spec[0], 'project': {'id': p.id, 'name': p.name}})
         data.setdefault('empty', None)
         return _ok(data)
+
+    def _writable_project(self, env, pid):
+        """The project if the caller may act on it, else None. Uses the caller's
+        access rules — sudo writes below are hard-scoped to this project."""
+        p = env['project.project'].browse(int(pid))
+        try:
+            p.check_access_rule('read')
+        except Exception:
+            return None
+        return p.exists() or None
+
+    @route(API + '/pms/project/<int:pid>/section/<string:code>/options', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_section_options(self, pid, code, **kw):
+        """The pick-lists a section's create form needs (materials, employees,
+        expense categories, doc types…), scoped to this project."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        p = self._writable_project(env, pid)
+        if not p:
+            return _err('لا صلاحية على هذا المشروع', 403)
+        dept = self._dept(p)
+        out = {}
+        if code == 'deliveries':
+            out['materials'] = [{'id': m.id, 'name': m.display_name}
+                                for m in env['care.pms.material'].sudo().search([('project_id', '=', p.id)], limit=300)]
+        elif code == 'supplies':
+            # Only supplies still in transit can be received.
+            out['receivable'] = [{'id': s.id, 'name': s.display_name}
+                                 for s in env['care.pms.supply'].sudo().search(
+                                     [('project_id', '=', p.id), ('state', '=', 'sent')], limit=200)]
+        elif code == 'petty':
+            EX = env['care.pms.petty.cash.expense']
+            out['categories'] = [{'value': k, 'label': v}
+                                 for k, v in EX._fields['category'].selection]
+            out['cash'] = [{'id': c.id, 'name': c.display_name}
+                           for c in env['care.pms.petty.cash'].sudo().search([('project_id', '=', p.id)], limit=100)]
+        elif code == 'requests':
+            DR = env['care.pms.doc.request']
+            out['doc_types'] = [{'value': k, 'label': v}
+                                for k, v in DR._fields['doc_type'].selection]
+            out['employees'] = [{'id': e.id, 'name': e.name}
+                                for e in (env['hr.employee'].sudo().search(
+                                    [('department_id', '=', dept)], limit=500) if dept else [])]
+        return _ok(out)
+
+    @route(API + '/pms/supply/<int:sid>/receive', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_supply_receive(self, sid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        sup = env['care.pms.supply'].sudo().browse(int(sid))
+        if not sup.exists():
+            return _err('غير موجود', 404)
+        if not self._writable_project(env, sup.project_id.id):
+            return _err('لا صلاحية', 403)
+        if sup.state != 'sent':
+            return _err('هذا التوريد ليس قيد الاستلام', 422)
+        try:
+            sup.action_receive()
+        except Exception as e:
+            return _err(str(e) or 'تعذّر الاستلام', 422)
+        return _ok({'id': sup.id, 'state': sup.state})
+
+    @route(API + '/pms/project/<int:pid>/delivery/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_delivery_create(self, pid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        p = self._writable_project(env, pid)
+        if not p:
+            return _err('لا صلاحية على هذا المشروع', 403)
+        from .api import _body
+        b = _body() or {}
+        if not b.get('material_id'):
+            return _err('اختر المادة', 422)
+        try:
+            note = env['care.pms.delivery.note'].sudo().create({
+                'project_id': p.id, 'location': b.get('location') or '',
+                'receiver_name': b.get('receiver_name') or ''})
+            env['care.pms.delivery.note.line'].sudo().create({
+                'note_id': note.id, 'material_id': int(b['material_id']),
+                'qty': float(b.get('qty') or 0)})
+            note.action_confirm()
+        except Exception as e:
+            # A balance/validation error is the model telling us the delivery
+            # exceeds stock — surface it, don't swallow it.
+            return _err(str(e) or 'تعذّر تسجيل التسليم', 422)
+        return _ok({'id': note.id, 'name': note.display_name})
+
+    @route(API + '/pms/project/<int:pid>/expense/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_expense_create(self, pid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        p = self._writable_project(env, pid)
+        if not p:
+            return _err('لا صلاحية على هذا المشروع', 403)
+        from .api import _body
+        b = _body() or {}
+        amt = float(b.get('amount') or 0)
+        if amt <= 0:
+            return _err('أدخل المبلغ', 422)
+        try:
+            if b.get('cash_id'):
+                cash = env['care.pms.petty.cash'].sudo().browse(int(b['cash_id']))
+            else:
+                cash = env['care.pms.petty.cash'].sudo().create(
+                    {'project_id': p.id, 'amount': float(b.get('cash_amount') or amt)})
+            env['care.pms.petty.cash.expense'].sudo().create({
+                'cash_id': cash.id, 'name': b.get('name') or 'مصروف',
+                'category': b.get('category') or 'misc',
+                'amount': amt, 'foreign_amount': amt, 'rate': 1.0})
+        except Exception as e:
+            return _err(str(e) or 'تعذّر تسجيل المصروف (قد يتجاوز العهدة)', 422)
+        return _ok({'id': cash.id})
+
+    @route(API + '/pms/project/<int:pid>/timesheet/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_timesheet_create(self, pid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        p = self._writable_project(env, pid)
+        if not p:
+            return _err('لا صلاحية على هذا المشروع', 403)
+        if not self._dept(p):
+            return _err('لا قسم مرتبط بهذا المشروع', 422)
+        from .api import _body
+        b = _body() or {}
+        if not (b.get('date_from') and b.get('date_to')):
+            return _err('حدّد الفترة', 422)
+        try:
+            ts = env['care.timesheet'].sudo().create({
+                'department_id': self._dept(p),
+                'date_from': b['date_from'], 'date_to': b['date_to']})
+            # Pulls present-days per employee from biometric attendance, then
+            # sends for approval — same two calls the portal makes.
+            if hasattr(ts, 'button_generate_timesheet'):
+                ts.button_generate_timesheet()
+            if hasattr(ts, 'button_submit'):
+                ts.button_submit()
+        except Exception as e:
+            return _err(str(e) or 'تعذّر إنشاء الكشف', 422)
+        return _ok({'id': ts.id, 'name': ts.display_name})
+
+    @route(API + '/pms/project/<int:pid>/docrequest/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_docrequest_create(self, pid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        p = self._writable_project(env, pid)
+        if not p:
+            return _err('لا صلاحية على هذا المشروع', 403)
+        from .api import _body
+        b = _body() or {}
+        if not b.get('employee_id'):
+            return _err('اختر الموظف', 422)
+        try:
+            r = env['care.pms.doc.request'].sudo().create({
+                'employee_id': int(b['employee_id']), 'project_id': p.id,
+                'doc_type': b.get('doc_type') or 'civil_id',
+                'description': b.get('description') or ''})
+        except Exception as e:
+            return _err(str(e) or 'تعذّر إنشاء الطلب', 422)
+        return _ok({'id': r.id, 'name': r.display_name})
 
     @route(API + '/pms/employee/<int:eid>/photo', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def pms_emp_photo(self, eid, **kw):
