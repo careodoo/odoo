@@ -127,6 +127,74 @@ class C2CBooking(models.Model):
                 users, title, body, ntype='info', action_url='c2c/booking/%s' % self.id)
         except Exception:
             pass
+        # a branded email in step with the in-app notification
+        self._email_customer(state, title, body)
+
+    # colour + emoji per state, to theme the email header
+    _STATE_STYLE = {
+        'confirmed': ('#16A34A', '✅'), 'assigned': ('#2980B9', '👷'),
+        'in_progress': ('#F39C12', '🔧'), 'done': ('#16A34A', '🎉'),
+        'cancelled': ('#C0392B', '✖'),
+    }
+
+    def _email_customer(self, state, title, body):
+        """Send the customer a professional, branded HTML email for a booking
+        event. Silent no-op when there is no email on file."""
+        self.ensure_one()
+        email = self.partner_id.email
+        if not email:
+            return
+        accent, emoji = self._STATE_STYLE.get(state, ('#C0392B', '📅'))
+        cur = self.currency_id.name if 'currency_id' in self._fields and self.currency_id else 'KWD'
+        rows = []
+        def row(label, value):
+            if not value:
+                return
+            rows.append(
+                '<tr><td style="padding:7px 0;color:#8a94a6;font-size:13px">%s</td>'
+                '<td style="padding:7px 0;text-align:left;font-weight:700;color:#1e293b;font-size:13px">%s</td></tr>'
+                % (label, value))
+        row('الخدمة', self.service_id.name or '')
+        row('رقم الحجز', self.name or '')
+        row('الموعد', self.visit_datetime and str(self.visit_datetime) or '')
+        row('العنوان', ' '.join([x for x in [self.area or '', self.address or ''] if x]))
+        if self.amount:
+            row('المبلغ', '%s %s' % (round(self.amount, 3), cur))
+        details = ''.join(rows)
+        name = self.partner_id.name or 'عميلنا الكريم'
+        html = """<div dir="rtl" style="margin:0;background:#f4f5f8;padding:22px 0;font-family:'Segoe UI',Tahoma,Arial,sans-serif">
+  <table align="center" width="600" style="max-width:600px;margin:auto;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 8px 24px -12px rgba(0,0,0,.25)">
+    <tr><td style="background:linear-gradient(135deg,#E24A3B,#C0392B,#8E241B);padding:26px 28px">
+      <div style="color:#fff;font-size:22px;font-weight:900;letter-spacing:1px">CARE 2 CARE</div>
+      <div style="color:#ffffffcc;font-size:12px;margin-top:2px">خدمات منزلية عند بابك · لأننا نهتم</div>
+    </td></tr>
+    <tr><td style="padding:26px 28px 8px">
+      <div style="display:inline-block;background:%s18;color:%s;font-weight:800;font-size:13px;padding:6px 14px;border-radius:999px">%s %s</div>
+      <h2 style="margin:14px 0 4px;color:#1e293b;font-size:19px">مرحبًا %s،</h2>
+      <p style="margin:0;color:#55607a;font-size:14px;line-height:1.9">%s</p>
+    </td></tr>
+    <tr><td style="padding:14px 28px 0">
+      <table width="100%%" style="background:#f8f9fc;border-radius:14px;padding:6px 16px;border:1px solid #edf0f5">%s</table>
+    </td></tr>
+    <tr><td style="padding:22px 28px">
+      <a href="https://ecare.care-kw.com" style="display:block;text-align:center;background:%s;color:#fff;text-decoration:none;font-weight:800;font-size:15px;padding:14px;border-radius:12px">عرض التفاصيل في التطبيق</a>
+    </td></tr>
+    <tr><td style="padding:6px 28px 26px;border-top:1px solid #eef1f6;text-align:center;color:#9aa4b6;font-size:11px">
+      شكرًا لاختيارك CARE 2 CARE · للاستفسار تواصل معنا في أي وقت.
+    </td></tr>
+  </table>
+</div>""" % (accent, accent, emoji, title.replace('✅','').replace('👷','').replace('🔧','').replace('🎉','').replace('✖','').strip(),
+             name, body, details, accent)
+        try:
+            self.env['mail.mail'].sudo().create({
+                'subject': '%s %s — %s' % (emoji, title.replace(emoji,'').strip(), self.service_id.name or ''),
+                'email_to': email,
+                'email_from': (self.company_id.email or self.env.company.email or 'no-reply@care-kw.com'),
+                'body_html': html,
+                'auto_delete': True,
+            }).send()
+        except Exception:
+            pass
 
     def action_confirm(self):
         self.write({'state': 'confirmed'})
