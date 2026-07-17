@@ -212,14 +212,101 @@ class _C2CAccountScreenState extends State<C2CAccountScreen> {
         ),
       );
 
-  void _langSheet() => showModalBottomSheet(context: context, backgroundColor: Colors.white, shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))), builder: (_) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const SizedBox(height: 10),
-          Container(width: 42, height: 4, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(4))),
-          Padding(padding: const EdgeInsets.all(14), child: Text(tr('اختر اللغة', 'Choose language'), style: const TextStyle(fontWeight: FontWeight.w900, color: C2C.navy, fontSize: 16))),
-          for (final l in context.read<LangProvider>().languages)
-            ListTile(title: Text(l[1], style: const TextStyle(fontWeight: FontWeight.w600)), trailing: gLang == l[0] ? const Icon(Icons.check_circle_rounded, color: C2C.navy) : null, onTap: () { context.read<LangProvider>().setLang(l[0]); Navigator.pop(context); setState(() {}); }),
-          const SizedBox(height: 8),
-        ]),
-      ));
+  // A cheerful glyph + coordinated gradient per language, matching the
+  // first-run language screen.
+  static const _langGlyph = {
+    'ar': 'ع', 'en': 'A', 'hi': 'अ', 'ur': 'ا', 'bn': 'অ', 'ne': 'न', 'fil': 'F',
+  };
+  static const _langGrads = [
+    [Color(0xFFE24A3B), Color(0xFFC0392B)], [Color(0xFFF39C4B), Color(0xFFE67E22)],
+    [Color(0xFF20BFA9), Color(0xFF16A085)], [Color(0xFF4A90D9), Color(0xFF2980B9)],
+    [Color(0xFFB06AB3), Color(0xFF8E44AD)], [Color(0xFF52C77E), Color(0xFF27AE60)],
+    [Color(0xFFEC5F8E), Color(0xFFC2185B)],
+  ];
+
+  void _langSheet() => showModalBottomSheet(
+        context: context, backgroundColor: Colors.transparent, isScrollControlled: true,
+        builder: (_) {
+          final langs = context.read<LangProvider>().languages;
+          return SafeArea(
+            child: Container(
+              decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                const SizedBox(height: 10),
+                Container(width: 42, height: 4, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(4))),
+                // branded red header
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.fromLTRB(14, 12, 14, 4),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [C2C.redBright, C2C.red, C2C.redDeep],
+                        begin: Alignment.topRight, end: Alignment.bottomLeft),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Row(children: [
+                    Container(
+                      width: 42, height: 42, alignment: Alignment.center,
+                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(13)),
+                      child: const Icon(Icons.translate_rounded, color: Colors.white, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(tr('اختر لغتك', 'Choose your language'),
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 17)),
+                      Text(tr('يمكنك تغييرها في أي وقت', 'You can change it anytime'),
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 11.5)),
+                    ])),
+                  ]),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 6, 14, 14),
+                  child: Column(children: [
+                    for (int i = 0; i < langs.length; i++) Builder(builder: (_) {
+                      final l = langs[i];
+                      final on = gLang == l[0];
+                      final g = _langGrads[i % _langGrads.length];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Material(
+                          color: on ? C2C.redSoft : const Color(0xFFF6F7FB),
+                          borderRadius: BorderRadius.circular(14),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(14),
+                            onTap: () { context.read<LangProvider>().setLang(l[0]); Navigator.pop(context); setState(() {}); },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: on ? C2C.red : Colors.transparent, width: 1.5),
+                              ),
+                              child: Row(children: [
+                                Container(
+                                  width: 40, height: 40, alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(colors: g, begin: Alignment.topRight, end: Alignment.bottomLeft),
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [BoxShadow(color: g[1].withValues(alpha: 0.35), blurRadius: 7, offset: const Offset(0, 3))],
+                                  ),
+                                  child: Text(_langGlyph[l[0]] ?? '•',
+                                      style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(child: Text(l[1],
+                                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15,
+                                        color: on ? C2C.red : C2C.ink))),
+                                if (on) const Icon(Icons.check_circle_rounded, color: C2C.red, size: 22),
+                              ]),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ]),
+                ),
+              ]),
+            ),
+          );
+        },
+      );
 }

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'c2c_shell.dart';
+import 'c2c_payment.dart';
 import 'c2c_video.dart';
 
 /// A filtered list of services (by category or search).
@@ -163,25 +164,45 @@ class _C2CServiceScreenState extends State<C2CServiceScreen> {
               // the card the user tapped in.
               final g = C2C.gradFor(('${s['category'] ?? s['name']}').hashCode.abs());
               return SliverAppBar(
-                backgroundColor: g[1], foregroundColor: Colors.white, pinned: true, expandedHeight: 176,
+                backgroundColor: g[1], foregroundColor: Colors.white, pinned: true, expandedHeight: 132,
                 flexibleSpace: FlexibleSpaceBar(
-                  titlePadding: const EdgeInsets.only(right: 16, bottom: 14, left: 56),
-                  title: Text('${s['name']}', maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w900, shadows: [Shadow(color: Colors.black54, blurRadius: 6)])),
+                  titlePadding: EdgeInsets.zero,
+                  title: null,
                   background: Stack(fit: StackFit.expand, clipBehavior: Clip.antiAlias, children: [
                     DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(
                         colors: g, begin: Alignment.topRight, end: Alignment.bottomLeft))),
-                    // clean icon watermark + sheen, exactly the card language
-                    Positioned(bottom: -18, left: -16,
-                        child: Icon(C2C.iconFor('${s['category'] ?? s['name']}'), size: 150,
-                            color: Colors.white.withValues(alpha: 0.18))),
-                    Positioned(top: -20, right: -20, child: Container(width: 130, height: 130,
+                    Positioned(bottom: -22, left: -18,
+                        child: Icon(C2C.iconFor('${s['category'] ?? s['name']}'), size: 130,
+                            color: Colors.white.withValues(alpha: 0.16))),
+                    Positioned(top: -18, right: -18, child: Container(width: 100, height: 100,
                         decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.10), shape: BoxShape.circle))),
-                    Positioned(top: 40, right: 40, child: Container(width: 54, height: 54,
-                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.08), shape: BoxShape.circle))),
-                    DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(
-                        begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Colors.black.withValues(alpha: 0.28)]))),
+                    // title + data INSIDE a translucent frame so it stays legible
+                    // whatever colour sits behind it.
+                    Positioned(right: 14, left: 14, bottom: 12, child: Container(
+                      padding: const EdgeInsets.fromLTRB(12, 9, 12, 9),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.28),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+                      ),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                        Text('${s['name']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900)),
+                        const SizedBox(height: 5),
+                        Row(children: [
+                          if ((s['category'] ?? '').toString().isNotEmpty)
+                            _hChip(Icons.category_rounded, '${s['category']}'),
+                          if ((s['rating'] ?? 0) > 0) ...[
+                            const SizedBox(width: 6),
+                            _hChip(Icons.star_rounded, '${s['rating']} (${s['bookings'] ?? 0})'),
+                          ],
+                          if ((s['duration_min'] ?? 0) > 0) ...[
+                            const SizedBox(width: 6),
+                            _hChip(Icons.schedule_rounded, '${s['duration_min']} ${tr('د', 'm')}'),
+                          ],
+                        ]),
+                      ]),
+                    )),
                   ]),
                 ),
               );
@@ -217,7 +238,17 @@ class _C2CServiceScreenState extends State<C2CServiceScreen> {
                     ),
                     if (s['description'] != null) ...[
                       _secTitle(tr('عن الخدمة', 'About the service')),
-                      Text('${s['description']}', style: const TextStyle(fontSize: 14, height: 1.6, color: Color(0xFF475569))),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+                        ),
+                        child: Text('${s['description']}',
+                            style: const TextStyle(fontSize: 13.5, height: 1.7, color: Color(0xFF475569))),
+                      ),
                     ],
                     if (packages.isNotEmpty) ...[
                       _secTitle(tr('اختر باقة', 'Choose a package')),
@@ -268,6 +299,18 @@ class _C2CServiceScreenState extends State<C2CServiceScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
         child: Text(t, style: TextStyle(color: c, fontWeight: FontWeight.w800, fontSize: 12)),
+      );
+
+  Widget _hChip(IconData ic, String t) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.20), borderRadius: BorderRadius.circular(8)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(ic, size: 11, color: Colors.white),
+          const SizedBox(width: 3),
+          Text(t, maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
+        ]),
       );
 
   Widget _secTitle(String t) => Padding(
@@ -341,24 +384,75 @@ class _C2CServiceScreenState extends State<C2CServiceScreen> {
   Widget _team(List team) {
     if (team.isEmpty) return const SizedBox.shrink();
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _secTitle(tr('فريق العمل', 'Our team')),
+      Row(children: [
+        _secTitle(tr('فريق العمل', 'Our team')),
+        const Spacer(),
+        Padding(padding: const EdgeInsets.only(top: 14),
+          child: Text(tr('${team.length} محترف موثوق', '${team.length} vetted pros'),
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.w700))),
+      ]),
       SizedBox(
-        height: 132,
+        height: 168,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.only(top: 4),
           itemCount: team.length,
           itemBuilder: (_, i) {
             final t = team[i] as Map;
+            final g = C2C.gradFor(i);
             return Container(
-              width: 110,
-              margin: const EdgeInsets.only(left: 10),
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)]),
+              width: 132,
+              margin: const EdgeInsets.only(left: 10, bottom: 4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+                boxShadow: [BoxShadow(color: g[1].withValues(alpha: 0.12), blurRadius: 10, offset: const Offset(0, 5))],
+              ),
+              clipBehavior: Clip.antiAlias,
               child: Column(children: [
-                CircleAvatar(radius: 26, backgroundColor: C2C.navy.withValues(alpha: 0.1), backgroundImage: t['image'] != null ? NetworkImage('${t['image']}') : null, child: t['image'] == null ? const Icon(Icons.person, color: C2C.navy) : null),
-                const SizedBox(height: 6),
-                Text('${t['name']}', maxLines: 2, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-                if ((t['rating'] ?? 0) > 0) Text('⭐ ${t['rating']}', style: const TextStyle(fontSize: 11, color: Color(0xFFF5A623), fontWeight: FontWeight.w800)),
+                // gradient banner with avatar
+                Container(
+                  height: 56, width: double.infinity,
+                  decoration: BoxDecoration(gradient: LinearGradient(colors: g,
+                      begin: Alignment.topRight, end: Alignment.bottomLeft)),
+                ),
+                Transform.translate(
+                  offset: const Offset(0, -26),
+                  child: Column(children: [
+                    Container(
+                      padding: const EdgeInsets.all(2.5),
+                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                      child: CircleAvatar(
+                        radius: 24, backgroundColor: g[1].withValues(alpha: 0.12),
+                        backgroundImage: t['image'] != null ? NetworkImage('${t['image']}') : null,
+                        child: t['image'] == null
+                            ? Text('${t['name']}'.characters.first,
+                                style: TextStyle(color: g[1], fontWeight: FontWeight.w900, fontSize: 18))
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: Text('${t['name']}', maxLines: 1, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: C2C.navy)),
+                    ),
+                    if (t['title'] != null || t['job'] != null)
+                      Text('${t['title'] ?? t['job']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 9.5, color: Colors.grey.shade500)),
+                    const SizedBox(height: 4),
+                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      if ((t['rating'] ?? 0) > 0) ...[
+                        const Icon(Icons.star_rounded, size: 12, color: Color(0xFFF5A623)),
+                        Text(' ${t['rating']}', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800)),
+                        const SizedBox(width: 6),
+                      ],
+                      const Icon(Icons.verified_rounded, size: 12, color: Color(0xFF16A34A)),
+                      Text(tr(' موثوق', ' vetted'), style: const TextStyle(fontSize: 9, color: Color(0xFF16A34A), fontWeight: FontWeight.w700)),
+                    ]),
+                  ]),
+                ),
               ]),
             );
           },
@@ -934,7 +1028,21 @@ class _C2CBookingSheetState extends State<C2CBookingSheet> {
         if (_coupon.text.trim().isNotEmpty) 'code': _coupon.text.trim(),
       });
       if (mounted) {
-        await _bookingConfirmed(res, visit);
+        // Online methods → hosted checkout before we celebrate.
+        if (_pay != 'cash' && res['id'] != null) {
+          final paid = await runC2CPayment(context, kind: 'booking', id: res['id'] as int);
+          if (mounted && paid == true) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(tr('✅ تم الدفع بنجاح', '✅ Payment successful')),
+                backgroundColor: const Color(0xFF16A34A)));
+          } else if (mounted && paid == false) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(tr('لم يكتمل الدفع — الحجز محفوظ ويمكنك الدفع لاحقًا',
+                               'Payment not completed — booking saved, pay later')),
+                backgroundColor: C2C.red));
+          }
+        }
+        if (mounted) await _bookingConfirmed(res, visit);
         if (mounted) Navigator.pop(context, true);
       }
     } catch (e) {

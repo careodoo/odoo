@@ -15,10 +15,17 @@ class LanguageOnboardingScreen extends StatefulWidget {
 
 class _LanguageOnboardingScreenState extends State<LanguageOnboardingScreen>
     with SingleTickerProviderStateMixin {
-  static const _navy = Color(0xFF0E3A5F);
-  static const _navy2 = Color(0xFF17547F);
-  static const _deep = Color(0xFF071E33);
-  static const _red = Color(0xFFC0392B);
+  static const _navy = Color(0xFFC0392B);       // brand red (used as the accent)
+  static const _navy2 = Color(0xFFE24A3B);      // bright red
+  static const _deep = Color(0xFF7A1C14);       // deep red ground
+  static const _red = Color(0xFFF5A623);        // warm amber pop
+  // a cheerful coordinated glyph gradient per language
+  static const _glyphGrads = [
+    [Color(0xFFE24A3B), Color(0xFFC0392B)], [Color(0xFFF39C4B), Color(0xFFE67E22)],
+    [Color(0xFF20BFA9), Color(0xFF16A085)], [Color(0xFF4A90D9), Color(0xFF2980B9)],
+    [Color(0xFFB06AB3), Color(0xFF8E44AD)], [Color(0xFF52C77E), Color(0xFF27AE60)],
+    [Color(0xFFEC5F8E), Color(0xFFC2185B)],
+  ];
 
   /// A greeting in each language's own tongue — the point of the screen is that
   /// you can find yours without reading any of the others.
@@ -153,15 +160,15 @@ class _LanguageOnboardingScreenState extends State<LanguageOnboardingScreen>
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
                   Container(
-                    width: 32, height: 32, alignment: Alignment.center,
+                    width: 34, height: 34, alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: on ? _navy.withValues(alpha: 0.09) : Colors.white.withValues(alpha: 0.13),
-                      borderRadius: BorderRadius.circular(10),
+                      gradient: LinearGradient(colors: _glyphGrads[i % _glyphGrads.length],
+                          begin: Alignment.topRight, end: Alignment.bottomLeft),
+                      borderRadius: BorderRadius.circular(11),
+                      boxShadow: on ? [BoxShadow(color: _glyphGrads[i % _glyphGrads.length][1].withValues(alpha: 0.4), blurRadius: 8, offset: const Offset(0, 3))] : null,
                     ),
                     child: Text(_glyph[code] ?? '•',
-                        style: TextStyle(
-                            color: on ? _navy : Colors.white,
-                            fontSize: 15, fontWeight: FontWeight.w900)),
+                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900)),
                   ),
                   const Spacer(),
                   AnimatedScale(
@@ -174,7 +181,7 @@ class _LanguageOnboardingScreenState extends State<LanguageOnboardingScreen>
                 Text(name,
                     maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                        color: on ? _navy : Colors.white,
+                        color: on ? const Color(0xFF1E293B) : Colors.white,
                         fontSize: 15.5, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 2),
                 Text(_hello[code] ?? '',

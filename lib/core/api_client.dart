@@ -762,6 +762,11 @@ class ApiClient {
   Future<void> c2cSubscriptionCancel(int id) async =>
       _handle(await http.post(_u('/c2c/subscription/$id/cancel'), headers: await _headers()));
 
+  /// Generate a Upayment payment link for a booking/subscription.
+  Future<Map<String, dynamic>> c2cPayCreate(String kind, int id) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/c2c/pay/create'),
+          headers: await _headers(), body: jsonEncode({'kind': kind, 'id': id}))))['data'] as Map);
+
   Future<List<dynamic>> c2cVideos() async =>
       List<dynamic>.from((await _handle(
           await http.get(_u('/c2c/videos'), headers: await _headers())))['data'] as List);

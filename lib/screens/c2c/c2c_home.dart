@@ -12,6 +12,7 @@ import 'c2c_subscriptions.dart';
 import 'c2c_contracts.dart';
 import 'c2c_rfq_dialog.dart';
 import 'c2c_video.dart';
+import 'c2c_payment.dart';
 
 /// CARE 2 CARE storefront home — premium, image-led, animated header.
 class C2CHomeScreen extends StatefulWidget {
@@ -913,8 +914,33 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
     );
     if (ok != true) return;
     try {
-      await auth.api.c2cSubscribe(plan['id'] as int, note: note.text);
+      final r = await auth.api.c2cSubscribe(plan['id'] as int, note: note.text);
       if (!mounted) return;
+      // Offer to pay the plan value now via the hosted checkout.
+      if (r['id'] != null && (plan['price'] ?? 0) is num && (plan['price'] as num) > 0) {
+        final payNow = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          title: Text(tr('الدفع الآن', 'Pay now')),
+          content: Text(tr('ادفع قيمة الاشتراك (${plan['price']} KWD) لتفعيله فورًا، أو ادفع لاحقًا.',
+                           'Pay ${plan['price']} KWD to activate now, or pay later.')),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('لاحقًا', 'Later'))),
+            FilledButton(style: FilledButton.styleFrom(backgroundColor: col),
+                onPressed: () => Navigator.pop(ctx, true), child: Text(tr('ادفع الآن', 'Pay now'))),
+          ],
+        ));
+        if (payNow == true && mounted) {
+          final paid = await runC2CPayment(context, kind: 'subscription', id: r['id'] as int);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(paid == true
+                    ? tr('✅ تم الدفع وتفعيل الاشتراك', '✅ Paid — subscription active')
+                    : tr('تم استلام طلبك — يمكنك الدفع لاحقًا', 'Requested — you can pay later')),
+                backgroundColor: paid == true ? const Color(0xFF16A34A) : C2C.red));
+          }
+          return;
+        }
+      }
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(tr('✅ تم استلام طلب اشتراكك', '✅ Subscription requested')),
           backgroundColor: const Color(0xFF16A34A)));
@@ -952,51 +978,54 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
   Widget _howItWorks() {
     final steps = <(IconData, String, String, String, List<Color>)>[
       (Icons.touch_app_rounded, '١', 'اختر الخدمة', 'Pick a service', C2C.gradFor(0)),
-      (Icons.event_available_rounded, '٢', 'حدّد الموعد والعنوان', 'Schedule', C2C.gradFor(2)),
-      (Icons.verified_rounded, '٣', 'يصلك محترف موثوق', 'Trusted pro arrives', C2C.gradFor(3)),
+      (Icons.event_available_rounded, '٢', 'حدّد الموعد', 'Schedule', C2C.gradFor(2)),
+      (Icons.verified_rounded, '٣', 'يصلك محترف', 'Pro arrives', C2C.gradFor(3)),
       (Icons.sentiment_very_satisfied_rounded, '٤', 'استرخِ وقيّم', 'Relax & rate', C2C.gradFor(6)),
     ];
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 4, 14, 0),
-      child: Column(children: [
-        for (int i = 0; i < steps.length; i++) Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5),
-          child: Row(children: [
-            Column(children: [
-              Container(
-                width: 46, height: 46, alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: steps[i].$5, begin: Alignment.topRight, end: Alignment.bottomLeft),
-                  borderRadius: BorderRadius.circular(15),
-                  boxShadow: [BoxShadow(color: steps[i].$5[1].withValues(alpha: 0.35), blurRadius: 8, offset: const Offset(0, 4))],
-                ),
-                child: Icon(steps[i].$1, color: Colors.white, size: 22),
-              ),
-              if (i < steps.length - 1)
-                Container(width: 2, height: 20, color: Colors.grey.withValues(alpha: 0.2)),
-            ]),
-            const SizedBox(width: 12),
-            Expanded(child: Container(
-              margin: EdgeInsets.only(bottom: i < steps.length - 1 ? 20 : 0),
-              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
-              decoration: BoxDecoration(
-                color: Colors.white, borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
-              ),
-              child: Row(children: [
+    return SizedBox(
+      height: 148,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(14, 6, 14, 4),
+        itemCount: steps.length,
+        itemBuilder: (_, i) {
+          final st = steps[i];
+          return Container(
+            width: 132,
+            margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+            padding: const EdgeInsets.all(13),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+              boxShadow: [BoxShadow(color: st.$5[1].withValues(alpha: 0.12), blurRadius: 10, offset: const Offset(0, 5))],
+            ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
                 Container(
-                  width: 24, height: 24, alignment: Alignment.center,
-                  decoration: BoxDecoration(color: steps[i].$5[1].withValues(alpha: 0.12), shape: BoxShape.circle),
-                  child: Text(steps[i].$2, style: TextStyle(color: steps[i].$5[1], fontWeight: FontWeight.w900, fontSize: 12)),
+                  width: 44, height: 44, alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: st.$5, begin: Alignment.topRight, end: Alignment.bottomLeft),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [BoxShadow(color: st.$5[1].withValues(alpha: 0.35), blurRadius: 8, offset: const Offset(0, 4))],
+                  ),
+                  child: Icon(st.$1, color: Colors.white, size: 22),
                 ),
-                const SizedBox(width: 10),
-                Expanded(child: Text(gLang == 'en' ? steps[i].$4 : steps[i].$3,
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: C2C.ink))),
+                const Spacer(),
+                Text(st.$2, style: TextStyle(color: st.$5[1].withValues(alpha: 0.35),
+                    fontSize: 30, fontWeight: FontWeight.w900)),
               ]),
-            )),
-          ]),
-        ),
-      ]),
+              const Spacer(),
+              Text(gLang == 'en' ? st.$4 : st.$3,
+                  maxLines: 2, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: C2C.ink, height: 1.2)),
+              const SizedBox(height: 3),
+              Text(tr('الخطوة ${st.$2}', 'Step ${i + 1}'),
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 10, fontWeight: FontWeight.w600)),
+            ]),
+          );
+        },
+      ),
     );
   }
 
