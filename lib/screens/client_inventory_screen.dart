@@ -58,12 +58,10 @@ class _ClientInventoryScreenState extends State<ClientInventoryScreen> {
       appBar: AppBar(title: Text(tr('المخزون الداخلي', 'Inventory')), actions: [
         IconButton(icon: const Icon(Icons.insights_rounded), tooltip: tr('تحليلات الاستهلاك', 'Consumption'), onPressed: _showConsumption),
       ]),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF0E3A5F),
-        onPressed: _storeId == null ? null : _scanIssue,
-        icon: const Icon(Icons.qr_code_scanner),
-        label: Text(tr('صرف', 'Issue')),
-      ),
+      // The issue action used to be a navy FAB on a navy app bar — it read as
+      // part of the chrome. Amber separates it from the CARE navy and says
+      // "this is the thing you came here to do".
+      floatingActionButton: _issueButton(),
       body: Column(children: [
         if (s != null && s['available'] == true)
           SizedBox(
@@ -120,6 +118,63 @@ class _ClientInventoryScreenState extends State<ClientInventoryScreen> {
           ),
         ),
       ]),
+    );
+  }
+
+  Widget _issueButton() {
+    final ready = _storeId != null;
+    return Container(
+      decoration: ready
+          ? BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [BoxShadow(
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.45),
+                  blurRadius: 14, offset: const Offset(0, 5))],
+            )
+          : null,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          // Without a store picked there is nothing to issue from; say that
+          // rather than present a dead button.
+          onTap: ready
+              ? _scanIssue
+              : () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(tr('اختر المخزن أولًا', 'Pick a store first')))),
+          child: Ink(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: ready
+                    ? const [Color(0xFFF7A23B), Color(0xFFD97706)]
+                    : [Colors.grey.shade400, Colors.grey.shade500],
+                begin: Alignment.topRight, end: Alignment.bottomLeft,
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.22),
+                      borderRadius: BorderRadius.circular(9)),
+                  child: const Icon(Icons.qr_code_scanner_rounded, color: Colors.white, size: 17),
+                ),
+                const SizedBox(width: 9),
+                Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                  Text(tr('صرف صنف', 'Issue item'),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13.5)),
+                  Text(tr('امسح باركود الصنف', 'Scan the item barcode'),
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.85),
+                          fontWeight: FontWeight.w600, fontSize: 8.5)),
+                ]),
+              ]),
+            ),
+          ),
+        ),
+      ),
     );
   }
 

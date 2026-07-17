@@ -66,15 +66,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _logo(),
-                    const SizedBox(height: 18),
-                    const Text('CARE',
-                        style: TextStyle(color: Colors.white, fontSize: 38, fontWeight: FontWeight.w900, letterSpacing: 4)),
-                    const SizedBox(height: 4),
-                    Text(tr('منصّتك المتكاملة — خدمات وإدارة', 'Your all-in-one services platform'),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white70, fontSize: 13, letterSpacing: .3)),
-                    const SizedBox(height: 30),
+                    _hero(),
+                    const SizedBox(height: 26),
                     _card(context),
                     const SizedBox(height: 20),
                     const Text('نظام إدارة المرافق المتكامل',
@@ -91,6 +84,62 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+
+  /// The brand opening. The wordmark carries a red keystone and the promise is
+  /// split into the two halves of the business — services and management —
+  /// rather than one grey line of text under a logo.
+  Widget _hero() => Column(mainAxisSize: MainAxisSize.min, children: [
+        _logo(),
+        const SizedBox(height: 20),
+        Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
+          const Text('CARE',
+              style: TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.w900, letterSpacing: 5)),
+          const SizedBox(width: 7),
+          // the keystone: the one spot of brand red on the screen
+          Container(
+            margin: const EdgeInsets.only(bottom: 5),
+            width: 9, height: 9,
+            decoration: BoxDecoration(
+              color: const Color(0xFFC0392B),
+              shape: BoxShape.circle,
+              boxShadow: [BoxShadow(color: const Color(0xFFC0392B).withValues(alpha: 0.7), blurRadius: 10)],
+            ),
+          ),
+        ]),
+        const SizedBox(height: 12),
+        // the promise, as the two halves of what CARE actually does
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          _promise(Icons.home_repair_service_rounded, tr('خدمات', 'Services')),
+          Container(
+            width: 4, height: 4,
+            margin: const EdgeInsets.symmetric(horizontal: 9),
+            decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.35), shape: BoxShape.circle),
+          ),
+          _promise(Icons.dashboard_customize_rounded, tr('إدارة', 'Management')),
+        ]),
+        const SizedBox(height: 10),
+        Text(tr('منصّتك المتكاملة', 'Your all-in-one platform'),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.55),
+                fontSize: 12, letterSpacing: 1.5, fontWeight: FontWeight.w600)),
+      ]);
+
+  Widget _promise(IconData ic, String label) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(ic, size: 13, color: Colors.white.withValues(alpha: 0.85)),
+          const SizedBox(width: 6),
+          Text(label,
+              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800)),
+        ]),
+      );
 
   Widget _logo() {
     final logo = _brand?['logo'] as String?;

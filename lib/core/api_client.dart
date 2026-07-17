@@ -152,9 +152,20 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/client/overview'), headers: await _headers())))['data'] as Map);
 
-  Future<Map<String, dynamic>> clientAnalytics() async =>
-      Map<String, dynamic>.from((await _handle(
-              await http.get(_u('/client/analytics'), headers: await _headers())))['data'] as Map);
+  Future<Map<String, dynamic>> clientAnalytics({
+    String period = 'month', String serviceType = 'all', String priority = 'all',
+    String state = 'all', int? facilityId, int? employeeId,
+  }) async {
+    final p = <String, String>{'period': period};
+    if (serviceType != 'all') p['service_type'] = serviceType;
+    if (priority != 'all') p['priority'] = priority;
+    if (state != 'all') p['state'] = state;
+    if (facilityId != null) p['facility_id'] = '$facilityId';
+    if (employeeId != null) p['employee_id'] = '$employeeId';
+    final qs = p.entries.map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}').join('&');
+    return Map<String, dynamic>.from((await _handle(
+        await http.get(_u('/client/analytics?$qs'), headers: await _headers())))['data'] as Map);
+  }
 
   Future<Map<String, dynamic>> clientFacility(int id) async =>
       Map<String, dynamic>.from((await _handle(
