@@ -42,8 +42,11 @@
   #ctrls{position:fixed;top:8px;right:8px;display:flex;flex-direction:column;gap:6px;z-index:5}
   #ctrls button{background:rgba(255,255,255,.94);border:none;border-radius:12px;width:42px;height:42px;font-size:18px;cursor:pointer;box-shadow:0 3px 12px rgba(15,27,45,.14);color:#0b6ea8}
   #ctrls button.on{background:#0b6ea8;color:#fff}
-  #floorbar{position:fixed;bottom:36px;right:8px;display:flex;flex-direction:column;gap:4px;z-index:5;max-height:56vh;overflow:auto}
-  #floorbar .fb{background:rgba(255,255,255,.92);border:none;border-radius:10px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;color:#334;box-shadow:0 2px 8px rgba(15,27,45,.1);white-space:nowrap;display:flex;align-items:center;gap:6px}
+  #floorbar{position:fixed;bottom:36px;right:6px;display:flex;flex-direction:column;gap:3px;z-index:5;max-height:52vh;overflow:auto;align-items:flex-end}
+  /* Compact + translucent so long floor names (السطح/الخدمات) don't reach across
+     the building. Names truncate; tap to reveal, the floor label still shows. */
+  #floorbar .fb{background:rgba(255,255,255,.72);backdrop-filter:blur(3px);border:none;border-radius:9px;padding:4px 8px;font-size:10.5px;font-weight:700;cursor:pointer;color:#334;box-shadow:0 2px 8px rgba(15,27,45,.08);white-space:nowrap;display:flex;align-items:center;gap:5px;max-width:104px;overflow:hidden;text-overflow:ellipsis}
+  #floorbar .fb span.nm{overflow:hidden;text-overflow:ellipsis;max-width:66px}
   #floorbar .fb.on{background:#0b6ea8;color:#fff}
   #floorbar .fb .c{background:#16a34a;color:#fff;border-radius:20px;font-size:9.5px;padding:0 5px;min-width:16px;text-align:center}
   #wfilter{position:fixed;top:60px;left:8px;right:8px;display:flex;gap:6px;flex-wrap:wrap;z-index:5;justify-content:center;pointer-events:none}
@@ -170,12 +173,31 @@ function initScene(){
   const g=new THREE.Mesh(new THREE.CircleGeometry(240,60),new THREE.MeshStandardMaterial({color:0xdfe8f4}));
   g.rotation.x=-Math.PI/2; g.position.y=0; scene.add(g);
   const ray=new THREE.Raycaster(),m=new THREE.Vector2();
-  rend.domElement.addEventListener('click',ev=>{
-    m.x=(ev.clientX/innerWidth)*2-1; m.y=-(ev.clientY/innerHeight)*2+1; ray.setFromCamera(m,cam);
-    const hit=ray.intersectObjects(workerMeshes)[0];
-    if(hit){ showWorker(hit.object.userData); return; }
-    // clicked empty space → dismiss the worker card
-    document.getElementById('card').style.display='none';
+  // Bigger picking tolerance so the small glowing markers are easy to tap on a
+  // phone (the default sphere/points threshold is far too tight for touch).
+  ray.params.Points.threshold=2.2; ray.params.Line.threshold=2.0;
+  // Distinguish a TAP from a rotate-drag: OrbitControls swallows 'click' after a
+  // drag, so we track the pointer ourselves and only pick on a near-stationary
+  // release. This is why tapping a worker "did nothing" before.
+  let _dx=0,_dy=0,_moved=0,_down=false;
+  const pick=(cx,cy)=>{
+    m.x=(cx/innerWidth)*2-1; m.y=-(cy/innerHeight)*2+1; ray.setFromCamera(m,cam);
+    // raycast against markers AND their halos/tags for a generous hit area
+    const targets=[].concat(workerMeshes, workerObjs.map(o=>o.tag), workerObjs.map(o=>o.halo));
+    const hit=ray.intersectObjects(targets,true)[0];
+    if(hit){
+      let wk=hit.object.userData&&hit.object.userData.employee_id?hit.object.userData:null;
+      if(!wk){ const o=workerObjs.find(o=>o.tag===hit.object||o.halo===hit.object||o.s===hit.object); if(o) wk=o.wk; }
+      if(wk){ showWorker(wk); return true; }
+    }
+    return false;
+  };
+  rend.domElement.addEventListener('pointerdown',ev=>{ _down=true;_moved=0;_dx=ev.clientX;_dy=ev.clientY; },{passive:true});
+  rend.domElement.addEventListener('pointermove',ev=>{ if(_down){ _moved+=Math.abs(ev.clientX-_dx)+Math.abs(ev.clientY-_dy); _dx=ev.clientX;_dy=ev.clientY; } },{passive:true});
+  rend.domElement.addEventListener('pointerup',ev=>{
+    _down=false;
+    if(_moved>12) return;                 // it was a rotate/zoom, not a tap
+    if(!pick(ev.clientX,ev.clientY)) document.getElementById('card').style.display='none';
   });
   addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();rend.setSize(innerWidth,innerHeight);});
   // control buttons
@@ -382,7 +404,7 @@ function focusFloor(y){
 }
 function buildFloorbar(){
   const fb=document.getElementById('floorbar'); if(!fb) return;
-  fb.innerHTML=floorMeta.slice().reverse().map(f=>'<button class="fb" data-y="'+f.y+'">'+esc(f.name)+(f.total?'<span class="c">'+f.total+'</span>':'')+'</button>').join('');
+  fb.innerHTML=floorMeta.slice().reverse().map(f=>'<button class="fb" data-y="'+f.y+'" title="'+esc(f.name)+'"><span class="nm">'+esc(f.name)+'</span>'+(f.total?'<span class="c">'+f.total+'</span>':'')+'</button>').join('');
   fb.querySelectorAll('.fb').forEach(el=>el.onclick=()=>{ fb.querySelectorAll('.fb').forEach(x=>x.classList.remove('on')); el.classList.add('on'); focusFloor(parseFloat(el.dataset.y)); });
 }
 // ---- worker filters (status / job / shift) ----
