@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/service_ui.dart';
+import 'excel_export.dart';
+import 'security_gatepass_create.dart';
 
 /// The client's security service in full: what is happening on their premises
 /// right now, then every record behind it — incidents, patrols, gate passes,
@@ -69,9 +71,26 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
     final s = _summary ?? const {};
     final label = _kinds.firstWhere((k) => k.$1 == _kind).$2;
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: _c, foregroundColor: Colors.white,
+        icon: const Icon(Icons.confirmation_number_rounded),
+        label: Text(tr('إصدار تصريح', 'Issue pass'), style: const TextStyle(fontWeight: FontWeight.w900)),
+        onPressed: () async {
+          final created = await SecurityGatepassCreateSheet.open(context);
+          if (created == true && mounted) {
+            _loadSummary(); _loadKind('gatepasses'); _prefetchCounts();
+          }
+        },
+      ),
       appBar: AppBar(
         title: Text(tr('الأمن', 'Security')),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.grid_on_rounded),
+            tooltip: tr('تصدير تصاريح الدخول', 'Export gate passes'),
+            onPressed: () => exportExcelFile(context, path: '/cafm/security/gatepasses/export',
+                fileName: 'gate-passes.xlsx', shareText: tr('تصاريح الدخول', 'Gate passes')),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             onPressed: () { _loadSummary(); _loadKind(_kind); _prefetchCounts(); },
@@ -175,7 +194,10 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
       for (final k in ['type', 'premise', 'route', 'guard', 'company', 'inspector', 'holder', 'location'])
         if (r[k] != null && '${r[k]}'.isNotEmpty) '${r[k]}',
     ];
-    return Container(
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () => _openRecord(r, '$title'),
+      child: Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
@@ -242,7 +264,83 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
           Text('${r['description']}', maxLines: 3, overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 11, height: 1.5, color: Colors.grey.shade700)),
         ],
+        const SizedBox(height: 6),
+        Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+          Text(tr('التفاصيل', 'Details'), style: TextStyle(fontSize: 10, color: _c, fontWeight: FontWeight.w800)),
+          Icon(Icons.chevron_left_rounded, size: 15, color: _c),
+        ]),
       ]),
+    ),
+    );
+  }
+
+  /// A professional detail sheet showing every populated field of a security
+  /// record, with human labels.
+  void _openRecord(Map r, String title) {
+    const labels = {
+      'name': 'المرجع', 'type': 'النوع', 'premise': 'الموقع', 'route': 'المسار',
+      'guard': 'الحارس', 'company': 'الجهة', 'phone': 'الهاتف', 'purpose': 'الغرض',
+      'visitor': 'الزائر', 'inspector': 'المفتّش', 'holder': 'حائز المفتاح',
+      'vehicle': 'المركبة', 'persons': 'عدد الأشخاص', 'severity': 'الخطورة',
+      'location': 'الموقع', 'date': 'التاريخ', 'check_in': 'الدخول', 'check_out': 'الخروج',
+      'start': 'البداية', 'end': 'النهاية', 'valid_from': 'صالح من', 'valid_until': 'صالح حتى',
+      'state_label': 'الحالة', 'description': 'الوصف',
+    };
+    final entries = <MapEntry<String, String>>[];
+    labels.forEach((k, lbl) {
+      final v = r[k];
+      if (v != null && '$v'.trim().isNotEmpty && '$v' != 'null') {
+        entries.add(MapEntry(lbl, '$v'.replaceFirst('T', ' ')));
+      }
+    });
+    showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+      builder: (_) => DraggableScrollableSheet(
+        expand: false, initialChildSize: 0.6, maxChildSize: 0.92,
+        builder: (_, sc) => Container(
+          decoration: const BoxDecoration(color: Color(0xFFF6F7F9), borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          clipBehavior: Clip.antiAlias,
+          child: ListView(controller: sc, padding: EdgeInsets.zero, children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+              decoration: BoxDecoration(gradient: LinearGradient(
+                  colors: [_c, Color.lerp(_c, Colors.black, 0.3)!], begin: Alignment.topRight, end: Alignment.bottomLeft)),
+              child: Row(children: [
+                const Icon(Icons.shield_rounded, color: Colors.white, size: 24),
+                const SizedBox(width: 10),
+                Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900))),
+                if (r['state_label'] != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(20)),
+                    child: Text('${r['state_label']}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900)),
+                  ),
+              ]),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+                child: Column(children: [
+                  for (var i = 0; i < entries.length; i++) ...[
+                    if (i > 0) Divider(height: 1, color: Colors.grey.shade200),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        SizedBox(width: 110, child: Text(entries[i].key,
+                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w600))),
+                        Expanded(child: Text(entries[i].value,
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF0E3A5F)))),
+                      ]),
+                    ),
+                  ],
+                ]),
+              ),
+            ),
+          ]),
+        ),
+      ),
     );
   }
 }

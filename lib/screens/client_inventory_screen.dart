@@ -3,6 +3,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import 'consumption_analytics_screen.dart';
 
 /// Client internal inventory: stores, stock balances, low stock, movements +
 /// a scan-to-issue flow (scan a product barcode to consume it from a store).
@@ -56,7 +57,8 @@ class _ClientInventoryScreenState extends State<ClientInventoryScreen> {
     final s = _summary;
     return Scaffold(
       appBar: AppBar(title: Text(tr('المخزون الداخلي', 'Inventory')), actions: [
-        IconButton(icon: const Icon(Icons.insights_rounded), tooltip: tr('تحليلات الاستهلاك', 'Consumption'), onPressed: _showConsumption),
+        IconButton(icon: const Icon(Icons.insights_rounded), tooltip: tr('تحليلات الاستهلاك', 'Consumption'),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ConsumptionAnalyticsScreen()))),
       ]),
       // The issue action used to be a navy FAB on a navy app bar — it read as
       // part of the chrome. Amber separates it from the CARE navy and says
@@ -265,62 +267,6 @@ class _ClientInventoryScreenState extends State<ClientInventoryScreen> {
     }
   }
 
-  Future<void> _showConsumption() async {
-    Map<String, dynamic>? data;
-    String period = 'month';
-    await showModalBottomSheet(
-      context: context, isScrollControlled: true, showDragHandle: true,
-      builder: (ctx) => StatefulBuilder(builder: (ctx, setSt) {
-        Future<void> load() async {
-          try { final d = await context.read<AuthProvider>().api.clientInvConsumption(period: period); setSt(() => data = d); } catch (_) {}
-        }
-        if (data == null) load();
-        Widget topList(String title, String emoji, List rows) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Padding(padding: const EdgeInsets.only(top: 14, bottom: 6), child: Text('$emoji $title', style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0E3A5F)))),
-          if (rows.isEmpty) const Text('—', style: TextStyle(color: Colors.grey)),
-          for (int i = 0; i < rows.length && i < 6; i++)
-            Padding(padding: const EdgeInsets.symmetric(vertical: 3), child: Row(children: [
-              Container(width: 22, height: 22, alignment: Alignment.center, decoration: BoxDecoration(color: const Color(0xFF0E3A5F).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)), child: Text('${i + 1}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF0E3A5F)))),
-              const SizedBox(width: 8),
-              Expanded(child: Text('${rows[i]['label']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
-              Text('${rows[i]['qty']}', style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFFC0392B))),
-            ])),
-        ]);
-        return DraggableScrollableSheet(expand: false, initialChildSize: 0.8, maxChildSize: 0.95, builder: (_, ctrl) => ListView(controller: ctrl, padding: const EdgeInsets.fromLTRB(18, 0, 18, 20), children: [
-          Text(tr('تحليلات الاستهلاك', 'Consumption analytics'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0E3A5F))),
-          const SizedBox(height: 10),
-          Wrap(spacing: 8, children: [
-            for (final p in const [['day', 'اليوم', 'Day'], ['month', 'الشهر', 'Month'], ['year', 'السنة', 'Year'], ['all', 'الكل', 'All']])
-              ChoiceChip(label: Text(gLang == 'en' ? p[2] : p[1]), selected: period == p[0], onSelected: (_) { period = p[0]; data = null; setSt(() {}); }),
-          ]),
-          if (data == null) const Padding(padding: EdgeInsets.all(40), child: Center(child: CircularProgressIndicator()))
-          else ...[
-            const SizedBox(height: 12),
-            Row(children: [
-              Expanded(child: _cstat('${data!['total_qty'] ?? 0}', tr('إجمالي المصروف', 'Total issued'), const Color(0xFF0891B2))),
-              const SizedBox(width: 8),
-              Expanded(child: _cstat('${data!['total_value'] ?? 0}', tr('القيمة', 'Value'), const Color(0xFF16A34A))),
-              const SizedBox(width: 8),
-              Expanded(child: _cstat('${data!['issues'] ?? 0}', tr('عمليات', 'Issues'), const Color(0xFFF59E0B))),
-            ]),
-            topList(tr('أكثر المواد استهلاكًا', 'Top materials'), '📦', (data!['top_materials'] as List?) ?? []),
-            topList(tr('أكثر المواقع استهلاكًا', 'Top locations'), '📍', (data!['top_locations'] as List?) ?? []),
-            topList(tr('أكثر المباني', 'Top buildings'), '🏢', (data!['top_buildings'] as List?) ?? []),
-            topList(tr('أكثر الموظفين صرفًا', 'Top employees'), '👷', (data!['top_employees'] as List?) ?? []),
-          ],
-        ]));
-      }),
-    );
-  }
-
-  Widget _cstat(String v, String l, Color c) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
-        decoration: BoxDecoration(color: c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-        child: Column(children: [
-          Text(v, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: c)),
-          Text(l, style: const TextStyle(fontSize: 10, color: Colors.grey), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
-        ]),
-      );
 }
 
 /// Minimal full-screen barcode scanner that pops the scanned code.

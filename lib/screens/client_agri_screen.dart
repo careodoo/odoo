@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/service_ui.dart';
+import 'pdf_report_screen.dart';
 
 /// Client-facing landscaping/agriculture suite: overview + trees/plants,
 /// tree works, irrigation zones and the species care guide (scoped to the
@@ -310,15 +311,28 @@ class _ClientAgriScreenState extends State<ClientAgriScreen> {
           Text('${d['name']}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
           if (d['species'] != null) Text('${d['species']}', style: const TextStyle(color: Colors.grey)),
           const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF15803D), foregroundColor: Colors.white),
+          Row(children: [
+            Expanded(child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF15803D), foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
               onPressed: () => _requestWork(id, '${d['name']}'),
-              icon: const Icon(Icons.build),
-              label: Text(tr('طلب عمل على هذه الشجرة', 'Request a work on this tree')),
-            ),
-          ),
+              icon: const Icon(Icons.build_rounded, size: 18),
+              label: Text(tr('طلب عمل', 'Request work'), style: const TextStyle(fontWeight: FontWeight.w800)),
+            )),
+            const SizedBox(width: 8),
+            Expanded(child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF15803D),
+                  side: const BorderSide(color: Color(0xFF15803D)),
+                  padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+                title: tr('بطاقة الشجرة', 'Tree card'),
+                path: '/cafm/agri/tree/$id/card',
+                fileName: 'tree-card-$id.pdf',
+              ))),
+              icon: const Icon(Icons.qr_code_2_rounded, size: 18),
+              label: Text(tr('بطاقة QR', 'QR card'), style: const TextStyle(fontWeight: FontWeight.w800)),
+            )),
+          ]),
           const Divider(height: 22),
           _kv(tr('المرفق', 'Facility'), d['facility']),
           _kv(tr('منطقة الريّ', 'Zone'), d['zone']),
@@ -355,46 +369,129 @@ class _ClientAgriScreenState extends State<ClientAgriScreen> {
   static const _reqOps = [
     ['prune', '✂️', 'تقليم', 'Prune'],
     ['inspect', '🔎', 'فحص', 'Inspect'],
-    ['pest', '🐛', 'مكافحة آفات', 'Pest'],
+    ['pest', '🐛', 'مكافحة آفات', 'Pest control'],
     ['fertilize', '🌱', 'تسميد', 'Fertilize'],
-    ['water', '💧', 'ريّ', 'Water'],
-    ['other', '•', 'أخرى', 'Other'],
+    ['water', '💧', 'ريّ إضافي', 'Extra water'],
+    ['weed', '🌾', 'إزالة أعشاب', 'Weeding'],
+    ['remove', '🪓', 'إزالة/قطع', 'Removal'],
+    ['other', '🛠️', 'أخرى', 'Other'],
+  ];
+  static const _reqPrio = [
+    ['0', 'منخفضة', 'Low', Color(0xFF64748B)],
+    ['1', 'عادية', 'Normal', Color(0xFF0891B2)],
+    ['2', 'عالية', 'High', Color(0xFFF7A23B)],
+    ['3', 'عاجلة', 'Urgent', Color(0xFFE5484D)],
   ];
 
   Future<void> _requestWork(int plantId, String plantName) async {
     String op = 'prune';
+    String priority = '1';
+    DateTime? preferred;
     final noteCtrl = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
+    const green = Color(0xFF15803D);
+    final ok = await showModalBottomSheet<bool>(
+      context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
       builder: (_) => StatefulBuilder(
-        builder: (ctx, setSt) => AlertDialog(
-          title: Text(tr('طلب عمل', 'Request work')),
-          content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(plantName, style: const TextStyle(fontWeight: FontWeight.w700)),
-            const SizedBox(height: 10),
-            Wrap(spacing: 6, runSpacing: 6, children: [
-              for (final o in _reqOps)
-                ChoiceChip(
-                  label: Text('${o[1]} ${gLang == 'en' ? o[3] : o[2]}'),
-                  selected: op == o[0],
-                  onSelected: (_) => setSt(() => op = o[0]),
+        builder: (ctx, setSt) => Container(
+          decoration: const BoxDecoration(color: Color(0xFFF6F7F9), borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          clipBehavior: Clip.antiAlias,
+          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+              decoration: const BoxDecoration(gradient: LinearGradient(
+                  colors: [Color(0xFF1a8c48), Color(0xFF0e5c30)], begin: Alignment.topRight, end: Alignment.bottomLeft)),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  const Icon(Icons.park_rounded, color: Colors.white, size: 24),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(tr('طلب عمل على الشجرة', 'Request tree work'),
+                      style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900))),
+                  IconButton(icon: const Icon(Icons.close_rounded, color: Colors.white), onPressed: () => Navigator.pop(ctx, false)),
+                ]),
+                Text(plantName, style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 13)),
+              ]),
+            ),
+            Flexible(child: ListView(shrinkWrap: true, padding: const EdgeInsets.all(16), children: [
+              Text(tr('نوع العمل المطلوب', 'Type of work'), style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0E3A5F))),
+              const SizedBox(height: 8),
+              Wrap(spacing: 7, runSpacing: 7, children: [
+                for (final o in _reqOps)
+                  ChoiceChip(
+                    label: Text('${o[1]} ${gLang == 'en' ? o[3] : o[2]}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                    selected: op == o[0],
+                    selectedColor: green.withValues(alpha: 0.18),
+                    onSelected: (_) => setSt(() => op = o[0] as String),
+                  ),
+              ]),
+              const SizedBox(height: 14),
+              Text(tr('الأولوية', 'Priority'), style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0E3A5F))),
+              const SizedBox(height: 8),
+              Row(children: [
+                for (final pr in _reqPrio)
+                  Expanded(child: GestureDetector(
+                    onTap: () => setSt(() => priority = pr[0] as String),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      padding: const EdgeInsets.symmetric(vertical: 9),
+                      decoration: BoxDecoration(
+                        color: priority == pr[0] ? pr[3] as Color : Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: priority == pr[0] ? pr[3] as Color : Colors.grey.shade300)),
+                      child: Text(gLang == 'en' ? '${pr[2]}' : '${pr[1]}', textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800,
+                              color: priority == pr[0] ? Colors.white : const Color(0xFF0E3A5F))),
+                    ),
+                  )),
+              ]),
+              const SizedBox(height: 14),
+              InkWell(
+                onTap: () async {
+                  final d = await showDatePicker(context: ctx, initialDate: DateTime.now().add(const Duration(days: 1)),
+                      firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 180)));
+                  if (d != null) setSt(() => preferred = d);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade300)),
+                  child: Row(children: [
+                    const Icon(Icons.event_rounded, size: 18, color: green),
+                    const SizedBox(width: 10),
+                    Text(preferred == null ? tr('التاريخ المفضّل (اختياري)', 'Preferred date (optional)')
+                        : '${preferred!.toLocal()}'.substring(0, 10),
+                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                    const Spacer(),
+                    if (preferred != null) IconButton(icon: const Icon(Icons.close_rounded, size: 18), onPressed: () => setSt(() => preferred = null)),
+                  ]),
                 ),
-            ]),
-            const SizedBox(height: 10),
-            TextField(controller: noteCtrl, decoration: InputDecoration(hintText: tr('ملاحظات (اختياري)', 'Notes (optional)'), border: const OutlineInputBorder()), maxLines: 2),
+              ),
+              const SizedBox(height: 12),
+              TextField(controller: noteCtrl, maxLines: 3,
+                  decoration: InputDecoration(hintText: tr('ملاحظات إضافية (اختياري)', 'Additional notes (optional)'),
+                      filled: true, fillColor: Colors.white,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)))),
+              const SizedBox(height: 16),
+              SizedBox(height: 50, child: FilledButton.icon(
+                style: FilledButton.styleFrom(backgroundColor: green, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+                onPressed: () => Navigator.pop(ctx, true),
+                icon: const Icon(Icons.send_rounded),
+                label: Text(tr('إرسال الطلب', 'Send request'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+              )),
+            ])),
           ]),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('إلغاء', 'Cancel'))),
-            ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('إرسال', 'Send'))),
-          ],
         ),
       ),
     );
     if (ok != true || !mounted) return;
     try {
-      await context.read<AuthProvider>().api.clientAgriRequest(plantId, op, note: noteCtrl.text);
+      await context.read<AuthProvider>().api.clientAgriRequest(plantId, op,
+          note: noteCtrl.text, priority: priority,
+          preferredDate: preferred == null ? null : '${preferred!.toLocal()}'.substring(0, 10));
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('أُرسل الطلب إلى فريق الزراعة', 'Request sent to landscaping team'))));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(tr('أُرسل الطلب إلى فريق الزراعة', 'Request sent to landscaping team')),
+            backgroundColor: const Color(0xFF16A34A), behavior: SnackBarBehavior.floating));
       }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));

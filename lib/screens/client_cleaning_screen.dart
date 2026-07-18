@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/service_ui.dart';
+import 'client_workorder_create.dart';
 
 /// Client-facing cleaning suite: overview + quality audits (accept/dispute),
 /// schedule compliance, cleaning rounds and consumables ledger (scoped to the
@@ -53,6 +54,17 @@ class _ClientCleaningScreenState extends State<ClientCleaningScreen> {
     final sc = (s['avg_score'] ?? 0);
     final label = _kinds.firstWhere((k) => k.$1 == _kind).$2;
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: _c, foregroundColor: Colors.white,
+        icon: const Icon(Icons.add_task_rounded),
+        label: Text(tr('مهمة نظافة', 'Cleaning task'), style: const TextStyle(fontWeight: FontWeight.w900)),
+        onPressed: () async {
+          // Reuse the pro work-order sheet, preset to the cleaning service so the
+          // client can raise a cleaning task at any location and assign a worker.
+          final created = await ClientWorkorderCreateSheet.open(context, presetServiceType: 'cleaning');
+          if (created == true && mounted) { _loadSummary(); _loadKind(_kind); }
+        },
+      ),
       appBar: AppBar(
         title: Text(tr('النظافة', 'Cleaning')),
         actions: [IconButton(icon: const Icon(Icons.refresh_rounded),

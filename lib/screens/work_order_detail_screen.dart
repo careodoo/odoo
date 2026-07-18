@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import 'employee_profile_screen.dart';
+import 'in_app_map_screen.dart';
 import '../core/widgets.dart';
 import 'media_viewer_screen.dart';
 import 'presence_scan_screen.dart';
@@ -90,12 +90,13 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
     }
   }
 
-  Future<void> _openMap() async {
-    final q = Uri.encodeComponent('${_d?['map_query'] ?? widget.title}');
-    final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$q');
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication) && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذّر فتح الخريطة')));
-    }
+  void _openMap() {
+    // Show the map inside the app; the map screen itself offers a hand-off to
+    // the device's maps app for turn-by-turn directions.
+    Navigator.push(context, MaterialPageRoute(builder: (_) => InAppMapScreen(
+      query: '${_d?['map_query'] ?? widget.title}',
+      title: tr('موقع المهمة', 'Task location'),
+    )));
   }
 
   @override

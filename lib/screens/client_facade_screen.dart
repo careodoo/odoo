@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/service_ui.dart';
+import 'excel_export.dart';
+import 'facade_permit_create.dart';
 
 /// Client-facing facade-cleaning suite: overview + elevation zones (schedule
 /// compliance) and height-work permits (wind-lockout safety), scoped to the
@@ -50,10 +52,24 @@ class _ClientFacadeScreenState extends State<ClientFacadeScreen> {
     final s = _summary ?? const {};
     final label = _kinds.firstWhere((k) => k.$1 == _kind).$2;
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: _c, foregroundColor: Colors.white,
+        icon: const Icon(Icons.add_moderator_rounded),
+        label: Text(tr('إصدار تصريح', 'Issue permit'), style: const TextStyle(fontWeight: FontWeight.w900)),
+        onPressed: () async {
+          final created = await FacadePermitCreateSheet.open(context);
+          if (created == true && mounted) { _loadSummary(); _loadKind('permits'); }
+        },
+      ),
       appBar: AppBar(
         title: Text(tr('الواجهات', 'Facade')),
-        actions: [IconButton(icon: const Icon(Icons.refresh_rounded),
-            onPressed: () { _loadSummary(); _loadKind(_kind); })],
+        actions: [
+          IconButton(icon: const Icon(Icons.grid_on_rounded), tooltip: tr('تصدير Excel', 'Export Excel'),
+              onPressed: () => exportExcelFile(context, path: '/cafm/facade/permits/export',
+                  fileName: 'facade-permits.xlsx', shareText: tr('تصاريح العمل على الارتفاع', 'Height-work permits'))),
+          IconButton(icon: const Icon(Icons.refresh_rounded),
+              onPressed: () { _loadSummary(); _loadKind(_kind); }),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async { await _loadSummary(); _loadKind(_kind); },

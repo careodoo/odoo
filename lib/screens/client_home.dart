@@ -28,6 +28,7 @@ import 'client_waste_screen.dart';
 import 'schedules_screen.dart';
 import 'attendance_screen.dart';
 import 'notify_send_screen.dart';
+import 'occupancy_screen.dart';
 
 /// The client's cockpit — everything the module holds for this customer:
 /// buildings, services, teams, live work-order activity. Fully data-driven, so
@@ -99,6 +100,8 @@ class _ClientHomeState extends State<ClientHome> {
                 _cockpit(k),
                 const SizedBox(height: 14),
                 _quickAccess(cs),
+                const SizedBox(height: 14),
+                _building3dCard(),
                 const SizedBox(height: 18),
                 if (_has('facilities')) ...[
                   _section(tr('مبانيي ومرافقي', 'My buildings & facilities')),
@@ -456,6 +459,55 @@ class _ClientHomeState extends State<ClientHome> {
     } else {
       _go(const ClientStructureScreen());
     }
+  }
+
+  /// A distinctive, prominent entry to the live 3D building view — with a
+  /// pulsing "live" badge so it reads as a real-time feed.
+  Widget _building3dCard() {
+    return GestureDetector(
+      onTap: () => _go(const OccupancyScreen()),
+      child: CustomPaint(
+        painter: const BrandPattern(opacity: 0.08),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 15, 14, 15),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF3B2F80), Color(0xFF4338CA), Color(0xFF1E1B4B)],
+              begin: Alignment.topRight, end: Alignment.bottomLeft),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [BoxShadow(color: const Color(0xFF4338CA).withValues(alpha: 0.35), blurRadius: 14, offset: const Offset(0, 7))],
+          ),
+          child: Row(children: [
+            Container(
+              width: 52, height: 52, alignment: Alignment.center,
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(15)),
+              child: const Icon(Icons.view_in_ar_rounded, color: Colors.white, size: 30),
+            ),
+            const SizedBox(width: 13),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Text(tr('المبنى ثلاثي الأبعاد', '3D building'),
+                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900)),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(color: const Color(0xFFE5484D), borderRadius: BorderRadius.circular(20)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
+                    const SizedBox(width: 4),
+                    Text(tr('بث حي', 'LIVE'), style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                  ]),
+                ),
+              ]),
+              const SizedBox(height: 3),
+              Text(tr('إشغال المبنى والطوابق لحظياً', 'Live building & floor occupancy'),
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 11.5)),
+            ])),
+            const Icon(Icons.chevron_left_rounded, color: Colors.white70),
+          ]),
+        ),
+      ),
+    );
   }
 
   Widget _section(String t, {VoidCallback? onMore}) => Padding(
