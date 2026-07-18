@@ -9,6 +9,7 @@ import 'notifications_screen.dart';
 import 'workorders_screen.dart';
 import 'attendance_screen.dart';
 import 'employee_attendance_screen.dart';
+import 'worker_file_screen.dart';
 
 /// "إنجازاتي" — the worker's own professional dashboard: a performance score
 /// ring, period filters, KPI cards (tasks / on-time / attendance hours /
@@ -210,6 +211,8 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
       );
 
   Widget _quickLinks(Color accent) => Column(children: [
+        _link(Icons.badge_rounded, tr('ملفي الشخصي الكامل', 'My full personal file'), const Color(0xFF0E7490),
+            () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkerFileScreen()))),
         _link(Icons.assignment_rounded, tr('مهامي وأوامر العمل', 'My tasks & work orders'), accent, _openTasks),
         _link(Icons.fingerprint_rounded, tr('سجل حضوري وانصرافي', 'My attendance record'), const Color(0xFF7C3AED), _openAttendance),
       ]);

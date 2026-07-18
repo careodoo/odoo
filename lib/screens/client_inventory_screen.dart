@@ -61,7 +61,12 @@ class _ClientInventoryScreenState extends State<ClientInventoryScreen> {
       final st = await api.clientInvStores();
       List<dynamic> locs = [];
       try { locs = await api.clientInvLocations(); } catch (_) {}
-      if (mounted) setState(() { _summary = s; _stores = st; _locations = locs; });
+      // pre-select the first store, otherwise "issue materials" has nothing to
+      // issue from and reports "pick a store first" even when there is only one.
+      if (mounted) setState(() {
+        _summary = s; _stores = st; _locations = locs;
+        _storeId ??= st.isNotEmpty ? st.first['id'] as int? : null;
+      });
     } catch (_) {}
     _load();
   }

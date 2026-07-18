@@ -18,6 +18,7 @@ import 'my_profile_screen.dart';
 import 'employee_attendance_screen.dart';
 import 'notifications_screen.dart';
 import 'chat_screen.dart';
+import 'worker_file_screen.dart';
 
 /// Role router: the same app opens a different face depending on who logs in.
 /// A security guard lands on the security command screen; a cleaner/agri worker
@@ -65,6 +66,7 @@ class WorkerHome extends StatelessWidget {
       (Icons.inventory_2_rounded, 'صرف مواد', 'Issue materials', const Color(0xFF0E7490), () => go(const ClientInventoryScreen())),
       (Icons.forum_rounded, 'التواصل', 'Messages', const Color(0xFF0E7490), () => go(const ChatHubScreen())),
       (Icons.workspace_premium_rounded, 'إنجازاتي', 'My achievements', const Color(0xFFF59E0B), () => go(const MyProfileScreen())),
+      (Icons.badge_rounded, 'ملفي', 'My file', const Color(0xFF0E7490), () => go(const WorkerFileScreen())),
       if (p.employeeId != null)
         (Icons.fingerprint_rounded, 'حضوري', 'My attendance', const Color(0xFF6D28D9), () => go(EmployeeAttendanceScreen(employeeId: p.employeeId!, name: p.name))),
       if (p.isSupervisor)

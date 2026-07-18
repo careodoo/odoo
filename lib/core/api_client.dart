@@ -577,6 +577,12 @@ class ApiClient {
   Future<int> chatUnread() async =>
       ((await _handle(await http.get(_u('/chat/unread'), headers: await _headers())))['data'] as Map)['unread'] as int? ?? 0;
 
+  /// The worker's complete personal file (identity, assignment, documents,
+  /// accommodation, attendance) honouring the app-settings visibility switches.
+  Future<Map<String, dynamic>> meProfile() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/me/profile'), headers: await _headers())))['data'] as Map);
+
   /// The supervisor's scope: supervised teams (service/facility/client/project),
   /// per-member load & achievements, team aggregate, and the quality queue.
   Future<Map<String, dynamic>> meSupervisor({String period = 'month'}) async =>
