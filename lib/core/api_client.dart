@@ -531,6 +531,54 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/client/asset/$id'), headers: await _headers())))['data'] as Map);
 
+  // ---- maintenance service --------------------------------------------------
+  Future<Map<String, dynamic>> maintSummary() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/maint/summary'), headers: await _headers())))['data'] as Map);
+
+  Future<List<dynamic>> maintFaults({String? state, int? departmentId, String? q}) async {
+    final p = <String, String>{};
+    if (state != null && state != 'all') p['state'] = state;
+    if (departmentId != null) p['department_id'] = '$departmentId';
+    if (q != null && q.isNotEmpty) p['q'] = q;
+    final qs = p.entries.map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}').join('&');
+    return List<dynamic>.from((await _handle(await http.get(
+        _u('/client/maint/faults${qs.isEmpty ? '' : '?$qs'}'), headers: await _headers())))['data'] as List);
+  }
+
+  Future<Map<String, dynamic>> maintFault(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/maint/fault/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> maintFaultCreate(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/client/maint/fault/create'), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<void> maintFaultAction(int id, String action) async =>
+      _handle(await http.post(_u('/client/maint/fault/$id/$action'), headers: await _headers()));
+
+  Future<List<dynamic>> maintInspections() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/client/maint/inspections'), headers: await _headers())))['data'] as List);
+
+  Future<void> maintInspectionCreate(Map<String, dynamic> body) async =>
+      _handle(await http.post(_u('/client/maint/inspection/create'), headers: await _headers(), body: jsonEncode(body)));
+
+  Future<void> maintInspectionDone(int id, String result) async =>
+      _handle(await http.post(_u('/client/maint/inspection/$id/done'), headers: await _headers(), body: jsonEncode({'result': result})));
+
+  Future<List<dynamic>> maintParts() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/client/maint/parts'), headers: await _headers())))['data'] as List);
+
+  Future<List<dynamic>> maintDepartments() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/client/maint/departments'), headers: await _headers())))['data'] as List);
+
+  Future<Map<String, dynamic>> maintOptions() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/maint/options'), headers: await _headers())))['data'] as Map);
+
   Future<Map<String, dynamic>> clientAssetOptions() async =>
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/client/asset/options'), headers: await _headers())))['data'] as Map);
