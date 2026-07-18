@@ -60,10 +60,12 @@ tr:last-child td{border-bottom:0}.mono{font-family:ui-monospace,Menlo,monospace;
 </head><body>
 <div class="hd"><h1>مستخدمو التجربة — مستشفى لوذان</h1><p>شركة حمد الطبية · لتجربة كل الأدوار وتحسين التطبيق</p></div>
 <div class="wrap">
-<div class="pw"><span>🔑 كلمة المرور الموحّدة</span><span>%(pw)s</span></div>
+<div class="pw"><span>🔑 كلمة المرور الموحّدة</span><span>__PW__</span></div>
 <div class="note">كل المستخدمين أدناه يستخدمون <b>نفس كلمة المرور</b> الظاهرة أعلاه. سجّل الدخول في التطبيق باسم المستخدم (البريد) وكلمة المرور، وسيفتح التطبيق تلقائياً على واجهة الدور المناسب (نظافة/أمن/زراعة/…).</div>
 <table><thead><tr><th>الدور</th><th>الاسم</th><th>اسم المستخدم (تسجيل الدخول)</th><th>كلمة المرور</th></tr></thead>
-<tbody>%(rows)s</tbody></table>
-<div class="note" style="margin-top:16px;color:#64748b">عدد المستخدمين: %(n)d · المنشأة: مستشفى لوذان</div>
-</div></body></html>""" % {'pw': pw, 'rows': rows, 'n': len(users)}
+<tbody>__ROWS__</tbody></table>
+<div class="note" style="margin-top:16px;color:#64748b">عدد المستخدمين: __N__ · المنشأة: مستشفى لوذان</div>
+</div></body></html>"""
+        html = (html.replace('__PW__', pw).replace('__ROWS__', rows)
+                .replace('__N__', str(len(users))))
         return request.make_response(html, headers=[('Content-Type', 'text/html; charset=utf-8')])
