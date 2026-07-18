@@ -87,6 +87,32 @@ class C2CClientApi(Controller):
                 pids.update(env['res.partner'].sudo().search(
                     [('commercial_partner_id', '=', p.commercial_partner_id.id)]).ids)
             cafm = bool(env['care.cafm.facility'].sudo().search_count([('partner_id', 'in', list(pids))]))
+        # CAFM WORKERS/STAFF (the field crew) also get the CAFM interface: an
+        # employee who is assigned CAFM work orders, or a CAFM/security supervisor.
+        # Without this a cleaner/guard would see Management/C2C but not their own
+        # facility workspace.
+        def _hg(xmlid):
+            try:
+                return u.has_group(xmlid)
+            except Exception:
+                return False
+        if not cafm:
+            emp = u.employee_id
+            if emp and 'care.cafm.workorder' in env:
+                cafm = bool(env['care.cafm.workorder'].sudo().search_count([('employee_id', '=', emp.id)]))
+            if not cafm and (_hg('security_management.group_security_manager')
+                             or _hg('base.group_erp_manager')):
+                cafm = True
+        # Management (back-office) is for real managers/admins — NOT every internal
+        # user. A field worker who happens to be an internal user must not see the
+        # company back office (quotations, projects, …).
+        management = bool(is_admin
+                          or _hg('sales_team.group_sale_manager')
+                          or _hg('account.group_account_manager')
+                          or _hg('project.group_project_manager')
+                          or _hg('purchase.group_purchase_manager')
+                          or _hg('stock.group_stock_manager')
+                          or _hg('hr.group_hr_manager'))
         # PMS access: internal project users, or a member/manager/follower of any project
         pms = False
         if 'project.project' in env:
@@ -135,6 +161,7 @@ class C2CClientApi(Controller):
                 'pms': pms,
                 'staff': is_staff,
                 'admin': is_admin,
+                'management': management,
                 'c2c_staff': bool(prov),
                 'waste_ops': bool(waste_role),
             },
