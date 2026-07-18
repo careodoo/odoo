@@ -4,3 +4,4 @@ from . import notification
 from . import device
 from . import account_deletion
 from . import orders_report
+from . import chat
