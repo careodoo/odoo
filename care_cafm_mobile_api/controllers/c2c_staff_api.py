@@ -156,6 +156,8 @@ class C2CStaffApi(Controller):
             dom = dom + [('state', 'in', ('assigned', 'in_progress'))]
         elif f == 'unassigned':
             dom = dom + [('provider_id', '=', False), ('state', 'in', ('confirmed', 'assigned'))]
+        elif f == 'review':
+            dom = dom + [('state', '=', 'review')]
         elif f == 'done':
             dom = dom + [('state', '=', 'done')]
         elif kw.get('state'):
@@ -197,6 +199,8 @@ class C2CStaffApi(Controller):
             'unassigned': Book.search_count(base + [('provider_id', '=', False), ('state', 'in', ('confirmed', 'assigned'))]),
             'done_today': Book.search_count(base + day + [('state', '=', 'done')]),
             'in_progress': Book.search_count(base + [('state', '=', 'in_progress')]),
+            # work the crew finished that is waiting on a supervisor sign-off
+            'review': Book.search_count(base + [('state', '=', 'review')]),
             'team_size': len(team) - 1,
             'team_available': len(team.filtered('available')) - (1 if me.available else 0),
         })
