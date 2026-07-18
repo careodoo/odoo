@@ -40,12 +40,25 @@ def _xlsx_response(title, columns, rows, filename, meta=None):
         ws.write(r, c, h, f_hdr)
     ws.set_row(r, 22)
     widths = [max(12, len(str(h)) + 2) for h in columns]
+    def _cell(v):
+        # xlsxwriter only writes str/number/bool/None cleanly; coerce anything
+        # else (dates, recordsets, False from empty relations) to text so a
+        # single odd value can never crash the whole export.
+        if v is None or v is False:
+            return ''
+        if isinstance(v, (str, int, float, bool)):
+            return v
+        return str(v)
     for i, row in enumerate(rows):
         r += 1
         fmt = f_alt if i % 2 else f_cell
         for c, v in enumerate(row):
-            ws.write(r, c, '' if v is None else v, fmt)
-            widths[c] = min(48, max(widths[c], len(str('' if v is None else v)) + 2))
+            cv = _cell(v)
+            try:
+                ws.write(r, c, cv, fmt)
+            except Exception:
+                ws.write_string(r, c, str(cv), fmt)
+            widths[c] = min(48, max(widths[c], len(str(cv)) + 2))
     for c, w in enumerate(widths):
         ws.set_column(c, c, w)
     ws.freeze_panes(r - len(rows), 0)
@@ -287,6 +300,8 @@ class ClientApi(Controller):
             'brand': a.brand or None, 'model': a.model_name or None,
             'serial': a.serial or None, 'barcode': a.barcode or None,
             'ownership': own.get(a.ownership, a.ownership or ''),
+            'ownership_raw': a.ownership,
+            'can_manage': a.ownership == 'client',
             'warranty_end': str(a.warranty_end) if a.warranty_end else None,
             'next_inspection': str(a.next_inspection_date) if a.next_inspection_date else None,
             'image': ('/web/image/care.cafm.asset/%s/image' % a.id) if a.image else None,
@@ -362,6 +377,96 @@ class ClientApi(Controller):
         if not a or a.facility_id.id not in self._fac_ids(env):
             return _err('غير موجود', 404)
         return _ok(self._asset_dict(a, full=True))
+
+    @route(API + '/client/asset/options', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def asset_options(self, **kw):
+        """Facilities (+locations), categories and statuses for the client's
+        asset add/edit form."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.cafm.asset' not in env:
+            return _err('غير متاح', 404)
+        facs = self._facilities(env)
+        Loc = env['care.cafm.location'].sudo()
+        locs = {}
+        for l in Loc.search([('facility_id', 'in', facs.ids)]):
+            locs.setdefault(l.facility_id.id, []).append({'id': l.id, 'name': l.name})
+        A = env['care.cafm.asset']
+        return _ok({
+            'facilities': [{'id': f.id, 'name': f.name, 'locations': locs.get(f.id, [])} for f in facs],
+            'categories': [{'v': k, 'l': v} for k, v in A._fields['category'].selection],
+            'statuses': [{'v': k, 'l': v} for k, v in A._fields['status'].selection],
+        })
+
+    def _asset_vals(self, env, b):
+        vals = {'name': (b.get('name') or '').strip(),
+                'category': b.get('category') or 'other',
+                'status': b.get('status') or 'operational',
+                'brand': b.get('brand') or None, 'model_name': b.get('model') or None,
+                'serial': b.get('serial') or None, 'barcode': b.get('barcode') or None,
+                'notes': b.get('notes') or None}
+        if b.get('location_id'):
+            vals['location_id'] = int(b['location_id'])
+        if b.get('warranty_end'):
+            try:
+                vals['warranty_end'] = fields.Date.to_date(b['warranty_end'])
+            except Exception:
+                pass
+        return vals
+
+    @route(API + '/client/asset/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def asset_create(self, **kw):
+        """Client adds an asset THEY OWN (ownership is forced to 'client')."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if not self._can_add_workers(env):
+            return _err('غير مسموح لك بإضافة أصول', 403)
+        if 'care.cafm.asset' not in env:
+            return _err('غير متاح', 404)
+        b = _body()
+        if not (b.get('name') or '').strip():
+            return _err('اسم الأصل مطلوب', 422)
+        fid = int(b['facility_id']) if b.get('facility_id') else (self._facilities(env)[:1].id or None)
+        if not fid or fid not in self._fac_ids(env):
+            return _err('المرفق مطلوب', 422)
+        vals = self._asset_vals(env, b)
+        vals.update({'facility_id': fid, 'ownership': 'client'})  # client-owned only
+        a = env['care.cafm.asset'].with_user(SUPERUSER_ID).create(vals)
+        return _ok(self._asset_dict(a, full=True))
+
+    @route(API + '/client/asset/<int:aid>/update', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def asset_update(self, aid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if not self._can_add_workers(env):
+            return _err('غير مسموح', 403)
+        a = env['care.cafm.asset'].sudo().browse(aid).exists()
+        if not a or a.facility_id.id not in self._fac_ids(env):
+            return _err('غير موجود', 404)
+        if a.ownership != 'client':
+            return _err('يمكنك تعديل أصولك فقط', 403)
+        a.write(self._asset_vals(env, _body()))
+        return _ok(self._asset_dict(a, full=True))
+
+    @route(API + '/client/asset/<int:aid>/delete', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def asset_delete(self, aid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if not self._can_add_workers(env):
+            return _err('غير مسموح', 403)
+        a = env['care.cafm.asset'].sudo().browse(aid).exists()
+        if not a or a.facility_id.id not in self._fac_ids(env):
+            return _err('غير موجود', 404)
+        if a.ownership != 'client':
+            return _err('يمكنك حذف أصولك فقط', 403)
+        if a.workorder_count:
+            return _err('لا يمكن الحذف — يوجد أوامر عمل على هذا الأصل', 400)
+        a.unlink()
+        return _ok({'deleted': aid})
 
     @route('/cafm/assets/export', type='http', auth='public', methods=['GET'], csrf=False)
     def assets_export(self, **kw):
@@ -1598,13 +1703,47 @@ class ClientApi(Controller):
         ])
 
     # ---- client service requests (طلبات الخدمة) -----------------------------
-    def _request_dict(self, r):
+    def _request_dict(self, r, env=None):
+        can_manage = self._can_add_workers(env) if env else False
         return {'id': r.id, 'name': r.name, 'title': r.title,
                 'facility': r.facility_id.name or None, 'location': r.location_id.name or None,
                 'service': r.service_id.name or None, 'priority': r.priority,
                 'state': dict(r._fields['state'].selection).get(r.state), 'state_raw': r.state,
-                'workorder': r.workorder_id.name or None, 'when': r.request_datetime or None,
-                'description': r.description or None}
+                'workorder': r.workorder_id.name or None,
+                'workorder_id': r.workorder_id.id or None,
+                'when': r.request_datetime or None, 'description': r.description or None,
+                'reject_reason': r.reject_reason or None,
+                'can_convert': bool(can_manage and not r.workorder_id and r.state in ('new', 'in_review')),
+                'can_cancel': bool(r.state in ('new', 'in_review'))}
+
+    @route(API + '/client/request/<int:rid>/convert', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def request_convert(self, rid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if not self._can_add_workers(env):
+            return _err('غير مسموح', 403)
+        r = env['care.cafm.service.request'].sudo().browse(rid).exists()
+        if not r or r.facility_id.id not in self._fac_ids(env):
+            return _err('غير موجود', 404)
+        try:
+            r.action_convert()
+        except Exception as e:
+            return _err(str(e), 400)
+        return _ok(self._request_dict(r, env))
+
+    @route(API + '/client/request/<int:rid>/cancel', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def request_cancel(self, rid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        r = env['care.cafm.service.request'].sudo().browse(rid).exists()
+        if not r or (r.facility_id.id not in self._fac_ids(env) and r.requested_by.id != env.user.id):
+            return _err('غير موجود', 404)
+        if r.state not in ('new', 'in_review'):
+            return _err('لا يمكن إلغاء هذا الطلب', 400)
+        r.write({'state': 'closed'})
+        return _ok(self._request_dict(r, env))
 
     @route(API + '/client/requests', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def requests(self, **kw):
@@ -1616,7 +1755,7 @@ class ClientApi(Controller):
         R = env['care.cafm.service.request'].sudo()
         facs = self._facilities(env)
         recs = R.search(['|', ('facility_id', 'in', facs.ids), ('requested_by', '=', env.user.id)], limit=200)
-        return _ok([self._request_dict(r) for r in recs])
+        return _ok([self._request_dict(r, env) for r in recs])
 
     @route(API + '/client/request/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
     def request_create(self, **kw):
@@ -1650,7 +1789,7 @@ class ClientApi(Controller):
         if b.get('specifications'):
             vals['specifications'] = b.get('specifications')
         r = env['care.cafm.service.request'].sudo().create(vals)
-        return _ok(self._request_dict(r))
+        return _ok(self._request_dict(r, env))
 
     # ---- services available to this client (drives the segmented menu) ------
     def _client_service_types(self, env):
