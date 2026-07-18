@@ -24,6 +24,7 @@ import 'client_agri_screen.dart';
 import 'client_cleaning_screen.dart';
 import 'client_facade_screen.dart';
 import 'client_inventory_screen.dart';
+import 'client_assets_screen.dart';
 import 'client_waste_screen.dart';
 import 'schedules_screen.dart';
 import 'attendance_screen.dart';
@@ -42,7 +43,6 @@ class ClientHome extends StatefulWidget {
 class _ClientHomeState extends State<ClientHome> {
   late Future<Map<String, dynamic>> _future;
   Set<String> _sections = {}; // enabled portal-section codes for this client
-  List<dynamic> _facilities = const [];
 
   @override
   void initState() {
@@ -89,7 +89,6 @@ class _ClientHomeState extends State<ClientHome> {
             }
             final d = snap.data!;
             final k = (d['kpis'] as Map);
-            _facilities = (d['facilities'] as List?) ?? const [];
             return ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               children: [
@@ -184,24 +183,32 @@ class _ClientHomeState extends State<ClientHome> {
               ],
             ]),
           ])),
-          // A live pulse of people actually on site — the thing a client asks
-          // first thing in the morning.
-          Column(children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-              decoration: BoxDecoration(
-                  color: (present > 0 ? const Color(0xFF16A34A) : Colors.white).withValues(alpha: present > 0 ? 0.9 : 0.14),
-                  borderRadius: BorderRadius.circular(20)),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
-                const SizedBox(width: 5),
-                Text('$present', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900)),
-              ]),
-            ),
-            const SizedBox(height: 2),
-            Text(tr('بالموقع', 'on site'),
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 8.5, fontWeight: FontWeight.w700)),
-          ]),
+          const SizedBox(width: 10),
+          // A live, pulsing count of people actually on site — the thing a client
+          // asks first thing in the morning. Fixed-width column so it never
+          // crowds the client name beside it.
+          SizedBox(
+            width: 62,
+            child: Column(children: [
+              PulseBadge(
+                color: present > 0 ? const Color(0xFF34D399) : Colors.white,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                      color: (present > 0 ? const Color(0xFF16A34A) : Colors.white).withValues(alpha: present > 0 ? 0.95 : 0.14),
+                      borderRadius: BorderRadius.circular(20)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
+                    const SizedBox(width: 5),
+                    Text('$present', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w900)),
+                  ]),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(tr('بالموقع', 'on site'),
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 8.5, fontWeight: FontWeight.w700)),
+            ]),
+          ),
         ]),
         // Only surfaces when something is actually late — an always-on banner
         // stops being read.
@@ -211,17 +218,19 @@ class _ClientHomeState extends State<ClientHome> {
             borderRadius: BorderRadius.circular(11),
             onTap: () => _go(const ClientWorkOrdersScreen(initialFilter: 'overdue')),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+              // On the red header a red alert disappears — use a distinctive
+              // amber so overdue work reads instantly.
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
               decoration: BoxDecoration(
-                  color: const Color(0xFFE5484D).withValues(alpha: 0.22),
+                  color: const Color(0xFFFBBF24),
                   borderRadius: BorderRadius.circular(11),
-                  border: Border.all(color: const Color(0xFFE5484D).withValues(alpha: 0.5))),
+                  boxShadow: [BoxShadow(color: const Color(0xFFB45309).withValues(alpha: 0.35), blurRadius: 8, offset: const Offset(0, 3))]),
               child: Row(children: [
-                const Icon(Icons.warning_amber_rounded, color: Color(0xFFFCA5A5), size: 15),
+                const Icon(Icons.warning_amber_rounded, color: Color(0xFF7C2D12), size: 17),
                 const SizedBox(width: 7),
                 Expanded(child: Text(tr('$overdue أمر عمل تجاوز موعده', '$overdue work orders overdue'),
-                    style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w800))),
-                const Icon(Icons.chevron_left_rounded, color: Colors.white70, size: 17),
+                    style: const TextStyle(color: Color(0xFF7C2D12), fontSize: 12, fontWeight: FontWeight.w900))),
+                const Icon(Icons.chevron_left_rounded, color: Color(0xFF7C2D12), size: 18),
               ]),
             ),
           ),
@@ -403,6 +412,7 @@ class _ClientHomeState extends State<ClientHome> {
       ('🏙️', 'الواجهات', 'Facade', 0xFF8B5CF6, const ClientFacadeScreen(), 'facade'),
       ('📦', 'المخزون', 'Inventory', 0xFF0E3A5F, const ClientInventoryScreen(), 'inventory'),
       ('♻️', 'النفايات', 'Waste', 0xFF16A34A, const ClientWasteScreen(), 'waste'),
+      ('🏭', 'الأصول', 'Assets', 0xFF0891B2, const ClientAssetsScreen(), null),
     ];
     final shown = specs.where((s) => s.$6 == null || _has(s.$6!)).toList();
     Widget tile((String, String, String, int, Widget, String?) s) {
@@ -442,24 +452,58 @@ class _ClientHomeState extends State<ClientHome> {
       crossAxisCount: 3,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 9,
-      crossAxisSpacing: 9,
-      childAspectRatio: 1.05,
-      children: [for (final it in items) StatCard(label: it.$1, value: it.$2 as int, color: it.$3, icon: it.$4, onTap: it.$5)],
+      mainAxisSpacing: 10,
+      crossAxisSpacing: 10,
+      childAspectRatio: 1.02,
+      children: [for (final it in items) _estateCard(it.$1, it.$2 as int, it.$3, it.$4, it.$5)],
     );
   }
 
-  /// Estate KPIs open the estate itself. With a single facility there is no
-  /// list worth showing — go straight to that record.
-  void _openEstate() {
-    if (_facilities.length == 1) {
-      final f = _facilities.first as Map;
-      Navigator.push(context, MaterialPageRoute(
-          builder: (_) => FacilityDetailScreen(facilityId: f['id'] as int, name: '${f['name']}')));
-    } else {
-      _go(const ClientStructureScreen());
-    }
+  /// A polished estate tile: a tinted card with a gradient icon badge, a large
+  /// figure and a corner accent — reads as a premium stat, not a plain button.
+  Widget _estateCard(String label, int value, Color c, IconData ic, VoidCallback onTap) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: c.withValues(alpha: 0.18)),
+          boxShadow: [BoxShadow(color: c.withValues(alpha: 0.10), blurRadius: 9, offset: const Offset(0, 4))],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(children: [
+          // soft corner accent
+          Positioned(top: -14, left: -14, child: Container(
+            width: 46, height: 46,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: c.withValues(alpha: 0.08)),
+          )),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Container(
+                width: 42, height: 42, alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [c, Color.lerp(c, Colors.black, 0.28)!],
+                      begin: Alignment.topRight, end: Alignment.bottomLeft),
+                  borderRadius: BorderRadius.circular(13),
+                  boxShadow: [BoxShadow(color: c.withValues(alpha: 0.35), blurRadius: 7, offset: const Offset(0, 3))],
+                ),
+                child: Icon(ic, color: Colors.white, size: 22),
+              ),
+              const SizedBox(height: 8),
+              Text('$value', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: c, height: 1)),
+              const SizedBox(height: 1),
+              Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF334155))),
+            ]),
+          ),
+        ]),
+      ),
+    );
   }
+
 
   /// A distinctive, prominent entry to the live 3D building view — with a
   /// pulsing "live" badge so it reads as a real-time feed.
@@ -554,6 +598,27 @@ class _ClientHomeState extends State<ClientHome> {
     'maintenance': (Color(0xFFF59E0B), '🔧'),
   };
 
+  /// Each service opens its OWN dedicated page (header stats + teams + records
+  /// for that service), not the shared analytics dashboard.
+  void _openService(String type) {
+    switch (type) {
+      case 'security':
+        _go(const ClientSecurityScreen()); break;
+      case 'cleaning':
+        _go(const ClientCleaningScreen()); break;
+      case 'agriculture':
+      case 'landscape':
+        _go(const ClientAgriScreen()); break;
+      case 'facade':
+        _go(const ClientFacadeScreen()); break;
+      case 'waste':
+        _go(const ClientWasteScreen()); break;
+      default:
+        // maintenance / general services → the service's work orders, filtered.
+        _go(ClientWorkOrdersScreen(initialFilter: 'all', serviceType: type));
+    }
+  }
+
   Widget _servicesWrap(List services) {
     if (services.isEmpty) return const SizedBox.shrink();
     return GridView.count(
@@ -567,7 +632,7 @@ class _ClientHomeState extends State<ClientHome> {
             final c = style.$1;
             return InkWell(
               borderRadius: BorderRadius.circular(16),
-              onTap: () => _go(const ClientAnalyticsScreen()),
+              onTap: () => _openService('${m['type']}'),
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(

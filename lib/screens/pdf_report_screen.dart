@@ -47,12 +47,15 @@ class _PdfReportScreenState extends State<PdfReportScreen> {
         target = widget.url!; // already carries its own auth (access_token)
       } else {
         final token = await api.token;
-        // Reuse the SSO bridge: it establishes a session for the token and
-        // redirects to the report, so the PDF comes back on the same request.
-        // NOTE: api.baseUrl already ends with /api/v1 — never re-add it.
-        target = '${api.baseUrl}/web/sso'
-            '?token=${Uri.encodeQueryComponent(token ?? '')}'
-            '&redirect=${Uri.encodeQueryComponent(widget.path!)}';
+        // Call the report route directly with the mobile token. package:http
+        // does not persist the /web/sso session cookie across its redirect, so
+        // auth='user' targets bounced to the login page — these routes now
+        // accept ?token= directly. baseUrl ends with /api/v1; reports live at
+        // the origin root.
+        final origin = api.baseUrl.replaceFirst(RegExp(r'/api/v\d+/?$'), '');
+        final p = widget.path!;
+        final sep = p.contains('?') ? '&' : '?';
+        target = '$origin$p${sep}token=${Uri.encodeQueryComponent(token ?? '')}';
       }
       final res = await http.get(Uri.parse(target));
       final body = res.bodyBytes;

@@ -181,6 +181,10 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/client/facility/$id'), headers: await _headers())))['data'] as Map);
 
+  Future<Map<String, dynamic>> clientLocation(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/location/$id'), headers: await _headers())))['data'] as Map);
+
   /// Teams as service-grouped blocks with their own attendance/workload stats.
   Future<Map<String, dynamic>> clientTeams() async =>
       Map<String, dynamic>.from((await _handle(
@@ -482,6 +486,25 @@ class ApiClient {
   Future<void> invoiceReject(int id, String comment) async =>
       _handle(await http.post(_u('/client/invoice/$id/reject'),
           headers: await _headers(), body: jsonEncode({'comment': comment})));
+
+  // ---- client-scoped assets register ---------------------------------------
+  Future<Map<String, dynamic>> clientAssetsSummary() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/assets/summary'), headers: await _headers())))['data'] as Map);
+
+  Future<List<dynamic>> clientAssets({String? category, String? status, String? q}) async {
+    final p = <String, String>{};
+    if (category != null && category != 'all') p['category'] = category;
+    if (status != null && status != 'all') p['status'] = status;
+    if (q != null && q.isNotEmpty) p['q'] = q;
+    final qs = p.entries.map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}').join('&');
+    return List<dynamic>.from((await _handle(await http.get(
+        _u('/client/assets${qs.isEmpty ? '' : '?$qs'}'), headers: await _headers())))['data'] as List);
+  }
+
+  Future<Map<String, dynamic>> clientAsset(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/asset/$id'), headers: await _headers())))['data'] as Map);
 
   Future<Map<String, dynamic>> clientScheduleOptions() async =>
       Map<String, dynamic>.from((await _handle(

@@ -393,7 +393,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12, fontWeight: FontWeight.w700)),
           ]),
           const SizedBox(height: 4),
-          Text('$spent $cur', style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900)),
+          Text('${spent.toStringAsFixed(3)} $cur', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
           const SizedBox(height: 14),
           Row(children: [
             _kpi(Icons.receipt_long_rounded, '$total', tr('طلب', 'Orders')),

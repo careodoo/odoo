@@ -17,6 +17,13 @@ class ClientSecurityScreen extends StatefulWidget {
 
 class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
   static const _c = Color(0xFFE5484D);
+  static const _kindColors = {
+    'incidents': Color(0xFFE5484D), 'patrols': Color(0xFF2563EB),
+    'gatepasses': Color(0xFF16A34A), 'visitors': Color(0xFF7C3AED),
+    'inspections': Color(0xFF0EA5A4), 'guards': Color(0xFF4338CA),
+    'keys': Color(0xFFF59E0B),
+  };
+  Color get _kc => _kindColors[_kind] ?? _c;
 
   Map<String, dynamic>? _summary;
   String _kind = 'incidents';
@@ -72,7 +79,7 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
     final label = _kinds.firstWhere((k) => k.$1 == _kind).$2;
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: _c, foregroundColor: Colors.white,
+        backgroundColor: _kc, foregroundColor: Colors.white,
         icon: const Icon(Icons.confirmation_number_rounded),
         label: Text(tr('إصدار تصريح', 'Issue pass'), style: const TextStyle(fontWeight: FontWeight.w900)),
         onPressed: () async {
@@ -104,7 +111,7 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
             title: tr('الأمن', 'Security'),
             subtitle: tr('${s['premises'] ?? 0} موقع تحت الحراسة', '${s['premises'] ?? 0} premises guarded'),
             icon: Icons.shield_rounded,
-            color: _c,
+            color: _kc,
             stats: [
               (tr('بلاغ مفتوح', 'open'), '${s['incidents_open'] ?? 0}',
                   ((s['incidents_open'] ?? 0) as int) > 0 ? const Color(0xFFDC2626) : null),
@@ -121,7 +128,7 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
             ][i]),
           ),
           const SizedBox(height: 12),
-          ServiceTabs(kinds: _kinds, current: _kind, onSelect: _loadKind, color: _c, counts: _counts),
+          ServiceTabs(kinds: _kinds, current: _kind, onSelect: _loadKind, color: _kc, counts: _counts),
           const SizedBox(height: 10),
           FutureBuilder<List<dynamic>>(
             future: _list,
@@ -158,7 +165,7 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
                 ],
                 MoreList(
                   items: rows,
-                  color: _c,
+                  color: _kc,
                   header: label,
                   emptyText: _q.isEmpty
                       ? tr('لا سجلات في $label.', 'No $label records.')
@@ -239,9 +246,9 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
-                    color: _c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(7)),
+                    color: _kc.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(7)),
                 child: Text('$state',
-                    style: const TextStyle(fontSize: 8.5, fontWeight: FontWeight.w900, color: _c)),
+                    style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w900, color: _kc)),
               ),
             ],
           ]),
@@ -266,8 +273,8 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
         ],
         const SizedBox(height: 6),
         Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-          Text(tr('التفاصيل', 'Details'), style: TextStyle(fontSize: 10, color: _c, fontWeight: FontWeight.w800)),
-          Icon(Icons.chevron_left_rounded, size: 15, color: _c),
+          Text(tr('التفاصيل', 'Details'), style: TextStyle(fontSize: 10, color: _kc, fontWeight: FontWeight.w800)),
+          Icon(Icons.chevron_left_rounded, size: 15, color: _kc),
         ]),
       ]),
     ),
@@ -304,7 +311,7 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
             Container(
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
               decoration: BoxDecoration(gradient: LinearGradient(
-                  colors: [_c, Color.lerp(_c, Colors.black, 0.3)!], begin: Alignment.topRight, end: Alignment.bottomLeft)),
+                  colors: [_kc, Color.lerp(_kc, Colors.black, 0.3)!], begin: Alignment.topRight, end: Alignment.bottomLeft)),
               child: Row(children: [
                 const Icon(Icons.shield_rounded, color: Colors.white, size: 24),
                 const SizedBox(width: 10),

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import '../core/widgets.dart';
+import '../core/app_version.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -53,6 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<LangProvider>();
     return Scaffold(
       body: Stack(
         children: [
@@ -61,20 +64,43 @@ class _LoginScreenState extends State<LoginScreen> {
           // 2) content
           SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
               child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // language switcher — top-right, understated
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: () => showLanguagePicker(context),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                          ),
+                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            const Icon(Icons.language_rounded, size: 15, color: Colors.white),
+                            const SizedBox(width: 6),
+                            Text(tr('العربية', 'English'),
+                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                          ]),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
                     _hero(),
                     const SizedBox(height: 26),
                     _card(context),
-                    const SizedBox(height: 20),
-                    const Text('نظام إدارة المرافق المتكامل',
-                        style: TextStyle(color: Colors.white54, fontSize: 12)),
+                    const SizedBox(height: 18),
+                    Text(tr('نظام إدارة المرافق المتكامل', 'Integrated facilities platform'),
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 4),
-                    const Text('build ${String.fromEnvironment('BUILD_NUMBER', defaultValue: 'dev')}',
-                        style: TextStyle(color: Colors.white38, fontSize: 11)),
+                    Text('v${AppVersion.value}',
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.35), fontSize: 11)),
                   ],
                 ),
               ),
@@ -172,64 +198,111 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _card(BuildContext context) {
+    const navy = Color(0xFF0E3A5F);
     return Container(
       constraints: const BoxConstraints(maxWidth: 420),
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.fromLTRB(22, 24, 22, 22),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 30, offset: Offset(0, 12))],
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 34, offset: Offset(0, 16))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(tr('تسجيل الدخول', 'Sign in'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 18),
-          TextField(
-            controller: _login,
-            textInputAction: TextInputAction.next,
-            decoration: InputDecoration(
-              labelText: tr('اسم المستخدم', 'Username'),
-              prefixIcon: const Icon(Icons.person_outline),
-              border: const OutlineInputBorder(),
+          Row(children: [
+            Container(
+              width: 40, height: 40, alignment: Alignment.center,
+              decoration: BoxDecoration(color: navy.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
+              child: const Icon(Icons.lock_person_rounded, color: navy, size: 22),
             ),
-          ),
-          const SizedBox(height: 14),
-          TextField(
-            controller: _pass,
-            obscureText: _obscure,
-            onSubmitted: (_) => _submit(),
-            decoration: InputDecoration(
-              labelText: tr('كلمة المرور', 'Password'),
-              prefixIcon: const Icon(Icons.lock_outline),
-              suffixIcon: IconButton(
-                icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
-                onPressed: () => setState(() => _obscure = !_obscure),
-              ),
-              border: const OutlineInputBorder(),
-            ),
-          ),
+            const SizedBox(width: 12),
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(tr('تسجيل الدخول', 'Sign in'), style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: navy)),
+              Text(tr('مرحباً بعودتك', 'Welcome back'), style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+            ]),
+          ]),
           const SizedBox(height: 22),
-          FilledButton(
-            onPressed: _busy ? null : _submit,
-            child: _busy
-                ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : Text(tr('دخول', 'Log in')),
+          _field(_login, tr('اسم المستخدم', 'Username'), Icons.person_outline_rounded, next: true),
+          const SizedBox(height: 14),
+          _field(_pass, tr('كلمة المرور', 'Password'), Icons.lock_outline_rounded,
+            obscure: _obscure, onSubmit: _submit,
+            suffix: IconButton(
+              icon: Icon(_obscure ? Icons.visibility_rounded : Icons.visibility_off_rounded, color: Colors.grey.shade500, size: 20),
+              onPressed: () => setState(() => _obscure = !_obscure),
+            ),
           ),
+          const SizedBox(height: 24),
+          // gradient CTA
+          Material(
+            color: Colors.transparent,
+            child: Ink(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Color(0xFF124E7C), navy]),
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [BoxShadow(color: navy.withValues(alpha: 0.35), blurRadius: 12, offset: const Offset(0, 6))],
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(15),
+                onTap: _busy ? null : _submit,
+                child: SizedBox(
+                  height: 54,
+                  child: Center(child: _busy
+                      ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : Row(mainAxisSize: MainAxisSize.min, children: [
+                          Text(tr('دخول', 'Log in'), style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900)),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 18),
+                        ])),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // secure trust note
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(Icons.verified_user_rounded, size: 13, color: Colors.grey.shade400),
+            const SizedBox(width: 5),
+            Text(tr('اتصال آمن ومشفّر', 'Secure encrypted connection'),
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.w600)),
+          ]),
           const SizedBox(height: 14),
           Row(children: [
-            const Expanded(child: Divider()),
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: Text(tr('جديد على كير؟', 'New to CARE?'), style: const TextStyle(color: Colors.grey, fontSize: 12))),
-            const Expanded(child: Divider()),
+            Expanded(child: Divider(color: Colors.grey.shade300)),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: Text(tr('جديد على كير؟', 'New to CARE?'), style: TextStyle(color: Colors.grey.shade500, fontSize: 12))),
+            Expanded(child: Divider(color: Colors.grey.shade300)),
           ]),
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: _busy ? null : () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SignupScreen())),
             icon: const Icon(Icons.person_add_alt_1_rounded, color: Color(0xFF16A34A)),
             label: Text(tr('إنشاء عضوية جديدة', 'Create a new account'), style: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w800)),
-            style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48), side: const BorderSide(color: Color(0xFF16A34A))),
+            style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(50),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                side: const BorderSide(color: Color(0xFF16A34A))),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _field(TextEditingController c, String label, IconData ic,
+      {bool obscure = false, bool next = false, Widget? suffix, VoidCallback? onSubmit}) {
+    const navy = Color(0xFF0E3A5F);
+    return TextField(
+      controller: c,
+      obscureText: obscure,
+      textInputAction: next ? TextInputAction.next : TextInputAction.done,
+      onSubmitted: onSubmit == null ? null : (_) => onSubmit(),
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(ic, size: 21),
+        suffixIcon: suffix,
+        filled: true,
+        fillColor: const Color(0xFFF4F6F8),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.grey.shade200)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: navy, width: 1.6)),
       ),
     );
   }

@@ -6,6 +6,50 @@ import '../core/i18n.dart';
 import '../screens/notifications_screen.dart';
 import '../screens/workorders_screen.dart';
 
+/// A softly pulsing badge — a live "heartbeat" ring behind its child, used to
+/// signal real-time figures (people on site now). Respects reduced-motion.
+class PulseBadge extends StatefulWidget {
+  const PulseBadge({super.key, required this.child, this.color = const Color(0xFF16A34A)});
+  final Widget child;
+  final Color color;
+  @override
+  State<PulseBadge> createState() => _PulseBadgeState();
+}
+
+class _PulseBadgeState extends State<PulseBadge> with SingleTickerProviderStateMixin {
+  late final AnimationController _c;
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400))..repeat();
+  }
+  @override
+  void dispose() { _c.dispose(); super.dispose(); }
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) return widget.child;
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (_, child) {
+        final t = _c.value;
+        return Stack(alignment: Alignment.center, clipBehavior: Clip.none, children: [
+          // expanding fading ring
+          Opacity(
+            opacity: (1 - t) * 0.5,
+            child: Container(
+              width: 30 + t * 22, height: 30 + t * 22,
+              decoration: BoxDecoration(shape: BoxShape.circle,
+                  border: Border.all(color: widget.color.withValues(alpha: 0.6), width: 2)),
+            ),
+          ),
+          child!,
+        ]);
+      },
+      child: widget.child,
+    );
+  }
+}
+
 /// Resolves an employee/photo value that may be a base64 `data:` URI (as the API
 /// sends) OR a plain http URL into an [ImageProvider]. Returns null when absent
 /// or unparseable, so callers can fall back to initials. `NetworkImage` cannot
@@ -116,19 +160,29 @@ class StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final card = Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) Icon(icon, color: color, size: 20),
           const SizedBox(height: 4),
-          Text('$value',
-              style: TextStyle(color: color, fontSize: 24, fontWeight: FontWeight.w900)),
-          Text(label, style: const TextStyle(fontSize: 12), textAlign: TextAlign.center),
+          // The value scales down instead of overflowing when it's large.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text('$value',
+                style: TextStyle(color: color, fontSize: 22, fontWeight: FontWeight.w900, height: 1)),
+          ),
+          const SizedBox(height: 2),
+          // Labels like "بالموقع الآن" must wrap/ellipsis, never spill out.
+          Text(label,
+              textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 10.5, height: 1.15, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
         ],
       ),
     );

@@ -28,10 +28,14 @@ Future<void> exportExcelFile(
   try {
     final api = context.read<AuthProvider>().api;
     final token = await api.token;
-    // Same SSO bridge the PDF viewer uses. baseUrl already ends with /api/v1.
-    final target = '${api.baseUrl}/web/sso'
-        '?token=${Uri.encodeQueryComponent(token ?? '')}'
-        '&redirect=${Uri.encodeQueryComponent(path)}';
+    // Call the report route DIRECTLY with the mobile token — NOT via /web/sso.
+    // package:http does not carry the SSO session cookie across the redirect, so
+    // the auth='user' target used to bounce to the login page (that was the
+    // "error" on print/export). These routes now accept ?token= directly.
+    // baseUrl ends with /api/v1; the report routes live at the origin root.
+    final origin = api.baseUrl.replaceFirst(RegExp(r'/api/v\d+/?$'), '');
+    final sep = path.contains('?') ? '&' : '?';
+    final target = '$origin$path${sep}token=${Uri.encodeQueryComponent(token ?? '')}';
     final res = await http.get(Uri.parse(target));
     if (res.statusCode != 200) {
       throw Exception('HTTP ${res.statusCode}');

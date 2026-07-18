@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import 'observation_create.dart';
 
 /// Quality rounds / observations (الجولات والجودة): log an observation, track
 /// its severity/state, and convert it into a corrective work order.
@@ -98,51 +99,7 @@ class _QualityScreenState extends State<QualityScreen> {
   }
 
   Future<void> _newObs() async {
-    final api = context.read<AuthProvider>().api;
-    final facs = await api.facilities();
-    final svcs = await api.servicesList();
-    if (!mounted) return;
-    final title = TextEditingController();
-    final desc = TextEditingController();
-    int? facId = facs.isNotEmpty ? facs.first['id'] as int : null;
-    int? svcId;
-    String sev = 'medium';
-    final ok = await showModalBottomSheet<bool>(
-      context: context, isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(ctx).viewInsets.bottom + 16),
-        child: StatefulBuilder(builder: (ctx, set) => Column(mainAxisSize: MainAxisSize.min, children: [
-          Text(tr('ملاحظة جودة جديدة', 'New quality observation'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-          const SizedBox(height: 12),
-          TextField(controller: title, decoration: InputDecoration(labelText: tr('الملاحظة', 'Observation'), border: const OutlineInputBorder(), isDense: true)),
-          const SizedBox(height: 10),
-          DropdownButtonFormField<int>(value: facId, isExpanded: true, decoration: InputDecoration(labelText: tr('المرفق', 'Facility'), border: const OutlineInputBorder(), isDense: true),
-              items: [for (final f in facs) DropdownMenuItem(value: f['id'] as int, child: Text('${f['name']}'))], onChanged: (v) => set(() => facId = v)),
-          const SizedBox(height: 10),
-          DropdownButtonFormField<int>(value: svcId, isExpanded: true, decoration: InputDecoration(labelText: tr('الخدمة (اختياري)', 'Service (optional)'), border: const OutlineInputBorder(), isDense: true),
-              items: [const DropdownMenuItem(value: null, child: Text('—')), for (final s in svcs) DropdownMenuItem(value: s['id'] as int, child: Text('${s['name']}'))], onChanged: (v) => set(() => svcId = v)),
-          const SizedBox(height: 10),
-          DropdownButtonFormField<String>(value: sev, isExpanded: true, decoration: InputDecoration(labelText: tr('الخطورة', 'Severity'), border: const OutlineInputBorder(), isDense: true),
-              items: [
-                DropdownMenuItem(value: 'low', child: Text(tr('منخفضة', 'Low'))),
-                DropdownMenuItem(value: 'medium', child: Text(tr('متوسطة', 'Medium'))),
-                DropdownMenuItem(value: 'high', child: Text(tr('عالية', 'High'))),
-                DropdownMenuItem(value: 'critical', child: Text(tr('حرجة', 'Critical'))),
-              ], onChanged: (v) => set(() => sev = v ?? 'medium')),
-          const SizedBox(height: 10),
-          TextField(controller: desc, maxLines: 2, decoration: InputDecoration(labelText: tr('الوصف', 'Description'), border: const OutlineInputBorder(), isDense: true)),
-          const SizedBox(height: 14),
-          SizedBox(width: double.infinity, child: FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('تسجيل', 'Log')))),
-        ])),
-      ),
-    );
-    if (ok != true || title.text.trim().isEmpty) return;
-    try {
-      await api.createObservation({'title': title.text.trim(), 'facility_id': facId, 'service_id': svcId, 'severity': sev, 'description': desc.text.trim()});
-      if (mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('سُجّلت الملاحظة', 'Recorded')))); setState(_load); }
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
-    }
+    final created = await ObservationCreateSheet.open(context);
+    if (created == true && mounted) setState(_load);
   }
 }

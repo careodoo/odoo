@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/widgets.dart';
+import 'location_picker.dart';
 
 /// Professional "raise a work order" sheet for the client: pick facility +
 /// location, target a service or a team, set priority, describe the job, and
@@ -211,10 +212,7 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
           (v) => setState(() { _facilityId = v; _locationId = null; _teamId = null; })),
       if (_locations.isNotEmpty) ...[
         const SizedBox(height: 10),
-        _dd<int?>(tr('الموقع (اختياري)', 'Location (optional)'), _locationId,
-            [const DropdownMenuItem(value: null, child: Text('—')),
-             for (final l in _locations) DropdownMenuItem(value: l['id'] as int, child: Text('${l['name']}'))],
-            (v) => setState(() => _locationId = v)),
+        _locationField(),
       ],
       const SizedBox(height: 16),
       _label(Icons.design_services_rounded, tr('الخدمة', 'Service')),
@@ -265,6 +263,41 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
       _field(_desc, tr('وصف المشكلة، الملاحظات، المتطلبات…', 'Describe the issue, notes, requirements…'), lines: 4),
       const SizedBox(height: 8),
     ];
+  }
+
+  /// A tappable location field that opens the searchable picker (with QR + NFC
+  /// scanning), instead of a long flat dropdown.
+  Widget _locationField() {
+    final sel = _locationId == null ? null
+        : _locations.firstWhere((l) => l['id'] == _locationId, orElse: () => const {});
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () async {
+        final picked = await LocationPickerSheet.open(context, locations: _locations,
+            title: tr('اختر موقع أمر العمل', 'Choose work-order location'));
+        if (picked != null && mounted) setState(() => _locationId = picked['id'] as int?);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300)),
+        child: Row(children: [
+          Icon(Icons.pin_drop_rounded, size: 20, color: _accent),
+          const SizedBox(width: 10),
+          Expanded(child: Text(
+            sel == null || sel.isEmpty ? tr('الموقع (بحث / QR / NFC) — اختياري', 'Location (search / QR / NFC) — optional')
+                : '${sel['name']}${sel['code'] != null ? ' · ${sel['code']}' : ''}',
+            maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 13, fontWeight: sel != null && sel.isNotEmpty ? FontWeight.w800 : FontWeight.w500,
+                color: sel != null && sel.isNotEmpty ? _navy : Colors.grey.shade500),
+          )),
+          if (_locationId != null)
+            GestureDetector(onTap: () => setState(() => _locationId = null),
+                child: const Icon(Icons.close_rounded, size: 18, color: Colors.grey))
+          else const Icon(Icons.chevron_left_rounded, color: Colors.grey),
+        ]),
+      ),
+    );
   }
 
   Widget _label(IconData ic, String t) => Row(children: [
