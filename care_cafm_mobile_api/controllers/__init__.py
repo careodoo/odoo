@@ -22,3 +22,4 @@ from . import builder_api
 from . import test_users
 from . import maintenance_client_api
 from . import chat_api
+from . import nfc_api

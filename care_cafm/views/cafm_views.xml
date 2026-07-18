@@ -109,6 +109,21 @@
                     <group><field name="is_checkpoint"/><field name="active"/>
                         <field name="last_scan_id" readonly="1"/></group>
                 </group>
+                <group string="شريحة NFC">
+                    <group>
+                        <field name="nfc_state"/>
+                        <field name="nfc_uid" readonly="1"/>
+                        <field name="nfc_note"/>
+                    </group>
+                    <group>
+                        <field name="nfc_written_on" readonly="1"/>
+                        <field name="nfc_written_by" readonly="1"/>
+                        <button name="action_nfc_disable" type="object" string="تعطيل الشريحة"
+                                invisible="nfc_state != 'active'"/>
+                        <button name="action_nfc_revoke" type="object" string="إلغاء الربط (مفقودة)"
+                                invisible="not nfc_uid"/>
+                    </group>
+                </group>
                 <field name="qr_image" widget="image" readonly="1" options="{'size':[180,180]}"/>
             </sheet></form>
         </field>

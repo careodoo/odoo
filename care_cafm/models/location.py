@@ -115,6 +115,37 @@ class CafmLocation(models.Model):
     ], string='النوع', default='other')
     is_checkpoint = fields.Boolean(string='نقطة تفتيش (دورية)',
                                    help='تُستخدم كنقطة دورية للأمن/الجودة.')
+    # ---- NFC tag provisioning -------------------------------------------
+    # A location can carry an NFC sticker as well as (or instead of) its QR
+    # label. Programming writes the location code onto the tag AND registers the
+    # tag's hardware UID here, so even a write-protected tag still resolves.
+    nfc_uid = fields.Char(string='معرّف شريحة NFC', copy=False, index=True,
+                          help='المعرّف الفيزيائي للشريحة المرتبطة بهذا الموقع.')
+    nfc_state = fields.Selection([
+        ('none', 'غير مبرمَجة'), ('active', 'مفعّلة'),
+        ('disabled', 'معطّلة'), ('lost', 'مفقودة/تالفة'),
+    ], string='حالة الشريحة', default='none', copy=False, tracking=True)
+    nfc_written_on = fields.Datetime(string='تاريخ البرمجة', copy=False, readonly=True)
+    nfc_written_by = fields.Many2one('res.users', string='برمجها', copy=False, readonly=True)
+    nfc_note = fields.Char(string='ملاحظة الشريحة', copy=False)
+
+    _sql_constraints_nfc = True  # documented: uid uniqueness enforced in code
+
+    def action_nfc_disable(self):
+        self.write({'nfc_state': 'disabled'})
+
+    def action_nfc_revoke(self):
+        """Tag lost or damaged — unbind it so a fresh one can be programmed."""
+        self.write({'nfc_uid': False, 'nfc_state': 'lost', 'nfc_note': 'أُلغي الربط'})
+
+    @api.model
+    def resolve_tag(self, value):
+        """Find the location a scanned tag/QR belongs to — by NFC uid or by code."""
+        value = (value or '').strip()
+        if not value:
+            return self.browse()
+        loc = self.search([('nfc_uid', '=', value), ('nfc_state', '=', 'active')], limit=1)
+        return loc or self.search([('code', '=', value)], limit=1)
     active = fields.Boolean(default=True)
     qr_url = fields.Char(compute='_compute_qr', string='رابط QR')
     qr_image = fields.Binary(compute='_compute_qr', string='رمز QR')

@@ -124,14 +124,18 @@ def _wo_dict(w):
         pass
     photos = sum(1 for m in media if not m['is_video'])
     videos = sum(1 for m in media if m['is_video'])
+    # Odoo hides another employee's record behind the "public profile", and the
+    # care modules add many private fields — so reading a colleague's name would
+    # raise AccessError. Only the name/job are exposed here, read with sudo.
+    _emp = w.employee_id.sudo()
     return {
         'id': w.id, 'name': w.name, 'title': w.title,
         'facility': w.facility_id.name, 'facility_id': w.facility_id.id,
         'location': w.location_id.name or None, 'location_id': w.location_id.id or None,
         'service': w.service_id.name, 'service_type': w.service_type,
-        'employee': w.employee_id.name or None, 'employee_id': w.employee_id.id or None,
+        'employee': _emp.name or None, 'employee_id': _emp.id or None,
         'priority': w.priority, 'state': w.state,
-        'job': w.employee_id.job_title or None,
+        'job': _emp.job_title or None,
         'request_datetime': w.request_datetime or None,
         'deadline': w.deadline or None,
         'start_datetime': w.start_datetime or None,
@@ -950,10 +954,13 @@ class MobileApi(http.Controller):
         code = (_body().get('code') or '').strip()
         if not code:
             return _err('code مطلوب', 422)
-        loc = env['care.cafm.location'].search([('code', '=', code)], limit=1)
+        # a scan may be a QR code OR an NFC tag uid — resolve either. Read with
+        # sudo: a worker legitimately standing at the tag may not have ACL on the
+        # location record itself, and the scan log is a system record.
+        loc = env['care.cafm.location'].sudo().resolve_tag(code)
         if not loc:
             return _err('رمز غير معروف', 404)
-        emp = env.user.employee_id
+        emp = env.user.sudo().employee_id
         # log a presence scan
         if emp:
             env['care.cafm.scan'].sudo().create({
