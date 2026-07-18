@@ -33,8 +33,14 @@ class C2CBooking(models.Model):
     gps = fields.Char(string='الإحداثيات (GPS)')
     phone = fields.Char(string='هاتف التواصل')
     notes = fields.Text(string='ملاحظات العميل')
-    # assignment
+    # assignment — either a single provider, or a whole crew (team leader).
+    # A team assignment is visible to every member of that crew.
     provider_id = fields.Many2one('c2c.provider', string='مقدّم الخدمة', tracking=True)
+    team_leader_id = fields.Many2one('c2c.provider', string='الفريق المُسنَد', tracking=True,
+                                     domain="[('role','in',('team_leader','supervisor'))]",
+                                     help='عند الإسناد لفريق يرى الطلبَ كل أعضاء الفريق.')
+    team_driver_id = fields.Many2one('c2c.provider', related='team_leader_id.driver_id',
+                                     string='سائق الفريق', store=True, readonly=True)
     # pricing & payment
     amount = fields.Float(string='المبلغ', tracking=True)
     currency_id = fields.Many2one('res.currency', default=lambda s: s.env.company.currency_id)
@@ -210,6 +216,40 @@ class C2CBooking(models.Model):
                 raise UserError(_('اختر مقدّم خدمة أولاً.'))
             b.state = 'assigned'
             b._notify_customer('assigned')
+
+    def action_assign_team(self, leader):
+        """Hand the job to a whole crew: every member — and the crew's driver —
+        sees it and is notified."""
+        Provider = self.env['c2c.provider']
+        leader = Provider.browse(int(leader)) if not isinstance(leader, models.BaseModel) else leader
+        if not leader.exists():
+            raise UserError(_('الفريق غير موجود.'))
+        for b in self:
+            b.team_leader_id = leader.id
+            # the leader carries the job unless a specific member is already set
+            if not b.provider_id:
+                b.provider_id = leader.id
+            if b.state in ('draft', 'confirmed'):
+                b.state = 'assigned'
+            crew = (leader | leader.team_member_ids | leader.driver_id)
+            b.message_post(body=_('👥 أُسند الطلب إلى فريق %s (%d عضو).') % (leader.name, len(crew)))
+            b._notify_crew(crew, _('🆕 طلب جديد لفريقك'),
+                           '%s — %s' % (b.service_id.name or '', b.area or b.address or ''))
+            b._notify_customer('assigned')
+        return True
+
+    def _notify_crew(self, crew, title, body):
+        """Push an in-app notification to every crew member with an app user."""
+        if 'care.cafm.notification' not in self.env:
+            return
+        Notif = self.env['care.cafm.notification'].sudo()
+        for p in crew:
+            if p.user_id:
+                try:
+                    Notif.push(p.user_id, title, body, ntype='task',
+                               action_url='/c2c/booking/%s' % self.id)
+                except Exception:
+                    pass
 
     def action_start(self):
         for b in self:

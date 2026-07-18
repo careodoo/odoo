@@ -202,16 +202,33 @@ class C2CStaffApi(Controller):
             elif act == 'note':
                 b.staff_note = body.get('note') or b.staff_note
             elif act in ('assign', 'reassign'):
-                pid = body.get('provider_id')
-                if not pid:
-                    return _err('اختر عضو الفريق', 422)
-                target = env['c2c.provider'].sudo().browse(int(pid)).exists()
-                if not target:
-                    return _err('العضو غير موجود', 404)
-                b.provider_id = target.id
-                if b.state in ('draft', 'confirmed'):
-                    b.state = 'assigned'
-                b.message_post(body='👷 تم إسناد الطلب إلى %s بواسطة %s' % (target.name, me.name))
+                # either a single member, or a whole crew (every member is notified)
+                tid = body.get('team_leader_id')
+                if tid:
+                    leader = env['c2c.provider'].sudo().browse(int(tid)).exists()
+                    if not leader:
+                        return _err('الفريق غير موجود', 404)
+                    b.action_assign_team(leader)
+                    b.message_post(body='👥 أسند %s الطلب إلى فريق %s' % (me.name, leader.name))
+                else:
+                    pid = body.get('provider_id')
+                    if not pid:
+                        return _err('اختر عضو الفريق أو الفريق', 422)
+                    target = env['c2c.provider'].sudo().browse(int(pid)).exists()
+                    if not target:
+                        return _err('العضو غير موجود', 404)
+                    b.provider_id = target.id
+                    if b.state in ('draft', 'confirmed'):
+                        b.state = 'assigned'
+                    b.message_post(body='👷 تم إسناد الطلب إلى %s بواسطة %s' % (target.name, me.name))
+                    if target.user_id and 'care.cafm.notification' in env:
+                        try:
+                            env['care.cafm.notification'].sudo().push(
+                                target.user_id, '🆕 طلب جديد مُسند إليك',
+                                '%s — %s' % (b.service_id.name or '', b.area or b.address or ''),
+                                ntype='task')
+                        except Exception:
+                            pass
             elif act == 'quality':
                 b.write({'quality_ok': True, 'quality_by': me.id})
                 b.message_post(body='✅ اعتماد الجودة بواسطة %s' % me.name)
@@ -224,6 +241,56 @@ class C2CStaffApi(Controller):
         except Exception as e:
             return _err(str(e), 422)
         return _ok(self._book_dict(b, full=True))
+
+    # ------------------------------------------------- crews (for assignment)
+    @route(API + '/c2c/staff/teams', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def staff_teams(self, **kw):
+        """Every crew available for assignment: its leader, its own driver, each
+        member's live status, and how loaded the crew currently is."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        me = self._me(env)
+        if not me:
+            return _err('غير مصرّح', 403)
+        if not (self._can(me, 'assign') or self._can(me, 'manage_team')):
+            return _err('غير مصرّح', 403)
+        P = env['c2c.provider'].sudo()
+        Book = env['c2c.booking'].sudo()
+        # crews = providers that actually lead a crew
+        leaders = P.search([('role', 'in', ('team_leader', 'supervisor')), ('active', '=', True)])
+        leaders = leaders.filtered(lambda l: l.team_member_ids)
+        roles = dict(P._fields['role'].selection)
+        out = []
+        for l in leaders:
+            members = l.team_member_ids
+            crew = l | members
+            active_jobs = Book.search_count([
+                '|', ('team_leader_id', '=', l.id), ('provider_id', 'in', crew.ids),
+                ('state', 'in', ('assigned', 'in_progress'))])
+            free = len(crew.filtered('available'))
+            out.append({
+                'id': l.id, 'name': l.name,
+                'leader': {'id': l.id, 'name': l.name, 'available': l.available,
+                           'phone': l.phone or None},
+                'driver': ({'id': l.driver_id.id, 'name': l.driver_id.name,
+                            'available': l.driver_id.available, 'phone': l.driver_id.phone or None}
+                           if l.driver_id else None),
+                'members': [{
+                    'id': m.id, 'name': m.name, 'role': m.role,
+                    'role_label': roles.get(m.role, m.role),
+                    'available': m.available, 'phone': m.phone or None,
+                    'rating': m.rating_avg,
+                    'load': Book.search_count([('provider_id', '=', m.id),
+                                               ('state', 'in', ('assigned', 'in_progress'))]),
+                } for m in members],
+                'size': len(crew), 'free': free, 'active_jobs': active_jobs,
+                # a crew is "available" when it has someone free and isn't buried
+                'status': 'busy' if active_jobs >= max(1, len(crew)) else ('free' if free else 'off'),
+                'categories': l.category_ids.mapped('name'),
+            })
+        out.sort(key=lambda t: (t['status'] != 'free', t['active_jobs']))
+        return _ok(out)
 
     # --------------------------------------------------------- team roster
     @route(API + '/c2c/staff/team', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
