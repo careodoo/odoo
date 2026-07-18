@@ -63,13 +63,40 @@ def _bearer():
     return request.httprequest.headers.get('X-Api-Token')
 
 
+# app short language code → Odoo locale, so translated record values (facility /
+# location names, …) come back in the language the user picked IN THE APP, not
+# whatever their res.users.lang happens to be.
+_APP_LANGS = {
+    'ar': 'ar_001', 'en': 'en_US', 'hi': 'hi_IN', 'ur': 'ur_PK',
+    'bn': 'bn_IN', 'ne': 'ne_NP', 'fil': 'fil_PH', 'fr': 'fr_FR',
+}
+
+
+def _req_lang():
+    """The app language for this request, as an Odoo locale, or None."""
+    raw = (request.httprequest.args.get('lang')
+           or request.httprequest.headers.get('X-Lang') or '').strip().lower()
+    if not raw:
+        return None
+    return _APP_LANGS.get(raw, raw if '_' in raw else None)
+
+
 def _auth():
     """Return an env bound to the token's user, or None. Record rules of that
-    user apply to every query made through the returned env."""
+    user apply to every query made through the returned env. When the app sends
+    its selected language, that language is applied so translated names surface."""
     user = request.env['care.cafm.mobile.token'].sudo().resolve(_bearer())
     if not user:
         return None
-    return request.env(user=user.id)
+    env = request.env(user=user.id)
+    lang = _req_lang()
+    if lang:
+        try:
+            if request.env['res.lang'].sudo().search_count([('code', '=', lang), ('active', '=', True)]):
+                env = env(context=dict(env.context, lang=lang))
+        except Exception:
+            pass
+    return env
 
 
 # ---- serializers -------------------------------------------------------------

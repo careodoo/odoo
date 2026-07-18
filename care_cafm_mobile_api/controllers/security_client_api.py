@@ -247,6 +247,59 @@ class SecurityClientApi(Controller):
             'state': r.state, 'state_label': st.get(r.state, r.state),
         } for r in recs])
 
+    # ---- live security positioning (map of premises + coverage) -----------
+    @route(API + '/client/security/positioning', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def sec_positioning(self, **kw):
+        """One record per premise for the interactive positioning map: address
+        (for geocoding), its patrol checkpoints with live status, guards on duty,
+        open incidents, and an overall coverage/health score."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'security.premise' not in env:
+            return _ok({'available': False})
+        pids, cids = self._scope(env)
+        prem = env['security.premise'].sudo().browse(pids).exists()
+        Point = env['security.patrol.point'].sudo() if 'security.patrol.point' in env else None
+        IncM = self._incident_model(env)
+        Att = env['security.attendance'].sudo() if 'security.attendance' in env else None
+        # guards currently on duty (client-level: checked in, not out)
+        on_duty = {}
+        if Att is not None:
+            for a in Att.search([('client_id', 'in', cids),
+                                 ('state', 'in', ('checked_in', 'present', 'on_duty')),
+                                 ('check_out', '=', False)], limit=300):
+                on_duty.setdefault(a.client_id.id, []).append({
+                    'name': (a.security_employee_id.name or '—'),
+                    'since': _dt(a.check_in)})
+        out = []
+        for p in prem:
+            pts = Point.search([('premise_id', '=', p.id)]) if Point is not None else []
+            st = _sel(Point, 'last_check_status') if Point is not None else {}
+            checkpoints = [{
+                'id': c.id, 'name': c.name,
+                'status': c.last_check_status, 'status_label': st.get(c.last_check_status, c.last_check_status or ''),
+                'last_check': _dt(c.last_check_time), 'next_check': _dt(c.next_check_time),
+                'overdue': c.last_check_status in ('late', 'missed'),
+            } for c in pts]
+            overdue = sum(1 for c in checkpoints if c['overdue'])
+            inc_open = (IncM.search_count([('premise_id', '=', p.id),
+                        ('state', 'not in', ('closed', 'resolved', 'cancelled'))]) if IncM is not None else 0)
+            total = len(checkpoints) or 1
+            coverage = round((total - overdue) * 100.0 / total)
+            # health: green (>=85 & no incidents) / amber / red
+            health = 'good' if (coverage >= 85 and inc_open == 0) else ('warn' if coverage >= 60 and inc_open <= 1 else 'risk')
+            guards = on_duty.get(p.client_id.id, []) if 'client_id' in p._fields and p.client_id else []
+            out.append({
+                'id': p.id, 'name': p.name, 'address': p.address or None,
+                'client': p.client_id.name if 'client_id' in p._fields and p.client_id else None,
+                'checkpoints': checkpoints, 'guards_on_duty': guards,
+                'stats': {'checkpoints': len(checkpoints), 'overdue': overdue,
+                          'incidents_open': inc_open, 'guards': len(guards), 'coverage': coverage},
+                'health': health,
+            })
+        return _ok({'available': True, 'premises': out})
+
     # ---- issue a gate pass (client-issued "permit") -----------------------
     @route(API + '/client/security/options', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def sec_options(self, **kw):

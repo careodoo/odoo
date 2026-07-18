@@ -3090,6 +3090,71 @@ class ClientApi(Controller):
         rec.unlink()
         return _ok({'deleted': rid})
 
+    # ---- translations of names (facility/building/floor/location/asset/team) --
+    _TR_MODELS = {'facility': 'care.cafm.facility', 'building': 'care.cafm.building',
+                  'floor': 'care.cafm.floor', 'location': 'care.cafm.location',
+                  'asset': 'care.cafm.asset', 'team': 'care.cafm.team'}
+
+    @route(API + '/client/i18n/languages', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def i18n_languages(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        langs = env['res.lang'].sudo().search([('active', '=', True)])
+        # map to the app's short codes where possible
+        short = {'ar_001': 'ar', 'en_US': 'en', 'hi_IN': 'hi', 'ur_PK': 'ur',
+                 'bn_IN': 'bn', 'ne_NP': 'ne', 'fil_PH': 'fil', 'fr_FR': 'fr'}
+        return _ok([{'code': l.code, 'short': short.get(l.code, l.code), 'name': l.name}
+                    for l in langs])
+
+    @route(API + '/client/i18n/get', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def i18n_get(self, **kw):
+        """Current per-language values of a record's name, for the editor."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        a = request.httprequest.args
+        kind, rid = a.get('kind'), a.get('id')
+        if kind not in self._TR_MODELS or not (rid or '').isdigit():
+            return _err('نوع غير معروف', 404)
+        rec = env[self._TR_MODELS[kind]].sudo().browse(int(rid)).exists()
+        if not rec:
+            return _err('غير موجود', 404)
+        langs = env['res.lang'].sudo().search([('active', '=', True)])
+        out = {}
+        for l in langs:
+            out[l.code] = rec.with_context(lang=l.code).name or ''
+        return _ok({'id': rec.id, 'values': out})
+
+    @route(API + '/client/i18n/set', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def i18n_set(self, **kw):
+        """Save a record's name per language. body: {kind, id, values:{lang:val}}."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if not self._can_add_workers(env):
+            return _err('غير مسموح', 403)
+        b = _body()
+        kind, rid = b.get('kind'), b.get('id')
+        if kind not in self._TR_MODELS or not rid:
+            return _err('نوع غير معروف', 404)
+        Model = env[self._TR_MODELS[kind]]
+        rec = Model.sudo().browse(int(rid)).exists()
+        if not rec:
+            return _err('غير موجود', 404)
+        values = b.get('values') or {}
+        # write English source first (the base), then each translation.
+        order = sorted(values.keys(), key=lambda c: 0 if c == 'en_US' else 1)
+        for code in order:
+            val = (values.get(code) or '').strip()
+            if not val:
+                continue
+            try:
+                rec.with_context(lang=code).sudo().write({'name': val})
+            except Exception:
+                pass
+        return _ok({'id': rec.id, 'name': rec.name})
+
     @route(API + '/client/facility/<int:fid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def facility(self, fid, **kw):
         env = _auth()
