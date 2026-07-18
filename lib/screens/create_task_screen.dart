@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import 'searchable_picker.dart';
 
 /// Full-page task creation for supervisors — opens as its own screen (not an
 /// inline list row). Captures the assignee, "المطلوب تنفيذه", and the proof
@@ -89,24 +90,27 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(title: Text(tr('مهمة جديدة', 'New task'))),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(padding: const EdgeInsets.all(16), children: [
               _field(tr('عنوان المهمة', 'Task title'), TextField(controller: _title, decoration: _dec(tr('مثال: تنظيف الواجهة', 'e.g. facade cleaning')))),
-              _dropdown<int>(tr('الموظف المُسنَد إليه', 'Assign to'), _empId,
-                  [for (final e in _employees) DropdownMenuItem(value: e['id'] as int, child: Text('${e['name']}'))],
-                  (v) => setState(() => _empId = v)),
+              _field(tr('الموظف المُسنَد إليه', 'Assign to'), SearchableField(
+                label: tr('الموظف المُسنَد إليه', 'Assign to'), icon: Icons.person_rounded, value: _empId, allowClear: false,
+                options: [for (final e in _employees) PickOption(value: e['id'], label: '${e['name']}',
+                    sublabel: e['job_title'] != null ? '${e['job_title']}' : null)],
+                onChanged: (v) => setState(() => _empId = v as int?))),
               Row(children: [
-                Expanded(child: _dropdown<int>(tr('الخدمة', 'Service'), _serviceId,
-                    [for (final s in _services) DropdownMenuItem(value: s['id'] as int, child: Text('${s['name']}'))],
-                    (v) => setState(() => _serviceId = v))),
+                Expanded(child: _field(tr('الخدمة', 'Service'), SearchableField(
+                  label: tr('الخدمة', 'Service'), icon: Icons.design_services_rounded, value: _serviceId, allowClear: false,
+                  options: [for (final s in _services) PickOption(value: s['id'], label: '${s['name']}')],
+                  onChanged: (v) => setState(() => _serviceId = v as int?)))),
                 const SizedBox(width: 10),
-                Expanded(child: _dropdown<int>(tr('المرفق', 'Facility'), _facilityId,
-                    [for (final f in _facilities) DropdownMenuItem(value: f['id'] as int, child: Text('${f['name']}'))],
-                    (v) => setState(() => _facilityId = v))),
+                Expanded(child: _field(tr('المرفق', 'Facility'), SearchableField(
+                  label: tr('المرفق', 'Facility'), icon: Icons.apartment_rounded, value: _facilityId, allowClear: false,
+                  options: [for (final f in _facilities) PickOption(value: f['id'], label: '${f['name']}')],
+                  onChanged: (v) => setState(() => _facilityId = v as int?)))),
               ]),
               Row(children: [
                 Expanded(child: _dropdown<int>(tr('الأولوية', 'Priority'), _priority, const [

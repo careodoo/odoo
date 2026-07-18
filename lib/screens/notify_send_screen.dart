@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/widgets.dart';
+import 'searchable_picker.dart';
 
 /// Client broadcast console: compose to a filtered audience (with live reach
 /// preview), pick a type/priority, send now or schedule for later — plus a
@@ -355,28 +356,21 @@ class _NotifySendScreenState extends State<NotifySendScreen> with SingleTickerPr
 
   Widget _dropdown(String label, List items, int? val, ValueChanged<int?> onCh) => Padding(
         padding: const EdgeInsets.only(bottom: 4),
-        child: DropdownButtonFormField<int>(
-          value: val, isExpanded: true,
-          decoration: _ddDeco(label),
-          items: items.map<DropdownMenuItem<int>>((x) => DropdownMenuItem(value: x['id'] as int, child: Text('${x['name']}'))).toList(),
-          onChanged: onCh,
+        child: SearchableField(
+          label: label, icon: Icons.search_rounded, value: val, accent: _accent, allowClear: false,
+          options: [for (final x in items) PickOption(value: x['id'],
+              label: '${x['name']}', sublabel: x['job'] != null ? '${x['job']}' : (x['facility'] != null ? '${x['facility']}' : null))],
+          onChanged: (v) => onCh(v as int?),
         ),
       );
 
   Widget _dropdownStr(String label, List items, String? val, ValueChanged<String?> onCh) => Padding(
         padding: const EdgeInsets.only(bottom: 4),
-        child: DropdownButtonFormField<String>(
-          value: val, isExpanded: true,
-          decoration: _ddDeco(label),
-          items: items.map<DropdownMenuItem<String>>((x) => DropdownMenuItem(value: '${x['v']}', child: Text('${x['l']}'))).toList(),
-          onChanged: onCh,
+        child: SearchableField(
+          label: label, icon: Icons.search_rounded, value: val, accent: _accent, allowClear: false,
+          options: [for (final x in items) PickOption(value: '${x['v']}', label: '${x['l']}', search: '${x['v']}')],
+          onChanged: (v) => onCh(v as String?),
         ),
-      );
-
-  InputDecoration _ddDeco(String label) => InputDecoration(
-        labelText: label, filled: true, fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
       );
 
   // ————————————————————————————————————————————— sent tab (stats + log)
