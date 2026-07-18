@@ -1310,6 +1310,12 @@ class ApiClient {
       List<dynamic>.from((await _handle(
               await http.get(_u('/c2c/staff/team'), headers: await _headers())))['data'] as List);
 
+  /// Crews available for assignment — leader, the crew's own driver, every
+  /// member's live status and how loaded the crew is.
+  Future<List<dynamic>> c2cStaffTeams() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/c2c/staff/teams'), headers: await _headers())))['data'] as List);
+
   Future<Map<String, dynamic>> c2cStaffAvailable(bool available) async =>
       Map<String, dynamic>.from((await _handle(await http.post(_u('/c2c/staff/available'),
               headers: await _headers(), body: jsonEncode({'available': available}))))['data'] as Map);

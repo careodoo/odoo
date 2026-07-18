@@ -221,20 +221,124 @@ class _StaffJobDetailState extends State<StaffJobDetail> {
     if (ok == true) await _act('complete', body: {'note': note.text});
   }
 
+  /// Assign the job either to a whole crew (every member + its driver is
+  /// notified and sees it) or to one individual.
   Future<void> _assign() async {
-    final team = await context.read<AuthProvider>().api.c2cStaffTeam();
+    final api = context.read<AuthProvider>().api;
+    List<dynamic> teams = const [];
+    List<dynamic> members = const [];
+    try {
+      teams = await api.c2cStaffTeams();
+    } catch (_) {}
+    try {
+      members = await api.c2cStaffTeam();
+    } catch (_) {}
     if (!mounted) return;
-    final picked = await showModalBottomSheet<int>(context: context, backgroundColor: Colors.white, shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))), builder: (ctx) => ListView(shrinkWrap: true, padding: const EdgeInsets.all(12), children: [
-      Padding(padding: const EdgeInsets.all(8), child: Text(tr('إسناد إلى عضو الفريق', 'Assign to member'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Crew.ink))),
-      for (final m in team) ListTile(
-        leading: CircleAvatar(backgroundColor: Crew.teal.withValues(alpha: 0.12), child: Text('${m['name']}'.characters.first, style: const TextStyle(color: Crew.teal, fontWeight: FontWeight.w800))),
-        title: Text('${m['name']}', style: const TextStyle(fontWeight: FontWeight.w700)),
-        subtitle: Text('${m['role_label']} · ${tr('مهام مفتوحة', 'open')}: ${m['load']}'),
-        trailing: m['available'] == true ? const Icon(Icons.check_circle, color: Crew.green, size: 18) : const Icon(Icons.do_not_disturb_on, color: Crew.slate, size: 18),
-        onTap: () => Navigator.pop(ctx, m['id'] as int),
+    final res = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+      builder: (ctx) => DefaultTabController(
+        length: 2,
+        child: DraggableScrollableSheet(
+          expand: false, initialChildSize: 0.75, minChildSize: 0.5, maxChildSize: 0.95,
+          builder: (_, sc) => Container(
+            decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+            clipBehavior: Clip.antiAlias,
+            child: Column(children: [
+              Container(
+                padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
+                color: Crew.teal,
+                child: Column(children: [
+                  Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 10), decoration: BoxDecoration(color: Colors.white54, borderRadius: BorderRadius.circular(3)))),
+                  Row(children: [
+                    const Icon(Icons.person_add_alt_1, color: Colors.white),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text(tr('إسناد الطلب', 'Assign job'), style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900))),
+                  ]),
+                  TabBar(indicatorColor: Colors.white, labelColor: Colors.white, unselectedLabelColor: Colors.white70,
+                    labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                    tabs: [Tab(text: tr('فريق كامل', 'A crew')), Tab(text: tr('فرد', 'One person'))]),
+                ]),
+              ),
+              Expanded(child: TabBarView(children: [
+                // ---- crews ----
+                teams.isEmpty
+                    ? Center(child: Text(tr('لا فرق معرّفة', 'No crews defined'), style: const TextStyle(color: Crew.slate)))
+                    : ListView(controller: sc, padding: const EdgeInsets.all(12), children: [
+                        for (final t in teams) _crewTile(ctx, t as Map),
+                      ]),
+                // ---- individuals ----
+                members.isEmpty
+                    ? Center(child: Text(tr('لا أعضاء', 'No members'), style: const TextStyle(color: Crew.slate)))
+                    : ListView(padding: const EdgeInsets.all(12), children: [
+                        for (final m in members) ListTile(
+                          leading: CircleAvatar(backgroundColor: Crew.teal.withValues(alpha: 0.12), child: Text('${m['name']}'.characters.first, style: const TextStyle(color: Crew.teal, fontWeight: FontWeight.w800))),
+                          title: Text('${m['name']}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                          subtitle: Text('${m['role_label']} · ${tr('مهام مفتوحة', 'open')}: ${m['load']}'),
+                          trailing: m['available'] == true ? const Icon(Icons.check_circle, color: Crew.green, size: 18) : const Icon(Icons.do_not_disturb_on, color: Crew.slate, size: 18),
+                          onTap: () => Navigator.pop(ctx, {'provider_id': m['id']}),
+                        ),
+                      ]),
+              ])),
+            ]),
+          ),
+        ),
       ),
-    ]));
-    if (picked != null) await _act(_j?['provider_id'] != null ? 'reassign' : 'assign', body: {'provider_id': picked});
+    );
+    if (res != null) await _act(_j?['provider_id'] != null ? 'reassign' : 'assign', body: res);
+  }
+
+  /// One crew: status, its driver, and every member's availability + load.
+  Widget _crewTile(BuildContext ctx, Map t) {
+    const statusColors = {'free': Crew.green, 'busy': Crew.amber, 'off': Crew.slate};
+    final c = statusColors['${t['status']}'] ?? Crew.slate;
+    final statusLabel = {'free': tr('متاح', 'Free'), 'busy': tr('مشغول', 'Busy'), 'off': tr('غير متاح', 'Off')}['${t['status']}'] ?? '';
+    final driver = t['driver'] as Map?;
+    final members = (t['members'] as List?) ?? const [];
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.grey.shade300)),
+      child: Column(children: [
+        ListTile(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          leading: CircleAvatar(backgroundColor: c.withValues(alpha: 0.14), child: Icon(Icons.groups_rounded, color: c)),
+          title: Text('${t['name']}', style: const TextStyle(fontWeight: FontWeight.w900, color: Crew.ink)),
+          subtitle: Text('${t['size']} ${tr('عضو', 'members')} · ${tr('مهام جارية', 'active')}: ${t['active_jobs']}'),
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(color: c.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(20)),
+            child: Text(statusLabel, style: TextStyle(color: c, fontWeight: FontWeight.w900, fontSize: 11)),
+          ),
+          onTap: () => Navigator.pop(ctx, {'team_leader_id': t['id']}),
+        ),
+        if (driver != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+            child: Row(children: [
+              const Icon(Icons.local_shipping_rounded, size: 15, color: Crew.blue),
+              const SizedBox(width: 6),
+              Expanded(child: Text('${tr('السائق', 'Driver')}: ${driver['name']}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Crew.ink))),
+              Icon(driver['available'] == true ? Icons.check_circle : Icons.do_not_disturb_on,
+                  size: 15, color: driver['available'] == true ? Crew.green : Crew.slate),
+            ]),
+          ),
+        if (members.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            child: Wrap(spacing: 6, runSpacing: 6, children: [
+              for (final m in members)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: (m['available'] == true ? Crew.green : Crew.slate).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8)),
+                  child: Text('${m['name']} · ${m['load']}',
+                      style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800,
+                          color: m['available'] == true ? Crew.green : Crew.slate)),
+                ),
+            ]),
+          ),
+      ]),
+    );
   }
 
   @override
