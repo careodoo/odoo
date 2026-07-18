@@ -290,11 +290,13 @@ class InventoryClientApi(Controller):
             dom += ['|', '|', ('product_id.name', 'ilike', q), ('name', 'ilike', q), ('location_id.name', 'ilike', q)]
         return M.search(dom, order='date desc, id desc', limit=limit)
 
-    @route('/cafm/inv/consumption/export', type='http', auth='user', methods=['GET'], csrf=False)
+    @route('/cafm/inv/consumption/export', type='http', auth='public', methods=['GET'], csrf=False)
     def inv_consumption_export(self, **kw):
         """Consumption movements as Excel (via /web/sso like the other exports)."""
-        from .client_api import _xlsx_response
-        env = request.env
+        from .client_api import _xlsx_response, _report_env
+        env = _report_env()
+        if not env:
+            return request.redirect('/web/login')
         a = dict(request.httprequest.args)
         a.setdefault('type', 'issue')
         recs = self._move_search(env, a, limit=5000)

@@ -73,6 +73,22 @@ def _emp_photo(emp, field='image_256'):
     return None
 
 
+def _report_env():
+    """Resolve the acting user for a printable/exportable route.
+
+    The app fetches these with package:http, which does NOT carry the session
+    cookie across the /web/sso redirect — so relying on auth='user' fails. We
+    therefore accept the mobile token directly on the query string and fall back
+    to an established session. Returns an env bound to that user, or None."""
+    if request.session.uid:
+        return request.env
+    tok = request.httprequest.args.get('token')
+    user = request.env['care.cafm.mobile.token'].sudo().resolve(tok) if tok else None
+    if user:
+        return request.env(user=user.id)
+    return None
+
+
 class ClientApi(Controller):
 
     # ---- clean public URL for the web portal (instead of .../static/mockups) --
@@ -257,6 +273,134 @@ class ClientApi(Controller):
             } for o in occs],
         })
 
+    # ==== ASSETS (care.cafm.asset) — full client-facing register ============
+    def _asset_dict(self, a, full=False):
+        cat = dict(a._fields['category'].selection)
+        st = dict(a._fields['status'].selection)
+        own = dict(a._fields['ownership'].selection)
+        d = {
+            'id': a.id, 'name': a.name, 'code': a.code or None,
+            'category': a.category, 'category_label': cat.get(a.category, a.category or ''),
+            'status': a.status, 'status_label': st.get(a.status, a.status or ''),
+            'facility': a.facility_id.name or None, 'facility_id': a.facility_id.id or None,
+            'building': a.building_id.name or None, 'location': a.location_id.name or None,
+            'brand': a.brand or None, 'model': a.model_name or None,
+            'serial': a.serial or None, 'barcode': a.barcode or None,
+            'ownership': own.get(a.ownership, a.ownership or ''),
+            'warranty_end': str(a.warranty_end) if a.warranty_end else None,
+            'next_inspection': str(a.next_inspection_date) if a.next_inspection_date else None,
+            'image': ('/web/image/care.cafm.asset/%s/image' % a.id) if a.image else None,
+            'wo_count': a.workorder_count,
+        }
+        if full:
+            d.update({
+                'install_date': str(a.install_date) if a.install_date else None,
+                'last_inspection': str(a.last_inspection_date) if a.last_inspection_date else None,
+                'last_audit': str(a.last_audit_date) if a.last_audit_date else None,
+                'qr_value': a.qr_value or a.code or None,
+                'notes': a.notes or None,
+                'workorders': [{
+                    'id': w.id, 'name': w.name, 'title': w.title,
+                    'state': w.state, 'date': str(w.request_datetime)[:16] if w.request_datetime else None,
+                } for w in a.workorder_ids.sorted(lambda w: w.id, reverse=True)[:20]],
+            })
+        return d
+
+    @route(API + '/client/assets/summary', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def assets_summary(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.cafm.asset' not in env:
+            return _ok({'available': False})
+        A = env['care.cafm.asset'].sudo()
+        recs = A.search([('facility_id', 'in', self._fac_ids(env))])
+        cat = dict(A._fields['category'].selection)
+        today = fields.Date.today()
+        soon = fields.Date.to_string(today + timedelta(days=60))
+        by_cat = {}
+        for a in recs:
+            g = by_cat.setdefault(a.category, {'v': a.category, 'l': cat.get(a.category, a.category or ''), 'count': 0})
+            g['count'] += 1
+        return _ok({
+            'available': True, 'total': len(recs),
+            'operational': len(recs.filtered(lambda a: a.status == 'operational')),
+            'maintenance': len(recs.filtered(lambda a: a.status == 'maintenance')),
+            'faulty': len(recs.filtered(lambda a: a.status == 'faulty')),
+            'retired': len(recs.filtered(lambda a: a.status == 'retired')),
+            'warranty_soon': len(recs.filtered(lambda a: a.warranty_end and str(a.warranty_end) <= soon and str(a.warranty_end) >= str(today))),
+            'inspection_due': len(recs.filtered(lambda a: a.next_inspection_date and str(a.next_inspection_date) <= str(today))),
+            'by_category': sorted(by_cat.values(), key=lambda g: -g['count']),
+        })
+
+    @route(API + '/client/assets', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def assets(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.cafm.asset' not in env:
+            return _ok([])
+        a = request.httprequest.args
+        dom = [('facility_id', 'in', self._fac_ids(env))]
+        for key, field in (('category', 'category'), ('status', 'status')):
+            v = a.get(key)
+            if v and v != 'all':
+                dom.append((field, '=', v))
+        q = (a.get('q') or '').strip()
+        if q:
+            dom += ['|', '|', '|', ('name', 'ilike', q), ('code', 'ilike', q),
+                    ('serial', 'ilike', q), ('barcode', 'ilike', q)]
+        recs = env['care.cafm.asset'].sudo().search(dom, order='facility_id, name', limit=600)
+        return _ok([self._asset_dict(a) for a in recs])
+
+    @route(API + '/client/asset/<int:aid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def asset_detail(self, aid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        a = env['care.cafm.asset'].sudo().browse(aid).exists()
+        if not a or a.facility_id.id not in self._fac_ids(env):
+            return _err('غير موجود', 404)
+        return _ok(self._asset_dict(a, full=True))
+
+    @route('/cafm/assets/export', type='http', auth='public', methods=['GET'], csrf=False)
+    def assets_export(self, **kw):
+        env = _report_env()
+        if not env:
+            return request.redirect('/web/login')
+        A = env['care.cafm.asset'].sudo()
+        cat, st = dict(A._fields['category'].selection), dict(A._fields['status'].selection)
+        recs = A.search([('facility_id', 'in', self._fac_ids(env))], order='facility_id, name', limit=5000)
+        columns = [_('#'), _('الرمز'), _('الأصل'), _('الفئة'), _('الحالة'), _('المرفق'),
+                   _('المبنى'), _('الموقع'), _('الماركة'), _('الموديل'), _('الرقم التسلسلي'),
+                   _('انتهاء الضمان'), _('الفحص القادم')]
+        rows = []
+        for i, a in enumerate(recs, 1):
+            rows.append([i, a.code or '', a.name, cat.get(a.category, a.category or ''),
+                         st.get(a.status, a.status or ''), a.facility_id.name or '',
+                         a.building_id.name or '', a.location_id.name or '', a.brand or '',
+                         a.model_name or '', a.serial or '',
+                         str(a.warranty_end) if a.warranty_end else '',
+                         str(a.next_inspection_date) if a.next_inspection_date else ''])
+        meta = [(_('العميل'), env.user.partner_id.commercial_partner_id.name), (_('عدد الأصول'), len(recs))]
+        return _xlsx_response(_('سجل الأصول'), columns, rows, 'assets.xlsx', meta)
+
+    @route('/cafm/asset/<int:aid>/label', type='http', auth='public', methods=['GET'], csrf=False)
+    def asset_label(self, aid, **kw):
+        env = _report_env()
+        if not env:
+            return request.redirect('/web/login')
+        a = env['care.cafm.asset'].sudo().browse(aid).exists()
+        if not a or a.facility_id.id not in self._fac_ids(env):
+            return request.not_found()
+        report = env.ref('care_cafm.action_report_cafm_asset_label').with_user(SUPERUSER_ID)
+        pdf = env['ir.actions.report'].sudo()._render_qweb_pdf(report, res_ids=[a.id])[0]
+        fname = 'asset-label-%s.pdf' % (a.code or a.id)
+        return request.make_response(pdf, headers=[
+            ('Content-Type', 'application/pdf'),
+            ('Content-Disposition', content_disposition(fname).replace('attachment', 'inline')),
+        ])
+
     def _attendance_data(self, env, a):
         """Attendance for the client's sites, organised by shift: who was
         expected, who actually punched in, who is missing, and every record.
@@ -435,12 +579,14 @@ class ClientApi(Controller):
                          'photo': _emp_photo(emp, 'image_256')}
         return _ok(d)
 
-    @route('/cafm/attendance/report', type='http', auth='user', methods=['GET'], csrf=False)
+    @route('/cafm/attendance/report', type='http', auth='public', methods=['GET'], csrf=False)
     def attendance_report_pdf(self, **kw):
         """The attendance PDF. auth='user' (not the bearer token) because the
         app opens it through /web/sso, which establishes a real session — that
         way the browser, the portal and the app all take the same path."""
-        env = request.env
+        env = _report_env()
+        if not env:
+            return request.redirect('/web/login')
         a = request.httprequest.args
         d = self._attendance_data(env, a)
         d['client'] = env.user.partner_id.commercial_partner_id.name
@@ -469,10 +615,12 @@ class ClientApi(Controller):
             ('Content-Disposition', content_disposition(fname).replace('attachment', 'inline')),
         ])
 
-    @route('/cafm/attendance/export', type='http', auth='user', methods=['GET'], csrf=False)
+    @route('/cafm/attendance/export', type='http', auth='public', methods=['GET'], csrf=False)
     def attendance_export_xlsx(self, **kw):
         """Attendance records as Excel. auth='user' via /web/sso, same as the PDF."""
-        env = request.env
+        env = _report_env()
+        if not env:
+            return request.redirect('/web/login')
         a = request.httprequest.args
         d = self._attendance_data(env, a)
         columns = [_('#'), _('الموظف'), _('المسمى'), _('المنشأة'), _('التاريخ'),
@@ -1713,7 +1861,11 @@ class ClientApi(Controller):
             price = pl._get_product_price(p, 1.0) if pl else p.lst_price
         except Exception:
             price = p.lst_price
-        desc = p.description_sale or p.description or ''
+        # Descriptions are stored as HTML; the app renders plain text, so an
+        # "empty" field like "<p><br></p>" would otherwise show as raw markup.
+        from odoo.tools import html2plaintext
+        raw = p.description_sale or p.description or ''
+        desc = html2plaintext(raw).strip() if raw else ''
         return _ok({
             'id': p.id, 'name': p.display_name, 'code': p.default_code or None,
             'barcode': p.barcode or None,
@@ -2341,6 +2493,26 @@ class ClientApi(Controller):
             'severity': b.get('severity') or 'medium',
             'description': b.get('description') or None,
         })
+        # Attach any photos/videos the client captured — stored as attachments on
+        # the observation so they show in its chatter and the corrective WO.
+        media = b.get('media') or []
+        for i, m in enumerate(media):
+            data = (m.get('data') or '') if isinstance(m, dict) else str(m)
+            if not data:
+                continue
+            try:
+                env['ir.attachment'].sudo().create({
+                    'name': (m.get('name') if isinstance(m, dict) else None) or ('media-%d' % (i + 1)),
+                    'datas': data, 'res_model': 'care.cafm.observation', 'res_id': o.id,
+                    'mimetype': (m.get('mimetype') if isinstance(m, dict) else None) or 'image/jpeg',
+                })
+            except Exception:
+                pass
+        if media:
+            try:
+                o.message_post(body=_('أرفق العميل %d ملف وسائط.') % len(media))
+            except Exception:
+                pass
         return _ok(self._obs_dict(o))
 
     @route(API + '/client/observation/<int:oid>/workorder', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
@@ -2425,7 +2597,11 @@ class ClientApi(Controller):
         Loc = env['care.cafm.location'].sudo()
         locs_by_fac = {}
         for l in Loc.search([('facility_id', 'in', facs.ids)]):
-            locs_by_fac.setdefault(l.facility_id.id, []).append({'id': l.id, 'name': l.name})
+            locs_by_fac.setdefault(l.facility_id.id, []).append({
+                'id': l.id, 'name': l.name, 'code': l.code or None,
+                'building': l.building_id.name if 'building_id' in l._fields and l.building_id else None,
+                'floor': l.floor_id.name if 'floor_id' in l._fields and l.floor_id else None,
+            })
         services = env['care.cafm.service'].sudo().search([])
         # only services this client actually receives
         _, allowed_types = self._client_service_types(env)
@@ -2923,9 +3099,80 @@ class ClientApi(Controller):
         if not f or f.id not in self._facilities(env).ids:
             return _err('غير موجود', 404)
         locs = env['care.cafm.location'].sudo().search([('facility_id', '=', f.id)])
+        lt = dict(env['care.cafm.location']._fields['location_type'].selection)
+        WO = env['care.cafm.workorder'].sudo()
+        # per-building floor + location rollup so the tree is clickable at every level
+        buildings = []
+        for b in f.building_ids:
+            floors = [{'id': fl.id, 'name': fl.name,
+                       'locations': len(fl.location_ids)} for fl in b.floor_ids]
+            buildings.append({'id': b.id, 'name': b.name, 'floors': len(b.floor_ids),
+                              'floor_list': floors, 'locations': sum(fl['locations'] for fl in floors)})
         return _ok({
             'id': f.id, 'name': f.name, 'address': f.address or None,
-            'buildings': [{'id': b.id, 'name': b.name, 'floors': len(b.floor_ids)} for b in f.building_ids],
+            'stats': {
+                'buildings': len(f.building_ids),
+                'floors': sum(len(b.floor_ids) for b in f.building_ids),
+                'locations': len(locs),
+                'checkpoints': len(locs.filtered('is_checkpoint')),
+                'workorders': WO.search_count([('facility_id', '=', f.id)]),
+                'open_workorders': WO.search_count([('facility_id', '=', f.id),
+                                                    ('state', 'not in', ('done', 'verified', 'cancelled'))]),
+                'assets': env['care.cafm.asset'].sudo().search_count([('facility_id', '=', f.id)]) if 'care.cafm.asset' in env else 0,
+            },
+            'buildings': buildings,
             'locations': [{'id': l.id, 'name': l.name, 'code': l.code,
-                           'type': l.location_type, 'checkpoint': l.is_checkpoint} for l in locs],
+                           'type': l.location_type, 'type_label': lt.get(l.location_type, l.location_type or ''),
+                           'building': l.building_id.name or None, 'floor': l.floor_id.name or None,
+                           'checkpoint': l.is_checkpoint,
+                           'wo_count': l.workorder_count, 'asset_count': l.asset_count} for l in locs],
         })
+
+    @route(API + '/client/location/<int:lid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def location_detail(self, lid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        l = env['care.cafm.location'].sudo().browse(lid).exists()
+        if not l or l.facility_id.id not in self._fac_ids(env):
+            return _err('غير موجود', 404)
+        lt = dict(env['care.cafm.location']._fields['location_type'].selection)
+        WO = env['care.cafm.workorder'].sudo()
+        wos = WO.search([('location_id', '=', l.id)], order='request_datetime desc', limit=20)
+        wst = dict(WO._fields['state'].selection)
+        assets = env['care.cafm.asset'].sudo().search([('location_id', '=', l.id)]) if 'care.cafm.asset' in env else env['care.cafm.location'].browse()
+        return _ok({
+            'id': l.id, 'name': l.name, 'code': l.code,
+            'type': l.location_type, 'type_label': lt.get(l.location_type, l.location_type or ''),
+            'facility': l.facility_id.name or None, 'building': l.building_id.name or None,
+            'floor': l.floor_id.name or None, 'checkpoint': l.is_checkpoint,
+            # a scannable QR image the client can view/save without printing
+            'qr_image': _abs('/report/barcode/QR/%s?width=320&height=320' % l.code) if l.code else None,
+            'stats': {
+                'workorders': l.workorder_count, 'assets': l.asset_count,
+                'open_workorders': WO.search_count([('location_id', '=', l.id),
+                                                    ('state', 'not in', ('done', 'verified', 'cancelled'))]),
+                'done_workorders': WO.search_count([('location_id', '=', l.id), ('state', 'in', ('done', 'verified'))]),
+            },
+            'workorders': [{'id': w.id, 'name': w.name, 'title': w.title,
+                            'state': w.state, 'state_label': wst.get(w.state, w.state),
+                            'date': str(w.request_datetime)[:16] if w.request_datetime else None} for w in wos],
+            'assets': [{'id': a.id, 'name': a.name, 'code': a.code or None,
+                        'status': a.status} for a in assets[:20]],
+        })
+
+    @route('/cafm/location/<int:lid>/qr', type='http', auth='public', methods=['GET'], csrf=False)
+    def location_qr_label(self, lid, **kw):
+        env = _report_env()
+        if not env:
+            return request.redirect('/web/login')
+        l = env['care.cafm.location'].sudo().browse(lid).exists()
+        if not l or l.facility_id.id not in self._fac_ids(env):
+            return request.not_found()
+        report = env.ref('care_cafm.action_report_location_qr').with_user(SUPERUSER_ID)
+        pdf = env['ir.actions.report'].sudo()._render_qweb_pdf(report, res_ids=[l.id])[0]
+        fname = 'location-qr-%s.pdf' % (l.code or l.id)
+        return request.make_response(pdf, headers=[
+            ('Content-Type', 'application/pdf'),
+            ('Content-Disposition', content_disposition(fname).replace('attachment', 'inline')),
+        ])

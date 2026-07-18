@@ -89,9 +89,23 @@ class CafmObservation(models.Model):
     def action_make_workorder(self):
         """Turn the observation into a work order for the assigned worker."""
         self.ensure_one()
+        # The work order REQUIRES a service, but an observation's service is
+        # optional (client quality notes rarely set one). Fall back to a service
+        # on the same facility, else any service, so conversion never 500s.
+        Service = self.env['care.cafm.service']
+        service = self.service_id
+        if not service:
+            service = Service.search(['|', ('facility_ids', 'in', self.facility_id.id),
+                                      ('facility_ids', '=', False)], limit=1) \
+                if 'facility_ids' in Service._fields else Service.browse()
+        if not service:
+            service = Service.search([], limit=1)
+        if not service:
+            from odoo.exceptions import UserError
+            raise UserError(_('لا توجد خدمة معرّفة لتحويل الملاحظة إلى أمر عمل. يرجى إضافة خدمة أولاً.'))
         wo = self.env['care.cafm.workorder'].create({
             'title': self.title, 'facility_id': self.facility_id.id,
-            'location_id': self.location_id.id, 'service_id': self.service_id.id,
+            'location_id': self.location_id.id, 'service_id': service.id,
             'wo_type': 'inspection', 'description': self.description,
             'employee_id': self.assignee_id.id,
             'priority': {'low': '0', 'medium': '1', 'high': '2', 'critical': '3'}.get(self.severity, '1'),

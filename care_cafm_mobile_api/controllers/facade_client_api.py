@@ -187,10 +187,12 @@ class FacadeClientApi(Controller):
         return _ok({'id': p.id, 'name': p.name, 'state': p.state,
                     'state_label': st.get(p.state, p.state), 'is_safe': p.is_safe})
 
-    @route('/cafm/facade/permits/export', type='http', auth='user', methods=['GET'], csrf=False)
+    @route('/cafm/facade/permits/export', type='http', auth='public', methods=['GET'], csrf=False)
     def facade_permits_export(self, **kw):
-        from .client_api import _xlsx_response
-        env = request.env
+        from .client_api import _xlsx_response, _report_env
+        env = _report_env()
+        if not env:
+            return request.redirect('/web/login')
         M = env['care.cafm.facade.permit'].sudo()
         st, mth = _sel(M, 'state'), _sel(M, 'method')
         recs = M.search([('facility_id', 'in', self._fac_ids(env))], order='date desc, id desc', limit=5000)

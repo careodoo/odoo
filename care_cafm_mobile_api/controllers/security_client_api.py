@@ -321,10 +321,12 @@ class SecurityClientApi(Controller):
         return _ok({'id': gp.id, 'name': gp.name, 'state': gp.state,
                     'state_label': st.get(gp.state, gp.state)})
 
-    @route('/cafm/security/gatepasses/export', type='http', auth='user', methods=['GET'], csrf=False)
+    @route('/cafm/security/gatepasses/export', type='http', auth='public', methods=['GET'], csrf=False)
     def sec_gatepasses_export(self, **kw):
-        from .client_api import _xlsx_response
-        env = request.env
+        from .client_api import _xlsx_response, _report_env
+        env = _report_env()
+        if not env:
+            return request.redirect('/web/login')
         pids, cids = self._scope(env)
         M = env['security.gate.pass'].sudo()
         st = _sel(M, 'state')

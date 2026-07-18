@@ -303,11 +303,14 @@ class AgriClientApi(Controller):
         return _ok({'id': r.id, 'name': getattr(r, 'name', False) or r.title, 'title': r.title,
                     'state': getattr(r, 'state', None)})
 
-    @route('/cafm/agri/tree/<int:pid>/card', type='http', auth='user', methods=['GET'], csrf=False)
+    @route('/cafm/agri/tree/<int:pid>/card', type='http', auth='public', methods=['GET'], csrf=False)
     def agri_tree_card(self, pid, **kw):
         """Printable QR field-card for one tree/plant (via /web/sso like the other
         reports). Scoped: only a plant on the caller's own facilities renders."""
-        env = request.env
+        from .client_api import _report_env
+        env = _report_env()
+        if not env:
+            return request.redirect('/web/login')
         plant = env['care.cafm.agri.plant'].sudo().browse(pid).exists()
         if not plant or plant.facility_id.id not in self._fac_ids(env):
             return request.not_found()
