@@ -35,10 +35,13 @@ class _StaffJobsScreenState extends State<StaffJobsScreen> {
   @override
   Widget build(BuildContext context) {
     final canAssign = _can.contains('assign') || _can.contains('reassign');
+    final canApprove = _can.contains('quality') || _can.contains('approve');
     final filters = <List<String>>[
       ['', tr('الكل', 'All')],
       ['today', tr('اليوم', 'Today')],
       ['open', tr('قيد التنفيذ', 'Active')],
+      // an approver needs to see what the crew already finished
+      if (canApprove) ['review', tr('بانتظار اعتمادي', 'To approve')],
       ['done', tr('منجزة', 'Done')],
       if (canAssign) ['unassigned', tr('غير مُسندة', 'Unassigned')],
     ];
@@ -146,12 +149,46 @@ class _StaffJobsScreenState extends State<StaffJobsScreen> {
                   if (j['provider'] != null && '${widget.me['name']}' != '${j['provider']}') Text('👷 ${j['provider']}', style: const TextStyle(fontSize: 10.5, color: Crew.teal, fontWeight: FontWeight.w700)),
                 ]),
               ],
+              // crew it went to + how much before/after evidence is on it
+              if (j['team'] != null || (j['before_count'] ?? 0) > 0 || (j['after_count'] ?? 0) > 0) ...[
+                const SizedBox(height: 5),
+                Row(children: [
+                  if (j['team'] != null) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(color: Crew.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(7)),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        const Icon(Icons.groups_rounded, size: 11, color: Crew.blue),
+                        const SizedBox(width: 3),
+                        Text('${j['team']}', style: const TextStyle(fontSize: 9.5, color: Crew.blue, fontWeight: FontWeight.w800)),
+                      ]),
+                    ),
+                    const SizedBox(width: 6),
+                  ],
+                  if ((j['before_count'] ?? 0) > 0)
+                    _evidenceChip(Icons.photo_camera_back_rounded, tr('قبل', 'B'), j['before_count'], Crew.amber),
+                  if ((j['after_count'] ?? 0) > 0) ...[
+                    const SizedBox(width: 5),
+                    _evidenceChip(Icons.photo_camera_front_rounded, tr('بعد', 'A'), j['after_count'], Crew.green),
+                  ],
+                ]),
+              ],
             ]),
           )),
         ]),
       ),
     );
   }
+
+  Widget _evidenceChip(IconData ic, String label, dynamic n, Color c) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(7)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(ic, size: 11, color: c),
+          const SizedBox(width: 3),
+          Text('$label $n', style: TextStyle(fontSize: 9.5, color: c, fontWeight: FontWeight.w800)),
+        ]),
+      );
 
   String _shortTime(String dt) {
     if (dt.length >= 16) return dt.substring(5, 16); // MM-DD HH:MM

@@ -53,12 +53,16 @@ class _StaffDashboardState extends State<StaffDashboard> {
             builder: (_, snap) {
               if (!snap.hasData) return const Padding(padding: EdgeInsets.only(top: 40), child: Center(child: CircularProgressIndicator(color: Crew.teal)));
               final k = snap.data!;
+              final canApprove = (((widget.me['caps'] as Map?)?['can'] as List?) ?? const [])
+                  .any((c) => c == 'quality' || c == 'approve');
               final cards = [
                 ['📋', '${k['today'] ?? 0}', tr('مهام اليوم', 'Today'), Crew.blue],
                 ['🔧', '${k['in_progress'] ?? 0}', tr('قيد التنفيذ', 'Active'), Crew.amber],
                 ['⏳', '${k['unassigned'] ?? 0}', tr('غير مُسندة', 'Unassigned'), const Color(0xFFC0392B)],
+                // work the crew finished that is waiting on this manager
+                if (canApprove)
+                  ['🔍', '${k['review'] ?? 0}', tr('بانتظار اعتمادي', 'To approve'), const Color(0xFF7C3AED)],
                 ['✅', '${k['done_today'] ?? 0}', tr('أُنجزت اليوم', 'Done today'), Crew.green],
-                ['🗂️', '${k['open'] ?? 0}', tr('مفتوحة', 'Open'), const Color(0xFF7C3AED)],
                 ['👥', '${k['team_available'] ?? 0}/${k['team_size'] ?? 0}', tr('الفريق المتاح', 'Team free'), Crew.teal],
               ];
               return GridView.count(
