@@ -425,6 +425,120 @@ class MobileApi(http.Controller):
             'schedule': sched, 'badges': badges,
         })
 
+    @http.route(API + '/me/supervisor', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def me_supervisor(self, **kw):
+        """The supervisor's scope and command data: which teams they supervise
+        (service / facility / project / client), each member's live load and
+        achievement stats, the team aggregate, and quality observations waiting
+        to be distributed to the crew."""
+        from datetime import timedelta as _td
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        user = env.user
+        period = (request.httprequest.args.get('period') or 'month').strip()
+        today = fields.Date.context_today(user)
+        if period == 'today':
+            since, plabel = today, _('اليوم')
+        elif period == 'week':
+            since, plabel = today - _td(days=today.weekday()), _('هذا الأسبوع')
+        elif period == 'all':
+            since, plabel = None, _('كل الفترات')
+        else:
+            since, plabel = today.replace(day=1), _('هذا الشهر')
+        since_dt = datetime.combine(since, time.min) if since else None
+
+        # NB: an empty recordset is falsy — test against None, not truthiness.
+        Team = env['care.cafm.team'].sudo() if 'care.cafm.team' in env else None
+        teams = Team.search([('supervisor_id', '=', user.id)]) if Team is not None else []
+        # a supervisor with no explicit team still oversees their own facilities
+        emp = user.employee_id
+        WO = env['care.cafm.workorder'].sudo()
+
+        members = env['hr.employee'].sudo().browse()
+        for t in teams:
+            members |= t.member_ids
+        if not members and emp:
+            # fall back to colleagues on the same facilities as the supervisor
+            fac_ids = set(WO.search([('employee_id', '=', emp.id)]).mapped('facility_id').ids)
+            if fac_ids:
+                peers = WO.search([('facility_id', 'in', list(fac_ids)), ('employee_id', '!=', False)])
+                members = peers.mapped('employee_id')
+
+        def _stats_for(dom):
+            recs = WO.search(dom)
+            inper = recs.filtered(lambda w: since_dt is None or ((w.done_datetime or w.request_datetime) and (w.done_datetime or w.request_datetime) >= since_dt))
+            done = inper.filtered(lambda w: w.state in ('done', 'verified'))
+            ontime = done.filtered(lambda w: w.done_datetime and w.deadline and w.done_datetime <= w.deadline)
+            return {
+                'total': len(inper), 'done': len(done), 'on_time': len(ontime),
+                'open': len(recs.filtered(lambda w: w.state not in ('done', 'verified', 'cancelled'))),
+                'overdue': len(recs.filtered('is_overdue')),
+                'on_time_rate': round(100.0 * len(ontime) / len(done), 1) if done else 100.0,
+            }
+
+        team_rows = []
+        for m in members:
+            st = _stats_for([('employee_id', '=', m.id)])
+            hours = 0.0
+            if 'care.cafm.shift' in env:
+                sdom = [('employee_id', '=', m.id)]
+                if since_dt:
+                    sdom.append(('check_in', '>=', fields.Datetime.to_string(since_dt)))
+                hours = round(sum(env['care.cafm.shift'].sudo().search(sdom).mapped('duration_hours')), 1)
+            team_rows.append({
+                'id': m.id, 'name': m.name, 'job': m.job_title or None,
+                'user_id': m.user_id.id or None, 'hours': hours, **st,
+            })
+        team_rows.sort(key=lambda r: (-r['overdue'], -r['open']))
+
+        # team aggregate
+        agg_done = sum(r['done'] for r in team_rows)
+        agg_ontime = sum(r['on_time'] for r in team_rows)
+        aggregate = {
+            'members': len(team_rows),
+            'done': agg_done, 'on_time': agg_ontime,
+            'open': sum(r['open'] for r in team_rows),
+            'overdue': sum(r['overdue'] for r in team_rows),
+            'hours': round(sum(r['hours'] for r in team_rows), 1),
+            'on_time_rate': round(100.0 * agg_ontime / agg_done, 1) if agg_done else 100.0,
+        }
+
+        # quality observations awaiting distribution (in the supervised facilities)
+        fac_ids = list({t.facility_id.id for t in teams if t.facility_id}) if teams else []
+        quality = []
+        if 'care.cafm.observation' in env:
+            odom = [('state', 'not in', ('closed', 'cancelled'))]
+            if fac_ids:
+                odom.append(('facility_id', 'in', fac_ids))
+            for o in env['care.cafm.observation'].sudo().search(odom, order='id desc', limit=40):
+                quality.append({
+                    'id': o.id, 'name': o.name, 'title': o.title,
+                    'facility': o.facility_id.name or None, 'location': o.location_id.name or None,
+                    'severity': o.severity,
+                    'severity_label': dict(o._fields['severity'].selection).get(o.severity),
+                    'state': o.state, 'state_label': dict(o._fields['state'].selection).get(o.state),
+                    'assignee': o.assignee_id.name or None,
+                    'workorder': o.workorder_id.name or None,
+                })
+
+        return _ok({
+            'period': period, 'period_label': plabel,
+            'is_supervisor': bool(teams) or bool(user.has_group('base.group_erp_manager')),
+            'teams': [{
+                'id': t.id, 'name': t.name,
+                'service': t.service_id.name or None, 'service_type': t.service_type,
+                'facility': t.facility_id.name or None, 'facility_id': t.facility_id.id or None,
+                'project': t.project_id.name if t.project_id else None,
+                'client': (t.facility_id.partner_id.name if t.facility_id and t.facility_id.partner_id else None),
+                'members': t.member_count,
+                'quality_user': t.quality_user_id.name or None,
+            } for t in teams],
+            'team': team_rows,
+            'aggregate': aggregate,
+            'quality': quality,
+        })
+
     @http.route(API + '/services', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def services(self, **kw):
         env = _auth()

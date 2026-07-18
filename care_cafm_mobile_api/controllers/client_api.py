@@ -2860,6 +2860,31 @@ class ClientApi(Controller):
         o.action_make_workorder()
         return _ok({'workorder': o.workorder_id.name})
 
+    @route(API + '/client/observation/<int:oid>/assign', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def observation_assign(self, oid, **kw):
+        """Supervisor distributes a quality observation to one of their crew."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        o = env['care.cafm.observation'].sudo().browse(oid).exists()
+        if not o:
+            return _err('غير موجود', 404)
+        eid = _body().get('employee_id')
+        if not eid:
+            return _err('اختر الفني/العامل', 422)
+        emp = env['hr.employee'].sudo().browse(int(eid)).exists()
+        if not emp:
+            return _err('الموظف غير موجود', 404)
+        vals = {'assignee_id': emp.id}
+        if 'assigned' in dict(o._fields['state'].selection) and o.state == 'open':
+            vals['state'] = 'assigned'
+        o.write(vals)
+        try:
+            o.message_post(body=_('أُسندت الملاحظة إلى %s.') % emp.name)
+        except Exception:
+            pass
+        return _ok(self._obs_dict(o))
+
     @route(API + '/client/observation/<int:oid>/cancel', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
     def observation_cancel(self, oid, **kw):
         env = _auth()
