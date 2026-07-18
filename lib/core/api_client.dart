@@ -260,6 +260,17 @@ class ApiClient {
   Future<void> observationToWorkOrder(int id) async =>
       _handle(await http.post(_u('/client/observation/$id/workorder'), headers: await _headers()));
 
+  Future<Map<String, dynamic>> observationDetail(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/observation/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<void> observationCancel(int id) async =>
+      _handle(await http.post(_u('/client/observation/$id/cancel'), headers: await _headers()));
+
+  Future<void> observationAddMedia(int id, List<Map<String, dynamic>> media) async =>
+      _handle(await http.post(_u('/client/observation/$id/media'),
+          headers: await _headers(), body: jsonEncode({'media': media})));
+
   Future<List<dynamic>> clientPpm() async =>
       List<dynamic>.from((await _handle(
               await http.get(_u('/client/ppm'), headers: await _headers())))['data'] as List);

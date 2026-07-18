@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
@@ -26,6 +28,12 @@ class ClientWorkorderCreateSheet extends StatefulWidget {
   State<ClientWorkorderCreateSheet> createState() => _ClientWorkorderCreateSheetState();
 }
 
+class _WoMedia {
+  _WoMedia(this.name, this.mimetype, this.b64, this.isVideo);
+  final String name, mimetype, b64;
+  final bool isVideo;
+}
+
 class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet> {
   Map<String, dynamic>? _opts;
   String? _error;
@@ -39,6 +47,8 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
   String _priority = '1';
   bool _assign = false;
   bool _submitting = false;
+  final List<_WoMedia> _media = [];
+  final _picker = ImagePicker();
 
   static const _navy = Color(0xFF0E3A5F);
   static const _accent = Color(0xFFC0392B);
@@ -111,6 +121,7 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
       'priority': _priority,
       'description': _desc.text.trim(),
       if (_assign && _workerId != null) 'employee_id': _workerId,
+      'media': [for (final m in _media) {'name': m.name, 'mimetype': m.mimetype, 'data': m.b64}],
     };
     try {
       await context.read<AuthProvider>().api.clientWorkorderCreate(body);
@@ -129,6 +140,54 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
 
   void _snack(String m) => ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(m), backgroundColor: _accent, behavior: SnackBarBehavior.floating));
+
+  Future<void> _addPhoto(ImageSource src) async {
+    final x = await _picker.pickImage(source: src, imageQuality: 60, maxWidth: 1600);
+    if (x == null) return;
+    final b = await x.readAsBytes();
+    setState(() => _media.add(_WoMedia(x.name, 'image/jpeg', base64Encode(b), false)));
+  }
+
+  Future<void> _addVideo(ImageSource src) async {
+    final x = await _picker.pickVideo(source: src, maxDuration: const Duration(seconds: 30));
+    if (x == null) return;
+    final b = await x.readAsBytes();
+    if (b.length > 12 * 1024 * 1024) { _snack(tr('الفيديو كبير جداً (الحد 12 ميجا)', 'Video too large (max 12 MB)')); return; }
+    setState(() => _media.add(_WoMedia(x.name, 'video/mp4', base64Encode(b), true)));
+  }
+
+  void _mediaMenu() => showModalBottomSheet(context: context, builder: (_) => SafeArea(child: Wrap(children: [
+        ListTile(leading: const Icon(Icons.photo_camera_rounded, color: _accent), title: Text(tr('التقاط صورة', 'Take photo')),
+            onTap: () { Navigator.pop(context); _addPhoto(ImageSource.camera); }),
+        ListTile(leading: const Icon(Icons.videocam_rounded, color: Color(0xFFE5484D)), title: Text(tr('تسجيل فيديو', 'Record video')),
+            onTap: () { Navigator.pop(context); _addVideo(ImageSource.camera); }),
+        ListTile(leading: const Icon(Icons.photo_library_rounded, color: Color(0xFF7C3AED)), title: Text(tr('صورة من المعرض', 'Photo from gallery')),
+            onTap: () { Navigator.pop(context); _addPhoto(ImageSource.gallery); }),
+        ListTile(leading: const Icon(Icons.video_library_rounded, color: Color(0xFF0891B2)), title: Text(tr('فيديو من المعرض', 'Video from gallery')),
+            onTap: () { Navigator.pop(context); _addVideo(ImageSource.gallery); }),
+      ])));
+
+  Widget _mediaStrip() => SizedBox(height: 84, child: ListView(scrollDirection: Axis.horizontal, children: [
+        InkWell(onTap: _mediaMenu, borderRadius: BorderRadius.circular(12), child: Container(
+          width: 84, height: 84,
+          decoration: BoxDecoration(color: _accent.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12), border: Border.all(color: _accent.withValues(alpha: 0.3))),
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            const Icon(Icons.add_a_photo_rounded, color: _accent, size: 24),
+            const SizedBox(height: 4),
+            Text(tr('إضافة', 'Add'), style: const TextStyle(color: _accent, fontSize: 11, fontWeight: FontWeight.w800)),
+          ]),
+        )),
+        for (var i = 0; i < _media.length; i++) Padding(padding: const EdgeInsets.only(right: 8), child: Stack(children: [
+          Container(width: 84, height: 84, clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: Colors.black12),
+              child: _media[i].isVideo
+                  ? const Center(child: Icon(Icons.play_circle_fill_rounded, color: Color(0xFFE5484D), size: 34))
+                  : Image.memory(base64Decode(_media[i].b64), fit: BoxFit.cover)),
+          Positioned(top: 2, right: 2, child: GestureDetector(onTap: () => setState(() => _media.removeAt(i)),
+              child: Container(decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                  child: const Icon(Icons.close_rounded, color: Colors.white, size: 16)))),
+        ])),
+      ]));
 
   @override
   Widget build(BuildContext context) {
@@ -263,6 +322,10 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
           ),
         ]),
       ),
+      const SizedBox(height: 16),
+      _label(Icons.perm_media_rounded, tr('صور وفيديو (اختياري)', 'Photos & video (optional)')),
+      const SizedBox(height: 8),
+      _mediaStrip(),
       const SizedBox(height: 16),
       _label(Icons.notes_rounded, tr('تفاصيل إضافية', 'Extra details')),
       const SizedBox(height: 8),

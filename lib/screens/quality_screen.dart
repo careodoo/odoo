@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import 'observation_create.dart';
+import 'observation_detail.dart';
 
 /// Quality rounds / observations (الجولات والجودة): log an observation, track
 /// its severity/state, and convert it into a corrective work order.
@@ -34,7 +35,6 @@ class _QualityScreenState extends State<QualityScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final canConvert = context.read<AuthProvider>().profile?.canAddWorkers ?? false;
     return Scaffold(
       appBar: AppBar(title: Text(tr('الجودة والجولات', 'Quality & rounds'))),
       floatingActionButton: FloatingActionButton.extended(
@@ -56,7 +56,7 @@ class _QualityScreenState extends State<QualityScreen> {
                 final sv = _sev[o['severity']] ?? const Color(0xFF3B82F6);
                 final oc = _stC[o['state']] ?? const Color(0xFF64748B);
                 return Card(child: ListTile(
-                  onTap: canConvert && o['workorder'] == null ? () => _convert(o['id'] as int) : null,
+                  onTap: () => _openDetail(o['id'] as int),
                   title: Text('${o['title']}', style: const TextStyle(fontWeight: FontWeight.w700)),
                   subtitle: Text('${o['name']} · ${o['facility'] ?? ''}${o['workorder'] != null ? ' · 🛠️ ${o['workorder']}' : ''}',
                       style: TextStyle(color: cs.outline, fontSize: 12)),
@@ -80,22 +80,9 @@ class _QualityScreenState extends State<QualityScreen> {
         child: Text('${t ?? ''}', style: TextStyle(color: c, fontSize: 10.5, fontWeight: FontWeight.w800)),
       );
 
-  Future<void> _convert(int id) async {
-    final ok = await showDialog<bool>(context: context, builder: (_) => AlertDialog(
-      title: Text(tr('تحويل إلى أمر عمل', 'Convert to work order')),
-      content: Text(tr('إنشاء أمر عمل تصحيحي من هذه الملاحظة؟', 'Create a corrective work order?')),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context, false), child: Text(tr('إلغاء', 'Cancel'))),
-        FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(tr('تحويل', 'Convert'))),
-      ],
-    ));
-    if (ok != true) return;
-    try {
-      await context.read<AuthProvider>().api.observationToWorkOrder(id);
-      if (mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('تم التحويل لأمر عمل', 'Converted')))); setState(_load); }
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
-    }
+  Future<void> _openDetail(int id) async {
+    final changed = await ObservationDetailSheet.open(context, id);
+    if (changed == true && mounted) setState(_load);
   }
 
   Future<void> _newObs() async {
