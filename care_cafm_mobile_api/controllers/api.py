@@ -425,6 +425,113 @@ class MobileApi(http.Controller):
             'schedule': sched, 'badges': badges,
         })
 
+    @http.route(API + '/me/profile', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def me_profile(self, **kw):
+        """The worker's complete personal file: identity & photo, their project /
+        facility / team, supervisor and manager, joining date, residency and
+        permit dates, accommodation, and an attendance summary. Document and
+        attendance blocks honour the app-settings visibility switches."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        user = env.user
+        emp = user.employee_id
+        if not emp:
+            return _ok({'has_employee': False})
+        emp = emp.sudo()
+
+        def _f(name):
+            return emp[name] if name in emp._fields else None
+
+        def _d(v):
+            return str(v) if v else None
+
+        st = env['care.app.settings'].sudo().search([], limit=1)
+        show_att = st.show_worker_attendance if st else True
+        show_docs = st.show_worker_documents if st else True
+
+        # team / project / supervisor context
+        team_info = None
+        if 'care.cafm.team' in env:
+            t = env['care.cafm.team'].sudo().search([('member_ids', 'in', [emp.id])], limit=1)
+            if t:
+                team_info = {
+                    'team': t.name, 'service': t.service_id.name or None,
+                    'facility': t.facility_id.name or None,
+                    'project': t.project_id.name if t.project_id else None,
+                    'client': (t.facility_id.partner_id.name if t.facility_id and t.facility_id.partner_id else None),
+                    'supervisor': t.supervisor_id.name or None,
+                }
+
+        # attendance summary (this month)
+        attendance = None
+        if show_att and 'care.cafm.shift' in env:
+            first = fields.Date.context_today(user).replace(day=1)
+            sh = env['care.cafm.shift'].sudo().search([
+                ('employee_id', '=', emp.id),
+                ('check_in', '>=', fields.Datetime.to_string(datetime.combine(first, time.min)))])
+            attendance = {
+                'shifts': len(sh), 'hours': round(sum(sh.mapped('duration_hours')), 1),
+                'days': len(set(str(s.check_in)[:10] for s in sh if s.check_in)),
+                'last_in': fields.Datetime.to_string(max(sh.mapped('check_in'))) if sh.mapped('check_in') else None,
+            }
+
+        documents = None
+        if show_docs:
+            documents = {
+                'residency_type': _f('residency_type'),
+                'residency_start': _d(_f('residency_start_date')),
+                'residency_end': _d(_f('residency_end_date')),
+                'permit_start': _d(_f('affairs_permit_start_date')),
+                'permit_end': _d(_f('affairs_permit_end_date')),
+                'passport_no': _f('passport_no'),
+                'civil_code': _f('civil_code'),
+                'moi_number': _f('moi_number'),
+                'social_affairs_title': _f('social_affairs_title'),
+            }
+
+        accommodation = None
+        if _f('is_company_accommodation'):
+            accommodation = {
+                'hostel': emp.hostel_id.name if _f('hostel_id') else None,
+                'room': emp.room_id.name if _f('room_id') else None,
+                'bed': emp.bed_id.name if _f('bed_id') else None,
+            }
+
+        return _ok({
+            'has_employee': True,
+            'identity': {
+                'id': emp.id, 'name': emp.name, 'english_name': _f('english_name'),
+                'job': emp.job_title or None,
+                'department': emp.department_id.name or None,
+                'manager': emp.parent_id.name or None,
+                'coach': emp.coach_id.name if 'coach_id' in emp._fields and emp.coach_id else None,
+                'work_phone': emp.work_phone or None, 'mobile': emp.mobile_phone or None,
+                'work_email': emp.work_email or None,
+                'joining_date': _d(_f('joining_date')) or _d(_f('enter_date')),
+                'photo': '/api/v1/me/photo' if emp.image_256 else None,
+            },
+            'assignment': team_info,
+            'documents': documents,
+            'accommodation': accommodation,
+            'attendance': attendance,
+            'visibility': {'attendance': show_att, 'documents': show_docs},
+        })
+
+    @http.route(API + '/me/photo', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def me_photo(self, **kw):
+        """The caller's own employee photo, served against the app token."""
+        env = _auth()
+        if not env:
+            return request.not_found()
+        emp = env.user.employee_id
+        if not emp or not emp.sudo().image_256:
+            return request.not_found()
+        import base64
+        data = base64.b64decode(emp.sudo().image_256)
+        return request.make_response(data, headers=[
+            ('Content-Type', 'image/png'), ('Content-Length', str(len(data)))])
+
     @http.route(API + '/me/supervisor', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def me_supervisor(self, **kw):
         """The supervisor's scope and command data: which teams they supervise
@@ -616,7 +723,29 @@ class MobileApi(http.Controller):
         media = [{'id': m.id, 'name': m.name, 'type': m.media_type,
                   'is_video': m.media_type == 'video',
                   'url': _abs(m.url), 'thumb': _abs(m.thumbnail_url or m.url)} for m in w.media_ids]
+        # ALSO surface what the client / quality inspector / supervisor attached —
+        # those land as ir.attachment on the work order, or on the quality
+        # observation it was raised from — so the worker sees what is asked of them.
+        brief = []
+        att_targets = [('care.cafm.workorder', w.id)]
+        try:
+            if 'care.cafm.observation' in env:
+                src = env['care.cafm.observation'].sudo().search([('workorder_id', '=', w.id)], limit=1)
+                if src:
+                    att_targets.append(('care.cafm.observation', src.id))
+        except Exception:
+            pass
+        for model, rid in att_targets:
+            for a in env['ir.attachment'].sudo().search(
+                    [('res_model', '=', model), ('res_id', '=', rid)], order='id desc'):
+                mt = a.mimetype or ''
+                url = _abs('/api/v1/client/attachment/%d' % a.id)
+                brief.append({'id': a.id, 'name': a.name, 'type': 'video' if mt.startswith('video') else 'image',
+                              'is_video': mt.startswith('video'), 'url': url, 'thumb': url,
+                              'source': 'observation' if model.endswith('observation') else 'request'})
         d.update({
+            # photos/videos captured by the client / quality / supervisor
+            'brief_media': brief,
             'assignee': w.employee_id.name or None,
             'location_detail': loc_detail,
             'map_query': ' '.join(filter(None, [loc.name if loc else None, w.facility_id.name, w.facility_id.address or ''])),

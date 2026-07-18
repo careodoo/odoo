@@ -37,6 +37,14 @@ class CareAppSettings(models.Model):
                               default='https://ecare.care-kw.com/care_hr/static/download/care-cafm.apk')
     ios_url = fields.Char(string='رابط App Store')
 
+    # ---- worker file visibility -------------------------------------------
+    show_worker_attendance = fields.Boolean(
+        string='إظهار الحضور والانصراف للعامل', default=True,
+        help='عند التعطيل يُخفى سجل الحضور والانصراف من ملف العامل في التطبيق.')
+    show_worker_documents = fields.Boolean(
+        string='إظهار بيانات الإقامة والوثائق', default=True,
+        help='عند التعطيل تُخفى تواريخ الإقامة والتصاريح من ملف العامل.')
+
     # ---- maintenance ------------------------------------------------------
     maintenance = fields.Boolean(string='وضع الصيانة',
                                  help='يعرض للتطبيق رسالة صيانة بدل المحتوى.')

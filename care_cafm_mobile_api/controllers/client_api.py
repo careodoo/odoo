@@ -86,6 +86,11 @@ def _emp_photo(emp, field='image_256'):
     return None
 
 
+def u_emp_id(env):
+    """The caller's employee id (0 when they have no employee file)."""
+    return env.user.employee_id.id or 0
+
+
 def _report_env():
     """Resolve the acting user for a printable/exportable route.
 
@@ -2816,12 +2821,21 @@ class ClientApi(Controller):
         a = env['ir.attachment'].sudo().browse(aid).exists()
         if not a:
             return request.not_found()
-        # authorise: the attachment must hang off one of the client's own records
+        # authorise: the client who owns the facility, the worker the record is
+        # assigned to, or a supervisor/admin.
         fld = self._ATT_MODEL_FACILITY.get(a.res_model)
         if fld and a.res_id:
             rec = env[a.res_model].sudo().browse(a.res_id).exists()
             fac = rec and rec[fld]
-            if not fac or fac.id not in self._fac_ids(env):
+            allowed = bool(fac and fac.id in self._fac_ids(env))
+            if not allowed:
+                u = env.user
+                allowed = bool(u.has_group('base.group_erp_manager') or u.has_group('base.group_system'))
+            if not allowed and u_emp_id(env) and rec and 'employee_id' in rec._fields:
+                allowed = rec.employee_id.id == u_emp_id(env)
+            if not allowed and u_emp_id(env) and rec and 'assignee_id' in rec._fields:
+                allowed = rec.assignee_id.id == u_emp_id(env)
+            if not allowed:
                 return request.not_found()
         elif a.res_model in self._ATT_MODEL_FACILITY:
             return request.not_found()
