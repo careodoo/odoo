@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import '../core/widgets.dart';
 import 'add_worker_screen.dart';
 
 /// Client self-management console: create/delete buildings, floors, locations,
@@ -47,17 +48,25 @@ class _ManageScreenState extends State<ManageScreen> {
 
   List _l(String k) => (_o?[k] as List?) ?? const [];
 
+  static const _navy = Color(0xFF0E3A5F);
+  static const _accent = Color(0xFF6366F1);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(tr('إدارة المنشأة', 'Manage facility'))),
+      backgroundColor: const Color(0xFFF6F7F9),
+      appBar: AppBar(title: Text(tr('إدارة المنشأة', 'Manage facility')),
+          backgroundColor: _accent, foregroundColor: Colors.white),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: _accent))
           : _o == null
               ? Center(child: Text(tr('لا صلاحية.', 'Not allowed.')))
               : RefreshIndicator(
+                  color: _accent,
                   onRefresh: _load,
-                  child: ListView(padding: const EdgeInsets.all(14), children: [
+                  child: ListView(padding: const EdgeInsets.fromLTRB(14, 14, 14, 24), children: [
+                    _statsHeader(),
+                    const SizedBox(height: 14),
                     _buildings(),
                     _floors(),
                     _locations(),
@@ -70,21 +79,79 @@ class _ManageScreenState extends State<ManageScreen> {
     );
   }
 
-  Widget _section(String title, IconData icon, List<Widget> children) => Card(
-        margin: const EdgeInsets.only(bottom: 14),
-        child: Padding(padding: const EdgeInsets.all(14), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [Icon(icon, size: 20, color: const Color(0xFF0B6EA8)), const SizedBox(width: 8),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15))]),
-          const SizedBox(height: 10),
-          ...children,
-        ])),
+  Widget _statsHeader() {
+    int n(String k) => (_o?[k] as List?)?.length ?? 0;
+    return CustomPaint(
+      painter: const BrandPattern(opacity: 0.07),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(colors: [Color(0xFF7C7FF0), Color(0xFF6366F1), Color(0xFF4338CA)],
+              begin: Alignment.topRight, end: Alignment.bottomLeft),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: _accent.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 6))],
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.settings_suggest_rounded, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Text(tr('هيكل المنشأة', 'Facility structure'),
+                style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900)),
+          ]),
+          const SizedBox(height: 12),
+          Row(children: [
+            _hk('${n('buildings')}', tr('مبنى', 'Bldg'), Icons.business_rounded),
+            _hdiv(), _hk('${n('floors')}', tr('دور', 'Floors'), Icons.layers_rounded),
+            _hdiv(), _hk('${n('locations')}', tr('موقع', 'Loc'), Icons.pin_drop_rounded),
+            _hdiv(), _hk('${n('assets')}', tr('أصل', 'Assets'), Icons.precision_manufacturing_rounded),
+            _hdiv(), _hk('${n('teams')}', tr('فريق', 'Teams'), Icons.groups_rounded),
+          ]),
+        ]),
+      ),
+    );
+  }
+
+  Widget _hk(String v, String l, IconData ic) => Expanded(child: Column(children: [
+        Icon(ic, color: Colors.white70, size: 15),
+        const SizedBox(height: 3),
+        Text(v, style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900)),
+        Text(l, maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 8.5, fontWeight: FontWeight.w600)),
+      ]));
+
+  Widget _hdiv() => Container(width: 1, height: 30, color: Colors.white.withValues(alpha: 0.2));
+
+  Widget _section(String title, IconData icon, List<Widget> children) => Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(16),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 3))],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+            color: _accent.withValues(alpha: 0.07),
+            child: Row(children: [
+              Container(width: 34, height: 34, alignment: Alignment.center,
+                  decoration: BoxDecoration(color: _accent.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(10)),
+                  child: Icon(icon, size: 19, color: _accent)),
+              const SizedBox(width: 9),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5, color: _navy)),
+            ]),
+          ),
+          Padding(padding: const EdgeInsets.fromLTRB(13, 10, 13, 13),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children)),
+        ]),
       );
 
   Widget _tile(String label, VoidCallback onDelete) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3),
+        padding: const EdgeInsets.symmetric(vertical: 2),
         child: Row(children: [
-          Expanded(child: Text(label, style: const TextStyle(fontSize: 13.5))),
-          IconButton(icon: const Icon(Icons.delete_outline, color: Color(0xFFE11D48), size: 20), onPressed: _busy ? null : onDelete),
+          Expanded(child: Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
+          IconButton(icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFE11D48), size: 20),
+              padding: EdgeInsets.zero, constraints: const BoxConstraints(),
+              onPressed: _busy ? null : onDelete),
         ]),
       );
 

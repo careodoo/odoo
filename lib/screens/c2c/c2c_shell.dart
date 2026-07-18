@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
+import '../../core/widgets.dart';
+import '../../core/app_version.dart';
 import '../main_shell.dart';
 import '../login_screen.dart';
 import 'c2c_home.dart';
@@ -84,7 +87,7 @@ class _C2CShellState extends State<C2CShell> {
       const C2CServicesTab(),
       const C2CShopScreen(),
       widget.guest ? const _GuestGate() : const C2CBookingsScreen(),
-      widget.guest ? const _GuestGate() : C2CAccountScreen(canSwitchCafm: widget.canSwitchCafm, showModeSwitch: widget.showModeSwitch),
+      widget.guest ? const _GuestAccountScreen() : C2CAccountScreen(canSwitchCafm: widget.canSwitchCafm, showModeSwitch: widget.showModeSwitch),
     ];
     return Scaffold(
       backgroundColor: C2C.bg,
@@ -177,6 +180,84 @@ class _GuestGate extends StatelessWidget {
           ]),
         ),
       ),
+    );
+  }
+}
+
+/// The Account tab for guests: everything that does NOT require a login —
+/// language, theme, privacy/terms, about, contact — plus a prominent sign-in CTA.
+class _GuestAccountScreen extends StatelessWidget {
+  const _GuestAccountScreen();
+
+  Future<void> _url(BuildContext c, String u) async {
+    if (!await launchUrl(Uri.parse(u), mode: LaunchMode.externalApplication) && c.mounted) {
+      ScaffoldMessenger.of(c).showSnackBar(SnackBar(content: Text(tr('تعذّر فتح الرابط', 'Could not open link'))));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    context.watch<LangProvider>();
+    Widget tile(IconData i, String t, VoidCallback onTap, {Color c = C2C.navy}) => Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          child: Material(
+            color: Colors.white, borderRadius: BorderRadius.circular(14),
+            child: ListTile(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              leading: Container(width: 38, height: 38,
+                  decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(11)),
+                  child: Icon(i, color: c, size: 20)),
+              title: Text(t, style: const TextStyle(fontWeight: FontWeight.w700)),
+              trailing: const Icon(Icons.chevron_left_rounded, color: Colors.grey),
+              onTap: onTap,
+            ),
+          ),
+        );
+    return Scaffold(
+      backgroundColor: C2C.bg,
+      body: ListView(padding: EdgeInsets.zero, children: [
+        // header
+        Container(
+          height: 168,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(colors: [C2C.redBright, C2C.red, C2C.redDeep], begin: Alignment.topRight, end: Alignment.bottomLeft),
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+          ),
+          child: SafeArea(bottom: false, child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            const CircleAvatar(radius: 32, backgroundColor: Colors.white,
+                child: Icon(Icons.person_outline_rounded, color: C2C.navy, size: 34)),
+            const SizedBox(height: 8),
+            Text(tr('زائر', 'Guest'), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+            Text(tr('سجّل الدخول لحفظ حجوزاتك وطلباتك', 'Sign in to save your bookings & orders'),
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12)),
+          ])),
+        ),
+        // sign-in CTA
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 6),
+          child: SizedBox(height: 50, child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(backgroundColor: C2C.red, foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+            onPressed: () => promptLogin(context),
+            icon: const Icon(Icons.login_rounded),
+            label: Text(tr('تسجيل الدخول / إنشاء حساب', 'Sign in / Create account'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+          )),
+        ),
+        const Padding(padding: EdgeInsets.fromLTRB(18, 10, 18, 4), child: Align(alignment: Alignment.centerRight,
+            child: Text('التفضيلات', style: TextStyle(fontWeight: FontWeight.w900, color: C2C.navy, fontSize: 15)))),
+        tile(Icons.language_rounded, tr('اللغة', 'Language'), () => showLanguagePicker(context), c: const Color(0xFF16A34A)),
+        const Padding(padding: EdgeInsets.fromLTRB(18, 12, 18, 4), child: Align(alignment: Alignment.centerRight,
+            child: Text('عن التطبيق', style: TextStyle(fontWeight: FontWeight.w900, color: C2C.navy, fontSize: 15)))),
+        tile(Icons.support_agent_rounded, tr('تواصل معنا', 'Contact us'), () => _url(context, 'https://care-kw.com'), c: const Color(0xFF0891B2)),
+        tile(Icons.privacy_tip_outlined, tr('سياسة الخصوصية', 'Privacy policy'), () => _url(context, 'https://ecare.care-kw.com/care_hr/static/legal/privacy.html'), c: const Color(0xFF16A34A)),
+        tile(Icons.article_outlined, tr('شروط الاستخدام', 'Terms of use'), () => _url(context, 'https://ecare.care-kw.com/care_hr/static/legal/terms.html'), c: const Color(0xFF64748B)),
+        tile(Icons.info_outline_rounded, tr('عن التطبيق', 'About'), () => showAboutDialog(context: context,
+            applicationName: 'CARE 2 CARE', applicationVersion: 'v${AppVersion.value}', applicationLegalese: '© CARE — care-kw.com'), c: C2C.navy),
+        const SizedBox(height: 24),
+        Center(child: Text('CARE 2 CARE', style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w900, letterSpacing: 1))),
+        Center(child: Text('v${AppVersion.value}', style: TextStyle(color: Colors.grey.shade400, fontSize: 11))),
+        const SizedBox(height: 24),
+      ]),
     );
   }
 }

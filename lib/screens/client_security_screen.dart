@@ -5,6 +5,7 @@ import '../core/i18n.dart';
 import '../core/service_ui.dart';
 import 'excel_export.dart';
 import 'security_gatepass_create.dart';
+import 'client_workorder_create.dart';
 
 /// The client's security service in full: what is happening on their premises
 /// right now, then every record behind it — incidents, patrols, gate passes,
@@ -80,14 +81,9 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: _kc, foregroundColor: Colors.white,
-        icon: const Icon(Icons.confirmation_number_rounded),
-        label: Text(tr('إصدار تصريح', 'Issue pass'), style: const TextStyle(fontWeight: FontWeight.w900)),
-        onPressed: () async {
-          final created = await SecurityGatepassCreateSheet.open(context);
-          if (created == true && mounted) {
-            _loadSummary(); _loadKind('gatepasses'); _prefetchCounts();
-          }
-        },
+        icon: const Icon(Icons.add_rounded),
+        label: Text(tr('إجراء أمني', 'Security action'), style: const TextStyle(fontWeight: FontWeight.w900)),
+        onPressed: _actionMenu,
       ),
       appBar: AppBar(
         title: Text(tr('الأمن', 'Security')),
@@ -179,6 +175,41 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
       ),
     );
   }
+
+  /// The client's security actions in one menu: raise a security work order or
+  /// issue a gate pass.
+  void _actionMenu() => showModalBottomSheet(context: context, backgroundColor: Colors.transparent, builder: (_) => Container(
+        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+        padding: const EdgeInsets.fromLTRB(8, 10, 8, 18),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 10),
+              decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(3))),
+          ListTile(
+            leading: Container(width: 40, height: 40, alignment: Alignment.center,
+                decoration: BoxDecoration(color: const Color(0xFFE5484D).withValues(alpha: 0.12), borderRadius: BorderRadius.circular(11)),
+                child: const Icon(Icons.add_task_rounded, color: Color(0xFFE5484D))),
+            title: Text(tr('طلب عمل أمني', 'Security work order'), style: const TextStyle(fontWeight: FontWeight.w800)),
+            subtitle: Text(tr('ارفع طلب عمل لخدمة الأمن وأسنِده', 'Raise & assign a security work order'), style: const TextStyle(fontSize: 11.5)),
+            onTap: () async {
+              Navigator.pop(context);
+              final created = await ClientWorkorderCreateSheet.open(context, presetServiceType: 'security');
+              if (created == true && mounted) { _loadSummary(); _prefetchCounts(); }
+            },
+          ),
+          ListTile(
+            leading: Container(width: 40, height: 40, alignment: Alignment.center,
+                decoration: BoxDecoration(color: const Color(0xFF16A34A).withValues(alpha: 0.12), borderRadius: BorderRadius.circular(11)),
+                child: const Icon(Icons.confirmation_number_rounded, color: Color(0xFF16A34A))),
+            title: Text(tr('إصدار تصريح دخول', 'Issue gate pass'), style: const TextStyle(fontWeight: FontWeight.w800)),
+            subtitle: Text(tr('لزائر أو مركبة', 'For a visitor or vehicle'), style: const TextStyle(fontSize: 11.5)),
+            onTap: () async {
+              Navigator.pop(context);
+              final created = await SecurityGatepassCreateSheet.open(context);
+              if (created == true && mounted) { _loadSummary(); _loadKind('gatepasses'); _prefetchCounts(); }
+            },
+          ),
+        ]),
+      ));
 
   String _hay(Map r) => r.values.map((v) => '$v').join(' ').toLowerCase();
 
