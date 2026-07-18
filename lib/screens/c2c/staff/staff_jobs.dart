@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../media_viewer_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../../core/auth.dart';
@@ -201,26 +201,6 @@ class _StaffJobDetailState extends State<StaffJobDetail> {
     }
   }
 
-  Future<void> _proof(String kind) async {
-    final x = await ImagePicker().pickImage(source: ImageSource.camera, imageQuality: 70, maxWidth: 1280);
-    if (x == null) return;
-    final b64 = base64Encode(await File(x.path).readAsBytes());
-    await _act('proof', body: {'kind': kind, 'image': b64});
-  }
-
-  Future<void> _complete() async {
-    final note = TextEditingController();
-    final ok = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
-      title: Text(tr('إنهاء المهمة', 'Complete job')),
-      content: TextField(controller: note, maxLines: 3, decoration: InputDecoration(hintText: tr('ملاحظة (اختياري)', 'Note (optional)'), border: const OutlineInputBorder())),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('إلغاء', 'Cancel'))),
-        ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Crew.green), onPressed: () => Navigator.pop(ctx, true), child: Text(tr('إنهاء', 'Complete'), style: const TextStyle(color: Colors.white))),
-      ],
-    ));
-    if (ok == true) await _act('complete', body: {'note': note.text});
-  }
-
   /// Assign the job either to a whole crew (every member + its driver is
   /// notified and sees it) or to one individual.
   Future<void> _assign() async {
@@ -399,25 +379,149 @@ class _StaffJobDetailState extends State<StaffJobDetail> {
     ]);
   }
 
+  /// Before/after evidence: as many photos and videos as the job needs.
   Widget _proofRow(Map j) {
-    Widget slot(String label, String? url, String kind) => Expanded(child: Column(children: [
-          Text(label, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Crew.slate)),
-          const SizedBox(height: 5),
+    final media = ((j['media'] as List?) ?? const []).cast<Map>();
+    final before = media.where((m) => m['kind'] == 'before').toList();
+    final after = media.where((m) => m['kind'] == 'after').toList();
+    final canAdd = _can.contains('proof');
+    return _card(tr('توثيق التنفيذ (قبل / بعد)', 'Before / after evidence'), [
+      _gallery(tr('قبل', 'Before'), before, 'before', canAdd, Crew.amber),
+      const SizedBox(height: 14),
+      _gallery(tr('بعد', 'After'), after, 'after', canAdd, Crew.green),
+    ]);
+  }
+
+  Widget _gallery(String label, List<Map> items, String kind, bool canAdd, Color c) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        Container(width: 8, height: 8, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
+        const SizedBox(width: 6),
+        Text(label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: Crew.ink)),
+        const SizedBox(width: 6),
+        Text('(${items.length})', style: const TextStyle(fontSize: 11.5, color: Crew.slate, fontWeight: FontWeight.w700)),
+      ]),
+      const SizedBox(height: 7),
+      SizedBox(height: 88, child: ListView(scrollDirection: Axis.horizontal, children: [
+        if (canAdd)
           GestureDetector(
-            onTap: _can.contains('proof') ? () => _proof(kind) : null,
+            onTap: () => _addMedia(kind),
             child: Container(
-              height: 96,
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.black12)),
-              clipBehavior: Clip.antiAlias,
-              child: url != null
-                  ? Image.network(url, fit: BoxFit.cover, width: double.infinity)
-                  : Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(_can.contains('proof') ? Icons.add_a_photo_outlined : Icons.image_outlined, color: Crew.slate), if (_can.contains('proof')) Padding(padding: const EdgeInsets.only(top: 4), child: Text(tr('التقط', 'Capture'), style: const TextStyle(fontSize: 10, color: Crew.slate)))])),
+              width: 84, height: 84, margin: const EdgeInsets.only(left: 8),
+              decoration: BoxDecoration(color: c.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(13), border: Border.all(color: c.withValues(alpha: 0.35))),
+              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Icon(Icons.add_a_photo_rounded, color: c, size: 22),
+                const SizedBox(height: 4),
+                Text(tr('إضافة', 'Add'), style: TextStyle(fontSize: 10.5, color: c, fontWeight: FontWeight.w800)),
+              ]),
             ),
           ),
-        ]));
-    return _card(tr('صور الإثبات', 'Proof photos'), [
-      Row(children: [slot(tr('قبل', 'Before'), j['before'], 'before'), const SizedBox(width: 10), slot(tr('بعد', 'After'), j['after'], 'after')]),
+        for (final m in items)
+          Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: GestureDetector(
+              onTap: () async {
+                final tok = await context.read<AuthProvider>().api.token;
+                if (!mounted) return;
+                Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => MediaViewerScreen(media: items, index: items.indexOf(m), token: tok)));
+              },
+              child: Container(
+                width: 84, height: 84, clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(13), color: Colors.black12),
+                child: m['is_video'] == true
+                    ? const Center(child: Icon(Icons.play_circle_fill_rounded, color: Color(0xFFE5484D), size: 32))
+                    : _AuthImage(url: '${m['thumb'] ?? m['url']}'),
+              ),
+            ),
+          ),
+        if (items.isEmpty && !canAdd)
+          Container(width: 120, alignment: Alignment.center, child: Text(tr('لا توجد', 'None'), style: const TextStyle(color: Crew.slate, fontSize: 12))),
+      ])),
     ]);
+  }
+
+  /// Capture or pick one or more photos/videos for the before/after gallery.
+  Future<void> _addMedia(String kind) async {
+    final choice = await showModalBottomSheet<String>(context: context, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(child: Wrap(children: [
+        ListTile(leading: const Icon(Icons.photo_camera_rounded, color: Crew.teal), title: Text(tr('التقاط صورة', 'Take photo')), onTap: () => Navigator.pop(ctx, 'cam_photo')),
+        ListTile(leading: const Icon(Icons.videocam_rounded, color: Color(0xFFE5484D)), title: Text(tr('تسجيل فيديو', 'Record video')), onTap: () => Navigator.pop(ctx, 'cam_video')),
+        ListTile(leading: const Icon(Icons.photo_library_rounded, color: Color(0xFF7C3AED)), title: Text(tr('صور من المعرض (متعددة)', 'Photos from gallery')), onTap: () => Navigator.pop(ctx, 'gal_photos')),
+        ListTile(leading: const Icon(Icons.video_library_rounded, color: Crew.blue), title: Text(tr('فيديو من المعرض', 'Video from gallery')), onTap: () => Navigator.pop(ctx, 'gal_video')),
+      ])));
+    if (choice == null) return;
+    final picker = ImagePicker();
+    final items = <Map<String, dynamic>>[];
+    try {
+      if (choice == 'cam_photo') {
+        final x = await picker.pickImage(source: ImageSource.camera, imageQuality: 70, maxWidth: 1600);
+        if (x != null) items.add({'kind': kind, 'media_type': 'photo', 'name': x.name, 'data': base64Encode(await x.readAsBytes())});
+      } else if (choice == 'gal_photos') {
+        final xs = await picker.pickMultiImage(imageQuality: 70, maxWidth: 1600);
+        for (final x in xs) {
+          items.add({'kind': kind, 'media_type': 'photo', 'name': x.name, 'data': base64Encode(await x.readAsBytes())});
+        }
+      } else {
+        final x = await picker.pickVideo(
+            source: choice == 'cam_video' ? ImageSource.camera : ImageSource.gallery,
+            maxDuration: const Duration(seconds: 45));
+        if (x != null) {
+          final b = await x.readAsBytes();
+          if (b.length > 15 * 1024 * 1024) {
+            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('الفيديو كبير جداً (الحد 15 ميجا)', 'Video too large (max 15 MB)'))));
+            return;
+          }
+          items.add({'kind': kind, 'media_type': 'video', 'name': x.name, 'data': base64Encode(b)});
+        }
+      }
+      if (items.isEmpty) return;
+      await _act('media', body: {'media': items});
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
+  /// Crew declares the job finished → it goes to the supervisor for sign-off.
+  Future<void> _finish() async {
+    final ctrl = TextEditingController();
+    final ok = await showDialog<bool>(context: context, builder: (c) => AlertDialog(
+      title: Text(tr('إنهاء وإرسال للاعتماد', 'Finish & send for approval')),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        Text(tr('سيراجع المشرف صور قبل/بعد ويعتمد الإنجاز.', 'The supervisor reviews the before/after evidence and signs it off.'),
+            style: const TextStyle(fontSize: 13)),
+        const SizedBox(height: 10),
+        TextField(controller: ctrl, maxLines: 2, decoration: InputDecoration(hintText: tr('ملاحظة الفريق (اختياري)', 'Crew note (optional)'), border: const OutlineInputBorder())),
+      ]),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('تراجع', 'Cancel'))),
+        FilledButton(style: FilledButton.styleFrom(backgroundColor: Crew.green), onPressed: () => Navigator.pop(c, true), child: Text(tr('إرسال', 'Send'))),
+      ],
+    ));
+    if (ok != true) return;
+    if (ctrl.text.trim().isNotEmpty) await _act('note', body: {'note': ctrl.text.trim()});
+    await _act('finish');
+  }
+
+  /// Supervisor signs the job off (or sends it back with a reason).
+  Future<void> _review(bool approve) async {
+    final ctrl = TextEditingController();
+    final ok = await showDialog<bool>(context: context, builder: (c) => AlertDialog(
+      title: Text(approve ? tr('اعتماد الإنجاز', 'Approve completion') : tr('إعادة للتنفيذ', 'Send back')),
+      content: TextField(controller: ctrl, maxLines: 3, decoration: InputDecoration(
+          hintText: approve ? tr('ملاحظة (اختياري)', 'Note (optional)') : tr('سبب الإعادة', 'Reason'),
+          border: const OutlineInputBorder())),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('تراجع', 'Cancel'))),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: approve ? Crew.green : const Color(0xFFE5484D)),
+          onPressed: () => Navigator.pop(c, true),
+          child: Text(approve ? tr('اعتماد', 'Approve') : tr('إعادة', 'Return'))),
+      ],
+    ));
+    if (ok != true) return;
+    await _act(approve ? 'approve_completion' : 'reject_completion', body: {'note': ctrl.text.trim()});
   }
 
   Widget _actionBar(Map j) {
@@ -434,7 +538,12 @@ class _StaffJobDetailState extends State<StaffJobDetail> {
         ));
 
     if (st == 'assigned' && _can.contains('start')) btns.add(b(tr('بدء التنفيذ', 'Start'), Icons.play_arrow_rounded, Crew.amber, () => _act('start')));
-    if (st == 'in_progress' && _can.contains('complete')) btns.add(b(tr('إنهاء', 'Complete'), Icons.check_rounded, Crew.green, _complete));
+    // the crew finishes → the supervisor reviews the before/after evidence
+    if (st == 'in_progress' && _can.contains('complete')) btns.add(b(tr('أنهيت العمل', 'Finished'), Icons.check_rounded, Crew.green, _finish));
+    if (st == 'review' && (_can.contains('quality') || _can.contains('approve'))) {
+      btns.add(b(tr('إعادة', 'Return'), Icons.undo_rounded, const Color(0xFFE5484D), () => _review(false)));
+      btns.add(b(tr('اعتماد', 'Approve'), Icons.verified_rounded, Crew.green, () => _review(true)));
+    }
     if ((st == 'confirmed' || st == 'assigned') && (_can.contains('assign') || _can.contains('reassign'))) btns.add(b(j['provider_id'] != null ? tr('إعادة إسناد', 'Reassign') : tr('إسناد', 'Assign'), Icons.person_add_alt_1, Crew.blue, _assign));
     if (st == 'done' && _can.contains('quality') && j['quality_ok'] != true) btns.add(b(tr('اعتماد الجودة', 'Quality OK'), Icons.verified, const Color(0xFF7C3AED), () => _act('quality')));
     if (st == 'done' && _can.contains('approve')) btns.add(b(tr('اعتماد الإغلاق', 'Approve'), Icons.done_all_rounded, Crew.deep, () => _act('approve')));
@@ -465,5 +574,21 @@ class _StaffJobDetailState extends State<StaffJobDetail> {
   Widget _kvAction(IconData ic, String k, dynamic v, IconData? action) => (v == null || '$v'.isEmpty) ? const SizedBox.shrink() : Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(children: [Icon(ic, size: 16, color: Crew.slate), const SizedBox(width: 8), SizedBox(width: 90, child: Text(k, style: const TextStyle(color: Crew.slate, fontSize: 12))), Expanded(child: Text('$v', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Crew.ink))), if (action != null) Icon(action, size: 17, color: Crew.teal)]),
+      );
+}
+
+
+/// Media served by the API needs the app token, so plain Image.network fails.
+class _AuthImage extends StatelessWidget {
+  const _AuthImage({required this.url});
+  final String url;
+  @override
+  Widget build(BuildContext context) => FutureBuilder<String?>(
+        future: context.read<AuthProvider>().api.token,
+        builder: (_, snap) => snap.hasData
+            ? Image.network(url, fit: BoxFit.cover, width: double.infinity,
+                headers: {'Authorization': 'Bearer ${snap.data}'},
+                errorBuilder: (_, __, ___) => const Icon(Icons.broken_image_rounded, color: Crew.slate))
+            : const SizedBox.shrink(),
       );
 }
