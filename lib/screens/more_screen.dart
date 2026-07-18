@@ -28,6 +28,7 @@ import 'client_analytics_screen.dart';
 import 'schedules_screen.dart';
 import 'notify_send_screen.dart';
 import 'maintenance_screen.dart';
+import 'chat_screen.dart';
 
 /// A polished home for everything this user can reach — styled like the CARE 2
 /// CARE account page: a vibrant header, the systems rail (top icons) for
@@ -80,6 +81,7 @@ class MoreScreen extends StatelessWidget {
     // ===== Work & operations =====
     header(tr('العمل والعمليات', 'Work & operations'));
     tile(Icons.assignment_rounded, isField ? tr('مهامي', 'My tasks') : tr('أوامر العمل', 'Work orders'), const WorkOrdersScreen(), c: _navy);
+    tile(Icons.forum_rounded, tr('التواصل والمحادثات', 'Messages & directory'), const ChatHubScreen(), c: const Color(0xFF0E7490));
     tile(Icons.fact_check_rounded, tr('الجودة والجولات', 'Quality & rounds'), const QualityScreen(), c: const Color(0xFF0EA5A4));
     if (!isField) tile(Icons.inbox_rounded, tr('طلبات الخدمة', 'Service requests'), const RequestsScreen(), c: const Color(0xFFE6295C));
     tile(Icons.event_repeat_rounded, tr('جدولة الأعمال', 'Work schedules'), const SchedulesScreen(), c: const Color(0xFF0D9488));

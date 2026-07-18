@@ -558,6 +558,25 @@ class ApiClient {
               await http.get(_u('/client/asset/$id'), headers: await _headers())))['data'] as Map);
 
   // ---- maintenance service --------------------------------------------------
+  // ---- directory + chat -----------------------------------------------------
+  Future<List<dynamic>> directory({String? q}) async {
+    final path = '/directory${q != null && q.isNotEmpty ? '?q=${Uri.encodeQueryComponent(q)}' : ''}';
+    return List<dynamic>.from((await _handle(await http.get(_u(path), headers: await _headers())))['data'] as List);
+  }
+
+  Future<List<dynamic>> chatThreads() async =>
+      List<dynamic>.from((await _handle(await http.get(_u('/chat/threads'), headers: await _headers())))['data'] as List);
+
+  Future<Map<String, dynamic>> chatMessages(int peer) async =>
+      Map<String, dynamic>.from((await _handle(await http.get(_u('/chat/$peer/messages'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> chatSend(int peer, String body) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/chat/$peer/send'),
+              headers: await _headers(), body: jsonEncode({'body': body}))))['data'] as Map);
+
+  Future<int> chatUnread() async =>
+      ((await _handle(await http.get(_u('/chat/unread'), headers: await _headers())))['data'] as Map)['unread'] as int? ?? 0;
+
   Future<Map<String, dynamic>> meAchievements({String period = 'month'}) async =>
       Map<String, dynamic>.from((await _handle(await http.get(
               _u('/me/achievements?period=$period'), headers: await _headers())))['data'] as Map);
