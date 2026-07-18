@@ -19,20 +19,52 @@ class WorkOrderDetailScreen extends StatefulWidget {
   State<WorkOrderDetailScreen> createState() => _WorkOrderDetailScreenState();
 }
 
-class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
+class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> with WidgetsBindingObserver {
   Map<String, dynamic>? _d;
   bool _loading = true;
   Timer? _timer;
   Duration _remaining = Duration.zero;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _load();
+    // Android may destroy the app while the camera is in front of it (low
+    // memory). On the way back Flutter relaunches at the home screen and the
+    // capture would be lost — recover it here and upload it anyway.
+    _recoverLostCapture();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _recoverLostCapture();
+  }
+
+  Future<void> _recoverLostCapture() async {
+    try {
+      final lost = await _picker.retrieveLostData();
+      if (lost.isEmpty || lost.file == null) return;
+      final f = lost.file!;
+      final bytes = await f.readAsBytes();
+      if (!mounted) return;
+      final isVideo = lost.type == RetrieveType.video;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('جارٍ رفع الصورة المستعادة…', 'Uploading recovered capture…'))));
+      await context.read<AuthProvider>().api
+          .workOrderPhoto(widget.id, base64Encode(bytes), f.name, isVideo ? 'video' : 'photo');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('تم الرفع للاعتماد', 'Uploaded for approval'))));
+        _load();
+      }
+    } catch (_) {
+      // nothing to recover — ignore
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     super.dispose();
   }
@@ -120,6 +152,7 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
                   ],
                   const SizedBox(height: 12),
                   if (_d!['instructions'] != null) ...[_instructionsCard(cs), const SizedBox(height: 12)],
+                  if (((_d!['brief_media'] as List?) ?? const []).isNotEmpty) ...[_briefMediaCard(), const SizedBox(height: 12)],
                   _infoCard(cs),
                   const SizedBox(height: 12),
                   _actions(api, p),
@@ -456,10 +489,9 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
   Future<void> _capture(bool video) async {
     final api = context.read<AuthProvider>().api;
     try {
-      final picker = ImagePicker();
       final XFile? x = video
-          ? await picker.pickVideo(source: ImageSource.camera, maxDuration: const Duration(seconds: 60))
-          : await picker.pickImage(source: ImageSource.camera, imageQuality: 70, maxWidth: 1600);
+          ? await _picker.pickVideo(source: ImageSource.camera, maxDuration: const Duration(seconds: 60))
+          : await _picker.pickImage(source: ImageSource.camera, imageQuality: 70, maxWidth: 1600);
       if (x == null) return;
       final bytes = await x.readAsBytes();
       if (!mounted) return;
@@ -551,6 +583,29 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> {
           Icon(ok ? Icons.check_circle : Icons.cancel, size: 18, color: ok ? const Color(0xFF16A34A) : const Color(0xFFE5484D)),
         ]),
       );
+
+  /// Photos/videos the client, quality inspector or supervisor attached — the
+  /// visual brief of what is being asked for.
+  Widget _briefMediaCard() {
+    final brief = ((_d!['brief_media'] as List?) ?? const []).cast<Map>();
+    return Card(
+      color: const Color(0xFF0EA5A4).withValues(alpha: 0.06),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.photo_library_rounded, color: Color(0xFF0EA5A4), size: 20),
+            const SizedBox(width: 8),
+            Expanded(child: Text(tr('صور المطلوب (من العميل/الجودة)', 'Reference photos (client / quality)'),
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5))),
+            Text('${brief.length}', style: const TextStyle(color: Color(0xFF0EA5A4), fontWeight: FontWeight.w900)),
+          ]),
+          const SizedBox(height: 10),
+          SizedBox(height: 90, child: _mediaStrip(brief)),
+        ]),
+      ),
+    );
+  }
 
   Widget _mediaStrip(List<Map> media) => Builder(builder: (ctx) => ListView(scrollDirection: Axis.horizontal, children: [
         for (int i = 0; i < media.length; i++)
