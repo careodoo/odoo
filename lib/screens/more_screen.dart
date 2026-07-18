@@ -46,9 +46,13 @@ class MoreScreen extends StatelessWidget {
     final p = context.watch<AuthProvider>().profile!;
     context.watch<LangProvider>();
     final name = p.name;
-    // a plain field worker (cleaner/guard/…) — not a client, manager or admin.
-    // They should only see their own tools, never the client/back-office consoles.
-    final isField = p.role != 'client' && !p.canAddWorkers && !p.isSupervisor && !p.isAdmin;
+    // Three tiers, so every user only sees what their role actually owns:
+    //  • client  — the estate/contract consoles for their own facilities
+    //  • boss    — supervisor/admin: operations oversight, no client ownership
+    //  • field   — a cleaner/guard: only their own tools
+    final isClient = p.role == 'client';
+    final isBoss = p.isSupervisor || p.isAdmin;
+    final isField = !isClient && !isBoss && !p.canAddWorkers;
     final items = <Widget>[];
     var toolCount = 0;
 
@@ -117,7 +121,8 @@ class MoreScreen extends StatelessWidget {
     // ===== Contracts & administration (client / back-office only) =====
     if (!isField) {
       header(tr('العقود والإدارة', 'Contracts & administration'));
-      tile(Icons.description_rounded, tr('العقود', 'Contracts'), const ContractsScreen(), c: const Color(0xFF0B6EA8));
+      // contracts are the client's own commercial file — not a supervisor tool
+      if (isClient || p.isAdmin) tile(Icons.description_rounded, tr('العقود', 'Contracts'), const ContractsScreen(), c: const Color(0xFF0B6EA8));
       if (p.canAddWorkers) {
         tile(Icons.settings_suggest_rounded, tr('إدارة المنشأة', 'Manage facility'), const ManageScreen(), c: const Color(0xFF6366F1));
         tile(Icons.person_add_rounded, tr('إضافة عامل', 'Add worker'), const AddWorkerScreen(), c: const Color(0xFF16A34A));
@@ -129,7 +134,7 @@ class MoreScreen extends StatelessWidget {
     }
     // my own performance file (a worker may see theirs); back office stays hidden
     if (p.role != 'client') { header(tr('ملفي', 'My file')); tile(Icons.star_rounded, tr('تقييم أدائي', 'My performance'), const AppraisalScreen(), c: const Color(0xFFF59E0B)); }
-    if (p.isSupervisor || p.isAdmin) tile(Icons.dashboard_customize_rounded, tr('لوحة أودو الكاملة', 'Full Odoo backend'), const OdooBackendScreen(), c: const Color(0xFF714B67));
+    if (p.isAdmin) tile(Icons.dashboard_customize_rounded, tr('لوحة أودو الكاملة', 'Full Odoo backend'), const OdooBackendScreen(), c: const Color(0xFF714B67));
 
     // ===== Account & preferences =====
     header(tr('الحساب والتفضيلات', 'Account & preferences'));
