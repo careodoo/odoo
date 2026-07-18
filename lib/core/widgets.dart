@@ -28,25 +28,29 @@ class _PulseBadgeState extends State<PulseBadge> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) return widget.child;
-    return AnimatedBuilder(
-      animation: _c,
-      builder: (_, child) {
-        final t = _c.value;
-        return Stack(alignment: Alignment.center, clipBehavior: Clip.none, children: [
-          // expanding fading ring
-          Opacity(
-            opacity: (1 - t) * 0.5,
-            child: Container(
-              width: 30 + t * 22, height: 30 + t * 22,
-              decoration: BoxDecoration(shape: BoxShape.circle,
-                  border: Border.all(color: widget.color.withValues(alpha: 0.6), width: 2)),
-            ),
-          ),
-          child!,
-        ]);
-      },
-      child: widget.child,
-    );
+    // The child sizes the Stack; the ring overflows via a Positioned.fill +
+    // OverflowBox so its animated growth NEVER changes the layout height (that
+    // was making the header pulse taller/shorter every cycle).
+    return Stack(alignment: Alignment.center, clipBehavior: Clip.none, children: [
+      Positioned.fill(child: IgnorePointer(child: OverflowBox(
+        maxWidth: double.infinity, maxHeight: double.infinity,
+        child: AnimatedBuilder(
+          animation: _c,
+          builder: (_, __) {
+            final t = _c.value;
+            return Opacity(
+              opacity: (1 - t) * 0.5,
+              child: Container(
+                width: 30 + t * 22, height: 30 + t * 22,
+                decoration: BoxDecoration(shape: BoxShape.circle,
+                    border: Border.all(color: widget.color.withValues(alpha: 0.6), width: 2)),
+              ),
+            );
+          },
+        ),
+      ))),
+      widget.child,
+    ]);
   }
 }
 
