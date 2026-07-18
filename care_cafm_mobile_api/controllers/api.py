@@ -3,7 +3,8 @@ import json
 import logging
 import re
 from html import unescape
-from odoo import http, fields
+from datetime import datetime, time
+from odoo import http, fields, _
 from odoo.http import request
 
 _logger = logging.getLogger(__name__)
@@ -309,6 +310,120 @@ class MobileApi(http.Controller):
         if not env:
             return _err('غير مصرّح', 401)
         return _ok(self._me_payload(env))
+
+    @http.route(API + '/me/achievements', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def me_achievements(self, **kw):
+        """The worker's own performance dashboard — tasks, on-time %, attendance
+        hours, materials issued, schedule compliance and earned badges — over a
+        selectable period (today / week / month / all)."""
+        from datetime import timedelta as _td
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        user = env.user
+        emp = user.employee_id
+        period = (request.httprequest.args.get('period') or 'month').strip()
+        today = fields.Date.context_today(user)
+        if period == 'today':
+            since, plabel = today, _('اليوم')
+        elif period == 'week':
+            since, plabel = today - _td(days=today.weekday()), _('هذا الأسبوع')
+        elif period == 'all':
+            since, plabel = None, _('كل الفترات')
+        else:
+            since, plabel = today.replace(day=1), _('هذا الشهر')
+        since_dt = fields.Datetime.to_string(datetime.combine(since, time.min)) if since else None
+
+        if not emp:
+            return _ok({'has_employee': False, 'period': period, 'period_label': plabel})
+
+        WO = env['care.cafm.workorder'].sudo()
+        dom = [('employee_id', '=', emp.id)]
+        all_mine = WO.search(dom)
+        # tasks touched in the period: done in period, or still open
+        def _in(w):
+            if since is None:
+                return True
+            d = w.done_datetime or w.request_datetime
+            return bool(d and d >= datetime.combine(since, time.min))
+        mine = all_mine.filtered(_in)
+        done = mine.filtered(lambda w: w.state in ('done', 'verified'))
+        on_time = done.filtered(lambda w: w.done_datetime and w.deadline and w.done_datetime <= w.deadline)
+        late_done = done - on_time
+        closed_n = len(done)
+        tasks = {
+            'total': len(mine), 'done': len(done),
+            'on_time': len(on_time), 'late': len(late_done),
+            'in_progress': len(mine.filtered(lambda w: w.state == 'in_progress')),
+            'open': len(all_mine.filtered(lambda w: w.state not in ('done', 'verified', 'cancelled'))),
+            'overdue': len(all_mine.filtered('is_overdue')),
+            'on_time_rate': round(100.0 * len(on_time) / closed_n, 1) if closed_n else 100.0,
+            'avg_minutes': round(sum(done.mapped('duration_minutes')) / closed_n, 0) if closed_n else 0,
+        }
+
+        # attendance (shifts)
+        att = {'shifts': 0, 'hours': 0.0, 'days': 0, 'last_in': None}
+        if 'care.cafm.shift' in env:
+            sdom = [('employee_id', '=', emp.id)]
+            if since_dt:
+                sdom.append(('check_in', '>=', since_dt))
+            shifts = env['care.cafm.shift'].sudo().search(sdom)
+            att = {
+                'shifts': len(shifts),
+                'hours': round(sum(shifts.mapped('duration_hours')), 1),
+                'days': len(set(str(s.check_in)[:10] for s in shifts if s.check_in)),
+                'last_in': fields.Datetime.to_string(max(shifts.mapped('check_in'))) if shifts.mapped('check_in') else None,
+            }
+
+        # materials issued by this worker
+        materials = {'count': 0, 'qty': 0.0}
+        if 'care.cafm.stock.move' in env:
+            mdom = [('employee_id', '=', emp.id), ('move_type', '=', 'issue')]
+            if since_dt:
+                mdom.append(('date', '>=', since_dt))
+            mv = env['care.cafm.stock.move'].sudo().search(mdom)
+            materials = {'count': len(mv), 'qty': round(sum(mv.mapped('quantity')), 1)}
+
+        # scheduled rounds compliance
+        sched = {'done': 0, 'late': 0, 'missed': 0, 'compliance': 100.0}
+        if 'care.cafm.schedule.occurrence' in env:
+            odom = [('employee_id', '=', emp.id)]
+            if since_dt:
+                odom.append(('planned_time', '>=', since_dt))
+            occ = env['care.cafm.schedule.occurrence'].sudo().search(odom)
+            od = len(occ.filtered(lambda o: o.state == 'done'))
+            ol = len(occ.filtered(lambda o: o.state == 'late'))
+            om = len(occ.filtered(lambda o: o.state == 'missed'))
+            closed = od + ol + om
+            sched = {'done': od, 'late': ol, 'missed': om,
+                     'compliance': round(100.0 * od / closed, 1) if closed else 100.0}
+
+        # earned badges (gamified, from the numbers above)
+        badges = []
+        if tasks['done'] >= 1 and tasks['on_time_rate'] >= 95:
+            badges.append({'icon': '🎯', 'label': _('الالتزام بالمواعيد')})
+        if att['days'] >= 20:
+            badges.append({'icon': '📅', 'label': _('حضور منتظم')})
+        if tasks['done'] >= 50:
+            badges.append({'icon': '🏆', 'label': _('إنجاز عالٍ')})
+        if sched['compliance'] >= 95 and (sched['done'] + sched['late'] + sched['missed']) > 0:
+            badges.append({'icon': '✅', 'label': _('جولات ممتازة')})
+        if tasks['overdue'] == 0 and tasks['open'] > 0:
+            badges.append({'icon': '🔥', 'label': _('بلا تأخير')})
+
+        # a simple 0-100 performance score for the header ring
+        score = round(0.5 * tasks['on_time_rate'] + 0.3 * sched['compliance']
+                      + 0.2 * min(100.0, (att['days'] / 22.0) * 100.0), 0)
+
+        return _ok({
+            'has_employee': True,
+            'period': period, 'period_label': plabel,
+            'employee': {'id': emp.id, 'name': emp.name, 'job': emp.job_title or None,
+                         'department': emp.department_id.name or None},
+            'score': score,
+            'tasks': tasks, 'attendance': att, 'materials': materials,
+            'schedule': sched, 'badges': badges,
+        })
 
     @http.route(API + '/services', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def services(self, **kw):
