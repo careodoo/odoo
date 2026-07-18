@@ -577,6 +577,16 @@ class ApiClient {
   Future<int> chatUnread() async =>
       ((await _handle(await http.get(_u('/chat/unread'), headers: await _headers())))['data'] as Map)['unread'] as int? ?? 0;
 
+  /// The supervisor's scope: supervised teams (service/facility/client/project),
+  /// per-member load & achievements, team aggregate, and the quality queue.
+  Future<Map<String, dynamic>> meSupervisor({String period = 'month'}) async =>
+      Map<String, dynamic>.from((await _handle(await http.get(
+              _u('/me/supervisor?period=$period'), headers: await _headers())))['data'] as Map);
+
+  Future<void> observationAssign(int id, int employeeId) async =>
+      _handle(await http.post(_u('/client/observation/$id/assign'),
+          headers: await _headers(), body: jsonEncode({'employee_id': employeeId})));
+
   Future<Map<String, dynamic>> meAchievements({String period = 'month'}) async =>
       Map<String, dynamic>.from((await _handle(await http.get(
               _u('/me/achievements?period=$period'), headers: await _headers())))['data'] as Map);

@@ -39,11 +39,16 @@ class _SupervisorHomeState extends State<SupervisorHome> {
     _load();
   }
 
+  String _period = 'month';
+
   void _load() {
     final api = context.read<AuthProvider>().api;
     setState(() {
-      _future = Future.wait([api.stats(), api.assignable(), api.team(), api.employees()])
-          .then((r) => _SupData(r[0] as Map<String, dynamic>, r[1] as List, r[2] as List, r[3] as List));
+      _future = Future.wait([
+        api.stats(), api.assignable(), api.team(), api.employees(),
+        api.meSupervisor(period: _period),
+      ]).then((r) => _SupData(r[0] as Map<String, dynamic>, r[1] as List, r[2] as List, r[3] as List,
+          r[4] as Map<String, dynamic>));
     });
   }
 
@@ -130,7 +135,7 @@ class _SupervisorHomeState extends State<SupervisorHome> {
             final d = snap.data;
             final s = d?.stats ?? const {};
             return ListView(padding: EdgeInsets.zero, children: [
-              _header(context, p, s),
+              _header(context, p, s, d),
               // ===== executive options =====
               Padding(padding: const EdgeInsets.fromLTRB(12, 14, 12, 4), child: Row(children: [
                 const Icon(Icons.grid_view_rounded, size: 17, color: _navy), const SizedBox(width: 7),
@@ -153,9 +158,14 @@ class _SupervisorHomeState extends State<SupervisorHome> {
                   _empty(tr('لا مهام بانتظار الإسناد ✓', 'Nothing awaiting assignment ✓'))
                 else
                   for (final w in d.assignable) _assignCard(w as Map, d.employees),
-                _sectionTitle(Icons.groups_rounded, tr('أحمال الفريق', 'Team load'), d.team.length),
-                if (d.team.isEmpty) _empty(tr('لا أعضاء فريق', 'No team members'))
-                else for (final m in d.team) _teamCard(m as Map),
+                // ===== quality queue — distribute to the crew =====
+                _sectionTitle(Icons.fact_check_rounded, tr('ملاحظات الجودة — للتوزيع', 'Quality — to distribute'), d.quality.length),
+                if (d.quality.isEmpty) _empty(tr('لا ملاحظات جودة مفتوحة ✓', 'No open quality notes ✓'))
+                else for (final q in d.quality.take(8)) _qualityCard(q as Map, d.employees),
+                // ===== crew: live load + achievements per member =====
+                _sectionTitle(Icons.groups_rounded, tr('فريقي — الأداء والأحمال', 'My crew — load & performance'), d.crew.length),
+                if (d.crew.isEmpty) _empty(tr('لا أعضاء فريق', 'No team members'))
+                else for (final m in d.crew) _crewCard(m as Map),
               ],
               const SizedBox(height: 26),
             ]);
@@ -165,7 +175,7 @@ class _SupervisorHomeState extends State<SupervisorHome> {
     );
   }
 
-  Widget _header(BuildContext context, dynamic p, Map s) => CustomPaint(
+  Widget _header(BuildContext context, dynamic p, Map s, _SupData? d) => CustomPaint(
         painter: const BrandPattern(opacity: 0.07),
         child: Container(
           padding: const EdgeInsets.fromLTRB(18, 0, 10, 18),
@@ -199,7 +209,51 @@ class _SupervisorHomeState extends State<SupervisorHome> {
                 Text(tr('مشرف تنفيذي · متابعة الأعمال', 'Executive supervisor · operations'), style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 11.5)),
               ])),
             ]),
-            const SizedBox(height: 14),
+            // ===== what exactly this person supervises =====
+            if (d != null && d.teams.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              for (final t in d.teams) Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.13), borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.white.withValues(alpha: 0.18))),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    const Icon(Icons.groups_rounded, color: Colors.white, size: 15),
+                    const SizedBox(width: 6),
+                    Expanded(child: Text('${(t as Map)['name'] ?? ''}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13))),
+                    Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(20)),
+                        child: Text('${t['members'] ?? 0} ${tr('عضو', 'members')}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800))),
+                  ]),
+                  const SizedBox(height: 7),
+                  Wrap(spacing: 6, runSpacing: 6, children: [
+                    if (t['service'] != null) _ctx(Icons.design_services_rounded, '${t['service']}'),
+                    if (t['facility'] != null) _ctx(Icons.apartment_rounded, '${t['facility']}'),
+                    if (t['client'] != null) _ctx(Icons.badge_rounded, '${t['client']}'),
+                    if (t['project'] != null) _ctx(Icons.account_tree_rounded, '${t['project']}'),
+                  ]),
+                ]),
+              ),
+            ],
+            const SizedBox(height: 8),
+            // ===== period filter for the achievement figures =====
+            SizedBox(height: 34, child: ListView(scrollDirection: Axis.horizontal, children: [
+              for (final pr in const [('today', 'اليوم', 'Today'), ('week', 'الأسبوع', 'Week'), ('month', 'الشهر', 'Month'), ('all', 'الكل', 'All')])
+                Padding(padding: const EdgeInsets.only(left: 6),
+                  child: GestureDetector(
+                    onTap: () { setState(() => _period = pr.$1); _load(); },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: _period == pr.$1 ? Colors.white : Colors.white.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(20)),
+                      child: Text(tr(pr.$2, pr.$3), style: TextStyle(color: _period == pr.$1 ? _teal : Colors.white, fontSize: 11.5, fontWeight: FontWeight.w900)),
+                    ),
+                  )),
+            ])),
+            const SizedBox(height: 12),
             // live statistics strip
             Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
@@ -229,6 +283,16 @@ class _SupervisorHomeState extends State<SupervisorHome> {
       ]));
 
   Widget _hd() => Container(width: 1, height: 32, color: Colors.white.withValues(alpha: 0.18));
+
+  /// a small "what I supervise" chip (service / facility / client / project)
+  Widget _ctx(IconData ic, String t) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(8)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(ic, color: Colors.white, size: 12), const SizedBox(width: 5),
+          Text(t, style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w800)),
+        ]),
+      );
 
   Widget _opt(IconData ic, String ar, String en, Color c, VoidCallback onTap) => Material(
         color: Colors.white, borderRadius: BorderRadius.circular(14),
@@ -298,40 +362,191 @@ class _SupervisorHomeState extends State<SupervisorHome> {
         ),
       );
 
-  Widget _teamCard(Map m) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-        child: Material(
-          color: Colors.white, borderRadius: BorderRadius.circular(14),
-          child: Container(
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.grey.shade200)),
-            padding: const EdgeInsets.all(11),
-            child: Row(children: [
-              CircleAvatar(radius: 20, backgroundColor: _navy, child: Text('${m['name']}'.characters.first, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800))),
-              const SizedBox(width: 11),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('${m['name']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: _navy)),
-                Text('${m['job_title'] ?? '—'}', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-              ])),
-              Wrap(spacing: 5, children: [
-                _pill('${tr('مفتوحة', 'open')} ${m['open'] ?? 0}', const Color(0xFF2F6DF6)),
-                if (((m['overdue'] as num?) ?? 0) > 0) _pill('${tr('متأخرة', 'late')} ${m['overdue']}', const Color(0xFFE5484D)),
-              ]),
-            ]),
-          ),
-        ),
-      );
-
   Widget _pill(String t, Color c) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20), border: Border.all(color: c.withValues(alpha: 0.35))),
         child: Text(t, style: TextStyle(color: c, fontSize: 10.5, fontWeight: FontWeight.w900)),
       );
+
+  // ===== a crew member: live load + achievements, tap for actions ===========
+  Widget _crewCard(Map m) {
+    final rate = ((m['on_time_rate'] as num?) ?? 0).toDouble();
+    final overdue = ((m['overdue'] as num?) ?? 0).toInt();
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      child: Material(
+        color: Colors.white, borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => _crewSheet(m),
+          child: Container(
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.grey.shade200)),
+            padding: const EdgeInsets.all(11),
+            child: Column(children: [
+              Row(children: [
+                CircleAvatar(radius: 20, backgroundColor: overdue > 0 ? const Color(0xFFE11D48) : _navy,
+                    child: Text('${m['name']}'.characters.first, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800))),
+                const SizedBox(width: 11),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('${m['name']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: _navy)),
+                  Text('${m['job'] ?? '—'}', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                ])),
+                Wrap(spacing: 5, children: [
+                  _pill('${tr('مفتوحة', 'open')} ${m['open'] ?? 0}', const Color(0xFF2F6DF6)),
+                  if (overdue > 0) _pill('${tr('متأخرة', 'late')} $overdue', const Color(0xFFE11D48)),
+                ]),
+              ]),
+              const SizedBox(height: 9),
+              Row(children: [
+                Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(value: rate / 100.0, minHeight: 6, backgroundColor: Colors.grey.shade200,
+                        valueColor: AlwaysStoppedAnimation(rate >= 90 ? const Color(0xFF16A34A) : (rate >= 70 ? const Color(0xFFF59E0B) : const Color(0xFFE11D48)))))),
+                const SizedBox(width: 8),
+                Text('${rate.toStringAsFixed(0)}% ${tr('التزام', 'on-time')}', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: _navy)),
+                const SizedBox(width: 10),
+                Text('${m['done'] ?? 0} ${tr('منجزة', 'done')} · ${m['hours'] ?? 0}${tr('س', 'h')}', style: TextStyle(fontSize: 10.5, color: Colors.grey.shade600, fontWeight: FontWeight.w700)),
+              ]),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _crewSheet(Map m) => showModalBottomSheet(context: context, backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: const BoxDecoration(color: Color(0xFFF6F7F9), borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        clipBehavior: Clip.antiAlias,
+        child: SafeArea(top: false, child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(width: double.infinity, padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+            decoration: const BoxDecoration(gradient: LinearGradient(colors: [_teal, _navy], begin: Alignment.topRight, end: Alignment.bottomLeft)),
+            child: Column(children: [
+              Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: Colors.white54, borderRadius: BorderRadius.circular(3)))),
+              Row(children: [
+                CircleAvatar(backgroundColor: Colors.white24, child: Text('${m['name']}'.characters.first, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900))),
+                const SizedBox(width: 12),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('${m['name']}', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900)),
+                  Text('${m['job'] ?? ''}', style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 11.5)),
+                ])),
+              ]),
+              const SizedBox(height: 12),
+              Row(children: [
+                _hs(Icons.inbox_rounded, '${m['open'] ?? 0}', tr('مفتوحة', 'Open')),
+                _hd(),
+                _hs(Icons.check_circle_rounded, '${m['done'] ?? 0}', tr('منجزة', 'Done')),
+                _hd(),
+                _hs(Icons.warning_amber_rounded, '${m['overdue'] ?? 0}', tr('متأخرة', 'Overdue')),
+                _hd(),
+                _hs(Icons.schedule_rounded, '${m['hours'] ?? 0}', tr('ساعات', 'Hours')),
+              ]),
+            ])),
+          ListTile(leading: const Icon(Icons.assignment_rounded, color: _navy),
+              title: Text(tr('عرض مهام هذا العضو', 'View their tasks')),
+              onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkOrdersScreen())); }),
+          if (m['user_id'] != null)
+            ListTile(leading: const Icon(Icons.forum_rounded, color: Color(0xFF0E7490)),
+                title: Text(tr('مراسلة', 'Message')),
+                onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => ChatScreen(peerUid: (m['user_id'] as num).toInt(), peerName: '${m['name']}'))); }),
+          ListTile(leading: const Icon(Icons.fingerprint_rounded, color: Color(0xFF7C3AED)),
+              title: Text(tr('سجل الحضور', 'Attendance record')),
+              onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendanceScreen())); }),
+          const SizedBox(height: 8),
+        ])),
+      ));
+
+  // ===== a quality observation the supervisor can hand to a crew member =====
+  Widget _qualityCard(Map q, List employees) {
+    const sevColors = {'low': Color(0xFF94A3B8), 'medium': Color(0xFF3B82F6), 'high': Color(0xFFF59E0B), 'critical': Color(0xFFE11D48)};
+    final c = sevColors['${q['severity']}'] ?? const Color(0xFF3B82F6);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      child: Material(
+        color: Colors.white, borderRadius: BorderRadius.circular(14),
+        child: Container(
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.grey.shade200)),
+          padding: const EdgeInsets.all(11),
+          child: Row(children: [
+            Container(width: 5, height: 46, decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(4))),
+            const SizedBox(width: 11),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('${q['title'] ?? q['name']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: _navy)),
+              const SizedBox(height: 3),
+              Text([q['facility'], q['location'], q['severity_label']].where((x) => x != null).join(' · '),
+                  maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+              if (q['assignee'] != null) Padding(padding: const EdgeInsets.only(top: 3),
+                  child: Text('${tr('مُسندة إلى', 'assigned to')}: ${q['assignee']}', style: const TextStyle(fontSize: 10.5, color: Color(0xFF16A34A), fontWeight: FontWeight.w800))),
+            ])),
+            const SizedBox(width: 6),
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(foregroundColor: _teal, side: const BorderSide(color: _teal), padding: const EdgeInsets.symmetric(horizontal: 10), minimumSize: const Size(0, 38)),
+              onPressed: () => _distribute(q, employees),
+              icon: const Icon(Icons.person_add_alt_rounded, size: 16),
+              label: Text(tr('توزيع', 'Assign'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11.5)),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _distribute(Map q, List employees) async {
+    final chosen = await showModalBottomSheet<int>(
+      context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+      builder: (_) => DraggableScrollableSheet(
+        expand: false, initialChildSize: 0.6, maxChildSize: 0.92,
+        builder: (_, sc) => Container(
+          decoration: const BoxDecoration(color: Color(0xFFF6F7F9), borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          clipBehavior: Clip.antiAlias,
+          child: Column(children: [
+            Container(width: double.infinity, padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+              decoration: const BoxDecoration(gradient: LinearGradient(colors: [_teal, _navy], begin: Alignment.topRight, end: Alignment.bottomLeft)),
+              child: Column(children: [
+                Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: Colors.white54, borderRadius: BorderRadius.circular(3)))),
+                Text(tr('توزيع الملاحظة على', 'Distribute note to'), style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900)),
+              ])),
+            Expanded(child: ListView(controller: sc, padding: const EdgeInsets.all(10), children: [
+              for (final e in employees) Card(
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                child: ListTile(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  leading: CircleAvatar(backgroundColor: _navy, child: Text('${e['name']}'.characters.first, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800))),
+                  title: Text('${e['name']}', style: const TextStyle(fontWeight: FontWeight.w800)),
+                  subtitle: Text('${e['job_title'] ?? '—'}'),
+                  onTap: () => Navigator.pop(context, e['id'] as int),
+                ),
+              ),
+            ])),
+          ]),
+        ),
+      ),
+    );
+    if (chosen == null) return;
+    try {
+      await context.read<AuthProvider>().api.observationAssign((q['id'] as num).toInt(), chosen);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('✔ وُزّعت الملاحظة', '✔ Note distributed')), backgroundColor: const Color(0xFF16A34A)));
+        _load();
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
 }
 
 class _SupData {
-  _SupData(this.stats, this.assignable, this.team, this.employees);
+  _SupData(this.stats, this.assignable, this.team, this.employees, this.scope);
   final Map<String, dynamic> stats;
   final List assignable;
   final List team;
   final List employees;
+  /// /me/supervisor — supervised teams, per-member achievements, quality queue.
+  final Map<String, dynamic> scope;
+
+  List get teams => (scope['teams'] as List?) ?? const [];
+  List get crew => (scope['team'] as List?) ?? const [];
+  List get quality => (scope['quality'] as List?) ?? const [];
+  Map get aggregate => (scope['aggregate'] as Map?) ?? const {};
 }
