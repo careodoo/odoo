@@ -35,3 +35,5 @@ acc_c2c_rfqopt_u,c2c.rfq.option.u,model_c2c_rfq_option,base.group_user,1,0,0,0
 acc_c2c_rfqopt_m,c2c.rfq.option.m,model_c2c_rfq_option,hr.group_hr_manager,1,1,1,1
 acc_c2c_media_u,c2c.service.media.u,model_c2c_service_media,base.group_user,1,0,0,0
 acc_c2c_media_m,c2c.service.media.m,model_c2c_service_media,hr.group_hr_manager,1,1,1,1
+access_c2c_booking_media_user,c2c.booking.media.user,model_c2c_booking_media,base.group_user,1,1,1,1
+access_c2c_booking_media_portal,c2c.booking.media.portal,model_c2c_booking_media,base.group_portal,1,0,0,0

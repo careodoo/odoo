@@ -54,7 +54,8 @@ class C2CBooking(models.Model):
     discount_amount = fields.Float(string='قيمة الخصم')
     state = fields.Selection([
         ('draft', 'مسودة'), ('confirmed', 'مؤكّد'), ('assigned', 'مُسند'),
-        ('in_progress', 'قيد التنفيذ'), ('done', 'منجز'), ('cancelled', 'ملغى'),
+        ('in_progress', 'قيد التنفيذ'), ('review', 'بانتظار اعتماد المشرف'),
+        ('done', 'منجز'), ('cancelled', 'ملغى'),
     ], string='الحالة', default='draft', required=True, tracking=True)
     rating = fields.Selection([
         ('1', '★'), ('2', '★★'), ('3', '★★★'), ('4', '★★★★'), ('5', '★★★★★'),
@@ -68,8 +69,20 @@ class C2CBooking(models.Model):
     staff_note = fields.Text(string='ملاحظة الفريق')
     proof_before = fields.Image(string='صورة قبل', max_width=1280, max_height=1280)
     proof_after = fields.Image(string='صورة بعد', max_width=1280, max_height=1280)
+    # as many before/after photos & videos as the job needs
+    media_ids = fields.One2many('c2c.booking.media', 'booking_id', string='وسائط التنفيذ')
+    before_count = fields.Integer(compute='_compute_media_counts', string='صور قبل')
+    after_count = fields.Integer(compute='_compute_media_counts', string='صور بعد')
     quality_ok = fields.Boolean(string='اعتماد الجودة', tracking=True)
     quality_by = fields.Many2one('c2c.provider', string='اعتمد الجودة', readonly=True, copy=False)
+    submitted_by = fields.Many2one('c2c.provider', string='أرسله للاعتماد', readonly=True, copy=False)
+    review_note = fields.Char(string='ملاحظة الاعتماد/الرفض')
+
+    @api.depends('media_ids.kind')
+    def _compute_media_counts(self):
+        for b in self:
+            b.before_count = len(b.media_ids.filtered(lambda m: m.kind == 'before'))
+            b.after_count = len(b.media_ids.filtered(lambda m: m.kind == 'after'))
 
     @api.depends('visit_datetime', 'duration_min')
     def _compute_end(self):
@@ -261,6 +274,47 @@ class C2CBooking(models.Model):
             b.write({'state': 'done', 'finished_at': fields.Datetime.now()})
             b._notify_customer('done')
 
+    def action_submit_review(self, by=None):
+        """The crew says "we're finished" — the job goes to the supervisor for
+        review instead of closing itself."""
+        for b in self:
+            if not b.media_ids.filtered(lambda m: m.kind == 'after'):
+                raise UserError(_('أضف صورة/فيديو "بعد" قبل إرسال العمل للاعتماد.'))
+            b.write({'state': 'review', 'finished_at': fields.Datetime.now(),
+                     'submitted_by': by.id if by else b.provider_id.id})
+            # ping whoever supervises this crew
+            sups = b.provider_id.supervisor_id | b.team_leader_id.supervisor_id
+            if not sups:
+                sups = self.env['c2c.provider'].sudo().search(
+                    [('role', 'in', ('supervisor', 'ops_manager'))], limit=5)
+            b._notify_crew(sups, _('🔍 عمل بانتظار اعتمادك'),
+                           '%s — %s' % (b.name or '', b.service_id.name or ''))
+            b.message_post(body=_('📤 أرسل الفريق العمل للاعتماد (%d قبل / %d بعد).')
+                           % (b.before_count, b.after_count))
+
+    def action_approve_completion(self, by=None, note=None):
+        """Supervisor reviewed the before/after evidence and signs the job off."""
+        for b in self:
+            b.write({'state': 'done', 'quality_ok': True,
+                     'quality_by': by.id if by else False,
+                     'review_note': note or b.review_note,
+                     'finished_at': b.finished_at or fields.Datetime.now()})
+            b.message_post(body=_('✅ اعتمد المشرف إنجاز العمل.%s')
+                           % ((' — %s' % note) if note else ''))
+            if b.provider_id:
+                b._notify_crew(b.provider_id, _('✅ تم اعتماد عملك'), b.name or '')
+            b._notify_customer('done')
+
+    def action_reject_completion(self, by=None, note=None):
+        """Send it back to the crew with a reason."""
+        for b in self:
+            b.write({'state': 'in_progress', 'review_note': note or ''})
+            b.message_post(body=_('↩️ أعاد المشرف العمل للتنفيذ.%s')
+                           % ((' — %s' % note) if note else ''))
+            crew = b.provider_id | b.team_leader_id | b.team_leader_id.team_member_ids
+            b._notify_crew(crew, _('↩️ العمل يحتاج استكمال'),
+                           note or (b.name or ''))
+
     def action_cancel(self):
         self.write({'state': 'cancelled'})
         for b in self:
@@ -294,3 +348,22 @@ class C2CBooking(models.Model):
         self.ensure_one()
         self.write({'rating': str(stars), 'feedback': feedback or self.feedback})
         self.service_id._compute_rating()
+
+
+class C2CBookingMedia(models.Model):
+    """Before/after evidence captured by the crew — as many photos and videos as
+    the job needs, instead of a single before/after image."""
+    _name = 'c2c.booking.media'
+    _description = 'وسائط تنفيذ الحجز'
+    _order = 'kind, id'
+
+    booking_id = fields.Many2one('c2c.booking', string='الحجز', required=True,
+                                 ondelete='cascade', index=True)
+    kind = fields.Selection([('before', 'قبل'), ('after', 'بعد')],
+                            string='النوع', required=True, default='after')
+    media_type = fields.Selection([('photo', 'صورة'), ('video', 'فيديو')],
+                                  string='الوسيط', default='photo')
+    name = fields.Char(string='الاسم')
+    file = fields.Binary(string='الملف', attachment=True)
+    provider_id = fields.Many2one('c2c.provider', string='التقطها')
+    note = fields.Char(string='ملاحظة')

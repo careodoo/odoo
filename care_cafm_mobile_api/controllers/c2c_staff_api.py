@@ -47,6 +47,10 @@ class C2CStaffApi(Controller):
             'provider_id': b.provider_id.id if b.provider_id else None,
             'state': b.state, 'state_label': dict(b._fields['state'].selection).get(b.state, b.state),
             'quality_ok': b.quality_ok,
+            'team': b.team_leader_id.name if b.team_leader_id else None,
+            'team_leader_id': b.team_leader_id.id if b.team_leader_id else None,
+            'team_driver': b.team_driver_id.name if b.team_driver_id else None,
+            'before_count': b.before_count, 'after_count': b.after_count,
         }
         if full:
             d.update({
@@ -56,8 +60,43 @@ class C2CStaffApi(Controller):
                 'before': _abs('/web/image/c2c.booking/%s/proof_before' % b.id) if b.proof_before else None,
                 'after': _abs('/web/image/c2c.booking/%s/proof_after' % b.id) if b.proof_after else None,
                 'rating': b.rating, 'feedback': b.feedback or None,
+                'submitted_by': b.submitted_by.name if b.submitted_by else None,
+                'review_note': b.review_note or None,
+                # the full before/after gallery
+                'media': [{
+                    'id': m.id, 'kind': m.kind, 'media_type': m.media_type,
+                    'is_video': m.media_type == 'video',
+                    'name': m.name or '', 'by': m.provider_id.name if m.provider_id else None,
+                    'note': m.note or None,
+                    'url': _abs('/api/v1/c2c/staff/media/%s' % m.id),
+                    'thumb': _abs('/api/v1/c2c/staff/media/%s' % m.id),
+                } for m in b.media_ids],
             })
         return d
+
+    # ------------------------------------------------------- media streaming
+    @route(API + '/c2c/staff/media/<int:mid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def staff_media(self, mid, **kw):
+        """Serve a before/after file against the app token (crew + managers)."""
+        env = _auth()
+        if not env:
+            return request.not_found()
+        me = self._me(env)
+        if not me:
+            return request.not_found()
+        m = env['c2c.booking.media'].sudo().browse(mid).exists()
+        if not m:
+            return request.not_found()
+        # only for jobs this person may see
+        if me.capabilities()['scope'] != 'all':
+            allowed = env['c2c.booking'].sudo().search(me.booking_domain()).ids
+            if m.booking_id.id not in allowed:
+                return request.not_found()
+        import base64
+        data = base64.b64decode(m.file or b'')
+        ctype = 'video/mp4' if m.media_type == 'video' else 'image/jpeg'
+        return request.make_response(data, headers=[
+            ('Content-Type', ctype), ('Content-Length', str(len(data)))])
 
     # --------------------------------------------------------------- identity
     @route(API + '/c2c/staff/whoami', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
@@ -179,6 +218,8 @@ class C2CStaffApi(Controller):
             return _err('غير مصرّح لهذا الطلب', 403)
         body = _body()
         cap_map = {'start': 'start', 'complete': 'complete', 'proof': 'proof',
+                   'media': 'proof', 'finish': 'complete',
+                   'approve_completion': None, 'reject_completion': None,
                    'assign': 'assign', 'quality': 'quality', 'approve': 'approve',
                    'reassign': 'reassign', 'note': 'view'}
         need = cap_map.get(act)
@@ -198,7 +239,46 @@ class C2CStaffApi(Controller):
                     return _err('الصورة مطلوبة', 422)
                 if ',' in img:
                     img = img.split(',', 1)[1]
+                # keep the legacy single image, and also add it to the gallery so
+                # a crew can attach as many before/after photos & videos as needed
                 b.write({'proof_before' if kind == 'before' else 'proof_after': img})
+                env['c2c.booking.media'].sudo().create({
+                    'booking_id': b.id, 'kind': 'before' if kind == 'before' else 'after',
+                    'media_type': 'video' if body.get('media_type') == 'video' else 'photo',
+                    'name': body.get('name') or ('%s-%s' % (kind, b.name or '')),
+                    'file': img, 'provider_id': me.id, 'note': body.get('note') or False,
+                })
+            elif act == 'media':
+                # add one or more before/after photos/videos in a single call
+                items = body.get('media') or []
+                if not items:
+                    return _err('لا توجد وسائط', 422)
+                Media = env['c2c.booking.media'].sudo()
+                for i, m in enumerate(items):
+                    data = (m.get('data') if isinstance(m, dict) else None) or ''
+                    if not data:
+                        continue
+                    if ',' in data:
+                        data = data.split(',', 1)[1]
+                    Media.create({
+                        'booking_id': b.id,
+                        'kind': 'before' if (m.get('kind') == 'before') else 'after',
+                        'media_type': 'video' if m.get('media_type') == 'video' else 'photo',
+                        'name': m.get('name') or ('media-%d' % (i + 1)),
+                        'file': data, 'provider_id': me.id, 'note': m.get('note') or False,
+                    })
+                b.message_post(body='📷 أضاف %s %d ملف تنفيذ.' % (me.name, len(items)))
+            elif act == 'finish':
+                # crew declares the job finished → supervisor review
+                b.action_submit_review(by=me)
+            elif act == 'approve_completion':
+                if not (self._can(me, 'quality') or self._can(me, 'approve')):
+                    return _err('لا تملك صلاحية الاعتماد', 403)
+                b.action_approve_completion(by=me, note=body.get('note'))
+            elif act == 'reject_completion':
+                if not (self._can(me, 'quality') or self._can(me, 'approve')):
+                    return _err('لا تملك صلاحية الاعتماد', 403)
+                b.action_reject_completion(by=me, note=body.get('note'))
             elif act == 'note':
                 b.staff_note = body.get('note') or b.staff_note
             elif act in ('assign', 'reassign'):
