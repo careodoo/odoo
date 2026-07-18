@@ -82,6 +82,7 @@ class _SecurityIncidentsScreenState extends State<SecurityIncidentsScreen> {
     return Card(
       color: const Color(0xFF152238),
       child: ListTile(
+        onTap: () => _openIncident(i),
         leading: CircleAvatar(
           backgroundColor: _sevColor(i['severity'] as String? ?? 'low'),
           child: const Icon(Icons.warning_amber, color: Colors.white, size: 20),
@@ -91,7 +92,51 @@ class _SecurityIncidentsScreenState extends State<SecurityIncidentsScreen> {
           '${types[i['type']] ?? i['type']} · ${severities[i['severity']] ?? i['severity']}\n${i['description'] ?? ''}',
           style: const TextStyle(color: Color(0xFF9CB2CD)),
         ),
+        trailing: const Icon(Icons.chevron_left_rounded, color: Color(0xFF6B7A90)),
         isThreeLine: true,
+      ),
+    );
+  }
+
+  void _openIncident(Map i) {
+    final sev = i['severity'] as String? ?? 'low';
+    final entries = i.entries.where((e) =>
+        e.key != 'id' && e.value != null && '${e.value}'.trim().isNotEmpty).toList();
+    const labels = {'name': 'المرجع', 'type': 'النوع', 'severity': 'الخطورة', 'description': 'الوصف',
+        'premise': 'الموقع', 'location': 'المكان', 'guard': 'الحارس', 'date': 'التاريخ',
+        'state': 'الحالة', 'reported_by': 'المُبلِّغ', 'action': 'الإجراء', 'note': 'ملاحظة'};
+    showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+      builder: (_) => DraggableScrollableSheet(
+        expand: false, initialChildSize: 0.6, minChildSize: 0.4, maxChildSize: 0.92,
+        builder: (_, sc) => Container(
+          decoration: const BoxDecoration(color: Color(0xFF0F1B2E), borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          clipBehavior: Clip.antiAlias,
+          child: Column(children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+              decoration: BoxDecoration(gradient: LinearGradient(colors: [_sevColor(sev), Color.lerp(_sevColor(sev), Colors.black, 0.45)!], begin: Alignment.topRight, end: Alignment.bottomLeft)),
+              child: Column(children: [
+                Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: Colors.white38, borderRadius: BorderRadius.circular(3)))),
+                Row(children: [
+                  const Icon(Icons.warning_amber_rounded, color: Colors.white),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text('${i['name'] ?? ''}', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900))),
+                  Text('${severities[sev] ?? sev}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+                ]),
+              ]),
+            ),
+            Expanded(child: ListView(controller: sc, padding: const EdgeInsets.all(16), children: [
+              for (final e in entries) Padding(
+                padding: const EdgeInsets.symmetric(vertical: 7),
+                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  SizedBox(width: 110, child: Text(labels[e.key] ?? e.key, style: const TextStyle(color: Color(0xFF9CB2CD), fontSize: 12.5, fontWeight: FontWeight.w700))),
+                  Expanded(child: Text(e.key == 'type' ? '${types[e.value] ?? e.value}' : (e.key == 'severity' ? '${severities[e.value] ?? e.value}' : '${e.value}'),
+                      style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w700))),
+                ]),
+              ),
+            ])),
+          ]),
+        ),
       ),
     );
   }
