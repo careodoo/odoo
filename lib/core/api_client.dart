@@ -495,9 +495,24 @@ class ApiClient {
       List<dynamic>.from((await _handle(
           await http.get(_u('/client/addresses'), headers: await _headers())))['data'] as List);
 
-  Future<List<dynamic>> clientOrders() async =>
-      List<dynamic>.from((await _handle(
-              await http.get(_u('/client/orders'), headers: await _headers())))['data'] as List);
+  Future<List<dynamic>> clientOrders({String? period, String? dateFrom, String? dateTo}) async {
+    final p = <String, String>{};
+    if (period != null) p['period'] = period;
+    if (dateFrom != null) p['date_from'] = dateFrom;
+    if (dateTo != null) p['date_to'] = dateTo;
+    final qs = p.entries.map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}').join('&');
+    return List<dynamic>.from((await _handle(await http.get(
+        _u('/client/orders${qs.isEmpty ? '' : '?$qs'}'), headers: await _headers())))['data'] as List);
+  }
+
+  /// Query string (period/date_from/date_to) for the orders PDF & Excel routes.
+  String ordersReportQuery({String? period, String? dateFrom, String? dateTo}) {
+    final p = <String, String>{};
+    if (period != null) p['period'] = period;
+    if (dateFrom != null) p['date_from'] = dateFrom;
+    if (dateTo != null) p['date_to'] = dateTo;
+    return p.entries.map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}').join('&');
+  }
 
   Future<Map<String, dynamic>> clientOrder(int id) async =>
       Map<String, dynamic>.from((await _handle(
@@ -616,6 +631,13 @@ class ApiClient {
   Future<Map<String, dynamic>> clientScheduleDetail(int id) async =>
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/client/schedule/$id'), headers: await _headers())))['data'] as Map);
+
+  /// action: 'pause' | 'resume' | 'stop' | 'reactivate'. For 'pause', optionally
+  /// pass pauseUntil (YYYY-MM-DD) to auto-resume, and a reason.
+  Future<Map<String, dynamic>> scheduleAction(int id, String action, {String? pauseUntil, String? reason}) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/client/schedule/$id/$action'), headers: await _headers(),
+              body: jsonEncode({if (pauseUntil != null) 'pause_until': pauseUntil, if (reason != null) 'reason': reason}))))['data'] as Map);
 
   Future<List<dynamic>> clientSchedules() async =>
       List<dynamic>.from(((await _handle(

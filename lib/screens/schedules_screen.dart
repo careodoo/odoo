@@ -88,6 +88,7 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
               Expanded(child: Text('${x['name']}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5, color: _navy))),
+              if ('${x['run_state']}' != 'running') ...[_runBadge('${x['run_state']}'), const SizedBox(width: 6)],
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                 decoration: BoxDecoration(color: _cc(comp).withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
@@ -178,6 +179,8 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
                       const SizedBox(width: 8),
                       if (d['require_photo'] == true) _infoPill(Icons.photo_camera_rounded, tr('صورة إثبات', 'Photo proof')),
                     ]),
+                    const SizedBox(height: 14),
+                    _controlBar(id, '${d['run_state'] ?? 'running'}', d['pause_until'] as String?),
                     const SizedBox(height: 16),
                     Row(children: [
                       const Icon(Icons.history_rounded, size: 16, color: _accent),
@@ -198,6 +201,106 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
         ),
       ),
     );
+  }
+
+  Widget _runBadge(String state) {
+    final m = {
+      'paused': (const Color(0xFFF59E0B), Icons.pause_circle_rounded, tr('موقوف مؤقتاً', 'Paused')),
+      'stopped': (const Color(0xFF94A3B8), Icons.stop_circle_rounded, tr('موقوف', 'Stopped')),
+    }[state];
+    if (m == null) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(color: m.$1.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(20), border: Border.all(color: m.$1.withValues(alpha: 0.4))),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(m.$2, size: 13, color: m.$1), const SizedBox(width: 3),
+        Text(m.$3, style: TextStyle(color: m.$1, fontSize: 10.5, fontWeight: FontWeight.w900)),
+      ]),
+    );
+  }
+
+  /// Pause (temporarily/permanently), resume or reactivate a schedule.
+  Widget _controlBar(int id, String state, String? pauseUntil) {
+    final btns = <Widget>[];
+    if (state == 'running') {
+      btns.add(_ctlBtn(Icons.pause_rounded, tr('إيقاف مؤقت', 'Pause'), const Color(0xFFF59E0B), () => _pause(id)));
+      btns.add(_ctlBtn(Icons.stop_rounded, tr('إيقاف نهائي', 'Stop'), const Color(0xFFE11D48), () => _act(id, 'stop', tr('إيقاف هذا الجدول نهائياً؟', 'Stop this schedule permanently?'))));
+    } else if (state == 'paused') {
+      btns.add(_ctlBtn(Icons.play_arrow_rounded, tr('استئناف', 'Resume'), const Color(0xFF16A34A), () => _act(id, 'resume', null)));
+      btns.add(_ctlBtn(Icons.stop_rounded, tr('إيقاف نهائي', 'Stop'), const Color(0xFFE11D48), () => _act(id, 'stop', tr('إيقاف هذا الجدول نهائياً؟', 'Stop this schedule permanently?'))));
+    } else {
+      btns.add(_ctlBtn(Icons.restart_alt_rounded, tr('إعادة تفعيل', 'Reactivate'), const Color(0xFF16A34A), () => _act(id, 'reactivate', null)));
+    }
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      if (state == 'paused' && pauseUntil != null)
+        Padding(padding: const EdgeInsets.only(bottom: 8),
+            child: Text(tr('موقوف حتى $pauseUntil', 'Paused until $pauseUntil'),
+                style: const TextStyle(color: Color(0xFFF59E0B), fontWeight: FontWeight.w800, fontSize: 12.5))),
+      Row(children: [for (final b in btns) Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 3), child: b))]),
+    ]);
+  }
+
+  Widget _ctlBtn(IconData ic, String label, Color c, VoidCallback onTap) => OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(foregroundColor: c, side: BorderSide(color: c), minimumSize: const Size.fromHeight(46)),
+        onPressed: onTap, icon: Icon(ic, size: 18),
+        label: Text(label, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5)),
+      );
+
+  Future<void> _pause(int id) async {
+    final choice = await showModalBottomSheet<String>(context: context, backgroundColor: Colors.transparent, builder: (_) => Container(
+      decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      padding: const EdgeInsets.all(16),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(tr('إيقاف الجدول مؤقتاً', 'Pause schedule'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: _navy)),
+        const SizedBox(height: 4),
+        Text(tr('يتوقف توليد المهام والتنبيهات حتى الاستئناف.', 'Stops generating tasks & alerts until resumed.'),
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)),
+        const SizedBox(height: 14),
+        ListTile(leading: const Icon(Icons.pause_circle_rounded, color: Color(0xFFF59E0B)),
+            title: Text(tr('إيقاف مفتوح (حتى الاستئناف يدوياً)', 'Open-ended (until resumed)')),
+            onTap: () => Navigator.pop(context, 'open')),
+        ListTile(leading: const Icon(Icons.event_rounded, color: Color(0xFF0891B2)),
+            title: Text(tr('إيقاف حتى تاريخ محدّد', 'Pause until a date')),
+            onTap: () => Navigator.pop(context, 'date')),
+      ]),
+    ));
+    if (choice == null) return;
+    String? until;
+    if (choice == 'date') {
+      final now = DateTime.now();
+      final picked = await showDatePicker(context: context, initialDate: now.add(const Duration(days: 7)),
+          firstDate: now, lastDate: now.add(const Duration(days: 365)));
+      if (picked == null) return;
+      until = '${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+    }
+    await _runAction(id, 'pause', until: until);
+  }
+
+  Future<void> _act(int id, String action, String? confirm) async {
+    if (confirm != null) {
+      final ok = await showDialog<bool>(context: context, builder: (c) => AlertDialog(
+        title: Text(tr('تأكيد', 'Confirm')), content: Text(confirm),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('تراجع', 'Back'))),
+          FilledButton(style: FilledButton.styleFrom(backgroundColor: _accent), onPressed: () => Navigator.pop(c, true), child: Text(tr('تأكيد', 'Confirm'))),
+        ]));
+      if (ok != true) return;
+    }
+    await _runAction(id, action);
+  }
+
+  Future<void> _runAction(int id, String action, {String? until}) async {
+    try {
+      await context.read<AuthProvider>().api.scheduleAction(id, action, pauseUntil: until);
+      if (!mounted) return;
+      Navigator.pop(context); // close detail sheet
+      setState(_load);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(tr('تم تحديث حالة الجدول', 'Schedule updated')),
+        backgroundColor: const Color(0xFF16A34A), behavior: SnackBarBehavior.floating));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
   }
 
   Widget _hStat(String v, String l) => Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

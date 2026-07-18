@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/widgets.dart';
+import 'excel_export.dart';
+import 'pdf_report_screen.dart';
 
 /// Client purchase orders — a professional dashboard: KPI header, filter chips,
 /// rich order cards, and a polished tracking/detail sheet.
@@ -15,6 +17,9 @@ class OrdersScreen extends StatefulWidget {
 class _OrdersScreenState extends State<OrdersScreen> {
   late Future<List<dynamic>> _future;
   String _filter = 'all';
+  String _period = 'all'; // all | today | month | year | custom
+  DateTime? _from;
+  DateTime? _to;
 
   static const _accent = Color(0xFFC0392B);
   static const _navy = Color(0xFF0E3A5F);
@@ -34,7 +39,44 @@ class _OrdersScreenState extends State<OrdersScreen> {
     _load();
   }
 
-  void _load() => _future = context.read<AuthProvider>().api.clientOrders();
+  static String _fmt(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  void _load() => _future = context.read<AuthProvider>().api.clientOrders(
+        period: (_period == 'all' || _period == 'custom') ? null : _period,
+        dateFrom: _period == 'custom' && _from != null ? _fmt(_from!) : null,
+        dateTo: _period == 'custom' && _to != null ? _fmt(_to!) : null,
+      );
+
+  String _reportQuery() => context.read<AuthProvider>().api.ordersReportQuery(
+        period: (_period == 'all' || _period == 'custom') ? null : _period,
+        dateFrom: _period == 'custom' && _from != null ? _fmt(_from!) : null,
+        dateTo: _period == 'custom' && _to != null ? _fmt(_to!) : null,
+      );
+
+  Future<void> _pickCustomRange() async {
+    final now = DateTime.now();
+    final r = await showDateRangePicker(context: context,
+        firstDate: DateTime(now.year - 3), lastDate: DateTime(now.year + 1),
+        initialDateRange: _from != null && _to != null ? DateTimeRange(start: _from!, end: _to!) : null);
+    if (r == null) return;
+    setState(() { _period = 'custom'; _from = r.start; _to = r.end; _load(); });
+  }
+
+  void _setPeriod(String p) => setState(() { _period = p; if (p != 'custom') { _from = null; _to = null; } _load(); });
+
+  Future<void> _print() async {
+    final q = _reportQuery();
+    Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+      title: tr('تقرير طلبات الشراء', 'Purchase orders report'),
+      path: '/cafm/orders/report.pdf${q.isEmpty ? '' : '?$q'}', fileName: 'purchase-orders.pdf')));
+  }
+
+  Future<void> _excel() async {
+    final q = _reportQuery();
+    await exportExcelFile(context, path: '/cafm/orders/export${q.isEmpty ? '' : '?$q'}',
+        fileName: 'purchase-orders.xlsx', shareText: tr('طلبات الشراء', 'Purchase orders'));
+  }
 
   // ————————————————————————————————————————————— detail sheet
   Future<void> _openOrder(int id) async {
@@ -321,7 +363,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F9),
-      appBar: AppBar(title: Text(tr('طلبات الشراء', 'Purchase orders')), backgroundColor: _accent, foregroundColor: Colors.white),
+      appBar: AppBar(title: Text(tr('طلبات الشراء', 'Purchase orders')), backgroundColor: _accent, foregroundColor: Colors.white,
+        actions: [
+          IconButton(icon: const Icon(Icons.print_rounded), tooltip: tr('طباعة تقرير', 'Print report'), onPressed: _print),
+          IconButton(icon: const Icon(Icons.grid_on_rounded), tooltip: tr('تصدير Excel', 'Export Excel'), onPressed: _excel),
+        ]),
       body: RefreshIndicator(
         color: _accent,
         onRefresh: () async => setState(_load),
@@ -330,21 +376,22 @@ class _OrdersScreenState extends State<OrdersScreen> {
           builder: (_, snap) {
             if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: _accent));
             final all = snap.data!.cast<Map>();
-            if (all.isEmpty) {
-              return ListView(children: [
-                const SizedBox(height: 120),
-                Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.grey.shade300),
-                const SizedBox(height: 12),
-                Center(child: Text(tr('لا طلبات — تسوّق من المتجر', 'No orders yet — shop now'),
-                    style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w600))),
-              ]);
-            }
             final shown = all.where((o) => _match(o)).toList();
             return ListView(padding: const EdgeInsets.only(bottom: 24), children: [
-              _statsHeader(all),
-              _filterBar(all),
+              _periodBar(),
+              if (all.isNotEmpty) _statsHeader(all),
+              if (all.isNotEmpty) _filterBar(all),
               const SizedBox(height: 4),
-              if (shown.isEmpty)
+              if (all.isEmpty)
+                Padding(padding: const EdgeInsets.fromLTRB(20, 60, 20, 20), child: Column(children: [
+                  Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.grey.shade300),
+                  const SizedBox(height: 12),
+                  Text(_period == 'all'
+                          ? tr('لا طلبات — تسوّق من المتجر', 'No orders yet — shop now')
+                          : tr('لا طلبات ضمن الفترة المحددة', 'No orders in the selected period'),
+                      textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
+                ]))
+              else if (shown.isEmpty)
                 Padding(padding: const EdgeInsets.all(40), child: Center(
                     child: Text(tr('لا طلبات في هذا التصنيف', 'No orders in this filter'),
                         style: TextStyle(color: Colors.grey.shade500)))),
@@ -353,6 +400,45 @@ class _OrdersScreenState extends State<OrdersScreen> {
           },
         ),
       ),
+    );
+  }
+
+  Widget _periodBar() {
+    const periods = [
+      ('all', 'الكل', 'All'), ('today', 'اليوم', 'Today'),
+      ('month', 'هذا الشهر', 'Month'), ('year', 'هذه السنة', 'Year'),
+    ];
+    final customLabel = (_period == 'custom' && _from != null && _to != null)
+        ? '${_fmt(_from!)} → ${_fmt(_to!)}'
+        : tr('مدة مخصصة', 'Custom');
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 10, 10, 4),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        SizedBox(height: 38, child: ListView(scrollDirection: Axis.horizontal, children: [
+          for (final p in periods) Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 3),
+            child: ChoiceChip(
+              selected: _period == p.$1,
+              label: Text(tr(p.$2, p.$3), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5,
+                  color: _period == p.$1 ? Colors.white : _navy)),
+              selectedColor: _accent, backgroundColor: Colors.white,
+              side: BorderSide(color: _period == p.$1 ? _accent : Colors.grey.shade300),
+              onSelected: (_) => _setPeriod(p.$1),
+            ),
+          ),
+          Padding(padding: const EdgeInsets.symmetric(horizontal: 3),
+            child: ChoiceChip(
+              selected: _period == 'custom',
+              avatar: Icon(Icons.date_range_rounded, size: 16, color: _period == 'custom' ? Colors.white : _accent),
+              label: Text(customLabel, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5,
+                  color: _period == 'custom' ? Colors.white : _navy)),
+              selectedColor: _accent, backgroundColor: Colors.white,
+              side: BorderSide(color: _period == 'custom' ? _accent : Colors.grey.shade300),
+              onSelected: (_) => _pickCustomRange(),
+            ),
+          ),
+        ])),
+      ]),
     );
   }
 
