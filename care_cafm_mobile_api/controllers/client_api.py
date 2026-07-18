@@ -2654,6 +2654,66 @@ class ClientApi(Controller):
                 pass
         return _ok(self._obs_dict(o))
 
+    def _obs_media(self, env, o):
+        atts = env['ir.attachment'].sudo().search(
+            [('res_model', '=', 'care.cafm.observation'), ('res_id', '=', o.id)], order='id desc')
+        out = []
+        for a in atts:
+            mt = a.mimetype or ''
+            u = _abs('/api/v1/client/attachment/%d' % a.id)
+            out.append({'id': a.id, 'name': a.name, 'mimetype': mt, 'type': mt,
+                        'is_video': mt.startswith('video'),
+                        'url': u, 'thumb': u})
+        return out
+
+    # a token-authenticated proxy for attachments on the client's own records
+    # (observations/faults/work orders) — /web/content needs a web session, this
+    # honours the app's Bearer token instead.
+    _ATT_MODEL_FACILITY = {
+        'care.cafm.observation': 'facility_id',
+        'care.cafm.maint.fault': 'facility_id',
+        'care.cafm.workorder': 'facility_id',
+    }
+
+    @route('/api/v1/client/attachment/<int:aid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def client_attachment(self, aid, **kw):
+        env = _auth() or _report_env()
+        if not env:
+            return request.not_found()
+        a = env['ir.attachment'].sudo().browse(aid).exists()
+        if not a:
+            return request.not_found()
+        # authorise: the attachment must hang off one of the client's own records
+        fld = self._ATT_MODEL_FACILITY.get(a.res_model)
+        if fld and a.res_id:
+            rec = env[a.res_model].sudo().browse(a.res_id).exists()
+            fac = rec and rec[fld]
+            if not fac or fac.id not in self._fac_ids(env):
+                return request.not_found()
+        elif a.res_model in self._ATT_MODEL_FACILITY:
+            return request.not_found()
+        data = a.raw or b''
+        return request.make_response(data, headers=[
+            ('Content-Type', a.mimetype or 'application/octet-stream'),
+            ('Content-Length', str(len(data))),
+            ('Content-Disposition', content_disposition(a.name or ('file-%d' % a.id)).replace('attachment', 'inline')),
+        ])
+
+    @route(API + '/client/observation/<int:oid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def observation_detail(self, oid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        o = env['care.cafm.observation'].sudo().browse(oid).exists()
+        if not o or o.facility_id.id not in self._fac_ids(env):
+            return _err('غير موجود', 404)
+        d = self._obs_dict(o)
+        d['media'] = self._obs_media(env, o)
+        d['can_convert'] = bool(self._can_add_workers(env) and not o.workorder_id
+                                and o.state not in ('closed', 'cancelled'))
+        d['can_cancel'] = bool(o.state not in ('closed', 'cancelled'))
+        return _ok(d)
+
     @route(API + '/client/observation/<int:oid>/workorder', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
     def observation_to_wo(self, oid, **kw):
         env = _auth()
@@ -2666,6 +2726,47 @@ class ClientApi(Controller):
             return _err('غير موجود', 404)
         o.action_make_workorder()
         return _ok({'workorder': o.workorder_id.name})
+
+    @route(API + '/client/observation/<int:oid>/cancel', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def observation_cancel(self, oid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        o = env['care.cafm.observation'].sudo().browse(oid).exists()
+        if not o or o.facility_id.id not in self._fac_ids(env):
+            return _err('غير موجود', 404)
+        if 'cancelled' in dict(o._fields['state'].selection):
+            o.state = 'cancelled'
+        return _ok(self._obs_dict(o))
+
+    @route(API + '/client/observation/<int:oid>/media', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def observation_add_media(self, oid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        o = env['care.cafm.observation'].sudo().browse(oid).exists()
+        if not o or o.facility_id.id not in self._fac_ids(env):
+            return _err('غير موجود', 404)
+        media = _body().get('media') or []
+        added = 0
+        for i, m in enumerate(media):
+            data = (m.get('data') or '') if isinstance(m, dict) else str(m)
+            if not data:
+                continue
+            try:
+                env['ir.attachment'].sudo().create({
+                    'name': (m.get('name') if isinstance(m, dict) else None) or ('media-%d' % (i + 1)),
+                    'datas': data, 'res_model': 'care.cafm.observation', 'res_id': o.id,
+                    'mimetype': (m.get('mimetype') if isinstance(m, dict) else None) or 'image/jpeg'})
+                added += 1
+            except Exception:
+                pass
+        if added:
+            try:
+                o.message_post(body=_('أضاف العميل %d ملف وسائط.') % added)
+            except Exception:
+                pass
+        return _ok({'added': added, 'media': self._obs_media(env, o)})
 
     # ---- preventive maintenance (PPM) ---------------------------------------
     def _ppm_dict(self, p):
@@ -2801,6 +2902,18 @@ class ClientApi(Controller):
             except Exception:
                 pass
         wo = env['care.cafm.workorder'].with_user(SUPERUSER_ID).create(vals)
+        # attach client-supplied photos/videos (base64) to the work order
+        for i, m in enumerate(b.get('media') or []):
+            data = (m.get('data') if isinstance(m, dict) else None) or ''
+            if not data:
+                continue
+            try:
+                env['ir.attachment'].sudo().create({
+                    'name': (m.get('name') if isinstance(m, dict) else None) or ('media-%d' % (i + 1)),
+                    'datas': data, 'res_model': 'care.cafm.workorder', 'res_id': wo.id,
+                    'mimetype': (m.get('mimetype') if isinstance(m, dict) else None) or 'image/jpeg'})
+            except Exception:
+                pass
         # a direct assignment should move it out of the unassigned state
         if wo.employee_id and wo.state == 'new':
             try:
