@@ -184,20 +184,16 @@ class MoreScreen extends StatelessWidget {
                     ]),
                   ),
                 ])),
-                // notifications
-                Stack(clipBehavior: Clip.none, children: [
-                  Container(
-                    width: 40, height: 40, alignment: Alignment.center,
-                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(13)),
-                    child: const Icon(Icons.notifications_rounded, color: Colors.white, size: 20),
-                  ),
-                  if (p.unreadNotifications > 0)
-                    Positioned(right: -4, top: -4, child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(color: Color(0xFFFBBF24), shape: BoxShape.circle),
-                      child: Text('${p.unreadNotifications}', style: const TextStyle(color: Color(0xFF7C2D12), fontSize: 9, fontWeight: FontWeight.w900)),
-                    )),
-                ]),
+                // polished header action icons
+                _headerIcon(context, Icons.language_rounded, onTap: () => showLanguagePicker(context)),
+                const SizedBox(width: 8),
+                if (p.isAdmin || context.read<AuthProvider>().isImpersonating) ...[
+                  _headerIcon(context, Icons.switch_account_rounded, onTap: () => _switchUser(context)),
+                  const SizedBox(width: 8),
+                ],
+                _headerIcon(context, Icons.notifications_rounded,
+                    badge: p.unreadNotifications,
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()))),
               ]),
               const SizedBox(height: 16),
               // glass info strip — "many data" at a glance
@@ -232,6 +228,77 @@ class MoreScreen extends StatelessWidget {
             style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontWeight: FontWeight.w600))),
         const SizedBox(height: 28),
       ]),
+    );
+  }
+
+  Widget _headerIcon(BuildContext context, IconData icon, {VoidCallback? onTap, int badge = 0}) => Stack(
+        clipBehavior: Clip.none, children: [
+          Material(
+            color: Colors.white.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(13),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(13), onTap: onTap,
+              child: Container(width: 40, height: 40, alignment: Alignment.center,
+                  child: Icon(icon, color: Colors.white, size: 20)),
+            ),
+          ),
+          if (badge > 0) Positioned(right: -4, top: -4, child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: const BoxDecoration(color: Color(0xFFFBBF24), shape: BoxShape.circle),
+            child: Text('$badge', style: const TextStyle(color: Color(0xFF7C2D12), fontSize: 9, fontWeight: FontWeight.w900)),
+          )),
+        ],
+      );
+
+  /// Admin/demo: preview the app as any other user (impersonation switcher).
+  void _switchUser(BuildContext context) {
+    final auth = context.read<AuthProvider>();
+    showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+      builder: (_) => DraggableScrollableSheet(
+        expand: false, initialChildSize: 0.75, minChildSize: 0.5, maxChildSize: 0.95,
+        builder: (c, sc) => Container(
+          decoration: const BoxDecoration(color: Color(0xFFF6F7F9), borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          clipBehavior: Clip.antiAlias,
+          child: Column(children: [
+            Container(width: double.infinity, padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+              decoration: const BoxDecoration(gradient: LinearGradient(colors: [_redBright, _redDeep], begin: Alignment.topRight, end: Alignment.bottomLeft)),
+              child: Column(children: [
+                Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: Colors.white54, borderRadius: BorderRadius.circular(3)))),
+                Row(children: [
+                  const Icon(Icons.switch_account_rounded, color: Colors.white),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(tr('عرض التطبيق كـ (تجريبي)', 'Preview app as (demo)'),
+                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900))),
+                ]),
+              ])),
+            Expanded(child: FutureBuilder<List<dynamic>>(
+              future: auth.impersonatableUsers(),
+              builder: (c, snap) {
+                if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+                final users = snap.data!;
+                return ListView(controller: sc, padding: const EdgeInsets.all(8), children: [
+                  for (final u in users) Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: ListTile(
+                      leading: CircleAvatar(backgroundColor: _navy, child: Text('${u['name']}'.characters.first, style: const TextStyle(color: Colors.white))),
+                      title: Text('${u['name']}', style: const TextStyle(fontWeight: FontWeight.w800)),
+                      subtitle: Text('${u['login']} · ${u['kind']}', style: const TextStyle(fontSize: 12)),
+                      trailing: const Icon(Icons.login_rounded, color: _navy),
+                      onTap: () async {
+                        Navigator.pop(c);
+                        try {
+                          await auth.impersonate('${u['login']}');
+                        } catch (e) {
+                          if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+                        }
+                      },
+                    ),
+                  ),
+                ]);
+              },
+            )),
+          ]),
+        ),
+      ),
     );
   }
 

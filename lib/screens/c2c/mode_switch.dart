@@ -37,7 +37,9 @@ List<AppMode> availableModes(Map<String, dynamic>? itf) {
       case 'pms':
         return i['pms'] == true;
       case 'management':
-        return i['staff'] == true || i['admin'] == true;
+        // Back-office is for real managers/admins — not every internal user.
+        // (Older sessions without the 'management' flag fall back to 'admin'.)
+        return i['management'] == true || i['admin'] == true;
     }
     return false;
   }).toList();
