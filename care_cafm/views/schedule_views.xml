@@ -22,6 +22,12 @@
             <form>
                 <header>
                     <button name="action_generate_today" type="object" string="🛠️ توليد تكرارات اليوم" class="btn-primary"/>
+                    <button name="action_pause" type="object" string="⏸️ إيقاف مؤقت" invisible="paused or not active"/>
+                    <button name="action_resume" type="object" string="▶️ استئناف" class="btn-primary" invisible="not paused"/>
+                    <button name="action_stop_permanent" type="object" string="⏹️ إيقاف نهائي" invisible="not active"/>
+                    <button name="action_reactivate" type="object" string="♻️ إعادة تفعيل" class="btn-primary" invisible="active"/>
+                    <field name="paused" invisible="1"/>
+                    <field name="active" invisible="1"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -45,6 +51,11 @@
                     <group>
                         <group string="الإثبات المطلوب">
                             <field name="require_presence"/><field name="require_photo"/><field name="require_video"/>
+                        </group>
+                        <group string="الإيقاف المؤقت">
+                            <field name="paused"/>
+                            <field name="pause_until" invisible="not paused"/>
+                            <field name="pause_reason" invisible="not paused"/>
                         </group>
                         <group string="الالتزام">
                             <field name="occ_total"/><field name="occ_done"/>

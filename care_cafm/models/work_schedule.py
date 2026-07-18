@@ -39,6 +39,12 @@ class CafmSchedule(models.Model):
     grace_minutes = fields.Integer(string='مهلة السماح (دقيقة)', default=10,
                                    help='بعدها تُعتبر الزيارة متأخرة.')
 
+    # temporary pause (paused/pause_until) vs permanent stop (active=False)
+    paused = fields.Boolean(string='موقوف مؤقتاً', default=False, tracking=True)
+    pause_until = fields.Date(string='إيقاف حتى', tracking=True,
+                              help='يُستأنف تلقائياً بعد هذا التاريخ. اتركه فارغاً لإيقاف مؤقت مفتوح.')
+    pause_reason = fields.Char(string='سبب الإيقاف')
+
     require_presence = fields.Boolean(string='إثبات حضور (QR)', default=True)
     require_photo = fields.Boolean(string='صورة إثبات', default=True)
     require_video = fields.Boolean(string='فيديو إثبات', default=False)
@@ -90,6 +96,38 @@ class CafmSchedule(models.Model):
             mins += step
         return out
 
+    def _paused_now(self):
+        """True while a temporary pause is in effect; auto-resumes once the
+        pause_until date has passed."""
+        self.ensure_one()
+        if not self.paused:
+            return False
+        if self.pause_until and fields.Date.context_today(self) > self.pause_until:
+            self.paused = False
+            self.pause_until = False
+            self.message_post(body=_('استُؤنف الجدول تلقائياً بانتهاء مدة الإيقاف.'))
+            return False
+        return True
+
+    def action_pause(self):
+        """Temporarily pause: stop generating/notifying until resumed or until
+        pause_until passes."""
+        self.write({'paused': True})
+        return True
+
+    def action_resume(self):
+        self.write({'paused': False, 'pause_until': False})
+        return True
+
+    def action_stop_permanent(self):
+        """Permanently stop the schedule (archive). Reactivate to bring back."""
+        self.write({'active': False, 'paused': False})
+        return True
+
+    def action_reactivate(self):
+        self.write({'active': True})
+        return True
+
     def action_generate_today(self):
         for s in self:
             s._generate_upto(fields.Datetime.now() + timedelta(minutes=s.every_minutes))
@@ -99,7 +137,7 @@ class CafmSchedule(models.Model):
         """Materialise occurrences for today's slots up to `until` (UTC)."""
         Occ = self.env['care.cafm.schedule.occurrence'].sudo()
         for s in self:
-            if not s.active:
+            if not s.active or s._paused_now():
                 continue
             today = fields.Date.context_today(s)
             existing = set(Occ.search([('schedule_id', '=', s.id)]).mapped('planned_time'))
@@ -114,12 +152,14 @@ class CafmSchedule(models.Model):
     def _cron_run(self):
         """Generate due occurrences, notify workers, and flag late/missed."""
         now = fields.Datetime.now()
-        schedules = self.search([('active', '=', True)])
+        schedules = self.search([('active', '=', True)]).filtered(lambda s: not s._paused_now())
         schedules._generate_upto(now + timedelta(minutes=5))
         Occ = self.env['care.cafm.schedule.occurrence'].sudo()
         pend = Occ.search([('state', '=', 'pending'), ('schedule_id.active', '=', True)])
         for o in pend:
             sched = o.schedule_id
+            if sched._paused_now():
+                continue
             # notify at due time
             if o.planned_time and o.planned_time <= now and not o.notified:
                 if o.employee_id.user_id and 'care.cafm.notification' in self.env:

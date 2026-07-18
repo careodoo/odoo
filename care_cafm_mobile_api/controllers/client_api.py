@@ -176,13 +176,16 @@ class ClientApi(Controller):
         if 'care.cafm.schedule' not in env:
             return _ok({'schedules': [], 'occurrences': []})
         facs = self._facilities(env)
-        Sch = env['care.cafm.schedule'].sudo()
+        Sch = env['care.cafm.schedule'].sudo().with_context(active_test=False)
         scheds = Sch.search([('facility_id', 'in', facs.ids)]) if facs else Sch.browse()
         st_lbl = {'pending': 'قيد الانتظار', 'done': 'منجزة في الوقت', 'late': 'متأخرة', 'missed': 'فائتة'}
         out = []
         for s in scheds:
+            run_state = 'stopped' if not s.active else ('paused' if s.paused else 'running')
             out.append({
                 'id': s.id, 'code': s.code, 'name': s.name, 'active': s.active,
+                'paused': s.paused, 'pause_until': str(s.pause_until) if s.pause_until else None,
+                'run_state': run_state,
                 'service': s.service_id.name or None, 'service_type': s.service_type,
                 'location': s.location_id.name or s.facility_id.name or None,
                 'employee': s.employee_id.name or None,
@@ -203,6 +206,38 @@ class ClientApi(Controller):
             'state': o.state, 'state_label': st_lbl.get(o.state, o.state),
         } for o in occs]
         return _ok({'schedules': out, 'occurrences': occ_out})
+
+    @route(API + '/client/schedule/<int:sid>/<string:action>', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def schedule_action(self, sid, action, **kw):
+        """Pause temporarily (with optional pause_until), resume, stop permanently
+        (archive) or reactivate a work schedule."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if not self._can_add_workers(env):
+            return _err('غير مسموح', 403)
+        s = env['care.cafm.schedule'].sudo().with_context(active_test=False).browse(sid).exists()
+        if not s or s.facility_id.id not in self._fac_ids(env):
+            return _err('غير موجود', 404)
+        b = _body()
+        if action == 'pause':
+            vals = {'paused': True}
+            if b.get('pause_until'):
+                vals['pause_until'] = b['pause_until']
+            if b.get('reason'):
+                vals['pause_reason'] = b['reason']
+            s.write(vals)
+        elif action == 'resume':
+            s.action_resume()
+        elif action == 'stop':
+            s.action_stop_permanent()
+        elif action == 'reactivate':
+            s.action_reactivate()
+        else:
+            return _err('إجراء غير معروف', 400)
+        run_state = 'stopped' if not s.active else ('paused' if s.paused else 'running')
+        return _ok({'id': s.id, 'run_state': run_state, 'paused': s.paused,
+                    'active': s.active, 'pause_until': str(s.pause_until) if s.pause_until else None})
 
     @route(API + '/client/schedule/options', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def schedule_options(self, **kw):
@@ -270,6 +305,8 @@ class ClientApi(Controller):
             [('schedule_id', '=', s.id)], order='planned_time desc', limit=100)
         return _ok({
             'id': s.id, 'name': s.name, 'code': s.code, 'active': s.active,
+            'paused': s.paused, 'pause_until': str(s.pause_until) if s.pause_until else None,
+            'run_state': 'stopped' if not s.active else ('paused' if s.paused else 'running'),
             'service': s.service_id.name or None, 'service_type': s.service_type,
             'facility': s.facility_id.name or None,
             'location': s.location_id.name or None, 'employee': s.employee_id.name or None,
