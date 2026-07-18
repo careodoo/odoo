@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:nfc_manager/nfc_manager.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../core/i18n.dart';
 
@@ -43,8 +44,57 @@ class _PresenceScanScreenState extends State<PresenceScanScreen> {
     Navigator.pop(context, code);
   }
 
+  /// Some locations carry an NFC tag instead of (or as well as) a QR sticker —
+  /// tapping the phone on it proves presence exactly the same way.
+  Future<void> _scanNfc() async {
+    try {
+      final available = await NfcManager.instance.isAvailable();
+      if (!available) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(tr('NFC غير متاح على هذا الجهاز', 'NFC is not available on this device'))));
+        }
+        return;
+      }
+      if (!mounted) return;
+      showDialog(context: context, barrierDismissible: true, builder: (_) => AlertDialog(
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.nfc_rounded, size: 46, color: Color(0xFF0E3A5F)),
+          const SizedBox(height: 12),
+          Text(tr('قرّب الجهاز من وسم الموقع…', 'Hold the phone near the location tag…'),
+              textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700)),
+        ]),
+      ));
+      NfcManager.instance.startSession(onDiscovered: (tag) async {
+        String? code;
+        try {
+          final ndef = Ndef.from(tag);
+          final rec = ndef?.cachedMessage?.records.first;
+          if (rec != null && rec.payload.isNotEmpty) {
+            // NDEF text records start with a status byte + language code
+            final bytes = rec.payload;
+            final langLen = bytes.first & 0x3F;
+            code = String.fromCharCodes(bytes.skip(1 + langLen));
+          }
+        } catch (_) {}
+        // fall back to the tag's hardware id
+        code ??= (tag.data['nfca']?['identifier'] as List?)
+            ?.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+        await NfcManager.instance.stopSession();
+        if (!mounted || code == null || code.isEmpty || _done) return;
+        _done = true;
+        _c?.stop();
+        Navigator.pop(context); // close the "hold near tag" dialog
+        Navigator.pop(context, code);
+      });
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
   @override
   void dispose() {
+    try { NfcManager.instance.stopSession(); } catch (_) {}
     _c?.dispose();
     super.dispose();
   }
@@ -55,12 +105,29 @@ class _PresenceScanScreenState extends State<PresenceScanScreen> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black, foregroundColor: Colors.white,
-        title: Text(tr('إثبات الحضور — امسح رمز الموقع', 'Prove presence — scan location')),
+        title: Text(tr('إثبات الحضور — QR أو NFC', 'Prove presence — QR or NFC')),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.nfc_rounded),
+            tooltip: tr('مسح NFC', 'Tap NFC'),
+            onPressed: _scanNfc,
+          ),
+        ],
       ),
       body: _denied
-          ? Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(
-              tr('صلاحية الكاميرا مطلوبة لإثبات الحضور.', 'Camera permission is required.'),
-              textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70))))
+          ? Center(child: Padding(padding: const EdgeInsets.all(24), child: Column(
+              mainAxisSize: MainAxisSize.min, children: [
+                Text(tr('صلاحية الكاميرا مطلوبة لمسح QR — أو استخدم NFC.',
+                        'Camera permission is required for QR — or use NFC.'),
+                    textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70)),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0E3A5F)),
+                  onPressed: _scanNfc,
+                  icon: const Icon(Icons.nfc_rounded),
+                  label: Text(tr('إثبات الحضور بـ NFC', 'Prove presence with NFC')),
+                ),
+              ])))
           : _c == null
               ? const Center(child: CircularProgressIndicator(color: Colors.white))
               : Stack(children: [
@@ -83,6 +150,19 @@ class _PresenceScanScreenState extends State<PresenceScanScreen> {
                     const SizedBox(height: 10),
                     Text(tr('وجّه الكاميرا نحو ملصق QR الخاص بالموقع', 'Point at the location QR sticker'),
                         style: const TextStyle(color: Colors.white70)),
+                    const SizedBox(height: 14),
+                    // the location may carry an NFC tag instead of a sticker
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white54),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      ),
+                      onPressed: _scanNfc,
+                      icon: const Icon(Icons.nfc_rounded),
+                      label: Text(tr('أو قرّب الجهاز من وسم NFC', 'Or tap an NFC tag'),
+                          style: const TextStyle(fontWeight: FontWeight.w800)),
+                    ),
                   ])),
                 ]),
     );
