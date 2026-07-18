@@ -75,10 +75,12 @@ class _StaffShellState extends State<StaffShell> {
             isManager ? StaffDashboard(me: me, onOpenJobs: () => setState(() => _tab = 1)) : StaffJobsScreen(me: me, embedded: true, defaultFilter: 'today'),
           ),
           _StaffTab(Icons.assignment_rounded, tr('المهام', 'Jobs'), StaffJobsScreen(me: me, embedded: true)),
+          // short labels: a nav bar of 5-6 destinations cannot fit long Arabic
+          // titles — they wrap and collide under the icons.
           if (me['role'] == 'driver' || me['role'] == 'ops_manager')
-            _StaffTab(Icons.local_shipping_rounded, tr('رحلات النفايات', 'Waste trips'), const DriverWasteTripsScreen()),
+            _StaffTab(Icons.local_shipping_rounded, tr('النفايات', 'Trips'), const DriverWasteTripsScreen()),
           if (me['role'] == 'worker' || me['role'] == 'supervisor' || me['role'] == 'ops_manager')
-            _StaffTab(Icons.factory_rounded, tr('استلام بالمركز', 'Center intake'), const ReceiverWasteScreen()),
+            _StaffTab(Icons.factory_rounded, tr('المركز', 'Intake'), const ReceiverWasteScreen()),
           if (hasTeam) _StaffTab(Icons.groups_rounded, tr('الفريق', 'Team'), StaffTeamScreen(me: me)),
           _StaffTab(Icons.person_rounded, tr('حسابي', 'Me'), _AccountTab(me: me, onChanged: _reload)),
         ];
@@ -95,9 +97,23 @@ class _StaffShellState extends State<StaffShell> {
             ),
             child: NavigationBar(
               selectedIndex: idx,
-              height: 64,
+              height: 66,
+              // With 5+ destinations (an ops manager gets six) every label no
+              // longer fits side by side, so show only the active one — the
+              // icons then sit centred in their own slot instead of colliding.
+              labelBehavior: tabs.length > 4
+                  ? NavigationDestinationLabelBehavior.onlyShowSelected
+                  : NavigationDestinationLabelBehavior.alwaysShow,
               onDestinationSelected: (i) => setState(() => _tab = i),
-              destinations: [for (final t in tabs) NavigationDestination(icon: Icon(t.icon, color: Crew.slate), selectedIcon: Icon(t.icon, color: Crew.teal), label: t.label)],
+              destinations: [
+                for (final t in tabs)
+                  NavigationDestination(
+                    icon: Icon(t.icon, color: Crew.slate),
+                    selectedIcon: Icon(t.icon, color: Crew.teal),
+                    label: t.label,
+                    tooltip: t.label,
+                  ),
+              ],
             ),
           ),
         );
