@@ -45,6 +45,9 @@ class MoreScreen extends StatelessWidget {
     final p = context.watch<AuthProvider>().profile!;
     context.watch<LangProvider>();
     final name = p.name;
+    // a plain field worker (cleaner/guard/…) — not a client, manager or admin.
+    // They should only see their own tools, never the client/back-office consoles.
+    final isField = p.role != 'client' && !p.canAddWorkers && !p.isSupervisor && !p.isAdmin;
     final items = <Widget>[];
     var toolCount = 0;
 
@@ -76,22 +79,26 @@ class MoreScreen extends StatelessWidget {
 
     // ===== Work & operations =====
     header(tr('العمل والعمليات', 'Work & operations'));
-    tile(Icons.assignment_rounded, tr('أوامر العمل', 'Work orders'), const WorkOrdersScreen(), c: _navy);
+    tile(Icons.assignment_rounded, isField ? tr('مهامي', 'My tasks') : tr('أوامر العمل', 'Work orders'), const WorkOrdersScreen(), c: _navy);
     tile(Icons.fact_check_rounded, tr('الجودة والجولات', 'Quality & rounds'), const QualityScreen(), c: const Color(0xFF0EA5A4));
-    tile(Icons.inbox_rounded, tr('طلبات الخدمة', 'Service requests'), const RequestsScreen(), c: const Color(0xFFE6295C));
+    if (!isField) tile(Icons.inbox_rounded, tr('طلبات الخدمة', 'Service requests'), const RequestsScreen(), c: const Color(0xFFE6295C));
     tile(Icons.event_repeat_rounded, tr('جدولة الأعمال', 'Work schedules'), const SchedulesScreen(), c: const Color(0xFF0D9488));
-    tile(Icons.handyman_rounded, tr('الصيانة', 'Maintenance'), const MaintenanceScreen(), c: const Color(0xFFF7A23B));
+    if (!isField) tile(Icons.handyman_rounded, tr('الصيانة', 'Maintenance'), const MaintenanceScreen(), c: const Color(0xFFF7A23B));
     if (p.canAddWorkers)
       tile(Icons.campaign_rounded, tr('مركز الإشعارات', 'Notification center'), const NotifySendScreen(), c: const Color(0xFFEA580C));
     if (p.role != 'client') tile(Icons.qr_code_scanner_rounded, tr('مسح رمز الموقع', 'Scan location'), const ScanScreen(), c: const Color(0xFF0891B2));
 
-    // ===== Estate & assets =====
-    header(tr('المنشآت والأصول', 'Estate & assets'));
-    tile(Icons.location_city_rounded, tr('المباني والمرافق', 'Buildings & facilities'), const ClientStructureScreen(), c: const Color(0xFFC0392B));
-    tile(Icons.precision_manufacturing_rounded, tr('الأصول', 'Assets'), const ClientAssetsScreen(), c: const Color(0xFF0891B2));
-    tile(Icons.inventory_2_rounded, tr('المخزون', 'Inventory'), const ClientInventoryScreen(), c: const Color(0xFF0E3A5F));
+    // ===== Estate & assets (client / back-office only) =====
+    if (!isField) {
+      header(tr('المنشآت والأصول', 'Estate & assets'));
+      tile(Icons.location_city_rounded, tr('المباني والمرافق', 'Buildings & facilities'), const ClientStructureScreen(), c: const Color(0xFFC0392B));
+      tile(Icons.precision_manufacturing_rounded, tr('الأصول', 'Assets'), const ClientAssetsScreen(), c: const Color(0xFF0891B2));
+    }
+    // ===== My tools (everyone) — a worker still needs stock + attendance =====
+    header(isField ? tr('أدواتي', 'My tools') : tr('المخزون والحضور', 'Inventory & attendance'));
+    tile(Icons.inventory_2_rounded, isField ? tr('صرف مواد', 'Issue materials') : tr('المخزون', 'Inventory'), const ClientInventoryScreen(), c: const Color(0xFF0E3A5F));
     tile(Icons.fingerprint_rounded, tr('الحضور والانصراف', 'Attendance'), const AttendanceScreen(), c: const Color(0xFF7C3AED));
-    tile(Icons.insights_rounded, tr('التحليلات والتقارير', 'Analytics & reports'), const ClientAnalyticsScreen(), c: const Color(0xFF2563EB));
+    if (!isField) tile(Icons.insights_rounded, tr('التحليلات والتقارير', 'Analytics & reports'), const ClientAnalyticsScreen(), c: const Color(0xFF2563EB));
 
     // role-specific service consoles
     if (p.role == 'cleaning') { header(tr('النظافة', 'Cleaning')); tile(Icons.cleaning_services_rounded, tr('تدقيق الجودة', 'Quality audits'), const ServiceScreen(kind: 'cleaning', title: 'تدقيق النظافة'), c: const Color(0xFF0EA5E9)); }
@@ -105,19 +112,22 @@ class MoreScreen extends StatelessWidget {
       tile(Icons.badge_rounded, tr('تصاريح البوابة', 'Gate passes'), SecurityListScreen(kind: 'gatepasses', title: tr('تصاريح البوابة', 'Gate passes')), c: const Color(0xFF16A34A));
     }
 
-    // ===== Contracts & administration =====
-    header(tr('العقود والإدارة', 'Contracts & administration'));
-    tile(Icons.description_rounded, tr('العقود', 'Contracts'), const ContractsScreen(), c: const Color(0xFF0B6EA8));
-    if (p.canAddWorkers) {
-      tile(Icons.settings_suggest_rounded, tr('إدارة المنشأة', 'Manage facility'), const ManageScreen(), c: const Color(0xFF6366F1));
-      tile(Icons.person_add_rounded, tr('إضافة عامل', 'Add worker'), const AddWorkerScreen(), c: const Color(0xFF16A34A));
+    // ===== Contracts & administration (client / back-office only) =====
+    if (!isField) {
+      header(tr('العقود والإدارة', 'Contracts & administration'));
+      tile(Icons.description_rounded, tr('العقود', 'Contracts'), const ContractsScreen(), c: const Color(0xFF0B6EA8));
+      if (p.canAddWorkers) {
+        tile(Icons.settings_suggest_rounded, tr('إدارة المنشأة', 'Manage facility'), const ManageScreen(), c: const Color(0xFF6366F1));
+        tile(Icons.person_add_rounded, tr('إضافة عامل', 'Add worker'), const AddWorkerScreen(), c: const Color(0xFF16A34A));
+      }
+      if (p.isSupervisor || p.isAdmin) {
+        tile(Icons.dashboard_customize_rounded, tr('لوحة المشرف — إسناد', 'Supervisor board'), const SupervisorScreen(), c: const Color(0xFF0D9488));
+        if (p.isAdmin) tile(Icons.business_rounded, tr('لوحة الشركة', 'Company dashboard'), const AdminHome(), c: const Color(0xFF6366F1));
+      }
     }
-    if (p.isSupervisor || p.isAdmin) {
-      tile(Icons.dashboard_customize_rounded, tr('لوحة المشرف — إسناد', 'Supervisor board'), const SupervisorScreen(), c: const Color(0xFF0D9488));
-      if (p.isAdmin) tile(Icons.business_rounded, tr('لوحة الشركة', 'Company dashboard'), const AdminHome(), c: const Color(0xFF6366F1));
-    }
-    if (p.role != 'client') tile(Icons.star_rounded, tr('تقييم الأداء', 'Performance'), const AppraisalScreen(), c: const Color(0xFFF59E0B));
-    if (p.role != 'client') tile(Icons.dashboard_customize_rounded, tr('لوحة أودو الكاملة', 'Full Odoo backend'), const OdooBackendScreen(), c: const Color(0xFF714B67));
+    // my own performance file (a worker may see theirs); back office stays hidden
+    if (p.role != 'client') { header(tr('ملفي', 'My file')); tile(Icons.star_rounded, tr('تقييم أدائي', 'My performance'), const AppraisalScreen(), c: const Color(0xFFF59E0B)); }
+    if (p.isSupervisor || p.isAdmin) tile(Icons.dashboard_customize_rounded, tr('لوحة أودو الكاملة', 'Full Odoo backend'), const OdooBackendScreen(), c: const Color(0xFF714B67));
 
     // ===== Account & preferences =====
     header(tr('الحساب والتفضيلات', 'Account & preferences'));

@@ -5,7 +5,7 @@ import '../core/i18n.dart';
 import 'home_screen.dart';
 import 'workorders_screen.dart';
 import 'scan_screen.dart';
-import 'notifications_screen.dart';
+import 'my_profile_screen.dart';
 import 'supervisor_screen.dart';
 import 'more_screen.dart';
 import 'client_analytics_screen.dart';
@@ -50,7 +50,9 @@ class _MainShellState extends State<MainShell> {
 
   List<_Tab> _tabs(profile) {
     final home = _Tab(Icons.home_rounded, tr('الرئيسية', 'Home'), const HomeScreen());
-    final notif = _Tab(Icons.notifications_rounded, tr('الإشعارات', 'Alerts'), const NotificationsScreen());
+    // "إنجازاتي" — a rich personal dashboard replaces the plain alerts tab
+    // (notifications stay reachable from its header bell and the home app bars).
+    final mine = _Tab(Icons.workspace_premium_rounded, tr('إنجازاتي', 'My profile'), const MyProfileScreen());
     final more = _Tab(Icons.grid_view_rounded, tr('المزيد', 'More'), const MoreScreen());
     if (profile.role == 'client') {
       // waste-only client → a waste-tailored nav (orders / trips / stats)
@@ -66,7 +68,7 @@ class _MainShellState extends State<MainShell> {
         home,
         _Tab(Icons.assignment_rounded, tr('أوامر العمل', 'Work orders'), const ClientWorkOrdersScreen()),
         _Tab(Icons.insights_rounded, tr('الإحصائيات', 'Analytics'), const ClientAnalyticsScreen()),
-        notif, more,
+        mine, more,
       ];
     }
     if (profile.isAdmin) {
@@ -74,7 +76,7 @@ class _MainShellState extends State<MainShell> {
         home,
         _Tab(Icons.assignment_rounded, tr('الأعمال', 'Work'), const WorkOrdersScreen()),
         _Tab(Icons.dashboard_customize_rounded, tr('المشرف', 'Supervisor'), const SupervisorScreen()),
-        notif, more,
+        mine, more,
       ];
     }
     // worker / security
@@ -82,7 +84,7 @@ class _MainShellState extends State<MainShell> {
       home,
       _Tab(Icons.assignment_rounded, tr('مهامي', 'My tasks'), const WorkOrdersScreen()),
       _Tab(Icons.qr_code_scanner_rounded, tr('مسح', 'Scan'), const ScanScreen()),
-      notif, more,
+      mine, more,
     ];
   }
 

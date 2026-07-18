@@ -95,25 +95,11 @@ class _RootShellState extends State<RootShell> {
   }
 }
 
-/// Wraps a non-C2C native shell (CAFM) with a floating "switch mode" affordance.
+/// Wraps a non-C2C native shell (CAFM). Switching systems lives in the account /
+/// More page (the mode rail), not a floating button over the content.
 class _ModeScaffold extends StatelessWidget {
   const _ModeScaffold({required this.child});
   final Widget child;
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: child,
-      floatingActionButtonLocation: FloatingActionButtonLocation.miniStartTop,
-      floatingActionButton: SafeArea(
-        child: FloatingActionButton.small(
-          heroTag: 'modeSwitch',
-          backgroundColor: const Color(0xFFF5A623),
-          foregroundColor: const Color(0xFF0E3A5F),
-          tooltip: 'تبديل الوضع / العودة إلى CARE 2 CARE',
-          onPressed: () => context.read<AuthProvider>().setAppMode('choose'),
-          child: const Icon(Icons.swap_horiz_rounded),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => child;
 }
