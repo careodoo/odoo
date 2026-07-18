@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ===== Purchase-orders report (PDF) =========================
+         Printed from the client app/portal. Data comes from the same
+         orders endpoint the screen uses, honouring the active date filter. -->
+    <record id="action_report_client_orders" model="ir.actions.report">
+        <field name="name">تقرير طلبات الشراء</field>
+        <field name="model">sale.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_cafm_mobile_api.report_client_orders</field>
+        <field name="report_file">care_cafm_mobile_api.report_client_orders</field>
+    </record>
+
+    <template id="report_client_orders">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page" style="font-size:12px;">
+                    <style>
+                        .po-t { width:100%; border-collapse:collapse; margin-top:8px; }
+                        .po-t th { background:#0E3A5F; color:#fff; border:1px solid #0E3A5F;
+                                   padding:6px; font-size:10.5px; text-align:center; }
+                        .po-t td { border:1px solid #E2E8F0; padding:5px 6px; font-size:10.5px; }
+                        .kpi { border:1px solid #CBD5E1; border-radius:6px; padding:6px 4px; text-align:center; }
+                        .kpi .v { font-size:15px; font-weight:700; color:#0E3A5F; }
+                        .kpi .l { font-size:9px; color:#64748B; }
+                        .num { text-align:right; font-variant-numeric:tabular-nums; }
+                    </style>
+
+                    <div style="text-align:center; margin-bottom:6px;">
+                        <h3 style="margin:0; color:#0E3A5F; font-weight:800;">تقرير طلبات الشراء</h3>
+                        <div style="font-size:11px; color:#64748B;">
+                            <span t-esc="data.get('client') or ''"/>
+                            <span t-if="data.get('period_label')"> — الفترة: <span t-esc="data['period_label']"/></span>
+                        </div>
+                        <div style="font-size:9.5px; color:#94A3B8;">
+                            صدر في <span t-esc="data.get('printed_on') or ''"/>
+                        </div>
+                    </div>
+
+                    <table style="width:100%; margin:8px 0;">
+                        <tr>
+                            <td style="width:33%; padding:2px;"><div class="kpi">
+                                <div class="v" t-esc="data.get('count', 0)"/><div class="l">عدد الطلبات</div></div></td>
+                            <td style="width:33%; padding:2px;"><div class="kpi">
+                                <div class="v"><span t-esc="data.get('total', 0)"/> <span t-esc="data.get('currency') or ''"/></div>
+                                <div class="l">إجمالي القيمة</div></div></td>
+                            <td style="width:33%; padding:2px;"><div class="kpi">
+                                <div class="v" t-esc="data.get('confirmed', 0)"/><div class="l">مؤكَّدة</div></div></td>
+                        </tr>
+                    </table>
+
+                    <table class="po-t">
+                        <thead>
+                            <tr>
+                                <th style="width:5%;">#</th>
+                                <th style="width:16%;">الرقم</th>
+                                <th style="width:16%;">التاريخ</th>
+                                <th style="width:23%;">الحالة</th>
+                                <th style="width:20%;">حالة التسليم</th>
+                                <th style="width:20%;">الإجمالي</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="data.get('orders') or []" t-as="o">
+                                <td style="text-align:center;"><span t-esc="o_index + 1"/></td>
+                                <td><span t-esc="o.get('name')"/></td>
+                                <td><span t-esc="o.get('date') or '—'"/></td>
+                                <td><span t-esc="o.get('state_label') or o.get('state')"/></td>
+                                <td><span t-esc="o.get('delivery_label') or '—'"/></td>
+                                <td class="num"><span t-esc="o.get('amount_total')"/> <span t-esc="data.get('currency') or ''"/></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div t-if="not data.get('orders')" style="text-align:center; color:#94A3B8; margin-top:20px;">
+                        لا توجد طلبات ضمن الفترة المحددة.
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

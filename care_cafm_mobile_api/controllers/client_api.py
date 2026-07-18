@@ -6,7 +6,7 @@ import base64
 import io
 import re
 import uuid
-from datetime import timedelta
+from datetime import timedelta, datetime, time
 from odoo import fields, SUPERUSER_ID, _
 from odoo.http import request, Controller, route, content_disposition
 
@@ -2185,13 +2185,50 @@ class ClientApi(Controller):
             return _err('غير مصرّح', 401)
         return _ok(self._delivery_addresses(env))
 
+    def _orders_domain(self, env, args):
+        """Domain for the client's sale orders honouring a date filter. Accepts
+        period=today|month|year or explicit date_from/date_to (YYYY-MM-DD)."""
+        pids = self._client_partners(env)
+        dom = [('partner_id', 'in', pids)]
+        period = (args.get('period') or '').strip()
+        today = fields.Date.context_today(env.user)
+        label = None
+        df = dt = None
+        if period == 'today':
+            df = dt = today
+            label = str(today)
+        elif period == 'month':
+            df = today.replace(day=1)
+            label = df.strftime('%Y-%m')
+        elif period == 'year':
+            df = today.replace(month=1, day=1)
+            label = str(today.year)
+        else:
+            if args.get('date_from'):
+                try:
+                    df = fields.Date.to_date(args['date_from'])
+                except Exception:
+                    df = None
+            if args.get('date_to'):
+                try:
+                    dt = fields.Date.to_date(args['date_to'])
+                except Exception:
+                    dt = None
+            if df or dt:
+                label = '%s → %s' % (df or '…', dt or '…')
+        if df:
+            dom.append(('date_order', '>=', fields.Datetime.to_string(datetime.combine(df, time.min))))
+        if dt:
+            dom.append(('date_order', '<=', fields.Datetime.to_string(datetime.combine(dt, time.max))))
+        return dom, label
+
     @route(API + '/client/orders', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def orders(self, **kw):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        pids = self._client_partners(env)
-        sos = env['sale.order'].sudo().search([('partner_id', 'in', pids)], limit=100)
+        dom, _label = self._orders_domain(env, request.httprequest.args)
+        sos = env['sale.order'].sudo().search(dom, order='date_order desc', limit=300)
         state_lbl = dict(env['sale.order']._fields['state'].selection)
         inv_lbl = {'no': 'غير مفوترة', 'to invoice': 'بانتظار الفوترة', 'invoiced': 'مفوترة', 'upselling': 'فرصة بيع'}
         dl_lbl = {'nothing': 'لا تسليم', 'to deliver': 'بانتظار التسليم', 'partial': 'تسليم جزئي', 'delivered': 'تم التسليم', 'full': 'تم التسليم'}
@@ -2226,6 +2263,65 @@ class ClientApi(Controller):
                 'lines': [{'product': l.product_id.display_name, 'qty': l.product_uom_qty,
                            'price': l.price_unit, 'subtotal': l.price_subtotal} for l in s.order_line]})
         return _ok(out)
+
+    def _orders_report_data(self, env, args):
+        """Shared rows + KPIs for the orders PDF/Excel, honouring the date filter."""
+        dom, label = self._orders_domain(env, args)
+        sos = env['sale.order'].sudo().search(dom, order='date_order desc', limit=2000)
+        state_lbl = dict(env['sale.order']._fields['state'].selection)
+        dl_lbl = {'nothing': 'لا تسليم', 'to deliver': 'بانتظار التسليم', 'partial': 'تسليم جزئي',
+                  'delivered': 'تم التسليم', 'full': 'تم التسليم'}
+        orders = []
+        for s in sos:
+            dlabel = None
+            try:
+                ds = getattr(s, 'delivery_status', None)
+                if ds:
+                    dlabel = dl_lbl.get(ds, ds)
+                elif s.picking_ids:
+                    pk = s.picking_ids.mapped('state')
+                    dlabel = 'تم التسليم' if all(x == 'done' for x in pk) else (
+                        'تسليم جزئي' if any(x == 'done' for x in pk) else 'بانتظار التسليم')
+            except Exception:
+                pass
+            orders.append({'name': s.name, 'date': str(s.date_order)[:10] if s.date_order else None,
+                           'state': s.state, 'state_label': state_lbl.get(s.state, s.state),
+                           'amount_total': round(s.amount_total, 2), 'delivery_label': dlabel})
+        cur = sos[:1].currency_id.name if sos else (env.company.currency_id.name or '')
+        return {
+            'orders': orders, 'count': len(orders),
+            'total': round(sum(s.amount_total for s in sos), 2),
+            'confirmed': len(sos.filtered(lambda x: x.state in ('sale', 'done'))),
+            'currency': cur, 'period_label': label,
+            'client': env.user.partner_id.commercial_partner_id.name or env.user.name,
+            'printed_on': fields.Datetime.to_string(fields.Datetime.now())[:16],
+        }
+
+    @route('/cafm/orders/report.pdf', type='http', auth='public', methods=['GET'], csrf=False)
+    def orders_report_pdf(self, **kw):
+        env = _report_env()
+        if not env:
+            return request.redirect('/web/login')
+        d = self._orders_report_data(env, request.httprequest.args)
+        report = request.env.ref('care_cafm_mobile_api.action_report_client_orders').with_user(SUPERUSER_ID)
+        pdf = request.env['ir.actions.report'].sudo()._render_qweb_pdf(report, res_ids=[], data=d)[0]
+        return request.make_response(pdf, headers=[
+            ('Content-Type', 'application/pdf'),
+            ('Content-Disposition', content_disposition('purchase-orders.pdf').replace('attachment', 'inline')),
+        ])
+
+    @route('/cafm/orders/export', type='http', auth='public', methods=['GET'], csrf=False)
+    def orders_export_xlsx(self, **kw):
+        env = _report_env()
+        if not env:
+            return request.redirect('/web/login')
+        d = self._orders_report_data(env, request.httprequest.args)
+        columns = [_('#'), _('الرقم'), _('التاريخ'), _('الحالة'), _('حالة التسليم'), _('الإجمالي')]
+        rows = [[i, o['name'], o['date'] or '', o['state_label'], o.get('delivery_label') or '', o['amount_total']]
+                for i, o in enumerate(d['orders'], 1)]
+        meta = [(_('العميل'), d['client']), (_('الفترة'), d['period_label'] or _('الكل')),
+                (_('عدد الطلبات'), d['count']), (_('إجمالي القيمة'), '%s %s' % (d['total'], d['currency']))]
+        return _xlsx_response(_('طلبات الشراء'), columns, rows, 'purchase-orders.xlsx', meta)
 
     def _sale_track(self, s):
         """Delivery / fulfilment tracking steps for a sale order."""

@@ -16,6 +16,7 @@
         'views/app_center_views.xml',
         'views/notification_views.xml',
         'views/account_deletion_views.xml',
+        'reports/orders_report.xml',
     ],
     'installable': True,
     'application': True,  # it has its own control centre now
