@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'media_viewer_screen.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
@@ -167,11 +170,15 @@ class _ChatScreenState extends State<ChatScreen> {
   final _scroll = ScrollController();
   Timer? _poll;
   bool _sending = false;
+  String? _token;
 
   @override
   void initState() {
     super.initState();
     _load();
+    context.read<AuthProvider>().api.token.then((t) {
+      if (mounted) setState(() => _token = t);
+    });
     _poll = Timer.periodic(const Duration(seconds: 6), (_) => _load(silent: true));
   }
 
@@ -198,18 +205,53 @@ class _ChatScreenState extends State<ChatScreen> {
         if (_scroll.hasClients) _scroll.animateTo(_scroll.position.maxScrollExtent, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
       });
 
-  Future<void> _send() async {
+  Future<void> _send({String? data, String? mediaType, String? name}) async {
     final body = _ctrl.text.trim();
-    if (body.isEmpty) return;
+    if (body.isEmpty && data == null) return;
     setState(() => _sending = true);
     _ctrl.clear();
     try {
-      await context.read<AuthProvider>().api.chatSend(widget.peerUid, body);
+      await context.read<AuthProvider>().api
+          .chatSend(widget.peerUid, body, data: data, mediaType: mediaType, name: name);
       await _load();
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     } finally {
       if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  /// Attach a photo or a video to the conversation.
+  Future<void> _attach() async {
+    final choice = await showModalBottomSheet<String>(context: context, builder: (ctx) => SafeArea(child: Wrap(children: [
+      ListTile(leading: const Icon(Icons.photo_camera_rounded, color: _accent), title: Text(tr('التقاط صورة', 'Take photo')), onTap: () => Navigator.pop(ctx, 'cam_photo')),
+      ListTile(leading: const Icon(Icons.videocam_rounded, color: Color(0xFFE5484D)), title: Text(tr('تسجيل فيديو', 'Record video')), onTap: () => Navigator.pop(ctx, 'cam_video')),
+      ListTile(leading: const Icon(Icons.photo_library_rounded, color: Color(0xFF7C3AED)), title: Text(tr('صورة من المعرض', 'Photo from gallery')), onTap: () => Navigator.pop(ctx, 'gal_photo')),
+      ListTile(leading: const Icon(Icons.video_library_rounded, color: Color(0xFF0891B2)), title: Text(tr('فيديو من المعرض', 'Video from gallery')), onTap: () => Navigator.pop(ctx, 'gal_video')),
+    ])));
+    if (choice == null) return;
+    try {
+      final picker = ImagePicker();
+      if (choice.endsWith('photo')) {
+        final x = await picker.pickImage(
+            source: choice.startsWith('cam') ? ImageSource.camera : ImageSource.gallery,
+            imageQuality: 70, maxWidth: 1600);
+        if (x == null) return;
+        await _send(data: base64Encode(await x.readAsBytes()), mediaType: 'photo', name: x.name);
+      } else {
+        final x = await picker.pickVideo(
+            source: choice.startsWith('cam') ? ImageSource.camera : ImageSource.gallery,
+            maxDuration: const Duration(seconds: 45));
+        if (x == null) return;
+        final b = await x.readAsBytes();
+        if (b.length > 15 * 1024 * 1024) {
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('الفيديو كبير جداً (الحد 15 ميجا)', 'Video too large (max 15 MB)'))));
+          return;
+        }
+        await _send(data: base64Encode(b), mediaType: 'video', name: x.name);
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     }
   }
 
@@ -238,6 +280,11 @@ class _ChatScreenState extends State<ChatScreen> {
           padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
           color: Colors.white,
           child: Row(children: [
+            IconButton(
+              icon: const Icon(Icons.attach_file_rounded, color: _accent),
+              tooltip: tr('إرفاق صورة أو فيديو', 'Attach photo or video'),
+              onPressed: _sending ? null : _attach,
+            ),
             Expanded(child: TextField(
               controller: _ctrl, minLines: 1, maxLines: 4,
               textInputAction: TextInputAction.newline,
@@ -276,7 +323,32 @@ class _ChatScreenState extends State<ChatScreen> {
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))],
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('${m['body']}', style: TextStyle(color: mine ? Colors.white : _navy, fontSize: 14, height: 1.3)),
+          if (m['media_type'] != null) ...[
+            GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => MediaViewerScreen(media: [m], index: 0, token: _token))),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: m['is_video'] == true
+                    ? Container(
+                        width: 200, height: 130, color: Colors.black26,
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 44))
+                    : (_token == null
+                        ? const SizedBox(width: 200, height: 130)
+                        : Image.network('${m['thumb'] ?? m['url']}',
+                            width: 200, fit: BoxFit.cover,
+                            headers: {'Authorization': 'Bearer $_token'},
+                            errorBuilder: (_, __, ___) => Container(
+                                width: 200, height: 130, color: Colors.black12,
+                                alignment: Alignment.center,
+                                child: const Icon(Icons.broken_image_rounded, color: Colors.grey)))),
+              ),
+            ),
+            if ('${m['body']}'.trim().isNotEmpty) const SizedBox(height: 6),
+          ],
+          if ('${m['body']}'.trim().isNotEmpty)
+            Text('${m['body']}', style: TextStyle(color: mine ? Colors.white : _navy, fontSize: 14, height: 1.3)),
           const SizedBox(height: 3),
           Text('${m['at'] ?? ''}'.replaceFirst('T', ' ').padRight(16).substring(0, 16),
               style: TextStyle(color: mine ? Colors.white70 : Colors.grey.shade500, fontSize: 9.5)),

@@ -570,9 +570,17 @@ class ApiClient {
   Future<Map<String, dynamic>> chatMessages(int peer) async =>
       Map<String, dynamic>.from((await _handle(await http.get(_u('/chat/$peer/messages'), headers: await _headers())))['data'] as Map);
 
-  Future<Map<String, dynamic>> chatSend(int peer, String body) async =>
+  /// Send a chat message: text, a photo/video, or both.
+  Future<Map<String, dynamic>> chatSend(int peer, String body,
+          {String? data, String? mediaType, String? name}) async =>
       Map<String, dynamic>.from((await _handle(await http.post(_u('/chat/$peer/send'),
-              headers: await _headers(), body: jsonEncode({'body': body}))))['data'] as Map);
+              headers: await _headers(),
+              body: jsonEncode({
+                'body': body,
+                if (data != null) 'data': data,
+                if (mediaType != null) 'media_type': mediaType,
+                if (name != null) 'name': name,
+              }))))['data'] as Map);
 
   Future<int> chatUnread() async =>
       ((await _handle(await http.get(_u('/chat/unread'), headers: await _headers())))['data'] as Map)['unread'] as int? ?? 0;
