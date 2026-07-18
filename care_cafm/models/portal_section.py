@@ -11,7 +11,7 @@ it appear in the config screen automatically."""
 from odoo import api, fields, models
 
 # base sections every facilities client gets under 'auto' mode
-BASE_AUTO = {'overview', 'facilities', 'workorders', 'inventory', 'shop', 'reports', 'team'}
+BASE_AUTO = {'overview', 'facilities', 'workorders', 'inventory', 'shop', 'reports', 'team', 'maintenance'}
 
 
 class CafmPortalSection(models.Model):

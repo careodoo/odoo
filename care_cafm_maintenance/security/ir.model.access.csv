@@ -1,0 +1,13 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_maint_department_user,maint.department.user,model_care_cafm_maint_department,base.group_user,1,1,1,1
+access_maint_part_user,maint.part.user,model_care_cafm_maint_part,base.group_user,1,1,1,1
+access_maint_fault_user,maint.fault.user,model_care_cafm_maint_fault,base.group_user,1,1,1,1
+access_maint_fault_part_user,maint.fault.part.user,model_care_cafm_maint_fault_part,base.group_user,1,1,1,1
+access_maint_inspection_user,maint.inspection.user,model_care_cafm_maint_inspection,base.group_user,1,1,1,1
+access_maint_inspection_item_user,maint.inspection.item.user,model_care_cafm_maint_inspection_item,base.group_user,1,1,1,1
+access_maint_department_portal,maint.department.portal,model_care_cafm_maint_department,base.group_portal,1,0,0,0
+access_maint_part_portal,maint.part.portal,model_care_cafm_maint_part,base.group_portal,1,0,0,0
+access_maint_fault_portal,maint.fault.portal,model_care_cafm_maint_fault,base.group_portal,1,1,1,0
+access_maint_fault_part_portal,maint.fault.part.portal,model_care_cafm_maint_fault_part,base.group_portal,1,1,1,0
+access_maint_inspection_portal,maint.inspection.portal,model_care_cafm_maint_inspection,base.group_portal,1,1,1,0
+access_maint_inspection_item_portal,maint.inspection.item.portal,model_care_cafm_maint_inspection_item,base.group_portal,1,1,1,0

@@ -3305,6 +3305,17 @@ class ClientApi(Controller):
         locs = env['care.cafm.location'].sudo().search([('facility_id', '=', f.id)])
         lt = dict(env['care.cafm.location']._fields['location_type'].selection)
         WO = env['care.cafm.workorder'].sudo()
+        Asset = env['care.cafm.asset'].sudo() if 'care.cafm.asset' in env else None
+        # count fields live on the facility, not the location — count per-location here.
+        wo_by_loc = {}
+        for grp in WO.read_group([('location_id', 'in', locs.ids)], ['location_id'], ['location_id']):
+            if grp.get('location_id'):
+                wo_by_loc[grp['location_id'][0]] = grp['location_id_count']
+        asset_by_loc = {}
+        if Asset is not None:
+            for grp in Asset.read_group([('location_id', 'in', locs.ids)], ['location_id'], ['location_id']):
+                if grp.get('location_id'):
+                    asset_by_loc[grp['location_id'][0]] = grp['location_id_count']
         # per-building floor + location rollup so the tree is clickable at every level
         buildings = []
         for b in f.building_ids:
@@ -3329,7 +3340,8 @@ class ClientApi(Controller):
                            'type': l.location_type, 'type_label': lt.get(l.location_type, l.location_type or ''),
                            'building': l.building_id.name or None, 'floor': l.floor_id.name or None,
                            'checkpoint': l.is_checkpoint,
-                           'wo_count': l.workorder_count, 'asset_count': l.asset_count} for l in locs],
+                           'wo_count': wo_by_loc.get(l.id, 0),
+                           'asset_count': asset_by_loc.get(l.id, 0)} for l in locs],
         })
 
     @route(API + '/client/location/<int:lid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
@@ -3353,7 +3365,7 @@ class ClientApi(Controller):
             # a scannable QR image the client can view/save without printing
             'qr_image': _abs('/report/barcode/QR/%s?width=320&height=320' % l.code) if l.code else None,
             'stats': {
-                'workorders': l.workorder_count, 'assets': l.asset_count,
+                'workorders': WO.search_count([('location_id', '=', l.id)]), 'assets': len(assets),
                 'open_workorders': WO.search_count([('location_id', '=', l.id),
                                                     ('state', 'not in', ('done', 'verified', 'cancelled'))]),
                 'done_workorders': WO.search_count([('location_id', '=', l.id), ('state', 'in', ('done', 'verified'))]),

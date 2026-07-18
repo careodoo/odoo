@@ -20,3 +20,4 @@ from . import shift_api
 from . import occupancy_api
 from . import builder_api
 from . import test_users
+from . import maintenance_client_api
