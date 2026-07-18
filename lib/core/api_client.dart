@@ -268,6 +268,14 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await http.post(
               _u('/client/request/create'), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
 
+  Future<Map<String, dynamic>> requestConvert(int id) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/client/request/$id/convert'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> requestCancel(int id) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/client/request/$id/cancel'), headers: await _headers())))['data'] as Map);
+
   Future<List<dynamic>> servicesList() async {
     try {
       return List<dynamic>.from((await _handle(
@@ -522,6 +530,21 @@ class ApiClient {
   Future<Map<String, dynamic>> clientAsset(int id) async =>
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/client/asset/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> clientAssetOptions() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/asset/options'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> clientAssetCreate(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/client/asset/create'), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<Map<String, dynamic>> clientAssetUpdate(int id, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/client/asset/$id/update'), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<void> clientAssetDelete(int id) async =>
+      _handle(await http.post(_u('/client/asset/$id/delete'), headers: await _headers()));
 
   Future<Map<String, dynamic>> clientScheduleOptions() async =>
       Map<String, dynamic>.from((await _handle(

@@ -6,6 +6,7 @@ import '../core/i18n.dart';
 import '../core/widgets.dart';
 import 'excel_export.dart';
 import 'pdf_report_screen.dart';
+import 'asset_create.dart';
 
 /// The client's full asset register — KPIs, category/status filters, search,
 /// and each asset opening a professional detail sheet with its QR label print,
@@ -71,6 +72,15 @@ class _ClientAssetsScreenState extends State<ClientAssetsScreen> {
     final s = _summary ?? const {};
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F9),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: _accent, foregroundColor: Colors.white,
+        icon: const Icon(Icons.add_rounded),
+        label: Text(tr('إضافة أصل', 'Add asset'), style: const TextStyle(fontWeight: FontWeight.w900)),
+        onPressed: () async {
+          final ok = await AssetCreateSheet.open(context);
+          if (ok == true && mounted) { await _loadSummary(); setState(_load); }
+        },
+      ),
       appBar: AppBar(
         title: Text(tr('الأصول', 'Assets')),
         backgroundColor: _accent, foregroundColor: Colors.white,
@@ -288,6 +298,29 @@ class _ClientAssetsScreenState extends State<ClientAssetsScreen> {
     );
   }
 
+  Future<void> _deleteAsset(int id, String name) async {
+    final ok = await showDialog<bool>(context: context, builder: (_) => AlertDialog(
+      title: Text(tr('حذف الأصل', 'Delete asset')),
+      content: Text(tr('هل تريد حذف "$name"؟', 'Delete "$name"?')),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context, false), child: Text(tr('إلغاء', 'Cancel'))),
+        FilledButton(style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE11D48)),
+            onPressed: () => Navigator.pop(context, true), child: Text(tr('حذف', 'Delete'))),
+      ],
+    ));
+    if (ok != true) return;
+    try {
+      await context.read<AuthProvider>().api.clientAssetDelete(id);
+      if (!mounted) return;
+      Navigator.pop(context); // close the detail sheet
+      await _loadSummary(); setState(_load);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(tr('حُذف الأصل', 'Asset deleted')), backgroundColor: const Color(0xFF16A34A), behavior: SnackBarBehavior.floating));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: _accent, behavior: SnackBarBehavior.floating));
+    }
+  }
+
   void _openAsset(int id, String name) {
     showModalBottomSheet(
       context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
@@ -347,6 +380,31 @@ class _ClientAssetsScreenState extends State<ClientAssetsScreen> {
                       icon: const Icon(Icons.qr_code_2_rounded, size: 18),
                       label: Text(tr('طباعة ملصق QR', 'Print QR label'), style: const TextStyle(fontWeight: FontWeight.w800)),
                     )),
+                    // manage actions — only for the client's OWN assets
+                    if (d['can_manage'] == true) ...[
+                      const SizedBox(height: 10),
+                      Row(children: [
+                        Expanded(child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(foregroundColor: _navy, side: const BorderSide(color: _navy),
+                              padding: const EdgeInsets.symmetric(vertical: 11), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                          onPressed: () async {
+                            Navigator.pop(context); // close detail
+                            final ok = await AssetCreateSheet.open(context, existing: d);
+                            if (ok == true && mounted) { await _loadSummary(); setState(_load); }
+                          },
+                          icon: const Icon(Icons.edit_rounded, size: 17),
+                          label: Text(tr('تعديل', 'Edit'), style: const TextStyle(fontWeight: FontWeight.w800)),
+                        )),
+                        const SizedBox(width: 10),
+                        Expanded(child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFE11D48), side: const BorderSide(color: Color(0xFFE11D48)),
+                              padding: const EdgeInsets.symmetric(vertical: 11), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                          onPressed: () => _deleteAsset(id, '${d['name']}'),
+                          icon: const Icon(Icons.delete_outline_rounded, size: 17),
+                          label: Text(tr('حذف', 'Delete'), style: const TextStyle(fontWeight: FontWeight.w800)),
+                        )),
+                      ]),
+                    ],
                     const SizedBox(height: 14),
                     _card(Column(children: [
                       _kv(tr('الفئة', 'Category'), d['category_label']),

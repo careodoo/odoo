@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/widgets.dart';
+import 'searchable_picker.dart';
 import 'location_picker.dart';
 
 /// Professional "new quality observation" form: facility + searchable/QR/NFC
@@ -211,9 +212,11 @@ class _ObservationCreateSheetState extends State<ObservationCreateSheet> {
       const SizedBox(height: 16),
       _lbl(Icons.apartment_rounded, tr('المرفق والموقع', 'Facility & location')),
       const SizedBox(height: 8),
-      _dd<int?>(tr('المرفق', 'Facility'), _facId,
-          [for (final f in _facs!) DropdownMenuItem(value: f['id'] as int, child: Text('${f['name']}'))],
-          (v) => setState(() { _facId = v; _locId = null; _locLabel = null; _loadLocations(); })),
+      SearchableField(
+        label: tr('المرفق', 'Facility'), icon: Icons.apartment_rounded, value: _facId, accent: _accent, allowClear: false,
+        options: [for (final f in _facs!) PickOption(value: f['id'], label: '${f['name']}')],
+        onChanged: (v) => setState(() { _facId = v as int?; _locId = null; _locLabel = null; _loadLocations(); }),
+      ),
       const SizedBox(height: 10),
       _locationField(),
       const SizedBox(height: 16),
@@ -223,10 +226,11 @@ class _ObservationCreateSheetState extends State<ObservationCreateSheet> {
       const SizedBox(height: 16),
       _lbl(Icons.design_services_rounded, tr('الخدمة (اختياري)', 'Service (optional)')),
       const SizedBox(height: 8),
-      _dd<int?>(tr('الخدمة', 'Service'), _svcId,
-          [const DropdownMenuItem(value: null, child: Text('—')),
-           for (final s in _svcs ?? const []) DropdownMenuItem(value: s['id'] as int, child: Text('${s['name']}'))],
-          (v) => setState(() => _svcId = v)),
+      SearchableField(
+        label: tr('الخدمة', 'Service'), icon: Icons.design_services_rounded, value: _svcId, accent: _accent,
+        options: [for (final s in _svcs ?? const []) PickOption(value: s['id'], label: '${s['name']}')],
+        onChanged: (v) => setState(() => _svcId = v as int?),
+      ),
       const SizedBox(height: 16),
       _lbl(Icons.perm_media_rounded, tr('صور وفيديو', 'Photos & video')),
       const SizedBox(height: 8),
@@ -350,12 +354,4 @@ class _ObservationCreateSheetState extends State<ObservationCreateSheet> {
         ),
       );
 
-  Widget _dd<T>(String label, T value, List<DropdownMenuItem<T>> items, ValueChanged<T?> onCh) =>
-      DropdownButtonFormField<T>(
-        value: value, isExpanded: true,
-        decoration: InputDecoration(labelText: label, filled: true, fillColor: Colors.white,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300))),
-        items: items, onChanged: onCh,
-      );
 }

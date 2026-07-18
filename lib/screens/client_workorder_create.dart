@@ -4,6 +4,7 @@ import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/widgets.dart';
 import 'location_picker.dart';
+import 'searchable_picker.dart';
 
 /// Professional "raise a work order" sheet for the client: pick facility +
 /// location, target a service or a team, set priority, describe the job, and
@@ -207,9 +208,11 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
       const SizedBox(height: 16),
       _label(Icons.apartment_rounded, tr('المرفق والموقع', 'Facility & location')),
       const SizedBox(height: 8),
-      _dd<int?>(tr('المرفق', 'Facility'), _facilityId,
-          [for (final f in (_opts!['facilities'] as List).cast<Map>()) DropdownMenuItem(value: f['id'] as int, child: Text('${f['name']}'))],
-          (v) => setState(() { _facilityId = v; _locationId = null; _teamId = null; })),
+      SearchableField(
+        label: tr('المرفق', 'Facility'), icon: Icons.apartment_rounded, value: _facilityId, allowClear: false,
+        options: [for (final f in (_opts!['facilities'] as List).cast<Map>()) PickOption(value: f['id'], label: '${f['name']}')],
+        onChanged: (v) => setState(() { _facilityId = v as int?; _locationId = null; _teamId = null; }),
+      ),
       if (_locations.isNotEmpty) ...[
         const SizedBox(height: 10),
         _locationField(),
@@ -217,16 +220,18 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
       const SizedBox(height: 16),
       _label(Icons.design_services_rounded, tr('الخدمة', 'Service')),
       const SizedBox(height: 8),
-      _dd<int?>(tr('نوع الخدمة', 'Service type'), _serviceId,
-          [const DropdownMenuItem(value: null, child: Text('—')),
-           for (final s in services) DropdownMenuItem(value: s['id'] as int, child: Text('${s['name']} · ${s['type_label'] ?? ''}'))],
-          (v) => setState(() => _serviceId = v)),
+      SearchableField(
+        label: tr('نوع الخدمة', 'Service type'), icon: Icons.design_services_rounded, value: _serviceId,
+        options: [for (final s in services) PickOption(value: s['id'], label: '${s['name']}', sublabel: '${s['type_label'] ?? ''}', search: '${s['type'] ?? ''} ${s['type_label'] ?? ''}')],
+        onChanged: (v) => setState(() => _serviceId = v as int?),
+      ),
       if (_teams.isNotEmpty) ...[
         const SizedBox(height: 10),
-        _dd<int?>(tr('توجيه لفريق (اختياري)', 'Route to team (optional)'), _teamId,
-            [const DropdownMenuItem(value: null, child: Text('—')),
-             for (final t in _teams) DropdownMenuItem(value: t['id'] as int, child: Text('${t['name']}${t['service'] != null ? ' · ${t['service']}' : ''}'))],
-            (v) => setState(() => _teamId = v)),
+        SearchableField(
+          label: tr('توجيه لفريق (اختياري)', 'Route to team (optional)'), icon: Icons.diversity_3_rounded, value: _teamId,
+          options: [for (final t in _teams) PickOption(value: t['id'], label: '${t['name']}', sublabel: t['service'] != null ? '${t['service']}' : null)],
+          onChanged: (v) => setState(() => _teamId = v as int?),
+        ),
       ],
       const SizedBox(height: 16),
       _label(Icons.flag_rounded, tr('الأولوية', 'Priority')),
@@ -249,11 +254,12 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
           ),
           if (_assign) Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-            child: _dd<int?>(tr('العامل', 'Worker'), _workerId,
-                [const DropdownMenuItem(value: null, child: Text('—')),
-                 for (final w in (_opts!['workers'] as List).cast<Map>())
-                   DropdownMenuItem(value: w['id'] as int, child: Text('${w['name']}${w['job'] != null ? ' · ${w['job']}' : ''}'))],
-                (v) => setState(() => _workerId = v)),
+            child: SearchableField(
+              label: tr('العامل', 'Worker'), icon: Icons.person_rounded, value: _workerId,
+              options: [for (final w in (_opts!['workers'] as List).cast<Map>())
+                PickOption(value: w['id'], label: '${w['name']}', sublabel: w['job'] != null ? '${w['job']}' : null)],
+              onChanged: (v) => setState(() => _workerId = v as int?),
+            ),
           ),
         ]),
       ),
@@ -317,16 +323,6 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
         ),
       );
 
-  Widget _dd<T>(String label, T value, List<DropdownMenuItem<T>> items, ValueChanged<T?> onCh) =>
-      DropdownButtonFormField<T>(
-        value: value, isExpanded: true,
-        decoration: InputDecoration(
-          labelText: label, filled: true, fillColor: Colors.white,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-        ),
-        items: items, onChanged: onCh,
-      );
 
   Widget _prioChip(String key) {
     final s = _prio[key]!;

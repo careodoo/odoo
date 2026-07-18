@@ -3,6 +3,13 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/widgets.dart';
+import 'client_workorders_screen.dart';
+import 'client_structure_screen.dart';
+import 'client_assets_screen.dart';
+import 'client_team_screen.dart';
+import 'client_services_screen.dart';
+import 'requests_screen.dart';
+import 'attendance_screen.dart';
 
 /// The client's analytics tab: every number the module holds for this customer
 /// — tickets, timing, people, estate — under one set of filters that applies to
@@ -298,18 +305,21 @@ class _ClientAnalyticsScreenState extends State<ClientAnalyticsScreen> {
         Text('$l $v', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: c)),
       ]);
 
+  void _wo(String filter) => Navigator.push(context, MaterialPageRoute(
+      builder: (_) => ClientWorkOrdersScreen(initialFilter: filter)));
+
   Widget _ticketGrid(Map k) => GridView.count(
         crossAxisCount: 4, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
         mainAxisSpacing: 8, crossAxisSpacing: 8, childAspectRatio: 0.9,
         children: [
-          StatCard(label: tr('إجمالي', 'Total'), value: k['total'] ?? 0, color: const Color(0xFF475569), icon: Icons.workspaces),
-          StatCard(label: tr('مفتوحة', 'Open'), value: k['open'] ?? 0, color: const Color(0xFF2F6DF6), icon: Icons.inbox),
-          StatCard(label: tr('قيد التنفيذ', 'Active'), value: k['in_progress'] ?? 0, color: const Color(0xFFF59E0B), icon: Icons.timelapse),
-          StatCard(label: tr('مُسنَدة', 'Assigned'), value: k['assigned'] ?? 0, color: const Color(0xFF0891B2), icon: Icons.assignment_ind),
-          StatCard(label: tr('منجزة', 'Done'), value: k['done'] ?? 0, color: const Color(0xFF16A34A), icon: Icons.check_circle),
-          StatCard(label: tr('مُعتمدة', 'Verified'), value: k['verified'] ?? 0, color: const Color(0xFF15803D), icon: Icons.verified),
-          StatCard(label: tr('متأخرة', 'Overdue'), value: k['overdue'] ?? 0, color: const Color(0xFFE5484D), icon: Icons.timer_off),
-          StatCard(label: tr('غير مُسندة', 'Unassigned'), value: k['unassigned'] ?? 0, color: const Color(0xFFB45309), icon: Icons.person_off),
+          StatCard(label: tr('إجمالي', 'Total'), value: k['total'] ?? 0, color: const Color(0xFF475569), icon: Icons.workspaces, onTap: () => _wo('all')),
+          StatCard(label: tr('مفتوحة', 'Open'), value: k['open'] ?? 0, color: const Color(0xFF2F6DF6), icon: Icons.inbox, onTap: () => _wo('open')),
+          StatCard(label: tr('قيد التنفيذ', 'Active'), value: k['in_progress'] ?? 0, color: const Color(0xFFF59E0B), icon: Icons.timelapse, onTap: () => _wo('in_progress')),
+          StatCard(label: tr('مُسنَدة', 'Assigned'), value: k['assigned'] ?? 0, color: const Color(0xFF0891B2), icon: Icons.assignment_ind, onTap: () => _wo('open')),
+          StatCard(label: tr('منجزة', 'Done'), value: k['done'] ?? 0, color: const Color(0xFF16A34A), icon: Icons.check_circle, onTap: () => _wo('done')),
+          StatCard(label: tr('مُعتمدة', 'Verified'), value: k['verified'] ?? 0, color: const Color(0xFF15803D), icon: Icons.verified, onTap: () => _wo('verified')),
+          StatCard(label: tr('متأخرة', 'Overdue'), value: k['overdue'] ?? 0, color: const Color(0xFFE5484D), icon: Icons.timer_off, onTap: () => _wo('overdue')),
+          StatCard(label: tr('غير مُسندة', 'Unassigned'), value: k['unassigned'] ?? 0, color: const Color(0xFFB45309), icon: Icons.person_off, onTap: () => _wo('open')),
         ],
       );
 
@@ -317,10 +327,14 @@ class _ClientAnalyticsScreenState extends State<ClientAnalyticsScreen> {
         crossAxisCount: 4, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
         mainAxisSpacing: 8, crossAxisSpacing: 8, childAspectRatio: 0.9,
         children: [
-          StatCard(label: tr('بالموقع الآن', 'On site'), value: (w['present_now'] ?? 0) as int, color: const Color(0xFF16A34A), icon: Icons.person_pin_circle),
-          StatCard(label: tr('الفِرَق', 'Teams'), value: (w['teams'] ?? k['teams'] ?? 0) as int, color: const Color(0xFF14B8A6), icon: Icons.groups),
-          StatCard(label: tr('الأعضاء', 'Members'), value: (k['members'] ?? 0) as int, color: const Color(0xFF0D9488), icon: Icons.badge),
-          StatCard(label: tr('ساعات الشهر', 'Hours (mo.)'), value: ((w['hours_month'] ?? 0) as num).round(), color: const Color(0xFF6366F1), icon: Icons.schedule),
+          StatCard(label: tr('بالموقع الآن', 'On site'), value: (w['present_now'] ?? 0) as int, color: const Color(0xFF16A34A), icon: Icons.person_pin_circle,
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendanceScreen()))),
+          StatCard(label: tr('الفِرَق', 'Teams'), value: (w['teams'] ?? k['teams'] ?? 0) as int, color: const Color(0xFF14B8A6), icon: Icons.groups,
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ClientTeamScreen()))),
+          StatCard(label: tr('الأعضاء', 'Members'), value: (k['members'] ?? 0) as int, color: const Color(0xFF0D9488), icon: Icons.badge,
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ClientTeamScreen()))),
+          StatCard(label: tr('ساعات الشهر', 'Hours (mo.)'), value: ((w['hours_month'] ?? 0) as num).round(), color: const Color(0xFF6366F1), icon: Icons.schedule,
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendanceScreen()))),
         ],
       );
 
@@ -328,13 +342,19 @@ class _ClientAnalyticsScreenState extends State<ClientAnalyticsScreen> {
         crossAxisCount: 4, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
         mainAxisSpacing: 8, crossAxisSpacing: 8, childAspectRatio: 0.9,
         children: [
-          StatCard(label: tr('المرافق', 'Facilities'), value: k['facilities'] ?? 0, color: const Color(0xFF6366F1), icon: Icons.location_city),
-          StatCard(label: tr('المباني', 'Buildings'), value: k['buildings'] ?? 0, color: const Color(0xFF8B5CF6), icon: Icons.apartment),
-          StatCard(label: tr('المواقع', 'Locations'), value: k['locations'] ?? 0, color: const Color(0xFF0EA5E9), icon: Icons.qr_code),
-          StatCard(label: tr('الأصول', 'Assets'), value: k['assets'] ?? 0, color: const Color(0xFF0891B2), icon: Icons.precision_manufacturing),
+          StatCard(label: tr('المرافق', 'Facilities'), value: k['facilities'] ?? 0, color: const Color(0xFF6366F1), icon: Icons.location_city,
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ClientStructureScreen(focus: 'facilities')))),
+          StatCard(label: tr('المباني', 'Buildings'), value: k['buildings'] ?? 0, color: const Color(0xFF8B5CF6), icon: Icons.apartment,
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ClientStructureScreen(focus: 'buildings')))),
+          StatCard(label: tr('المواقع', 'Locations'), value: k['locations'] ?? 0, color: const Color(0xFF0EA5E9), icon: Icons.qr_code,
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ClientStructureScreen(focus: 'locations')))),
+          StatCard(label: tr('الأصول', 'Assets'), value: k['assets'] ?? 0, color: const Color(0xFF0891B2), icon: Icons.precision_manufacturing,
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ClientAssetsScreen()))),
           StatCard(label: tr('الصيانة الوقائية', 'PPM'), value: k['ppm'] ?? 0, color: const Color(0xFF16A34A), icon: Icons.event_repeat),
-          StatCard(label: tr('طلبات جديدة', 'New requests'), value: k['requests_new'] ?? 0, color: const Color(0xFFF59E0B), icon: Icons.mark_email_unread),
-          StatCard(label: tr('الخدمات', 'Services'), value: k['services'] ?? 0, color: const Color(0xFF37C98A), icon: Icons.design_services),
+          StatCard(label: tr('طلبات جديدة', 'New requests'), value: k['requests_new'] ?? 0, color: const Color(0xFFF59E0B), icon: Icons.mark_email_unread,
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RequestsScreen()))),
+          StatCard(label: tr('الخدمات', 'Services'), value: k['services'] ?? 0, color: const Color(0xFF37C98A), icon: Icons.design_services,
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ClientServicesScreen()))),
         ],
       );
 

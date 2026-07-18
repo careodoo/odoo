@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import 'searchable_picker.dart';
 
 /// Service Requests (طلبات الخدمة): a client submits a request and follows it
 /// until it becomes a work order — the mockup's "request → closure" path.
@@ -53,14 +54,19 @@ class _RequestsScreenState extends State<RequestsScreen> {
                 final r = list[i] as Map;
                 final c = _stateColor[r['state_raw']] ?? const Color(0xFF64748B);
                 return Card(child: ListTile(
+                  onTap: () => _openRequest(r),
                   title: Text('${r['title']}', style: const TextStyle(fontWeight: FontWeight.w700)),
                   subtitle: Text('${r['name']} · ${r['facility'] ?? ''}${r['workorder'] != null ? ' · 🛠️ ${r['workorder']}' : ''}',
                       style: TextStyle(color: cs.outline, fontSize: 12)),
-                  trailing: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                    decoration: BoxDecoration(color: c.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
-                    child: Text('${r['state'] ?? ''}', style: TextStyle(color: c, fontSize: 11, fontWeight: FontWeight.w800)),
-                  ),
+                  trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                      decoration: BoxDecoration(color: c.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
+                      child: Text('${r['state'] ?? ''}', style: TextStyle(color: c, fontSize: 11, fontWeight: FontWeight.w800)),
+                    ),
+                    const SizedBox(height: 2),
+                    const Icon(Icons.chevron_left_rounded, size: 16, color: Colors.grey),
+                  ]),
                 ));
               },
             );
@@ -68,6 +74,102 @@ class _RequestsScreenState extends State<RequestsScreen> {
         ),
       ),
     );
+  }
+
+  /// A professional request detail sheet with the full data and the actions the
+  /// client can take: convert to a work order, cancel, or view the linked WO.
+  void _openRequest(Map r) {
+    final c = _stateColor[r['state_raw']] ?? const Color(0xFF64748B);
+    showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+      builder: (_) => DraggableScrollableSheet(
+        expand: false, initialChildSize: 0.6, maxChildSize: 0.92,
+        builder: (_, sc) => Container(
+          decoration: const BoxDecoration(color: Color(0xFFF6F7F9), borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          clipBehavior: Clip.antiAlias,
+          child: ListView(controller: sc, padding: EdgeInsets.zero, children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+              decoration: BoxDecoration(gradient: LinearGradient(colors: [c, Color.lerp(c, Colors.black, 0.3)!], begin: Alignment.topRight, end: Alignment.bottomLeft)),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Expanded(child: Text('${r['title']}', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900))),
+                  Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+                      child: Text('${r['state'] ?? ''}', style: TextStyle(color: c, fontSize: 11.5, fontWeight: FontWeight.w900))),
+                ]),
+                Text('${r['name']}', style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12.5)),
+              ]),
+            ),
+            Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+                child: Column(children: [
+                  _kv2(tr('المرفق', 'Facility'), r['facility']),
+                  _kv2(tr('الموقع', 'Location'), r['location']),
+                  _kv2(tr('الخدمة', 'Service'), r['service']),
+                  _kv2(tr('التاريخ', 'Date'), '${r['when'] ?? ''}'.replaceFirst('T', ' ')),
+                  if (r['workorder'] != null) _kv2(tr('أمر العمل', 'Work order'), r['workorder']),
+                  if (r['reject_reason'] != null) _kv2(tr('سبب الرفض', 'Reject reason'), r['reject_reason']),
+                ]),
+              ),
+              if (r['description'] != null && '${r['description']}'.trim().isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(tr('الوصف', 'Description'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0E3A5F))),
+                      const SizedBox(height: 4),
+                      Text('${r['description']}', style: TextStyle(fontSize: 12.5, height: 1.5, color: Colors.grey.shade700)),
+                    ])),
+              ],
+              const SizedBox(height: 16),
+              // ===== actions =====
+              if (r['can_convert'] == true)
+                SizedBox(width: double.infinity, child: FilledButton.icon(
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A), padding: const EdgeInsets.symmetric(vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  onPressed: () => _action(r['id'] as int, 'convert'),
+                  icon: const Icon(Icons.build_rounded, size: 18),
+                  label: Text(tr('تحويل إلى أمر عمل', 'Convert to work order'), style: const TextStyle(fontWeight: FontWeight.w900)),
+                )),
+              if (r['can_cancel'] == true) ...[
+                const SizedBox(height: 8),
+                SizedBox(width: double.infinity, child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFE11D48), side: const BorderSide(color: Color(0xFFE11D48)), padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  onPressed: () => _action(r['id'] as int, 'cancel'),
+                  icon: const Icon(Icons.close_rounded, size: 18),
+                  label: Text(tr('إلغاء الطلب', 'Cancel request'), style: const TextStyle(fontWeight: FontWeight.w800)),
+                )),
+              ],
+              const SizedBox(height: 8),
+            ])),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _kv2(String k, dynamic v) {
+    if (v == null || '$v'.trim().isEmpty) return const SizedBox.shrink();
+    return Padding(padding: const EdgeInsets.symmetric(vertical: 9), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      SizedBox(width: 100, child: Text(k, style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w600))),
+      Expanded(child: Text('$v', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF0E3A5F)))),
+    ]));
+  }
+
+  Future<void> _action(int id, String kind) async {
+    try {
+      final api = context.read<AuthProvider>().api;
+      if (kind == 'convert') { await api.requestConvert(id); } else { await api.requestCancel(id); }
+      if (!mounted) return;
+      Navigator.pop(context); // close sheet
+      setState(_load);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(kind == 'convert' ? tr('حُوّل الطلب إلى أمر عمل', 'Converted to work order') : tr('أُلغي الطلب', 'Request cancelled')),
+        backgroundColor: const Color(0xFF16A34A), behavior: SnackBarBehavior.floating));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
   }
 
   Future<void> _newRequest() async {
@@ -90,11 +192,15 @@ class _RequestsScreenState extends State<RequestsScreen> {
           const SizedBox(height: 12),
           TextField(controller: title, decoration: InputDecoration(labelText: tr('عنوان الطلب', 'Title'), border: const OutlineInputBorder(), isDense: true)),
           const SizedBox(height: 10),
-          DropdownButtonFormField<int>(value: facId, isExpanded: true, decoration: InputDecoration(labelText: tr('المرفق', 'Facility'), border: const OutlineInputBorder(), isDense: true),
-              items: [for (final f in facs) DropdownMenuItem(value: f['id'] as int, child: Text('${f['name']}'))], onChanged: (v) => set(() => facId = v)),
+          SearchableField(
+            label: tr('المرفق', 'Facility'), icon: Icons.apartment_rounded, value: facId, allowClear: false,
+            options: [for (final f in facs) PickOption(value: f['id'], label: '${f['name']}')],
+            onChanged: (v) => set(() => facId = v as int?)),
           const SizedBox(height: 10),
-          DropdownButtonFormField<int>(value: svcId, isExpanded: true, decoration: InputDecoration(labelText: tr('الخدمة (اختياري)', 'Service (optional)'), border: const OutlineInputBorder(), isDense: true),
-              items: [const DropdownMenuItem(value: null, child: Text('—')), for (final s in svcs) DropdownMenuItem(value: s['id'] as int, child: Text('${s['name']}'))], onChanged: (v) => set(() => svcId = v)),
+          SearchableField(
+            label: tr('الخدمة (اختياري)', 'Service (optional)'), icon: Icons.design_services_rounded, value: svcId,
+            options: [for (final s in svcs) PickOption(value: s['id'], label: '${s['name']}')],
+            onChanged: (v) => set(() => svcId = v as int?)),
           const SizedBox(height: 10),
           DropdownButtonFormField<int>(value: prio, isExpanded: true, decoration: InputDecoration(labelText: tr('الأولوية', 'Priority'), border: const OutlineInputBorder(), isDense: true),
               items: const [DropdownMenuItem(value: 0, child: Text('عادية')), DropdownMenuItem(value: 1, child: Text('متوسطة')), DropdownMenuItem(value: 2, child: Text('عالية')), DropdownMenuItem(value: 3, child: Text('عاجلة'))], onChanged: (v) => set(() => prio = v ?? 1)),

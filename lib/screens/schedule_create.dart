@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/widgets.dart';
+import 'searchable_picker.dart';
 
 /// Client adds a recurring work schedule: name, facility+location, service,
 /// assigned worker, repeat interval, working window, and proof requirements.
@@ -156,28 +157,33 @@ class _ScheduleCreateSheetState extends State<ScheduleCreateSheet> {
       const SizedBox(height: 16),
       _label(Icons.apartment_rounded, tr('المرفق والموقع', 'Facility & location')),
       const SizedBox(height: 8),
-      _dd<int?>(tr('المرفق', 'Facility'), _facilityId,
-          [for (final f in (_opts!['facilities'] as List).cast<Map>()) DropdownMenuItem(value: f['id'] as int, child: Text('${f['name']}'))],
-          (v) => setState(() { _facilityId = v; _locationId = null; })),
+      SearchableField(
+        label: tr('المرفق', 'Facility'), icon: Icons.apartment_rounded, value: _facilityId, accent: _c, allowClear: false,
+        options: [for (final f in (_opts!['facilities'] as List).cast<Map>()) PickOption(value: f['id'], label: '${f['name']}')],
+        onChanged: (v) => setState(() { _facilityId = v as int?; _locationId = null; }),
+      ),
       if (_locations.isNotEmpty) ...[
         const SizedBox(height: 10),
-        _dd<int?>(tr('الموقع (اختياري)', 'Location (optional)'), _locationId,
-            [const DropdownMenuItem(value: null, child: Text('—')),
-             for (final l in _locations) DropdownMenuItem(value: l['id'] as int, child: Text('${l['name']}'))],
-            (v) => setState(() => _locationId = v)),
+        SearchableField(
+          label: tr('الموقع (اختياري)', 'Location (optional)'), icon: Icons.pin_drop_rounded, value: _locationId, accent: _c,
+          options: [for (final l in _locations) PickOption(value: l['id'], label: '${l['name']}')],
+          onChanged: (v) => setState(() => _locationId = v as int?),
+        ),
       ],
       const SizedBox(height: 16),
       _label(Icons.design_services_rounded, tr('الخدمة والمنفّذ', 'Service & worker')),
       const SizedBox(height: 8),
-      _dd<int?>(tr('الخدمة', 'Service'), _serviceId,
-          [const DropdownMenuItem(value: null, child: Text('—')),
-           for (final s in services) DropdownMenuItem(value: s['id'] as int, child: Text('${s['name']}'))],
-          (v) => setState(() => _serviceId = v)),
+      SearchableField(
+        label: tr('الخدمة', 'Service'), icon: Icons.design_services_rounded, value: _serviceId, accent: _c,
+        options: [for (final s in services) PickOption(value: s['id'], label: '${s['name']}')],
+        onChanged: (v) => setState(() => _serviceId = v as int?),
+      ),
       const SizedBox(height: 10),
-      _dd<int?>(tr('العامل المسنَد', 'Assigned worker'), _workerId,
-          [const DropdownMenuItem(value: null, child: Text('—')),
-           for (final w in workers) DropdownMenuItem(value: w['id'] as int, child: Text('${w['name']}${w['job'] != null ? ' · ${w['job']}' : ''}'))],
-          (v) => setState(() => _workerId = v)),
+      SearchableField(
+        label: tr('العامل المسنَد', 'Assigned worker'), icon: Icons.person_rounded, value: _workerId, accent: _c,
+        options: [for (final w in workers) PickOption(value: w['id'], label: '${w['name']}', sublabel: w['job'] != null ? '${w['job']}' : null)],
+        onChanged: (v) => setState(() => _workerId = v as int?),
+      ),
       const SizedBox(height: 16),
       _label(Icons.repeat_rounded, tr('التكرار والنافذة', 'Repeat & window')),
       const SizedBox(height: 8),
@@ -217,14 +223,6 @@ class _ScheduleCreateSheetState extends State<ScheduleCreateSheet> {
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _c, width: 1.5)),
       );
 
-  Widget _dd<T>(String label, T value, List<DropdownMenuItem<T>> items, ValueChanged<T?> onCh) =>
-      DropdownButtonFormField<T>(
-        value: value, isExpanded: true,
-        decoration: InputDecoration(labelText: label, filled: true, fillColor: Colors.white,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300))),
-        items: items, onChanged: onCh,
-      );
 
   Widget _check(String label, bool v, ValueChanged<bool> onCh) => CheckboxListTile(
         value: v, onChanged: (x) => onCh(x ?? false), activeColor: _c,
