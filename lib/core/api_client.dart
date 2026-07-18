@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'i18n.dart';
 
 /// Thin client over the Odoo `/api/v1` token API.
 ///
@@ -28,6 +29,9 @@ class ApiClient {
     final t = await token;
     return {
       'Content-Type': 'application/json; charset=utf-8',
+      // Drive translated record values (facility/location names…) by the
+      // language the user picked in the app.
+      'X-Lang': gLang,
       if (t != null) 'Authorization': 'Bearer $t',
     };
   }
@@ -184,6 +188,19 @@ class ApiClient {
   Future<Map<String, dynamic>> clientLocation(int id) async =>
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/client/location/$id'), headers: await _headers())))['data'] as Map);
+
+  // ---- record-name translations --------------------------------------------
+  Future<List<dynamic>> i18nLanguages() async =>
+      List<dynamic>.from((await _handle(
+              await http.get(_u('/client/i18n/languages'), headers: await _headers())))['data'] as List);
+
+  Future<Map<String, dynamic>> i18nGet(String kind, int id) async =>
+      Map<String, dynamic>.from((await _handle(await http.get(
+              _u('/client/i18n/get?kind=$kind&id=$id'), headers: await _headers())))['data'] as Map);
+
+  Future<void> i18nSet(String kind, int id, Map<String, String> values) async =>
+      _handle(await http.post(_u('/client/i18n/set'), headers: await _headers(),
+          body: jsonEncode({'kind': kind, 'id': id, 'values': values})));
 
   /// Teams as service-grouped blocks with their own attendance/workload stats.
   Future<Map<String, dynamic>> clientTeams() async =>
@@ -578,6 +595,10 @@ class ApiClient {
   Future<Map<String, dynamic>> clientSecurityOptions() async =>
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/client/security/options'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> clientSecurityPositioning() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/client/security/positioning'), headers: await _headers())))['data'] as Map);
 
   Future<Map<String, dynamic>> clientSecurityGatepassCreate(Map<String, dynamic> body) async =>
       Map<String, dynamic>.from((await _handle(await http.post(

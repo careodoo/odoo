@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/widgets.dart';
+import 'translate_dialog.dart';
 import 'add_worker_screen.dart';
 
 /// Client self-management console: create/delete buildings, floors, locations,
@@ -145,10 +146,15 @@ class _ManageScreenState extends State<ManageScreen> {
         ]),
       );
 
-  Widget _tile(String label, VoidCallback onDelete) => Padding(
+  Widget _tile(String label, VoidCallback onDelete, {String? trKind, int? trId, String? trName}) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 2),
         child: Row(children: [
           Expanded(child: Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
+          if (trKind != null && trId != null)
+            IconButton(icon: const Icon(Icons.translate_rounded, color: _accent, size: 19),
+                tooltip: tr('الترجمات', 'Translations'),
+                padding: const EdgeInsets.only(left: 6), constraints: const BoxConstraints(),
+                onPressed: _busy ? null : () => TranslateDialog.open(context, kind: trKind, id: trId, currentName: trName)),
           IconButton(icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFE11D48), size: 20),
               padding: EdgeInsets.zero, constraints: const BoxConstraints(),
               onPressed: _busy ? null : onDelete),
@@ -184,7 +190,7 @@ class _ManageScreenState extends State<ManageScreen> {
         _addBtn(() => _do(() => context.read<AuthProvider>().api.manageUpsert('building', {'name': name.text.trim(), 'facility_id': fac, 'building_type': type}), tr('أُضيف المبنى', 'Building added'))),
       ])),
       const Divider(),
-      for (final b in _l('buildings')) _tile('🧱 ${b['name']} (${b['floors']} ${tr('أدوار', 'floors')})', () => _confirmDelete('building', b['id'] as int)),
+      for (final b in _l('buildings')) _tile('🧱 ${b['name']} (${b['floors']} ${tr('أدوار', 'floors')})', () => _confirmDelete('building', b['id'] as int), trKind: 'building', trId: b['id'] as int, trName: '${b['name']}'),
     ]);
   }
 
@@ -198,7 +204,7 @@ class _ManageScreenState extends State<ManageScreen> {
         _addBtn(() => _do(() => context.read<AuthProvider>().api.manageUpsert('floor', {'name': name.text.trim(), 'building_id': bld}), tr('أُضيف الدور', 'Floor added'))),
       ])),
       const Divider(),
-      for (final f in _l('floors')) _tile('🪜 ${f['building']} ← ${f['name']}', () => _confirmDelete('floor', f['id'] as int)),
+      for (final f in _l('floors')) _tile('🪜 ${f['building']} ← ${f['name']}', () => _confirmDelete('floor', f['id'] as int), trKind: 'floor', trId: f['id'] as int, trName: '${f['name']}'),
     ]);
   }
 
@@ -237,7 +243,7 @@ class _ManageScreenState extends State<ManageScreen> {
         _addBtn(() => _do(() => context.read<AuthProvider>().api.manageUpsert('asset', {'name': name.text.trim(), 'facility_id': fac, 'category': cat}), tr('أُضيف الأصل', 'Asset added'))),
       ])),
       const Divider(),
-      for (final a in _l('assets')) _tile('🏭 ${a['code'] ?? ''} · ${a['name']}', () => _confirmDelete('asset', a['id'] as int)),
+      for (final a in _l('assets')) _tile('🏭 ${a['code'] ?? ''} · ${a['name']}', () => _confirmDelete('asset', a['id'] as int), trKind: 'asset', trId: a['id'] as int, trName: '${a['name']}'),
     ]);
   }
 
@@ -256,7 +262,7 @@ class _ManageScreenState extends State<ManageScreen> {
         _addBtn(() => _do(() => context.read<AuthProvider>().api.manageUpsert('team', {'name': name.text.trim(), 'facility_id': fac, 'service_id': svc}), tr('أُضيف الفريق', 'Team added'))),
       ])),
       const Divider(),
-      for (final t in _l('teams')) _tile('👥 ${t['name']} · ${t['service'] ?? ''}', () => _confirmDelete('team', t['id'] as int)),
+      for (final t in _l('teams')) _tile('👥 ${t['name']} · ${t['service'] ?? ''}', () => _confirmDelete('team', t['id'] as int), trKind: 'team', trId: t['id'] as int, trName: '${t['name']}'),
     ]);
   }
 

@@ -6,6 +6,7 @@ import '../core/service_ui.dart';
 import 'excel_export.dart';
 import 'security_gatepass_create.dart';
 import 'client_workorder_create.dart';
+import 'security_positioning_screen.dart';
 
 /// The client's security service in full: what is happening on their premises
 /// right now, then every record behind it — incidents, patrols, gate passes,
@@ -88,6 +89,11 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
       appBar: AppBar(
         title: Text(tr('الأمن', 'Security')),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.map_rounded),
+            tooltip: tr('خريطة التموضع', 'Positioning map'),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityPositioningScreen())),
+          ),
           IconButton(
             icon: const Icon(Icons.grid_on_rounded),
             tooltip: tr('تصدير تصاريح الدخول', 'Export gate passes'),
