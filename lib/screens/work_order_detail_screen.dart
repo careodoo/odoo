@@ -8,6 +8,7 @@ import '../core/i18n.dart';
 import 'employee_profile_screen.dart';
 import 'in_app_map_screen.dart';
 import '../core/widgets.dart';
+import '../core/record_report.dart';
 import 'media_viewer_screen.dart';
 import 'presence_scan_screen.dart';
 
@@ -138,6 +139,11 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> with Widg
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(title: Text(tr('تفاصيل المهمة', 'Task details')), actions: [
+        ReportButton(
+            code: 'workorder',
+            id: widget.id,
+            title: tr('تقرير أمر العمل', 'Work order report'),
+            compact: true),
         IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
       ]),
       body: _loading
