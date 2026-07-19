@@ -12,6 +12,7 @@ from . import builder
 from . import request_asset_ppm
 from . import sla
 from . import dashboard
+from . import client_permission
 from . import org
 from . import portal_section
 from . import work_schedule

@@ -341,9 +341,27 @@ class HospKitchen(HospPortal):
             ('Content-Disposition', 'attachment; filename="hospitality_%sd.csv"' % ndays)])
 
     # ================= client-side limit settings =================
+    def _may_set_limits(self):
+        """Consumption caps are the client's money and their staff's allowance —
+        only an administrator or a user their client record trusts may touch
+        them. This was writing global policy for any logged-in user."""
+        env = request.env
+        u = env.user
+        if u.has_group('base.group_system') or u.has_group('base.group_erp_manager'):
+            return True
+        p = u.partner_id.commercial_partner_id or u.partner_id
+        client = env['care.cafm.client'].sudo().search(
+            [('partner_id', '=', p.id)], limit=1) if p else None
+        return bool(client and client.can('inventory_policy'))
+
     @http.route('/hosp/limits', type='http', auth='user', website=False)
     def limits(self, **kw):
         env = request.env
+        if not self._may_set_limits():
+            return _shell('حدود الاستهلاك', Markup(
+                '<div class="card"><div class="h4">⛔ غير مصرّح</div>'
+                '<div class="muted">ضبط حدود الاستهلاك متاح لمسؤولي العميل فقط.</div></div>'),
+                accent=STATS_ACCENT, back='/hosp')
         L = env['care.hosp.limit'].sudo()
         pols = L.search([])
         body = Markup(
@@ -406,6 +424,8 @@ class HospKitchen(HospPortal):
     @http.route('/hosp/limits/<int:lid>/save', type='http', auth='user',
                 methods=['POST'], website=False, csrf=True)
     def limit_save(self, lid, **post):
+        if not self._may_set_limits():
+            return request.redirect('/hosp')
         p = request.env['care.hosp.limit'].sudo().browse(lid).exists()
         if p:
             p.write({'max_items': int(post.get('max_items') or 0),
@@ -418,6 +438,8 @@ class HospKitchen(HospPortal):
     @http.route('/hosp/limits/new', type='http', auth='user',
                 methods=['POST'], website=False, csrf=True)
     def limit_new(self, **post):
+        if not self._may_set_limits():
+            return request.redirect('/hosp')
         name = (post.get('name') or '').strip()
         if name:
             request.env['care.hosp.limit'].sudo().create({

@@ -251,12 +251,16 @@ class ServiceOrderPortal(CustomerPortal):
       auth="user",
       website=True,
       methods=['POST'],
-      csrf=False,
   )
   def portal_service_order_submit(self, order_id=None, **kw):
     if order_id:
       datetime_converted = self.convert_input_datetime(kw.get('order_datetime'))
-      order = http.request.env['service.order'].browse(order_id)
+      # This used to browse and sudo().write() whatever id arrived, so any
+      # signed-in user could rewrite any customer's order.
+      try:
+        order = self._document_check_access('service.order', int(order_id))
+      except (AccessError, MissingError):
+        return http.request.redirect('/my')
       order.sudo().write({
           'project_id': int(kw.get('project_id')),
           'type_id': int(kw.get('type_id')),
@@ -272,8 +276,17 @@ class ServiceOrderPortal(CustomerPortal):
       return http.request.redirect(f'/service_order/{order_id}')
     else:
       datetime_converted = self.convert_input_datetime(kw.get('request_datetime'))
+      # Splatting **kw into create() let a crafted form set any field on the
+      # model — state, company, prices. Only these are the customer's to give.
+      ALLOWED = ('project_id', 'type_id', 'pickup_location_id', 'notes',
+                 'partner_id', 'quantity', 'item_id', 'description')
+      vals = {k: v for k, v in kw.items() if k in ALLOWED and v not in (None, '')}
+      for f in ('project_id', 'type_id', 'pickup_location_id', 'item_id'):
+        if vals.get(f):
+          vals[f] = int(vals[f])
+      vals['partner_id'] = http.request.env.user.partner_id.id
       order_id = http.request.env['service.order'].sudo().create({
-          **kw,
+          **vals,
           'request_datetime': datetime_converted,
       })
       # send notification
@@ -341,7 +354,10 @@ class ServiceOrderPortal(CustomerPortal):
       website=True,
   )
   def portal_service_order_update(self, order_id, **kw):
-    order = http.request.env['service.order'].browse(order_id)
+    try:
+      order = self._document_check_access('service.order', int(order_id))
+    except (AccessError, MissingError):
+      return http.request.redirect('/my')
     return http.request.render(
         'service_order.portal_service_order_update',
         {
@@ -360,9 +376,15 @@ class ServiceOrderPortal(CustomerPortal):
       type='http',
       auth="user",
       website=True,
+      methods=['POST'],
   )
   def portal_service_order_cancel(self, order_id, **kw):
-    order = http.request.env['service.order'].browse(order_id)
+    # Cancelling was a GET on an unchecked id: one crafted link cancelled
+    # anyone's order, and a link prefetcher could do it by accident.
+    try:
+      order = self._document_check_access('service.order', int(order_id))
+    except (AccessError, MissingError):
+      return http.request.redirect('/my')
     if order.trip_id:
       order.sudo().trip_id.action_to_cancelled()
     else:

@@ -219,7 +219,7 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        if not self._can_add_workers(env):
+        if not self._can(env, 'schedule_manage'):
             return _err('غير مسموح', 403)
         s = env['care.cafm.schedule'].sudo().with_context(active_test=False).browse(sid).exists()
         if not s or s.facility_id.id not in self._fac_ids(env):
@@ -269,7 +269,7 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        if not self._can_add_workers(env):
+        if not self._can(env, 'schedule_manage'):
             return _err('غير مسموح لك بإضافة جداول', 403)
         if 'care.cafm.schedule' not in env:
             return _err('غير متاح', 404)
@@ -463,7 +463,7 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        if not self._can_add_workers(env):
+        if not self._can(env, 'asset_manage'):
             return _err('غير مسموح لك بإضافة أصول', 403)
         if 'care.cafm.asset' not in env:
             return _err('غير متاح', 404)
@@ -483,7 +483,7 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        if not self._can_add_workers(env):
+        if not self._can(env, 'asset_manage'):
             return _err('غير مسموح', 403)
         a = env['care.cafm.asset'].sudo().browse(aid).exists()
         if not a or a.facility_id.id not in self._fac_ids(env):
@@ -498,7 +498,7 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        if not self._can_add_workers(env):
+        if not self._can(env, 'asset_manage'):
             return _err('غير مسموح', 403)
         a = env['care.cafm.asset'].sudo().browse(aid).exists()
         if not a or a.facility_id.id not in self._fac_ids(env):
@@ -1746,7 +1746,7 @@ class ClientApi(Controller):
 
     # ---- client service requests (طلبات الخدمة) -----------------------------
     def _request_dict(self, r, env=None):
-        can_manage = self._can_add_workers(env) if env else False
+        can_manage = self._can(env, 'workorder_create') if env else False
         return {'id': r.id, 'name': r.name, 'title': r.title,
                 'facility': r.facility_id.name or None, 'location': r.location_id.name or None,
                 'service': r.service_id.name or None, 'priority': r.priority,
@@ -1763,7 +1763,7 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        if not self._can_add_workers(env):
+        if not self._can(env, 'observation_convert'):
             return _err('غير مسموح', 403)
         r = env['care.cafm.service.request'].sudo().browse(rid).exists()
         if not r or r.facility_id.id not in self._fac_ids(env):
@@ -2856,7 +2856,7 @@ class ClientApi(Controller):
             return _err('غير موجود', 404)
         d = self._obs_dict(o)
         d['media'] = self._obs_media(env, o)
-        d['can_convert'] = bool(self._can_add_workers(env) and not o.workorder_id
+        d['can_convert'] = bool(self._can(env, 'observation_convert') and not o.workorder_id
                                 and o.state not in ('closed', 'cancelled'))
         d['can_cancel'] = bool(o.state not in ('closed', 'cancelled'))
         return _ok(d)
@@ -2866,7 +2866,7 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        if not self._can_add_workers(env):
+        if not self._can(env, 'observation_convert'):
             return _err('غير مسموح', 403)
         o = env['care.cafm.observation'].sudo().browse(oid).exists()
         if not o or o.facility_id.id not in self._fac_ids(env):
@@ -2964,7 +2964,7 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        if not self._can_add_workers(env):
+        if not self._can(env, 'schedule_manage'):
             return _err('غير مسموح', 403)
         if 'care.cafm.ppm' not in env:
             return _err('غير متاح', 404)
@@ -2989,7 +2989,7 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        if not self._can_add_workers(env):
+        if not self._can(env, 'schedule_manage'):
             return _err('غير مسموح', 403)
         p = env['care.cafm.ppm'].sudo().browse(pid).exists()
         if not p or p.facility_id.id not in self._fac_ids(env):
@@ -3040,7 +3040,7 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        if not self._can_add_workers(env):
+        if not self._can(env, 'workorder_create'):
             return _err('غير مسموح لك بإنشاء أوامر عمل', 403)
         b = _body()
         title = (b.get('title') or '').strip()
@@ -3218,15 +3218,65 @@ class ClientApi(Controller):
             },
         })
 
-    # ---- add workers (client self-service, gated per-client or supervisor) ---
-    def _can_add_workers(self, env):
+    # ---- client capability gates ------------------------------------------
+    def _client_of(self, env):
+        """The care.cafm.client record behind the calling user, if any."""
+        p = env.user.partner_id.commercial_partner_id or env.user.partner_id
+        if not p:
+            return None
+        C = env['care.cafm.client'].sudo()
+        return C.search([('partner_id', '=', p.id)], limit=1) or None
+
+    def _is_staff(self, env):
         u = env.user
-        if (u.has_group('base.group_erp_manager') or u.has_group('base.group_system')
-                or u.has_group('security_management.group_security_manager')):
+        return bool(u.has_group('base.group_erp_manager') or u.has_group('base.group_system')
+                    or u.has_group('security_management.group_security_manager'))
+
+    def _can(self, env, code):
+        """Does the caller hold this capability?
+
+        Staff always do. A client user is checked against their own permission
+        matrix; if no client record exists we fall back to the legacy partner
+        flag so nothing that worked yesterday stops working today.
+        """
+        if self._is_staff(env):
             return True
-        # a client user whose company partner is flagged
-        p = u.partner_id.commercial_partner_id or u.partner_id
+        client = self._client_of(env)
+        if client:
+            return client.can(code)
+        p = env.user.partner_id.commercial_partner_id or env.user.partner_id
         return bool(p and p.sudo().cafm_can_add_workers)
+
+    def _can_add_workers(self, env):
+        """Kept for call sites that genuinely mean "add a worker"."""
+        return self._can(env, 'worker_add')
+
+    @route(API + '/client/permissions', type='http', auth='public', methods=['GET'],
+           csrf=False, cors='*')
+    def permissions(self, **kw):
+        """What this caller may do. The app and the portal both read this so a
+        button the server would refuse is never drawn in the first place."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        catalogue = env['care.cafm.client'].sudo().permission_catalogue()
+        staff = self._is_staff(env)
+        client = self._client_of(env)
+        granted = set(c['code'] for c in catalogue) if staff else (
+            client.granted_codes() if client else set())
+        if not staff and not client:
+            # legacy fallback: the old blanket flag
+            p = env.user.partner_id.commercial_partner_id or env.user.partner_id
+            if p and p.sudo().cafm_can_add_workers:
+                granted = set(c['code'] for c in catalogue)
+            else:
+                granted = set(c['code'] for c in catalogue if c['default'])
+        return _ok({
+            'is_staff': staff,
+            'client': client.name if client else None,
+            'granted': sorted(granted),
+            'catalogue': [dict(c, allowed=c['code'] in granted) for c in catalogue],
+        })
 
     @route(API + '/client/worker/options', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def worker_options(self, **kw):
@@ -3234,7 +3284,7 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        if not self._can_add_workers(env):
+        if not self._can(env, 'worker_add'):
             return _err('غير مسموح بإضافة عمّال', 403)
         teams = env['care.cafm.team'].sudo().search([('facility_id', 'in', self._facilities(env).ids)])
         return _ok({
@@ -3247,7 +3297,7 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        if not self._can_add_workers(env):
+        if not self._can(env, 'worker_add'):
             return _err('غير مسموح لك بإضافة عمّال', 403)
         b = _body()
         name = (b.get('name') or '').strip()
@@ -3301,7 +3351,7 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        if not self._can_add_workers(env):
+        if not self._can(env, 'structure_manage'):
             return _err('غير مسموح', 403)
         facs = self._facilities(env)
         Svc = env['care.cafm.service'].sudo()
@@ -3334,7 +3384,7 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        if not self._can_add_workers(env):
+        if not self._can(env, 'asset_manage'):
             return _err('غير مسموح', 403)
         if 'care.cafm.asset' not in env:
             return _err('غير متاح', 404)
@@ -3367,7 +3417,7 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        if not self._can_add_workers(env):
+        if not self._can(env, 'structure_manage'):
             return _err('غير مسموح', 403)
         b = _body()
         fid = int(b['facility_id']) if b.get('facility_id') else None
@@ -3399,7 +3449,7 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        if not self._can_add_workers(env):
+        if not self._can(env, 'structure_manage'):
             return _err('غير مسموح', 403)
         b = _body()
         Fl = env['care.cafm.floor'].sudo()
@@ -3430,7 +3480,7 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        if not self._can_add_workers(env):
+        if not self._can(env, 'structure_manage'):
             return _err('غير مسموح', 403)
         b = _body()
         Loc = env['care.cafm.location'].sudo()
@@ -3463,7 +3513,7 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        if not self._can_add_workers(env):
+        if not self._can(env, 'team_manage'):
             return _err('غير مسموح', 403)
         b = _body()
         T = env['care.cafm.team'].sudo()
@@ -3491,7 +3541,7 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        if not self._can_add_workers(env):
+        if not self._can(env, 'structure_manage'):
             return _err('غير مسموح', 403)
         models = {'building': 'care.cafm.building', 'floor': 'care.cafm.floor',
                   'location': 'care.cafm.location', 'team': 'care.cafm.team',
@@ -3558,7 +3608,7 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        if not self._can_add_workers(env):
+        if False:
             return _err('غير مسموح', 403)
         b = _body()
         kind, rid = b.get('kind'), b.get('id')

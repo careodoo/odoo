@@ -36,7 +36,7 @@ class CafmShiftType(models.Model):
 class CafmClient(models.Model):
     _name = 'care.cafm.client'
     _description = 'عميل CAFM'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'care.cafm.client.permission.mixin']
     _order = 'name'
 
     name = fields.Char(string='اسم العميل', required=True, tracking=True, translate=True)

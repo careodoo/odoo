@@ -14,9 +14,11 @@
                 <strong>Are you sure from cancel this order?</strong>
                 <br />
               </div>
-              <a t-att-href="'service_order/%s/cancel' % order.id">
-                <button class="btn btn-danger">yes, cancel this order</button>
-              </a>
+              <form method="post" t-attf-action="/service_order/#{order.id}/cancel"
+                    style="display:inline">
+                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                <button class="btn btn-danger" type="submit">yes, cancel this order</button>
+              </form>
             </div>
           </div>
         </div>
