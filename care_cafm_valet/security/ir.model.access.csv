@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_valet_zone_user,valet.zone.user,model_care_valet_zone,base.group_user,1,1,1,1
+access_valet_zone_portal,valet.zone.portal,model_care_valet_zone,base.group_portal,1,0,0,0
+access_valet_spot_user,valet.spot.user,model_care_valet_spot,base.group_user,1,1,1,1
+access_valet_spot_portal,valet.spot.portal,model_care_valet_spot,base.group_portal,1,0,0,0
+access_valet_ticket_user,valet.ticket.user,model_care_valet_ticket,base.group_user,1,1,1,1
+access_valet_ticket_portal,valet.ticket.portal,model_care_valet_ticket,base.group_portal,1,1,1,0
+access_valet_shift_user,valet.shift.user,model_care_valet_shift,base.group_user,1,1,1,1
+access_valet_shift_portal,valet.shift.portal,model_care_valet_shift,base.group_portal,1,0,0,0

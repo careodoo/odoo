@@ -26,6 +26,29 @@ class CareChatMessage(models.Model):
             a, b = sorted([m.from_uid.id or 0, m.to_uid.id or 0])
             m.pair_key = '%d-%d' % (a, b)
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        """A chat message is worthless if the other person is not told about it,
+        so every message pushes the recipient."""
+        recs = super().create(vals_list)
+        Notif = self.env.get('care.cafm.notification')
+        if Notif is None:
+            return recs
+        for m in recs:
+            if not m.to_uid or not m.to_uid.active or m.to_uid == m.from_uid:
+                continue
+            preview = (m.body or '').strip()
+            if not preview:
+                preview = {'photo': '📷 صورة', 'video': '🎬 فيديو'}.get(m.media_type, 'مرفق')
+            try:
+                self.env['care.cafm.notification'].sudo().push(
+                    m.to_uid, '💬 %s' % (m.from_uid.sudo().name or ''),
+                    preview[:140], ntype='info',
+                    author=m.from_uid, action_url='/chat/%s' % m.from_uid.id)
+            except Exception:
+                pass
+        return recs
+
     @api.model
     def pair_of(self, uid_a, uid_b):
         a, b = sorted([int(uid_a), int(uid_b)])

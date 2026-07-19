@@ -162,6 +162,37 @@ class CafmWorkorder(models.Model):
                     vals['sla_hours'] = hrs
         return super().create(vals_list)
 
+    def _push_assignment(self):
+        """Tell the assignee's phone. Assignment was the one event workers
+        actually wait on, and it pushed nothing at all — only an Odoo activity,
+        which the mobile app never surfaces."""
+        Notif = self.env.get('care.cafm.notification')
+        if Notif is None:
+            return
+        for rec in self:
+            user = rec.employee_id.user_id
+            if not user or not user.active:
+                continue
+            try:
+                self.env['care.cafm.notification'].sudo().push(
+                    user, _('🆕 أمر عمل جديد مُسنَد إليك'),
+                    ' — '.join(filter(None, [rec.title or rec.name,
+                                             rec.facility_id.name or ''])),
+                    ntype='task', action_url='/workorder/%s' % rec.id)
+            except Exception:
+                pass  # never let a push failure block the workflow
+
+    def write(self, vals):
+        """Assignment also happens by dropping an employee on the record (or via
+        the API), not only through action_assign — push in both paths."""
+        before = {r.id: r.employee_id.id for r in self} if 'employee_id' in vals else {}
+        res = super().write(vals)
+        if before:
+            changed = self.filtered(
+                lambda r: r.employee_id and r.employee_id.id != before.get(r.id))
+            changed._push_assignment()
+        return res
+
     # ---------- workflow ----------
     def action_assign(self):
         for rec in self:
@@ -172,6 +203,7 @@ class CafmWorkorder(models.Model):
                 rec.activity_schedule('mail.mail_activity_data_todo',
                                       summary=_('أمر عمل: %s') % (rec.title or ''),
                                       user_id=rec.employee_id.user_id.id)
+            rec._push_assignment()
 
     def _cafm_log(self, body):
         """message_post that never fails when the acting user has no email

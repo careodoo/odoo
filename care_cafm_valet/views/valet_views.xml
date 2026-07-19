@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- ===== Tickets ===== -->
+  <record id="view_valet_ticket_tree" model="ir.ui.view">
+    <field name="name">care.valet.ticket.tree</field>
+    <field name="model">care.valet.ticket</field>
+    <field name="arch" type="xml">
+      <tree decoration-warning="state=='requested'" decoration-danger="is_late==True" decoration-muted="state=='delivered'">
+        <field name="name"/><field name="plate"/><field name="car_make"/><field name="car_color"/>
+        <field name="facility_id"/><field name="zone_id"/><field name="spot_id"/>
+        <field name="guest_name"/><field name="received_at"/>
+        <field name="retrieval_minutes"/><field name="is_late"/>
+        <field name="fee" sum="الرسوم"/><field name="tip" sum="الإكراميات"/>
+        <field name="paid"/><field name="state"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_valet_ticket_form" model="ir.ui.view">
+    <field name="name">care.valet.ticket.form</field>
+    <field name="model">care.valet.ticket</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="action_park" type="object" string="🅿️ صف المركبة" class="btn-primary"
+                  invisible="state != 'received'"/>
+          <button name="action_request" type="object" string="🔔 طلب الإحضار"
+                  invisible="state != 'parked'"/>
+          <button name="action_deliver" type="object" string="✅ تسليم للضيف" class="btn-primary"
+                  invisible="state not in ('parked','requested')"/>
+          <button name="action_cancel" type="object" string="إلغاء"
+                  invisible="state in ('delivered','cancelled')"/>
+          <field name="state" widget="statusbar"/>
+        </header>
+        <sheet>
+          <div class="oe_title"><h1><field name="name" readonly="1"/></h1>
+            <h3><field name="plate" placeholder="رقم اللوحة"/></h3></div>
+          <group>
+            <group string="المركبة">
+              <field name="car_make"/><field name="car_model"/><field name="car_color"/>
+              <field name="key_tag"/>
+            </group>
+            <group string="الضيف">
+              <field name="guest_name"/><field name="guest_phone"/>
+            </group>
+          </group>
+          <group>
+            <group string="الموقع">
+              <field name="facility_id"/><field name="zone_id"/><field name="spot_id"/>
+            </group>
+            <group string="الطاقم والوردية">
+              <field name="received_by"/><field name="parked_by"/>
+              <field name="delivered_by"/><field name="shift_id"/>
+            </group>
+          </group>
+          <group>
+            <group string="التوقيت">
+              <field name="received_at"/><field name="parked_at"/>
+              <field name="requested_at"/><field name="delivered_at"/>
+              <field name="sla_minutes"/>
+              <field name="retrieval_minutes"/><field name="is_late"/>
+              <field name="park_minutes"/>
+            </group>
+            <group string="الرسوم">
+              <field name="fee"/><field name="tip"/>
+              <field name="payment_method"/><field name="paid"/>
+            </group>
+          </group>
+          <group string="حالة المركبة">
+            <field name="has_damage"/>
+            <field name="damage_note" placeholder="خدوش، أضرار سابقة، ملاحظات…"/>
+          </group>
+        </sheet>
+        <div class="oe_chatter"><field name="message_ids"/><field name="activity_ids"/></div>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_valet_ticket" model="ir.actions.act_window">
+    <field name="name">تذاكر الفاليه</field>
+    <field name="res_model">care.valet.ticket</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- ===== Zones & spots ===== -->
+  <record id="view_valet_zone_tree" model="ir.ui.view">
+    <field name="name">care.valet.zone.tree</field>
+    <field name="model">care.valet.zone</field>
+    <field name="arch" type="xml">
+      <tree>
+        <field name="name"/><field name="code"/><field name="facility_id"/>
+        <field name="capacity"/><field name="occupied"/><field name="free"/>
+        <field name="occupancy" widget="progressbar"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_valet_zone_form" model="ir.ui.view">
+    <field name="name">care.valet.zone.form</field>
+    <field name="model">care.valet.zone</field>
+    <field name="arch" type="xml">
+      <form><sheet>
+        <div class="oe_title"><h1><field name="name"/></h1></div>
+        <group>
+          <group><field name="code"/><field name="facility_id"/><field name="capacity"/></group>
+          <group><field name="occupied"/><field name="free"/><field name="occupancy" widget="progressbar"/></group>
+        </group>
+        <field name="spot_ids">
+          <tree editable="bottom" decoration-danger="state=='occupied'" decoration-muted="state=='blocked'">
+            <field name="name"/><field name="state"/><field name="ticket_id" readonly="1"/><field name="note"/>
+          </tree>
+        </field>
+      </sheet></form>
+    </field>
+  </record>
+  <record id="action_valet_zone" model="ir.actions.act_window">
+    <field name="name">مناطق ومواقف</field>
+    <field name="res_model">care.valet.zone</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- ===== Shifts ===== -->
+  <record id="view_valet_shift_tree" model="ir.ui.view">
+    <field name="name">care.valet.shift.tree</field>
+    <field name="model">care.valet.shift</field>
+    <field name="arch" type="xml">
+      <tree decoration-success="state=='open'">
+        <field name="name"/><field name="employee_id"/><field name="facility_id"/>
+        <field name="start_at"/><field name="end_at"/>
+        <field name="ticket_count"/><field name="total_fees" sum="الرسوم"/>
+        <field name="total_tips" sum="الإكراميات"/><field name="cash_due" sum="النقد"/>
+        <field name="state"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_valet_shift_form" model="ir.ui.view">
+    <field name="name">care.valet.shift.form</field>
+    <field name="model">care.valet.shift</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="action_close" type="object" string="إغلاق الوردية" class="btn-primary"
+                  invisible="state != 'open'"/>
+          <field name="state" widget="statusbar"/>
+        </header>
+        <sheet>
+          <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+          <group>
+            <group><field name="employee_id"/><field name="facility_id"/><field name="start_at"/><field name="end_at"/></group>
+            <group><field name="ticket_count"/><field name="total_fees"/><field name="total_tips"/><field name="cash_due"/></group>
+          </group>
+          <field name="ticket_ids">
+            <tree><field name="name"/><field name="plate"/><field name="state"/><field name="fee"/><field name="tip"/><field name="paid"/></tree>
+          </field>
+        </sheet>
+      </form>
+    </field>
+  </record>
+  <record id="action_valet_shift" model="ir.actions.act_window">
+    <field name="name">ورديات الفاليه</field>
+    <field name="res_model">care.valet.shift</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- ===== Menu ===== -->
+  <menuitem id="menu_valet_root" name="صف السيارات" sequence="47"/>
+  <menuitem id="menu_valet_tickets" name="التذاكر" parent="menu_valet_root" action="action_valet_ticket" sequence="10"/>
+  <menuitem id="menu_valet_zones" name="المناطق والمواقف" parent="menu_valet_root" action="action_valet_zone" sequence="20"/>
+  <menuitem id="menu_valet_shifts" name="الورديات" parent="menu_valet_root" action="action_valet_shift" sequence="30"/>
+</odoo>
