@@ -111,9 +111,6 @@ class _ClientHomeState extends State<ClientHome> {
                   for (final f in (d['facilities'] as List)) _facilityCard(f as Map, cs),
                   const SizedBox(height: 16),
                 ],
-                _section(tr('الخدمات المقدَّمة', 'Services provided')),
-                _servicesWrap(d['services'] as List),
-                const SizedBox(height: 16),
                 if (_has('team')) ...[
                   _section(tr('فِرَق العمل', 'Teams'), onMore: () => _go(const ClientTeamScreen())),
                   for (final t in (d['teams'] as List)) _teamCard(t as Map, cs),
@@ -401,45 +398,45 @@ class _ClientHomeState extends State<ClientHome> {
     // weight as a shortcut, so nothing led. They are grouped now, and each
     // group is drawn the way its job deserves.
     // (emoji, ar, en, colour, screen, sectionCode) — sectionCode null = always
-    final act = <(String, String, String, int, Widget, String?)>[
-      ('📥', 'طلب خدمة', 'Request', 0xFFC0392B, const RequestsScreen(), null),
-      ('✅', 'الجودة', 'Quality', 0xFF16A34A, const QualityScreen(), null),
-      ('📡', 'النشاط', 'Live', 0xFF0891B2, const ClientActivityScreen(), 'workorders'),
-      ('🔁', 'الجدولة', 'Schedules', 0xFF0D9488, const SchedulesScreen(), 'workorders'),
+    final act = <(IconData, String, String, int, Widget, String?)>[
+      (Icons.add_task_rounded, 'طلب خدمة', 'Request', 0xFFC0392B, const RequestsScreen(), null),
+      (Icons.verified_rounded, 'الجودة', 'Quality', 0xFF16A34A, const QualityScreen(), null),
+      (Icons.sensors_rounded, 'النشاط', 'Live', 0xFF0891B2, const ClientActivityScreen(), 'workorders'),
+      (Icons.event_repeat_rounded, 'الجدولة', 'Schedules', 0xFF0D9488, const SchedulesScreen(), 'workorders'),
     ];
-    final services = <(String, String, String, int, Widget, String?)>[
-      ('🧼', 'النظافة', 'Cleaning', 0xFF0EA5E9, const ClientCleaningScreen(), 'cleaning'),
-      ('🛡️', 'الأمن', 'Security', 0xFFE11D48, const ClientSecurityScreen(), 'security'),
-      ('🌳', 'الزراعة', 'Landscaping', 0xFF16A34A, const ClientAgriScreen(), 'agriculture'),
-      ('🏙️', 'الواجهات', 'Facade', 0xFF8B5CF6, const ClientFacadeScreen(), 'facade'),
-      ('🛠️', 'الصيانة', 'Maintenance', 0xFFF59E0B, const MaintenanceScreen(), 'maintenance'),
-      ('♻️', 'النفايات', 'Waste', 0xFF16A34A, const ClientWasteScreen(), 'waste'),
-      ('☕', 'الضيافة', 'Hospitality', 0xFF8A6D3B, const HospitalityScreen(), 'hospitality'),
-      ('🚗', 'صف السيارات', 'Valet', 0xFFB45309, const ValetScreen(), 'valet'),
-      ('🐜', 'مكافحة الحشرات', 'Pest', 0xFF7C3AED,
+    final services = <(IconData, String, String, int, Widget, String?)>[
+      (Icons.cleaning_services_rounded, 'النظافة', 'Cleaning', 0xFF0EA5E9, const ClientCleaningScreen(), 'cleaning'),
+      (Icons.shield_rounded, 'الأمن', 'Security', 0xFFE11D48, const ClientSecurityScreen(), 'security'),
+      (Icons.park_rounded, 'الزراعة', 'Landscaping', 0xFF16A34A, const ClientAgriScreen(), 'agriculture'),
+      (Icons.apartment_rounded, 'الواجهات', 'Facade', 0xFF8B5CF6, const ClientFacadeScreen(), 'facade'),
+      (Icons.handyman_rounded, 'الصيانة', 'Maintenance', 0xFFF59E0B, const MaintenanceScreen(), 'maintenance'),
+      (Icons.recycling_rounded, 'النفايات', 'Waste', 0xFF16A34A, const ClientWasteScreen(), 'waste'),
+      (Icons.local_cafe_rounded, 'الضيافة', 'Hospitality', 0xFF8A6D3B, const HospitalityScreen(), 'hospitality'),
+      (Icons.directions_car_rounded, 'صف السيارات', 'Valet', 0xFFB45309, const ValetScreen(), 'valet'),
+      (Icons.pest_control_rounded, 'مكافحة الحشرات', 'Pest', 0xFF7C3AED,
           const SpecialtyServiceScreen(spec: ServiceSpec.pest), 'pest'),
-      ('🧴', 'التعقيم', 'Disinfection', 0xFF0EA5A5,
+      (Icons.sanitizer_rounded, 'التعقيم', 'Disinfection', 0xFF0EA5A5,
           const SpecialtyServiceScreen(spec: ServiceSpec.disinfection), 'disinfection'),
-      ('🏊', 'المسابح', 'Pools', 0xFF0891B2,
+      (Icons.pool_rounded, 'المسابح', 'Pools', 0xFF0891B2,
           const SpecialtyServiceScreen(spec: ServiceSpec.pool), 'pool'),
-      ('🚰', 'خزانات المياه', 'Water tanks', 0xFF0E7A5F,
+      (Icons.water_drop_rounded, 'خزانات المياه', 'Water tanks', 0xFF0E7A5F,
           const SpecialtyServiceScreen(spec: ServiceSpec.watertank), 'watertank'),
     ];
-    final place = <(String, String, String, int, Widget, String?)>[
-      ('🏢', 'المباني', 'Buildings', 0xFF6366F1, const ClientStructureScreen(), 'facilities'),
-      ('🏭', 'الأصول', 'Assets', 0xFF0891B2, const ClientAssetsScreen(), null),
-      ('📦', 'المخزون', 'Inventory', 0xFF0E3A5F, const ClientInventoryScreen(), 'inventory'),
-      ('🕐', 'الحضور', 'Attendance', 0xFF0891B2, const AttendanceScreen(), 'team'),
-      ('👷', 'الفريق', 'Team', 0xFF2F6DF6, const ClientTeamScreen(), 'team'),
-      ('📣', 'إشعار', 'Notify', 0xFF6366F1, const NotifySendScreen(), null),
+    final place = <(IconData, String, String, int, Widget, String?)>[
+      (Icons.business_rounded, 'المباني', 'Buildings', 0xFF6366F1, const ClientStructureScreen(), 'facilities'),
+      (Icons.precision_manufacturing_rounded, 'الأصول', 'Assets', 0xFF0891B2, const ClientAssetsScreen(), null),
+      (Icons.inventory_2_rounded, 'المخزون', 'Inventory', 0xFF0E3A5F, const ClientInventoryScreen(), 'inventory'),
+      (Icons.schedule_rounded, 'الحضور', 'Attendance', 0xFF0891B2, const AttendanceScreen(), 'team'),
+      (Icons.groups_rounded, 'الفريق', 'Team', 0xFF2F6DF6, const ClientTeamScreen(), 'team'),
+      (Icons.campaign_rounded, 'إشعار', 'Notify', 0xFF6366F1, const NotifySendScreen(), null),
     ];
-    final money = <(String, String, String, int, Widget, String?)>[
-      ('🛒', 'المتجر', 'Shop', 0xFF0EA5E9, const ShopScreen(), 'shop'),
-      ('📦', 'طلباتي', 'Orders', 0xFFF59E0B, const OrdersScreen(), null),
-      ('💳', 'الفواتير', 'Invoices', 0xFF7A1340, const InvoicesScreen(), null),
+    final money = <(IconData, String, String, int, Widget, String?)>[
+      (Icons.storefront_rounded, 'المتجر', 'Shop', 0xFF0EA5E9, const ShopScreen(), 'shop'),
+      (Icons.receipt_long_rounded, 'طلباتي', 'Orders', 0xFFF59E0B, const OrdersScreen(), null),
+      (Icons.credit_card_rounded, 'الفواتير', 'Invoices', 0xFF7A1340, const InvoicesScreen(), null),
     ];
 
-    List<T> vis<T extends (String, String, String, int, Widget, String?)>(List<T> l) =>
+    List<T> vis<T extends (IconData, String, String, int, Widget, String?)>(List<T> l) =>
         l.where((s) => s.$6 == null || _has(s.$6!)).toList();
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -470,7 +467,7 @@ class _ClientHomeState extends State<ClientHome> {
       );
 
   /// The things people came to do: full-width, high contrast, unmissable.
-  Widget _actionRow(List<(String, String, String, int, Widget, String?)> items) => Row(
+  Widget _actionRow(List<(IconData, String, String, int, Widget, String?)> items) => Row(
         children: [
           for (final s in items)
             Expanded(
@@ -490,8 +487,8 @@ class _ClientHomeState extends State<ClientHome> {
                           blurRadius: 10, offset: const Offset(0, 5))],
                     ),
                     child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      Text(s.$1, style: const TextStyle(fontSize: 21)),
-                      const SizedBox(height: 6),
+                      Icon(s.$1, size: 24, color: Colors.white),
+                      const SizedBox(height: 7),
                       Text(tr(s.$2, s.$3), textAlign: TextAlign.center, maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900,
@@ -506,16 +503,19 @@ class _ClientHomeState extends State<ClientHome> {
 
   /// Services read as a row of cards carrying their own colour on a leading
   /// stripe — a contracted service is not a shortcut and should not look like one.
-  Widget _serviceWrap(List<(String, String, String, int, Widget, String?)> items) => Wrap(
-        spacing: 8, runSpacing: 8,
+  /// Services fill the row in two even columns — a fixed-width Wrap left a
+  /// ragged gap down the side and made the section look unfinished.
+  Widget _serviceWrap(List<(IconData, String, String, int, Widget, String?)> items) =>
+      GridView.count(
+        crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+        crossAxisSpacing: 9, mainAxisSpacing: 9, childAspectRatio: 3.0,
         children: [
           for (final s in items)
             InkWell(
               borderRadius: BorderRadius.circular(13),
               onTap: () => _go(s.$5),
               child: Container(
-                width: 108,
-                padding: const EdgeInsets.fromLTRB(10, 10, 8, 10),
+                padding: const EdgeInsets.fromLTRB(11, 10, 10, 10),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(13),
@@ -524,18 +524,17 @@ class _ClientHomeState extends State<ClientHome> {
                       offset: Offset(0, 2))],
                 ),
                 child: Row(children: [
-                  Container(width: 4, height: 34,
+                  Container(width: 3.5, height: 30,
                       decoration: BoxDecoration(color: Color(s.$4),
                           borderRadius: BorderRadius.circular(3))),
-                  const SizedBox(width: 8),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min, children: [
-                    Text(s.$1, style: const TextStyle(fontSize: 16)),
-                    const SizedBox(height: 3),
-                    Text(tr(s.$2, s.$3), maxLines: 2, overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 10.5,
+                  const SizedBox(width: 10),
+                  Icon(s.$1, size: 19, color: Color(s.$4)),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Text(tr(s.$2, s.$3), maxLines: 2, overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5,
                             height: 1.2, color: Color(s.$4))),
-                  ])),
+                  ),
                 ]),
               ),
             ),
@@ -543,7 +542,7 @@ class _ClientHomeState extends State<ClientHome> {
       );
 
   /// Supporting destinations: quiet, dense, uniform.
-  Widget _compactGrid(List<(String, String, String, int, Widget, String?)> items) =>
+  Widget _compactGrid(List<(IconData, String, String, int, Widget, String?)> items) =>
       GridView.count(
         crossAxisCount: 4, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
         crossAxisSpacing: 9, mainAxisSpacing: 9, childAspectRatio: 1.0,
@@ -559,8 +558,8 @@ class _ClientHomeState extends State<ClientHome> {
                   border: Border.all(color: Colors.grey.shade200),
                 ),
                 child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Text(s.$1, style: const TextStyle(fontSize: 19)),
-                  const SizedBox(height: 5),
+                  Icon(s.$1, size: 21, color: Color(s.$4)),
+                  const SizedBox(height: 6),
                   Text(tr(s.$2, s.$3), textAlign: TextAlign.center, maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 10.5,
