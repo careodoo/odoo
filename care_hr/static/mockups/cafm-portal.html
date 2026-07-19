@@ -10,9 +10,12 @@
   @font-face{font-family:'Tajawal';font-weight:700;src:url('/care_arabic_font/static/fonts/Tajawal-700.ttf') format('truetype')}
   @font-face{font-family:'Tajawal';font-weight:800;src:url('/care_arabic_font/static/fonts/Tajawal-800.ttf') format('truetype')}
   :root{
-    --nav:#0f2544; --nav2:#0b1c34; --accent:#e6295c; --accent-d:#c21e4c;
+    /* CARE identity — the same tokens the app uses, so the two read as one
+       system instead of two products that happen to share data. */
+    --nav:#1b1416; --nav2:#120c0e; --accent:#c0392b; --accent-d:#8e241b;
+    --accent-l:#e24a3b;
     --teal:#0ea5a4; --blue:#3b82f6; --amber:#f59e0b; --green:#16a34a; --red:#e11d48; --purple:#7c3aed; --cyan:#0891b2;
-    --ink:#0f2137; --muted:#64748b; --line:#e6edf5; --line2:#eef3f9; --bg:#f1f5fa; --card:#fff;
+    --ink:#14202b; --muted:#64748b; --line:#e6eaf0; --line2:#eef3f9; --bg:#f4f6fa; --card:#fff;
     --sb:256px; --radius:16px; --shadow:0 4px 20px rgba(15,33,55,.06); --shadow-lg:0 18px 50px rgba(15,33,55,.18);
   }
   *{box-sizing:border-box}
@@ -24,14 +27,17 @@
   ::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#cdd8e6;border-radius:8px}
   /* ---------- login ---------- */
   #login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:60;
-    background:radial-gradient(1200px 600px at 80% -10%,#173a66,transparent),linear-gradient(135deg,#0f2544,#0b1c34 70%)}
+    background:radial-gradient(1100px 560px at 82% -12%,rgba(255,255,255,.16),transparent),
+               linear-gradient(150deg,var(--accent-l),var(--accent) 45%,#7a1b14)}
+  #login::before{content:'';position:absolute;inset:0;pointer-events:none;
+    background-image:repeating-linear-gradient(-45deg,rgba(255,255,255,.05) 0 1px,transparent 1px 30px)}
   #login .card{background:#fff;border-radius:22px;padding:38px 34px;width:380px;max-width:92vw;box-shadow:var(--shadow-lg);text-align:center}
   #login img{max-width:200px;margin-bottom:6px}
   #login h2{margin:8px 0 22px;font-size:16px;color:var(--muted);font-weight:600}
   #login .fld{position:relative;margin-bottom:14px}
   #login input{width:100%;padding:13px 15px;border:1.5px solid var(--line);border-radius:12px;font-size:14px;font-family:inherit;transition:border .15s}
   #login input:focus{outline:none;border-color:var(--accent)}
-  #login button{width:100%;padding:13px;border:0;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-d));color:#fff;font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 8px 20px rgba(230,41,92,.3)}
+  #login button{width:100%;padding:13px;border:0;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-d));color:#fff;font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 10px 24px rgba(192,57,43,.32)}
   #login .err{color:var(--red);font-size:13px;min-height:18px;margin-top:8px}
   /* ---------- shell ---------- */
   #app{display:none}
@@ -357,9 +363,9 @@ function woEvidence(w){const m=(w.media||[]);let h='<div style="display:flex;ali
 function donut(parts,size,label){size=size||140;const r=size/2-14,c=2*Math.PI*r,cx=size/2;let off=0,tot=parts.reduce((s,p)=>s+p.v,0)||1,seg='';
   parts.forEach(p=>{const l=c*p.v/tot;seg+='<circle cx="'+cx+'" cy="'+cx+'" r="'+r+'" fill="none" stroke="'+p.c+'" stroke-width="15" stroke-linecap="round" stroke-dasharray="'+Math.max(0,l-1.5)+' '+(c-l+1.5)+'" stroke-dashoffset="'+(-off)+'" transform="rotate(-90 '+cx+' '+cx+')"/>';off+=l;});
   const mid=label!==undefined?label:(parts[0]?Math.round(100*parts[0].v/tot)+'%':'0');
-  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'"><circle cx="'+cx+'" cy="'+cx+'" r="'+r+'" fill="none" stroke="#eef2f7" stroke-width="15"/>'+seg+'<text x="'+cx+'" y="'+(cx+2)+'" text-anchor="middle" font-size="21" font-weight="800" fill="#0f2137" font-family="Tajawal">'+mid+'</text><text x="'+cx+'" y="'+(cx+20)+'" text-anchor="middle" font-size="10.5" fill="#64748b" font-family="Tajawal">'+esc(parts.__sub||'')+'</text></svg>';}
+  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'"><circle cx="'+cx+'" cy="'+cx+'" r="'+r+'" fill="none" stroke="#eef2f7" stroke-width="15"/>'+seg+'<text x="'+cx+'" y="'+(cx+2)+'" text-anchor="middle" font-size="21" font-weight="800" fill="#14202b" font-family="Tajawal">'+mid+'</text><text x="'+cx+'" y="'+(cx+20)+'" text-anchor="middle" font-size="10.5" fill="#64748b" font-family="Tajawal">'+esc(parts.__sub||'')+'</text></svg>';}
 function gauge(pct,color){pct=Math.max(0,Math.min(100,pct));color=color||'#16a34a';const r=54,cx=64,cy=64,c=Math.PI*r;const l=c*pct/100;
-  return '<svg width="128" height="80" viewBox="0 0 128 80"><path d="M10 64 A54 54 0 0 1 118 64" fill="none" stroke="#eef2f7" stroke-width="13" stroke-linecap="round"/><path d="M10 64 A54 54 0 0 1 118 64" fill="none" stroke="'+color+'" stroke-width="13" stroke-linecap="round" stroke-dasharray="'+l+' '+c+'"/><text x="64" y="60" text-anchor="middle" font-size="22" font-weight="800" fill="#0f2137" font-family="Tajawal">'+Math.round(pct)+'%</text></svg>';}
+  return '<svg width="128" height="80" viewBox="0 0 128 80"><path d="M10 64 A54 54 0 0 1 118 64" fill="none" stroke="#eef2f7" stroke-width="13" stroke-linecap="round"/><path d="M10 64 A54 54 0 0 1 118 64" fill="none" stroke="'+color+'" stroke-width="13" stroke-linecap="round" stroke-dasharray="'+l+' '+c+'"/><text x="64" y="60" text-anchor="middle" font-size="22" font-weight="800" fill="#14202b" font-family="Tajawal">'+Math.round(pct)+'%</text></svg>';}
 function barsChart(items){const mx=Math.max(1,...items.map(i=>i.v));return '<div class="bars">'+items.map(i=>'<div class="col"><div class="nm num" style="color:'+(i.c||'#0ea5a4')+'">'+i.v+'</div><div class="bk" style="height:'+(100*i.v/mx)+'%;background:linear-gradient(180deg,'+(i.c||'#14b8a6')+','+(i.c2||'#0b8f86')+')"></div><div class="cap" title="'+esc(i.l)+'">'+esc(i.l)+'</div></div>').join('')+'</div>';}
 function areaChart(points,color){color=color||'#3b82f6';const w=560,h=120,pad=6;const mx=Math.max(1,...points.map(p=>p.v));const n=points.length;
   const X=i=>pad+i*(w-2*pad)/Math.max(1,n-1);const Y=v=>h-pad-(v/mx)*(h-2*pad);
@@ -767,7 +773,7 @@ const ROUTES={
         +KC('🏭','#a16207',k.assets,T('الأصول','Assets'),'assets')
         +KC('👥','#14b8a6',k.teams,T('الفِرَق','Teams'),'team')
         +KC('🧑‍🔧','#6366f1',k.members,T('الأعضاء','Members'),'team')
-        +KC('📥','#e6295c',k.requests_new,T('طلبات جديدة','New requests'),'requests')
+        +KC('📥','var(--accent)',k.requests_new,T('طلبات جديدة','New requests'),'requests')
         +KC('🧾','#f59e0b',k.open,T('أوامر مفتوحة','Open'),'workorders')
         +KC('🔧','#f97316',k.in_progress,T('قيد التنفيذ','In progress'),'workorders')
         +KC('⏰','#e11d48',k.overdue,T('متأخرة','Overdue'),'workorders')

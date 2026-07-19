@@ -31,11 +31,39 @@ def _sel(rec, field):
         return {}
 
 
+class Field:
+    """One input on a section's add form. Declared, not hand-written, so every
+    service gets the same form behaviour without twenty near-identical pages."""
+
+    def __init__(self, name, label, kind='char', required=False, comodel=None,
+                 domain_facility=False, options=None, default=None, help=None):
+        self.name = name
+        self.label = label
+        self.kind = kind          # char | text | int | float | date | datetime
+                                  # | select | m2o | bool
+        self.required = required
+        self.comodel = comodel    # for m2o
+        self.domain_facility = domain_facility   # scope the m2o to the facility
+        self.options = options    # for select: [(value, label)] or a field name
+        self.default = default
+        self.help = help
+
+
+class Create:
+    """What it takes for a client to add one of these."""
+
+    def __init__(self, label, perm, fields, facility_field='facility_id'):
+        self.label = label
+        self.perm = perm          # capability code from the client matrix
+        self.fields = fields
+        self.facility_field = facility_field
+
+
 class Section:
     """One sub-menu of a service: a model, how to scope it, how to draw a row."""
 
     def __init__(self, key, label, model, row, scope='facility',
-                 order=None, icon='•', empty_text=None):
+                 order=None, icon='•', empty_text=None, create=None):
         self.key = key
         self.label = label
         self.model = model
@@ -44,6 +72,7 @@ class Section:
         self.order = order
         self.icon = icon
         self.empty_text = empty_text
+        self.create = create      # a Create spec, or None if read-only
 
 
 # ---------------------------------------------------------------- row renderers
@@ -209,7 +238,20 @@ def REGISTRY():
                                    r.pest_type, ''),
                                lambda r: r.description or '',
                                lambda r: _state_pill(r, 'severity', 'crit') + _state_pill(r)),
-                    icon='⚠️'),
+                    icon='⚠️',
+                    create=Create('الإبلاغ عن ظهور آفة', 'observation_create', [
+                        Field('pest_type', 'نوع الآفة', 'select', required=True, options=[
+                            ('cockroach', 'صراصير'), ('rodent', 'قوارض'), ('ant', 'نمل'),
+                            ('fly', 'ذباب'), ('mosquito', 'بعوض'), ('bedbug', 'بق الفراش'),
+                            ('termite', 'نمل أبيض'), ('bird', 'طيور'), ('other', 'أخرى')]),
+                        Field('severity', 'مدى الانتشار', 'select', required=True, default='one',
+                              options=[('one', 'مشاهدة فردية'), ('few', 'عدة مشاهدات'),
+                                       ('infestation', 'انتشار واضح')]),
+                        Field('location_id', 'الموقع', 'm2o', comodel='care.cafm.location',
+                              domain_facility=True),
+                        Field('description', 'الوصف', 'text',
+                              help='أين ومتى شوهدت — يساعد الفني على تحديد نقطة الدخول.'),
+                    ])),
             Section('chemicals', 'سجل المبيدات المعتمدة', 'care.pest.chemical',
                     _r_generic(lambda r: '%s — %s' % (r.name, r.name_en or ''),
                                lambda r: '%s · تسجيل %s' % (
@@ -235,7 +277,17 @@ def REGISTRY():
                                    r.ph or 0, r.free_chlorine or 0,
                                    r.temperature or 0, r.turbidity or 0),
                                lambda r: [('ضمن النطاق', 'ok')] if r.is_safe
-                               else [(r.breaches or 'خارج النطاق', 'crit')]), icon='🧪'),
+                               else [(r.breaches or 'خارج النطاق', 'crit')]), icon='🧪',
+                    create=Create('تسجيل قراءة مياه', 'workorder_verify', [
+                        Field('pool_id', 'المسبح', 'm2o', comodel='care.pool.pool',
+                              domain_facility=True, required=True),
+                        Field('ph', 'الأس الهيدروجيني pH', 'float'),
+                        Field('free_chlorine', 'الكلور الحر (ppm)', 'float'),
+                        Field('combined_chlorine', 'الكلور المرتبط (ppm)', 'float'),
+                        Field('temperature', 'الحرارة (°م)', 'float'),
+                        Field('turbidity', 'العكارة (NTU)', 'float'),
+                        Field('note', 'ملاحظة', 'char'),
+                    ], facility_field=None)),
             Section('tasks', 'أعمال الصيانة', 'care.pool.task',
                     _r_generic(lambda r: dict(r._fields['task_type'].selection).get(
                                    r.task_type, ''),
@@ -256,7 +308,22 @@ def REGISTRY():
                                lambda r: _state_pill(r, 'status',
                                                      'crit' if r.status in ('overdue', 'never')
                                                      else 'warn' if r.status == 'due_soon' else 'ok')
-                               + _state_pill(r, 'use', 'info')), icon='🛢️'),
+                               + _state_pill(r, 'use', 'info')), icon='🛢️',
+                    create=Create('إضافة خزان', 'asset_manage', [
+                        Field('code', 'رقم الخزان', 'char', required=True),
+                        Field('position', 'الموقع', 'select', default='roof', options=[
+                            ('roof', 'علوي'), ('ground', 'أرضي'), ('underground', 'تحت الأرض')]),
+                        Field('material', 'الخامة', 'select', default='grp', options=[
+                            ('grp', 'فايبر جلاس'), ('polyethylene', 'بولي إيثيلين'),
+                            ('concrete', 'خرساني'), ('steel', 'حديد مجلفن')]),
+                        Field('capacity_gal', 'السعة (جالون)', 'float'),
+                        Field('use', 'الاستخدام', 'select', default='domestic', options=[
+                            ('potable', 'مياه شرب'), ('domestic', 'استخدام عام'),
+                            ('fire', 'مكافحة حريق'), ('irrigation', 'ري')]),
+                        Field('cycle_months', 'دورة التنظيف (شهر)', 'int', default=6),
+                        Field('location_id', 'الموقع', 'm2o', comodel='care.cafm.location',
+                              domain_facility=True),
+                    ])),
             Section('cleanings', 'عمليات التنظيف', 'care.tank.cleaning',
                     _r_generic(lambda r: '%s — %s' % (r.tank_id.name or '', _d(r.clean_date, 10)),
                                lambda r: ' · '.join(filter(None, [
@@ -279,7 +346,22 @@ def REGISTRY():
                                           else [('تلامس أقل من المطلوب', 'crit')])
                                + ([('ATP %s' % r.atp_reading,
                                     'ok' if r.atp_pass else 'warn')] if r.atp_tested else [])
-                               + _state_pill(r)), icon='🧽'),
+                               + _state_pill(r)), icon='🧽',
+                    create=Create('تسجيل جولة تعقيم', 'observation_create', [
+                        Field('product_id', 'المطهّر', 'm2o',
+                              comodel='care.disinfect.product', required=True),
+                        Field('location_id', 'الموقع', 'm2o', comodel='care.cafm.location',
+                              domain_facility=True),
+                        Field('round_type', 'نوع الجولة', 'select', default='routine', options=[
+                            ('routine', 'دوري'), ('terminal', 'نهائي بعد خروج مريض'),
+                            ('outbreak', 'استجابة لعدوى'), ('preventive', 'وقائي')]),
+                        Field('method', 'الطريقة', 'select', default='wipe', options=[
+                            ('wipe', 'مسح'), ('spray', 'رشّ'), ('fog', 'تضبيب'),
+                            ('electrostatic', 'رشّ كهروستاتيكي')]),
+                        Field('contact_minutes', 'زمن التلامس (دقيقة)', 'int', required=True,
+                              help='المدة التي بقي فيها المطهّر رطبًا — هي الفارق بين التعقيم والمسح.'),
+                        Field('note', 'ملاحظات', 'text'),
+                    ])),
             Section('products', 'المطهّرات المعتمدة', 'care.disinfect.product',
                     _r_generic(lambda r: '%s — %s' % (r.name, r.name_en or ''),
                                lambda r: '%s · تخفيف %s · تلامس %s دقيقة' % (
@@ -351,6 +433,142 @@ class ServicePages(http.Controller):
         return recs, total
 
     # ---------------- pages ----------------
+
+    # ---------------- adding records ----------------
+    def _may(self, code):
+        """Does this caller hold the capability the section asks for?"""
+        env = request.env
+        u = env.user
+        if u.has_group('base.group_system') or u.has_group('base.group_erp_manager'):
+            return True
+        C = env['care.cafm.client'].sudo()
+        client = C.search([('user_ids', 'in', u.id)], limit=1)
+        if not client:
+            par = u.partner_id.commercial_partner_id or u.partner_id
+            client = C.search([('partner_id', '=', par.id)], limit=1) if par else None
+        if client:
+            return client.can(code)
+        # an employee acting on site keeps the operational capabilities
+        return bool(u.employee_id)
+
+    def _field_input(self, f, facs):
+        env = request.env
+        if f.kind == 'm2o':
+            recs = env[f.comodel].sudo().search(
+                [('facility_id', 'in', facs.ids)] if f.domain_facility else [], limit=400)
+            opts = Markup('' if f.required else '<option value="">— بدون —</option>')
+            opts += Markup('').join(
+                Markup('<option value="%s">%s</option>') % (r.id, esc(r.display_name))
+                for r in recs)
+            return Markup('<select name="%s"%s>%s</select>') % (
+                f.name, Markup(' required' if f.required else ''), opts)
+        if f.kind == 'select':
+            opts = f.options
+            if isinstance(opts, str):
+                opts = env[f.model_hint]._fields[opts].selection if False else []
+            body = Markup('').join(
+                Markup('<option value="%s"%s>%s</option>') % (
+                    v, Markup(' selected' if v == f.default else ''), esc(l))
+                for v, l in (opts or []))
+            return Markup('<select name="%s"%s>%s</select>') % (
+                f.name, Markup(' required' if f.required else ''), body)
+        if f.kind == 'bool':
+            return Markup('<label style="display:flex;gap:8px;align-items:center;margin-top:6px">'
+                          '<input type="checkbox" name="%s" value="1"%s '
+                          'style="width:auto;margin:0"/> %s</label>') % (
+                f.name, Markup(' checked' if f.default else ''), esc(f.label))
+        if f.kind == 'text':
+            return Markup('<textarea name="%s" rows="3"%s></textarea>') % (
+                f.name, Markup(' required' if f.required else ''))
+        html_type = {'int': 'number', 'float': 'number', 'date': 'date',
+                     'datetime': 'datetime-local'}.get(f.kind, 'text')
+        step = ' step="any"' if f.kind == 'float' else ''
+        return Markup('<input type="%s" name="%s"%s%s%s/>') % (
+            Markup(html_type), f.name, Markup(step),
+            Markup(' required' if f.required else ''),
+            Markup(' value="%s"' % f.default) if f.default is not None else Markup(''))
+
+    def _create_form(self, code, section, facs):
+        c = section.create
+        if not c or not self._may(c.perm):
+            return Markup('')
+        rows = Markup('')
+        for f in c.fields:
+            if f.kind == 'bool':
+                rows += self._field_input(f, facs)
+                continue
+            rows += Markup('<label>%s%s</label>%s') % (
+                esc(f.label), Markup(' *' if f.required else ''), self._field_input(f, facs))
+            if f.help:
+                rows += Markup('<div class="muted" style="margin-top:3px">%s</div>') % esc(f.help)
+        fopts = Markup('').join(
+            Markup('<option value="%s">%s</option>') % (f.id, esc(f.name)) for f in facs)
+        fac_row = (Markup('<label>المرفق</label><select name="__facility">%s</select>') % fopts) \
+            if len(facs) > 1 else Markup('<input type="hidden" name="__facility" value="%s"/>') % (
+                facs[:1].id or 0)
+        return Markup(
+            '<details class="card"><summary style="font-weight:900;cursor:pointer">➕ %s</summary>'
+            '<form method="post" action="/cafm/m/svc/%s/%s/add" style="margin-top:10px">%s'
+            '%s%s<button class="btn">حفظ</button></form></details>'
+        ) % (esc(c.label), code, section.key, _csrf(), fac_row, rows)
+
+    @http.route('/cafm/m/svc/<string:code>/<string:key>/add', type='http', auth='user',
+                methods=['POST'], website=False, csrf=True)
+    def section_add(self, code, key, **post):
+        reg = REGISTRY().get(code)
+        if not reg:
+            return request.redirect('/cafm/m')
+        _label, _icon, sections = reg
+        section = next((s for s in sections if s.key == key), None)
+        if not section or not section.create:
+            return request.redirect('/cafm/m/svc/%s' % code)
+        c = section.create
+        if not self._may(c.perm):
+            return _shell('غير مصرّح', Markup(
+                '<div class="card"><div class="h4">⛔ غير مصرّح</div>'
+                '<div class="muted">حسابك لا يملك صلاحية «%s». اطلبها من صفحة الصلاحيات.</div>'
+                '<a class="btn g" href="/cafm/m/permissions">صلاحياتي</a></div>') % esc(c.label),
+                accent=accent_for(code), back='/cafm/m/svc/%s/%s' % (code, key))
+
+        env = request.env
+        facs = self._facilities()
+        vals = {}
+        fid = int(post.get('__facility') or 0) or (facs[:1].id or 0)
+        if c.facility_field and fid in facs.ids:
+            vals[c.facility_field] = fid
+        for f in c.fields:
+            raw = post.get(f.name)
+            if f.kind == 'bool':
+                vals[f.name] = bool(raw)
+                continue
+            if raw in (None, ''):
+                continue
+            if f.kind in ('int', 'm2o'):
+                try:
+                    vals[f.name] = int(raw)
+                except ValueError:
+                    continue
+            elif f.kind == 'float':
+                try:
+                    vals[f.name] = float(raw)
+                except ValueError:
+                    continue
+            elif f.kind == 'datetime':
+                vals[f.name] = raw.replace('T', ' ') + (':00' if len(raw) == 16 else '')
+            else:
+                vals[f.name] = raw
+        try:
+            env[section.model].sudo().create(vals)
+        except Exception as e:
+            msg = str(getattr(e, 'args', [e])[0] if getattr(e, 'args', None) else e)
+            return _shell('تعذّر الحفظ', Markup(
+                '<div class="card"><div class="h4">⛔ لم يُحفظ السجل</div>'
+                '<div class="muted" style="margin-top:6px">%s</div>'
+                '<a class="btn g" href="/cafm/m/svc/%s/%s">رجوع</a></div>') % (
+                    esc(msg), code, key),
+                accent=accent_for(code), back='/cafm/m/svc/%s/%s' % (code, key))
+        return request.redirect('/cafm/m/svc/%s/%s' % (code, key))
+
     @http.route('/cafm/m/svc/<string:code>', type='http', auth='user', website=False)
     def service_home(self, code, **kw):
         reg = REGISTRY().get(code)
@@ -405,6 +623,7 @@ class ServicePages(http.Controller):
             body += Markup('<a class="pill" style="%s;padding:7px 12px" href="/cafm/m/svc/%s/%s">%s %s</a>') % (
                 Markup(style), code, s.key, s.icon, esc(s.label))
         body += Markup('</div>')
+        body += self._create_form(code, section, self._facilities())
         body += sec('%s — %s' % (label, section.label))
         body += Markup('<div class="muted" style="margin-bottom:9px">%s سجل · صفحة %s من %s</div>') % (
             total, page, pages)
