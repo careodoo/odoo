@@ -26,3 +26,4 @@ from . import nfc_api
 from . import support_api
 from . import valet_api
 from . import hospitality_api
+from . import report_api
