@@ -33,6 +33,7 @@ class Profile {
     required this.login,
     required this.role,
     required this.isSupervisor,
+    this.isQuality = false,
     required this.isAdmin,
     required this.canAddWorkers,
     required this.serviceTypes,
@@ -46,6 +47,8 @@ class Profile {
   final String login;
   final String role;
   final bool isSupervisor;
+  /// named on a team's quality slot → gets the inspection console
+  final bool isQuality;
   final bool isAdmin;
   final bool canAddWorkers;
   final List<String> serviceTypes;
@@ -65,6 +68,7 @@ class Profile {
       employeeId: u['employee_id'] as int?,
       role: j['role'] as String? ?? 'worker',
       isSupervisor: j['is_supervisor'] as bool? ?? false,
+      isQuality: j['is_quality'] as bool? ?? false,
       isAdmin: j['is_admin'] as bool? ?? false,
       canAddWorkers: j['can_add_workers'] as bool? ?? false,
       serviceTypes: List<String>.from((j['my_service_types'] as List?) ?? const []),

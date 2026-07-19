@@ -9,6 +9,7 @@ import 'scan_screen.dart';
 import 'security_home.dart';
 import 'supervisor_screen.dart';
 import 'supervisor_home.dart';
+import 'quality_home.dart';
 import 'client_home.dart';
 import 'admin_home.dart';
 import 'service_screen.dart';
@@ -34,6 +35,8 @@ class HomeScreen extends StatelessWidget {
     // a supervisor opens straight onto their board — stats, executive actions,
     // the unassigned backlog and live team load, all on the first screen.
     if (profile.isSupervisor) return const SupervisorHome();
+    // a team's quality officer gets the inspection console
+    if (profile.isQuality) return const QualityHome();
     if (profile.role == 'security') return const SecurityHome();
     return const WorkerHome();
   }

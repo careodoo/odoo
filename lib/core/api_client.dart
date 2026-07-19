@@ -619,6 +619,12 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/me/profile'), headers: await _headers())))['data'] as Map);
 
+  /// The quality inspector's console: inspected teams/facilities, observation
+  /// stats, severity breakdown, recent notes and the data the quick-note needs.
+  Future<Map<String, dynamic>> meQuality({String period = 'month'}) async =>
+      Map<String, dynamic>.from((await _handle(await http.get(
+              _u('/me/quality?period=$period'), headers: await _headers())))['data'] as Map);
+
   /// The supervisor's scope: supervised teams (service/facility/client/project),
   /// per-member load & achievements, team aggregate, and the quality queue.
   Future<Map<String, dynamic>> meSupervisor({String period = 'month'}) async =>
