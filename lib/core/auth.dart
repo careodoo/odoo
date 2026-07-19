@@ -82,6 +82,11 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Called once at startup: if a token is stored, fetch the profile.
+  ///
+  /// This used to drop the token on *any* failure, so a cold start with the
+  /// network not up yet, a server restart, or a timeout signed the user out
+  /// permanently — which is why closing the app looked like logging out. Only
+  /// the server rejecting the token is a reason to forget it.
   Future<void> bootstrap() async {
     loading = true;
     notifyListeners();
@@ -91,13 +96,37 @@ class AuthProvider extends ChangeNotifier {
         _startPolling();
         Push.registerWith(api); // attach this device to the signed-in user
       }
+    } on ApiException catch (e) {
+      if (e.status == 401 || e.status == 403) {
+        await api.logout();          // the token really is dead
+        profile = null;
+      } else {
+        // the server had a bad moment — keep the session and try again
+        sessionOffline = true;
+      }
     } catch (_) {
-      // stale/expired token → drop it silently, show login
-      await api.logout();
-      profile = null;
+      // no network at all: keep the session, show the app, retry on use
+      sessionOffline = true;
     } finally {
       loading = false;
       notifyListeners();
+    }
+  }
+
+  /// True when we hold a token but could not reach the server at launch.
+  bool sessionOffline = false;
+
+  /// Retry the profile fetch after a failed cold start, without signing out.
+  Future<bool> retrySession() async {
+    if (await api.token == null) return false;
+    try {
+      profile = Profile.fromJson(await api.me());
+      sessionOffline = false;
+      _startPolling();
+      notifyListeners();
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 
