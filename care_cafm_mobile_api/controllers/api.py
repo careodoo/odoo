@@ -271,6 +271,10 @@ class MobileApi(http.Controller):
         # security app, a cleaner the cleaning app, etc.
         is_cafm_member = ('care.cafm.client' in env
                           and bool(env['care.cafm.client'].sudo().search_count([('user_ids', 'in', [user.id])])))
+        # a quality officer is the person named on a team's quality slot — they
+        # get the inspection console rather than the plain worker screen.
+        is_quality = ('care.cafm.team' in env
+                      and bool(env['care.cafm.team'].sudo().search_count([('quality_user_id', '=', user.id)])))
         if not emp or is_cafm_member:
             role = 'client'
         elif 'security' in my_types:
@@ -285,6 +289,7 @@ class MobileApi(http.Controller):
             'role': role,
             'is_supervisor': is_supervisor,
             'is_admin': is_admin,
+            'is_quality': is_quality,
             'can_add_workers': can_add_workers,
             'my_service_types': my_types,
             'services': [_service_dict(s) for s in services],
@@ -535,6 +540,95 @@ class MobileApi(http.Controller):
         data = base64.b64decode(emp.sudo().image_256)
         return request.make_response(data, headers=[
             ('Content-Type', 'image/png'), ('Content-Length', str(len(data)))])
+
+    @http.route(API + '/me/quality', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def me_quality(self, **kw):
+        """The quality inspector's console: which teams/facilities they inspect,
+        observation stats over a period, the severity/state breakdown, and the
+        facilities+locations needed to log a note in two taps."""
+        from datetime import timedelta as _td
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        user = env.user
+        period = (request.httprequest.args.get('period') or 'month').strip()
+        today = fields.Date.context_today(user)
+        if period == 'today':
+            since, plabel = today, _('اليوم')
+        elif period == 'week':
+            since, plabel = today - _td(days=today.weekday()), _('هذا الأسبوع')
+        elif period == 'all':
+            since, plabel = None, _('كل الفترات')
+        else:
+            since, plabel = today.replace(day=1), _('هذا الشهر')
+        since_dt = datetime.combine(since, time.min) if since else None
+
+        Team = env['care.cafm.team'].sudo() if 'care.cafm.team' in env else None
+        teams = Team.search([('quality_user_id', '=', user.id)]) if Team is not None else []
+        fac_ids = [t.facility_id.id for t in teams if t.facility_id]
+        # fall back to the facilities they work on
+        emp = user.employee_id
+        if not fac_ids and emp:
+            fac_ids = env['care.cafm.workorder'].sudo().search(
+                [('employee_id', '=', emp.id)]).mapped('facility_id').ids
+
+        Obs = env['care.cafm.observation'].sudo() if 'care.cafm.observation' in env else None
+        obs = Obs.browse()
+        if Obs is not None:
+            dom = [('facility_id', 'in', fac_ids)] if fac_ids else []
+            obs = Obs.search(dom, order='id desc', limit=400)
+        inper = obs.filtered(lambda o: since_dt is None or (o.create_date and o.create_date >= since_dt))
+        mine = inper.filtered(lambda o: o.raised_by.id == user.id)
+        openo = obs.filtered(lambda o: o.state not in ('closed', 'cancelled'))
+        sev_lbl = dict(Obs._fields['severity'].selection) if Obs is not None else {}
+        st_lbl = dict(Obs._fields['state'].selection) if Obs is not None else {}
+
+        by_sev = {}
+        for o in openo:
+            g = by_sev.setdefault(o.severity, {'key': o.severity, 'label': sev_lbl.get(o.severity, o.severity), 'count': 0})
+            g['count'] += 1
+
+        Fac = env['care.cafm.facility'].sudo()
+        facs = Fac.browse(fac_ids) if fac_ids else Fac.search([], limit=20)
+        Loc = env['care.cafm.location'].sudo()
+        locs = {}
+        for l in Loc.search([('facility_id', 'in', facs.ids)]):
+            locs.setdefault(l.facility_id.id, []).append({'id': l.id, 'name': l.name, 'code': l.code})
+
+        return _ok({
+            'period': period, 'period_label': plabel,
+            'is_quality': bool(teams),
+            'teams': [{'id': t.id, 'name': t.name,
+                       'service': t.service_id.name or None,
+                       'facility': t.facility_id.name or None,
+                       'project': t.project_id.name if t.project_id else None,
+                       'client': (t.facility_id.partner_id.name if t.facility_id and t.facility_id.partner_id else None),
+                       'supervisor': t.supervisor_id.name or None,
+                       'members': t.member_count} for t in teams],
+            'stats': {
+                'open': len(openo),
+                'critical': len(openo.filtered(lambda o: o.severity == 'critical')),
+                'overdue': len(openo.filtered('is_overdue')),
+                'period_total': len(inper),
+                'mine': len(mine),
+                'closed': len(inper.filtered(lambda o: o.state == 'closed')),
+                'converted': len(inper.filtered(lambda o: o.workorder_id)),
+            },
+            'by_severity': sorted(by_sev.values(), key=lambda g: -g['count']),
+            'recent': [{
+                'id': o.id, 'name': o.name, 'title': o.title,
+                'facility': o.facility_id.name or None, 'location': o.location_id.name or None,
+                'severity': o.severity, 'severity_label': sev_lbl.get(o.severity, o.severity),
+                'state': o.state, 'state_label': st_lbl.get(o.state, o.state),
+                'workorder': o.workorder_id.name or None,
+                'assignee': o.assignee_id.name or None,
+                'mine': o.raised_by.id == user.id,
+                'at': str(o.create_date)[:16] if o.create_date else None,
+            } for o in obs[:40]],
+            # everything the quick-note sheet needs
+            'facilities': [{'id': f.id, 'name': f.name, 'locations': locs.get(f.id, [])} for f in facs],
+            'severities': [{'v': k, 'l': v} for k, v in (Obs._fields['severity'].selection if Obs is not None else [])],
+        })
 
     @http.route(API + '/me/supervisor', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def me_supervisor(self, **kw):
