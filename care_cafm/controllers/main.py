@@ -84,9 +84,18 @@ class CafmMobile(http.Controller):
             ('inbox', '🔔', 'الإشعارات', 'ما وصلني · غير المقروء'),
             ('support', '🎧', 'الدعم الفني', 'تذاكر · متابعة الرد'),
         ]
+        # hospitality lives on its own route prefix, not /cafm/m/<key>
+        extra = [
+            ('/hosp', '☕', 'الضيافة', 'اطلب مشروبك بمواصفاتك'),
+            ('/hosp/kitchen', '🍳', 'شاشة المطبخ', 'الطلبات لايف'),
+            ('/hosp/stats', '📊', 'إحصائيات الضيافة', 'الاستهلاك والتكلفة'),
+        ]
         tiles = Markup('').join(Markup(
             '<a class="tile" href="/cafm/m/%s"><div class="i">%s</div><div class="n">%s</div><div class="s">%s</div></a>'
         ) % (a[0], a[1], a[2], a[3]) for a in apps)
+        tiles += Markup('').join(Markup(
+            '<a class="tile" href="%s"><div class="i">%s</div><div class="n">%s</div><div class="s">%s</div></a>'
+        ) % (a[0], a[1], a[2], a[3]) for a in extra)
         body = Markup(
             '<div class="kpi"><div><div class="n">%s</div><div class="l">مهامّي المفتوحة</div></div>'
             '<div><div class="n">%s</div><div class="l">ملاحظات مفتوحة</div></div></div>'

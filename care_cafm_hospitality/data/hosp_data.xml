@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data noupdate="1">
+
+    <record id="seq_hosp_order" model="ir.sequence">
+      <field name="name">طلب ضيافة</field>
+      <field name="code">care.hosp.order</field>
+      <field name="prefix">HSP/%(year)s/</field>
+      <field name="padding">5</field>
+    </record>
+
+    <record id="section_hospitality" model="care.cafm.portal.section">
+      <field name="name">الضيافة</field>
+      <field name="code">hospitality</field>
+      <field name="icon">☕</field>
+      <field name="always_on" eval="True"/>
+    </record>
+
+    <!-- standing orders are placed a few minutes before the hour they are due,
+         so the morning rush is already on the kitchen screen -->
+    <record id="cron_hosp_standing" model="ir.cron">
+      <field name="name">الضيافة: تنفيذ الطلبات الدائمة</field>
+      <field name="model_id" ref="model_care_hosp_standing"/>
+      <field name="state">code</field>
+      <field name="code">model._cron_place_standing()</field>
+      <field name="interval_number">15</field>
+      <field name="interval_type">minutes</field>
+      <field name="numbercall">-1</field>
+      <field name="active" eval="True"/>
+    </record>
+
+    <!-- ========== option groups ========== -->
+    <record id="og_sugar" model="care.hosp.option.group">
+      <field name="name">السكر</field><field name="sequence">10</field>
+      <field name="required" eval="True"/>
+    </record>
+    <record id="op_sugar_none" model="care.hosp.option">
+      <field name="name">بدون سكر</field><field name="group_id" ref="og_sugar"/><field name="sequence">1</field>
+    </record>
+    <record id="op_sugar_light" model="care.hosp.option">
+      <field name="name">سكر خفيف</field><field name="group_id" ref="og_sugar"/><field name="sequence">2</field>
+    </record>
+    <record id="op_sugar_mid" model="care.hosp.option">
+      <field name="name">سكر وسط</field><field name="group_id" ref="og_sugar"/>
+      <field name="sequence">3</field><field name="is_default" eval="True"/>
+    </record>
+    <record id="op_sugar_extra" model="care.hosp.option">
+      <field name="name">سكر زيادة</field><field name="group_id" ref="og_sugar"/><field name="sequence">4</field>
+    </record>
+
+    <record id="og_size" model="care.hosp.option.group">
+      <field name="name">الحجم</field><field name="sequence">20</field>
+      <field name="required" eval="True"/>
+    </record>
+    <record id="op_size_s" model="care.hosp.option">
+      <field name="name">صغير</field><field name="group_id" ref="og_size"/><field name="sequence">1</field>
+    </record>
+    <record id="op_size_m" model="care.hosp.option">
+      <field name="name">وسط</field><field name="group_id" ref="og_size"/>
+      <field name="sequence">2</field><field name="is_default" eval="True"/>
+    </record>
+    <record id="op_size_l" model="care.hosp.option">
+      <field name="name">كبير</field><field name="group_id" ref="og_size"/>
+      <field name="sequence">3</field><field name="extra_cost">0.100</field>
+    </record>
+
+    <record id="og_milk" model="care.hosp.option.group">
+      <field name="name">الحليب</field><field name="sequence">30</field>
+      <field name="required" eval="False"/>
+    </record>
+    <record id="op_milk_none" model="care.hosp.option">
+      <field name="name">بدون حليب</field><field name="group_id" ref="og_milk"/><field name="sequence">1</field>
+    </record>
+    <record id="op_milk_normal" model="care.hosp.option">
+      <field name="name">حليب كامل الدسم</field><field name="group_id" ref="og_milk"/>
+      <field name="sequence">2</field><field name="is_default" eval="True"/>
+    </record>
+    <record id="op_milk_light" model="care.hosp.option">
+      <field name="name">حليب قليل الدسم</field><field name="group_id" ref="og_milk"/><field name="sequence">3</field>
+    </record>
+    <record id="op_milk_soy" model="care.hosp.option">
+      <field name="name">حليب صويا</field><field name="group_id" ref="og_milk"/>
+      <field name="sequence">4</field><field name="extra_cost">0.150</field>
+    </record>
+
+    <record id="og_strength" model="care.hosp.option.group">
+      <field name="name">درجة التحميص/القوة</field><field name="sequence">40</field>
+      <field name="required" eval="False"/>
+    </record>
+    <record id="op_str_light" model="care.hosp.option">
+      <field name="name">خفيفة</field><field name="group_id" ref="og_strength"/><field name="sequence">1</field>
+    </record>
+    <record id="op_str_mid" model="care.hosp.option">
+      <field name="name">وسط</field><field name="group_id" ref="og_strength"/>
+      <field name="sequence">2</field><field name="is_default" eval="True"/>
+    </record>
+    <record id="op_str_strong" model="care.hosp.option">
+      <field name="name">ثقيلة</field><field name="group_id" ref="og_strength"/><field name="sequence">3</field>
+    </record>
+
+    <record id="og_extras" model="care.hosp.option.group">
+      <field name="name">إضافات</field><field name="sequence">50</field>
+      <field name="required" eval="False"/><field name="multi" eval="True"/>
+      <field name="max_select">4</field>
+    </record>
+    <record id="op_ex_cardamom" model="care.hosp.option">
+      <field name="name">هيل</field><field name="group_id" ref="og_extras"/><field name="sequence">1</field>
+    </record>
+    <record id="op_ex_saffron" model="care.hosp.option">
+      <field name="name">زعفران</field><field name="group_id" ref="og_extras"/>
+      <field name="sequence">2</field><field name="extra_cost">0.200</field>
+    </record>
+    <record id="op_ex_cinnamon" model="care.hosp.option">
+      <field name="name">قرفة</field><field name="group_id" ref="og_extras"/><field name="sequence">3</field>
+    </record>
+    <record id="op_ex_vanilla" model="care.hosp.option">
+      <field name="name">فانيليا</field><field name="group_id" ref="og_extras"/>
+      <field name="sequence">4</field><field name="extra_cost">0.100</field>
+    </record>
+    <record id="op_ex_ice" model="care.hosp.option">
+      <field name="name">ثلج إضافي</field><field name="group_id" ref="og_extras"/><field name="sequence">5</field>
+    </record>
+
+    <!-- ========== categories ========== -->
+    <record id="cat_hot" model="care.hosp.category">
+      <field name="name">مشروبات ساخنة</field><field name="code">hot</field>
+      <field name="icon">☕</field><field name="color">#b45309</field><field name="sequence">10</field>
+    </record>
+    <record id="cat_cold" model="care.hosp.category">
+      <field name="name">مشروبات باردة</field><field name="code">cold</field>
+      <field name="icon">🧊</field><field name="color">#0891b2</field><field name="sequence">20</field>
+    </record>
+    <record id="cat_arabic" model="care.hosp.category">
+      <field name="name">ضيافة عربية</field><field name="code">arabic</field>
+      <field name="icon">🫖</field><field name="color">#a16207</field><field name="sequence">30</field>
+    </record>
+    <record id="cat_snack" model="care.hosp.category">
+      <field name="name">مأكولات خفيفة</field><field name="code">snack</field>
+      <field name="icon">🥐</field><field name="color">#16a34a</field><field name="sequence">40</field>
+    </record>
+    <record id="cat_meeting" model="care.hosp.category">
+      <field name="name">ضيافة الاجتماعات</field><field name="code">meeting</field>
+      <field name="icon">🍽️</field><field name="color">#7c3aed</field><field name="sequence">50</field>
+    </record>
+
+  </data>
+</odoo>

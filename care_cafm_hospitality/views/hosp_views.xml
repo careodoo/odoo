@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- ================= الطلبات ================= -->
+  <record id="view_hosp_order_tree" model="ir.ui.view">
+    <field name="name">care.hosp.order.tree</field>
+    <field name="model">care.hosp.order</field>
+    <field name="arch" type="xml">
+      <tree decoration-danger="is_late" decoration-muted="state in ('cancelled','rejected')"
+            decoration-success="state == 'delivered'">
+        <field name="name"/>
+        <field name="requester_id"/>
+        <field name="facility_id"/>
+        <field name="room_label"/>
+        <field name="order_type"/>
+        <field name="item_count"/>
+        <field name="total_cost" sum="الإجمالي"/>
+        <field name="placed_at"/>
+        <field name="wait_minutes" widget="float_time" string="الانتظار"/>
+        <field name="is_late" invisible="1"/>
+        <field name="state" widget="badge"
+               decoration-info="state == 'placed'" decoration-warning="state in ('accepted','preparing','await_approval')"
+               decoration-success="state in ('ready','delivered')"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_hosp_order_form" model="ir.ui.view">
+    <field name="name">care.hosp.order.form</field>
+    <field name="model">care.hosp.order</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="action_place" string="إرسال للمطبخ" type="object" class="btn-primary"
+                  invisible="state != 'draft'"/>
+          <button name="action_approve" string="اعتماد" type="object" class="btn-primary"
+                  invisible="state != 'await_approval'"/>
+          <button name="action_accept" string="قبول" type="object" class="btn-primary"
+                  invisible="state != 'placed'"/>
+          <button name="action_preparing" string="بدء التحضير" type="object"
+                  invisible="state not in ('placed','accepted')"/>
+          <button name="action_ready" string="جاهز" type="object" class="btn-primary"
+                  invisible="state not in ('accepted','preparing')"/>
+          <button name="action_deliver" string="تم التقديم" type="object" class="btn-primary"
+                  invisible="state not in ('ready','preparing','accepted')"/>
+          <button name="action_reject" string="رفض" type="object"
+                  invisible="state in ('delivered','cancelled','rejected')"/>
+          <button name="action_cancel" string="إلغاء" type="object"
+                  invisible="state in ('delivered','cancelled','rejected')"/>
+          <field name="state" widget="statusbar"
+                 statusbar_visible="draft,placed,accepted,preparing,ready,delivered"/>
+        </header>
+        <sheet>
+          <div class="oe_title">
+            <h1><field name="name" readonly="1"/></h1>
+          </div>
+          <group>
+            <group>
+              <field name="requester_id"/>
+              <field name="department_id"/>
+              <field name="facility_id"/>
+              <field name="location_id"/>
+              <field name="room_label"/>
+            </group>
+            <group>
+              <field name="order_type"/>
+              <field name="guest_count" invisible="order_type == 'self'"/>
+              <field name="guest_name" invisible="order_type == 'self'"/>
+              <field name="is_vip"/>
+              <field name="scheduled_at"/>
+              <field name="limit_note" readonly="1" invisible="not limit_note"/>
+              <field name="approver_id" readonly="1" invisible="not approver_id"/>
+            </group>
+          </group>
+          <notebook>
+            <page string="الأصناف">
+              <field name="line_ids">
+                <tree editable="bottom">
+                  <field name="item_id"/>
+                  <field name="quantity"/>
+                  <field name="option_ids" widget="many2many_tags"/>
+                  <field name="note"/>
+                  <field name="station_id" readonly="1"/>
+                  <field name="line_cost" readonly="1" sum="الإجمالي"/>
+                  <field name="state"/>
+                </tree>
+              </field>
+              <group class="oe_subtotal_footer">
+                <field name="item_count"/>
+                <field name="total_cost"/>
+              </group>
+            </page>
+            <page string="التوقيت والتقييم">
+              <group>
+                <group>
+                  <field name="placed_at"/>
+                  <field name="accepted_at"/>
+                  <field name="ready_at"/>
+                  <field name="delivered_at"/>
+                </group>
+                <group>
+                  <field name="prep_target"/>
+                  <field name="prep_minutes"/>
+                  <field name="wait_minutes"/>
+                  <field name="is_late"/>
+                  <field name="prepared_by"/>
+                  <field name="delivered_by"/>
+                  <field name="rating"/>
+                  <field name="rating_note"/>
+                </group>
+              </group>
+            </page>
+            <page string="ملاحظات">
+              <field name="note"/>
+              <field name="reject_reason" readonly="1" invisible="not reject_reason"/>
+            </page>
+          </notebook>
+        </sheet>
+        <div class="oe_chatter">
+          <field name="message_follower_ids"/>
+          <field name="activity_ids"/>
+          <field name="message_ids"/>
+        </div>
+      </form>
+    </field>
+  </record>
+
+  <record id="view_hosp_order_search" model="ir.ui.view">
+    <field name="name">care.hosp.order.search</field>
+    <field name="model">care.hosp.order</field>
+    <field name="arch" type="xml">
+      <search>
+        <field name="name"/>
+        <field name="requester_id"/>
+        <field name="facility_id"/>
+        <field name="room_label"/>
+        <filter name="f_live" string="الجاري"
+                domain="[('state','in',('placed','accepted','preparing','ready'))]"/>
+        <filter name="f_late" string="المتأخرة" domain="[('is_late','=',True)]"/>
+        <filter name="f_approval" string="بانتظار الموافقة" domain="[('state','=','await_approval')]"/>
+        <filter name="f_today" string="اليوم"
+                domain="[('placed_at','&gt;=', (context_today()).strftime('%Y-%m-%d 00:00:00'))]"/>
+        <separator/>
+        <filter name="f_mine" string="طلباتي" domain="[('requester_id','=',uid)]"/>
+        <group expand="0" string="التجميع">
+          <filter name="g_state" string="الحالة" context="{'group_by':'state'}"/>
+          <filter name="g_user" string="الطالب" context="{'group_by':'requester_id'}"/>
+          <filter name="g_dept" string="الإدارة" context="{'group_by':'department_id'}"/>
+          <filter name="g_fac" string="المرفق" context="{'group_by':'facility_id'}"/>
+          <filter name="g_type" string="نوع الطلب" context="{'group_by':'order_type'}"/>
+          <filter name="g_day" string="اليوم" context="{'group_by':'placed_at:day'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+
+  <record id="action_hosp_order" model="ir.actions.act_window">
+    <field name="name">طلبات الضيافة</field>
+    <field name="res_model">care.hosp.order</field>
+    <field name="view_mode">tree,form,pivot,graph</field>
+    <field name="context">{'search_default_f_live': 1}</field>
+  </record>
+
+  <!-- تحليل الاستهلاك على مستوى السطر -->
+  <record id="view_hosp_line_pivot" model="ir.ui.view">
+    <field name="name">care.hosp.order.line.pivot</field>
+    <field name="model">care.hosp.order.line</field>
+    <field name="arch" type="xml">
+      <pivot string="تحليل الاستهلاك">
+        <field name="requester_id" type="row"/>
+        <field name="category_id" type="col"/>
+        <field name="quantity" type="measure"/>
+        <field name="line_cost" type="measure"/>
+      </pivot>
+    </field>
+  </record>
+  <record id="view_hosp_line_graph" model="ir.ui.view">
+    <field name="name">care.hosp.order.line.graph</field>
+    <field name="model">care.hosp.order.line</field>
+    <field name="arch" type="xml">
+      <graph string="الاستهلاك" type="bar">
+        <field name="item_id"/>
+        <field name="quantity" type="measure"/>
+      </graph>
+    </field>
+  </record>
+  <record id="action_hosp_analysis" model="ir.actions.act_window">
+    <field name="name">تحليل الاستهلاك</field>
+    <field name="res_model">care.hosp.order.line</field>
+    <field name="view_mode">pivot,graph,tree</field>
+  </record>
+
+  <!-- ================= الأصناف ================= -->
+  <record id="view_hosp_item_tree" model="ir.ui.view">
+    <field name="name">care.hosp.item.tree</field>
+    <field name="model">care.hosp.item</field>
+    <field name="arch" type="xml">
+      <tree decoration-muted="not available">
+        <field name="sequence" widget="handle"/>
+        <field name="icon"/>
+        <field name="name"/>
+        <field name="category_id"/>
+        <field name="station_id"/>
+        <field name="prep_minutes"/>
+        <field name="unit_cost"/>
+        <field name="order_count"/>
+        <field name="available" widget="boolean_toggle"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_hosp_item_form" model="ir.ui.view">
+    <field name="name">care.hosp.item.form</field>
+    <field name="model">care.hosp.item</field>
+    <field name="arch" type="xml">
+      <form>
+        <sheet>
+          <field name="image" widget="image" class="oe_avatar"/>
+          <div class="oe_title"><h1><field name="name" placeholder="اسم الصنف"/></h1></div>
+          <group>
+            <group>
+              <field name="category_id"/>
+              <field name="station_id"/>
+              <field name="code"/>
+              <field name="icon"/>
+              <field name="is_hot"/>
+            </group>
+            <group>
+              <field name="prep_minutes"/>
+              <field name="unit_cost"/>
+              <field name="available"/>
+              <field name="unavailable_note" invisible="available"/>
+              <field name="serve_from" widget="float_time"/>
+              <field name="serve_to" widget="float_time"/>
+            </group>
+          </group>
+          <group string="المواصفات المتاحة للطالب">
+            <field name="option_group_ids" widget="many2many_tags" nolabel="1"/>
+          </group>
+          <group string="التوفّر">
+            <field name="facility_ids" widget="many2many_tags" nolabel="1"/>
+          </group>
+          <field name="description" placeholder="وصف يظهر للطالب في البورتال…"/>
+        </sheet>
+      </form>
+    </field>
+  </record>
+  <record id="action_hosp_item" model="ir.actions.act_window">
+    <field name="name">الأصناف</field>
+    <field name="res_model">care.hosp.item</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- ================= الأقسام / الخيارات / المحطات ================= -->
+  <record id="action_hosp_category" model="ir.actions.act_window">
+    <field name="name">الأقسام</field>
+    <field name="res_model">care.hosp.category</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <record id="view_hosp_optgroup_form" model="ir.ui.view">
+    <field name="name">care.hosp.option.group.form</field>
+    <field name="model">care.hosp.option.group</field>
+    <field name="arch" type="xml">
+      <form>
+        <sheet>
+          <div class="oe_title"><h1><field name="name" placeholder="مثال: السكر"/></h1></div>
+          <group>
+            <field name="required"/><field name="multi"/>
+            <field name="max_select" invisible="not multi"/>
+            <field name="sequence"/>
+          </group>
+          <field name="option_ids">
+            <tree editable="bottom">
+              <field name="sequence" widget="handle"/>
+              <field name="name"/>
+              <field name="is_default"/>
+              <field name="extra_cost"/>
+            </tree>
+          </field>
+        </sheet>
+      </form>
+    </field>
+  </record>
+  <record id="action_hosp_optgroup" model="ir.actions.act_window">
+    <field name="name">مجموعات الخيارات</field>
+    <field name="res_model">care.hosp.option.group</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <record id="action_hosp_station" model="ir.actions.act_window">
+    <field name="name">محطات التحضير</field>
+    <field name="res_model">care.hosp.station</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- ================= الحدود ================= -->
+  <record id="view_hosp_limit_form" model="ir.ui.view">
+    <field name="name">care.hosp.limit.form</field>
+    <field name="model">care.hosp.limit</field>
+    <field name="arch" type="xml">
+      <form>
+        <sheet>
+          <div class="oe_title"><h1><field name="name" placeholder="مثال: حد الموظفين اليومي"/></h1></div>
+          <group>
+            <group>
+              <field name="facility_id"/>
+              <field name="scope"/>
+              <field name="user_ids" widget="many2many_tags" invisible="scope != 'user'"/>
+              <field name="department_ids" widget="many2many_tags" invisible="scope != 'department'"/>
+              <field name="category_id"/>
+              <field name="period"/>
+            </group>
+            <group>
+              <field name="max_items"/>
+              <field name="max_orders"/>
+              <field name="max_cost"/>
+              <field name="on_exceed"/>
+              <field name="approver_ids" widget="many2many_tags" invisible="on_exceed != 'approve'"/>
+              <field name="exempt_vip"/>
+            </group>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+  <record id="action_hosp_limit" model="ir.actions.act_window">
+    <field name="name">حدود الاستهلاك</field>
+    <field name="res_model">care.hosp.limit</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <record id="action_hosp_standing" model="ir.actions.act_window">
+    <field name="name">الطلبات الدائمة</field>
+    <field name="res_model">care.hosp.standing</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- ================= القوائم ================= -->
+  <menuitem id="menu_hosp_root" name="الضيافة"
+            sequence="46"/>
+  <menuitem id="menu_hosp_orders" name="الطلبات" parent="menu_hosp_root"
+            action="action_hosp_order" sequence="10"/>
+  <menuitem id="menu_hosp_analysis" name="تحليل الاستهلاك" parent="menu_hosp_root"
+            action="action_hosp_analysis" sequence="20"/>
+  <menuitem id="menu_hosp_cfg" name="الإعداد" parent="menu_hosp_root" sequence="90"/>
+  <menuitem id="menu_hosp_item" name="الأصناف" parent="menu_hosp_cfg"
+            action="action_hosp_item" sequence="10"/>
+  <menuitem id="menu_hosp_category" name="الأقسام" parent="menu_hosp_cfg"
+            action="action_hosp_category" sequence="20"/>
+  <menuitem id="menu_hosp_optgroup" name="مجموعات الخيارات" parent="menu_hosp_cfg"
+            action="action_hosp_optgroup" sequence="30"/>
+  <menuitem id="menu_hosp_station" name="محطات التحضير" parent="menu_hosp_cfg"
+            action="action_hosp_station" sequence="40"/>
+  <menuitem id="menu_hosp_limit" name="حدود الاستهلاك" parent="menu_hosp_cfg"
+            action="action_hosp_limit" sequence="50"/>
+  <menuitem id="menu_hosp_standing" name="الطلبات الدائمة" parent="menu_hosp_cfg"
+            action="action_hosp_standing" sequence="60"/>
+
+</odoo>

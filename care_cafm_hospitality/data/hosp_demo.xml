@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data noupdate="1">
+
+    <!-- ملاحظة: المحطات والحدود والطلبات التجريبية تُزرع بعد التثبيت لأنها
+         مرتبطة بمرافق فعلية في قاعدة البيانات. الأصناف هنا لأنها ثابتة. -->
+
+    <!-- ========== مشروبات ساخنة ========== -->
+    <record id="item_arabic_coffee" model="care.hosp.item">
+      <field name="name">قهوة عربية</field><field name="code">HOT-ARB</field>
+      <field name="category_id" ref="cat_arabic"/><field name="icon">☕</field>
+      <field name="prep_minutes">4</field><field name="unit_cost">0.250</field>
+      <field name="is_hot" eval="True"/><field name="sequence">10</field>
+      <field name="description">قهوة عربية بالهيل والزعفران تُقدَّم في دلّة.</field>
+      <field name="option_group_ids" eval="[(6,0,[ref('og_size'),ref('og_strength'),ref('og_extras')])]"/>
+    </record>
+    <record id="item_espresso" model="care.hosp.item">
+      <field name="name">إسبريسو</field><field name="code">HOT-ESP</field>
+      <field name="category_id" ref="cat_hot"/><field name="icon">☕</field>
+      <field name="prep_minutes">3</field><field name="unit_cost">0.300</field>
+      <field name="is_hot" eval="True"/><field name="sequence">20</field>
+      <field name="option_group_ids" eval="[(6,0,[ref('og_sugar'),ref('og_size'),ref('og_strength')])]"/>
+    </record>
+    <record id="item_latte" model="care.hosp.item">
+      <field name="name">لاتيه</field><field name="code">HOT-LAT</field>
+      <field name="category_id" ref="cat_hot"/><field name="icon">🥛</field>
+      <field name="prep_minutes">5</field><field name="unit_cost">0.400</field>
+      <field name="is_hot" eval="True"/><field name="sequence">30</field>
+      <field name="option_group_ids" eval="[(6,0,[ref('og_sugar'),ref('og_size'),ref('og_milk'),ref('og_extras')])]"/>
+    </record>
+    <record id="item_cappuccino" model="care.hosp.item">
+      <field name="name">كابتشينو</field><field name="code">HOT-CAP</field>
+      <field name="category_id" ref="cat_hot"/><field name="icon">☕</field>
+      <field name="prep_minutes">5</field><field name="unit_cost">0.400</field>
+      <field name="is_hot" eval="True"/><field name="sequence">40</field>
+      <field name="option_group_ids" eval="[(6,0,[ref('og_sugar'),ref('og_size'),ref('og_milk')])]"/>
+    </record>
+    <record id="item_nescafe" model="care.hosp.item">
+      <field name="name">نسكافيه</field><field name="code">HOT-NES</field>
+      <field name="category_id" ref="cat_hot"/><field name="icon">☕</field>
+      <field name="prep_minutes">3</field><field name="unit_cost">0.200</field>
+      <field name="is_hot" eval="True"/><field name="sequence">50</field>
+      <field name="option_group_ids" eval="[(6,0,[ref('og_sugar'),ref('og_size'),ref('og_milk')])]"/>
+    </record>
+    <record id="item_tea" model="care.hosp.item">
+      <field name="name">شاي</field><field name="code">HOT-TEA</field>
+      <field name="category_id" ref="cat_arabic"/><field name="icon">🫖</field>
+      <field name="prep_minutes">3</field><field name="unit_cost">0.150</field>
+      <field name="is_hot" eval="True"/><field name="sequence">60</field>
+      <field name="option_group_ids" eval="[(6,0,[ref('og_sugar'),ref('og_size'),ref('og_milk'),ref('og_extras')])]"/>
+    </record>
+    <record id="item_green_tea" model="care.hosp.item">
+      <field name="name">شاي أخضر</field><field name="code">HOT-GRN</field>
+      <field name="category_id" ref="cat_hot"/><field name="icon">🍵</field>
+      <field name="prep_minutes">3</field><field name="unit_cost">0.200</field>
+      <field name="is_hot" eval="True"/><field name="sequence">70</field>
+      <field name="option_group_ids" eval="[(6,0,[ref('og_sugar'),ref('og_size')])]"/>
+    </record>
+    <record id="item_karak" model="care.hosp.item">
+      <field name="name">شاي كرك</field><field name="code">HOT-KRK</field>
+      <field name="category_id" ref="cat_arabic"/><field name="icon">🫖</field>
+      <field name="prep_minutes">6</field><field name="unit_cost">0.250</field>
+      <field name="is_hot" eval="True"/><field name="sequence">80</field>
+      <field name="option_group_ids" eval="[(6,0,[ref('og_sugar'),ref('og_size'),ref('og_extras')])]"/>
+    </record>
+
+    <!-- ========== مشروبات باردة ========== -->
+    <record id="item_iced_latte" model="care.hosp.item">
+      <field name="name">آيس لاتيه</field><field name="code">CLD-ILT</field>
+      <field name="category_id" ref="cat_cold"/><field name="icon">🧊</field>
+      <field name="prep_minutes">5</field><field name="unit_cost">0.450</field>
+      <field name="sequence">10</field>
+      <field name="option_group_ids" eval="[(6,0,[ref('og_sugar'),ref('og_size'),ref('og_milk'),ref('og_extras')])]"/>
+    </record>
+    <record id="item_water" model="care.hosp.item">
+      <field name="name">مياه معدنية</field><field name="code">CLD-WTR</field>
+      <field name="category_id" ref="cat_cold"/><field name="icon">💧</field>
+      <field name="prep_minutes">1</field><field name="unit_cost">0.100</field>
+      <field name="sequence">20</field>
+      <field name="option_group_ids" eval="[(6,0,[ref('og_size')])]"/>
+    </record>
+    <record id="item_juice" model="care.hosp.item">
+      <field name="name">عصير طازج</field><field name="code">CLD-JUC</field>
+      <field name="category_id" ref="cat_cold"/><field name="icon">🧃</field>
+      <field name="prep_minutes">6</field><field name="unit_cost">0.500</field>
+      <field name="sequence">30</field>
+      <field name="option_group_ids" eval="[(6,0,[ref('og_size'),ref('og_extras')])]"/>
+    </record>
+    <record id="item_softdrink" model="care.hosp.item">
+      <field name="name">مشروب غازي</field><field name="code">CLD-SFT</field>
+      <field name="category_id" ref="cat_cold"/><field name="icon">🥤</field>
+      <field name="prep_minutes">1</field><field name="unit_cost">0.200</field>
+      <field name="sequence">40</field>
+    </record>
+
+    <!-- ========== مأكولات خفيفة (نافذة تقديم صباحية) ========== -->
+    <record id="item_croissant" model="care.hosp.item">
+      <field name="name">كرواسون</field><field name="code">SNK-CRS</field>
+      <field name="category_id" ref="cat_snack"/><field name="icon">🥐</field>
+      <field name="prep_minutes">2</field><field name="unit_cost">0.350</field>
+      <field name="serve_from">6.0</field><field name="serve_to">11.0</field>
+      <field name="sequence">10</field>
+      <field name="description">يُقدَّم صباحًا حتى الساعة ١١.</field>
+    </record>
+    <record id="item_dates" model="care.hosp.item">
+      <field name="name">تمر</field><field name="code">SNK-DAT</field>
+      <field name="category_id" ref="cat_arabic"/><field name="icon">🌴</field>
+      <field name="prep_minutes">1</field><field name="unit_cost">0.150</field>
+      <field name="sequence">20</field>
+    </record>
+    <record id="item_cookies" model="care.hosp.item">
+      <field name="name">بسكويت</field><field name="code">SNK-CKI</field>
+      <field name="category_id" ref="cat_snack"/><field name="icon">🍪</field>
+      <field name="prep_minutes">1</field><field name="unit_cost">0.200</field>
+      <field name="sequence">30</field>
+    </record>
+    <record id="item_sandwich" model="care.hosp.item">
+      <field name="name">ساندويتش</field><field name="code">SNK-SND</field>
+      <field name="category_id" ref="cat_snack"/><field name="icon">🥪</field>
+      <field name="prep_minutes">8</field><field name="unit_cost">0.750</field>
+      <field name="sequence">40</field>
+    </record>
+
+    <!-- ========== ضيافة الاجتماعات ========== -->
+    <record id="item_meeting_basic" model="care.hosp.item">
+      <field name="name">ضيافة اجتماع — أساسية</field><field name="code">MTG-BSC</field>
+      <field name="category_id" ref="cat_meeting"/><field name="icon">🍽️</field>
+      <field name="prep_minutes">15</field><field name="unit_cost">1.500</field>
+      <field name="sequence">10</field>
+      <field name="description">مياه وقهوة وشاي وتمر للطاولة.</field>
+    </record>
+    <record id="item_meeting_vip" model="care.hosp.item">
+      <field name="name">ضيافة اجتماع — VIP</field><field name="code">MTG-VIP</field>
+      <field name="category_id" ref="cat_meeting"/><field name="icon">🥇</field>
+      <field name="prep_minutes">25</field><field name="unit_cost">4.000</field>
+      <field name="sequence">20</field>
+      <field name="description">ضيافة كاملة: قهوة مختصة، عصائر طازجة، معجّنات وحلويات.</field>
+    </record>
+
+  </data>
+</odoo>
