@@ -33,14 +33,14 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
   Future<List<dynamic>>? _list;
   final Map<String, int> _counts = {};
 
-  static const _kinds = <(String, String, IconData)>[
-    ('incidents', 'البلاغات', Icons.report_problem_rounded),
-    ('patrols', 'الجولات', Icons.directions_walk_rounded),
-    ('gatepasses', 'تصاريح الدخول', Icons.confirmation_number_rounded),
-    ('visitors', 'الزوّار', Icons.person_add_alt_rounded),
-    ('inspections', 'التفتيش', Icons.fact_check_rounded),
-    ('guards', 'الحرّاس', Icons.shield_rounded),
-    ('keys', 'المفاتيح', Icons.key_rounded),
+  static const _kinds = <(String, String, String, IconData)>[
+    ('incidents', 'البلاغات', 'Incidents', Icons.report_problem_rounded),
+    ('patrols', 'الجولات', 'Patrols', Icons.directions_walk_rounded),
+    ('gatepasses', 'تصاريح الدخول', 'Gate passes', Icons.confirmation_number_rounded),
+    ('visitors', 'الزوّار', 'Visitors', Icons.person_add_alt_rounded),
+    ('inspections', 'التفتيش', 'Inspections', Icons.fact_check_rounded),
+    ('guards', 'الحرّاس', 'Guards', Icons.shield_rounded),
+    ('keys', 'المفاتيح', 'Keys', Icons.key_rounded),
   ];
 
   @override
@@ -78,7 +78,7 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
   @override
   Widget build(BuildContext context) {
     final s = _summary ?? const {};
-    final label = _kinds.firstWhere((k) => k.$1 == _kind).$2;
+    final label = (() { final k = _kinds.firstWhere((x) => x.$1 == _kind); return tr(k.$2, k.$3); })();
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: _kc, foregroundColor: Colors.white,
@@ -321,14 +321,14 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
   /// A professional detail sheet showing every populated field of a security
   /// record, with human labels.
   void _openRecord(Map r, String title) {
-    const labels = {
+    final labels = {
       'name': 'المرجع', 'type': 'النوع', 'premise': 'الموقع', 'route': 'المسار',
       'guard': 'الحارس', 'company': 'الجهة', 'phone': 'الهاتف', 'purpose': 'الغرض',
       'visitor': 'الزائر', 'inspector': 'المفتّش', 'holder': 'حائز المفتاح',
       'vehicle': 'المركبة', 'persons': 'عدد الأشخاص', 'severity': 'الخطورة',
       'location': 'الموقع', 'date': 'التاريخ', 'check_in': 'الدخول', 'check_out': 'الخروج',
       'start': 'البداية', 'end': 'النهاية', 'valid_from': 'صالح من', 'valid_until': 'صالح حتى',
-      'state_label': 'الحالة', 'description': 'الوصف',
+      'state_label': 'الحالة', 'description': tr('الوصف', 'Description'),
     };
     final entries = <MapEntry<String, String>>[];
     labels.forEach((k, lbl) {

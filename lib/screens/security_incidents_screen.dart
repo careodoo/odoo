@@ -102,9 +102,9 @@ class _SecurityIncidentsScreenState extends State<SecurityIncidentsScreen> {
     final sev = i['severity'] as String? ?? 'low';
     final entries = i.entries.where((e) =>
         e.key != 'id' && e.value != null && '${e.value}'.trim().isNotEmpty).toList();
-    const labels = {'name': 'المرجع', 'type': 'النوع', 'severity': 'الخطورة', 'description': 'الوصف',
+    final labels = {'name': 'المرجع', 'type': 'النوع', 'severity': 'الخطورة', 'description': 'الوصف',
         'premise': 'الموقع', 'location': 'المكان', 'guard': 'الحارس', 'date': 'التاريخ',
-        'state': 'الحالة', 'reported_by': 'المُبلِّغ', 'action': 'الإجراء', 'note': 'ملاحظة'};
+        'state': 'الحالة', 'reported_by': 'المُبلِّغ', 'action': 'الإجراء', 'note': tr('ملاحظة', 'Note')};
     showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
       builder: (_) => DraggableScrollableSheet(
         expand: false, initialChildSize: 0.6, minChildSize: 0.4, maxChildSize: 0.92,
@@ -193,7 +193,7 @@ class _IncidentFormState extends State<_IncidentForm> {
 
   @override
   Widget build(BuildContext context) {
-    const white = TextStyle(color: Colors.white);
+    final white = TextStyle(color: Colors.white);
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -207,7 +207,7 @@ class _IncidentFormState extends State<_IncidentForm> {
             value: _type,
             dropdownColor: const Color(0xFF1E3A5F),
             style: white,
-            decoration: const InputDecoration(labelText: 'النوع', labelStyle: white),
+            decoration: InputDecoration(labelText: 'النوع', labelStyle: white),
             items: [
               for (final e in _SecurityIncidentsScreenState.types.entries)
                 DropdownMenuItem(value: e.key, child: Text(e.value, style: white)),
@@ -219,7 +219,7 @@ class _IncidentFormState extends State<_IncidentForm> {
             value: _sev,
             dropdownColor: const Color(0xFF1E3A5F),
             style: white,
-            decoration: const InputDecoration(labelText: 'الخطورة', labelStyle: white),
+            decoration: InputDecoration(labelText: 'الخطورة', labelStyle: white),
             items: [
               for (final e in _SecurityIncidentsScreenState.severities.entries)
                 DropdownMenuItem(value: e.key, child: Text(e.value, style: white)),
@@ -231,7 +231,7 @@ class _IncidentFormState extends State<_IncidentForm> {
             controller: _desc,
             style: white,
             maxLines: 3,
-            decoration: const InputDecoration(labelText: 'الوصف', labelStyle: white),
+            decoration: InputDecoration(labelText: 'الوصف', labelStyle: white),
           ),
           const SizedBox(height: 20),
           FilledButton(

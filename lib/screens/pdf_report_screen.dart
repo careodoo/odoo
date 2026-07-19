@@ -73,7 +73,7 @@ class _PdfReportScreenState extends State<PdfReportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const navy = Color(0xFF0E3A5F);
+    final navy = Color(0xFF0E3A5F);
     final name = widget.fileName ?? 'report.pdf';
     return Scaffold(
       backgroundColor: const Color(0xFFECEFF3),
@@ -115,7 +115,7 @@ class _PdfReportScreenState extends State<PdfReportScreen> {
           child: Row(children: [
             Expanded(child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                foregroundColor: navy, side: const BorderSide(color: navy),
+                foregroundColor: navy, side: BorderSide(color: navy),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
               onPressed: () => Printing.sharePdf(bytes: _bytes!, filename: name),

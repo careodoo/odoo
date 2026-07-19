@@ -21,11 +21,11 @@ class _ClientAgriScreenState extends State<ClientAgriScreen> {
 
   static const _c = Color(0xFF16A34A);
   String _q = '';
-  static const _kinds = <(String, String, IconData)>[
-    ('plants', 'الأشجار', Icons.park_rounded),
-    ('operations', 'الأعمال', Icons.content_cut_rounded),
-    ('zones', 'الريّ', Icons.water_drop_rounded),
-    ('species', 'الأنواع', Icons.menu_book_rounded),
+  static const _kinds = <(String, String, String, IconData)>[
+    ('plants', 'الأشجار', 'Trees', Icons.park_rounded),
+    ('operations', 'الأعمال', 'Operations', Icons.content_cut_rounded),
+    ('zones', 'الريّ', 'Irrigation', Icons.water_drop_rounded),
+    ('species', 'الأنواع', 'Species', Icons.menu_book_rounded),
   ];
 
   @override
@@ -51,7 +51,7 @@ class _ClientAgriScreenState extends State<ClientAgriScreen> {
   @override
   Widget build(BuildContext context) {
     final s = _summary ?? const {};
-    final label = _kinds.firstWhere((k) => k.$1 == _kind).$2;
+    final label = (() { final k = _kinds.firstWhere((x) => x.$1 == _kind); return tr(k.$2, k.$3); })();
     return Scaffold(
       appBar: AppBar(
         title: Text(tr('الزراعة والحدائق', 'Landscaping')),

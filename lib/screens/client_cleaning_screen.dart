@@ -21,11 +21,11 @@ class _ClientCleaningScreenState extends State<ClientCleaningScreen> {
 
   static const _c = Color(0xFF0EA5E9);
   String _q = '';
-  static const _kinds = <(String, String, IconData)>[
-    ('audits', 'التدقيق', Icons.fact_check_rounded),
-    ('schedules', 'الجداول', Icons.event_repeat_rounded),
-    ('rounds', 'الجولات', Icons.directions_walk_rounded),
-    ('consumables', 'المواد', Icons.cleaning_services_rounded),
+  static const _kinds = <(String, String, String, IconData)>[
+    ('audits', 'التدقيق', 'Audits', Icons.fact_check_rounded),
+    ('schedules', 'الجداول', 'Schedules', Icons.event_repeat_rounded),
+    ('rounds', 'الجولات', 'Patrols', Icons.directions_walk_rounded),
+    ('consumables', 'المواد', 'Consumables', Icons.cleaning_services_rounded),
   ];
 
   @override
@@ -52,7 +52,7 @@ class _ClientCleaningScreenState extends State<ClientCleaningScreen> {
   Widget build(BuildContext context) {
     final s = _summary ?? const {};
     final sc = (s['avg_score'] ?? 0);
-    final label = _kinds.firstWhere((k) => k.$1 == _kind).$2;
+    final label = (() { final k = _kinds.firstWhere((x) => x.$1 == _kind); return tr(k.$2, k.$3); })();
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: _c, foregroundColor: Colors.white,

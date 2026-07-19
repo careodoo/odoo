@@ -103,8 +103,10 @@ class ServiceTabs extends StatelessWidget {
     this.counts = const {},
   });
 
-  /// (code, label, icon)
-  final List<(String, String, IconData)> kinds;
+  /// (code, arabic label, english label, icon) — the tab strip is shared by
+  /// four service consoles, so carrying both languages here translates all of
+  /// them at once.
+  final List<(String, String, String, IconData)> kinds;
   final String current;
   final ValueChanged<String> onSelect;
   final Color color;
@@ -133,9 +135,9 @@ class ServiceTabs extends StatelessWidget {
                 border: Border.all(color: on ? color : color.withValues(alpha: 0.18)),
               ),
               child: Row(children: [
-                Icon(k.$3, size: 14, color: on ? Colors.white : color),
+                Icon(k.$4, size: 14, color: on ? Colors.white : color),
                 const SizedBox(width: 6),
-                Text(k.$2,
+                Text(tr(k.$2, k.$3),
                     style: TextStyle(
                         fontSize: 11.5, fontWeight: FontWeight.w800,
                         color: on ? Colors.white : color)),

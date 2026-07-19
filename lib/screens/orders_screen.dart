@@ -404,7 +404,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
   }
 
   Widget _periodBar() {
-    const periods = [
+    final periods = [
       ('all', 'الكل', 'All'), ('today', 'اليوم', 'Today'),
       ('month', 'هذا الشهر', 'Month'), ('year', 'هذه السنة', 'Year'),
     ];

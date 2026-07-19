@@ -22,9 +22,9 @@ class _ClientFacadeScreenState extends State<ClientFacadeScreen> {
 
   static const _c = Color(0xFF7C3AED);
   String _q = '';
-  static const _kinds = <(String, String, IconData)>[
-    ('permits', 'التصاريح', Icons.health_and_safety_rounded),
-    ('zones', 'الواجهات', Icons.location_city_rounded),
+  static const _kinds = <(String, String, String, IconData)>[
+    ('permits', 'التصاريح', 'Permits', Icons.health_and_safety_rounded),
+    ('zones', 'الواجهات', 'Elevations', Icons.location_city_rounded),
   ];
 
   @override
@@ -50,7 +50,7 @@ class _ClientFacadeScreenState extends State<ClientFacadeScreen> {
   @override
   Widget build(BuildContext context) {
     final s = _summary ?? const {};
-    final label = _kinds.firstWhere((k) => k.$1 == _kind).$2;
+    final label = (() { final k = _kinds.firstWhere((x) => x.$1 == _kind); return tr(k.$2, k.$3); })();
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: _c, foregroundColor: Colors.white,
