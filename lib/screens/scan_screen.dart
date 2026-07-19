@@ -10,7 +10,12 @@ import '../models/models.dart';
 /// Scan a location — the worker chooses QR (camera) or NFC (tap the chip).
 /// Both resolve the same location code via /scan.
 class ScanScreen extends StatefulWidget {
-  const ScanScreen({super.key});
+  const ScanScreen({super.key, this.returnCode = false});
+
+  /// Pop with the scanned code instead of resolving it against /scan. Lets a
+  /// form reuse this screen — which already handles both QR and NFC — as a
+  /// location picker, rather than growing its own scanner.
+  final bool returnCode;
   @override
   State<ScanScreen> createState() => _ScanScreenState();
 }
@@ -34,6 +39,10 @@ class _ScanScreenState extends State<ScanScreen> {
   // ---- shared: resolve a scanned code -------------------------------------
   Future<void> _process(String code) async {
     if (_handling) return;
+    if (widget.returnCode) {
+      Navigator.pop(context, code);
+      return;
+    }
     setState(() => _handling = true);
     try {
       final data = await context.read<AuthProvider>().api.scan(code);

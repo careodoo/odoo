@@ -645,14 +645,17 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
             else if (o['state'] == 'await_approval')
               _tag('🔐 ${tr('بانتظار الموافقة', 'Awaiting approval')}', const Color(0xFFA78BFA))
             else if (live && o['is_late'] == true)
-              _tag('⏱ ${tr('متأخر', 'Late')} ${(o['wait_minutes'] as num).toInt()} ${tr('د', 'm')}',
+              _tag('⏱ ${tr('متأخر', 'Late')} ${((o['wait_minutes'] as num?) ?? 0).toInt()} ${tr('د', 'm')}',
                   const Color(0xFFE11D48))
             else if (live)
               _tag('⏱ ~${(((o['prep_target'] as num?) ?? 5) - ((o['wait_minutes'] as num?) ?? 0)).clamp(0, 99).toInt()} ${tr('د', 'm')}',
                   const Color(0xFFF59E0B)),
             const Spacer(),
-            if (o['rating'] != null)
-              Text('★' * int.parse('${o['rating']}'),
+            // Odoo sends an unset number as `false`, not null — and in Dart
+            // `false != null` is true, so the old guard let int.parse('false')
+            // run and threw inside build. That is the grey screen.
+            if (((o['rating'] as num?) ?? 0) > 0)
+              Text('★' * ((o['rating'] as num).toInt().clamp(0, 5)),
                   style: const TextStyle(color: Color(0xFFF59E0B), fontWeight: FontWeight.w900))
             else if (o['state'] == 'delivered')
               TextButton(

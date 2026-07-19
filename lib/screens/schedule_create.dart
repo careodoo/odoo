@@ -4,6 +4,7 @@ import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/widgets.dart';
 import 'searchable_picker.dart';
+import 'scan_screen.dart';
 
 /// Client adds a recurring work schedule: name, facility+location, service,
 /// assigned worker, repeat interval, working window, and proof requirements.
@@ -27,7 +28,13 @@ class _ScheduleCreateSheetState extends State<ScheduleCreateSheet> {
   int? _locationId;
   int? _serviceId;
   int? _workerId;
-  double _every = 60;
+  int? _teamId;
+  bool _assignTeam = false;      // a round is often owned by whoever is on shift
+  final _every = TextEditingController(text: '1');
+  String _unit = 'hour';
+  final _remind = TextEditingController(text: '15');
+  String _remindUnit = 'minute';
+  bool _scanning = false;
   RangeValues _window = const RangeValues(7, 19);
   bool _presence = true;
   bool _photo = true;
@@ -45,6 +52,8 @@ class _ScheduleCreateSheetState extends State<ScheduleCreateSheet> {
   @override
   void dispose() {
     _name.dispose();
+    _every.dispose();
+    _remind.dispose();
     super.dispose();
   }
 
@@ -71,12 +80,23 @@ class _ScheduleCreateSheetState extends State<ScheduleCreateSheet> {
   Future<void> _submit() async {
     if (_name.text.trim().isEmpty) { _snack(tr('أدخل اسم الجدول', 'Enter a name')); return; }
     if (_serviceId == null) { _snack(tr('اختر الخدمة', 'Choose a service')); return; }
-    if (_workerId == null) { _snack(tr('اختر العامل المسنَد', 'Choose the assigned worker')); return; }
+    if (_assignTeam ? _teamId == null : _workerId == null) {
+      _snack(_assignTeam ? tr('اختر الفريق', 'Choose the team')
+                         : tr('اختر العامل المسنَد', 'Choose the assigned worker'));
+      return;
+    }
+    final every = int.tryParse(_every.text.trim()) ?? 0;
+    if (every < 1) { _snack(tr('مدة التكرار غير صحيحة', 'Invalid repeat interval')); return; }
     setState(() => _submitting = true);
     final body = <String, dynamic>{
       'name': _name.text.trim(), 'facility_id': _facilityId, 'location_id': _locationId,
-      'service_id': _serviceId, 'employee_id': _workerId,
-      'every_minutes': _every.round(),
+      'service_id': _serviceId,
+      'employee_id': _assignTeam ? null : _workerId,
+      'team_id': _assignTeam ? _teamId : null,
+      'interval_value': every,
+      'interval_unit': _unit,
+      'remind_before': int.tryParse(_remind.text.trim()) ?? 0,
+      'remind_unit': _remindUnit,
       'window_start': _window.start, 'window_end': _window.end,
       'require_presence': _presence, 'require_photo': _photo,
     };
@@ -150,6 +170,9 @@ class _ScheduleCreateSheetState extends State<ScheduleCreateSheet> {
   List<Widget> _form() {
     final services = (_opts!['services'] as List?)?.cast<Map>() ?? const [];
     final workers = (_opts!['workers'] as List?)?.cast<Map>() ?? const [];
+    final teams = (_opts!['teams'] as List?)?.cast<Map>() ?? const [];
+    final iUnits = (_opts!['interval_units'] as List?)?.cast<Map>() ?? const [];
+    final rUnits = (_opts!['remind_units'] as List?)?.cast<Map>() ?? const [];
     return [
       _label(Icons.title_rounded, tr('اسم الجدول', 'Schedule name')),
       const SizedBox(height: 8),
@@ -169,6 +192,20 @@ class _ScheduleCreateSheetState extends State<ScheduleCreateSheet> {
           options: [for (final l in _locations) PickOption(value: l['id'], label: '${l['name']}')],
           onChanged: (v) => setState(() => _locationId = v as int?),
         ),
+        const SizedBox(height: 8),
+        // Picking the site you are standing in beats hunting for it in a list
+        // of two hundred. The QR carries the location code, the tag its uid —
+        // both already exist on the location record.
+        SizedBox(width: double.infinity, child: OutlinedButton.icon(
+          onPressed: _scanning ? null : _scanLocation,
+          icon: const Icon(Icons.qr_code_scanner_rounded, size: 18),
+          style: OutlinedButton.styleFrom(foregroundColor: _c,
+              side: BorderSide(color: _c.withValues(alpha: 0.5)),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+          label: Text(tr('تحديد الموقع بمسح QR أو NFC', 'Set location by QR or NFC scan'),
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+        )),
       ],
       const SizedBox(height: 16),
       _label(Icons.design_services_rounded, tr('الخدمة والمنفّذ', 'Service & worker')),
@@ -179,21 +216,63 @@ class _ScheduleCreateSheetState extends State<ScheduleCreateSheet> {
         onChanged: (v) => setState(() => _serviceId = v as int?),
       ),
       const SizedBox(height: 10),
-      SearchableField(
-        label: tr('العامل المسنَد', 'Assigned worker'), icon: Icons.person_rounded, value: _workerId, accent: _c,
-        options: [for (final w in workers) PickOption(value: w['id'], label: '${w['name']}', sublabel: w['job'] != null ? '${w['job']}' : null)],
-        onChanged: (v) => setState(() => _workerId = v as int?),
+      // Assign to a person or to a team — a recurring round usually belongs to
+      // whoever is on shift, not to one named worker who may be on leave.
+      SegmentedButton<bool>(
+        segments: [
+          ButtonSegment(value: false, icon: const Icon(Icons.person_rounded, size: 16),
+              label: Text(tr('عامل', 'Worker'))),
+          ButtonSegment(value: true, icon: const Icon(Icons.groups_rounded, size: 16),
+              label: Text(tr('فريق', 'Team'))),
+        ],
+        selected: {_assignTeam},
+        showSelectedIcon: false,
+        style: ButtonStyle(visualDensity: VisualDensity.compact,
+            textStyle: WidgetStateProperty.all(const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800))),
+        onSelectionChanged: (v) => setState(() => _assignTeam = v.first),
       ),
+      const SizedBox(height: 10),
+      if (!_assignTeam)
+        SearchableField(
+          label: tr('العامل المسنَد', 'Assigned worker'), icon: Icons.person_rounded, value: _workerId, accent: _c,
+          options: [for (final w in workers) PickOption(value: w['id'], label: '${w['name']}', sublabel: w['job'] != null ? '${w['job']}' : null)],
+          onChanged: (v) => setState(() => _workerId = v as int?),
+        )
+      else
+        SearchableField(
+          label: tr('الفريق المسنَد', 'Assigned team'), icon: Icons.groups_rounded, value: _teamId, accent: _c,
+          options: [for (final t in teams) PickOption(value: t['id'], label: '${t['name']}',
+              sublabel: t['members'] != null ? tr('${t['members']} عضو', '${t['members']} members') : null)],
+          onChanged: (v) => setState(() => _teamId = v as int?),
+        ),
       const SizedBox(height: 16),
       _label(Icons.repeat_rounded, tr('التكرار والنافذة', 'Repeat & window')),
       const SizedBox(height: 8),
+      // A cycle is a number AND a unit. Minutes-only forced "every 90 days" to
+      // be typed as 129600 minutes, which nobody does correctly.
       Row(children: [
-        Text(tr('يتكرّر كل', 'Repeat every'), style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
-        const Spacer(),
-        Text(tr('${_every.round()} دقيقة', '${_every.round()} min'), style: const TextStyle(fontWeight: FontWeight.w900, color: _c)),
+        Expanded(flex: 2, child: TextField(
+          controller: _every, keyboardType: TextInputType.number,
+          decoration: _deco(tr('يتكرّر كل', 'Repeat every')),
+        )),
+        const SizedBox(width: 9),
+        Expanded(flex: 3, child: _unitDrop(iUnits, _unit, (v) => setState(() => _unit = v))),
       ]),
-      Slider(value: _every, min: 15, max: 480, divisions: 31, activeColor: _c,
-          label: '${_every.round()}', onChanged: (v) => setState(() => _every = v)),
+      const SizedBox(height: 14),
+      _label(Icons.notifications_active_rounded, tr('التنبيه قبل الموعد', 'Remind before')),
+      const SizedBox(height: 8),
+      Row(children: [
+        Expanded(flex: 2, child: TextField(
+          controller: _remind, keyboardType: TextInputType.number,
+          decoration: _deco(tr('نبّه قبل', 'Notify before')),
+        )),
+        const SizedBox(width: 9),
+        Expanded(flex: 3, child: _unitDrop(rUnits, _remindUnit, (v) => setState(() => _remindUnit = v))),
+      ]),
+      const SizedBox(height: 6),
+      Text(tr('اجعلها صفرًا لإلغاء التنبيه المسبق.', 'Set to zero for no advance reminder.'),
+          style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+      const SizedBox(height: 12),
       Row(children: [
         Text(tr('نافذة العمل', 'Working window'), style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
         const Spacer(),
@@ -207,6 +286,58 @@ class _ScheduleCreateSheetState extends State<ScheduleCreateSheet> {
       _check(tr('صورة إثبات', 'Photo proof'), _photo, (v) => setState(() => _photo = v)),
       const SizedBox(height: 8),
     ];
+  }
+
+  Widget _unitDrop(List<Map> units, String value, ValueChanged<String> onCh) {
+    final items = units.isNotEmpty
+        ? units
+        : const [{'code': 'minute', 'label': 'دقيقة'}, {'code': 'hour', 'label': 'ساعة'},
+                 {'code': 'day', 'label': 'يوم'}, {'code': 'month', 'label': 'شهر'}];
+    final codes = items.map((u) => '${u['code']}').toList();
+    return DropdownButtonFormField<String>(
+      initialValue: codes.contains(value) ? value : codes.first,
+      decoration: _deco(''),
+      items: [for (final u in items)
+        DropdownMenuItem(value: '${u['code']}',
+            child: Text('${u['label']}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)))],
+      onChanged: (v) { if (v != null) onCh(v); },
+    );
+  }
+
+  /// Match a scanned payload against the loaded locations. The QR encodes the
+  /// location's code; a tag reports its uid. Both are on the record already, so
+  /// this resolves locally rather than costing a round trip.
+  bool _applyScan(String raw, {required bool nfc}) {
+    final v = raw.trim().toLowerCase();
+    if (v.isEmpty) return false;
+    for (final l in _locations) {
+      final key = '${nfc ? (l['nfc_uid'] ?? '') : (l['code'] ?? '')}'.trim().toLowerCase();
+      if (key.isNotEmpty && key == v) {
+        setState(() => _locationId = l['id'] as int?);
+        _snack(tr('الموقع: ${l['name']}', 'Location: ${l['name']}'));
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// ScanScreen already offers QR and NFC and is the screen workers know, so
+  /// the form borrows it whole instead of reimplementing either reader.
+  Future<void> _scanLocation() async {
+    setState(() => _scanning = true);
+    try {
+      final code = await Navigator.push<String>(
+          context, MaterialPageRoute(builder: (_) => const ScanScreen(returnCode: true)));
+      if (code == null || !mounted) return;
+      // A QR carries the location code, a tag its uid — try both.
+      if (!_applyScan(code, nfc: false) && !_applyScan(code, nfc: true)) {
+        _snack(tr('لا يطابق أي موقع في هذا المرفق', 'No location in this facility matches'));
+      }
+    } catch (e) {
+      if (mounted) _snack('$e');
+    } finally {
+      if (mounted) setState(() => _scanning = false);
+    }
   }
 
   Widget _label(IconData ic, String t) => Row(children: [

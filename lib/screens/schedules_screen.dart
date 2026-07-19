@@ -96,9 +96,10 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
               ),
             ]),
             const SizedBox(height: 4),
-            Text('📍 ${x['location'] ?? '—'} · 👤 ${x['employee'] ?? '—'}',
+            Text('📍 ${x['location'] ?? '—'} · 👤 ${x['team'] ?? x['employee'] ?? '—'}',
                 style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
             const SizedBox(height: 8),
+            _countdown(x),
             ClipRRect(
               borderRadius: BorderRadius.circular(6),
               child: LinearProgressIndicator(value: comp / 100, minHeight: 8, color: _cc(comp), backgroundColor: const Color(0xFFEEF2F7)),
@@ -111,13 +112,69 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
               const SizedBox(width: 6),
               _chip('🚫 ${x['missed'] ?? 0}', const Color(0xFFE11D48)),
               const Spacer(),
-              Text('${tr('كل', 'every')} ${x['every_minutes']}${tr('د', 'm')}', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+              Text(_everyLabel(x), style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
               const Icon(Icons.chevron_left_rounded, size: 18, color: Colors.grey),
             ]),
           ]),
         ),
       ),
     );
+  }
+
+
+  /// How long until the next run — the one thing a supervisor opens this
+  /// screen to find out, and the one thing it never showed.
+  Widget _countdown(Map x) {
+    if (x['run_state'] == 'paused' || x['run_state'] == 'stopped') {
+      return _banner(Icons.pause_circle_filled_rounded, const Color(0xFF64748B),
+          x['run_state'] == 'paused' ? tr('موقوف مؤقتًا', 'Paused') : tr('متوقف', 'Stopped'));
+    }
+    final due = x['is_due_now'] == true;
+    final mins = (x['minutes_to_next'] as num?)?.toInt();
+    if (due) {
+      return _banner(Icons.notifications_active_rounded, const Color(0xFFE11D48),
+          tr('مستحق الآن', 'Due now'));
+    }
+    if (mins == null) return const SizedBox(height: 2);
+    final label = '${x['countdown'] ?? _humanise(mins)}';
+    // amber inside the last hour: close enough that somebody should move
+    final c = mins <= 60 ? const Color(0xFFF59E0B) : const Color(0xFF0D9488);
+    return _banner(Icons.timer_outlined, c,
+        '${tr('التالي بعد', 'Next in')} $label'
+        '${x['next_run'] != null ? ' · ${x['next_run']}' : ''}');
+  }
+
+  Widget _banner(IconData ic, Color c, String t) => Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+            color: c.withValues(alpha: 0.09),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: c.withValues(alpha: 0.25))),
+        child: Row(children: [
+          Icon(ic, size: 15, color: c),
+          const SizedBox(width: 7),
+          Expanded(child: Text(t,
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: c))),
+        ]),
+      );
+
+  String _humanise(int mins) {
+    if (mins < 60) return tr('$mins دقيقة', '$mins min');
+    if (mins < 1440) return tr('${(mins / 60).floor()} ساعة', '${(mins / 60).floor()} h');
+    return tr('${(mins / 1440).floor()} يوم', '${(mins / 1440).floor()} d');
+  }
+
+  /// The cycle in its own unit — "every 2 days" beats "every 2880m".
+  String _everyLabel(Map x) {
+    final v = (x['interval_value'] as num?)?.toInt();
+    final u = '${x['interval_unit'] ?? ''}';
+    if (v != null && v > 0 && u.isNotEmpty) {
+      const ar = {'minute': 'دقيقة', 'hour': 'ساعة', 'day': 'يوم', 'week': 'أسبوع', 'month': 'شهر'};
+      const en = {'minute': 'min', 'hour': 'h', 'day': 'd', 'week': 'w', 'month': 'mo'};
+      return '${tr('كل', 'every')} $v ${tr(ar[u] ?? u, en[u] ?? u)}';
+    }
+    return '${tr('كل', 'every')} ${x['every_minutes']}${tr('د', 'm')}';
   }
 
   Widget _chip(String t, Color c) => Container(
