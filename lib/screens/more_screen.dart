@@ -13,6 +13,7 @@ import 'admin_home.dart';
 import 'security_incidents_screen.dart';
 import 'security_list_screen.dart';
 import 'service_screen.dart';
+import 'cleaning_audit_screen.dart';
 import 'appraisal_screen.dart';
 import 'add_worker_screen.dart';
 import 'contracts_screen.dart';
@@ -108,7 +109,7 @@ class MoreScreen extends StatelessWidget {
     if (!isField) tile(Icons.insights_rounded, tr('التحليلات والتقارير', 'Analytics & reports'), const ClientAnalyticsScreen(), c: const Color(0xFF2563EB));
 
     // role-specific service consoles
-    if (p.role == 'cleaning') { header(tr('النظافة', 'Cleaning')); tile(Icons.cleaning_services_rounded, tr('تدقيق الجودة', 'Quality audits'), const ServiceScreen(kind: 'cleaning', title: 'تدقيق النظافة'), c: const Color(0xFF0EA5E9)); }
+    if (p.role == 'cleaning') { header(tr('النظافة', 'Cleaning')); tile(Icons.cleaning_services_rounded, tr('تدقيق الجودة', 'Quality audits'), const CleaningAuditScreen(), c: const Color(0xFF0EA5E9)); }
     if (p.role == 'agriculture') { header(tr('الزراعة', 'Agriculture')); tile(Icons.grass_rounded, tr('مناطق الريّ', 'Irrigation zones'), ServiceScreen(kind: 'agri', title: tr('مناطق الريّ', 'Irrigation zones')), c: const Color(0xFF16A34A)); }
     if (p.role == 'facade') { header(tr('الواجهات', 'Facades')); tile(Icons.cleaning_services_rounded, tr('تصاريح الارتفاع', 'Height permits'), const ServiceScreen(kind: 'facade', title: 'تصاريح الواجهات'), c: const Color(0xFF7C3AED)); }
     if (p.role == 'security') {

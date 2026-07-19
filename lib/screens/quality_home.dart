@@ -8,7 +8,7 @@ import '../core/widgets.dart';
 import 'observation_create.dart';
 import 'observation_detail.dart';
 import 'quality_screen.dart';
-import 'service_screen.dart';
+import 'cleaning_audit_screen.dart';
 import 'workorders_screen.dart';
 import 'scan_screen.dart';
 import 'chat_screen.dart';
@@ -213,7 +213,7 @@ class _QualityHomeState extends State<QualityHome> {
       }),
       (Icons.fact_check_rounded, 'كل الملاحظات', 'All notes', const Color(0xFF0891B2), () => _go(const QualityScreen())),
       (Icons.cleaning_services_rounded, 'تدقيق النظافة', 'Cleaning audit', const Color(0xFF0EA5E9),
-          () => _go(const ServiceScreen(kind: 'cleaning', title: 'تدقيق النظافة'))),
+          () => _go(const CleaningAuditScreen())),
       (Icons.assignment_rounded, 'أوامر العمل', 'Work orders', _navy, () => _go(const WorkOrdersScreen())),
       (Icons.qr_code_scanner_rounded, 'مسح موقع', 'Scan', const Color(0xFF0D9488), () => _go(const ScanScreen())),
       (Icons.forum_rounded, 'التواصل', 'Messages', const Color(0xFF0E7490), () => _go(const ChatHubScreen())),

@@ -558,6 +558,11 @@ class ApiClient {
               await http.get(_u('/client/asset/$id'), headers: await _headers())))['data'] as Map);
 
   // ---- maintenance service --------------------------------------------------
+  /// One cleaning audit in full, with its checklist item by item.
+  Future<Map<String, dynamic>> cleaningAudit(int id) async =>
+      Map<String, dynamic>.from((await _handle(await http.get(
+              _u('/service/cleaning/audit/$id'), headers: await _headers())))['data'] as Map);
+
   // ---- NFC tag provisioning -------------------------------------------------
   Future<Map<String, dynamic>> nfcLocations({int? facilityId, String? state, String? q}) async {
     final p = <String, String>{};

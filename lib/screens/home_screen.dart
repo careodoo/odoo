@@ -13,6 +13,7 @@ import 'quality_home.dart';
 import 'client_home.dart';
 import 'admin_home.dart';
 import 'service_screen.dart';
+import 'cleaning_audit_screen.dart';
 import 'shift_card.dart';
 import 'client_inventory_screen.dart';
 import 'my_profile_screen.dart';
@@ -61,7 +62,7 @@ class WorkerHome extends StatelessWidget {
       (Icons.assignment_rounded, 'مهامي', 'My tasks', accent, () => go(const WorkOrdersScreen())),
       (Icons.qr_code_scanner_rounded, 'مسح حضور', 'Check-in', const Color(0xFF0891B2), () => go(const ScanScreen())),
       if (p.role == 'cleaning')
-        (Icons.fact_check_rounded, 'تدقيق النظافة', 'Cleaning audit', const Color(0xFF0EA5E9), () => go(const ServiceScreen(kind: 'cleaning', title: 'تدقيق النظافة'))),
+        (Icons.fact_check_rounded, 'تدقيق النظافة', 'Cleaning audit', const Color(0xFF0EA5E9), () => go(const CleaningAuditScreen())),
       if (p.role == 'agriculture')
         (Icons.grass_rounded, 'مناطق الريّ', 'Irrigation', const Color(0xFF16A34A), () => go(const ServiceScreen(kind: 'agri', title: 'مناطق الريّ'))),
       if (p.role == 'facade')
