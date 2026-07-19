@@ -1069,3 +1069,24 @@ class MobileApi(http.Controller):
                          'type': loc.location_type},
             'workorders': [_wo_dict(w) for w in wos],
         })
+
+
+class AppConfigApi(http.Controller):
+    """What the app should know before it starts: the minimum supported build,
+    whether that minimum is enforced, and where to get the update."""
+
+    @http.route(API + '/app/config', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def app_config(self, **kw):
+        env = request.env
+        s = env['care.app.settings'].sudo().search([], limit=1)
+        store = 'https://play.google.com/store/apps/details?id=care.app'
+        return _ok({
+            'min_version': (s.min_version or '') if s else '',
+            'force_update': bool(s.force_update) if s else False,
+            'update_message': (s.update_message or 'يتوفّر إصدار جديد من التطبيق') if s else '',
+            'android_url': (s.android_url or store) if s else store,
+            'ios_url': (s.ios_url or '') if s else '',
+            'store_url': (s.android_url or store) if s else store,
+            'maintenance': bool(s.maintenance) if s else False,
+            'maintenance_message': (s.maintenance_message or '') if s else '',
+        })
