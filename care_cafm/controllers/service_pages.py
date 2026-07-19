@@ -513,6 +513,42 @@ class ServicePages(http.Controller):
         # an employee acting on site keeps the operational capabilities
         return bool(u.employee_id)
 
+    def _create_record(self, section, post):
+        """Build values from a posted form and create the record.
+
+        Shared by the HTML form and the JSON API so the two cannot disagree
+        about what a field means or which facility a record lands in.
+        """
+        env = request.env
+        c = section.create
+        facs = self._facilities()
+        vals = {}
+        fid = int(post.get('__facility') or 0) or (facs[:1].id or 0)
+        if c.facility_field and fid in facs.ids:
+            vals[c.facility_field] = fid
+        for f in c.fields:
+            raw = post.get(f.name)
+            if f.kind == 'bool':
+                vals[f.name] = raw in (True, 'true', 'on', '1', 1)
+                continue
+            if raw in (None, ''):
+                continue
+            if f.kind in ('int', 'm2o'):
+                try:
+                    vals[f.name] = int(raw)
+                except (TypeError, ValueError):
+                    continue
+            elif f.kind == 'float':
+                try:
+                    vals[f.name] = float(raw)
+                except (TypeError, ValueError):
+                    continue
+            elif f.kind == 'datetime':
+                vals[f.name] = str(raw).replace('T', ' ') + (':00' if len(str(raw)) == 16 else '')
+            else:
+                vals[f.name] = raw
+        return env[section.model].sudo().create(vals)
+
     def _field_input(self, f, facs):
         env = request.env
         if f.kind == 'm2o':
@@ -592,35 +628,8 @@ class ServicePages(http.Controller):
                 '<a class="btn g" href="/cafm/m/permissions">صلاحياتي</a></div>') % esc(c.label),
                 accent=accent_for(code), back='/cafm/m/svc/%s/%s' % (code, key))
 
-        env = request.env
-        facs = self._facilities()
-        vals = {}
-        fid = int(post.get('__facility') or 0) or (facs[:1].id or 0)
-        if c.facility_field and fid in facs.ids:
-            vals[c.facility_field] = fid
-        for f in c.fields:
-            raw = post.get(f.name)
-            if f.kind == 'bool':
-                vals[f.name] = bool(raw)
-                continue
-            if raw in (None, ''):
-                continue
-            if f.kind in ('int', 'm2o'):
-                try:
-                    vals[f.name] = int(raw)
-                except ValueError:
-                    continue
-            elif f.kind == 'float':
-                try:
-                    vals[f.name] = float(raw)
-                except ValueError:
-                    continue
-            elif f.kind == 'datetime':
-                vals[f.name] = raw.replace('T', ' ') + (':00' if len(raw) == 16 else '')
-            else:
-                vals[f.name] = raw
         try:
-            env[section.model].sudo().create(vals)
+            self._create_record(section, post)
         except Exception as e:
             msg = str(getattr(e, 'args', [e])[0] if getattr(e, 'args', None) else e)
             return _shell('تعذّر الحفظ', Markup(

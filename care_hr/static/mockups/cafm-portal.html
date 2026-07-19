@@ -656,7 +656,8 @@ function renderNav(){
         : (s.type==='agriculture'||s.type==='landscape')
         ? AGRI_ITEMS.map(it=>navAnchor(it)).join('')
           +'<a data-id="workorders_'+s.type+'" onclick="goSvc(\'workorders\',\''+s.type+'\')"><span class="ic">🧾</span><span>'+esc(T('أوامر العمل','Work orders'))+'</span></a>'
-        : '<a data-id="workorders_'+s.type+'" onclick="goSvc(\'workorders\',\''+s.type+'\')"><span class="ic">🧾</span><span>'+esc(T('أوامر العمل','Work orders'))+'</span></a>'
+        : svcRegItems(s.type)
+          +'<a data-id="workorders_'+s.type+'" onclick="goSvc(\'workorders\',\''+s.type+'\')"><span class="ic">🧾</span><span>'+esc(T('أوامر العمل','Work orders'))+'</span></a>'
           +'<a data-id="quality_'+s.type+'" onclick="goSvc(\'quality\',\''+s.type+'\')"><span class="ic">✅</span><span>'+esc(T('الجودة والجولات','Quality & rounds'))+'</span></a>'
           +(s.type==='maintenance'?'<a data-id="ppm" onclick="go(\'ppm\')"><span class="ic">🔧</span><span>'+esc(T('الصيانة الوقائية','Preventive maint.'))+'</span></a>':'');
       const col_cls=' col';   // all services collapsed by default
@@ -676,6 +677,107 @@ function renderNav(){
   document.getElementById('nav').innerHTML=html;
   setActive(CUR);}
 function updateCounts(){for(const k in COUNTS){const e=document.getElementById('cnt_'+k);if(e)e.textContent=COUNTS[k];}}
+/* ---- services that describe themselves ----
+   Until now the nav had a hand-written branch per service, and every service
+   added after those branches were written fell through to a bare "work orders
+   + quality" pair — a client contracted for hospitality, valet, pools or pest
+   control saw, functionally, nothing. The backend already declares what each
+   service is made of, so read that instead of maintaining a second list here. */
+let SVC_REG={};
+async function loadSvcReg(){try{const d=await api('/client/svc');
+  (d.services||[]).forEach(s=>{SVC_REG[s.code]=s;});}catch(e){SVC_REG={};}}
+function svcRegItems(type){const reg=SVC_REG[type];
+  if(!reg||!reg.sections||!reg.sections.length)return '';
+  return reg.sections.map(sec=>
+    '<a data-id="svc:'+esc(type)+':'+esc(sec.key)+'" onclick="goSvcSec(\''+type+'\',\''+sec.key+'\')">'
+    +'<span class="ic">'+esc(sec.icon||'•')+'</span><span>'+esc(sec.label)+'</span></a>').join('');
+}
+function goSvcSec(code,key,page){SVC_PAGE=page||1;go('svc:'+code+':'+key);}
+let SVC_PAGE=1;
+/* One renderer for every service section — 11 services, 39 sub-sections. A
+   section added to the registry appears here with no code written for it. */
+async function renderSvcSection(code,key){
+  const host=document.getElementById('page');
+  host.innerHTML='<div class="spin"></div>';
+  let d;
+  try{d=await api('/client/svc/'+encodeURIComponent(code)+'/'+encodeURIComponent(key)+'?page='+(SVC_PAGE||1));}
+  catch(e){host.innerHTML=emptyState(T('تعذّر التحميل','Could not load'));return;}
+  const sec=d.section||{},svc=d.service||{};
+  SVC_MODEL[code+':'+key]=sec.model||'';
+  document.getElementById('ptitle').textContent=sec.label||'';
+  document.getElementById('psub').textContent=svc.label||'';
+  let h='<div class="toolbar">';
+  if(d.can_add)h+='<button class="btn p" onclick="svcAddForm(\''+code+'\',\''+key+'\')">＋ '+esc(d.add_label||T('إضافة','Add'))+'</button>';
+  h+='<span style="color:var(--muted);font-size:12.5px">'+esc(T('السجلات','Records'))+': <b class="num">'+(d.total||0)+'</b></span></div>';
+  if(!(d.rows||[]).length){host.innerHTML=h+emptyState(sec.empty||T('لا توجد سجلات','No records'));return;}
+  h+='<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))">';
+  h+=(d.rows||[]).map(r=>'<div class="panel" style="padding:14px">'
+    +'<div style="font-weight:800;font-size:14px;margin-bottom:3px">'+esc(r.title)+'</div>'
+    +(r.subtitle?'<div style="color:var(--muted);font-size:12px;margin-bottom:8px">'+esc(r.subtitle)+'</div>':'')
+    +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
+    +(r.pills||[]).map(p=>pillHtml(p.t,p.c)).join('')+'</div>'
+    +'<div style="margin-top:10px"><button class="btn s" style="font-size:11.5px;padding:6px 11px" '
+    +'onclick="svcReport(\''+code+'\','+r.id+',\''+esc(r.title).replace(/'/g,"")+'\')">🖨️ '
+    +esc(T('تقرير PDF','PDF report'))+'</button></div>'
+    +'</div>').join('');
+  h+='</div>';
+  if((d.pages||1)>1){h+='<div class="toolbar" style="margin-top:14px;justify-content:center">';
+    for(let i=1;i<=d.pages;i++)h+='<span class="chip'+(i===d.page?' on':'')+'" onclick="goSvcSec(\''+code+'\',\''+key+'\','+i+')">'+i+'</span>';
+    h+='</div>';}
+  host.innerHTML=h;
+}
+const PILLC={ok:'#16a34a',warn:'#f59e0b',danger:'#e11d48',info:'#3b82f6',muted:'#64748b'};
+function pillHtml(t,c){const col=PILLC[c]||PILLC.info;
+  return '<span class="pill" style="background:'+col+'1f;color:'+col+'">'+esc(t)+'</span>';}
+/* Every record can be printed, using the same generic report endpoint the app
+   uses — the model code is the Odoo model with dots replaced by underscores. */
+function svcReport(code,id,title){
+  const key=(String(CUR).split(':')[2]||'');
+  const model=(SVC_MODEL[code+':'+key]||'').replace(/\./g,'_');
+  if(!model){toast(T('غير متاح','Unavailable'));return;}
+  window.open(API+'/report/'+model+'/'+id,'_blank');
+}
+let SVC_MODEL={};
+/* The add form is built from the field list the server sends, so a new field
+   on a section appears in the portal without touching this file. */
+async function svcAddForm(code,key){
+  let d;try{d=await api('/client/svc/'+code+'/'+key);}catch(e){toast(T('تعذّر التحميل','Could not load'));return;}
+  if(!d.can_add){toast(T('لا تملك صلاحية الإضافة','Not permitted'));return;}
+  const f=(d.fields||[]).map(x=>{
+    const req=x.required?' required':'';
+    let inp;
+    if(x.kind==='m2o'||x.kind==='select'){
+      inp='<select class="inp" id="sf_'+x.name+'" style="width:100%">'
+        +(x.required?'':'<option value=""></option>')
+        +(x.options||[]).map(o=>'<option value="'+esc(String(o.v))+'"'+(String(o.v)===String(x.default)?' selected':'')+'>'+esc(o.l)+'</option>').join('')
+        +'</select>';
+    }else if(x.kind==='text'){
+      inp='<textarea class="inp" id="sf_'+x.name+'" rows="3" style="width:100%"></textarea>';
+    }else if(x.kind==='bool'){
+      inp='<input type="checkbox" id="sf_'+x.name+'">';
+    }else{
+      const t=x.kind==='date'?'date':(x.kind==='datetime'?'datetime-local':(x.kind==='int'||x.kind==='float'?'number':'text'));
+      inp='<input type="'+t+'" class="inp" id="sf_'+x.name+'" style="width:100%"'
+        +(x.default!==null&&x.default!==undefined?' value="'+esc(String(x.default))+'"':'')+'>';
+    }
+    return '<div style="margin-bottom:12px"><label style="display:block;font-weight:700;font-size:12.5px;margin-bottom:5px">'
+      +esc(x.label)+(x.required?' <span style="color:var(--red)">*</span>':'')+'</label>'+inp
+      +(x.help?'<div style="font-size:11px;color:var(--muted);margin-top:4px">'+esc(x.help)+'</div>':'')+'</div>';
+  }).join('');
+  openDrawer(d.add_label||T('إضافة سجل','Add record'),'<div class="sec">'+f+'</div>',
+    {icon:(d.service||{}).icon||'➕',subtitle:(d.section||{}).label,
+     actions:[{label:T('إلغاء','Cancel'),cls:'s',onclick:closeDrawer},
+              {label:T('حفظ','Save'),cls:'p',onclick:function(){svcAddSave(code,key,d.fields||[]);}}]});
+}
+async function svcAddSave(code,key,fields){
+  const body={};
+  for(const x of fields){const el=document.getElementById('sf_'+x.name);if(!el)continue;
+    body[x.name]=(x.kind==='bool')?(el.checked?'1':''):el.value;
+    if(x.required&&!body[x.name]){toast(T('أكمل: ','Required: ')+x.label);return;}}
+  try{await api('/client/svc/'+code+'/'+key+'/add',{method:'POST',body:body});}
+  catch(e){toast(String(e&&e.message||e).slice(0,120));return;}
+  closeDrawer();toast(T('تم الحفظ','Saved'));goSvcSec(code,key,1);
+}
 const TITLES={dashboard:[['لوحة التحكم','Dashboard'],['نظرة شاملة على التشغيل','Operations overview']],requests:[['طلبات الخدمة','Service requests'],['من الطلب إلى أمر العمل','Request → work order']],workorders:[['أوامر العمل','Work orders'],['متابعة وتفاصيل التنفيذ','Track & manage']],quality:[['الجودة والجولات','Quality & rounds'],['ملاحظات التصحيح وإعادة التفتيش','Corrections & re-inspection']],schedules:[['جدولة الأعمال','Work schedules'],['مهام متكرّرة بإثبات حضور والتزام','Recurring tasks · presence & compliance']],team:[['الفريق','Team'],['العاملون وحالتهم المباشرة','Workers & live status']],attendance:[['الحضور والانصراف','Attendance'],['سجلّات فتح وإغلاق الورديات','Shift open/close records']],facilities:[['المرافق والمباني','Facilities'],['مرفق ← مبنى ← دور ← موقع','Facility → building → floor → location']],assets:[['الأصول','Assets'],['سجل المعدّات','Equipment register']],ppm:[['الصيانة الوقائية','Preventive maintenance'],['خطط دورية تلقائية','Recurring auto plans']],occupancy:[['معاينة ثلاثية الأبعاد حيّة','Live 3D preview'],['حركة العاملين لحظياً','Real-time worker movement']],activity:[['النشاط المباشر','Live activity'],['حركة العاملين','Worker movement']],shop:[['المتجر','Shop'],['المنتجات بسعرك الخاص','Products at your price']],orders:[['طلبات الشراء','My orders'],['أوامر البيع','Sales orders']],invoices:[['الفواتير','Invoices'],['المدفوع وغير المدفوع','Paid & unpaid']],contracts:[['العقود','Contracts'],['التفاصيل والنُّسخ','Details & copies']],sla:[['اتفاقية الخدمة','SLA'],['مستويات الاستجابة والإنجاز','Response & resolution targets']],analytics:[['التحليلات','Analytics'],['مؤشرات الأداء','KPIs']],notifications:[['الإشعارات','Notifications'],['','']],manage:[['إدارة المنشأة','Manage facility'],['تحكّم كامل','Full control']],settings:[['الإعدادات والحساب','Settings'],['','']]};
 Object.assign(TITLES,{
   sec_overview:[['نظرة الأمن','Security overview'],['حالة الأمن على مواقعك','Security posture across your sites']],
@@ -709,7 +811,12 @@ Object.assign(TITLES,{
 function setActive(id){document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.id===id));
   const base=(id||'').replace(/_(cleaning|security|facade|agriculture|agri|maintenance|landscape|pest|other)$/,'');
   const t=TITLES[id]||TITLES[base]||[['',''],['','']];document.getElementById('ptitle').textContent=T(t[0][0],t[0][1]);document.getElementById('psub').textContent=T(t[1][0],t[1][1]);}
-async function go(id,activeId){const route=id;if(window.__actTimer&&route!=='activity'){clearInterval(window.__actTimer);window.__actTimer=null;}setActive(activeId||id);document.getElementById('sb').classList.remove('open');closeDrawer();const p=document.getElementById('page');p.innerHTML='<div class="spin"></div>';
+async function go(id,activeId){const route=id;
+  // registry-driven service sections are routed by id, not by a ROUTES entry
+  if(String(id).startsWith('svc:')){const pr=id.split(':');setActive(id);
+    document.getElementById('sb').classList.remove('open');closeDrawer();CUR=id;
+    await renderSvcSection(pr[1],pr[2]);return;}
+if(window.__actTimer&&route!=='activity'){clearInterval(window.__actTimer);window.__actTimer=null;}setActive(activeId||id);document.getElementById('sb').classList.remove('open');closeDrawer();const p=document.getElementById('page');p.innerHTML='<div class="spin"></div>';
   try{await ROUTES[route](p);}catch(e){p.innerHTML='<div class="empty"><div class="em">⚠️</div><div style="margin-top:8px">تعذّر التحميل: '+esc(e.message)+'</div></div>';}}
 // ---------- global search ----------
 let _si;async function globalSearch(q){clearTimeout(_si);q=q.trim();const box=document.getElementById('sres');if(q.length<2){box.style.display='none';return;}
@@ -1951,6 +2058,7 @@ async function boot(){try{ME=await api('/me');}catch(e){showLogin();return;}
   if(ME.unread_notifications){const b=document.getElementById('nbadge');b.style.display='inline-block';b.textContent=ME.unread_notifications;}
   await loadPalette();
   try{const sd=await api('/client/services');SERVICES=(sd&&sd.services)||[];}catch(e){SERVICES=[];}
+  await loadSvcReg();   // what each service is made of, straight from the backend
   try{const pr=await api('/client/projects');window.__PROJECTS=pr||[];if((pr||[]).length>1){const sel=document.getElementById('projSel');sel.style.display='inline-block';sel.innerHTML='<option value="all">🗂️ '+T('كل المشاريع','All projects')+'</option>'+pr.map(x=>'<option value="'+x.id+'"'+(String(PROJECT)===String(x.id)?' selected':'')+'>'+esc(x.name)+'</option>').join('');}}catch(e){}
   renderNav();go('dashboard');refreshCounts();setInterval(refreshCounts,60000);
 }
