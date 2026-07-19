@@ -20,4 +20,5 @@ from . import account_invoice
 from . import offboard
 from . import wo_rating
 from . import inventory
+from . import inventory_ops
 from . import stats

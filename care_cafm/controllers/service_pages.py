@@ -76,6 +76,43 @@ class Section:
 
 
 # ---------------------------------------------------------------- row renderers
+def _r_stock_item(r):
+    """Balance first, because that is the only number anyone opens this for."""
+    low = getattr(r, 'low_stock', False)
+    bal = '%.0f %s' % (r.on_hand or 0.0, getattr(r, 'uom_name', '') or '')
+    sub = ' \u00b7 '.join(filter(None, [
+        getattr(r.store_id, 'name', '') or '',
+        'الحد الأدنى %.0f' % r.min_qty if r.min_qty else '']))
+    pills = [(bal, 'danger' if low else 'ok')]
+    if low and getattr(r, 'to_reorder', 0):
+        pills.append(('يُطلب %.0f' % r.to_reorder, 'warn'))
+    return (r.display_name, sub, pills)
+
+
+def _r_stock_count(r):
+    sub = ' \u00b7 '.join(filter(None, [
+        getattr(r.store_id, 'name', '') or '', _d(getattr(r, 'count_date', None))]))
+    pills = list(_state_pill(r, 'state', 'info'))
+    if r.state == 'done':
+        pills.append(('دقة %.0f%%' % (r.accuracy or 0),
+                      'ok' if (r.accuracy or 0) >= 95 else 'warn'))
+    if r.variance_lines:
+        pills.append(('%d فرق' % r.variance_lines, 'warn'))
+    return (r.display_name, sub, pills)
+
+
+def _r_stock_request(r):
+    sub = ' \u00b7 '.join(filter(None, [
+        getattr(r.store_id, 'name', '') or '',
+        '%d صنف' % len(r.line_ids) if r.line_ids else '',
+        _d(getattr(r, 'needed_by', None))]))
+    pills = list(_state_pill(r, 'state', 'info'))
+    if getattr(r, 'urgency', '') in ('high', 'critical'):
+        pills.append((_sel(r, 'urgency').get(r.urgency, ''),
+                      'danger' if r.urgency == 'critical' else 'warn'))
+    return (r.display_name, sub, pills)
+
+
 def _r_incident(r):
     sev = _sel(r, 'severity').get(getattr(r, 'severity', ''), '')
     st = _sel(r, 'state').get(getattr(r, 'state', ''), '')
@@ -377,6 +414,31 @@ def REGISTRY():
                     _r_generic(lambda r: r.display_name,
                                lambda r: _d(getattr(r, 'date', None)),
                                lambda r: _state_pill(r, 'move_type', 'info')), icon='🔄'),
+            Section('items', 'الأصناف والأرصدة', 'care.cafm.stock.item',
+                    _r_stock_item, icon='📋',
+                    empty_text='لا توجد أصناف مسجّلة في مخازن هذا المرفق.'),
+            Section('counts', 'الجرد', 'care.cafm.stock.count',
+                    _r_stock_count, icon='🧮',
+                    empty_text='لم يُجرَ جرد بعد — ابدأ جردًا لمطابقة الرصيد الدفتري بالواقع.',
+                    create=Create('بدء جرد', 'inventory_policy', [
+                        Field('store_id', 'المخزن', 'm2o', required=True,
+                              comodel='care.cafm.store', domain_facility=True),
+                        Field('count_type', 'نوع الجرد', 'select', required=True,
+                              options='count_type', default='cycle'),
+                        Field('count_date', 'تاريخ الجرد', 'date'),
+                        Field('note', 'ملاحظة', 'text'),
+                    ])),
+            Section('requests', 'طلبات التعويض', 'care.cafm.stock.request',
+                    _r_stock_request, icon='📥',
+                    empty_text='لا توجد طلبات تعويض — تُنشأ تلقائيًا عند نزول صنف تحت حدّه الأدنى.',
+                    create=Create('طلب تعويض', 'inventory_issue', [
+                        Field('store_id', 'المخزن الطالب', 'm2o', required=True,
+                              comodel='care.cafm.store', domain_facility=True),
+                        Field('urgency', 'الأولوية', 'select', required=True,
+                              options='urgency', default='normal'),
+                        Field('needed_by', 'مطلوب بحلول', 'date'),
+                        Field('reason', 'المبرّر', 'text', required=True),
+                    ])),
         ]),
     }
 

@@ -57,3 +57,11 @@ acc_cafm_issueline_u,care.cafm.stock.issue.line.u,model_care_cafm_stock_issue_li
 acc_cafm_issueline_m,care.cafm.stock.issue.line.m,model_care_cafm_stock_issue_line,hr.group_hr_manager,1,1,1,1
 access_cafm_client_perm_user,cafm.client.permission.user,model_care_cafm_client_permission,base.group_user,1,0,0,0
 access_cafm_client_perm_mgr,cafm.client.permission.mgr,model_care_cafm_client_permission,base.group_system,1,1,1,1
+access_care_cafm_stock_count_user,care_cafm_stock_count.user,model_care_cafm_stock_count,base.group_user,1,1,1,0
+access_care_cafm_stock_count_mgr,care_cafm_stock_count.mgr,model_care_cafm_stock_count,base.group_system,1,1,1,1
+access_care_cafm_stock_count_line_user,care_cafm_stock_count_line.user,model_care_cafm_stock_count_line,base.group_user,1,1,1,0
+access_care_cafm_stock_count_line_mgr,care_cafm_stock_count_line.mgr,model_care_cafm_stock_count_line,base.group_system,1,1,1,1
+access_care_cafm_stock_request_user,care_cafm_stock_request.user,model_care_cafm_stock_request,base.group_user,1,1,1,0
+access_care_cafm_stock_request_mgr,care_cafm_stock_request.mgr,model_care_cafm_stock_request,base.group_system,1,1,1,1
+access_care_cafm_stock_request_line_user,care_cafm_stock_request_line.user,model_care_cafm_stock_request_line,base.group_user,1,1,1,0
+access_care_cafm_stock_request_line_mgr,care_cafm_stock_request_line.mgr,model_care_cafm_stock_request_line,base.group_system,1,1,1,1

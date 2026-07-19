@@ -13,6 +13,7 @@
         'security/ir.model.access.csv',
         'data/sequences.xml',
         'data/portal_sections.xml',
+        'data/inventory_ops_data.xml',
         'data/cron.xml',
         'data/report_qr.xml',
         'reports/reports.xml',
