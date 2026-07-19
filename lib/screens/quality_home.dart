@@ -116,9 +116,7 @@ class _QualityHomeState extends State<QualityHome> {
             Container(
               padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 2)),
-              child: CircleAvatar(radius: 26, backgroundColor: Colors.white,
-                  child: Text(p.name.isNotEmpty ? p.name.trim().characters.first : '?',
-                      style: const TextStyle(color: _teal, fontSize: 22, fontWeight: FontWeight.w900))),
+              child: MeAvatar(name: p.name, radius: 26, fallbackColor: _teal),
             ),
             const SizedBox(width: 13),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

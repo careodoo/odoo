@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
+import 'auth.dart';
 import '../core/i18n.dart';
 import '../screens/notifications_screen.dart';
 import '../screens/workorders_screen.dart';
@@ -251,4 +252,41 @@ class BrandPattern extends CustomPainter {
   @override
   bool shouldRepaint(BrandPattern old) =>
       old.color != color || old.opacity != opacity || old.gap != gap;
+}
+
+/// The signed-in person's own photo (served by /me/photo against the app
+/// token), falling back to their initial when there is no picture.
+class MeAvatar extends StatelessWidget {
+  const MeAvatar({super.key, required this.name, this.radius = 28, this.fallbackColor = const Color(0xFF0E3A5F)});
+  final String name;
+  final double radius;
+  final Color fallbackColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final api = context.read<AuthProvider>().api;
+    return FutureBuilder<String?>(
+      future: api.token,
+      builder: (_, snap) {
+        final initial = name.trim().isNotEmpty ? name.trim().characters.first : '?';
+        Widget fallback() => CircleAvatar(
+              radius: radius, backgroundColor: Colors.white,
+              child: Text(initial, style: TextStyle(color: fallbackColor, fontSize: radius * 0.85, fontWeight: FontWeight.w900)),
+            );
+        if (!snap.hasData) return fallback();
+        return CircleAvatar(
+          radius: radius, backgroundColor: Colors.white,
+          child: ClipOval(
+            child: Image.network(
+              '${api.baseUrl}/me/photo',
+              width: radius * 2, height: radius * 2, fit: BoxFit.cover,
+              headers: {'Authorization': 'Bearer ${snap.data}'},
+              errorBuilder: (_, __, ___) => fallback(),
+              loadingBuilder: (c, child, p) => p == null ? child : fallback(),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }

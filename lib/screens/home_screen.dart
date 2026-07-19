@@ -103,9 +103,7 @@ class WorkerHome extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 2)),
-                  child: CircleAvatar(radius: 28, backgroundColor: Colors.white,
-                      child: Text(p.name.isNotEmpty ? p.name.trim().characters.first : '?',
-                          style: TextStyle(color: accent, fontSize: 24, fontWeight: FontWeight.w900))),
+                  child: MeAvatar(name: p.name, radius: 28, fallbackColor: accent),
                 ),
                 const SizedBox(width: 14),
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
