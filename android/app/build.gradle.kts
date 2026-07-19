@@ -55,6 +55,11 @@ android {
 
     buildTypes {
         release {
+            // R8 otherwise fails on ML Kit script recognisers we do not bundle
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
             signingConfig = if (keystorePropertiesFile.exists())
                 signingConfigs.getByName("release") else signingConfigs.getByName("debug")
         }

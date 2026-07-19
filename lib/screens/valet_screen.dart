@@ -1,4 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
@@ -246,6 +251,10 @@ class _ValetScreenState extends State<ValetScreen> {
             ]),
             const SizedBox(height: 10),
             Row(children: [
+              // the slip the guest walks away with, and scans to call the car up
+              Expanded(child: _btn(tr('التذكرة', 'Ticket'), Icons.qr_code_2_rounded,
+                  const Color(0xFF64748B), () => _openTicket(t))),
+              const SizedBox(width: 8),
               if (st == 'received')
                 Expanded(child: _btn(tr('صف المركبة', 'Park'), Icons.local_parking_rounded, const Color(0xFF16A34A),
                     () => _park(t, d))),
@@ -271,6 +280,19 @@ class _ValetScreenState extends State<ValetScreen> {
         icon: Icon(ic, size: 17),
         label: Text(l, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
       );
+
+  /// The printable ticket with its QR. Opened in the browser so it can print
+  /// straight to the kerbside printer.
+  Future<void> _openTicket(Map t) async {
+    final base = context.read<AuthProvider>().api.baseUrl
+        .replaceAll(RegExp(r'/api/v1/?$'), '');
+    final url = Uri.parse('$base/valet/ticket/${(t['id'] as num).toInt()}/print');
+    try {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      if (mounted) _snack(tr('تعذّر فتح التذكرة', 'Could not open the ticket'));
+    }
+  }
 
   Future<void> _act(Map t, String action, {Map<String, dynamic>? body}) async {
     setState(() => _busy = true);
@@ -344,6 +366,39 @@ class _ValetScreenState extends State<ValetScreen> {
     if (mounted) _snack(tr('✅ سُلّمت المركبة', '✅ Car handed back'), c: const Color(0xFF16A34A));
   }
 
+  /// Read the plate off a photo of the car. An attendant holding keys in one
+  /// hand should not be typing a plate with the other, and a mistyped plate is
+  /// the one error this service cannot recover from.
+  Future<String?> _scanPlate() async {
+    try {
+      final shot = await ImagePicker().pickImage(
+          source: ImageSource.camera, imageQuality: 92, maxWidth: 1600);
+      if (shot == null) return null;
+      final recogniser = TextRecognizer(script: TextRecognitionScript.latin);
+      final result = await recogniser.processImage(InputImage.fromFile(File(shot.path)));
+      await recogniser.close();
+      // Plates are short, mostly digits, and sit on their own line. Score the
+      // lines and take the most plate-like rather than the longest blob of text.
+      String? best;
+      var bestScore = -1.0;
+      for (final block in result.blocks) {
+        for (final line in block.lines) {
+          final raw = line.text.replaceAll(RegExp(r'[^0-9A-Za-z\u0600-\u06FF ]'), '').trim();
+          if (raw.length < 3 || raw.length > 12) continue;
+          final digits = RegExp(r'[0-9]').allMatches(raw).length;
+          if (digits < 3) continue;
+          final score = digits * 2.0 + (raw.length <= 8 ? 3 : 0) - (raw.length - digits) * 0.5;
+          if (score > bestScore) { bestScore = score; best = raw; }
+        }
+      }
+      return best;
+    } catch (e) {
+      if (mounted) _snack(tr('تعذّرت قراءة اللوحة — اكتبها يدويًا',
+          'Could not read the plate — type it in'));
+      return null;
+    }
+  }
+
   /// Take a car in — plate first, everything else optional.
   Future<void> _newTicket(Map? d) async {
     final facs = ((d?['facilities'] as List?) ?? const []).cast<Map>();
@@ -384,7 +439,28 @@ class _ValetScreenState extends State<ValetScreen> {
                 ]),
               ),
               Expanded(child: ListView(controller: sc, padding: const EdgeInsets.all(16), children: [
-                _f(plate, tr('رقم اللوحة *', 'Plate *'), big: true),
+                Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                  Expanded(child: _f(plate, tr('رقم اللوحة *', 'Plate *'), big: true)),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    height: 52,
+                    child: FilledButton.icon(
+                      style: FilledButton.styleFrom(backgroundColor: _gold,
+                          padding: const EdgeInsets.symmetric(horizontal: 14)),
+                      onPressed: () async {
+                        final read = await _scanPlate();
+                        if (read != null && read.isNotEmpty) {
+                          setSt(() => plate.text = read);
+                          _snack('${tr('قُرئت اللوحة', 'Plate read')}: $read',
+                              c: const Color(0xFF16A34A));
+                        }
+                      },
+                      icon: const Icon(Icons.document_scanner_rounded, size: 18),
+                      label: Text(tr('تصوير', 'Scan'),
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5)),
+                    ),
+                  ),
+                ]),
                 const SizedBox(height: 10),
                 Row(children: [
                   Expanded(child: _f(make, tr('الماركة', 'Make'))),
