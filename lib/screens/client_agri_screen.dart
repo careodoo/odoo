@@ -21,6 +21,7 @@ class _ClientAgriScreenState extends State<ClientAgriScreen> {
 
   static const _c = Color(0xFF16A34A);
   String _q = '';
+  String? _speciesCat;
   static const _kinds = <(String, String, String, IconData)>[
     ('plants', 'الأشجار', 'Trees', Icons.park_rounded),
     ('operations', 'الأعمال', 'Operations', Icons.content_cut_rounded),
@@ -95,23 +96,37 @@ class _ClientAgriScreenState extends State<ClientAgriScreen> {
                   ? all
                   : all.where((r) => (r as Map).values.map((v) => '$v').join(' ').toLowerCase()
                       .contains(_q.toLowerCase())).toList();
-              // Species is a catalogue — cards, not list rows.
+              // The species catalogue is a reference directory: searchable,
+              // filterable by kind, and every entry opens. It used to be a
+              // fixed-ratio grid whose Expanded image squeezed the names into
+              // each other.
               if (_kind == 'species') {
+                final cats = <String>{for (final r in all) '${(r as Map)['category'] ?? ''}'}
+                    .where((x) => x.isNotEmpty).toList()..sort();
+                var list = rows;
+                if (_speciesCat != null) {
+                  list = list.where((r) => (r as Map)['category'] == _speciesCat).toList();
+                }
                 return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  if (all.length > 6) ...[_searchField(label), const SizedBox(height: 10)],
-                  if (rows.isEmpty)
+                  _searchField(label),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 36,
+                    child: ListView(scrollDirection: Axis.horizontal, children: [
+                      _catChip(null, tr('الكل', 'All'), all.length),
+                      for (final c in cats)
+                        _catChip(c, c, all.where((r) => (r as Map)['category'] == c).length),
+                    ]),
+                  ),
+                  const SizedBox(height: 6),
+                  Text('${list.length} ${tr('نوع', 'species')}',
+                      style: TextStyle(fontSize: 11.5, color: Colors.grey.shade500,
+                          fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 8),
+                  if (list.isEmpty)
                     _emptyBox(label)
                   else
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      padding: EdgeInsets.zero,
-                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 320, childAspectRatio: 1.55,
-                          crossAxisSpacing: 10, mainAxisSpacing: 10),
-                      itemCount: rows.length,
-                      itemBuilder: (_, i) => _speciesCard(rows[i] as Map),
-                    ),
+                    for (final r in list) _speciesRow(r as Map),
                 ]);
               }
               return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -252,29 +267,195 @@ class _ClientAgriScreenState extends State<ClientAgriScreen> {
     }
   }
 
-  Widget _speciesCard(Map s) => Card(
-        clipBehavior: Clip.antiAlias,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Expanded(
-            child: s['image'] != null
-                ? Image.network('${s['image']}', width: double.infinity, fit: BoxFit.cover)
-                : Container(width: double.infinity, color: const Color(0xFF16A34A).withValues(alpha: 0.12), child: const Center(child: Text('🌳', style: TextStyle(fontSize: 40)))),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('${s['name']}', style: const TextStyle(fontWeight: FontWeight.w800), maxLines: 1, overflow: TextOverflow.ellipsis),
-              const SizedBox(height: 4),
-              Wrap(spacing: 4, runSpacing: 4, children: [
-                _pill('${s['category']}', Colors.blueGrey),
-                _pill('💧 ${s['water_need']}', const Color(0xFF0369A1)),
-                if (s['heat_tolerant'] == true) _pill('🇰🇼', const Color(0xFF16A34A)),
+  Widget _catChip(String? code, String label, int n) => Padding(
+        padding: const EdgeInsets.only(left: 6),
+        child: ChoiceChip(
+          selected: _speciesCat == code,
+          label: Text('$label ($n)',
+              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800,
+                  color: _speciesCat == code ? Colors.white : const Color(0xFF14202B))),
+          selectedColor: _c, backgroundColor: Colors.white,
+          side: BorderSide(color: _speciesCat == code ? _c : Colors.grey.shade300),
+          onSelected: (_) => setState(() => _speciesCat = code),
+        ),
+      );
+
+  /// One species: both names, the botanical name, and the facts a crew works
+  /// from. Tapping opens the full care guide.
+  Widget _speciesRow(Map s) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () => _openSpecies(s),
+            child: Container(
+              padding: const EdgeInsets.all(11),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Container(
+                  width: 46, height: 46, alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: _c.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(12),
+                    image: s['image'] != null
+                        ? DecorationImage(image: NetworkImage('${s['image']}'), fit: BoxFit.cover)
+                        : null,
+                  ),
+                  child: s['image'] == null
+                      ? Text(_speciesEmoji('${s['category_raw'] ?? ''}'),
+                          style: const TextStyle(fontSize: 22))
+                      : null,
+                ),
+                const SizedBox(width: 11),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('${s['name']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14,
+                          color: Color(0xFF14202B))),
+                  if (s['name_en'] != null)
+                    Text('${s['name_en']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700,
+                            color: Colors.grey.shade600)),
+                  if (s['scientific_name'] != null)
+                    Text('${s['scientific_name']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic,
+                            color: Colors.grey.shade400)),
+                  const SizedBox(height: 6),
+                  Wrap(spacing: 5, runSpacing: 5, children: [
+                    _pill('${s['category']}', Colors.blueGrey),
+                    _pill('💧 ${s['water_need']}', const Color(0xFF0369A1)),
+                    _pill('☀️ ${s['sun_exposure']}', const Color(0xFFB45309)),
+                    if (s['heat_tolerant'] == true)
+                      _pill('🇰🇼 ${tr('يتحمّل الحر', 'heat')}', const Color(0xFF16A34A)),
+                    if (s['salt_tolerant'] == true)
+                      _pill('🧂 ${tr('ملوحة', 'salt')}', const Color(0xFF0891B2)),
+                    if (((s['plant_count'] as num?) ?? 0) > 0)
+                      _pill('🌱 ${s['plant_count']}', const Color(0xFF7C3AED)),
+                  ]),
+                ])),
+                Icon(Icons.chevron_left_rounded, color: Colors.grey.shade400),
               ]),
-              const SizedBox(height: 4),
-              Text('✂️ ${tr('تقليم كل', 'prune')} ${s['prune_interval_days']}${tr('ي', 'd')} · 🌱 ${s['fertilize_interval_days']}${tr('ي', 'd')}',
-                  style: const TextStyle(fontSize: 11, color: Colors.grey)),
+            ),
+          ),
+        ),
+      );
+
+  String _speciesEmoji(String cat) => const {
+        'tree': '🌳', 'palm': '🌴', 'shrub': '🌿', 'flower': '🌸',
+        'grass': '🌾', 'cactus': '🌵', 'groundcover': '☘️',
+      }[cat] ?? '🌱';
+
+  void _openSpecies(Map s) => showModalBottomSheet(
+        context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+        builder: (ctx) => DraggableScrollableSheet(
+          expand: false, initialChildSize: 0.72, minChildSize: 0.4, maxChildSize: 0.95,
+          builder: (_, sc) => Container(
+            decoration: const BoxDecoration(color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+            clipBehavior: Clip.antiAlias,
+            child: ListView(controller: sc, padding: EdgeInsets.zero, children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
+                decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: [_c, _c.withValues(alpha: 0.72)],
+                        begin: Alignment.topRight, end: Alignment.bottomLeft)),
+                child: Column(children: [
+                  Center(child: Container(width: 40, height: 4,
+                      margin: const EdgeInsets.only(bottom: 14),
+                      decoration: BoxDecoration(color: Colors.white54,
+                          borderRadius: BorderRadius.circular(3)))),
+                  Text(_speciesEmoji('${s['category_raw'] ?? ''}'),
+                      style: const TextStyle(fontSize: 38)),
+                  const SizedBox(height: 6),
+                  Text('${s['name']}', textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white, fontSize: 19,
+                          fontWeight: FontWeight.w900)),
+                  if (s['name_en'] != null)
+                    Text('${s['name_en']}',
+                        style: const TextStyle(color: Colors.white70, fontSize: 13.5,
+                            fontWeight: FontWeight.w700)),
+                  if (s['scientific_name'] != null)
+                    Text('${s['scientific_name']}',
+                        style: const TextStyle(color: Colors.white54, fontSize: 12,
+                            fontStyle: FontStyle.italic)),
+                ]),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  GridView.count(
+                    crossAxisCount: 2, shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    childAspectRatio: 3.1, crossAxisSpacing: 9, mainAxisSpacing: 9,
+                    children: [
+                      _fact('💧', tr('احتياج الماء', 'Water'), '${s['water_need']}'),
+                      _fact('☀️', tr('التعرّض للشمس', 'Sun'), '${s['sun_exposure']}'),
+                      _fact('✂️', tr('دورة التقليم', 'Pruning'),
+                          '${s['prune_interval_days']} ${tr('يوم', 'days')}'),
+                      _fact('🌱', tr('دورة التسميد', 'Feeding'),
+                          '${s['fertilize_interval_days']} ${tr('يوم', 'days')}'),
+                      _fact('🇰🇼', tr('حرارة الكويت', 'Kuwait heat'),
+                          s['heat_tolerant'] == true ? tr('يتحمّل', 'Tolerant')
+                                                     : tr('لا يتحمّل', 'Not tolerant')),
+                      _fact('🧂', tr('الملوحة', 'Salinity'),
+                          s['salt_tolerant'] == true ? tr('يتحمّل', 'Tolerant')
+                                                     : tr('لا يتحمّل', 'Not tolerant')),
+                    ],
+                  ),
+                  if (s['care_guide'] != null) ...[
+                    const SizedBox(height: 18),
+                    Text(tr('دليل العناية', 'Care guide'),
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5,
+                            color: Color(0xFF14202B))),
+                    const SizedBox(height: 7),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(13),
+                      decoration: BoxDecoration(color: const Color(0xFFF6F7F9),
+                          borderRadius: BorderRadius.circular(13)),
+                      child: Text('${s['care_guide']}',
+                          style: const TextStyle(fontSize: 13, height: 1.6)),
+                    ),
+                  ],
+                  if (((s['plant_count'] as num?) ?? 0) > 0) ...[
+                    const SizedBox(height: 14),
+                    Row(children: [
+                      Icon(Icons.park_rounded, size: 16, color: _c),
+                      const SizedBox(width: 7),
+                      Text('${s['plant_count']} ${tr('نبتة من هذا النوع في مواقعك',
+                          'planted at your sites')}',
+                          style: TextStyle(fontSize: 12.5, color: Colors.grey.shade700,
+                              fontWeight: FontWeight.w700)),
+                    ]),
+                  ],
+                  const SizedBox(height: 16),
+                ]),
+              ),
             ]),
           ),
+        ),
+      );
+
+  Widget _fact(String icon, String label, String value) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+        decoration: BoxDecoration(color: const Color(0xFFF6F7F9),
+            borderRadius: BorderRadius.circular(12)),
+        child: Row(children: [
+          Text(icon, style: const TextStyle(fontSize: 16)),
+          const SizedBox(width: 8),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min, children: [
+            Text(label, style: TextStyle(fontSize: 9.5, color: Colors.grey.shade500,
+                fontWeight: FontWeight.w700)),
+            Text(value, maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900,
+                    color: Color(0xFF14202B))),
+          ])),
         ]),
       );
 
