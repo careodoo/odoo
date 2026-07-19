@@ -3,6 +3,15 @@ from odoo.exceptions import ValidationError
 from odoo import fields, models, api, _
 
 
+PALETTE = {
+    'cleaning': '#0ea5e9', 'security': '#e11d48', 'agriculture': '#16a34a',
+    'facade': '#8b5cf6', 'maintenance': '#f59e0b', 'pest': '#7c3aed',
+    'waste': '#16a34a', 'disinfection': '#0ea5a5', 'pool': '#0891b2',
+    'watertank': '#0e7a5f', 'valet': '#b45309', 'hospitality': '#8a6d3b',
+    'other': '#64748b',
+}
+
+
 class CafmService(models.Model):
     """A service line offered to clients (cleaning, security, agriculture...).
     Each service has its own teams, SLA, mobile interface flavour and colour."""
@@ -32,6 +41,11 @@ class CafmService(models.Model):
     color = fields.Integer(string='لون')
     icon = fields.Char(string='أيقونة', default='🧹',
                        help='إيموجي يمثّل الخدمة في تطبيق الموبايل.')
+    # The same service used to render in a different colour in the app, the
+    # /cafm/m portal and the client portal, because each carried its own
+    # hardcoded map. The record is now the single source of truth.
+    color_hex = fields.Char(string='لون الخدمة', default='#64748b',
+                            help='يُستخدم في التطبيق والبوابة معًا — لون واحد لكل خدمة.')
     active = fields.Boolean(default=True)
 
     # Some services are really specialisations of another: pool maintenance is
@@ -64,3 +78,24 @@ class CafmService(models.Model):
             rec.team_count = len(rec.team_ids)
 
     _sql_constraints = [('code_uniq', 'unique(code)', 'رمز الخدمة يجب أن يكون فريداً.')]
+
+    @api.onchange('service_type')
+    def _onchange_service_type_colour(self):
+        for r in self:
+            if r.service_type:
+                r.color_hex = PALETTE.get(r.service_type, '#64748b')
+
+    @api.model
+    def palette(self):
+        """type -> {colour, icon, label} for any surface that needs to style a
+        service it only knows by type code."""
+        out = {}
+        for s in self.sudo().search([]):
+            if s.service_type and s.service_type not in out:
+                out[s.service_type] = {
+                    'color': s.color_hex or PALETTE.get(s.service_type, '#64748b'),
+                    'icon': s.icon or '🧩', 'label': s.name,
+                }
+        for t, c in PALETTE.items():
+            out.setdefault(t, {'color': c, 'icon': '🧩', 'label': t})
+        return out

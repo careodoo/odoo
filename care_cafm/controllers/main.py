@@ -8,12 +8,26 @@ def esc(v):
     return Markup.escape(v if v is not None else '')
 
 
+# Fallback only. The live colours come from care.cafm.service.color_hex so the
+# app, this portal and the client portal cannot drift apart again.
 ACCENTS = {
-    'cleaning': '#2f6df6', 'security': '#e5484d', 'agriculture': '#37c98a',
-    'facade': '#38bdf8', 'maintenance': '#f7a23b', 'pest': '#a78bfa',
-    'waste': '#8a6d3b', 'disinfection': '#0ea5a5', 'pool': '#0891b2',
-    'watertank': '#0e7a5f', 'other': '#64748b',
+    'cleaning': '#0ea5e9', 'security': '#e11d48', 'agriculture': '#16a34a',
+    'facade': '#8b5cf6', 'maintenance': '#f59e0b', 'pest': '#7c3aed',
+    'waste': '#16a34a', 'disinfection': '#0ea5a5', 'pool': '#0891b2',
+    'watertank': '#0e7a5f', 'valet': '#b45309', 'hospitality': '#8a6d3b',
+    'other': '#64748b',
 }
+
+
+def accent_for(service_type):
+    """The one colour this service is drawn in, everywhere."""
+    try:
+        pal = request.env['care.cafm.service'].sudo().palette()
+        if service_type in pal:
+            return pal[service_type]['color']
+    except Exception:
+        pass
+    return ACCENTS.get(service_type, ACCENTS['other'])
 
 
 _PAGE = """<!doctype html><html lang="ar" dir="rtl"><head>
@@ -51,6 +65,10 @@ label{font-size:12.5px;color:#9cb2cd;font-weight:700}
 </style></head><body>
 <div class="top"><div><div class="t">__TITLE__</div></div><a class="back" href="__BACK__">↩ رجوع</a></div>
 <div class="wrap">__BODY__</div></body></html>"""
+
+
+def _csrf():
+    return Markup('<input type="hidden" name="csrf_token" value="%s"/>') % request.csrf_token()
 
 
 def _shell(title, body, accent='#f7a23b', back='/cafm/m'):
@@ -207,34 +225,78 @@ class CafmMobile(http.Controller):
     @http.route('/cafm/m/supervisor', type='http', auth='user', website=False)
     def supervisor(self, **kw):
         env = request.env
-        wos = env['care.cafm.workorder'].search(
-            [('state', 'not in', ('done', 'verified', 'cancelled'))], limit=10)
+        # A supervisor opens this to place work, so unassigned comes first and
+        # the list is long enough to actually clear a backlog.
+        WO = env['care.cafm.workorder']
+        base = [('state', 'not in', ('done', 'verified', 'cancelled'))]
+        unassigned = WO.search(base + [('employee_id', '=', False)], limit=25)
+        wos = unassigned | WO.search(
+            base + [('employee_id', '!=', False)], limit=max(0, 25 - len(unassigned)))
         obs = env['care.cafm.observation'].search([('state', 'not in', ('closed', 'cancelled'))], limit=6)
         scans = env['care.cafm.scan'].search([], limit=6)
         who = Markup('')
         for s in scans:
             who += Markup('<div class="card row"><div><div class="h4">%s</div>'
                           '<div class="muted">📍 %s</div></div><span class="muted">%s</span></div>'
-                          ) % (esc(s.employee_id.name or '—'), esc(s.location_id.name or '—'),
+                          ) % (esc(s.employee_id.sudo().name or '—'), esc(s.location_id.name or '—'),
                                esc(fields.Datetime.to_string(s.scan_datetime)[11:16] if s.scan_datetime else ''))
         if not scans:
             who = Markup('<div class="card muted">لا عمليات مسح بعد.</div>')
+        # Crews this supervisor can actually hand work to.
+        crew = env['care.cafm.employee'].sudo() if 'care.cafm.employee' in env else None
+        workers = env['hr.employee'].sudo().search(
+            [('id', 'in', env['care.cafm.team'].sudo().search([]).mapped('member_ids').ids)])
         wo_rows = Markup('')
         for w in wos:
+            # hr.employee is private: reading a colleague's record without sudo
+            # raises on the restricted HR fields and 403s the whole page.
+            assigned = w.employee_id.sudo()
+            # This board listed "غير مُسنَد" and then offered no way to fix it —
+            # the one thing a supervisor opens this page to do.
+            if assigned:
+                act = Markup('<div class="muted" style="margin-top:6px">👷 %s</div>') % esc(assigned.name)
+            elif workers:
+                opts = Markup('').join(
+                    Markup('<option value="%s">%s%s</option>') % (
+                        e.id, esc(e.name), esc(' — %s' % e.job_title if e.job_title else ''))
+                    for e in workers[:200])
+                act = Markup(
+                    '<form method="post" action="/cafm/m/wo/%s/assign" style="margin-top:8px">%s'
+                    '<label>إسناد إلى</label><select name="employee_id" required>%s</select>'
+                    '<button class="btn">إسناد المهمة</button></form>'
+                ) % (w.id, _csrf(), opts)
+            else:
+                act = Markup('<div class="muted" style="margin-top:6px">غير مُسنَد</div>')
             wo_rows += Markup('<div class="card"><div class="h4">%s</div>'
-                              '<div class="muted">📍 %s · 👷 %s · <span class="pill %s">%s</span></div></div>'
+                              '<div class="muted">📍 %s · <span class="pill %s">%s</span></div>%s</div>'
                               ) % (esc(w.title), esc(w.location_id.name or '—'),
-                                   esc(w.employee_id.name or 'غير مُسنَد'),
                                    'crit' if w.is_overdue else 'info',
-                                   esc(dict(w._fields['state'].selection).get(w.state)))
+                                   esc(dict(w._fields['state'].selection).get(w.state)), act)
         body = Markup(
             '<div class="kpi"><div><div class="n">%s</div><div class="l">أوامر مفتوحة</div></div>'
+            '<div><div class="n" style="color:%s">%s</div><div class="l">بانتظار الإسناد</div></div>'
             '<div><div class="n">%s</div><div class="l">ملاحظات</div></div></div>'
             '<h3 style="margin:14px 0 10px">من أين الآن؟ (من المسح)</h3>%s'
             '<h3 style="margin:16px 0 10px">أوامر العمل</h3>%s'
             '<a class="btn g" href="/cafm/m/quality">＋ رصد ملاحظة تصحيح</a>'
-        ) % (len(wos), len(obs), who, wo_rows)
+        ) % (WO.search_count(base), '#f2603f' if unassigned else '#e9f1fb',
+             WO.search_count(base + [('employee_id', '=', False)]), len(obs), who, wo_rows)
         return _shell('المشرف', body, ACCENTS['maintenance'])
+
+    @http.route('/cafm/m/wo/<int:wid>/assign', type='http', auth='user',
+                methods=['POST'], website=False, csrf=True)
+    def wo_assign(self, wid, **post):
+        """Hand a work order to a worker straight from the supervisor board."""
+        env = request.env
+        w = env['care.cafm.workorder'].sudo().browse(wid).exists()
+        eid = int(post.get('employee_id') or 0)
+        if w and eid:
+            w.employee_id = eid
+            try:
+                w.action_assign()
+            except Exception:
+                w.state = 'assigned'
+        return request.redirect('/cafm/m/supervisor')
 
     # ---------------- quality: raise observation ----------------
     @http.route('/cafm/m/quality', type='http', auth='user', website=False)
@@ -702,7 +764,8 @@ class CafmDashboard(http.Controller):
 .wrap{max-width:1080px;margin:0 auto;padding:18px}
 .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
 @media(max-width:900px){.kpis{grid-template-columns:repeat(3,1fr)}}@media(max-width:560px){.kpis{grid-template-columns:repeat(2,1fr)}}
-.kpi{background:#16273d;border:1px solid #274261;border-radius:13px;padding:14px;text-align:center}
+.kpi{background:#16273d;border:1px solid #274261;border-radius:13px;padding:14px;text-align:center;display:block;color:inherit;text-decoration:none}
+a.kpi:hover{border-color:#4aa8ff;background:#1b3050}
 .kpi .n{font-size:26px;font-weight:900}.kpi .l{font-size:11px;color:#9cb2cd;margin-top:2px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
 @media(max-width:820px){.grid{grid-template-columns:1fr}}
@@ -715,11 +778,11 @@ th{text-align:right;color:#9cb2cd;font-size:11.5px;padding:6px 10px;border-botto
 <div class="wrap">
 <div class="kpis">
  <div class="kpi"><div class="n" style="color:%(ring)s">%(sla).0f%%</div><div class="l">التزام SLA</div></div>
- <div class="kpi"><div class="n">%(total)s</div><div class="l">إجمالي الأوامر</div></div>
- <div class="kpi"><div class="n" style="color:#4aa8ff">%(open)s</div><div class="l">مفتوحة</div></div>
- <div class="kpi"><div class="n" style="color:#f2603f">%(overdue)s</div><div class="l">متأخرة SLA</div></div>
- <div class="kpi"><div class="n" style="color:#f5b638">%(obs)s</div><div class="l">ملاحظات مفتوحة</div></div>
- <div class="kpi"><div class="n" style="color:#e5484d">%(inc)s</div><div class="l">بلاغات أمنية</div></div>
+ <a class="kpi" href="/cafm/m/workorders?tab=all"><div class="n">%(total)s</div><div class="l">إجمالي الأوامر ›</div></a>
+ <a class="kpi" href="/cafm/m/workorders?tab=open"><div class="n" style="color:#4aa8ff">%(open)s</div><div class="l">مفتوحة ›</div></a>
+ <a class="kpi" href="/cafm/m/workorders?tab=overdue"><div class="n" style="color:#f2603f">%(overdue)s</div><div class="l">متأخرة SLA ›</div></a>
+ <a class="kpi" href="/cafm/m/quality"><div class="n" style="color:#f5b638">%(obs)s</div><div class="l">ملاحظات مفتوحة ›</div></a>
+ <a class="kpi" href="/cafm/m/security"><div class="n" style="color:#e5484d">%(inc)s</div><div class="l">بلاغات أمنية ›</div></a>
 </div>
 <div class="grid">
  <div class="card"><h3>أوامر العمل حسب الحالة</h3>%(by_state)s</div>

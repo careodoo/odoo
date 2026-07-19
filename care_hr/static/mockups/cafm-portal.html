@@ -463,7 +463,13 @@ const NAV_TAIL=[
   {id:'manage',ic:'🛠️',t:['إدارة المنشأة','Manage'],need:'manage'},
   {id:'settings',ic:'⚙️',t:['الإعدادات والحساب','Settings']},
 ];
-const SVC_COLORS={cleaning:'#0ea5e9',security:'#e11d48',agriculture:'#16a34a',landscape:'#16a34a',pest:'#a16207',maintenance:'#f59e0b',facade:'#8b5cf6',fitout:'#0891b2',other:'#64748b'};
+// Fallback only. Real colours load from /client/palette so this portal, the
+// /cafm/m pages and the app cannot drift to three different blues again.
+let SVC_COLORS={cleaning:'#0ea5e9',security:'#e11d48',agriculture:'#16a34a',landscape:'#16a34a',pest:'#7c3aed',maintenance:'#f59e0b',facade:'#8b5cf6',fitout:'#0891b2',other:'#64748b'};
+let SVC_ICONS={};
+async function loadPalette(){try{const p=await api('/client/palette');
+  for(const k in p){ if(p[k].color) SVC_COLORS[k]=p[k].color; if(p[k].icon) SVC_ICONS[k]=p[k].icon; }
+}catch(e){/* keep the fallback */}}
 function goSvc(base,type){window.__PRESVC=type;go(base,base+'_'+type);}
 function toggleSvc(t){const el=document.querySelector('.svc[data-svc="'+CSS.escape(t)+'"]');if(el)el.classList.toggle('col');}
 function navAnchor(x){return '<a data-id="'+x.id+'" onclick="go(\''+x.id+'\')"><span class="ic">'+x.ic+'</span><span>'+esc(T(x.t[0],x.t[1]))+'</span>'+(x.cnt?'<span class="cnt" id="cnt_'+x.cnt+'">·</span>':'')+'</a>';}
@@ -1780,6 +1786,7 @@ async function boot(){try{ME=await api('/me');}catch(e){showLogin();return;}
   const u=ME.user||{};document.getElementById('uname').textContent=u.name||'';document.getElementById('urole').textContent=(ME.is_admin?'أدمن':ME.is_supervisor?'مشرف':ME.role||'مستخدم');document.getElementById('uav').textContent=(u.name||'?').trim().charAt(0);
   document.getElementById('sbFoot').textContent=(u.name||'')+' · '+(ME.role||'');
   if(ME.unread_notifications){const b=document.getElementById('nbadge');b.style.display='inline-block';b.textContent=ME.unread_notifications;}
+  await loadPalette();
   try{const sd=await api('/client/services');SERVICES=(sd&&sd.services)||[];}catch(e){SERVICES=[];}
   try{const pr=await api('/client/projects');window.__PROJECTS=pr||[];if((pr||[]).length>1){const sel=document.getElementById('projSel');sel.style.display='inline-block';sel.innerHTML='<option value="all">🗂️ '+T('كل المشاريع','All projects')+'</option>'+pr.map(x=>'<option value="'+x.id+'"'+(String(PROJECT)===String(x.id)?' selected':'')+'>'+esc(x.name)+'</option>').join('');}}catch(e){}
   renderNav();go('dashboard');refreshCounts();setInterval(refreshCounts,60000);

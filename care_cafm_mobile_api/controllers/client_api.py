@@ -3251,6 +3251,17 @@ class ClientApi(Controller):
         """Kept for call sites that genuinely mean "add a worker"."""
         return self._can(env, 'worker_add')
 
+    @route(API + '/client/palette', type='http', auth='public', methods=['GET'],
+           csrf=False, cors='*')
+    def palette(self, **kw):
+        """One colour and icon per service type, from the service records.
+        Three surfaces used to carry three different hardcoded maps, so the
+        same service rendered in a different colour depending where you were."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        return _ok(env['care.cafm.service'].sudo().palette())
+
     @route(API + '/client/permissions', type='http', auth='public', methods=['GET'],
            csrf=False, cors='*')
     def permissions(self, **kw):
