@@ -4,7 +4,6 @@ import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/widgets.dart';
 import 'work_order_detail_screen.dart';
-import 'requests_screen.dart';
 
 const _navy = Color(0xFF0E3A5F);
 
@@ -181,11 +180,13 @@ class _SpecialtyServiceScreenState extends State<SpecialtyServiceScreen> {
         title: Text(tr(s.ar, s.en), style: const TextStyle(fontWeight: FontWeight.w900)),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: s.color,
-        onPressed: () => Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const RequestsScreen())),
-        icon: const Icon(Icons.add_task_rounded),
-        label: Text(tr('طلب خدمة', 'Request'), style: const TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: const Color(0xFFC0392B),
+        foregroundColor: Colors.white,
+        elevation: 3,
+        onPressed: _requestSheet,
+        icon: const Icon(Icons.post_add_rounded),
+        label: Text(tr('اطلب زيارة', 'Request a visit'),
+            style: const TextStyle(fontWeight: FontWeight.w900)),
       ),
       body: _d == null
           ? Center(child: CircularProgressIndicator(color: s.color))
@@ -203,6 +204,133 @@ class _SpecialtyServiceScreenState extends State<SpecialtyServiceScreen> {
               ]),
             ),
     );
+  }
+
+  /// A request for this service specifically — pre-filled with the service, so
+  /// nobody has to pick it from a list, and it never shows another service's
+  /// records.
+  Future<void> _requestSheet() async {
+    final s = widget.spec;
+    final title = TextEditingController();
+    final desc = TextEditingController();
+    String priority = '1';
+    List<dynamic> facs = const [];
+    try {
+      facs = await context.read<AuthProvider>().api.facilities();
+    } catch (_) {}
+    int? facId = facs.isNotEmpty ? (facs.first['id'] as num).toInt() : null;
+    if (!mounted) return;
+
+    final ok = await showModalBottomSheet<bool>(
+      context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setSt) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        child: Container(
+          decoration: const BoxDecoration(color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(width: 42, height: 4, margin: const EdgeInsets.only(bottom: 18),
+                decoration: BoxDecoration(color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(3))),
+            Row(children: [
+              Text(s.icon, style: const TextStyle(fontSize: 26)),
+              const SizedBox(width: 10),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(tr('طلب زيارة — ', 'Request a visit — ') + tr(s.ar, s.en),
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: _navy)),
+                Text(tr('يصل الطلب لفريق الخدمة مباشرة', 'Goes straight to the service team'),
+                    style: TextStyle(fontSize: 11.5, color: Colors.grey.shade500)),
+              ])),
+            ]),
+            const SizedBox(height: 16),
+            TextField(
+              controller: title,
+              decoration: InputDecoration(
+                labelText: tr('ما المطلوب؟', 'What is needed?'),
+                hintText: tr('مثال: رشّ دوري لمنطقة المطبخ', 'e.g. routine spray of the kitchen area'),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), isDense: true),
+            ),
+            const SizedBox(height: 11),
+            if (facs.length > 1)
+              DropdownButtonFormField<int>(
+                value: facId,
+                decoration: InputDecoration(labelText: tr('المرفق', 'Facility'),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), isDense: true),
+                items: [for (final f in facs)
+                  DropdownMenuItem(value: (f['id'] as num).toInt(), child: Text('${f['name']}'))],
+                onChanged: (v) => setSt(() => facId = v),
+              ),
+            const SizedBox(height: 11),
+            Align(alignment: AlignmentDirectional.centerStart,
+                child: Text(tr('الأولوية', 'Priority'),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w700))),
+            const SizedBox(height: 6),
+            Row(children: [
+              for (final p in [('0', tr('منخفضة', 'Low')), ('1', tr('عادية', 'Normal')),
+                               ('2', tr('عالية', 'High')), ('3', tr('عاجلة', 'Urgent'))])
+                Expanded(child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: ChoiceChip(
+                    selected: priority == p.$1,
+                    label: SizedBox(width: double.infinity,
+                        child: Text(p.$2, textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800,
+                                color: priority == p.$1 ? Colors.white : _navy))),
+                    selectedColor: s.color, backgroundColor: Colors.grey.shade100,
+                    side: BorderSide(color: priority == p.$1 ? s.color : Colors.grey.shade300),
+                    onSelected: (_) => setSt(() => priority = p.$1),
+                  ),
+                )),
+            ]),
+            const SizedBox(height: 11),
+            TextField(
+              controller: desc, maxLines: 3,
+              decoration: InputDecoration(labelText: tr('تفاصيل إضافية', 'Extra detail'),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+            ),
+            const SizedBox(height: 18),
+            SizedBox(width: double.infinity, child: FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC0392B),
+                  minimumSize: const Size.fromHeight(52)),
+              onPressed: () {
+                if (title.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                      content: Text(tr('اكتب ما المطلوب', 'Say what is needed'))));
+                  return;
+                }
+                Navigator.pop(ctx, true);
+              },
+              icon: const Icon(Icons.send_rounded),
+              label: Text(tr('إرسال الطلب', 'Send request'),
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+            )),
+          ]),
+        ),
+      )),
+    );
+    if (ok != true) return;
+    try {
+      await context.read<AuthProvider>().api.createRequest({
+        'title': title.text.trim(),
+        'description': desc.text.trim(),
+        'priority': priority,
+        'service_type': s.code,
+        if (facId != null) 'facility_id': facId,
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('أُرسل الطلب لفريق الخدمة', 'Sent to the service team')),
+          backgroundColor: const Color(0xFF16A34A), behavior: SnackBarBehavior.floating));
+      _load();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('$e'.replaceFirst('Exception: ', '')),
+            backgroundColor: const Color(0xFFE11D48)));
+      }
+    }
   }
 
   Widget _header(Map stats) {

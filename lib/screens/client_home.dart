@@ -397,62 +397,179 @@ class _ClientHomeState extends State<ClientHome> {
   void _go(Widget s) => Navigator.push(context, MaterialPageRoute(builder: (_) => s));
 
   Widget _quickAccess(ColorScheme cs) {
-    // (emoji, ar, en, color, screen, sectionCode) — sectionCode null = always
-    final specs = <(String, String, String, int, Widget, String?)>[
-      ('📥', tr('طلب خدمة', 'Request'), 'Request', 0xFFE6295C, const RequestsScreen(), null),
-      ('👷', tr('الفريق', 'Team'), 'Team', 0xFF2F6DF6, const ClientTeamScreen(), 'team'),
-      ('📡', tr('النشاط', 'Activity'), 'Live', 0xFF16A34A, const ClientActivityScreen(), 'workorders'),
-      ('🏢', tr('المباني', 'Buildings'), 'Buildings', 0xFF6366F1, const ClientStructureScreen(), 'facilities'),
-      ('🛒', tr('المتجر', 'Shop'), 'Shop', 0xFF0EA5E9, const ShopScreen(), 'shop'),
-      ('📦', tr('طلباتي', 'My orders'), 'Orders', 0xFFF59E0B, const OrdersScreen(), null),
-      ('💳', tr('الفواتير', 'Invoices'), 'Invoices', 0xFF7A1340, const InvoicesScreen(), null),
-      ('✅', tr('الجودة', 'Quality'), 'Quality', 0xFF16A34A, const QualityScreen(), null),
-      ('🛡️', tr('الأمن', 'Security'), 'Security', 0xFFE11D48, const ClientSecurityScreen(), 'security'),
-      ('🔁', tr('الجدولة', 'Schedules'), 'Schedules', 0xFF0D9488, const SchedulesScreen(), 'workorders'),
-      ('🕐', tr('الحضور', 'Attendance'), 'Attendance', 0xFF0891B2, const AttendanceScreen(), 'team'),
-      ('📣', tr('إشعار', 'Notify'), 'Notify', 0xFF6366F1, const NotifySendScreen(), null),
-      ('🧼', tr('النظافة', 'Cleaning'), 'Cleaning', 0xFF0891B2, const ClientCleaningScreen(), 'cleaning'),
-      ('🌳', tr('الزراعة', 'Landscaping'), 'Landscape', 0xFF15803D, const ClientAgriScreen(), 'agriculture'),
-      ('🏙️', tr('الواجهات', 'Facade'), 'Facade', 0xFF8B5CF6, const ClientFacadeScreen(), 'facade'),
-      ('📦', tr('المخزون', 'Inventory'), 'Inventory', 0xFF0E3A5F, const ClientInventoryScreen(), 'inventory'),
-      ('♻️', tr('النفايات', 'Waste'), 'Waste', 0xFF16A34A, const ClientWasteScreen(), 'waste'),
-      ('🏭', tr('الأصول', 'Assets'), 'Assets', 0xFF0891B2, const ClientAssetsScreen(), null),
-      ('🛠️', tr('الصيانة', 'Maintenance'), 'Maintenance', 0xFFF7A23B, const MaintenanceScreen(), 'maintenance'),
-      ('🚗', tr('صف السيارات', 'Valet parking'), 'Valet', 0xFFB45309, const ValetScreen(), 'valet'),
-      ('☕', tr('الضيافة', 'Hospitality'), 'Hospitality', 0xFF8A6D3B, const HospitalityScreen(), 'hospitality'),
-      ('🐜', tr('مكافحة الحشرات', 'Pest control'), 'Pest', 0xFF7C3AED,
+    // Twenty-five identical tinted squares in one grid gave a service the same
+    // weight as a shortcut, so nothing led. They are grouped now, and each
+    // group is drawn the way its job deserves.
+    // (emoji, ar, en, colour, screen, sectionCode) — sectionCode null = always
+    final act = <(String, String, String, int, Widget, String?)>[
+      ('📥', 'طلب خدمة', 'Request', 0xFFC0392B, const RequestsScreen(), null),
+      ('✅', 'الجودة', 'Quality', 0xFF16A34A, const QualityScreen(), null),
+      ('📡', 'النشاط', 'Live', 0xFF0891B2, const ClientActivityScreen(), 'workorders'),
+      ('🔁', 'الجدولة', 'Schedules', 0xFF0D9488, const SchedulesScreen(), 'workorders'),
+    ];
+    final services = <(String, String, String, int, Widget, String?)>[
+      ('🧼', 'النظافة', 'Cleaning', 0xFF0EA5E9, const ClientCleaningScreen(), 'cleaning'),
+      ('🛡️', 'الأمن', 'Security', 0xFFE11D48, const ClientSecurityScreen(), 'security'),
+      ('🌳', 'الزراعة', 'Landscaping', 0xFF16A34A, const ClientAgriScreen(), 'agriculture'),
+      ('🏙️', 'الواجهات', 'Facade', 0xFF8B5CF6, const ClientFacadeScreen(), 'facade'),
+      ('🛠️', 'الصيانة', 'Maintenance', 0xFFF59E0B, const MaintenanceScreen(), 'maintenance'),
+      ('♻️', 'النفايات', 'Waste', 0xFF16A34A, const ClientWasteScreen(), 'waste'),
+      ('☕', 'الضيافة', 'Hospitality', 0xFF8A6D3B, const HospitalityScreen(), 'hospitality'),
+      ('🚗', 'صف السيارات', 'Valet', 0xFFB45309, const ValetScreen(), 'valet'),
+      ('🐜', 'مكافحة الحشرات', 'Pest', 0xFF7C3AED,
           const SpecialtyServiceScreen(spec: ServiceSpec.pest), 'pest'),
-      ('🧴', tr('التعقيم', 'Disinfection'), 'Disinfection', 0xFF0EA5A5,
+      ('🧴', 'التعقيم', 'Disinfection', 0xFF0EA5A5,
           const SpecialtyServiceScreen(spec: ServiceSpec.disinfection), 'disinfection'),
-      ('🏊', tr('المسابح', 'Pools'), 'Pools', 0xFF0891B2,
+      ('🏊', 'المسابح', 'Pools', 0xFF0891B2,
           const SpecialtyServiceScreen(spec: ServiceSpec.pool), 'pool'),
-      ('🚰', tr('خزانات المياه', 'Water tanks'), 'Water tanks', 0xFF0E7A5F,
+      ('🚰', 'خزانات المياه', 'Water tanks', 0xFF0E7A5F,
           const SpecialtyServiceScreen(spec: ServiceSpec.watertank), 'watertank'),
     ];
-    final shown = specs.where((s) => s.$6 == null || _has(s.$6!)).toList();
-    Widget tile((String, String, String, int, Widget, String?) s) {
-      final c = Color(s.$4);
-      return InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () => _go(s.$5),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-          decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(16)),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text(s.$1, style: const TextStyle(fontSize: 24)),
-            const SizedBox(height: 6),
-            Text(tr(s.$2, s.$3), style: TextStyle(color: c, fontWeight: FontWeight.w800, fontSize: 12), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
-          ]),
-        ),
-      );
-    }
+    final place = <(String, String, String, int, Widget, String?)>[
+      ('🏢', 'المباني', 'Buildings', 0xFF6366F1, const ClientStructureScreen(), 'facilities'),
+      ('🏭', 'الأصول', 'Assets', 0xFF0891B2, const ClientAssetsScreen(), null),
+      ('📦', 'المخزون', 'Inventory', 0xFF0E3A5F, const ClientInventoryScreen(), 'inventory'),
+      ('🕐', 'الحضور', 'Attendance', 0xFF0891B2, const AttendanceScreen(), 'team'),
+      ('👷', 'الفريق', 'Team', 0xFF2F6DF6, const ClientTeamScreen(), 'team'),
+      ('📣', 'إشعار', 'Notify', 0xFF6366F1, const NotifySendScreen(), null),
+    ];
+    final money = <(String, String, String, int, Widget, String?)>[
+      ('🛒', 'المتجر', 'Shop', 0xFF0EA5E9, const ShopScreen(), 'shop'),
+      ('📦', 'طلباتي', 'Orders', 0xFFF59E0B, const OrdersScreen(), null),
+      ('💳', 'الفواتير', 'Invoices', 0xFF7A1340, const InvoicesScreen(), null),
+    ];
 
-    return GridView.count(
-      crossAxisCount: 4, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 0.92,
-      children: [for (final s in shown) tile(s)],
-    );
+    List<T> vis<T extends (String, String, String, int, Widget, String?)>(List<T> l) =>
+        l.where((s) => s.$6 == null || _has(s.$6!)).toList();
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _groupTitle(tr('ابدأ من هنا', 'Start here')),
+      _actionRow(vis(act)),
+      const SizedBox(height: 18),
+      _groupTitle(tr('خدماتك المتعاقدة', 'Your contracted services')),
+      _serviceWrap(vis(services)),
+      const SizedBox(height: 18),
+      _groupTitle(tr('المكان والفريق', 'Place & people')),
+      _compactGrid(vis(place)),
+      const SizedBox(height: 18),
+      _groupTitle(tr('المتجر والفواتير', 'Shop & billing')),
+      _compactGrid(vis(money)),
+    ]);
   }
+
+  Widget _groupTitle(String t) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Row(children: [
+          Container(width: 3, height: 15,
+              decoration: BoxDecoration(color: const Color(0xFFC0392B),
+                  borderRadius: BorderRadius.circular(2))),
+          const SizedBox(width: 8),
+          Text(t, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5,
+              color: Color(0xFF14202B))),
+        ]),
+      );
+
+  /// The things people came to do: full-width, high contrast, unmissable.
+  Widget _actionRow(List<(String, String, String, int, Widget, String?)> items) => Row(
+        children: [
+          for (final s in items)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () => _go(s.$5),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                          colors: [Color(s.$4), Color(s.$4).withValues(alpha: 0.78)],
+                          begin: Alignment.topRight, end: Alignment.bottomLeft),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [BoxShadow(color: Color(s.$4).withValues(alpha: 0.28),
+                          blurRadius: 10, offset: const Offset(0, 5))],
+                    ),
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      Text(s.$1, style: const TextStyle(fontSize: 21)),
+                      const SizedBox(height: 6),
+                      Text(tr(s.$2, s.$3), textAlign: TextAlign.center, maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900,
+                              fontSize: 11.5)),
+                    ]),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      );
+
+  /// Services read as a row of cards carrying their own colour on a leading
+  /// stripe — a contracted service is not a shortcut and should not look like one.
+  Widget _serviceWrap(List<(String, String, String, int, Widget, String?)> items) => Wrap(
+        spacing: 8, runSpacing: 8,
+        children: [
+          for (final s in items)
+            InkWell(
+              borderRadius: BorderRadius.circular(13),
+              onTap: () => _go(s.$5),
+              child: Container(
+                width: 108,
+                padding: const EdgeInsets.fromLTRB(10, 10, 8, 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(13),
+                  border: Border.all(color: Colors.grey.shade200),
+                  boxShadow: const [BoxShadow(color: Color(0x0D000000), blurRadius: 6,
+                      offset: Offset(0, 2))],
+                ),
+                child: Row(children: [
+                  Container(width: 4, height: 34,
+                      decoration: BoxDecoration(color: Color(s.$4),
+                          borderRadius: BorderRadius.circular(3))),
+                  const SizedBox(width: 8),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min, children: [
+                    Text(s.$1, style: const TextStyle(fontSize: 16)),
+                    const SizedBox(height: 3),
+                    Text(tr(s.$2, s.$3), maxLines: 2, overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 10.5,
+                            height: 1.2, color: Color(s.$4))),
+                  ])),
+                ]),
+              ),
+            ),
+        ],
+      );
+
+  /// Supporting destinations: quiet, dense, uniform.
+  Widget _compactGrid(List<(String, String, String, int, Widget, String?)> items) =>
+      GridView.count(
+        crossAxisCount: 4, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+        crossAxisSpacing: 9, mainAxisSpacing: 9, childAspectRatio: 1.0,
+        children: [
+          for (final s in items)
+            InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: () => _go(s.$5),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF6F7F9),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  Text(s.$1, style: const TextStyle(fontSize: 19)),
+                  const SizedBox(height: 5),
+                  Text(tr(s.$2, s.$3), textAlign: TextAlign.center, maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 10.5,
+                          color: Color(0xFF44536A))),
+                ]),
+              ),
+            ),
+        ],
+      );
 
   Widget _kpiGrid(Map k) {
     final items = [
