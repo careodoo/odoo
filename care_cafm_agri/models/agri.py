@@ -16,6 +16,10 @@ class AgriSpecies(models.Model):
     _order = 'name'
 
     name = fields.Char(string='النوع', required=True, tracking=True)
+    # The catalogue is read by Arabic and English speakers alike, and a species
+    # name is not something to guess at — carry both spellings explicitly.
+    name_en = fields.Char(string='الاسم بالإنجليزية', tracking=True)
+    display_bilingual = fields.Char(string='الاسم', compute='_compute_bilingual', store=True)
     scientific_name = fields.Char(string='الاسم العلمي', tracking=True)
     category = fields.Selection([
         ('tree', 'شجرة'), ('palm', 'نخيل'), ('shrub', 'شجيرة'),
@@ -40,6 +44,11 @@ class AgriSpecies(models.Model):
     plant_ids = fields.One2many('care.cafm.agri.plant', 'species_id', string='الأشجار/النباتات')
     plant_count = fields.Integer(string='العدد', compute='_compute_plant_count')
     active = fields.Boolean(default=True)
+
+    @api.depends('name', 'name_en')
+    def _compute_bilingual(self):
+        for r in self:
+            r.display_bilingual = ' — '.join([x for x in (r.name, r.name_en) if x])
 
     @api.depends('plant_ids')
     def _compute_plant_count(self):
@@ -99,6 +108,11 @@ class AgriZone(models.Model):
     client_plan_comment = fields.Char(string='تعليق العميل', tracking=True)
     client_plan_date = fields.Datetime(string='تاريخ الموافقة/الرفض', readonly=True)
     active = fields.Boolean(default=True)
+
+    @api.depends('name', 'name_en')
+    def _compute_bilingual(self):
+        for r in self:
+            r.display_bilingual = ' — '.join([x for x in (r.name, r.name_en) if x])
 
     @api.depends('plant_ids')
     def _compute_plant_count(self):

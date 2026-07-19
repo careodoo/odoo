@@ -334,9 +334,18 @@ class AgriClientApi(Controller):
             return g
         Sp = env['care.cafm.agri.species'].sudo()
         cat, wn, sun = _sel(Sp, 'category'), _sel(Sp, 'water_need'), _sel(Sp, 'sun_exposure')
-        recs = Sp.search([], order='name')
+        a = request.httprequest.args
+        dom = []
+        q = (a.get('q') or '').strip()
+        if q:
+            dom += ['|', '|', ('name', 'ilike', q), ('name_en', 'ilike', q),
+                    ('scientific_name', 'ilike', q)]
+        if a.get('category') and a['category'] != 'all':
+            dom.append(('category', '=', a['category']))
+        recs = Sp.search(dom, order='category, name')
         return _ok([{
-            'id': s.id, 'name': s.name, 'scientific_name': s.scientific_name or None,
+            'id': s.id, 'name': s.name, 'name_en': s.name_en or None,
+            'scientific_name': s.scientific_name or None,
             'category': cat.get(s.category, s.category or ''), 'category_raw': s.category,
             'image': _abs('/web/image/care.cafm.agri.species/%s/image' % s.id) if s.image else None,
             'water_need': wn.get(s.water_need, s.water_need or ''),
