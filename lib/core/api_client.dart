@@ -558,6 +558,11 @@ class ApiClient {
               await http.get(_u('/client/asset/$id'), headers: await _headers())))['data'] as Map);
 
   // ---- maintenance service --------------------------------------------------
+  /// Minimum supported build, update message and store link (no auth needed).
+  Future<Map<String, dynamic>> appConfig() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/app/config'))))['data'] as Map);
+
   // ---- support desk (Odoo Helpdesk) ------------------------------------------
   Future<Map<String, dynamic>> supportTickets() async =>
       Map<String, dynamic>.from((await _handle(

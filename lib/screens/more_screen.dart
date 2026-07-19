@@ -33,6 +33,7 @@ import 'chat_screen.dart';
 import 'nfc_provision_screen.dart';
 import 'material_policy_screen.dart';
 import 'support_screen.dart';
+import 'update_gate.dart';
 
 /// A polished home for everything this user can reach — styled like the CARE 2
 /// CARE account page: a vibrant header, the systems rail (top icons) for
@@ -158,6 +159,10 @@ class MoreScreen extends StatelessWidget {
         onTap: () => _openUrl(context, 'https://ecare.care-kw.com/care_hr/static/legal/privacy.html'));
     tile(Icons.article_outlined, tr('شروط الاستخدام', 'Terms of use'), null, c: const Color(0xFF64748B),
         onTap: () => _openUrl(context, 'https://ecare.care-kw.com/care_hr/static/legal/terms.html'));
+    tile(Icons.star_rate_rounded, tr('قيّم التطبيق', 'Rate the app'), null, c: const Color(0xFFF59E0B),
+        onTap: () => _rateApp(context));
+    tile(Icons.system_update_rounded, tr('التحقق من التحديثات', 'Check for updates'), null, c: const Color(0xFF0891B2),
+        onTap: () => _checkUpdate(context));
     tile(Icons.info_outline_rounded, tr('عن التطبيق', 'About'), null, c: const Color(0xFF0E3A5F),
         onTap: () => _about(context));
     tile(Icons.logout_rounded, tr('تسجيل الخروج', 'Sign out'), null, c: _red, danger: true,
@@ -329,6 +334,65 @@ class MoreScreen extends StatelessWidget {
     if (!await launchUrl(u, mode: LaunchMode.externalApplication) && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('تعذّر فتح الرابط', 'Could not open link'))));
     }
+  }
+
+
+  /// Ask for a rating in-app; anything 4★+ goes to the store listing, lower
+  /// scores open a support ticket instead so the complaint reaches us first.
+  void _rateApp(BuildContext context) {
+    int stars = 0;
+    showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setSt) => Container(
+        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 14),
+              decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(3))),
+          const Text('⭐', style: TextStyle(fontSize: 34)),
+          const SizedBox(height: 8),
+          Text(tr('ما رأيك في تطبيق CARE؟', 'How do you rate CARE?'),
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: _navy)),
+          const SizedBox(height: 4),
+          Text(tr('تقييمك يساعدنا على تحسينه', 'Your rating helps us improve it'),
+              style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600)),
+          const SizedBox(height: 14),
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            for (var i = 1; i <= 5; i++)
+              IconButton(
+                iconSize: 34,
+                icon: Icon(i <= stars ? Icons.star_rounded : Icons.star_border_rounded,
+                    color: const Color(0xFFF59E0B)),
+                onPressed: () => setSt(() => stars = i),
+              ),
+          ]),
+          const SizedBox(height: 10),
+          SizedBox(width: double.infinity, child: FilledButton.icon(
+            style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFF59E0B), minimumSize: const Size.fromHeight(50)),
+            onPressed: stars == 0 ? null : () {
+              Navigator.pop(ctx);
+              if (stars >= 4) {
+                _openUrl(context, 'https://play.google.com/store/apps/details?id=care.app');
+              } else {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const SupportScreen()));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(tr('يهمّنا رأيك — أخبرنا بما يمكن تحسينه',
+                                   'We want to hear you — tell us what to improve')),
+                  backgroundColor: const Color(0xFF0891B2)));
+              }
+            },
+            icon: const Icon(Icons.send_rounded),
+            label: Text(stars >= 4 ? tr('قيّم على المتجر', 'Rate on the store') : tr('إرسال', 'Send'),
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+          )),
+        ]),
+      )),
+    );
+  }
+
+  Future<void> _checkUpdate(BuildContext context) async {
+    UpdateGate.reset();
+    await UpdateGate.check(context, silentWhenCurrent: false);
   }
 
   void _themeInfo(BuildContext context) => showDialog(context: context, builder: (_) => AlertDialog(

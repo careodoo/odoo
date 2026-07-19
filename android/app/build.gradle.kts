@@ -64,6 +64,19 @@ kotlin {
     }
 }
 
+// Google Play requires every native library to support 16 KB memory pages.
+// mobile_scanner 5.x pulls old MLKit + CameraX whose .so files are aligned to
+// 4 KB (libbarhopper_v3.so, libimage_processing_util_jni.so); these newer
+// releases ship 16 KB-aligned binaries. Gradle resolves to the highest version,
+// so declaring them here upgrades what the plugin brings in.
+dependencies {
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
+    implementation("androidx.camera:camera-core:1.4.2")
+    implementation("androidx.camera:camera-camera2:1.4.2")
+    implementation("androidx.camera:camera-lifecycle:1.4.2")
+    implementation("androidx.camera:camera-view:1.4.2")
+}
+
 flutter {
     source = "../.."
 }

@@ -7,6 +7,7 @@ import '../management/management_home.dart';
 import '../pms/pms_shell.dart';
 import 'c2c_shell.dart';
 import 'mode_switch.dart';
+import '../update_gate.dart';
 import 'staff/staff_shell.dart';
 
 /// Routes the logged-in user to their chosen interface:
@@ -44,6 +45,7 @@ class _RootShellState extends State<RootShell> {
       }
     }
     await auth.loadAppMode();
+    if (mounted) UpdateGate.check(context);
   }
 
   @override
