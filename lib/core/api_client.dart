@@ -558,6 +558,27 @@ class ApiClient {
               await http.get(_u('/client/asset/$id'), headers: await _headers())))['data'] as Map);
 
   // ---- maintenance service --------------------------------------------------
+  // ---- material issue policy (client / admin) --------------------------------
+  Future<Map<String, dynamic>> invPolicy({int? storeId}) async =>
+      Map<String, dynamic>.from((await _handle(await http.get(
+              _u('/client/inv/policy${storeId != null ? '?store_id=$storeId' : ''}'),
+              headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> invPolicySetItem(int itemId,
+          {bool? allow, double? maxQty, List<int>? serviceIds}) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/client/inv/policy/item/$itemId'), headers: await _headers(),
+              body: jsonEncode({
+                if (allow != null) 'allow_worker_issue': allow,
+                if (maxQty != null) 'max_issue_qty': maxQty,
+                if (serviceIds != null) 'allowed_service_ids': serviceIds,
+              }))))['data'] as Map);
+
+  Future<Map<String, dynamic>> invPolicySetStore(int storeId, bool allow) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/client/inv/policy/store/$storeId'), headers: await _headers(),
+              body: jsonEncode({'worker_issue_allowed': allow}))))['data'] as Map);
+
   /// One cleaning audit in full, with its checklist item by item.
   Future<Map<String, dynamic>> cleaningAudit(int id) async =>
       Map<String, dynamic>.from((await _handle(await http.get(
