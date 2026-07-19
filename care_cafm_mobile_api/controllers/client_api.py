@@ -3292,7 +3292,9 @@ class ClientApi(Controller):
     # ---- full client self-management (buildings/floors/locations/teams) ------
     #      gated by the same per-client permission (or supervisor/admin).
     def _fac_ids(self, env):
-        return set(self._facilities(env).ids)
+        # a list, not a set: Odoo domains reject sets outright, and nearly
+        # every caller drops this into ('facility_id', 'in', ...)
+        return self._facilities(env).ids
 
     @route(API + '/client/manage/options', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def manage_options(self, **kw):

@@ -30,6 +30,10 @@ class CafmPortalSection(models.Model):
     is_service = fields.Boolean(string='قسم خدمة', compute='_compute_is_service', store=True)
     always_on = fields.Boolean(string='ظاهر دائمًا',
                                help='يظهر لكل العملاء بغضّ النظر عن الخدمات (مثل نظرة عامة).')
+    parent_id = fields.Many2one('care.cafm.portal.section', string='ضمن قسم',
+                                ondelete='set null', index=True,
+                                help='لعرض القسم كخدمة فرعية داخل قسم رئيسي.')
+    child_ids = fields.One2many('care.cafm.portal.section', 'parent_id', string='الأقسام الفرعية')
     active = fields.Boolean(default=True)
 
     _sql_constraints = [('code_uniq', 'unique(code)', 'رمز القسم يجب أن يكون فريدًا.')]
@@ -50,4 +54,5 @@ class CafmPortalSection(models.Model):
         if service_types:
             svc = self.search([('service_type', 'in', list(service_types))])
             codes |= set(svc.mapped('code'))
+            codes |= set(svc.mapped('parent_id.code'))
         return codes

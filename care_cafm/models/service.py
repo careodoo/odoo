@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from odoo.exceptions import ValidationError
 from odoo import fields, models, api, _
 
 
@@ -23,6 +24,8 @@ class CafmService(models.Model):
         ('disinfection', 'التعقيم'),
         ('pool', 'صيانة المسابح'),
         ('watertank', 'تنظيف خزانات المياه'),
+        ('valet', 'صف السيارات'),
+        ('hospitality', 'الضيافة'),
         ('other', 'أخرى'),
     ], string='نوع الخدمة', required=True, default='cleaning')
     default_sla_hours = fields.Float(string='SLA الافتراضي (ساعات)', default=4.0)
@@ -31,9 +34,28 @@ class CafmService(models.Model):
                        help='إيموجي يمثّل الخدمة في تطبيق الموبايل.')
     active = fields.Boolean(default=True)
 
+    # Some services are really specialisations of another: pool maintenance is
+    # maintenance, tank cleaning and disinfection are cleaning. Nesting them
+    # keeps the client's service list readable instead of eleven flat tiles.
+    parent_id = fields.Many2one('care.cafm.service', string='ضمن خدمة',
+                                ondelete='set null', index=True,
+                                help='اتركه فارغًا للخدمات الرئيسية.')
+    child_ids = fields.One2many('care.cafm.service', 'parent_id', string='الخدمات الفرعية')
+    is_sub = fields.Boolean(string='خدمة فرعية', compute='_compute_is_sub', store=True)
+
     team_ids = fields.One2many('care.cafm.team', 'service_id', string='الفِرَق')
     workorder_count = fields.Integer(compute='_compute_counts')
     team_count = fields.Integer(compute='_compute_counts')
+
+    @api.depends('parent_id')
+    def _compute_is_sub(self):
+        for r in self:
+            r.is_sub = bool(r.parent_id)
+
+    @api.constrains('parent_id')
+    def _check_parent_loop(self):
+        if not self._check_recursion():
+            raise ValidationError(_('لا يمكن أن تكون الخدمة ضمن نفسها.'))
 
     def _compute_counts(self):
         WO = self.env['care.cafm.workorder']

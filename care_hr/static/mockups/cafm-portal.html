@@ -296,6 +296,7 @@ async function api(path,{method='GET',body=null,raw=false}={}){
   if(!r.ok||j.ok===false) throw new Error(j.error||('خطأ '+r.status));
   return j.data!==undefined?j.data:j;
 }
+function asArr(v){return Array.isArray(v)?v:((v&&(v.records||v.items||v.lines||v.list))||[]);}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',2200);}
 function setProject(v){PROJECT=v;localStorage.setItem('carefm_project',v);refreshCounts();go(CUR||'dashboard');}
 function printHTML(title,bodyHtml){const w=window.open('','_blank');if(!w){toast(T('اسمح بالنوافذ المنبثقة','Allow pop-ups'));return;}
@@ -543,7 +544,7 @@ async function go(id,activeId){const route=id;if(window.__actTimer&&route!=='act
   try{await ROUTES[route](p);}catch(e){p.innerHTML='<div class="empty"><div class="em">⚠️</div><div style="margin-top:8px">تعذّر التحميل: '+esc(e.message)+'</div></div>';}}
 // ---------- global search ----------
 let _si;async function globalSearch(q){clearTimeout(_si);q=q.trim();const box=document.getElementById('sres');if(q.length<2){box.style.display='none';return;}
-  _si=setTimeout(async()=>{try{const[t,wos]=await Promise.all([api('/client/team').catch(()=>[]),api('/client/workorders?state=all').catch(()=>[])]);
+  _si=setTimeout(async()=>{try{const[t,wos]=await Promise.all([api('/client/team').catch(()=>[]),api('/client/workorders?state=all').then(asArr).catch(()=>[])]);
     const tm=t.filter(x=>(x.employee||x.name||'').includes(q)).slice(0,5).map(x=>'<a onclick="openEmp('+x.id+');hideSearch()">👷 '+esc(x.employee||x.name)+' <span class=muted>· '+esc(x.job||'')+'</span></a>');
     const wm=wos.filter(x=>(x.title||'').includes(q)||(x.name||'').includes(q)).slice(0,6).map(x=>'<a onclick="openWO('+x.id+');hideSearch()">🧾 '+esc(x.title)+' <span class=muted>· '+esc(x.name)+'</span></a>');
     box.innerHTML=(tm.concat(wm).join('')||'<a class=muted>لا نتائج</a>');box.style.display='block';}catch(e){}},250);}
@@ -834,7 +835,7 @@ const ROUTES={
   },
   async workorders(p){CUR='workorders';
     const canCreate=ME&&(ME.is_supervisor||ME.is_admin||ME.can_add_workers);
-    const [wosAll,facs,svcs,emps]=await Promise.all([api('/client/workorders?state=all').catch(()=>[]),api('/facilities').catch(()=>[]),api('/services').catch(()=>[]),canCreate?api('/employees').catch(()=>[]):Promise.resolve([])]);
+    const [wosAll,facs,svcs,emps]=await Promise.all([api('/client/workorders?state=all').then(asArr).catch(()=>[]),api('/facilities').catch(()=>[]),api('/services').catch(()=>[]),canCreate?api('/employees').catch(()=>[]):Promise.resolve([])]);
     let st='all',fac='',svc=(window.__PRESVC||''),q='';window.__PRESVC=null;
     const svcName=(svcs.find(s=>s.type===svc)||{}).name;
     window.__newWO=()=>{openDrawer(T('أمر عمل جديد','New work order'),'<div class="form-grid">'
@@ -1036,7 +1037,7 @@ const ROUTES={
     const SIC={new:['📥','#64748b'],assigned:['📌','#6366f1'],in_progress:['🔧','#f59e0b'],done:['🕓','#0891b2'],verified:['✅','#16a34a'],cancelled:['🚫','#94a3b8']};
     p.innerHTML='<div id="opsWrap"><div class="spin"></div></div>';
     async function load(){
-      const [wos,d]=await Promise.all([api('/client/workorders?state=all').catch(()=>[]),api('/client/activity').catch(()=>({feed:[],live:[]}))]);
+      const [wos,d]=await Promise.all([api('/client/workorders?state=all').then(asArr).catch(()=>[]),api('/client/activity').catch(()=>({feed:[],live:[]}))]);
       const openN=wos.filter(w=>!['done','verified','cancelled'].includes(w.state)).length;
       const progN=wos.filter(w=>w.state==='in_progress').length;
       const overN=wos.filter(w=>w.is_overdue).length;
@@ -1062,7 +1063,7 @@ const ROUTES={
     if(window.__actTimer)clearInterval(window.__actTimer);
     window.__actTimer=setInterval(()=>{if(CUR==='activity')load();else{clearInterval(window.__actTimer);window.__actTimer=null;}},20000);
   },
-  async sla(p){CUR='sla';const [policies,a,wos]=await Promise.all([api('/client/sla').catch(()=>[]),api('/client/analytics').catch(()=>({kpis:{}})),api('/client/workorders?state=all').catch(()=>[])]);const k=a.kpis||{};
+  async sla(p){CUR='sla';const [policies,a,wos]=await Promise.all([api('/client/sla').catch(()=>[]),api('/client/analytics').catch(()=>({kpis:{}})),api('/client/workorders?state=all').then(asArr).catch(()=>[])]);const k=a.kpis||{};
     const now=Date.now();const ms=v=>v?new Date(String(v).replace(' ','T')+'Z').getTime():0;
     const openW=wos.filter(w=>!['done','verified','cancelled'].includes(w.state));
     const breaches=wos.filter(w=>w.is_overdue);
@@ -1773,7 +1774,7 @@ const ROUTES={
   },
 };
 // ---------- boot ----------
-async function refreshCounts(){try{const [wos,rq,inv]=await Promise.all([api('/client/workorders?state=open').catch(()=>[]),api('/client/requests').catch(()=>[]),api('/client/invoices').catch(()=>({invoices:[]}))]);COUNTS.open=wos.length;COUNTS.requests=rq.filter(r=>r.state_raw==='new').length;COUNTS.unpaid=(inv.invoices||[]).filter(x=>x.amount_residual>0).length;updateCounts();}catch(e){}}
+async function refreshCounts(){try{const [wos,rq,inv]=await Promise.all([api('/client/workorders?state=open').then(asArr).catch(()=>[]),api('/client/requests').catch(()=>[]),api('/client/invoices').catch(()=>({invoices:[]}))]);COUNTS.open=wos.length;COUNTS.requests=rq.filter(r=>r.state_raw==='new').length;COUNTS.unpaid=(inv.invoices||[]).filter(x=>x.amount_residual>0).length;updateCounts();}catch(e){}}
 async function boot(){try{ME=await api('/me');}catch(e){showLogin();return;}
   document.getElementById('splash').style.display='none';document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';
   const u=ME.user||{};document.getElementById('uname').textContent=u.name||'';document.getElementById('urole').textContent=(ME.is_admin?'أدمن':ME.is_supervisor?'مشرف':ME.role||'مستخدم');document.getElementById('uav').textContent=(u.name||'?').trim().charAt(0);

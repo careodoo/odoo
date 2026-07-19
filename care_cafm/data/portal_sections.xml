@@ -65,15 +65,18 @@
     </record>
     <record id="psec_disinfection" model="care.cafm.portal.section">
       <field name="name">التعقيم</field><field name="code">disinfection</field>
-      <field name="icon">💨</field><field name="sequence">27</field><field name="service_type">disinfection</field>
+      <field name="icon">🧴</field><field name="sequence">27</field><field name="service_type">disinfection</field>
+      <field name="parent_id" ref="psec_cleaning"/>
     </record>
     <record id="psec_pool" model="care.cafm.portal.section">
       <field name="name">صيانة المسابح</field><field name="code">pool</field>
       <field name="icon">🏊</field><field name="sequence">28</field><field name="service_type">pool</field>
+      <field name="parent_id" ref="psec_maintenance"/>
     </record>
     <record id="psec_watertank" model="care.cafm.portal.section">
       <field name="name">تنظيف خزانات المياه</field><field name="code">watertank</field>
       <field name="icon">🚰</field><field name="sequence">29</field><field name="service_type">watertank</field>
+      <field name="parent_id" ref="psec_cleaning"/>
     </record>
 
   </data>
