@@ -196,6 +196,12 @@ class ClientApi(Controller):
                 'employee': _person_name(s.employee_id),
                 'every_minutes': s.every_minutes,
                 'compliance': s.compliance,
+                'next_run': str(s.next_run)[:16] if s.next_run else None,
+                'minutes_to_next': s.minutes_to_next, 'countdown': s.countdown,
+                'is_due_now': s.is_due_now,
+                'interval_value': s.interval_value, 'interval_unit': s.interval_unit,
+                'team': s.team_id.name or None, 'team_id': s.team_id.id or None,
+                'remind_before': s.remind_before, 'remind_unit': s.remind_unit,
                 'done': s.occ_done, 'late': s.occ_late, 'missed': s.occ_missed, 'total': s.occ_total,
                 'require_photo': s.require_photo, 'require_presence': s.require_presence,
             })
@@ -262,6 +268,14 @@ class ClientApi(Controller):
             'facilities': [{'id': f.id, 'name': f.name, 'locations': locs_by_fac.get(f.id, [])} for f in facs],
             'services': [{'id': s.id, 'name': s.name, 'type': s.service_type} for s in services],
             'workers': [{'id': e.id, 'name': _person_name(e), 'job': e.job_title or None} for e in workers],
+            'teams': [{'id': t.id, 'name': t.name, 'facility_id': t.facility_id.id,
+                       'service': t.service_id.name or None, 'members': len(t.member_ids)}
+                      for t in env['care.cafm.team'].sudo().search(
+                          [('facility_id', 'in', facs.ids)])],
+            'interval_units': [{'code': c, 'label': l} for c, l in
+                               env['care.cafm.schedule']._fields['interval_unit'].selection],
+            'remind_units': [{'code': c, 'label': l} for c, l in
+                             env['care.cafm.schedule']._fields['remind_unit'].selection],
         })
 
     @route(API + '/client/schedule/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
@@ -282,13 +296,19 @@ class ClientApi(Controller):
             return _err('المرفق مطلوب', 422)
         if not b.get('service_id'):
             return _err('الخدمة مطلوبة', 422)
-        if not b.get('employee_id'):
-            return _err('العامل المسنَد مطلوب', 422)
+        # A round is usually owned by whoever is on shift, so a team is as
+        # valid an assignment as a named worker.
+        if not b.get('employee_id') and not b.get('team_id'):
+            return _err('حدّد عاملًا أو فريقًا للإسناد', 422)
         vals = {
             'name': name, 'facility_id': fid, 'service_id': int(b['service_id']),
-            'employee_id': int(b['employee_id']),
+            'employee_id': int(b['employee_id']) if b.get('employee_id') else False,
+            'team_id': int(b['team_id']) if b.get('team_id') else False,
             'location_id': int(b['location_id']) if b.get('location_id') else False,
-            'every_minutes': int(b.get('every_minutes') or 60),
+            'interval_value': int(b.get('interval_value') or 1),
+            'interval_unit': b.get('interval_unit') or 'hour',
+            'remind_before': int(b.get('remind_before') or 15),
+            'remind_unit': b.get('remind_unit') or 'minute',
             'window_start': float(b.get('window_start') or 7.0),
             'window_end': float(b.get('window_end') or 19.0),
             'require_presence': bool(b.get('require_presence', True)),
@@ -317,6 +337,12 @@ class ClientApi(Controller):
             'location': s.location_id.name or None, 'employee': _person_name(s.employee_id),
             'employee_id': s.employee_id.id or None,
             'every_minutes': s.every_minutes, 'compliance': s.compliance,
+            'next_run': str(s.next_run)[:16] if s.next_run else None,
+            'minutes_to_next': s.minutes_to_next, 'countdown': s.countdown,
+            'is_due_now': s.is_due_now,
+            'interval_value': s.interval_value, 'interval_unit': s.interval_unit,
+            'team': s.team_id.name or None,
+            'remind_before': s.remind_before, 'remind_unit': s.remind_unit,
             'window': '%02d:00 – %02d:00' % (int(s.window_start), int(s.window_end)),
             'done': s.occ_done, 'late': s.occ_late, 'missed': s.occ_missed, 'total': s.occ_total,
             'require_photo': s.require_photo, 'require_presence': s.require_presence,

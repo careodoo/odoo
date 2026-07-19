@@ -29,10 +29,29 @@ class CafmSchedule(models.Model):
     location_id = fields.Many2one('care.cafm.location', string='الموقع (QR)', tracking=True,
                                   domain="[('facility_id','=',facility_id)]",
                                   help='المكان الذي يجب زيارته ومسح رمزه لإثبات الحضور.')
-    employee_id = fields.Many2one('hr.employee', string='المُسنَد إليه', required=True, tracking=True)
+    employee_id = fields.Many2one('hr.employee', string='المُسنَد إليه', tracking=True)
 
-    every_minutes = fields.Integer(string='التكرار كل (دقيقة)', default=60, required=True, tracking=True,
-                                   help='مثال: 60 = كل ساعة، 30 = كل نصف ساعة.')
+    # People think in "every 2 hours" or "every 3 months", not in 120 or
+    # 129600 minutes. The unit pair is what is edited; every_minutes stays as
+    # the computed engine value so the generator and every caller keep working.
+    interval_value = fields.Integer(string='التكرار كل', default=1, required=True, tracking=True)
+    interval_unit = fields.Selection([
+        ('minute', 'دقيقة'), ('hour', 'ساعة'), ('day', 'يوم'), ('month', 'شهر'),
+    ], string='الوحدة', default='hour', required=True, tracking=True)
+    every_minutes = fields.Integer(string='التكرار بالدقائق', compute='_compute_every',
+                                   store=True, readonly=True,
+                                   help='القيمة المحسوبة التي يعمل بها المولّد.')
+
+    # Assigning to a team rather than a person is the normal case on a site
+    # where whoever is on shift takes the round.
+    team_id = fields.Many2one('care.cafm.team', string='الفريق المُسنَد',
+                              tracking=True, domain="[('facility_id','=',facility_id)]")
+
+    remind_before = fields.Integer(string='التنبيه قبل الموعد بـ', default=15, tracking=True)
+    remind_unit = fields.Selection([
+        ('minute', 'دقيقة'), ('hour', 'ساعة'), ('day', 'يوم'),
+    ], string='وحدة التنبيه', default='minute', required=True)
+    remind_minutes = fields.Integer(compute='_compute_every', store=True)
     window_start = fields.Float(string='بداية النافذة', default=7.0, help='بصيغة 24 ساعة')
     window_end = fields.Float(string='نهاية النافذة', default=19.0)
     days = fields.Char(string='الأيام', default='السبت–الخميس')
@@ -52,12 +71,70 @@ class CafmSchedule(models.Model):
     color = fields.Integer()
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
 
+    next_run = fields.Datetime(string='الموعد القادم', compute='_compute_next', store=True,
+                               index=True)
+    minutes_to_next = fields.Integer(string='المتبقّي (دقيقة)', compute='_compute_next')
+    countdown = fields.Char(string='العدّ التنازلي', compute='_compute_next',
+                            help='الوقت المتبقّي للعمل القادم، بصيغة يقرأها الإنسان.')
+    is_due_now = fields.Boolean(string='حان موعده', compute='_compute_next')
+
     occurrence_ids = fields.One2many('care.cafm.schedule.occurrence', 'schedule_id', string='التكرارات')
     occ_total = fields.Integer(compute='_compute_stats', string='الكل')
     occ_done = fields.Integer(compute='_compute_stats', string='منجزة')
     occ_late = fields.Integer(compute='_compute_stats', string='متأخرة')
     occ_missed = fields.Integer(compute='_compute_stats', string='فائتة')
     compliance = fields.Float(compute='_compute_stats', string='الالتزام %')
+
+    UNIT_MIN = {'minute': 1, 'hour': 60, 'day': 1440, 'month': 43200}
+
+    @api.depends('interval_value', 'interval_unit', 'remind_before', 'remind_unit')
+    def _compute_every(self):
+        for s in self:
+            s.every_minutes = max(1, (s.interval_value or 1) * self.UNIT_MIN.get(s.interval_unit, 60))
+            s.remind_minutes = max(0, (s.remind_before or 0) * self.UNIT_MIN.get(s.remind_unit, 1))
+
+    @api.depends('occurrence_ids.planned_time', 'occurrence_ids.state',
+                 'every_minutes', 'paused', 'pause_until', 'active')
+    def _compute_next(self):
+        now = fields.Datetime.now()
+        for s in self:
+            nxt = False
+            if s.active and not s._paused_now():
+                pending = s.occurrence_ids.filtered(
+                    lambda o: o.state in ('pending', 'due') and o.planned_time
+                    and o.planned_time >= now).sorted('planned_time')
+                if pending:
+                    nxt = pending[0].planned_time
+                else:
+                    # nothing materialised yet — say when the next slot lands
+                    slots = [x for x in s._slots_for_day(fields.Date.context_today(s)) if x > now]
+                    if not slots:
+                        tomorrow = fields.Date.context_today(s) + timedelta(days=1)
+                        slots = s._slots_for_day(tomorrow)
+                    nxt = slots[0] if slots else False
+            s.next_run = nxt
+            if not nxt:
+                s.minutes_to_next, s.countdown, s.is_due_now = 0, '—', False
+                continue
+            mins = int((nxt - now).total_seconds() // 60)
+            s.minutes_to_next = mins
+            s.is_due_now = mins <= 0
+            s.countdown = s._humanise(mins)
+
+    @api.model
+    def _humanise(self, mins):
+        """A countdown someone can read at a glance: overdue, minutes, hours,
+        or days — never '2143 minutes'."""
+        if mins <= 0:
+            return _('حان الآن')
+        if mins < 60:
+            return _('%s دقيقة') % mins
+        if mins < 1440:
+            h, m = divmod(mins, 60)
+            return _('%sس %sد') % (h, m) if m else _('%s ساعة') % h
+        d, rem = divmod(mins, 1440)
+        h = rem // 60
+        return _('%s يوم %s س') % (d, h) if h else _('%s يوم') % d
 
     @api.depends('occurrence_ids.state')
     def _compute_stats(self):
@@ -143,16 +220,49 @@ class CafmSchedule(models.Model):
             existing = set(Occ.search([('schedule_id', '=', s.id)]).mapped('planned_time'))
             for slot in s._slots_for_day(today):
                 if slot <= until and slot not in existing:
+                    emp = s.employee_id
+                    if not emp and s.team_id:
+                        # whoever is on the team takes it; the first member is a
+                        # placeholder the supervisor can reassign
+                        emp = s.team_id.member_ids[:1]
                     Occ.create({
                         'schedule_id': s.id, 'planned_time': slot,
-                        'employee_id': s.employee_id.id,
+                        'employee_id': emp.id if emp else False,
                     })
+
+    def _send_reminders(self, now):
+        """Warn before the slot, not when it is already late. A reminder that
+        arrives at the due minute is just a second way of saying 'overdue'."""
+        Occ = self.env['care.cafm.schedule.occurrence'].sudo()
+        if 'care.cafm.notification' not in self.env:
+            return
+        for s in self.filtered(lambda x: x.remind_minutes > 0):
+            window_end = now + timedelta(minutes=s.remind_minutes)
+            due = Occ.search([('schedule_id', '=', s.id), ('state', '=', 'pending'),
+                              ('planned_time', '>', now), ('planned_time', '<=', window_end),
+                              ('reminded', '=', False)])
+            if not due:
+                continue
+            people = s.employee_id or s.team_id.member_ids
+            users = people.mapped('user_id')
+            if not users:
+                continue
+            for o in due:
+                try:
+                    self.env['care.cafm.notification'].sudo().push(
+                        users, _('⏰ عمل مجدول بعد %s') % s._humanise(s.remind_minutes),
+                        '%s — %s' % (s.name, s.location_id.name or s.facility_id.name or ''),
+                        ntype='task')
+                except Exception:
+                    pass
+            due.write({'reminded': True})
 
     @api.model
     def _cron_run(self):
         """Generate due occurrences, notify workers, and flag late/missed."""
         now = fields.Datetime.now()
         schedules = self.search([('active', '=', True)]).filtered(lambda s: not s._paused_now())
+        schedules._send_reminders(now)
         schedules._generate_upto(now + timedelta(minutes=5))
         Occ = self.env['care.cafm.schedule.occurrence'].sudo()
         pend = Occ.search([('state', '=', 'pending'), ('schedule_id.active', '=', True)])
@@ -191,6 +301,7 @@ class CafmScheduleOccurrence(models.Model):
     employee_id = fields.Many2one('hr.employee', string='المُسنَد إليه', index=True)
 
     planned_time = fields.Datetime(string='الوقت المقرّر', required=True, index=True)
+    reminded = fields.Boolean(string='أُرسل التنبيه', default=False, copy=False)
     actual_time = fields.Datetime(string='وقت التنفيذ', readonly=True)
     state = fields.Selection([
         ('pending', 'قيد الانتظار'), ('done', 'منجزة في الوقت'),
