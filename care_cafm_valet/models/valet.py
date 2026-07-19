@@ -5,6 +5,8 @@ The full kerb-to-kerb cycle: a guest hands over a car, the attendant issues a
 numbered ticket, parks it in a numbered bay, and later retrieves it on request —
 with timing, charges, damage notes and shift takings all recorded."""
 from datetime import timedelta
+import secrets
+
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
@@ -99,6 +101,11 @@ class ValetTicket(models.Model):
     damage_note = fields.Text(string='ملاحظات حالة المركبة')
     has_damage = fields.Boolean(string='بها ملاحظات ضرر', tracking=True)
     key_tag = fields.Char(string='رقم علاقة المفتاح')
+    # A guest holds a printed ticket, not an account. The token on that ticket
+    # is what lets them ask for the car back without logging in — so it must be
+    # unguessable and belong to exactly one ticket.
+    qr_token = fields.Char(string='رمز التذكرة', copy=False, index=True, readonly=True)
+    requested_by_guest = fields.Boolean(string='طلبها الضيف بنفسه', readonly=True)
     state = fields.Selection([
         ('received', 'مُستلَمة'), ('parked', 'مركونة'), ('requested', 'مطلوبة'),
         ('delivered', 'سُلِّمت'), ('cancelled', 'ملغاة'),
@@ -141,11 +148,38 @@ class ValetTicket(models.Model):
             t.spot_id.write({'state': 'occupied', 'ticket_id': t.id})
             t.message_post(body=_('🅿️ رُكنت في الموقف %s.') % t.spot_id.name)
 
-    def action_request(self):
+    def action_request(self, by_guest=False):
         """Guest asked for the car back — starts the retrieval clock."""
         for t in self:
-            t.write({'state': 'requested', 'requested_at': fields.Datetime.now()})
-            t.message_post(body=_('🔔 طلب الضيف إحضار المركبة.'))
+            t.write({'state': 'requested', 'requested_at': fields.Datetime.now(),
+                     'requested_by_guest': by_guest})
+            t.message_post(body=_('🔔 طلب الضيف إحضار المركبة%s.')
+                           % (_(' (بمسح رمز التذكرة)') if by_guest else ''))
+            t._notify_crew()
+
+    def _notify_crew(self):
+        """Tell whoever is on the stand to bring the car up. A request that only
+        appears on a board nobody is looking at is not a request."""
+        self.ensure_one()
+        if 'care.cafm.notification' not in self.env:
+            return
+        emps = self.env['care.valet.shift'].sudo().search(
+            [('facility_id', '=', self.facility_id.id), ('state', '=', 'open')]
+        ).mapped('employee_id')
+        users = emps.mapped('user_id')
+        if not users:
+            users = self.env['res.users'].sudo().search(
+                [('groups_id', 'in', self.env.ref('base.group_erp_manager').id)], limit=10)
+        if not users:
+            return
+        where = self.spot_id.name or self.zone_id.name or ''
+        try:
+            self.env['care.cafm.notification'].sudo().push(
+                users, _('🚗 طلب إحضار مركبة'),
+                '%s — %s%s' % (self.plate, self.name, (' · %s' % where) if where else ''),
+                ntype='alert', action_url='/cafm/m/valet')
+        except Exception:
+            pass
 
     def action_deliver(self, by=None, fee=None, tip=None, paid=None):
         for t in self:

@@ -225,6 +225,9 @@ class ValetPortal(http.Controller):
                 '<button class="btn">✔ تسليم</button></form></details>'
             ) % (t.id, self._csrf(), t.fee or 0)
 
+        act += Markup(
+            '<a class="btn g" href="/valet/ticket/%s/print" target="_blank">🖨️ طباعة التذكرة</a>'
+        ) % t.id
         return Markup(
             '<div class="card stripe" style="border-inline-start-color:%s">'
             '<div class="row"><div class="h4">%s</div>'
