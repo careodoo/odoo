@@ -3220,17 +3220,31 @@ class ClientApi(Controller):
 
     # ---- client capability gates ------------------------------------------
     def _client_of(self, env):
-        """The care.cafm.client record behind the calling user, if any."""
+        """The care.cafm.client behind the calling user.
+
+        Membership is the authoritative link and must be checked first: a client
+        contact usually has their own partner record, not one under the company,
+        so a partner-only lookup silently found nothing and every such user fell
+        through to the legacy flag instead of their client's matrix.
+        """
+        C = env['care.cafm.client'].sudo()
+        by_member = C.search([('user_ids', 'in', env.user.id)], limit=1)
+        if by_member:
+            return by_member
         p = env.user.partner_id.commercial_partner_id or env.user.partner_id
         if not p:
             return None
-        C = env['care.cafm.client'].sudo()
         return C.search([('partner_id', '=', p.id)], limit=1) or None
 
     def _is_staff(self, env):
+        """CARE staff — not "anyone holding a module manager group".
+
+        The security-manager group used to count here, which made a client
+        contact who manages their own guards read as unrestricted staff and
+        skip the whole capability matrix.
+        """
         u = env.user
-        return bool(u.has_group('base.group_erp_manager') or u.has_group('base.group_system')
-                    or u.has_group('security_management.group_security_manager'))
+        return bool(u.has_group('base.group_erp_manager') or u.has_group('base.group_system'))
 
     def _can(self, env, code):
         """Does the caller hold this capability?

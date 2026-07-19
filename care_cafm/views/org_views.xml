@@ -62,12 +62,57 @@
                                    help="اختر عميلاً من أودو أو أنشئ واحداً جديداً."/>
                             <field name="phone"/><field name="email"/>
                         </group>
-                        <group string="الصلاحيات والإحصاء">
-                            <field name="can_add_workers"/>
+                        <group string="الإحصاء">
+                            <field name="permission_summary"/>
                             <field name="facility_count"/><field name="open_wo"/>
                         </group>
                     </group>
                     <notebook>
+                        <page string="🔐 صلاحيات العميل" name="permissions">
+                            <div class="text-muted" style="margin-bottom:10px">
+                                حدّد بالضبط ما يستطيع مستخدمو هذا العميل فعله. كل صلاحية
+                                مستقلّة — منح «تقديم طلب خدمة» لا يمنح حذف المباني.
+                                <br/>الزرّ القديم <b>«يُسمح بإضافة عمّال»</b> ما زال يعمل
+                                كاحتياط للعملاء الذين لم تُضبط صلاحياتهم بعد.
+                            </div>
+                            <button name="action_grant_all" type="object" class="btn-secondary"
+                                    string="منح الكل" icon="fa-check-square-o"/>
+                            <button name="action_revoke_all" type="object" class="btn-secondary"
+                                    string="سحب الكل" icon="fa-square-o"/>
+                            <group>
+                                <group string="الأعمال والطلبات">
+                                    <field name="perm_request_create"/>
+                                    <field name="perm_workorder_create"/>
+                                    <field name="perm_workorder_verify"/>
+                                    <field name="perm_schedule_manage"/>
+                                </group>
+                                <group string="الجودة">
+                                    <field name="perm_observation_create"/>
+                                    <field name="perm_observation_convert"/>
+                                </group>
+                                <group string="الأصول والمباني">
+                                    <field name="perm_asset_manage"/>
+                                    <field name="perm_structure_manage"/>
+                                </group>
+                                <group string="الفِرَق والعمّال">
+                                    <field name="perm_worker_add"/>
+                                    <field name="perm_team_manage"/>
+                                    <field name="perm_notify_send"/>
+                                </group>
+                                <group string="المالية والمتجر">
+                                    <field name="perm_invoice_approve"/>
+                                    <field name="perm_shop_order"/>
+                                </group>
+                                <group string="الخدمات">
+                                    <field name="perm_hospitality_order"/>
+                                    <field name="perm_inventory_issue"/>
+                                    <field name="perm_inventory_policy"/>
+                                </group>
+                            </group>
+                            <group string="الإعداد القديم (احتياطي)">
+                                <field name="can_add_workers"/>
+                            </group>
+                        </page>
                         <page string="👤 مستخدمو العميل" name="users">
                             <field name="user_ids" widget="many2many_tags"
                                    options="{'no_quick_create': True}"

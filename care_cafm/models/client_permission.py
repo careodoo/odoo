@@ -106,6 +106,68 @@ class CafmClientPermissionMixin(models.AbstractModel):
             rec.permission_summary = ('%s صلاحية: %s' % (len(granted), '، '.join(granted[:4]))
                                       + ('…' if len(granted) > 4 else '')) if granted else 'لا صلاحيات'
 
+
+    # ---- one boolean per capability, so the matrix is an ordinary form ----
+    perm_request_create = fields.Boolean(
+        string='إنشاء طلب خدمة', compute='_compute_perm_flags', inverse='_inverse_perm_flags',
+        help='تقديم طلب خدمة جديد يتحوّل لاحقًا إلى أمر عمل.', store=False)
+    perm_workorder_create = fields.Boolean(
+        string='إنشاء أمر عمل مباشرة', compute='_compute_perm_flags', inverse='_inverse_perm_flags',
+        help='تخطّي مرحلة الطلب وإنشاء أمر عمل جاهز للإسناد.', store=False)
+    perm_workorder_verify = fields.Boolean(
+        string='اعتماد الأعمال المنجزة', compute='_compute_perm_flags', inverse='_inverse_perm_flags',
+        help='قبول أو رفض العمل بعد تنفيذه.', store=False)
+    perm_schedule_manage = fields.Boolean(
+        string='إدارة الجدولة والصيانة الوقائية', compute='_compute_perm_flags', inverse='_inverse_perm_flags',
+        help='إنشاء وإيقاف الجداول الدورية وخطط الصيانة الوقائية.', store=False)
+    perm_observation_create = fields.Boolean(
+        string='تسجيل ملاحظة جودة', compute='_compute_perm_flags', inverse='_inverse_perm_flags',
+        help='رفع ملاحظة على مستوى الخدمة مع صور وفيديو.', store=False)
+    perm_observation_convert = fields.Boolean(
+        string='تحويل الملاحظة إلى أمر عمل', compute='_compute_perm_flags', inverse='_inverse_perm_flags',
+        help='تصعيد الملاحظة مباشرة إلى عمل مُسنَد.', store=False)
+    perm_asset_manage = fields.Boolean(
+        string='إدارة الأصول', compute='_compute_perm_flags', inverse='_inverse_perm_flags',
+        help='إضافة وتعديل وحذف الأصول والمعدّات.', store=False)
+    perm_structure_manage = fields.Boolean(
+        string='إدارة المباني والأدوار والمواقع', compute='_compute_perm_flags', inverse='_inverse_perm_flags',
+        help='تعديل الهيكل المكاني للمرفق.', store=False)
+    perm_worker_add = fields.Boolean(
+        string='إضافة عمّال', compute='_compute_perm_flags', inverse='_inverse_perm_flags',
+        help='إضافة عامل جديد وإسناده لفريق.', store=False)
+    perm_team_manage = fields.Boolean(
+        string='إدارة الفرق', compute='_compute_perm_flags', inverse='_inverse_perm_flags',
+        help='إنشاء الفرق وتعديل أعضائها.', store=False)
+    perm_notify_send = fields.Boolean(
+        string='إرسال إشعارات للعمّال', compute='_compute_perm_flags', inverse='_inverse_perm_flags',
+        help='بثّ إشعار لفريق أو لمجموعة عمّال.', store=False)
+    perm_invoice_approve = fields.Boolean(
+        string='اعتماد الفواتير', compute='_compute_perm_flags', inverse='_inverse_perm_flags',
+        help='قبول أو رفض الفواتير المرفوعة للعميل.', store=False)
+    perm_shop_order = fields.Boolean(
+        string='الطلب من المتجر', compute='_compute_perm_flags', inverse='_inverse_perm_flags',
+        help='إنشاء طلبات شراء من متجر العميل.', store=False)
+    perm_hospitality_order = fields.Boolean(
+        string='طلبات الضيافة', compute='_compute_perm_flags', inverse='_inverse_perm_flags',
+        help='طلب المشروبات والضيافة من داخل النظام.', store=False)
+    perm_inventory_issue = fields.Boolean(
+        string='صرف المواد من المخزون', compute='_compute_perm_flags', inverse='_inverse_perm_flags',
+        help='صرف المستهلكات للعمّال من مخازن المشروع.', store=False)
+    perm_inventory_policy = fields.Boolean(
+        string='ضبط سياسة صرف المواد', compute='_compute_perm_flags', inverse='_inverse_perm_flags',
+        help='تحديد المواد المسموح للعمّال صرفها وحدودها.', store=False)
+
+    def _compute_perm_flags(self):
+        for rec in self:
+            granted = rec.granted_codes()
+            for code, _l, _h, _d, _g in PERMISSIONS:
+                rec['perm_%s' % code] = code in granted
+
+    def _inverse_perm_flags(self):
+        for rec in self:
+            for code, _l, _h, _d, _g in PERMISSIONS:
+                rec.set_permission(code, bool(rec['perm_%s' % code]))
+
     def granted_codes(self):
         """Every capability this client currently holds."""
         self.ensure_one()
