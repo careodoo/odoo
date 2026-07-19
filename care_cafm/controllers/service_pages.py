@@ -184,6 +184,40 @@ def REGISTRY():
                                lambda r: [('تحت الحد', 'warn')] if getattr(r, 'low_stock', False) else []),
                     scope='global', icon='📦'),
         ]),
+        'pest': ('مكافحة الحشرات', '🐜', [
+            Section('programs', 'برامج المكافحة', 'care.pest.program',
+                    _r_generic(lambda r: r.name,
+                               lambda r: 'آخر زيارة %s · القادمة %s' % (
+                                   _d(r.last_visit, 10), _d(r.next_due, 10)),
+                               lambda r: ([('متأخر', 'crit')] if r.is_overdue else [])
+                               + _state_pill(r, 'frequency', 'info')), icon='🗓️'),
+            Section('visits', 'الزيارات', 'care.pest.visit',
+                    _r_generic(lambda r: '%s — %s' % (r.name, _d(r.visit_date, 10)),
+                               lambda r: '%s محطة مفحوصة · %s ملتقط' % (
+                                   r.stations_checked, r.total_catch),
+                               lambda r: _state_pill(r, 'activity_level', 'warn')
+                               + _state_pill(r)), icon='🔎'),
+            Section('stations', 'شبكة المحطات', 'care.pest.station',
+                    _r_generic(lambda r: r.name,
+                               lambda r: ' · '.join(filter(None, [
+                                   r.location_id.name or '',
+                                   'آخر فحص %s' % _d(r.last_check, 10) if r.last_check else ''])),
+                               lambda r: _state_pill(r, 'target', 'info') + _state_pill(r)),
+                    icon='📍'),
+            Section('sightings', 'بلاغات الظهور', 'care.pest.sighting',
+                    _r_generic(lambda r: dict(r._fields['pest_type'].selection).get(
+                                   r.pest_type, ''),
+                               lambda r: r.description or '',
+                               lambda r: _state_pill(r, 'severity', 'crit') + _state_pill(r)),
+                    icon='⚠️'),
+            Section('chemicals', 'سجل المبيدات المعتمدة', 'care.pest.chemical',
+                    _r_generic(lambda r: '%s — %s' % (r.name, r.name_en or ''),
+                               lambda r: '%s · تسجيل %s' % (
+                                   r.active_ingredient or '', r.moh_registration or '—'),
+                               lambda r: ([('آمن في مناطق الأغذية', 'ok')] if r.food_area_safe else [])
+                               + ([('منع دخول %sس' % r.reentry_hours, 'warn')] if r.reentry_hours else [])),
+                    scope='global', icon='🧪'),
+        ]),
         'inventory': ('المخزون', '📦', [
             Section('stores', 'المخازن', 'care.cafm.store',
                     _r_generic(lambda r: r.display_name), icon='🏬'),

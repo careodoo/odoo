@@ -1,0 +1,13 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_pest_chem_user,pest.chem.user,model_care_pest_chemical,base.group_user,1,0,0,0
+access_pest_chem_mgr,pest.chem.mgr,model_care_pest_chemical,base.group_system,1,1,1,1
+access_pest_station_user,pest.station.user,model_care_pest_station,base.group_user,1,1,1,0
+access_pest_station_mgr,pest.station.mgr,model_care_pest_station,base.group_system,1,1,1,1
+access_pest_program_user,pest.program.user,model_care_pest_program,base.group_user,1,1,1,0
+access_pest_program_mgr,pest.program.mgr,model_care_pest_program,base.group_system,1,1,1,1
+access_pest_visit_user,pest.visit.user,model_care_pest_visit,base.group_user,1,1,1,0
+access_pest_visit_mgr,pest.visit.mgr,model_care_pest_visit,base.group_system,1,1,1,1
+access_pest_vstation_user,pest.vstation.user,model_care_pest_visit_station,base.group_user,1,1,1,1
+access_pest_vchem_user,pest.vchem.user,model_care_pest_visit_chemical,base.group_user,1,1,1,1
+access_pest_sight_user,pest.sight.user,model_care_pest_sighting,base.group_user,1,1,1,0
+access_pest_sight_mgr,pest.sight.mgr,model_care_pest_sighting,base.group_system,1,1,1,1

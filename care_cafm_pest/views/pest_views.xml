@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_pest_program_tree" model="ir.ui.view">
+    <field name="name">care.pest.program.tree</field>
+    <field name="model">care.pest.program</field>
+    <field name="arch" type="xml">
+      <tree decoration-danger="is_overdue">
+        <field name="name"/><field name="facility_id"/><field name="frequency"/>
+        <field name="technician_id"/><field name="last_visit"/><field name="next_due"/>
+        <field name="visit_count"/><field name="is_overdue" invisible="1"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_pest_program_form" model="ir.ui.view">
+    <field name="name">care.pest.program.form</field>
+    <field name="model">care.pest.program</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="action_log_visit" type="object" string="تسجيل زيارة" class="btn-primary"/>
+        </header>
+        <sheet>
+          <div class="oe_title"><h1><field name="name" placeholder="مثال: برنامج القوارض الشهري"/></h1></div>
+          <group>
+            <group><field name="facility_id"/><field name="frequency"/><field name="targets"/></group>
+            <group><field name="technician_id"/><field name="start_date"/>
+                   <field name="next_due"/><field name="last_visit"/></group>
+          </group>
+          <field name="visit_ids">
+            <tree><field name="name"/><field name="visit_date"/><field name="visit_type"/>
+                  <field name="stations_checked"/><field name="total_catch"/>
+                  <field name="activity_level"/><field name="state"/></tree>
+          </field>
+        </sheet>
+        <div class="oe_chatter"><field name="message_ids"/></div>
+      </form>
+    </field>
+  </record>
+
+  <record id="view_pest_visit_form" model="ir.ui.view">
+    <field name="name">care.pest.visit.form</field>
+    <field name="model">care.pest.visit</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="action_done" type="object" string="إنهاء الزيارة" class="btn-primary"
+                  invisible="state != 'draft'"/>
+          <button name="action_cancel" type="object" string="إلغاء" invisible="state != 'draft'"/>
+          <field name="state" widget="statusbar"/>
+        </header>
+        <sheet>
+          <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+          <group>
+            <group><field name="facility_id"/><field name="program_id"/><field name="visit_type"/></group>
+            <group><field name="visit_date"/><field name="technician_id"/>
+                   <field name="reentry_until" readonly="1"/></group>
+          </group>
+          <group>
+            <group><field name="stations_checked" readonly="1"/></group>
+            <group><field name="total_catch" readonly="1"/><field name="activity_level" readonly="1"/></group>
+          </group>
+          <notebook>
+            <page string="المحطات">
+              <field name="station_line_ids">
+                <tree editable="bottom">
+                  <field name="station_id"/><field name="checked"/><field name="catch_count"/>
+                  <field name="bait_state"/><field name="station_state"/><field name="note"/>
+                </tree>
+              </field>
+            </page>
+            <page string="المواد المستخدمة">
+              <field name="chemical_line_ids">
+                <tree editable="bottom">
+                  <field name="chemical_id"/><field name="active_ingredient" readonly="1"/>
+                  <field name="area"/><field name="quantity"/><field name="uom_name"/>
+                  <field name="dilution_used"/><field name="reentry_hours" readonly="1"/>
+                </tree>
+              </field>
+            </page>
+            <page string="الملاحظات"><field name="findings"/></page>
+          </notebook>
+        </sheet>
+        <div class="oe_chatter"><field name="message_ids"/></div>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_pest_program" model="ir.actions.act_window">
+    <field name="name">برامج المكافحة</field><field name="res_model">care.pest.program</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+  <record id="action_pest_visit" model="ir.actions.act_window">
+    <field name="name">الزيارات</field><field name="res_model">care.pest.visit</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+  <record id="action_pest_station" model="ir.actions.act_window">
+    <field name="name">المحطات</field><field name="res_model">care.pest.station</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+  <record id="action_pest_chemical" model="ir.actions.act_window">
+    <field name="name">سجل المبيدات</field><field name="res_model">care.pest.chemical</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+  <record id="action_pest_sighting" model="ir.actions.act_window">
+    <field name="name">بلاغات الظهور</field><field name="res_model">care.pest.sighting</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <menuitem id="menu_pest_root" name="مكافحة الحشرات" sequence="47"/>
+  <menuitem id="menu_pest_program" name="البرامج" parent="menu_pest_root" action="action_pest_program" sequence="10"/>
+  <menuitem id="menu_pest_visit" name="الزيارات" parent="menu_pest_root" action="action_pest_visit" sequence="20"/>
+  <menuitem id="menu_pest_sighting" name="بلاغات الظهور" parent="menu_pest_root" action="action_pest_sighting" sequence="30"/>
+  <menuitem id="menu_pest_cfg" name="الإعداد" parent="menu_pest_root" sequence="90"/>
+  <menuitem id="menu_pest_station" name="المحطات" parent="menu_pest_cfg" action="action_pest_station" sequence="10"/>
+  <menuitem id="menu_pest_chemical" name="سجل المبيدات" parent="menu_pest_cfg" action="action_pest_chemical" sequence="20"/>
+</odoo>
