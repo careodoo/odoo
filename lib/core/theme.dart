@@ -1,23 +1,28 @@
 import 'package:flutter/material.dart';
+import 'i18n.dart';
 
 /// One app, a distinct visual identity per service. These accents mirror the
 /// Odoo backend so the field app and the web console feel like one system.
 class ServiceTheme {
-  const ServiceTheme(this.label, this.accent, this.icon, this.dark);
-  final String label;
+  const ServiceTheme(this.labelAr, this.labelEn, this.accent, this.icon, this.dark);
+  final String labelAr;
+  final String labelEn;
+  /// Resolved in the viewer's language. The map is const, so tr() cannot live
+  /// inside it — both spellings are carried and chosen here instead.
+  String get label => tr(labelAr, labelEn);
   final Color accent;
   final String icon;
   /// Security leans into a darker, high-contrast "command" look.
   final bool dark;
 
   static const Map<String, ServiceTheme> byType = {
-    'security': ServiceTheme('الأمن والحراسة', Color(0xFFE5484D), '🛡️', true),
-    'cleaning': ServiceTheme('النظافة', Color(0xFF2F6DF6), '🧹', false),
-    'agriculture': ServiceTheme('الزراعة', Color(0xFF37C98A), '🌿', false),
-    'facade': ServiceTheme('الواجهات', Color(0xFF38BDF8), '🪟', false),
-    'maintenance': ServiceTheme('الصيانة', Color(0xFFF7A23B), '❄️', false),
-    'worker': ServiceTheme('العامل', Color(0xFFF7A23B), '👷', false),
-    'client': ServiceTheme('العميل', Color(0xFFC0392B), '🧑‍💼', false),
+    'security': ServiceTheme('الأمن والحراسة', 'Security & guarding', Color(0xFFE5484D), '🛡️', true),
+    'cleaning': ServiceTheme('النظافة', 'Cleaning', Color(0xFF2F6DF6), '🧹', false),
+    'agriculture': ServiceTheme('الزراعة', 'Landscaping', Color(0xFF37C98A), '🌿', false),
+    'facade': ServiceTheme('الواجهات', 'Facade', Color(0xFF38BDF8), '🪟', false),
+    'maintenance': ServiceTheme('الصيانة', 'Maintenance', Color(0xFFF7A23B), '❄️', false),
+    'worker': ServiceTheme('العامل', 'Worker', Color(0xFFF7A23B), '👷', false),
+    'client': ServiceTheme('العميل', 'Client', Color(0xFFC0392B), '🧑‍💼', false),
   };
 
   static ServiceTheme of(String type) =>

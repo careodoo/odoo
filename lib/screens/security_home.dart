@@ -23,7 +23,7 @@ class SecurityHome extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFF0B1220),
       appBar: AppBar(
-        title: const Text('🛡️  مركز الأمن'),
+        title: Text(tr('🛡️  مركز الأمن', '🛡️  Security centre')),
         actions: [
           const ShiftToggle(onSurface: true),
           NotifBell(unread: p.unreadNotifications),
@@ -51,7 +51,7 @@ class SecurityHome extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(p.name, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
-                      const Text('حارس أمن · وردية نشطة', style: TextStyle(color: Color(0xFF9CB2CD), fontSize: 13)),
+                      Text(tr('حارس أمن · وردية نشطة', 'Security guard · on shift'), style: TextStyle(color: Color(0xFF9CB2CD), fontSize: 13)),
                     ],
                   ),
                 ),
@@ -139,18 +139,18 @@ class SecurityHome extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('🚨 تأكيد الطوارئ'),
-        content: const Text('سيتم إرسال بلاغ طوارئ فوري إلى غرفة العمليات. متابعة؟'),
+        title: Text(tr('🚨 تأكيد الطوارئ', '🚨 Confirm emergency')),
+        content: Text(tr('سيتم إرسال بلاغ طوارئ فوري إلى غرفة العمليات. متابعة؟', 'An immediate emergency alert will be sent to the control room. Continue?')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('إلغاء')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('إلغاء', 'Cancel'))),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE5484D)),
             onPressed: () {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('🚨 تم إرسال بلاغ الطوارئ')));
+                SnackBar(content: Text(tr('🚨 تم إرسال بلاغ الطوارئ', '🚨 Emergency alert sent'))));
             },
-            child: const Text('إرسال البلاغ'),
+            child: Text(tr('إرسال البلاغ', 'Submit report')),
           ),
         ],
       ),

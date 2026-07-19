@@ -191,9 +191,9 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
               ),
               child: Material(color: Colors.transparent, child: InkWell(
                 borderRadius: BorderRadius.circular(14), onTap: _newOrder,
-                child: const Center(child: Row(mainAxisSize: MainAxisSize.min, children: [
+                child: Center(child: Row(mainAxisSize: MainAxisSize.min, children: [
                   Icon(Icons.add_circle_outline_rounded, color: Colors.white), SizedBox(width: 8),
-                  Text('طلب نقل جديد', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
+                  Text(tr('طلب نقل جديد', 'New transfer request'), style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
                 ])),
               )),
             ))),
@@ -224,9 +224,9 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             const Icon(Icons.tune_rounded, color: Color(0xFF0E3A5F)), const SizedBox(width: 8),
-            const Text('بحث وفلترة', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: Color(0xFF0E3A5F))),
+            Text(tr('بحث وفلترة', 'Search & filter'), style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: Color(0xFF0E3A5F))),
             const Spacer(),
-            TextButton(onPressed: () { qCtrl.clear(); setSt(() => tmpState = null); }, child: const Text('مسح')),
+            TextButton(onPressed: () { qCtrl.clear(); setSt(() => tmpState = null); }, child: Text(tr('مسح', 'Clear'))),
           ]),
           const SizedBox(height: 12),
           TextField(controller: qCtrl, autofocus: true, decoration: InputDecoration(
@@ -234,7 +234,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
             prefixIcon: const Icon(Icons.search), filled: true, fillColor: const Color(0xFFF1F5F9),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none))),
           const SizedBox(height: 14),
-          const Text('الحالة', style: TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF64748B))),
+          Text(tr('الحالة', 'Status'), style: TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF64748B))),
           const SizedBox(height: 8),
           Wrap(spacing: 8, runSpacing: 8, children: [
             for (final st in _states) ChoiceChip(
@@ -249,7 +249,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
           SizedBox(width: double.infinity, height: 50, child: ElevatedButton.icon(
             onPressed: () { setState(() { _q = qCtrl.text; _stateFilter = tmpState; }); _load(); Navigator.pop(ctx); },
             icon: const Icon(Icons.check_rounded),
-            label: const Text('تطبيق', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+            label: Text(tr('تطبيق', 'Apply'), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0E3A5F), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))))),
         ]),
       )),
@@ -380,7 +380,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
             Expanded(child: ListView(controller: ctrl, padding: const EdgeInsets.all(16), children: [
               _card(tr('حالة الطلب', 'Order status'), [
                 if (cancelled)
-                  const Text('✖ تم إلغاء الطلب', style: TextStyle(color: Color(0xFFE11D48), fontWeight: FontWeight.w700))
+                  Text(tr('✖ تم إلغاء الطلب', '✖ Order cancelled'), style: TextStyle(color: Color(0xFFE11D48), fontWeight: FontWeight.w700))
                 else
                   Column(children: [for (int i = 0; i < _flow.length; i++) _step(i, cur)]),
               ]),

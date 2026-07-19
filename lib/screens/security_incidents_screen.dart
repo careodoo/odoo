@@ -239,7 +239,7 @@ class _IncidentFormState extends State<_IncidentForm> {
             onPressed: _busy ? null : _save,
             child: _busy
                 ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Text('إرسال البلاغ'),
+                : Text(tr('إرسال البلاغ', 'Submit report')),
           ),
         ],
       ),

@@ -84,7 +84,7 @@ class _ScanScreenState extends State<ScanScreen> {
     final available = await NfcManager.instance.isAvailable();
     if (!available) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('NFC غير متاح أو غير مُفعَّل على هذا الجهاز')));
+          SnackBar(content: Text(tr('NFC غير متاح أو غير مُفعَّل على هذا الجهاز', 'NFC is unavailable or switched off on this device'))));
       return;
     }
     setState(() { _mode = _Mode.nfc; _status = tr('قرّب الجهاز من شريحة NFC…', 'Hold the phone near an NFC tag…'); });
@@ -94,7 +94,7 @@ class _ScanScreenState extends State<ScanScreen> {
       if (code != null && code.isNotEmpty) {
         _process(code);
       } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('لم أتمكّن من قراءة رمز من الشريحة')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('لم أتمكّن من قراءة رمز من الشريحة', 'Could not read a code from the tag'))));
         setState(() => _mode = _Mode.choose);
       }
     });
@@ -195,13 +195,13 @@ class _ScanScreenState extends State<ScanScreen> {
                   Text('تعذّر تشغيل الكاميرا: ${error.errorCode.name}',
                       textAlign: TextAlign.center, style: const TextStyle(color: Colors.white)),
                   const SizedBox(height: 12),
-                  FilledButton(onPressed: openAppSettings, child: const Text('فتح الإعدادات')),
+                  FilledButton(onPressed: openAppSettings, child: Text(tr('فتح الإعدادات', 'Open settings'))),
                 ]),
               ),
             ),
           ),
           Container(height: 240, width: 240, decoration: BoxDecoration(border: Border.all(color: Colors.white, width: 3), borderRadius: BorderRadius.circular(20))),
-          Positioned(bottom: 40, child: FilledButton.icon(onPressed: _reset, icon: const Icon(Icons.close), label: const Text('إلغاء'))),
+          Positioned(bottom: 40, child: FilledButton.icon(onPressed: _reset, icon: const Icon(Icons.close), label: Text(tr('إلغاء', 'Cancel')))),
         ],
       );
 
@@ -213,7 +213,7 @@ class _ScanScreenState extends State<ScanScreen> {
           const SizedBox(height: 24),
           const CircularProgressIndicator(),
           const SizedBox(height: 24),
-          TextButton(onPressed: _reset, child: const Text('إلغاء')),
+          TextButton(onPressed: _reset, child: Text(tr('إلغاء', 'Cancel'))),
         ]),
       );
 
@@ -227,7 +227,7 @@ class _ScanScreenState extends State<ScanScreen> {
         Card(child: Padding(
           padding: const EdgeInsets.all(18),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: const [Icon(Icons.check_circle, color: Color(0xFF16794A)), SizedBox(width: 8), Text('تم تسجيل الحضور', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16))]),
+            Row(children: [Icon(Icons.check_circle, color: Color(0xFF16794A)), SizedBox(width: 8), Text(tr('تم تسجيل الحضور', 'Attendance recorded'), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16))]),
             const SizedBox(height: 10),
             Text('${loc['name']}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
             Text('${loc['facility']} · ${loc['code']}', style: TextStyle(color: cs.outline)),
@@ -237,7 +237,7 @@ class _ScanScreenState extends State<ScanScreen> {
         Text('أوامر العمل عند هذا الموقع (${wos.length})', style: const TextStyle(fontWeight: FontWeight.w800)),
         for (final w in wos) Card(child: ListTile(title: Text(w.title), subtitle: Text('${w.name} · ${w.serviceType}'))),
         const SizedBox(height: 8),
-        FilledButton.icon(onPressed: _reset, icon: const Icon(Icons.replay), label: const Text('مسح آخر')),
+        FilledButton.icon(onPressed: _reset, icon: const Icon(Icons.replay), label: Text(tr('مسح آخر', 'Last scan'))),
       ],
     );
   }

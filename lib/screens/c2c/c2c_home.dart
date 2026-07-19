@@ -818,10 +818,10 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
                 padding: const EdgeInsets.all(13),
                 decoration: BoxDecoration(color: C2C.bg, borderRadius: BorderRadius.circular(14)),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Row(children: const [
+                  Row(children: [
                     Icon(Icons.gavel_rounded, size: 15, color: C2C.slate),
                     SizedBox(width: 6),
-                    Text('شروط الإلغاء', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: C2C.ink)),
+                    Text(tr('شروط الإلغاء', 'Cancellation terms'), style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: C2C.ink)),
                   ]),
                   const SizedBox(height: 8),
                   for (final t in const [
