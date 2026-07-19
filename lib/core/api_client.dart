@@ -558,6 +558,34 @@ class ApiClient {
               await http.get(_u('/client/asset/$id'), headers: await _headers())))['data'] as Map);
 
   // ---- maintenance service --------------------------------------------------
+  // ---- NFC tag provisioning -------------------------------------------------
+  Future<Map<String, dynamic>> nfcLocations({int? facilityId, String? state, String? q}) async {
+    final p = <String, String>{};
+    if (facilityId != null) p['facility_id'] = '$facilityId';
+    if (state != null && state != 'all') p['state'] = state;
+    if (q != null && q.isNotEmpty) p['q'] = q;
+    final qs = p.entries.map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}').join('&');
+    return Map<String, dynamic>.from((await _handle(await http.get(
+        _u('/nfc/locations${qs.isEmpty ? '' : '?$qs'}'), headers: await _headers())))['data'] as Map);
+  }
+
+  /// Bind a physical tag (its hardware uid) to a location and activate it.
+  Future<Map<String, dynamic>> nfcProvision(int locationId, String uid,
+          {bool written = false, bool force = false, String? note}) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/nfc/location/$locationId/provision'), headers: await _headers(),
+              body: jsonEncode({'uid': uid, 'written': written, 'force': force, if (note != null) 'note': note}))))['data'] as Map);
+
+  /// action: 'disable' | 'enable' | 'revoke'
+  Future<Map<String, dynamic>> nfcAction(int locationId, String action) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/nfc/location/$locationId/$action'), headers: await _headers())))['data'] as Map);
+
+  /// Tap any tag and find out which location it belongs to.
+  Future<Map<String, dynamic>> nfcVerify(String value) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(_u('/nfc/verify'),
+              headers: await _headers(), body: jsonEncode({'value': value}))))['data'] as Map);
+
   // ---- directory + chat -----------------------------------------------------
   Future<List<dynamic>> directory({String? q}) async {
     final path = '/directory${q != null && q.isNotEmpty ? '?q=${Uri.encodeQueryComponent(q)}' : ''}';

@@ -29,6 +29,7 @@ import 'schedules_screen.dart';
 import 'notify_send_screen.dart';
 import 'maintenance_screen.dart';
 import 'chat_screen.dart';
+import 'nfc_provision_screen.dart';
 
 /// A polished home for everything this user can reach — styled like the CARE 2
 /// CARE account page: a vibrant header, the systems rail (top icons) for
@@ -125,6 +126,7 @@ class MoreScreen extends StatelessWidget {
       if (isClient || p.isAdmin) tile(Icons.description_rounded, tr('العقود', 'Contracts'), const ContractsScreen(), c: const Color(0xFF0B6EA8));
       if (p.canAddWorkers) {
         tile(Icons.settings_suggest_rounded, tr('إدارة المنشأة', 'Manage facility'), const ManageScreen(), c: const Color(0xFF6366F1));
+        tile(Icons.nfc_rounded, tr('برمجة شرائح NFC', 'NFC tags'), const NfcProvisionScreen(), c: const Color(0xFF6D28D9));
         tile(Icons.person_add_rounded, tr('إضافة عامل', 'Add worker'), const AddWorkerScreen(), c: const Color(0xFF16A34A));
       }
       if (p.isSupervisor || p.isAdmin) {
