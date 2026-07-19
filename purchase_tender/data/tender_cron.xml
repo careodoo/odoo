@@ -44,5 +44,16 @@
       <field name="nextcall">2026-07-01 07:30:00</field>
       <field name="active" eval="True" />
     </record>
+
+    <record id="cron_tender_days_refresh" model="ir.cron">
+      <field name="name">Tender: Refresh days-to-close countdown</field>
+      <field name="model_id" ref="model_purchase_tender" />
+      <field name="state">code</field>
+      <field name="code">model._cron_refresh_days_to_close()</field>
+      <field name="interval_number">1</field>
+      <field name="interval_type">days</field>
+      <field name="nextcall">2026-07-20 00:05:00</field>
+      <field name="active" eval="True" />
+    </record>
   </data>
 </odoo>

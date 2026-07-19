@@ -415,6 +415,18 @@ class PurchaseTender(models.Model):
             else:
                 rec.close_sort_key = 1000000 - d
 
+    @api.model
+    def _cron_refresh_days_to_close(self):
+        """days_to_close is stored (so it can be sorted and grouped) but it is
+        measured from *today* — nothing in @api.depends changes as the clock
+        does, so without this nightly pass the countdown would freeze on the
+        value it had when the date was last edited."""
+        recs = self.search(['|', ('closing_date', '!=', False), ('new_closing_date', '!=', False)])
+        recs.invalidate_recordset(['days_to_close', 'close_sort_key'])
+        recs.modified(['closing_date', 'new_closing_date'])
+        recs._compute_days_to_close()
+        return True
+
     @api.depends('care_rank', 'state', 'price_analysis_ids')
     def _compute_win_probability(self):
         cp = self.env['ir.config_parameter'].sudo()
