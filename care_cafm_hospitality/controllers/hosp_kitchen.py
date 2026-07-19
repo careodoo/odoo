@@ -50,7 +50,7 @@ class HospKitchen(HospPortal):
             '<div><div class="n">%s</div><div class="l">قُدِّمت اليوم</div></div>'
             '</div>'
         ) % (len(orders.filtered(lambda o: o.state != 'ready')),
-             '#f2603f' if late else '#e9f1fb', len(late),
+             '#f2603f' if late else '#14202b', len(late),
              len(orders.filtered(lambda o: o.state == 'ready')), done_today)
 
         if pending_approval:
@@ -63,11 +63,11 @@ class HospKitchen(HospPortal):
         stations = env['care.hosp.station'].sudo().search([('facility_id', 'in', facs.ids)])
         if stations:
             body += Markup('<div style="display:flex;gap:7px;flex-wrap:wrap;margin:15px 0 11px">')
-            sel = 'background:%s;color:#0b1220' % KITCHEN_ACCENT if not station else 'background:#152438;color:#9cb2cd'
+            sel = 'background:%s;color:#ffffff' % KITCHEN_ACCENT if not station else 'background:#ffffff;color:#71809a'
             body += Markup('<a href="/hosp/kitchen" class="pill" style="%s;padding:8px 13px">كل المحطات</a>') % Markup(sel)
             for s in stations:
                 on = station and int(station) == s.id
-                st = ('background:%s;color:#0b1220' % KITCHEN_ACCENT) if on else 'background:#152438;color:#9cb2cd'
+                st = ('background:%s;color:#ffffff' % KITCHEN_ACCENT) if on else 'background:#ffffff;color:#71809a'
                 n = len([o for o in orders if s.id in o.line_ids.mapped('station_id').ids])
                 body += Markup('<a href="/hosp/kitchen?station=%s" class="pill" style="%s;padding:8px 13px">'
                                '%s %s (%s)</a>') % (s.id, Markup(st), s.icon or '🍳', esc(s.name), n)
@@ -100,7 +100,7 @@ class HospKitchen(HospPortal):
         lines = Markup('')
         for l in o.line_ids:
             lines += Markup(
-                '<div style="padding:8px 0;border-top:1px solid #294059">'
+                '<div style="padding:8px 0;border-top:1px solid #e6eaf0">'
                 '<div style="font-size:16px;font-weight:900">%s × %s</div>'
                 '%s%s</div>'
             ) % (esc(l.item_id.name), int(l.quantity),
@@ -137,7 +137,7 @@ class HospKitchen(HospPortal):
     def _kbtn(self, oid, act, label, color):
         return Markup(
             '<form method="post" action="/hosp/kitchen/%s/%s" style="margin:0;flex:1">%s'
-            '<button class="btn" style="background:%s;color:#0b1220;margin:0">%s</button></form>'
+            '<button class="btn" style="background:%s;color:#ffffff;margin:0">%s</button></form>'
         ) % (oid, act, _csrf(), Markup(color), esc(label))
 
     @http.route('/hosp/kitchen/<int:oid>/<string:act>', type='http', auth='user',
@@ -218,7 +218,7 @@ class HospKitchen(HospPortal):
         body = Markup('<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:13px">')
         for d, label in (('7', 'آخر ٧ أيام'), ('30', 'آخر ٣٠ يومًا'), ('90', 'آخر ٩٠ يومًا')):
             on = str(ndays) == d
-            st = ('background:%s;color:#0b1220' % STATS_ACCENT) if on else 'background:#152438;color:#9cb2cd'
+            st = ('background:%s;color:#ffffff' % STATS_ACCENT) if on else 'background:#ffffff;color:#71809a'
             body += Markup('<a href="/hosp/stats?days=%s" class="pill" style="%s;padding:8px 13px">%s</a>') % (
                 d, Markup(st), esc(label))
         body += Markup('</div>')
@@ -291,7 +291,7 @@ class HospKitchen(HospPortal):
             out += Markup(
                 '<div style="flex:1;text-align:center">'
                 '<div style="height:%spx;background:%s;border-radius:4px 4px 0 0" title="%s طلب"></div>'
-                '<div style="font-size:9px;color:#9cb2cd;margin-top:3px">%s</div></div>'
+                '<div style="font-size:9px;color:#71809a;margin-top:3px">%s</div></div>'
             ) % (ht, Markup(col), n, h)
         return out + Markup('</div><div class="muted" style="margin-top:7px">'
                             'الأعمدة تمثّل عدد الطلبات لكل ساعة — الأحمر هو وقت الذروة.</div></div>')

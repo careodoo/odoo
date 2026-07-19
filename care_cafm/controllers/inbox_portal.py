@@ -42,13 +42,13 @@ class InboxPortal(http.Controller):
 
         body += Markup('<div style="display:flex;gap:7px;margin:15px 0 11px">')
         for key, label in (('all', 'الكل'), ('unread', 'غير المقروءة')):
-            sel = ('background:%s;color:#0b1220' % ACCENT) if key == filter else 'background:#152438;color:#9cb2cd'
+            sel = ('background:%s;color:#ffffff' % ACCENT) if key == filter else 'background:#ffffff;color:#71809a'
             body += Markup('<a href="/cafm/m/inbox?filter=%s" class="pill" style="%s;padding:7px 12px">%s</a>') % (
                 key, Markup(sel), esc(label))
         if unread:
             body += Markup(
                 '<form method="post" action="/cafm/m/inbox/read-all" style="margin:0">%s'
-                '<button class="pill" style="background:#1c3149;color:#e9f1fb;border:none;padding:7px 12px;'
+                '<button class="pill" style="background:#ffffff;color:#14202b;border:none;padding:7px 12px;'
                 'cursor:pointer;font-family:inherit">تعليم الكل كمقروء</button></form>') % _csrf()
         body += Markup('</div>')
 

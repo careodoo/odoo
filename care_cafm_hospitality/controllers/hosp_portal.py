@@ -30,7 +30,7 @@ def _csrf():
 
 def _bar(pct, color='#8a6d3b', height=8):
     return Markup(
-        '<div style="background:#0d1826;border-radius:6px;height:%spx;overflow:hidden">'
+        '<div style="background:#f4f6fa;border-radius:6px;height:%spx;overflow:hidden">'
         '<div style="height:%spx;width:%s%%;background:%s"></div></div>'
     ) % (height, height, max(0, min(100, round(pct or 0))), Markup(color))
 
@@ -98,11 +98,11 @@ class HospPortal(http.Controller):
 
         # category rail
         body += Markup('<div style="display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 12px">')
-        sel = 'background:%s;color:#0b1220' % ACCENT if not cat else 'background:#152438;color:#9cb2cd'
+        sel = 'background:%s;color:#ffffff' % ACCENT if not cat else 'background:#ffffff;color:#71809a'
         body += Markup('<a href="/hosp" class="pill" style="%s;padding:8px 13px">الكل</a>') % Markup(sel)
         for c in cats:
             on = cat and int(cat) == c.id
-            style = ('background:%s;color:#0b1220' % c.color) if on else 'background:#152438;color:#9cb2cd'
+            style = ('background:%s;color:#ffffff' % c.color) if on else 'background:#ffffff;color:#71809a'
             body += Markup('<a href="/hosp?cat=%s" class="pill" style="%s;padding:8px 13px">%s %s</a>') % (
                 c.id, Markup(style), c.icon or '', esc(c.name))
         body += Markup('</div>')
@@ -155,7 +155,7 @@ class HospPortal(http.Controller):
         if not cart or not cart.line_ids:
             return Markup('')
         lines = Markup('').join(Markup(
-            '<div class="row" style="padding:6px 0;border-top:1px solid #294059">'
+            '<div class="row" style="padding:6px 0;border-top:1px solid #e6eaf0">'
             '<div><div class="h4">%s × %s</div><div class="muted">%s%s</div></div>'
             '<form method="post" action="/hosp/line/%s/remove" style="margin:0">%s'
             '<button class="pill crit" style="border:none;cursor:pointer;font-family:inherit">حذف</button>'
@@ -187,7 +187,7 @@ class HospPortal(http.Controller):
             out += Markup(
                 '<form method="post" action="/hosp/fav/%s/order" style="margin:0">%s'
                 '<button class="card" style="border:1px solid %s;cursor:pointer;font-family:inherit;'
-                'color:#e9f1fb;text-align:start;margin:0;min-width:150px">'
+                'color:#14202b;text-align:start;margin:0;min-width:150px">'
                 '<div class="h4">%s %s</div><div class="muted">%s</div></button></form>'
             ) % (f.id, _csrf(), Markup(ACCENT), f.item_id.icon or '☕', esc(f.item_id.name),
                  esc(' · '.join(f.option_ids.mapped('name')) or '—'))
@@ -244,7 +244,7 @@ class HospPortal(http.Controller):
                 checked = ' checked' if (o.is_default and not g.multi) else ''
                 form += Markup(
                     '<label style="display:flex;align-items:center;gap:9px;padding:7px 0;'
-                    'color:#e9f1fb;font-weight:600;font-size:13.5px">'
+                    'color:#14202b;font-weight:600;font-size:13.5px">'
                     '<input type="%s" name="%s" value="%s"%s style="width:auto;margin:0"/>%s%s</label>'
                 ) % (kind, nm, o.id, Markup(checked), esc(o.name), esc(extra))
             form += Markup('</div>')
@@ -252,7 +252,7 @@ class HospPortal(http.Controller):
             '<div class="card">'
             '<label>الكمية</label><input type="number" name="quantity" value="1" min="1" max="20"/>'
             '<label>ملاحظة للمُحضِّر</label><input name="note" placeholder="مثال: كوب ورقي، بدون رغوة"/>'
-            '<label style="display:flex;align-items:center;gap:9px;margin-top:10px;color:#e9f1fb">'
+            '<label style="display:flex;align-items:center;gap:9px;margin-top:10px;color:#14202b">'
             '<input type="checkbox" name="save_fav" value="1" style="width:auto;margin:0"/>'
             'احفظه في «طلبي المعتاد»</label>'
             '<button class="btn">أضف إلى السلّة</button></div></form>')

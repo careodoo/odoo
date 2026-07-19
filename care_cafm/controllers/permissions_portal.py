@@ -61,7 +61,7 @@ class PermissionsPortal(http.Controller):
             for code, label, help_ in rows:
                 on = code in granted
                 pill = (Markup('<span class="pill ok">✔ ممنوحة</span>') if on
-                        else Markup('<span class="pill" style="background:#1c3149;color:#7f97b4">'
+                        else Markup('<span class="pill" style="background:#ffffff;color:#71809a">'
                                     '— غير ممنوحة</span>'))
                 ask = Markup('')
                 if not on and client:

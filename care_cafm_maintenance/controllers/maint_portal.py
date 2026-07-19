@@ -69,8 +69,8 @@ class MaintPortal(http.Controller):
             '<div><div class="n">%s</div><div class="l">فحوص مستحقة</div></div>'
             '<div><div class="n" style="color:%s">%s</div><div class="l">قطع تحت الحد</div></div>'
             '</div>'
-        ) % (len(openf), '#f2603f' if crit else '#e9f1fb', crit, insp_due,
-             '#f5b638' if low else '#e9f1fb', low)
+        ) % (len(openf), '#f2603f' if crit else '#14202b', crit, insp_due,
+             '#f5b638' if low else '#14202b', low)
 
         body += self._report_form(facs)
         body += self._filters(state)
@@ -90,7 +90,7 @@ class MaintPortal(http.Controller):
                 ('closed', 'مغلقة'), ('all', 'الكل')]
         out = Markup('<div style="display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 11px">')
         for key, label in opts:
-            sel = ('background:%s;color:#0b1220' % ACCENT) if key == cur else 'background:#152438;color:#9cb2cd'
+            sel = ('background:%s;color:#ffffff' % ACCENT) if key == cur else 'background:#ffffff;color:#71809a'
             out += Markup('<a href="/cafm/m/maint?state=%s" class="pill" style="%s;padding:7px 12px">%s</a>') % (
                 key, Markup(sel), esc(label))
         return out + Markup('</div>')
@@ -160,7 +160,7 @@ class MaintPortal(http.Controller):
         if not low:
             return Markup('')
         rows = Markup('').join(Markup(
-            '<div class="row" style="padding:7px 0;border-top:1px solid #294059">'
+            '<div class="row" style="padding:7px 0;border-top:1px solid #e6eaf0">'
             '<div><div class="h4">%s</div><div class="muted">%s</div></div>'
             '<span class="pill warn">%s / %s %s</span></div>'
         ) % (esc(p.name), esc(p.location or p.supplier or '—'),

@@ -401,7 +401,7 @@ class ServicePages(http.Controller):
             if s.model not in request.env:
                 continue
             on = s.key == key
-            style = ('background:%s;color:#0b1220' % accent) if on else 'background:#152438;color:#9cb2cd'
+            style = ('background:%s;color:#ffffff' % accent) if on else 'background:#ffffff;color:#71809a'
             body += Markup('<a class="pill" style="%s;padding:7px 12px" href="/cafm/m/svc/%s/%s">%s %s</a>') % (
                 Markup(style), code, s.key, s.icon, esc(s.label))
         body += Markup('</div>')

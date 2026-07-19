@@ -94,7 +94,7 @@ class ValetPortal(http.Controller):
             '<div><div class="n" style="color:%s">%s</div><div class="l">متأخرة</div></div>'
             '</div>'
         ) % (counts.get('received', 0), counts.get('parked', 0), counts.get('requested', 0),
-             out_today, '#f2603f' if late else '#e9f1fb', late)
+             out_today, '#f2603f' if late else '#14202b', late)
 
     def _shift_bar(self, shift, facs):
         if shift:
@@ -129,7 +129,7 @@ class ValetPortal(http.Controller):
             out += Markup(
                 '<div class="card"><div class="row"><div class="h4">🅿️ %s</div>'
                 '<span class="pill" style="background:rgba(55,201,138,.15);color:%s">%s متاح</span></div>'
-                '<div style="background:#0d1826;border-radius:6px;height:8px;margin-top:8px;overflow:hidden">'
+                '<div style="background:#f4f6fa;border-radius:6px;height:8px;margin-top:8px;overflow:hidden">'
                 '<div style="height:8px;width:%s%%;background:%s"></div></div>'
                 '<div class="muted" style="margin-top:5px">%s مشغولة من %s · %s%%</div></div>'
             ) % (esc(z.name), col, z.free, min(100, int(z.occupancy or 0)), col,
@@ -143,7 +143,7 @@ class ValetPortal(http.Controller):
                 ('delivered', 'سُلِّمت', ''), ('all', 'الكل', '')]
         out = Markup('<div style="display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 11px">')
         for key, label, n in opts:
-            sel = ('background:%s;color:#0b1220' % ACCENT) if key == cur else 'background:#152438;color:#9cb2cd'
+            sel = ('background:%s;color:#ffffff' % ACCENT) if key == cur else 'background:#ffffff;color:#71809a'
             txt = '%s (%s)' % (label, n) if n != '' else label
             out += Markup(
                 '<a href="/cafm/m/valet?state=%s" class="pill" style="%s;padding:7px 12px">%s</a>'

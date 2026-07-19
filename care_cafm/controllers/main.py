@@ -32,54 +32,79 @@ def accent_for(service_type):
 
 _PAGE = """<!doctype html><html lang="ar" dir="rtl"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>__TITLE__ · CAFM</title>
+<title>__TITLE__ · CARE</title>
 <style>
-:root{--ac:__AC__}
+/* One identity with the app: light ground, white cards, CARE red chrome. This
+   portal used to be dark while the app and the client portal were light, so
+   the same system looked like three products depending where you stood. The
+   class names are unchanged, so every page inherits this without edits. */
+:root{--ac:__AC__;--ink:#14202b;--muted:#71809a;--line:#e6eaf0;--bg:#f4f6fa;
+      --red:#c0392b;--red2:#e24a3b}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:#0d1826;color:#e9f1fb;font-family:"Segoe UI",Tahoma,system-ui,"Noto Sans Arabic",sans-serif;direction:rtl;padding-bottom:78px}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font-family:"Segoe UI",Tahoma,system-ui,"Noto Sans Arabic",sans-serif;
+     direction:rtl;padding-bottom:78px}
 a{color:inherit;text-decoration:none}
-.top{position:sticky;top:0;z-index:5;background:linear-gradient(150deg,var(--ac),#0b1220);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 6px 18px -8px rgba(0,0,0,.6)}
+.top{position:sticky;top:0;z-index:5;
+     background:linear-gradient(150deg,var(--red2),var(--red));color:#fff;
+     padding:14px 16px;display:flex;align-items:center;justify-content:space-between;
+     box-shadow:0 4px 16px -8px rgba(0,0,0,.35)}
 .top .t{font-weight:900;font-size:17px}
 .wrap{padding:14px}
-.card{background:#152438;border:1px solid #294059;border-radius:14px;padding:14px;margin-bottom:11px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;
+      margin-bottom:11px;box-shadow:0 1px 3px rgba(16,24,40,.04)}
 .row{display:flex;justify-content:space-between;align-items:center;gap:10px}
 h1,h2,h3{margin:0}
-.muted{color:#9cb2cd;font-size:12.5px}
-.pill{display:inline-flex;gap:5px;align-items:center;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px}
-.ok{background:rgba(55,201,138,.18);color:#37c98a}.warn{background:rgba(245,182,56,.2);color:#f5b638}
-.crit{background:rgba(242,96,63,.2);color:#f2603f}.info{background:rgba(74,168,255,.18);color:#4aa8ff}
+.muted{color:var(--muted);font-size:12.5px}
+.pill{display:inline-flex;gap:5px;align-items:center;font-size:11px;font-weight:800;
+      padding:3px 9px;border-radius:999px}
+.ok{background:rgba(22,163,74,.12);color:#15803d}
+.warn{background:rgba(245,158,11,.14);color:#b45309}
+.crit{background:rgba(225,29,72,.11);color:#be123c}
+.info{background:rgba(14,165,233,.12);color:#0369a1}
 .stripe{border-inline-start:4px solid var(--ac);padding-inline-start:11px}
-.btn{display:block;width:100%;text-align:center;background:var(--ac);color:#0b1220;font-weight:900;border:none;border-radius:11px;padding:13px;font-size:15px;margin-top:9px;cursor:pointer}
-.btn.g{background:#1c3149;color:#e9f1fb;border:1px solid #294059}
-.btn.crit{background:linear-gradient(150deg,#e5484d,#a5252a);color:#fff}
+.btn{display:block;width:100%;text-align:center;background:var(--ac);color:#fff;
+     font-weight:900;border:none;border-radius:11px;padding:13px;font-size:15px;
+     margin-top:9px;cursor:pointer;font-family:inherit}
+.btn.g{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.btn.crit{background:linear-gradient(150deg,var(--red2),var(--red));color:#fff}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.tile{background:#152438;border:1px solid #294059;border-radius:14px;padding:16px;text-align:center}
-.tile .i{font-size:30px}.tile .n{font-weight:900;margin-top:6px}.tile .s{font-size:11.5px;color:#9cb2cd}
+.tile{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;
+      text-align:center;box-shadow:0 1px 3px rgba(16,24,40,.04)}
+.tile .i{font-size:28px}
+.tile .n{font-weight:900;margin-top:6px;font-size:13.5px}
+.tile .s{font-size:11.5px;color:var(--muted);margin-top:2px}
 .big{font-size:32px;font-weight:900;letter-spacing:1px}
-.back{font-size:13px;opacity:.9}
-.kpi{display:flex;gap:10px}.kpi>div{flex:1;background:#152438;border:1px solid #294059;border-radius:12px;padding:11px;text-align:center}
-.kpi .n{font-size:20px;font-weight:900}.kpi .l{font-size:10.5px;color:#9cb2cd}
-input,select,textarea{width:100%;background:#0d1826;border:1px solid #294059;color:#e9f1fb;border-radius:10px;padding:10px;font-family:inherit;margin-top:6px}
-label{font-size:12.5px;color:#9cb2cd;font-weight:700}
+.back{font-size:13px;opacity:.9;color:#fff}
+.kpi{display:flex;gap:10px}
+.kpi>div{flex:1;background:#fff;border:1px solid var(--line);border-radius:12px;
+         padding:11px;text-align:center;box-shadow:0 1px 3px rgba(16,24,40,.04)}
+.kpi .n{font-size:20px;font-weight:900}
+.kpi .l{font-size:10.5px;color:var(--muted)}
+input,select,textarea{width:100%;background:#fff;border:1px solid var(--line);
+     color:var(--ink);border-radius:10px;padding:10px;font-family:inherit;margin-top:6px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--ac);outline-offset:-1px}
+label{font-size:12.5px;color:var(--muted);font-weight:700}
 .h4{font-size:14px;font-weight:800;margin:0 0 3px}
-/* --- persistent navigation: every page used to be a dead end with one
-       "back" link, so moving sideways meant walking to the launcher --- */
+/* --- persistent navigation --- */
 .nav{position:fixed;bottom:0;left:0;right:0;z-index:9;display:flex;
-     background:#0f1c2e;border-top:1px solid #294059;padding:6px 4px 8px}
-.nav a{flex:1;text-align:center;color:#7f97b4;font-size:9.5px;font-weight:700;padding:4px 2px}
-.nav a .i{display:block;font-size:19px;margin-bottom:2px;filter:grayscale(.5);opacity:.75}
-.nav a.on{color:var(--ac)}.nav a.on .i{filter:none;opacity:1}
-.crumb{font-size:11.5px;color:#9cb2cd;padding:9px 16px 0}
-.crumb a{color:#4aa8ff}
+     background:#fff;border-top:1px solid var(--line);padding:6px 4px 8px;
+     box-shadow:0 -2px 12px rgba(16,24,40,.06)}
+.nav a{flex:1;text-align:center;color:var(--muted);font-size:9.5px;font-weight:700;padding:4px 2px}
+.nav a .i{display:block;font-size:19px;margin-bottom:2px;opacity:.6}
+.nav a.on{color:var(--red)}
+.nav a.on .i{opacity:1}
+.crumb{font-size:11.5px;color:var(--muted);padding:9px 16px 0}
+.crumb a{color:var(--ac);font-weight:700}
 .sec{display:flex;align-items:center;justify-content:space-between;margin:17px 0 9px}
 .sec h3{font-size:14.5px;font-weight:900}
 .sec a{font-size:12px;color:var(--ac);font-weight:800}
-.empty{text-align:center;padding:34px 16px;color:#7f97b4}
-.empty .i{font-size:42px;opacity:.55;display:block;margin-bottom:8px}
+.empty{text-align:center;padding:34px 16px;color:var(--muted)}
+.empty .i{font-size:42px;opacity:.4;display:block;margin-bottom:8px}
 .pager{display:flex;gap:8px;justify-content:center;margin:14px 0 4px}
 .pager a,.pager span{padding:7px 13px;border-radius:9px;font-size:12.5px;font-weight:800;
-  background:#152438;border:1px solid #294059}
-.pager .cur{background:var(--ac);color:#0b1220;border-color:var(--ac)}
+  background:#fff;border:1px solid var(--line)}
+.pager .cur{background:var(--ac);color:#fff;border-color:var(--ac)}
 .pager .off{opacity:.35}
 </style></head><body>
 <div class="top"><div><div class="t">__TITLE__</div></div><a class="back" href="__BACK__">↩ رجوع</a></div>
@@ -304,7 +329,7 @@ class CafmMobile(http.Controller):
         if not incs:
             inc_rows = Markup('<div class="card muted">لا بلاغات مفتوحة.</div>')
         body = Markup(
-            '<div class="card" style="background:linear-gradient(150deg,#1c2333,#152438)">'
+            '<div class="card" style="background:linear-gradient(150deg,#1c2333,#ffffff)">'
             '<div class="row"><div><div class="h4">نقطتي: البوابة الرئيسية</div>'
             '<div class="muted">حضور بصمة ✔ · وردية صباحية</div></div>'
             '<span class="pill ok">على رأس العمل</span></div></div>'
@@ -386,7 +411,7 @@ class CafmMobile(http.Controller):
             '<h3 style="margin:14px 0 10px">من أين الآن؟ (من المسح)</h3>%s'
             '<h3 style="margin:16px 0 10px">أوامر العمل</h3>%s'
             '<a class="btn g" href="/cafm/m/quality">＋ رصد ملاحظة تصحيح</a>'
-        ) % (WO.search_count(base), '#f2603f' if unassigned else '#e9f1fb',
+        ) % (WO.search_count(base), '#f2603f' if unassigned else '#14202b',
              WO.search_count(base + [('employee_id', '=', False)]), len(obs), who, wo_rows)
         return _shell('المشرف', body, ACCENTS['maintenance'], nav='sup')
 
@@ -601,7 +626,7 @@ class CafmMobile(http.Controller):
         cur = m.currency_id.name
         lines = Markup('')
         for l in m.invoice_line_ids.filtered(lambda x: not x.display_type):
-            lines += Markup('<div class="row" style="padding:6px 0;border-top:1px solid #294059">'
+            lines += Markup('<div class="row" style="padding:6px 0;border-top:1px solid #e6eaf0">'
                             '<div><b>%s</b><div class="muted">%s × %s</div></div>'
                             '<div style="text-align:end"><b>%s</b></div></div>'
                             ) % (esc(l.name or l.product_id.display_name), esc(self._fmt(l.quantity)),
@@ -613,7 +638,7 @@ class CafmMobile(http.Controller):
             '<div style="text-align:end"><div class="big" style="font-size:22px">%s</div>'
             '<div class="muted">%s</div></div></div></div>'
             '<div class="card"><div class="h4">البنود</div>%s'
-            '<div class="row" style="padding-top:9px;margin-top:6px;border-top:2px solid #294059">'
+            '<div class="row" style="padding-top:9px;margin-top:6px;border-top:2px solid #e6eaf0">'
             '<b>الإجمالي</b><b>%s %s</b></div>'
             '<div class="row muted"><span>المتبقّي</span><span>%s</span></div></div>'
         ) % (esc(m.name), esc(str(m.invoice_date or '')), esc(self._fmt(m.amount_total)), esc(cur),
@@ -736,7 +761,7 @@ class CafmMobile(http.Controller):
         state_lbl = dict(w._fields['state'].selection)
         rows = Markup('')
         def _kv(k, v):
-            return Markup('<div class="row" style="padding:6px 0;border-top:1px solid #294059">'
+            return Markup('<div class="row" style="padding:6px 0;border-top:1px solid #e6eaf0">'
                           '<span class="muted">%s</span><b>%s</b></div>') % (esc(k), esc(v))
         rows += _kv('المرفق', w.facility_id.name or '—')
         if w.location_id:
@@ -881,28 +906,28 @@ class CafmDashboard(http.Controller):
         for o in env['care.cafm.observation'].search([], limit=6):
             sc = {'critical': '#f2603f', 'high': '#f2603f', 'medium': '#f5b638'}.get(o.severity, '#4aa8ff')
             feed += Markup('<div style="border-inline-start:3px solid %s;padding-inline-start:10px;margin:8px 0;font-size:12.5px">'
-                           '<b>%s</b><div style="color:#9cb2cd;font-size:11.5px">📍 %s · %s</div></div>'
+                           '<b>%s</b><div style="color:#71809a;font-size:11.5px">📍 %s · %s</div></div>'
                            ) % (sc, esc(o.title), esc(o.location_id.name or '—'),
                                 esc(dict(o._fields['state'].selection).get(o.state)))
 
         ring = ('#37c98a' if sla >= 90 else '#f5b638' if sla >= 75 else '#f2603f')
         page = ("""<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>غرفة قيادة CAFM</title>
-<style>body{margin:0;background:#0d1826;color:#e9f1fb;font-family:"Segoe UI",Tahoma,system-ui,"Noto Sans Arabic",sans-serif;direction:rtl}
+<style>body{margin:0;background:#f4f6fa;color:#14202b;font-family:"Segoe UI",Tahoma,system-ui,"Noto Sans Arabic",sans-serif;direction:rtl}
 .top{background:linear-gradient(135deg,#1e5eff,#0b3ec9);padding:18px 22px;font-weight:900;font-size:20px;display:flex;justify-content:space-between;align-items:center}
 .top a{color:#dbe7ff;font-size:13px;text-decoration:none}
 .wrap{max-width:1080px;margin:0 auto;padding:18px}
 .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
 @media(max-width:900px){.kpis{grid-template-columns:repeat(3,1fr)}}@media(max-width:560px){.kpis{grid-template-columns:repeat(2,1fr)}}
-.kpi{background:#16273d;border:1px solid #274261;border-radius:13px;padding:14px;text-align:center;display:block;color:inherit;text-decoration:none}
+.kpi{background:#ffffff;border:1px solid #e6eaf0;border-radius:13px;padding:14px;text-align:center;display:block;color:inherit;text-decoration:none}
 a.kpi:hover{border-color:#4aa8ff;background:#1b3050}
-.kpi .n{font-size:26px;font-weight:900}.kpi .l{font-size:11px;color:#9cb2cd;margin-top:2px}
+.kpi .n{font-size:26px;font-weight:900}.kpi .l{font-size:11px;color:#71809a;margin-top:2px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
 @media(max-width:820px){.grid{grid-template-columns:1fr}}
-.card{background:#16273d;border:1px solid #274261;border-radius:14px;padding:16px}
+.card{background:#ffffff;border:1px solid #e6eaf0;border-radius:14px;padding:16px}
 .card h3{margin:0 0 10px;font-size:15px}
 table{width:100%%;border-collapse:collapse;font-size:12.5px}
-th{text-align:right;color:#9cb2cd;font-size:11.5px;padding:6px 10px;border-bottom:1px solid #274261}
+th{text-align:right;color:#71809a;font-size:11.5px;padding:6px 10px;border-bottom:1px solid #e6eaf0}
 </style></head><body>
 <div class="top"><div>🏗️ غرفة قيادة CAFM</div><a href="/cafm/m">📱 التطبيق</a></div>
 <div class="wrap">
