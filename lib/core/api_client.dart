@@ -558,6 +558,24 @@ class ApiClient {
               await http.get(_u('/client/asset/$id'), headers: await _headers())))['data'] as Map);
 
   // ---- maintenance service --------------------------------------------------
+  // ---- support desk (Odoo Helpdesk) ------------------------------------------
+  Future<Map<String, dynamic>> supportTickets() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/support/tickets'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> supportTicket(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/support/ticket/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> supportCreate(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/support/ticket/create'), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<Map<String, dynamic>> supportReply(int id, String body) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/support/ticket/$id/reply'), headers: await _headers(),
+              body: jsonEncode({'body': body}))))['data'] as Map);
+
   // ---- material issue policy (client / admin) --------------------------------
   Future<Map<String, dynamic>> invPolicy({int? storeId}) async =>
       Map<String, dynamic>.from((await _handle(await http.get(

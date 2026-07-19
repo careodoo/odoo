@@ -32,6 +32,7 @@ import 'maintenance_screen.dart';
 import 'chat_screen.dart';
 import 'nfc_provision_screen.dart';
 import 'material_policy_screen.dart';
+import 'support_screen.dart';
 
 /// A polished home for everything this user can reach — styled like the CARE 2
 /// CARE account page: a vibrant header, the systems rail (top icons) for
@@ -150,8 +151,7 @@ class MoreScreen extends StatelessWidget {
 
     // ===== Help & support (client-friendly extras) =====
     header(tr('المساعدة والدعم', 'Help & support'));
-    tile(Icons.support_agent_rounded, tr('تواصل مع الدعم', 'Contact support'), null, c: const Color(0xFF0891B2),
-        onTap: () => _contactSupport(context));
+    tile(Icons.support_agent_rounded, tr('الدعم الفني وطلباتي', 'Support & my tickets'), const SupportScreen(), c: const Color(0xFF0891B2));
     tile(Icons.help_outline_rounded, tr('كيف يعمل التطبيق', 'How the app works'), null, c: const Color(0xFF7C3AED),
         onTap: () => _howItWorks(context));
     tile(Icons.privacy_tip_outlined, tr('سياسة الخصوصية', 'Privacy policy'), null, c: const Color(0xFF16A34A),
@@ -335,22 +335,6 @@ class MoreScreen extends StatelessWidget {
         title: Text(tr('المظهر', 'Theme')),
         content: Text(tr('يتبع التطبيق مظهر جهازك (فاتح/داكن) تلقائياً.', 'The app follows your device light/dark theme automatically.')),
         actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('حسناً', 'OK')))],
-      ));
-
-  void _contactSupport(BuildContext context) => showModalBottomSheet(context: context, backgroundColor: Colors.transparent, builder: (_) => Container(
-        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
-        padding: const EdgeInsets.all(20),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [const Icon(Icons.support_agent_rounded, color: Color(0xFF0891B2)), const SizedBox(width: 8),
-            Text(tr('تواصل مع الدعم', 'Contact support'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16))]),
-          const SizedBox(height: 14),
-          ListTile(leading: const Icon(Icons.phone_rounded, color: Color(0xFF16A34A)), title: const Text('+965 1880 011'),
-            onTap: () => _openUrl(context, 'tel:+9651880011')),
-          ListTile(leading: const Icon(Icons.email_rounded, color: Color(0xFFC0392B)), title: const Text('info@care-kw.com'),
-            onTap: () => _openUrl(context, 'mailto:info@care-kw.com')),
-          ListTile(leading: const Icon(Icons.language_rounded, color: Color(0xFF0891B2)), title: const Text('care-kw.com'),
-            onTap: () => _openUrl(context, 'https://care-kw.com')),
-        ]),
       ));
 
   void _howItWorks(BuildContext context) => showDialog(context: context, builder: (_) => AlertDialog(
