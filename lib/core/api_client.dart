@@ -563,6 +563,35 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/app/config'))))['data'] as Map);
 
+  // ---- valet parking ---------------------------------------------------------
+  Future<Map<String, dynamic>> valetBoard() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/valet/board'), headers: await _headers())))['data'] as Map);
+
+  Future<List<dynamic>> valetTickets({String? state, String? q}) async {
+    final p = <String, String>{};
+    if (state != null) p['state'] = state;
+    if (q != null && q.isNotEmpty) p['q'] = q;
+    final qs = p.entries.map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}').join('&');
+    return List<dynamic>.from((await _handle(await http.get(
+        _u('/valet/tickets${qs.isEmpty ? '' : '?$qs'}'), headers: await _headers())))['data'] as List);
+  }
+
+  Future<Map<String, dynamic>> valetCreate(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/valet/ticket/create'), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  /// action: park | request | deliver | cancel
+  Future<Map<String, dynamic>> valetAction(int id, String action, {Map<String, dynamic>? body}) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/valet/ticket/$id/$action'), headers: await _headers(),
+              body: jsonEncode(body ?? {}))))['data'] as Map);
+
+  Future<Map<String, dynamic>> valetShift(String action, {int? facilityId}) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/valet/shift/$action'), headers: await _headers(),
+              body: jsonEncode({if (facilityId != null) 'facility_id': facilityId}))))['data'] as Map);
+
   // ---- support desk (Odoo Helpdesk) ------------------------------------------
   Future<Map<String, dynamic>> supportTickets() async =>
       Map<String, dynamic>.from((await _handle(

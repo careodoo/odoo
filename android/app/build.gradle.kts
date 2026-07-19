@@ -23,6 +23,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // flutter_local_notifications schedules with java.time, which needs
+        // desugaring to run on the older API levels we still support.
+        isCoreLibraryDesugaringEnabled = true
     }
 
     defaultConfig {
@@ -70,6 +73,7 @@ kotlin {
 // releases ship 16 KB-aligned binaries. Gradle resolves to the highest version,
 // so declaring them here upgrades what the plugin brings in.
 dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     implementation("com.google.mlkit:barcode-scanning:17.3.0")
     implementation("androidx.camera:camera-core:1.4.2")
     implementation("androidx.camera:camera-camera2:1.4.2")

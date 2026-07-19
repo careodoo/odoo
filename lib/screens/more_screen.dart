@@ -33,6 +33,7 @@ import 'chat_screen.dart';
 import 'nfc_provision_screen.dart';
 import 'material_policy_screen.dart';
 import 'support_screen.dart';
+import 'valet_screen.dart';
 import 'update_gate.dart';
 
 /// A polished home for everything this user can reach — styled like the CARE 2
@@ -95,6 +96,7 @@ class MoreScreen extends StatelessWidget {
     if (!isField) tile(Icons.inbox_rounded, tr('طلبات الخدمة', 'Service requests'), const RequestsScreen(), c: const Color(0xFFE6295C));
     tile(Icons.event_repeat_rounded, tr('جدولة الأعمال', 'Work schedules'), const SchedulesScreen(), c: const Color(0xFF0D9488));
     if (!isField) tile(Icons.handyman_rounded, tr('الصيانة', 'Maintenance'), const MaintenanceScreen(), c: const Color(0xFFF7A23B));
+    tile(Icons.directions_car_rounded, tr('صف السيارات', 'Valet parking'), const ValetScreen(), c: const Color(0xFFB45309));
     if (p.canAddWorkers)
       tile(Icons.campaign_rounded, tr('مركز الإشعارات', 'Notification center'), const NotifySendScreen(), c: const Color(0xFFEA580C));
     if (p.role != 'client') tile(Icons.qr_code_scanner_rounded, tr('مسح رمز الموقع', 'Scan location'), const ScanScreen(), c: const Color(0xFF0891B2));
