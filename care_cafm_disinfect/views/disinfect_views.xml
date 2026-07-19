@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_dis_round_tree" model="ir.ui.view">
+    <field name="name">care.disinfect.round.tree</field><field name="model">care.disinfect.round</field>
+    <field name="arch" type="xml">
+      <tree decoration-danger="state == 'rework'">
+        <field name="name"/><field name="facility_id"/><field name="location_id"/>
+        <field name="round_type"/><field name="method"/><field name="done_at"/>
+        <field name="product_id"/><field name="contact_minutes"/><field name="required_minutes"/>
+        <field name="contact_ok"/><field name="state" widget="badge"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_dis_round_form" model="ir.ui.view">
+    <field name="name">care.disinfect.round.form</field><field name="model">care.disinfect.round</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="action_done" type="object" string="إنهاء الجولة" class="btn-primary"
+                  invisible="state != 'draft'"/>
+          <button name="action_reset" type="object" string="إعادة للمسودة"
+                  invisible="state == 'draft'"/>
+          <field name="state" widget="statusbar"/>
+        </header>
+        <sheet>
+          <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+          <group>
+            <group><field name="facility_id"/><field name="location_id"/>
+                   <field name="round_type"/><field name="method"/></group>
+            <group><field name="done_at"/><field name="done_by"/><field name="product_id"/>
+                   <field name="dilution_used"/></group>
+          </group>
+          <group string="زمن التلامس — الفارق بين التعقيم والمسح">
+            <group><field name="contact_minutes"/><field name="required_minutes" readonly="1"/></group>
+            <group><field name="contact_ok" readonly="1"/><field name="ventilated"/>
+                   <field name="fresh_cloth"/></group>
+          </group>
+          <group string="الأسطح المعقَّمة">
+            <group><field name="hit_handles"/><field name="hit_rails"/><field name="hit_switches"/></group>
+            <group><field name="hit_equipment"/><field name="hit_sanitary"/></group>
+          </group>
+          <group string="التحقق بمسح ATP">
+            <group><field name="atp_tested"/><field name="atp_reading"/></group>
+            <group><field name="atp_pass" readonly="1"/></group>
+          </group>
+          <field name="note" placeholder="ملاحظات…"/>
+        </sheet>
+        <div class="oe_chatter"><field name="message_ids"/></div>
+      </form>
+    </field>
+  </record>
+  <record id="action_dis_round" model="ir.actions.act_window">
+    <field name="name">جولات التعقيم</field><field name="res_model">care.disinfect.round</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+  <record id="action_dis_product" model="ir.actions.act_window">
+    <field name="name">المطهّرات المعتمدة</field><field name="res_model">care.disinfect.product</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+  <menuitem id="menu_dis_root" name="التعقيم" sequence="50"/>
+  <menuitem id="menu_dis_rounds" name="الجولات" parent="menu_dis_root" action="action_dis_round" sequence="10"/>
+  <menuitem id="menu_dis_products" name="المطهّرات" parent="menu_dis_root" action="action_dis_product" sequence="20"/>
+</odoo>

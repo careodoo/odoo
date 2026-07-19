@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_tank_tree" model="ir.ui.view">
+    <field name="name">care.tank.tank.tree</field><field name="model">care.tank.tank</field>
+    <field name="arch" type="xml">
+      <tree decoration-danger="status == 'overdue'" decoration-warning="status == 'due_soon'"
+            decoration-muted="status == 'never'">
+        <field name="code"/><field name="facility_id"/><field name="position"/>
+        <field name="capacity_gal"/><field name="use"/><field name="last_cleaned"/>
+        <field name="next_due"/><field name="days_left"/><field name="last_lab"/>
+        <field name="status" widget="badge"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_tank_form" model="ir.ui.view">
+    <field name="name">care.tank.tank.form</field><field name="model">care.tank.tank</field>
+    <field name="arch" type="xml">
+      <form>
+        <header><button name="action_start_cleaning" type="object" string="بدء تنظيف"
+                        class="btn-primary"/></header>
+        <sheet>
+          <div class="oe_title"><h1><field name="code" placeholder="رقم الخزان"/></h1></div>
+          <group>
+            <group><field name="facility_id"/><field name="location_id"/><field name="position"/>
+                   <field name="material"/></group>
+            <group><field name="capacity_gal"/><field name="use"/><field name="cycle_months"/>
+                   <field name="last_cleaned" readonly="1"/><field name="next_due" readonly="1"/>
+                   <field name="status" readonly="1"/><field name="last_lab" readonly="1"/></group>
+          </group>
+          <field name="cleaning_ids">
+            <tree><field name="name"/><field name="clean_date"/><field name="crew_id"/>
+                  <field name="completeness"/><field name="lab_result"/>
+                  <field name="certificate_no"/><field name="state"/></tree>
+          </field>
+        </sheet>
+        <div class="oe_chatter"><field name="message_ids"/></div>
+      </form>
+    </field>
+  </record>
+  <record id="view_tankclean_form" model="ir.ui.view">
+    <field name="name">care.tank.cleaning.form</field><field name="model">care.tank.cleaning</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="action_done" type="object" string="إتمام وإصدار الشهادة"
+                  class="btn-primary" invisible="state != 'draft'"/>
+          <button name="action_cancel" type="object" string="إلغاء" invisible="state != 'draft'"/>
+          <field name="state" widget="statusbar"/>
+        </header>
+        <sheet>
+          <div class="oe_title"><h1><field name="name" readonly="1"/></h1>
+            <field name="certificate_no" readonly="1"/></div>
+          <group>
+            <group><field name="tank_id"/><field name="clean_date"/><field name="crew_id"/></group>
+            <group><field name="completeness" widget="progressbar"/>
+                   <field name="chlorine_ppm"/><field name="contact_minutes"/>
+                   <field name="residual_ppm"/></group>
+          </group>
+          <group string="خطوات التنظيف — الشهادة لا تصدر قبل إتمامها">
+            <group><field name="step_drained"/><field name="step_sediment"/>
+                   <field name="step_scrubbed"/></group>
+            <group><field name="step_disinfected"/><field name="step_rinsed"/>
+                   <field name="step_refilled"/></group>
+          </group>
+          <group string="التحليل المخبري">
+            <group><field name="lab_sample_taken"/><field name="lab_result"/></group>
+            <group><field name="lab_reference"/></group>
+          </group>
+          <field name="findings" placeholder="ملاحظات…"/>
+        </sheet>
+        <div class="oe_chatter"><field name="message_ids"/></div>
+      </form>
+    </field>
+  </record>
+  <record id="action_tank" model="ir.actions.act_window">
+    <field name="name">الخزانات</field><field name="res_model">care.tank.tank</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+  <record id="action_tank_cleaning" model="ir.actions.act_window">
+    <field name="name">عمليات التنظيف</field><field name="res_model">care.tank.cleaning</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+  <menuitem id="menu_tank_root" name="خزانات المياه" sequence="49"/>
+  <menuitem id="menu_tank_tanks" name="سجل الخزانات" parent="menu_tank_root" action="action_tank" sequence="10"/>
+  <menuitem id="menu_tank_clean" name="عمليات التنظيف" parent="menu_tank_root" action="action_tank_cleaning" sequence="20"/>
+</odoo>

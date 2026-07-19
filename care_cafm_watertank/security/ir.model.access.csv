@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_tank_user,tank.user,model_care_tank_tank,base.group_user,1,1,1,0
+access_tank_mgr,tank.mgr,model_care_tank_tank,base.group_system,1,1,1,1
+access_tankclean_user,tankclean.user,model_care_tank_cleaning,base.group_user,1,1,1,0
+access_tankclean_mgr,tankclean.mgr,model_care_tank_cleaning,base.group_system,1,1,1,1

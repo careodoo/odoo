@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_dis_prod_user,dis.prod.user,model_care_disinfect_product,base.group_user,1,0,0,0
+access_dis_prod_mgr,dis.prod.mgr,model_care_disinfect_product,base.group_system,1,1,1,1
+access_dis_round_user,dis.round.user,model_care_disinfect_round,base.group_user,1,1,1,0
+access_dis_round_mgr,dis.round.mgr,model_care_disinfect_round,base.group_system,1,1,1,1

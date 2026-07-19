@@ -245,6 +245,49 @@ def REGISTRY():
                                    'ضغط الفلتر %.2f' % r.filter_pressure if r.filter_pressure else ''])),
                                ), icon='🧹'),
         ]),
+        'watertank': ('تنظيف خزانات المياه', '🚰', [
+            Section('tanks', 'سجل الخزانات', 'care.tank.tank',
+                    _r_generic(lambda r: r.name,
+                               lambda r: ' · '.join(filter(None, [
+                                   r.location_id.name or '',
+                                   'آخر تنظيف %s' % _d(r.last_cleaned, 10) if r.last_cleaned
+                                   else 'لم يُنظَّف بعد',
+                                   'القادم %s' % _d(r.next_due, 10) if r.next_due else ''])),
+                               lambda r: _state_pill(r, 'status',
+                                                     'crit' if r.status in ('overdue', 'never')
+                                                     else 'warn' if r.status == 'due_soon' else 'ok')
+                               + _state_pill(r, 'use', 'info')), icon='🛢️'),
+            Section('cleanings', 'عمليات التنظيف', 'care.tank.cleaning',
+                    _r_generic(lambda r: '%s — %s' % (r.tank_id.name or '', _d(r.clean_date, 10)),
+                               lambda r: ' · '.join(filter(None, [
+                                   'اكتمال %s%%' % r.completeness,
+                                   'شهادة %s' % r.certificate_no if r.certificate_no else '',
+                                   'تقرير %s' % r.lab_reference if r.lab_reference else ''])),
+                               lambda r: ([('مخبريًا: مطابقة', 'ok')] if r.lab_result == 'pass'
+                                          else [('مخبريًا: غير مطابقة', 'crit')] if r.lab_result
+                                          else []) + _state_pill(r)), icon='🧾'),
+        ]),
+        'disinfection': ('التعقيم', '🧴', [
+            Section('rounds', 'جولات التعقيم', 'care.disinfect.round',
+                    _r_generic(lambda r: '%s — %s' % (r.name, _d(r.done_at)),
+                               lambda r: ' · '.join(filter(None, [
+                                   r.location_id.name or '',
+                                   r.product_id.name or '',
+                                   'تلامس %s د (المطلوب %s)' % (r.contact_minutes,
+                                                                 r.required_minutes)])),
+                               lambda r: ([('التلامس مُحترَم', 'ok')] if r.contact_ok
+                                          else [('تلامس أقل من المطلوب', 'crit')])
+                               + ([('ATP %s' % r.atp_reading,
+                                    'ok' if r.atp_pass else 'warn')] if r.atp_tested else [])
+                               + _state_pill(r)), icon='🧽'),
+            Section('products', 'المطهّرات المعتمدة', 'care.disinfect.product',
+                    _r_generic(lambda r: '%s — %s' % (r.name, r.name_en or ''),
+                               lambda r: '%s · تخفيف %s · تلامس %s دقيقة' % (
+                                   r.active_ingredient or '', r.dilution or '—',
+                                   r.contact_minutes),
+                               lambda r: ([('آمن في مناطق الأغذية', 'ok')] if r.food_safe else [])),
+                    scope='global', icon='🧪'),
+        ]),
         'inventory': ('المخزون', '📦', [
             Section('stores', 'المخازن', 'care.cafm.store',
                     _r_generic(lambda r: r.display_name), icon='🏬'),
