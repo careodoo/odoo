@@ -36,7 +36,7 @@ _PAGE = """<!doctype html><html lang="ar" dir="rtl"><head>
 <style>
 :root{--ac:__AC__}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:#0d1826;color:#e9f1fb;font-family:"Segoe UI",Tahoma,system-ui,"Noto Sans Arabic",sans-serif;direction:rtl;padding-bottom:20px}
+body{margin:0;background:#0d1826;color:#e9f1fb;font-family:"Segoe UI",Tahoma,system-ui,"Noto Sans Arabic",sans-serif;direction:rtl;padding-bottom:78px}
 a{color:inherit;text-decoration:none}
 .top{position:sticky;top:0;z-index:5;background:linear-gradient(150deg,var(--ac),#0b1220);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 6px 18px -8px rgba(0,0,0,.6)}
 .top .t{font-weight:900;font-size:17px}
@@ -62,20 +62,115 @@ h1,h2,h3{margin:0}
 input,select,textarea{width:100%;background:#0d1826;border:1px solid #294059;color:#e9f1fb;border-radius:10px;padding:10px;font-family:inherit;margin-top:6px}
 label{font-size:12.5px;color:#9cb2cd;font-weight:700}
 .h4{font-size:14px;font-weight:800;margin:0 0 3px}
+/* --- persistent navigation: every page used to be a dead end with one
+       "back" link, so moving sideways meant walking to the launcher --- */
+.nav{position:fixed;bottom:0;left:0;right:0;z-index:9;display:flex;
+     background:#0f1c2e;border-top:1px solid #294059;padding:6px 4px 8px}
+.nav a{flex:1;text-align:center;color:#7f97b4;font-size:9.5px;font-weight:700;padding:4px 2px}
+.nav a .i{display:block;font-size:19px;margin-bottom:2px;filter:grayscale(.5);opacity:.75}
+.nav a.on{color:var(--ac)}.nav a.on .i{filter:none;opacity:1}
+.crumb{font-size:11.5px;color:#9cb2cd;padding:9px 16px 0}
+.crumb a{color:#4aa8ff}
+.sec{display:flex;align-items:center;justify-content:space-between;margin:17px 0 9px}
+.sec h3{font-size:14.5px;font-weight:900}
+.sec a{font-size:12px;color:var(--ac);font-weight:800}
+.empty{text-align:center;padding:34px 16px;color:#7f97b4}
+.empty .i{font-size:42px;opacity:.55;display:block;margin-bottom:8px}
+.pager{display:flex;gap:8px;justify-content:center;margin:14px 0 4px}
+.pager a,.pager span{padding:7px 13px;border-radius:9px;font-size:12.5px;font-weight:800;
+  background:#152438;border:1px solid #294059}
+.pager .cur{background:var(--ac);color:#0b1220;border-color:var(--ac)}
+.pager .off{opacity:.35}
 </style></head><body>
 <div class="top"><div><div class="t">__TITLE__</div></div><a class="back" href="__BACK__">↩ رجوع</a></div>
-<div class="wrap">__BODY__</div></body></html>"""
+__CRUMB__
+<div class="wrap">__BODY__</div>
+__NAV__
+</body></html>"""
 
 
 def _csrf():
     return Markup('<input type="hidden" name="csrf_token" value="%s"/>') % request.csrf_token()
 
 
-def _shell(title, body, accent='#f7a23b', back='/cafm/m'):
+def _nav(active=None):
+    """The five places anyone actually moves between, chosen by what this user
+    is. Rendered on every page so no page is a dead end."""
+    env = request.env
+    items = [('/cafm/m', '🏠', 'الرئيسية', 'home')]
+    emp = env.user.employee_id
+    is_staff = env.user.has_group('base.group_system') or env.user.has_group('base.group_erp_manager')
+    if emp:
+        items += [('/cafm/m/worker', '🧹', 'مهامّي', 'worker'),
+                  ('/cafm/m/scan', '▣', 'مسح', 'scan')]
+    else:
+        items += [('/cafm/m/workorders', '🛠️', 'الأعمال', 'wo'),
+                  ('/cafm/m/quality', '🔎', 'ملاحظة', 'quality')]
+    if is_staff or emp:
+        items.append(('/cafm/m/supervisor', '🦺', 'الإشراف', 'sup'))
+    else:
+        items.append(('/cafm/m/client', '🧑\u200d💼', 'بوابتي', 'client'))
+    unread = 0
+    try:
+        unread = env['care.cafm.notification'].sudo().search_count(
+            [('user_id', '=', env.user.id), ('is_read', '=', False)])
+    except Exception:
+        pass
+    bell = '🔔' if not unread else '🔴'
+    items.append(('/cafm/m/inbox', bell, 'الإشعارات%s' % (' (%s)' % unread if unread else ''), 'inbox'))
+    out = Markup('<div class="nav">')
+    for href, icon, label, key in items:
+        out += Markup('<a class="%s" href="%s"><span class="i">%s</span>%s</a>') % (
+            'on' if key == active else '', href, icon, esc(label))
+    return out + Markup('</div>')
+
+
+def _crumb(trail):
+    """trail: [(label, href_or_None), ...] — the last entry is the current page."""
+    if not trail:
+        return Markup('')
+    out = Markup('<div class="crumb">')
+    for i, (label, href) in enumerate(trail):
+        if i:
+            out += Markup(' › ')
+        out += (Markup('<a href="%s">%s</a>') % (href, esc(label))) if href else esc(label)
+    return out + Markup('</div>')
+
+
+def sec(title, more_href=None, more_label='عرض الكل'):
+    """A section heading, optionally with a link to the full list."""
+    tail = (Markup('<a href="%s">%s ›</a>') % (more_href, esc(more_label))) if more_href else Markup('')
+    return Markup('<div class="sec"><h3>%s</h3>%s</div>') % (esc(title), tail)
+
+
+def empty(text, icon='📭'):
+    return Markup('<div class="empty"><span class="i">%s</span>%s</div>') % (icon, esc(text))
+
+
+def pager(page, pages, url):
+    """url must contain a {p} placeholder. Long lists were silently truncated
+    at a hard limit with no way to reach the rest."""
+    if pages <= 1:
+        return Markup('')
+    out = Markup('<div class="pager">')
+    prev_cls = 'off' if page <= 1 else ''
+    out += Markup('<a class="%s" href="%s">‹</a>') % (Markup(prev_cls), url.format(p=max(1, page - 1)))
+    for n in range(max(1, page - 2), min(pages, page + 2) + 1):
+        out += (Markup('<span class="cur">%s</span>') % n) if n == page else (
+            Markup('<a href="%s">%s</a>') % (url.format(p=n), n))
+    next_cls = 'off' if page >= pages else ''
+    out += Markup('<a class="%s" href="%s">›</a>') % (Markup(next_cls), url.format(p=min(pages, page + 1)))
+    return out + Markup('</div>')
+
+
+def _shell(title, body, accent='#f7a23b', back='/cafm/m', nav=None, crumb=None):
     """Full mobile HTML page shell (RTL, dark, self-contained). Built with
     .replace (not %-format) so literal % in the CSS is safe."""
     page = (_PAGE.replace('__AC__', accent).replace('__BACK__', back)
-            .replace('__TITLE__', str(esc(title))).replace('__BODY__', str(body)))
+            .replace('__TITLE__', str(esc(title)))
+            .replace('__CRUMB__', str(_crumb(crumb or [])))
+            .replace('__NAV__', str(_nav(nav)))
+            .replace('__BODY__', str(body)))
     return Markup(page)
 
 
@@ -121,7 +216,7 @@ class CafmMobile(http.Controller):
             '<div class="grid">%s</div>'
             '<p class="muted" style="margin-top:14px">تطبيق واحد يتكيّف مع كل دور وخدمة. مرحباً %s.</p>'
         ) % (wo_mine, obs_open, tiles, esc(env.user.name))
-        return _shell('CAFM', body, back='/web')
+        return _shell('CAFM', body, back='/web', nav='home')
 
     # ---------------- worker (service-flavoured) ----------------
     @http.route(['/cafm/m/worker', '/cafm/m/agriculture'], type='http', auth='user', website=False)
@@ -281,7 +376,7 @@ class CafmMobile(http.Controller):
             '<a class="btn g" href="/cafm/m/quality">＋ رصد ملاحظة تصحيح</a>'
         ) % (WO.search_count(base), '#f2603f' if unassigned else '#e9f1fb',
              WO.search_count(base + [('employee_id', '=', False)]), len(obs), who, wo_rows)
-        return _shell('المشرف', body, ACCENTS['maintenance'])
+        return _shell('المشرف', body, ACCENTS['maintenance'], nav='sup')
 
     @http.route('/cafm/m/wo/<int:wid>/assign', type='http', auth='user',
                 methods=['POST'], website=False, csrf=True)
@@ -318,7 +413,7 @@ class CafmMobile(http.Controller):
             '<label style="margin-top:8px">الوصف</label><textarea name="description" rows="2"></textarea>'
             '<button class="btn" type="submit">＋ تسجيل الملاحظة</button></div></form>'
         ) % (esc(request.csrf_token()), fopts, sopts)
-        return _shell('الجودة', body, ACCENTS['pest'])
+        return _shell('الجودة', body, ACCENTS['pest'], nav='quality')
 
     @http.route('/cafm/m/obs/new', type='http', auth='user', website=False, methods=['POST'], csrf=True)
     def obs_new(self, **post):
@@ -551,7 +646,7 @@ class CafmMobile(http.Controller):
         return request.redirect('/cafm/m/invoice/%s' % mid)
 
     @http.route('/cafm/m/workorders', type='http', auth='user', website=False)
-    def m_workorders(self, state='open', **kw):
+    def m_workorders(self, state='open', page=1, q=None, **kw):
         env = request.env
         pids, facs, types, codes, name = self._client_scope(env)
         WO = env['care.cafm.workorder'].sudo()
@@ -562,9 +657,26 @@ class CafmMobile(http.Controller):
             dom.append(('state', 'not in', ('done', 'verified', 'cancelled')))
         elif state and state != 'all':
             dom.append(('state', '=', state))
-        wos = WO.search(dom, order='request_datetime desc', limit=200)
+        q = (q or '').strip()
+        if q:
+            dom += ['|', '|', ('title', 'ilike', q), ('name', 'ilike', q),
+                    ('description', 'ilike', q)]
+        # The list used to stop dead at 200 rows with nothing to say so, and no
+        # way to reach row 201.
+        PER = 25
+        try:
+            page = max(1, int(page))
+        except (TypeError, ValueError):
+            page = 1
         if state == 'overdue':
-            wos = wos.filtered('is_overdue')
+            allw = WO.search(dom, order='request_datetime desc').filtered('is_overdue')
+            total = len(allw)
+            wos = allw[(page - 1) * PER: page * PER]
+        else:
+            total = WO.search_count(dom)
+            wos = WO.search(dom, order='request_datetime desc',
+                            limit=PER, offset=(page - 1) * PER)
+        pages = max(1, (total + PER - 1) // PER)
         state_lbl = dict(WO._fields['state'].selection)
         # filter tabs
         tabs = Markup('')
@@ -573,10 +685,14 @@ class CafmMobile(http.Controller):
             tabs += Markup('<a class="%s" style="margin-inline-end:6px" href="/cafm/m/workorders?state=%s">%s</a>'
                            ) % (Markup(cls), Markup(code), esc(lbl))
         body = Markup('<div class="card"><div class="row"><b>أوامر العمل</b>'
-                      '<span class="muted">%s سجل</span></div>'
-                      '<div style="margin-top:9px">%s</div></div>') % (len(wos), tabs)
+                      '<span class="muted">%s سجل · صفحة %s من %s</span></div>'
+                      '<div style="margin-top:9px">%s</div>'
+                      '<form method="get" action="/cafm/m/workorders" style="margin-top:9px">'
+                      '<input type="hidden" name="state" value="%s"/>'
+                      '<input name="q" value="%s" placeholder="ابحث في العنوان أو الرقم…"/>'
+                      '</form></div>') % (total, page, pages, tabs, esc(state or 'open'), esc(q))
         if not wos:
-            body += Markup('<div class="card muted">لا أوامر عمل.</div>')
+            body += empty('لا أوامر عمل في هذا التصنيف.', '🛠️')
         for w in wos:
             sev = ''
             if w.priority == '3':
@@ -593,6 +709,8 @@ class CafmMobile(http.Controller):
                  esc(state_lbl.get(w.state, w.state)),
                  Markup('<div style="margin-top:7px">%s%s</div>') % (Markup(sev), od) if (sev or w.is_overdue) else Markup(''),
                  Markup(''))
+        body += pager(page, pages,
+                      '/cafm/m/workorders?state=%s&q=%s&page={p}' % (state or 'open', q))
         return _shell('أوامر العمل', body, ACCENTS.get('maintenance', '#f7a23b'))
 
     @http.route('/cafm/m/workorder/<int:wid>', type='http', auth='user', website=False)
