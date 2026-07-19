@@ -223,10 +223,10 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
   (Color, String) _severity(Map r) {
     final s = '${r['severity'] ?? ''}'.toLowerCase();
     if (s.isEmpty || s == 'null') return (Colors.transparent, '');
-    if (s.contains('critical') || s.contains('حرج') || s.contains('عالي') || s.contains('high')) {
+    if (s.contains('critical') || s.contains(tr('حرج', 'Critical')) || s.contains(tr('عالي', 'High')) || s.contains('high')) {
       return (const Color(0xFFDC2626), '${r['severity']}');
     }
-    if (s.contains('medium') || s.contains('متوسط')) return (const Color(0xFFF7A23B), '${r['severity']}');
+    if (s.contains('medium') || s.contains(tr('متوسط', 'Medium'))) return (const Color(0xFFF7A23B), '${r['severity']}');
     return (const Color(0xFF16A34A), '${r['severity']}');
   }
 

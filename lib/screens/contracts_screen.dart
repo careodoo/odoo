@@ -122,7 +122,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
         for (final a in copies) OutlinedButton.icon(
           onPressed: _busy ? null : () => _openCopy(a as Map),
           icon: const Icon(Icons.download, size: 16),
-          label: Text('${(a as Map)['name'] ?? 'نسخة'}', overflow: TextOverflow.ellipsis)),
+          label: Text('${(a as Map)['name'] ?? tr('نسخة', 'Copy')}', overflow: TextOverflow.ellipsis)),
       ]),
     ])));
   }

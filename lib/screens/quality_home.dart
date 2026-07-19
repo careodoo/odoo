@@ -207,16 +207,16 @@ class _QualityHomeState extends State<QualityHome> {
 
   Widget _actions() {
     final items = <(IconData, String, String, Color, VoidCallback)>[
-      (Icons.note_add_rounded, 'ملاحظة كاملة', 'Full note', _teal, () async {
+      (Icons.note_add_rounded, tr('ملاحظة كاملة', 'Full note'), 'Full note', _teal, () async {
         final ok = await ObservationCreateSheet.open(context);
         if (ok == true) _load();
       }),
-      (Icons.fact_check_rounded, 'كل الملاحظات', 'All notes', const Color(0xFF0891B2), () => _go(const QualityScreen())),
-      (Icons.cleaning_services_rounded, 'تدقيق النظافة', 'Cleaning audit', const Color(0xFF0EA5E9),
+      (Icons.fact_check_rounded, tr('كل الملاحظات', 'All notes'), 'All notes', const Color(0xFF0891B2), () => _go(const QualityScreen())),
+      (Icons.cleaning_services_rounded, tr('تدقيق النظافة', 'Cleaning audit'), 'Cleaning audit', const Color(0xFF0EA5E9),
           () => _go(const CleaningAuditScreen())),
-      (Icons.assignment_rounded, 'أوامر العمل', 'Work orders', _navy, () => _go(const WorkOrdersScreen())),
-      (Icons.qr_code_scanner_rounded, 'مسح موقع', 'Scan', const Color(0xFF0D9488), () => _go(const ScanScreen())),
-      (Icons.forum_rounded, 'التواصل', 'Messages', const Color(0xFF0E7490), () => _go(const ChatHubScreen())),
+      (Icons.assignment_rounded, tr('أوامر العمل', 'Work orders'), 'Work orders', _navy, () => _go(const WorkOrdersScreen())),
+      (Icons.qr_code_scanner_rounded, tr('مسح موقع', 'Scan location'), 'Scan', const Color(0xFF0D9488), () => _go(const ScanScreen())),
+      (Icons.forum_rounded, tr('التواصل', 'Messages'), 'Messages', const Color(0xFF0E7490), () => _go(const ChatHubScreen())),
     ];
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 14, 12, 4),

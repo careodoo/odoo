@@ -59,22 +59,22 @@ class WorkerHome extends StatelessWidget {
     void go(Widget s) => Navigator.push(context, MaterialPageRoute(builder: (_) => s));
 
     final actions = <(IconData, String, String, Color, VoidCallback)>[
-      (Icons.assignment_rounded, 'مهامي', 'My tasks', accent, () => go(const WorkOrdersScreen())),
-      (Icons.qr_code_scanner_rounded, 'مسح حضور', 'Check-in', const Color(0xFF0891B2), () => go(const ScanScreen())),
+      (Icons.assignment_rounded, tr('مهامي', 'My tasks'), 'My tasks', accent, () => go(const WorkOrdersScreen())),
+      (Icons.qr_code_scanner_rounded, tr('مسح حضور', 'Attendance scan'), 'Check-in', const Color(0xFF0891B2), () => go(const ScanScreen())),
       if (p.role == 'cleaning')
-        (Icons.fact_check_rounded, 'تدقيق النظافة', 'Cleaning audit', const Color(0xFF0EA5E9), () => go(const CleaningAuditScreen())),
+        (Icons.fact_check_rounded, tr('تدقيق النظافة', 'Cleaning audit'), 'Cleaning audit', const Color(0xFF0EA5E9), () => go(const CleaningAuditScreen())),
       if (p.role == 'agriculture')
-        (Icons.grass_rounded, 'مناطق الريّ', 'Irrigation', const Color(0xFF16A34A), () => go(const ServiceScreen(kind: 'agri', title: 'مناطق الريّ'))),
+        (Icons.grass_rounded, tr('مناطق الريّ', 'Irrigation zones'), 'Irrigation', const Color(0xFF16A34A), () => go(const ServiceScreen(kind: 'agri', title: 'مناطق الريّ'))),
       if (p.role == 'facade')
-        (Icons.roofing_rounded, 'تصاريح الارتفاع', 'Height permits', const Color(0xFF7C3AED), () => go(const ServiceScreen(kind: 'facade', title: 'تصاريح الواجهات'))),
-      (Icons.inventory_2_rounded, 'صرف مواد', 'Issue materials', const Color(0xFF0E7490), () => go(const ClientInventoryScreen())),
-      (Icons.forum_rounded, 'التواصل', 'Messages', const Color(0xFF0E7490), () => go(const ChatHubScreen())),
-      (Icons.workspace_premium_rounded, 'إنجازاتي', 'My achievements', const Color(0xFFF59E0B), () => go(const MyProfileScreen())),
-      (Icons.badge_rounded, 'ملفي', 'My file', const Color(0xFF0E7490), () => go(const WorkerFileScreen())),
+        (Icons.roofing_rounded, tr('تصاريح الارتفاع', 'Height permits'), 'Height permits', const Color(0xFF7C3AED), () => go(const ServiceScreen(kind: 'facade', title: 'تصاريح الواجهات'))),
+      (Icons.inventory_2_rounded, tr('صرف مواد', 'Issue materials'), 'Issue materials', const Color(0xFF0E7490), () => go(const ClientInventoryScreen())),
+      (Icons.forum_rounded, tr('التواصل', 'Messages'), 'Messages', const Color(0xFF0E7490), () => go(const ChatHubScreen())),
+      (Icons.workspace_premium_rounded, tr('إنجازاتي', 'My achievements'), 'My achievements', const Color(0xFFF59E0B), () => go(const MyProfileScreen())),
+      (Icons.badge_rounded, tr('ملفي', 'My file'), 'My file', const Color(0xFF0E7490), () => go(const WorkerFileScreen())),
       if (p.employeeId != null)
-        (Icons.fingerprint_rounded, 'حضوري', 'My attendance', const Color(0xFF6D28D9), () => go(EmployeeAttendanceScreen(employeeId: p.employeeId!, name: p.name))),
+        (Icons.fingerprint_rounded, tr('حضوري', 'My attendance'), 'My attendance', const Color(0xFF6D28D9), () => go(EmployeeAttendanceScreen(employeeId: p.employeeId!, name: p.name))),
       if (p.isSupervisor)
-        (Icons.dashboard_customize_rounded, 'لوحة المشرف', 'Supervisor', const Color(0xFF0D9488), () => go(const SupervisorScreen())),
+        (Icons.dashboard_customize_rounded, tr('لوحة المشرف', 'Supervisor board'), 'Supervisor', const Color(0xFF0D9488), () => go(const SupervisorScreen())),
     ];
 
     return Scaffold(

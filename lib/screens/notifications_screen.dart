@@ -56,7 +56,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               return _msg('خطأ: ${snap.error}');
             }
             final items = snap.data?.$1 ?? const [];
-            if (items.isEmpty) return _msg('لا إشعارات.');
+            if (items.isEmpty) return _msg(tr('لا إشعارات.', 'No notifications.'));
             return ListView.separated(
               padding: const EdgeInsets.all(12),
               itemCount: items.length,

@@ -314,7 +314,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
     final items = offers.isNotEmpty
         ? offers.map<Map<String, dynamic>>((o) => {'ic': o['icon'] ?? '🎉', 't': o['title'] ?? '', 's': o['subtitle'] ?? (o['code'] != null ? 'كود: ${o['code']}' : ''), 'img': o['image'], 'code': o['code'], 'c1': _hex(o['color'] as String?, C2C.navy), 'c2': _hex(o['color2'] as String?, C2C.navy2)}).toList()
         : [
-            {'ic': '🎉', 't': 'خصم 20% على أول حجز', 's': 'كود: WELCOME20', 'code': 'WELCOME20', 'c1': const Color(0xFF17547F), 'c2': const Color(0xFF0A2A44)},
+            {'ic': '🎉', 't': tr('خصم 20% على أول حجز', '20% off your first booking'), 's': tr('كود: WELCOME20', 'Code: WELCOME20'), 'code': 'WELCOME20', 'c1': const Color(0xFF17547F), 'c2': const Color(0xFF0A2A44)},
           ];
     _promoCount = items.length;
     return Column(children: [
@@ -437,10 +437,10 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
   /// Fast lanes to the things a returning customer opens most.
   Widget _quickActions() {
     final items = <(IconData, String, String, List<Color>, Widget)>[
-      (Icons.event_available_rounded, 'احجز خدمة', 'Book', C2C.gradFor(0), const C2CServiceListScreen(title: 'كل الخدمات')),
-      (Icons.card_membership_rounded, 'باقة اشتراك', 'Plans', C2C.gradFor(4), const C2CSubscriptionsScreen()),
-      (Icons.receipt_long_rounded, 'طلباتي', 'Orders', C2C.gradFor(1), const C2COrdersScreen()),
-      (Icons.description_rounded, 'عرض سعر', 'Quote', C2C.gradFor(3), const C2CContractsScreen()),
+      (Icons.event_available_rounded, tr('احجز خدمة', 'Book a service'), 'Book', C2C.gradFor(0), const C2CServiceListScreen(title: 'كل الخدمات')),
+      (Icons.card_membership_rounded, tr('باقة اشتراك', 'Subscription plan'), 'Plans', C2C.gradFor(4), const C2CSubscriptionsScreen()),
+      (Icons.receipt_long_rounded, tr('طلباتي', 'My orders'), 'Orders', C2C.gradFor(1), const C2COrdersScreen()),
+      (Icons.description_rounded, tr('عرض سعر', 'Get a quote'), 'Quote', C2C.gradFor(3), const C2CContractsScreen()),
     ];
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
@@ -882,7 +882,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
             child: Row(children: [
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text('${plan['name']}', style: TextStyle(fontWeight: FontWeight.w900, color: col, fontSize: 14)),
-                Text(tr('${plan['visits']} زيارة · ${plan['period'] == 'yearly' ? 'سنوي' : (plan['period'] == 'quarterly' ? 'ربع سنوي' : 'شهري')}',
+                Text(tr('${plan['visits']} زيارة · ${plan['period'] == 'yearly' ? 'سنوي' : (plan['period'] == 'quarterly' ? tr('ربع سنوي', 'Quarterly') : tr('شهري', 'Monthly'))}',
                         '${plan['visits']} visits'),
                     style: TextStyle(color: Colors.grey.shade600, fontSize: 11)),
               ])),
@@ -977,10 +977,10 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
   // ============ HOW IT WORKS ============
   Widget _howItWorks() {
     final steps = <(IconData, String, String, String, List<Color>)>[
-      (Icons.touch_app_rounded, '١', 'اختر الخدمة', 'Pick a service', C2C.gradFor(0)),
-      (Icons.event_available_rounded, '٢', 'حدّد الموعد', 'Schedule', C2C.gradFor(2)),
-      (Icons.verified_rounded, '٣', 'يصلك محترف', 'Pro arrives', C2C.gradFor(3)),
-      (Icons.sentiment_very_satisfied_rounded, '٤', 'استرخِ وقيّم', 'Relax & rate', C2C.gradFor(6)),
+      (Icons.touch_app_rounded, '١', tr('اختر الخدمة', 'Pick a service'), 'Pick a service', C2C.gradFor(0)),
+      (Icons.event_available_rounded, '٢', tr('حدّد الموعد', 'Choose a time'), 'Schedule', C2C.gradFor(2)),
+      (Icons.verified_rounded, '٣', tr('يصلك محترف', 'A professional arrives'), 'Pro arrives', C2C.gradFor(3)),
+      (Icons.sentiment_very_satisfied_rounded, '٤', tr('استرخِ وقيّم', 'Relax, then rate'), 'Relax & rate', C2C.gradFor(6)),
     ];
     return SizedBox(
       height: 148,

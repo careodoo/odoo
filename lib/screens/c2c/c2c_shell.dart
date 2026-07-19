@@ -47,21 +47,21 @@ class C2C {
   /// faint watermark so cards read as designed, not as pasted emoji.
   static IconData iconFor(String name) {
     bool has(List<String> ks) => ks.any(name.contains);
-    if (has(['تكييف', 'تبريد'])) return Icons.ac_unit_rounded;
-    if (has(['سباك'])) return Icons.plumbing_rounded;
-    if (has(['كهرب'])) return Icons.electrical_services_rounded;
-    if (has(['تنظيف', 'منازل'])) return Icons.cleaning_services_rounded;
-    if (has(['سجاد', 'كنب'])) return Icons.weekend_rounded;
-    if (has(['مغسلة', 'غسيل ملابس'])) return Icons.local_laundry_service_rounded;
-    if (has(['حديقة', 'حدائق', 'تنسيق'])) return Icons.grass_rounded;
-    if (has(['مسبح', 'سباحة', 'حمامات'])) return Icons.pool_rounded;
-    if (has(['نقل', 'عفش', 'تغليف'])) return Icons.local_shipping_rounded;
-    if (has(['معدّات', 'معدات', 'سيارات', 'تأجير'])) return Icons.agriculture_rounded;
-    if (has(['حشرات', 'مكافحة'])) return Icons.pest_control_rounded;
-    if (has(['صيانة', 'ترميم'])) return Icons.handyman_rounded;
-    if (has(['دهان', 'صبغ'])) return Icons.format_paint_rounded;
-    if (has(['نجار'])) return Icons.carpenter_rounded;
-    if (has(['أمن', 'حراسة'])) return Icons.shield_rounded;
+    if (has([tr('تكييف', 'Air conditioning'), tr('تبريد', 'Refrigeration')])) return Icons.ac_unit_rounded;
+    if (has([tr('سباك', 'Plumber')])) return Icons.plumbing_rounded;
+    if (has([tr('كهرب', 'Electrician')])) return Icons.electrical_services_rounded;
+    if (has([tr('تنظيف', 'Cleaning'), tr('منازل', 'Homes')])) return Icons.cleaning_services_rounded;
+    if (has([tr('سجاد', 'Carpets'), tr('كنب', 'Sofas')])) return Icons.weekend_rounded;
+    if (has([tr('مغسلة', 'Laundry'), tr('غسيل ملابس', 'Laundry')])) return Icons.local_laundry_service_rounded;
+    if (has([tr('حديقة', 'Garden'), tr('حدائق', 'Gardens'), tr('تنسيق', 'Landscaping')])) return Icons.grass_rounded;
+    if (has([tr('مسبح', 'Pool'), tr('سباحة', 'Swimming'), tr('حمامات', 'Bathrooms')])) return Icons.pool_rounded;
+    if (has([tr('نقل', 'Moving'), tr('عفش', 'Furniture'), tr('تغليف', 'Packing')])) return Icons.local_shipping_rounded;
+    if (has([tr('معدّات', 'Equipment'), tr('معدات', 'Equipment'), tr('سيارات', 'Cars'), tr('تأجير', 'Rental')])) return Icons.agriculture_rounded;
+    if (has([tr('حشرات', 'Pests'), tr('مكافحة', 'Control')])) return Icons.pest_control_rounded;
+    if (has([tr('صيانة', 'Maintenance'), tr('ترميم', 'Renovation')])) return Icons.handyman_rounded;
+    if (has([tr('دهان', 'Painting'), tr('صبغ', 'Painting')])) return Icons.format_paint_rounded;
+    if (has([tr('نجار', 'Carpenter')])) return Icons.carpenter_rounded;
+    if (has([tr('أمن', 'Security'), tr('حراسة', 'Guarding')])) return Icons.shield_rounded;
     return Icons.home_repair_service_rounded;
   }
 }

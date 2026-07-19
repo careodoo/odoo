@@ -82,7 +82,7 @@ class SecurityHome extends StatelessWidget {
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ScanScreen())),
               ),
               _Tile(
-                icon: '📋', label: 'مهامي',
+                icon: '📋', label: tr('مهامي', 'My tasks'),
                 sub: tr('أوامر العمل', 'Work orders'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkOrdersScreen())),
               ),

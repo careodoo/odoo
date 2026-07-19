@@ -80,7 +80,7 @@ class _ServiceScreenState extends State<ServiceScreen> {
         return Card(child: ListTile(
           leading: Icon(Icons.grass, color: due ? const Color(0xFFF59E0B) : const Color(0xFF37C98A)),
           title: Text('${m['name']}', style: const TextStyle(fontWeight: FontWeight.w700)),
-          subtitle: Text('${m['facility'] ?? ''} · ريّ: ${m['method'] ?? ''} · ${m['frequency'] ?? ''}${m['weather_based'] == true ? ' · حسب الطقس' : ''}\nالتالي: ${m['next_run'] ?? '—'}', style: TextStyle(color: cs.outline, fontSize: 12)),
+          subtitle: Text('${m['facility'] ?? ''} · ريّ: ${m['method'] ?? ''} · ${m['frequency'] ?? ''}${m['weather_based'] == true ? tr(' · حسب الطقس', '· weather-based') : ''}\nالتالي: ${m['next_run'] ?? '—'}', style: TextStyle(color: cs.outline, fontSize: 12)),
           isThreeLine: true,
           trailing: due ? _pill(tr('مستحق', 'Due'), const Color(0xFFF59E0B)) : _pill(tr('منتظم', 'Regular'), const Color(0xFF37C98A)),
         ));

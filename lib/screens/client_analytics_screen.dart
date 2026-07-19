@@ -360,11 +360,11 @@ class _ClientAnalyticsScreenState extends State<ClientAnalyticsScreen> {
 
   Widget _buckets(Map b) {
     final items = <(String, String, int, Color)>[
-      ('خلال يوم', '≤1d', (b['d1'] ?? 0) as int, const Color(0xFFFBBF24)),
-      ('1–3 أيام', '1–3d', (b['d3'] ?? 0) as int, const Color(0xFFF59E0B)),
-      ('3–7 أيام', '3–7d', (b['w1'] ?? 0) as int, const Color(0xFFEA580C)),
-      ('أسبوع–شهر', '1w–1mo', (b['m1'] ?? 0) as int, const Color(0xFFDC2626)),
-      ('أكثر من شهر', '>1mo', (b['m1p'] ?? 0) as int, const Color(0xFF7F1D1D)),
+      (tr('خلال يوم', 'Within a day'), '≤1d', (b['d1'] ?? 0) as int, const Color(0xFFFBBF24)),
+      (tr('1–3 أيام', '1–3 days'), '1–3d', (b['d3'] ?? 0) as int, const Color(0xFFF59E0B)),
+      (tr('3–7 أيام', '3–7 days'), '3–7d', (b['w1'] ?? 0) as int, const Color(0xFFEA580C)),
+      (tr('أسبوع–شهر', 'A week to a month'), '1w–1mo', (b['m1'] ?? 0) as int, const Color(0xFFDC2626)),
+      (tr('أكثر من شهر', 'Over a month'), '>1mo', (b['m1p'] ?? 0) as int, const Color(0xFF7F1D1D)),
     ];
     if (items.every((e) => e.$3 == 0)) return const SizedBox.shrink();
     return _panel(tr('توزيع التأخير', 'How overdue'), Icons.running_with_errors_rounded, const Color(0xFFE5484D), [

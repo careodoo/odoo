@@ -415,7 +415,7 @@ class _ClientActivityScreenState extends State<ClientActivityScreen> {
   }
 
   Widget _eventRow(Map e) {
-    final k = _kinds['${e['kind']}'] ?? ('حدث', 'Event', Icons.circle, const Color(0xFF64748B));
+    final k = _kinds['${e['kind']}'] ?? (tr('حدث', 'Event'), 'Event', Icons.circle, const Color(0xFF64748B));
     final hasWo = e['wo_id'] != null;
     return InkWell(
       borderRadius: BorderRadius.circular(10),

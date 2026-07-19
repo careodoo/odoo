@@ -107,21 +107,21 @@ class _SupervisorHomeState extends State<SupervisorHome> {
     void go(Widget s) => Navigator.push(context, MaterialPageRoute(builder: (_) => s));
 
     final options = <(IconData, String, String, Color, VoidCallback)>[
-      (Icons.add_task_rounded, 'مهمة جديدة', 'New task', _teal, () async {
+      (Icons.add_task_rounded, tr('مهمة جديدة', 'New task'), 'New task', _teal, () async {
         final c = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => const CreateTaskScreen()));
         if (c == true) _load();
       }),
-      (Icons.assignment_rounded, 'أوامر العمل', 'Work orders', _navy, () => go(const WorkOrdersScreen())),
-      (Icons.groups_rounded, 'الفريق', 'Team', const Color(0xFF6366F1), () => go(const ClientTeamScreen())),
-      (Icons.fact_check_rounded, 'الجودة', 'Quality', const Color(0xFF0EA5A4), () => go(const QualityScreen())),
-      (Icons.event_repeat_rounded, 'الجدولة', 'Schedules', const Color(0xFF0D9488), () => go(const SchedulesScreen())),
-      (Icons.inbox_rounded, 'طلبات الخدمة', 'Requests', const Color(0xFFE6295C), () => go(const RequestsScreen())),
-      (Icons.handyman_rounded, 'الصيانة', 'Maintenance', const Color(0xFFF7A23B), () => go(const MaintenanceScreen())),
-      (Icons.fingerprint_rounded, 'الحضور', 'Attendance', const Color(0xFF7C3AED), () => go(const AttendanceScreen())),
-      (Icons.insights_rounded, 'التحليلات', 'Analytics', const Color(0xFF2563EB), () => go(const ClientAnalyticsScreen())),
-      (Icons.campaign_rounded, 'إشعار للفريق', 'Notify team', const Color(0xFFEA580C), () => go(const NotifySendScreen())),
-      (Icons.forum_rounded, 'التواصل', 'Messages', const Color(0xFF0E7490), () => go(const ChatHubScreen())),
-      (Icons.qr_code_scanner_rounded, 'مسح موقع', 'Scan', const Color(0xFF0891B2), () => go(const ScanScreen())),
+      (Icons.assignment_rounded, tr('أوامر العمل', 'Work orders'), 'Work orders', _navy, () => go(const WorkOrdersScreen())),
+      (Icons.groups_rounded, tr('الفريق', 'Team'), 'Team', const Color(0xFF6366F1), () => go(const ClientTeamScreen())),
+      (Icons.fact_check_rounded, tr('الجودة', 'Quality'), 'Quality', const Color(0xFF0EA5A4), () => go(const QualityScreen())),
+      (Icons.event_repeat_rounded, tr('الجدولة', 'Schedules'), 'Schedules', const Color(0xFF0D9488), () => go(const SchedulesScreen())),
+      (Icons.inbox_rounded, tr('طلبات الخدمة', 'Service requests'), 'Requests', const Color(0xFFE6295C), () => go(const RequestsScreen())),
+      (Icons.handyman_rounded, tr('الصيانة', 'Maintenance'), 'Maintenance', const Color(0xFFF7A23B), () => go(const MaintenanceScreen())),
+      (Icons.fingerprint_rounded, tr('الحضور', 'Attendance'), 'Attendance', const Color(0xFF7C3AED), () => go(const AttendanceScreen())),
+      (Icons.insights_rounded, tr('التحليلات', 'Analytics'), 'Analytics', const Color(0xFF2563EB), () => go(const ClientAnalyticsScreen())),
+      (Icons.campaign_rounded, tr('إشعار للفريق', 'Notify the team'), 'Notify team', const Color(0xFFEA580C), () => go(const NotifySendScreen())),
+      (Icons.forum_rounded, tr('التواصل', 'Messages'), 'Messages', const Color(0xFF0E7490), () => go(const ChatHubScreen())),
+      (Icons.qr_code_scanner_rounded, tr('مسح موقع', 'Scan location'), 'Scan', const Color(0xFF0891B2), () => go(const ScanScreen())),
     ];
 
     return Scaffold(

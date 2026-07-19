@@ -408,7 +408,7 @@ class MoreScreen extends StatelessWidget {
   void _howItWorks(BuildContext context) => showDialog(context: context, builder: (_) => AlertDialog(
         title: Text(tr('كيف يعمل التطبيق', 'How the app works')),
         content: Text(tr(
-          'من الرئيسية تتابع مبانيك وخدماتك وفِرَقك وأوامر العمل مباشرة. ارفع طلب خدمة أو ملاحظة جودة، وتابع تنفيذها حتى الإغلاق، واطبع التقارير أو صدّرها إلى Excel.',
+          tr('من الرئيسية تتابع مبانيك وخدماتك وفِرَقك وأوامر العمل مباشرة. ارفع طلب خدمة أو ملاحظة جودة، وتابع تنفيذها حتى الإغلاق، واطبع التقارير أو صدّرها إلى Excel.', 'From here you follow your buildings, services, teams and work orders live. Raise a service request or a quality note, track it through to closure, and print or export the reports to Excel.'),
           'From the home screen you follow your buildings, services, teams and work orders live. Raise a service request or quality note, track it to closure, and print or export reports to Excel.'),
           style: const TextStyle(height: 1.6)),
         actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('حسناً', 'OK')))],

@@ -59,15 +59,26 @@ class _SecurityListScreenState extends State<SecurityListScreen> {
         Center(child: Text(t, style: const TextStyle(color: Color(0xFF9CB2CD)))),
       ]);
 
+  // (ar, en) so a status reads in the viewer's language, not always Arabic
   static const _stateLabels = {
     // patrol
-    'scheduled': 'مجدولة', 'in_progress': 'جارية', 'completed': 'مكتملة', 'cancelled': 'ملغاة',
+    'scheduled': ('مجدولة', 'Scheduled'), 'in_progress': ('جارية', 'Active'), 'completed': ('مكتملة', 'Completed'), 'cancelled': ('ملغاة', 'Cancelled'),
     // key
-    'available': 'بالخزانة', 'checked_out': 'مُسلَّم', 'maintenance': 'صيانة', 'lost': 'مفقود',
+    'available': ('بالخزانة', 'In the cabinet'), 'checked_out': ('مُسلَّم', 'Issued'), 'maintenance': ('صيانة', 'Maintenance'), 'lost': ('مفقود', 'Lost'),
     // gate pass
-    'draft': 'مسودة', 'pending': 'بانتظار الموافقة', 'approved': 'معتمد',
-    'valid': 'ساري', 'expired': 'منتهٍ',
+    'draft': ('مسودة', 'Draft'), 'pending': ('بانتظار الموافقة', 'Awaiting approval'), 'approved': ('معتمد', 'Approved'),
+    'valid': ('ساري', 'Valid'), 'expired': ('منتهٍ', 'Expired'),
   };
+
+  String _fieldLabel(String k) {
+    final v = _keyLabels[k];
+    return v == null ? k : tr(v.$1, v.$2);
+  }
+
+  String _label(String s) {
+    final v = _stateLabels[s];
+    return v == null ? s : tr(v.$1, v.$2);
+  }
 
   Color _stateColor(String s) => switch (s) {
         'in_progress' || 'valid' || 'available' || 'completed' || 'approved' => const Color(0xFF37C98A),
@@ -118,7 +129,7 @@ class _SecurityListScreenState extends State<SecurityListScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(color: _stateColor(state), borderRadius: BorderRadius.circular(20)),
-            child: Text(_stateLabels[state] ?? state,
+            child: Text(_label(state),
                 style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
           ),
           const SizedBox(height: 4),
@@ -131,12 +142,12 @@ class _SecurityListScreenState extends State<SecurityListScreen> {
 
   /// A localized label for a raw record key — so the detail sheet reads well.
   static const _keyLabels = {
-    'name': 'المرجع', 'route': 'المسار', 'guard': 'الحارس', 'premise': 'الموقع',
-    'points': 'عدد النقاط', 'holder': 'بحوزة', 'visitor': 'الزائر', 'purpose': 'الغرض',
-    'date': 'التاريخ', 'start': 'البداية', 'end': 'النهاية', 'valid_from': 'ساري من',
-    'valid_to': 'ساري حتى', 'company': 'الجهة', 'vehicle': 'المركبة', 'id_number': 'رقم الهوية',
-    'phone': 'الهاتف', 'note': 'ملاحظة', 'notes': 'ملاحظات', 'checked_at': 'وقت التسليم',
-    'returned_at': 'وقت الإرجاع', 'points_done': 'نقاط مُنجزة',
+    'name': ('المرجع', 'Reference'), 'route': ('المسار', 'Route'), 'guard': ('الحارس', 'Guard'), 'premise': ('الموقع', 'Location'),
+    'points': ('عدد النقاط', 'Checkpoints'), 'holder': ('بحوزة', 'Held by'), 'visitor': ('الزائر', 'Visitor'), 'purpose': ('الغرض', 'Purpose'),
+    'date': ('التاريخ', 'Date'), 'start': ('البداية', 'Start'), 'end': ('النهاية', 'End'), 'valid_from': ('ساري من', 'Valid from'),
+    'valid_to': ('ساري حتى', 'Valid until'), 'company': ('الجهة', 'Party'), 'vehicle': ('المركبة', 'Vehicle'), 'id_number': ('رقم الهوية', 'ID number'),
+    'phone': ('الهاتف', 'Phone'), 'note': ('ملاحظة', 'Note'), 'notes': ('ملاحظات', 'Notes'), 'checked_at': ('وقت التسليم', 'Handover time'),
+    'returned_at': ('وقت الإرجاع', 'Return time'), 'points_done': ('نقاط مُنجزة', 'Checkpoints done'),
   };
 
   void _openDetail(Map m, IconData icon) {
@@ -163,7 +174,7 @@ class _SecurityListScreenState extends State<SecurityListScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(color: _stateColor(state), borderRadius: BorderRadius.circular(20)),
-                    child: Text(_stateLabels[state] ?? state, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
+                    child: Text(_label(state), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
                   ),
                 ]),
               ]),
@@ -172,7 +183,7 @@ class _SecurityListScreenState extends State<SecurityListScreen> {
               for (final e in entries) Padding(
                 padding: const EdgeInsets.symmetric(vertical: 7),
                 child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  SizedBox(width: 120, child: Text(_keyLabels[e.key] ?? e.key,
+                  SizedBox(width: 120, child: Text(_fieldLabel(e.key),
                       style: const TextStyle(color: Color(0xFF9CB2CD), fontSize: 12.5, fontWeight: FontWeight.w700))),
                   Expanded(child: Text('${e.value}', style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w700))),
                 ]),

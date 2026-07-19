@@ -154,7 +154,7 @@ class _NfcProvisionScreenState extends State<NfcProvisionScreen> {
       setState(() => _busy = false);
       final msg = '$e';
       // the tag already belongs to another location — offer to move it
-      if (msg.contains('مرتبطة بالفعل') || msg.contains('409')) {
+      if (msg.contains(tr('مرتبطة بالفعل', 'Already bound')) || msg.contains('409')) {
         final move = await showDialog<bool>(context: context, builder: (c) => AlertDialog(
           title: Text(tr('الشريحة مستخدمة', 'Tag already in use')),
           content: Text(msg.replaceAll('Exception: ', '')),

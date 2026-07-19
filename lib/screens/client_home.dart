@@ -250,10 +250,10 @@ class _ClientHomeState extends State<ClientHome> {
   /// labels collided on a small screen.
   Widget _miniBar(Profile p) {
     final items = <(IconData, String, String, Color, Widget)>[
-      (Icons.fact_check_outlined, 'الجودة', 'Quality', const Color(0xFF16A34A), const QualityScreen()),
-      (Icons.description_outlined, 'العقود', 'Contracts', const Color(0xFF6366F1), const ContractsScreen()),
+      (Icons.fact_check_outlined, tr('الجودة', 'Quality'), 'Quality', const Color(0xFF16A34A), const QualityScreen()),
+      (Icons.description_outlined, tr('العقود', 'Contracts'), 'Contracts', const Color(0xFF6366F1), const ContractsScreen()),
       if (p.canAddWorkers)
-        (Icons.settings_suggest_outlined, 'إدارة المنشأة', 'Manage', const Color(0xFFF59E0B), const ManageScreen()),
+        (Icons.settings_suggest_outlined, tr('إدارة المنشأة', 'Facility management'), 'Manage', const Color(0xFFF59E0B), const ManageScreen()),
     ];
     return Row(children: [
       for (final it in items) ...[
@@ -399,34 +399,34 @@ class _ClientHomeState extends State<ClientHome> {
   Widget _quickAccess(ColorScheme cs) {
     // (emoji, ar, en, color, screen, sectionCode) — sectionCode null = always
     final specs = <(String, String, String, int, Widget, String?)>[
-      ('📥', 'طلب خدمة', 'Request', 0xFFE6295C, const RequestsScreen(), null),
-      ('👷', 'الفريق', 'Team', 0xFF2F6DF6, const ClientTeamScreen(), 'team'),
-      ('📡', 'النشاط', 'Live', 0xFF16A34A, const ClientActivityScreen(), 'workorders'),
-      ('🏢', 'المباني', 'Buildings', 0xFF6366F1, const ClientStructureScreen(), 'facilities'),
-      ('🛒', 'المتجر', 'Shop', 0xFF0EA5E9, const ShopScreen(), 'shop'),
-      ('📦', 'طلباتي', 'Orders', 0xFFF59E0B, const OrdersScreen(), null),
-      ('💳', 'الفواتير', 'Invoices', 0xFF7A1340, const InvoicesScreen(), null),
-      ('✅', 'الجودة', 'Quality', 0xFF16A34A, const QualityScreen(), null),
-      ('🛡️', 'الأمن', 'Security', 0xFFE11D48, const ClientSecurityScreen(), 'security'),
-      ('🔁', 'الجدولة', 'Schedules', 0xFF0D9488, const SchedulesScreen(), 'workorders'),
-      ('🕐', 'الحضور', 'Attendance', 0xFF0891B2, const AttendanceScreen(), 'team'),
-      ('📣', 'إشعار', 'Notify', 0xFF6366F1, const NotifySendScreen(), null),
-      ('🧼', 'النظافة', 'Cleaning', 0xFF0891B2, const ClientCleaningScreen(), 'cleaning'),
-      ('🌳', 'الزراعة', 'Landscape', 0xFF15803D, const ClientAgriScreen(), 'agriculture'),
-      ('🏙️', 'الواجهات', 'Facade', 0xFF8B5CF6, const ClientFacadeScreen(), 'facade'),
-      ('📦', 'المخزون', 'Inventory', 0xFF0E3A5F, const ClientInventoryScreen(), 'inventory'),
-      ('♻️', 'النفايات', 'Waste', 0xFF16A34A, const ClientWasteScreen(), 'waste'),
-      ('🏭', 'الأصول', 'Assets', 0xFF0891B2, const ClientAssetsScreen(), null),
-      ('🛠️', 'الصيانة', 'Maintenance', 0xFFF7A23B, const MaintenanceScreen(), 'maintenance'),
-      ('🚗', 'صف السيارات', 'Valet', 0xFFB45309, const ValetScreen(), 'valet'),
-      ('☕', 'الضيافة', 'Hospitality', 0xFF8A6D3B, const HospitalityScreen(), 'hospitality'),
-      ('🐜', 'مكافحة الحشرات', 'Pest', 0xFF7C3AED,
+      ('📥', tr('طلب خدمة', 'Request'), 'Request', 0xFFE6295C, const RequestsScreen(), null),
+      ('👷', tr('الفريق', 'Team'), 'Team', 0xFF2F6DF6, const ClientTeamScreen(), 'team'),
+      ('📡', tr('النشاط', 'Activity'), 'Live', 0xFF16A34A, const ClientActivityScreen(), 'workorders'),
+      ('🏢', tr('المباني', 'Buildings'), 'Buildings', 0xFF6366F1, const ClientStructureScreen(), 'facilities'),
+      ('🛒', tr('المتجر', 'Shop'), 'Shop', 0xFF0EA5E9, const ShopScreen(), 'shop'),
+      ('📦', tr('طلباتي', 'My orders'), 'Orders', 0xFFF59E0B, const OrdersScreen(), null),
+      ('💳', tr('الفواتير', 'Invoices'), 'Invoices', 0xFF7A1340, const InvoicesScreen(), null),
+      ('✅', tr('الجودة', 'Quality'), 'Quality', 0xFF16A34A, const QualityScreen(), null),
+      ('🛡️', tr('الأمن', 'Security'), 'Security', 0xFFE11D48, const ClientSecurityScreen(), 'security'),
+      ('🔁', tr('الجدولة', 'Schedules'), 'Schedules', 0xFF0D9488, const SchedulesScreen(), 'workorders'),
+      ('🕐', tr('الحضور', 'Attendance'), 'Attendance', 0xFF0891B2, const AttendanceScreen(), 'team'),
+      ('📣', tr('إشعار', 'Notify'), 'Notify', 0xFF6366F1, const NotifySendScreen(), null),
+      ('🧼', tr('النظافة', 'Cleaning'), 'Cleaning', 0xFF0891B2, const ClientCleaningScreen(), 'cleaning'),
+      ('🌳', tr('الزراعة', 'Landscaping'), 'Landscape', 0xFF15803D, const ClientAgriScreen(), 'agriculture'),
+      ('🏙️', tr('الواجهات', 'Facade'), 'Facade', 0xFF8B5CF6, const ClientFacadeScreen(), 'facade'),
+      ('📦', tr('المخزون', 'Inventory'), 'Inventory', 0xFF0E3A5F, const ClientInventoryScreen(), 'inventory'),
+      ('♻️', tr('النفايات', 'Waste'), 'Waste', 0xFF16A34A, const ClientWasteScreen(), 'waste'),
+      ('🏭', tr('الأصول', 'Assets'), 'Assets', 0xFF0891B2, const ClientAssetsScreen(), null),
+      ('🛠️', tr('الصيانة', 'Maintenance'), 'Maintenance', 0xFFF7A23B, const MaintenanceScreen(), 'maintenance'),
+      ('🚗', tr('صف السيارات', 'Valet parking'), 'Valet', 0xFFB45309, const ValetScreen(), 'valet'),
+      ('☕', tr('الضيافة', 'Hospitality'), 'Hospitality', 0xFF8A6D3B, const HospitalityScreen(), 'hospitality'),
+      ('🐜', tr('مكافحة الحشرات', 'Pest control'), 'Pest', 0xFF7C3AED,
           const SpecialtyServiceScreen(spec: ServiceSpec.pest), 'pest'),
-      ('🧴', 'التعقيم', 'Disinfection', 0xFF0EA5A5,
+      ('🧴', tr('التعقيم', 'Disinfection'), 'Disinfection', 0xFF0EA5A5,
           const SpecialtyServiceScreen(spec: ServiceSpec.disinfection), 'disinfection'),
-      ('🏊', 'المسابح', 'Pools', 0xFF0891B2,
+      ('🏊', tr('المسابح', 'Pools'), 'Pools', 0xFF0891B2,
           const SpecialtyServiceScreen(spec: ServiceSpec.pool), 'pool'),
-      ('🚰', 'خزانات المياه', 'Water tanks', 0xFF0E7A5F,
+      ('🚰', tr('خزانات المياه', 'Water tanks'), 'Water tanks', 0xFF0E7A5F,
           const SpecialtyServiceScreen(spec: ServiceSpec.watertank), 'watertank'),
     ];
     final shown = specs.where((s) => s.$6 == null || _has(s.$6!)).toList();

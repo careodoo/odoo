@@ -264,11 +264,11 @@ class _ClientWorkOrdersScreenState extends State<ClientWorkOrdersScreen> {
   Widget _overdueBreakdown(Map st) {
     final b = (st['overdue_buckets'] as Map?) ?? const {};
     final items = <(String, String, int, Color)>[
-      ('خلال يوم', '≤1d', (b['d1'] ?? 0) as int, const Color(0xFFFBBF24)),
-      ('1–3 أيام', '1–3d', (b['d3'] ?? 0) as int, const Color(0xFFF59E0B)),
-      ('3–7 أيام', '3–7d', (b['w1'] ?? 0) as int, const Color(0xFFEA580C)),
-      ('أسبوع–شهر', '1w–1mo', (b['m1'] ?? 0) as int, const Color(0xFFDC2626)),
-      ('أكثر من شهر', '>1mo', (b['m1p'] ?? 0) as int, const Color(0xFF7F1D1D)),
+      (tr('خلال يوم', 'Within a day'), '≤1d', (b['d1'] ?? 0) as int, const Color(0xFFFBBF24)),
+      (tr('1–3 أيام', '1–3 days'), '1–3d', (b['d3'] ?? 0) as int, const Color(0xFFF59E0B)),
+      (tr('3–7 أيام', '3–7 days'), '3–7d', (b['w1'] ?? 0) as int, const Color(0xFFEA580C)),
+      (tr('أسبوع–شهر', 'A week to a month'), '1w–1mo', (b['m1'] ?? 0) as int, const Color(0xFFDC2626)),
+      (tr('أكثر من شهر', 'Over a month'), '>1mo', (b['m1p'] ?? 0) as int, const Color(0xFF7F1D1D)),
     ];
     final total = items.fold<int>(0, (a, e) => a + e.$3);
     if (total == 0) return const SizedBox.shrink();
@@ -334,7 +334,7 @@ class _ClientWorkOrdersScreenState extends State<ClientWorkOrdersScreen> {
     }
 
     return Column(children: [
-      block('حسب الحالة', 'By state', byState, const Color(0xFF2F6DF6)),
+      block(tr('حسب الحالة', 'By status'), 'By state', byState, const Color(0xFF2F6DF6)),
       const SizedBox(height: 10),
       block('حسب الخدمة', 'By service', byService, const Color(0xFF0891B2)),
       const SizedBox(height: 10),

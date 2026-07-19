@@ -317,8 +317,8 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> with Widg
         child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           _locationBlock(cs),
           _row(Icons.person, 'المُسنَد إليه', '${_d!['assignee'] ?? '—'}'),
-          _row(Icons.flag, 'الأولوية', '${_d!['priority']}'),
-          _row(Icons.schedule, 'الموعد', '${_d!['deadline'] ?? '—'}'),
+          _row(Icons.flag, tr('الأولوية', 'Priority'), '${_d!['priority']}'),
+          _row(Icons.schedule, tr('الموعد', 'Due'), '${_d!['deadline'] ?? '—'}'),
           if (_d!['description'] != null) ...[
             const Divider(),
             Text(tr('الوصف', 'Description'), style: TextStyle(color: cs.outline, fontSize: 12)),
@@ -401,7 +401,7 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> with Widg
       }
       children.add(FilledButton.icon(
         style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
-        onPressed: canSubmit ? () => _act(() => api.workOrderDone(widget.id), 'تم الإرسال للاعتماد') : null,
+        onPressed: canSubmit ? () => _act(() => api.workOrderDone(widget.id), tr('تم الإرسال للاعتماد', 'Sent for approval')) : null,
         icon: const Icon(Icons.check), label: Text(tr('إتمام وإرسال للاعتماد', 'Complete & submit'))));
     }
     // supervisor: approve or return the result
@@ -409,7 +409,7 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> with Widg
       children.add(Row(children: [
         Expanded(child: FilledButton.icon(
           style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0B6EA8)),
-          onPressed: () => _act(() => api.workOrderVerify(widget.id), 'تم الاعتماد والإغلاق'),
+          onPressed: () => _act(() => api.workOrderVerify(widget.id), tr('تم الاعتماد والإغلاق', 'Approved and closed')),
           icon: const Icon(Icons.verified), label: Text(tr('اعتماد', 'Approve')))),
         const SizedBox(width: 8),
         Expanded(child: OutlinedButton.icon(
@@ -465,7 +465,7 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> with Widg
     try {
       await api.scan(code); // log the presence scan at the location
     } catch (_) {/* the start action also logs a tied scan */}
-    await _act(() => api.workOrderStart(widget.id), 'تم إثبات الحضور — بدأ التنفيذ والعدّاد يعمل');
+    await _act(() => api.workOrderStart(widget.id), tr('تم إثبات الحضور — بدأ التنفيذ والعدّاد يعمل', 'Presence confirmed — work started, timer running'));
   }
 
   Future<void> _reject() async {
@@ -482,7 +482,7 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> with Widg
       ],
     ));
     if (ok == true) {
-      _act(() => context.read<AuthProvider>().api.workOrderReject(widget.id, ctrl.text.trim()), 'أُرجعت المهمة للعامل');
+      _act(() => context.read<AuthProvider>().api.workOrderReject(widget.id, ctrl.text.trim()), tr('أُرجعت المهمة للعامل', 'Task returned to the worker'));
     }
   }
 
@@ -517,7 +517,7 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> with Widg
       ],
     ));
     if (ok == true && ctrl.text.trim().isNotEmpty) {
-      _act(() => context.read<AuthProvider>().api.workOrderNote(widget.id, ctrl.text.trim()), 'أُضيفت الملاحظة');
+      _act(() => context.read<AuthProvider>().api.workOrderNote(widget.id, ctrl.text.trim()), tr('أُضيفت الملاحظة', 'Note added'));
     }
   }
 

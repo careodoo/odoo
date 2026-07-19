@@ -62,8 +62,8 @@ class _ScanScreenState extends State<ScanScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(
             status.isPermanentlyDenied
-                ? 'صلاحية الكاميرا مرفوضة — فعّلها من الإعدادات'
-                : 'يجب السماح باستخدام الكاميرا')));
+                ? tr('صلاحية الكاميرا مرفوضة — فعّلها من الإعدادات', 'Camera permission denied — enable it in Settings')
+                : tr('يجب السماح باستخدام الكاميرا', 'Camera access is required'))));
         if (status.isPermanentlyDenied) openAppSettings();
       }
       return;
@@ -87,7 +87,7 @@ class _ScanScreenState extends State<ScanScreen> {
           const SnackBar(content: Text('NFC غير متاح أو غير مُفعَّل على هذا الجهاز')));
       return;
     }
-    setState(() { _mode = _Mode.nfc; _status = 'قرّب الجهاز من شريحة NFC…'; });
+    setState(() { _mode = _Mode.nfc; _status = tr('قرّب الجهاز من شريحة NFC…', 'Hold the phone near an NFC tag…'); });
     NfcManager.instance.startSession(onDiscovered: (NfcTag tag) async {
       String? code = _codeFromTag(tag);
       await _stopNfc();
