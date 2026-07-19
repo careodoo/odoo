@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_pool_tree" model="ir.ui.view">
+    <field name="name">care.pool.pool.tree</field><field name="model">care.pool.pool</field>
+    <field name="arch" type="xml">
+      <tree decoration-danger="state == 'closed'" decoration-warning="needs_reading">
+        <field name="name"/><field name="facility_id"/><field name="pool_type"/>
+        <field name="volume_m3"/><field name="last_reading"/><field name="last_safe"/>
+        <field name="needs_reading"/><field name="state" widget="badge"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_pool_form" model="ir.ui.view">
+    <field name="name">care.pool.pool.form</field><field name="model">care.pool.pool</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="action_reopen" type="object" string="إعادة الفتح" class="btn-primary"
+                  invisible="state == 'open'"/>
+          <button name="action_close" type="object" string="إغلاق" invisible="state != 'open'"/>
+          <field name="state" widget="statusbar"/>
+        </header>
+        <sheet>
+          <div class="oe_title"><h1><field name="name"/></h1><field name="name_en"/></div>
+          <group>
+            <group><field name="facility_id"/><field name="location_id"/><field name="pool_type"/>
+                   <field name="volume_m3"/><field name="depth_min"/><field name="depth_max"/></group>
+            <group><field name="filter_type"/><field name="treatment"/>
+                   <field name="last_reading" readonly="1"/><field name="last_safe" readonly="1"/>
+                   <field name="closed_reason" readonly="1" invisible="not closed_reason"/></group>
+          </group>
+          <group string="النطاق الآمن — يُغلق المسبح تلقائيًا عند الخروج عنه">
+            <group><field name="ph_min"/><field name="ph_max"/><field name="cl_min"/><field name="cl_max"/></group>
+            <group><field name="temp_min"/><field name="temp_max"/><field name="turbidity_max"/></group>
+          </group>
+          <notebook>
+            <page string="القراءات">
+              <field name="reading_ids">
+                <tree decoration-danger="not is_safe">
+                  <field name="taken_at"/><field name="ph"/><field name="free_chlorine"/>
+                  <field name="temperature"/><field name="turbidity"/>
+                  <field name="is_safe"/><field name="breaches"/>
+                </tree>
+              </field>
+            </page>
+            <page string="أعمال الصيانة">
+              <field name="task_ids">
+                <tree><field name="done_at"/><field name="task_type"/><field name="done_by"/>
+                      <field name="chemical"/><field name="quantity"/><field name="filter_pressure"/></tree>
+              </field>
+            </page>
+          </notebook>
+        </sheet>
+        <div class="oe_chatter"><field name="message_ids"/></div>
+      </form>
+    </field>
+  </record>
+  <record id="action_pool" model="ir.actions.act_window">
+    <field name="name">المسابح</field><field name="res_model">care.pool.pool</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+  <record id="action_pool_reading" model="ir.actions.act_window">
+    <field name="name">قراءات المياه</field><field name="res_model">care.pool.reading</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+  <record id="action_pool_task" model="ir.actions.act_window">
+    <field name="name">أعمال الصيانة</field><field name="res_model">care.pool.task</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+  <menuitem id="menu_pool_root" name="صيانة المسابح" sequence="48"/>
+  <menuitem id="menu_pool_pools" name="المسابح" parent="menu_pool_root" action="action_pool" sequence="10"/>
+  <menuitem id="menu_pool_readings" name="القراءات" parent="menu_pool_root" action="action_pool_reading" sequence="20"/>
+  <menuitem id="menu_pool_tasks" name="أعمال الصيانة" parent="menu_pool_root" action="action_pool_task" sequence="30"/>
+</odoo>

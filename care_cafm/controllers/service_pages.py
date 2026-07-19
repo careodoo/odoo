@@ -218,6 +218,33 @@ def REGISTRY():
                                + ([('منع دخول %sس' % r.reentry_hours, 'warn')] if r.reentry_hours else [])),
                     scope='global', icon='🧪'),
         ]),
+        'pool': ('صيانة المسابح', '🏊', [
+            Section('pools', 'المسابح', 'care.pool.pool',
+                    _r_generic(lambda r: '%s — %s' % (r.name, r.name_en or ''),
+                               lambda r: ' · '.join(filter(None, [
+                                   r.location_id.name or '',
+                                   '%s م³' % int(r.volume_m3) if r.volume_m3 else '',
+                                   'آخر قراءة %s' % _d(r.last_reading, 16) if r.last_reading else 'لا قراءة'])),
+                               lambda r: _state_pill(r)
+                               + ([('بانتظار قراءة اليوم', 'warn')] if r.needs_reading else [])
+                               + ([] if r.last_safe else [('آخر قراءة خارج النطاق', 'crit')])),
+                    icon='🏊'),
+            Section('readings', 'قراءات المياه', 'care.pool.reading',
+                    _r_generic(lambda r: '%s — %s' % (r.pool_id.name or '', _d(r.taken_at)),
+                               lambda r: 'pH %.1f · كلور %.1f · حرارة %.1f · عكارة %.2f' % (
+                                   r.ph or 0, r.free_chlorine or 0,
+                                   r.temperature or 0, r.turbidity or 0),
+                               lambda r: [('ضمن النطاق', 'ok')] if r.is_safe
+                               else [(r.breaches or 'خارج النطاق', 'crit')]), icon='🧪'),
+            Section('tasks', 'أعمال الصيانة', 'care.pool.task',
+                    _r_generic(lambda r: dict(r._fields['task_type'].selection).get(
+                                   r.task_type, ''),
+                               lambda r: ' · '.join(filter(None, [
+                                   r.pool_id.name or '', _d(r.done_at),
+                                   '%s %s' % (r.quantity, r.uom_name or '') if r.quantity else '',
+                                   'ضغط الفلتر %.2f' % r.filter_pressure if r.filter_pressure else ''])),
+                               ), icon='🧹'),
+        ]),
         'inventory': ('المخزون', '📦', [
             Section('stores', 'المخازن', 'care.cafm.store',
                     _r_generic(lambda r: r.display_name), icon='🏬'),

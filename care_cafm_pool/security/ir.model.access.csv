@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_pool_user,pool.user,model_care_pool_pool,base.group_user,1,1,1,0
+access_pool_mgr,pool.mgr,model_care_pool_pool,base.group_system,1,1,1,1
+access_pool_reading_user,pool.reading.user,model_care_pool_reading,base.group_user,1,1,1,0
+access_pool_reading_mgr,pool.reading.mgr,model_care_pool_reading,base.group_system,1,1,1,1
+access_pool_task_user,pool.task.user,model_care_pool_task,base.group_user,1,1,1,0
+access_pool_task_mgr,pool.task.mgr,model_care_pool_task,base.group_system,1,1,1,1
