@@ -114,6 +114,29 @@ td{padding:8px 18px;border-bottom:1px solid #eef1f5}
                 .replace('__QR__', str(qr_block)))
         return request.make_response(page, headers=[('Content-Type', 'text/html; charset=utf-8')])
 
+    @http.route('/valet/ticket/<int:tid>/pdf', type='http', auth='user', website=False)
+    def ticket_pdf(self, tid, **kw):
+        """The same slip as a PDF, so the app can show it inline and offer
+        print and share instead of throwing the user into a browser."""
+        t = request.env['care.valet.ticket'].sudo().browse(tid).exists()
+        if not t:
+            return request.not_found()
+        html = self.ticket_print(tid).data
+        if isinstance(html, bytes):
+            html = html.decode('utf-8')
+        # drop the on-screen print button — it means nothing on paper
+        html = html.replace('<button class="pr" onclick="window.print()">🖨️ طباعة التذكرة</button>', '')
+        pdf = request.env['ir.actions.report'].sudo()._run_wkhtmltopdf(
+            [html], landscape=False,
+            specific_paperformat_args={
+                'data-report-margin-top': 6, 'data-report-margin-bottom': 6,
+                'data-report-margin-left': 6, 'data-report-margin-right': 6,
+            })
+        return request.make_response(pdf, headers=[
+            ('Content-Type', 'application/pdf'),
+            ('Content-Disposition', 'inline; filename="%s.pdf"' % (t.name or 'valet').replace('/', '-')),
+        ])
+
     # ---------------- the guest page (public, token only) ----------------
     @http.route('/valet/t/<string:token>', type='http', auth='public', website=False,
                 sitemap=False)
