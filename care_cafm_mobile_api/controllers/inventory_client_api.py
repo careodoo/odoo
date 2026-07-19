@@ -22,15 +22,30 @@ def _d(v):
 class InventoryClientApi(Controller):
 
     def _facilities(self, env):
+        Fac = env['care.cafm.facility'].sudo()
         if env.user.has_group('base.group_erp_manager') or env.user.has_group('base.group_system'):
-            return env['care.cafm.facility'].sudo().search([])
+            return Fac.search([])
         p = env.user.partner_id
         pids = {p.id}
         if p.commercial_partner_id:
             pids.add(p.commercial_partner_id.id)
             pids.update(env['res.partner'].sudo().search(
                 [('commercial_partner_id', '=', p.commercial_partner_id.id)]).ids)
-        return env['care.cafm.facility'].sudo().search([('partner_id', 'in', list(pids))])
+        facs = Fac.search([('partner_id', 'in', list(pids))])
+        if facs:
+            return facs
+        # A field worker owns no facility, but still has to draw materials for
+        # the sites they actually work on — scope them to those instead.
+        emp = env.user.employee_id
+        ids = set()
+        if emp:
+            ids |= set(env['care.cafm.workorder'].sudo().search(
+                [('employee_id', '=', emp.id)]).mapped('facility_id').ids)
+            if 'care.cafm.team' in env:
+                ids |= set(env['care.cafm.team'].sudo().search(
+                    ['|', ('member_ids', 'in', [emp.id]), ('supervisor_id', '=', env.user.id)]
+                ).mapped('facility_id').ids)
+        return Fac.browse(list(ids))
 
     def _fac_ids(self, env):
         facs = self._facilities(env)
@@ -86,6 +101,24 @@ class InventoryClientApi(Controller):
             return _err('المنتج غير موجود', 404)
         # resolve the issuing employee from the logged-in user, if linked
         emp = env['hr.employee'].sudo().search([('user_id', '=', env.user.id)], limit=1)
+        qty = float(b.get('quantity') or 1.0)
+        # ---- the client's self-issue policy ----------------------------------
+        # Managers/keepers bypass it; a field worker may only draw items the
+        # client marked issuable, for their own service, within the per-issue cap.
+        u = env.user
+        privileged = bool(u.has_group('base.group_erp_manager') or u.has_group('base.group_system')
+                          or (u.partner_id.commercial_partner_id or u.partner_id).sudo().cafm_can_add_workers)
+        if not privileged:
+            item = env['care.cafm.stock.item'].sudo().search(
+                [('store_id', '=', store.id), ('product_id', '=', p.id)], limit=1)
+            if item:
+                svc_types = []
+                if emp:
+                    svc_types = list({w.service_type for w in env['care.cafm.workorder'].sudo().search(
+                        [('employee_id', '=', emp.id)]) if w.service_type})
+                ok, why = item.worker_may_issue(service_type=(svc_types[0] if svc_types else None), qty=qty)
+                if not ok:
+                    return _err(why, 403)
         try:
             move = env['care.cafm.stock.move'].sudo().create({
                 'move_type': 'issue', 'store_id': store.id, 'product_id': p.id,
@@ -213,6 +246,16 @@ class InventoryClientApi(Controller):
             'facility': s.facility_id.name or None, 'keeper': s.keeper_id.name or None,
             'item_count': s.item_count, 'low_count': s.low_count,
             'stock_value': round(s.stock_value, 2),
+            # sub-store structure: which main store it belongs to, and the
+            # service it serves
+            'is_sub': s.is_sub,
+            'parent_store': s.parent_store_id.name or None,
+            'parent_store_id': s.parent_store_id.id or None,
+            'service': s.service_id.name or None,
+            'service_id': s.service_id.id or None,
+            'service_type': s.service_id.service_type or None,
+            'sub_count': len(s.child_store_ids),
+            'worker_issue_allowed': s.worker_issue_allowed,
         } for s in self._stores(env)])
 
     # ---- stock items (balances) ------------------------------------------
@@ -241,7 +284,103 @@ class InventoryClientApi(Controller):
             'unit_cost': it.unit_cost, 'stock_value': round(it.stock_value, 2),
             'last_move': _d(it.last_move_date),
             'image': '/api/v1/product/%s/image' % it.product_id.id,
+            # the client's self-issue policy for this item
+            'allow_worker_issue': it.allow_worker_issue,
+            'allowed_services': it.allowed_service_ids.mapped('name'),
+            'allowed_service_ids': it.allowed_service_ids.ids,
+            'max_issue_qty': it.max_issue_qty,
         } for it in recs])
+
+    # ---- the client's material policy (client / admin only) ---------------
+    def _may_set_policy(self, env):
+        u = env.user
+        if u.has_group('base.group_erp_manager') or u.has_group('base.group_system'):
+            return True
+        cp = u.partner_id.commercial_partner_id or u.partner_id
+        return bool(cp and cp.sudo().cafm_can_add_workers)
+
+    @route(API + '/client/inv/policy', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def inv_policy(self, **kw):
+        """What the crew may draw, per store — the settings screen's data."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        g = self._guard(env)
+        if g:
+            return g
+        stores = self._stores(env)
+        Item = env['care.cafm.stock.item'].sudo()
+        sid = request.httprequest.args.get('store_id')
+        dom = [('store_id', 'in', stores.ids)]
+        if sid and sid.isdigit():
+            dom.append(('store_id', '=', int(sid)))
+        items = Item.search(dom, order='product_id')
+        services = env['care.cafm.service'].sudo().search([])
+        return _ok({
+            'can_manage': self._may_set_policy(env),
+            'services': [{'id': s.id, 'name': s.name, 'type': s.service_type} for s in services],
+            'stores': [{'id': s.id, 'name': s.name, 'is_sub': s.is_sub,
+                        'service': s.service_id.name or None,
+                        'parent': s.parent_store_id.name or None,
+                        'worker_issue_allowed': s.worker_issue_allowed} for s in stores],
+            'items': [{
+                'id': it.id, 'product': it.product_id.display_name,
+                'store': it.store_id.name, 'store_id': it.store_id.id,
+                'on_hand': it.on_hand, 'uom': it.uom_name or None,
+                'allow_worker_issue': it.allow_worker_issue,
+                'allowed_services': it.allowed_service_ids.mapped('name'),
+                'allowed_service_ids': it.allowed_service_ids.ids,
+                'max_issue_qty': it.max_issue_qty,
+            } for it in items],
+        })
+
+    @route(API + '/client/inv/policy/item/<int:iid>', type='http', auth='public',
+           methods=['POST'], csrf=False, cors='*')
+    def inv_policy_set(self, iid, **kw):
+        """Client/admin sets whether the crew may draw this item, for which
+        services, and the per-issue cap."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if not self._may_set_policy(env):
+            return _err('غير مسموح — الإعداد للعميل أو المدير فقط', 403)
+        it = env['care.cafm.stock.item'].sudo().browse(iid).exists()
+        if not it or it.store_id.id not in self._stores(env).ids:
+            return _err('الصنف غير موجود', 404)
+        b = _body()
+        vals = {}
+        if 'allow_worker_issue' in b:
+            vals['allow_worker_issue'] = bool(b['allow_worker_issue'])
+        if 'max_issue_qty' in b:
+            vals['max_issue_qty'] = float(b['max_issue_qty'] or 0)
+        if 'allowed_service_ids' in b:
+            vals['allowed_service_ids'] = [(6, 0, [int(x) for x in (b['allowed_service_ids'] or [])])]
+        if vals:
+            it.write(vals)
+        return _ok({
+            'id': it.id, 'product': it.product_id.display_name,
+            'allow_worker_issue': it.allow_worker_issue,
+            'allowed_services': it.allowed_service_ids.mapped('name'),
+            'allowed_service_ids': it.allowed_service_ids.ids,
+            'max_issue_qty': it.max_issue_qty,
+        })
+
+    @route(API + '/client/inv/policy/store/<int:sid>', type='http', auth='public',
+           methods=['POST'], csrf=False, cors='*')
+    def inv_policy_store(self, sid, **kw):
+        """Toggle whether a whole store allows direct worker issue."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if not self._may_set_policy(env):
+            return _err('غير مسموح', 403)
+        s = env['care.cafm.store'].sudo().browse(sid).exists()
+        if not s or s.id not in self._stores(env).ids:
+            return _err('المخزن غير موجود', 404)
+        b = _body()
+        if 'worker_issue_allowed' in b:
+            s.worker_issue_allowed = bool(b['worker_issue_allowed'])
+        return _ok({'id': s.id, 'name': s.name, 'worker_issue_allowed': s.worker_issue_allowed})
 
     # ---- movements --------------------------------------------------------
     @route(API + '/client/inv/moves', type='http', auth='public', methods=['GET'], csrf=False, cors='*')

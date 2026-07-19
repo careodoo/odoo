@@ -26,7 +26,24 @@ class CafmStore(models.Model):
     ], string='النوع', default='facility', required=True, tracking=True)
     facility_id = fields.Many2one('care.cafm.facility', string='المرفق', tracking=True)
     keeper_id = fields.Many2one('hr.employee', string='أمين المخزن', tracking=True)
+    # a service can have its own sub-store fed from the facility's main store
+    parent_store_id = fields.Many2one('care.cafm.store', string='المخزن الرئيسي',
+                                      domain="[('parent_store_id','=',False)]",
+                                      help='اترك فارغاً إذا كان هذا هو المخزن الرئيسي.')
+    service_id = fields.Many2one('care.cafm.service', string='الخدمة',
+                                 help='المخزن الفرعي المخصّص لهذه الخدمة.')
+    child_store_ids = fields.One2many('care.cafm.store', 'parent_store_id', string='المخازن الفرعية')
+    is_sub = fields.Boolean(string='مخزن فرعي', compute='_compute_is_sub', store=True)
+    # who may draw from it
+    worker_issue_allowed = fields.Boolean(
+        string='يسمح لعمّال الخدمة بالصرف', default=True,
+        help='عند التعطيل لا يستطيع العامل الصرف من هذا المخزن مباشرة.')
     item_ids = fields.One2many('care.cafm.stock.item', 'store_id', string='الأصناف')
+
+    @api.depends('parent_store_id')
+    def _compute_is_sub(self):
+        for s in self:
+            s.is_sub = bool(s.parent_store_id)
     item_count = fields.Integer(string='عدد الأصناف', compute='_compute_stats')
     low_count = fields.Integer(string='أصناف منخفضة', compute='_compute_stats')
     stock_value = fields.Float(string='قيمة المخزون', compute='_compute_stats')
@@ -72,6 +89,31 @@ class CafmStockItem(models.Model):
     stock_value = fields.Float(string='قيمة الرصيد', compute='_compute_value', store=True)
     last_move_date = fields.Datetime(string='آخر حركة', readonly=True)
     move_ids = fields.One2many('care.cafm.stock.move', 'item_id', string='الحركات')
+    # ---- worker self-issue policy (set by the client or an admin) --------
+    allow_worker_issue = fields.Boolean(
+        string='مسموح صرفه للعمّال', default=True, tracking=True,
+        help='عند التعطيل لا يظهر الصنف للعامل ولا يمكنه صرفه بنفسه.')
+    allowed_service_ids = fields.Many2many(
+        'care.cafm.service', 'cafm_item_service_rel', 'item_id', 'service_id',
+        string='الخدمات المسموح لها',
+        help='اتركها فارغة ليكون الصنف متاحاً لكل الخدمات.')
+    max_issue_qty = fields.Float(
+        string='حد الصرف للمرة الواحدة', default=0.0,
+        help='0 = بلا حد. يمنع صرف كمية أكبر من هذا الحد في العملية الواحدة.')
+
+    def worker_may_issue(self, service_type=None, qty=0.0):
+        """(allowed, reason) — the policy a worker's self-issue must satisfy."""
+        self.ensure_one()
+        if not self.allow_worker_issue:
+            return False, _('هذا الصنف غير مسموح بصرفه للعمّال.')
+        if not self.store_id.worker_issue_allowed:
+            return False, _('لا يُسمح بالصرف المباشر من هذا المخزن.')
+        if self.allowed_service_ids and service_type:
+            if service_type not in self.allowed_service_ids.mapped('service_type'):
+                return False, _('هذا الصنف مخصّص لخدمة أخرى.')
+        if self.max_issue_qty and qty and qty > self.max_issue_qty:
+            return False, _('الحد الأقصى للصرف %(m)s لكل عملية.') % {'m': self.max_issue_qty}
+        return True, ''
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
 
     _sql_constraints = [
