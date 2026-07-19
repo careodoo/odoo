@@ -33,38 +33,20 @@ class UpdateGate {
       final force = cfg['force_update'] == true;
       final url = '${cfg['store_url'] ?? cfg['android_url'] ?? ''}';
       if (!context.mounted) return;
-      await showDialog(
+      await showModalBottomSheet(
         context: context,
-        barrierDismissible: !force,
+        isDismissible: !force,
+        enableDrag: !force,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
         builder: (c) => PopScope(
           canPop: !force,
-          child: AlertDialog(
-            title: Row(children: [
-              const Icon(Icons.system_update_rounded, color: Color(0xFF0891B2)),
-              const SizedBox(width: 8),
-              Expanded(child: Text(tr('تحديث متوفّر', 'Update available'),
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17))),
-            ]),
-            content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('${cfg['update_message'] ?? ''}', style: const TextStyle(fontSize: 14, height: 1.4)),
-              const SizedBox(height: 10),
-              Text('${tr('إصدارك', 'Yours')}: ${info.version}   •   ${tr('المطلوب', 'Required')}: $min',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey)),
-            ]),
-            actions: [
-              if (!force)
-                TextButton(onPressed: () => Navigator.pop(c), child: Text(tr('لاحقاً', 'Later'))),
-              FilledButton.icon(
-                style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0891B2)),
-                onPressed: () async {
-                  if (url.isNotEmpty) {
-                    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-                  }
-                },
-                icon: const Icon(Icons.download_rounded),
-                label: Text(tr('تحديث الآن', 'Update now')),
-              ),
-            ],
+          child: _UpdateSheet(
+            message: '${cfg['update_message'] ?? ''}',
+            current: info.version,
+            required_: min,
+            force: force,
+            url: url,
           ),
         ),
       );
@@ -84,4 +66,140 @@ class UpdateGate {
     }
     return false;
   }
+}
+
+
+
+/// The update prompt. A stock alert dialog made a release look like an error;
+/// this reads as an announcement — brand red, what is new, and one clear action.
+class _UpdateSheet extends StatelessWidget {
+  const _UpdateSheet({
+    required this.message,
+    required this.current,
+    required this.required_,
+    required this.force,
+    required this.url,
+  });
+
+  final String message;
+  final String current;
+  final String required_;
+  final bool force;
+  final String url;
+
+  static const _red = Color(0xFFC0392B);
+  static const _ink = Color(0xFF14202B);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+      ),
+      padding: const EdgeInsets.fromLTRB(22, 12, 22, 26),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        if (!force)
+          Container(
+            width: 42, height: 4,
+            margin: const EdgeInsets.only(bottom: 20),
+            decoration: BoxDecoration(
+                color: Colors.grey.shade300, borderRadius: BorderRadius.circular(3)),
+          )
+        else
+          const SizedBox(height: 8),
+        Container(
+          width: 66, height: 66,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [Color(0xFFE24A3B), _red]),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [BoxShadow(color: _red.withValues(alpha: 0.3),
+                blurRadius: 18, offset: const Offset(0, 8))],
+          ),
+          child: const Icon(Icons.rocket_launch_rounded, color: Colors.white, size: 32),
+        ),
+        const SizedBox(height: 16),
+        Text(force ? tr('تحديث مطلوب', 'Update required')
+                   : tr('إصدار جديد من CARE', 'A new version of CARE'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: _ink)),
+        if (message.trim().isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Text(message,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13.5, height: 1.55, color: Colors.grey.shade700)),
+        ],
+        const SizedBox(height: 18),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+          decoration: BoxDecoration(
+              color: const Color(0xFFF6F7F9), borderRadius: BorderRadius.circular(13)),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            _version(tr('لديك', 'Yours'), current, Colors.grey.shade500),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Icon(Icons.arrow_back_rounded, size: 16, color: Colors.grey.shade400),
+            ),
+            _version(tr('الأحدث', 'Latest'), required_, _red),
+          ]),
+        ),
+        const SizedBox(height: 20),
+        SizedBox(
+          width: double.infinity,
+          child: Material(
+            color: Colors.transparent,
+            child: Ink(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Color(0xFFE24A3B), _red]),
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [BoxShadow(color: _red.withValues(alpha: 0.3),
+                    blurRadius: 14, offset: const Offset(0, 7))],
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(15),
+                onTap: url.isEmpty ? null : () async {
+                  await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                },
+                child: SizedBox(
+                  height: 54,
+                  child: Center(
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      const Icon(Icons.download_rounded, color: Colors.white, size: 20),
+                      const SizedBox(width: 9),
+                      Text(tr('تحديث الآن', 'Update now'),
+                          style: const TextStyle(color: Colors.white, fontSize: 16,
+                              fontWeight: FontWeight.w900)),
+                    ]),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        if (!force) ...[
+          const SizedBox(height: 4),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(tr('لاحقاً', 'Later'),
+                style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w700)),
+          ),
+        ] else ...[
+          const SizedBox(height: 12),
+          Text(tr('لا يمكن متابعة استخدام التطبيق قبل التحديث',
+                  'The app cannot be used until it is updated'),
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 11.5, color: Colors.grey.shade500)),
+        ],
+      ]),
+    );
+  }
+
+  Widget _version(String label, String value, Color color) =>
+      Column(mainAxisSize: MainAxisSize.min, children: [
+        Text(label, style: TextStyle(fontSize: 10.5, color: Colors.grey.shade500,
+            fontWeight: FontWeight.w700)),
+        const SizedBox(height: 2),
+        Text(value, style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w900, color: color)),
+      ]);
 }

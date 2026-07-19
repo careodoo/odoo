@@ -95,10 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     _hero(),
                     const SizedBox(height: 26),
                     _card(context),
-                    const SizedBox(height: 18),
-                    Text(tr('نظام إدارة المرافق المتكامل', 'Integrated facilities platform'),
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 20),
                     Text('v${AppVersion.value}',
                         style: TextStyle(color: Colors.white.withValues(alpha: 0.35), fontSize: 11)),
                   ],
@@ -111,61 +108,18 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  /// The brand opening. The wordmark carries a red keystone and the promise is
-  /// split into the two halves of the business — services and management —
-  /// rather than one grey line of text under a logo.
+  /// The brand opening. The logo already says CARE, so repeating it as a
+  /// wordmark, then again as two chips and two taglines, was four introductions
+  /// where one will do.
   Widget _hero() => Column(mainAxisSize: MainAxisSize.min, children: [
         _logo(),
-        const SizedBox(height: 20),
-        Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
-          const Text('CARE',
-              style: TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.w900, letterSpacing: 5)),
-          const SizedBox(width: 7),
-          // the keystone: the one spot of brand red on the screen
-          Container(
-            margin: const EdgeInsets.only(bottom: 5),
-            width: 9, height: 9,
-            decoration: BoxDecoration(
-              color: const Color(0xFFC0392B),
-              shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: const Color(0xFFC0392B).withValues(alpha: 0.7), blurRadius: 10)],
-            ),
-          ),
-        ]),
-        const SizedBox(height: 12),
-        // the promise, as the two halves of what CARE actually does
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          _promise(Icons.home_repair_service_rounded, tr('خدمات', 'Services')),
-          Container(
-            width: 4, height: 4,
-            margin: const EdgeInsets.symmetric(horizontal: 9),
-            decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.35), shape: BoxShape.circle),
-          ),
-          _promise(Icons.dashboard_customize_rounded, tr('إدارة', 'Management')),
-        ]),
-        const SizedBox(height: 10),
-        Text(tr('منصّتك المتكاملة', 'Your all-in-one platform'),
+        const SizedBox(height: 18),
+        Text(tr('منصّة إدارة المرافق والخدمات', 'Facilities and services platform'),
             textAlign: TextAlign.center,
             style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.55),
-                fontSize: 12, letterSpacing: 1.5, fontWeight: FontWeight.w600)),
+                color: Colors.white.withValues(alpha: 0.82),
+                fontSize: 13.5, height: 1.4, fontWeight: FontWeight.w600, letterSpacing: 0.3)),
       ]);
-
-  Widget _promise(IconData ic, String label) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-        ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(ic, size: 13, color: Colors.white.withValues(alpha: 0.85)),
-          const SizedBox(width: 6),
-          Text(label,
-              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800)),
-        ]),
-      );
 
   Widget _logo() {
     final logo = _brand?['logo'] as String?;
@@ -198,49 +152,44 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _card(BuildContext context) {
-    const navy = Color(0xFF0E3A5F);
+    const ink = Color(0xFF14202B);
+    const red = Color(0xFFC0392B);
     return Container(
       constraints: const BoxConstraints(maxWidth: 420),
-      padding: const EdgeInsets.fromLTRB(22, 24, 22, 22),
+      padding: const EdgeInsets.fromLTRB(22, 26, 22, 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 34, offset: Offset(0, 16))],
+        boxShadow: const [BoxShadow(color: Color(0x40000000), blurRadius: 38, offset: Offset(0, 18))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(children: [
-            Container(
-              width: 40, height: 40, alignment: Alignment.center,
-              decoration: BoxDecoration(color: navy.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
-              child: const Icon(Icons.lock_person_rounded, color: navy, size: 22),
-            ),
-            const SizedBox(width: 12),
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(tr('تسجيل الدخول', 'Sign in'), style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: navy)),
-              Text(tr('مرحباً بعودتك', 'Welcome back'), style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
-            ]),
-          ]),
+          Text(tr('تسجيل الدخول', 'Sign in'),
+              style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900, color: ink)),
+          const SizedBox(height: 3),
+          Text(tr('مرحباً بعودتك', 'Welcome back'),
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade500)),
           const SizedBox(height: 22),
           _field(_login, tr('اسم المستخدم', 'Username'), Icons.person_outline_rounded, next: true),
-          const SizedBox(height: 14),
+          const SizedBox(height: 13),
           _field(_pass, tr('كلمة المرور', 'Password'), Icons.lock_outline_rounded,
             obscure: _obscure, onSubmit: _submit,
             suffix: IconButton(
-              icon: Icon(_obscure ? Icons.visibility_rounded : Icons.visibility_off_rounded, color: Colors.grey.shade500, size: 20),
+              icon: Icon(_obscure ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+                  color: Colors.grey.shade500, size: 20),
               onPressed: () => setState(() => _obscure = !_obscure),
             ),
           ),
-          const SizedBox(height: 24),
-          // gradient CTA
+          const SizedBox(height: 22),
           Material(
             color: Colors.transparent,
             child: Ink(
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFF124E7C), navy]),
+                gradient: const LinearGradient(colors: [Color(0xFFE24A3B), red]),
                 borderRadius: BorderRadius.circular(15),
-                boxShadow: [BoxShadow(color: navy.withValues(alpha: 0.35), blurRadius: 12, offset: const Offset(0, 6))],
+                boxShadow: [BoxShadow(color: red.withValues(alpha: 0.32),
+                    blurRadius: 14, offset: const Offset(0, 7))],
               ),
               child: InkWell(
                 borderRadius: BorderRadius.circular(15),
@@ -248,39 +197,42 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: SizedBox(
                   height: 54,
                   child: Center(child: _busy
-                      ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : Row(mainAxisSize: MainAxisSize.min, children: [
-                          Text(tr('دخول', 'Log in'), style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900)),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 18),
-                        ])),
+                      ? const SizedBox(height: 22, width: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : Text(tr('دخول', 'Log in'),
+                          style: const TextStyle(color: Colors.white, fontSize: 16,
+                              fontWeight: FontWeight.w900, letterSpacing: 0.5))),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          // secure trust note
+          const SizedBox(height: 16),
+          // Creating an account is the rarer path, so it reads as a link rather
+          // than a second button competing with the one people came to press —
+          // and it is no longer green, which fought the brand.
+          Center(
+            child: TextButton(
+              onPressed: _busy ? null : () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const SignupScreen())),
+              child: RichText(
+                text: TextSpan(
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  children: [
+                    TextSpan(text: '${tr('جديد على كير؟', 'New to CARE?')} '),
+                    TextSpan(text: tr('أنشئ عضوية', 'Create an account'),
+                        style: const TextStyle(color: red, fontWeight: FontWeight.w900)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
           Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(Icons.verified_user_rounded, size: 13, color: Colors.grey.shade400),
+            Icon(Icons.lock_rounded, size: 11, color: Colors.grey.shade400),
             const SizedBox(width: 5),
             Text(tr('اتصال آمن ومشفّر', 'Secure encrypted connection'),
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.w600)),
+                style: TextStyle(color: Colors.grey.shade400, fontSize: 10.5, fontWeight: FontWeight.w600)),
           ]),
-          const SizedBox(height: 14),
-          Row(children: [
-            Expanded(child: Divider(color: Colors.grey.shade300)),
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: Text(tr('جديد على كير؟', 'New to CARE?'), style: TextStyle(color: Colors.grey.shade500, fontSize: 12))),
-            Expanded(child: Divider(color: Colors.grey.shade300)),
-          ]),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: _busy ? null : () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SignupScreen())),
-            icon: const Icon(Icons.person_add_alt_1_rounded, color: Color(0xFF16A34A)),
-            label: Text(tr('إنشاء عضوية جديدة', 'Create a new account'), style: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w800)),
-            style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(50),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                side: const BorderSide(color: Color(0xFF16A34A))),
-          ),
         ],
       ),
     );
@@ -395,51 +347,39 @@ class _Backdrop extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      // CARE is a red brand. This screen was the one place it read as a blue
+      // one, so the first impression contradicted every other surface.
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF0E3A5F), Color(0xFF124E7C), Color(0xFF0B6EA8)],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: [Color(0xFFE24A3B), Color(0xFFC0392B), Color(0xFF7A1B14)],
         ),
       ),
-      child: Stack(
-        children: [
-          _blob(-60, -40, 200, const Color(0x3338BDF8)),
-          _blob(260, 120, 160, const Color(0x2637C98A)),
-          _blob(-40, 520, 220, const Color(0x22F7A23B)),
-          Positioned.fill(child: CustomPaint(painter: _GridPainter())),
-        ],
-      ),
+      child: Stack(children: const [
+        // a single soft light source rather than three coloured blobs fighting
+        Positioned(top: -120, right: -90, child: _Glow(size: 320, opacity: 0.16)),
+        Positioned(bottom: -140, left: -110, child: _Glow(size: 300, opacity: 0.10)),
+        Positioned.fill(child: CustomPaint(painter: BrandPattern(opacity: 0.055, gap: 30))),
+      ]),
     );
   }
-
-  Widget _blob(double left, double top, double size, Color color) => Positioned(
-        left: left, top: top,
-        child: Container(
-          width: size, height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
-          ),
-        ),
-      );
 }
 
-class _GridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0x0DFFFFFF)
-      ..strokeWidth = 1;
-    const step = 32.0;
-    for (double x = 0; x < size.width; x += step) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-    for (double y = 0; y < size.height; y += step) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-  }
 
+class _Glow extends StatelessWidget {
+  const _Glow({required this.size, required this.opacity});
+  final double size;
+  final double opacity;
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  Widget build(BuildContext context) => Container(
+        width: size, height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(colors: [
+            Colors.white.withValues(alpha: opacity),
+            Colors.white.withValues(alpha: 0),
+          ]),
+        ),
+      );
 }

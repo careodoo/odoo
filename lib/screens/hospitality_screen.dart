@@ -105,7 +105,7 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
           : TabBarView(controller: _tabs, children: [
               _menuTab(),
               _ordersTab(),
-              showKitchen ? _kitchenTab() : _empty(tr('لست ضمن طاقم المطبخ', 'Not kitchen staff')),
+              showKitchen ? _kitchenTab() : _emptyTab(tr('لست ضمن طاقم المطبخ', 'Not kitchen staff')),
             ]),
     );
   }
@@ -581,7 +581,7 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
     final live = ((_orders?['live'] as List?) ?? const []).cast<Map>();
     final past = ((_orders?['past'] as List?) ?? const []).cast<Map>();
     if (live.isEmpty && past.isEmpty) {
-      return _empty(tr('لا طلبات بعد', 'No orders yet'));
+      return _emptyTab(tr('لا طلبات بعد', 'No orders yet'));
     }
     return RefreshIndicator(
       color: _brown,
@@ -858,10 +858,19 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
         child: Text(t, style: TextStyle(color: c, fontSize: 10.5, fontWeight: FontWeight.w900)),
       );
 
-  Widget _empty(String t) => ListView(children: [
-        const SizedBox(height: 90),
-        Icon(Icons.local_cafe_outlined, size: 56, color: Colors.grey.shade300),
-        const SizedBox(height: 10),
-        Center(child: Text(t, style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w600))),
-      ]);
+  /// Plain content — never a scrollable. It is dropped inside ListViews, and a
+  /// vertical scrollable nested in another has unbounded height and throws.
+  Widget _empty(String t) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 70, horizontal: 20),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.local_cafe_outlined, size: 56, color: Colors.grey.shade300),
+          const SizedBox(height: 10),
+          Text(t, textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
+        ]),
+      );
+
+  /// The same message when it is a whole tab, which does need to scroll so
+  /// pull-to-refresh keeps working.
+  Widget _emptyTab(String t) => ListView(children: [_empty(t)]);
 }
