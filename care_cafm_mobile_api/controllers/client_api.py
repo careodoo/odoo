@@ -1830,6 +1830,8 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
+        if not self._can(env, 'request_create'):
+            return _err('لا تملك صلاحية إنشاء طلب خدمة', 403)
         if 'care.cafm.service.request' not in env:
             return _err('غير متاح', 404)
         b = _body()
@@ -2159,6 +2161,8 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
+        if not self._can(env, 'shop_order'):
+            return _err('لا تملك صلاحية الطلب من المتجر', 403)
         b = _body()
         lines = b.get('lines') or []
         if not lines:
@@ -2558,6 +2562,8 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
+        if not self._can(env, 'invoice_approve'):
+            return _err('لا تملك صلاحية اعتماد الفواتير', 403)
         m = self._client_invoice(env, mid)
         if not m:
             return _err('غير موجود', 404)
@@ -2575,6 +2581,8 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
+        if not self._can(env, 'invoice_approve'):
+            return _err('لا تملك صلاحية اعتماد الفواتير', 403)
         m = self._client_invoice(env, mid)
         if not m:
             return _err('غير موجود', 404)
@@ -2637,6 +2645,8 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
+        if not self._can(env, 'notify_send'):
+            return _err('لا تملك صلاحية إرسال الإشعارات', 403)
         b = _body()
         title = (b.get('title') or '').strip()
         if not title:
