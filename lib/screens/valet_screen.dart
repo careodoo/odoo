@@ -2,13 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/widgets.dart';
 import 'searchable_picker.dart';
+import 'pdf_report_screen.dart';
 
 const _navy = Color(0xFF0E3A5F);
 const _gold = Color(0xFFB45309);
@@ -254,18 +254,21 @@ class _ValetScreenState extends State<ValetScreen> {
               // the slip the guest walks away with, and scans to call the car up
               Expanded(child: _btn(tr('التذكرة', 'Ticket'), Icons.qr_code_2_rounded,
                   const Color(0xFF64748B), () => _openTicket(t))),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               if (st == 'received')
-                Expanded(child: _btn(tr('صف المركبة', 'Park'), Icons.local_parking_rounded, const Color(0xFF16A34A),
+                Expanded(child: _btn(tr('صفّ', 'Park'), Icons.local_parking_rounded, const Color(0xFF16A34A),
                     () => _park(t, d))),
+              // A parked ticket shows three actions at once — the labels are
+              // kept short so all three fit rather than colliding.
               if (st == 'parked') ...[
-                Expanded(child: _btn(tr('طلب الإحضار', 'Request'), Icons.notifications_active_rounded, const Color(0xFFF59E0B),
-                    () => _act(t, 'request'))),
-                const SizedBox(width: 8),
-                Expanded(child: _btn(tr('تسليم', 'Deliver'), Icons.check_rounded, _gold, () => _deliver(t))),
+                Expanded(child: _btn(tr('إحضار', 'Call up'), Icons.notifications_active_rounded,
+                    const Color(0xFFF59E0B), () => _act(t, 'request'))),
+                const SizedBox(width: 6),
+                Expanded(child: _btn(tr('تسليم', 'Deliver'), Icons.check_rounded, _gold,
+                    () => _deliver(t))),
               ],
               if (st == 'requested')
-                Expanded(child: _btn(tr('تسليم للضيف', 'Hand over'), Icons.check_circle_rounded, const Color(0xFF16A34A),
+                Expanded(child: _btn(tr('تسليم', 'Hand over'), Icons.check_circle_rounded, const Color(0xFF16A34A),
                     () => _deliver(t))),
             ]),
           ]),
@@ -274,24 +277,43 @@ class _ValetScreenState extends State<ValetScreen> {
     );
   }
 
-  Widget _btn(String l, IconData ic, Color c, VoidCallback onTap) => OutlinedButton.icon(
-        style: OutlinedButton.styleFrom(foregroundColor: c, side: BorderSide(color: c), minimumSize: const Size(0, 40)),
+  /// Three of these sit side by side on a parked ticket, and at the old size
+  /// the labels collided. Tighter padding, smaller type, and the label may
+  /// shrink rather than overflow.
+  Widget _btn(String l, IconData ic, Color c, VoidCallback onTap) => OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: c,
+          side: BorderSide(color: c),
+          minimumSize: const Size(0, 36),
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          visualDensity: VisualDensity.compact,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
         onPressed: _busy ? null : onTap,
-        icon: Icon(ic, size: 17),
-        label: Text(l, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(ic, size: 15),
+          const SizedBox(width: 4),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(l, maxLines: 1,
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11.5)),
+            ),
+          ),
+        ]),
       );
 
-  /// The printable ticket with its QR. Opened in the browser so it can print
-  /// straight to the kerbside printer.
-  Future<void> _openTicket(Map t) async {
-    final base = context.read<AuthProvider>().api.baseUrl
-        .replaceAll(RegExp(r'/api/v1/?$'), '');
-    final url = Uri.parse('$base/valet/ticket/${(t['id'] as num).toInt()}/print');
-    try {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } catch (_) {
-      if (mounted) _snack(tr('تعذّر فتح التذكرة', 'Could not open the ticket'));
-    }
+  /// The ticket opens inside the app, where print and share already live.
+  /// Bouncing out to a browser lost the session and the user's place.
+  void _openTicket(Map t) {
+    final id = (t['id'] as num).toInt();
+    Navigator.push(context, MaterialPageRoute(
+      builder: (_) => PdfReportScreen(
+        path: '/valet/ticket/$id/pdf',
+        title: '${tr('تذكرة', 'Ticket')} ${t['name'] ?? ''}',
+        fileName: 'valet-${t['name'] ?? id}'.replaceAll('/', '-'),
+      ),
+    ));
   }
 
   Future<void> _act(Map t, String action, {Map<String, dynamic>? body}) async {

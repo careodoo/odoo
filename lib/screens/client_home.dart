@@ -423,17 +423,17 @@ class _ClientHomeState extends State<ClientHome> {
           const SpecialtyServiceScreen(spec: ServiceSpec.watertank), 'watertank'),
     ];
     final place = <(IconData, String, String, int, Widget, String?)>[
-      (Icons.business_rounded, 'المباني', 'Buildings', 0xFF6366F1, const ClientStructureScreen(), 'facilities'),
-      (Icons.precision_manufacturing_rounded, 'الأصول', 'Assets', 0xFF0891B2, const ClientAssetsScreen(), null),
-      (Icons.inventory_2_rounded, 'المخزون', 'Inventory', 0xFF0E3A5F, const ClientInventoryScreen(), 'inventory'),
+      (Icons.business_rounded, 'المباني', 'Buildings', 0xFF4F46E5, const ClientStructureScreen(), 'facilities'),
+      (Icons.precision_manufacturing_rounded, 'الأصول', 'Assets', 0xFF0E7490, const ClientAssetsScreen(), null),
+      (Icons.inventory_2_rounded, 'المخزون', 'Inventory', 0xFF7C3AED, const ClientInventoryScreen(), 'inventory'),
       (Icons.schedule_rounded, 'الحضور', 'Attendance', 0xFF0891B2, const AttendanceScreen(), 'team'),
-      (Icons.groups_rounded, 'الفريق', 'Team', 0xFF2F6DF6, const ClientTeamScreen(), 'team'),
-      (Icons.campaign_rounded, 'إشعار', 'Notify', 0xFF6366F1, const NotifySendScreen(), null),
+      (Icons.groups_rounded, 'الفريق', 'Team', 0xFF2563EB, const ClientTeamScreen(), 'team'),
+      (Icons.campaign_rounded, 'إشعار', 'Notify', 0xFFDB2777, const NotifySendScreen(), null),
     ];
     final money = <(IconData, String, String, int, Widget, String?)>[
       (Icons.storefront_rounded, 'المتجر', 'Shop', 0xFF0EA5E9, const ShopScreen(), 'shop'),
-      (Icons.receipt_long_rounded, 'طلباتي', 'Orders', 0xFFF59E0B, const OrdersScreen(), null),
-      (Icons.credit_card_rounded, 'الفواتير', 'Invoices', 0xFF7A1340, const InvoicesScreen(), null),
+      (Icons.receipt_long_rounded, 'طلباتي', 'Orders', 0xFFEA580C, const OrdersScreen(), null),
+      (Icons.credit_card_rounded, 'الفواتير', 'Invoices', 0xFF9D174D, const InvoicesScreen(), null),
     ];
 
     List<T> vis<T extends (IconData, String, String, int, Widget, String?)>(List<T> l) =>
@@ -541,29 +541,46 @@ class _ClientHomeState extends State<ClientHome> {
         ],
       );
 
-  /// Supporting destinations: quiet, dense, uniform.
+  /// Supporting destinations. These were flat grey boxes with a small grey
+  /// icon — uniform to the point of being unreadable at a glance, because
+  /// nothing distinguished one from the next. Each now carries its own colour
+  /// in a proper icon chip, on a white card, at a size you can actually see.
   Widget _compactGrid(List<(IconData, String, String, int, Widget, String?)> items) =>
       GridView.count(
         crossAxisCount: 4, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-        crossAxisSpacing: 9, mainAxisSpacing: 9, childAspectRatio: 1.0,
+        crossAxisSpacing: 9, mainAxisSpacing: 9, childAspectRatio: 0.86,
         children: [
           for (final s in items)
             InkWell(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(15),
               onTap: () => _go(s.$5),
               child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF6F7F9),
-                  borderRadius: BorderRadius.circular(14),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
                   border: Border.all(color: Colors.grey.shade200),
+                  boxShadow: const [BoxShadow(color: Color(0x0D000000), blurRadius: 6,
+                      offset: Offset(0, 2))],
                 ),
                 child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Icon(s.$1, size: 21, color: Color(s.$4)),
-                  const SizedBox(height: 6),
+                  Container(
+                    width: 42, height: 42, alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(s.$4).withValues(alpha: 0.16),
+                                 Color(s.$4).withValues(alpha: 0.07)],
+                        begin: Alignment.topRight, end: Alignment.bottomLeft,
+                      ),
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: Icon(s.$1, size: 23, color: Color(s.$4)),
+                  ),
+                  const SizedBox(height: 7),
                   Text(tr(s.$2, s.$3), textAlign: TextAlign.center, maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 10.5,
-                          color: Color(0xFF44536A))),
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11,
+                          color: Color(0xFF14202B))),
                 ]),
               ),
             ),

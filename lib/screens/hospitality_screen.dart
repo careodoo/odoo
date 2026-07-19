@@ -773,12 +773,20 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Container(
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14),
-            border: Border(left: BorderSide(color: edge, width: 6),
-                top: BorderSide(color: Colors.grey.shade200),
-                right: BorderSide(color: Colors.grey.shade200),
-                bottom: BorderSide(color: Colors.grey.shade200))),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        // A borderRadius may only be given on a *uniform* Border — pairing it
+        // with a thick left edge asserts at paint time, which a release build
+        // shows as a grey rectangle. The urgency edge is its own bar instead.
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Container(width: 6,
+              decoration: BoxDecoration(color: edge,
+                  borderRadius: BorderRadius.circular(3))),
+          const SizedBox(width: 10),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             Expanded(child: Text('${o['name']}',
                 style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15.5, color: _navy))),
@@ -828,6 +836,7 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
                 Expanded(child: _kbtn(o, 'deliver', tr('تم التقديم', 'Served'), _brown)),
               ],
             ]),
+          ])),
         ]),
       ),
     );

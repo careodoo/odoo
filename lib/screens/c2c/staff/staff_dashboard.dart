@@ -83,11 +83,20 @@ class _StaffDashboardState extends State<StaffDashboard> {
 
   Widget _kpiCard(String ic, String v, String label, Color c) => Container(
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))], border: Border(left: BorderSide(color: c, width: 4))),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+        // A borderRadius is only legal on a uniform Border; the accent edge is a
+        // bar of its own, or this asserts at paint time and goes grey.
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16),
+            boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))],
+            border: Border.all(color: Colors.black12)),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Container(width: 4, decoration: BoxDecoration(color: c,
+              borderRadius: BorderRadius.circular(2))),
+          const SizedBox(width: 10),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
           Row(children: [Text(ic, style: const TextStyle(fontSize: 20)), const Spacer(), Text(v, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 24, color: c))]),
           const SizedBox(height: 4),
           Text(label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Crew.slate)),
+        ])),
         ]),
       );
 
