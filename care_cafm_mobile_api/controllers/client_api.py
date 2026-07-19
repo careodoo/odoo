@@ -1814,10 +1814,17 @@ class ClientApi(Controller):
         if not fid or fid not in self._fac_ids(env):
             return _err('المرفق مطلوب', 422)
         cp = env.user.partner_id.commercial_partner_id or env.user.partner_id
+        # A caller that knows the service only by its type — the per-service
+        # screens do — would otherwise file a request against no service at all.
+        service_id = int(b['service_id']) if b.get('service_id') else False
+        if not service_id and b.get('service_type'):
+            svc = env['care.cafm.service'].sudo().search(
+                [('service_type', '=', b['service_type'])], limit=1)
+            service_id = svc.id or False
         vals = {
             'title': title, 'facility_id': fid,
             'location_id': int(b['location_id']) if b.get('location_id') else False,
-            'service_id': int(b['service_id']) if b.get('service_id') else False,
+            'service_id': service_id,
             'description': b.get('description') or None,
             'priority': str(b.get('priority') or '1'),
             'partner_id': cp.id if cp else False,
