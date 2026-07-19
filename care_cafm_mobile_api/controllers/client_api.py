@@ -10,7 +10,7 @@ from datetime import timedelta, datetime, time
 from odoo import fields, SUPERUSER_ID, _
 from odoo.http import request, Controller, route, content_disposition
 
-from .api import _auth, _ok, _err, _body, _abs, API, _wo_dict
+from .api import _auth, _ok, _err, _body, _abs, API, _wo_dict, _person_name
 
 
 def _xlsx_response(title, columns, rows, filename, meta=None):
@@ -193,7 +193,7 @@ class ClientApi(Controller):
                 'run_state': run_state,
                 'service': s.service_id.name or None, 'service_type': s.service_type,
                 'location': s.location_id.name or s.facility_id.name or None,
-                'employee': s.employee_id.name or None,
+                'employee': _person_name(s.employee_id),
                 'every_minutes': s.every_minutes,
                 'compliance': s.compliance,
                 'done': s.occ_done, 'late': s.occ_late, 'missed': s.occ_missed, 'total': s.occ_total,
@@ -204,7 +204,7 @@ class ClientApi(Controller):
         Occ = env['care.cafm.schedule.occurrence'].sudo()
         occs = Occ.search([('schedule_id', 'in', scheds.ids)], order='planned_time desc', limit=60) if scheds else Occ.browse()
         occ_out = [{
-            'id': o.id, 'schedule': o.schedule_id.name, 'employee': o.employee_id.name or None,
+            'id': o.id, 'schedule': o.schedule_id.name, 'employee': _person_name(o.employee_id),
             'location': o.location_id.name or None,
             'planned': o.planned_time or None, 'actual': o.actual_time or None,
             'delay': o.response_delay_minutes, 'presence': o.presence_verified,
@@ -261,7 +261,7 @@ class ClientApi(Controller):
         return _ok({
             'facilities': [{'id': f.id, 'name': f.name, 'locations': locs_by_fac.get(f.id, [])} for f in facs],
             'services': [{'id': s.id, 'name': s.name, 'type': s.service_type} for s in services],
-            'workers': [{'id': e.id, 'name': e.name, 'job': e.job_title or None} for e in workers],
+            'workers': [{'id': e.id, 'name': _person_name(e), 'job': e.job_title or None} for e in workers],
         })
 
     @route(API + '/client/schedule/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
@@ -314,14 +314,14 @@ class ClientApi(Controller):
             'run_state': 'stopped' if not s.active else ('paused' if s.paused else 'running'),
             'service': s.service_id.name or None, 'service_type': s.service_type,
             'facility': s.facility_id.name or None,
-            'location': s.location_id.name or None, 'employee': s.employee_id.name or None,
+            'location': s.location_id.name or None, 'employee': _person_name(s.employee_id),
             'employee_id': s.employee_id.id or None,
             'every_minutes': s.every_minutes, 'compliance': s.compliance,
             'window': '%02d:00 – %02d:00' % (int(s.window_start), int(s.window_end)),
             'done': s.occ_done, 'late': s.occ_late, 'missed': s.occ_missed, 'total': s.occ_total,
             'require_photo': s.require_photo, 'require_presence': s.require_presence,
             'occurrences': [{
-                'id': o.id, 'employee': o.employee_id.name or None, 'location': o.location_id.name or None,
+                'id': o.id, 'employee': _person_name(o.employee_id), 'location': o.location_id.name or None,
                 'planned': o.planned_time or None, 'actual': o.actual_time or None,
                 'delay': o.response_delay_minutes, 'presence': o.presence_verified,
                 'state': o.state, 'state_label': st_lbl.get(o.state, o.state),
@@ -593,7 +593,7 @@ class ClientApi(Controller):
             if s.state == 'closed' and not s.check_out:
                 g['incomplete'] += 1
             records.append({
-                'id': s.id, 'employee': s.employee_id.name, 'employee_id': eid,
+                'id': s.id, 'employee': _person_name(s.employee_id), 'employee_id': eid,
                 'job': s.employee_id.job_title or None,
                 'photo': _emp_photo(s.employee_id, 'image_128'),
                 'facility': s.facility_id.name or None, 'facility_id': s.facility_id.id or None,
@@ -722,7 +722,7 @@ class ClientApi(Controller):
                 m['id'] == eid for s in d['shifts'] for m in s['members']):
             return _err('لا سجلات لهذا الموظف في منشآتك', 404)
         emp = env['hr.employee'].sudo().browse(eid)
-        d['employee'] = {'id': emp.id, 'name': emp.name, 'job': emp.job_title or None,
+        d['employee'] = {'id': emp.id, 'name': _person_name(emp), 'job': emp.job_title or None,
                          'photo': _emp_photo(emp, 'image_256')}
         return _ok(d)
 
@@ -1002,7 +1002,7 @@ class ClientApi(Controller):
             ew = wos.filtered(lambda w, e=e: w.employee_id == e)
             ed = ew.filtered(lambda w: w.state in ('done', 'verified'))
             employees.append({
-                'name': e.name, 'job_title': e.job_title or None,
+                'name': _person_name(e), 'job_title': e.job_title or None,
                 'total': len(ew), 'open': len(ew.filtered(_is_open)),
                 'done': len(ed), 'overdue': len(ew.filtered('is_overdue')),
                 'completion_pct': round(100.0 * len(ed) / len(ew), 0) if ew else 0,
@@ -1235,7 +1235,7 @@ class ClientApi(Controller):
             status = 'on_task' if e.id in on_task else ('recent' if recent else 'off')
             ti = emp_team.get(e.id, {})
             out.append({
-                'id': e.id, 'name': e.name, 'job': e.job_title or None,
+                'id': e.id, 'name': _person_name(e), 'job': e.job_title or None,
                 'department': e.department_id.name or None,
                 'team': ti.get('team'), 'shift': ti.get('shift'), 'role': ti.get('role'),
                 'photo': _emp_photo(e, 'image_128'),
@@ -1293,7 +1293,7 @@ class ClientApi(Controller):
 
         def _member(e, m=None):
             return {
-                'id': e.id, 'name': e.name, 'job': e.job_title or None,
+                'id': e.id, 'name': _person_name(e), 'job': e.job_title or None,
                 'photo': _emp_photo(e, 'image_128'),
                 'role': (dict(m._fields['role'].selection).get(m.role, m.role) if (m and 'role' in m._fields) else None),
                 'shift': (m.shift_type_id.name if (m and m.shift_type_id) else None),
@@ -1397,7 +1397,7 @@ class ClientApi(Controller):
         state_lbl = dict(WO._fields['state'].selection)
         by_state = {lbl: len(wos.filtered(lambda w, st=code: w.state == st)) for code, lbl in state_lbl.items()}
         profile = {
-            'id': emp.id, 'name': emp.name, 'job': emp.job_title or None,
+            'id': emp.id, 'name': _person_name(emp), 'job': emp.job_title or None,
             'department': emp.department_id.name or None,
             'manager': emp.parent_id.name or None,
             'work_phone': emp.work_phone or None, 'mobile': emp.mobile_phone or None,
@@ -1519,7 +1519,7 @@ class ClientApi(Controller):
             events.append({
                 'kind': 'scan',
                 'title': type_lbl.get(sc.scan_type, sc.scan_type) or 'مسح موقع',
-                'employee': sc.employee_id.name or None,
+                'employee': _person_name(sc.employee_id),
                 'employee_id': sc.employee_id.id or None,
                 'photo': _emp_photo(sc.employee_id, 'image_128') if sc.employee_id else None,
                 'location': sc.location_id.name or None,
@@ -1535,7 +1535,7 @@ class ClientApi(Controller):
                 sh_dom.append(('employee_id', '=', emp_filter))
             for sh in env['care.cafm.shift'].sudo().search(sh_dom, order='check_in desc', limit=300):
                 base = {
-                    'employee': sh.employee_id.name or None,
+                    'employee': _person_name(sh.employee_id),
                     'employee_id': sh.employee_id.id or None,
                     'photo': _emp_photo(sh.employee_id, 'image_128') if sh.employee_id else None,
                     'facility': sh.facility_id.name or None,
@@ -1554,7 +1554,7 @@ class ClientApi(Controller):
             wo_dom.append(('employee_id', '=', emp_filter))
         for w in WO.search(wo_dom, order='request_datetime desc', limit=300):
             base = {
-                'employee': w.employee_id.name or None,
+                'employee': _person_name(w.employee_id),
                 'employee_id': w.employee_id.id or None,
                 'photo': _emp_photo(w.employee_id, 'image_128') if w.employee_id else None,
                 'facility': w.facility_id.name or None,
@@ -1607,7 +1607,7 @@ class ClientApi(Controller):
                 eid = sc.employee_id.id
                 w = on_task.get(eid)
                 live.append({
-                    'employee': sc.employee_id.name, 'employee_id': eid,
+                    'employee': _person_name(sc.employee_id), 'employee_id': eid,
                     'photo': _emp_photo(sc.employee_id, 'image_128'),
                     'job': sc.employee_id.job_title or None,
                     'location': sc.location_id.name or None,

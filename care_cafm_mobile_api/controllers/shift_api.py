@@ -2,7 +2,7 @@
 """Geofenced shift open/close + availability, and worker appraisal scoring."""
 from odoo.http import Controller, route
 
-from .api import _auth, _ok, _err, _body, API
+from .api import _auth, _ok, _err, _body, API, _person_name
 
 
 def _notify_supervisors(env, title, body):
@@ -83,7 +83,7 @@ class ShiftApi(Controller):
         if not env:
             return _err('غير مصرّح', 401)
         shifts = env['care.cafm.shift'].sudo().search([('state', '=', 'open')])
-        return _ok([{'employee': s.employee_id.name, 'facility': s.facility_id.name or None,
+        return _ok([{'employee': _person_name(s.employee_id), 'facility': s.facility_id.name or None,
                      'since': s.check_in, 'distance': s.in_distance} for s in shifts])
 
     # ---- appraisal -----------------------------------------------------------

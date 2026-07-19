@@ -5,7 +5,7 @@ consume it from a store to a facility/location). Scoped to the client's
 facilities."""
 from odoo.http import request, Controller, route
 
-from .api import _auth, _ok, _err, _body, API
+from .api import _auth, _ok, _err, _body, API, _person_name
 
 
 def _sel(Model, field):
@@ -198,7 +198,7 @@ class InventoryClientApi(Controller):
             'top_locations': top_id(lambda m: m.location_id.id, lambda m: m.location_id.display_name or '—'),
             'top_buildings': top_id(lambda m: m.building_id.id, lambda m: m.building_id.name or '—'),
             'by_facility': top_id(lambda m: m.facility_id.id, lambda m: m.facility_id.name or '—'),
-            'top_employees': top_id(lambda m: m.employee_id.id, lambda m: m.employee_id.name or '—'),
+            'top_employees': top_id(lambda m: m.employee_id.id, lambda m: (_person_name(m.employee_id) or '—')),
         })
 
     def _guard(self, env):
@@ -400,7 +400,7 @@ class InventoryClientApi(Controller):
             'store': m.store_id.name or None, 'quantity': m.quantity, 'uom': m.uom_name or None,
             'facility': m.facility_id.name or None, 'location': m.location_id.name or None,
             'building': m.building_id.name or None,
-            'employee': m.employee_id.name or None, 'date': _d(m.date),
+            'employee': _person_name(m.employee_id), 'date': _d(m.date),
             'total_cost': m.total_cost, 'state': m.state, 'note': m.note or None,
         } for m in recs])
 
@@ -446,7 +446,7 @@ class InventoryClientApi(Controller):
         for i, m in enumerate(recs, 1):
             rows.append([i, _d(m.date) or '', m.name, m.product_id.display_name, m.quantity,
                          m.uom_name or '', m.facility_id.name or '', m.building_id.name or '',
-                         m.location_id.name or '', m.employee_id.name or '',
+                         m.location_id.name or '', (_person_name(m.employee_id) or ''),
                          round(m.total_cost, 2), mt.get(m.move_type, m.move_type or '')])
         meta = [
             (_('العميل'), env.user.partner_id.commercial_partner_id.name),

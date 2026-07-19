@@ -82,6 +82,23 @@ def _req_lang():
     return _APP_LANGS.get(raw, raw if '_' in raw else None)
 
 
+def _person_name(emp):
+    """An employee's name in the caller's language.
+
+    hr.employee.name is not a translatable field — it holds whatever HR typed,
+    which for this workforce is Arabic. The English spelling lives in a separate
+    ``english_name`` field, so an English-speaking user was reading Arabic names
+    while every other label around them was translated.
+    """
+    if not emp:
+        return None
+    emp = emp.sudo()
+    lang = _req_lang()
+    if lang and not lang.startswith('ar'):
+        return (emp.english_name or '').strip() or emp.name
+    return emp.name
+
+
 def _auth():
     """Return an env bound to the token's user, or None. Record rules of that
     user apply to every query made through the returned env. When the app sends
@@ -133,7 +150,7 @@ def _wo_dict(w):
         'facility': w.facility_id.name, 'facility_id': w.facility_id.id,
         'location': w.location_id.name or None, 'location_id': w.location_id.id or None,
         'service': w.service_id.name, 'service_type': w.service_type,
-        'employee': _emp.name or None, 'employee_id': _emp.id or None,
+        'employee': _person_name(_emp), 'employee_id': _emp.id or None,
         'priority': w.priority, 'state': w.state,
         'job': _emp.job_title or None,
         'request_datetime': w.request_datetime or None,
@@ -427,7 +444,7 @@ class MobileApi(http.Controller):
         return _ok({
             'has_employee': True,
             'period': period, 'period_label': plabel,
-            'employee': {'id': emp.id, 'name': emp.name, 'job': emp.job_title or None,
+            'employee': {'id': emp.id, 'name': _person_name(emp), 'job': emp.job_title or None,
                          'department': emp.department_id.name or None},
             'score': score,
             'tasks': tasks, 'attendance': att, 'materials': materials,
@@ -844,7 +861,7 @@ class MobileApi(http.Controller):
         d.update({
             # photos/videos captured by the client / quality / supervisor
             'brief_media': brief,
-            'assignee': w.employee_id.name or None,
+            'assignee': _person_name(w.employee_id),
             'location_detail': loc_detail,
             'map_query': ' '.join(filter(None, [loc.name if loc else None, w.facility_id.name, w.facility_id.address or ''])),
             'instructions': w.instructions or None,
@@ -982,7 +999,7 @@ class MobileApi(http.Controller):
             return _err(str(e), 400)
         # notify the supervisor(s) that the result awaits approval
         _notify(env, _wo_supervisors(env, w), 'نتيجة بانتظار الاعتماد',
-                '%s أكمل: %s' % (w.employee_id.name or '', w.title), wo=w)
+                '%s أكمل: %s' % ((_person_name(w.employee_id) or ''), w.title), wo=w)
         return _ok(_wo_dict(w))
 
     @http.route(API + '/workorders/<int:wid>/reject', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
