@@ -11,9 +11,10 @@ from odoo.addons.care_cafm.controllers.main import _shell, esc
 
 ACCENT = '#f7a23b'
 
-_SEV_COLOR = {'3': '#f2603f', '2': '#f5b638', '1': '#4aa8ff', '0': '#37c98a'}
-_STATE_COLOR = {'new': '#4aa8ff', 'assigned': '#f5b638', 'in_progress': '#f59e0b',
-                'fixed': '#37c98a', 'closed': '#64748b', 'cancelled': '#94a3b8'}
+_SEV_COLOR = {'critical': '#f2603f', 'high': '#f5b638',
+              'medium': '#4aa8ff', 'low': '#37c98a'}
+_STATE_COLOR = {'reported': '#4aa8ff', 'diagnosed': '#f5b638', 'in_progress': '#f59e0b',
+                'resolved': '#37c98a', 'closed': '#64748b', 'cancelled': '#94a3b8'}
 
 
 class MaintPortal(http.Controller):
@@ -54,7 +55,7 @@ class MaintPortal(http.Controller):
         faults = F.search(dom, order='severity desc, reported_date desc', limit=100)
 
         openf = F.search(base + [('state', 'not in', ('closed', 'cancelled'))])
-        crit = len(openf.filtered(lambda f: f.severity == '3'))
+        crit = len(openf.filtered(lambda f: f.severity == 'critical'))
         parts = env['care.cafm.maint.part'].sudo().search([])
         low = len(parts.filtered('low_stock'))
         insp_due = env['care.cafm.maint.inspection'].sudo().search_count(
@@ -84,8 +85,9 @@ class MaintPortal(http.Controller):
         return Markup('<input type="hidden" name="csrf_token" value="%s"/>') % request.csrf_token()
 
     def _filters(self, cur):
-        opts = [('open', 'المفتوحة'), ('new', 'جديدة'), ('in_progress', 'قيد الإصلاح'),
-                ('fixed', 'تم الإصلاح'), ('closed', 'مغلقة'), ('all', 'الكل')]
+        opts = [('open', 'المفتوحة'), ('reported', 'مُبلَّغ'), ('diagnosed', 'تم التشخيص'),
+                ('in_progress', 'قيد الإصلاح'), ('resolved', 'تم الإصلاح'),
+                ('closed', 'مغلقة'), ('all', 'الكل')]
         out = Markup('<div style="display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 11px">')
         for key, label in opts:
             sel = ('background:%s;color:#0b1220' % ACCENT) if key == cur else 'background:#152438;color:#9cb2cd'
@@ -110,8 +112,10 @@ class MaintPortal(http.Controller):
             '<label>المرفق</label><select name="facility_id">%s</select>'
             '<label>القسم</label><select name="department_id">%s</select>'
             '<label>الخطورة</label><select name="severity">'
-            '<option value="1">منخفضة</option><option value="2" selected>متوسطة</option>'
-            '<option value="3">حرِجة — تعطّل خدمة</option></select>'
+            '<option value="low">منخفضة</option>'
+            '<option value="medium" selected>متوسطة</option>'
+            '<option value="high">عالية</option>'
+            '<option value="critical">حرِجة — تعطّل خدمة</option></select>'
             '<label>الوصف</label><textarea name="description" rows="3"></textarea>'
             '<button class="btn">إرسال البلاغ</button></form></details>'
         ) % (self._csrf(), fopts, dopts)
@@ -130,7 +134,7 @@ class MaintPortal(http.Controller):
         if f.parts_cost:
             extra += Markup('<span class="pill info">قطع %s د.ك</span> ') % round(f.parts_cost, 3)
         act = Markup('')
-        if f.state in ('new', 'assigned'):
+        if f.state in ('reported', 'diagnosed'):
             act = Markup('<form method="post" action="/cafm/m/maint/%s/start">%s'
                          '<button class="btn">▶ بدء الإصلاح</button></form>') % (f.id, self._csrf())
         elif f.state == 'in_progress':
@@ -179,7 +183,7 @@ class MaintPortal(http.Controller):
         env['care.cafm.maint.fault'].sudo().create({
             'title': title, 'facility_id': fid,
             'department_id': int(post.get('department_id') or 0) or False,
-            'severity': post.get('severity') or '2',
+            'severity': post.get('severity') or 'medium',
             'description': post.get('description') or False,
             'reported_by': env.user.id, 'reporter_name': env.user.name,
         })
@@ -200,7 +204,7 @@ class MaintPortal(http.Controller):
             elif act == 'fix':
                 if post.get('resolution'):
                     f.resolution = post['resolution']
-                f.state = 'fixed'
+                f.state = 'resolved'
                 f.restored_at = fields.Datetime.now()
         except Exception:
             pass
