@@ -154,14 +154,70 @@
   .alert{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:12px;margin-bottom:8px;font-size:13px;font-weight:600}
   .alert.r{background:#fff1f3;color:#b4123a} .alert.a{background:#fff8ec;color:#a05a05} .alert.g{background:#eefaf2;color:#12703f}
   /* drawer */
-  #scrim{position:fixed;inset:0;background:rgba(15,33,55,.42);z-index:44;display:none;opacity:0;transition:opacity .2s}
+  /* ---------- dialogs ----------
+     Every dialog in the portal goes through openDrawer(), so this container is
+     the dialog system. A centred card on a desktop (where a full-height rail
+     wastes the screen and buries the actions below the fold) and a bottom sheet
+     on a phone, which is where a thumb already expects one. */
+  #scrim{position:fixed;inset:0;z-index:44;display:none;opacity:0;transition:opacity .22s;
+    background:radial-gradient(900px 500px at 50% 0%,rgba(120,20,12,.30),rgba(10,18,30,.58));
+    backdrop-filter:blur(3px)}
   #scrim.show{display:block;opacity:1}
-  #drawer{position:fixed;inset-inline-end:0;top:0;bottom:0;width:520px;max-width:94vw;background:var(--bg);z-index:45;transform:translateX(120%);transition:transform .28s cubic-bezier(.2,.7,.2,1);box-shadow:var(--shadow-lg);display:flex;flex-direction:column}
-  html[dir=rtl] #drawer{transform:translateX(-120%)}
-  #drawer.show{transform:none!important}
-  #drawer .dh{display:flex;align-items:center;gap:10px;padding:16px 18px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0}
-  #drawer .dh b{flex:1;font-size:16px}
-  #drawer .db{padding:16px 18px;overflow:auto;flex:1}
+  #drawer{position:fixed;z-index:45;display:flex;flex-direction:column;background:var(--card);
+    inset-inline-start:50%;top:50%;width:min(720px,94vw);max-height:88vh;
+    transform:translate(-50%,-46%) scale(.97);opacity:0;pointer-events:none;
+    border-radius:20px;overflow:hidden;box-shadow:0 30px 90px rgba(10,18,30,.34);
+    transition:opacity .2s ease,transform .24s cubic-bezier(.2,.8,.25,1)}
+  html[dir=rtl] #drawer{transform:translate(50%,-46%) scale(.97)}
+  #drawer.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+  html[dir=rtl] #drawer.show{transform:translate(50%,-50%) scale(1)}
+  #drawer.sm{width:min(460px,94vw)} #drawer.lg{width:min(1020px,96vw)}
+  /* the header carries the accent so a dialog reads as part of CARE, not a
+     browser default floating over it */
+  #drawer .dh{display:flex;align-items:center;gap:12px;padding:16px 20px;position:relative;
+    background:linear-gradient(135deg,var(--accent),var(--accent-d));color:#fff;flex:0 0 auto}
+  #drawer .dh::after{content:'';position:absolute;inset:0;pointer-events:none;
+    background-image:repeating-linear-gradient(-45deg,rgba(255,255,255,.06) 0 1px,transparent 1px 26px)}
+  #drawer .dh .dic{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.18);
+    display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 auto;z-index:1}
+  #drawer .dh .dtx{flex:1;min-width:0;z-index:1}
+  #drawer .dh b{display:block;font-size:16px;font-weight:800;line-height:1.35}
+  #drawer .dh .dsub{font-size:11.5px;opacity:.85;margin-top:1px}
+  #drawer .dh .iconbtn{background:rgba(255,255,255,.16);border:0;color:#fff;width:34px;height:34px;
+    border-radius:10px;font-size:16px;z-index:1}
+  #drawer .dh .iconbtn:hover{background:rgba(255,255,255,.28)}
+  #drawer .db{padding:18px 20px;overflow:auto;flex:1;background:var(--bg)}
+  /* actions live on a sticky footer instead of scrolling away with the body */
+  #drawer .df{display:flex;gap:9px;justify-content:flex-end;align-items:center;flex:0 0 auto;
+    padding:12px 18px;background:var(--card);border-top:1px solid var(--line)}
+  #drawer .df .spacer{flex:1}
+  #drawer .db>.sec{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+  #drawer .db>.sec>h4{margin:0 0 10px;font-size:12px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+  @media(max-width:760px){
+    #drawer,html[dir=rtl] #drawer{inset-inline-start:0;inset-inline-end:0;top:auto;bottom:0;
+      width:100%;max-width:100%;max-height:92vh;border-radius:22px 22px 0 0;
+      transform:translateY(14%) scale(1)}
+    #drawer.show,html[dir=rtl] #drawer.show{transform:translateY(0) scale(1)}
+    #drawer .dh::before{content:'';position:absolute;top:7px;inset-inline-start:50%;
+      transform:translateX(-50%);width:38px;height:4px;border-radius:4px;background:rgba(255,255,255,.4)}
+  }
+  @media(prefers-reduced-motion:reduce){#drawer{transition:opacity .01s}}
+  /* ---------- command palette ---------- */
+  #cmdk{position:fixed;inset:0;z-index:70;display:none;align-items:flex-start;justify-content:center;
+    padding-top:12vh;background:rgba(10,18,30,.5);backdrop-filter:blur(4px)}
+  #cmdk.show{display:flex}
+  #cmdk .box{width:min(600px,94vw);background:var(--card);border-radius:18px;overflow:hidden;
+    box-shadow:0 30px 90px rgba(10,18,30,.4)}
+  #cmdk input{width:100%;border:0;border-bottom:1px solid var(--line);padding:17px 20px;
+    font-family:inherit;font-size:15.5px;font-weight:700;color:var(--ink)}
+  #cmdk input:focus{outline:none}
+  #cmdk .list{max-height:52vh;overflow:auto;padding:6px}
+  #cmdk .it{display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:11px;cursor:pointer;font-size:13.5px;font-weight:600}
+  #cmdk .it .ic{width:28px;height:28px;border-radius:8px;background:#f1f5fa;display:flex;align-items:center;justify-content:center}
+  #cmdk .it.on,#cmdk .it:hover{background:var(--accent);color:#fff}
+  #cmdk .it.on .ic,#cmdk .it:hover .ic{background:rgba(255,255,255,.2)}
+  #cmdk .it .kb{margin-inline-start:auto;font-size:10.5px;opacity:.6}
+  #cmdk .hint{padding:9px 16px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);display:flex;gap:14px}
   .kv{width:100%;font-size:13px} .kv td{padding:7px 4px;border-bottom:1px solid var(--line2)} .kv td:first-child{color:var(--muted);width:120px}
   .sec-t{font-size:12px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin:14px 0 8px}
   .media-grid{display:flex;gap:8px;flex-wrap:wrap}
@@ -254,6 +310,7 @@
       <div class="crumb"><h1 id="ptitle">لوحة التحكم</h1><div class="sub" id="psub"></div></div>
       <div class="search"><input id="gsearch" placeholder="بحث عن مرفق، عامل، أمر عمل…" oninput="globalSearch(this.value)" onblur="setTimeout(()=>hideSearch(),200)"/><span class="sic">🔍</span><div class="res" id="sres"></div></div>
       <select id="projSel" style="display:none;border:1px solid var(--line);border-radius:20px;padding:6px 12px;font-weight:700;font-size:12.5px;background:#fff;cursor:pointer;font-family:inherit" onchange="setProject(this.value)"></select>
+      <button class="iconbtn" onclick="openCmd()" title="Ctrl+K">⌘</button>
       <button class="iconbtn" onclick="go('notifications')">🔔<span class="dot" id="nbadge" style="display:none"></span></button>
       <div class="user" onclick="go('settings')"><div class="av" id="uav">?</div><div><div class="nm" id="uname"></div><div class="rl" id="urole"></div></div></div>
     </div>
@@ -261,7 +318,20 @@
   </div>
 </div>
 <div id="scrim" onclick="closeDrawer()"></div>
-<div id="drawer"><div class="dh"><b id="dtitle"></b><button class="iconbtn" onclick="closeDrawer()">✕</button></div><div class="db" id="dbody"></div></div>
+<div id="drawer" role="dialog" aria-modal="true" aria-labelledby="dtitle">
+  <div class="dh"><div class="dic" id="dicon">📄</div>
+    <div class="dtx"><b id="dtitle"></b><div class="dsub" id="dsub" style="display:none"></div></div>
+    <button class="iconbtn" onclick="closeDrawer()" aria-label="إغلاق">✕</button></div>
+  <div class="db" id="dbody"></div>
+  <div class="df" id="dfoot" style="display:none"></div>
+</div>
+<div id="cmdk" onclick="if(event.target===this)closeCmd()">
+  <div class="box">
+    <input id="cmdq" placeholder="اذهب إلى… (اكتب اسم صفحة أو خدمة)" oninput="cmdRender(this.value)"/>
+    <div class="list" id="cmdlist"></div>
+    <div class="hint"><span>↑↓ للتنقل</span><span>Enter للفتح</span><span>Esc للإغلاق</span></div>
+  </div>
+</div>
 <div id="toast"></div>
 
 <script>
@@ -390,9 +460,96 @@ function pagedTable(hostId,rows,headHtml,rowFn,key,rerender,pageSize){
 function __pg(key,page){const st=__PG[key];if(!st)return;st.page=page;pagedTable(st.host,st.rows,st.head,st.rowFn,key,st.rerender,st.size);}
 function pgReset(key){if(__PG[key])__PG[key].page=1;}
 // ---------- drawer ----------
-function openDrawer(title,html){document.getElementById('dtitle').textContent=title;document.getElementById('dbody').innerHTML=html;document.getElementById('scrim').classList.add('show');document.getElementById('drawer').classList.add('show');}
-function setDrawer(title,html){document.getElementById('dtitle').textContent=title;document.getElementById('dbody').innerHTML=html;}
-function closeDrawer(){document.getElementById('scrim').classList.remove('show');document.getElementById('drawer').classList.remove('show');}
+/* ---- dialogs ----
+   Every dialog in the portal comes through here, so an option added once is an
+   option every dialog gains. The signature stays (title,html) — the third
+   argument is optional so no existing call had to change:
+     {icon, subtitle, size:'sm'|'lg', actions:[{label,cls,onclick,icon}]}      */
+function openDrawer(title,html,opt){opt=opt||{};
+  const d=document.getElementById('drawer');
+  d.classList.remove('sm','lg'); if(opt.size)d.classList.add(opt.size);
+  document.getElementById('dicon').textContent=opt.icon||'📄';
+  const s=document.getElementById('dsub');
+  s.textContent=opt.subtitle||''; s.style.display=opt.subtitle?'block':'none';
+  document.getElementById('dtitle').textContent=title;
+  document.getElementById('dbody').innerHTML=html;
+  drawerActions(opt.actions);
+  document.getElementById('scrim').classList.add('show');
+  d.classList.add('show');
+  setTimeout(()=>{const f=d.querySelector('.db input,.db select,.db textarea');if(f)f.focus();},80);
+}
+/* Buttons live on the sticky footer so they never scroll out of reach — the
+   commonest complaint about a long form in a dialog. */
+function drawerActions(actions){const f=document.getElementById('dfoot');
+  if(!actions||!actions.length){f.style.display='none';f.innerHTML='';return;}
+  f.innerHTML='<span class="spacer"></span>'+actions.map((a,i)=>
+    '<button class="btn '+(a.cls||'s')+'" onclick="__dact('+i+')">'+
+    (a.icon?esc(a.icon)+' ':'')+esc(a.label)+'</button>').join('');
+  f.__acts=actions; f.style.display='flex';
+}
+function __dact(i){const f=document.getElementById('dfoot');const a=(f.__acts||[])[i];
+  if(a&&typeof a.onclick==='function')a.onclick(); else if(a&&a.onclick)eval(a.onclick);}
+function setDrawer(title,html,opt){openDrawer(title,html,opt);}
+function closeDrawer(){document.getElementById('scrim').classList.remove('show');
+  document.getElementById('drawer').classList.remove('show');
+  drawerActions(null);}
+/* A confirm that matches the rest of the portal instead of the browser's, and
+   that can say what is about to happen rather than just "OK / Cancel". */
+function confirmDialog(title,message,onYes,opt){opt=opt||{};
+  openDrawer(title,'<div class="sec" style="font-size:14px;line-height:1.7">'+esc(message)+'</div>',
+    {icon:opt.icon||'⚠️',size:'sm',subtitle:opt.subtitle,
+     actions:[{label:T('إلغاء','Cancel'),cls:'s',onclick:closeDrawer},
+              {label:opt.yes||T('تأكيد','Confirm'),cls:opt.danger?'d':'p',
+               onclick:function(){closeDrawer();onYes&&onYes();}}]});
+}
+/* ---- command palette ----
+   The sidebar keeps growing as services are added; typing the name of a page
+   beats hunting for it. */
+let CMD_IDX=0,CMD_HITS=[];
+/* Read the sidebar itself rather than a second list of pages — a service added
+   to the nav is searchable the same day, with no list to keep in step. Some
+   entries call goSvc() rather than go(), so the anchor is clicked, not guessed. */
+function cmdItems(){const out=[];
+  document.querySelectorAll('#nav a[data-id]').forEach(a=>{
+    const ic=a.querySelector('.ic'),cnt=a.querySelector('.cnt');
+    let label='';a.querySelectorAll('span').forEach(s=>{if(s!==ic&&s!==cnt)label+=s.textContent;});
+    label=label.trim()||a.textContent.trim();
+    const grp=a.closest('.svc');
+    const scope=grp?(grp.querySelector('.svc-h')||{}).textContent:'';
+    out.push({label:label,scope:(scope||'').trim(),icon:(ic?ic.textContent:'')||'•',el:a});});
+  return out.filter(i=>i.label);
+}
+function openCmd(){document.getElementById('cmdk').classList.add('show');
+  const q=document.getElementById('cmdq');q.value='';cmdRender('');setTimeout(()=>q.focus(),40);}
+function closeCmd(){document.getElementById('cmdk').classList.remove('show');}
+function cmdRender(term){term=(term||'').trim().toLowerCase();
+  CMD_HITS=cmdItems().filter(i=>!term||i.label.toLowerCase().includes(term)
+                                 ||(i.scope||'').toLowerCase().includes(term)).slice(0,40);
+  CMD_IDX=0;
+  const l=document.getElementById('cmdlist');
+  l.innerHTML=CMD_HITS.length?CMD_HITS.map((i,n)=>
+    '<div class="it'+(n===0?' on':'')+'" onclick="cmdGo('+n+')"><span class="ic">'+esc(i.icon)+
+    '</span><span>'+esc(i.label)+'</span>'+
+    (i.scope?'<span class="kb">'+esc(i.scope)+'</span>':'')+'</div>').join('')
+    :'<div style="padding:24px;text-align:center;color:var(--muted)">'+T('لا نتائج','No matches')+'</div>';
+}
+function cmdMove(d){if(!CMD_HITS.length)return;CMD_IDX=(CMD_IDX+d+CMD_HITS.length)%CMD_HITS.length;
+  const els=document.querySelectorAll('#cmdlist .it');
+  els.forEach((e,n)=>e.classList.toggle('on',n===CMD_IDX));
+  if(els[CMD_IDX])els[CMD_IDX].scrollIntoView({block:'nearest'});}
+function cmdGo(n){const it=CMD_HITS[n];if(!it||!it.el)return;closeCmd();it.el.click();}
+document.addEventListener('keydown',function(e){
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openCmd();return;}
+  const cmd=document.getElementById('cmdk');
+  if(cmd&&cmd.classList.contains('show')){
+    if(e.key==='Escape'){closeCmd();}
+    else if(e.key==='ArrowDown'){e.preventDefault();cmdMove(1);}
+    else if(e.key==='ArrowUp'){e.preventDefault();cmdMove(-1);}
+    else if(e.key==='Enter'){e.preventDefault();cmdGo(CMD_IDX);}
+    return;
+  }
+  if(e.key==='Escape'&&document.getElementById('drawer').classList.contains('show'))closeDrawer();
+});
 // ---------- auth ----------
 async function loadBrand(){try{BRAND=await api('/branding');}catch(e){}
   const lg=BRAND&&BRAND.logo;if(lg){document.getElementById('loginLogo').src=lg;document.getElementById('splashLogo').src=lg;const s=document.getElementById('sbLogo');s.src=lg;s.style.display='block';document.getElementById('sbTxt').style.display='none';}else{document.getElementById('loginLogo').style.display='none';document.getElementById('splashLogo').style.display='none';}}
