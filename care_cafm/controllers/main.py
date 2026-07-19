@@ -196,6 +196,7 @@ class CafmMobile(http.Controller):
             ('valet', '🚗', 'صف السيارات', 'استلام · صفّ · تسليم'),
             ('inbox', '🔔', 'الإشعارات', 'ما وصلني · غير المقروء'),
             ('support', '🎧', 'الدعم الفني', 'تذاكر · متابعة الرد'),
+            ('permissions', '🔐', 'صلاحياتي', 'ما يسمح به حسابك'),
         ]
         # hospitality lives on its own route prefix, not /cafm/m/<key>
         extra = [
