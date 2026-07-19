@@ -200,6 +200,13 @@ class CafmMobile(http.Controller):
         ]
         # hospitality lives on its own route prefix, not /cafm/m/<key>
         extra = [
+            ('/cafm/m/svc/security', '🛡️', 'الأمن', 'بلاغات · جولات · تصاريح · مفاتيح'),
+            ('/cafm/m/svc/cleaning', '🧼', 'النظافة', 'تدقيقات · جداول · جولات · مستهلكات'),
+            ('/cafm/m/svc/agriculture', '🌳', 'الزراعة', 'أشجار · أعمال · ريّ · دليل الأنواع'),
+            ('/cafm/m/svc/facade', '🏙️', 'الواجهات', 'تصاريح ارتفاع · واجهات'),
+            ('/cafm/m/svc/waste', '♻️', 'النفايات', 'أوامر · رحلات · مراكز'),
+            ('/cafm/m/svc/maintenance', '🛠️', 'الصيانة', 'أعطال · فحوص · قطع غيار'),
+            ('/cafm/m/svc/inventory', '📦', 'المخزون', 'مخازن · حركات'),
             ('/hosp', '☕', 'الضيافة', 'اطلب مشروبك بمواصفاتك'),
             ('/hosp/kitchen', '🍳', 'شاشة المطبخ', 'الطلبات لايف'),
             ('/hosp/stats', '📊', 'إحصائيات الضيافة', 'الاستهلاك والتكلفة'),
