@@ -564,6 +564,51 @@ class ApiClient {
               await http.get(_u('/app/config'))))['data'] as Map);
 
   // ---- valet parking ---------------------------------------------------------
+  /// One service's slice of the client's work — the per-service screens all
+  /// read the same enriched work-order envelope, filtered by service type.
+  Future<Map<String, dynamic>> clientServiceBoard(String serviceType, {String state = 'all'}) async =>
+      Map<String, dynamic>.from((await _handle(await http.get(
+              _u('/client/workorders?state=$state&service_type=$serviceType'),
+              headers: await _headers())))['data'] as Map);
+
+  // ---- hospitality ----
+  Future<Map<String, dynamic>> hospMenu() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/hosp/menu'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> hospMyOrders() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/hosp/orders'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> hospCreate(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/hosp/order/create'),
+              headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<Map<String, dynamic>> hospFavOrder(int id, {String? room}) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/hosp/favorite/$id/order'),
+              headers: await _headers(),
+              body: jsonEncode({if (room != null) 'room': room}))))['data'] as Map);
+
+  Future<Map<String, dynamic>> hospRate(int id, int rating, {String? note}) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/hosp/order/$id/rate'),
+              headers: await _headers(),
+              body: jsonEncode({'rating': '$rating', if (note != null) 'note': note}))))['data'] as Map);
+
+  Future<Map<String, dynamic>> hospCancel(int id) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/hosp/order/$id/cancel'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> hospKitchen() async =>
+      Map<String, dynamic>.from((await _handle(
+              await http.get(_u('/hosp/kitchen'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> hospKitchenAct(int id, String act) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/hosp/kitchen/$id/$act'), headers: await _headers())))['data'] as Map);
+
   Future<Map<String, dynamic>> valetBoard() async =>
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/valet/board'), headers: await _headers())))['data'] as Map);

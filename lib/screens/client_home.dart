@@ -23,6 +23,8 @@ import 'client_security_screen.dart';
 import 'client_agri_screen.dart';
 import 'maintenance_screen.dart';
 import 'valet_screen.dart';
+import 'hospitality_screen.dart';
+import 'specialty_service_screen.dart';
 import 'client_cleaning_screen.dart';
 import 'client_facade_screen.dart';
 import 'client_inventory_screen.dart';
@@ -417,6 +419,15 @@ class _ClientHomeState extends State<ClientHome> {
       ('🏭', 'الأصول', 'Assets', 0xFF0891B2, const ClientAssetsScreen(), null),
       ('🛠️', 'الصيانة', 'Maintenance', 0xFFF7A23B, const MaintenanceScreen(), 'maintenance'),
       ('🚗', 'صف السيارات', 'Valet', 0xFFB45309, const ValetScreen(), 'valet'),
+      ('☕', 'الضيافة', 'Hospitality', 0xFF8A6D3B, const HospitalityScreen(), 'hospitality'),
+      ('🐜', 'مكافحة الحشرات', 'Pest', 0xFF7C3AED,
+          const SpecialtyServiceScreen(spec: ServiceSpec.pest), 'pest'),
+      ('🧴', 'التعقيم', 'Disinfection', 0xFF0EA5A5,
+          const SpecialtyServiceScreen(spec: ServiceSpec.disinfection), 'disinfection'),
+      ('🏊', 'المسابح', 'Pools', 0xFF0891B2,
+          const SpecialtyServiceScreen(spec: ServiceSpec.pool), 'pool'),
+      ('🚰', 'خزانات المياه', 'Water tanks', 0xFF0E7A5F,
+          const SpecialtyServiceScreen(spec: ServiceSpec.watertank), 'watertank'),
     ];
     final shown = specs.where((s) => s.$6 == null || _has(s.$6!)).toList();
     Widget tile((String, String, String, int, Widget, String?) s) {
