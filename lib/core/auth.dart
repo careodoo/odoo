@@ -1,3 +1,4 @@
+import 'i18n.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -144,7 +145,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     } catch (e) {
-      error = 'تعذّر الاتصال بالخادم';
+      error = tr('تعذّر الاتصال بالخادم', 'Could not reach the server');
       notifyListeners();
       return false;
     }

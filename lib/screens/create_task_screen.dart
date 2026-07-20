@@ -113,11 +113,11 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                   onChanged: (v) => setState(() => _facilityId = v as int?)))),
               ]),
               Row(children: [
-                Expanded(child: _dropdown<int>(tr('الأولوية', 'Priority'), _priority, const [
-                  DropdownMenuItem(value: 0, child: Text('عادية')),
-                  DropdownMenuItem(value: 1, child: Text('متوسطة')),
-                  DropdownMenuItem(value: 2, child: Text('عالية')),
-                  DropdownMenuItem(value: 3, child: Text('عاجلة')),
+                Expanded(child: _dropdown<int>(tr('الأولوية', 'Priority'), _priority, [
+                  DropdownMenuItem(value: 0, child: Text(tr('عادية', 'Normal'))),
+                  DropdownMenuItem(value: 1, child: Text(tr('متوسطة', 'Medium'))),
+                  DropdownMenuItem(value: 2, child: Text(tr('عالية', 'High'))),
+                  DropdownMenuItem(value: 3, child: Text(tr('عاجلة', 'Urgent'))),
                 ], (v) => setState(() => _priority = v ?? 1))),
                 const SizedBox(width: 10),
                 Expanded(child: _field(tr('المدة (دقيقة)', 'Minutes'),

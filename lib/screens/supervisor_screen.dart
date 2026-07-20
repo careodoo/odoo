@@ -39,9 +39,9 @@ class _SupervisorScreenState extends State<SupervisorScreen> {
       builder: (_) => ListView(
         shrinkWrap: true,
         children: [
-          const Padding(
+          Padding(
             padding: EdgeInsets.all(16),
-            child: Text('اختر الموظف', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
+            child: Text(tr('اختر الموظف', 'Choose the worker'), style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
           ),
           for (final e in emps)
             ListTile(
@@ -59,7 +59,7 @@ class _SupervisorScreenState extends State<SupervisorScreen> {
     try {
       await api.assign(woId, chosen);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✔ تم إسناد المهمة')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('✔ تم إسناد المهمة', '✔ Task assigned'))));
         setState(_load);
       }
     } catch (e) {
@@ -71,7 +71,7 @@ class _SupervisorScreenState extends State<SupervisorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0B1220),
-      appBar: AppBar(title: const Text('🧭 لوحة المشرف')),
+      appBar: AppBar(title: Text(tr('🧭 لوحة المشرف', '🧭 Supervisor board'))),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           final created = await Navigator.push<bool>(context,

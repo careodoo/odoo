@@ -32,8 +32,12 @@ class _C2CRfqSheetState extends State<C2CRfqSheet> {
   List<dynamic> _rfqOptions = const [];
   bool _loading = true, _busy = false;
 
-  static const _budgets = ['أقل من 500', '500 – 2000', '2000 – 5000', 'أكثر من 5000'];
-  static const _times = ['صباحًا', 'ظهرًا', 'مساءً', 'أي وقت'];
+  // const cannot contain a method call, so the pair is stored and resolved
+  // where it is rendered — same trick used for every other option list.
+  static const _budgets = [('أقل من 500', 'Under 500'), ('500 – 2000', '500 – 2000'),
+                           ('2000 – 5000', '2000 – 5000'), ('أكثر من 5000', 'Over 5000')];
+  static const _times = [('صباحًا', 'Morning'), ('ظهرًا', 'Midday'),
+                         ('مساءً', 'Evening'), ('أي وقت', 'Any time')];
 
   @override
   void initState() {
@@ -185,12 +189,16 @@ class _C2CRfqSheetState extends State<C2CRfqSheet> {
               _section('٤', tr('الميزانية والوقت', 'Budget & timing'), Icons.payments_rounded, [
                 _label(tr('الميزانية التقديرية (KWD)', 'Estimated budget (KWD)')),
                 Wrap(spacing: 7, runSpacing: 7, children: [
-                  for (final b in _budgets) _chip(b, _budget == b, () => setState(() => _budget = _budget == b ? '' : b)),
+                  for (final b in _budgets)
+                    _chip(tr(b.$1, b.$2), _budget == b.$1,
+                        () => setState(() => _budget = _budget == b.$1 ? '' : b.$1)),
                 ]),
                 const SizedBox(height: 10),
                 _label(tr('الوقت المفضّل للتواصل', 'Preferred contact time')),
                 Wrap(spacing: 7, runSpacing: 7, children: [
-                  for (final t in _times) _chip(t, _time == t, () => setState(() => _time = _time == t ? '' : t)),
+                  for (final t in _times)
+                    _chip(tr(t.$1, t.$2), _time == t.$1,
+                        () => setState(() => _time = _time == t.$1 ? '' : t.$1)),
                 ]),
               ]),
               _section('٥', tr('بيانات التواصل', 'Contact'), Icons.person_rounded, [

@@ -149,7 +149,7 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> with Widg
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _d == null
-              ? const Center(child: Text('تعذّر التحميل'))
+              ? Center(child: Text(tr('تعذّر التحميل', 'Could not load')))
               : ListView(padding: const EdgeInsets.all(16), children: [
                   _header(cs),
                   if (_d!['state'] == 'in_progress') _timerCard(),
@@ -310,7 +310,8 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> with Widg
         Icon(over ? Icons.timer_off : Icons.timer, color: c, size: 34),
         const SizedBox(width: 14),
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(over ? 'تجاوز الوقت المحدّد' : 'الوقت المتبقّي', style: TextStyle(color: c, fontWeight: FontWeight.w700)),
+          Text(over ? tr('تجاوز الوقت المحدّد', 'Past the target time')
+                   : tr('الوقت المتبقّي', 'Time remaining'), style: TextStyle(color: c, fontWeight: FontWeight.w700)),
           Text(t, style: TextStyle(color: c, fontSize: 30, fontWeight: FontWeight.w900, fontFeatures: const [])),
         ]),
         const Spacer(),
@@ -516,7 +517,7 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> with Widg
     final ctrl = TextEditingController();
     final ok = await showDialog<bool>(context: context, builder: (_) => AlertDialog(
       title: Text(tr('إضافة ملاحظة', 'Add note')),
-      content: TextField(controller: ctrl, maxLines: 3, decoration: const InputDecoration(hintText: 'اكتب ملاحظة...')),
+      content: TextField(controller: ctrl, maxLines: 3, decoration: InputDecoration(hintText: tr('اكتب ملاحظة...', 'Write a note...'))),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('إلغاء')),
         FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(tr('إرسال', 'Send'))),

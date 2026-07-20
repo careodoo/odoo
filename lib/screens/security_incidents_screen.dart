@@ -207,7 +207,7 @@ class _IncidentFormState extends State<_IncidentForm> {
             value: _type,
             dropdownColor: const Color(0xFF1E3A5F),
             style: white,
-            decoration: InputDecoration(labelText: 'النوع', labelStyle: white),
+            decoration: InputDecoration(labelText: tr('النوع', 'Type'), labelStyle: white),
             items: [
               for (final e in _SecurityIncidentsScreenState.types.entries)
                 DropdownMenuItem(value: e.key, child: Text(e.value, style: white)),
@@ -219,7 +219,7 @@ class _IncidentFormState extends State<_IncidentForm> {
             value: _sev,
             dropdownColor: const Color(0xFF1E3A5F),
             style: white,
-            decoration: InputDecoration(labelText: 'الخطورة', labelStyle: white),
+            decoration: InputDecoration(labelText: tr('الخطورة', 'Severity'), labelStyle: white),
             items: [
               for (final e in _SecurityIncidentsScreenState.severities.entries)
                 DropdownMenuItem(value: e.key, child: Text(e.value, style: white)),
@@ -231,7 +231,7 @@ class _IncidentFormState extends State<_IncidentForm> {
             controller: _desc,
             style: white,
             maxLines: 3,
-            decoration: InputDecoration(labelText: 'الوصف', labelStyle: white),
+            decoration: InputDecoration(labelText: tr('الوصف', 'Description'), labelStyle: white),
           ),
           const SizedBox(height: 20),
           FilledButton(

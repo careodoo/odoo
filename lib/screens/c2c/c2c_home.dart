@@ -106,12 +106,12 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
               SliverToBoxAdapter(child: _quickActions()),
               _sectionRow(tr('التصنيفات', 'Categories'),
                   () => Navigator.push(context, MaterialPageRoute(
-                      builder: (_) => const C2CServiceListScreen(title: 'كل الخدمات')))),
+                      builder: (_) => C2CServiceListScreen(title: tr('كل الخدمات', 'All services'))))),
               SliverToBoxAdapter(child: _categoryCards(cats)),
               if (popular.isNotEmpty)
                 _sectionRow(tr('موصى به لك', 'Recommended for you'),
                     () => Navigator.push(context, MaterialPageRoute(
-                        builder: (_) => const C2CServiceListScreen(title: 'كل الخدمات')))),
+                        builder: (_) => C2CServiceListScreen(title: tr('كل الخدمات', 'All services'))))),
               if (popular.isNotEmpty) SliverToBoxAdapter(child: _popularRail(popular)),
               if (_videos.isNotEmpty)
                 _sectionRow(tr('شاهد خدماتنا', 'Watch our services'), () {}),
@@ -209,7 +209,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
           child: Row(children: [
             Expanded(child: InkWell(
               onTap: () => Navigator.push(context, MaterialPageRoute(
-                  builder: (_) => const C2CServiceListScreen(title: 'كل الخدمات'))),
+                  builder: (_) => C2CServiceListScreen(title: tr('كل الخدمات', 'All services')))),
               borderRadius: BorderRadius.circular(12),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 11),
@@ -224,7 +224,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
             // filter pill, like the reference
             InkWell(
               onTap: () => Navigator.push(context, MaterialPageRoute(
-                  builder: (_) => const C2CServiceListScreen(title: 'كل الخدمات'))),
+                  builder: (_) => C2CServiceListScreen(title: tr('كل الخدمات', 'All services')))),
               borderRadius: BorderRadius.circular(12),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
@@ -437,7 +437,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
   /// Fast lanes to the things a returning customer opens most.
   Widget _quickActions() {
     final items = <(IconData, String, String, List<Color>, Widget)>[
-      (Icons.event_available_rounded, tr('احجز خدمة', 'Book a service'), 'Book', C2C.gradFor(0), const C2CServiceListScreen(title: 'كل الخدمات')),
+      (Icons.event_available_rounded, tr('احجز خدمة', 'Book a service'), 'Book', C2C.gradFor(0), C2CServiceListScreen(title: tr('كل الخدمات', 'All services'))),
       (Icons.card_membership_rounded, tr('باقة اشتراك', 'Subscription plan'), 'Plans', C2C.gradFor(4), const C2CSubscriptionsScreen()),
       (Icons.receipt_long_rounded, tr('طلباتي', 'My orders'), 'Orders', C2C.gradFor(1), const C2COrdersScreen()),
       (Icons.description_rounded, tr('عرض سعر', 'Get a quote'), 'Quote', C2C.gradFor(3), const C2CContractsScreen()),
@@ -824,8 +824,9 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
                     Text(tr('شروط الإلغاء', 'Cancellation terms'), style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: C2C.ink)),
                   ]),
                   const SizedBox(height: 8),
-                  for (final t in const [
-                    'يمكن إلغاء الاشتراك في أي وقت من صفحة «اشتراكاتي».',
+                  for (final t in [
+                    tr('يمكن إلغاء الاشتراك في أي وقت من صفحة «اشتراكاتي».',
+                        'You can cancel any time from "My subscriptions".'),
                     'الإلغاء قبل بدء أول زيارة: استرداد كامل.',
                     'بعد بدء الخدمة: تُحتسب الزيارات المنفّذة ويُسترد الباقي.',
                     'لا رسوم إلغاء خفية — الشفافية أساس تعاملنا.',

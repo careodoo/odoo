@@ -129,10 +129,10 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
           border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: const [
+          Row(children: [
             Icon(Icons.verified_user_rounded, size: 15, color: Color(0xFFE5484D)),
             SizedBox(width: 6),
-            Text('الوثائق والامتثال', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Pms.ink)),
+            Text(tr('الوثائق والامتثال', 'Documents & compliance'), style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Pms.ink)),
           ]),
           const SizedBox(height: 10),
           for (final i in items) Builder(builder: (_) {
@@ -214,10 +214,10 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
           border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: const [
+          Row(children: [
             Icon(Icons.schedule_rounded, size: 15, color: Color(0xFF2F6DF6)),
             SizedBox(width: 6),
-            Text('آخر الحضور', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Pms.ink)),
+            Text(tr('آخر الحضور', 'Recent attendance'), style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Pms.ink)),
           ]),
           const SizedBox(height: 4),
           // The file lists the last 30 punches; paging keeps it readable.
