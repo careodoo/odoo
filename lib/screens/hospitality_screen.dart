@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import 'hosp_stock_screen.dart';
 import '../core/widgets.dart';
 
 const _brown = Color(0xFF8A6D3B);
@@ -80,6 +81,15 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
         backgroundColor: _brown, foregroundColor: Colors.white,
         title: Text(tr('الضيافة', 'Hospitality'),
             style: const TextStyle(fontWeight: FontWeight.w900)),
+        actions: [
+          // The pantry behind the menu — what is left, in cups.
+          IconButton(
+            tooltip: tr('المخزون', 'Pantry'),
+            icon: const Icon(Icons.inventory_2_outlined),
+            onPressed: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const HospStockScreen())),
+          ),
+        ],
         bottom: TabBar(
           controller: _tabs, indicatorColor: Colors.white,
           labelColor: Colors.white, unselectedLabelColor: Colors.white70,

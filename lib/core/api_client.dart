@@ -563,6 +563,26 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/app/config'))))['data'] as Map);
 
+  // ---- hospitality pantry ---------------------------------------------------
+  /// Supplies with their balance in servings, plus recent purchases.
+  Future<Map<String, dynamic>> hospStock() async =>
+      Map<String, dynamic>.from((await _handle(await http.get(
+              _u('/hosp/stock'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> hospPurchaseCreate(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/hosp/purchase/create'),
+              headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<void> hospPurchaseAct(int id, String act) async =>
+      _handle(await http.post(_u('/hosp/purchase/$id/$act'),
+          headers: await _headers()));
+
+  /// Where I am served — set once, changeable unless the client locked it.
+  Future<void> hospSetPlace(Map<String, dynamic> body) async =>
+      _handle(await http.post(_u('/hosp/place'),
+          headers: await _headers(), body: jsonEncode(body)));
+
   // ---- service registry (the 39 sections, shared with the web portal) --------
   /// What each service is made of. The backend declares it once, so a section
   /// added there appears in the app and the portal without either being edited.
