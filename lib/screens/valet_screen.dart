@@ -62,6 +62,89 @@ class _ValetScreenState extends State<ValetScreen>
   void _snack(String m, {Color? c}) => ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(m), backgroundColor: c ?? _gold, behavior: SnackBarBehavior.floating));
 
+  /// Who is on the floor right now and how many cars each is holding.
+  Future<void> _driversSheet() async {
+    final facId = (_d?['facility_id'] as num?)?.toInt();
+    showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => DraggableScrollableSheet(
+        expand: false, initialChildSize: 0.6, maxChildSize: 0.92, minChildSize: 0.4,
+        builder: (c, ctrl) => FutureBuilder<List<dynamic>>(
+          future: context.read<AuthProvider>().api.valetDrivers(facilityId: facId),
+          builder: (c, snap) {
+            if (snap.connectionState == ConnectionState.waiting) {
+              return const Padding(padding: EdgeInsets.all(40),
+                  child: Center(child: CircularProgressIndicator(color: _gold)));
+            }
+            final drivers = (snap.data ?? const []).cast<Map>();
+            return ListView(controller: ctrl, padding: const EdgeInsets.fromLTRB(16, 14, 16, 24), children: [
+              Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(
+                  color: Colors.black12, borderRadius: BorderRadius.circular(3)))),
+              const SizedBox(height: 14),
+              Row(children: [
+                const Icon(Icons.groups_rounded, color: _gold),
+                const SizedBox(width: 8),
+                Text(tr('السائقون على الأرض', 'Drivers on the floor'),
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
+                const Spacer(),
+                Text('${drivers.where((d) => d['on_shift'] == true).length}/${drivers.length}',
+                    style: const TextStyle(fontWeight: FontWeight.w900, color: _gold)),
+              ]),
+              const SizedBox(height: 12),
+              if (drivers.isEmpty)
+                Padding(padding: const EdgeInsets.all(30),
+                    child: Center(child: Text(tr('لا سائقين مسجّلين', 'No drivers registered'),
+                        style: const TextStyle(color: Colors.black54)))),
+              for (final d in drivers) _driverTile(d),
+            ]);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _driverTile(Map d) {
+    final on = d['on_shift'] == true;
+    final open = (d['open'] as num?)?.toInt() ?? 0;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: on ? const Color(0xFFF0FBF3) : const Color(0xFFF6F7F9),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: on ? const Color(0xFF16A34A) : const Color(0xFFE3E7EE)),
+      ),
+      child: Row(children: [
+        CircleAvatar(radius: 22, backgroundColor: on ? const Color(0xFF16A34A) : Colors.black26,
+            child: Text('${d['name'] ?? '؟'}'.characters.take(1).toString().toUpperCase(),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900))),
+        const SizedBox(width: 12),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('${d['name'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+          const SizedBox(height: 2),
+          Text([
+            on ? tr('على الوردية', 'On shift') : tr('خارج الوردية', 'Off shift'),
+            if (d['facility'] != null) '${d['facility']}',
+            if ((d['zones'] as List?)?.isNotEmpty ?? false) (d['zones'] as List).join('، '),
+          ].join(' · '), style: const TextStyle(fontSize: 11.5, color: Colors.black54)),
+        ])),
+        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          _dstat('${open}', tr('بحوزته', 'Holding'), open > 0 ? const Color(0xFFB45309) : Colors.black45),
+          Text('${tr('اليوم', 'today')} ${d['today'] ?? 0} · ${d['avg_park'] ?? 0}${tr('د', 'm')}',
+              style: const TextStyle(fontSize: 10.5, color: Colors.black45)),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _dstat(String v, String l, Color c) => Row(mainAxisSize: MainAxisSize.min, children: [
+        Text(v, style: TextStyle(fontWeight: FontWeight.w900, color: c, fontSize: 15)),
+        const SizedBox(width: 4),
+        Text(l, style: const TextStyle(fontSize: 10.5, color: Colors.black45)),
+      ]);
+
   @override
   Widget build(BuildContext context) {
     final d = _d;
@@ -74,6 +157,11 @@ class _ValetScreenState extends State<ValetScreen>
         backgroundColor: _gold, foregroundColor: Colors.white,
         title: Text(tr('صف السيارات', 'Valet'), style: const TextStyle(fontWeight: FontWeight.w900)),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.groups_rounded),
+            tooltip: tr('السائقون', 'Drivers'),
+            onPressed: _driversSheet,
+          ),
           IconButton(
             icon: const Icon(Icons.badge_rounded),
             tooltip: tr('الوردية', 'Shift'),

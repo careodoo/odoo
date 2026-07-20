@@ -421,6 +421,8 @@ class _ClientHomeState extends State<ClientHome> {
           const SpecialtyServiceScreen(spec: ServiceSpec.pool), 'pool'),
       (Icons.water_drop_rounded, 'خزانات المياه', 'Water tanks', 0xFF0E7A5F,
           const SpecialtyServiceScreen(spec: ServiceSpec.watertank), 'watertank'),
+      (Icons.local_shipping_rounded, 'المناولة', 'Handling', 0xFF0D9488,
+          const SpecialtyServiceScreen(spec: ServiceSpec.handling), 'handling'),
     ];
     final place = <(IconData, String, String, int, Widget, String?)>[
       (Icons.business_rounded, 'المباني', 'Buildings', 0xFF4F46E5, const ClientStructureScreen(), 'facilities'),

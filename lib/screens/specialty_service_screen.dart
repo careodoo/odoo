@@ -125,9 +125,30 @@ class ServiceSpec {
     ],
   );
 
+  static const handling = ServiceSpec(
+    code: 'handling',
+    ar: 'المناولة', en: 'Material handling',
+    icon: '📦', color: Color(0xFF0D9488),
+    tagline: ('نقل وتحميل ومناولة المواد والمعدّات بأمان، مع توثيق حالة العهدة قبل وبعد',
+        'Safe moving, loading and handling — item condition logged in and out'),
+    facts: [
+      ('🏷️', 'توثيق حالة العهدة قبل وبعد النقل', 'Item condition logged in and out'),
+      ('⚖️', 'احترام حدود الوزن والحمولة الآمنة', 'Safe load and weight limits respected'),
+      ('🦺', 'معدّات مناولة معتمدة وأفراد مدرّبون', 'Certified equipment, trained crew'),
+      ('📸', 'إثبات بالصور عند التسليم والاستلام', 'Photo proof on handover and receipt'),
+    ],
+    checklist: [
+      ('فحص المعدّة والحمولة قبل البدء', 'Inspect equipment and load before start'),
+      ('تأمين وتثبيت المواد أثناء النقل', 'Secure and brace materials in transit'),
+      ('توثيق أي ضرر بالصور فورًا', 'Photograph any damage immediately'),
+      ('التسليم والحصول على توقيع الاستلام', 'Deliver and capture the receipt signature'),
+      ('إرجاع المعدّة وتسجيل الحالة النهائية', 'Return equipment, log final condition'),
+    ],
+  );
+
   static ServiceSpec? byCode(String c) => {
         'pest': pest, 'disinfection': disinfection,
-        'pool': pool, 'watertank': watertank,
+        'pool': pool, 'watertank': watertank, 'handling': handling,
       }[c];
 }
 
