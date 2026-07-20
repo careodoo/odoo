@@ -636,6 +636,15 @@ async function loadPalette(){try{const p=await api('/client/palette');
 function goSvc(base,type){window.__PRESVC=type;go(base,base+'_'+type);}
 function toggleSvc(t){const el=document.querySelector('.svc[data-svc="'+CSS.escape(t)+'"]');if(el)el.classList.toggle('col');}
 function navAnchor(x){return '<a data-id="'+x.id+'" onclick="go(\''+x.id+'\')"><span class="ic">'+x.ic+'</span><span>'+esc(T(x.t[0],x.t[1]))+'</span>'+(x.cnt?'<span class="cnt" id="cnt_'+x.cnt+'">·</span>':'')+'</a>';}
+
+/* The service's name in the language the reader chose, not the one their Odoo
+   account happens to use — the server now sends both. */
+function svcName(s){
+  if(!s) return '';
+  const ar = s.name_ar || s.type_label_ar || s.name;
+  const en = s.name_en || s.type_label_en || s.type_label || s.name;
+  return T(ar, en);
+}
 function renderNav(){
   let html=NAV_MAIN.map(x=>x.grp?'<div class="grp">'+esc(T(x.grp[0],x.grp[1]))+'</div>':navAnchor(x)).join('');
   // ---- one collapsible group per available service ----
@@ -662,7 +671,7 @@ function renderNav(){
           +(s.type==='maintenance'?'<a data-id="ppm" onclick="go(\'ppm\')"><span class="ic">🔧</span><span>'+esc(T('الصيانة الوقائية','Preventive maint.'))+'</span></a>':'');
       const col_cls=' col';   // all services collapsed by default
       html+='<div class="svc'+col_cls+'" data-svc="'+esc(s.type)+'">'
-        +'<div class="svc-h" onclick="toggleSvc(\''+esc(s.type)+'\')"><span class="svc-ic" style="background:'+col+'">'+(s.icon||'🧩')+'</span><span>'+esc(T(s.name,s.type_label||s.name))+'</span>'+(s.open?'<span class="svc-cnt">'+s.open+'</span>':'')+'<span class="svc-chev">▾</span></div>'
+        +'<div class="svc-h" onclick="toggleSvc(\''+esc(s.type)+'\')"><span class="svc-ic" style="background:'+col+'">'+(s.icon||'🧩')+'</span><span>'+esc(svcName(s))+'</span>'+(s.open?'<span class="svc-cnt">'+s.open+'</span>':'')+'<span class="svc-chev">▾</span></div>'
         +'<div class="svc-items">'+items+'</div></div>';
     });
   }
@@ -690,7 +699,7 @@ function svcRegItems(type){const reg=SVC_REG[type];
   if(!reg||!reg.sections||!reg.sections.length)return '';
   return reg.sections.map(sec=>
     '<a data-id="svc:'+esc(type)+':'+esc(sec.key)+'" onclick="goSvcSec(\''+type+'\',\''+sec.key+'\')">'
-    +'<span class="ic">'+esc(sec.icon||'•')+'</span><span>'+esc(sec.label)+'</span></a>').join('');
+    +'<span class="ic">'+esc(sec.icon||'•')+'</span><span>'+esc(T(sec.label, sec.label_en||sec.label))+'</span></a>').join('');
 }
 function goSvcSec(code,key,page){SVC_PAGE=page||1;go('svc:'+code+':'+key);}
 let SVC_PAGE=1;
@@ -704,14 +713,17 @@ async function renderSvcSection(code,key){
   catch(e){host.innerHTML=emptyState(T('تعذّر التحميل','Could not load'));return;}
   const sec=d.section||{},svc=d.service||{};
   SVC_MODEL[code+':'+key]=sec.model||'';
-  document.getElementById('ptitle').textContent=sec.label||'';
-  document.getElementById('psub').textContent=svc.label||'';
+  SVC_CANCEL[code+':'+key]=!!d.can_cancel;
+  document.getElementById('ptitle').textContent=T(sec.label||'', sec.label_en||sec.label||'');
+  document.getElementById('psub').textContent=T(svc.label||'', svc.label_en||svc.label||'');
   let h='<div class="toolbar">';
-  if(d.can_add)h+='<button class="btn p" onclick="svcAddForm(\''+code+'\',\''+key+'\')">＋ '+esc(d.add_label||T('إضافة','Add'))+'</button>';
+  if(d.can_add)h+='<button class="btn p" onclick="svcAddForm(\''+code+'\',\''+key+'\')">＋ '+esc(T(d.add_label||'إضافة', d.add_label_en||'Add'))+'</button>';
   h+='<span style="color:var(--muted);font-size:12.5px">'+esc(T('السجلات','Records'))+': <b class="num">'+(d.total||0)+'</b></span></div>';
   if(!(d.rows||[]).length){host.innerHTML=h+emptyState(sec.empty||T('لا توجد سجلات','No records'));return;}
   h+='<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))">';
-  h+=(d.rows||[]).map(r=>'<div class="panel" style="padding:14px">'
+  SVC_ROWS[code+':'+key]=d.rows||[];
+  h+=(d.rows||[]).map((r,ix)=>'<div class="panel" style="padding:14px;cursor:pointer" '
+    +'onclick="svcOpenRow(\''+code+'\',\''+key+'\','+ix+')">'
     +'<div style="font-weight:800;font-size:14px;margin-bottom:3px">'+esc(r.title)+'</div>'
     +(r.subtitle?'<div style="color:var(--muted);font-size:12px;margin-bottom:8px">'+esc(r.subtitle)+'</div>':'')
     +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
@@ -743,6 +755,26 @@ function svcReport(code,id,title){
 let SVC_MODEL={};
 /* The add form is built from the field list the server sends, so a new field
    on a section appears in the portal without touching this file. */
+
+/* Every record opens. A list you cannot drill into is a report, not a system —
+   and the pills alone never carry enough to act on. */
+let SVC_ROWS={};
+function svcOpenRow(code,key,ix){
+  const r=(SVC_ROWS[code+':'+key]||[])[ix]; if(!r)return;
+  const model=(SVC_MODEL[code+':'+key]||'').replace(/\./g,'_');
+  const pills=(r.pills||[]).map(p=>pillHtml(p.t,p.c)).join(' ');
+  const body='<div class="sec">'
+    +(r.subtitle?'<div style="color:var(--muted);font-size:12.5px;margin-bottom:9px">'+esc(r.subtitle)+'</div>':'')
+    +(pills?'<div style="display:flex;gap:6px;flex-wrap:wrap">'+pills+'</div>':'')
+    +'</div>';
+  const acts=[{label:T('إغلاق','Close'),cls:'s',onclick:closeDrawer}];
+  if(model)acts.push({label:T('تقرير PDF','PDF report'),cls:'b',
+    onclick:function(){window.open(API+'/report/'+model+'/'+r.id,'_blank');}});
+  if(SVC_CANCEL[code+':'+key])acts.push({label:T('إلغاء','Cancel'),cls:'d',
+    onclick:function(){closeDrawer();svcCancel(code,key,r.id);}});
+  openDrawer(r.title||'',body,{icon:'📄',subtitle:r.subtitle||'',actions:acts});
+}
+let SVC_CANCEL={};
 async function svcAddForm(code,key){
   let d;try{d=await api('/client/svc/'+code+'/'+key);}catch(e){toast(T('تعذّر التحميل','Could not load'));return;}
   if(!d.can_add){toast(T('لا تملك صلاحية الإضافة','Not permitted'));return;}

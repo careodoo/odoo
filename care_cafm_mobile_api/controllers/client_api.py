@@ -1925,8 +1925,19 @@ class ClientApi(Controller):
             open_cnt = WO.search_count([('facility_id', 'in', facs.ids),
                                         ('service_id.service_type', '=', s.service_type),
                                         ('state', 'in', ('new', 'assigned', 'in_progress'))]) if facs else 0
+            # Both names travel, because the caller's chosen language is not
+            # the Odoo user's language: a client can read the portal in English
+            # while their Odoo account is Arabic, and picking one server-side
+            # left the nav showing Arabic service names in English mode.
+            ar = s.with_context(lang='ar_001')
+            en = s.with_context(lang='en_US')
             out.append({'id': s.id, 'name': s.name, 'type': s.service_type,
+                        'name_ar': ar.name or s.name, 'name_en': en.name or s.name,
                         'type_label': type_lbl.get(s.service_type, s.service_type),
+                        'type_label_ar': dict(ar._fields['service_type']._description_selection(
+                            ar.env)).get(s.service_type, s.service_type),
+                        'type_label_en': dict(en._fields['service_type']._description_selection(
+                            en.env)).get(s.service_type, s.service_type),
                         'icon': s.icon or '🧩', 'open': open_cnt})
         return _ok({'services': out})
 

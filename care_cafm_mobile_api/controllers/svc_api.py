@@ -25,6 +25,82 @@ API = '/api/v1'
 PAGE = 40
 
 
+# The registry is written in Arabic. A client reading the portal in English
+# must see English section names, and their Odoo account language is not
+# the same choice — so both travel and the caller picks.
+LABEL_EN = {
+    'الأمن': 'Security',
+    'النظافة': 'Cleaning',
+    'الزراعة': 'Landscaping',
+    'الواجهات': 'Facades',
+    'نقل ومعالجة النفايات': 'Waste transfer & treatment',
+    'الصيانة': 'Maintenance',
+    'مكافحة الحشرات': 'Pest control',
+    'صيانة المسابح': 'Pool maintenance',
+    'تنظيف خزانات المياه': 'Water tank cleaning',
+    'التعقيم': 'Disinfection',
+    'المخزون': 'Inventory',
+    'الضيافة': 'Hospitality',
+    'صف السيارات': 'Valet parking',
+    'البلاغات': 'Incidents',
+    'الجولات': 'Rounds',
+    'تصاريح الدخول': 'Gate passes',
+    'التفتيش': 'Inspections',
+    'الحرّاس': 'Guards',
+    'المفاتيح': 'Keys',
+    'التدقيقات': 'Audits',
+    'الجداول': 'Schedules',
+    'المستهلكات': 'Consumables',
+    'الأشجار والنباتات': 'Trees & plants',
+    'أعمال الأشجار': 'Tree works',
+    'مناطق الريّ': 'Irrigation zones',
+    'دليل الأنواع': 'Species guide',
+    'تصاريح الارتفاع': 'Height permits',
+    'أوامر النقل': 'Collection orders',
+    'الرحلات': 'Trips',
+    'مراكز المعالجة': 'Treatment centres',
+    'الأعطال': 'Faults',
+    'الفحوص الدورية': 'Periodic inspections',
+    'قطع الغيار': 'Spare parts',
+    'برامج المكافحة': 'Control programmes',
+    'الزيارات': 'Visits',
+    'شبكة المحطات': 'Station grid',
+    'بلاغات الظهور': 'Sightings',
+    'سجل المبيدات المعتمدة': 'Approved pesticides',
+    'المسابح': 'Pools',
+    'قراءات المياه': 'Water readings',
+    'أعمال الصيانة': 'Maintenance work',
+    'سجل الخزانات': 'Tank register',
+    'عمليات التنظيف': 'Cleaning operations',
+    'جولات التعقيم': 'Disinfection rounds',
+    'المطهّرات المعتمدة': 'Approved disinfectants',
+    'المخازن': 'Stores',
+    'الحركات': 'Movements',
+    'الأصناف والأرصدة': 'Items & balances',
+    'الجرد': 'Stock count',
+    'طلبات التعويض': 'Replenishment requests',
+    'الطلبات': 'Orders',
+    'قائمة الأصناف': 'Menu',
+    'الأقسام': 'Categories',
+    'حدود الاستهلاك': 'Consumption limits',
+    'التذاكر': 'Tickets',
+    'المواقف': 'Zones',
+    'الورديات': 'Shifts',
+    'إضافة سجل': 'Add record',
+    'بدء جرد': 'Start a count',
+    'طلب تعويض': 'Request replenishment',
+    'إضافة خزان': 'Add tank',
+    'تسجيل قراءة مياه': 'Log a water reading',
+    'تسجيل جولة تعقيم': 'Log a disinfection round',
+    'الإبلاغ عن ظهور آفة': 'Report a sighting',
+    'طلب ضيافة': 'Place a hospitality order',
+    'تسجيل مركبة': 'Register a vehicle',
+}
+
+
+def _en(label):
+    return LABEL_EN.get(label, label)
+
 def _pages():
     """The registry's own logic — scoping, capability checks, field inputs —
     reused rather than re-implemented, so the two surfaces cannot drift."""
@@ -100,11 +176,13 @@ class ServiceApi(Controller):
         out = []
         for code, (label, icon, sections) in REGISTRY().items():
             out.append({
-                'code': code, 'label': label, 'icon': icon,
-                'sections': [{'key': s.key, 'label': s.label, 'icon': s.icon,
+                'code': code, 'label': label, 'label_en': _en(label), 'icon': icon,
+                'sections': [{'key': s.key, 'label': s.label,
+                              'label_en': _en(s.label), 'icon': s.icon,
                               'can_add': bool((c := p._effective_create(s)))
                                          and p._may(c.perm),
-                              'add_label': c.label if c else None}
+                              'add_label': c.label if c else None,
+                              'add_label_en': _en(c.label) if c else None}
                              for s in sections],
             })
         return _ok({'services': out})
@@ -145,8 +223,10 @@ class ServiceApi(Controller):
                     spec['options'] = sel
                 fields.append(spec)
         return _ok({
-            'service': {'code': code, 'label': reg[0], 'icon': reg[1]},
+            'service': {'code': code, 'label': reg[0], 'label_en': _en(reg[0]),
+                        'icon': reg[1]},
             'section': {'key': section.key, 'label': section.label,
+                        'label_en': _en(section.label),
                         'icon': section.icon, 'empty': section.empty_text or '',
                         'model': section.model},
             'rows': [_row(section, r) for r in recs],
@@ -154,6 +234,7 @@ class ServiceApi(Controller):
             'can_add': can_add,
             'can_cancel': p._may('record_manage'),
             'add_label': create.label if create else None,
+            'add_label_en': _en(create.label) if create else None,
             'fields': fields,
         })
 
