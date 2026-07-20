@@ -28,7 +28,11 @@ class ValetScreen extends StatefulWidget {
   State<ValetScreen> createState() => _ValetScreenState();
 }
 
-class _ValetScreenState extends State<ValetScreen> {
+class _ValetScreenState extends State<ValetScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 900))
+    ..repeat(reverse: true);
   Map<String, dynamic>? _d;
   String _filter = 'live';
   bool _busy = false;
@@ -37,6 +41,12 @@ class _ValetScreenState extends State<ValetScreen> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -82,6 +92,9 @@ class _ValetScreenState extends State<ValetScreen> {
               color: _gold,
               onRefresh: _load,
               child: ListView(padding: EdgeInsets.zero, children: [
+                // Requested cars ride above everything else, whatever filter
+                // is on — a guest is already waiting at the door.
+                _wantedBanner(((d['tickets'] as List?) ?? const []).cast<Map>()),
                 _header(stats, d),
                 _zones(((d['zones'] as List?) ?? const []).cast<Map>()),
                 _chips(stats),
@@ -205,6 +218,105 @@ class _ValetScreenState extends State<ValetScreen> {
             ),
         ]),
       );
+
+
+  /// Cars that have been asked for, pinned to the top and pulsing.
+  ///
+  /// A retrieval request buried in a list of thirty parked cars is a guest
+  /// standing at the door while nobody moves. This is the one thing on the
+  /// screen that should be impossible to miss.
+  Widget _wantedBanner(List<Map> tickets) {
+    final wanted = tickets.where((t) => '${t['state']}' == 'requested').toList();
+    if (wanted.isEmpty) return const SizedBox.shrink();
+    return AnimatedBuilder(
+      animation: _pulse,
+      builder: (_, child) {
+        final t = Curves.easeInOut.transform(_pulse.value);
+        return Container(
+          margin: const EdgeInsets.fromLTRB(12, 10, 12, 2),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFE11D48).withValues(alpha: 0.20 + 0.28 * t),
+                blurRadius: 14 + 12 * t,
+                spreadRadius: 1 + 2 * t,
+              ),
+            ],
+          ),
+          child: child,
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+              colors: [Color(0xFFE11D48), Color(0xFF9F1239)],
+              begin: Alignment.topRight, end: Alignment.bottomLeft),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.notifications_active_rounded,
+                color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                  '${tr('مركبات مطلوبة الآن', 'Cars requested now')} · ${wanted.length}',
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14.5)),
+            ),
+          ]),
+          const SizedBox(height: 9),
+          for (final t in wanted.take(4))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 7),
+              child: Row(children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8)),
+                  child: Text('${t['plate'] ?? ''}',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 13)),
+                ),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Text(
+                      '${t['zone'] ?? t['spot'] ?? ''} · ${tr('منذ', 'for')} '
+                      '${intOf(t['retrieval_minutes'])} ${tr('د', 'm')}',
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.92), fontSize: 11.5)),
+                ),
+                const SizedBox(width: 8),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFFB91C3C),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
+                    minimumSize: const Size(0, 34),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: _busy ? null : () => _act(t, 'deliver'),
+                  child: Text(tr('تسليم', 'Deliver'),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w900, fontSize: 12.5)),
+                ),
+              ]),
+            ),
+          if (wanted.length > 4)
+            Text('+${wanted.length - 4} ${tr('أخرى', 'more')}',
+                style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.85), fontSize: 11.5)),
+        ]),
+      ),
+    );
+  }
 
   Widget _card(Map t, Map d) {
     final st = '${t['state']}';

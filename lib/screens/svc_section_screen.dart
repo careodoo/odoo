@@ -139,7 +139,12 @@ class _SvcSectionScreenState extends State<SvcSectionScreen> {
 
   Widget _card(Map r) {
     final pills = ((r['pills'] as List?) ?? const []).cast<Map>();
-    return Container(
+    // Every record opens. A list you cannot drill into is a report, not a
+    // system, and the pills alone never carry enough to act on.
+    return InkWell(
+      onTap: () => _openRow(r),
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
@@ -192,6 +197,110 @@ class _SvcSectionScreenState extends State<SvcSectionScreen> {
           ],
         ]),
       ]),
+    ),
+    );
+  }
+
+  /// The record itself, with its actions in one place.
+  void _openRow(Map r) {
+    final pills = ((r['pills'] as List?) ?? const []).cast<Map>();
+    final model = '${(_d?['section'] as Map?)?['model'] ?? ''}'.replaceAll('.', '_');
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (c) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+                width: 40, height: 4, margin: const EdgeInsets.only(bottom: 14),
+                decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(3))),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Text('${r['title'] ?? ''}',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w900, fontSize: 16.5)),
+            ),
+            if ('${r['subtitle'] ?? ''}'.isNotEmpty) ...[
+              const SizedBox(height: 5),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Text('${r['subtitle']}',
+                    style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600)),
+              ),
+            ],
+            if (pills.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Wrap(spacing: 6, runSpacing: 6, children: [
+                  for (final p in pills)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                          color: (_pillColors['${p['c']}'] ?? _pillColors['info']!)
+                              .withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(20)),
+                      child: Text('${p['t']}',
+                          style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                              color: _pillColors['${p['c']}'] ??
+                                  _pillColors['info']!)),
+                    ),
+                ]),
+              ),
+            ],
+            const SizedBox(height: 18),
+            Row(children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: model.isEmpty
+                      ? null
+                      : () {
+                          Navigator.pop(c);
+                          openRecordReport(context,
+                              code: model,
+                              id: intOf(r['id']),
+                              title: '${r['title']}');
+                        },
+                  icon: const Icon(Icons.picture_as_pdf_outlined, size: 17),
+                  style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12))),
+                  label: Text(tr('تقرير PDF', 'PDF report'),
+                      style: const TextStyle(fontWeight: FontWeight.w800)),
+                ),
+              ),
+              if (_canCancel) ...[
+                const SizedBox(width: 9),
+                Expanded(
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFFE11D48),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12))),
+                    onPressed: () {
+                      Navigator.pop(c);
+                      _confirmCancel(intOf(r['id']), '${r['title']}');
+                    },
+                    icon: const Icon(Icons.delete_outline_rounded, size: 17),
+                    label: Text(tr('إلغاء', 'Cancel'),
+                        style: const TextStyle(fontWeight: FontWeight.w800)),
+                  ),
+                ),
+              ],
+            ]),
+          ]),
+        ),
+      ),
     );
   }
 
