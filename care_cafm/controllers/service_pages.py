@@ -120,6 +120,50 @@ def _t(ar, en):
     return en if (request.env.context.get('lang') or '').startswith('en') else ar
 
 
+def _r_facade_permit(r):
+    """A permit is read for one thing: may the crew go up or not."""
+    safe = getattr(r, 'is_safe', False)
+    sub = ' \u00b7 '.join(filter(None, [
+        getattr(r.zone_id, 'name', '') or '', _d(getattr(r, 'date', None)),
+        '%s %s' % (_t('رياح', 'wind'), getattr(r, 'wind_speed', 0) or 0)]))
+    pills = [((_t('مصرّح', 'Approved') if safe else _t('غير مصرّح', 'Not approved')),
+              'ok' if safe else 'danger')]
+    if not getattr(r, 'risk_assessed', False):
+        pills.append((_t('بلا تقييم مخاطر', 'No risk assessment'), 'warn'))
+    return (r.display_name, sub, pills)
+
+
+def _r_facade_zone(r):
+    """The history a facade carries: when it was last done and when it is due."""
+    sub = ' \u00b7 '.join(filter(None, [
+        _sel(r, 'method').get(getattr(r, 'method', ''), ''),
+        '%s م²' % r.area_sqm if getattr(r, 'area_sqm', 0) else '',
+        '%s %s' % (getattr(r, 'floors', 0), _t('دور', 'floors')) if getattr(r, 'floors', 0) else '']))
+    pills = []
+    last = getattr(r, 'last_cleaned', None)
+    if last:
+        pills.append(('%s %s' % (_t('آخر تنظيف', 'last'), _d(last)), 'muted'))
+    due = getattr(r, 'next_due', None)
+    if due:
+        import datetime as _dt
+        late = due < _dt.date.today() if isinstance(due, _dt.date) else False
+        pills.append(((_t('متأخر', 'Overdue') if late else '%s %s' % (_t('يستحق', 'due'), _d(due))),
+                      'danger' if late else 'info'))
+    return (r.display_name, sub, pills)
+
+
+def _r_clean_consumable(r):
+    """Balance first, and say when it runs short — a consumables list that
+    only shows names is a list nobody opens twice."""
+    on = getattr(r, 'on_hand', 0) or 0
+    mn = getattr(r, 'min_qty', 0) or 0
+    low = mn and on <= mn
+    pills = [('%s %s' % (on, getattr(r, 'uom_name', '') or ''), 'danger' if low else 'ok')]
+    if low:
+        pills.append((_t('تحت الحد الأدنى', 'Below minimum'), 'warn'))
+    return (r.display_name, getattr(r.location_id, 'name', '') or '', pills)
+
+
 def _r_stock_item(r):
     """Balance first, because that is the only number anyone opens this for."""
     low = getattr(r, 'low_stock', False)
@@ -217,7 +261,19 @@ def REGISTRY():
                                lambda r: _d(r.audit_date),
                                lambda r: [('%.0f%%' % (r.score or 0),
                                            'ok' if (r.score or 0) >= 75 else 'warn')]
-                               + _state_pill(r)), icon='📋'),
+                               + _state_pill(r)), icon='📋',
+                    empty_text='لا توجد تدقيقات بعد.',
+                    # The client inspects their own building every day and had
+                    # no way to record it — the audit trail only ever held
+                    # CARE's own view of CARE's own work.
+                    create=Create('تسجيل تدقيق', 'observation_create', [
+                        Field('location_id', 'الموقع', 'm2o', required=True,
+                              comodel='care.cafm.location', domain_facility=True),
+                        Field('template_id', 'قالب الفحص', 'm2o',
+                              comodel='care.cafm.clean.audit.template'),
+                        Field('audit_date', 'التاريخ والوقت', 'datetime'),
+                        Field('note', 'الملاحظات', 'text'),
+                    ])),
             Section('schedules', 'الجداول', 'care.cafm.clean.schedule',
                     _r_generic(lambda r: r.display_name,
                                lambda r: getattr(r, 'location_id', None) and r.location_id.name or ''),
@@ -225,11 +281,17 @@ def REGISTRY():
             Section('rounds', 'الجولات', 'care.cafm.clean.round',
                     _r_generic(lambda r: r.display_name,
                                lambda r: _d(getattr(r, 'scan_in', None)),
-                               lambda r: _state_pill(r)), icon='🚶'),
+                               lambda r: _state_pill(r)), icon='🚶',
+                    empty_text='لا جولات مسجّلة.'),
             Section('consumables', 'المستهلكات', 'care.cafm.clean.consumable',
-                    _r_generic(lambda r: r.display_name,
-                               lambda r: '%s %s' % (getattr(r, 'on_hand', 0),
-                                                    getattr(r, 'uom_name', '') or '')), icon='🧴'),
+                    _r_clean_consumable, icon='🧴',
+                    empty_text='لا مستهلكات مسجّلة.',
+                    create=Create('تسجيل مستهلك', 'inventory_policy', [
+                        Field('name', 'الاسم', 'char', required=True),
+                        Field('uom_name', 'الوحدة', 'char'),
+                        Field('on_hand', 'الرصيد', 'float'),
+                        Field('min_qty', 'حد إعادة الطلب', 'float'),
+                    ])),
         ]),
         'agriculture': ('الزراعة', '🌳', [
             Section('plants', 'الأشجار والنباتات', 'care.cafm.agri.plant',
@@ -255,13 +317,27 @@ def REGISTRY():
         ]),
         'facade': ('الواجهات', '🏙️', [
             Section('permits', 'تصاريح الارتفاع', 'care.cafm.facade.permit',
-                    _r_generic(lambda r: r.display_name,
-                               lambda r: getattr(r, 'zone_id', None) and r.zone_id.name or '',
-                               lambda r: _state_pill(r)), icon='🎫'),
+                    _r_facade_permit, icon='🎫',
+                    empty_text='لا تصاريح مسجّلة.',
+                    create=Create('طلب تصريح ارتفاع', 'observation_create', [
+                        Field('zone_id', 'الواجهة', 'm2o', required=True,
+                              comodel='care.cafm.facade.zone', domain_facility=True),
+                        Field('date', 'التاريخ', 'date', required=True),
+                        Field('valid_hours', 'صلاحية (ساعات)', 'float', default=6),
+                        Field('wind_speed', 'سرعة الرياح (كم/س)', 'float'),
+                        Field('risk_assessed', 'تقييم مخاطر مرفق', 'bool'),
+                        Field('equipment_checked', 'فحص المعدّات والحبال', 'bool'),
+                    ])),
             Section('zones', 'الواجهات', 'care.cafm.facade.zone',
-                    _r_generic(lambda r: r.display_name,
-                               lambda r: _sel(r, 'method').get(getattr(r, 'method', ''), '')),
-                    icon='🪟'),
+                    _r_facade_zone, icon='🪟',
+                    empty_text='لم تُسجَّل واجهات بعد.',
+                    create=Create('إضافة واجهة', 'structure_manage', [
+                        Field('name', 'اسم الواجهة', 'char', required=True),
+                        Field('method', 'طريقة الوصول', 'select', options='method'),
+                        Field('area_sqm', 'المساحة (م²)', 'float'),
+                        Field('floors', 'عدد الأدوار', 'int'),
+                        Field('clean_cycle_days', 'دورة التنظيف (يوم)', 'int'),
+                    ])),
         ]),
         'waste': ('نقل ومعالجة النفايات', '♻️', [
             Section('orders', 'أوامر النقل', 'cafm.waste.order',
