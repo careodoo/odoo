@@ -172,3 +172,122 @@ class ValetTicketVehicle(models.Model):
             elif v and v.notes:
                 t.message_post(body=_('📌 Permanent notes on this vehicle: %s') % v.notes)
         return tickets
+
+
+class ValetDriver(models.Model):
+    """The crew who actually park the cars.
+
+    A supervisor could see tickets but had no way to say who is on the floor
+    and who takes the next car. Without that, "where is my car" has no owner
+    and the parking spot is whatever the guest was told verbally.
+    """
+    _name = 'care.valet.driver'
+    _description = 'Valet Driver'
+    _inherit = ['mail.thread']
+    _order = 'active desc, name'
+
+    name = fields.Char(string='Name', required=True, tracking=True)
+    employee_id = fields.Many2one('hr.employee', string='Employee', tracking=True)
+    user_id = fields.Many2one('res.users', string='App user', tracking=True,
+                              help='The account this driver signs in with.')
+    phone = fields.Char(string='Phone', tracking=True)
+    facility_id = fields.Many2one('care.cafm.facility', string='Facility',
+                                  required=True, index=True, tracking=True)
+    zone_ids = fields.Many2many('care.valet.zone', string='Zones covered')
+    on_shift = fields.Boolean(string='On shift', default=False, tracking=True)
+    shift_started = fields.Datetime(string='Shift started', readonly=True)
+
+    ticket_ids = fields.One2many('care.valet.ticket', 'driver_id', string='Cars handled')
+    open_count = fields.Integer(string='Cars in hand', compute='_compute_load')
+    today_count = fields.Integer(string='Handled today', compute='_compute_load')
+    avg_park_minutes = fields.Float(string='Average park time (minutes)',
+                                    compute='_compute_load')
+    active = fields.Boolean(default=True)
+    company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
+
+    def _compute_load(self):
+        today = fields.Date.context_today(self)
+        for d in self:
+            tickets = d.ticket_ids
+            d.open_count = len(tickets.filtered(
+                lambda t: t.state in ('received', 'parked', 'requested')))
+            d.today_count = len(tickets.filtered(
+                lambda t: t.received_at and str(t.received_at)[:10] == str(today)))
+            spans = [(t.parked_at - t.received_at).total_seconds() / 60.0
+                     for t in tickets
+                     if getattr(t, 'parked_at', False) and t.received_at]
+            d.avg_park_minutes = (sum(spans) / len(spans)) if spans else 0.0
+
+    def action_toggle_shift(self):
+        for d in self:
+            d.write({'on_shift': not d.on_shift,
+                     'shift_started': fields.Datetime.now() if not d.on_shift else False})
+        return True
+
+    @api.model
+    def next_free(self, facility_id, zone_id=None):
+        """Whoever is on shift with the fewest cars in hand.
+
+        Round-robin by name would hand the tenth car to someone already
+        holding four; load is the only fair basis.
+        """
+        dom = [('facility_id', '=', facility_id), ('on_shift', '=', True)]
+        if zone_id:
+            dom.append(('zone_ids', 'in', [zone_id]))
+        drivers = self.search(dom)
+        if not drivers:
+            return self.browse()
+        return min(drivers, key=lambda d: d.open_count)
+
+
+class ValetTicketDriver(models.Model):
+    """Who has the car, and exactly where they left it."""
+    _inherit = 'care.valet.ticket'
+
+    driver_id = fields.Many2one('care.valet.driver', string='Driver', index=True,
+                                tracking=True)
+    parked_at = fields.Datetime(string='Parked at', readonly=True, copy=False)
+    park_row = fields.Char(string='Row / bay', tracking=True,
+                           help='What the driver writes on the slip: B2-14, '
+                                'basement row 3, and so on.')
+    park_note = fields.Char(string='Parking note',
+                            help='Anything that helps find it again — beside '
+                                 'the pillar, second level, behind the van.')
+    # The phone knows where it is; asking the driver to describe it is how a
+    # car goes missing on a busy evening.
+    park_lat = fields.Float(string='Latitude', digits=(10, 7), readonly=True)
+    park_lng = fields.Float(string='Longitude', digits=(10, 7), readonly=True)
+    park_located = fields.Boolean(string='Location captured',
+                                  compute='_compute_located', store=True)
+    park_map_url = fields.Char(string='Map link', compute='_compute_located')
+
+    @api.depends('park_lat', 'park_lng')
+    def _compute_located(self):
+        for t in self:
+            t.park_located = bool(t.park_lat and t.park_lng)
+            t.park_map_url = ('https://maps.google.com/?q=%s,%s'
+                              % (t.park_lat, t.park_lng)) if t.park_located else False
+
+    def action_park(self, row=None, note=None, lat=None, lng=None, driver_id=None):
+        """Record where the car actually is, at the moment it is left there."""
+        for t in self:
+            vals = {'state': 'parked', 'parked_at': fields.Datetime.now()}
+            if row:
+                vals['park_row'] = row
+            if note:
+                vals['park_note'] = note
+            if lat and lng:
+                vals['park_lat'] = float(lat)
+                vals['park_lng'] = float(lng)
+            if driver_id:
+                vals['driver_id'] = int(driver_id)
+            elif not t.driver_id:
+                d = self.env['care.valet.driver'].sudo().next_free(
+                    t.facility_id.id, t.zone_id.id or None)
+                if d:
+                    vals['driver_id'] = d.id
+            t.write(vals)
+            t.message_post(body=_('🅿️ Parked at %s%s') % (
+                row or t.park_row or '—',
+                _(' · location captured') if (lat and lng) else ''))
+        return True

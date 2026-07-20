@@ -9,3 +9,5 @@ access_valet_shift_user,valet.shift.user,model_care_valet_shift,base.group_user,
 access_valet_shift_portal,valet.shift.portal,model_care_valet_shift,base.group_portal,1,0,0,0
 access_care_valet_vehicle_user,care.valet.vehicle.user,model_care_valet_vehicle,base.group_user,1,1,1,0
 access_care_valet_vehicle_mgr,care.valet.vehicle.mgr,model_care_valet_vehicle,base.group_system,1,1,1,1
+access_care_valet_driver_user,care.valet.driver.user,model_care_valet_driver,base.group_user,1,1,1,0
+access_care_valet_driver_mgr,care.valet.driver.mgr,model_care_valet_driver,base.group_system,1,1,1,1

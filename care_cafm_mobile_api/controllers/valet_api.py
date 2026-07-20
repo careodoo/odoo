@@ -283,3 +283,86 @@ class ValetApi(Controller):
                 'zone': t.zone_id.name or None,
             } for t in recent],
         })
+
+    # ---- drivers, and where the car actually is ----------------------------
+    @route(API + '/valet/drivers', type='http', auth='public', methods=['GET'],
+           csrf=False, cors='*')
+    def valet_drivers(self, **kw):
+        """Who is on the floor, and how many cars each is holding."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        D = env['care.valet.driver'].sudo()
+        dom = []
+        if kw.get('facility_id'):
+            dom.append(('facility_id', '=', int(kw['facility_id'])))
+        drivers = D.search(dom)
+        return _ok({'drivers': [{
+            'id': d.id, 'name': d.name, 'phone': d.phone or None,
+            'on_shift': d.on_shift,
+            'shift_started': str(d.shift_started or '')[:16] or None,
+            'open': d.open_count, 'today': d.today_count,
+            'avg_park': round(d.avg_park_minutes),
+            'zones': d.zone_ids.mapped('name'),
+            'facility': d.facility_id.name or None,
+        } for d in drivers]})
+
+    @route(API + '/valet/driver/<int:did>/shift', type='http', auth='public',
+           methods=['POST'], csrf=False, cors='*')
+    def valet_driver_shift(self, did, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        d = env['care.valet.driver'].sudo().browse(did).exists()
+        if not d:
+            return _err('غير موجود', 404)
+        d.action_toggle_shift()
+        return _ok({'on_shift': d.on_shift})
+
+    @route(API + '/valet/ticket/<int:tid>/park', type='http', auth='public',
+           methods=['POST'], csrf=False, cors='*')
+    def valet_park(self, tid, **kw):
+        """Park it and say where.
+
+        The phone already knows its coordinates; asking a driver to describe
+        a basement bay in words is how a car goes missing on a busy evening.
+        The row label stays too — a guest reads that, not a latitude.
+        """
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        t = env['care.valet.ticket'].sudo().browse(tid).exists()
+        if not t:
+            return _err('غير موجود', 404)
+        b = _body()
+        try:
+            t.action_park(row=b.get('row'), note=b.get('note'),
+                          lat=b.get('lat'), lng=b.get('lng'),
+                          driver_id=b.get('driver_id'))
+        except Exception as e:
+            return _err(str(e) or 'تعذّر الحفظ', 422)
+        return _ok({'state': t.state, 'row': t.park_row or None,
+                    'located': t.park_located, 'map': t.park_map_url or None,
+                    'driver': t.driver_id.name or None})
+
+    @route(API + '/valet/ticket/<int:tid>/assign', type='http', auth='public',
+           methods=['POST'], csrf=False, cors='*')
+    def valet_assign(self, tid, **kw):
+        """Hand a car to a driver — or let the load decide."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        t = env['care.valet.ticket'].sudo().browse(tid).exists()
+        if not t:
+            return _err('غير موجود', 404)
+        b = _body()
+        did = b.get('driver_id')
+        if did:
+            t.driver_id = int(did)
+        else:
+            d = env['care.valet.driver'].sudo().next_free(
+                t.facility_id.id, t.zone_id.id or None)
+            if not d:
+                return _err('لا يوجد سائق على الوردية', 422)
+            t.driver_id = d.id
+        return _ok({'driver': t.driver_id.name, 'driver_id': t.driver_id.id})
