@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android backs up app data but never the Keystore keys that encrypt it. A
+  restored device therefore holds a token it cannot decrypt, and every read
+  throws BadPaddingException: BAD_DECRYPT — which is exactly what stopped
+  login on a real device. Excluding the secure-storage preferences means the
+  app comes back logged out, which is recoverable, instead of broken.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="FlutterSecureStorage.xml"/>
+        <exclude domain="sharedpref" path="FlutterSecureStorage"/>
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="FlutterSecureStorage.xml"/>
+        <exclude domain="sharedpref" path="FlutterSecureStorage"/>
+    </device-transfer>
+</data-extraction-rules>

@@ -39,12 +39,33 @@ class ApiClient {
 
   final String baseUrl;
   final _storage = const FlutterSecureStorage();
+
+  /// Reading the token can throw, and losing the token is not an error worth
+  /// blocking a login for.
+  ///
+  /// The value is encrypted with a key held in the Android Keystore. Keys are
+  /// never included in a backup, but the encrypted preferences ARE — so after
+  /// a restore, or some OEM update paths, the ciphertext is present and the
+  /// key that opens it is gone. Every read then throws
+  /// `BadPaddingException: BAD_DECRYPT` and the app cannot even reach the
+  /// login request. A stale token we cannot decrypt is worth exactly nothing,
+  /// so drop it and carry on as a logged-out app.
+  Future<String?> _readToken() async {
+    try {
+      return await _storage.read(key: _tokenKey);
+    } catch (_) {
+      try {
+        await _storage.deleteAll();
+      } catch (_) {/* nothing left to salvage */}
+      return null;
+    }
+  }
   static const _tokenKey = 'care_token';
 
-  Future<String?> get token => _storage.read(key: _tokenKey);
+  Future<String?> get token => _readToken();
   Future<void> _setToken(String? t) async => t == null
-      ? _storage.delete(key: _tokenKey)
-      : _storage.write(key: _tokenKey, value: t);
+      ? _storage.delete(key: _tokenKey).catchError((_) {})
+      : _storage.write(key: _tokenKey, value: t).catchError((_) {});
   Future<void> setToken(String? t) => _setToken(t); // public (for impersonation restore)
 
   Future<Map<String, String>> _headers() async {
