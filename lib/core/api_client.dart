@@ -230,6 +230,11 @@ class ApiClient {
         await _net.get(_u('/client/analytics?$qs'), headers: await _headers())))['data'] as Map);
   }
 
+  /// Everything one building is, across every service.
+  Future<Map<String, dynamic>> facilityInsight(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/client/facility/$id/insight'), headers: await _headers())))['data'] as Map);
+
   Future<Map<String, dynamic>> clientFacility(int id) async =>
       Map<String, dynamic>.from((await _handle(
               await _net.get(_u('/client/facility/$id'), headers: await _headers())))['data'] as Map);
@@ -644,6 +649,28 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/valet/ticket/$ticketId/park'),
               headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  /// One incident with its evidence, updates, location and stream.
+  Future<Map<String, dynamic>> incidentDetail(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/incident/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<void> incidentMedia(int id, Map<String, dynamic> body) async =>
+      _handle(await _net.post(_u('/security/incident/$id/media'),
+          headers: await _headers(), body: jsonEncode(body)));
+
+  Future<void> incidentUpdate(int id, String body) async =>
+      _handle(await _net.post(_u('/security/incident/$id/update'),
+          headers: await _headers(), body: jsonEncode({'body': body})));
+
+  Future<void> incidentLocate(int id, double lat, double lng) async =>
+      _handle(await _net.post(_u('/security/incident/$id/locate'),
+          headers: await _headers(), body: jsonEncode({'lat': lat, 'lng': lng})));
+
+  Future<Map<String, dynamic>> incidentToWorkorder(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/security/incident/$id/to_workorder'),
+              headers: await _headers())))['data'] as Map);
 
   // ---- hospitality pantry ---------------------------------------------------
   /// Supplies with their balance in servings, plus recent purchases.

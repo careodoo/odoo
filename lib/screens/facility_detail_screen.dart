@@ -39,6 +39,9 @@ class _FacilityDetailScreenState extends State<FacilityDetailScreen> {
         title: Text(widget.name, overflow: TextOverflow.ellipsis),
         backgroundColor: _accent, foregroundColor: Colors.white,
         actions: [
+          IconButton(icon: const Icon(Icons.insights_rounded),
+              tooltip: tr('إحصائيات المبنى', 'Building insight'),
+              onPressed: _openInsight),
           IconButton(icon: const Icon(Icons.map_rounded), tooltip: tr('الموقع على الخريطة', 'On the map'),
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) =>
                   InAppMapScreen(query: widget.name, title: widget.name)))),
@@ -128,6 +131,166 @@ class _FacilityDetailScreenState extends State<FacilityDetailScreen> {
             ]),
           ]),
         ),
+      );
+
+  /// The building read as a whole, across every service — what is open, what
+  /// is overdue, what it holds, and which service is the heaviest. All of it
+  /// already exists on the server; this is the one screen it meets on.
+  Future<void> _openInsight() async {
+    showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+      builder: (_) => DraggableScrollableSheet(
+        expand: false, initialChildSize: 0.9, minChildSize: 0.5, maxChildSize: 0.96,
+        builder: (_, sc) => Container(
+          decoration: const BoxDecoration(
+              color: Color(0xFFF6F7F9),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+          clipBehavior: Clip.antiAlias,
+          child: FutureBuilder<Map<String, dynamic>>(
+            future: context.read<AuthProvider>().api.facilityInsight(widget.facilityId),
+            builder: (c, snap) {
+              if (!snap.hasData) {
+                return const SizedBox(height: 260, child: Center(child: CircularProgressIndicator(color: _accent)));
+              }
+              final d = snap.data!;
+              final st = (d['structure'] as Map?) ?? const {};
+              final wk = (d['work'] as Map?) ?? const {};
+              final byService = ((wk['by_service'] as List?) ?? const []).cast<Map>();
+              return ListView(controller: sc, padding: const EdgeInsets.all(16), children: [
+                Center(child: Container(width: 40, height: 4,
+                    decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(3)))),
+                const SizedBox(height: 14),
+                Text(tr('إحصائيات المبنى', 'Building insight'),
+                    style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: _navy)),
+                Text('${d['facility']?['name'] ?? widget.name}',
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)),
+                const SizedBox(height: 14),
+                // headline row: structure
+                Row(children: [
+                  _iCard('${st['buildings'] ?? 0}', tr('مبانٍ', 'Buildings'), Icons.business_rounded, const Color(0xFF1E5F8C)),
+                  _iCard('${st['floors'] ?? 0}', tr('أدوار', 'Floors'), Icons.layers_rounded, const Color(0xFF7C3AED)),
+                  _iCard('${st['locations'] ?? 0}', tr('مواقع', 'Locations'), Icons.place_rounded, const Color(0xFF0891B2)),
+                ]),
+                const SizedBox(height: 10),
+                // work orders
+                _iPanel(tr('أوامر العمل', 'Work orders'), Icons.assignment_rounded, const Color(0xFFC0392B), [
+                  _stat('${wk['total'] ?? 0}', tr('إجمالي', 'Total')),
+                  _stat('${wk['open'] ?? 0}', tr('مفتوح', 'Open'), const Color(0xFFF59E0B)),
+                  _stat('${wk['overdue'] ?? 0}', tr('متأخر', 'Overdue'), const Color(0xFFE11D48)),
+                  _stat('${wk['completion_pct'] ?? 0}%', tr('الإنجاز', 'Done'), const Color(0xFF16A34A)),
+                ]),
+                if (byService.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  for (final b in byService.take(8))
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 4),
+                      child: Row(children: [
+                        Expanded(child: Text('${b['service']}',
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5))),
+                        Text('${b['total']}',
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5)),
+                        const SizedBox(width: 8),
+                        if (intOf(b['open']) > 0)
+                          _chip('${b['open']} ${tr('مفتوح', 'open')}', const Color(0xFFF59E0B)),
+                        if (intOf(b['late']) > 0) ...[
+                          const SizedBox(width: 4),
+                          _chip('${b['late']} ${tr('متأخر', 'late')}', const Color(0xFFE11D48)),
+                        ],
+                      ]),
+                    ),
+                ],
+                const SizedBox(height: 6),
+                if (d['assets'] != null)
+                  _iPanel(tr('الأصول', 'Assets'), Icons.inventory_2_rounded, const Color(0xFF0891B2), [
+                    _stat('${(d['assets'] as Map)['total'] ?? 0}', tr('إجمالي', 'Total')),
+                    _stat('${(d['assets'] as Map)['care_owned'] ?? 0}', 'CARE'),
+                    _stat('${(d['assets'] as Map)['client_owned'] ?? 0}', tr('للعميل', 'Client')),
+                  ]),
+                if (d['quality'] != null)
+                  _iPanel(tr('الجودة', 'Quality'), Icons.verified_rounded, const Color(0xFF16A34A), [
+                    _stat('${(d['quality'] as Map)['total'] ?? 0}', tr('ملاحظات', 'Total')),
+                    _stat('${(d['quality'] as Map)['open'] ?? 0}', tr('مفتوح', 'Open'), const Color(0xFFF59E0B)),
+                    _stat('${(d['quality'] as Map)['critical'] ?? 0}', tr('حرج', 'Critical'), const Color(0xFFE11D48)),
+                  ]),
+                if (d['schedules'] != null)
+                  _iPanel(tr('الجدولة', 'Schedules'), Icons.event_repeat_rounded, const Color(0xFF0D9488), [
+                    _stat('${(d['schedules'] as Map)['total'] ?? 0}', tr('جداول', 'Total')),
+                    _stat('${(d['schedules'] as Map)['running'] ?? 0}', tr('نشط', 'Running')),
+                    _stat('${(d['schedules'] as Map)['avg_compliance'] ?? 0}%', tr('التزام', 'Compliance')),
+                  ]),
+                if (d['inventory'] != null)
+                  _iPanel(tr('المخزون', 'Inventory'), Icons.warehouse_rounded, const Color(0xFF8A6D3B), [
+                    _stat('${(d['inventory'] as Map)['items'] ?? 0}', tr('أصناف', 'Items')),
+                    _stat('${(d['inventory'] as Map)['low'] ?? 0}', tr('منخفض', 'Low'), const Color(0xFFE11D48)),
+                    _stat('${(d['inventory'] as Map)['value'] ?? 0}', tr('القيمة', 'Value')),
+                  ]),
+                if ((d['services'] as Map?)?.isNotEmpty ?? false) ...[
+                  const SizedBox(height: 10),
+                  Text(tr('نشاط الخدمات (آخر 30 يومًا)', 'Service activity (last 30 days)'),
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: _navy)),
+                  const SizedBox(height: 6),
+                  for (final e in (d['services'] as Map).entries)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3),
+                      child: Row(children: [
+                        Expanded(child: Text('${(e.value as Map)['label']}',
+                            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600))),
+                        Text('${(e.value as Map)['total']}',
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5)),
+                        const SizedBox(width: 8),
+                        _chip('+${(e.value as Map)['last_30_days']}', const Color(0xFF16A34A)),
+                      ]),
+                    ),
+                ],
+                const SizedBox(height: 20),
+              ]);
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _iCard(String v, String l, IconData ic, Color c) => Expanded(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          padding: const EdgeInsets.symmetric(vertical: 13),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.grey.shade200)),
+          child: Column(children: [
+            Icon(ic, color: c, size: 20),
+            const SizedBox(height: 5),
+            Text(v, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: c)),
+            Text(l, style: TextStyle(fontSize: 10.5, color: Colors.grey.shade600)),
+          ]),
+        ),
+      );
+
+  Widget _iPanel(String title, IconData ic, Color c, List<Widget> stats) => Container(
+        margin: const EdgeInsets.only(top: 10),
+        padding: const EdgeInsets.all(13),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.grey.shade200)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [Icon(ic, size: 16, color: c), const SizedBox(width: 6),
+            Text(title, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: c))]),
+          const SizedBox(height: 10),
+          Row(children: stats),
+        ]),
+      );
+
+  Widget _stat(String v, String l, [Color? c]) => Expanded(
+        child: Column(children: [
+          Text(v, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: c ?? _navy)),
+          Text(l, textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
+        ]),
+      );
+
+  Widget _chip(String t, Color c) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+        decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
+        child: Text(t, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: c)),
       );
 
   Widget _kpi(String v, String l, IconData ic) => Expanded(child: Column(children: [

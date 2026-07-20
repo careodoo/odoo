@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:convert';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
@@ -126,6 +129,20 @@ class _SecurityIncidentsScreenState extends State<SecurityIncidentsScreen> {
               ]),
             ),
             Expanded(child: ListView(controller: sc, padding: const EdgeInsets.all(16), children: [
+              // Evidence bar: a typed report is what the reporter remembers,
+              // not what happened. Photo, location and updates are what an
+              // insurer or a dispute will actually ask for.
+              Wrap(spacing: 8, runSpacing: 8, children: [
+                _evBtn(Icons.photo_camera_rounded, tr('صورة', 'Photo'),
+                    () => _addPhoto(intOf(i['id']))),
+                _evBtn(Icons.my_location_rounded, tr('الموقع', 'Location'),
+                    () => _captureLocation(intOf(i['id']))),
+                _evBtn(Icons.note_add_rounded, tr('تحديث', 'Update'),
+                    () => _addUpdate(intOf(i['id']))),
+                _evBtn(Icons.build_rounded, tr('أمر عمل', 'Work order'),
+                    () => _escalate(intOf(i['id']))),
+              ]),
+              const Divider(color: Colors.white24, height: 24),
               for (final e in entries) Padding(
                 padding: const EdgeInsets.symmetric(vertical: 7),
                 child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -139,6 +156,84 @@ class _SecurityIncidentsScreenState extends State<SecurityIncidentsScreen> {
         ),
       ),
     );
+  }
+
+  Widget _evBtn(IconData ic, String label, VoidCallback onTap) => OutlinedButton.icon(
+        onPressed: onTap,
+        icon: Icon(ic, size: 17, color: Colors.white),
+        style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.white,
+            side: const BorderSide(color: Colors.white38),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11))),
+        label: Text(label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800)),
+      );
+
+  void _snack(String m, [Color? c]) => ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(m), backgroundColor: c, behavior: SnackBarBehavior.floating));
+
+  Future<void> _addPhoto(int id) async {
+    try {
+      final x = await ImagePicker().pickImage(
+          source: ImageSource.camera, maxWidth: 1600, imageQuality: 70);
+      if (x == null) return;
+      final bytes = await x.readAsBytes();
+      await context.read<AuthProvider>().api.incidentMedia(id, {
+        'kind': 'photo', 'file': base64Encode(bytes), 'filename': x.name,
+      });
+      if (mounted) _snack(tr('أُضيفت الصورة للبلاغ', 'Photo attached'), const Color(0xFF16A34A));
+    } catch (e) {
+      if (mounted) _snack('$e', const Color(0xFFE11D48));
+    }
+  }
+
+  Future<void> _captureLocation(int id) async {
+    try {
+      final ok = await Geolocator.checkPermission();
+      if (ok == LocationPermission.denied) {
+        await Geolocator.requestPermission();
+      }
+      final pos = await Geolocator.getCurrentPosition();
+      await context.read<AuthProvider>().api.incidentLocate(id, pos.latitude, pos.longitude);
+      if (mounted) _snack(tr('سُجّل موقع البلاغ', 'Location captured'), const Color(0xFF16A34A));
+    } catch (e) {
+      if (mounted) _snack('$e', const Color(0xFFE11D48));
+    }
+  }
+
+  Future<void> _addUpdate(int id) async {
+    final ctrl = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: Text(tr('إضافة تحديث', 'Add update')),
+        content: TextField(controller: ctrl, maxLines: 3, autofocus: true,
+            decoration: InputDecoration(
+                hintText: tr('ما الذي حدث بعد ذلك؟', 'What happened next?'),
+                border: const OutlineInputBorder())),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('إلغاء', 'Cancel'))),
+          FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(tr('إضافة', 'Add'))),
+        ],
+      ),
+    );
+    if (ok != true || ctrl.text.trim().isEmpty) return;
+    try {
+      await context.read<AuthProvider>().api.incidentUpdate(id, ctrl.text.trim());
+      if (mounted) _snack(tr('أُضيف التحديث', 'Update added'), const Color(0xFF16A34A));
+    } catch (e) {
+      if (mounted) _snack('$e', const Color(0xFFE11D48));
+    }
+  }
+
+  Future<void> _escalate(int id) async {
+    try {
+      final r = await context.read<AuthProvider>().api.incidentToWorkorder(id);
+      if (mounted) _snack('${tr('أُنشئ أمر العمل', 'Work order raised')}: ${r['workorder']}',
+          const Color(0xFF16A34A));
+    } catch (e) {
+      if (mounted) _snack('$e', const Color(0xFFE11D48));
+    }
   }
 
   void _openForm() {
