@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo><data noupdate="1">
+  <record id="seq_hosp_purchase" model="ir.sequence">
+    <field name="name">طلب شراء ضيافة</field>
+    <field name="code">care.hosp.purchase</field>
+    <field name="prefix">HPO/%(year)s/</field><field name="padding">4</field>
+  </record>
+  <record id="cron_hosp_low_supplies" model="ir.cron">
+    <field name="name">الضيافة: طلب شراء لما يوشك على النفاد</field>
+    <field name="model_id" ref="model_care_hosp_purchase"/>
+    <field name="state">code</field><field name="code">model._cron_low_supplies()</field>
+    <field name="interval_number">1</field><field name="interval_type">days</field>
+    <field name="numbercall">-1</field><field name="active" eval="True"/>
+  </record>
+</data></odoo>

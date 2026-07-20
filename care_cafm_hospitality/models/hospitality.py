@@ -199,6 +199,9 @@ class HospOrder(models.Model):
 
     prepared_by = fields.Many2one('hr.employee', string='حضّرها', tracking=True)
     delivered_by = fields.Many2one('hr.employee', string='قدّمها')
+    supplies_consumed = fields.Boolean(
+        string='خُصم من المخزون', default=False, copy=False, readonly=True,
+        help='يمنع خصم نفس الطلب مرتين عند إعادة التسليم.')
     reject_reason = fields.Char(string='سبب الرفض')
     approver_id = fields.Many2one('res.users', string='المعتمِد')
     limit_note = fields.Char(string='ملاحظة الحد', readonly=True)
@@ -288,6 +291,37 @@ class HospOrder(models.Model):
             o.write({'state': 'delivered', 'delivered_at': fields.Datetime.now(),
                      'delivered_by': emp.id if emp else o.delivered_by.id})
             o.line_ids.write({'state': 'served'})
+            o._consume_supplies()
+        return True
+
+    def _consume_supplies(self):
+        """Deduct what this order actually used, once, on delivery.
+
+        Delivery is the honest moment: an order cancelled while brewing has
+        still consumed the beans, but one rejected before it starts has not,
+        and deducting at order time would drain the pantry on paper for drinks
+        nobody ever received.
+
+        Options carry their own consumption — 'extra sugar' is three sachets,
+        not the same as 'no sugar' — so a recipe line tied to an option only
+        counts when that option was chosen.
+        """
+        Recipe = self.env['care.hosp.recipe'].sudo()
+        for o in self:
+            if o.supplies_consumed:
+                continue
+            for line in o.line_ids:
+                chosen = set(line.option_ids.ids)
+                for r in Recipe.search([('item_id', '=', line.item_id.id)]):
+                    if r.option_id and r.option_id.id not in chosen:
+                        continue
+                    qty = (r.qty_per_serving or 0.0) * (line.quantity or 1.0)
+                    if qty:
+                        r.supply_id._apply(
+                            -qty, 'consume',
+                            note=_('استهلاك %s × %s') % (line.item_id.name, line.quantity),
+                            order=o)
+            o.supplies_consumed = True
         return True
 
     def action_reject(self, reason=None):

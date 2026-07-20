@@ -9,6 +9,7 @@
     'data': [
         'security/ir.model.access.csv',
         'data/hosp_data.xml',
+        'data/hosp_stock_data.xml',
         'data/hosp_demo.xml',
         'views/hosp_views.xml',
     ],

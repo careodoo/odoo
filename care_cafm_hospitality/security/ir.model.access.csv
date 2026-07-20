@@ -18,3 +18,13 @@ access_hosp_limit_mgr,hosp.limit.mgr,model_care_hosp_limit,base.group_system,1,1
 access_hosp_fav_user,hosp.fav.user,model_care_hosp_favorite,base.group_user,1,1,1,1
 access_hosp_standing_user,hosp.standing.user,model_care_hosp_standing,base.group_user,1,1,1,1
 access_hosp_standing_mgr,hosp.standing.mgr,model_care_hosp_standing,base.group_system,1,1,1,1
+access_care_hosp_supply_user,care_hosp_supply.user,model_care_hosp_supply,base.group_user,1,1,1,0
+access_care_hosp_supply_mgr,care_hosp_supply.mgr,model_care_hosp_supply,base.group_system,1,1,1,1
+access_care_hosp_recipe_user,care_hosp_recipe.user,model_care_hosp_recipe,base.group_user,1,1,1,0
+access_care_hosp_recipe_mgr,care_hosp_recipe.mgr,model_care_hosp_recipe,base.group_system,1,1,1,1
+access_care_hosp_stock_move_user,care_hosp_stock_move.user,model_care_hosp_stock_move,base.group_user,1,1,1,0
+access_care_hosp_stock_move_mgr,care_hosp_stock_move.mgr,model_care_hosp_stock_move,base.group_system,1,1,1,1
+access_care_hosp_purchase_user,care_hosp_purchase.user,model_care_hosp_purchase,base.group_user,1,1,1,0
+access_care_hosp_purchase_mgr,care_hosp_purchase.mgr,model_care_hosp_purchase,base.group_system,1,1,1,1
+access_care_hosp_purchase_line_user,care_hosp_purchase_line.user,model_care_hosp_purchase_line,base.group_user,1,1,1,0
+access_care_hosp_purchase_line_mgr,care_hosp_purchase_line.mgr,model_care_hosp_purchase_line,base.group_system,1,1,1,1

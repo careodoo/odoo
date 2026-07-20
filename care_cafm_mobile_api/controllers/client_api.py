@@ -1862,6 +1862,20 @@ class ClientApi(Controller):
             'partner_id': cp.id if cp else False,
             'requested_by': env.user.id,
         }
+        # What is being collected, when this is a waste request. "General" is a
+        # real answer, not a missing one.
+        scope = b.get('waste_scope')
+        if scope in ('general', 'type', 'items'):
+            vals['waste_scope'] = scope
+            if scope == 'type' and b.get('waste_type_id'):
+                vals['waste_type_id'] = int(b['waste_type_id'])
+            if scope == 'items' and b.get('waste_item_ids'):
+                ids = b['waste_item_ids']
+                if isinstance(ids, str):
+                    ids = [int(x) for x in ids.split(',') if x.strip().isdigit()]
+                vals['waste_item_ids'] = [(6, 0, [int(i) for i in ids])]
+            if b.get('waste_note'):
+                vals['waste_note'] = b['waste_note']
         if b.get('requested_hours') not in (None, ''):
             try:
                 vals['requested_hours'] = float(b.get('requested_hours'))
@@ -3812,3 +3826,21 @@ class ClientApi(Controller):
             ('Content-Type', 'application/pdf'),
             ('Content-Disposition', content_disposition(fname).replace('attachment', 'inline')),
         ])
+
+    @route(API + '/client/waste/catalogue', type='http', auth='public',
+           methods=['GET'], csrf=False, cors='*')
+    def waste_catalogue(self, **kw):
+        """The categories and items a client can point at when asking for a
+        collection — so the form offers choices instead of a free-text box."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'cafm.waste.type' not in env:
+            return _ok({'types': [], 'items': []})
+        return _ok({
+            'types': [{'id': t.id, 'name': t.name}
+                      for t in env['cafm.waste.type'].sudo().search([])],
+            'items': [{'id': i.id, 'name': i.name,
+                       'type_id': getattr(i, 'type_id', False) and i.type_id.id or None}
+                      for i in env['cafm.waste.item'].sudo().search([])],
+        })
