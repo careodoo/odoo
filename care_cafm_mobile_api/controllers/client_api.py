@@ -3862,3 +3862,119 @@ class ClientApi(Controller):
                        'type_id': getattr(i, 'type_id', False) and i.type_id.id or None}
                       for i in env['cafm.waste.item'].sudo().search([])],
         })
+
+    @route(API + '/client/facility/<int:fid>/insight', type='http', auth='public',
+           methods=['GET'], csrf=False, cors='*')
+    def facility_insight(self, fid, **kw):
+        """Everything one building is, across every service.
+
+        The facilities page listed buildings and floors and stopped there — a
+        name with nothing behind it. What a facility manager actually opens a
+        building for is: what is broken, what is overdue, what did it cost me,
+        and which service is dragging. All of that already exists, scattered
+        across nine models; this is the one place it meets.
+        """
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if fid not in self._fac_ids(env):
+            return _err('غير موجود', 404)
+        F = env['care.cafm.facility'].sudo().browse(fid)
+        since = fields.Date.context_today(F) - timedelta(days=30)
+        out = {'facility': {'id': F.id, 'name': F.name,
+                            'partner': F.partner_id.name or None}}
+
+        # ---- structure -------------------------------------------------
+        Loc = env['care.cafm.location'].sudo()
+        locs = Loc.search([('facility_id', '=', fid)])
+        blds = env['care.cafm.building'].sudo().search(
+            [('facility_id', '=', fid)]) if 'care.cafm.building' in env else []
+        out['structure'] = {
+            'buildings': len(blds), 'locations': len(locs),
+            'floors': len(set(locs.mapped('floor_id').ids)) if 'floor_id' in Loc._fields else 0,
+        }
+
+        # ---- work orders, the spine ------------------------------------
+        WO = env['care.cafm.workorder'].sudo()
+        wos = WO.search([('facility_id', '=', fid)])
+        open_states = ('new', 'assigned', 'in_progress')
+        recent = wos.filtered(lambda w: w.create_date and w.create_date.date() >= since)
+        by_service = {}
+        for w in wos:
+            k = w.service_id.name or '—'
+            b = by_service.setdefault(k, {'service': k, 'total': 0, 'open': 0, 'late': 0})
+            b['total'] += 1
+            if w.state in open_states:
+                b['open'] += 1
+            if getattr(w, 'is_overdue', False):
+                b['late'] += 1
+        done = wos.filtered(lambda w: w.state in ('done', 'verified'))
+        out['work'] = {
+            'total': len(wos), 'open': len(wos.filtered(lambda w: w.state in open_states)),
+            'overdue': len(wos.filtered(lambda w: getattr(w, 'is_overdue', False))),
+            'done': len(done), 'last_30_days': len(recent),
+            'completion_pct': round(100.0 * len(done) / len(wos), 1) if wos else 0.0,
+            'by_service': sorted(by_service.values(), key=lambda x: -x['total']),
+        }
+
+        # ---- assets ------------------------------------------------------
+        A = env['care.cafm.asset'].sudo().search([('facility_id', '=', fid)])
+        out['assets'] = {
+            'total': len(A),
+            'care_owned': len(A.filtered(lambda a: a.ownership == 'care')),
+            'client_owned': len(A.filtered(lambda a: a.ownership == 'client')),
+            'by_status': [{'status': s, 'count': len(A.filtered(lambda a, s=s: a.status == s))}
+                          for s in set(A.mapped('status')) if s],
+        }
+
+        # ---- quality -----------------------------------------------------
+        if 'care.cafm.observation' in env:
+            O = env['care.cafm.observation'].sudo().search([('facility_id', '=', fid)])
+            out['quality'] = {
+                'total': len(O),
+                'open': len(O.filtered(lambda o: o.state not in ('closed', 'resolved'))),
+                'critical': len(O.filtered(lambda o: getattr(o, 'severity', '') == 'critical')),
+            }
+
+        # ---- schedules and compliance -------------------------------------
+        if 'care.cafm.schedule' in env:
+            S = env['care.cafm.schedule'].sudo().search([('facility_id', '=', fid)])
+            comp = [s.compliance for s in S if s.compliance is not None]
+            out['schedules'] = {
+                'total': len(S), 'running': len(S.filtered(lambda x: x.active and not x.paused)),
+                'avg_compliance': round(sum(comp) / len(comp), 1) if comp else 0.0,
+                'due_now': len(S.filtered(lambda x: getattr(x, 'is_due_now', False))),
+            }
+
+        # ---- inventory ----------------------------------------------------
+        if 'care.cafm.stock.item' in env:
+            I = env['care.cafm.stock.item'].sudo().search([('facility_id', '=', fid)])
+            out['inventory'] = {
+                'items': len(I), 'low': len(I.filtered('low_stock')),
+                'value': round(sum(I.mapped('stock_value')), 3),
+            }
+
+        # ---- per-service detail, only for services this facility has -------
+        svc = {}
+        for model, key, label in [
+                ('care.cafm.clean.audit', 'cleaning_audits', 'Cleaning audits'),
+                ('care.pool.reading', 'pool_readings', 'Pool readings'),
+                ('care.tank.cleaning', 'tank_cleanings', 'Tank cleanings'),
+                ('care.disinfect.round', 'disinfection_rounds', 'Disinfection rounds'),
+                ('care.pest.visit', 'pest_visits', 'Pest visits'),
+                ('care.valet.ticket', 'valet_tickets', 'Valet tickets'),
+                ('care.hosp.order', 'hospitality_orders', 'Hospitality orders'),
+                ('care.cafm.facade.permit', 'facade_permits', 'Facade permits')]:
+            if model not in env:
+                continue
+            M = env[model].sudo()
+            if 'facility_id' not in M._fields:
+                continue
+            recs = M.search([('facility_id', '=', fid)])
+            if not recs:
+                continue
+            svc[key] = {'label': label, 'total': len(recs),
+                        'last_30_days': len(recs.filtered(
+                            lambda r: r.create_date and r.create_date.date() >= since))}
+        out['services'] = svc
+        return _ok(out)
