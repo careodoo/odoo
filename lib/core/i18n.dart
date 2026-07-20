@@ -47,3 +47,13 @@ class LangProvider extends ChangeNotifier {
 
   Future<void> toggle() => setLang(gLang == 'ar' ? 'en' : 'ar');
 }
+
+/// Odoo sends an unset number as `false`, never null. `x as num?` accepts a
+/// num or null and throws on anything else, so every `numOf(m['f'], 0)`
+/// across the app was one empty field away from crashing the screen it was on.
+/// This narrows by type instead of casting.
+num numOf(dynamic v, [num fallback = 0]) => v is num ? v : fallback;
+
+/// The same, for the common `.toDouble()` / `.toInt()` follow-ups.
+double dblOf(dynamic v, [double fallback = 0]) => v is num ? v.toDouble() : fallback;
+int intOf(dynamic v, [int fallback = 0]) => v is num ? v.toInt() : fallback;

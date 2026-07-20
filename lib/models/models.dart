@@ -1,3 +1,4 @@
+import '../core/i18n.dart';
 /// Plain data models mirroring the `/api/v1` JSON.
 
 class Service {
@@ -122,6 +123,6 @@ class WorkOrder {
         deadline: j['deadline'] as String?,
         startDatetime: j['start_datetime'] as String?,
         doneDatetime: j['done_datetime'] as String?,
-        durationMinutes: (j['duration_minutes'] as num?)?.toDouble() ?? 0,
+        durationMinutes: dblOf(j['duration_minutes'], 0.0),
       );
 }

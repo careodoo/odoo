@@ -127,7 +127,7 @@ class _ManagementHomeState extends State<ManagementHome> {
 
   Widget _card(Map a) {
     final c = _tint['${a['key']}'] ?? Mgmt.slate;
-    final n = (a['count'] as num?) ?? 0;
+    final n = numOf(a['count'], 0);
     return Material(
       color: Colors.white, borderRadius: BorderRadius.circular(16),
       child: InkWell(

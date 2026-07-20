@@ -39,8 +39,8 @@ class _WasteTripMapScreenState extends State<WasteTripMapScreen> {
   Future<void> _poll() async {
     try {
       final d = await context.read<AuthProvider>().api.wasteTripTrack(widget.tripId);
-      final lat = (d['lat'] as num?)?.toDouble() ?? 0;
-      final lng = (d['lng'] as num?)?.toDouble() ?? 0;
+      final lat = dblOf(d['lat'], 0.0);
+      final lng = dblOf(d['lng'], 0.0);
       if (mounted) {
         setState(() {
           _loading = false;

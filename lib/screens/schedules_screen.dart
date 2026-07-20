@@ -73,7 +73,7 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
   }
 
   Widget _card(Map x) {
-    final comp = (x['compliance'] as num?) ?? 0;
+    final comp = numOf(x['compliance'], 0);
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(

@@ -71,7 +71,7 @@ class _ThreadsTabState extends State<_ThreadsTab> with AutomaticKeepAliveClientM
 
   Widget _tile(Map th) {
     final peer = (th['peer'] as Map?) ?? {};
-    final unread = (th['unread'] as num?)?.toInt() ?? 0;
+    final unread = intOf(th['unread'], 0);
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: ListTile(

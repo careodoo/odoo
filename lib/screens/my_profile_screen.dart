@@ -60,7 +60,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
             final mat = (d['materials'] as Map?) ?? {};
             final sch = (d['schedule'] as Map?) ?? {};
             final badges = (d['badges'] as List?) ?? [];
-            final score = ((d['score'] as num?) ?? 0).toDouble();
+            final score = (numOf(d['score'], 0)).toDouble();
             return ListView(padding: EdgeInsets.zero, children: [
               _header(context, p, st, d, score),
               Padding(padding: const EdgeInsets.fromLTRB(12, 12, 12, 4), child: _periodBar(st.accent)),
@@ -167,8 +167,8 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
       );
 
   Widget _bars(Map t, Map sch) {
-    final onTime = (t['on_time_rate'] as num?)?.toDouble() ?? 0;
-    final comp = (sch['compliance'] as num?)?.toDouble() ?? 0;
+    final onTime = dblOf(t['on_time_rate'], 0.0);
+    final comp = dblOf(sch['compliance'], 0.0);
     final schTotal = _i(sch['done']) + _i(sch['late']) + _i(sch['missed']);
     return Column(children: [
       _barRow(tr('الالتزام بالمواعيد', 'On-time completion'), onTime, const Color(0xFF16A34A)),

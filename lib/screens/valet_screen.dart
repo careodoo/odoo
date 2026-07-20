@@ -168,10 +168,10 @@ class _ValetScreenState extends State<ValetScreen> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(5),
                 child: LinearProgressIndicator(
-                  value: ((z['occupancy'] as num?) ?? 0) / 100.0, minHeight: 6,
+                  value: (numOf(z['occupancy'], 0)) / 100.0, minHeight: 6,
                   backgroundColor: Colors.grey.shade200,
                   valueColor: AlwaysStoppedAnimation(
-                      ((z['occupancy'] as num?) ?? 0) > 85 ? const Color(0xFFE11D48) : const Color(0xFF16A34A)),
+                      (numOf(z['occupancy'], 0)) > 85 ? const Color(0xFFE11D48) : const Color(0xFF16A34A)),
                 ),
               ),
               const SizedBox(height: 5),

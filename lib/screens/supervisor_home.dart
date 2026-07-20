@@ -369,8 +369,8 @@ class _SupervisorHomeState extends State<SupervisorHome> {
 
   // ===== a crew member: live load + achievements, tap for actions ===========
   Widget _crewCard(Map m) {
-    final rate = ((m['on_time_rate'] as num?) ?? 0).toDouble();
-    final overdue = ((m['overdue'] as num?) ?? 0).toInt();
+    final rate = (numOf(m['on_time_rate'], 0)).toDouble();
+    final overdue = (numOf(m['overdue'], 0)).toInt();
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       child: Material(

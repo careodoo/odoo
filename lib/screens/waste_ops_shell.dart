@@ -366,7 +366,7 @@ class _DriverPickerState extends State<_DriverPicker> {
                 itemBuilder: (_, i) {
                   final d = ds[i] as Map;
                   final sel = d['id'] == widget.currentId;
-                  final busy = (d['busy'] as num?)?.toInt() ?? 0;
+                  final busy = intOf(d['busy'], 0);
                   return Material(
                     color: sel ? WOps.green.withValues(alpha: 0.08) : WOps.bg,
                     borderRadius: BorderRadius.circular(14),

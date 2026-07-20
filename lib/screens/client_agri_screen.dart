@@ -333,7 +333,7 @@ class _ClientAgriScreenState extends State<ClientAgriScreen> {
                       _pill('🇰🇼 ${tr('يتحمّل الحر', 'heat')}', const Color(0xFF16A34A)),
                     if (s['salt_tolerant'] == true)
                       _pill('🧂 ${tr('ملوحة', 'salt')}', const Color(0xFF0891B2)),
-                    if (((s['plant_count'] as num?) ?? 0) > 0)
+                    if ((numOf(s['plant_count'], 0)) > 0)
                       _pill('🌱 ${s['plant_count']}', const Color(0xFF7C3AED)),
                   ]),
                 ])),
@@ -422,7 +422,7 @@ class _ClientAgriScreenState extends State<ClientAgriScreen> {
                           style: const TextStyle(fontSize: 13, height: 1.6)),
                     ),
                   ],
-                  if (((s['plant_count'] as num?) ?? 0) > 0) ...[
+                  if ((numOf(s['plant_count'], 0)) > 0) ...[
                     const SizedBox(height: 14),
                     Row(children: [
                       Icon(Icons.park_rounded, size: 16, color: _c),

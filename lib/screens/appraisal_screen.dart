@@ -61,7 +61,7 @@ class _AppraisalScreenState extends State<AppraisalScreen> {
   }
 
   Widget _scoreCard(Map d, {bool mine = false}) {
-    final overall = (d['overall'] as num?) ?? 0;
+    final overall = numOf(d['overall'], 0);
     final axes = (d['axes'] as Map);
     final c = _c(overall);
     return Card(
@@ -105,7 +105,7 @@ class _AppraisalScreenState extends State<AppraisalScreen> {
       );
 
   Widget _teamRow(int rank, Map d) {
-    final overall = (d['overall'] as num?) ?? 0;
+    final overall = numOf(d['overall'], 0);
     return Card(child: ListTile(
       leading: CircleAvatar(backgroundColor: _c(overall).withValues(alpha: 0.15),
           child: Text('$rank', style: TextStyle(color: _c(overall), fontWeight: FontWeight.w900))),

@@ -95,7 +95,7 @@ class _PmsProjectsScreenState extends State<PmsProjectsScreen> {
   }
 
   Widget _card(Map p) {
-    final pct = ((p['progress'] as num?) ?? 0).toDouble();
+    final pct = (numOf(p['progress'], 0)).toDouble();
     return Material(
       color: Colors.white, borderRadius: BorderRadius.circular(16),
       child: InkWell(
@@ -258,7 +258,7 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
             }
             if (!snap.hasData) return const Center(child: CircularProgressIndicator());
             final d = snap.data!;
-            final pct = ((d['progress'] as num?) ?? 0).toDouble();
+            final pct = (numOf(d['progress'], 0)).toDouble();
             final stages = (d['stages'] as List?) ?? [];
             return ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 24), children: [
               Container(

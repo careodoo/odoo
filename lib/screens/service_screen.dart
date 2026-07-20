@@ -67,7 +67,7 @@ class _ServiceScreenState extends State<ServiceScreen> {
     final cs = Theme.of(context).colorScheme;
     switch (widget.kind) {
       case 'cleaning':
-        final score = (m['score'] as num?)?.toDouble() ?? 0;
+        final score = dblOf(m['score'], 0.0);
         final col = score >= 85 ? const Color(0xFF16A34A) : (score >= 60 ? const Color(0xFFF59E0B) : const Color(0xFFE5484D));
         return Card(child: ListTile(
           leading: CircleAvatar(backgroundColor: col.withValues(alpha: 0.15), child: Text('${score.round()}', style: TextStyle(color: col, fontWeight: FontWeight.w900))),

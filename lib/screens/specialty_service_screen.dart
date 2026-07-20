@@ -347,7 +347,7 @@ class _SpecialtyServiceScreenState extends State<SpecialtyServiceScreen> {
 
   Widget _header(Map stats) {
     final s = widget.spec;
-    final rate = ((stats['completion_rate'] as num?) ?? 0).toDouble();
+    final rate = (numOf(stats['completion_rate'], 0)).toDouble();
     return CustomPaint(
       painter: const BrandPattern(opacity: 0.07),
       child: Container(
@@ -463,7 +463,7 @@ class _SpecialtyServiceScreenState extends State<SpecialtyServiceScreen> {
     final c = done
         ? const Color(0xFF16A34A)
         : (overdue ? const Color(0xFFE11D48) : widget.spec.color);
-    final photos = ((w['media_count'] as num?) ?? 0).toInt();
+    final photos = (numOf(w['media_count'], 0)).toInt();
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Material(

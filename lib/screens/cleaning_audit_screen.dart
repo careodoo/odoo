@@ -44,8 +44,8 @@ class _CleaningAuditScreenState extends State<CleaningAuditScreen> {
   List<Map> _apply(List<dynamic> all) {
     var list = all.cast<Map>();
     switch (_filter) {
-      case 'failed': list = list.where((a) => ((a['fail_count'] as num?) ?? 0) > 0).toList(); break;
-      case 'passed': list = list.where((a) => ((a['fail_count'] as num?) ?? 0) == 0).toList(); break;
+      case 'failed': list = list.where((a) => (numOf(a['fail_count'], 0)) > 0).toList(); break;
+      case 'passed': list = list.where((a) => (numOf(a['fail_count'], 0)) == 0).toList(); break;
       case 'disputed': list = list.where((a) => a['client_ack'] == 'disputed').toList(); break;
     }
     if (_q.isNotEmpty) {
@@ -96,9 +96,9 @@ class _CleaningAuditScreenState extends State<CleaningAuditScreen> {
 
   Widget _stats(List<Map> all) {
     final n = all.length;
-    final avg = n == 0 ? 0.0 : all.fold<double>(0, (s, a) => s + ((a['score'] as num?)?.toDouble() ?? 0)) / n;
-    final fails = all.fold<int>(0, (s, a) => s + (((a['fail_count'] as num?) ?? 0).toInt()));
-    final clean = all.where((a) => ((a['fail_count'] as num?) ?? 0) == 0).length;
+    final avg = n == 0 ? 0.0 : all.fold<double>(0, (s, a) => s + (dblOf(a['score'], 0.0))) / n;
+    final fails = all.fold<int>(0, (s, a) => s + ((numOf(a['fail_count'], 0)).toInt()));
+    final clean = all.where((a) => (numOf(a['fail_count'], 0)) == 0).length;
     final disputed = all.where((a) => a['client_ack'] == 'disputed').length;
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 10, 12, 2),
@@ -160,9 +160,9 @@ class _CleaningAuditScreenState extends State<CleaningAuditScreen> {
       );
 
   Widget _card(Map a) {
-    final score = (a['score'] as num?)?.toDouble() ?? 0;
+    final score = dblOf(a['score'], 0.0);
     final c = _scoreColor(score);
-    final fails = ((a['fail_count'] as num?) ?? 0).toInt();
+    final fails = (numOf(a['fail_count'], 0)).toInt();
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Material(
@@ -217,7 +217,7 @@ class _CleaningAuditScreenState extends State<CleaningAuditScreen> {
           future: context.read<AuthProvider>().api.cleaningAudit(id),
           builder: (_, snap) {
             final d = snap.data;
-            final score = (d?['score'] as num?)?.toDouble() ?? 0;
+            final score = dblOf(d?['score'], 0.0);
             final c = _scoreColor(score);
             final lines = ((d?['lines'] as List?) ?? const []).cast<Map>();
             return Container(

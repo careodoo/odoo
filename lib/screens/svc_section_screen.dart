@@ -69,8 +69,8 @@ class _SvcSectionScreenState extends State<SvcSectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final total = (_d?['total'] as num?)?.toInt() ?? 0;
-    final pages = (_d?['pages'] as num?)?.toInt() ?? 1;
+    final total = intOf(_d?['total'], 0);
+    final pages = intOf(_d?['pages'], 1);
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6FA),
       appBar: AppBar(

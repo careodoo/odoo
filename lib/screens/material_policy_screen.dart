@@ -211,7 +211,7 @@ class _MaterialPolicyScreenState extends State<MaterialPolicyScreen> {
 
   Widget _itemCard(Map it, List<Map> services, bool canManage) {
     final allow = it['allow_worker_issue'] == true;
-    final cap = (it['max_issue_qty'] as num?)?.toDouble() ?? 0;
+    final cap = dblOf(it['max_issue_qty'], 0.0);
     final svcs = ((it['allowed_services'] as List?) ?? const []).cast<String>();
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -275,7 +275,7 @@ class _MaterialPolicyScreenState extends State<MaterialPolicyScreen> {
   Future<void> _editRules(Map it, List<Map> services) async {
     final selected = Set<int>.from(((it['allowed_service_ids'] as List?) ?? const []).cast<int>());
     final capCtrl = TextEditingController(
-        text: ((it['max_issue_qty'] as num?)?.toDouble() ?? 0) == 0 ? '' : '${it['max_issue_qty']}');
+        text: (dblOf(it['max_issue_qty'], 0.0)) == 0 ? '' : '${it['max_issue_qty']}');
     final saved = await showModalBottomSheet<bool>(
       context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(builder: (ctx, setSt) => Padding(

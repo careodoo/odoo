@@ -165,7 +165,7 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
   Widget _limitsStrip() {
     final limits = ((_menu!['limits'] as List?) ?? const [])
         .cast<Map>()
-        .where((l) => ((l['max_items'] as num?) ?? 0) > 0 || ((l['max_cost'] as num?) ?? 0) > 0)
+        .where((l) => (numOf(l['max_items'], 0)) > 0 || (numOf(l['max_cost'], 0)) > 0)
         .toList();
     if (limits.isEmpty) return const SizedBox.shrink();
     return Column(children: [
@@ -174,10 +174,10 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
   }
 
   Widget _limitBar(Map l) {
-    final maxI = (l['max_items'] as num?) ?? 0;
-    final usedI = (l['used_items'] as num?) ?? 0;
-    final maxC = (l['max_cost'] as num?) ?? 0;
-    final usedC = (l['used_cost'] as num?) ?? 0;
+    final maxI = numOf(l['max_items'], 0);
+    final usedI = numOf(l['used_items'], 0);
+    final maxC = numOf(l['max_cost'], 0);
+    final usedC = numOf(l['used_cost'], 0);
     final pct = maxI > 0 ? usedI / maxI : (maxC > 0 ? usedC / maxC : 0.0);
     final label = maxI > 0
         ? '${l['policy']} — ${tr('المتبقّي لك', 'Left')} ${(maxI - usedI).clamp(0, maxI).toInt()} ${tr('من', 'of')} ${maxI.toInt()}'
@@ -280,7 +280,7 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
   }
 
   String _hhmm(dynamic v) {
-    final d = (v as num?)?.toDouble() ?? 0;
+    final d = dblOf(v, 0.0);
     return '${d.floor().toString().padLeft(2, '0')}:${((d - d.floor()) * 60).round().toString().padLeft(2, '0')}';
   }
 
@@ -456,7 +456,7 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
                 const SizedBox(width: 9),
                 Expanded(child: Text('${o['name']}',
                     style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600))),
-                if (((o['extra_cost'] as num?) ?? 0) > 0)
+                if ((numOf(o['extra_cost'], 0)) > 0)
                   Text('+${o['extra_cost']}',
                       style: const TextStyle(color: _brown, fontWeight: FontWeight.w800, fontSize: 12)),
               ]),
@@ -645,16 +645,16 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
             else if (o['state'] == 'await_approval')
               _tag('🔐 ${tr('بانتظار الموافقة', 'Awaiting approval')}', const Color(0xFFA78BFA))
             else if (live && o['is_late'] == true)
-              _tag('⏱ ${tr('متأخر', 'Late')} ${((o['wait_minutes'] as num?) ?? 0).toInt()} ${tr('د', 'm')}',
+              _tag('⏱ ${tr('متأخر', 'Late')} ${(numOf(o['wait_minutes'], 0)).toInt()} ${tr('د', 'm')}',
                   const Color(0xFFE11D48))
             else if (live)
-              _tag('⏱ ~${(((o['prep_target'] as num?) ?? 5) - ((o['wait_minutes'] as num?) ?? 0)).clamp(0, 99).toInt()} ${tr('د', 'm')}',
+              _tag('⏱ ~${((numOf(o['prep_target'], 5)) - (numOf(o['wait_minutes'], 0))).clamp(0, 99).toInt()} ${tr('د', 'm')}',
                   const Color(0xFFF59E0B)),
             const Spacer(),
             // Odoo sends an unset number as `false`, not null — and in Dart
             // `false != null` is true, so the old guard let int.parse('false')
             // run and threw inside build. That is the grey screen.
-            if (((o['rating'] as num?) ?? 0) > 0)
+            if ((numOf(o['rating'], 0)) > 0)
               Text('★' * ((o['rating'] as num).toInt().clamp(0, 5)),
                   style: const TextStyle(color: Color(0xFFF59E0B), fontWeight: FontWeight.w900))
             else if (o['state'] == 'delivered')
@@ -757,8 +757,8 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
   /// One ticket. Colour comes from how long it has waited against its own
   /// target, so urgency reads without reading numbers.
   Widget _kdsCard(Map o, {bool approval = false}) {
-    final waited = ((o['wait_minutes'] as num?) ?? 0).toDouble();
-    final target = ((o['prep_target'] as num?) ?? 5).toDouble();
+    final waited = (numOf(o['wait_minutes'], 0)).toDouble();
+    final target = (numOf(o['prep_target'], 5)).toDouble();
     final ratio = target > 0 ? waited / target : 0;
     Color edge;
     if (approval) {

@@ -163,7 +163,7 @@ class _ConsumptionAnalyticsScreenState extends State<ConsumptionAnalyticsScreen>
   }
 
   Widget _row(Map r, int i, double maxQty, (String, String, String, IconData, Color, String) s) {
-    final qty = (r['qty'] as num?)?.toDouble() ?? 0;
+    final qty = dblOf(r['qty'], 0.0);
     return InkWell(
       onTap: () => _openRecords(s, r['id'] as int?, '${r['label']}'),
       child: Padding(
@@ -280,8 +280,8 @@ class _ConsumptionRecordsScreenState extends State<_ConsumptionRecordsScreen> {
             if (rows.isEmpty) {
               return Center(child: Text(tr('لا حركات مطابقة', 'No matching movements'), style: const TextStyle(color: Colors.grey)));
             }
-            final totQty = rows.fold<double>(0, (s, m) => s + ((m['quantity'] as num?)?.toDouble() ?? 0));
-            final totVal = rows.fold<double>(0, (s, m) => s + ((m['total_cost'] as num?)?.toDouble() ?? 0));
+            final totQty = rows.fold<double>(0, (s, m) => s + (dblOf(m['quantity'], 0.0)));
+            final totVal = rows.fold<double>(0, (s, m) => s + (dblOf(m['total_cost'], 0.0)));
             return ListView(padding: const EdgeInsets.fromLTRB(12, 0, 12, 20), children: [
               Container(
                 margin: const EdgeInsets.only(bottom: 8),
