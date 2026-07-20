@@ -2,7 +2,7 @@
 <odoo>
   <!-- ORDER report -->
   <record id="action_report_waste_order" model="ir.actions.report">
-    <field name="name">تقرير طلب النفايات</field>
+    <field name="name">تقرير طلب النفايات / Waste Order Report</field>
     <field name="model">cafm.waste.order</field>
     <field name="report_type">qweb-pdf</field>
     <field name="report_name">care_cafm_waste.report_waste_order_doc</field>
@@ -18,19 +18,19 @@
         <t t-call="web.external_layout">
           <div class="page">
             <div style="border-bottom:3px solid #16A34A;padding-bottom:8px;margin-bottom:16px">
-              <h2 style="color:#0E3A5F;margin:0">♻️ تقرير طلب نقل ومعالجة نفايات</h2>
+              <h2 style="color:#0E3A5F;margin:0">♻️ تقرير طلب نقل ومعالجة نفايات / Waste Transfer and Treatment — Order</h2>
               <div style="color:#64748b">الرقم: <strong t-esc="o.serial"/> · الحالة: <span t-field="o.states"/></div>
             </div>
             <table class="table table-sm">
-              <tr><td><strong>العميل</strong></td><td t-esc="o.contact_id.name or ''"/><td><strong>Project</strong></td><td t-esc="o.project_id.name or ''"/></tr>
-              <tr><td><strong>Pickup Location</strong></td><td t-esc="o.pickup_location_id.name or ''"/><td><strong>تاريخ الطلب</strong></td><td t-esc="o.request_datetime"/></tr>
-              <tr><td><strong>مدير العمليات</strong></td><td t-esc="o.ops_manager_id.name or ''"/><td><strong>Driver</strong></td><td t-esc="o.driver_id.name or ''"/></tr>
-              <tr><td><strong>Quantity Receiver</strong></td><td t-esc="o.receiver_id.name or ''"/><td><strong>الوزن النهائي</strong></td><td><span t-esc="o.final_weight"/> كجم</td></tr>
+              <tr><td><strong>العميل / Client</strong></td><td t-esc="o.contact_id.name or ''"/><td><strong>Project</strong></td><td t-esc="o.project_id.name or ''"/></tr>
+              <tr><td><strong>Pickup Location</strong></td><td t-esc="o.pickup_location_id.name or ''"/><td><strong>تاريخ الطلب / Request date</strong></td><td t-esc="o.request_datetime"/></tr>
+              <tr><td><strong>مدير العمليات / Operations manager</strong></td><td t-esc="o.ops_manager_id.name or ''"/><td><strong>Driver</strong></td><td t-esc="o.driver_id.name or ''"/></tr>
+              <tr><td><strong>Quantity Receiver</strong></td><td t-esc="o.receiver_id.name or ''"/><td><strong>الوزن النهائي / Final weight</strong></td><td><span t-esc="o.final_weight"/> كجم</td></tr>
             </table>
             <h4 style="color:#0E3A5F;margin-top:16px">Items</h4>
             <t t-set="lines" t-value="o.order_line_ids or (o.trip_id.trip_line_ids if o.trip_id else o.order_line_ids)"/>
             <table class="table table-sm table-bordered">
-              <thead style="background:#f1f5f9"><tr><th>Item</th><th>Quantity</th><th>وزن الوحدة</th><th>Total Weight</th></tr></thead>
+              <thead style="background:#f1f5f9"><tr><th>Item</th><th>Quantity</th><th>وزن الوحدة / Unit weight</th><th>Total Weight</th></tr></thead>
               <tbody>
                 <tr t-foreach="lines" t-as="l">
                   <td t-esc="l.item_id.name"/><td t-esc="l.quantity"/><td t-esc="l.weight"/>
@@ -39,7 +39,7 @@
               </tbody>
             </table>
             <div t-if="o.proof_image" style="margin-top:16px">
-              <h4 style="color:#0E3A5F">صورة الإثبات</h4>
+              <h4 style="color:#0E3A5F">صورة الإثبات / Proof photo</h4>
               <img t-att-src="image_data_uri(o.proof_image)" style="max-width:60%;max-height:250px;border-radius:8px"/>
             </div>
           </div>
@@ -50,7 +50,7 @@
 
   <!-- TRIP report -->
   <record id="action_report_waste_trip" model="ir.actions.report">
-    <field name="name">تقرير رحلة النفايات</field>
+    <field name="name">تقرير رحلة النفايات / Waste Trip Report</field>
     <field name="model">cafm.waste.trip</field>
     <field name="report_type">qweb-pdf</field>
     <field name="report_name">care_cafm_waste.report_waste_trip_doc</field>
@@ -66,12 +66,12 @@
         <t t-call="web.external_layout">
           <div class="page">
             <div style="border-bottom:3px solid #0E3A5F;padding-bottom:8px;margin-bottom:16px">
-              <h2 style="color:#0E3A5F;margin:0">🚛 تقرير رحلة نقل نفايات</h2>
+              <h2 style="color:#0E3A5F;margin:0">🚛 تقرير رحلة نقل نفايات · Waste Collection Trip Report</h2>
               <div style="color:#64748b">المرجع: <strong t-esc="t.reference"/></div>
             </div>
             <table class="table table-sm">
               <tr><td><strong>Project</strong></td><td t-esc="t.project_id.name or ''"/><td><strong>Treatment Centre</strong></td><td t-esc="t.center_id.name or ''"/></tr>
-              <tr><td><strong>الالتقاط</strong></td><td t-esc="t.pickup_location_id.name or ''"/><td><strong>التاريخ</strong></td><td t-esc="t.trip_date"/></tr>
+              <tr><td><strong>الالتقاط / Pickup</strong></td><td t-esc="t.pickup_location_id.name or ''"/><td><strong>التاريخ</strong></td><td t-esc="t.trip_date"/></tr>
               <tr><td><strong>Total Weight</strong></td><td><span t-esc="t.total_qty_weight"/> كجم</td><td><strong>Quantity</strong></td><td t-esc="t.total_quantity"/></tr>
             </table>
             <table class="table table-sm table-bordered">
@@ -86,7 +86,7 @@
 
   <!-- ============ PERIOD SUMMARY REPORT (dashboard) ============ -->
   <record id="action_report_waste_period" model="ir.actions.report">
-    <field name="name">تقرير النفايات الإجمالي</field>
+    <field name="name">تقرير النفايات الإجمالي / Waste Summary Report</field>
     <field name="model">cafm.waste.order</field>
     <field name="report_type">qweb-pdf</field>
     <field name="report_name">care_cafm_waste.report_waste_period_doc</field>
@@ -101,12 +101,12 @@
         <div class="page">
           <!-- title -->
           <div style="border-bottom:3px solid #16A34A;padding-bottom:6px;margin-bottom:10px">
-            <h2 style="margin:0;color:#14532D">♻ تقرير نقل ومعالجة النفايات — الإجمالي</h2>
+            <h2 style="margin:0;color:#14532D">♻ تقرير نقل ومعالجة النفايات — الإجمالي / Waste Transfer and Treatment — Summary</h2>
             <div style="color:#64748B;font-size:12px">
               <t t-if="date_from and date_to">
                 الفترة من <strong t-esc="date_from"/> إلى <strong t-esc="date_to"/>
               </t>
-              <t t-else="">كل الفترات</t>
+              <t t-else="">كل الفترات / All periods</t>
             </div>
           </div>
 
@@ -115,7 +115,7 @@
             <tr>
               <td style="background:#F0FDF4;text-align:center;padding:10px">
                 <div style="font-size:22px;font-weight:bold;color:#16A34A" t-esc="totals['orders']"/>
-                <div style="font-size:11px;color:#64748B">عدد الأوامر</div>
+                <div style="font-size:11px;color:#64748B">عدد الأوامر / Orders count</div>
               </td>
               <td style="background:#EEF2FF;text-align:center;padding:10px">
                 <div style="font-size:22px;font-weight:bold;color:#4F46E5" t-esc="totals['qty']"/>
@@ -123,16 +123,16 @@
               </td>
               <td style="background:#ECFEFF;text-align:center;padding:10px">
                 <div style="font-size:22px;font-weight:bold;color:#0891B2" t-esc="totals['weight']"/>
-                <div style="font-size:11px;color:#64748B">إجمالي الوزن (كجم)</div>
+                <div style="font-size:11px;color:#64748B">إجمالي الوزن / Total weight (kg)</div>
               </td>
             </tr>
           </table>
 
           <!-- by status -->
-          <h4 style="color:#14532D;margin-bottom:4px">التوزيع حسب الحالة</h4>
+          <h4 style="color:#14532D;margin-bottom:4px">التوزيع حسب الحالة / By status</h4>
           <table class="table table-sm table-bordered" style="margin-bottom:14px">
             <thead style="background:#F1F5F9">
-              <tr><th>Status</th><th class="text-end">الأوامر</th><th class="text-end">Quantity</th><th class="text-end">Weight (kg)</th></tr>
+              <tr><th>Status</th><th class="text-end">الأوامر / Orders</th><th class="text-end">Quantity</th><th class="text-end">Weight (kg)</th></tr>
             </thead>
             <tbody>
               <tr t-foreach="by_state" t-as="s">
@@ -143,10 +143,10 @@
           </table>
 
           <!-- by project -->
-          <h4 style="color:#14532D;margin-bottom:4px" t-if="len(by_project) &gt; 1">التوزيع حسب المشروع</h4>
+          <h4 style="color:#14532D;margin-bottom:4px" t-if="len(by_project) &gt; 1">التوزيع حسب المشروع / By project</h4>
           <table class="table table-sm table-bordered" style="margin-bottom:14px" t-if="len(by_project) &gt; 1">
             <thead style="background:#F1F5F9">
-              <tr><th>Project</th><th class="text-end">الأوامر</th><th class="text-end">Quantity</th><th class="text-end">Weight (kg)</th></tr>
+              <tr><th>Project</th><th class="text-end">الأوامر / Orders</th><th class="text-end">Quantity</th><th class="text-end">Weight (kg)</th></tr>
             </thead>
             <tbody>
               <tr t-foreach="by_project" t-as="p">
@@ -157,10 +157,10 @@
           </table>
 
           <!-- by item -->
-          <h4 style="color:#14532D;margin-bottom:4px">الأصناف المنقولة</h4>
+          <h4 style="color:#14532D;margin-bottom:4px">الأصناف المنقولة / Items collected</h4>
           <table class="table table-sm table-bordered" style="margin-bottom:14px">
             <thead style="background:#F1F5F9">
-              <tr><th>Item</th><th class="text-end">Quantity</th><th class="text-end">الوزن الكلي (كجم)</th></tr>
+              <tr><th>Item</th><th class="text-end">Quantity</th><th class="text-end">الوزن الكلي / Total weight (kg)</th></tr>
             </thead>
             <tbody>
               <tr t-foreach="by_item" t-as="i">
@@ -173,7 +173,7 @@
           </table>
 
           <!-- order detail: ONE ROW each, not one page each -->
-          <h4 style="color:#14532D;margin-bottom:4px">تفصيل الأوامر</h4>
+          <h4 style="color:#14532D;margin-bottom:4px">تفصيل الأوامر / Order detail</h4>
           <table class="table table-sm table-bordered" style="font-size:11px">
             <thead style="background:#F1F5F9">
               <tr>
