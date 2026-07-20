@@ -254,11 +254,21 @@ class _ClientAssetsScreenState extends State<ClientAssetsScreen> {
         child: Padding(
           padding: const EdgeInsets.all(11),
           child: Row(children: [
-            Container(
-              width: 46, height: 46, alignment: Alignment.center,
-              decoration: BoxDecoration(color: _accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-              child: Icon(_catIcons['${a['category']}'] ?? Icons.category_rounded, color: _accent, size: 24),
-            ),
+            Stack(children: [
+              Container(
+                width: 46, height: 46, alignment: Alignment.center,
+                decoration: BoxDecoration(color: _accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                child: Icon(_catIcons['${a['category']}'] ?? Icons.category_rounded, color: _accent, size: 24),
+              ),
+              // A CARE-owned asset the client may not edit gets a small lock,
+              // so the difference is visible before the record is even opened.
+              if (a['can_manage'] != true)
+                Positioned(right: -2, bottom: -2, child: Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: const BoxDecoration(color: Color(0xFF64748B), shape: BoxShape.circle),
+                  child: const Icon(Icons.lock_rounded, size: 10, color: Colors.white),
+                )),
+            ]),
             const SizedBox(width: 11),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('${a['name']}', maxLines: 1, overflow: TextOverflow.ellipsis,

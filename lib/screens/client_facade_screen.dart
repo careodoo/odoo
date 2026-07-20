@@ -4,6 +4,7 @@ import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/service_ui.dart';
 import 'excel_export.dart';
+import 'pdf_report_screen.dart';
 import 'facade_permit_create.dart';
 
 /// Client-facing facade-cleaning suite: overview + elevation zones (schedule
@@ -194,6 +195,27 @@ class _ClientFacadeScreenState extends State<ClientFacadeScreen> {
             const SizedBox(height: 4),
             Wrap(spacing: 6, runSpacing: 6, children: [for (final w in workers) _pill('$w', const Color(0xFF4338CA))]),
           ],
+          const SizedBox(height: 14),
+          // The official permit — logo, safety checklist, three signature
+          // blocks — the sheet a crew shows at the anchor point and an
+          // inspector asks for.
+          SizedBox(
+            width: double.infinity, height: 48,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                  backgroundColor: (x['is_safe'] == true)
+                      ? const Color(0xFF16A34A) : const Color(0xFF991B1B),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+              onPressed: () => Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => PdfReportScreen(
+                      path: '/facade/permit/${x['id']}/pdf',
+                      title: tr('تصريح ارتفاع', 'Height-work permit'),
+                      fileName: 'permit-${x['id']}.pdf'))),
+              icon: const Icon(Icons.print_rounded),
+              label: Text(tr('طباعة التصريح الرسمي', 'Print the official permit'),
+                  style: const TextStyle(fontWeight: FontWeight.w900)),
+            ),
+          ),
         ]),
       ),
     );
