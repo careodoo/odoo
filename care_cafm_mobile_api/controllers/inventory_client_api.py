@@ -160,7 +160,10 @@ class InventoryClientApi(Controller):
                ('facility_id', 'in', self._fac_ids(env))]
         if since:
             dom.append(('date', '>=', str(since)))
-        moves = Move.search(dom)
+        page = max(1, int(kw.get('page') or 1))
+        per = min(200, max(20, int(kw.get('per_page') or 60)))
+        moves = Move.search(dom, order='date desc, id desc',
+                            limit=per, offset=(page - 1) * per)
 
         def top(key_fn, label_fn, limit=8):
             agg = {}

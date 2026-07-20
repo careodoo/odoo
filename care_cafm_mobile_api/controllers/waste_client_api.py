@@ -124,7 +124,12 @@ class WasteClientApi(Controller):
         if kw.get('date_to'):
             dom.append(('request_datetime', '<=', '%s 23:59:59' % kw['date_to']))
         order_by = 'serial desc' if _wm(env)['order'] == 'cafm.waste.order' else 'id desc'
-        recs = SO.search(dom, order=order_by, limit=200)
+        # 347 KB in one response is fast on the server and slow on a phone.
+        # Page it: the list shows forty, the rest arrives when scrolled.
+        page = max(1, int(kw.get('page') or 1))
+        per = min(80, max(10, int(kw.get('per_page') or 40)))
+        total = SO.search_count(dom)
+        recs = SO.search(dom, order=order_by, limit=per, offset=(page - 1) * per)
         def g_(o, f):
             return getattr(o, f) if f in o._fields else False
         def lines(o):
@@ -239,7 +244,11 @@ class WasteClientApi(Controller):
             tdom.append(('trip_date', '>=', kw['date_from']))
         if kw.get('date_to'):
             tdom.append(('trip_date', '<=', kw['date_to']))
-        recs = T.search(tdom, order=torder, limit=200)
+        # 269 KB of trips in one response: fast on the server, slow on a
+        # phone. Page it like the orders list.
+        page = max(1, int(kw.get('page') or 1))
+        per = min(80, max(10, int(kw.get('per_page') or 40)))
+        recs = T.search(tdom, order=torder, limit=per, offset=(page - 1) * per)
 
         def dloc(t):
             if 'driver_lat' in t._fields and (t.driver_lat or t.driver_lng):
@@ -447,7 +456,10 @@ class WasteClientApi(Controller):
         dom = ['|', ('driver_id', '=', env.user.id), ('order_id.driver_id', '=', env.user.id)]
         if not kw.get('all'):
             dom.append(('states', 'in', ('scheduled', 'pickuped', 'arrived', 'processing')))
-        recs = T.search(dom, order='sequence desc', limit=100)
+        page = max(1, int(kw.get('page') or 1))
+        per = min(80, max(10, int(kw.get('per_page') or 40)))
+        total = T.search_count(dom)
+        recs = T.search(dom, order='sequence desc', limit=per, offset=(page - 1) * per)
         st = _sel(T, 'states')
         return _ok([{
             'id': t.id, 'sequence': t.sequence,

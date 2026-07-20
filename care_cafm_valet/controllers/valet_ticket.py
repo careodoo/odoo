@@ -75,7 +75,9 @@ class ValetTicketPortal(http.Controller):
             (_('Vehicle'), ' '.join(filter(None, [t.car_make, t.car_color])) or '—'),
             (_('Key'), t.key_tag or '—'),
             (_('Spot'), t.spot_id.name or t.zone_id.name or '—'),
-            (_('Time'), str(t.received_at or '')[5:16]),
+            # The date matters as much as the time: a ticket found in a
+            # drawer is useless if you cannot tell which day it belongs to.
+            (_('Date & time'), str(t.received_at or '')[:16]),
         ]
         body = Markup('').join(
             Markup('<tr><td class="k">%s</td><td class="v">%s</td></tr>') % (k, v or '—')
@@ -99,6 +101,7 @@ body{margin:0;background:#eef1f5;font-family:"Segoe UI",Tahoma,system-ui,"Noto S
    box-shadow:0 10px 30px -12px rgba(0,0,0,.35)}
 .h{background:linear-gradient(150deg,__RED__,#7a3906);color:#fff;padding:9px 12px;text-align:center}
 .h .b{font-size:9px;letter-spacing:2px;opacity:.85}
+.h img{max-height:26px;margin-bottom:4px;filter:brightness(0) invert(1)}
 .h .n{font-size:17px;font-weight:900;margin-top:2px;letter-spacing:1px}
 .h .p{font-size:13px;font-weight:800;margin-top:4px;background:rgba(255,255,255,.16);
       display:inline-block;padding:3px 10px;border-radius:7px}
@@ -120,7 +123,7 @@ td{padding:4px 11px;border-bottom:1px solid #f1f4f7}
 </style></head><body>
 <div>
 <div class="t">
-  <div class="h"><div class="b">CARE VALET</div><div class="n">__NAME__</div>
+  <div class="h">__LOGO__<div class="b">CARE VALET</div><div class="n">__NAME__</div>
     <div class="p">__PLATE__</div></div>
   <table>__ROWS__</table>
   __NOTE__
@@ -131,7 +134,15 @@ td{padding:4px 11px;border-bottom:1px solid #f1f4f7}
 </div>
 <button class="pr" onclick="window.print()">🖨️ Print Ticket</button>
 </div></body></html>""")
-        page = (html.replace('__NAME__', escape(t.name or ''))
+        # The header carried an empty band where a logo belonged. Print the
+        # company logo when there is one, and close the gap when there is not.
+        logo = ''
+        co = t.company_id or request.env.company
+        if co and co.logo:
+            logo = ('<img src="data:image/png;base64,%s"/>'
+                    % (co.logo.decode() if isinstance(co.logo, bytes) else co.logo))
+        page = (html.replace('__LOGO__', logo)
+                .replace('__NAME__', escape(t.name or ''))
                 .replace('__PLATE__', escape(t.plate or ''))
                 .replace('__RED__', RED).replace('__INK__', INK)
                 .replace('__ROWS__', str(body)).replace('__NOTE__', str(note))

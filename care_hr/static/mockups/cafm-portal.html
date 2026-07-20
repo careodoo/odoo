@@ -700,7 +700,11 @@ function svcRegItems(type){const reg=SVC_REG[type];
   // added here rather than being invisible on the web while the app has it.
   let extra = '';
   if (type === 'hospitality') {
-    extra = '<a data-id="hosp_stock" onclick="go(\'hosp_stock\')"><span class="ic">📦</span><span>'
+    extra = '<a data-id="hosp_menu" onclick="go(\'hosp_menu\')"><span class="ic">☕</span><span>'
+      + esc(T('القائمة والطلب','Menu & ordering')) + '</span></a>'
+      + '<a data-id="hosp_orders" onclick="go(\'hosp_orders\')"><span class="ic">🧾</span><span>'
+      + esc(T('طلباتي','My orders')) + '</span></a>'
+      + '<a data-id="hosp_stock" onclick="go(\'hosp_stock\')"><span class="ic">📦</span><span>'
       + esc(T('المخزون والمشتريات','Pantry & purchases')) + '</span></a>'
       + '<a onclick="hospPlaceForm()"><span class="ic">📍</span><span>'
       + esc(T('مكان التقديم','Serving place')) + '</span></a>';
@@ -1188,6 +1192,257 @@ function valetPlateForm(){
               {label:T('بحث','Search'),cls:'p',onclick:valetPlateLookup}]});
 }
 
+
+/* ---- hospitality menu state ---- */
+let HOSP_MENU=null, HOSP_CART={}, HOSP_ORDERS=[];
+function hospCat(id,el){
+  document.querySelectorAll('#hcats .chip').forEach(c=>c.classList.remove('on'));
+  if(el)el.classList.add('on');
+  hospRenderItems(id);
+}
+function hospRenderItems(cat){
+  const m=HOSP_MENU||{}; let items=(m.items||[]);
+  if(cat!==null&&cat!==undefined)items=items.filter(i=>i.category_id===cat);
+  const host=document.getElementById('hitems'); if(!host)return;
+  if(!items.length){host.innerHTML=emptyState(T('لا أصناف في هذا القسم','Nothing in this category'));return;}
+  host.innerHTML='<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">'
+    +items.map(i=>{
+      const ok=i.servable!==false, cost=+i.cost||0;
+      return '<div class="panel" style="padding:0;overflow:hidden;opacity:'+(ok?1:.55)+'">'
+        +'<div style="display:flex;gap:0">'
+        +(i.image?'<img src="'+esc(i.image)+'" style="width:104px;height:104px;object-fit:cover;flex:0 0 auto"/>'
+                :'<div style="width:104px;height:104px;display:flex;align-items:center;justify-content:center;background:#8a6d3b17;font-size:34px">'+(i.icon||'☕')+'</div>')
+        +'<div style="padding:11px 12px;flex:1;min-width:0">'
+        +'<b style="font-size:14px">'+esc(i.name)+'</b>'
+        +(i.description?'<div style="font-size:11.5px;color:var(--muted);margin-top:3px">'+esc(i.description)+'</div>':'')
+        +'<div style="display:flex;align-items:center;gap:8px;margin-top:8px">'
+        +'<b style="color:#8a6d3b;font-size:13px">'+(cost>0?cost.toFixed(3)+' '+esc(T('د.ك','KWD')):esc(T('بلا تكلفة','No charge')))+'</b>'
+        +'<span style="font-size:11.5px;color:var(--muted)">⏱ '+(i.prep_minutes||5)+' '+esc(T('د','m'))+'</span>'
+        +(ok?'<button class="btn p" style="margin-inline-start:auto;padding:5px 12px;font-size:12px" onclick="hospAdd('+i.id+')">＋</button>'
+            :'<span style="margin-inline-start:auto;font-size:11px;color:var(--red)">'+esc(T('خارج وقت التقديم','Outside hours'))+'</span>')
+        +'</div></div></div></div>';}).join('')+'</div>';
+}
+/* Options are chosen per item, because "extra sugar" is a different drink and
+   a different cost from "no sugar". */
+function hospAdd(id){
+  const it=((HOSP_MENU||{}).items||[]).find(x=>x.id===id); if(!it)return;
+  const groups=it.option_groups||[];
+  if(!groups.length){hospPush(it,[]);return;}
+  const body=groups.map(g=>'<div class="sec"><h4>'+esc(g.name)+(g.required?' *':'')+'</h4>'
+    +(g.options||[]).map(o=>'<label style="display:block;padding:4px 0;font-size:13px">'
+      +'<input type="'+(g.multi?'checkbox':'radio')+'" name="og'+g.id+'" class="hopt" data-g="'+g.id+'" value="'+o.id+'"'
+      +(o.is_default?' checked':'')+'/> '+esc(o.name)
+      +(+o.extra_cost?' <span style="color:var(--muted)">+'+(+o.extra_cost).toFixed(3)+'</span>':'')+'</label>').join('')
+    +'</div>').join('');
+  openDrawer(it.name,body,{icon:it.icon||'☕',subtitle:T('اختر المواصفات','Choose the options'),
+    actions:[{label:T('إلغاء','Cancel'),cls:'s',onclick:closeDrawer},
+             {label:T('أضف للسلّة','Add to cart'),cls:'p',onclick:function(){
+               const sel=[...document.querySelectorAll('.hopt:checked')].map(x=>+x.value);
+               closeDrawer(); hospPush(it,sel);}}]});
+}
+function hospPush(it,opts){
+  const key=it.id+':'+opts.join(',');
+  HOSP_CART[key]=HOSP_CART[key]||{item_id:it.id,name:it.name,options:opts,qty:0,cost:+it.cost||0};
+  HOSP_CART[key].qty++;
+  hospCartBar(); toast(T('أُضيف للسلّة','Added to cart'));
+}
+function hospCartBar(){
+  const el=document.getElementById('hcartbar'); if(!el)return;
+  const n=Object.values(HOSP_CART).reduce((s,x)=>s+x.qty,0);
+  el.innerHTML=n?'<button class="btn p" onclick="hospCartSheet()">🛒 '+esc(T('السلّة','Cart'))+' ('+n+')</button>':'';
+}
+function hospCartSheet(){
+  const rows=Object.entries(HOSP_CART).map(([k,x])=>
+    '<div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--line2)">'
+    +'<div style="flex:1"><b style="font-size:13px">'+esc(x.name)+'</b>'
+    +'<div style="font-size:11px;color:var(--muted)">'+(+x.cost).toFixed(3)+' × '+x.qty+'</div></div>'
+    +'<button class="btn s" style="padding:3px 9px" onclick="hospQty(\''+k+'\',-1)">−</button>'
+    +'<b style="min-width:20px;text-align:center">'+x.qty+'</b>'
+    +'<button class="btn s" style="padding:3px 9px" onclick="hospQty(\''+k+'\',1)">＋</button></div>').join('');
+  const tot=Object.values(HOSP_CART).reduce((s,x)=>s+x.qty*x.cost,0);
+  openDrawer(T('سلّة الطلب','Your order'),
+    '<div class="sec">'+(rows||esc(T('السلّة فارغة','Cart is empty')))
+    +'<div style="display:flex;margin-top:10px;font-weight:800"><span style="flex:1">'+esc(T('الإجمالي','Total'))+'</span>'
+    +'<span>'+tot.toFixed(3)+'</span></div></div>'
+    +'<div class="sec"><label style="font-weight:700;font-size:12.5px">'+esc(T('ملاحظة','Note'))+'</label>'
+    +'<input class="inp" id="h_note" style="width:100%;margin-top:6px" placeholder="'
+    +esc(T('مثال: بدون رغوة','e.g. no foam'))+'"/></div>',
+    {icon:'🛒',
+     actions:[{label:T('إغلاق','Close'),cls:'s',onclick:closeDrawer},
+              {label:T('إرسال الطلب','Place order'),cls:'p',onclick:hospPlaceOrder}]});
+}
+function hospQty(k,d){
+  if(!HOSP_CART[k])return;
+  HOSP_CART[k].qty+=d;
+  if(HOSP_CART[k].qty<=0)delete HOSP_CART[k];
+  closeDrawer(); hospCartBar(); hospCartSheet();
+}
+async function hospPlaceOrder(){
+  const lines=Object.values(HOSP_CART).map(x=>({item_id:x.item_id,quantity:x.qty,option_ids:x.options}));
+  if(!lines.length){toast(T('السلّة فارغة','Cart is empty'));return;}
+  const note=(document.getElementById('h_note')||{}).value||'';
+  try{await api('/hosp/order/create',{method:'POST',body:{lines:lines,note:note}});}
+  catch(e){toast(String(e&&e.message||e).slice(0,130));return;}
+  HOSP_CART={}; closeDrawer(); toast(T('أُرسل الطلب','Order placed')); go('hosp_orders');
+}
+/* Every order opens — a list you cannot drill into is a receipt, not a system. */
+function hospOpenOrder(id){
+  const o=(HOSP_ORDERS||[]).find(x=>x.id===id); if(!o)return;
+  const lines=(o.lines||[]).map(l=>'<div style="display:flex;padding:5px 0;border-bottom:1px solid var(--line2);font-size:12.5px">'
+    +'<span style="flex:1">'+esc(l.item||l.name||'')+(l.options?' <span style="color:var(--muted)">· '+esc(l.options)+'</span>':'')+'</span>'
+    +'<b>×'+(l.quantity||1)+'</b></div>').join('');
+  const rows=[[T('الحالة','Status'),o.state_label||o.state],[T('المكان','Place'),o.room||o.facility||'—'],
+    [T('وقت الطلب','Placed'),o.placed_at||'—'],[T('جاهز في','Ready at'),o.ready_at||'—'],
+    [T('سُلّم في','Delivered'),o.delivered_at||'—'],[T('الانتظار','Waited'),(o.wait_minutes||0)+' '+T('دقيقة','min')],
+    [T('الإجمالي','Total'),(+o.total_cost||0).toFixed(3)]];
+  let h='<div class="sec">'+rows.map(r=>'<div style="display:flex;padding:5px 0;border-bottom:1px solid var(--line2)">'
+    +'<span style="flex:1;color:var(--muted);font-size:12.5px">'+esc(r[0])+'</span>'
+    +'<b style="font-size:12.5px">'+esc(String(r[1]))+'</b></div>').join('')+'</div>';
+  if(lines)h+='<div class="sec"><h4>'+esc(T('الأصناف','Items'))+'</h4>'+lines+'</div>';
+  if(o.note)h+='<div class="sec">📝 '+esc(o.note)+'</div>';
+  const acts=[{label:T('إغلاق','Close'),cls:'s',onclick:closeDrawer}];
+  if(['sent','accepted','preparing'].includes(o.state))
+    acts.push({label:T('إلغاء الطلب','Cancel order'),cls:'d',onclick:function(){hospCancelOrder(o.id);}});
+  openDrawer(o.name||'',h,{icon:'🧾',subtitle:o.state_label||'',actions:acts});
+}
+async function hospCancelOrder(id){
+  try{await api('/hosp/order/'+id+'/cancel',{method:'POST',body:{}});}
+  catch(e){toast(String(e&&e.message||e).slice(0,120));return;}
+  closeDrawer(); toast(T('أُلغي الطلب','Order cancelled')); go('hosp_orders');
+}
+
+
+/* A purchase opens: which supplies, how many packs, what each cost. */
+async function hospOpenPurchase(id){
+  let d; try{d=await api('/hosp/purchase/'+id);}catch(e){toast(T('تعذّر التحميل','Could not load'));return;}
+  const rows=[[T('المورّد','Supplier'),d.supplier],[T('التاريخ','Date'),d.date],
+    [T('المصدر','Source'),d.source==='care'?T('من CARE','From CARE'):T('مورّد خارجي','External')],
+    [T('المرجع','Reference'),d.reference||'—'],[T('الإجمالي','Total'),(+d.total||0).toFixed(3)]];
+  let h='<div class="sec">'+rows.map(r=>'<div style="display:flex;padding:5px 0;border-bottom:1px solid var(--line2)">'
+    +'<span style="flex:1;color:var(--muted);font-size:12.5px">'+esc(r[0])+'</span>'
+    +'<b style="font-size:12.5px">'+esc(String(r[1]))+'</b></div>').join('')+'</div>';
+  h+='<div class="sec"><h4>'+esc(T('البنود','Lines'))+'</h4>'
+    +(d.lines||[]).map(l=>'<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--line2);font-size:12.5px">'
+      +'<span style="flex:1">'+esc(l.supply)+'</span>'
+      +'<span style="color:var(--muted)">'+l.quantity+' '+esc(l.unit||'')+' ('+(+l.base_qty||0).toFixed(0)+' '+esc(l.uom||'')+')</span>'
+      +'<b>'+(+l.subtotal||0).toFixed(3)+'</b></div>').join('')+'</div>';
+  if(d.note)h+='<div class="sec">📝 '+esc(d.note)+'</div>';
+  const NX={draft:['submit',['إرسال','Submit']],submitted:['approve',['اعتماد','Approve']],approved:['receive',['استلام','Receive']]};
+  const n=NX[d.state];
+  const acts=[{label:T('إغلاق','Close'),cls:'s',onclick:closeDrawer}];
+  if(n)acts.push({label:T(n[1][0],n[1][1]),cls:'p',onclick:function(){closeDrawer();hospPurchaseAct(d.id,n[0]);}});
+  openDrawer(d.name,h,{icon:'🧾',subtitle:d.facility||'',size:'lg',actions:acts});
+}
+
+/* Materials are registered in the catalogue, not typed fresh into every
+   purchase — otherwise the same coffee arrives under four spellings and no
+   balance can be trusted. */
+async function hospSupplyForm(id){
+  let opts; try{opts=await api('/hosp/suppliers');}catch(e){opts={suppliers:[],categories:[],uoms:[]};}
+  let cur={};
+  if(id){const st=await api('/hosp/stock').catch(()=>({}));
+    cur=((st.supplies||[]).find(x=>x.id===id))||{};}
+  const f=(lbl,id2,val,type)=>'<div style="margin-bottom:10px"><label style="font-weight:700;font-size:12.5px">'
+    +esc(lbl)+'</label><input class="inp" id="'+id2+'" type="'+(type||'text')+'" style="width:100%;margin-top:5px" value="'+esc(String(val==null?'':val))+'"/></div>';
+  const sel=(lbl,id2,list,val)=>'<div style="margin-bottom:10px"><label style="font-weight:700;font-size:12.5px">'
+    +esc(lbl)+'</label><select class="inp" id="'+id2+'" style="width:100%;margin-top:5px">'
+    +list.map(o=>'<option value="'+esc(String(o.v))+'"'+(String(o.v)===String(val)?' selected':'')+'>'+esc(o.l)+'</option>').join('')
+    +'</select></div>';
+  openDrawer(id?T('تعديل مستهلك','Edit supply'):T('تسجيل مستهلك جديد','Register a supply'),
+    '<div class="sec">'
+    +f(T('الاسم','Name'),'sp_name',cur.name||'')
+    +f(T('الرمز','Code'),'sp_code',cur.code||'')
+    +sel(T('الفئة','Category'),'sp_cat',(opts.categories||[]).map(c=>({v:c.code,l:c.label})),cur.category)
+    +sel(T('وحدة القياس','Unit'),'sp_uom',(opts.uoms||[]).map(c=>({v:c.code,l:c.label})),cur.uom)
+    +f(T('اسم العبوة','Pack name'),'sp_pack',cur.pack_name||'كيس')
+    +f(T('محتوى العبوة','Pack size'),'sp_size',cur.pack_size||1000,'number')
+    +f(T('حد إعادة الطلب','Reorder threshold'),'sp_min',cur.min_qty||0,'number')
+    +f(T('تكلفة الوحدة','Unit cost'),'sp_cost',cur.unit_cost||0,'number')
+    +sel(T('مصدر التوريد','Supply source'),'sp_src',
+        [{v:'care',l:T('من CARE','From CARE')},{v:'external',l:T('مورّد خارجي','External supplier')}],cur.supplier_type)
+    +sel(T('المورّد الخارجي','External supplier'),'sp_partner',
+        [{v:'',l:'—'}].concat((opts.suppliers||[]).map(x=>({v:x.id,l:x.name}))),'')
+    +(id?'':f(T('رصيد افتتاحي','Opening balance'),'sp_open',0,'number'))
+    +'</div>',
+    {icon:'📦',size:'lg',
+     actions:[{label:T('إلغاء','Cancel'),cls:'s',onclick:closeDrawer},
+              {label:T('حفظ','Save'),cls:'p',onclick:function(){hospSupplySave(id);}}]});
+}
+async function hospSupplySave(id){
+  const v=x=>(document.getElementById(x)||{}).value||'';
+  const body={id:id||null,name:v('sp_name'),code:v('sp_code'),category:v('sp_cat'),
+    uom_name:v('sp_uom'),pack_name:v('sp_pack'),pack_size:+v('sp_size')||1000,
+    min_qty:+v('sp_min')||0,unit_cost:+v('sp_cost')||0,supplier_type:v('sp_src'),
+    partner_id:v('sp_partner')||null};
+  const op=v('sp_open'); if(op)body.opening_qty=+op;
+  if(!body.name){toast(T('الاسم مطلوب','Name is required'));return;}
+  try{await api('/hosp/supply/save',{method:'POST',body:body});}
+  catch(e){toast(String(e&&e.message||e).slice(0,120));return;}
+  closeDrawer();toast(T('تم الحفظ','Saved'));go('hosp_stock');
+}
+
+
+/* ---- supplies: filters, search and the cards ---- */
+let HOSP_SUPPLIES=[], HOSP_FILT='all', HOSP_PURCH=[];
+function hospFilt(f,el){
+  if(f!==null&&f!==undefined){HOSP_FILT=f;
+    document.querySelectorAll('#hsfilt .chip').forEach(c=>c.classList.remove('on'));
+    if(el)el.classList.add('on');}
+  hospRenderSupplies();
+}
+function hospRenderSupplies(){
+  const host=document.getElementById('hslist'); if(!host)return;
+  const q=((document.getElementById('hsq')||{}).value||'').trim().toLowerCase();
+  let list=HOSP_SUPPLIES.filter(s=>{
+    if(HOSP_FILT==='urgent'){const d=+s.days_cover||0; if(!(s.low||(d>0&&d<7)))return false;}
+    else if(HOSP_FILT==='low'){if(!s.low)return false;}
+    else if(String(HOSP_FILT).startsWith('cat:')){if((s.category_label||'—')!==HOSP_FILT.slice(4))return false;}
+    if(q&&!((s.name||'')+' '+(s.code||'')).toLowerCase().includes(q))return false;
+    return true;});
+  // worst first: what runs out soonest is what needs a decision
+  list.sort((a,b)=>{const da=+a.days_cover||9e9, db=+b.days_cover||9e9; return da-db;});
+  if(!list.length){host.innerHTML=emptyState(T('لا نتائج','No matches'));return;}
+  host.innerHTML='<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))">'
+    +list.map(s=>{
+      const days=+s.days_cover||0, urgent=s.low||(days>0&&days<7);
+      const c=urgent?'#e11d48':'#16a34a';
+      return '<div class="panel" style="padding:14px;cursor:pointer;border-color:'+(urgent?c+'55':'var(--line)')+'" onclick="hospSupplyForm('+s.id+')">'
+        +'<div style="display:flex;align-items:center;gap:8px">'
+        +'<div style="font-weight:800;font-size:14px;flex:1">'+esc(s.name)+'</div>'
+        +'<span class="pill" style="background:'+c+'1f;color:'+c+'">'+(s.servings_left||0)+' '+esc(T('حصة','servings'))+'</span></div>'
+        +'<div style="color:var(--muted);font-size:11.5px;margin-top:5px">'
+        +(+s.on_hand||0).toFixed(0)+' '+esc(s.uom_label||'')+' · '+(+s.packs||0).toFixed(1)+' '+esc(s.pack_name||'')
+        +(s.per_serving?' · '+esc(s.per_serving):'')+'</div>'
+        +'<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;font-size:11.5px">'
+        +(days>0?'<b style="color:'+c+'">'+esc(T('تكفي','Lasts'))+' '+days.toFixed(days<10?1:0)+' '+esc(T('يوم','days'))+'</b>':'')
+        +(+s.daily_use?'<span style="color:var(--muted)">'+esc(T('استهلاك يومي','daily'))+' '+(+s.daily_use).toFixed(1)+'</span>':'')
+        +(+s.value?'<span style="color:var(--muted)">'+esc(T('قيمة','value'))+' '+(+s.value).toFixed(2)+'</span>':'')
+        +'</div>'
+        +((s.used_in||[]).length?'<div style="margin-top:9px;border-top:1px solid var(--line2);padding-top:8px;font-size:11px;color:var(--muted)">'
+          +(s.used_in||[]).slice(0,4).map(u=>esc(u.item)+(u.option?' · '+esc(u.option):'')
+            +' <b>'+u.qty+'</b> → '+u.per_pack+' '+esc(T('حصة/عبوة','per pack'))).join('<br/>')
+          +'</div>':'')
+        +'</div>';}).join('')+'</div>'
+    + hospPurchasesHtml();
+}
+function hospPurchasesHtml(){
+  if(!(HOSP_PURCH||[]).length)return '';
+  const SC={draft:'#64748b',submitted:'#3b82f6',approved:'#f59e0b',received:'#16a34a',cancelled:'#e11d48'};
+  const SL={draft:['مسودة','Draft'],submitted:['مُرسَل','Submitted'],approved:['معتمد','Approved'],
+            received:['تم الاستلام','Received'],cancelled:['ملغى','Cancelled']};
+  const NX={draft:['submit',['إرسال','Submit']],submitted:['approve',['اعتماد','Approve']],
+            approved:['receive',['استلام','Receive']]};
+  return '<h3 style="margin:20px 0 8px">'+esc(T('المشتريات','Purchases'))+'</h3>'
+    +'<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">'
+    +HOSP_PURCH.map(x=>{const c=SC[x.state]||'#64748b',l=SL[x.state]||[x.state,x.state],n=NX[x.state];
+      return '<div class="panel" style="padding:13px;cursor:pointer" onclick="hospOpenPurchase('+x.id+')">'
+      +'<div style="display:flex;gap:8px"><b style="flex:1">'+esc(x.name)+'</b>'+pillHtml(T(l[0],l[1]),'info')+'</div>'
+      +'<div style="color:var(--muted);font-size:11.5px;margin-top:4px">'+esc(x.supplier||'CARE')+' · '+esc(x.date)
+      +' · '+x.lines+' '+esc(T('صنف','items'))+' · '+(+x.total||0).toFixed(3)+'</div>'
+      +(n?'<button class="btn s" style="margin-top:9px;width:100%" onclick="event.stopPropagation();hospPurchaseAct('+x.id+',\''+n[0]+'\')">'
+        +esc(T(n[1][0],n[1][1]))+'</button>':'')+'</div>';}).join('')+'</div>';
+}
+
 /* ---- hospitality pantry helpers ---- */
 async function hospPurchaseAct(id,act){
   try{await api('/hosp/purchase/'+id+'/'+act,{method:'POST',body:{}});}
@@ -1228,6 +1483,65 @@ function setPage(ar,en,sar,sen){
 }
 
 const ROUTES={
+  // ---- hospitality: a menu you can order from -----------------------------
+  // The registry listed items as bare rows — names with nothing else — which
+  // is a table, not a menu. A menu is looked at before it is read, so the
+  // photo leads, the price sits on it, and ordering happens in place.
+  async hosp_menu(p){CUR='hosp_menu';
+    setPage('الضيافة','Hospitality','اطلب من القائمة','Order from the menu');
+    let m; try{m=await api('/hosp/menu');}catch(e){p.innerHTML=emptyState(T('تعذّر التحميل','Could not load'));return;}
+    if(m.available===false){p.innerHTML=emptyState(T('خدمة الضيافة غير مفعّلة لحسابك','Hospitality is not enabled for your account'));return;}
+    HOSP_MENU=m; HOSP_CART={};
+    const mp=m.my_place||{};
+    let h='<div class="toolbar">'
+      +'<button class="btn s" onclick="hospPlaceForm()">📍 '
+      +esc(mp.location||mp.room_label||T('حدّد مكان التقديم','Set your serving place'))+'</button>'
+      +'<button class="btn s" onclick="go(\'hosp_orders\')">🧾 '+esc(T('طلباتي','My orders'))+'</button>'
+      +'<span id="hcartbar" style="margin-inline-start:auto"></span></div>';
+    // limits, so a user knows what is left before they order
+    (m.limits||[]).forEach(l=>{
+      const mi=+l.max_items||0, ui=+l.used_items||0, mc=+l.max_cost||0, uc=+l.used_cost||0;
+      if(!mi&&!mc)return;
+      const pct=mi?Math.min(100,100*ui/mi):Math.min(100,100*uc/mc);
+      h+='<div class="panel" style="padding:11px;margin-bottom:10px">'
+        +'<div style="display:flex;font-size:12.5px"><b style="flex:1">'+esc(l.policy||'')+'</b>'
+        +'<span style="color:var(--muted)">'+(mi?ui+'/'+mi+' '+esc(T('صنف','items')):uc.toFixed(2)+'/'+mc.toFixed(2))+'</span></div>'
+        +'<div style="height:6px;background:var(--line2);border-radius:6px;margin-top:6px;overflow:hidden">'
+        +'<div style="height:100%;width:'+pct+'%;background:'+(pct>85?'#e11d48':'#16a34a')+'"></div></div></div>';
+    });
+    h+='<div class="toolbar" id="hcats"><span class="chip on" onclick="hospCat(null,this)">🍽️ '+esc(T('الكل','All'))+'</span>'
+      +(m.categories||[]).map(c=>'<span class="chip" onclick="hospCat('+c.id+',this)">'+(c.icon||'☕')+' '+esc(c.name)+'</span>').join('')
+      +'</div><div id="hitems"></div>';
+    p.innerHTML=h; hospRenderItems(null);
+  },
+  async hosp_orders(p){CUR='hosp_orders';
+    setPage('طلباتي','My orders','متابعة الطلبات','Track your orders');
+    let d; try{d=await api('/hosp/orders');}catch(e){p.innerHTML=emptyState(T('تعذّر التحميل','Could not load'));return;}
+    HOSP_ORDERS=[...(d.live||[]),...(d.past||[])];
+    const card=(o,live)=>{
+      const SC={sent:'#3b82f6',accepted:'#0891b2',preparing:'#f59e0b',ready:'#16a34a',
+                delivered:'#64748b',rejected:'#e11d48',cancelled:'#94a3b8'};
+      const c=SC[o.state]||'#64748b';
+      return '<div class="panel" style="padding:13px;cursor:pointer" onclick="hospOpenOrder('+o.id+')">'
+        +'<div style="display:flex;gap:8px;align-items:center">'
+        +'<b style="flex:1;font-size:13.5px">'+esc(o.name||'')+'</b>'
+        +pillHtml(o.state_label||o.state,'info')
+        +(o.is_late?pillHtml(T('متأخر','Late'),'danger'):'')+'</div>'
+        +'<div style="color:var(--muted);font-size:11.5px;margin-top:5px">'
+        +esc([o.room,o.facility,o.placed_at].filter(Boolean).join(' · '))+'</div>'
+        +'<div style="margin-top:6px;font-size:12px">'+ (o.item_count||0) +' '+esc(T('صنف','items'))
+        +' · <b>'+(+o.total_cost||0).toFixed(3)+'</b></div></div>';
+    };
+    let h='';
+    if((d.live||[]).length){h+='<h3>'+esc(T('الجاري الآن','In progress'))+'</h3>'
+      +'<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">'
+      +d.live.map(o=>card(o,true)).join('')+'</div>';}
+    if((d.past||[]).length){h+='<h3 style="margin-top:18px">'+esc(T('السجل','History'))+'</h3>'
+      +'<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">'
+      +d.past.map(o=>card(o,false)).join('')+'</div>';}
+    p.innerHTML=h||emptyState(T('لا طلبات بعد','No orders yet'));
+  },
+
   // ---- hospitality pantry: the same numbers the app shows -----------------
   // A storekeeper reads cups, not grams. The servings figure leads and the
   // weight supports it, and under a week of cover turns the row red because
@@ -1241,7 +1555,111 @@ const ROUTES={
       +kpi('⚠️','#e11d48',t.low||0,T('تحت الحد الأدنى','Below minimum'))
       +kpi('⏳','#f59e0b',t.urgent||0,T('تنفد خلال أسبوع','Out within a week'))
       +'</div><div class="toolbar" style="margin-top:14px">'
-      +'<button class="btn p" onclick="hospOrderForm()">🛒 '+esc(T('طلب شراء','Order supplies'))+'</button></div>';
+      +'<button class="btn p" onclick="hospOrderForm()">🛒 '+esc(T('طلب شراء','Order supplies'))+'</button>'
+      +'<button class="btn s" onclick="hospSupplyForm()">＋ '+esc(T('تسجيل مستهلك','Register a supply'))+'</button></div>';
+    // Filters, because a pantry with sixty lines is unusable without them —
+    // and the counts sit on the chips so you can see where the trouble is
+    // before clicking.
+    const cats={}; (d.supplies||[]).forEach(x=>{cats[x.category_label||'—']=(cats[x.category_label||'—']||0)+1;});
+    h+='<div class="toolbar" id="hsfilt">'
+      +'<span class="chip on" onclick="hospFilt(\'all\',this)">'+esc(T('الكل','All'))+' ('+(d.supplies||[]).length+')</span>'
+      +'<span class="chip" onclick="hospFilt(\'urgent\',this)">🔴 '+esc(T('تنفد قريبًا','Running out'))+' ('+(t.urgent||0)+')</span>'
+      +'<span class="chip" onclick="hospFilt(\'low\',this)">⚠️ '+esc(T('تحت الحد','Below minimum'))+' ('+(t.low||0)+')</span>'
+      +Object.entries(cats).map(([k,v])=>'<span class="chip" onclick="hospFilt(\'cat:'+esc(k)+'\',this)">'+esc(k)+' ('+v+')</span>').join('')
+      +'<input class="inp" id="hsq" placeholder="'+esc(T('بحث…','Search…'))+'" oninput="hospFilt(null)" style="margin-inline-start:auto;width:180px"/>'
+      +'</div>';
+    HOSP_SUPPLIES=d.supplies||[]; HOSP_PURCH=d.purchases||[]; HOSP_FILT='all';
+    h+='<div id="hslist"></div>';
+    p.innerHTML=h; hospRenderSupplies(); return;
+  },
+  async hosp_menu(p){CUR='hosp_menu';
+    setPage('الضيافة','Hospitality','اطلب من القائمة','Order from the menu');
+    let m; try{m=await api('/hosp/menu');}catch(e){p.innerHTML=emptyState(T('تعذّر التحميل','Could not load'));return;}
+    if(m.available===false){p.innerHTML=emptyState(T('خدمة الضيافة غير مفعّلة لحسابك','Hospitality is not enabled for your account'));return;}
+    HOSP_MENU=m; HOSP_CART={};
+    const mp=m.my_place||{};
+    let h='<div class="toolbar">'
+      +'<button class="btn s" onclick="hospPlaceForm()">📍 '
+      +esc(mp.location||mp.room_label||T('حدّد مكان التقديم','Set your serving place'))+'</button>'
+      +'<button class="btn s" onclick="go(\'hosp_orders\')">🧾 '+esc(T('طلباتي','My orders'))+'</button>'
+      +'<span id="hcartbar" style="margin-inline-start:auto"></span></div>';
+    // limits, so a user knows what is left before they order
+    (m.limits||[]).forEach(l=>{
+      const mi=+l.max_items||0, ui=+l.used_items||0, mc=+l.max_cost||0, uc=+l.used_cost||0;
+      if(!mi&&!mc)return;
+      const pct=mi?Math.min(100,100*ui/mi):Math.min(100,100*uc/mc);
+      h+='<div class="panel" style="padding:11px;margin-bottom:10px">'
+        +'<div style="display:flex;font-size:12.5px"><b style="flex:1">'+esc(l.policy||'')+'</b>'
+        +'<span style="color:var(--muted)">'+(mi?ui+'/'+mi+' '+esc(T('صنف','items')):uc.toFixed(2)+'/'+mc.toFixed(2))+'</span></div>'
+        +'<div style="height:6px;background:var(--line2);border-radius:6px;margin-top:6px;overflow:hidden">'
+        +'<div style="height:100%;width:'+pct+'%;background:'+(pct>85?'#e11d48':'#16a34a')+'"></div></div></div>';
+    });
+    h+='<div class="toolbar" id="hcats"><span class="chip on" onclick="hospCat(null,this)">🍽️ '+esc(T('الكل','All'))+'</span>'
+      +(m.categories||[]).map(c=>'<span class="chip" onclick="hospCat('+c.id+',this)">'+(c.icon||'☕')+' '+esc(c.name)+'</span>').join('')
+      +'</div><div id="hitems"></div>';
+    p.innerHTML=h; hospRenderItems(null);
+  },
+  async hosp_orders(p){CUR='hosp_orders';
+    setPage('طلباتي','My orders','متابعة الطلبات','Track your orders');
+    let d; try{d=await api('/hosp/orders');}catch(e){p.innerHTML=emptyState(T('تعذّر التحميل','Could not load'));return;}
+    HOSP_ORDERS=[...(d.live||[]),...(d.past||[])];
+    const card=(o,live)=>{
+      const SC={sent:'#3b82f6',accepted:'#0891b2',preparing:'#f59e0b',ready:'#16a34a',
+                delivered:'#64748b',rejected:'#e11d48',cancelled:'#94a3b8'};
+      const c=SC[o.state]||'#64748b';
+      return '<div class="panel" style="padding:13px;cursor:pointer" onclick="hospOpenOrder('+o.id+')">'
+        +'<div style="display:flex;gap:8px;align-items:center">'
+        +'<b style="flex:1;font-size:13.5px">'+esc(o.name||'')+'</b>'
+        +pillHtml(o.state_label||o.state,'info')
+        +(o.is_late?pillHtml(T('متأخر','Late'),'danger'):'')+'</div>'
+        +'<div style="color:var(--muted);font-size:11.5px;margin-top:5px">'
+        +esc([o.room,o.facility,o.placed_at].filter(Boolean).join(' · '))+'</div>'
+        +'<div style="margin-top:6px;font-size:12px">'+ (o.item_count||0) +' '+esc(T('صنف','items'))
+        +' · <b>'+(+o.total_cost||0).toFixed(3)+'</b></div></div>';
+    };
+    let h='';
+    if((d.live||[]).length){h+='<h3>'+esc(T('الجاري الآن','In progress'))+'</h3>'
+      +'<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">'
+      +d.live.map(o=>card(o,true)).join('')+'</div>';}
+    if((d.past||[]).length){h+='<h3 style="margin-top:18px">'+esc(T('السجل','History'))+'</h3>'
+      +'<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">'
+      +d.past.map(o=>card(o,false)).join('')+'</div>';}
+    p.innerHTML=h||emptyState(T('لا طلبات بعد','No orders yet'));
+  },
+
+  // ---- hospitality pantry: the same numbers the app shows -----------------
+  // A storekeeper reads cups, not grams. The servings figure leads and the
+  // weight supports it, and under a week of cover turns the row red because
+  // that is when ordering should already have happened.
+  async hosp_stock(p){CUR='hosp_stock';
+    setPage('مخزون الضيافة','Hospitality pantry','ما تبقّى — بالحصص','What is left — in servings');
+    let d; try{d=await api('/hosp/stock');}catch(e){p.innerHTML=emptyState(T('تعذّر التحميل','Could not load'));return;}
+    const t=d.totals||{};
+    let h='<div class="kpis">'
+      +kpi('💰','#8a6d3b',(t.value||0).toFixed(2),T('قيمة المخزون','Stock value'))
+      +kpi('⚠️','#e11d48',t.low||0,T('تحت الحد الأدنى','Below minimum'))
+      +kpi('⏳','#f59e0b',t.urgent||0,T('تنفد خلال أسبوع','Out within a week'))
+      +'</div><div class="toolbar" style="margin-top:14px">'
+      +'<button class="btn p" onclick="hospOrderForm()">🛒 '+esc(T('طلب شراء','Order supplies'))+'</button>'
+      +'<button class="btn s" onclick="hospSupplyForm()">＋ '+esc(T('تسجيل مستهلك','Register a supply'))+'</button></div>';
+    // Filters, because a pantry with sixty lines is unusable without them —
+    // and the counts sit on the chips so you can see where the trouble is
+    // before clicking.
+    const cats={}; (d.supplies||[]).forEach(x=>{cats[x.category_label||'—']=(cats[x.category_label||'—']||0)+1;});
+    h+='<div class="toolbar" id="hsfilt">'
+      +'<span class="chip on" onclick="hospFilt(\'all\',this)">'+esc(T('الكل','All'))+' ('+(d.supplies||[]).length+')</span>'
+      +'<span class="chip" onclick="hospFilt(\'urgent\',this)">🔴 '+esc(T('تنفد قريبًا','Running out'))+' ('+(t.urgent||0)+')</span>'
+      +'<span class="chip" onclick="hospFilt(\'low\',this)">⚠️ '+esc(T('تحت الحد','Below minimum'))+' ('+(t.low||0)+')</span>'
+      +Object.entries(cats).map(([k,v])=>'<span class="chip" onclick="hospFilt(\'cat:'+esc(k)+'\',this)">'+esc(k)+' ('+v+')</span>').join('')
+      +'<input class="inp" id="hsq" placeholder="'+esc(T('بحث…','Search…'))+'" oninput="hospFilt(null)" style="margin-inline-start:auto;width:180px"/>'
+      +'</div>';
+    HOSP_SUPPLIES=d.supplies||[]; HOSP_PURCH=d.purchases||[]; HOSP_FILT='all';
+    h+='<div id="hslist"></div>';
+    p.innerHTML=h; hospRenderSupplies(); return;
+  },
+  async __hosp_stock_rows(){}, // placeholder
+  async _unused(p){
+    let d={},t={};
     h+='<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))">';
     h+=(d.supplies||[]).map(s=>{
       const days=+s.days_cover||0, urgent=s.low||(days>0&&days<7);
@@ -1267,7 +1685,7 @@ const ROUTES={
       const SL={draft:['مسودة','Draft'],submitted:['مُرسَل','Submitted'],approved:['معتمد','Approved'],received:['تم الاستلام','Received'],cancelled:['ملغى','Cancelled']};
       const NX={draft:['submit',['إرسال','Submit']],submitted:['approve',['اعتماد','Approve']],approved:['receive',['استلام','Receive']]};
       h+=(d.purchases||[]).map(x=>{const c=SC[x.state]||'#64748b',l=SL[x.state]||[x.state,x.state],n=NX[x.state];
-        return '<div class="panel" style="padding:13px"><div style="display:flex;gap:8px">'
+        return '<div class="panel" style="padding:13px;cursor:pointer" onclick="hospOpenPurchase('+x.id+')"><div style="display:flex;gap:8px">'
         +'<b style="flex:1">'+esc(x.name)+'</b>'+pillHtml(T(l[0],l[1]),'info')+'</div>'
         +'<div style="color:var(--muted);font-size:11.5px;margin-top:4px">'+esc(x.supplier||'CARE')+' · '+esc(x.date)+' · '+x.lines+' '+esc(T('صنف','items'))+' · '+(+x.total||0).toFixed(3)+'</div>'
         +(n?'<button class="btn s" style="margin-top:9px;width:100%" onclick="hospPurchaseAct('+x.id+',\''+n[0]+'\')">'+esc(T(n[1][0],n[1][1]))+'</button>':'')

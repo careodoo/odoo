@@ -628,6 +628,13 @@ class ClientApi(Controller):
                 'photo': _emp_photo(s.employee_id, 'image_128'),
                 'facility': s.facility_id.name or None, 'facility_id': s.facility_id.id or None,
                 'check_in': s.check_in or None, 'check_out': s.check_out or None,
+                # A row showing two timestamps does not say which way the punch
+                # went. Name it, so the log reads as in / out at a glance.
+                'punch': ('out' if s.check_out else ('in' if s.check_in else None)),
+                'punch_label': (_('Check-out') if s.check_out
+                                else (_('Check-in') if s.check_in else '')),
+                'punch_at': str(s.check_out or s.check_in or '')[:16] or None,
+                'open_now': s.state == 'open',
                 'date': str(s.check_in)[:10] if s.check_in else None,
                 'hours': round(s.duration_hours or 0.0, 1),
                 'state': s.state, 'open': s.state == 'open',
@@ -2067,8 +2074,19 @@ class ClientApi(Controller):
             projs = env['care.cafm.project'].sudo().search([('partner_id', '=', partner.id)])
             for pr in projs:
                 allowed.update(pr.material_ids.ids)
-        if allowed:
-            dom += [('id', 'in', list(allowed))]
+        # Materials the client actually stocks, straight from the CAFM
+        # inventory — so the catalogue is what is on their shelves rather than
+        # a second list somebody has to keep in step.
+        if 'care.cafm.stock.item' in env:
+            facs = self._facilities(env)
+            if facs:
+                allowed.update(env['care.cafm.stock.item'].sudo().search(
+                    [('facility_id', 'in', facs.ids)]).mapped('product_id').ids)
+        # An empty allow-list used to fall through to EVERY product in Odoo —
+        # the client saw the whole company catalogue instead of their own
+        # items. Nothing assigned now means nothing shown, which is the honest
+        # answer and is visibly a configuration gap rather than a data leak.
+        dom += [('id', 'in', list(allowed))]
         prods = Prod.search(dom, limit=300)
         pl = self._pricelist(env)
         out = []

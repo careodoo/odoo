@@ -430,3 +430,98 @@ class HospitalityApi(Controller):
         except Exception as e:
             return _err(str(e) or 'تعذّر التنفيذ', 422)
         return _ok({'state': p.state})
+
+    # ---- suppliers and the supply catalogue --------------------------------
+    @route(API + '/hosp/suppliers', type='http', auth='public', methods=['GET'],
+           csrf=False, cors='*')
+    def hosp_suppliers(self, **kw):
+        """Who we buy from, and what a purchase line may point at."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        P = env['res.partner'].sudo()
+        parts = P.search([('supplier_rank', '>', 0)], limit=200) or \
+            P.search([('is_company', '=', True)], limit=200)
+        S = env['care.hosp.supply'].sudo()
+        cat = dict(S._fields['category'].selection)
+        uom = dict(S._fields['uom_name'].selection)
+        return _ok({
+            'suppliers': [{'id': p.id, 'name': p.name, 'phone': p.phone or None,
+                           'email': p.email or None} for p in parts],
+            'categories': [{'code': c, 'label': l} for c, l in cat.items()],
+            'uoms': [{'code': c, 'label': l} for c, l in uom.items()],
+        })
+
+    @route(API + '/hosp/supply/save', type='http', auth='public', methods=['POST'],
+           csrf=False, cors='*')
+    def hosp_supply_save(self, **kw):
+        """Register a consumable, or correct one.
+
+        Materials belong in the catalogue, not typed fresh into every purchase
+        — otherwise the same coffee arrives under four spellings and no
+        balance can ever be trusted.
+        """
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        b = _body()
+        name = (b.get('name') or '').strip()
+        if not name:
+            return _err('اسم المستهلك مطلوب', 422)
+        vals = {
+            'name': name,
+            'code': b.get('code') or False,
+            'category': b.get('category') or 'other',
+            'uom_name': b.get('uom_name') or 'g',
+            'pack_name': b.get('pack_name') or 'كيس',
+            'pack_size': float(b.get('pack_size') or 1000),
+            'min_qty': float(b.get('min_qty') or 0),
+            'unit_cost': float(b.get('unit_cost') or 0),
+            'supplier_type': b.get('supplier_type') or 'care',
+            'partner_id': int(b['partner_id']) if b.get('partner_id') else False,
+        }
+        S = env['care.hosp.supply'].sudo()
+        if b.get('id'):
+            rec = S.browse(int(b['id'])).exists()
+            if not rec:
+                return _err('غير موجود', 404)
+            rec.write(vals)
+        else:
+            fac = env['care.cafm.facility'].sudo().browse(
+                int(b['facility_id'])) if b.get('facility_id') else \
+                S.search([], limit=1).facility_id
+            vals['facility_id'] = fac.id or False
+            rec = S.create(vals)
+            if b.get('opening_qty'):
+                rec._apply(float(b['opening_qty']), 'receipt',
+                           note=_('رصيد افتتاحي'))
+        return _ok({'id': rec.id, 'name': rec.name})
+
+    @route(API + '/hosp/purchase/<int:pid>', type='http', auth='public',
+           methods=['GET'], csrf=False, cors='*')
+    def hosp_purchase_detail(self, pid, **kw):
+        """One purchase, with its lines — a list you cannot open is a receipt."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        p = env['care.hosp.purchase'].sudo().browse(pid).exists()
+        if not p:
+            return _err('غير موجود', 404)
+        uom = dict(env['care.hosp.supply']._fields['uom_name'].selection)
+        return _ok({
+            'id': p.id, 'name': p.name, 'date': str(p.date),
+            'source': p.source, 'state': p.state,
+            'supplier': p.partner_id.name or 'CARE',
+            'reference': p.reference or None, 'note': p.note or None,
+            'total': round(p.total_cost, 3),
+            'facility': p.facility_id.name or None,
+            'lines': [{
+                'id': l.id, 'supply': l.supply_id.name,
+                'quantity': l.quantity, 'by_pack': l.by_pack,
+                'unit': l.uom_label,
+                'base_qty': l.base_qty,
+                'uom': uom.get(l.supply_id.uom_name, ''),
+                'unit_cost': l.unit_cost or l.supply_id.unit_cost,
+                'subtotal': round(l.subtotal, 3),
+            } for l in p.line_ids],
+        })

@@ -83,11 +83,11 @@ def _r_hosp_order(r):
         _d(getattr(r, 'placed_at', None) or getattr(r, 'create_date', None))]))
     pills = list(_state_pill(r, 'state', 'info'))
     if getattr(r, 'is_late', False):
-        pills.append(('متأخر', 'danger'))
+        pills.append((_t('متأخر', 'Late'), 'danger'))
     if getattr(r, 'is_vip', False):
         pills.append(('VIP', 'warn'))
     if getattr(r, 'item_count', 0):
-        pills.append(('%d صنف' % r.item_count, 'muted'))
+        pills.append((_t('%d صنف', '%d items') % r.item_count, 'muted'))
     return (r.display_name, sub, pills)
 
 
@@ -108,8 +108,16 @@ def _r_valet_ticket(r):
         _d(getattr(r, 'received_at', None))]))
     pills = list(_state_pill(r, 'state', 'info'))
     if getattr(r, 'key_tag', ''):
-        pills.append(('مفتاح %s' % r.key_tag, 'muted'))
+        pills.append((_t('مفتاح %s', 'Key %s') % r.key_tag, 'muted'))
     return (r.display_name, sub, pills)
+
+
+# A pill written as a bare Arabic string is Arabic for everyone, whatever
+# language the reader chose — which is how an English portal ended up showing
+# "مفتاح K-814" beside "Delivered". These render in the caller's language.
+def _t(ar, en):
+    """Arabic or English, per the active language."""
+    return en if (request.env.context.get('lang') or '').startswith('en') else ar
 
 
 def _r_stock_item(r):
@@ -118,10 +126,10 @@ def _r_stock_item(r):
     bal = '%.0f %s' % (r.on_hand or 0.0, getattr(r, 'uom_name', '') or '')
     sub = ' \u00b7 '.join(filter(None, [
         getattr(r.store_id, 'name', '') or '',
-        'الحد الأدنى %.0f' % r.min_qty if r.min_qty else '']))
+        _t('الحد الأدنى %.0f', 'min %.0f') % r.min_qty if r.min_qty else '']))
     pills = [(bal, 'danger' if low else 'ok')]
     if low and getattr(r, 'to_reorder', 0):
-        pills.append(('يُطلب %.0f' % r.to_reorder, 'warn'))
+        pills.append((_t('يُطلب %.0f', 'reorder %.0f') % r.to_reorder, 'warn'))
     return (r.display_name, sub, pills)
 
 
@@ -130,17 +138,17 @@ def _r_stock_count(r):
         getattr(r.store_id, 'name', '') or '', _d(getattr(r, 'count_date', None))]))
     pills = list(_state_pill(r, 'state', 'info'))
     if r.state == 'done':
-        pills.append(('دقة %.0f%%' % (r.accuracy or 0),
+        pills.append((_t('دقة %.0f%%', 'accuracy %.0f%%') % (r.accuracy or 0),
                       'ok' if (r.accuracy or 0) >= 95 else 'warn'))
     if r.variance_lines:
-        pills.append(('%d فرق' % r.variance_lines, 'warn'))
+        pills.append((_t('%d فرق', '%d variances') % r.variance_lines, 'warn'))
     return (r.display_name, sub, pills)
 
 
 def _r_stock_request(r):
     sub = ' \u00b7 '.join(filter(None, [
         getattr(r.store_id, 'name', '') or '',
-        '%d صنف' % len(r.line_ids) if r.line_ids else '',
+        _t('%d صنف', '%d items') % len(r.line_ids) if r.line_ids else '',
         _d(getattr(r, 'needed_by', None))]))
     pills = list(_state_pill(r, 'state', 'info'))
     if getattr(r, 'urgency', '') in ('high', 'critical'):
@@ -349,7 +357,7 @@ def REGISTRY():
                                lambda r: 'pH %.1f · كلور %.1f · حرارة %.1f · عكارة %.2f' % (
                                    r.ph or 0, r.free_chlorine or 0,
                                    r.temperature or 0, r.turbidity or 0),
-                               lambda r: [('ضمن النطاق', 'ok')] if r.is_safe
+                               lambda r: [(_t('ضمن النطاق', 'In range'), 'ok')] if r.is_safe
                                else [(r.breaches or 'خارج النطاق', 'crit')]), icon='🧪',
                     create=Create('تسجيل قراءة مياه', 'workorder_verify', [
                         Field('pool_id', 'المسبح', 'm2o', comodel='care.pool.pool',
@@ -403,8 +411,8 @@ def REGISTRY():
                                    'اكتمال %s%%' % r.completeness,
                                    'شهادة %s' % r.certificate_no if r.certificate_no else '',
                                    'تقرير %s' % r.lab_reference if r.lab_reference else ''])),
-                               lambda r: ([('مخبريًا: مطابقة', 'ok')] if r.lab_result == 'pass'
-                                          else [('مخبريًا: غير مطابقة', 'crit')] if r.lab_result
+                               lambda r: ([(_t('مخبريًا: مطابقة', 'Lab: pass'), 'ok')] if r.lab_result == 'pass'
+                                          else [(_t('مخبريًا: غير مطابقة', 'Lab: fail'), 'crit')] if r.lab_result
                                           else []) + _state_pill(r)), icon='🧾'),
         ]),
         'disinfection': ('التعقيم', '🧴', [
@@ -413,10 +421,10 @@ def REGISTRY():
                                lambda r: ' · '.join(filter(None, [
                                    r.location_id.name or '',
                                    r.product_id.name or '',
-                                   'تلامس %s د (المطلوب %s)' % (r.contact_minutes,
+                                   _t('تلامس %s د (المطلوب %s)', 'contact %s min (needs %s)') % (r.contact_minutes,
                                                                  r.required_minutes)])),
                                lambda r: ([('التلامس مُحترَم', 'ok')] if r.contact_ok
-                                          else [('تلامس أقل من المطلوب', 'crit')])
+                                          else [(_t('تلامس أقل من المطلوب', 'Contact below requirement'), 'crit')])
                                + ([('ATP %s' % r.atp_reading,
                                     'ok' if r.atp_pass else 'warn')] if r.atp_tested else [])
                                + _state_pill(r)), icon='🧽',
