@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:provider/provider.dart';
@@ -461,8 +462,77 @@ class _ValetScreenState extends State<ValetScreen>
     }
     final picked = await SearchablePicker.open(context,
         options: spots, title: tr('اختر الموقف', 'Choose a bay'), accent: _gold, allowClear: false);
-    if (picked == null) return;
-    await _act(t, 'park', body: {'spot_id': picked});
+    if (picked == null || !mounted) return;
+    // Where exactly, and let the phone capture the coordinates so the car can
+    // be found again — a bay id alone does not survive a busy basement.
+    final row = TextEditingController();
+    final note = TextEditingController();
+    final go = await showModalBottomSheet<bool>(
+      context: context, isScrollControlled: true, showDragHandle: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(18, 4, 18, MediaQuery.of(ctx).viewInsets.bottom + 18),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(tr('أين رُكنت المركبة؟', 'Where is it parked?'),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _navy)),
+          const SizedBox(height: 12),
+          TextField(controller: row, decoration: InputDecoration(
+              labelText: tr('رقم الصف / الموقع', 'Row / bay label'),
+              hintText: 'B2-14', border: const OutlineInputBorder())),
+          const SizedBox(height: 10),
+          TextField(controller: note, decoration: InputDecoration(
+              labelText: tr('ملاحظة (اختياري)', 'Note (optional)'),
+              hintText: tr('بجانب العمود', 'beside the pillar'), border: const OutlineInputBorder())),
+          const SizedBox(height: 14),
+          Row(children: [
+            Expanded(child: OutlinedButton.icon(
+              onPressed: () async {
+                final loc = await _captureParkLocation();
+                if (loc != null && mounted) {
+                  _parkLat = loc.$1; _parkLng = loc.$2;
+                  _snack(tr('سُجّل الموقع', 'Location captured'), c: const Color(0xFF16A34A));
+                }
+              },
+              icon: const Icon(Icons.my_location_rounded, size: 18),
+              label: Text(_parkLat != 0 ? tr('الموقع مُسجَّل ✓', 'Location set ✓') : tr('التقاط الموقع', 'Capture location')),
+              style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 13)),
+            )),
+          ]),
+          const SizedBox(height: 12),
+          SizedBox(width: double.infinity, height: 50, child: FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(tr('تأكيد الركن', 'Confirm parking'),
+                style: const TextStyle(fontWeight: FontWeight.w900)),
+          )),
+        ]),
+      ),
+    );
+    if (go != true || !mounted) return;
+    try {
+      await context.read<AuthProvider>().api.valetPark(intOf(t['id']), {
+        'spot_id': picked, 'row': row.text.trim(), 'note': note.text.trim(),
+        if (_parkLat != 0) 'lat': _parkLat, if (_parkLng != 0) 'lng': _parkLng,
+      });
+      _parkLat = 0; _parkLng = 0;
+      if (mounted) { _snack(tr('رُكنت المركبة', 'Car parked'), c: const Color(0xFF16A34A)); _load(); }
+    } catch (e) {
+      // fall back to the generic action if the new route is unavailable
+      await _act(t, 'park', body: {'spot_id': picked});
+    }
+  }
+
+  double _parkLat = 0, _parkLng = 0;
+
+  Future<(double, double)?> _captureParkLocation() async {
+    try {
+      final ok = await Geolocator.checkPermission();
+      if (ok == LocationPermission.denied) await Geolocator.requestPermission();
+      final pos = await Geolocator.getCurrentPosition();
+      return (pos.latitude, pos.longitude);
+    } catch (e) {
+      if (mounted) _snack('$e', c: const Color(0xFFE11D48));
+      return null;
+    }
   }
 
   /// Hand the car back and settle the charge.
