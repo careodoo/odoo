@@ -305,7 +305,9 @@
                                             <td><span t-field="material.product_id"/></td>
                                             <td><span t-field="material.product_id.uom_id"/></td>
                                             <td><span t-field="material.quantity"/></td>
-                                            <td t-if="not doc.include_material"><span t-field="material.cost"/></td>
+                                            <!-- was material.cost — the raw purchase price, printed under a
+     column headed "Price" on a document that goes to the customer. -->
+                                            <td t-if="not doc.include_material"><span t-esc="doc._customer_price(material.cost)" t-options="{'widget': 'float', 'precision': 3}"/></td>
                                             <td t-if="not doc.include_material"><span t-field="material.total_amount"/></td>
                                         </tr>
                                         <tr t-foreach="doc.equipment_ids" t-as="equipment">
@@ -314,7 +316,7 @@
                                             <td><span t-field="equipment.product_id"/></td>
                                             <td><span t-field="equipment.product_id.uom_id"/></td>
                                             <td><span t-field="equipment.quantity"/></td>
-                                            <td t-if="not doc.include_material"><span t-field="equipment.cost"/></td>
+                                            <td t-if="not doc.include_material"><span t-esc="doc._customer_price(equipment.cost)" t-options="{'widget': 'float', 'precision': 3}"/></td>
                                             <td t-if="not doc.include_material"><span t-field="equipment.total_amount"/></td>
                                         </tr>
                                     </tbody>

@@ -76,5 +76,5 @@ class Lead(models.Model):
         res = super().action_set_lost(**additional_values)
         for lead in self:
             lead.proposal_ids.filtered(
-                lambda p: p.state not in ('won', 'cancel', 'reject')).write({'state': 'cancel'})
+                lambda p: p.state not in ('won', 'cancel', 'reject')).button_cancel()
         return res

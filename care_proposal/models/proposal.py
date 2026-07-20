@@ -315,10 +315,35 @@ class Proposal(models.Model):
             rec.other_amount = total_other
             rec.gate_amount = total_gate
 
-    @api.depends('material_amount', 'equipment_amount', 'transportation_amount', 'salary_amount')
+    # Every component below is computed into its own field a few lines up, but
+    # only four of them were being summed — residency, uniform, leave and
+    # indemnity, insurance, medical, gate pass, fees and accommodation were all
+    # left out. On a live quotation that hid KD 133.000 of real cost, and the
+    # header then showed a "cost" that no other number in the module agreed
+    # with.
+    COST_COMPONENTS = (
+        'material_amount', 'equipment_amount', 'transportation_amount',
+        'salary_amount', 'residency_amount', 'uniform_amount', 'leave_amount',
+        'insurance_amount', 'medical_amount', 'gate_amount', 'fee_amount',
+        'other_amount', 'accommodation_amount', 'commission_amount',
+    )
+
+    @api.depends(*COST_COMPONENTS)
     def compute_total_cost(self):
         for rec in self:
-            rec.total_cost = rec.material_amount + rec.equipment_amount + rec.transportation_amount + rec.salary_amount
+            rec.total_cost = sum((rec[f] or 0.0) for f in rec.COST_COMPONENTS)
+
+    cost_reconciliation_gap = fields.Float(
+        digits=(16, 3), string='Cost reconciliation gap',
+        compute='_compute_cost_gap',
+        help='Component total minus the cost the price was actually built on. '
+             'Anything other than zero means the breakdown and the price '
+             'disagree, and one of them is wrong.')
+
+    @api.depends('total_cost', 'total_pricing_cost')
+    def _compute_cost_gap(self):
+        for rec in self:
+            rec.cost_reconciliation_gap = (rec.total_cost or 0.0) - (rec.total_pricing_cost or 0.0)
 
     @api.depends('total_cost', 'manpower_quantity')
     def compute_individual_cost(self):
@@ -581,6 +606,16 @@ class Proposal(models.Model):
             rec.scenario_economy_price = rec._price_for_margin(cost, rec.scenario_economy_pct)
             rec.scenario_standard_price = rec._price_for_margin(cost, rec.scenario_standard_pct)
             rec.scenario_premium_price = rec._price_for_margin(cost, rec.scenario_premium_pct)
+
+    def _customer_price(self, cost):
+        """A cost turned into something a customer may see.
+
+        The materials and equipment tables printed product.standard_price
+        under a column headed "Price", so the client could read our purchase
+        cost and derive the margin on the line.
+        """
+        self.ensure_one()
+        return self._price_for_margin(cost or 0.0, self.target_margin_pct or 0.0)
 
     @staticmethod
     def _price_for_margin(cost, margin_pct):
@@ -903,30 +938,99 @@ class Proposal(models.Model):
             if not getattr(field, 'tracking', False):
                 field.tracking = True
 
-    @api.model
-    def create(self, vals):
-        if vals.get('ref', _('New')) == _('New'):
-            vals['ref'] = self.env['ir.sequence'].next_by_code('proposal.proposal') or _('New')
-        result = super(Proposal, self).create(vals)
-        return result
+    # create() had no state guard, so the write() gate was defeated by simply
+    # creating the record already approved. And Odoo 17 calls create with a
+    # LIST, so the old @api.model signature raised AttributeError on any batch
+    # import.
+    @api.model_create_multi
+    def create(self, vals_list):
+        if isinstance(vals_list, dict):
+            vals_list = [vals_list]
+        allowed = (self.env.context.get('proposal_workflow')
+                   or self.env.user.has_group('care_proposal.group_proposal_manager'))
+        for v in vals_list:
+            if v.get('state') in self.WORKFLOW_STATES and not allowed:
+                v['state'] = 'draft'
+        return self._create_proposals(vals_list)
+
+    def _create_proposals(self, vals_list):
+        for vals in vals_list:
+            if vals.get('ref', _('New')) == _('New'):
+                vals['ref'] = self.env['ir.sequence'].next_by_code(
+                    'proposal.proposal') or _('New')
+        return super(Proposal, self).create(vals_list)
 
     def button_submit(self):
-        self.state = 'submit'
+        for rec in self:
+            # Three proposals in the live data had been sent with a zero total
+            # and eight had no service lines at all. A quotation with nothing
+            # in it is not a quotation.
+            if not rec.partner_id:
+                raise UserError(_('Set the customer before submitting.'))
+            if not rec.service_ids:
+                raise UserError(_('Add at least one service line before submitting.'))
+            if not rec.pricing_ids or not (rec.total_amount or 0):
+                raise UserError(_(
+                    'Generate the pricing before submitting — the total is zero.'))
+            if rec.below_guard and not self.env.user.has_group(
+                    'care_proposal.group_proposal_manager'):
+                raise UserError(_(
+                    'Line(s) are below the %s%% margin guard. A proposal manager '
+                    'must submit this one.') % rec.margin_guard_pct)
+        self._set_state('submit')
+
+    # ---- workflow, enforced on the server -----------------------------
+    # `invisible=` in the view is decoration. Every one of these buttons was
+    # callable over RPC by any employee, and `state` was a plain writable
+    # field, so a junior user could put a proposal straight into 'won' and
+    # skip the approval chain entirely. Verified on the live database before
+    # this was written.
+    WORKFLOW_STATES = ('submit', 'waiting', 'approve', 'reject', 'won', 'cancel')
+
+    def write(self, vals):
+        if 'state' in vals and vals['state'] in self.WORKFLOW_STATES \
+                and not self.env.context.get('proposal_workflow'):
+            if not self.env.user.has_group('care_proposal.group_proposal_manager'):
+                raise UserError(_(
+                    'The proposal state is set by the approval workflow, not by '
+                    'editing the field. Use Submit / Approve / Reject.'))
+        return super().write(vals)
+
+    def _set_state(self, state, **extra):
+        """The only way the workflow moves a proposal."""
+        return super(Proposal, self.with_context(proposal_workflow=True)).write(
+            dict(extra, state=state))
 
     def button_approve(self):
+        for rec in self:
+            approvers = rec.approval_ids.mapped('user_id')
+            if self.env.uid not in approvers.ids and \
+                    not self.env.user.has_group('care_proposal.group_proposal_manager'):
+                raise UserError(_('You are not an approver on this proposal.'))
+            # Nobody signs off their own margin.
+            if self.env.uid == rec.create_uid.id and len(approvers) > 1:
+                raise UserError(_(
+                    'You raised this proposal, so you cannot approve it. '
+                    'Another approver on the list must.'))
+            if rec.state not in ('submit', 'waiting'):
+                raise UserError(_('Only a submitted proposal can be approved.'))
+            # A below-cost bid needs a manager, not a click.
+            if rec.below_guard and not self.env.user.has_group(
+                    'care_proposal.group_proposal_manager'):
+                raise UserError(_(
+                    'This proposal has line(s) below the margin guard of %s%%. '
+                    'A proposal manager must approve it.') % rec.margin_guard_pct)
         self.approval_ids.filtered(lambda l: l.user_id.id == self.env.uid).write({
             'approved': True,
             'date_approved': fields.Datetime.now(),
         })
         if self.approval_ids.filtered(lambda l: not l.approved):
-            self.write({'state': 'waiting'})
+            self._set_state('waiting')
             return
-        self.write({
-            'state':
-                'approve',
-            'receiver_users':
-                self.env['proposal.receiver'].sudo().search([]).mapped('user_id').mapped('id'),
-        })
+        self._set_state(
+            'approve',
+            receiver_users=self.env['proposal.receiver'].sudo().search(
+                []).mapped('user_id').mapped('id'))
 
     @api.depends('receiver_users')
     def compute_receiver_users_str(self):
@@ -936,13 +1040,13 @@ class Proposal(models.Model):
                 rec.receiver_users_str = ','.join(rec.receiver_users.mapped('email'))
 
     def button_reject(self):
-        self.state = 'reject'
+        self._set_state('reject')
 
     def button_cancel(self):
-        self.state = 'cancel'
+        self._set_state('cancel')
 
     def button_draft(self):
-        self.state = 'draft'
+        self._set_state('draft')
         self.approval_ids = [(5, 0, 0)]
         self.write({'approval_ids': self.get_default_approvers()})
 
@@ -962,7 +1066,7 @@ class Proposal(models.Model):
             force_send=True,
             email_layout_xmlid='mail.mail_notification_light',
         )
-        self.state = 'won'
+        self._set_state('won')
         # CRM sync: record winning quote, roll up revenue, mark opportunity won.
         if self.lead_id:
             self.lead_id._sync_won_proposal(self)

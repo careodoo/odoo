@@ -17,6 +17,47 @@
       <field name="implied_ids" eval="[(4, ref('care_proposal.group_proposal_cost_admin'))]"/>
     </record>
 
+
+    <!-- Who may see cost and margin, and who may only quote.
+         Until now every employee had full read/write on proposals, so a
+         junior clerk could read the company's whole cost base and margin on
+         every deal — and write state='won' straight past the approval chain. -->
+    <record id="group_proposal_user" model="res.groups">
+      <field name="name">Proposal User</field>
+      <field name="category_id" ref="module_category_proposal"/>
+      <field name="comment">Can create and edit proposals. Cannot see cost, margin or commission.</field>
+    </record>
+
+    <record id="group_proposal_manager" model="res.groups">
+      <field name="name">Proposal Manager</field>
+      <field name="category_id" ref="module_category_proposal"/>
+      <field name="implied_ids" eval="[(4, ref('care_proposal.group_proposal_user'))]"/>
+      <field name="comment">Sees cost and margin, approves proposals, may price below the margin guard.</field>
+    </record>
+
+    <record id="base.group_system" model="res.groups">
+      <field name="implied_ids" eval="[(4, ref('care_proposal.group_proposal_manager'))]"/>
+    </record>
+
+    <!-- Sales managers approve proposals; without this the manager group had
+         only system administrators in it, so a below-guard quotation could not
+         be submitted or approved by anyone who actually does that job. -->
+    <record id="sales_team.group_sale_manager" model="res.groups">
+      <field name="implied_ids" eval="[(4, ref('care_proposal.group_proposal_manager'))]"/>
+    </record>
+    <record id="sales_team.group_sale_salesman" model="res.groups">
+      <field name="implied_ids" eval="[(4, ref('care_proposal.group_proposal_user'))]"/>
+    </record>
+
+    <!-- Multi-company isolation. A three-company database had none, so a user
+         in company A read and re-priced company B's bids. -->
+    <record id="rule_proposal_company" model="ir.rule">
+      <field name="name">Proposal: own companies</field>
+      <field name="model_id" ref="model_proposal_proposal"/>
+      <field name="domain_force">['|',('company_id','=',False),('company_id','in',company_ids)]</field>
+      <field name="global" eval="True"/>
+    </record>
+
     <!-- Portal customers can only see their own service requests. -->
     <record id="service_request_portal_rule" model="ir.rule">
       <field name="name">Service Request: portal own</field>
