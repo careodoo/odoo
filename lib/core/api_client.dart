@@ -275,6 +275,11 @@ class ApiClient {
       List<dynamic>.from((await _handle(
               await http.get(_u('/client/ppm'), headers: await _headers())))['data'] as List);
 
+  /// Categories and items a collection request can point at.
+  Future<Map<String, dynamic>> wasteCatalogue() async =>
+      Map<String, dynamic>.from((await _handle(await http.get(
+              _u('/client/waste/catalogue'), headers: await _headers())))['data'] as Map);
+
   Future<Map<String, dynamic>> createRequest(Map<String, dynamic> body) async =>
       Map<String, dynamic>.from((await _handle(await http.post(
               _u('/client/request/create'), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);

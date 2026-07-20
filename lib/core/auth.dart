@@ -145,10 +145,31 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     } catch (e) {
-      error = tr('تعذّر الاتصال بالخادم', 'Could not reach the server');
+      // This catch used to report "could not reach the server" for ANY
+      // failure — a parse error, a bad field, a timeout — which sends everyone
+      // hunting the network while the real fault is elsewhere. Name it.
+      error = _reachError(e);
       notifyListeners();
       return false;
     }
+  }
+
+  /// A message that distinguishes "the network is down" from "something else
+  /// went wrong", and carries the detail either way.
+  String _reachError(Object e) {
+    final s = '$e';
+    final offline = s.contains('SocketException') ||
+        s.contains('Failed host lookup') ||
+        s.contains('Connection refused') ||
+        s.contains('Network is unreachable') ||
+        s.contains('TimeoutException') ||
+        s.contains('HandshakeException');
+    if (offline) {
+      return tr('تعذّر الاتصال بالخادم — تحقّق من الإنترنت',
+                'Could not reach the server — check your connection');
+    }
+    final detail = s.length > 160 ? '${s.substring(0, 160)}…' : s;
+    return tr('تعذّر إتمام الدخول: $detail', 'Login failed: $detail');
   }
 
   /// Public self-registration → CARE 2 CARE customer; auto-logs in on success.

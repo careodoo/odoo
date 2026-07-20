@@ -176,12 +176,27 @@ class _RequestsScreenState extends State<RequestsScreen> {
     final api = context.read<AuthProvider>().api;
     final facs = await api.facilities();
     final svcs = await api.servicesList();
+    // The waste catalogue, so a collection request can say what it is
+    // carrying instead of leaving the crew to guess the vehicle.
+    Map<String, dynamic> cat = const {'types': [], 'items': []};
+    try { cat = await api.wasteCatalogue(); } catch (_) {}
     if (!mounted) return;
     final title = TextEditingController();
     final desc = TextEditingController();
     int? facId = facs.isNotEmpty ? facs.first['id'] as int : null;
     int? svcId;
     int prio = 1;
+    var wasteScope = 'general';
+    int? wasteTypeId;
+    final wasteItems = <int>{};
+    final wasteNote = TextEditingController();
+    final types = ((cat['types'] as List?) ?? const []).cast<Map>();
+    final items = ((cat['items'] as List?) ?? const []).cast<Map>();
+    bool isWaste() {
+      if (svcId == null) return false;
+      final m = svcs.firstWhere((x) => x['id'] == svcId, orElse: () => const {});
+      return '${m['type'] ?? ''}' == 'waste';
+    }
     final ok = await showModalBottomSheet<bool>(
       context: context, isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
@@ -201,6 +216,60 @@ class _RequestsScreenState extends State<RequestsScreen> {
             label: tr('الخدمة (اختياري)', 'Service (optional)'), icon: Icons.design_services_rounded, value: svcId,
             options: [for (final s in svcs) PickOption(value: s['id'], label: '${s['name']}')],
             onChanged: (v) => set(() => svcId = v as int?)),
+          // Only asked when it is a collection — every other service would
+          // just be answering a question that does not apply to it.
+          if (isWaste()) ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(tr('ما المطلوب نقله؟', 'What is being collected?'),
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+            ),
+            const SizedBox(height: 7),
+            SegmentedButton<String>(
+              segments: [
+                ButtonSegment(value: 'general', label: Text(tr('عام', 'General'))),
+                ButtonSegment(value: 'type', label: Text(tr('فئة', 'Category'))),
+                ButtonSegment(value: 'items', label: Text(tr('أصناف', 'Items'))),
+              ],
+              selected: {wasteScope},
+              showSelectedIcon: false,
+              style: ButtonStyle(
+                  visualDensity: VisualDensity.compact,
+                  textStyle: WidgetStateProperty.all(
+                      const TextStyle(fontSize: 12, fontWeight: FontWeight.w800))),
+              onSelectionChanged: (v) => set(() => wasteScope = v.first),
+            ),
+            if (wasteScope == 'type') ...[
+              const SizedBox(height: 10),
+              SearchableField(
+                label: tr('الفئة', 'Category'), icon: Icons.category_rounded,
+                value: wasteTypeId,
+                options: [for (final t in types) PickOption(value: t['id'], label: '${t['name']}')],
+                onChanged: (v) => set(() => wasteTypeId = v as int?)),
+            ],
+            if (wasteScope == 'items') ...[
+              const SizedBox(height: 8),
+              Wrap(spacing: 6, runSpacing: 6, children: [
+                for (final it in items)
+                  FilterChip(
+                    label: Text('${it['name']}', style: const TextStyle(fontSize: 11.5)),
+                    selected: wasteItems.contains(intOf(it['id'])),
+                    onSelected: (v) => set(() => v
+                        ? wasteItems.add(intOf(it['id']))
+                        : wasteItems.remove(intOf(it['id']))),
+                  ),
+              ]),
+            ],
+            if (wasteScope == 'general') ...[
+              const SizedBox(height: 10),
+              TextField(controller: wasteNote,
+                  decoration: InputDecoration(
+                      labelText: tr('وصف المنقولات (اختياري)', 'Describe the load (optional)'),
+                      hintText: tr('مثال: أثاث مكتبي قديم', 'e.g. old office furniture'),
+                      border: const OutlineInputBorder(), isDense: true)),
+            ],
+          ],
           const SizedBox(height: 10),
           DropdownButtonFormField<int>(value: prio, isExpanded: true, decoration: InputDecoration(labelText: tr('الأولوية', 'Priority'), border: const OutlineInputBorder(), isDense: true),
               items: const [DropdownMenuItem(value: 0, child: Text('عادية')), DropdownMenuItem(value: 1, child: Text('متوسطة')), DropdownMenuItem(value: 2, child: Text('عالية')), DropdownMenuItem(value: 3, child: Text('عاجلة'))], onChanged: (v) => set(() => prio = v ?? 1)),
@@ -213,7 +282,17 @@ class _RequestsScreenState extends State<RequestsScreen> {
     );
     if (ok != true || title.text.trim().isEmpty) return;
     try {
-      await api.createRequest({'title': title.text.trim(), 'facility_id': facId, 'service_id': svcId, 'priority': prio, 'description': desc.text.trim()});
+      await api.createRequest({
+        'title': title.text.trim(), 'facility_id': facId, 'service_id': svcId,
+        'priority': prio, 'description': desc.text.trim(),
+        if (isWaste()) 'waste_scope': wasteScope,
+        if (isWaste() && wasteScope == 'type' && wasteTypeId != null)
+          'waste_type_id': wasteTypeId,
+        if (isWaste() && wasteScope == 'items' && wasteItems.isNotEmpty)
+          'waste_item_ids': wasteItems.toList(),
+        if (isWaste() && wasteScope == 'general' && wasteNote.text.trim().isNotEmpty)
+          'waste_note': wasteNote.text.trim(),
+      });
       if (mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('تم إرسال الطلب', 'Request submitted')))); setState(_load); }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
