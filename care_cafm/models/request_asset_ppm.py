@@ -17,6 +17,63 @@ class CafmAsset(models.Model):
     _order = 'facility_id, name'
 
     name = fields.Char(string='الأصل', required=True, tracking=True, translate=True)
+    # ---- who owns it decides who may change it ---------------------------
+    # A chiller CARE installed and a chiller the hospital already owned are
+    # not the same record. The client maintains their own equipment; CARE
+    # equipment is ours to describe, and a client edit to it would quietly
+    # rewrite our own asset register.
+    ownership = fields.Selection([
+        ('care', 'CARE-owned'), ('client', 'Client-owned'),
+    ], string='Ownership', default='care', required=True, tracking=True, index=True)
+    client_editable = fields.Boolean(string='Client may edit',
+                                     compute='_compute_client_editable')
+
+    # Scanning beats searching when you are standing in front of the thing.
+    nfc_uid = fields.Char(string='NFC tag', copy=False, index=True, tracking=True)
+    qr_code = fields.Char(string='QR code', compute='_compute_qr_code', store=True,
+                          index=True)
+
+    @api.depends('code')
+    def _compute_qr_code(self):
+        # Odoo refuses a compute that depends on id, so fall back on the id
+        # inside the body instead — a new record simply has no QR until saved.
+        for a in self:
+            a.qr_code = a.code or ('AST-%s' % a.id if a.id else False)
+
+    def _compute_client_editable(self):
+        mgr = self.env.user.has_group('base.group_system') or \
+            self.env.user.has_group('base.group_erp_manager')
+        for a in self:
+            a.client_editable = mgr or a.ownership == 'client'
+
+    # Fields that describe what the asset IS, as opposed to notes about its
+    # condition. A client may keep the latter on any asset.
+    CORE_FIELDS = ('name', 'code', 'category', 'ownership', 'serial',
+                   'model', 'brand', 'purchase_date', 'warranty_end',
+                   'facility_id', 'location_id')
+
+    def write(self, vals):
+        if not self.env.context.get('asset_owner_write'):
+            staff = self.env.user.has_group('base.group_system') or \
+                self.env.user.has_group('base.group_erp_manager')
+            if not staff:
+                touched = [f for f in vals if f in self.CORE_FIELDS]
+                blocked = self.filtered(lambda a: a.ownership == 'care')
+                if touched and blocked:
+                    raise UserError(_(
+                        'This asset belongs to CARE. You can add notes and '
+                        'report faults on it, but its details are maintained '
+                        'by CARE.'))
+        return super().write(vals)
+
+    def unlink(self):
+        staff = self.env.user.has_group('base.group_system') or \
+            self.env.user.has_group('base.group_erp_manager')
+        if not staff and self.filtered(lambda a: a.ownership == 'care'):
+            raise UserError(_('A CARE-owned asset cannot be deleted here.'))
+        return super().unlink()
+
+
     code = fields.Char(string='الرمز', copy=False, index=True, tracking=True,
                        default=lambda s: _('جديد'))
     category = fields.Selection([
