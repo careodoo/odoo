@@ -76,6 +76,42 @@ class Section:
 
 
 # ---------------------------------------------------------------- row renderers
+def _r_hosp_order(r):
+    sub = ' \u00b7 '.join(filter(None, [
+        getattr(r, 'room_label', '') or '',
+        getattr(r.facility_id, 'name', '') or '',
+        _d(getattr(r, 'placed_at', None) or getattr(r, 'create_date', None))]))
+    pills = list(_state_pill(r, 'state', 'info'))
+    if getattr(r, 'is_late', False):
+        pills.append(('متأخر', 'danger'))
+    if getattr(r, 'is_vip', False):
+        pills.append(('VIP', 'warn'))
+    if getattr(r, 'item_count', 0):
+        pills.append(('%d صنف' % r.item_count, 'muted'))
+    return (r.display_name, sub, pills)
+
+
+def _r_hosp_item(r):
+    sub = ' \u00b7 '.join(filter(None, [
+        getattr(r.category_id, 'name', '') or '',
+        '%d دقيقة' % r.prep_minutes if getattr(r, 'prep_minutes', 0) else '']))
+    pills = [('%.3f د.ك' % (r.cost or 0.0), 'muted')]
+    if not getattr(r, 'active', True):
+        pills.append(('موقوف', 'danger'))
+    return (r.display_name, sub, pills)
+
+
+def _r_valet_ticket(r):
+    sub = ' \u00b7 '.join(filter(None, [
+        getattr(r, 'plate', '') or '',
+        getattr(r, 'guest_name', '') or '',
+        _d(getattr(r, 'received_at', None))]))
+    pills = list(_state_pill(r, 'state', 'info'))
+    if getattr(r, 'key_tag', ''):
+        pills.append(('مفتاح %s' % r.key_tag, 'muted'))
+    return (r.display_name, sub, pills)
+
+
 def _r_stock_item(r):
     """Balance first, because that is the only number anyone opens this for."""
     low = getattr(r, 'low_stock', False)
@@ -406,6 +442,46 @@ def REGISTRY():
                                    r.contact_minutes),
                                lambda r: ([('آمن في مناطق الأغذية', 'ok')] if r.food_safe else [])),
                     scope='global', icon='🧪'),
+        ]),
+        'hospitality': ('الضيافة', '\u2615', [
+            Section('orders', 'الطلبات', 'care.hosp.order', _r_hosp_order, icon='\U0001f9fe',
+                    empty_text='لا توجد طلبات ضيافة بعد.',
+                    create=Create('طلب ضيافة', 'hospitality_order', [
+                        Field('room_label', 'المكتب/القاعة', 'char', required=True),
+                        Field('order_type', 'نوع الطلب', 'select', required=True,
+                              options='order_type', default='personal'),
+                        Field('guest_count', 'عدد الحضور', 'int', default=1),
+                        Field('location_id', 'الموقع', 'm2o',
+                              comodel='care.cafm.location', domain_facility=True),
+                        Field('note', 'ملاحظة', 'text'),
+                    ])),
+            Section('menu', 'قائمة الأصناف', 'care.hosp.item', _r_hosp_item, icon='\u2615',
+                    scope='global',
+                    empty_text='لم تُضَف أصناف للقائمة بعد.'),
+            Section('categories', 'الأقسام', 'care.hosp.category',
+                    _r_generic(lambda r: r.display_name), icon='\U0001f5c2', scope='global'),
+            Section('limits', 'حدود الاستهلاك', 'care.hosp.limit',
+                    _r_generic(lambda r: r.display_name,
+                               lambda r: _sel(r, 'period').get(getattr(r, 'period', ''), '')),
+                    icon='\U0001f6d1', scope='global',
+                    empty_text='لا توجد سياسات حدود — الاستهلاك مفتوح.'),
+        ]),
+        'valet': ('صف السيارات', '\U0001f697', [
+            Section('tickets', 'التذاكر', 'care.valet.ticket', _r_valet_ticket, icon='\U0001f39f',
+                    empty_text='لا توجد تذاكر بعد.',
+                    create=Create('تسجيل مركبة', 'record_manage', [
+                        Field('plate', 'رقم اللوحة', 'char', required=True),
+                        Field('guest_name', 'اسم الضيف', 'char'),
+                        Field('guest_phone', 'هاتف الضيف', 'char'),
+                        Field('car_make', 'الماركة', 'char'),
+                        Field('car_color', 'اللون', 'char'),
+                        Field('key_tag', 'رقم المفتاح', 'char'),
+                    ])),
+            Section('zones', 'المواقف', 'care.valet.zone',
+                    _r_generic(lambda r: r.display_name), icon='\U0001f17f'),
+            Section('shifts', 'الورديات', 'care.valet.shift',
+                    _r_generic(lambda r: r.display_name,
+                               lambda r: _d(getattr(r, 'date', None))), icon='\U0001f552'),
         ]),
         'inventory': ('المخزون', '📦', [
             Section('stores', 'المخازن', 'care.cafm.store',
