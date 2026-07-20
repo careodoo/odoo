@@ -222,3 +222,117 @@ class SecurityMobileApi(Controller):
             return _err('غير مصرّح', 401)
         recs = env['security.key'].sudo().search([], order='name', limit=100)
         return _ok([_key_dict(k) for k in recs])
+
+
+class SecurityIncidentExtra(Controller):
+    """Evidence, updates, location and escalation for an incident — the things
+    that cannot be reconstructed an hour later."""
+
+    @route(API + '/security/incident/<int:iid>', type='http', auth='public',
+           methods=['GET'], csrf=False, cors='*')
+    def incident_detail(self, iid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        i = env['security.incident.report'].sudo().browse(iid).exists()
+        if not i:
+            return _err('غير موجود', 404)
+        base = env['ir.config_parameter'].sudo().get_param('web.base.url', '').rstrip('/')
+        return _ok({
+            'id': i.id, 'name': i.name,
+            'type': i.incident_type, 'severity': i.severity,
+            'location': i.location or None,
+            'located': i.located, 'map_url': i.map_url or None,
+            'lat': i.latitude, 'lng': i.longitude,
+            'description': i.description or None,
+            'state': i.state,
+            'live_active': i.live_active, 'live_url': i.live_url or None,
+            'workorder': i.workorder_id.display_name or None,
+            'media': [{
+                'id': m.id, 'kind': m.kind, 'caption': m.name or None,
+                'url': '%s/web/image/security.incident.media/%s/file' % (base, m.id),
+                'at': str(m.taken_at or '')[:16],
+            } for m in i.media_ids],
+            'updates': [{
+                'id': u.id, 'body': u.body, 'by': u.user_id.name or None,
+                'at': str(u.at or '')[:16],
+            } for u in i.update_ids],
+        })
+
+    @route(API + '/security/incident/<int:iid>/media', type='http', auth='public',
+           methods=['POST'], csrf=False, cors='*')
+    def incident_media(self, iid, **kw):
+        """Attach a photo or clip taken at the scene."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        i = env['security.incident.report'].sudo().browse(iid).exists()
+        if not i:
+            return _err('غير موجود', 404)
+        b = _body()
+        if not b.get('file'):
+            return _err('لا ملف', 422)
+        m = env['security.incident.media'].sudo().create({
+            'incident_id': i.id, 'kind': b.get('kind') or 'photo',
+            'name': b.get('caption') or False, 'file': b['file'],
+            'filename': b.get('filename') or 'evidence',
+        })
+        return _ok({'id': m.id, 'count': len(i.media_ids)})
+
+    @route(API + '/security/incident/<int:iid>/update', type='http', auth='public',
+           methods=['POST'], csrf=False, cors='*')
+    def incident_update(self, iid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        i = env['security.incident.report'].sudo().browse(iid).exists()
+        if not i:
+            return _err('غير موجود', 404)
+        b = _body()
+        if not (b.get('body') or '').strip():
+            return _err('النص مطلوب', 422)
+        i.action_add_update(b['body'], user_id=env.user.id)
+        return _ok({'count': len(i.update_ids)})
+
+    @route(API + '/security/incident/<int:iid>/locate', type='http', auth='public',
+           methods=['POST'], csrf=False, cors='*')
+    def incident_locate(self, iid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        i = env['security.incident.report'].sudo().browse(iid).exists()
+        if not i:
+            return _err('غير موجود', 404)
+        b = _body()
+        i.write({'latitude': float(b.get('lat') or 0),
+                 'longitude': float(b.get('lng') or 0)})
+        return _ok({'located': i.located, 'map_url': i.map_url or None})
+
+    @route(API + '/security/incident/<int:iid>/live', type='http', auth='public',
+           methods=['POST'], csrf=False, cors='*')
+    def incident_live(self, iid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        i = env['security.incident.report'].sudo().browse(iid).exists()
+        if not i:
+            return _err('غير موجود', 404)
+        b = _body()
+        i.write({'live_active': bool(b.get('active')),
+                 'live_url': b.get('url') or i.live_url})
+        return _ok({'live_active': i.live_active, 'live_url': i.live_url or None})
+
+    @route(API + '/security/incident/<int:iid>/to_workorder', type='http',
+           auth='public', methods=['POST'], csrf=False, cors='*')
+    def incident_to_workorder(self, iid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        i = env['security.incident.report'].sudo().browse(iid).exists()
+        if not i:
+            return _err('غير موجود', 404)
+        try:
+            wo = i.action_to_workorder()
+        except Exception as e:
+            return _err(str(e) or 'تعذّر', 422)
+        return _ok({'workorder': wo.display_name, 'workorder_id': wo.id})

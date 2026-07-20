@@ -180,6 +180,32 @@ def _r_cashier(r):
     return (r.display_name, _d(getattr(r, 'date', None)), pills)
 
 
+def _r_disinfect_round(r):
+    """The round as a planned task, not just a completed record: who owns it,
+    when it is due, and when the room reopens."""
+    sub = ' \u00b7 '.join(filter(None, [
+        getattr(r.location_id, 'name', '') or '',
+        getattr(r.product_id, 'name', '') or '',
+        _t('تلامس %s د', 'contact %s min') % r.contact_minutes]))
+    pills = list(_state_pill(r, 'state', 'info'))
+    # who is on it
+    who = getattr(r, 'assigned_to', None) or getattr(r, 'done_by', None)
+    if who and who.name:
+        pills.append((who.name, 'muted'))
+    # overdue / due countdown
+    if getattr(r, 'is_overdue', False):
+        pills.append((_t('متأخر %s د', 'overdue %s min') % r.minutes_late, 'danger'))
+    if getattr(r, 'priority', '') in ('urgent', 'outbreak'):
+        pills.append((_sel(r, 'priority').get(r.priority, ''), 'danger'))
+    # the number a ward waits on: when can it be used again
+    left = getattr(r, 'reentry_minutes_left', 0)
+    if left and left > 0:
+        pills.append((_t('يفتح بعد %s د', 'reopens in %s min') % left, 'warn'))
+    if not r.contact_ok:
+        pills.append((_t('تلامس ناقص', 'contact short'), 'crit'))
+    return ('%s — %s' % (r.name, _d(r.done_at)), sub, pills)
+
+
 def _r_facade_permit(r):
     """A permit is read for one thing: may the crew go up or not."""
     safe = getattr(r, 'is_safe', False)
@@ -565,17 +591,7 @@ def REGISTRY():
         ]),
         'disinfection': ('التعقيم', '🧴', [
             Section('rounds', 'جولات التعقيم', 'care.disinfect.round',
-                    _r_generic(lambda r: '%s — %s' % (r.name, _d(r.done_at)),
-                               lambda r: ' · '.join(filter(None, [
-                                   r.location_id.name or '',
-                                   r.product_id.name or '',
-                                   _t('تلامس %s د (المطلوب %s)', 'contact %s min (needs %s)') % (r.contact_minutes,
-                                                                 r.required_minutes)])),
-                               lambda r: ([('التلامس مُحترَم', 'ok')] if r.contact_ok
-                                          else [(_t('تلامس أقل من المطلوب', 'Contact below requirement'), 'crit')])
-                               + ([('ATP %s' % r.atp_reading,
-                                    'ok' if r.atp_pass else 'warn')] if r.atp_tested else [])
-                               + _state_pill(r)), icon='🧽',
+                    _r_disinfect_round, icon='🧽',
                     create=Create('تسجيل جولة تعقيم', 'observation_create', [
                         Field('product_id', 'المطهّر', 'm2o',
                               comodel='care.disinfect.product', required=True),
