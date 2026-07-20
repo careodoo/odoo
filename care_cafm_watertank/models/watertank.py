@@ -15,54 +15,54 @@ from odoo.exceptions import UserError
 
 class WaterTank(models.Model):
     _name = 'care.tank.tank'
-    _description = 'خزان مياه'
+    _description = 'Water tank'
     _inherit = ['mail.thread']
     _order = 'facility_id, code'
 
-    name = fields.Char(string='الخزان', compute='_compute_name', store=True)
-    code = fields.Char(string='رقم الخزان', required=True, tracking=True)
-    facility_id = fields.Many2one('care.cafm.facility', string='المرفق', required=True,
+    name = fields.Char(string='Tank', compute='_compute_name', store=True)
+    code = fields.Char(string='Tank number', required=True, tracking=True)
+    facility_id = fields.Many2one('care.cafm.facility', string='Facility', required=True,
                                   tracking=True, index=True)
-    location_id = fields.Many2one('care.cafm.location', string='الموقع', tracking=True)
+    location_id = fields.Many2one('care.cafm.location', string='Location', tracking=True)
     position = fields.Selection([
-        ('roof', 'علوي (سطح)'), ('ground', 'أرضي'), ('underground', 'تحت الأرض'),
-    ], string='الموقع', default='roof', required=True, tracking=True)
+        ('roof', 'Roof'), ('ground', 'Ground'), ('underground', 'Underground'),
+    ], string='Location', default='roof', required=True, tracking=True)
     material = fields.Selection([
-        ('grp', 'فايبر جلاس GRP'), ('polyethylene', 'بولي إيثيلين'),
-        ('concrete', 'خرساني'), ('steel', 'حديد مجلفن'), ('stainless', 'ستانلس ستيل'),
-    ], string='الخامة', default='grp', tracking=True)
-    capacity_gal = fields.Float(string='السعة (جالون)', tracking=True)
+        ('grp', 'GRP fibreglass'), ('polyethylene', 'Polyethylene'),
+        ('concrete', 'Concrete'), ('steel', 'Galvanised steel'), ('stainless', 'Stainless steel'),
+    ], string='Material', default='grp', tracking=True)
+    capacity_gal = fields.Float(string='Capacity (gallons)', tracking=True)
     use = fields.Selection([
-        ('potable', 'مياه شرب'), ('domestic', 'استخدام عام'), ('fire', 'مكافحة حريق'),
-        ('irrigation', 'ري'),
-    ], string='الاستخدام', default='domestic', required=True, tracking=True)
-    cycle_months = fields.Integer(string='دورة التنظيف (شهر)', default=6, required=True,
+        ('potable', 'Potable'), ('domestic', 'Domestic'), ('fire', 'Firefighting'),
+        ('irrigation', 'Irrigation'),
+    ], string='Use', default='domestic', required=True, tracking=True)
+    cycle_months = fields.Integer(string='Cleaning cycle (months)', default=6, required=True,
                                   tracking=True,
-                                  help='المتعارف عليه ٦ أشهر لمياه الشرب.')
+                                  help='Six months is the norm for potable water.')
 
-    cleaning_ids = fields.One2many('care.tank.cleaning', 'tank_id', string='عمليات التنظيف')
-    last_cleaned = fields.Date(string='آخر تنظيف', compute='_compute_cycle', store=True)
-    next_due = fields.Date(string='التنظيف القادم', compute='_compute_cycle', store=True, index=True)
-    days_left = fields.Integer(string='المتبقّي (يوم)', compute='_compute_days')
+    cleaning_ids = fields.One2many('care.tank.cleaning', 'tank_id', string='Cleaning operations')
+    last_cleaned = fields.Date(string='Last cleaned', compute='_compute_cycle', store=True)
+    next_due = fields.Date(string='Next due', compute='_compute_cycle', store=True, index=True)
+    days_left = fields.Integer(string='Days left', compute='_compute_days')
     status = fields.Selection([
-        ('ok', 'ضمن الدورة'), ('due_soon', 'يستحق قريبًا'), ('overdue', 'متأخر'),
-        ('never', 'لم يُنظَّف بعد'),
-    ], string='حالة الدورة', compute='_compute_days', store=True, index=True)
+        ('ok', 'Within cycle'), ('due_soon', 'Due soon'), ('overdue', 'Overdue'),
+        ('never', 'Never cleaned'),
+    ], string='Cycle status', compute='_compute_days', store=True, index=True)
     last_lab = fields.Selection([
-        ('pass', 'مطابقة'), ('fail', 'غير مطابقة'),
-    ], string='آخر نتيجة مخبرية', compute='_compute_cycle', store=True)
+        ('pass', 'Pass'), ('fail', 'Fail'),
+    ], string='Last lab result', compute='_compute_cycle', store=True)
     active = fields.Boolean(default=True)
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
 
     _sql_constraints = [('code_facility_uniq', 'unique(code, facility_id)',
-                         'رقم الخزان مستخدم في هذا المرفق.')]
+                         'That tank number is already used in this facility.')]
 
     @api.depends('code', 'position', 'capacity_gal')
     def _compute_name(self):
         pos = dict(self._fields['position'].selection)
         for t in self:
             t.name = '%s — %s%s' % (t.code or '', pos.get(t.position, ''),
-                                    ' · %d جالون' % t.capacity_gal if t.capacity_gal else '')
+                                    ' · %d gallons' % t.capacity_gal if t.capacity_gal else '')
 
     @api.depends('cleaning_ids.clean_date', 'cleaning_ids.state', 'cycle_months',
                  'cleaning_ids.lab_result')
@@ -111,7 +111,7 @@ class WaterTank(models.Model):
             try:
                 self.env['care.cafm.notification'].sudo().push(
                     staff,
-                    _('🚰 تنظيف خزان %s') % (_('متأخر') if late else _('يستحق قريبًا')),
+                    _('🚰 Tank cleaning %s') % (_('Overdue') if late else _('Due soon')),
                     '%s — %s' % (t.name, t.facility_id.name or ''),
                     ntype='alert' if late else 'warning')
             except Exception:
@@ -122,43 +122,43 @@ class WaterTank(models.Model):
 class TankCleaning(models.Model):
     """One documented clean. The certificate and the lab result are the point."""
     _name = 'care.tank.cleaning'
-    _description = 'تنظيف خزان'
+    _description = 'Tank cleaning'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'clean_date desc, id desc'
 
     name = fields.Char(default='/', copy=False, readonly=True)
-    tank_id = fields.Many2one('care.tank.tank', string='الخزان', required=True,
+    tank_id = fields.Many2one('care.tank.tank', string='Tank', required=True,
                               ondelete='cascade', index=True, tracking=True)
     facility_id = fields.Many2one(related='tank_id.facility_id', store=True, index=True)
-    clean_date = fields.Date(string='تاريخ التنظيف', default=fields.Date.context_today,
+    clean_date = fields.Date(string='Cleaning date', default=fields.Date.context_today,
                              required=True, tracking=True, index=True)
-    crew_id = fields.Many2one('hr.employee', string='المنفّذ', tracking=True)
+    crew_id = fields.Many2one('hr.employee', string='Done by', tracking=True)
     state = fields.Selection([
-        ('draft', 'قيد التنفيذ'), ('done', 'مكتمل'), ('cancelled', 'ملغى'),
-    ], string='الحالة', default='draft', required=True, tracking=True)
+        ('draft', 'In progress'), ('done', 'Completed'), ('cancelled', 'Cancelled'),
+    ], string='Status', default='draft', required=True, tracking=True)
 
     # the steps that make it a compliant clean rather than a rinse
-    step_drained = fields.Boolean(string='تفريغ الخزان وعزل خط التغذية')
-    step_sediment = fields.Boolean(string='إزالة الرواسب')
-    step_scrubbed = fields.Boolean(string='تنظيف الجدران والقاع')
-    step_disinfected = fields.Boolean(string='تعقيم بالكلور المخفّف')
-    step_rinsed = fields.Boolean(string='شطف كامل حتى زوال أثر الكلور')
-    step_refilled = fields.Boolean(string='إعادة التعبئة')
-    chlorine_ppm = fields.Float(string='تركيز الكلور المستخدم (ppm)', default=50.0,
-                                help='المتعارف عليه 50 ppm لمدة ساعة تلامس.')
-    contact_minutes = fields.Integer(string='زمن التلامس (دقيقة)', default=60)
-    residual_ppm = fields.Float(string='الكلور المتبقي بعد الشطف (ppm)',
-                                help='يجب أن يعود لمستوى الشبكة الطبيعي قبل التشغيل.')
+    step_drained = fields.Boolean(string='Drain the tank and isolate the feed line')
+    step_sediment = fields.Boolean(string='Remove sediment')
+    step_scrubbed = fields.Boolean(string='Clean walls and floor')
+    step_disinfected = fields.Boolean(string='Disinfect with diluted chlorine')
+    step_rinsed = fields.Boolean(string='Rinse until no chlorine trace remains')
+    step_refilled = fields.Boolean(string='Refill')
+    chlorine_ppm = fields.Float(string='Chlorine used (ppm)', default=50.0,
+                                help='50 ppm for one hour of contact is the norm.')
+    contact_minutes = fields.Integer(string='Contact time (minutes)', default=60)
+    residual_ppm = fields.Float(string='Residual chlorine after rinsing (ppm)',
+                                help='It must return to normal mains level before the tank goes back into service.')
 
-    lab_sample_taken = fields.Boolean(string='أُخذت عيّنة مخبرية')
+    lab_sample_taken = fields.Boolean(string='Lab sample taken')
     lab_result = fields.Selection([
-        ('pass', 'مطابقة للمواصفة'), ('fail', 'غير مطابقة'),
-    ], string='نتيجة التحليل', tracking=True)
-    lab_reference = fields.Char(string='رقم التقرير المخبري')
-    certificate_no = fields.Char(string='رقم شهادة التنظيف', copy=False, readonly=True,
+        ('pass', 'Meets the standard'), ('fail', 'Fail'),
+    ], string='Lab result', tracking=True)
+    lab_reference = fields.Char(string='Lab report number')
+    certificate_no = fields.Char(string='Cleaning certificate number', copy=False, readonly=True,
                                  tracking=True)
-    findings = fields.Text(string='الملاحظات')
-    completeness = fields.Integer(string='اكتمال الخطوات %', compute='_compute_complete', store=True)
+    findings = fields.Text(string='Findings')
+    completeness = fields.Integer(string='Steps completed %', compute='_compute_complete', store=True)
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
 
     STEPS = ['step_drained', 'step_sediment', 'step_scrubbed',
@@ -183,12 +183,12 @@ class TankCleaning(models.Model):
         for c in self:
             missing = [self._fields[f].string for f in self.STEPS if not c[f]]
             if missing:
-                raise UserError(_('لا يمكن إصدار الشهادة قبل إتمام كل الخطوات.\nالمتبقّي: %s')
-                                % '، '.join(missing))
+                raise UserError(_('The certificate cannot be issued before every step is done.\nRemaining: %s')
+                                % ', '.join(missing))
             if c.lab_sample_taken and not c.lab_result:
-                raise UserError(_('سُجّلت عيّنة مخبرية دون نتيجة — أدخل النتيجة أولًا.'))
+                raise UserError(_('A lab sample was recorded with no result — enter the result first.'))
             if c.lab_result == 'fail':
-                raise UserError(_('نتيجة التحليل غير مطابقة — يجب إعادة التنظيف قبل الاعتماد.'))
+                raise UserError(_('The lab result failed — the tank must be cleaned again before approval.'))
             c.certificate_no = c.certificate_no or (
                 self.env['ir.sequence'].next_by_code('care.tank.certificate') or c.name)
             c.state = 'done'
@@ -207,8 +207,8 @@ class TankCleaning(models.Model):
             return
         try:
             self.env['care.cafm.notification'].sudo().push(
-                client.user_ids, _('🚰 تم تنظيف خزان وإصدار الشهادة'),
-                '%s — شهادة %s' % (self.tank_id.name, self.certificate_no or ''),
+                client.user_ids, _('🚰 Tank cleaned and certificate issued'),
+                '%s — certificate %s' % (self.tank_id.name, self.certificate_no or ''),
                 ntype='info')
         except Exception:
             pass

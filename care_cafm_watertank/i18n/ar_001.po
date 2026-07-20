@@ -1,0 +1,666 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* care_cafm_watertank
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0+e-20241205\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-20 12:11+0000\n"
+"PO-Revision-Date: 2026-07-20 12:11+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: care_cafm_watertank
+#. odoo-python
+#: code:addons/care_cafm_watertank/models/watertank.py:0
+#, python-format
+msgid "A lab sample was recorded with no result — enter the result first."
+msgstr "سُجّلت عيّنة مخبرية دون نتيجة — أدخل النتيجة أولًا."
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__message_needaction
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__message_needaction
+msgid "Action Needed"
+msgstr "إجراء مطلوب"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__active
+msgid "Active"
+msgstr "نشط"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__activity_ids
+msgid "Activities"
+msgstr "الأنشطة"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr "تنسيق استثناء النشاط"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__activity_state
+msgid "Activity State"
+msgstr "حالة النشاط"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__activity_type_icon
+msgid "Activity Type Icon"
+msgstr "أيقونة نوع النشاط"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__message_attachment_count
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__message_attachment_count
+msgid "Attachment Count"
+msgstr "عدد المرفقات"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_cleaning__state__cancelled
+msgid "Cancelled"
+msgstr "ملغى"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__capacity_gal
+msgid "Capacity (gallons)"
+msgstr "السعة (جالون)"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__chlorine_ppm
+msgid "Chlorine used (ppm)"
+msgstr "تركيز الكلور المستخدم (ppm)"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__step_scrubbed
+msgid "Clean walls and floor"
+msgstr "تنظيف الجدران والقاع"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__certificate_no
+msgid "Cleaning certificate number"
+msgstr "رقم شهادة التنظيف"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__cycle_months
+msgid "Cleaning cycle (months)"
+msgstr "دورة التنظيف (شهر)"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__clean_date
+msgid "Cleaning date"
+msgstr "تاريخ التنظيف"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__cleaning_ids
+msgid "Cleaning operations"
+msgstr "عمليات التنظيف"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__company_id
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__company_id
+msgid "Company"
+msgstr "الشركة"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_cleaning__state__done
+msgid "Completed"
+msgstr "مكتمل"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_tank__material__concrete
+msgid "Concrete"
+msgstr "خرساني"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__contact_minutes
+msgid "Contact time (minutes)"
+msgstr "زمن التلامس (دقيقة)"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__create_uid
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__create_uid
+msgid "Created by"
+msgstr "أنشأه"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__create_date
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__create_date
+msgid "Created on"
+msgstr "تاريخ الإنشاء"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__status
+msgid "Cycle status"
+msgstr "حالة الدورة"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__days_left
+msgid "Days left"
+msgstr "المتبقّي (يوم)"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__step_disinfected
+msgid "Disinfect with diluted chlorine"
+msgstr "تعقيم بالكلور المخفّف"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__display_name
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_tank__use__domestic
+msgid "Domestic"
+msgstr "استخدام عام"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__crew_id
+msgid "Done by"
+msgstr "المنفّذ"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__step_drained
+msgid "Drain the tank and isolate the feed line"
+msgstr "تفريغ الخزان وعزل خط التغذية"
+
+#. module: care_cafm_watertank
+#. odoo-python
+#: code:addons/care_cafm_watertank/models/watertank.py:0
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_tank__status__due_soon
+#, python-format
+msgid "Due soon"
+msgstr "يستحق قريبًا"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__facility_id
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__facility_id
+msgid "Facility"
+msgstr "المرفق"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_cleaning__lab_result__fail
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_tank__last_lab__fail
+msgid "Fail"
+msgstr "غير مطابقة"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__findings
+msgid "Findings"
+msgstr "الملاحظات"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_tank__use__fire
+msgid "Firefighting"
+msgstr "مكافحة حريق"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__message_follower_ids
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__message_follower_ids
+msgid "Followers"
+msgstr "المتابعون"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__message_partner_ids
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "المتابعون (جهات)"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,help:care_cafm_watertank.field_care_tank_cleaning__activity_type_icon
+msgid "Font awesome icon e.g. fa-tasks"
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_tank__material__grp
+msgid "GRP fibreglass"
+msgstr "فايبر جلاس GRP"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_tank__material__steel
+msgid "Galvanised steel"
+msgstr "حديد مجلفن"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_tank__position__ground
+msgid "Ground"
+msgstr "أرضي"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__has_message
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__has_message
+msgid "Has Message"
+msgstr "به رسائل"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__id
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__activity_exception_icon
+msgid "Icon"
+msgstr "الأيقونة"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,help:care_cafm_watertank.field_care_tank_cleaning__activity_exception_icon
+msgid "Icon to indicate an exception activity."
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,help:care_cafm_watertank.field_care_tank_cleaning__message_needaction
+#: model:ir.model.fields,help:care_cafm_watertank.field_care_tank_tank__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "عند التفعيل، الرسائل الجديدة تتطلّب انتباهك."
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,help:care_cafm_watertank.field_care_tank_cleaning__message_has_error
+#: model:ir.model.fields,help:care_cafm_watertank.field_care_tank_cleaning__message_has_sms_error
+#: model:ir.model.fields,help:care_cafm_watertank.field_care_tank_tank__message_has_error
+#: model:ir.model.fields,help:care_cafm_watertank.field_care_tank_tank__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr "عند التفعيل، بعض الرسائل بها خطأ في التسليم."
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_cleaning__state__draft
+msgid "In progress"
+msgstr "قيد التنفيذ"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_tank__use__irrigation
+msgid "Irrigation"
+msgstr "ري"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__message_is_follower
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__message_is_follower
+msgid "Is Follower"
+msgstr "متابِع"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__lab_reference
+msgid "Lab report number"
+msgstr "رقم التقرير المخبري"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__lab_result
+msgid "Lab result"
+msgstr "نتيجة التحليل"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__lab_sample_taken
+msgid "Lab sample taken"
+msgstr "أُخذت عيّنة مخبرية"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__write_uid
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__write_date
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__last_cleaned
+msgid "Last cleaned"
+msgstr "آخر تنظيف"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__last_lab
+msgid "Last lab result"
+msgstr "آخر نتيجة مخبرية"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__location_id
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__position
+msgid "Location"
+msgstr "الموقع"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__material
+msgid "Material"
+msgstr "الخامة"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_cleaning__lab_result__pass
+msgid "Meets the standard"
+msgstr "مطابقة للمواصفة"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__message_has_error
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__message_has_error
+msgid "Message Delivery error"
+msgstr "خطأ تسليم الرسالة"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__message_ids
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__message_ids
+msgid "Messages"
+msgstr "الرسائل"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__my_activity_date_deadline
+msgid "My Activity Deadline"
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__name
+msgid "Name"
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_tank__status__never
+msgid "Never cleaned"
+msgstr "لم يُنظَّف بعد"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__activity_calendar_event_id
+msgid "Next Activity Calendar Event"
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr "موعد النشاط التالي"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__activity_summary
+msgid "Next Activity Summary"
+msgstr "ملخّص النشاط التالي"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__activity_type_id
+msgid "Next Activity Type"
+msgstr "نوع النشاط التالي"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__next_due
+msgid "Next due"
+msgstr "التنظيف القادم"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__message_needaction_counter
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__message_needaction_counter
+msgid "Number of Actions"
+msgstr "عدد الإجراءات"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__message_has_error_counter
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__message_has_error_counter
+msgid "Number of errors"
+msgstr "عدد الأخطاء"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,help:care_cafm_watertank.field_care_tank_cleaning__message_needaction_counter
+#: model:ir.model.fields,help:care_cafm_watertank.field_care_tank_tank__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "عدد الرسائل التي تتطلّب إجراءً"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,help:care_cafm_watertank.field_care_tank_cleaning__message_has_error_counter
+#: model:ir.model.fields,help:care_cafm_watertank.field_care_tank_tank__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "عدد الرسائل التي بها خطأ تسليم"
+
+#. module: care_cafm_watertank
+#. odoo-python
+#: code:addons/care_cafm_watertank/models/watertank.py:0
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_tank__status__overdue
+#, python-format
+msgid "Overdue"
+msgstr "متأخر"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_tank__last_lab__pass
+msgid "Pass"
+msgstr "مطابقة"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_tank__material__polyethylene
+msgid "Polyethylene"
+msgstr "بولي إيثيلين"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_tank__use__potable
+msgid "Potable"
+msgstr "مياه شرب"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__rating_ids
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__rating_ids
+msgid "Ratings"
+msgstr "التقييمات"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__step_refilled
+msgid "Refill"
+msgstr "إعادة التعبئة"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__step_sediment
+msgid "Remove sediment"
+msgstr "إزالة الرواسب"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__residual_ppm
+msgid "Residual chlorine after rinsing (ppm)"
+msgstr "الكلور المتبقي بعد الشطف (ppm)"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__activity_user_id
+msgid "Responsible User"
+msgstr "المستخدم المسؤول"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__step_rinsed
+msgid "Rinse until no chlorine trace remains"
+msgstr "شطف كامل حتى زوال أثر الكلور"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_tank__position__roof
+msgid "Roof"
+msgstr "علوي (سطح)"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__message_has_sms_error
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_tank__material__stainless
+msgid "Stainless steel"
+msgstr "ستانلس ستيل"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__state
+msgid "Status"
+msgstr "الحالة"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,help:care_cafm_watertank.field_care_tank_cleaning__activity_state
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__completeness
+msgid "Steps completed %"
+msgstr "اكتمال الخطوات %"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__tank_id
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__name
+msgid "Tank"
+msgstr "الخزان"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__code
+msgid "Tank number"
+msgstr "رقم الخزان"
+
+#. module: care_cafm_watertank
+#. odoo-python
+#: code:addons/care_cafm_watertank/models/watertank.py:0
+#, python-format
+msgid ""
+"The certificate cannot be issued before every step is done.\n"
+"Remaining: %s"
+msgstr ""
+
+#. module: care_cafm_watertank
+#. odoo-python
+#: code:addons/care_cafm_watertank/models/watertank.py:0
+#, python-format
+msgid ""
+"The lab result failed — the tank must be cleaned again before approval."
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,help:care_cafm_watertank.field_care_tank_cleaning__activity_exception_decoration
+msgid "Type of the exception activity on record."
+msgstr "نوع نشاط الاستثناء على السجل."
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_tank__position__underground
+msgid "Underground"
+msgstr "تحت الأرض"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__use
+msgid "Use"
+msgstr "الاستخدام"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_cleaning__website_message_ids
+#: model:ir.model.fields,field_description:care_cafm_watertank.field_care_tank_tank__website_message_ids
+msgid "Website Messages"
+msgstr "رسائل الموقع"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,help:care_cafm_watertank.field_care_tank_cleaning__website_message_ids
+#: model:ir.model.fields,help:care_cafm_watertank.field_care_tank_tank__website_message_ids
+msgid "Website communication history"
+msgstr "سجل مراسلات الموقع"
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields.selection,name:care_cafm_watertank.selection__care_tank_tank__status__ok
+msgid "Within cycle"
+msgstr "ضمن الدورة"
+
+#. module: care_cafm_watertank
+#: model_terms:ir.ui.view,arch_db:care_cafm_watertank.view_tankclean_form
+msgid "إتمام وإصدار الشهادة"
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model_terms:ir.ui.view,arch_db:care_cafm_watertank.view_tankclean_form
+msgid "إلغاء"
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model_terms:ir.ui.view,arch_db:care_cafm_watertank.view_tankclean_form
+msgid "التحليل المخبري"
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model:ir.actions.act_window,name:care_cafm_watertank.action_tank
+msgid "الخزانات"
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,help:care_cafm_watertank.field_care_tank_cleaning__chlorine_ppm
+msgid "المتعارف عليه 50 ppm لمدة ساعة تلامس."
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,help:care_cafm_watertank.field_care_tank_tank__cycle_months
+msgid "المتعارف عليه ٦ أشهر لمياه الشرب."
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model_terms:ir.ui.view,arch_db:care_cafm_watertank.view_tank_form
+msgid "بدء تنظيف"
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model:ir.model,name:care_cafm_watertank.model_care_tank_cleaning
+msgid "تنظيف خزان"
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model:ir.model,name:care_cafm_watertank.model_care_tank_tank
+msgid "خزان مياه"
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model:ir.ui.menu,name:care_cafm_watertank.menu_tank_root
+msgid "خزانات المياه"
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model:ir.actions.server,name:care_cafm_watertank.cron_tank_due_ir_actions_server
+msgid "خزانات المياه: تنبيه الدورات المستحقة"
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model_terms:ir.ui.view,arch_db:care_cafm_watertank.view_tankclean_form
+msgid "خطوات التنظيف — الشهادة لا تصدر قبل إتمامها"
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model_terms:ir.ui.view,arch_db:care_cafm_watertank.view_tank_form
+msgid "رقم الخزان"
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model:ir.model.constraint,message:care_cafm_watertank.constraint_care_tank_tank_code_facility_uniq
+msgid "رقم الخزان مستخدم في هذا المرفق."
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model:ir.ui.menu,name:care_cafm_watertank.menu_tank_tanks
+msgid "سجل الخزانات"
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model:ir.actions.act_window,name:care_cafm_watertank.action_tank_cleaning
+#: model:ir.ui.menu,name:care_cafm_watertank.menu_tank_clean
+msgid "عمليات التنظيف"
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model_terms:ir.ui.view,arch_db:care_cafm_watertank.view_tankclean_form
+msgid "ملاحظات…"
+msgstr ""
+
+#. module: care_cafm_watertank
+#: model:ir.model.fields,help:care_cafm_watertank.field_care_tank_cleaning__residual_ppm
+msgid "يجب أن يعود لمستوى الشبكة الطبيعي قبل التشغيل."
+msgstr ""
+
+#. module: care_cafm_watertank
+#. odoo-python
+#: code:addons/care_cafm_watertank/models/watertank.py:0
+#, python-format
+msgid "🚰 Tank cleaned and certificate issued"
+msgstr "🚰 تم تنظيف خزان وإصدار الشهادة"
+
+#. module: care_cafm_watertank
+#. odoo-python
+#: code:addons/care_cafm_watertank/models/watertank.py:0
+#, python-format
+msgid "🚰 Tank cleaning %s"
+msgstr "🚰 تنظيف خزان %s"

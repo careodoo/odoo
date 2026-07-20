@@ -77,7 +77,7 @@
     <field name="view_mode">tree,form</field>
   </record>
   <record id="action_tank_cleaning" model="ir.actions.act_window">
-    <field name="name">عمليات التنظيف</field><field name="res_model">care.tank.cleaning</field>
+    <field name="name">Cleaning operations</field><field name="res_model">care.tank.cleaning</field>
     <field name="view_mode">tree,form</field>
   </record>
   <menuitem id="menu_tank_root" name="خزانات المياه" sequence="49"/>

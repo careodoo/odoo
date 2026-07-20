@@ -325,3 +325,108 @@ class HospitalityApi(Controller):
             return _err(str(e) or 'تعذّر الحفظ', 422)
         return _ok({'location': env.user.hosp_location_id.name or None,
                     'room_label': env.user.hosp_room_label or None})
+
+    # ---- pantry: what is left, in servings, and how to refill it -----------
+    @route(API + '/hosp/stock', type='http', auth='public', methods=['GET'],
+           csrf=False, cors='*')
+    def hosp_stock(self, **kw):
+        """The pantry as a storekeeper reads it.
+
+        Grams are what the scale says; servings are what the decision needs.
+        Both travel, plus days of cover, so "order more coffee" stops being a
+        guess.
+        """
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        S = env['care.hosp.supply'].sudo()
+        P = env['care.hosp.purchase'].sudo()
+        uom = dict(S._fields['uom_name'].selection)
+        cat = dict(S._fields['category'].selection)
+        sups = S.search([('active', '=', True)])
+        return _ok({
+            'supplies': [{
+                'id': s.id, 'name': s.name, 'code': s.code,
+                'category': s.category, 'category_label': cat.get(s.category, ''),
+                'uom': s.uom_name, 'uom_label': uom.get(s.uom_name, ''),
+                'pack_name': s.pack_name, 'pack_size': s.pack_size,
+                'on_hand': s.on_hand, 'packs': round(s.packs_on_hand, 2),
+                'min_qty': s.min_qty, 'low': s.low_stock,
+                'servings_left': round(s.servings_left),
+                'per_serving': s.per_serving_hint,
+                'daily_use': round(s.daily_use, 2),
+                'days_cover': round(s.days_cover, 1),
+                'unit_cost': s.unit_cost, 'value': round(s.stock_value, 3),
+                'supplier_type': s.supplier_type,
+                'supplier': s.partner_id.name or None,
+                'used_in': [{'item': r.item_id.name,
+                             'qty': r.qty_per_serving,
+                             'per_pack': round(r.servings_per_pack),
+                             'option': r.option_id.name or None}
+                            for r in s.recipe_ids],
+            } for s in sups],
+            'totals': {
+                'value': round(sum(sups.mapped('stock_value')), 3),
+                'low': len(sups.filtered('low_stock')),
+                'urgent': len([s for s in sups if s.days_cover and s.days_cover < 7]),
+            },
+            'purchases': [{
+                'id': p.id, 'name': p.name, 'date': str(p.date),
+                'source': p.source, 'state': p.state,
+                'supplier': p.partner_id.name or 'CARE',
+                'lines': len(p.line_ids), 'total': round(p.total_cost, 3),
+            } for p in P.search([], order='date desc, id desc', limit=40)],
+        })
+
+    @route(API + '/hosp/purchase/create', type='http', auth='public',
+           methods=['POST'], csrf=False, cors='*')
+    def hosp_purchase_create(self, **kw):
+        """Order supplies — from CARE's own store or an outside vendor."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        b = _body()
+        lines = b.get('lines') or []
+        if not lines:
+            return _err('أضف صنفًا واحدًا على الأقل', 422)
+        fac = env['care.cafm.facility'].sudo().browse(
+            int(b['facility_id'])) if b.get('facility_id') else \
+            env['care.hosp.supply'].sudo().search([], limit=1).facility_id
+        if not fac:
+            return _err('المرفق مطلوب', 422)
+        try:
+            p = env['care.hosp.purchase'].sudo().create({
+                'facility_id': fac.id,
+                'source': b.get('source') or 'care',
+                'partner_id': int(b['partner_id']) if b.get('partner_id') else False,
+                'reference': b.get('reference') or False,
+                'note': b.get('note') or False,
+                'line_ids': [(0, 0, {
+                    'supply_id': int(l['supply_id']),
+                    'quantity': float(l.get('quantity') or 1),
+                    'by_pack': l.get('by_pack', True),
+                    'unit_cost': float(l.get('unit_cost') or 0) or False,
+                }) for l in lines],
+            })
+        except Exception as e:
+            return _err(str(e) or 'تعذّر الحفظ', 422)
+        return _ok({'id': p.id, 'name': p.name, 'total': round(p.total_cost, 3)})
+
+    @route(API + '/hosp/purchase/<int:pid>/<string:act>', type='http',
+           auth='public', methods=['POST'], csrf=False, cors='*')
+    def hosp_purchase_act(self, pid, act, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        p = env['care.hosp.purchase'].sudo().browse(pid).exists()
+        if not p:
+            return _err('غير موجود', 404)
+        fn = {'submit': p.action_submit, 'approve': p.action_approve,
+              'receive': p.action_receive, 'cancel': p.action_cancel}.get(act)
+        if not fn:
+            return _err('إجراء غير معروف', 400)
+        try:
+            fn()
+        except Exception as e:
+            return _err(str(e) or 'تعذّر التنفيذ', 422)
+        return _ok({'state': p.state})
