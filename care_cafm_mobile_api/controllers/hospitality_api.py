@@ -10,6 +10,11 @@ from odoo.http import request, Controller, route
 from .api import _auth, _ok, _err, _body, API
 
 
+def _base():
+    return request.env['ir.config_parameter'].sudo().get_param(
+        'web.base.url', '').rstrip('/')
+
+
 class HospitalityApi(Controller):
 
     # ---- scoping ----------------------------------------------------------
@@ -86,6 +91,18 @@ class HospitalityApi(Controller):
         return _ok({
             'available': True,
             'facilities': [{'id': f.id, 'name': f.name} for f in facs],
+            # Where this person is served, so the order sheet arrives filled in
+            # instead of asking for an office number every single time.
+            'my_place': {
+                'location_id': env.user.hosp_location_id.id or None,
+                'location': env.user.hosp_location_id.name or None,
+                'code': env.user.hosp_location_id.code or None,
+                'room_label': env.user.hosp_room_label or None,
+                'locked': env.user.hosp_location_locked,
+            },
+            'places': [{'id': l.id, 'name': l.name, 'code': l.code or None}
+                       for l in env['care.cafm.location'].sudo().search(
+                           [('facility_id', 'in', facs.ids)], limit=400)],
             'categories': [{'id': c.id, 'name': c.name, 'icon': c.icon or '☕',
                             'color': c.color or '#8a6d3b', 'sequence': c.sequence}
                            for c in cats],
@@ -93,6 +110,11 @@ class HospitalityApi(Controller):
                 'id': i.id, 'name': i.name, 'icon': i.icon or '☕',
                 'category_id': i.category_id.id, 'category': i.category_id.name,
                 'description': i.description or None,
+                # A menu is looked at before it is read. The URL is served by
+                # Odoo's image endpoint so the payload stays small and the
+                # phone can cache each photo.
+                'image': ('%s/web/image/care.hosp.item/%s/image/400x400'
+                          % (_base(), i.id)) if i.image else None,
                 'prep_minutes': i.prep_minutes, 'cost': i.unit_cost,
                 # a breakfast item outside its serving window must not look orderable
                 'servable': i.is_servable_now(),
@@ -133,7 +155,11 @@ class HospitalityApi(Controller):
         emp = env.user.employee_id
         vals = {
             'requester_id': env.user.id, 'facility_id': fid,
-            'room_label': b.get('room') or False, 'note': b.get('note') or False,
+            'room_label': (b.get('room') or env.user.hosp_room_label
+                           or env.user.hosp_location_id.name or False),
+            'location_id': (int(b['location_id']) if b.get('location_id')
+                            else env.user.hosp_location_id.id or False),
+            'note': b.get('note') or False,
             'order_type': b.get('order_type') or 'self',
             'guest_count': int(b.get('guest_count') or 1),
             'guest_name': b.get('guest_name') or False,
@@ -281,3 +307,21 @@ class HospitalityApi(Controller):
         except Exception as e:
             return _err(str(getattr(e, 'args', [e])[0] if getattr(e, 'args', None) else e), 422)
         return _ok(self._order(o))
+
+    @route(API + '/hosp/place', type='http', auth='public', methods=['POST'],
+           csrf=False, cors='*')
+    def hosp_set_place(self, **kw):
+        """Set my serving place — by location id, by scanned code, or by name."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        b = _body()
+        try:
+            env.user.hosp_set_place(
+                location_id=int(b['location_id']) if b.get('location_id') else None,
+                room_label=b.get('room_label'),
+                code=b.get('code'))
+        except Exception as e:
+            return _err(str(e) or 'تعذّر الحفظ', 422)
+        return _ok({'location': env.user.hosp_location_id.name or None,
+                    'room_label': env.user.hosp_room_label or None})

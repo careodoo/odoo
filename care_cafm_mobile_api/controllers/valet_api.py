@@ -43,6 +43,23 @@ class ValetApi(Controller):
         T = t._fields
         return {
             'id': t.id, 'name': t.name, 'plate': t.plate,
+            # What the plate already knows: a returning car should not be
+            # re-typed, and a standing note must reach the crew every visit.
+            'vehicle': ({
+                'id': t.vehicle_id.id, 'plate': t.vehicle_id.plate,
+                'make': t.vehicle_id.make, 'model': t.vehicle_id.model,
+                'color': t.vehicle_id.color,
+                'owner': t.vehicle_id.owner_name, 'phone': t.vehicle_id.owner_phone,
+                'owner_type': t.vehicle_id.owner_type,
+                'visits': t.vehicle_id.visit_count,
+                'regular': t.vehicle_id.is_regular,
+                'vip': t.vehicle_id.vip, 'blocked': t.vehicle_id.blocked,
+                'block_reason': t.vehicle_id.block_reason or None,
+                'notes': t.vehicle_id.notes or None,
+                'avg_stay': round(t.vehicle_id.avg_stay_minutes),
+                'last_seen': str(t.vehicle_id.last_seen or '')[:16] or None,
+            } if t.vehicle_id else None),
+            'visit_number': t.visit_number,
             'car': ' '.join(filter(None, [t.car_make, t.car_model, t.car_color])) or None,
             'car_make': t.car_make or None, 'car_model': t.car_model or None,
             'car_color': t.car_color or None, 'key_tag': t.key_tag or None,
@@ -225,3 +242,44 @@ class ValetApi(Controller):
             return _ok({'id': cur.id, 'name': cur.name, 'tickets': cur.ticket_count,
                         'fees': cur.total_fees, 'tips': cur.total_tips, 'cash_due': cur.cash_due})
         return _err('إجراء غير معروف', 400)
+
+    # A Kuwaiti plate often contains a slash, which cannot survive in a path
+    # segment, so the plate travels as a query parameter.
+    @route([API + '/valet/plate', API + '/valet/plate/<path:plate>'], type='http',
+           auth='public', methods=['GET'], csrf=False, cors='*')
+    def valet_plate_lookup(self, plate=None, **kw):
+        """What do we already know about this plate?
+
+        Called the moment the camera reads one, so the crew sees the car's
+        history before the guest has finished handing over the key. An unknown
+        plate is an ordinary answer, not an error.
+        """
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        plate = plate or kw.get('plate') or request.httprequest.args.get('plate')
+        if not plate:
+            return _err('أدخل رقم اللوحة', 422)
+        v = env['care.valet.vehicle'].sudo().find_by_plate(plate)
+        if not v:
+            return _ok({'known': False, 'plate': plate})
+        recent = env['care.valet.ticket'].sudo().search(
+            [('vehicle_id', '=', v.id)], order='received_at desc', limit=8)
+        return _ok({
+            'known': True, 'id': v.id, 'plate': v.plate,
+            'make': v.make, 'model': v.model, 'color': v.color,
+            'owner': v.owner_name, 'phone': v.owner_phone,
+            'owner_type': v.owner_type, 'visits': v.visit_count,
+            'regular': v.is_regular, 'vip': v.vip,
+            'blocked': v.blocked, 'block_reason': v.block_reason or None,
+            'notes': v.notes or None,
+            'avg_stay': round(v.avg_stay_minutes),
+            'last_seen': str(v.last_seen or '')[:16] or None,
+            'preferred_zone': v.preferred_zone_id.name or None,
+            'history': [{
+                'id': t.id, 'name': t.name, 'state': t.state,
+                'received_at': str(t.received_at or '')[:16],
+                'delivered_at': str(t.delivered_at or '')[:16] or None,
+                'zone': t.zone_id.name or None,
+            } for t in recent],
+        })

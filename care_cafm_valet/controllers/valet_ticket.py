@@ -71,14 +71,11 @@ class ValetTicketPortal(http.Controller):
         rows = [
             (_('رقم التذكرة'), t.name),
             (_('اللوحة'), t.plate),
-            (_('المركبة'), ' '.join(filter(None, [t.car_make, t.car_model, t.car_color])) or '—'),
-            (_('رقم المفتاح'), t.key_tag or '—'),
-            (_('الضيف'), t.guest_name or '—'),
-            (_('الهاتف'), t.guest_phone or '—'),
-            (_('المرفق'), t.facility_id.name or '—'),
+            # A claim slip, not a file: only what is needed to return the car.
+            (_('المركبة'), ' '.join(filter(None, [t.car_make, t.car_color])) or '—'),
+            (_('المفتاح'), t.key_tag or '—'),
             (_('الموقف'), t.spot_id.name or t.zone_id.name or '—'),
-            (_('وقت الاستلام'), str(t.received_at or '')[:16]),
-            (_('استلمها'), t.received_by.sudo().name or '—'),
+            (_('الوقت'), str(t.received_at or '')[5:16]),
         ]
         body = Markup('').join(
             Markup('<tr><td class="k">%s</td><td class="v">%s</td></tr>') % (k, v or '—')
@@ -97,25 +94,25 @@ class ValetTicketPortal(http.Controller):
 <title>__NAME__</title><style>
 *{box-sizing:border-box}
 body{margin:0;background:#eef1f5;font-family:"Segoe UI",Tahoma,system-ui,"Noto Sans Arabic",sans-serif;
-     display:flex;justify-content:center;padding:18px}
-.t{width:360px;background:#fff;border-radius:16px;overflow:hidden;
+     display:flex;justify-content:center;padding:8px}
+.t{width:260px;background:#fff;border-radius:16px;overflow:hidden;
    box-shadow:0 10px 30px -12px rgba(0,0,0,.35)}
-.h{background:linear-gradient(150deg,__RED__,#7a3906);color:#fff;padding:16px 18px;text-align:center}
-.h .b{font-size:12px;letter-spacing:3px;opacity:.85}
-.h .n{font-size:24px;font-weight:900;margin-top:2px;letter-spacing:1px}
-.h .p{font-size:15px;font-weight:800;margin-top:6px;background:rgba(255,255,255,.16);
-      display:inline-block;padding:5px 14px;border-radius:9px}
-table{width:100%;border-collapse:collapse;font-size:13px}
-td{padding:8px 18px;border-bottom:1px solid #eef1f5}
+.h{background:linear-gradient(150deg,__RED__,#7a3906);color:#fff;padding:9px 12px;text-align:center}
+.h .b{font-size:9px;letter-spacing:2px;opacity:.85}
+.h .n{font-size:17px;font-weight:900;margin-top:2px;letter-spacing:1px}
+.h .p{font-size:13px;font-weight:800;margin-top:4px;background:rgba(255,255,255,.16);
+      display:inline-block;padding:3px 10px;border-radius:7px}
+table{width:100%;border-collapse:collapse;font-size:10.5px}
+td{padding:4px 11px;border-bottom:1px solid #f1f4f7}
 .k{color:#7d8b9c;width:42%}
 .v{font-weight:800;color:__INK__}
-.qr{text-align:center;padding:16px}
-.qr img{width:180px;height:180px}
-.qr .c{font-size:12.5px;color:#7d8b9c;margin-top:8px;line-height:1.6}
+.qr{text-align:center;padding:9px}
+.qr img{width:112px;height:112px}
+.qr .c{font-size:9.5px;color:#7d8b9c;margin-top:5px;line-height:1.45}
 .qr .c b{color:__INK__}
-.note{margin:0 18px 14px;padding:10px;background:#fff6ed;border:1px solid #f3d9bd;
-      border-radius:10px;font-size:12px;color:#7a3906}
-.f{background:#f7f8fa;padding:11px;text-align:center;font-size:11px;color:#8b97a6}
+.note{margin:0 11px 9px;padding:7px;background:#fff6ed;border:1px solid #f3d9bd;
+      border-radius:8px;font-size:9.5px;color:#7a3906}
+.f{background:#f7f8fa;padding:6px;text-align:center;font-size:8.5px;color:#8b97a6}
 .pr{display:block;margin:14px auto 0;background:__RED__;color:#fff;border:none;
     border-radius:11px;padding:12px 26px;font-size:15px;font-weight:900;cursor:pointer;
     font-family:inherit}
@@ -216,7 +213,10 @@ td{padding:8px 18px;border-bottom:1px solid #eef1f5}
         return request.redirect('/valet/t/%s' % token)
 
     def _page(self, icon, title, sub, plate, extra=Markup('')):
-        html = Markup("""<!doctype html><html lang="ar" dir="rtl"><head>
+        # Same trap as the ticket: a Markup template escapes what replace()
+        # puts into it, so the CTA button and the plate block arrived as
+        # visible source instead of markup.
+        html = ("""<!doctype html><html lang="ar" dir="rtl"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>__TITLE__ · CARE Valet</title><style>
 *{box-sizing:border-box}
@@ -241,6 +241,7 @@ __PLATE__ __EXTRA__
 <div class="b">CARE VALET</div>
 </div></body></html>""")
         plate_html = (Markup('<div class="plate">%s</div>') % plate) if plate else Markup('')
-        return (html.replace('__ICON__', icon).replace('__TITLE__', str(title))
-                .replace('__SUB__', str(sub)).replace('__RED__', RED)
+        return (html.replace('__ICON__', str(icon))
+                .replace('__TITLE__', str(escape(title)))
+                .replace('__SUB__', str(escape(sub))).replace('__RED__', RED)
                 .replace('__PLATE__', str(plate_html)).replace('__EXTRA__', str(extra)))

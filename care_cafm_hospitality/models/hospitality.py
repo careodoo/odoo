@@ -592,3 +592,51 @@ class HospStanding(models.Model):
                 order.action_cancel()
             s.last_run = today
         return True
+
+
+class ResUsersHospitality(models.Model):
+    """Where this person is served.
+
+    A guest typing their office number into every order is how orders arrive at
+    the wrong desk. The place is a property of the person, set once — by the
+    location's own QR code or by name — and changeable when they move desks or
+    order for a meeting room instead.
+    """
+    _inherit = 'res.users'
+
+    hosp_location_id = fields.Many2one(
+        'care.cafm.location', string='مكان التقديم المعتاد',
+        help='يُملأ تلقائيًا في كل طلب ضيافة، ويمكن تغييره عند الطلب.')
+    hosp_room_label = fields.Char(
+        string='المكتب/القاعة',
+        help='يُستخدم عندما لا يكون المكان مسجّلاً كموقع في النظام.')
+    hosp_location_locked = fields.Boolean(
+        string='تثبيت المكان', default=False,
+        help='عند تفعيله لا يستطيع المستخدم تغيير المكان أثناء الطلب — '
+             'يضبطه مسؤول العميل فقط.')
+
+    def hosp_place(self):
+        """(location, label) for this user, whatever was filled in."""
+        self.ensure_one()
+        return self.hosp_location_id, (
+            self.hosp_room_label or self.hosp_location_id.name or '')
+
+    def hosp_set_place(self, location_id=None, room_label=None, code=None):
+        """Set the default place, resolving a scanned location code if given."""
+        self.ensure_one()
+        if self.hosp_location_locked and not self.env.user._is_admin():
+            raise UserError(_('مكان التقديم مثبَّت — راجع مسؤول الحساب لتغييره.'))
+        if code:
+            loc = self.env['care.cafm.location'].sudo().search(
+                [('code', '=', code)], limit=1)
+            if not loc:
+                raise UserError(_('لا يوجد موقع بهذا الرمز: %s') % code)
+            location_id = loc.id
+        vals = {}
+        if location_id is not None:
+            vals['hosp_location_id'] = location_id or False
+        if room_label is not None:
+            vals['hosp_room_label'] = room_label or False
+        if vals:
+            self.sudo().write(vals)
+        return True
