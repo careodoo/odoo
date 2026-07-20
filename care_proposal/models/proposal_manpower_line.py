@@ -27,11 +27,11 @@ class ProposalManpowerLine(models.Model):
         domain="[('id', 'in', service_ids)]",
         string='Service',
     )
-    salary = fields.Float(
+    salary = fields.Float(digits=(16, 3), 
         compute='compute_salary',
         store=True,
     )
-    total_salary = fields.Float(
+    total_salary = fields.Float(digits=(16, 3), 
         compute='compute_total_salary',
         store=True,
     )

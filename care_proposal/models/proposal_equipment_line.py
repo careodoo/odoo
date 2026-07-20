@@ -8,8 +8,8 @@ class ProposalEquipmentLine(models.Model):
     product_id = fields.Many2one('product.product', required=True, string='Equipment')
     quantity = fields.Float(default=1)
     uom_id = fields.Many2one('uom.uom', string='Unit of Measure')
-    cost = fields.Float(required=True)
-    total_amount = fields.Float(compute='compute_total_amount', store=True, string='Total')
+    cost = fields.Float(digits=(16, 3), required=True)
+    total_amount = fields.Float(digits=(16, 3), compute='compute_total_amount', store=True, string='Total')
 
     @api.onchange('product_id')
     def onchange_product_id(self):

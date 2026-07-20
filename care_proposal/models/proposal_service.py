@@ -19,7 +19,7 @@ class ProposalService(models.Model):
     daily_hours = fields.Integer()
     weekly_days = fields.Integer()
     monthly_days = fields.Integer()
-    total_cost = fields.Float(compute='compute_total_cost', store=True,)
+    total_cost = fields.Float(digits=(16, 3), compute='compute_total_cost', store=True,)
     line_ids = fields.One2many('proposal.service.item', 'proposal_service_id',)
 
     # --- Customer Cost Books (per-customer, dated, snapshot-able) ---------

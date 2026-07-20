@@ -17,5 +17,5 @@ class ProposalServiceLineCost(models.Model):
     sequence = fields.Integer(default=10)
     component_id = fields.Many2one('proposal.cost.component', string='Component')
     name = fields.Char(string='Label')
-    amount = fields.Float()
+    amount = fields.Float(digits=(16, 3), )
     note = fields.Char()

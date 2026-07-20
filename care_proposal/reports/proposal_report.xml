@@ -221,7 +221,7 @@
                                         <td class="text-center"><span t-esc="round(pricing_line.individual_sales_price, 2)"/></td>
                                         <td class="text-center"><span t-esc="round(pricing_line.sales_price, 2)"/></td>
                                         <td class="text-center"><span t-esc="round(pricing_line.individual_profit_amount, 2)"/></td>
-                                        <td class="text-center"><span t-esc="round(pricing_line.profit_amount, )"/></td>
+                                        <td class="text-center"><span t-esc="round(pricing_line.profit_amount, 3)"/></td>
                                         <td class="text-center"><span t-esc="round(pricing_line.profit_percentage, 2)"/>%</td>
                                     </tr>
                                     <tr>
@@ -232,7 +232,7 @@
                                         <td class="text-center" style="background-color:#d4d4d4"><span t-esc="round(sum(doc.pricing_ids.mapped('sales_price')), 2)"/></td>
                                         <td class="text-center" style="background-color:#d4d4d4"><span t-esc="round(sum(doc.pricing_ids.mapped('individual_profit_amount')), 2)"/></td>
                                         <td class="text-center" style="background-color:#d4d4d4"><span t-esc="round(sum(doc.pricing_ids.mapped('profit_amount')), 2)"/></td>
-                                        <td class="text-center" style="background-color:#d4d4d4"><span t-esc="round(sum(doc.pricing_ids.mapped('profit_percentage'))/len(doc.pricing_ids), 2) if doc.pricing_ids else 0"/>%</td>
+                                        <td class="text-center" style="background-color:#d4d4d4"><span t-esc="round(sum(doc.pricing_ids.mapped('profit_amount'))/sum(doc.pricing_ids.mapped('cost'))*100, 2) if sum(doc.pricing_ids.mapped('cost')) else 0"/>%</td>
                                     </tr>
                                 </tbody>
                             </table>

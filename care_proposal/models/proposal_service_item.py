@@ -23,5 +23,5 @@ class ProposalServiceItem(models.Model):
         required=True,
     )
     other_cost = fields.Char()
-    cost = fields.Float()
+    cost = fields.Float(digits=(16, 3), )
     description = fields.Char()

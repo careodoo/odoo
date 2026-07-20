@@ -7,7 +7,7 @@ class ProposalTransportation(models.Model):
     _description = 'Proposal Transportation'
 
     name = fields.Char(required=True)
-    cost = fields.Float()
+    cost = fields.Float(digits=(16, 3), )
     type = fields.Selection(
         selection=[
             ('individual', 'Individual'),

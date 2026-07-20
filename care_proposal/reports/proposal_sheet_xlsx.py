@@ -143,18 +143,23 @@ class ProposalSheetReportXlsx(models.AbstractModel):
             commission = f"{proposal.commission_rate}%"
         else:
             commission = f"{proposal.commission_rate}"
-        if len(proposal.pricing_ids):
-            avg_profit = sum(proposal.pricing_ids.mapped('profit_percentage')) / len(proposal.pricing_ids)
-        else:
-            avg_profit = 0
+        # Weighted. An unweighted mean of per-line percentages let one
+        # supervisor at 60% cancel out sixty cleaners at 12% and report 36% —
+        # three times the truth, on the sheet a manager approves.
+        _cost = sum(proposal.pricing_ids.mapped('cost')) or 0.0
+        avg_profit = (sum(proposal.pricing_ids.mapped('profit_amount')) / _cost * 100) if _cost else 0.0
 
         sheet.write(row, 0, proposal.individual_cost, header_style)
         sheet.write(row, 1, proposal.individual_sales, header_style)
         sheet.write(row, 2, commission, header_style)
         sheet.write(row, 3, avg_profit, header_style)
         sheet.write(row, 4, f"{proposal.margin_percentage}%", header_style)
-        sheet.write(row, 5, proposal.total_cost + proposal.commission_amount, header_style)
-        sheet.write(row, 6, proposal.total_sales + proposal.commission_amount, header_style)
+        # Commission is a share of profit PAID OUT — a cost, never revenue.
+        # Adding it to the sales line inflated the top line by the commission,
+        # and per-line commission is already inside pricing_ids.cost, so the
+        # cost side was double-counting it at the same time.
+        sheet.write(row, 5, proposal.total_pricing_cost, header_style)
+        sheet.write(row, 6, proposal.total_sales, header_style)
 
         row += 2
         sheet.write(row, 3, 'Created By: ', header_style7)

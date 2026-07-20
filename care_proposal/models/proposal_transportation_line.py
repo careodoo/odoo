@@ -15,7 +15,7 @@ class ProposalTransportationLine(models.Model):
         domain="[('proposal_id', '=', proposal_id)]",
         required=True,
     )
-    cost = fields.Float(
+    cost = fields.Float(digits=(16, 3), 
         related='transportation_id.cost',
         store=True,
     )

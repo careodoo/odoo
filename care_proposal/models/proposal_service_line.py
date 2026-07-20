@@ -14,12 +14,12 @@ class ProposalServiceLine(models.Model):
     weekly_days = fields.Integer(related='proposal_service_id.weekly_days')
     monthly_days = fields.Integer(related='proposal_service_id.monthly_days')
     quantity = fields.Integer(default=1)
-    total_cost = fields.Float(
+    total_cost = fields.Float(digits=(16, 3), 
         related='proposal_service_id.total_cost',
         store=True,
         string='Subtotal (live)',
     )
-    total = fields.Float(compute='compute_total', store=True)
+    total = fields.Float(digits=(16, 3), compute='compute_total', store=True)
 
     # --- Snapshot / freeze (Phase 2) -------------------------------------
     # The frozen breakdown is the source of truth once frozen; catalog edits
@@ -30,12 +30,47 @@ class ProposalServiceLine(models.Model):
         'proposal.service.cost', string='Cost Book used', readonly=True, copy=False)
     snapshot_line_ids = fields.One2many(
         'proposal.service.line.cost', 'line_id', string='Frozen breakdown', copy=True)
-    frozen_unit_cost = fields.Float(string='Frozen unit cost', copy=True)
-    effective_unit_cost = fields.Float(
+    frozen_unit_cost = fields.Float(digits=(16, 3), string='Frozen unit cost', copy=True)
+    effective_unit_cost = fields.Float(digits=(16, 3), 
         string='Unit cost', compute='_compute_effective', store=True,
         help="Frozen cost if the line is frozen, else the live catalog cost.")
-    effective_total = fields.Float(
+    effective_total = fields.Float(digits=(16, 3), 
         string='Line total', compute='_compute_effective', store=True)
+
+    # ---- the gap a frozen price hides --------------------------------
+    # Freezing protects a quoted price from later cost changes, which is
+    # right. But nothing said when the two had drifted apart, so a line
+    # frozen at 209.760 kept pricing at that while the service had moved to
+    # 269.760 — a 60.000 hole per unit that only turned up by chance.
+    cost_drift = fields.Float(
+        digits=(16, 3), string='Cost drift', compute='_compute_cost_drift',
+        help='Current service cost minus the frozen cost. Positive means the '
+             'proposal is priced BELOW what the service costs today.')
+    cost_drift_total = fields.Float(
+        digits=(16, 3), string='Drift total', compute='_compute_cost_drift')
+    drift_state = fields.Selection([
+        ('none', 'Current'), ('under', 'Priced below cost'),
+        ('over', 'Priced above cost'),
+    ], string='Freeze status', compute='_compute_cost_drift')
+
+    @api.depends('frozen', 'frozen_unit_cost', 'total_cost', 'quantity')
+    def _compute_cost_drift(self):
+        for rec in self:
+            if not rec.frozen:
+                rec.cost_drift = rec.cost_drift_total = 0.0
+                rec.drift_state = 'none'
+                continue
+            d = (rec.total_cost or 0.0) - (rec.frozen_unit_cost or 0.0)
+            rec.cost_drift = d
+            rec.cost_drift_total = d * (rec.quantity or 0.0)
+            # a tenth of a fils is rounding, not a real gap
+            rec.drift_state = ('none' if abs(d) < 0.001
+                               else 'under' if d > 0 else 'over')
+
+    def action_refreeze(self):
+        """Re-freeze on today's cost — offered rather than done automatically,
+        because a quoted price must not move without someone deciding to."""
+        return self.action_freeze_cost()
 
     @api.depends('quantity', 'total_cost')
     def compute_total(self):

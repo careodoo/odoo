@@ -32,7 +32,7 @@ class Proposal(models.Model):
     partner_id = fields.Many2one('res.partner')
     proposal_date = fields.Date()
     expire_date = fields.Date()
-    total_amount = fields.Float(
+    total_amount = fields.Float(digits=(16, 3), 
         compute='compute_total_amount',
         store=True,
         string='Total Amount',
@@ -67,29 +67,29 @@ class Proposal(models.Model):
     pricing_ids = fields.One2many('proposal.pricing.line', 'proposal_id')
     service_quantity = fields.Integer(compute='compute_service_quantity', store=True)
     manpower_quantity = fields.Integer(compute='compute_manpower_quantity', store=True)
-    material_amount = fields.Float(compute='compute_material_amount', store=True)
-    equipment_amount = fields.Float(compute='compute_equipment_amount', store=True)
-    transportation_amount = fields.Float(compute='compute_transportation_amount', store=True)
-    salary_amount = fields.Float(compute='compute_salary_amount', store=True)
-    uniform_amount = fields.Float(compute='compute_service_amounts', store=True)
-    accommodation_amount = fields.Float(compute='compute_service_amounts', store=True)
-    residency_amount = fields.Float(compute='compute_service_amounts', store=True)
-    leave_amount = fields.Float(compute='compute_service_amounts', store=True, string='L&A Amount')
-    insurance_amount = fields.Float(compute='compute_service_amounts', store=True)
-    fee_amount = fields.Float(compute='compute_service_amounts', store=True)
-    other_amount = fields.Float(compute='compute_service_amounts', store=True)
-    gate_amount = fields.Float(compute='compute_service_amounts', store=True)
-    medical_amount = fields.Float(compute='compute_service_amounts', store=True)
-    total_cost = fields.Float(compute='compute_total_cost', store=True)
-    individual_cost = fields.Float(compute='compute_individual_cost', store=True)
-    total_sales = fields.Float(compute='compute_total_sales', store=True)
-    individual_sales = fields.Float(compute='compute_individual_sales', store=True)
-    total_pricing_cost = fields.Float(
+    material_amount = fields.Float(digits=(16, 3), compute='compute_material_amount', store=True)
+    equipment_amount = fields.Float(digits=(16, 3), compute='compute_equipment_amount', store=True)
+    transportation_amount = fields.Float(digits=(16, 3), compute='compute_transportation_amount', store=True)
+    salary_amount = fields.Float(digits=(16, 3), compute='compute_salary_amount', store=True)
+    uniform_amount = fields.Float(digits=(16, 3), compute='compute_service_amounts', store=True)
+    accommodation_amount = fields.Float(digits=(16, 3), compute='compute_service_amounts', store=True)
+    residency_amount = fields.Float(digits=(16, 3), compute='compute_service_amounts', store=True)
+    leave_amount = fields.Float(digits=(16, 3), compute='compute_service_amounts', store=True, string='L&A Amount')
+    insurance_amount = fields.Float(digits=(16, 3), compute='compute_service_amounts', store=True)
+    fee_amount = fields.Float(digits=(16, 3), compute='compute_service_amounts', store=True)
+    other_amount = fields.Float(digits=(16, 3), compute='compute_service_amounts', store=True)
+    gate_amount = fields.Float(digits=(16, 3), compute='compute_service_amounts', store=True)
+    medical_amount = fields.Float(digits=(16, 3), compute='compute_service_amounts', store=True)
+    total_cost = fields.Float(digits=(16, 3), compute='compute_total_cost', store=True)
+    individual_cost = fields.Float(digits=(16, 3), compute='compute_individual_cost', store=True)
+    total_sales = fields.Float(digits=(16, 3), compute='compute_total_sales', store=True)
+    individual_sales = fields.Float(digits=(16, 3), compute='compute_individual_sales', store=True)
+    total_pricing_cost = fields.Float(digits=(16, 3), 
         compute='compute_total_pricing_cost',
         store=True,
         string='Total Pricing Cost',
     )
-    margin_amount = fields.Float(compute='compute_margin', store=True, string='Net Profit')
+    margin_amount = fields.Float(digits=(16, 3), compute='compute_margin', store=True, string='Net Profit')
     margin_percentage = fields.Float(compute='compute_margin', store=True, string='Net Profit %')
     lead_id = fields.Many2one('crm.lead')
     approver_id = fields.Many2one('res.users', compute='compute_approver', store=True)
@@ -141,8 +141,8 @@ class Proposal(models.Model):
         ('fixed', 'Fixed'),
     ])
     commission_rate = fields.Float()
-    commission_amount = fields.Float(compute='compute_commission_amount', store=True)
-    total_commission_amount = fields.Float(string='Total Commission')
+    commission_amount = fields.Float(digits=(16, 3), compute='compute_commission_amount', store=True)
+    total_commission_amount = fields.Float(digits=(16, 3), string='Total Commission')
     approval_ids = fields.One2many(
         'proposal.approval',
         'proposal_id',
@@ -246,7 +246,14 @@ class Proposal(models.Model):
         for rec in self:
             rec.salary_amount = sum(rec.manpower_ids.mapped('total_salary') or [])
 
-    @api.depends('service_ids', 'service_ids.proposal_service_id')
+    # The body reads quantity and every cost component, so it must depend on
+    # them: correcting a wage in the catalogue or a headcount on a line used
+    # to leave all nine amounts frozen at their old values — and those are
+    # what the cost sheet prints.
+    @api.depends('service_ids', 'service_ids.proposal_service_id',
+                 'service_ids.quantity',
+                 'service_ids.proposal_service_id.line_ids.cost',
+                 'service_ids.proposal_service_id.line_ids.type')
     def compute_service_amounts(self):
         for rec in self:
             rec.uniform_amount = 0
@@ -420,7 +427,43 @@ class Proposal(models.Model):
         default.setdefault('state', 'draft')
         default.setdefault('superseded', False)
         default.setdefault('approval_ids', [(5, 0, 0)])
-        return super().copy(default)
+        new = super().copy(default)
+        new._remap_service_references(self)
+        return new
+
+    def _remap_service_references(self, source):
+        """Point every service reference at the copy's own lines.
+
+        service_ids is copy=True, so a duplicate gets brand-new service lines
+        with new ids — but the many2many columns that say which lines carry
+        material, equipment, transport or commission copy by REFERENCE and
+        keep pointing at the original proposal. generate_pricing then matches
+        none of them, and the revision is quoted without its material,
+        equipment or transport cost at all. Silently, and below cost.
+        """
+        self.ensure_one()
+        old_lines, new_lines = source.service_ids, self.service_ids
+        if not old_lines or len(old_lines) != len(new_lines):
+            return
+        # copy() preserves order, so pair them positionally — the lines carry
+        # no natural key to match on.
+        remap = {o.id: n.id for o, n in zip(old_lines, new_lines)}
+
+        def mapped(recs):
+            return [remap[r.id] for r in recs if r.id in remap]
+
+        vals = {}
+        for fname in ('material_service_ids', 'equipment_service_ids'):
+            if fname in self._fields:
+                vals[fname] = [(6, 0, mapped(self[fname]))]
+        if vals:
+            self.write(vals)
+        for fname in ('transportation_ids', 'commission_ids'):
+            if fname not in self._fields:
+                continue
+            for line in self[fname]:
+                if 'service_ids' in line._fields and line.service_ids:
+                    line.service_ids = [(6, 0, mapped(line.service_ids))]
 
     def action_duplicate(self):
         """Exact copy of this quotation (new ref, Draft). Frozen snapshot costs
@@ -510,7 +553,7 @@ class Proposal(models.Model):
         ('manual', 'Manual'),
     ], default='target_margin', tracking=True)
     target_margin_pct = fields.Float(string='Margin %', default=20.0, tracking=True)
-    target_price = fields.Float(string='Target price', tracking=True)
+    target_price = fields.Float(digits=(16, 3), string='Target price', tracking=True)
     price_round = fields.Float(string='Round to', default=1.0,
                                help="Round customer unit prices to this step (0 = no rounding).")
     margin_guard_pct = fields.Float(string='Margin guard %', default=10.0, tracking=True,
@@ -521,9 +564,9 @@ class Proposal(models.Model):
     scenario_economy_pct = fields.Float(string='Economy %', default=15.0)
     scenario_standard_pct = fields.Float(string='Standard %', default=22.0)
     scenario_premium_pct = fields.Float(string='Premium %', default=32.0)
-    scenario_economy_price = fields.Float(compute='_compute_scenarios')
-    scenario_standard_price = fields.Float(compute='_compute_scenarios')
-    scenario_premium_price = fields.Float(compute='_compute_scenarios')
+    scenario_economy_price = fields.Float(digits=(16, 3), compute='_compute_scenarios')
+    scenario_standard_price = fields.Float(digits=(16, 3), compute='_compute_scenarios')
+    scenario_premium_price = fields.Float(digits=(16, 3), compute='_compute_scenarios')
 
     @api.depends('pricing_ids.below_guard')
     def _compute_below_guard(self):
@@ -542,7 +585,14 @@ class Proposal(models.Model):
     @staticmethod
     def _price_for_margin(cost, margin_pct):
         """Selling price that yields ``margin_pct`` margin-on-price."""
-        if margin_pct and margin_pct < 100:
+        if margin_pct and margin_pct >= 100:
+            # 1/(1-1) is infinite. Returning the cost unchanged turned a
+            # fat-fingered 100 (meant as 10) into a deliberate-looking
+            # zero-margin quote.
+            raise UserError(_(
+                'A margin of %s%% is not achievable — margin on price must be '
+                'below 100%%.') % margin_pct)
+        if margin_pct:
             return cost / (1.0 - margin_pct / 100.0)
         return cost
 
@@ -752,7 +802,10 @@ class Proposal(models.Model):
         }
 
     def generate_pricing(self):
-        self.pricing_ids = [(5, 0, 0)]
+        # Delete explicitly rather than trusting the (5, 0, 0) command:
+        # it says 'unlink all', and unlinking a nullable inverse orphans
+        # the rows instead of removing them.
+        self.pricing_ids.unlink()
         vals = []
         total_material_service_qty = sum(self.material_service_ids.mapped('quantity'))
         total_equipment_service_qty = sum(self.equipment_service_ids.mapped('quantity'))
@@ -764,6 +817,15 @@ class Proposal(models.Model):
             commission_amount = 0
             if service_line.id in self.material_service_ids.ids and total_material_service_qty:
                 material_cost = self.material_amount / total_material_service_qty
+            # A zero period silently dropped the whole equipment budget from the
+            # price. Refuse instead: an unpriced scrubber is not a rounding
+            # error, it is thousands of dinars the customer never pays for.
+            if (service_line.id in self.equipment_service_ids.ids
+                    and total_equipment_service_qty and not self.proposal_period):
+                raise UserError(_(
+                    'Set the proposal period before pricing: equipment cost is '
+                    'amortised over it, and with no period the equipment would '
+                    'be priced at zero.'))
             if service_line.id in self.equipment_service_ids.ids and total_equipment_service_qty and self.proposal_period:
                 equipment_cost = self.equipment_amount / total_equipment_service_qty / self.proposal_period
             # transportation
@@ -776,6 +838,12 @@ class Proposal(models.Model):
                         transportation_cost = tl.cost / total_transportation_service_qty
                 else:
                     transportation_cost = tl.cost
+                # The daily/monthly selector existed but nothing read it, so a
+                # KD 1.000 daily bus card was priced exactly like KD 1.000 a
+                # month — under-recovering by a whole working month.
+                if getattr(tl, 'period', False) == 'daily':
+                    days = getattr(service_line, 'monthly_days', 0) or 26
+                    transportation_cost *= days
             # Snapshot-aware (Phase 2/3): use the frozen cost when the line is
             # frozen, else the live catalog cost (effective_* falls back).
             unit_cost = service_line.effective_unit_cost
