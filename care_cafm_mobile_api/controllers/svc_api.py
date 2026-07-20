@@ -87,6 +87,12 @@ class ServiceApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
+        # ServicePages helpers read request.env.user (the web session). The app
+        # has no session — only the token — so without this the registry would
+        # scope to the PUBLIC user: empty facilities, no permissions. And with
+        # a stray admin cookie it would scope to admin. The token must be the
+        # only identity either way.
+        request.update_env(user=env.user.id)
         p = _pages()
         # No second opinion about which services a client has: /client/services
         # already answers that and the portal already reads it. This describes
@@ -96,8 +102,9 @@ class ServiceApi(Controller):
             out.append({
                 'code': code, 'label': label, 'icon': icon,
                 'sections': [{'key': s.key, 'label': s.label, 'icon': s.icon,
-                              'can_add': bool(s.create) and p._may(s.create.perm),
-                              'add_label': s.create.label if s.create else None}
+                              'can_add': bool((c := p._effective_create(s)))
+                                         and p._may(c.perm),
+                              'add_label': c.label if c else None}
                              for s in sections],
             })
         return _ok({'services': out})
@@ -108,6 +115,12 @@ class ServiceApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
+        # ServicePages helpers read request.env.user (the web session). The app
+        # has no session — only the token — so without this the registry would
+        # scope to the PUBLIC user: empty facilities, no permissions. And with
+        # a stray admin cookie it would scope to admin. The token must be the
+        # only identity either way.
+        request.update_env(user=env.user.id)
         reg = REGISTRY().get(code)
         if not reg:
             return _err('خدمة غير معروفة', 404)
@@ -121,10 +134,11 @@ class ServiceApi(Controller):
             page = 1
         recs, total = p._records(section, page)
         facs = p._facilities()
-        can_add = bool(section.create) and p._may(section.create.perm)
+        create = p._effective_create(section)
+        can_add = bool(create) and p._may(create.perm)
         fields = []
         if can_add:
-            for f in section.create.fields:
+            for f in create.fields:
                 spec = _field_spec(f, facs, env)
                 sel = self._resolve_select(section, f, env)
                 if sel is not None:
@@ -138,7 +152,8 @@ class ServiceApi(Controller):
             'rows': [_row(section, r) for r in recs],
             'page': page, 'pages': max(1, (total + PAGE - 1) // PAGE), 'total': total,
             'can_add': can_add,
-            'add_label': section.create.label if section.create else None,
+            'can_cancel': p._may('record_manage'),
+            'add_label': create.label if create else None,
             'fields': fields,
         })
 
@@ -148,19 +163,51 @@ class ServiceApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
+        # ServicePages helpers read request.env.user (the web session). The app
+        # has no session — only the token — so without this the registry would
+        # scope to the PUBLIC user: empty facilities, no permissions. And with
+        # a stray admin cookie it would scope to admin. The token must be the
+        # only identity either way.
+        request.update_env(user=env.user.id)
         reg = REGISTRY().get(code)
         if not reg:
             return _err('خدمة غير معروفة', 404)
         section = next((s for s in reg[2] if s.key == key), None)
-        if not section or not section.create:
-            return _err('لا يمكن الإضافة في هذا القسم', 404)
         p = _pages()
+        create = p._effective_create(section) if section else None
+        if not create:
+            return _err('لا يمكن الإضافة في هذا القسم', 404)
         # The capability check is here, not only in the UI — a form that is
         # hidden is not a form that cannot be posted to.
-        if not p._may(section.create.perm):
+        if not p._may(create.perm):
             return _err('لا تملك صلاحية الإضافة هنا', 403)
         try:
             rec = p._create_record(section, post)
         except Exception as e:
             return _err(str(e) or 'تعذّر الحفظ', 422)
         return _ok({'id': rec.id, 'name': rec.display_name})
+
+    @route(API + '/client/svc/<string:code>/<string:key>/<int:rid>/cancel',
+           type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def svc_cancel(self, code, key, rid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        # ServicePages helpers read request.env.user (the web session). The app
+        # has no session — only the token — so without this the registry would
+        # scope to the PUBLIC user: empty facilities, no permissions. And with
+        # a stray admin cookie it would scope to admin. The token must be the
+        # only identity either way.
+        request.update_env(user=env.user.id)
+        reg = REGISTRY().get(code)
+        section = next((s for s in reg[2] if s.key == key), None) if reg else None
+        if not section:
+            return _err('قسم غير معروف', 404)
+        p = _pages()
+        if not p._may('record_manage'):
+            return _err('إلغاء السجلات يتطلب صلاحية «إدارة السجلات»', 403)
+        try:
+            how = p._cancel_record(section, rid)
+        except Exception as e:
+            return _err(str(e) or 'تعذّر الإلغاء', 422)
+        return _ok({'result': how})

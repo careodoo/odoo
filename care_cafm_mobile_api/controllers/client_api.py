@@ -259,7 +259,11 @@ class ClientApi(Controller):
         Loc = env['care.cafm.location'].sudo()
         locs_by_fac = {}
         for l in Loc.search([('facility_id', 'in', facs.ids)]):
-            locs_by_fac.setdefault(l.facility_id.id, []).append({'id': l.id, 'name': l.name})
+            # code and nfc_uid travel with the location so a scanned QR or
+            # tag resolves in the app without a extra round trip.
+            locs_by_fac.setdefault(l.facility_id.id, []).append(
+                {'id': l.id, 'name': l.name, 'code': l.code or None,
+                 'nfc_uid': l.nfc_uid or None})
         services = env['care.cafm.service'].sudo().search([])
         _, allowed = self._client_service_types(env)
         services = services.filtered(lambda s: not allowed or s.service_type in allowed)

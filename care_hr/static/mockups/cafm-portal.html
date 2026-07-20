@@ -716,9 +716,12 @@ async function renderSvcSection(code,key){
     +(r.subtitle?'<div style="color:var(--muted);font-size:12px;margin-bottom:8px">'+esc(r.subtitle)+'</div>':'')
     +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
     +(r.pills||[]).map(p=>pillHtml(p.t,p.c)).join('')+'</div>'
-    +'<div style="margin-top:10px"><button class="btn s" style="font-size:11.5px;padding:6px 11px" '
+    +'<div style="margin-top:10px;display:flex;gap:7px"><button class="btn s" style="font-size:11.5px;padding:6px 11px" '
     +'onclick="svcReport(\''+code+'\','+r.id+',\''+esc(r.title).replace(/'/g,"")+'\')">🖨️ '
-    +esc(T('تقرير PDF','PDF report'))+'</button></div>'
+    +esc(T('تقرير PDF','PDF report'))+'</button>'
+    +(d.can_cancel?'<button class="btn d" style="font-size:11.5px;padding:6px 11px" '
+      +'onclick="svcCancel(\''+code+'\',\''+key+'\','+r.id+')">🗑 '+esc(T('إلغاء','Cancel'))+'</button>':'')
+    +'</div>'
     +'</div>').join('');
   h+='</div>';
   if((d.pages||1)>1){h+='<div class="toolbar" style="margin-top:14px;justify-content:center">';
@@ -768,6 +771,18 @@ async function svcAddForm(code,key){
     {icon:(d.service||{}).icon||'➕',subtitle:(d.section||{}).label,
      actions:[{label:T('إلغاء','Cancel'),cls:'s',onclick:closeDrawer},
               {label:T('حفظ','Save'),cls:'p',onclick:function(){svcAddSave(code,key,d.fields||[]);}}]});
+}
+
+/* Cancelling asks first and says what will actually happen — the server picks
+   the least destructive path (cancel state, else archive, else delete). */
+function svcCancel(code,key,id){
+  confirmDialog(T('إلغاء السجل','Cancel record'),
+    T('سيُلغى هذا السجل — إن كان له حالة إلغاء تُستخدم، وإلا يُؤرشف.','This record will be cancelled, or archived if it has no cancel state.'),
+    async function(){
+      try{await api('/client/svc/'+code+'/'+key+'/'+id+'/cancel',{method:'POST',body:{}});}
+      catch(e){toast(String(e&&e.message||e).slice(0,120));return;}
+      toast(T('تم الإلغاء','Cancelled'));goSvcSec(code,key,1);
+    },{danger:true,icon:'🗑'});
 }
 async function svcAddSave(code,key,fields){
   const body={};

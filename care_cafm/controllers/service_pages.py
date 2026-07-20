@@ -513,6 +513,78 @@ class ServicePages(http.Controller):
         # an employee acting on site keeps the operational capabilities
         return bool(u.employee_id)
 
+    # ---- full record control -------------------------------------------
+    # 33 of the 39 sections shipped read-only. Rather than hand-writing 33
+    # forms (and 33 more chances to drift), a section with no declared Create
+    # builds one from the model's own field definitions — required fields
+    # first, then the common describing fields — gated on the record_manage
+    # capability. Declared specs still win: curation beats generation.
+    AUTO_SKIP = {
+        'company_id', 'active', 'color', 'sequence', 'name',
+        'create_uid', 'write_uid', 'message_ids', 'activity_ids',
+    }
+    AUTO_KINDS = {'char': 'char', 'text': 'text', 'integer': 'int',
+                  'float': 'float', 'date': 'date', 'datetime': 'datetime',
+                  'boolean': 'bool', 'selection': 'select', 'many2one': 'm2o'}
+
+    def _effective_create(self, section):
+        """The section's declared Create, or one generated from the model."""
+        if section.create:
+            return section.create
+        env = request.env
+        if section.model not in env:
+            return None
+        Model = env[section.model]
+        fac_field = 'facility_id' if 'facility_id' in Model._fields else None
+        picked = []
+        for fname, f in Model._fields.items():
+            if fname in self.AUTO_SKIP or fname == fac_field:
+                continue
+            kind = self.AUTO_KINDS.get(f.type)
+            if not kind or f.compute or getattr(f, 'related', None) or f.readonly:
+                continue
+            if kind == 'm2o' and not f.comodel_name:
+                continue
+            picked.append((not f.required, fname, f, kind))
+        picked.sort(key=lambda t: t[0])          # required fields first
+        fields = []
+        for _opt, fname, f, kind in picked[:10]:
+            fields.append(Field(
+                fname, f.string or fname, kind, required=bool(f.required),
+                comodel=f.comodel_name if kind == 'm2o' else None,
+                domain_facility=bool(
+                    kind == 'm2o' and f.comodel_name and
+                    'facility_id' in env[f.comodel_name]._fields),
+                options=fname if kind == 'select' else None))
+        if not fields:
+            return None
+        return Create('إضافة سجل', 'record_manage', fields,
+                      facility_field=fac_field)
+
+    def _cancel_record(self, section, rid):
+        """Cancel/remove one record, the least destructive way that sticks:
+        a cancel state if the model has one, else archive, else unlink —
+        so 'إلغاء' never silently destroys a paper trail that had one."""
+        env = request.env
+        rec = env[section.model].sudo().browse(int(rid)).exists()
+        if not rec:
+            raise ValueError('السجل غير موجود')
+        facs = self._facilities()
+        rec_fac = getattr(rec, 'facility_id', None)
+        if rec_fac and rec_fac.id not in facs.ids:
+            raise ValueError('السجل خارج نطاق مرافقك')
+        st = rec._fields.get('state')
+        if st and st.type == 'selection':
+            keys = [k for k, _l in (st.selection or []) if isinstance(st.selection, list)]
+            if 'cancelled' in keys:
+                rec.write({'state': 'cancelled'}); return 'cancelled'
+            if 'cancel' in keys:
+                rec.write({'state': 'cancel'}); return 'cancelled'
+        if 'active' in rec._fields:
+            rec.write({'active': False}); return 'archived'
+        rec.unlink()
+        return 'deleted'
+
     def _create_record(self, section, post):
         """Build values from a posted form and create the record.
 
@@ -520,7 +592,7 @@ class ServicePages(http.Controller):
         about what a field means or which facility a record lands in.
         """
         env = request.env
-        c = section.create
+        c = self._effective_create(section)
         facs = self._facilities()
         vals = {}
         fid = int(post.get('__facility') or 0) or (facs[:1].id or 0)
@@ -587,7 +659,7 @@ class ServicePages(http.Controller):
             Markup(' value="%s"' % f.default) if f.default is not None else Markup(''))
 
     def _create_form(self, code, section, facs):
-        c = section.create
+        c = self._effective_create(section)
         if not c or not self._may(c.perm):
             return Markup('')
         rows = Markup('')
@@ -618,9 +690,9 @@ class ServicePages(http.Controller):
             return request.redirect('/cafm/m')
         _label, _icon, sections = reg
         section = next((s for s in sections if s.key == key), None)
-        if not section or not section.create:
+        c = self._effective_create(section) if section else None
+        if not c:
             return request.redirect('/cafm/m/svc/%s' % code)
-        c = section.create
         if not self._may(c.perm):
             return _shell('غير مصرّح', Markup(
                 '<div class="card"><div class="h4">⛔ غير مصرّح</div>'
@@ -638,6 +710,24 @@ class ServicePages(http.Controller):
                 '<a class="btn g" href="/cafm/m/svc/%s/%s">رجوع</a></div>') % (
                     esc(msg), code, key),
                 accent=accent_for(code), back='/cafm/m/svc/%s/%s' % (code, key))
+        return request.redirect('/cafm/m/svc/%s/%s' % (code, key))
+
+    @http.route('/cafm/m/svc/<string:code>/<string:key>/<int:rid>/cancel',
+                type='http', auth='user', methods=['POST'], website=False, csrf=True)
+    def section_cancel(self, code, key, rid, **post):
+        reg = REGISTRY().get(code)
+        section = next((s for s in reg[2] if s.key == key), None) if reg else None
+        if not section:
+            return request.redirect('/cafm/m')
+        if not self._may('record_manage'):
+            return _shell('غير مصرّح', Markup(
+                '<div class="card"><div class="h4">⛔ غير مصرّح</div>'
+                '<div class="muted">إلغاء السجلات يتطلب صلاحية «إدارة السجلات».</div></div>'),
+                accent=accent_for(code), back='/cafm/m/svc/%s/%s' % (code, key))
+        try:
+            self._cancel_record(section, rid)
+        except Exception:
+            pass
         return request.redirect('/cafm/m/svc/%s/%s' % (code, key))
 
     @http.route('/cafm/m/svc/<string:code>', type='http', auth='user', website=False)
