@@ -1,0 +1,278 @@
+# Arabic (Kuwait) translation for care_cafm_pool.
+# The code now carries English source terms, which is what Odoo treats
+# as en_US; this file restores the Arabic UI the module shipped with.
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ar_001\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+msgid "CARE — Pool Maintenance"
+msgstr "CARE — صيانة المسابح (Pool Maintenance)"
+
+msgid "Water chemistry readings with a safe band that closes the pool automatically, plus a maintenance log"
+msgstr "قراءات كيمياء المياه بنطاق آمن يُغلق المسبح تلقائيًا، وسجل أعمال الصيانة"
+
+msgid "Pool"
+msgstr "مسبح"
+
+msgid "English name"
+msgstr "الاسم بالإنجليزية"
+
+msgid "Facility"
+msgstr "المرفق"
+
+msgid "Location"
+msgstr "الموقع"
+
+msgid "Swimming pool"
+msgstr "مسبح سباحة"
+
+msgid "Kids pool"
+msgstr "مسبح أطفال"
+
+msgid "Jacuzzi"
+msgstr "جاكوزي"
+
+msgid "Therapy pool"
+msgstr "مسبح علاجي"
+
+msgid "Lap pool"
+msgstr "مسبح رياضي"
+
+msgid "Type"
+msgstr "النوع"
+
+msgid "Capacity (m³)"
+msgstr "السعة (م³)"
+
+msgid "Min depth (m)"
+msgstr "أقل عمق (م)"
+
+msgid "Max depth (m)"
+msgstr "أقصى عمق (م)"
+
+msgid "Sand"
+msgstr "رملي"
+
+msgid "Cartridge"
+msgstr "خرطوشي"
+
+msgid "Diatomite (DE)"
+msgstr "دايتومي DE"
+
+msgid "Other"
+msgstr "أخرى"
+
+msgid "Filter type"
+msgstr "نوع الفلتر"
+
+msgid "Chlorine"
+msgstr "كلور"
+
+msgid "Salt generator"
+msgstr "مولّد ملحي"
+
+msgid "Bromine"
+msgstr "بروم"
+
+msgid "UV"
+msgstr "أشعة UV"
+
+msgid "Treatment method"
+msgstr "طريقة المعالجة"
+
+msgid "Min pH"
+msgstr "أدنى pH"
+
+msgid "Max pH"
+msgstr "أقصى pH"
+
+msgid "Min free chlorine (ppm)"
+msgstr "أدنى كلور حر (ppm)"
+
+msgid "Max free chlorine (ppm)"
+msgstr "أقصى كلور حر (ppm)"
+
+msgid "Min temperature (°C)"
+msgstr "أدنى حرارة (°م)"
+
+msgid "Max temperature (°C)"
+msgstr "أقصى حرارة (°م)"
+
+msgid "Max turbidity (NTU)"
+msgstr "أقصى عكارة (NTU)"
+
+msgid "Open"
+msgstr "مفتوح"
+
+msgid "Closed"
+msgstr "مغلق"
+
+msgid "Under maintenance"
+msgstr "تحت الصيانة"
+
+msgid "Status"
+msgstr "الحالة"
+
+msgid "Closure reason"
+msgstr "سبب الإغلاق"
+
+msgid "Readings"
+msgstr "القراءات"
+
+msgid "Maintenance work"
+msgstr "أعمال الصيانة"
+
+msgid "Last reading"
+msgstr "آخر قراءة"
+
+msgid "Last reading in range"
+msgstr "آخر قراءة ضمن النطاق"
+
+msgid "Awaiting a reading today"
+msgstr "بانتظار قراءة اليوم"
+
+msgid "⛔ Pool closed: %s"
+msgstr "⛔ أُغلق المسبح: %s"
+
+msgid "The pool cannot reopen before a reading inside the safe band is recorded."
+msgstr "لا يمكن فتح المسبح قبل تسجيل قراءة ضمن النطاق الآمن."
+
+msgid "✅ Pool reopened after a passing reading."
+msgstr "✅ أُعيد فتح المسبح بعد قراءة مطابقة."
+
+msgid "🏊 No reading today"
+msgstr "🏊 لا توجد قراءة اليوم"
+
+msgid "Water reading"
+msgstr "قراءة مياه"
+
+msgid "Taken at"
+msgstr "وقت القراءة"
+
+msgid "Taken by"
+msgstr "القارئ"
+
+msgid "pH"
+msgstr "الأس الهيدروجيني pH"
+
+msgid "Free chlorine (ppm)"
+msgstr "الكلور الحر (ppm)"
+
+msgid "Combined chlorine (ppm)"
+msgstr "الكلور المرتبط (ppm)"
+
+msgid "Above 0.5 means the water needs shock chlorination."
+msgstr "فوق 0.5 يعني ماءً بحاجة لصدمة كلورية."
+
+msgid "Temperature (°C)"
+msgstr "الحرارة (°م)"
+
+msgid "Turbidity (NTU)"
+msgstr "العكارة (NTU)"
+
+msgid "Total alkalinity (ppm)"
+msgstr "القلوية الكلية (ppm)"
+
+msgid "Cyanuric acid (ppm)"
+msgstr "حمض السيانوريك (ppm)"
+
+msgid "The stabiliser — above 100 it weakens chlorine effectiveness."
+msgstr "المثبّت — فوق 100 يُضعف فاعلية الكلور."
+
+msgid "Within the safe band"
+msgstr "ضمن النطاق الآمن"
+
+msgid "Values out of range"
+msgstr "القيم الخارجة عن النطاق"
+
+msgid "Action taken"
+msgstr "الإجراء المتخذ"
+
+msgid "Closed the pool"
+msgstr "أُغلق المسبح بسببها"
+
+msgid "Note"
+msgstr "ملاحظة"
+
+msgid "chlorine %.1f"
+msgstr "كلور %.1f"
+
+msgid "temperature %.1f"
+msgstr "حرارة %.1f"
+
+msgid "turbidity %.2f"
+msgstr "عكارة %.2f"
+
+msgid "combined chlorine %.1f"
+msgstr "كلور مرتبط %.1f"
+
+msgid "Reading out of range: %s"
+msgstr "قراءة خارج النطاق: %s"
+
+msgid "🏊 Pool closed — reading out of range"
+msgstr "🏊 أُغلق المسبح — قراءة خارج النطاق"
+
+msgid "Pool maintenance task"
+msgstr "عمل صيانة مسبح"
+
+msgid "Filter backwash"
+msgstr "غسيل عكسي للفلتر"
+
+msgid "Vacuum the floor"
+msgstr "كنس القاع"
+
+msgid "Skim the surface"
+msgstr "كشط السطح"
+
+msgid "Brush walls and waterline"
+msgstr "تنظيف الجدران وخط الماء"
+
+msgid "Empty the baskets"
+msgstr "تفريغ السلال"
+
+msgid "Clean / replace filter"
+msgstr "تنظيف/استبدال الفلتر"
+
+msgid "Dose chemicals"
+msgstr "إضافة مواد كيميائية"
+
+msgid "Shock chlorination"
+msgstr "صدمة كلورية"
+
+msgid "Drain and refill"
+msgstr "تصريف وإعادة تعبئة"
+
+msgid "Repair"
+msgstr "إصلاح"
+
+msgid "Task type"
+msgstr "نوع العمل"
+
+msgid "Done at"
+msgstr "وقت التنفيذ"
+
+msgid "Done by"
+msgstr "المنفّذ"
+
+msgid "Chemical used"
+msgstr "المادة المستخدمة"
+
+msgid "Quantity"
+msgstr "الكمية"
+
+msgid "Unit"
+msgstr "الوحدة"
+
+msgid "kg"
+msgstr "كجم"
+
+msgid "Filter pressure (bar)"
+msgstr "ضغط الفلتر (bar)"
+
+msgid "Half a bar above normal means it is time to backwash."
+msgstr "ارتفاعه عن الطبيعي بمقدار 0.5 يعني وقت الغسيل العكسي."

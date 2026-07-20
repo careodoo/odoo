@@ -8,7 +8,7 @@ is ask for that one car. Asking pushes the request to whoever is on shift.
 import base64
 import io as _io
 
-from markupsafe import Markup
+from markupsafe import Markup, escape
 
 from odoo import http, _
 from odoo.http import request
@@ -88,7 +88,11 @@ class ValetTicketPortal(http.Controller):
         qr_block = (Markup('<img src="%s" alt="QR"/>') % qr) if qr else Markup(
             '<div class="noqr">%s</div>') % url
 
-        html = Markup("""<!doctype html><html lang="ar" dir="rtl"><head>
+        # A plain str template: Markup.replace() ESCAPES what it is given, so
+        # substituting the rows into a Markup template turned every <tr> into
+        # visible text on the printed ticket. The fragments below are already
+        # safe Markup; the free-text values are escaped explicitly.
+        html = ("""<!doctype html><html lang="ar" dir="rtl"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>__NAME__</title><style>
 *{box-sizing:border-box}
@@ -130,8 +134,8 @@ td{padding:8px 18px;border-bottom:1px solid #eef1f5}
 </div>
 <button class="pr" onclick="window.print()">🖨️ طباعة التذكرة</button>
 </div></body></html>""")
-        page = (html.replace('__NAME__', str(t.name or ''))
-                .replace('__PLATE__', str(t.plate or ''))
+        page = (html.replace('__NAME__', escape(t.name or ''))
+                .replace('__PLATE__', escape(t.plate or ''))
                 .replace('__RED__', RED).replace('__INK__', INK)
                 .replace('__ROWS__', str(body)).replace('__NOTE__', str(note))
                 .replace('__QR__', str(qr_block)))

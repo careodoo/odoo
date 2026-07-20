@@ -64,7 +64,7 @@
     <field name="view_mode">tree,form</field>
   </record>
   <record id="action_pool_task" model="ir.actions.act_window">
-    <field name="name">أعمال الصيانة</field><field name="res_model">care.pool.task</field>
+    <field name="name">Maintenance work</field><field name="res_model">care.pool.task</field>
     <field name="view_mode">tree,form</field>
   </record>
   <menuitem id="menu_pool_root" name="صيانة المسابح" sequence="48"/>
