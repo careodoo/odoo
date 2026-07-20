@@ -13,8 +13,16 @@ import 'screens/language_onboarding.dart';
 void main() async {
   // PackageInfo talks over a platform channel, so the binding must exist first
   WidgetsFlutterBinding.ensureInitialized();
-  await AppVersion.load(); // real version, never a hardcoded string
-  await Push.init();          // FCM: permission + device token
+  // Neither of these may hold the app hostage. Both talk to the platform —
+  // package info over a channel, Firebase over the network — and a hang is not
+  // an exception, so try/catch alone cannot save a startup that stalls before
+  // runApp: the user sees a spinner and nothing else, forever.
+  await AppVersion.load()
+      .timeout(const Duration(seconds: 5), onTimeout: () {})
+      .catchError((_) {});
+  await Push.init()
+      .timeout(const Duration(seconds: 8), onTimeout: () {})
+      .catchError((_) {});
 
   // In release Flutter paints a bare grey box when a widget throws, which is
   // exactly what a user reports as "the page is grey and won't open" — with

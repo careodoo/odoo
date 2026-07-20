@@ -335,10 +335,23 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  Widget _f(TextEditingController c, String label, IconData ic, {TextInputType? keyboard}) => TextField(
-        controller: c, keyboardType: keyboard,
-        decoration: InputDecoration(labelText: label, prefixIcon: Icon(ic), border: const OutlineInputBorder()),
-      );
+  Widget _f(TextEditingController c, String label, IconData ic, {TextInputType? keyboard}) {
+    // A phone keyboard "helps" with an email address by capitalising it and
+    // inserting a period and a space — one real login arrived as
+    // "rajab. ibrahim.@Care-kw.com" and was rejected as a wrong password.
+    // Turn the help off for the address field.
+    final isEmail = keyboard == TextInputType.emailAddress;
+    return TextField(
+      controller: c,
+      keyboardType: keyboard,
+      autocorrect: !isEmail,
+      enableSuggestions: !isEmail,
+      textCapitalization:
+          isEmail ? TextCapitalization.none : TextCapitalization.sentences,
+      decoration: InputDecoration(
+          labelText: label, prefixIcon: Icon(ic), border: const OutlineInputBorder()),
+    );
+  }
 }
 
 /// A layered gradient + soft floating shapes — brand-forward, no assets needed.
