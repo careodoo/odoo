@@ -563,6 +563,28 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
               await http.get(_u('/app/config'))))['data'] as Map);
 
+  // ---- service registry (the 39 sections, shared with the web portal) --------
+  /// What each service is made of. The backend declares it once, so a section
+  /// added there appears in the app and the portal without either being edited.
+  Future<Map<String, dynamic>> svcRegistry() async =>
+      Map<String, dynamic>.from((await _handle(await http.get(
+              _u('/client/svc'), headers: await _headers())))['data'] as Map);
+
+  /// One section's records, plus whether this client may add or cancel here.
+  Future<Map<String, dynamic>> svcSection(String code, String key, {int page = 1}) async =>
+      Map<String, dynamic>.from((await _handle(await http.get(
+              _u('/client/svc/$code/$key?page=$page'),
+              headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> svcAdd(String code, String key, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await http.post(
+              _u('/client/svc/$code/$key/add'),
+              headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<void> svcCancel(String code, String key, int id) async =>
+      _handle(await http.post(_u('/client/svc/$code/$key/$id/cancel'),
+          headers: await _headers()));
+
   // ---- valet parking ---------------------------------------------------------
   /// One service's slice of the client's work — the per-service screens all
   /// read the same enriched work-order envelope, filtered by service type.

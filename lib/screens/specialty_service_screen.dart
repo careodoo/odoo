@@ -4,6 +4,7 @@ import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/widgets.dart';
 import 'work_order_detail_screen.dart';
+import 'svc_sections_hub.dart';
 
 const _navy = Color(0xFF0E3A5F);
 
@@ -178,6 +179,17 @@ class _SpecialtyServiceScreenState extends State<SpecialtyServiceScreen> {
       appBar: AppBar(
         backgroundColor: s.color, foregroundColor: Colors.white,
         title: Text(tr(s.ar, s.en), style: const TextStyle(fontWeight: FontWeight.w900)),
+        actions: [
+          // The real records of this service — readings, cleanings, stations,
+          // rounds — not just its work orders.
+          IconButton(
+            tooltip: tr('سجلات الخدمة', 'Service records'),
+            icon: const Icon(Icons.folder_open_rounded),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => SvcSectionsHub(
+                    code: s.code, title: tr(s.ar, s.en), accent: s.color))),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: const Color(0xFFC0392B),
