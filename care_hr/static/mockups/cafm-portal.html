@@ -696,8 +696,20 @@ let SVC_REG={};
 async function loadSvcReg(){try{const d=await api('/client/svc');
   (d.services||[]).forEach(s=>{SVC_REG[s.code]=s;});}catch(e){SVC_REG={};}}
 function svcRegItems(type){const reg=SVC_REG[type];
+  // The pantry is a hospitality page but lives outside the registry, so it is
+  // added here rather than being invisible on the web while the app has it.
+  let extra = '';
+  if (type === 'hospitality') {
+    extra = '<a data-id="hosp_stock" onclick="go(\'hosp_stock\')"><span class="ic">📦</span><span>'
+      + esc(T('المخزون والمشتريات','Pantry & purchases')) + '</span></a>'
+      + '<a onclick="hospPlaceForm()"><span class="ic">📍</span><span>'
+      + esc(T('مكان التقديم','Serving place')) + '</span></a>';
+  } else if (type === 'valet') {
+    extra = '<a onclick="valetPlateForm()"><span class="ic">🔎</span><span>'
+      + esc(T('بحث بلوحة المركبة','Look up a plate')) + '</span></a>';
+  }
   if(!reg||!reg.sections||!reg.sections.length)return '';
-  return reg.sections.map(sec=>
+  return extra + reg.sections.map(sec=>
     '<a data-id="svc:'+esc(type)+':'+esc(sec.key)+'" onclick="goSvcSec(\''+type+'\',\''+sec.key+'\')">'
     +'<span class="ic">'+esc(sec.icon||'•')+'</span><span>'+esc(T(sec.label, sec.label_en||sec.label))+'</span></a>').join('');
 }
@@ -799,7 +811,10 @@ async function svcAddForm(code,key){
       +esc(x.label)+(x.required?' <span style="color:var(--red)">*</span>':'')+'</label>'+inp
       +(x.help?'<div style="font-size:11px;color:var(--muted);margin-top:4px">'+esc(x.help)+'</div>':'')+'</div>';
   }).join('');
-  openDrawer(d.add_label||T('إضافة سجل','Add record'),'<div class="sec">'+f+'</div>',
+  // Only the waste service is asked what it is carrying — every other service
+  // would be answering a question that does not apply to it.
+  const wf = (code === 'waste') ? await wasteScopeFields() : '';
+  openDrawer(d.add_label||T('إضافة سجل','Add record'),'<div class="sec">'+f+'</div>'+wf,
     {icon:(d.service||{}).icon||'➕',subtitle:(d.section||{}).label,
      actions:[{label:T('إلغاء','Cancel'),cls:'s',onclick:closeDrawer},
               {label:T('حفظ','Save'),cls:'p',onclick:function(){svcAddSave(code,key,d.fields||[]);}}]});
@@ -821,6 +836,7 @@ async function svcAddSave(code,key,fields){
   for(const x of fields){const el=document.getElementById('sf_'+x.name);if(!el)continue;
     body[x.name]=(x.kind==='bool')?(el.checked?'1':''):el.value;
     if(x.required&&!body[x.name]){toast(T('أكمل: ','Required: ')+x.label);return;}}
+  if(code === 'waste') Object.assign(body, wasteScopeBody());
   try{await api('/client/svc/'+code+'/'+key+'/add',{method:'POST',body:body});}
   catch(e){toast(String(e&&e.message||e).slice(0,120));return;}
   closeDrawer();toast(T('تم الحفظ','Saved'));goSvcSec(code,key,1);
@@ -1065,7 +1081,202 @@ let CUR='dashboard';
     const p=n=>String(n).padStart(2,'0');
     return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes());};
 
+
+
+/* ---- where I am served ----
+   A guest typing their office number into every order is how orders arrive at
+   the wrong desk. Set it once; changeable unless the client locked it. */
+async function hospPlaceForm(){
+  let m; try{m=await api('/hosp/menu');}catch(e){toast(T('تعذّر التحميل','Could not load'));return;}
+  const mp=m.my_place||{}, places=m.places||[];
+  if(mp.locked){toast(T('مكان التقديم مثبَّت من مسؤول الحساب','Your serving place is locked by your admin'));return;}
+  openDrawer(T('مكان التقديم','Serving place'),
+    '<div class="sec">'
+    +'<label style="font-weight:700;font-size:12.5px">'+esc(T('الموقع','Location'))+'</label>'
+    +'<select class="inp" id="hp_loc" style="width:100%;margin:6px 0 12px"><option value="">—</option>'
+    +places.map(l=>'<option value="'+l.id+'"'+(String(l.id)===String(mp.location_id)?' selected':'')+'>'
+      +esc(l.name)+(l.code?' ('+esc(l.code)+')':'')+'</option>').join('')+'</select>'
+    +'<label style="font-weight:700;font-size:12.5px">'+esc(T('المكتب/القاعة','Office / hall'))+'</label>'
+    +'<input class="inp" id="hp_room" style="width:100%;margin-top:6px" value="'+esc(mp.room_label||'')+'"/>'
+    +'<div style="font-size:11px;color:var(--muted);margin-top:8px">'
+    +esc(T('يُملأ تلقائيًا في كل طلب ضيافة.','Filled in automatically on every hospitality order.'))+'</div></div>',
+    {icon:'📍',size:'sm',
+     actions:[{label:T('إلغاء','Cancel'),cls:'s',onclick:closeDrawer},
+              {label:T('حفظ','Save'),cls:'p',onclick:hospPlaceSave}]});
+}
+async function hospPlaceSave(){
+  const body={location_id:(document.getElementById('hp_loc')||{}).value||null,
+              room_label:(document.getElementById('hp_room')||{}).value||''};
+  try{await api('/hosp/place',{method:'POST',body:body});}
+  catch(e){toast(String(e&&e.message||e).slice(0,120));return;}
+  closeDrawer();toast(T('تم الحفظ','Saved'));
+}
+
+/* ---- what a collection is carrying ----
+   A crew arriving with the wrong vehicle for a load of scrap metal is a wasted
+   trip, so the client says what it is. "General" is a real answer. */
+let WASTE_CAT=null;
+async function wasteScopeFields(){
+  if(!WASTE_CAT){try{WASTE_CAT=await api('/client/waste/catalogue');}catch(e){WASTE_CAT={types:[],items:[]};}}
+  const t=WASTE_CAT.types||[], it=WASTE_CAT.items||[];
+  return '<div id="wscope" class="sec"><label style="font-weight:700;font-size:12.5px">'
+    +esc(T('ما المطلوب نقله؟','What is being collected?'))+'</label>'
+    +'<select class="inp" id="w_scope" style="width:100%;margin:6px 0 10px" onchange="wasteScopeSwitch()">'
+    +'<option value="general">'+esc(T('عام — نفايات مختلطة','General — mixed waste'))+'</option>'
+    +'<option value="type">'+esc(T('فئة محدّدة','A category'))+'</option>'
+    +'<option value="items">'+esc(T('أصناف محدّدة','Specific items'))+'</option></select>'
+    +'<div id="w_type" style="display:none"><select class="inp" id="w_type_id" style="width:100%">'
+    +t.map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join('')+'</select></div>'
+    +'<div id="w_items" style="display:none;max-height:180px;overflow:auto">'
+    +it.map(x=>'<label style="display:block;font-size:12.5px;padding:3px 0">'
+      +'<input type="checkbox" class="w_item" value="'+x.id+'"/> '+esc(x.name)+'</label>').join('')+'</div>'
+    +'<div id="w_note"><input class="inp" id="w_note_v" style="width:100%" '
+    +'placeholder="'+esc(T('وصف المنقولات (اختياري)','Describe the load (optional)'))+'"/></div></div>';
+}
+function wasteScopeSwitch(){
+  const v=(document.getElementById('w_scope')||{}).value;
+  const set=(id,on)=>{const e=document.getElementById(id);if(e)e.style.display=on?'block':'none';};
+  set('w_type',v==='type');set('w_items',v==='items');set('w_note',v==='general');
+}
+function wasteScopeBody(){
+  const v=(document.getElementById('w_scope')||{}).value;
+  if(!v)return {};
+  const b={waste_scope:v};
+  if(v==='type'){const e=document.getElementById('w_type_id');if(e&&e.value)b.waste_type_id=+e.value;}
+  if(v==='items'){b.waste_item_ids=[...document.querySelectorAll('.w_item:checked')].map(x=>+x.value);}
+  if(v==='general'){const e=document.getElementById('w_note_v');if(e&&e.value.trim())b.waste_note=e.value.trim();}
+  return b;
+}
+
+/* ---- the vehicle behind the plate ---- */
+async function valetPlateLookup(){
+  const q=(document.getElementById('vp_q')||{}).value||'';
+  if(!q.trim()){toast(T('أدخل رقم اللوحة','Enter a plate number'));return;}
+  let d; try{d=await api('/valet/plate?plate='+encodeURIComponent(q.trim()));}
+  catch(e){toast(String(e&&e.message||e).slice(0,110));return;}
+  if(!d.known){
+    setDrawer(T('مركبة جديدة','New vehicle'),
+      '<div class="sec">'+esc(T('لا سجل سابق لهذه اللوحة','No previous record for this plate'))+': <b>'+esc(q)+'</b></div>',
+      {icon:'🚗',size:'sm',actions:[{label:T('إغلاق','Close'),cls:'s',onclick:closeDrawer}]});
+    return;
+  }
+  const rows=[[T('اللوحة','Plate'),d.plate],[T('المركبة','Vehicle'),[d.make,d.model,d.color].filter(Boolean).join(' ')||'—'],
+    [T('المالك','Owner'),d.owner||'—'],[T('الهاتف','Phone'),d.phone||'—'],
+    [T('عدد الزيارات','Visits'),d.visits],[T('متوسط المدة','Average stay'),(d.avg_stay||0)+' '+T('دقيقة','min')],
+    [T('آخر زيارة','Last seen'),d.last_seen||'—']];
+  let h='<div class="sec">'+rows.map(r=>'<div style="display:flex;padding:5px 0;border-bottom:1px solid var(--line2)">'
+    +'<span style="flex:1;color:var(--muted);font-size:12.5px">'+esc(r[0])+'</span>'
+    +'<b style="font-size:12.5px">'+esc(String(r[1]))+'</b></div>').join('')+'</div>';
+  if(d.vip)h+='<div class="sec" style="border-color:#f59e0b">⭐ '+esc(T('مركبة كبار الشخصيات','VIP vehicle'))+'</div>';
+  if(d.blocked)h+='<div class="sec" style="border-color:#e11d48">⛔ '+esc(T('ممنوعة','Blocked'))+': '+esc(d.block_reason||'')+'</div>';
+  if(d.notes)h+='<div class="sec">📌 '+esc(d.notes)+'</div>';
+  if((d.history||[]).length)h+='<div class="sec"><h4>'+esc(T('الزيارات السابقة','Previous visits'))+'</h4>'
+    +d.history.map(t=>'<div style="display:flex;gap:8px;padding:4px 0;font-size:12px">'
+      +'<b style="flex:1">'+esc(t.name)+'</b><span style="color:var(--muted)">'+esc(t.received_at||'')+'</span></div>').join('')+'</div>';
+  setDrawer(T('سجل المركبة','Vehicle record'),h,{icon:'🚗',subtitle:d.plate,
+    actions:[{label:T('إغلاق','Close'),cls:'s',onclick:closeDrawer}]});
+}
+function valetPlateForm(){
+  openDrawer(T('بحث بلوحة المركبة','Look up a plate'),
+    '<div class="sec"><input class="inp" id="vp_q" style="width:100%;font-size:16px;text-align:center" '
+    +'placeholder="'+esc(T('مثال: 12345/ب','e.g. 12345/B'))+'"/>'
+    +'<div style="font-size:11px;color:var(--muted);margin-top:8px">'
+    +esc(T('الأرقام العربية والفواصل تُطابَق تلقائيًا.','Arabic digits and separators are matched automatically.'))
+    +'</div></div>',
+    {icon:'🚗',size:'sm',
+     actions:[{label:T('إغلاق','Close'),cls:'s',onclick:closeDrawer},
+              {label:T('بحث','Search'),cls:'p',onclick:valetPlateLookup}]});
+}
+
+/* ---- hospitality pantry helpers ---- */
+async function hospPurchaseAct(id,act){
+  try{await api('/hosp/purchase/'+id+'/'+act,{method:'POST',body:{}});}
+  catch(e){toast(String(e&&e.message||e).slice(0,120));return;}
+  toast(T('تم','Done'));go('hosp_stock');
+}
+/* Ordering is by pack, because that is how supplies are bought. */
+async function hospOrderForm(){
+  let d; try{d=await api('/hosp/stock');}catch(e){toast(T('تعذّر التحميل','Could not load'));return;}
+  const rows=(d.supplies||[]).map(s=>
+    '<div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--line2)">'
+    +'<div style="flex:1"><b style="font-size:13px">'+esc(s.name)+'</b>'
+    +'<div style="font-size:11px;color:var(--muted)">'+esc(s.pack_name||'')+' · '+(+s.pack_size||0).toFixed(0)+' '+esc(s.uom_label||'')+'</div></div>'
+    +'<input class="inp" type="number" min="0" step="1" value="0" id="hq_'+s.id+'" style="width:74px;text-align:center"/></div>').join('');
+  openDrawer(T('طلب شراء مستهلكات','Order supplies'),
+    '<div class="sec"><label style="font-weight:700;font-size:12.5px">'+esc(T('مصدر الشراء','Source'))+'</label>'
+    +'<select class="inp" id="hsrc" style="width:100%;margin:6px 0 12px">'
+    +'<option value="care">'+esc(T('من شركة CARE','From CARE'))+'</option>'
+    +'<option value="external">'+esc(T('مورّد خارجي','External supplier'))+'</option></select>'
+    +rows+'</div>',
+    {icon:'🛒',size:'lg',
+     actions:[{label:T('إلغاء','Cancel'),cls:'s',onclick:closeDrawer},
+              {label:T('إنشاء الطلب','Create order'),cls:'p',onclick:function(){hospOrderSave(d.supplies||[]);}}]});
+}
+async function hospOrderSave(sups){
+  const lines=[];
+  for(const s of sups){const el=document.getElementById('hq_'+s.id);
+    const q=el?+el.value:0; if(q>0)lines.push({supply_id:s.id,quantity:q,by_pack:true});}
+  if(!lines.length){toast(T('اختر صنفًا واحدًا على الأقل','Pick at least one item'));return;}
+  const src=(document.getElementById('hsrc')||{}).value||'care';
+  try{await api('/hosp/purchase/create',{method:'POST',body:{source:src,lines:lines}});}
+  catch(e){toast(String(e&&e.message||e).slice(0,120));return;}
+  closeDrawer();toast(T('أُنشئ طلب الشراء','Purchase order created'));go('hosp_stock');
+}
+function setPage(ar,en,sar,sen){
+  document.getElementById('ptitle').textContent=T(ar,en);
+  document.getElementById('psub').textContent=T(sar||'',sen||'');
+}
+
 const ROUTES={
+  // ---- hospitality pantry: the same numbers the app shows -----------------
+  // A storekeeper reads cups, not grams. The servings figure leads and the
+  // weight supports it, and under a week of cover turns the row red because
+  // that is when ordering should already have happened.
+  async hosp_stock(p){CUR='hosp_stock';
+    setPage('مخزون الضيافة','Hospitality pantry','ما تبقّى — بالحصص','What is left — in servings');
+    let d; try{d=await api('/hosp/stock');}catch(e){p.innerHTML=emptyState(T('تعذّر التحميل','Could not load'));return;}
+    const t=d.totals||{};
+    let h='<div class="kpis">'
+      +kpi('💰','#8a6d3b',(t.value||0).toFixed(2),T('قيمة المخزون','Stock value'))
+      +kpi('⚠️','#e11d48',t.low||0,T('تحت الحد الأدنى','Below minimum'))
+      +kpi('⏳','#f59e0b',t.urgent||0,T('تنفد خلال أسبوع','Out within a week'))
+      +'</div><div class="toolbar" style="margin-top:14px">'
+      +'<button class="btn p" onclick="hospOrderForm()">🛒 '+esc(T('طلب شراء','Order supplies'))+'</button></div>';
+    h+='<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))">';
+    h+=(d.supplies||[]).map(s=>{
+      const days=+s.days_cover||0, urgent=s.low||(days>0&&days<7);
+      const c=urgent?'#e11d48':'#16a34a';
+      return '<div class="panel" style="padding:14px;border-color:'+(urgent?c+'55':'var(--line)')+'">'
+        +'<div style="display:flex;align-items:center;gap:8px">'
+        +'<div style="font-weight:800;font-size:14px;flex:1">'+esc(s.name)+'</div>'
+        +'<span class="pill" style="background:'+c+'1f;color:'+c+'">'+(s.servings_left||0)+' '+esc(T('حصة','servings'))+'</span></div>'
+        +'<div style="color:var(--muted);font-size:11.5px;margin-top:5px">'
+        +(+s.on_hand||0).toFixed(0)+' '+esc(s.uom_label||'')+' · '+(+s.packs||0).toFixed(1)+' '+esc(s.pack_name||'')
+        +(s.per_serving?' · '+esc(s.per_serving):'')+'</div>'
+        +(days>0?'<div style="margin-top:8px;font-size:11.5px;font-weight:800;color:'+c+'">'
+          +esc(T('تكفي','Lasts'))+' '+days.toFixed(days<10?1:0)+' '+esc(T('يوم','days'))+'</div>':'')
+        +((s.used_in||[]).length?'<div style="margin-top:9px;border-top:1px solid var(--line2);padding-top:8px;font-size:11px;color:var(--muted)">'
+          +(s.used_in||[]).slice(0,4).map(u=>esc(u.item)+(u.option?' · '+esc(u.option):'')
+            +' <b>'+u.qty+'</b> → '+u.per_pack+' '+esc(T('حصة/عبوة','per pack'))).join('<br/>')
+          +'</div>':'')
+        +'</div>';}).join('');
+    h+='</div>';
+    if((d.purchases||[]).length){
+      h+='<h3 style="margin:20px 0 8px">'+esc(T('المشتريات','Purchases'))+'</h3><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">';
+      const SC={draft:'#64748b',submitted:'#3b82f6',approved:'#f59e0b',received:'#16a34a',cancelled:'#e11d48'};
+      const SL={draft:['مسودة','Draft'],submitted:['مُرسَل','Submitted'],approved:['معتمد','Approved'],received:['تم الاستلام','Received'],cancelled:['ملغى','Cancelled']};
+      const NX={draft:['submit',['إرسال','Submit']],submitted:['approve',['اعتماد','Approve']],approved:['receive',['استلام','Receive']]};
+      h+=(d.purchases||[]).map(x=>{const c=SC[x.state]||'#64748b',l=SL[x.state]||[x.state,x.state],n=NX[x.state];
+        return '<div class="panel" style="padding:13px"><div style="display:flex;gap:8px">'
+        +'<b style="flex:1">'+esc(x.name)+'</b>'+pillHtml(T(l[0],l[1]),'info')+'</div>'
+        +'<div style="color:var(--muted);font-size:11.5px;margin-top:4px">'+esc(x.supplier||'CARE')+' · '+esc(x.date)+' · '+x.lines+' '+esc(T('صنف','items'))+' · '+(+x.total||0).toFixed(3)+'</div>'
+        +(n?'<button class="btn s" style="margin-top:9px;width:100%" onclick="hospPurchaseAct('+x.id+',\''+n[0]+'\')">'+esc(T(n[1][0],n[1][1]))+'</button>':'')
+        +'</div>';}).join('');
+      h+='</div>';
+    }
+    p.innerHTML=h;
+  },
+
   async dashboard(p){CUR='dashboard';
     let period='all',svc='all';
     const cts=await api('/client/contracts').catch(()=>[]);
