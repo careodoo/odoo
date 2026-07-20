@@ -13,10 +13,10 @@ from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
 PEST_TYPES = [
-    ('cockroach', 'صراصير'), ('rodent', 'قوارض'), ('ant', 'نمل'),
-    ('fly', 'ذباب'), ('mosquito', 'بعوض'), ('bedbug', 'بق الفراش'),
-    ('termite', 'نمل أبيض (أرضة)'), ('bird', 'طيور'), ('snake', 'زواحف'),
-    ('other', 'أخرى'),
+    ('cockroach', 'Cockroaches'), ('rodent', 'Rodents'), ('ant', 'Ants'),
+    ('fly', 'Flies'), ('mosquito', 'Mosquitoes'), ('bedbug', 'Bed Bugs'),
+    ('termite', 'Termites'), ('bird', 'Birds'), ('snake', 'Reptiles'),
+    ('other', 'Other'),
 ]
 
 
@@ -24,26 +24,26 @@ class PestChemical(models.Model):
     """The approved-pesticide register. A client is entitled to ask what was
     sprayed near their kitchen and to be told the registration number."""
     _name = 'care.pest.chemical'
-    _description = 'مبيد معتمد'
+    _description = 'Approved Pesticide'
     _inherit = ['mail.thread']
     _order = 'name'
 
-    name = fields.Char(string='الاسم التجاري', required=True, tracking=True)
-    name_en = fields.Char(string='الاسم بالإنجليزية')
-    active_ingredient = fields.Char(string='المادة الفعّالة', required=True, tracking=True)
-    moh_registration = fields.Char(string='رقم تسجيل وزارة الصحة', tracking=True,
-                                   help='لا يُستخدم مبيد غير مسجّل.')
+    name = fields.Char(string='Trade Name', required=True, tracking=True)
+    name_en = fields.Char(string='English Name')
+    active_ingredient = fields.Char(string='Active Ingredient', required=True, tracking=True)
+    moh_registration = fields.Char(string='Ministry of Health Registration Number', tracking=True,
+                                   help='Unregistered pesticides must not be used.')
     formulation = fields.Selection([
-        ('sc', 'معلّق مركّز SC'), ('ec', 'مستحلب مركّز EC'), ('wp', 'مسحوق قابل للبلل WP'),
-        ('gel', 'جل طُعم'), ('bait', 'طُعم حبيبي'), ('dust', 'بودرة'),
-        ('aerosol', 'رذاذ'), ('other', 'أخرى'),
-    ], string='الصيغة', default='sc', tracking=True)
-    target_pests = fields.Char(string='الآفات المستهدفة')
-    dilution = fields.Char(string='نسبة التخفيف', help='مثال: 5 مل لكل لتر ماء.')
-    reentry_hours = fields.Integer(string='فترة منع الدخول (ساعة)', default=4, tracking=True,
-                                   help='كم ساعة يُمنع دخول المكان بعد الرش.')
-    food_area_safe = fields.Boolean(string='مسموح في مناطق الأغذية', tracking=True)
-    hazard_note = fields.Text(string='تحذيرات السلامة')
+        ('sc', 'Suspension Concentrate (SC)'), ('ec', 'Emulsifiable Concentrate (EC)'), ('wp', 'Wettable Powder (WP)'),
+        ('gel', 'Bait Gel'), ('bait', 'Granular Bait'), ('dust', 'Dust'),
+        ('aerosol', 'Spray'), ('other', 'Other'),
+    ], string='Formulation', default='sc', tracking=True)
+    target_pests = fields.Char(string='Target Pests')
+    dilution = fields.Char(string='Dilution Rate', help='Example: 5 ml per litre of water.')
+    reentry_hours = fields.Integer(string='Re-entry Interval (hours)', default=4, tracking=True,
+                                   help='Number of hours the area must remain unoccupied after treatment.')
+    food_area_safe = fields.Boolean(string='Approved for Food Areas', tracking=True)
+    hazard_note = fields.Text(string='Safety Warnings')
     active = fields.Boolean(default=True)
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
 
@@ -55,36 +55,36 @@ class PestStation(models.Model):
     """A numbered station on the grid. The grid is the service — a client pays
     for coverage, and coverage is only demonstrable station by station."""
     _name = 'care.pest.station'
-    _description = 'محطة مكافحة'
+    _description = 'Control Station'
     _inherit = ['mail.thread']
     _order = 'facility_id, code'
 
-    name = fields.Char(string='الاسم', compute='_compute_name', store=True)
-    code = fields.Char(string='رقم المحطة', required=True, tracking=True,
-                       help='رقم مطبوع على المحطة نفسها ليُطابَق ميدانيًا.')
-    facility_id = fields.Many2one('care.cafm.facility', string='المرفق', required=True,
+    name = fields.Char(string='Name', compute='_compute_name', store=True)
+    code = fields.Char(string='Station Number', required=True, tracking=True,
+                       help='Number printed on the station itself so it can be matched in the field.')
+    facility_id = fields.Many2one('care.cafm.facility', string='Facility', required=True,
                                   tracking=True, index=True)
-    location_id = fields.Many2one('care.cafm.location', string='الموقع', tracking=True)
+    location_id = fields.Many2one('care.cafm.location', string='Location', tracking=True)
     station_type = fields.Selection([
-        ('bait_station', 'محطة طُعم قوارض'), ('snap_trap', 'مصيدة قافزة'),
-        ('glue_board', 'لوح لاصق'), ('light_trap', 'مصيدة ضوئية'),
-        ('pheromone', 'مصيدة فرمونية'), ('monitor', 'نقطة رصد'),
-    ], string='النوع', default='bait_station', required=True, tracking=True)
-    target = fields.Selection(PEST_TYPES, string='الآفة المستهدفة', default='rodent')
-    indoor = fields.Boolean(string='داخلي', default=True)
-    installed_on = fields.Date(string='تاريخ التركيب', default=fields.Date.context_today)
+        ('bait_station', 'Rodent Bait Station'), ('snap_trap', 'Snap Trap'),
+        ('glue_board', 'Glue Board'), ('light_trap', 'Insect Light Trap'),
+        ('pheromone', 'Pheromone Trap'), ('monitor', 'Monitoring Point'),
+    ], string='Type', default='bait_station', required=True, tracking=True)
+    target = fields.Selection(PEST_TYPES, string='Target Pest', default='rodent')
+    indoor = fields.Boolean(string='Indoor', default=True)
+    installed_on = fields.Date(string='Installation Date', default=fields.Date.context_today)
     state = fields.Selection([
-        ('active', 'نشطة'), ('damaged', 'تالفة'), ('missing', 'مفقودة'),
-        ('removed', 'مُزالة'),
-    ], string='الحالة', default='active', required=True, tracking=True)
-    note = fields.Char(string='ملاحظة')
-    last_check = fields.Date(string='آخر فحص', compute='_compute_last', store=True)
-    last_catch = fields.Integer(string='آخر عدد ملتقط', compute='_compute_last', store=True)
-    check_ids = fields.One2many('care.pest.visit.station', 'station_id', string='الفحوص')
+        ('active', 'Active'), ('damaged', 'Damaged'), ('missing', 'Missing'),
+        ('removed', 'Removed'),
+    ], string='Status', default='active', required=True, tracking=True)
+    note = fields.Char(string='Note')
+    last_check = fields.Date(string='Last Inspection', compute='_compute_last', store=True)
+    last_catch = fields.Integer(string='Last Catch Count', compute='_compute_last', store=True)
+    check_ids = fields.One2many('care.pest.visit.station', 'station_id', string='Inspections')
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
 
     _sql_constraints = [('code_facility_uniq', 'unique(code, facility_id)',
-                         'رقم المحطة مستخدم في هذا المرفق.')]
+                         'This station number is already used in this facility.')]
 
     @api.depends('code', 'station_type')
     def _compute_name(self):
@@ -105,25 +105,25 @@ class PestProgram(models.Model):
     """The standing schedule. Treatment does not wait for a sighting — that is
     the whole difference between a programme and a call-out."""
     _name = 'care.pest.program'
-    _description = 'برنامج مكافحة'
+    _description = 'Control Programme'
     _inherit = ['mail.thread']
     _order = 'facility_id, name'
 
-    name = fields.Char(string='البرنامج', required=True, tracking=True)
-    facility_id = fields.Many2one('care.cafm.facility', string='المرفق', required=True,
+    name = fields.Char(string='Programme', required=True, tracking=True)
+    facility_id = fields.Many2one('care.cafm.facility', string='Facility', required=True,
                                   tracking=True, index=True)
     frequency = fields.Selection([
-        ('weekly', 'أسبوعي'), ('biweekly', 'كل أسبوعين'), ('monthly', 'شهري'),
-        ('quarterly', 'ربع سنوي'),
-    ], string='الدورية', default='monthly', required=True, tracking=True)
-    targets = fields.Char(string='الآفات المشمولة')
-    technician_id = fields.Many2one('hr.employee', string='الفني المسؤول', tracking=True)
-    start_date = fields.Date(string='بداية البرنامج', default=fields.Date.context_today)
-    next_due = fields.Date(string='الزيارة القادمة', tracking=True, index=True)
-    last_visit = fields.Date(string='آخر زيارة', compute='_compute_visits', store=True)
-    visit_count = fields.Integer(string='عدد الزيارات', compute='_compute_visits')
-    visit_ids = fields.One2many('care.pest.visit', 'program_id', string='الزيارات')
-    is_overdue = fields.Boolean(string='متأخر', compute='_compute_overdue', store=True)
+        ('weekly', 'Weekly'), ('biweekly', 'Fortnightly'), ('monthly', 'Monthly'),
+        ('quarterly', 'Quarterly'),
+    ], string='Frequency', default='monthly', required=True, tracking=True)
+    targets = fields.Char(string='Covered Pests')
+    technician_id = fields.Many2one('hr.employee', string='Assigned Technician', tracking=True)
+    start_date = fields.Date(string='Programme Start', default=fields.Date.context_today)
+    next_due = fields.Date(string='Next Visit', tracking=True, index=True)
+    last_visit = fields.Date(string='Last Visit', compute='_compute_visits', store=True)
+    visit_count = fields.Integer(string='Visit Count', compute='_compute_visits')
+    visit_ids = fields.One2many('care.pest.visit', 'program_id', string='Visits')
+    is_overdue = fields.Boolean(string='Overdue', compute='_compute_overdue', store=True)
     active = fields.Boolean(default=True)
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
 
@@ -176,7 +176,7 @@ class PestProgram(models.Model):
             late = p.next_due < today
             self.env['care.cafm.notification'].sudo().push(
                 users,
-                _('🐜 زيارة مكافحة %s') % (_('متأخرة') if late else _('مستحقة')),
+                _('🐜 Pest Control Visit %s') % (_('Overdue') if late else _('Due')),
                 '%s — %s' % (p.name, p.facility_id.name or ''),
                 ntype='alert' if late else 'task')
         return True
@@ -184,38 +184,38 @@ class PestProgram(models.Model):
 
 class PestVisit(models.Model):
     _name = 'care.pest.visit'
-    _description = 'زيارة مكافحة'
+    _description = 'Pest Control Visit'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'visit_date desc, id desc'
 
     name = fields.Char(default='/', copy=False, readonly=True)
-    program_id = fields.Many2one('care.pest.program', string='البرنامج', index=True)
-    facility_id = fields.Many2one('care.cafm.facility', string='المرفق', required=True,
+    program_id = fields.Many2one('care.pest.program', string='Programme', index=True)
+    facility_id = fields.Many2one('care.cafm.facility', string='Facility', required=True,
                                   tracking=True, index=True)
-    visit_date = fields.Date(string='تاريخ الزيارة', default=fields.Date.context_today,
+    visit_date = fields.Date(string='Visit Date', default=fields.Date.context_today,
                              required=True, tracking=True, index=True)
-    technician_id = fields.Many2one('hr.employee', string='الفني', tracking=True)
+    technician_id = fields.Many2one('hr.employee', string='Technician', tracking=True)
     visit_type = fields.Selection([
-        ('routine', 'زيارة دورية'), ('callout', 'استدعاء طارئ'),
-        ('followup', 'زيارة متابعة'),
-    ], string='نوع الزيارة', default='routine', required=True, tracking=True)
+        ('routine', 'Scheduled Visit'), ('callout', 'Emergency Call-out'),
+        ('followup', 'Follow-up Visit'),
+    ], string='Visit Type', default='routine', required=True, tracking=True)
     state = fields.Selection([
-        ('draft', 'مسودة'), ('done', 'منفّذة'), ('cancelled', 'ملغاة'),
-    ], string='الحالة', default='draft', required=True, tracking=True)
+        ('draft', 'Draft'), ('done', 'Completed'), ('cancelled', 'Cancelled'),
+    ], string='Status', default='draft', required=True, tracking=True)
     station_line_ids = fields.One2many('care.pest.visit.station', 'visit_id',
-                                       string='المحطات المفحوصة')
+                                       string='Inspected Stations')
     chemical_line_ids = fields.One2many('care.pest.visit.chemical', 'visit_id',
-                                        string='المواد المستخدمة')
-    findings = fields.Text(string='الملاحظات والتوصيات')
-    stations_checked = fields.Integer(string='محطات مفحوصة', compute='_compute_totals', store=True)
-    total_catch = fields.Integer(string='إجمالي الملتقط', compute='_compute_totals', store=True)
+                                        string='Products Applied')
+    findings = fields.Text(string='Notes and Recommendations')
+    stations_checked = fields.Integer(string='Stations Inspected', compute='_compute_totals', store=True)
+    total_catch = fields.Integer(string='Total Catch', compute='_compute_totals', store=True)
     activity_level = fields.Selection([
-        ('none', 'لا نشاط'), ('low', 'نشاط خفيف'), ('medium', 'نشاط متوسط'),
-        ('high', 'نشاط مرتفع'),
-    ], string='مستوى النشاط', compute='_compute_totals', store=True)
-    reentry_until = fields.Datetime(string='يُمنع الدخول حتى', compute='_compute_reentry',
+        ('none', 'No Activity'), ('low', 'Light Activity'), ('medium', 'Moderate Activity'),
+        ('high', 'High Activity'),
+    ], string='Activity Level', compute='_compute_totals', store=True)
+    reentry_until = fields.Datetime(string='Re-entry Allowed After', compute='_compute_reentry',
                                     store=True,
-                                    help='أطول فترة منع دخول بين المواد المستخدمة.')
+                                    help='The longest re-entry interval among the products applied.')
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
 
     @api.model_create_multi
@@ -247,7 +247,7 @@ class PestVisit(models.Model):
     def action_done(self):
         for v in self:
             if not v.station_line_ids.filtered('checked'):
-                raise UserError(_('سجّل فحص محطة واحدة على الأقل قبل إنهاء الزيارة.'))
+                raise UserError(_('Record at least one station inspection before completing the visit.'))
             v.state = 'done'
             if v.program_id:
                 v.program_id._roll_next(v.visit_date)
@@ -269,8 +269,8 @@ class PestVisit(models.Model):
         lvl = dict(self._fields['activity_level'].selection).get(self.activity_level, '')
         try:
             self.env['care.cafm.notification'].sudo().push(
-                users, _('🐜 تمت زيارة مكافحة الحشرات'),
-                '%s — %s محطة · %s' % (self.facility_id.name or '', self.stations_checked, lvl),
+                users, _('🐜 Pest Control Visit Completed'),
+                '%s — %s stations · %s' % (self.facility_id.name or '', self.stations_checked, lvl),
                 ntype='info')
         except Exception:
             pass
@@ -279,21 +279,21 @@ class PestVisit(models.Model):
 class PestVisitStation(models.Model):
     """What one station showed on one visit. This line is the evidence."""
     _name = 'care.pest.visit.station'
-    _description = 'فحص محطة'
+    _description = 'Station Inspection'
     _order = 'id'
 
     visit_id = fields.Many2one('care.pest.visit', required=True, ondelete='cascade', index=True)
-    station_id = fields.Many2one('care.pest.station', string='المحطة', required=True, index=True)
-    checked = fields.Boolean(string='فُحصت', default=True)
-    catch_count = fields.Integer(string='العدد الملتقط')
+    station_id = fields.Many2one('care.pest.station', string='Station', required=True, index=True)
+    checked = fields.Boolean(string='Inspected', default=True)
+    catch_count = fields.Integer(string='Catch Count')
     bait_state = fields.Selection([
-        ('intact', 'سليم'), ('partial', 'مستهلك جزئيًا'), ('consumed', 'مستهلك بالكامل'),
-        ('missing', 'مفقود'), ('replaced', 'تم استبداله'),
-    ], string='حالة الطُعم', default='intact')
+        ('intact', 'Intact'), ('partial', 'Partially Consumed'), ('consumed', 'Fully Consumed'),
+        ('missing', 'Missing'), ('replaced', 'Replaced'),
+    ], string='Bait Condition', default='intact')
     station_state = fields.Selection([
-        ('ok', 'سليمة'), ('damaged', 'تالفة'), ('missing', 'مفقودة'), ('blocked', 'يصعب الوصول'),
-    ], string='حالة المحطة', default='ok')
-    note = fields.Char(string='ملاحظة')
+        ('ok', 'Intact'), ('damaged', 'Damaged'), ('missing', 'Missing'), ('blocked', 'Inaccessible'),
+    ], string='Station Condition', default='ok')
+    note = fields.Char(string='Note')
     facility_id = fields.Many2one(related='visit_id.facility_id', store=True, index=True)
     visit_date = fields.Date(related='visit_id.visit_date', store=True, index=True)
 
@@ -308,41 +308,41 @@ class PestVisitStation(models.Model):
 
 class PestVisitChemical(models.Model):
     _name = 'care.pest.visit.chemical'
-    _description = 'مادة مستخدمة'
+    _description = 'Product Applied'
     _order = 'id'
 
     visit_id = fields.Many2one('care.pest.visit', required=True, ondelete='cascade', index=True)
-    chemical_id = fields.Many2one('care.pest.chemical', string='المبيد', required=True)
-    area = fields.Char(string='المنطقة المعالَجة')
-    quantity = fields.Float(string='الكمية المستخدمة')
-    uom_name = fields.Char(string='الوحدة', default='لتر محلول')
-    dilution_used = fields.Char(string='التخفيف المستخدم')
-    active_ingredient = fields.Char(related='chemical_id.active_ingredient', string='المادة الفعّالة')
-    reentry_hours = fields.Integer(related='chemical_id.reentry_hours', string='منع الدخول (ساعة)')
+    chemical_id = fields.Many2one('care.pest.chemical', string='Pesticide', required=True)
+    area = fields.Char(string='Treated Area')
+    quantity = fields.Float(string='Quantity Used')
+    uom_name = fields.Char(string='Unit', default='Litres of Solution')
+    dilution_used = fields.Char(string='Dilution Applied')
+    active_ingredient = fields.Char(related='chemical_id.active_ingredient', string='Active Ingredient')
+    reentry_hours = fields.Integer(related='chemical_id.reentry_hours', string='Re-entry Interval (hours)')
 
 
 class PestSighting(models.Model):
     """A client-reported sighting. It is not a work order — it is a data point
     that should pull the next visit forward."""
     _name = 'care.pest.sighting'
-    _description = 'بلاغ ظهور آفة'
+    _description = 'Pest Sighting Report'
     _inherit = ['mail.thread']
     _order = 'create_date desc'
 
     name = fields.Char(default='/', copy=False, readonly=True)
-    facility_id = fields.Many2one('care.cafm.facility', string='المرفق', required=True, index=True)
-    location_id = fields.Many2one('care.cafm.location', string='الموقع')
-    pest_type = fields.Selection(PEST_TYPES, string='نوع الآفة', required=True, tracking=True)
+    facility_id = fields.Many2one('care.cafm.facility', string='Facility', required=True, index=True)
+    location_id = fields.Many2one('care.cafm.location', string='Location')
+    pest_type = fields.Selection(PEST_TYPES, string='Pest Type', required=True, tracking=True)
     severity = fields.Selection([
-        ('one', 'مشاهدة فردية'), ('few', 'عدة مشاهدات'), ('infestation', 'انتشار واضح'),
-    ], string='مدى الانتشار', default='one', required=True, tracking=True)
-    description = fields.Text(string='الوصف')
-    reported_by = fields.Many2one('res.users', string='المُبلِّغ', default=lambda s: s.env.user)
+        ('one', 'Single Sighting'), ('few', 'Multiple Sightings'), ('infestation', 'Visible Infestation'),
+    ], string='Extent of Infestation', default='one', required=True, tracking=True)
+    description = fields.Text(string='Description')
+    reported_by = fields.Many2one('res.users', string='Reported By', default=lambda s: s.env.user)
     state = fields.Selection([
-        ('new', 'جديد'), ('scheduled', 'مجدول له زيارة'), ('treated', 'عولج'),
-        ('closed', 'مغلق'),
-    ], string='الحالة', default='new', required=True, tracking=True)
-    visit_id = fields.Many2one('care.pest.visit', string='زيارة المعالجة', readonly=True)
+        ('new', 'New'), ('scheduled', 'Visit Scheduled'), ('treated', 'Treated'),
+        ('closed', 'Closed'),
+    ], string='Status', default='new', required=True, tracking=True)
+    visit_id = fields.Many2one('care.pest.visit', string='Treatment Visit', readonly=True)
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
 
     @api.model_create_multi
@@ -365,7 +365,7 @@ class PestSighting(models.Model):
                 continue
             try:
                 self.env['care.cafm.notification'].sudo().push(
-                    users, _('🐜 بلاغ ظهور آفة'),
+                    users, _('🐜 Pest Sighting Report'),
                     '%s — %s · %s' % (
                         r.facility_id.name or '',
                         dict(self._fields['pest_type'].selection).get(r.pest_type, ''),

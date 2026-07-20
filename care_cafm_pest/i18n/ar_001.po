@@ -1,0 +1,1114 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* care_cafm_pest
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0+e-20241205\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-20 14:19+0000\n"
+"PO-Revision-Date: 2026-07-20 14:19+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__message_needaction
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__message_needaction
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__message_needaction
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__message_needaction
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__message_needaction
+msgid "Action Needed"
+msgstr "إجراء مطلوب"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__active
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__active
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_station__state__active
+msgid "Active"
+msgstr "نشط"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__active_ingredient
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_chemical__active_ingredient
+msgid "Active Ingredient"
+msgstr "المادة الفعّالة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__activity_ids
+msgid "Activities"
+msgstr "الأنشطة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr "تنسيق استثناء النشاط"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__activity_level
+msgid "Activity Level"
+msgstr "مستوى النشاط"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__activity_state
+msgid "Activity State"
+msgstr "حالة النشاط"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__activity_type_icon
+msgid "Activity Type Icon"
+msgstr "أيقونة نوع النشاط"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_sighting__pest_type__ant
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_station__target__ant
+msgid "Ants"
+msgstr "نمل"
+
+#. module: care_cafm_pest
+#: model:ir.model,name:care_cafm_pest.model_care_pest_chemical
+msgid "Approved Pesticide"
+msgstr "مبيد معتمد"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__food_area_safe
+msgid "Approved for Food Areas"
+msgstr "مسموح في مناطق الأغذية"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__technician_id
+msgid "Assigned Technician"
+msgstr "الفني المسؤول"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__message_attachment_count
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__message_attachment_count
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__message_attachment_count
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__message_attachment_count
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__message_attachment_count
+msgid "Attachment Count"
+msgstr "عدد المرفقات"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_station__bait_state
+msgid "Bait Condition"
+msgstr "حالة الطُعم"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_chemical__formulation__gel
+msgid "Bait Gel"
+msgstr "جل طُعم"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_sighting__pest_type__bedbug
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_station__target__bedbug
+msgid "Bed Bugs"
+msgstr "بق الفراش"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_sighting__pest_type__bird
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_station__target__bird
+msgid "Birds"
+msgstr "طيور"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_visit__state__cancelled
+msgid "Cancelled"
+msgstr "ملغاة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_station__catch_count
+msgid "Catch Count"
+msgstr "العدد الملتقط"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_sighting__state__closed
+msgid "Closed"
+msgstr "مغلق"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_sighting__pest_type__cockroach
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_station__target__cockroach
+msgid "Cockroaches"
+msgstr "صراصير"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__company_id
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__company_id
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__company_id
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__company_id
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__company_id
+msgid "Company"
+msgstr "الشركة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_visit__state__done
+msgid "Completed"
+msgstr "منفّذة"
+
+#. module: care_cafm_pest
+#: model:ir.model,name:care_cafm_pest.model_care_pest_program
+msgid "Control Programme"
+msgstr "برنامج مكافحة"
+
+#. module: care_cafm_pest
+#: model:ir.model,name:care_cafm_pest.model_care_pest_station
+msgid "Control Station"
+msgstr "محطة مكافحة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__targets
+msgid "Covered Pests"
+msgstr "الآفات المشمولة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__create_uid
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__create_uid
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__create_uid
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__create_uid
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__create_uid
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_chemical__create_uid
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_station__create_uid
+msgid "Created by"
+msgstr "أنشأه"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__create_date
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__create_date
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__create_date
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__create_date
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__create_date
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_chemical__create_date
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_station__create_date
+msgid "Created on"
+msgstr "تاريخ الإنشاء"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_station__state__damaged
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_visit_station__station_state__damaged
+msgid "Damaged"
+msgstr "تالفة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__description
+msgid "Description"
+msgstr "الوصف"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_chemical__dilution_used
+msgid "Dilution Applied"
+msgstr "التخفيف المستخدم"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__dilution
+msgid "Dilution Rate"
+msgstr "نسبة التخفيف"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__display_name
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__display_name
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__display_name
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__display_name
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__display_name
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_chemical__display_name
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_station__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_visit__state__draft
+msgid "Draft"
+msgstr "مسودة"
+
+#. module: care_cafm_pest
+#. odoo-python
+#: code:addons/care_cafm_pest/models/pest.py:0
+#, python-format
+msgid "Due"
+msgstr "مستحقة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_chemical__formulation__dust
+msgid "Dust"
+msgstr "بودرة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_visit__visit_type__callout
+msgid "Emergency Call-out"
+msgstr "استدعاء طارئ"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_chemical__formulation__ec
+msgid "Emulsifiable Concentrate (EC)"
+msgstr "مستحلب مركّز EC"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__name_en
+msgid "English Name"
+msgstr "الاسم بالإنجليزية"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_chemical__dilution
+msgid "Example: 5 ml per litre of water."
+msgstr "مثال: 5 مل لكل لتر ماء."
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__severity
+msgid "Extent of Infestation"
+msgstr "مدى الانتشار"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__facility_id
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__facility_id
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__facility_id
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__facility_id
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_station__facility_id
+msgid "Facility"
+msgstr "المرفق"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_sighting__pest_type__fly
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_station__target__fly
+msgid "Flies"
+msgstr "ذباب"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_visit__visit_type__followup
+msgid "Follow-up Visit"
+msgstr "زيارة متابعة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__message_follower_ids
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__message_follower_ids
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__message_follower_ids
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__message_follower_ids
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__message_follower_ids
+msgid "Followers"
+msgstr "المتابعون"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__message_partner_ids
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__message_partner_ids
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__message_partner_ids
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__message_partner_ids
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "المتابعون (جهات)"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_visit__activity_type_icon
+msgid "Font awesome icon e.g. fa-tasks"
+msgstr ""
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__formulation
+msgid "Formulation"
+msgstr "الصيغة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_program__frequency__biweekly
+msgid "Fortnightly"
+msgstr "كل أسبوعين"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__frequency
+msgid "Frequency"
+msgstr "الدورية"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_visit_station__bait_state__consumed
+msgid "Fully Consumed"
+msgstr "مستهلك بالكامل"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_station__station_type__glue_board
+msgid "Glue Board"
+msgstr "لوح لاصق"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_chemical__formulation__bait
+msgid "Granular Bait"
+msgstr "طُعم حبيبي"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__has_message
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__has_message
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__has_message
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__has_message
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__has_message
+msgid "Has Message"
+msgstr "به رسائل"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_visit__activity_level__high
+msgid "High Activity"
+msgstr "نشاط مرتفع"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__id
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__id
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__id
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__id
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__id
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_chemical__id
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_station__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__activity_exception_icon
+msgid "Icon"
+msgstr "الأيقونة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_visit__activity_exception_icon
+msgid "Icon to indicate an exception activity."
+msgstr ""
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_chemical__message_needaction
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_program__message_needaction
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_sighting__message_needaction
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_station__message_needaction
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_visit__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "عند التفعيل، الرسائل الجديدة تتطلّب انتباهك."
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_chemical__message_has_error
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_chemical__message_has_sms_error
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_program__message_has_error
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_program__message_has_sms_error
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_sighting__message_has_error
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_sighting__message_has_sms_error
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_station__message_has_error
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_station__message_has_sms_error
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_visit__message_has_error
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_visit__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr "عند التفعيل، بعض الرسائل بها خطأ في التسليم."
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_visit_station__station_state__blocked
+msgid "Inaccessible"
+msgstr "يصعب الوصول"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__indoor
+msgid "Indoor"
+msgstr "داخلي"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_station__station_type__light_trap
+msgid "Insect Light Trap"
+msgstr "مصيدة ضوئية"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_station__checked
+msgid "Inspected"
+msgstr "فُحصت"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__station_line_ids
+msgid "Inspected Stations"
+msgstr "المحطات المفحوصة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__check_ids
+msgid "Inspections"
+msgstr "الفحوص"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__installed_on
+msgid "Installation Date"
+msgstr "تاريخ التركيب"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_visit_station__bait_state__intact
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_visit_station__station_state__ok
+msgid "Intact"
+msgstr "سليمة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__message_is_follower
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__message_is_follower
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__message_is_follower
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__message_is_follower
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__message_is_follower
+msgid "Is Follower"
+msgstr "متابِع"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__last_catch
+msgid "Last Catch Count"
+msgstr "آخر عدد ملتقط"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__last_check
+msgid "Last Inspection"
+msgstr "آخر فحص"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__write_uid
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__write_uid
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__write_uid
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__write_uid
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__write_uid
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_chemical__write_uid
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_station__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__write_date
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__write_date
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__write_date
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__write_date
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__write_date
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_chemical__write_date
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_station__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__last_visit
+msgid "Last Visit"
+msgstr "آخر زيارة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_visit__activity_level__low
+msgid "Light Activity"
+msgstr "نشاط خفيف"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__location_id
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__location_id
+msgid "Location"
+msgstr "الموقع"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__message_has_error
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__message_has_error
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__message_has_error
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__message_has_error
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__message_has_error
+msgid "Message Delivery error"
+msgstr "خطأ تسليم الرسالة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__message_ids
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__message_ids
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__message_ids
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__message_ids
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__message_ids
+msgid "Messages"
+msgstr "الرسائل"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__moh_registration
+msgid "Ministry of Health Registration Number"
+msgstr "رقم تسجيل وزارة الصحة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_station__state__missing
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_visit_station__bait_state__missing
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_visit_station__station_state__missing
+msgid "Missing"
+msgstr "مفقود"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_visit__activity_level__medium
+msgid "Moderate Activity"
+msgstr "نشاط متوسط"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_station__station_type__monitor
+msgid "Monitoring Point"
+msgstr "نقطة رصد"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_program__frequency__monthly
+msgid "Monthly"
+msgstr "شهري"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_sighting__pest_type__mosquito
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_station__target__mosquito
+msgid "Mosquitoes"
+msgstr "بعوض"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_sighting__severity__few
+msgid "Multiple Sightings"
+msgstr "عدة مشاهدات"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__my_activity_date_deadline
+msgid "My Activity Deadline"
+msgstr ""
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__name
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__name
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__name
+msgid "Name"
+msgstr "الاسم"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_sighting__state__new
+msgid "New"
+msgstr "جديد"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__activity_calendar_event_id
+msgid "Next Activity Calendar Event"
+msgstr ""
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr "موعد النشاط التالي"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__activity_summary
+msgid "Next Activity Summary"
+msgstr "ملخّص النشاط التالي"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__activity_type_id
+msgid "Next Activity Type"
+msgstr "نوع النشاط التالي"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__next_due
+msgid "Next Visit"
+msgstr "الزيارة القادمة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_visit__activity_level__none
+msgid "No Activity"
+msgstr "لا نشاط"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__note
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_station__note
+msgid "Note"
+msgstr "ملاحظة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__findings
+msgid "Notes and Recommendations"
+msgstr "الملاحظات والتوصيات"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__message_needaction_counter
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__message_needaction_counter
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__message_needaction_counter
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__message_needaction_counter
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__message_needaction_counter
+msgid "Number of Actions"
+msgstr "عدد الإجراءات"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__message_has_error_counter
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__message_has_error_counter
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__message_has_error_counter
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__message_has_error_counter
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__message_has_error_counter
+msgid "Number of errors"
+msgstr "عدد الأخطاء"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_chemical__reentry_hours
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_visit_chemical__reentry_hours
+msgid "Number of hours the area must remain unoccupied after treatment."
+msgstr "كم ساعة يُمنع دخول المكان بعد الرش."
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_chemical__message_needaction_counter
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_program__message_needaction_counter
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_sighting__message_needaction_counter
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_station__message_needaction_counter
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_visit__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "عدد الرسائل التي تتطلّب إجراءً"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_chemical__message_has_error_counter
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_program__message_has_error_counter
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_sighting__message_has_error_counter
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_station__message_has_error_counter
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_visit__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "عدد الرسائل التي بها خطأ تسليم"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_station__code
+msgid ""
+"Number printed on the station itself so it can be matched in the field."
+msgstr ""
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_chemical__formulation__other
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_sighting__pest_type__other
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_station__target__other
+msgid "Other"
+msgstr "أخرى"
+
+#. module: care_cafm_pest
+#. odoo-python
+#: code:addons/care_cafm_pest/models/pest.py:0
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__is_overdue
+#, python-format
+msgid "Overdue"
+msgstr "متأخرة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_visit_station__bait_state__partial
+msgid "Partially Consumed"
+msgstr "مستهلك جزئيًا"
+
+#. module: care_cafm_pest
+#: model:ir.model,name:care_cafm_pest.model_care_pest_visit
+msgid "Pest Control Visit"
+msgstr "زيارة مكافحة"
+
+#. module: care_cafm_pest
+#: model:ir.model,name:care_cafm_pest.model_care_pest_sighting
+msgid "Pest Sighting Report"
+msgstr "بلاغ ظهور آفة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__pest_type
+msgid "Pest Type"
+msgstr "نوع الآفة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_chemical__chemical_id
+msgid "Pesticide"
+msgstr "المبيد"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_station__station_type__pheromone
+msgid "Pheromone Trap"
+msgstr "مصيدة فرمونية"
+
+#. module: care_cafm_pest
+#: model:ir.model,name:care_cafm_pest.model_care_pest_visit_chemical
+msgid "Product Applied"
+msgstr "مادة مستخدمة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__chemical_line_ids
+msgid "Products Applied"
+msgstr "المواد المستخدمة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__name
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__program_id
+msgid "Programme"
+msgstr "البرنامج"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__start_date
+msgid "Programme Start"
+msgstr "بداية البرنامج"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_chemical__quantity
+msgid "Quantity Used"
+msgstr "الكمية المستخدمة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_program__frequency__quarterly
+msgid "Quarterly"
+msgstr "ربع سنوي"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__rating_ids
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__rating_ids
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__rating_ids
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__rating_ids
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__rating_ids
+msgid "Ratings"
+msgstr "التقييمات"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__reentry_until
+msgid "Re-entry Allowed After"
+msgstr "يُمنع الدخول حتى"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__reentry_hours
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_chemical__reentry_hours
+msgid "Re-entry Interval (hours)"
+msgstr "منع الدخول (ساعة)"
+
+#. module: care_cafm_pest
+#. odoo-python
+#: code:addons/care_cafm_pest/models/pest.py:0
+#, python-format
+msgid "Record at least one station inspection before completing the visit."
+msgstr "سجّل فحص محطة واحدة على الأقل قبل إنهاء الزيارة."
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_station__state__removed
+msgid "Removed"
+msgstr "مُزالة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_visit_station__bait_state__replaced
+msgid "Replaced"
+msgstr "تم استبداله"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__reported_by
+msgid "Reported By"
+msgstr "المُبلِّغ"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_sighting__pest_type__snake
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_station__target__snake
+msgid "Reptiles"
+msgstr "زواحف"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__activity_user_id
+msgid "Responsible User"
+msgstr "المستخدم المسؤول"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_station__station_type__bait_station
+msgid "Rodent Bait Station"
+msgstr "محطة طُعم قوارض"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_sighting__pest_type__rodent
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_station__target__rodent
+msgid "Rodents"
+msgstr "قوارض"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__message_has_sms_error
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__message_has_sms_error
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__message_has_sms_error
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__message_has_sms_error
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr ""
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__hazard_note
+msgid "Safety Warnings"
+msgstr "تحذيرات السلامة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_visit__visit_type__routine
+msgid "Scheduled Visit"
+msgstr "زيارة دورية"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_sighting__severity__one
+msgid "Single Sighting"
+msgstr "مشاهدة فردية"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_station__station_type__snap_trap
+msgid "Snap Trap"
+msgstr "مصيدة قافزة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_chemical__formulation__aerosol
+msgid "Spray"
+msgstr "رذاذ"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_station__station_id
+msgid "Station"
+msgstr "المحطة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_station__station_state
+msgid "Station Condition"
+msgstr "حالة المحطة"
+
+#. module: care_cafm_pest
+#: model:ir.model,name:care_cafm_pest.model_care_pest_visit_station
+msgid "Station Inspection"
+msgstr "فحص محطة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__code
+msgid "Station Number"
+msgstr "رقم المحطة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__stations_checked
+msgid "Stations Inspected"
+msgstr "محطات مفحوصة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__state
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__state
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__state
+msgid "Status"
+msgstr "الحالة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_visit__activity_state
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+msgstr ""
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_chemical__formulation__sc
+msgid "Suspension Concentrate (SC)"
+msgstr "معلّق مركّز SC"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__target
+msgid "Target Pest"
+msgstr "الآفة المستهدفة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__target_pests
+msgid "Target Pests"
+msgstr "الآفات المستهدفة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__technician_id
+msgid "Technician"
+msgstr "الفني"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_sighting__pest_type__termite
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_station__target__termite
+msgid "Termites"
+msgstr "نمل أبيض (أرضة)"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_visit__reentry_until
+msgid "The longest re-entry interval among the products applied."
+msgstr "أطول فترة منع دخول بين المواد المستخدمة."
+
+#. module: care_cafm_pest
+#: model:ir.model.constraint,message:care_cafm_pest.constraint_care_pest_station_code_facility_uniq
+msgid "This station number is already used in this facility."
+msgstr "رقم المحطة مستخدم في هذا المرفق."
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__total_catch
+msgid "Total Catch"
+msgstr "إجمالي الملتقط"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__name
+msgid "Trade Name"
+msgstr "الاسم التجاري"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_sighting__state__treated
+msgid "Treated"
+msgstr "عولج"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_chemical__area
+msgid "Treated Area"
+msgstr "المنطقة المعالَجة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__visit_id
+msgid "Treatment Visit"
+msgstr "زيارة المعالجة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__station_type
+msgid "Type"
+msgstr "النوع"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_visit__activity_exception_decoration
+msgid "Type of the exception activity on record."
+msgstr "نوع نشاط الاستثناء على السجل."
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_chemical__uom_name
+msgid "Unit"
+msgstr "الوحدة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_chemical__moh_registration
+msgid "Unregistered pesticides must not be used."
+msgstr "لا يُستخدم مبيد غير مسجّل."
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_sighting__severity__infestation
+msgid "Visible Infestation"
+msgstr "انتشار واضح"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_chemical__visit_id
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_station__visit_id
+msgid "Visit"
+msgstr ""
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__visit_count
+msgid "Visit Count"
+msgstr "عدد الزيارات"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__visit_date
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit_station__visit_date
+msgid "Visit Date"
+msgstr "تاريخ الزيارة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_sighting__state__scheduled
+msgid "Visit Scheduled"
+msgstr "مجدول له زيارة"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__visit_type
+msgid "Visit Type"
+msgstr "نوع الزيارة"
+
+#. module: care_cafm_pest
+#: model:ir.actions.act_window,name:care_cafm_pest.action_pest_visit
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__visit_ids
+msgid "Visits"
+msgstr "الزيارات"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_chemical__website_message_ids
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_program__website_message_ids
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_sighting__website_message_ids
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_station__website_message_ids
+#: model:ir.model.fields,field_description:care_cafm_pest.field_care_pest_visit__website_message_ids
+msgid "Website Messages"
+msgstr "رسائل الموقع"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_chemical__website_message_ids
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_program__website_message_ids
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_sighting__website_message_ids
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_station__website_message_ids
+#: model:ir.model.fields,help:care_cafm_pest.field_care_pest_visit__website_message_ids
+msgid "Website communication history"
+msgstr "سجل مراسلات الموقع"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_program__frequency__weekly
+msgid "Weekly"
+msgstr "أسبوعي"
+
+#. module: care_cafm_pest
+#: model:ir.model.fields.selection,name:care_cafm_pest.selection__care_pest_chemical__formulation__wp
+msgid "Wettable Powder (WP)"
+msgstr "مسحوق قابل للبلل WP"
+
+#. module: care_cafm_pest
+#: model_terms:ir.ui.view,arch_db:care_cafm_pest.view_pest_visit_form
+msgid "إلغاء"
+msgstr ""
+
+#. module: care_cafm_pest
+#: model_terms:ir.ui.view,arch_db:care_cafm_pest.view_pest_visit_form
+msgid "إنهاء الزيارة"
+msgstr ""
+
+#. module: care_cafm_pest
+#: model:ir.ui.menu,name:care_cafm_pest.menu_pest_cfg
+msgid "الإعداد"
+msgstr ""
+
+#. module: care_cafm_pest
+#: model:ir.ui.menu,name:care_cafm_pest.menu_pest_program
+msgid "البرامج"
+msgstr ""
+
+#. module: care_cafm_pest
+#: model:ir.ui.menu,name:care_cafm_pest.menu_pest_visit
+msgid "الزيارات"
+msgstr ""
+
+#. module: care_cafm_pest
+#: model:ir.actions.act_window,name:care_cafm_pest.action_pest_station
+#: model:ir.ui.menu,name:care_cafm_pest.menu_pest_station
+#: model_terms:ir.ui.view,arch_db:care_cafm_pest.view_pest_visit_form
+msgid "المحطات"
+msgstr ""
+
+#. module: care_cafm_pest
+#: model_terms:ir.ui.view,arch_db:care_cafm_pest.view_pest_visit_form
+msgid "الملاحظات"
+msgstr ""
+
+#. module: care_cafm_pest
+#: model_terms:ir.ui.view,arch_db:care_cafm_pest.view_pest_visit_form
+msgid "المواد المستخدمة"
+msgstr ""
+
+#. module: care_cafm_pest
+#: model:ir.actions.act_window,name:care_cafm_pest.action_pest_program
+msgid "برامج المكافحة"
+msgstr ""
+
+#. module: care_cafm_pest
+#: model:ir.actions.act_window,name:care_cafm_pest.action_pest_sighting
+#: model:ir.ui.menu,name:care_cafm_pest.menu_pest_sighting
+msgid "بلاغات الظهور"
+msgstr ""
+
+#. module: care_cafm_pest
+#: model_terms:ir.ui.view,arch_db:care_cafm_pest.view_pest_program_form
+msgid "تسجيل زيارة"
+msgstr ""
+
+#. module: care_cafm_pest
+#: model:ir.actions.act_window,name:care_cafm_pest.action_pest_chemical
+#: model:ir.ui.menu,name:care_cafm_pest.menu_pest_chemical
+msgid "سجل المبيدات"
+msgstr ""
+
+#. module: care_cafm_pest
+#: model_terms:ir.ui.view,arch_db:care_cafm_pest.view_pest_program_form
+msgid "مثال: برنامج القوارض الشهري"
+msgstr ""
+
+#. module: care_cafm_pest
+#: model:ir.ui.menu,name:care_cafm_pest.menu_pest_root
+msgid "مكافحة الحشرات"
+msgstr ""
+
+#. module: care_cafm_pest
+#: model:ir.actions.server,name:care_cafm_pest.cron_pest_due_ir_actions_server
+msgid "مكافحة الحشرات: تنبيه الزيارات المستحقة"
+msgstr ""
+
+#. module: care_cafm_pest
+#. odoo-python
+#: code:addons/care_cafm_pest/models/pest.py:0
+#, python-format
+msgid "🐜 Pest Control Visit %s"
+msgstr "🐜 زيارة مكافحة %s"
+
+#. module: care_cafm_pest
+#. odoo-python
+#: code:addons/care_cafm_pest/models/pest.py:0
+#, python-format
+msgid "🐜 Pest Control Visit Completed"
+msgstr "🐜 تمت زيارة مكافحة الحشرات"
+
+#. module: care_cafm_pest
+#. odoo-python
+#: code:addons/care_cafm_pest/models/pest.py:0
+#, python-format
+msgid "🐜 Pest Sighting Report"
+msgstr "🐜 بلاغ ظهور آفة"

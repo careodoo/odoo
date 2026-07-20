@@ -99,7 +99,7 @@ class HospPortal(http.Controller):
         # category rail
         body += Markup('<div style="display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 12px">')
         sel = 'background:%s;color:#ffffff' % ACCENT if not cat else 'background:#ffffff;color:#71809a'
-        body += Markup('<a href="/hosp" class="pill" style="%s;padding:8px 13px">الكل</a>') % Markup(sel)
+        body += Markup('<a href="/hosp" class="pill" style="%s;padding:8px 13px">All</a>') % Markup(sel)
         for c in cats:
             on = cat and int(cat) == c.id
             style = ('background:%s;color:#ffffff' % c.color) if on else 'background:#ffffff;color:#71809a'
@@ -113,7 +113,7 @@ class HospPortal(http.Controller):
             by_cat.setdefault(i.category_id, env['care.hosp.item'])
             by_cat[i.category_id] |= i
         if not by_cat:
-            body += Markup('<div class="card"><div class="muted">لا أصناف متاحة حاليًا.</div></div>')
+            body += Markup('<div class="card"><div class="muted">No items available at the moment.</div></div>')
         for c, its in by_cat.items():
             body += Markup('<h3 style="margin:16px 0 9px">%s %s</h3>') % (c.icon or '', esc(c.name))
             body += Markup('<div class="grid">')
@@ -122,16 +122,16 @@ class HospPortal(http.Controller):
                 dim = '' if servable else 'opacity:.45;'
                 sub = i.unavailable_note or ''
                 if servable:
-                    sub = '%s د · %s د.ك' % (i.prep_minutes, i.unit_cost)
+                    sub = '%s min · %s KWD' % (i.prep_minutes, i.unit_cost)
                 elif not sub:
-                    sub = 'خارج وقت التقديم (%02d:00–%02d:00)' % (i.serve_from, i.serve_to)
+                    sub = 'Outside serving hours (%02d:00–%02d:00)' % (i.serve_from, i.serve_to)
                 href = ('/hosp/item/%s' % i.id) if servable else '#'
                 body += Markup(
                     '<a class="tile" style="%s" href="%s"><div class="i">%s</div>'
                     '<div class="n">%s</div><div class="s">%s</div></a>'
                 ) % (Markup(dim), href, i.icon or '☕', esc(i.name), esc(sub))
             body += Markup('</div>')
-        return _shell('الضيافة', body, accent=ACCENT)
+        return _shell('Hospitality', body, accent=ACCENT)
 
     def _greeting(self):
         env = request.env
@@ -144,10 +144,10 @@ class HospPortal(http.Controller):
                                      ('state', 'not in', ('draft', 'cancelled', 'rejected'))])
         return Markup(
             '<div class="kpi">'
-            '<div><div class="n">%s</div><div class="l">طلباتي الجارية</div></div>'
-            '<div><div class="n">%s</div><div class="l">طلباتي اليوم</div></div>'
+            '<div><div class="n">%s</div><div class="l">My Active Orders</div></div>'
+            '<div><div class="n">%s</div><div class="l">My Orders Today</div></div>'
             '<div><a href="/hosp/orders" style="display:block"><div class="n">📜</div>'
-            '<div class="l">سجل طلباتي</div></a></div></div>'
+            '<div class="l">My Order History</div></a></div></div>'
         ) % (mine_open, mine_today)
 
     def _cart_bar(self):
@@ -158,20 +158,20 @@ class HospPortal(http.Controller):
             '<div class="row" style="padding:6px 0;border-top:1px solid #e6eaf0">'
             '<div><div class="h4">%s × %s</div><div class="muted">%s%s</div></div>'
             '<form method="post" action="/hosp/line/%s/remove" style="margin:0">%s'
-            '<button class="pill crit" style="border:none;cursor:pointer;font-family:inherit">حذف</button>'
+            '<button class="pill crit" style="border:none;cursor:pointer;font-family:inherit">Delete</button>'
             '</form></div>'
         ) % (esc(l.item_id.name), int(l.quantity), esc(l.option_label or '—'),
              esc(' · %s' % l.note) if l.note else '', l.id, _csrf()) for l in cart.line_ids)
         return Markup(
             '<div class="card" style="border-color:%s">'
-            '<div class="row"><div class="h4">🛒 سلّتك (%s صنف)</div>'
-            '<span class="pill info">%s د.ك</span></div>%s'
+            '<div class="row"><div class="h4">🛒 Your Cart (%s items)</div>'
+            '<span class="pill info">%s KWD</span></div>%s'
             '<form method="post" action="/hosp/place" style="margin-top:10px">%s'
-            '<label>المكتب/القاعة</label><input name="room_label" value="%s" placeholder="مثال: مكتب المالية"/>'
-            '<label>ملاحظات</label><input name="note" value="%s"/>'
-            '<button class="btn">إرسال الطلب للمطبخ</button></form>'
+            '<label>Office/Hall</label><input name="room_label" value="%s" placeholder="Example: Finance Office"/>'
+            '<label>Notes</label><input name="note" value="%s"/>'
+            '<button class="btn">Send Order to Kitchen</button></form>'
             '<form method="post" action="/hosp/cart/clear" style="margin-top:6px">%s'
-            '<button class="btn g">إفراغ السلّة</button></form></div>'
+            '<button class="btn g">Empty Cart</button></form></div>'
         ) % (Markup(ACCENT), cart.item_count, round(cart.total_cost, 3), lines, _csrf(),
              esc(cart.room_label or ''), esc(cart.note or ''), _csrf())
 
@@ -181,7 +181,7 @@ class HospPortal(http.Controller):
             [('user_id', '=', env.user.id)], limit=6, order='times_used desc')
         if not favs:
             return Markup('')
-        out = Markup('<h3 style="margin:16px 0 9px">⭐ طلبي المعتاد — بنقرة واحدة</h3>'
+        out = Markup('<h3 style="margin:16px 0 9px">⭐ My Usual Order — in one tap</h3>'
                      '<div style="display:flex;gap:8px;flex-wrap:wrap">')
         for f in favs:
             out += Markup(
@@ -206,10 +206,10 @@ class HospPortal(http.Controller):
             if u['max_items']:
                 pct = 100.0 * u['used_items'] / u['max_items']
                 left = max(0, u['max_items'] - u['used_items'])
-                label = '%s — المتبقّي لك %s من %s' % (u['policy'], left, u['max_items'])
+                label = '%s — you have %s left of %s' % (u['policy'], left, u['max_items'])
             else:
                 pct = 100.0 * u['used_cost'] / u['max_cost']
-                label = '%s — استهلكت %s من %s د.ك' % (
+                label = '%s — you have used %s of %s KWD' % (
                     u['policy'], round(u['used_cost'], 3), u['max_cost'])
             color = '#f2603f' if pct >= 100 else ('#f5b638' if pct >= 70 else '#37c98a')
             out += Markup('<div class="card"><div class="muted">%s</div>%s</div>') % (
@@ -227,18 +227,18 @@ class HospPortal(http.Controller):
             '<h2 style="text-align:center;margin:6px 0">%s</h2>'
             '<div class="muted" style="text-align:center">%s</div>'
             '<div class="row" style="margin-top:10px">'
-            '<span class="pill info">⏱ %s دقيقة</span>'
-            '<span class="pill info">%s د.ك</span></div></div>'
+            '<span class="pill info">⏱ %s minutes</span>'
+            '<span class="pill info">%s KWD</span></div></div>'
         ) % (it.icon or '☕', esc(it.name), esc(it.description or ''),
              it.prep_minutes, it.unit_cost)
 
         form = Markup('<form method="post" action="/hosp/add">%s'
                       '<input type="hidden" name="item_id" value="%s"/>') % (_csrf(), it.id)
         for g in it.option_group_ids.sorted('sequence'):
-            req = ' <span class="pill crit">إلزامي</span>' if g.required else ''
+            req = ' <span class="pill crit">Required</span>' if g.required else ''
             form += Markup('<div class="card"><div class="h4">%s%s</div>') % (esc(g.name), Markup(req))
             for o in g.option_ids.sorted('sequence'):
-                extra = ' (+%s د.ك)' % o.extra_cost if o.extra_cost else ''
+                extra = ' (+%s KWD)' % o.extra_cost if o.extra_cost else ''
                 kind = 'checkbox' if g.multi else 'radio'
                 nm = 'opt_%s' % g.id
                 checked = ' checked' if (o.is_default and not g.multi) else ''
@@ -250,12 +250,12 @@ class HospPortal(http.Controller):
             form += Markup('</div>')
         form += Markup(
             '<div class="card">'
-            '<label>الكمية</label><input type="number" name="quantity" value="1" min="1" max="20"/>'
-            '<label>ملاحظة للمُحضِّر</label><input name="note" placeholder="مثال: كوب ورقي، بدون رغوة"/>'
+            '<label>Quantity</label><input type="number" name="quantity" value="1" min="1" max="20"/>'
+            '<label>Note for the preparer</label><input name="note" placeholder="Example: paper cup, no foam"/>'
             '<label style="display:flex;align-items:center;gap:9px;margin-top:10px;color:#14202b">'
             '<input type="checkbox" name="save_fav" value="1" style="width:auto;margin:0"/>'
-            'احفظه في «طلبي المعتاد»</label>'
-            '<button class="btn">أضف إلى السلّة</button></div></form>')
+            'Save it to My Usual Order</label>'
+            '<button class="btn">Add to Cart</button></div></form>')
         return _shell(it.name, body + form, accent=ACCENT, back='/hosp')
 
     @http.route('/hosp/add', type='http', auth='user', methods=['POST'], website=False, csrf=True)
@@ -313,10 +313,10 @@ class HospPortal(http.Controller):
             cart.action_place()
         except Exception as e:
             msg = str(getattr(e, 'args', [e])[0] if getattr(e, 'args', None) else e)
-            return _shell('تعذّر الإرسال', Markup(
-                '<div class="card"><div class="h4">⛔ لم يُرسَل الطلب</div>'
+            return _shell('Could Not Send', Markup(
+                '<div class="card"><div class="h4">⛔ The order was not sent</div>'
                 '<div class="muted" style="margin-top:6px">%s</div>'
-                '<a class="btn g" href="/hosp">رجوع للسلّة</a></div>') % esc(msg),
+                '<a class="btn g" href="/hosp">Back to Cart</a></div>') % esc(msg),
                 accent=ACCENT, back='/hosp')
         return request.redirect('/hosp/orders')
 
@@ -346,19 +346,19 @@ class HospPortal(http.Controller):
         live = orders.filtered(lambda o: o.state in ('placed', 'accepted', 'preparing', 'ready',
                                                      'await_approval'))
         if live:
-            body += Markup('<h3 style="margin:4px 0 9px">الجاري الآن</h3>')
+            body += Markup('<h3 style="margin:4px 0 9px">In Progress Now</h3>')
             body += Markup('<script>setTimeout(function(){location.reload()},20000)</script>')
         for o in live:
             body += self._my_order_card(o, live=True)
         past = orders - live
         if past:
-            body += Markup('<h3 style="margin:18px 0 9px">السجل</h3>')
+            body += Markup('<h3 style="margin:18px 0 9px">History</h3>')
         for o in past[:40]:
             body += self._my_order_card(o, live=False)
         if not orders:
-            body += Markup('<div class="card"><div class="muted">لا طلبات بعد.</div>'
-                           '<a class="btn" href="/hosp">اطلب الآن</a></div>')
-        return _shell('طلباتي', body, accent=ACCENT, back='/hosp')
+            body += Markup('<div class="card"><div class="muted">No orders yet.</div>'
+                           '<a class="btn" href="/hosp">Order Now</a></div>')
+        return _shell('My Orders', body, accent=ACCENT, back='/hosp')
 
     def _my_order_card(self, o, live):
         colors = {'await_approval': '#a78bfa', 'placed': '#4aa8ff', 'accepted': '#f5b638',
@@ -372,14 +372,14 @@ class HospPortal(http.Controller):
         if o.state in ('placed', 'accepted', 'preparing'):
             eta = max(0, (o.prep_target or 5) - o.wait_minutes)
             cls = 'crit' if o.is_late else 'warn'
-            txt = 'متأخر — %s دقيقة انتظار' % int(o.wait_minutes) if o.is_late \
-                else 'متبقٍ ~%s دقيقة' % int(eta)
+            txt = 'Late — %s minutes waiting' % int(o.wait_minutes) if o.is_late \
+                else '~%s minutes remaining' % int(eta)
             extra = Markup('<span class="pill %s">⏱ %s</span>') % (Markup(cls), esc(txt))
         elif o.state == 'ready':
-            extra = Markup('<span class="pill ok">🔔 جاهز للاستلام</span>')
+            extra = Markup('<span class="pill ok">🔔 Ready for pickup</span>')
         elif o.state == 'await_approval':
             extra = Markup('<span class="pill" style="background:rgba(167,139,250,.2);color:#a78bfa">'
-                           'بانتظار موافقة المسؤول</span>')
+                           'Awaiting administrator approval</span>')
         rate = Markup('')
         if o.state == 'delivered' and not o.rating:
             rate = Markup('<form method="post" action="/hosp/order/%s/rate" '

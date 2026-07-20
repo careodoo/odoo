@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
-    'name': 'CARE — خدمة صف السيارات (Valet Parking)',
-    'summary': 'خدمة الفاليه: استلام المركبات، بطاقات ترقيم، مواقف، تسليم، ورديات ومحصّلات',
+    'name': 'CARE — Valet Parking Service',
+    'summary': 'Valet service: vehicle check-in, numbered tickets, parking spots, handover, shifts and cash collections',
     'version': '17.0.1.0.0',
     'author': 'CARE',
     'license': 'LGPL-3',

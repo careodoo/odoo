@@ -1,0 +1,1721 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* care_cafm_waste
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0+e-20241205\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-20 14:18+0000\n"
+"PO-Revision-Date: 2026-07-20 14:18+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: care_cafm_waste
+#. odoo-python
+#: code:addons/care_cafm_waste/models/waste_models.py:0
+#, python-format
+msgid " · Awaiting driver assignment"
+msgstr " · بانتظار إسناد سائق"
+
+#. module: care_cafm_waste
+#: model:ir.actions.report,print_report_name:care_cafm_waste.action_report_waste_trip
+msgid "'%s' % (object.reference or object.sequence)"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.actions.report,print_report_name:care_cafm_waste.action_report_waste_order
+msgid "'%s' % object.serial"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_order_detail
+msgid "<i class=\"fa fa-download\"/> تحميل التقرير"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_create
+msgid "<i class=\"fa fa-paper-plane me-2\"/> إرسال الطلب"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_orders
+msgid "<i class=\"fa fa-plus\"/> طلب جديد"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_orders
+msgid "<i class=\"fa fa-print\"/> طباعة التقرير"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_order_detail
+msgid "<span class=\"text-muted small\">Driver</span>"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_order_detail
+msgid "<span class=\"text-muted small\">Project</span>"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_order_detail
+msgid "<span class=\"text-muted small\">Quantity Receiver</span>"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_order_detail
+msgid "<span class=\"text-muted small\">الوزن النهائي</span>"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_order_detail
+msgid "<span class=\"text-muted small\">مدير العمليات</span>"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_create
+msgid "<span style=\"font-size:32px\" class=\"me-3\">♻️</span>"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_order_doc
+msgid "<strong>Driver</strong>"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_order_doc
+msgid "<strong>Pickup Location</strong>"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_order_doc
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_trip_doc
+msgid "<strong>Project</strong>"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_order_doc
+msgid "<strong>Quantity Receiver</strong>"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_trip_doc
+msgid "<strong>Quantity</strong>"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_trip_doc
+msgid "<strong>Total Weight</strong>"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_trip_doc
+msgid "<strong>Treatment Centre</strong>"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_trip_doc
+msgid "<strong>الالتقاط</strong>"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_trip_doc
+msgid "<strong>التاريخ</strong>"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_order_doc
+msgid "<strong>العميل</strong>"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_order_doc
+msgid "<strong>الوزن النهائي</strong>"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_order_doc
+msgid "<strong>تاريخ الطلب</strong>"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_order_doc
+msgid "<strong>مدير العمليات</strong>"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__driver_accepted_at
+msgid "Acceptance Time"
+msgstr "وقت القبول"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__access_warning
+msgid "Access warning"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__message_needaction
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__message_needaction
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__message_needaction
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__message_needaction
+msgid "Action Needed"
+msgstr "إجراء مطلوب"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_center__active
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__active
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__active
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order_line__active
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_pickup_location__active
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__active
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_team__active
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__active
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip_line__active
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_type__active
+msgid "Active"
+msgstr "نشط"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__activity_ids
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__activity_ids
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__activity_ids
+msgid "Activities"
+msgstr "الأنشطة"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__activity_exception_decoration
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__activity_exception_decoration
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr "تنسيق استثناء النشاط"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__activity_state
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__activity_state
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__activity_state
+msgid "Activity State"
+msgstr "حالة النشاط"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__activity_type_icon
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__activity_type_icon
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__activity_type_icon
+msgid "Activity Type Icon"
+msgstr "أيقونة نوع النشاط"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_order__media_ids
+msgid ""
+"Additional photos and videos evidencing the collection and treatment work."
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_center__address
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_pickup_location__address
+msgid "Address"
+msgstr "العنوان"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields.selection,name:care_cafm_waste.selection__cafm_waste_order__states__arrived
+#: model:ir.model.fields.selection,name:care_cafm_waste.selection__cafm_waste_trip__states__arrived
+msgid "Arrived at Treatment"
+msgstr "وصل للمعالجة"
+
+#. module: care_cafm_waste
+#. odoo-python
+#: code:addons/care_cafm_waste/models/waste_models.py:0
+#, python-format
+msgid "Assign Driver"
+msgstr "إسناد سائق"
+
+#. module: care_cafm_waste
+#: model:ir.model,name:care_cafm_waste.model_cafm_waste_assign_driver
+msgid "Assign Driver to a Transfer Order"
+msgstr "إسناد سائق لطلب نقل"
+
+#. module: care_cafm_waste
+#. odoo-python
+#: code:addons/care_cafm_waste/models/waste_models.py:0
+#, python-format
+msgid "Assign a driver to order %s"
+msgstr "إسناد سائق للطلب %s"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__message_attachment_count
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__message_attachment_count
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__message_attachment_count
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__message_attachment_count
+msgid "Attachment Count"
+msgstr "عدد المرفقات"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_assign_driver__available_driver_ids
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__available_driver_ids
+msgid "Available Drivers"
+msgstr "السائقون المتاحون"
+
+#. module: care_cafm_waste
+#: model:ir.model,name:care_cafm_waste.model_care_cafm_service_request
+msgid "CAFM Service Request"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.model.fields.selection,name:care_cafm_waste.selection__cafm_waste_order__states__cancelled
+#: model:ir.model.fields.selection,name:care_cafm_waste.selection__cafm_waste_trip__states__cancelled
+msgid "Cancelled"
+msgstr "ملغى"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__contact_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__contact_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__contact_id
+msgid "Client Entity"
+msgstr "جهة العميل"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_center__company_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__company_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_team__company_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__company_id
+msgid "Company"
+msgstr "الشركة"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields.selection,name:care_cafm_waste.selection__cafm_waste_order__states__completed
+#: model:ir.model.fields.selection,name:care_cafm_waste.selection__cafm_waste_trip__states__completed
+msgid "Completed"
+msgstr "مكتمل"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_assign_driver__create_uid
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_center__create_uid
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__create_uid
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__create_uid
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order_line__create_uid
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_pickup_location__create_uid
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__create_uid
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_team__create_uid
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__create_uid
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip_line__create_uid
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_type__create_uid
+msgid "Created by"
+msgstr "أنشأه"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_assign_driver__create_date
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_center__create_date
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__create_date
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__create_date
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order_line__create_date
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_pickup_location__create_date
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__create_date
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_team__create_date
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__create_date
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip_line__create_date
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_type__create_date
+msgid "Created on"
+msgstr "تاريخ الإنشاء"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_order__access_url
+msgid "Customer Portal URL"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__default_driver_id
+msgid "Default Driver"
+msgstr "السائق الافتراضي"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__default_ops_manager_id
+msgid "Default Operations Officer"
+msgstr "مسؤول العمليات الافتراضي"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__default_receiver_id
+msgid "Default Quantity Receiver"
+msgstr "مستلم الكميات الافتراضي"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields.selection,name:care_cafm_waste.selection__cafm_waste_order__states__delivered
+#: model:ir.model.fields.selection,name:care_cafm_waste.selection__cafm_waste_trip__states__delivered
+msgid "Delivered to Incinerator"
+msgstr "سُلّم للمحرقة"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_assign_driver__display_name
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_center__display_name
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__display_name
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__display_name
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order_line__display_name
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_pickup_location__display_name
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__display_name
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_team__display_name
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__display_name
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip_line__display_name
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_type__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields.selection,name:care_cafm_waste.selection__cafm_waste_order__states__draft
+#: model:ir.model.fields.selection,name:care_cafm_waste.selection__cafm_waste_trip__states__draft
+msgid "Draft"
+msgstr "مسودة"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_assign_driver__driver_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__driver_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__driver_id
+msgid "Driver"
+msgstr "السائق"
+
+#. module: care_cafm_waste
+#. odoo-python
+#: code:addons/care_cafm_waste/models/waste_models.py:0
+#, python-format
+msgid "Driver %s has been assigned."
+msgstr "تم إسناد السائق %s"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__driver_accepted
+msgid "Driver Accepted"
+msgstr "قبِل السائق"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__driver_user_ids
+msgid "Drivers Registered in the Service"
+msgstr "السائقون المسجّلون في الخدمة"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__end_date
+msgid "End Date"
+msgstr "تاريخ النهاية"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__cafm_client_id
+msgid "Facility Client"
+msgstr "عميل المرافق"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__final_weight
+msgid "Final Received Weight"
+msgstr "الوزن النهائي المستلم"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__message_follower_ids
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__message_follower_ids
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__message_follower_ids
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__message_follower_ids
+msgid "Followers"
+msgstr "المتابعون"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__message_partner_ids
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__message_partner_ids
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__message_partner_ids
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "المتابعون (جهات)"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_order__activity_type_icon
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_project__activity_type_icon
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_trip__activity_type_icon
+msgid "Font awesome icon e.g. fa-tasks"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.model.fields.selection,name:care_cafm_waste.selection__care_cafm_service_request__waste_scope__general
+msgid "General — Mixed Waste"
+msgstr "عام — نفايات مختلطة"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_center__is_incinerator
+msgid "Government Incinerator"
+msgstr "محرقة حكومية"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__has_message
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__has_message
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__has_message
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__has_message
+msgid "Has Message"
+msgstr "به رسائل"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__height
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order_line__height
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip_line__height
+msgid "Height"
+msgstr "الارتفاع"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_assign_driver__id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_center__id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order_line__id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_pickup_location__id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_team__id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip_line__id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_type__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__activity_exception_icon
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__activity_exception_icon
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__activity_exception_icon
+msgid "Icon"
+msgstr "الأيقونة"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_order__activity_exception_icon
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_project__activity_exception_icon
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_trip__activity_exception_icon
+msgid "Icon to indicate an exception activity."
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_item__message_needaction
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_order__message_needaction
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_project__message_needaction
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_trip__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "عند التفعيل، الرسائل الجديدة تتطلّب انتباهك."
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_item__message_has_error
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_item__message_has_sms_error
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_order__message_has_error
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_order__message_has_sms_error
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_project__message_has_error
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_project__message_has_sms_error
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_trip__message_has_error
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_trip__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr "عند التفعيل، بعض الرسائل بها خطأ في التسليم."
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__image
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__image
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_order_detail
+msgid "Image"
+msgstr "صورة"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__message_is_follower
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__message_is_follower
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__message_is_follower
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__message_is_follower
+msgid "Is Follower"
+msgstr "متابِع"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order_line__item_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip_line__item_id
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_order_detail
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_order_doc
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_trip_doc
+msgid "Item"
+msgstr "الصنف"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__order_line_ids
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__trip_line_ids
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_order_detail
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_order_doc
+msgid "Items"
+msgstr "الأصناف"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_care_cafm_service_request__waste_item_ids
+msgid "Items To Be Transported"
+msgstr "الأصناف المطلوب نقلها"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__driver_loc_time
+msgid "Last Location Update"
+msgstr "آخر تحديث للموقع"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_assign_driver__write_uid
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_center__write_uid
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__write_uid
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__write_uid
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order_line__write_uid
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_pickup_location__write_uid
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__write_uid
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_team__write_uid
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__write_uid
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip_line__write_uid
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_type__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_assign_driver__write_date
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_center__write_date
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__write_date
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__write_date
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order_line__write_date
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_pickup_location__write_date
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__write_date
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_team__write_date
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__write_date
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip_line__write_date
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_type__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__driver_lat
+msgid "Latitude"
+msgstr "خط العرض"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_care_cafm_service_request__waste_type_id
+msgid "Load Category"
+msgstr "فئة المنقولات"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_care_cafm_service_request__waste_note
+msgid "Load Description"
+msgstr "وصف المنقولات"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_care_cafm_service_request__waste_scope
+msgid "Load Scope"
+msgstr "نطاق المنقولات"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_care_cafm_service_request__waste_summary
+msgid "Load Summary"
+msgstr "ملخّص المنقولات"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__driver_lng
+msgid "Longitude"
+msgstr "خط الطول"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_team__member_count
+msgid "Member Count"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_team__employee_ids
+msgid "Members"
+msgstr "الأعضاء"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__message_has_error
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__message_has_error
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__message_has_error
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__message_has_error
+msgid "Message Delivery error"
+msgstr "خطأ تسليم الرسالة"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__message_ids
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__message_ids
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__message_ids
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__message_ids
+msgid "Messages"
+msgstr "الرسائل"
+
+#. module: care_cafm_waste
+#: model:ir.actions.server,name:care_cafm_waste.action_migrate_waste
+#: model:ir.model,name:care_cafm_waste.model_cafm_waste_migrate
+msgid "Migrate waste data from service_order"
+msgstr "ترحيل بيانات النفايات من service_order"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__my_activity_date_deadline
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__my_activity_date_deadline
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__my_activity_date_deadline
+msgid "My Activity Deadline"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_center__name
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__name
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_pickup_location__name
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__name
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_team__name
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_type__name
+msgid "Name"
+msgstr ""
+
+#. module: care_cafm_waste
+#. odoo-python
+#: code:addons/care_cafm_waste/models/waste_models.py:0
+#, python-format
+msgid "New Transfer Order %s — %s%s"
+msgstr "طلب نقل جديد %s — %s%s"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__activity_calendar_event_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__activity_calendar_event_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__activity_calendar_event_id
+msgid "Next Activity Calendar Event"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__activity_date_deadline
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__activity_date_deadline
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr "موعد النشاط التالي"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__activity_summary
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__activity_summary
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__activity_summary
+msgid "Next Activity Summary"
+msgstr "ملخّص النشاط التالي"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__activity_type_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__activity_type_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__activity_type_id
+msgid "Next Activity Type"
+msgstr "نوع النشاط التالي"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__notes
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__notes
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__notes
+msgid "Notes"
+msgstr "ملاحظات"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_project__default_ops_manager_id
+msgid ""
+"Notified as soon as any new transfer order arrives in this project, and "
+"assigns the driver."
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__message_needaction_counter
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__message_needaction_counter
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__message_needaction_counter
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__message_needaction_counter
+msgid "Number of Actions"
+msgstr "عدد الإجراءات"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__message_has_error_counter
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__message_has_error_counter
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__message_has_error_counter
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__message_has_error_counter
+msgid "Number of errors"
+msgstr "عدد الأخطاء"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_item__message_needaction_counter
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_order__message_needaction_counter
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_project__message_needaction_counter
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_trip__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "عدد الرسائل التي تتطلّب إجراءً"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_item__message_has_error_counter
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_order__message_has_error_counter
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_project__message_has_error_counter
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_trip__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "عدد الرسائل التي بها خطأ تسليم"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__ops_manager_id
+msgid "Operations Officer"
+msgstr "مسؤول العمليات"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_project__default_driver_id
+msgid ""
+"Optional — assigned automatically to new orders. Leave empty so the "
+"operations officer assigns manually."
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_assign_driver__order_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order_line__order_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__order_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip_line__order_id
+msgid "Order"
+msgstr "الطلب"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__order_count
+msgid "Order Count"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__request_datetime
+msgid "Order Time"
+msgstr "وقت الطلب"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__order_ids
+msgid "Orders"
+msgstr "الطلبات"
+
+#. module: care_cafm_waste
+#: model:ir.model,name:care_cafm_waste.model_report_care_cafm_waste_report_waste_period_doc
+msgid "Overall Waste Report for the Period"
+msgstr "تقرير النفايات الإجمالي للفترة"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields.selection,name:care_cafm_waste.selection__cafm_waste_order__states__pickuped
+#: model:ir.model.fields.selection,name:care_cafm_waste.selection__cafm_waste_trip__states__pickuped
+msgid "Picked Up"
+msgstr "تم الالتقاط"
+
+#. module: care_cafm_waste
+#: model:ir.model,name:care_cafm_waste.model_cafm_waste_pickup_location
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__pickup_location_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__pickup_location_id
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_orders
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+msgid "Pickup Location"
+msgstr "موقع الالتقاط"
+
+#. module: care_cafm_waste
+#: model:ir.actions.act_window,name:care_cafm_waste.action_waste_pickups
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__pickup_location_ids
+msgid "Pickup Locations"
+msgstr "مواقع الالتقاط"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__order_datetime
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__pickuped_datetime
+msgid "Pickup Time"
+msgstr "وقت الالتقاط"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__access_url
+msgid "Portal Access URL"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_assign_driver__project_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__project_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_pickup_location__project_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_team__project_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__project_id
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+msgid "Project"
+msgstr "المشروع"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__proof_image
+msgid "Proof Photo"
+msgstr "صورة إثبات"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__media_ids
+msgid "Proof Photos and Videos"
+msgstr "صور وفيديوهات الإثبات"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__qr_url
+msgid "QR"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order_line__quantity
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip_line__quantity
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_create
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_order_detail
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_orders
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_order_doc
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_trip_doc
+msgid "Quantity"
+msgstr "الكمية"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__receiver_id
+msgid "Quantity Receiver"
+msgstr "مستلم الكميات"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__rating_ids
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__rating_ids
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__rating_ids
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__rating_ids
+msgid "Ratings"
+msgstr "التقييمات"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__final_note
+msgid "Receipt Note"
+msgstr "ملاحظة الاستلام"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__reference
+msgid "Reference"
+msgstr "المرجع"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__activity_user_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__activity_user_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__activity_user_id
+msgid "Responsible User"
+msgstr "المستخدم المسؤول"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__message_has_sms_error
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__message_has_sms_error
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__message_has_sms_error
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.model.fields.selection,name:care_cafm_waste.selection__cafm_waste_order__states__scheduled
+#: model:ir.model.fields.selection,name:care_cafm_waste.selection__cafm_waste_trip__states__scheduled
+msgid "Scheduled"
+msgstr "مجدول"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__access_token
+msgid "Security Token"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__serial
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__sequence
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__sequence
+msgid "Sequence Number"
+msgstr "الرقم التسلسلي"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields.selection,name:care_cafm_waste.selection__care_cafm_service_request__waste_scope__type
+msgid "Specific Category"
+msgstr "فئة محدّدة"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields.selection,name:care_cafm_waste.selection__care_cafm_service_request__waste_scope__items
+msgid "Specific Items"
+msgstr "أصناف محدّدة"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__start_date
+msgid "Start Date"
+msgstr "تاريخ البداية"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__states
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__states
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_orders
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+msgid "Status"
+msgstr "الحالة"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_order__activity_state
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_project__activity_state
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_trip__activity_state
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__team_id
+msgid "Team"
+msgstr "الفريق"
+
+#. module: care_cafm_waste
+#: model:ir.actions.act_window,name:care_cafm_waste.action_waste_teams
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__team_ids
+msgid "Teams"
+msgstr "الفرق"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_assign_driver__available_driver_ids
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_order__available_driver_ids
+msgid "The drivers registered in the project of this order."
+msgstr "السائقون المسجّلون في مشروع هذا الطلب."
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_project__driver_user_ids
+msgid ""
+"The pool of drivers the operations officer selects from when assigning the "
+"order."
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_project__default_receiver_id
+msgid "The treatment centre receiver who records the received quantities."
+msgstr "مستلم مركز المعالجة الذي يسجّل الكميات المستلمة."
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__total_weight
+msgid "Total Item Weights"
+msgstr "مجموع أوزان الأصناف"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__total_quantity
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__total_quantity
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+msgid "Total Quantity"
+msgstr "إجمالي الكمية"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__total_weight
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__total_qty_weight
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_order_detail
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_order_doc
+msgid "Total Weight"
+msgstr "الوزن الكلي"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__center_id
+msgid "Treatment Centre"
+msgstr "مركز المعالجة"
+
+#. module: care_cafm_waste
+#: model:ir.model,name:care_cafm_waste.model_cafm_waste_center
+msgid "Treatment Centre / Incinerator"
+msgstr "مركز المعالجة / المحرقة"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__trip_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip_line__trip_id
+msgid "Trip"
+msgstr "الرحلة"
+
+#. module: care_cafm_waste
+#. odoo-python
+#: code:addons/care_cafm_waste/models/waste_models.py:0
+#, python-format
+msgid ""
+"Trip %s has been assigned to you — pickup from %s. Open Waste Trips to share"
+" your location."
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__trip_count
+msgid "Trip Count"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__trip_date
+msgid "Trip Date"
+msgstr "تاريخ الرحلة"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__trip_line_ids
+msgid "Trip Items"
+msgstr "أصناف الرحلة"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__media_ids
+msgid "Trip Photos and Videos"
+msgstr "صور وفيديوهات الرحلة"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__trip_ids
+msgid "Trips"
+msgstr "الرحلات"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__type_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__type_id
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__type_id
+msgid "Type"
+msgstr "النوع"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_order__activity_exception_decoration
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_project__activity_exception_decoration
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_trip__activity_exception_decoration
+msgid "Type of the exception activity on record."
+msgstr "نوع نشاط الاستثناء على السجل."
+
+#. module: care_cafm_waste
+#: model:ir.model.fields.selection,name:care_cafm_waste.selection__cafm_waste_order__states__processing
+#: model:ir.model.fields.selection,name:care_cafm_waste.selection__cafm_waste_trip__states__processing
+msgid "Under Treatment"
+msgstr "قيد المعالجة"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,help:care_cafm_waste.field_care_cafm_service_request__waste_note
+msgid ""
+"Used when the available categories do not cover what will be transported."
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.model,name:care_cafm_waste.model_cafm_waste_team
+msgid "Waste Collection Team"
+msgstr "فريق رفع النفايات"
+
+#. module: care_cafm_waste
+#: model:ir.model,name:care_cafm_waste.model_cafm_waste_item
+msgid "Waste Item"
+msgstr "صنف نفايات"
+
+#. module: care_cafm_waste
+#. odoo-python
+#: code:addons/care_cafm_waste/models/waste_models.py:0
+#, python-format
+msgid "Waste Order %s"
+msgstr "طلب نفايات %s"
+
+#. module: care_cafm_waste
+#: model:ir.model,name:care_cafm_waste.model_cafm_waste_order_line
+msgid "Waste Order Line"
+msgstr "سطر طلب نفايات"
+
+#. module: care_cafm_waste
+#: model:ir.model,name:care_cafm_waste.model_cafm_waste_type
+msgid "Waste Order Type"
+msgstr "نوع طلب النفايات"
+
+#. module: care_cafm_waste
+#: model:ir.model,name:care_cafm_waste.model_cafm_waste_project
+msgid "Waste Project (Client Contract)"
+msgstr "مشروع نفايات (عقد عميل)"
+
+#. module: care_cafm_waste
+#: model:ir.model,name:care_cafm_waste.model_cafm_waste_trip
+msgid "Waste Transfer Trip"
+msgstr "رحلة نقل نفايات"
+
+#. module: care_cafm_waste
+#: model:ir.model,name:care_cafm_waste.model_cafm_waste_order
+msgid "Waste Transfer and Treatment Order"
+msgstr "طلب نقل ومعالجة نفايات"
+
+#. module: care_cafm_waste
+#: model:ir.model,name:care_cafm_waste.model_cafm_waste_trip_line
+msgid "Waste Trip Line"
+msgstr "سطر رحلة نفايات"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__website_message_ids
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order__website_message_ids
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_project__website_message_ids
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip__website_message_ids
+msgid "Website Messages"
+msgstr "رسائل الموقع"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_item__website_message_ids
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_order__website_message_ids
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_project__website_message_ids
+#: model:ir.model.fields,help:care_cafm_waste.field_cafm_waste_trip__website_message_ids
+msgid "Website communication history"
+msgstr "سجل مراسلات الموقع"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order_line__weight
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip_line__weight
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_orders
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_trip_doc
+msgid "Weight"
+msgstr "الوزن"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__weight
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+msgid "Weight (kg)"
+msgstr "الوزن (كجم)"
+
+#. module: care_cafm_waste
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_item__width
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_order_line__width
+#: model:ir.model.fields,field_description:care_cafm_waste.field_cafm_waste_trip_line__width
+msgid "Width"
+msgstr "العرض"
+
+#. module: care_cafm_waste
+#. odoo-python
+#: code:addons/care_cafm_waste/models/waste_models.py:0
+#, python-format
+msgid "You have been assigned the role %s on order %s"
+msgstr "أُسند إليك دور «%s» في الطلب %s"
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_orders
+msgid "kg"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_order_doc
+msgid "· الحالة:"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_form
+msgid "أصناف الرحلة (المُنفّذة)"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.actions.act_window,name:care_cafm_waste.action_waste_items
+#: model:ir.ui.menu,name:care_cafm_waste.menu_waste_items
+msgid "أصناف النفايات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.actions.act_window,name:care_cafm_waste.action_waste_types
+#: model:ir.ui.menu,name:care_cafm_waste.menu_waste_types
+msgid "أنواع الطلبات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+msgid "إجمالي الوزن (كجم)"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_assign_driver_form
+msgid "إسناد سائق"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_assign_driver_form
+msgid "إسناد وبدء العملية"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_form
+msgid "إعادة لمسودة"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_form
+msgid "إكمال"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_create
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_assign_driver_form
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_form
+msgid "إلغاء"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_orders
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+msgid "إلى"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_project_form
+msgid "اختر السائقين المسجّلين في خدمة نقل النفايات…"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_assign_driver_form
+msgid "اختر من السائقين المسجّلين في المشروع…"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_create
+msgid "اطلب رفع المخلفات من موقعك وسنتولّى الباقي"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_form
+msgid "الأصناف"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_trip_form
+msgid "الأصناف المنقولة"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+msgid "الأوامر"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+msgid "الإجمالي"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+msgid "التاريخ"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+msgid "التوزيع حسب الحالة"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+msgid "التوزيع حسب المشروع"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_search
+msgid "الحالة"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.ui.menu,name:care_cafm_waste.menu_waste_trips
+msgid "الرحلات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_orders
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+msgid "الرقم"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_order_doc
+msgid "الرقم:"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_project_form
+msgid "السائقون"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.ui.menu,name:care_cafm_waste.menu_waste_orders
+msgid "الطلبات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_search
+msgid "العميل"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+msgid "الفترة من"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.ui.menu,name:care_cafm_waste.menu_waste_teams
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_project_form
+msgid "الفرق"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_trip_doc
+msgid "المرجع:"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_project_form
+msgid "المسؤولون"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.ui.menu,name:care_cafm_waste.menu_waste_projects
+msgid "المشاريع"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_search
+msgid "المشروع"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+msgid "الوزن الكلي (كجم)"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_orders
+msgid "بحث بالرقم أو الموقع…"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_form
+msgid "بدء المعالجة"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_orders
+msgid "تاريخ الطلب"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_graph
+msgid "تحليل الطلبات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_form
+msgid "تسليم للمحرقة"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+msgid "تفصيل الأوامر"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.actions.report,name:care_cafm_waste.action_report_waste_period
+msgid "تقرير النفايات الإجمالي"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.actions.report,name:care_cafm_waste.action_report_waste_trip
+msgid "تقرير رحلة النفايات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.actions.report,name:care_cafm_waste.action_report_waste_order
+msgid "تقرير طلب النفايات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_form
+msgid "تم الالتقاط"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_form
+msgid "جدولة"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.actions.act_window,name:care_cafm_waste.action_waste_trips
+msgid "رحلات النفايات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_kanban
+msgid "صنف ·"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_order_doc
+msgid "صورة الإثبات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_orders
+msgid "طلب ·"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_create
+msgid "طلب رفع نفايات جديد"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.actions.act_window,name:care_cafm_waste.action_waste_orders
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_orders
+msgid "طلبات النفايات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_my_home_waste
+msgid "طلباتكم ورحلاتكم وتقاريركم"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+msgid "عدد الأوامر"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_form
+msgid "فريق العملية والإثبات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_order_detail
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_order_doc
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_trip_doc
+msgid "كجم"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+msgid "كل الفترات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_orders
+msgid "لا توجد طلبات بعد."
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_assign_driver_form
+msgid ""
+"لا يوجد سائقون مسجّلون في هذا المشروع — أضِفهم من تبويب «♻️ فريق نقل "
+"النفايات» في المشروع."
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_pivot
+msgid "محور الطلبات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:res.groups,name:care_cafm_waste.group_waste_manager
+msgid "مدير — نقل النفايات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.actions.act_window,name:care_cafm_waste.action_waste_centers
+#: model:ir.ui.menu,name:care_cafm_waste.menu_waste_centers
+msgid "مراكز المعالجة"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:res.groups,name:care_cafm_waste.group_waste_user
+msgid "مستخدم — نقل النفايات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.actions.act_window,name:care_cafm_waste.action_waste_projects
+msgid "مشاريع النفايات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_search
+msgid "مفتوحة"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_search
+msgid "مكتملة"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_form
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_project_form
+msgid "ملاحظات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_orders
+msgid "من"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.ui.menu,name:care_cafm_waste.menu_waste_pickups
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_project_form
+msgid "مواقع الالتقاط"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_trip_form
+msgid "موقع السائق (حي)"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:care.cafm.service,name:care_cafm_waste.cafm_service_waste
+#: model:ir.module.category,name:care_cafm_waste.module_category_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_my_home_waste
+msgid "نقل ومعالجة النفايات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_order_doc
+msgid "وزن الوحدة"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_form
+msgid "وصل للمعالجة"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_project_form
+msgid ""
+"يُسنَد هذا الفريق تلقائيًا لكل طلب نقل جديد في هذا المشروع، ويمكن تغييره داخل أي طلب لاحقًا.\n"
+"              مسؤول العمليات يصله تنبيه فور وصول الطلب ليقوم بإسناد السائق."
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_period_doc
+msgid "♻ تقرير نقل ومعالجة النفايات — الإجمالي"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_create
+msgid "♻️ الصنف"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_order_doc
+msgid "♻️ تقرير طلب نقل ومعالجة نفايات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_project_form
+msgid "♻️ فريق نقل النفايات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.ui.menu,name:care_cafm_waste.menu_waste_root
+msgid "♻️ نقل ومعالجة النفايات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_orders
+msgid "⚖️ الوزن (كجم)"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.ui.menu,name:care_cafm_waste.menu_waste_config
+msgid "⚙️ الإعداد"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_orders
+msgid "✅ المكتملة"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_order_detail
+msgid "✖ Order Cancelled"
+msgstr "✖ تم إلغاء الطلب"
+
+#. module: care_cafm_waste
+#: model:ir.ui.menu,name:care_cafm_waste.menu_waste_migrate
+msgid "⤵️ ترحيل من service_order"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_orders
+msgid "🏆 أكثر الأصناف"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_order_detail
+msgid "👷 فريق العملية"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_create
+msgid "📅 التاريخ والوقت"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_orders
+msgid "📈 حسب الشهر"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.actions.act_window,name:care_cafm_waste.action_waste_dashboard
+msgid "📊 لوحة إحصائيات النفايات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model:ir.ui.menu,name:care_cafm_waste.menu_waste_dashboard
+msgid "📊 لوحة الإحصائيات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_orders
+msgid "📋 الطلبات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_create
+msgid "📋 النوع"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_create
+msgid "📍 موقع الالتقاط"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_create
+msgid "📝 ملاحظات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_orders
+msgid "📦 الكمية"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_trip_form
+msgid "📷 صور وفيديوهات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_order_detail
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_form
+msgid "📷 صور وفيديوهات الإثبات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_order_detail
+msgid "📸 صورة الإثبات"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_form
+msgid "🖨️ طباعة التقرير"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_trip_form
+msgid "🖨️ طباعة تقرير الرحلة"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_create
+msgid "🗂️ المشروع"
+msgstr ""
+
+#. module: care_cafm_waste
+#. odoo-python
+#: code:addons/care_cafm_waste/models/waste_models.py:0
+#, python-format
+msgid "🗑️ New Waste Transfer Order"
+msgstr "🗑️ طلب نقل نفايات جديد"
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.portal_waste_order_detail
+msgid "🗺️ تتبّع السائق المباشر"
+msgstr ""
+
+#. module: care_cafm_waste
+#. odoo-python
+#: code:addons/care_cafm_waste/models/waste_models.py:0
+#, python-format
+msgid "🚛 New Waste Trip %s"
+msgstr "🚛 رحلة نفايات جديدة %s"
+
+#. module: care_cafm_waste
+#. odoo-python
+#: code:addons/care_cafm_waste/models/waste_models.py:0
+#, python-format
+msgid "🚛 The order has been assigned to driver %s"
+msgstr "🚛 تم إسناد الطلب إلى السائق %s"
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.view_waste_order_form
+msgid "🚛 إسناد سائق"
+msgstr ""
+
+#. module: care_cafm_waste
+#: model_terms:ir.ui.view,arch_db:care_cafm_waste.report_waste_trip_doc
+msgid "🚛 تقرير رحلة نقل نفايات"
+msgstr ""

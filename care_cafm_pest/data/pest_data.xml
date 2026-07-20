@@ -2,13 +2,13 @@
 <odoo>
   <data noupdate="1">
     <record id="seq_pest_visit" model="ir.sequence">
-      <field name="name">زيارة مكافحة</field>
+      <field name="name">Pest Control Visit</field>
       <field name="code">care.pest.visit</field>
       <field name="prefix">PST/%(year)s/</field>
       <field name="padding">5</field>
     </record>
     <record id="seq_pest_sighting" model="ir.sequence">
-      <field name="name">بلاغ ظهور آفة</field>
+      <field name="name">Pest Sighting Report</field>
       <field name="code">care.pest.sighting</field>
       <field name="prefix">PSG/%(year)s/</field>
       <field name="padding">4</field>

@@ -245,7 +245,7 @@
     </field>
   </record>
   <record id="action_hosp_item" model="ir.actions.act_window">
-    <field name="name">الأصناف</field>
+    <field name="name">Items</field>
     <field name="res_model">care.hosp.item</field>
     <field name="view_mode">tree,form</field>
   </record>
@@ -282,7 +282,7 @@
     </field>
   </record>
   <record id="action_hosp_optgroup" model="ir.actions.act_window">
-    <field name="name">مجموعات الخيارات</field>
+    <field name="name">Option Groups</field>
     <field name="res_model">care.hosp.option.group</field>
     <field name="view_mode">tree,form</field>
   </record>
@@ -324,7 +324,7 @@
     </field>
   </record>
   <record id="action_hosp_limit" model="ir.actions.act_window">
-    <field name="name">حدود الاستهلاك</field>
+    <field name="name">Consumption Limits</field>
     <field name="res_model">care.hosp.limit</field>
     <field name="view_mode">tree,form</field>
   </record>

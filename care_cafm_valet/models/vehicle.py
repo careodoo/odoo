@@ -35,51 +35,51 @@ def normalise_plate(raw):
 
 class ValetVehicle(models.Model):
     _name = 'care.valet.vehicle'
-    _description = 'مركبة مسجّلة'
+    _description = 'Registered Vehicle'
     _inherit = ['mail.thread']
     _order = 'last_seen desc, id desc'
     _rec_name = 'plate'
 
-    plate = fields.Char(string='رقم اللوحة', required=True, tracking=True, index=True)
-    plate_key = fields.Char(string='مفتاح المطابقة', compute='_compute_key', store=True,
+    plate = fields.Char(string='Plate Number', required=True, tracking=True, index=True)
+    plate_key = fields.Char(string='Match Key', compute='_compute_key', store=True,
                             index=True,
-                            help='اللوحة بعد التوحيد — يُطابَق به ما تقرأه الكاميرا.')
-    make = fields.Char(string='الماركة', tracking=True)
-    model = fields.Char(string='الموديل', tracking=True)
-    color = fields.Char(string='اللون', tracking=True)
-    owner_name = fields.Char(string='اسم المالك', tracking=True)
-    owner_phone = fields.Char(string='هاتف المالك', tracking=True)
+                            help='The normalised plate — used to match what the camera reads.')
+    make = fields.Char(string='Make', tracking=True)
+    model = fields.Char(string='Model', tracking=True)
+    color = fields.Char(string='Color', tracking=True)
+    owner_name = fields.Char(string='Owner Name', tracking=True)
+    owner_phone = fields.Char(string='Owner Phone', tracking=True)
     owner_type = fields.Selection([
-        ('guest', 'زائر'), ('staff', 'موظف'), ('patient', 'مريض'),
-        ('supplier', 'مورّد'), ('vip', 'كبار الشخصيات'),
-    ], string='الصفة', default='guest', required=True, tracking=True)
-    employee_id = fields.Many2one('hr.employee', string='الموظف', tracking=True)
-    facility_id = fields.Many2one('care.cafm.facility', string='المرفق', index=True,
+        ('guest', 'Visitor'), ('staff', 'Employee'), ('patient', 'Patient'),
+        ('supplier', 'Supplier'), ('vip', 'VIP'),
+    ], string='Category', default='guest', required=True, tracking=True)
+    employee_id = fields.Many2one('hr.employee', string='Employee', tracking=True)
+    facility_id = fields.Many2one('care.cafm.facility', string='Facility', index=True,
                                   tracking=True)
 
     # ---- standing instructions that should survive between visits ----------
-    vip = fields.Boolean(string='كبار الشخصيات', tracking=True,
-                         help='يُنبَّه الطاقم فور تسجيل دخول المركبة.')
-    blocked = fields.Boolean(string='ممنوعة', tracking=True)
-    block_reason = fields.Char(string='سبب المنع', tracking=True)
-    notes = fields.Text(string='ملاحظات دائمة',
-                        help='مثل: مقبض الباب الأيسر متضرّر مسبقًا، أو ناقل حركة يدوي.')
-    preferred_zone_id = fields.Many2one('care.valet.zone', string='الموقف المفضّل')
+    vip = fields.Boolean(string='VIP', tracking=True,
+                         help='The team is alerted as soon as the vehicle checks in.')
+    blocked = fields.Boolean(string='Blocked', tracking=True)
+    block_reason = fields.Char(string='Block Reason', tracking=True)
+    notes = fields.Text(string='Permanent Notes',
+                        help='For example: left door handle already damaged, or manual transmission.')
+    preferred_zone_id = fields.Many2one('care.valet.zone', string='Preferred Spot')
 
-    ticket_ids = fields.One2many('care.valet.ticket', 'vehicle_id', string='الزيارات')
-    visit_count = fields.Integer(string='عدد الزيارات', compute='_compute_stats',
+    ticket_ids = fields.One2many('care.valet.ticket', 'vehicle_id', string='Visits')
+    visit_count = fields.Integer(string='Visit Count', compute='_compute_stats',
                                  store=True)
-    last_seen = fields.Datetime(string='آخر زيارة', compute='_compute_stats', store=True)
-    first_seen = fields.Datetime(string='أول زيارة', compute='_compute_stats', store=True)
-    avg_stay_minutes = fields.Float(string='متوسط مدة البقاء (دقيقة)',
+    last_seen = fields.Datetime(string='Last Visit', compute='_compute_stats', store=True)
+    first_seen = fields.Datetime(string='First Visit', compute='_compute_stats', store=True)
+    avg_stay_minutes = fields.Float(string='Average Stay (Minutes)',
                                     compute='_compute_stats', store=True)
-    is_regular = fields.Boolean(string='زائر متكرّر', compute='_compute_stats', store=True,
-                                help='ثلاث زيارات فأكثر خلال التسعين يومًا الماضية.')
+    is_regular = fields.Boolean(string='Frequent Visitor', compute='_compute_stats', store=True,
+                                help='Three or more visits in the last ninety days.')
     active = fields.Boolean(default=True)
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
 
     _sql_constraints = [('plate_key_uniq', 'unique(plate_key, company_id)',
-                         'هذه اللوحة مسجّلة بالفعل.')]
+                         'This plate is already registered.')]
 
     @api.depends('plate')
     def _compute_key(self):
@@ -129,7 +129,7 @@ class ValetVehicle(models.Model):
     def action_tickets(self):
         self.ensure_one()
         return {
-            'type': 'ir.actions.act_window', 'name': _('زيارات %s') % self.plate,
+            'type': 'ir.actions.act_window', 'name': _('Visits of %s') % self.plate,
             'res_model': 'care.valet.ticket', 'view_mode': 'list,form',
             'domain': [('vehicle_id', '=', self.id)],
             'context': {'default_vehicle_id': self.id, 'default_plate': self.plate},
@@ -140,11 +140,11 @@ class ValetTicketVehicle(models.Model):
     """Tie every ticket to its vehicle, so a plate accumulates a history."""
     _inherit = 'care.valet.ticket'
 
-    vehicle_id = fields.Many2one('care.valet.vehicle', string='المركبة', index=True,
+    vehicle_id = fields.Many2one('care.valet.vehicle', string='Vehicle', index=True,
                                  ondelete='set null', tracking=True)
-    vehicle_known = fields.Boolean(string='مركبة معروفة', compute='_compute_known',
+    vehicle_known = fields.Boolean(string='Known Vehicle', compute='_compute_known',
                                    store=True)
-    visit_number = fields.Integer(string='رقم الزيارة', compute='_compute_known',
+    visit_number = fields.Integer(string='Visit Number', compute='_compute_known',
                                   store=True)
 
     @api.depends('vehicle_id', 'vehicle_id.visit_count')
@@ -166,9 +166,9 @@ class ValetTicketVehicle(models.Model):
                     }).id
             v = t.vehicle_id
             if v and v.blocked:
-                t.message_post(body=_('⛔ مركبة ممنوعة: %s') % (v.block_reason or ''))
+                t.message_post(body=_('⛔ Blocked vehicle: %s') % (v.block_reason or ''))
             elif v and v.vip:
-                t.message_post(body=_('⭐ مركبة كبار الشخصيات — أولوية في التسليم.'))
+                t.message_post(body=_('⭐ VIP vehicle — priority handover.'))
             elif v and v.notes:
-                t.message_post(body=_('📌 ملاحظات دائمة على المركبة: %s') % v.notes)
+                t.message_post(body=_('📌 Permanent notes on this vehicle: %s') % v.notes)
         return tickets

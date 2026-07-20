@@ -79,19 +79,19 @@ class ValetPortal(http.Controller):
         body += self._intake_form(facs, env['care.valet.zone'].sudo().search(
             [('facility_id', 'in', facs.ids)]))
         if not tickets:
-            body += Markup('<div class="card"><div class="muted">لا مركبات في هذه الحالة.</div></div>')
+            body += Markup('<div class="card"><div class="muted">No vehicles in this status.</div></div>')
         for t in tickets:
             body += self._ticket_card(t, facs)
-        return _shell('صف السيارات', body, accent=ACCENT)
+        return _shell('Valet Parking', body, accent=ACCENT)
 
     def _kpis(self, counts, out_today, late):
         return Markup(
             '<div class="kpi">'
-            '<div><div class="n">%s</div><div class="l">مُستلَمة</div></div>'
-            '<div><div class="n">%s</div><div class="l">مركونة</div></div>'
-            '<div><div class="n">%s</div><div class="l">مطلوبة</div></div>'
-            '<div><div class="n">%s</div><div class="l">سُلِّمت اليوم</div></div>'
-            '<div><div class="n" style="color:%s">%s</div><div class="l">متأخرة</div></div>'
+            '<div><div class="n">%s</div><div class="l">Checked In</div></div>'
+            '<div><div class="n">%s</div><div class="l">Parked</div></div>'
+            '<div><div class="n">%s</div><div class="l">Requested</div></div>'
+            '<div><div class="n">%s</div><div class="l">Delivered Today</div></div>'
+            '<div><div class="n" style="color:%s">%s</div><div class="l">Overdue</div></div>'
             '</div>'
         ) % (counts.get('received', 0), counts.get('parked', 0), counts.get('requested', 0),
              out_today, '#f2603f' if late else '#14202b', late)
@@ -101,9 +101,9 @@ class ValetPortal(http.Controller):
             return Markup(
                 '<div class="card row" style="margin-top:11px">'
                 '<div><div class="h4">🎫 %s</div>'
-                '<div class="muted">%s تذكرة · رسوم %s · إكراميات %s · نقد مستحق %s</div></div>'
+                '<div class="muted">%s tickets · fees %s · tips %s · cash due %s</div></div>'
                 '<form method="post" action="/cafm/m/valet/shift/close">%s'
-                '<button class="btn g" style="width:auto;margin:0;padding:9px 14px">إغلاق الوردية</button>'
+                '<button class="btn g" style="width:auto;margin:0;padding:9px 14px">Close Shift</button>'
                 '</form></div>'
             ) % (esc(shift.name), shift.ticket_count, shift.total_fees, shift.total_tips,
                  shift.cash_due, self._csrf())
@@ -111,9 +111,9 @@ class ValetPortal(http.Controller):
             return Markup('')
         return Markup(
             '<form method="post" action="/cafm/m/valet/shift/open" class="card row" style="margin-top:11px">%s'
-            '<div><div class="h4">لا وردية مفتوحة</div>'
-            '<div class="muted">افتح وردية لتُنسب التذاكر والنقد إليك.</div></div>'
-            '<button class="btn" style="width:auto;margin:0;padding:9px 14px">فتح وردية</button>'
+            '<div><div class="h4">No open shift</div>'
+            '<div class="muted">Open a shift so tickets and cash are assigned to you.</div></div>'
+            '<button class="btn" style="width:auto;margin:0;padding:9px 14px">Open Shift</button>'
             '</form>'
         ) % self._csrf()
 
@@ -123,24 +123,24 @@ class ValetPortal(http.Controller):
     def _zones(self, zones):
         if not zones:
             return Markup('')
-        out = Markup('<h3 style="margin:16px 0 9px">المناطق والإشغال</h3>')
+        out = Markup('<h3 style="margin:16px 0 9px">Zones and Occupancy</h3>')
         for z in zones:
             col = '#f2603f' if z.occupancy > 85 else '#37c98a'
             out += Markup(
                 '<div class="card"><div class="row"><div class="h4">🅿️ %s</div>'
-                '<span class="pill" style="background:rgba(55,201,138,.15);color:%s">%s متاح</span></div>'
+                '<span class="pill" style="background:rgba(55,201,138,.15);color:%s">%s available</span></div>'
                 '<div style="background:#f4f6fa;border-radius:6px;height:8px;margin-top:8px;overflow:hidden">'
                 '<div style="height:8px;width:%s%%;background:%s"></div></div>'
-                '<div class="muted" style="margin-top:5px">%s مشغولة من %s · %s%%</div></div>'
+                '<div class="muted" style="margin-top:5px">%s occupied of %s · %s%%</div></div>'
             ) % (esc(z.name), col, z.free, min(100, int(z.occupancy or 0)), col,
                  z.occupied, z.capacity, round(z.occupancy or 0))
         return out
 
     def _filters(self, cur, counts):
-        opts = [('live', 'الكل الجاري', ''), ('requested', 'مطلوبة', counts.get('requested', 0)),
-                ('parked', 'مركونة', counts.get('parked', 0)),
-                ('received', 'بانتظار الصف', counts.get('received', 0)),
-                ('delivered', 'سُلِّمت', ''), ('all', 'الكل', '')]
+        opts = [('live', 'All Active', ''), ('requested', 'Requested', counts.get('requested', 0)),
+                ('parked', 'Parked', counts.get('parked', 0)),
+                ('received', 'Awaiting Parking', counts.get('received', 0)),
+                ('delivered', 'Delivered', ''), ('all', 'All', '')]
         out = Markup('<div style="display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 11px">')
         for key, label, n in opts:
             sel = ('background:%s;color:#ffffff' % ACCENT) if key == cur else 'background:#ffffff;color:#71809a'
@@ -157,24 +157,24 @@ class ValetPortal(http.Controller):
             return Markup('')
         fopts = Markup('').join(
             Markup('<option value="%s">%s</option>') % (f.id, esc(f.name)) for f in facs)
-        zopts = Markup('<option value="">— بدون —</option>') + Markup('').join(
+        zopts = Markup('<option value="">— None —</option>') + Markup('').join(
             Markup('<option value="%s">%s</option>') % (z.id, esc(z.name)) for z in zones)
         return Markup(
-            '<details class="card"><summary style="font-weight:900;cursor:pointer">🚗 استلام مركبة جديدة</summary>'
+            '<details class="card"><summary style="font-weight:900;cursor:pointer">🚗 Check In New Vehicle</summary>'
             '<form method="post" action="/cafm/m/valet/create" style="margin-top:10px">%s'
-            '<label>رقم اللوحة *</label><input name="plate" required placeholder="١٢٣٤٥ / ABC"/>'
+            '<label>Plate Number *</label><input name="plate" required placeholder="12345 / ABC"/>'
             '<div class="grid" style="gap:8px">'
-            '<div><label>الماركة</label><input name="car_make"/></div>'
-            '<div><label>الموديل</label><input name="car_model"/></div>'
-            '<div><label>اللون</label><input name="car_color"/></div>'
-            '<div><label>رقم المفتاح</label><input name="key_tag"/></div>'
-            '<div><label>اسم الضيف</label><input name="guest_name"/></div>'
-            '<div><label>الهاتف</label><input name="guest_phone"/></div></div>'
-            '<label>الرسوم</label><input name="fee" type="number" step="0.001" value="0"/>'
-            '<label>المرفق</label><select name="facility_id">%s</select>'
-            '<label>المنطقة</label><select name="zone_id">%s</select>'
-            '<label>ملاحظات حالة المركبة (خدوش…)</label><textarea name="damage_note" rows="2"></textarea>'
-            '<button class="btn">إصدار التذكرة</button></form></details>'
+            '<div><label>Make</label><input name="car_make"/></div>'
+            '<div><label>Model</label><input name="car_model"/></div>'
+            '<div><label>Color</label><input name="car_color"/></div>'
+            '<div><label>Key Number</label><input name="key_tag"/></div>'
+            '<div><label>Guest Name</label><input name="guest_name"/></div>'
+            '<div><label>Phone</label><input name="guest_phone"/></div></div>'
+            '<label>Fees</label><input name="fee" type="number" step="0.001" value="0"/>'
+            '<label>Facility</label><select name="facility_id">%s</select>'
+            '<label>Zone</label><select name="zone_id">%s</select>'
+            '<label>Vehicle condition notes (scratches…)</label><textarea name="damage_note" rows="2"></textarea>'
+            '<button class="btn">Issue Ticket</button></form></details>'
         ) % (self._csrf(), fopts, zopts)
 
     def _ticket_card(self, t, facs):
@@ -185,13 +185,13 @@ class ValetPortal(http.Controller):
         if t.key_tag:
             tags += Markup('<span class="pill info">🔑 %s</span> ') % esc(t.key_tag)
         if t.has_damage:
-            tags += Markup('<span class="pill crit">⚠ ملاحظات ضرر</span> ')
+            tags += Markup('<span class="pill crit">⚠ Damage Notes</span> ')
         if t.state == 'requested':
             cls = 'crit' if t.is_late else 'warn'
-            tags += Markup('<span class="pill %s">⏱ %s د</span> ') % (cls, round(t.retrieval_minutes, 1))
+            tags += Markup('<span class="pill %s">⏱ %s min</span> ') % (cls, round(t.retrieval_minutes, 1))
         if t.fee:
-            tags += Markup('<span class="pill info">%s د.ك%s</span> ') % (
-                t.fee, ' · مدفوع' if t.paid else '')
+            tags += Markup('<span class="pill info">%s KWD%s</span> ') % (
+                t.fee, ' · Paid' if t.paid else '')
 
         act = Markup('')
         if t.state == 'received':
@@ -203,30 +203,30 @@ class ValetPortal(http.Controller):
                     for s in free)
                 act = Markup(
                     '<form method="post" action="/cafm/m/valet/%s/park">%s'
-                    '<label>اختر الموقف</label><select name="spot_id" required>%s</select>'
-                    '<button class="btn" style="background:#37c98a;color:#04201c">صفّ المركبة</button></form>'
+                    '<label>Select Spot</label><select name="spot_id" required>%s</select>'
+                    '<button class="btn" style="background:#37c98a;color:#04201c">Park Vehicle</button></form>'
                 ) % (t.id, self._csrf(), opts)
             else:
-                act = Markup('<div class="muted" style="margin-top:8px">لا مواقف متاحة في هذا المرفق.</div>')
+                act = Markup('<div class="muted" style="margin-top:8px">No spots available in this facility.</div>')
         elif t.state == 'parked':
             act = Markup(
                 '<form method="post" action="/cafm/m/valet/%s/request">%s'
-                '<button class="btn" style="background:#f59e0b;color:#221503">🔔 طلب الإحضار</button></form>'
+                '<button class="btn" style="background:#f59e0b;color:#221503">🔔 Request Retrieval</button></form>'
             ) % (t.id, self._csrf())
         if t.state in ('parked', 'requested'):
             act += Markup(
-                '<details style="margin-top:8px"><summary class="muted" style="cursor:pointer">تسليم للضيف</summary>'
+                '<details style="margin-top:8px"><summary class="muted" style="cursor:pointer">Hand Over to Guest</summary>'
                 '<form method="post" action="/cafm/m/valet/%s/deliver">%s'
                 '<div class="grid" style="gap:8px">'
-                '<div><label>الرسوم</label><input name="fee" type="number" step="0.001" value="%s"/></div>'
-                '<div><label>الإكرامية</label><input name="tip" type="number" step="0.001" value="0"/></div></div>'
+                '<div><label>Fees</label><input name="fee" type="number" step="0.001" value="%s"/></div>'
+                '<div><label>Tip</label><input name="tip" type="number" step="0.001" value="0"/></div></div>'
                 '<label style="display:flex;gap:7px;align-items:center;margin-top:8px">'
-                '<input type="checkbox" name="paid" value="1" checked style="width:auto;margin:0"/> تم الدفع</label>'
-                '<button class="btn">✔ تسليم</button></form></details>'
+                '<input type="checkbox" name="paid" value="1" checked style="width:auto;margin:0"/> Paid</label>'
+                '<button class="btn">✔ Hand Over</button></form></details>'
             ) % (t.id, self._csrf(), t.fee or 0)
 
         act += Markup(
-            '<a class="btn g" href="/valet/ticket/%s/print" target="_blank">🖨️ طباعة التذكرة</a>'
+            '<a class="btn g" href="/valet/ticket/%s/print" target="_blank">🖨️ Print Ticket</a>'
         ) % t.id
         return Markup(
             '<div class="card stripe" style="border-inline-start-color:%s">'

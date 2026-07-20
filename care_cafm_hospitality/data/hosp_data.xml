@@ -3,14 +3,14 @@
   <data noupdate="1">
 
     <record id="seq_hosp_order" model="ir.sequence">
-      <field name="name">طلب ضيافة</field>
+      <field name="name">Hospitality Order</field>
       <field name="code">care.hosp.order</field>
       <field name="prefix">HSP/%(year)s/</field>
       <field name="padding">5</field>
     </record>
 
     <record id="section_hospitality" model="care.cafm.portal.section">
-      <field name="name">الضيافة</field>
+      <field name="name">Hospitality</field>
       <field name="code">hospitality</field>
       <field name="icon">☕</field>
       <field name="always_on" eval="True"/>

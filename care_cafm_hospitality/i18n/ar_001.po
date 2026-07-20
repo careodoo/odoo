@@ -1,0 +1,2173 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* care_cafm_hospitality
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0+e-20241205\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-20 14:19+0000\n"
+"PO-Revision-Date: 2026-07-20 14:19+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__accepted_at
+msgid "Acceptance Time"
+msgstr "وقت القبول"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_order__state__accepted
+msgid "Accepted"
+msgstr "مقبول"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__message_needaction
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__message_needaction
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__message_needaction
+msgid "Action Needed"
+msgstr "إجراء مطلوب"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_category__active
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__active
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_limit__active
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option__active
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option_group__active
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_standing__active
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_station__active
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__active
+msgid "Active"
+msgstr "نشط"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__activity_ids
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__activity_ids
+msgid "Activities"
+msgstr "الأنشطة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__activity_exception_decoration
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr "تنسيق استثناء النشاط"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__activity_state
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__activity_state
+msgid "Activity State"
+msgstr "حالة النشاط"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__activity_type_icon
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__activity_type_icon
+msgid "Activity Type Icon"
+msgstr "أيقونة نوع النشاط"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__prep_minutes
+msgid "Actual Preparation Time"
+msgstr "زمن التحضير الفعلي"
+
+#. module: care_cafm_hospitality
+#. odoo-python
+#: code:addons/care_cafm_hospitality/models/hospitality.py:0
+#, python-format
+msgid "Add at least one item."
+msgstr "أضف صنفًا واحدًا على الأقل."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_purchase__state__approved
+msgid "Approved"
+msgstr "معتمد"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__approver_id
+msgid "Approver"
+msgstr "المعتمِد"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_limit__approver_ids
+msgid "Approvers"
+msgstr "المعتمِدون"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.item,name:care_cafm_hospitality.item_arabic_coffee
+msgid "Arabic coffee"
+msgstr "قهوة عربية"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.category,name:care_cafm_hospitality.cat_arabic
+msgid "Arabic hospitality"
+msgstr "ضيافة عربية"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_supply__pack_name
+msgid "As purchased: bag, box, carton…"
+msgstr "كما تُشترى: كيس، علبة، كرتون…"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__message_attachment_count
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__message_attachment_count
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__message_attachment_count
+msgid "Attachment Count"
+msgstr "عدد المرفقات"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__guest_count
+msgid "Attendee Count"
+msgstr "عدد الحضور"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__available
+msgid "Available"
+msgstr "متاح"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__facility_ids
+msgid "Available in Facilities"
+msgstr "متاح في المرافق"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__daily_use
+msgid "Average Daily Consumption"
+msgstr "متوسط الاستهلاك اليومي"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_order__state__await_approval
+msgid "Awaiting Approval"
+msgstr "بانتظار الموافقة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__on_hand
+msgid "Balance"
+msgstr "الرصيد"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__stock_value
+msgid "Balance Value"
+msgstr "قيمة الرصيد"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__packs_on_hand
+msgid "Balance in Packages"
+msgstr "الرصيد بالعبوات"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.item,name:care_cafm_hospitality.item_cookies
+msgid "Biscuits"
+msgstr "بسكويت"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_limit__on_exceed__block
+msgid "Block Order"
+msgstr "منع الطلب"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_stock_move__user_id
+msgid "By"
+msgstr "بواسطة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase_line__by_pack
+msgid "By Package"
+msgstr "بالعبوة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_order__state__cancelled
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_purchase__state__cancelled
+msgid "Cancelled"
+msgstr "ملغى"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.item,name:care_cafm_hospitality.item_cappuccino
+msgid "Cappuccino"
+msgstr "كابتشينو"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option,name:care_cafm_hospitality.op_ex_cardamom
+msgid "Cardamom"
+msgstr "هيل"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_category__name
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__category_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order_line__category_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__category
+msgid "Category"
+msgstr "القسم"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_category__color
+msgid "Category color in the portal and on the kitchen display."
+msgstr "لون القسم في البورتال وشاشة المطبخ."
+
+#. module: care_cafm_hospitality
+#. odoo-python
+#: code:addons/care_cafm_hospitality/models/hospitality.py:0
+#, python-format
+msgid "Choose \"%s\" for the item \"%s\"."
+msgstr "اختر \"%s\" للصنف \"%s\"."
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option,name:care_cafm_hospitality.op_ex_cinnamon
+msgid "Cinnamon"
+msgstr "قرفة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_category__code
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__code
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__code
+msgid "Code"
+msgstr "الرمز"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_supply__category__coffee
+msgid "Coffee and Beans"
+msgstr "بنّ وقهوة"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.category,name:care_cafm_hospitality.cat_cold
+msgid "Cold drinks"
+msgstr "مشروبات باردة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_category__color
+msgid "Color"
+msgstr "اللون"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__company_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_limit__company_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__company_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__company_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_station__company_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_stock_move__company_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__company_id
+msgid "Company"
+msgstr "الشركة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_recipe__option_id
+msgid "Conditional on Option"
+msgstr "مشروط بالخيار"
+
+#. module: care_cafm_hospitality
+#. odoo-python
+#: code:addons/care_cafm_hospitality/models/hospitality.py:0
+#, python-format
+msgid "Consumption %s × %s"
+msgstr "استهلاك %s × %s"
+
+#. module: care_cafm_hospitality
+#: model:ir.actions.act_window,name:care_cafm_hospitality.action_hosp_limit
+msgid "Consumption Limits"
+msgstr "حدود الاستهلاك"
+
+#. module: care_cafm_hospitality
+#: model:ir.model,name:care_cafm_hospitality.model_care_hosp_recipe
+msgid "Consumption Recipe"
+msgstr "معادلة استهلاك"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__total_cost
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order_line__line_cost
+msgid "Cost"
+msgstr "التكلفة"
+
+#. module: care_cafm_hospitality
+#. odoo-python
+#: code:addons/care_cafm_hospitality/models/hospitality.py:0
+#, python-format
+msgid "Cost limit exceeded (%(m)s)."
+msgstr "تجاوز حد التكلفة (%(m)s)."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_supply__unit_cost
+msgid "Cost of a single unit (not the package)."
+msgstr "تكلفة الوحدة الواحدة (لا العبوة)."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__days_cover
+msgid "Coverage (Days)"
+msgstr "تغطية (يوم)"
+
+#. module: care_cafm_hospitality
+#. odoo-python
+#: code:addons/care_cafm_hospitality/models/hosp_stock.py:0
+#, python-format
+msgid ""
+"Created automatically: supplies below the threshold or with less than a week"
+" of coverage."
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_category__create_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_favorite__create_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__create_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_limit__create_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option__create_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option_group__create_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__create_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order_line__create_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__create_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase_line__create_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_recipe__create_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_standing__create_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_station__create_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_stock_move__create_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__create_uid
+msgid "Created by"
+msgstr "أنشأه"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_category__create_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_favorite__create_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__create_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_limit__create_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option__create_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option_group__create_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__create_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order_line__create_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__create_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase_line__create_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_recipe__create_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_standing__create_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_station__create_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_stock_move__create_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__create_date
+msgid "Created on"
+msgstr "تاريخ الإنشاء"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.item,name:care_cafm_hospitality.item_croissant
+msgid "Croissant"
+msgstr "كرواسون"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_limit__period__day
+msgid "Daily"
+msgstr "يومي"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_supply__category__dairy
+msgid "Dairy"
+msgstr "ألبان"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_stock_move__date
+msgid "Date"
+msgstr "التاريخ"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.item,name:care_cafm_hospitality.item_dates
+msgid "Dates"
+msgstr "تمر"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__supplies_consumed
+msgid "Deducted from Stock"
+msgstr "خُصم من المخزون"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option__is_default
+msgid "Default"
+msgstr "الافتراضي"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__department_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order_line__department_id
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_limit__scope__department
+msgid "Department"
+msgstr "إدارة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_limit__department_ids
+msgid "Departments"
+msgstr "الإدارات"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_category__description
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__description
+msgid "Description"
+msgstr "الوصف"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_category__display_name
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_favorite__display_name
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__display_name
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_limit__display_name
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option__display_name
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option_group__display_name
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__display_name
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order_line__display_name
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__display_name
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase_line__display_name
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_recipe__display_name
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_standing__display_name
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_station__display_name
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_stock_move__display_name
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__display_name
+msgid "Display Name"
+msgstr "الاسم المعروض"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_order__state__draft
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_purchase__state__draft
+msgid "Draft"
+msgstr "مسودة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__servings_left
+msgid "Enough For (Servings)"
+msgstr "يكفي (حصص)"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__partner_id
+msgid "Entity"
+msgstr "الجهة"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.item,name:care_cafm_hospitality.item_espresso
+msgid "Espresso"
+msgstr "إسبريسو"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_limit__scope__all
+msgid "Everyone"
+msgstr "الجميع"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_order_line__note
+msgid "Example: no foam, paper cup."
+msgstr "مثال: بدون رغوة، كوب ورقي."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_limit__exempt_vip
+msgid "Exempt VIP Hospitality and Meetings"
+msgstr "استثناء ضيافة VIP والاجتماعات"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__partner_id
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_purchase__source__external
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_supply__supplier_type__external
+msgid "External Supplier"
+msgstr "المورّد الخارجي"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option__extra_cost
+msgid "Extra Cost"
+msgstr "تكلفة إضافية"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option,name:care_cafm_hospitality.op_ex_ice
+msgid "Extra ice"
+msgstr "ثلج إضافي"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option,name:care_cafm_hospitality.op_sugar_extra
+msgid "Extra sugar"
+msgstr "سكر زيادة"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option.group,name:care_cafm_hospitality.og_extras
+msgid "Extras"
+msgstr "إضافات"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_limit__facility_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__facility_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order_line__facility_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__facility_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_standing__facility_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_station__facility_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__facility_id
+msgid "Facility"
+msgstr "المرفق"
+
+#. module: care_cafm_hospitality
+#: model:ir.model,name:care_cafm_hospitality.model_care_hosp_favorite
+msgid "Favorites"
+msgstr "المفضّلة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_res_users__hosp_location_id
+msgid ""
+"Filled in automatically on every hospitality order, and can be changed when "
+"ordering."
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__message_follower_ids
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__message_follower_ids
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__message_follower_ids
+msgid "Followers"
+msgstr "المتابعون"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__message_partner_ids
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__message_partner_ids
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "المتابعون (جهات)"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_order__activity_type_icon
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_purchase__activity_type_icon
+msgid "Font awesome icon e.g. fa-tasks"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_supply__category__food
+msgid "Food"
+msgstr "مأكولات"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_item__unit_cost
+msgid ""
+"For internal costing and consumption reports — it is not charged to the "
+"employee."
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_order__room_label
+msgid ""
+"Free text for when the location is not registered as a place in the system."
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.item,name:care_cafm_hospitality.item_juice
+msgid "Fresh juice"
+msgstr "عصير طازج"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_purchase__source__care
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_supply__supplier_type__care
+msgid "From CARE"
+msgstr "من شركة CARE"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option,name:care_cafm_hospitality.op_milk_normal
+msgid "Full-fat milk"
+msgstr "حليب كامل الدسم"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_supply__uom_name__g
+msgid "Gram"
+msgstr "جرام"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.item,name:care_cafm_hospitality.item_green_tea
+msgid "Green tea"
+msgstr "شاي أخضر"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option__group_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option_group__name
+msgid "Group"
+msgstr "المجموعة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__guest_name
+msgid "Guest/Entity Name"
+msgstr "اسم الضيف/الجهة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__has_message
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__has_message
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__has_message
+msgid "Has Message"
+msgstr "به رسائل"
+
+#. module: care_cafm_hospitality
+#: model:care.cafm.portal.section,name:care_cafm_hospitality.section_hospitality
+msgid "Hospitality"
+msgstr "الضيافة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model,name:care_cafm_hospitality.model_care_hosp_category
+msgid "Hospitality Category"
+msgstr "قسم الضيافة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model,name:care_cafm_hospitality.model_care_hosp_limit
+msgid "Hospitality Consumption Limit"
+msgstr "حد استهلاك الضيافة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model,name:care_cafm_hospitality.model_care_hosp_item
+msgid "Hospitality Item"
+msgstr "صنف ضيافة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model,name:care_cafm_hospitality.model_care_hosp_order
+msgid "Hospitality Order"
+msgstr "طلب ضيافة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model,name:care_cafm_hospitality.model_care_hosp_order_line
+msgid "Hospitality Order Line"
+msgstr "سطر طلب ضيافة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model,name:care_cafm_hospitality.model_care_hosp_purchase_line
+msgid "Hospitality Purchase Line"
+msgstr "بند شراء ضيافة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model,name:care_cafm_hospitality.model_care_hosp_purchase
+msgid "Hospitality Purchase Request"
+msgstr "طلب شراء ضيافة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model,name:care_cafm_hospitality.model_care_hosp_stock_move
+msgid "Hospitality Stock Move"
+msgstr "حركة مخزون ضيافة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model,name:care_cafm_hospitality.model_care_hosp_supply
+msgid "Hospitality Supply"
+msgstr "مستهلك ضيافة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__is_hot
+msgid "Hot Drink"
+msgstr "مشروب ساخن"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.category,name:care_cafm_hospitality.cat_hot
+msgid "Hot drinks"
+msgstr "مشروبات ساخنة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_standing__time_of_day
+msgid "Hour"
+msgstr "الساعة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_recipe__servings_per_pack
+msgid "How many cups one bag or box yields."
+msgstr "كم كوبًا يعطيه الكيس/العلبة الواحدة."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_category__id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_favorite__id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_limit__id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option__id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option_group__id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order_line__id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase_line__id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_recipe__id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_standing__id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_station__id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_stock_move__id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__id
+msgid "ID"
+msgstr "المعرّف"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.item,name:care_cafm_hospitality.item_iced_latte
+msgid "Iced latte"
+msgstr "آيس لاتيه"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_category__icon
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__icon
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__activity_exception_icon
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__activity_exception_icon
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_station__icon
+msgid "Icon"
+msgstr "الأيقونة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_order__activity_exception_icon
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_purchase__activity_exception_icon
+msgid "Icon to indicate an exception activity."
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_order__message_needaction
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_purchase__message_needaction
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_supply__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "عند التفعيل، الرسائل الجديدة تتطلّب انتباهك."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_order__message_has_error
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_order__message_has_sms_error
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_purchase__message_has_error
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_purchase__message_has_sms_error
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_supply__message_has_error
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_supply__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr "عند التفعيل، بعض الرسائل بها خطأ في التسليم."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__image
+msgid "Image"
+msgstr "الصورة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_order__state__preparing
+msgid "In Preparation"
+msgstr "قيد التحضير"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_order_line__state__queued
+msgid "In Queue"
+msgstr "في الطابور"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_supply__on_hand
+msgid "In the base unit of measure."
+msgstr "بوحدة القياس الأساسية."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_recipe__qty_per_serving
+msgid ""
+"In the supply unit of measure. Example: 18 grams of coffee for an espresso."
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_supply__min_qty
+msgid "In the unit of measure."
+msgstr "بوحدة القياس."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_supply__pack_size
+msgid "In the unit of measure. Example: a 1000 gram bag of coffee."
+msgstr "بوحدة القياس. مثال: كيس بنّ 1000 جرام."
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.item,name:care_cafm_hospitality.item_nescafe
+msgid "Instant coffee"
+msgstr "نسكافيه"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_stock_move__move_type__adjust
+msgid "Inventory Adjustment"
+msgstr "تسوية جرد"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__reference
+msgid "Invoice/Order Number"
+msgstr "رقم الفاتورة/الأمر"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__message_is_follower
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__message_is_follower
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__message_is_follower
+msgid "Is Follower"
+msgstr "متابِع"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_favorite__item_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__name
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order_line__item_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_recipe__item_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_standing__item_id
+msgid "Item"
+msgstr "الصنف"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_category__item_count
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__item_count
+msgid "Item Count"
+msgstr "عدد الأصناف"
+
+#. module: care_cafm_hospitality
+#. odoo-python
+#: code:addons/care_cafm_hospitality/models/hospitality.py:0
+#, python-format
+msgid "Item limit exceeded (%(m)s %(per)s) — consumed %(u)s."
+msgstr "تجاوز حد الأصناف (%(m)s %(per)s) — المستهلك %(u)s."
+
+#. module: care_cafm_hospitality
+#: model:ir.actions.act_window,name:care_cafm_hospitality.action_hosp_item
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_category__item_ids
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__line_ids
+msgid "Items"
+msgstr "الأصناف"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.item,name:care_cafm_hospitality.item_karak
+msgid "Karak tea"
+msgstr "شاي كرك"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_supply__uom_name__kg
+msgid "Kilogram"
+msgstr "كيلوجرام"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option,name:care_cafm_hospitality.op_size_l
+msgid "Large"
+msgstr "كبير"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_standing__last_run
+msgid "Last Run"
+msgstr "آخر تنفيذ"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_category__write_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_favorite__write_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__write_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_limit__write_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option__write_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option_group__write_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__write_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order_line__write_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__write_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase_line__write_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_recipe__write_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_standing__write_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_station__write_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_stock_move__write_uid
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_category__write_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_favorite__write_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__write_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_limit__write_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option__write_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option_group__write_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__write_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order_line__write_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__write_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase_line__write_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_recipe__write_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_standing__write_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_station__write_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_stock_move__write_date
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__is_late
+msgid "Late"
+msgstr "متأخر"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.item,name:care_cafm_hospitality.item_latte
+msgid "Latte"
+msgstr "لاتيه"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_recipe__option_id
+msgid ""
+"Leave it empty to always count it. Set it to count only when this option is "
+"chosen — such as extra sugar."
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_limit__facility_id
+msgid "Leave it empty to apply it to all facilities."
+msgstr "اتركه فارغًا لتطبيقها على كل المرافق."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_limit__category_id
+msgid "Leave it empty to include all categories."
+msgstr "اتركه فارغًا ليشمل كل الأقسام."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_item__facility_ids
+msgid "Leave it empty to make it available in all facilities."
+msgstr "اتركه فارغًا ليكون متاحًا في كل المرافق."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_order__scheduled_at
+msgid "Leave it empty to prepare immediately."
+msgstr "اتركه فارغًا للتحضير فورًا."
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option,name:care_cafm_hospitality.op_str_light
+msgid "Light"
+msgstr "خفيفة"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option,name:care_cafm_hospitality.op_sugar_light
+msgid "Light sugar"
+msgstr "سكر خفيف"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_option_group__multi
+msgid "Like add-ons: more than one option can be chosen."
+msgstr "مثل الإضافات: يمكن اختيار أكثر من خيار."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__limit_note
+msgid "Limit Note"
+msgstr "ملاحظة الحد"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order_line__state
+msgid "Line Status"
+msgstr "حالة السطر"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__line_ids
+msgid "Lines"
+msgstr "البنود"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_supply__uom_name__l
+msgid "Liter"
+msgstr "لتر"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_standing__location_id
+msgid "Location"
+msgstr "الموقع"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__location_id
+msgid "Location/Office"
+msgstr "الموقع/المكتب"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_res_users__hosp_location_locked
+msgid "Lock Place"
+msgstr "تثبيت المكان"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__low_stock
+msgid "Low"
+msgstr "منخفض"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option_group__max_select
+msgid "Max Choices"
+msgstr "أقصى عدد اختيارات"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_limit__max_cost
+msgid "Max Cost"
+msgstr "أقصى تكلفة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_limit__max_items
+msgid "Max Number of Items"
+msgstr "أقصى عدد أصناف"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_limit__max_orders
+msgid "Max Number of Orders"
+msgstr "أقصى عدد طلبات"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option,name:care_cafm_hospitality.op_size_m
+#: model:care.hosp.option,name:care_cafm_hospitality.op_str_mid
+msgid "Medium"
+msgstr "وسط"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option,name:care_cafm_hospitality.op_sugar_mid
+msgid "Medium sugar"
+msgstr "سكر وسط"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_order__order_type__meeting
+msgid "Meeting"
+msgstr "اجتماع"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_limit__exempt_vip
+msgid "Meeting and visitor orders are not counted against the employee limit."
+msgstr "طلبات الاجتماعات والزوّار لا تُحتسب على حد الموظف."
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.category,name:care_cafm_hospitality.cat_meeting
+msgid "Meeting catering"
+msgstr "ضيافة الاجتماعات"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.item,name:care_cafm_hospitality.item_meeting_vip
+msgid "Meeting catering — VIP"
+msgstr "ضيافة اجتماع — VIP"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.item,name:care_cafm_hospitality.item_meeting_basic
+msgid "Meeting catering — standard"
+msgstr "ضيافة اجتماع — أساسية"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__message_has_error
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__message_has_error
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__message_has_error
+msgid "Message Delivery error"
+msgstr "خطأ تسليم الرسالة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__message_ids
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__message_ids
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__message_ids
+msgid "Messages"
+msgstr "الرسائل"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option.group,name:care_cafm_hospitality.og_milk
+msgid "Milk"
+msgstr "الحليب"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_supply__uom_name__ml
+msgid "Milliliter"
+msgstr "مليلتر"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.item,name:care_cafm_hospitality.item_water
+msgid "Mineral water"
+msgstr "مياه معدنية"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_limit__period__month
+msgid "Monthly"
+msgstr "شهري"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_stock_move__move_type
+msgid "Move Type"
+msgstr "نوع الحركة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__move_ids
+msgid "Moves"
+msgstr "الحركات"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option_group__multi
+msgid "Multiple Choice"
+msgstr "اختيار متعدد"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__my_activity_date_deadline
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__my_activity_date_deadline
+msgid "My Activity Deadline"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_favorite__name
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__name
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_standing__name
+msgid "Name"
+msgstr "الاسم"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_limit__on_exceed__approve
+msgid "Needs Approval"
+msgstr "يحتاج موافقة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__activity_calendar_event_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__activity_calendar_event_id
+msgid "Next Activity Calendar Event"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__activity_date_deadline
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr "موعد النشاط التالي"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__activity_summary
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__activity_summary
+msgid "Next Activity Summary"
+msgstr "ملخّص النشاط التالي"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__activity_type_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__activity_type_id
+msgid "Next Activity Type"
+msgstr "نوع النشاط التالي"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option,name:care_cafm_hospitality.op_milk_none
+msgid "No milk"
+msgstr "بدون حليب"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option,name:care_cafm_hospitality.op_sugar_none
+msgid "No sugar"
+msgstr "بدون سكر"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_favorite__note
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order_line__note
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_stock_move__note
+msgid "Note"
+msgstr "ملاحظة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__note
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__note
+msgid "Notes"
+msgstr "ملاحظات"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__message_needaction_counter
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__message_needaction_counter
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__message_needaction_counter
+msgid "Number of Actions"
+msgstr "عدد الإجراءات"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__message_has_error_counter
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__message_has_error_counter
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__message_has_error_counter
+msgid "Number of errors"
+msgstr "عدد الأخطاء"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_order__message_needaction_counter
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_purchase__message_needaction_counter
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_supply__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "عدد الرسائل التي تتطلّب إجراءً"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_order__message_has_error_counter
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_purchase__message_has_error_counter
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_supply__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "عدد الرسائل التي بها خطأ تسليم"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_standing__room_label
+msgid "Office"
+msgstr "المكتب"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__room_label
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_res_users__hosp_room_label
+msgid "Office/Hall"
+msgstr "المكتب/القاعة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_limit__on_exceed
+msgid "On Exceed"
+msgstr "عند التجاوز"
+
+#. module: care_cafm_hospitality
+#: model:ir.model,name:care_cafm_hospitality.model_care_hosp_option
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option__name
+msgid "Option"
+msgstr "الخيار"
+
+#. module: care_cafm_hospitality
+#: model:ir.model,name:care_cafm_hospitality.model_care_hosp_option_group
+msgid "Option Group"
+msgstr "مجموعة خيارات"
+
+#. module: care_cafm_hospitality
+#: model:ir.actions.act_window,name:care_cafm_hospitality.action_hosp_optgroup
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__option_group_ids
+msgid "Option Groups"
+msgstr "مجموعات الخيارات"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_favorite__option_ids
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option_group__option_ids
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order_line__option_ids
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_standing__option_ids
+msgid "Options"
+msgstr "الخيارات"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order_line__order_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_stock_move__order_id
+msgid "Order"
+msgstr "الطلب"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_stock_move__move_type__consume
+msgid "Order Consumption"
+msgstr "استهلاك بطلب"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__name
+msgid "Order Number"
+msgstr "رقم الطلب"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__order_type
+msgid "Order Type"
+msgstr "نوع الطلب"
+
+#. module: care_cafm_hospitality
+#. odoo-python
+#: code:addons/care_cafm_hospitality/models/hospitality.py:0
+#, python-format
+msgid "Order limit exceeded (%(m)s %(per)s)."
+msgstr "تجاوز حد الطلبات (%(m)s %(per)s)."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_supply__category__other
+msgid "Other"
+msgstr "أخرى"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__pack_size
+msgid "Package Content"
+msgstr "محتوى العبوة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__pack_cost
+msgid "Package Cost"
+msgstr "تكلفة العبوة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__pack_name
+msgid "Package Name"
+msgstr "اسم العبوة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_order__partner_id
+msgid "Partner-related data of the user"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_limit__period
+msgid "Period"
+msgstr "الفترة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_order__order_type__self
+msgid "Personal Order"
+msgstr "طلب شخصي"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_supply__uom_name__pcs
+msgid "Piece"
+msgstr "قطعة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_limit__name
+msgid "Policy"
+msgstr "السياسة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_stock_move__quantity
+msgid "Positive to add, negative to deduct."
+msgstr "موجبة للإضافة، سالبة للخصم."
+
+#. module: care_cafm_hospitality
+#: model:ir.model,name:care_cafm_hospitality.model_care_hosp_station
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__station_id
+msgid "Preparation Station"
+msgstr "محطة التحضير"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__prep_minutes
+msgid "Preparation Time (Minutes)"
+msgstr "زمن التحضير (دقيقة)"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__prepared_by
+msgid "Prepared By"
+msgstr "حضّرها"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_order__supplies_consumed
+msgid "Prevents deducting the same order twice when it is delivered again."
+msgstr "يمنع خصم نفس الطلب مرتين عند إعادة التسليم."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase_line__purchase_id
+msgid "Purchase"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_stock_move__purchase_id
+msgid "Purchase Request"
+msgstr "طلب الشراء"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__source
+msgid "Purchase Source"
+msgstr "مصدر الشراء"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_purchase_line__by_pack
+msgid ""
+"Purchasing is usually done in packages, while the balance is calculated in "
+"units."
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_favorite__quantity
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order_line__quantity
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase_line__quantity
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_standing__quantity
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_stock_move__quantity
+msgid "Quantity"
+msgstr "الكمية"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase_line__base_qty
+msgid "Quantity in Base Unit"
+msgstr "الكمية بالوحدة الأساسية"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_recipe__qty_per_serving
+msgid "Quantity per Serving"
+msgstr "الكمية لكل حصة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__per_serving_hint
+msgid "Rate"
+msgstr "المعدّل"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__rating
+msgid "Rating"
+msgstr "التقييم"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__rating_note
+msgid "Rating Note"
+msgstr "ملاحظة التقييم"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__rating_ids
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__rating_ids
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__rating_ids
+msgid "Ratings"
+msgstr "التقييمات"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_order__state__ready
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_order_line__state__ready
+msgid "Ready"
+msgstr "جاهز"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__ready_at
+msgid "Ready Time"
+msgstr "وقت الجهوزية"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_stock_move__move_type__receipt
+msgid "Receipt"
+msgstr "توريد"
+
+#. module: care_cafm_hospitality
+#. odoo-python
+#: code:addons/care_cafm_hospitality/models/hosp_stock.py:0
+#, python-format
+msgid "Receipt under %s (%s)"
+msgstr "توريد بموجب %s (%s)"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_purchase__state__received
+msgid "Received"
+msgstr "تم الاستلام"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_order__state__rejected
+msgid "Rejected"
+msgstr "مرفوض"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__reject_reason
+msgid "Rejection Reason"
+msgstr "سبب الرفض"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__min_qty
+msgid "Reorder Threshold"
+msgstr "حد إعادة الطلب"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__requester_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order_line__requester_id
+msgid "Requester"
+msgstr "الطالب"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option_group__required
+msgid "Required"
+msgstr "إلزامي"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_purchase__partner_id
+msgid "Required when purchasing from an external supplier."
+msgstr "مطلوب عند الشراء من مورّد خارجي."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__activity_user_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__activity_user_id
+msgid "Responsible User"
+msgstr "المستخدم المسؤول"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_limit__category_id
+msgid "Restricted to Category"
+msgstr "مقصور على قسم"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_stock_move__move_type__return
+msgid "Return to Supplier"
+msgstr "إرجاع للمورّد"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option.group,name:care_cafm_hospitality.og_strength
+msgid "Roast / strength"
+msgstr "درجة التحميص/القوة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__message_has_sms_error
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__message_has_sms_error
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option,name:care_cafm_hospitality.op_ex_saffron
+msgid "Saffron"
+msgstr "زعفران"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.item,name:care_cafm_hospitality.item_sandwich
+msgid "Sandwich"
+msgstr "ساندويتش"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__scheduled_at
+msgid "Scheduled Serving Time"
+msgstr "موعد التقديم"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_limit__scope
+msgid "Scope"
+msgstr "النطاق"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option,name:care_cafm_hospitality.op_milk_light
+msgid "Semi-skimmed milk"
+msgstr "حليب قليل الدسم"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_order__state__placed
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_purchase__state__submitted
+msgid "Sent"
+msgstr "مُرسَل"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_category__sequence
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_favorite__sequence
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__sequence
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_limit__sequence
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option__sequence
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_option_group__sequence
+msgid "Sequence"
+msgstr "التسلسل"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_order__state__delivered
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_order_line__state__served
+msgid "Served"
+msgstr "قُدِّم"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__delivered_by
+msgid "Served By"
+msgstr "قدّمها"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__serve_from
+msgid "Served From"
+msgstr "يُقدَّم من الساعة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_recipe__cost_per_serving
+msgid "Serving Cost"
+msgstr "تكلفة الحصة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_supply__category__disposable
+msgid "Serving Supplies"
+msgstr "مستلزمات تقديم"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__delivered_at
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order_line__delivered_at
+msgid "Serving Time"
+msgstr "وقت التقديم"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_recipe__servings_per_pack
+msgid "Servings per Package"
+msgstr "الحصص لكل عبوة"
+
+#. module: care_cafm_hospitality
+#. odoo-python
+#: code:addons/care_cafm_hospitality/models/hosp_stock.py:0
+#, python-format
+msgid "Set the external supplier."
+msgstr "حدّد المورّد الخارجي."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_supply__supplier_type
+msgid "Sets the default when creating a purchase request for this supply."
+msgstr "يحدّد الافتراضي عند إنشاء طلب شراء لهذا الصنف."
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option.group,name:care_cafm_hospitality.og_size
+msgid "Size"
+msgstr "الحجم"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option,name:care_cafm_hospitality.op_size_s
+msgid "Small"
+msgstr "صغير"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.category,name:care_cafm_hospitality.cat_snack
+msgid "Snacks"
+msgstr "مأكولات خفيفة"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.item,name:care_cafm_hospitality.item_softdrink
+msgid "Soft drink"
+msgstr "مشروب غازي"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option,name:care_cafm_hospitality.op_milk_soy
+msgid "Soy milk"
+msgstr "حليب صويا"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_limit__scope__user
+msgid "Specific User"
+msgstr "مستخدم محدّد"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order_line__option_label
+msgid "Specifications"
+msgstr "المواصفات"
+
+#. module: care_cafm_hospitality
+#: model:ir.model,name:care_cafm_hospitality.model_care_hosp_standing
+msgid "Standing Order"
+msgstr "طلب دائم"
+
+#. module: care_cafm_hospitality
+#. odoo-python
+#: code:addons/care_cafm_hospitality/models/hospitality.py:0
+#, python-format
+msgid "Standing order: %s"
+msgstr "طلب دائم: %s"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order_line__station_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_station__name
+msgid "Station"
+msgstr "المحطة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_station__member_ids
+msgid "Station Staff"
+msgstr "طاقم المحطة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__state
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order_line__order_state
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__state
+msgid "Status"
+msgstr "الحالة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_order__activity_state
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_purchase__activity_state
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option,name:care_cafm_hospitality.op_str_strong
+msgid "Strong"
+msgstr "ثقيلة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__placed_at
+msgid "Submission Time"
+msgstr "وقت الإرسال"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option.group,name:care_cafm_hospitality.og_sugar
+msgid "Sugar"
+msgstr "السكر"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_supply__category__sugar
+msgid "Sugar and Sweeteners"
+msgstr "سكر ومحليات"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__partner_id
+msgid "Supplier"
+msgstr "المورّد"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase_line__supply_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_recipe__supply_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_stock_move__supply_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__name
+msgid "Supply"
+msgstr "المستهلك"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__supplier_type
+msgid "Supply Source"
+msgstr "مصدر التوريد"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__prep_target
+msgid "Target (Minutes)"
+msgstr "المستهدف (دقيقة)"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.item,name:care_cafm_hospitality.item_tea
+msgid "Tea"
+msgstr "شاي"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_supply__category__tea
+msgid "Tea and Herbs"
+msgstr "شاي وأعشاب"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_recipe__uom_name
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_supply__uom_name
+msgid "The base unit used to calculate balance and consumption."
+msgstr "الوحدة الأساسية التي يُحسب بها الرصيد والاستهلاك."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_supply__servings_left
+msgid ""
+"The lowest number of servings that can be made from the current balance."
+msgstr ""
+
+#. module: care_cafm_hospitality
+#. odoo-python
+#: code:addons/care_cafm_hospitality/models/hospitality.py:0
+#, python-format
+msgid "The quantity must be greater than zero."
+msgstr "الكمية يجب أن تكون أكبر من صفر."
+
+#. module: care_cafm_hospitality
+#. odoo-python
+#: code:addons/care_cafm_hospitality/models/hosp_stock.py:0
+#, python-format
+msgid "The quantity per serving must be greater than zero."
+msgstr "الكمية لكل حصة يجب أن تكون أكبر من صفر."
+
+#. module: care_cafm_hospitality
+#. odoo-python
+#: code:addons/care_cafm_hospitality/models/hosp_stock.py:0
+#, python-format
+msgid "The request is received after it is approved."
+msgstr "يُستلم الطلب بعد اعتماده."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_option_group__required
+msgid "The requester must choose before completing the order."
+msgstr "يجب على الطالب الاختيار قبل إتمام الطلب."
+
+#. module: care_cafm_hospitality
+#. odoo-python
+#: code:addons/care_cafm_hospitality/models/hospitality.py:0
+#, python-format
+msgid ""
+"The serving place is locked — contact the account administrator to change "
+"it."
+msgstr ""
+
+#. module: care_cafm_hospitality
+#. odoo-python
+#: code:addons/care_cafm_hospitality/models/hosp_stock.py:0
+#, python-format
+msgid "There are no lines in the request."
+msgstr "لا توجد بنود في الطلب."
+
+#. module: care_cafm_hospitality
+#. odoo-python
+#: code:addons/care_cafm_hospitality/models/hospitality.py:0
+#, python-format
+msgid "There is no location with this code: %s"
+msgstr "لا يوجد موقع بهذا الرمز: %s"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.constraint,message:care_cafm_hospitality.constraint_care_hosp_supply_code_uniq
+msgid "This supply code is already used in this facility."
+msgstr "رمز المستهلك مستخدم في هذا المرفق."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__order_count
+msgid "Times Ordered"
+msgstr "مرات الطلب"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_favorite__times_used
+msgid "Times Used"
+msgstr "مرات الاستخدام"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_order__department_id
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_order_line__department_id
+msgid "To charge the consumption to the cost center."
+msgstr "لتحميل الاستهلاك على مركز التكلفة."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__total_cost
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase_line__subtotal
+msgid "Total"
+msgstr "الإجمالي"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__wait_minutes
+msgid "Total Waiting Time"
+msgstr "زمن الانتظار الكلي"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_order__activity_exception_decoration
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_purchase__activity_exception_decoration
+msgid "Type of the exception activity on record."
+msgstr "نوع نشاط الاستثناء على السجل."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__unavailable_note
+msgid "Unavailability Reason"
+msgstr "سبب عدم التوفر"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase_line__uom_label
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_recipe__uom_name
+msgid "Unit"
+msgstr "الوحدة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__unit_cost
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase_line__unit_cost
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__unit_cost
+msgid "Unit Cost"
+msgstr "تكلفة الوحدة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__uom_name
+msgid "Unit of Measure"
+msgstr "وحدة القياس"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_item__serve_to
+msgid "Until"
+msgstr "حتى الساعة"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__recipe_ids
+msgid "Used In"
+msgstr "يدخل في"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_item__prep_minutes
+msgid "Used as the target on the kitchen display."
+msgstr "يُستخدم كمستهدف على شاشة المطبخ."
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_res_users__hosp_room_label
+msgid "Used when the place is not registered as a location in the system."
+msgstr "يُستخدم عندما لا يكون المكان مسجّلاً كموقع في النظام."
+
+#. module: care_cafm_hospitality
+#: model:ir.model,name:care_cafm_hospitality.model_res_users
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_favorite__user_id
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_standing__user_id
+msgid "User"
+msgstr "المستخدم"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_limit__user_ids
+msgid "Users"
+msgstr "المستخدمون"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_res_users__hosp_location_id
+msgid "Usual Serving Place"
+msgstr "مكان التقديم المعتاد"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__is_vip
+msgid "VIP Hospitality"
+msgstr "ضيافة VIP"
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.option,name:care_cafm_hospitality.op_ex_vanilla
+msgid "Vanilla"
+msgstr "فانيليا"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_order__order_type__guest
+msgid "Visitor Hospitality"
+msgstr "ضيافة زوّار"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_limit__on_exceed__warn
+msgid "Warn Only"
+msgstr "تنبيه فقط"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_stock_move__move_type__waste
+msgid "Waste/Damage"
+msgstr "هدر/تلف"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_supply__category__water
+msgid "Water and Beverages"
+msgstr "مياه ومشروبات"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_order__website_message_ids
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_purchase__website_message_ids
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_supply__website_message_ids
+msgid "Website Messages"
+msgstr "رسائل الموقع"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_order__website_message_ids
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_purchase__website_message_ids
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_supply__website_message_ids
+msgid "Website communication history"
+msgstr "سجل مراسلات الموقع"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields.selection,name:care_cafm_hospitality.selection__care_hosp_limit__period__week
+msgid "Weekly"
+msgstr "أسبوعي"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_res_users__hosp_location_locked
+msgid ""
+"When enabled the user cannot change the place while ordering — only the "
+"client administrator can set it."
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_station__open_to
+msgid "Work Ends"
+msgstr "ينتهي العمل"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_station__open_from
+msgid "Work Starts"
+msgstr "يبدأ العمل"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,field_description:care_cafm_hospitality.field_care_hosp_standing__weekdays_only
+msgid "Working Days Only"
+msgstr "أيام العمل فقط"
+
+#. module: care_cafm_hospitality
+#: model:ir.model.fields,help:care_cafm_hospitality.field_care_hosp_limit__max_items
+msgid "Zero = no limit."
+msgstr "صفر = بلا حد."
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_form
+msgid "إرسال للمطبخ"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_form
+msgid "إلغاء"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_item_form
+msgid "اسم الصنف"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_form
+msgid "اعتماد"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.ui.menu,name:care_cafm_hospitality.menu_hosp_item
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_form
+msgid "الأصناف"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.actions.act_window,name:care_cafm_hospitality.action_hosp_category
+#: model:ir.ui.menu,name:care_cafm_hospitality.menu_hosp_category
+msgid "الأقسام"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_form
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_tree
+msgid "الإجمالي"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_search
+msgid "الإدارة"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.ui.menu,name:care_cafm_hospitality.menu_hosp_cfg
+msgid "الإعداد"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_line_graph
+msgid "الاستهلاك"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_tree
+msgid "الانتظار"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_search
+msgid "التجميع"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_item_form
+msgid "التوفّر"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_form
+msgid "التوقيت والتقييم"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_search
+msgid "الجاري"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_search
+msgid "الحالة"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.ui.menu,name:care_cafm_hospitality.menu_hosp_root
+msgid "الضيافة"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.actions.server,name:care_cafm_hospitality.cron_hosp_standing_ir_actions_server
+msgid "الضيافة: تنفيذ الطلبات الدائمة"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.actions.server,name:care_cafm_hospitality.cron_hosp_low_supplies_ir_actions_server
+msgid "الضيافة: طلب شراء لما يوشك على النفاد"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_search
+msgid "الطالب"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.ui.menu,name:care_cafm_hospitality.menu_hosp_orders
+msgid "الطلبات"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.actions.act_window,name:care_cafm_hospitality.action_hosp_standing
+#: model:ir.ui.menu,name:care_cafm_hospitality.menu_hosp_standing
+msgid "الطلبات الدائمة"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_search
+msgid "المتأخرة"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_search
+msgid "المرفق"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_item_form
+msgid "المواصفات المتاحة للطالب"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_search
+msgid "اليوم"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_search
+msgid "بانتظار الموافقة"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_form
+msgid "بدء التحضير"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.actions.act_window,name:care_cafm_hospitality.action_hosp_analysis
+#: model:ir.ui.menu,name:care_cafm_hospitality.menu_hosp_analysis
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_line_pivot
+msgid "تحليل الاستهلاك"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_form
+msgid "تم التقديم"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_form
+msgid "جاهز"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.ui.menu,name:care_cafm_hospitality.menu_hosp_limit
+msgid "حدود الاستهلاك"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_form
+msgid "رفض"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.item,description:care_cafm_hospitality.item_meeting_vip
+msgid "ضيافة كاملة: قهوة مختصة، عصائر طازجة، معجّنات وحلويات."
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.actions.act_window,name:care_cafm_hospitality.action_hosp_order
+msgid "طلبات الضيافة"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_search
+msgid "طلباتي"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_form
+msgid "قبول"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.item,description:care_cafm_hospitality.item_arabic_coffee
+msgid "قهوة عربية بالهيل والزعفران تُقدَّم في دلّة."
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_optgroup_form
+msgid "مثال: السكر"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_limit_form
+msgid "مثال: حد الموظفين اليومي"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.ui.menu,name:care_cafm_hospitality.menu_hosp_optgroup
+msgid "مجموعات الخيارات"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:ir.actions.act_window,name:care_cafm_hospitality.action_hosp_station
+#: model:ir.ui.menu,name:care_cafm_hospitality.menu_hosp_station
+msgid "محطات التحضير"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_form
+msgid "ملاحظات"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.item,description:care_cafm_hospitality.item_meeting_basic
+msgid "مياه وقهوة وشاي وتمر للطاولة."
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_order_search
+msgid "نوع الطلب"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model_terms:ir.ui.view,arch_db:care_cafm_hospitality.view_hosp_item_form
+msgid "وصف يظهر للطالب في البورتال…"
+msgstr ""
+
+#. module: care_cafm_hospitality
+#: model:care.hosp.item,description:care_cafm_hospitality.item_croissant
+msgid "يُقدَّم صباحًا حتى الساعة ١١."
+msgstr ""
+
+#. module: care_cafm_hospitality
+#. odoo-python
+#: code:addons/care_cafm_hospitality/models/hospitality.py:0
+#, python-format
+msgid "⛔ Your order could not be completed"
+msgstr "⛔ تعذّر تنفيذ طلبك"
+
+#. module: care_cafm_hospitality
+#. odoo-python
+#: code:addons/care_cafm_hospitality/models/hospitality.py:0
+#, python-format
+msgid "✅ Hospitality order approved"
+msgstr "✅ اعتُمد طلب الضيافة"
+
+#. module: care_cafm_hospitality
+#. odoo-python
+#: code:addons/care_cafm_hospitality/models/hospitality.py:0
+#, python-format
+msgid "🆕 New hospitality order"
+msgstr "🆕 طلب ضيافة جديد"
+
+#. module: care_cafm_hospitality
+#. odoo-python
+#: code:addons/care_cafm_hospitality/models/hospitality.py:0
+#, python-format
+msgid "👨‍🍳 Your order is being prepared"
+msgstr "👨‍🍳 طلبك قيد التحضير"
+
+#. module: care_cafm_hospitality
+#. odoo-python
+#: code:addons/care_cafm_hospitality/models/hospitality.py:0
+#, python-format
+msgid "🔐 Hospitality order needs your approval"
+msgstr "🔐 طلب ضيافة يحتاج اعتمادك"
+
+#. module: care_cafm_hospitality
+#. odoo-python
+#: code:addons/care_cafm_hospitality/models/hospitality.py:0
+#, python-format
+msgid "🔔 Your order is ready"
+msgstr "🔔 طلبك جاهز"

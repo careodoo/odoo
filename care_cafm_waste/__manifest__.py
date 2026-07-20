@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
-    'name': 'CARE CAFM — نقل ومعالجة النفايات',
-    'summary': 'خدمة نقل ومعالجة النفايات داخل إدارة المرافق: طلبات ورحلات وتقارير',
+    'name': 'CARE CAFM — Waste Transfer and Treatment',
+    'summary': 'Waste transfer and treatment service within facilities management: orders, trips and reports',
     'version': '17.0.1.0.0',
     'category': 'Services/CAFM',
     'license': 'LGPL-3',

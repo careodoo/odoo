@@ -307,7 +307,7 @@
   </record>
 
   <record id="action_waste_pickups" model="ir.actions.act_window">
-    <field name="name">مواقع الالتقاط</field><field name="res_model">cafm.waste.pickup.location</field><field name="view_mode">tree,form</field>
+    <field name="name">Pickup Locations</field><field name="res_model">cafm.waste.pickup.location</field><field name="view_mode">tree,form</field>
   </record>
   <record id="view_waste_pickup_tree" model="ir.ui.view">
     <field name="name">cafm.waste.pickup.tree</field><field name="model">cafm.waste.pickup.location</field>
@@ -315,7 +315,7 @@
   </record>
 
   <record id="action_waste_teams" model="ir.actions.act_window">
-    <field name="name">الفرق</field><field name="res_model">cafm.waste.team</field><field name="view_mode">tree,form</field>
+    <field name="name">Teams</field><field name="res_model">cafm.waste.team</field><field name="view_mode">tree,form</field>
   </record>
   <record id="view_waste_team_tree" model="ir.ui.view">
     <field name="name">cafm.waste.team.tree</field><field name="model">cafm.waste.team</field>

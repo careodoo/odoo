@@ -22,15 +22,15 @@
               <div style="color:#64748b">الرقم: <strong t-esc="o.serial"/> · الحالة: <span t-field="o.states"/></div>
             </div>
             <table class="table table-sm">
-              <tr><td><strong>العميل</strong></td><td t-esc="o.contact_id.name or ''"/><td><strong>المشروع</strong></td><td t-esc="o.project_id.name or ''"/></tr>
-              <tr><td><strong>موقع الالتقاط</strong></td><td t-esc="o.pickup_location_id.name or ''"/><td><strong>تاريخ الطلب</strong></td><td t-esc="o.request_datetime"/></tr>
-              <tr><td><strong>مدير العمليات</strong></td><td t-esc="o.ops_manager_id.name or ''"/><td><strong>السائق</strong></td><td t-esc="o.driver_id.name or ''"/></tr>
-              <tr><td><strong>مستلم الكميات</strong></td><td t-esc="o.receiver_id.name or ''"/><td><strong>الوزن النهائي</strong></td><td><span t-esc="o.final_weight"/> كجم</td></tr>
+              <tr><td><strong>العميل</strong></td><td t-esc="o.contact_id.name or ''"/><td><strong>Project</strong></td><td t-esc="o.project_id.name or ''"/></tr>
+              <tr><td><strong>Pickup Location</strong></td><td t-esc="o.pickup_location_id.name or ''"/><td><strong>تاريخ الطلب</strong></td><td t-esc="o.request_datetime"/></tr>
+              <tr><td><strong>مدير العمليات</strong></td><td t-esc="o.ops_manager_id.name or ''"/><td><strong>Driver</strong></td><td t-esc="o.driver_id.name or ''"/></tr>
+              <tr><td><strong>Quantity Receiver</strong></td><td t-esc="o.receiver_id.name or ''"/><td><strong>الوزن النهائي</strong></td><td><span t-esc="o.final_weight"/> كجم</td></tr>
             </table>
-            <h4 style="color:#0E3A5F;margin-top:16px">الأصناف</h4>
+            <h4 style="color:#0E3A5F;margin-top:16px">Items</h4>
             <t t-set="lines" t-value="o.order_line_ids or (o.trip_id.trip_line_ids if o.trip_id else o.order_line_ids)"/>
             <table class="table table-sm table-bordered">
-              <thead style="background:#f1f5f9"><tr><th>الصنف</th><th>الكمية</th><th>وزن الوحدة</th><th>الوزن الكلي</th></tr></thead>
+              <thead style="background:#f1f5f9"><tr><th>Item</th><th>Quantity</th><th>وزن الوحدة</th><th>Total Weight</th></tr></thead>
               <tbody>
                 <tr t-foreach="lines" t-as="l">
                   <td t-esc="l.item_id.name"/><td t-esc="l.quantity"/><td t-esc="l.weight"/>
@@ -70,12 +70,12 @@
               <div style="color:#64748b">المرجع: <strong t-esc="t.reference"/></div>
             </div>
             <table class="table table-sm">
-              <tr><td><strong>المشروع</strong></td><td t-esc="t.project_id.name or ''"/><td><strong>مركز المعالجة</strong></td><td t-esc="t.center_id.name or ''"/></tr>
+              <tr><td><strong>Project</strong></td><td t-esc="t.project_id.name or ''"/><td><strong>Treatment Centre</strong></td><td t-esc="t.center_id.name or ''"/></tr>
               <tr><td><strong>الالتقاط</strong></td><td t-esc="t.pickup_location_id.name or ''"/><td><strong>التاريخ</strong></td><td t-esc="t.trip_date"/></tr>
-              <tr><td><strong>الوزن الكلي</strong></td><td><span t-esc="t.total_qty_weight"/> كجم</td><td><strong>الكمية</strong></td><td t-esc="t.total_quantity"/></tr>
+              <tr><td><strong>Total Weight</strong></td><td><span t-esc="t.total_qty_weight"/> كجم</td><td><strong>Quantity</strong></td><td t-esc="t.total_quantity"/></tr>
             </table>
             <table class="table table-sm table-bordered">
-              <thead style="background:#f1f5f9"><tr><th>الصنف</th><th>الكمية</th><th>الوزن</th></tr></thead>
+              <thead style="background:#f1f5f9"><tr><th>Item</th><th>Quantity</th><th>Weight</th></tr></thead>
               <tbody><tr t-foreach="t.trip_line_ids" t-as="l"><td t-esc="l.item_id.name"/><td t-esc="l.quantity"/><td t-esc="round(l.quantity*l.weight,2)"/></tr></tbody>
             </table>
           </div>
@@ -119,7 +119,7 @@
               </td>
               <td style="background:#EEF2FF;text-align:center;padding:10px">
                 <div style="font-size:22px;font-weight:bold;color:#4F46E5" t-esc="totals['qty']"/>
-                <div style="font-size:11px;color:#64748B">إجمالي الكمية</div>
+                <div style="font-size:11px;color:#64748B">Total Quantity</div>
               </td>
               <td style="background:#ECFEFF;text-align:center;padding:10px">
                 <div style="font-size:22px;font-weight:bold;color:#0891B2" t-esc="totals['weight']"/>
@@ -132,7 +132,7 @@
           <h4 style="color:#14532D;margin-bottom:4px">التوزيع حسب الحالة</h4>
           <table class="table table-sm table-bordered" style="margin-bottom:14px">
             <thead style="background:#F1F5F9">
-              <tr><th>الحالة</th><th class="text-end">الأوامر</th><th class="text-end">الكمية</th><th class="text-end">الوزن (كجم)</th></tr>
+              <tr><th>Status</th><th class="text-end">الأوامر</th><th class="text-end">Quantity</th><th class="text-end">Weight (kg)</th></tr>
             </thead>
             <tbody>
               <tr t-foreach="by_state" t-as="s">
@@ -146,7 +146,7 @@
           <h4 style="color:#14532D;margin-bottom:4px" t-if="len(by_project) &gt; 1">التوزيع حسب المشروع</h4>
           <table class="table table-sm table-bordered" style="margin-bottom:14px" t-if="len(by_project) &gt; 1">
             <thead style="background:#F1F5F9">
-              <tr><th>المشروع</th><th class="text-end">الأوامر</th><th class="text-end">الكمية</th><th class="text-end">الوزن (كجم)</th></tr>
+              <tr><th>Project</th><th class="text-end">الأوامر</th><th class="text-end">Quantity</th><th class="text-end">Weight (kg)</th></tr>
             </thead>
             <tbody>
               <tr t-foreach="by_project" t-as="p">
@@ -160,7 +160,7 @@
           <h4 style="color:#14532D;margin-bottom:4px">الأصناف المنقولة</h4>
           <table class="table table-sm table-bordered" style="margin-bottom:14px">
             <thead style="background:#F1F5F9">
-              <tr><th>الصنف</th><th class="text-end">الكمية</th><th class="text-end">الوزن الكلي (كجم)</th></tr>
+              <tr><th>Item</th><th class="text-end">Quantity</th><th class="text-end">الوزن الكلي (كجم)</th></tr>
             </thead>
             <tbody>
               <tr t-foreach="by_item" t-as="i">
@@ -177,8 +177,8 @@
           <table class="table table-sm table-bordered" style="font-size:11px">
             <thead style="background:#F1F5F9">
               <tr>
-                <th>الرقم</th><th>المشروع</th><th>موقع الالتقاط</th><th>التاريخ</th>
-                <th class="text-end">الكمية</th><th class="text-end">الوزن</th><th>الحالة</th>
+                <th>الرقم</th><th>Project</th><th>Pickup Location</th><th>التاريخ</th>
+                <th class="text-end">Quantity</th><th class="text-end">Weight</th><th>Status</th>
               </tr>
             </thead>
             <tbody>

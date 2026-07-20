@@ -62,25 +62,25 @@ class ValetTicketPortal(http.Controller):
                 website=False, csrf=False, cors='*')
     def ticket_print(self, tid, **kw):
         if not _caller():
-            return request.make_response(_('غير مصرّح'), status=401)
+            return request.make_response(_('Not authorized'), status=401)
         t = request.env['care.valet.ticket'].sudo().browse(tid).exists()
         if not t:
             return request.not_found()
         url = '%s/valet/t/%s' % (_base_url(), t.qr_token or '')
         qr = _qr_data_uri(url)
         rows = [
-            (_('رقم التذكرة'), t.name),
-            (_('اللوحة'), t.plate),
+            (_('Ticket Number'), t.name),
+            (_('Plate'), t.plate),
             # A claim slip, not a file: only what is needed to return the car.
-            (_('المركبة'), ' '.join(filter(None, [t.car_make, t.car_color])) or '—'),
-            (_('المفتاح'), t.key_tag or '—'),
-            (_('الموقف'), t.spot_id.name or t.zone_id.name or '—'),
-            (_('الوقت'), str(t.received_at or '')[5:16]),
+            (_('Vehicle'), ' '.join(filter(None, [t.car_make, t.car_color])) or '—'),
+            (_('Key'), t.key_tag or '—'),
+            (_('Spot'), t.spot_id.name or t.zone_id.name or '—'),
+            (_('Time'), str(t.received_at or '')[5:16]),
         ]
         body = Markup('').join(
             Markup('<tr><td class="k">%s</td><td class="v">%s</td></tr>') % (k, v or '—')
             for k, v in rows)
-        note = Markup('<div class="note"><b>ملاحظات حالة المركبة:</b> %s</div>') % t.damage_note \
+        note = Markup('<div class="note"><b>Vehicle condition notes:</b> %s</div>') % t.damage_note \
             if t.damage_note else Markup('')
         qr_block = (Markup('<img src="%s" alt="QR"/>') % qr) if qr else Markup(
             '<div class="noqr">%s</div>') % url
@@ -125,11 +125,11 @@ td{padding:4px 11px;border-bottom:1px solid #f1f4f7}
   <table>__ROWS__</table>
   __NOTE__
   <div class="qr">__QR__
-    <div class="c"><b>لطلب سيارتك:</b> امسح الرمز بكاميرا هاتفك<br/>وسيصل الطلب فورًا لطاقم الفاليه</div>
+    <div class="c"><b>To request your car:</b> Scan the code with your phone camera<br/>and the request reaches the valet team instantly</div>
   </div>
-  <div class="f">احتفظ بهذه التذكرة — تُسلَّم المركبة لحاملها</div>
+  <div class="f">Keep this ticket — the vehicle is released to its holder</div>
 </div>
-<button class="pr" onclick="window.print()">🖨️ طباعة التذكرة</button>
+<button class="pr" onclick="window.print()">🖨️ Print Ticket</button>
 </div></body></html>""")
         page = (html.replace('__NAME__', escape(t.name or ''))
                 .replace('__PLATE__', escape(t.plate or ''))
@@ -144,7 +144,7 @@ td{padding:4px 11px;border-bottom:1px solid #f1f4f7}
         """The same slip as a PDF, so the app can show it inline and offer
         print and share instead of throwing the user into a browser."""
         if not _caller():
-            return request.make_response(_('غير مصرّح'), status=401)
+            return request.make_response(_('Not authorized'), status=401)
         t = request.env['care.valet.ticket'].sudo().browse(tid).exists()
         if not t:
             return request.not_found()
@@ -152,7 +152,7 @@ td{padding:4px 11px;border-bottom:1px solid #f1f4f7}
         if isinstance(html, bytes):
             html = html.decode('utf-8')
         # drop the on-screen print button — it means nothing on paper
-        html = html.replace('<button class="pr" onclick="window.print()">🖨️ طباعة التذكرة</button>', '')
+        html = html.replace('<button class="pr" onclick="window.print()">🖨️ Print Ticket</button>', '')
         pdf = request.env['ir.actions.report'].sudo()._run_wkhtmltopdf(
             [html], landscape=False,
             specific_paperformat_args={
@@ -172,29 +172,29 @@ td{padding:4px 11px;border-bottom:1px solid #f1f4f7}
             [('qr_token', '=', token)], limit=1)
         if not t:
             return request.make_response(self._page(
-                '⚠️', 'تذكرة غير معروفة', 'تأكّد من مسح الرمز الصحيح.', ''),
+                '⚠️', 'Unknown ticket', 'Please make sure you scanned the correct code.', ''),
                 headers=[('Content-Type', 'text/html; charset=utf-8')])
 
         state = t.state
         if state == 'delivered':
             return request.make_response(self._page(
-                '✅', 'تم تسليم المركبة', 'شكرًا لاستخدامكم خدمة CARE للفاليه.', t.plate),
+                '✅', 'Vehicle handed over', 'Thank you for using the CARE valet service.', t.plate),
                 headers=[('Content-Type', 'text/html; charset=utf-8')])
         if state == 'requested':
             mins = int(t.retrieval_minutes or 0)
             return request.make_response(self._page(
-                '⏱️', 'طلبك قيد التنفيذ',
-                'الطاقم يُحضر مركبتك الآن — مضى %s دقيقة.' % mins, t.plate),
+                '⏱️', 'Your request is in progress',
+                'Our team is retrieving your vehicle now — %s minutes elapsed.' % mins, t.plate),
                 headers=[('Content-Type', 'text/html; charset=utf-8')])
 
         action = Markup(
             '<form method="post" action="/valet/t/%s/request">'
-            '<button class="cta">🚗 اطلب مركبتي الآن</button></form>'
-            '<div class="hint">سيصل الطلب فورًا لطاقم الفاليه، ومتوسط زمن الإحضار %s دقائق.</div>'
+            '<button class="cta">🚗 Request My Vehicle Now</button></form>'
+            '<div class="hint">The request reaches the valet team instantly, and average retrieval time is %s minutes.</div>'
         ) % (token, t.sla_minutes or 7)
         return request.make_response(
-            self._page('🚗', 'مركبتك جاهزة للطلب',
-                       'اضغط الزر عندما تكون في طريقك للمخرج.', t.plate, extra=action),
+            self._page('🚗', 'Your vehicle is ready to request',
+                       'Press the button when you are on your way to the exit.', t.plate, extra=action),
             headers=[('Content-Type', 'text/html; charset=utf-8')])
 
     @http.route('/valet/t/<string:token>/request', type='http', auth='public',

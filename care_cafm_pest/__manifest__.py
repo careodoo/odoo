@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
-    'name': 'CARE — مكافحة الحشرات (Pest Control)',
-    'summary': 'برامج مكافحة دورية، شبكة محطات مرقّمة، سجل مبيدات معتمدة، وزيارات موثّقة',
+    'name': 'CARE — Pest Control',
+    'summary': 'Recurring control programmes, a numbered station grid, an approved pesticide register, and documented visits',
     'version': '17.0.1.0.0',
     'author': 'CARE',
     'license': 'LGPL-3',

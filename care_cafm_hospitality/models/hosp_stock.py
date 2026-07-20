@@ -22,62 +22,62 @@ from odoo.exceptions import UserError
 class HospSupply(models.Model):
     """One consumable behind the menu: beans, sugar, milk, cups, lids."""
     _name = 'care.hosp.supply'
-    _description = 'مستهلك ضيافة'
+    _description = 'Hospitality Supply'
     _inherit = ['mail.thread']
     _order = 'category, name'
 
-    name = fields.Char(string='المستهلك', required=True, translate=True, tracking=True)
-    code = fields.Char(string='الرمز', tracking=True)
+    name = fields.Char(string='Supply', required=True, translate=True, tracking=True)
+    code = fields.Char(string='Code', tracking=True)
     category = fields.Selection([
-        ('coffee', 'بنّ وقهوة'), ('tea', 'شاي وأعشاب'), ('sugar', 'سكر ومحليات'),
-        ('dairy', 'ألبان'), ('water', 'مياه ومشروبات'), ('food', 'مأكولات'),
-        ('disposable', 'مستلزمات تقديم'), ('other', 'أخرى'),
-    ], string='الفئة', default='other', required=True, tracking=True)
+        ('coffee', 'Coffee and Beans'), ('tea', 'Tea and Herbs'), ('sugar', 'Sugar and Sweeteners'),
+        ('dairy', 'Dairy'), ('water', 'Water and Beverages'), ('food', 'Food'),
+        ('disposable', 'Serving Supplies'), ('other', 'Other'),
+    ], string='Category', default='other', required=True, tracking=True)
     uom_name = fields.Selection([
-        ('g', 'جرام'), ('kg', 'كيلوجرام'), ('ml', 'مليلتر'), ('l', 'لتر'),
-        ('pcs', 'قطعة'),
-    ], string='وحدة القياس', default='g', required=True, tracking=True,
-        help='الوحدة الأساسية التي يُحسب بها الرصيد والاستهلاك.')
-    pack_name = fields.Char(string='اسم العبوة', default='كيس',
-                            help='كما تُشترى: كيس، علبة، كرتون…')
-    pack_size = fields.Float(string='محتوى العبوة', default=1000.0, required=True,
+        ('g', 'Gram'), ('kg', 'Kilogram'), ('ml', 'Milliliter'), ('l', 'Liter'),
+        ('pcs', 'Piece'),
+    ], string='Unit of Measure', default='g', required=True, tracking=True,
+        help='The base unit used to calculate balance and consumption.')
+    pack_name = fields.Char(string='Package Name', default='Bag',
+                            help='As purchased: bag, box, carton…')
+    pack_size = fields.Float(string='Package Content', default=1000.0, required=True,
                              tracking=True,
-                             help='بوحدة القياس. مثال: كيس بنّ 1000 جرام.')
-    on_hand = fields.Float(string='الرصيد', default=0.0, tracking=True,
-                           help='بوحدة القياس الأساسية.')
-    packs_on_hand = fields.Float(string='الرصيد بالعبوات', compute='_compute_packs',
+                             help='In the unit of measure. Example: a 1000 gram bag of coffee.')
+    on_hand = fields.Float(string='Balance', default=0.0, tracking=True,
+                           help='In the base unit of measure.')
+    packs_on_hand = fields.Float(string='Balance in Packages', compute='_compute_packs',
                                  store=True)
-    min_qty = fields.Float(string='حد إعادة الطلب', default=0.0, tracking=True,
-                           help='بوحدة القياس.')
-    unit_cost = fields.Float(string='تكلفة الوحدة', tracking=True,
-                             help='تكلفة الوحدة الواحدة (لا العبوة).')
-    pack_cost = fields.Float(string='تكلفة العبوة', compute='_compute_packs', store=True)
-    stock_value = fields.Float(string='قيمة الرصيد', compute='_compute_packs', store=True)
+    min_qty = fields.Float(string='Reorder Threshold', default=0.0, tracking=True,
+                           help='In the unit of measure.')
+    unit_cost = fields.Float(string='Unit Cost', tracking=True,
+                             help='Cost of a single unit (not the package).')
+    pack_cost = fields.Float(string='Package Cost', compute='_compute_packs', store=True)
+    stock_value = fields.Float(string='Balance Value', compute='_compute_packs', store=True)
 
-    facility_id = fields.Many2one('care.cafm.facility', string='المرفق',
+    facility_id = fields.Many2one('care.cafm.facility', string='Facility',
                                   tracking=True, index=True)
     supplier_type = fields.Selection([
-        ('care', 'من شركة CARE'), ('external', 'مورّد خارجي'),
-    ], string='مصدر التوريد', default='care', required=True, tracking=True,
-        help='يحدّد الافتراضي عند إنشاء طلب شراء لهذا الصنف.')
-    partner_id = fields.Many2one('res.partner', string='المورّد الخارجي',
+        ('care', 'From CARE'), ('external', 'External Supplier'),
+    ], string='Supply Source', default='care', required=True, tracking=True,
+        help='Sets the default when creating a purchase request for this supply.')
+    partner_id = fields.Many2one('res.partner', string='External Supplier',
                                  tracking=True)
 
-    recipe_ids = fields.One2many('care.hosp.recipe', 'supply_id', string='يدخل في')
-    move_ids = fields.One2many('care.hosp.stock.move', 'supply_id', string='الحركات')
+    recipe_ids = fields.One2many('care.hosp.recipe', 'supply_id', string='Used In')
+    move_ids = fields.One2many('care.hosp.stock.move', 'supply_id', string='Moves')
 
     # ---- the numbers that make this legible -------------------------------
-    servings_left = fields.Float(string='يكفي (حصص)', compute='_compute_cover',
-                                 help='أقل عدد حصص يمكن تقديمها من الرصيد الحالي.')
-    per_serving_hint = fields.Char(string='المعدّل', compute='_compute_cover')
-    daily_use = fields.Float(string='متوسط الاستهلاك اليومي', compute='_compute_cover')
-    days_cover = fields.Float(string='تغطية (يوم)', compute='_compute_cover')
-    low_stock = fields.Boolean(string='منخفض', compute='_compute_flags', store=True)
+    servings_left = fields.Float(string='Enough For (Servings)', compute='_compute_cover',
+                                 help='The lowest number of servings that can be made from the current balance.')
+    per_serving_hint = fields.Char(string='Rate', compute='_compute_cover')
+    daily_use = fields.Float(string='Average Daily Consumption', compute='_compute_cover')
+    days_cover = fields.Float(string='Coverage (Days)', compute='_compute_cover')
+    low_stock = fields.Boolean(string='Low', compute='_compute_flags', store=True)
     active = fields.Boolean(default=True)
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
 
     _sql_constraints = [('code_uniq', 'unique(code, facility_id)',
-                         'رمز المستهلك مستخدم في هذا المرفق.')]
+                         'This supply code is already used in this facility.')]
 
     @api.depends('on_hand', 'pack_size', 'unit_cost')
     def _compute_packs(self):
@@ -105,7 +105,7 @@ class HospSupply(models.Model):
             biggest = max(s.recipe_ids.mapped('qty_per_serving') or [0.0]) or 0.0
             s.servings_left = (s.on_hand / biggest) if biggest else 0.0
             s.per_serving_hint = (
-                '%.4g %s / حصة' % (biggest, dict(self._fields['uom_name'].selection).get(
+                '%.4g %s / serving' % (biggest, dict(self._fields['uom_name'].selection).get(
                     s.uom_name, ''))) if biggest else ''
             used = sum(abs(m.quantity) for m in Move.search([
                 ('supply_id', '=', s.id), ('move_type', '=', 'consume'),
@@ -137,24 +137,24 @@ class HospRecipe(models.Model):
     rate.
     """
     _name = 'care.hosp.recipe'
-    _description = 'معادلة استهلاك'
+    _description = 'Consumption Recipe'
     _order = 'item_id, id'
 
-    item_id = fields.Many2one('care.hosp.item', string='الصنف', required=True,
+    item_id = fields.Many2one('care.hosp.item', string='Item', required=True,
                               ondelete='cascade', index=True)
-    supply_id = fields.Many2one('care.hosp.supply', string='المستهلك', required=True,
+    supply_id = fields.Many2one('care.hosp.supply', string='Supply', required=True,
                                 ondelete='restrict', index=True)
-    qty_per_serving = fields.Float(string='الكمية لكل حصة', required=True, default=1.0,
-                                   help='بوحدة قياس المستهلك. مثال: 18 جرام بنّ للإسبريسو.')
-    uom_name = fields.Selection(related='supply_id.uom_name', string='الوحدة')
+    qty_per_serving = fields.Float(string='Quantity per Serving', required=True, default=1.0,
+                                   help='In the supply unit of measure. Example: 18 grams of coffee for an espresso.')
+    uom_name = fields.Selection(related='supply_id.uom_name', string='Unit')
     option_id = fields.Many2one(
-        'care.hosp.option', string='مشروط بالخيار',
-        help='اتركه فارغًا ليُحتسب دائمًا. حدّده ليُحتسب فقط عند اختيار هذا '
-             'الخيار — مثل «سكر زيادة».')
-    servings_per_pack = fields.Float(string='الحصص لكل عبوة', compute='_compute_yield',
+        'care.hosp.option', string='Conditional on Option',
+        help='Leave it empty to always count it. Set it to count only when this '
+             'option is chosen — such as extra sugar.')
+    servings_per_pack = fields.Float(string='Servings per Package', compute='_compute_yield',
                                      store=True,
-                                     help='كم كوبًا يعطيه الكيس/العلبة الواحدة.')
-    cost_per_serving = fields.Float(string='تكلفة الحصة', compute='_compute_yield',
+                                     help='How many cups one bag or box yields.')
+    cost_per_serving = fields.Float(string='Serving Cost', compute='_compute_yield',
                                     store=True)
 
     @api.depends('qty_per_serving', 'supply_id.pack_size', 'supply_id.unit_cost')
@@ -169,31 +169,31 @@ class HospRecipe(models.Model):
     def _check_qty(self):
         for r in self:
             if r.qty_per_serving <= 0:
-                raise UserError(_('الكمية لكل حصة يجب أن تكون أكبر من صفر.'))
+                raise UserError(_('The quantity per serving must be greater than zero.'))
 
 
 class HospStockMove(models.Model):
     """The pantry ledger. Positive adds, negative consumes."""
     _name = 'care.hosp.stock.move'
-    _description = 'حركة مخزون ضيافة'
+    _description = 'Hospitality Stock Move'
     _order = 'date desc, id desc'
 
-    supply_id = fields.Many2one('care.hosp.supply', string='المستهلك', required=True,
+    supply_id = fields.Many2one('care.hosp.supply', string='Supply', required=True,
                                 ondelete='cascade', index=True)
-    date = fields.Datetime(string='التاريخ', default=fields.Datetime.now, required=True,
+    date = fields.Datetime(string='Date', default=fields.Datetime.now, required=True,
                            index=True)
     move_type = fields.Selection([
-        ('receipt', 'توريد'), ('consume', 'استهلاك بطلب'), ('waste', 'هدر/تلف'),
-        ('adjust', 'تسوية جرد'), ('return', 'إرجاع للمورّد'),
-    ], string='نوع الحركة', required=True, default='consume', index=True)
-    quantity = fields.Float(string='الكمية', required=True,
-                            help='موجبة للإضافة، سالبة للخصم.')
-    order_id = fields.Many2one('care.hosp.order', string='الطلب', ondelete='set null',
+        ('receipt', 'Receipt'), ('consume', 'Order Consumption'), ('waste', 'Waste/Damage'),
+        ('adjust', 'Inventory Adjustment'), ('return', 'Return to Supplier'),
+    ], string='Move Type', required=True, default='consume', index=True)
+    quantity = fields.Float(string='Quantity', required=True,
+                            help='Positive to add, negative to deduct.')
+    order_id = fields.Many2one('care.hosp.order', string='Order', ondelete='set null',
                                index=True)
-    purchase_id = fields.Many2one('care.hosp.purchase', string='طلب الشراء',
+    purchase_id = fields.Many2one('care.hosp.purchase', string='Purchase Request',
                                   ondelete='set null')
-    user_id = fields.Many2one('res.users', string='بواسطة', default=lambda s: s.env.user)
-    note = fields.Char(string='ملاحظة')
+    user_id = fields.Many2one('res.users', string='By', default=lambda s: s.env.user)
+    note = fields.Char(string='Note')
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
 
 
@@ -204,29 +204,29 @@ class HospPurchase(models.Model):
     depend on who supplied it.
     """
     _name = 'care.hosp.purchase'
-    _description = 'طلب شراء ضيافة'
+    _description = 'Hospitality Purchase Request'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'date desc, id desc'
 
     name = fields.Char(default='/', copy=False, readonly=True)
-    facility_id = fields.Many2one('care.cafm.facility', string='المرفق', required=True,
+    facility_id = fields.Many2one('care.cafm.facility', string='Facility', required=True,
                                   tracking=True, index=True)
-    date = fields.Date(string='التاريخ', default=fields.Date.context_today,
+    date = fields.Date(string='Date', default=fields.Date.context_today,
                        required=True, tracking=True)
     source = fields.Selection([
-        ('care', 'من شركة CARE'), ('external', 'مورّد خارجي'),
-    ], string='مصدر الشراء', default='care', required=True, tracking=True)
-    partner_id = fields.Many2one('res.partner', string='المورّد',
+        ('care', 'From CARE'), ('external', 'External Supplier'),
+    ], string='Purchase Source', default='care', required=True, tracking=True)
+    partner_id = fields.Many2one('res.partner', string='Supplier',
                                  tracking=True,
-                                 help='مطلوب عند الشراء من مورّد خارجي.')
-    reference = fields.Char(string='رقم الفاتورة/الأمر', tracking=True)
+                                 help='Required when purchasing from an external supplier.')
+    reference = fields.Char(string='Invoice/Order Number', tracking=True)
     state = fields.Selection([
-        ('draft', 'مسودة'), ('submitted', 'مُرسَل'), ('approved', 'معتمد'),
-        ('received', 'تم الاستلام'), ('cancelled', 'ملغى'),
-    ], string='الحالة', default='draft', required=True, tracking=True)
-    line_ids = fields.One2many('care.hosp.purchase.line', 'purchase_id', string='البنود')
-    total_cost = fields.Float(string='الإجمالي', compute='_compute_total', store=True)
-    note = fields.Text(string='ملاحظات')
+        ('draft', 'Draft'), ('submitted', 'Sent'), ('approved', 'Approved'),
+        ('received', 'Received'), ('cancelled', 'Cancelled'),
+    ], string='Status', default='draft', required=True, tracking=True)
+    line_ids = fields.One2many('care.hosp.purchase.line', 'purchase_id', string='Lines')
+    total_cost = fields.Float(string='Total', compute='_compute_total', store=True)
+    note = fields.Text(string='Notes')
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
 
     @api.model_create_multi
@@ -246,7 +246,7 @@ class HospPurchase(models.Model):
     def _check_partner(self):
         for p in self:
             if p.source == 'external' and not p.partner_id:
-                raise UserError(_('حدّد المورّد الخارجي.'))
+                raise UserError(_('Set the external supplier.'))
 
     def action_submit(self):
         self.write({'state': 'submitted'})
@@ -259,15 +259,15 @@ class HospPurchase(models.Model):
         arrival of an invoice."""
         for p in self:
             if p.state not in ('approved', 'submitted'):
-                raise UserError(_('يُستلم الطلب بعد اعتماده.'))
+                raise UserError(_('The request is received after it is approved.'))
             if not p.line_ids:
-                raise UserError(_('لا توجد بنود في الطلب.'))
+                raise UserError(_('There are no lines in the request.'))
             for l in p.line_ids:
                 qty = l.quantity * (l.supply_id.pack_size or 1.0) if l.by_pack \
                     else l.quantity
                 l.supply_id._apply(
                     qty, 'receipt',
-                    note=_('توريد بموجب %s (%s)') % (
+                    note=_('Receipt under %s (%s)') % (
                         p.name, dict(self._fields['source'].selection)[p.source]))
                 if l.unit_cost:
                     l.supply_id.sudo().unit_cost = l.unit_cost
@@ -300,7 +300,7 @@ class HospPurchase(models.Model):
                 'facility_id': fac.id,
                 'source': sups[0].supplier_type,
                 'partner_id': sups[0].partner_id.id or False,
-                'note': _('أُنشئ تلقائيًا: أصناف تحت الحد أو تغطيتها أقل من أسبوع.'),
+                'note': _('Created automatically: supplies below the threshold or with less than a week of coverage.'),
                 'line_ids': [(0, 0, {
                     'supply_id': s.id, 'by_pack': True,
                     'quantity': max(1.0, round(
@@ -314,19 +314,19 @@ class HospPurchase(models.Model):
 
 class HospPurchaseLine(models.Model):
     _name = 'care.hosp.purchase.line'
-    _description = 'بند شراء ضيافة'
+    _description = 'Hospitality Purchase Line'
     _order = 'id'
 
     purchase_id = fields.Many2one('care.hosp.purchase', required=True,
                                   ondelete='cascade', index=True)
-    supply_id = fields.Many2one('care.hosp.supply', string='المستهلك', required=True)
-    by_pack = fields.Boolean(string='بالعبوة', default=True,
-                             help='الشراء يتم بالعبوات عادةً، والرصيد يُحسب بالوحدات.')
-    quantity = fields.Float(string='الكمية', default=1.0, required=True)
-    uom_label = fields.Char(string='الوحدة', compute='_compute_labels')
-    unit_cost = fields.Float(string='تكلفة الوحدة')
-    subtotal = fields.Float(string='الإجمالي', compute='_compute_labels', store=True)
-    base_qty = fields.Float(string='الكمية بالوحدة الأساسية', compute='_compute_labels',
+    supply_id = fields.Many2one('care.hosp.supply', string='Supply', required=True)
+    by_pack = fields.Boolean(string='By Package', default=True,
+                             help='Purchasing is usually done in packages, while the balance is calculated in units.')
+    quantity = fields.Float(string='Quantity', default=1.0, required=True)
+    uom_label = fields.Char(string='Unit', compute='_compute_labels')
+    unit_cost = fields.Float(string='Unit Cost')
+    subtotal = fields.Float(string='Total', compute='_compute_labels', store=True)
+    base_qty = fields.Float(string='Quantity in Base Unit', compute='_compute_labels',
                             store=True)
 
     @api.depends('quantity', 'by_pack', 'unit_cost', 'supply_id.pack_size',
@@ -336,6 +336,6 @@ class HospPurchaseLine(models.Model):
         for l in self:
             size = l.supply_id.pack_size or 1.0
             l.base_qty = l.quantity * size if l.by_pack else l.quantity
-            l.uom_label = (l.supply_id.pack_name or 'عبوة') if l.by_pack \
+            l.uom_label = (l.supply_id.pack_name or 'Package') if l.by_pack \
                 else uom.get(l.supply_id.uom_name, '')
             l.subtotal = l.base_qty * (l.unit_cost or l.supply_id.unit_cost or 0.0)

@@ -18,18 +18,18 @@ from odoo.exceptions import UserError, ValidationError
 
 class HospCategory(models.Model):
     _name = 'care.hosp.category'
-    _description = 'قسم الضيافة'
+    _description = 'Hospitality Category'
     _order = 'sequence, name'
 
-    name = fields.Char(string='القسم', required=True, translate=True)
-    code = fields.Char(string='الرمز')
-    icon = fields.Char(string='الأيقونة', default='☕')
-    color = fields.Char(string='اللون', default='#8a6d3b',
-                        help='لون القسم في البورتال وشاشة المطبخ.')
+    name = fields.Char(string='Category', required=True, translate=True)
+    code = fields.Char(string='Code')
+    icon = fields.Char(string='Icon', default='☕')
+    color = fields.Char(string='Color', default='#8a6d3b',
+                        help='Category color in the portal and on the kitchen display.')
     sequence = fields.Integer(default=10)
-    description = fields.Text(string='الوصف', translate=True)
-    item_ids = fields.One2many('care.hosp.item', 'category_id', string='الأصناف')
-    item_count = fields.Integer(compute='_compute_item_count', string='عدد الأصناف')
+    description = fields.Text(string='Description', translate=True)
+    item_ids = fields.One2many('care.hosp.item', 'category_id', string='Items')
+    item_count = fields.Integer(compute='_compute_item_count', string='Item Count')
     active = fields.Boolean(default=True)
 
     def _compute_item_count(self):
@@ -44,31 +44,31 @@ class HospOptionGroup(models.Model):
     """A question asked about an item — "كم سكر؟", "الحجم؟". Reusable across
     items so "السكر" is defined once and attached to every hot drink."""
     _name = 'care.hosp.option.group'
-    _description = 'مجموعة خيارات'
+    _description = 'Option Group'
     _order = 'sequence, name'
 
-    name = fields.Char(string='المجموعة', required=True, translate=True)
+    name = fields.Char(string='Group', required=True, translate=True)
     sequence = fields.Integer(default=10)
-    required = fields.Boolean(string='إلزامي', default=True,
-                              help='يجب على الطالب الاختيار قبل إتمام الطلب.')
-    multi = fields.Boolean(string='اختيار متعدد',
-                           help='مثل الإضافات: يمكن اختيار أكثر من خيار.')
-    max_select = fields.Integer(string='أقصى عدد اختيارات', default=1)
-    option_ids = fields.One2many('care.hosp.option', 'group_id', string='الخيارات')
+    required = fields.Boolean(string='Required', default=True,
+                              help='The requester must choose before completing the order.')
+    multi = fields.Boolean(string='Multiple Choice',
+                           help='Like add-ons: more than one option can be chosen.')
+    max_select = fields.Integer(string='Max Choices', default=1)
+    option_ids = fields.One2many('care.hosp.option', 'group_id', string='Options')
     active = fields.Boolean(default=True)
 
 
 class HospOption(models.Model):
     _name = 'care.hosp.option'
-    _description = 'خيار'
+    _description = 'Option'
     _order = 'sequence, name'
 
-    name = fields.Char(string='الخيار', required=True, translate=True)
-    group_id = fields.Many2one('care.hosp.option.group', string='المجموعة',
+    name = fields.Char(string='Option', required=True, translate=True)
+    group_id = fields.Many2one('care.hosp.option.group', string='Group',
                                required=True, ondelete='cascade')
     sequence = fields.Integer(default=10)
-    is_default = fields.Boolean(string='الافتراضي')
-    extra_cost = fields.Float(string='تكلفة إضافية', default=0.0)
+    is_default = fields.Boolean(string='Default')
+    extra_cost = fields.Float(string='Extra Cost', default=0.0)
     active = fields.Boolean(default=True)
 
 
@@ -76,45 +76,45 @@ class HospStation(models.Model):
     """Where an item is actually made. Splitting the kitchen into stations keeps
     the barista's screen free of sandwich orders."""
     _name = 'care.hosp.station'
-    _description = 'محطة تحضير'
+    _description = 'Preparation Station'
     _order = 'name'
 
-    name = fields.Char(string='المحطة', required=True, translate=True)
-    facility_id = fields.Many2one('care.cafm.facility', string='المرفق', required=True)
-    icon = fields.Char(string='الأيقونة', default='🍳')
-    member_ids = fields.Many2many('hr.employee', string='طاقم المحطة')
-    open_from = fields.Float(string='يبدأ العمل', default=7.0)
-    open_to = fields.Float(string='ينتهي العمل', default=17.0)
+    name = fields.Char(string='Station', required=True, translate=True)
+    facility_id = fields.Many2one('care.cafm.facility', string='Facility', required=True)
+    icon = fields.Char(string='Icon', default='🍳')
+    member_ids = fields.Many2many('hr.employee', string='Station Staff')
+    open_from = fields.Float(string='Work Starts', default=7.0)
+    open_to = fields.Float(string='Work Ends', default=17.0)
     active = fields.Boolean(default=True)
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
 
 
 class HospItem(models.Model):
     _name = 'care.hosp.item'
-    _description = 'صنف ضيافة'
+    _description = 'Hospitality Item'
     _order = 'sequence, name'
 
-    name = fields.Char(string='الصنف', required=True, translate=True)
-    code = fields.Char(string='الرمز')
-    category_id = fields.Many2one('care.hosp.category', string='القسم', required=True)
-    station_id = fields.Many2one('care.hosp.station', string='محطة التحضير')
+    name = fields.Char(string='Item', required=True, translate=True)
+    code = fields.Char(string='Code')
+    category_id = fields.Many2one('care.hosp.category', string='Category', required=True)
+    station_id = fields.Many2one('care.hosp.station', string='Preparation Station')
     sequence = fields.Integer(default=10)
-    icon = fields.Char(string='الأيقونة', default='☕')
-    image = fields.Image(string='الصورة', max_width=512, max_height=512)
-    description = fields.Text(string='الوصف', translate=True)
-    option_group_ids = fields.Many2many('care.hosp.option.group', string='مجموعات الخيارات')
-    prep_minutes = fields.Integer(string='زمن التحضير (دقيقة)', default=5,
-                                  help='يُستخدم كمستهدف على شاشة المطبخ.')
-    unit_cost = fields.Float(string='تكلفة الوحدة',
-                             help='للاحتساب الداخلي وتقارير الاستهلاك — لا يُحصَّل من الموظف.')
-    facility_ids = fields.Many2many('care.cafm.facility', string='متاح في المرافق',
-                                    help='اتركه فارغًا ليكون متاحًا في كل المرافق.')
-    available = fields.Boolean(string='متاح', default=True)
-    unavailable_note = fields.Char(string='سبب عدم التوفر')
-    serve_from = fields.Float(string='يُقدَّم من الساعة', default=0.0)
-    serve_to = fields.Float(string='حتى الساعة', default=24.0)
-    is_hot = fields.Boolean(string='مشروب ساخن')
-    order_count = fields.Integer(compute='_compute_stats', string='مرات الطلب')
+    icon = fields.Char(string='Icon', default='☕')
+    image = fields.Image(string='Image', max_width=512, max_height=512)
+    description = fields.Text(string='Description', translate=True)
+    option_group_ids = fields.Many2many('care.hosp.option.group', string='Option Groups')
+    prep_minutes = fields.Integer(string='Preparation Time (Minutes)', default=5,
+                                  help='Used as the target on the kitchen display.')
+    unit_cost = fields.Float(string='Unit Cost',
+                             help='For internal costing and consumption reports — it is not charged to the employee.')
+    facility_ids = fields.Many2many('care.cafm.facility', string='Available in Facilities',
+                                    help='Leave it empty to make it available in all facilities.')
+    available = fields.Boolean(string='Available', default=True)
+    unavailable_note = fields.Char(string='Unavailability Reason')
+    serve_from = fields.Float(string='Served From', default=0.0)
+    serve_to = fields.Float(string='Until', default=24.0)
+    is_hot = fields.Boolean(string='Hot Drink')
+    order_count = fields.Integer(compute='_compute_stats', string='Times Ordered')
     active = fields.Boolean(default=True)
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
 
@@ -140,71 +140,71 @@ class HospItem(models.Model):
 
 class HospOrder(models.Model):
     _name = 'care.hosp.order'
-    _description = 'طلب ضيافة'
+    _description = 'Hospitality Order'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'id desc'
 
-    name = fields.Char(string='رقم الطلب', default='/', copy=False, readonly=True, index=True)
-    requester_id = fields.Many2one('res.users', string='الطالب', required=True,
+    name = fields.Char(string='Order Number', default='/', copy=False, readonly=True, index=True)
+    requester_id = fields.Many2one('res.users', string='Requester', required=True,
                                    default=lambda s: s.env.user, tracking=True, index=True)
-    partner_id = fields.Many2one('res.partner', string='الجهة', related='requester_id.partner_id',
+    partner_id = fields.Many2one('res.partner', string='Entity', related='requester_id.partner_id',
                                  store=True, index=True)
-    department_id = fields.Many2one('hr.department', string='الإدارة', tracking=True, index=True,
-                                    help='لتحميل الاستهلاك على مركز التكلفة.')
-    facility_id = fields.Many2one('care.cafm.facility', string='المرفق', required=True, index=True)
-    location_id = fields.Many2one('care.cafm.location', string='الموقع/المكتب')
-    room_label = fields.Char(string='المكتب/القاعة',
-                             help='نص حر حين لا يكون الموقع مسجّلًا كمكان في النظام.')
+    department_id = fields.Many2one('hr.department', string='Department', tracking=True, index=True,
+                                    help='To charge the consumption to the cost center.')
+    facility_id = fields.Many2one('care.cafm.facility', string='Facility', required=True, index=True)
+    location_id = fields.Many2one('care.cafm.location', string='Location/Office')
+    room_label = fields.Char(string='Office/Hall',
+                             help='Free text for when the location is not registered as a place in the system.')
 
-    line_ids = fields.One2many('care.hosp.order.line', 'order_id', string='الأصناف')
-    note = fields.Text(string='ملاحظات')
+    line_ids = fields.One2many('care.hosp.order.line', 'order_id', string='Items')
+    note = fields.Text(string='Notes')
 
     # guests / meetings — a very different order from "قهوتي الصباحية"
     order_type = fields.Selection([
-        ('self', 'طلب شخصي'), ('meeting', 'اجتماع'), ('guest', 'ضيافة زوّار'),
-    ], string='نوع الطلب', default='self', required=True, tracking=True)
-    guest_count = fields.Integer(string='عدد الحضور', default=1)
-    guest_name = fields.Char(string='اسم الضيف/الجهة')
-    is_vip = fields.Boolean(string='ضيافة VIP', tracking=True)
+        ('self', 'Personal Order'), ('meeting', 'Meeting'), ('guest', 'Visitor Hospitality'),
+    ], string='Order Type', default='self', required=True, tracking=True)
+    guest_count = fields.Integer(string='Attendee Count', default=1)
+    guest_name = fields.Char(string='Guest/Entity Name')
+    is_vip = fields.Boolean(string='VIP Hospitality', tracking=True)
 
-    scheduled_at = fields.Datetime(string='موعد التقديم',
-                                   help='اتركه فارغًا للتحضير فورًا.')
+    scheduled_at = fields.Datetime(string='Scheduled Serving Time',
+                                   help='Leave it empty to prepare immediately.')
     state = fields.Selection([
-        ('draft', 'مسودة'),
-        ('await_approval', 'بانتظار الموافقة'),
-        ('placed', 'مُرسَل'),
-        ('accepted', 'مقبول'),
-        ('preparing', 'قيد التحضير'),
-        ('ready', 'جاهز'),
-        ('delivered', 'تم التقديم'),
-        ('rejected', 'مرفوض'),
-        ('cancelled', 'ملغى'),
-    ], string='الحالة', default='draft', required=True, tracking=True, index=True)
+        ('draft', 'Draft'),
+        ('await_approval', 'Awaiting Approval'),
+        ('placed', 'Sent'),
+        ('accepted', 'Accepted'),
+        ('preparing', 'In Preparation'),
+        ('ready', 'Ready'),
+        ('delivered', 'Served'),
+        ('rejected', 'Rejected'),
+        ('cancelled', 'Cancelled'),
+    ], string='Status', default='draft', required=True, tracking=True, index=True)
 
-    placed_at = fields.Datetime(string='وقت الإرسال', readonly=True, index=True)
-    accepted_at = fields.Datetime(string='وقت القبول', readonly=True)
-    ready_at = fields.Datetime(string='وقت الجهوزية', readonly=True)
-    delivered_at = fields.Datetime(string='وقت التقديم', readonly=True, index=True)
-    prep_target = fields.Integer(string='المستهدف (دقيقة)', compute='_compute_target', store=True)
-    prep_minutes = fields.Float(string='زمن التحضير الفعلي', compute='_compute_times', store=True)
-    wait_minutes = fields.Float(string='زمن الانتظار الكلي', compute='_compute_times', store=True)
-    is_late = fields.Boolean(string='متأخر', compute='_compute_times', store=True, index=True)
+    placed_at = fields.Datetime(string='Submission Time', readonly=True, index=True)
+    accepted_at = fields.Datetime(string='Acceptance Time', readonly=True)
+    ready_at = fields.Datetime(string='Ready Time', readonly=True)
+    delivered_at = fields.Datetime(string='Serving Time', readonly=True, index=True)
+    prep_target = fields.Integer(string='Target (Minutes)', compute='_compute_target', store=True)
+    prep_minutes = fields.Float(string='Actual Preparation Time', compute='_compute_times', store=True)
+    wait_minutes = fields.Float(string='Total Waiting Time', compute='_compute_times', store=True)
+    is_late = fields.Boolean(string='Late', compute='_compute_times', store=True, index=True)
 
-    item_count = fields.Integer(string='عدد الأصناف', compute='_compute_totals', store=True)
-    total_cost = fields.Float(string='التكلفة', compute='_compute_totals', store=True)
+    item_count = fields.Integer(string='Item Count', compute='_compute_totals', store=True)
+    total_cost = fields.Float(string='Cost', compute='_compute_totals', store=True)
 
     rating = fields.Selection([('1', '★'), ('2', '★★'), ('3', '★★★'),
-                               ('4', '★★★★'), ('5', '★★★★★')], string='التقييم')
-    rating_note = fields.Char(string='ملاحظة التقييم')
+                               ('4', '★★★★'), ('5', '★★★★★')], string='Rating')
+    rating_note = fields.Char(string='Rating Note')
 
-    prepared_by = fields.Many2one('hr.employee', string='حضّرها', tracking=True)
-    delivered_by = fields.Many2one('hr.employee', string='قدّمها')
+    prepared_by = fields.Many2one('hr.employee', string='Prepared By', tracking=True)
+    delivered_by = fields.Many2one('hr.employee', string='Served By')
     supplies_consumed = fields.Boolean(
-        string='خُصم من المخزون', default=False, copy=False, readonly=True,
-        help='يمنع خصم نفس الطلب مرتين عند إعادة التسليم.')
-    reject_reason = fields.Char(string='سبب الرفض')
-    approver_id = fields.Many2one('res.users', string='المعتمِد')
-    limit_note = fields.Char(string='ملاحظة الحد', readonly=True)
+        string='Deducted from Stock', default=False, copy=False, readonly=True,
+        help='Prevents deducting the same order twice when it is delivered again.')
+    reject_reason = fields.Char(string='Rejection Reason')
+    approver_id = fields.Many2one('res.users', string='Approver')
+    limit_note = fields.Char(string='Limit Note', readonly=True)
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
 
     # ---- computes ----
@@ -245,7 +245,7 @@ class HospOrder(models.Model):
         which case the order waits for a human instead of being thrown away."""
         for o in self:
             if not o.line_ids:
-                raise UserError(_('أضف صنفًا واحدًا على الأقل.'))
+                raise UserError(_('Add at least one item.'))
             o._check_options()
             verdict = self.env['care.hosp.limit'].check_order(o)
             if verdict.get('blocked'):
@@ -263,7 +263,7 @@ class HospOrder(models.Model):
             o.write({'state': 'placed', 'placed_at': fields.Datetime.now(),
                      'approver_id': self.env.user.id})
             o._notify_station()
-            o._notify_requester(_('✅ اعتُمد طلب الضيافة'), o.name)
+            o._notify_requester(_('✅ Hospitality order approved'), o.name)
         return True
 
     def action_accept(self):
@@ -271,7 +271,7 @@ class HospOrder(models.Model):
         for o in self.filtered(lambda x: x.state == 'placed'):
             o.write({'state': 'accepted', 'accepted_at': fields.Datetime.now(),
                      'prepared_by': emp.id if emp else False})
-            o._notify_requester(_('👨‍🍳 طلبك قيد التحضير'), o.name)
+            o._notify_requester(_('👨‍🍳 Your order is being prepared'), o.name)
         return True
 
     def action_preparing(self):
@@ -282,7 +282,7 @@ class HospOrder(models.Model):
         for o in self.filtered(lambda x: x.state in ('placed', 'accepted', 'preparing')):
             o.write({'state': 'ready', 'ready_at': fields.Datetime.now()})
             o.line_ids.write({'state': 'ready'})
-            o._notify_requester(_('🔔 طلبك جاهز'), o.name)
+            o._notify_requester(_('🔔 Your order is ready'), o.name)
         return True
 
     def action_deliver(self):
@@ -319,7 +319,7 @@ class HospOrder(models.Model):
                     if qty:
                         r.supply_id._apply(
                             -qty, 'consume',
-                            note=_('استهلاك %s × %s') % (line.item_id.name, line.quantity),
+                            note=_('Consumption %s × %s') % (line.item_id.name, line.quantity),
                             order=o)
             o.supplies_consumed = True
         return True
@@ -327,7 +327,7 @@ class HospOrder(models.Model):
     def action_reject(self, reason=None):
         for o in self:
             o.write({'state': 'rejected', 'reject_reason': reason or o.reject_reason})
-            o._notify_requester(_('⛔ تعذّر تنفيذ طلبك'),
+            o._notify_requester(_('⛔ Your order could not be completed'),
                                 o.reject_reason or o.name)
         return True
 
@@ -346,7 +346,7 @@ class HospOrder(models.Model):
             for line in o.line_ids:
                 for grp in line.item_id.option_group_ids.filtered('required'):
                     if not (line.option_ids & grp.option_ids):
-                        raise UserError(_('اختر "%s" للصنف "%s".') % (grp.name, line.item_id.name))
+                        raise UserError(_('Choose "%s" for the item "%s".') % (grp.name, line.item_id.name))
 
     # ---- notifications ----
     def _push(self, users, title, body):
@@ -366,32 +366,32 @@ class HospOrder(models.Model):
         """Whoever mans the stations this order touches gets told at once."""
         emps = self.line_ids.mapped('item_id.station_id.member_ids')
         users = emps.mapped('user_id')
-        self._push(users, _('🆕 طلب ضيافة جديد'),
+        self._push(users, _('🆕 New hospitality order'),
                    '%s — %s' % (self.name, self.room_label or self.location_id.name or ''))
 
     def _notify_approvers(self, message):
         approvers = self.env['care.hosp.limit'].approvers_for(self)
-        self._push(approvers, _('🔐 طلب ضيافة يحتاج اعتمادك'),
+        self._push(approvers, _('🔐 Hospitality order needs your approval'),
                    '%s — %s' % (self.requester_id.name, message))
 
 
 class HospOrderLine(models.Model):
     _name = 'care.hosp.order.line'
-    _description = 'سطر طلب ضيافة'
+    _description = 'Hospitality Order Line'
     _order = 'id'
 
-    order_id = fields.Many2one('care.hosp.order', string='الطلب', required=True,
+    order_id = fields.Many2one('care.hosp.order', string='Order', required=True,
                                ondelete='cascade', index=True)
-    item_id = fields.Many2one('care.hosp.item', string='الصنف', required=True)
-    category_id = fields.Many2one(related='item_id.category_id', store=True, string='القسم')
-    station_id = fields.Many2one(related='item_id.station_id', store=True, string='المحطة', index=True)
-    quantity = fields.Float(string='الكمية', default=1.0, required=True)
-    option_ids = fields.Many2many('care.hosp.option', string='الخيارات')
-    option_label = fields.Char(string='المواصفات', compute='_compute_label', store=True)
-    note = fields.Char(string='ملاحظة', help='مثال: بدون رغوة، كوب ورقي.')
-    line_cost = fields.Float(string='التكلفة', compute='_compute_cost', store=True)
-    state = fields.Selection([('queued', 'في الطابور'), ('ready', 'جاهز'), ('served', 'قُدِّم')],
-                             string='حالة السطر', default='queued')
+    item_id = fields.Many2one('care.hosp.item', string='Item', required=True)
+    category_id = fields.Many2one(related='item_id.category_id', store=True, string='Category')
+    station_id = fields.Many2one(related='item_id.station_id', store=True, string='Station', index=True)
+    quantity = fields.Float(string='Quantity', default=1.0, required=True)
+    option_ids = fields.Many2many('care.hosp.option', string='Options')
+    option_label = fields.Char(string='Specifications', compute='_compute_label', store=True)
+    note = fields.Char(string='Note', help='Example: no foam, paper cup.')
+    line_cost = fields.Float(string='Cost', compute='_compute_cost', store=True)
+    state = fields.Selection([('queued', 'In Queue'), ('ready', 'Ready'), ('served', 'Served')],
+                             string='Line Status', default='queued')
     # denormalised for the analytics screens — they group by these constantly
     requester_id = fields.Many2one(related='order_id.requester_id', store=True, index=True)
     department_id = fields.Many2one(related='order_id.department_id', store=True, index=True)
@@ -414,7 +414,7 @@ class HospOrderLine(models.Model):
     def _check_qty(self):
         for l in self:
             if l.quantity <= 0:
-                raise ValidationError(_('الكمية يجب أن تكون أكبر من صفر.'))
+                raise ValidationError(_('The quantity must be greater than zero.'))
 
 
 class HospLimit(models.Model):
@@ -422,33 +422,33 @@ class HospLimit(models.Model):
     the order to an approver — most clients want the second, because refusing a
     guest a coffee is worse than asking a manager."""
     _name = 'care.hosp.limit'
-    _description = 'حد استهلاك الضيافة'
+    _description = 'Hospitality Consumption Limit'
     _order = 'sequence, id'
 
-    name = fields.Char(string='السياسة', required=True, translate=True)
+    name = fields.Char(string='Policy', required=True, translate=True)
     sequence = fields.Integer(default=10)
-    facility_id = fields.Many2one('care.cafm.facility', string='المرفق',
-                                  help='اتركه فارغًا لتطبيقها على كل المرافق.')
+    facility_id = fields.Many2one('care.cafm.facility', string='Facility',
+                                  help='Leave it empty to apply it to all facilities.')
     scope = fields.Selection([
-        ('user', 'مستخدم محدّد'), ('department', 'إدارة'), ('all', 'الجميع'),
-    ], string='النطاق', default='all', required=True)
-    user_ids = fields.Many2many('res.users', string='المستخدمون')
-    department_ids = fields.Many2many('hr.department', string='الإدارات')
-    category_id = fields.Many2one('care.hosp.category', string='مقصور على قسم',
-                                  help='اتركه فارغًا ليشمل كل الأقسام.')
-    period = fields.Selection([('day', 'يومي'), ('week', 'أسبوعي'), ('month', 'شهري')],
-                              string='الفترة', default='day', required=True)
-    max_items = fields.Integer(string='أقصى عدد أصناف', default=0,
-                               help='صفر = بلا حد.')
-    max_orders = fields.Integer(string='أقصى عدد طلبات', default=0)
-    max_cost = fields.Float(string='أقصى تكلفة', default=0.0)
+        ('user', 'Specific User'), ('department', 'Department'), ('all', 'Everyone'),
+    ], string='Scope', default='all', required=True)
+    user_ids = fields.Many2many('res.users', string='Users')
+    department_ids = fields.Many2many('hr.department', string='Departments')
+    category_id = fields.Many2one('care.hosp.category', string='Restricted to Category',
+                                  help='Leave it empty to include all categories.')
+    period = fields.Selection([('day', 'Daily'), ('week', 'Weekly'), ('month', 'Monthly')],
+                              string='Period', default='day', required=True)
+    max_items = fields.Integer(string='Max Number of Items', default=0,
+                               help='Zero = no limit.')
+    max_orders = fields.Integer(string='Max Number of Orders', default=0)
+    max_cost = fields.Float(string='Max Cost', default=0.0)
     on_exceed = fields.Selection([
-        ('approve', 'يحتاج موافقة'), ('block', 'منع الطلب'), ('warn', 'تنبيه فقط'),
-    ], string='عند التجاوز', default='approve', required=True)
+        ('approve', 'Needs Approval'), ('block', 'Block Order'), ('warn', 'Warn Only'),
+    ], string='On Exceed', default='approve', required=True)
     approver_ids = fields.Many2many('res.users', 'hosp_limit_approver_rel', 'limit_id', 'user_id',
-                                    string='المعتمِدون')
-    exempt_vip = fields.Boolean(string='استثناء ضيافة VIP والاجتماعات', default=True,
-                                help='طلبات الاجتماعات والزوّار لا تُحتسب على حد الموظف.')
+                                    string='Approvers')
+    exempt_vip = fields.Boolean(string='Exempt VIP Hospitality and Meetings', default=True,
+                                help='Meeting and visitor orders are not counted against the employee limit.')
     active = fields.Boolean(default=True)
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
 
@@ -508,14 +508,14 @@ class HospLimit(models.Model):
 
             hit = None
             if p.max_items and used_items + new_items > p.max_items:
-                hit = _('تجاوز حد الأصناف (%(m)s %(per)s) — المستهلك %(u)s.') % {
+                hit = _('Item limit exceeded (%(m)s %(per)s) — consumed %(u)s.') % {
                     'm': p.max_items, 'per': dict(p._fields['period'].selection)[p.period],
                     'u': int(used_items)}
             elif p.max_orders and used_orders + 1 > p.max_orders:
-                hit = _('تجاوز حد الطلبات (%(m)s %(per)s).') % {
+                hit = _('Order limit exceeded (%(m)s %(per)s).') % {
                     'm': p.max_orders, 'per': dict(p._fields['period'].selection)[p.period]}
             elif p.max_cost and used_cost + new_cost > p.max_cost:
-                hit = _('تجاوز حد التكلفة (%(m)s).') % {'m': p.max_cost}
+                hit = _('Cost limit exceeded (%(m)s).') % {'m': p.max_cost}
             if not hit:
                 continue
             msg = '%s — %s' % (p.name, hit)
@@ -566,39 +566,39 @@ class HospFavorite(models.Model):
     """"طلبي المعتاد" — the whole point of a hospitality app is that the third
     coffee of the week takes one tap, not six."""
     _name = 'care.hosp.favorite'
-    _description = 'المفضّلة'
+    _description = 'Favorites'
     _order = 'sequence, id'
 
-    name = fields.Char(string='الاسم', required=True)
-    user_id = fields.Many2one('res.users', string='المستخدم', required=True,
+    name = fields.Char(string='Name', required=True)
+    user_id = fields.Many2one('res.users', string='User', required=True,
                               default=lambda s: s.env.user, ondelete='cascade', index=True)
-    item_id = fields.Many2one('care.hosp.item', string='الصنف', required=True)
-    option_ids = fields.Many2many('care.hosp.option', string='الخيارات')
-    quantity = fields.Float(string='الكمية', default=1.0)
-    note = fields.Char(string='ملاحظة')
+    item_id = fields.Many2one('care.hosp.item', string='Item', required=True)
+    option_ids = fields.Many2many('care.hosp.option', string='Options')
+    quantity = fields.Float(string='Quantity', default=1.0)
+    note = fields.Char(string='Note')
     sequence = fields.Integer(default=10)
-    times_used = fields.Integer(string='مرات الاستخدام', default=0)
+    times_used = fields.Integer(string='Times Used', default=0)
 
 
 class HospStanding(models.Model):
     """A standing order — "قهوتي كل يوم عمل الساعة ٨". The cron places it, so
     the kitchen sees the morning rush before it walks in."""
     _name = 'care.hosp.standing'
-    _description = 'طلب دائم'
+    _description = 'Standing Order'
     _order = 'time_of_day'
 
-    name = fields.Char(string='الاسم', required=True)
-    user_id = fields.Many2one('res.users', string='المستخدم', required=True,
+    name = fields.Char(string='Name', required=True)
+    user_id = fields.Many2one('res.users', string='User', required=True,
                               default=lambda s: s.env.user, ondelete='cascade')
-    facility_id = fields.Many2one('care.cafm.facility', string='المرفق', required=True)
-    location_id = fields.Many2one('care.cafm.location', string='الموقع')
-    room_label = fields.Char(string='المكتب')
-    item_id = fields.Many2one('care.hosp.item', string='الصنف', required=True)
-    option_ids = fields.Many2many('care.hosp.option', string='الخيارات')
-    quantity = fields.Float(string='الكمية', default=1.0)
-    time_of_day = fields.Float(string='الساعة', default=8.0, required=True)
-    weekdays_only = fields.Boolean(string='أيام العمل فقط', default=True)
-    last_run = fields.Date(string='آخر تنفيذ', readonly=True)
+    facility_id = fields.Many2one('care.cafm.facility', string='Facility', required=True)
+    location_id = fields.Many2one('care.cafm.location', string='Location')
+    room_label = fields.Char(string='Office')
+    item_id = fields.Many2one('care.hosp.item', string='Item', required=True)
+    option_ids = fields.Many2many('care.hosp.option', string='Options')
+    quantity = fields.Float(string='Quantity', default=1.0)
+    time_of_day = fields.Float(string='Hour', default=8.0, required=True)
+    weekdays_only = fields.Boolean(string='Working Days Only', default=True)
+    last_run = fields.Date(string='Last Run', readonly=True)
     active = fields.Boolean(default=True)
 
     @api.model
@@ -616,7 +616,7 @@ class HospStanding(models.Model):
             order = self.env['care.hosp.order'].with_user(s.user_id).create({
                 'requester_id': s.user_id.id, 'facility_id': s.facility_id.id,
                 'location_id': s.location_id.id or False, 'room_label': s.room_label,
-                'note': _('طلب دائم: %s') % s.name,
+                'note': _('Standing order: %s') % s.name,
                 'line_ids': [(0, 0, {'item_id': s.item_id.id, 'quantity': s.quantity,
                                      'option_ids': [(6, 0, s.option_ids.ids)]})],
             })
@@ -639,15 +639,15 @@ class ResUsersHospitality(models.Model):
     _inherit = 'res.users'
 
     hosp_location_id = fields.Many2one(
-        'care.cafm.location', string='مكان التقديم المعتاد',
-        help='يُملأ تلقائيًا في كل طلب ضيافة، ويمكن تغييره عند الطلب.')
+        'care.cafm.location', string='Usual Serving Place',
+        help='Filled in automatically on every hospitality order, and can be changed when ordering.')
     hosp_room_label = fields.Char(
-        string='المكتب/القاعة',
-        help='يُستخدم عندما لا يكون المكان مسجّلاً كموقع في النظام.')
+        string='Office/Hall',
+        help='Used when the place is not registered as a location in the system.')
     hosp_location_locked = fields.Boolean(
-        string='تثبيت المكان', default=False,
-        help='عند تفعيله لا يستطيع المستخدم تغيير المكان أثناء الطلب — '
-             'يضبطه مسؤول العميل فقط.')
+        string='Lock Place', default=False,
+        help='When enabled the user cannot change the place while ordering — '
+             'only the client administrator can set it.')
 
     def hosp_place(self):
         """(location, label) for this user, whatever was filled in."""
@@ -659,12 +659,12 @@ class ResUsersHospitality(models.Model):
         """Set the default place, resolving a scanned location code if given."""
         self.ensure_one()
         if self.hosp_location_locked and not self.env.user._is_admin():
-            raise UserError(_('مكان التقديم مثبَّت — راجع مسؤول الحساب لتغييره.'))
+            raise UserError(_('The serving place is locked — contact the account administrator to change it.'))
         if code:
             loc = self.env['care.cafm.location'].sudo().search(
                 [('code', '=', code)], limit=1)
             if not loc:
-                raise UserError(_('لا يوجد موقع بهذا الرمز: %s') % code)
+                raise UserError(_('There is no location with this code: %s') % code)
             location_id = loc.id
         vals = {}
         if location_id is not None:

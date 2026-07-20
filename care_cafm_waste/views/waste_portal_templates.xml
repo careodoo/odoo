@@ -69,7 +69,7 @@
       </div>
 
       <t t-if="orders" t-call="portal.portal_table">
-        <thead><tr><th>الرقم</th><th>موقع الالتقاط</th><th>تاريخ الطلب</th><th>الكمية</th><th>الوزن</th><th>الحالة</th></tr></thead>
+        <thead><tr><th>الرقم</th><th>Pickup Location</th><th>تاريخ الطلب</th><th>Quantity</th><th>Weight</th><th>Status</th></tr></thead>
         <tbody>
           <tr t-foreach="orders" t-as="o">
             <td><a t-attf-href="/waste/order/#{o.id}"><t t-esc="o.serial"/></a></td>
@@ -98,7 +98,7 @@
         <div class="card-body p-4">
           <!-- timeline -->
           <t t-set="flow" t-value="['draft','scheduled','pickuped','arrived','processing','delivered','completed']"/>
-          <t t-set="labels" t-value="{'draft':'مسودة','scheduled':'مجدول','pickuped':'تم الالتقاط','arrived':'وصل','processing':'معالجة','delivered':'المحرقة','completed':'مكتمل'}"/>
+          <t t-set="labels" t-value="{'draft':'Draft','scheduled':'Scheduled','pickuped':'Picked Up','arrived':'وصل','processing':'معالجة','delivered':'المحرقة','completed':'Completed'}"/>
           <t t-set="cur" t-value="flow.index(o.states) if o.states in flow else -1"/>
           <div class="d-flex flex-wrap align-items-center p-3 mb-3" style="background:#f4f7fb;border-radius:14px" t-if="o.states != 'cancelled'">
             <t t-foreach="flow" t-as="s"><div class="d-flex align-items-center">
@@ -107,16 +107,16 @@
               <span t-if="not s_last" style="color:#cbd5e1">→</span>
             </div></t>
           </div>
-          <div t-else="" class="alert alert-danger">✖ تم إلغاء الطلب</div>
+          <div t-else="" class="alert alert-danger">✖ Order Cancelled</div>
 
           <div class="row g-3">
             <div class="col-md-6"><div class="card border-0 shadow-sm h-100"><div class="card-body">
               <h6 class="fw-bold mb-3" style="color:#0E3A5F">👷 فريق العملية</h6>
               <div t-if="o.ops_manager_id" class="d-flex justify-content-between mb-2"><span class="text-muted small">مدير العمليات</span><span class="fw-bold small" t-field="o.ops_manager_id.name"/></div>
-              <div t-if="o.driver_id" class="d-flex justify-content-between mb-2"><span class="text-muted small">السائق</span><span class="fw-bold small" t-field="o.driver_id.name"/></div>
-              <div t-if="o.receiver_id" class="d-flex justify-content-between mb-2"><span class="text-muted small">مستلم الكميات</span><span class="fw-bold small" t-field="o.receiver_id.name"/></div>
+              <div t-if="o.driver_id" class="d-flex justify-content-between mb-2"><span class="text-muted small">Driver</span><span class="fw-bold small" t-field="o.driver_id.name"/></div>
+              <div t-if="o.receiver_id" class="d-flex justify-content-between mb-2"><span class="text-muted small">Quantity Receiver</span><span class="fw-bold small" t-field="o.receiver_id.name"/></div>
               <div t-if="o.final_weight" class="d-flex justify-content-between mb-2"><span class="text-muted small">الوزن النهائي</span><span class="fw-bold small"><t t-esc="o.final_weight"/> كجم</span></div>
-              <div class="d-flex justify-content-between"><span class="text-muted small">المشروع</span><span class="fw-bold small" t-field="o.project_id.name"/></div>
+              <div class="d-flex justify-content-between"><span class="text-muted small">Project</span><span class="fw-bold small" t-field="o.project_id.name"/></div>
             </div></div></div>
             <div class="col-md-6" t-if="o.proof_image"><div class="card border-0 shadow-sm h-100"><div class="card-body">
               <h6 class="fw-bold mb-3" style="color:#0E3A5F">📸 صورة الإثبات</h6>
@@ -124,10 +124,10 @@
             </div></div></div>
           </div>
 
-          <h5 class="fw-bold mt-4" style="color:#0E3A5F">الأصناف</h5>
+          <h5 class="fw-bold mt-4" style="color:#0E3A5F">Items</h5>
           <t t-set="lines" t-value="o.order_line_ids or (o.trip_id.trip_line_ids if o.trip_id else o.order_line_ids)"/>
           <table class="table table-sm">
-            <thead class="bg-light"><tr><th>صورة</th><th>الصنف</th><th>الكمية</th><th>الوزن الكلي</th></tr></thead>
+            <thead class="bg-light"><tr><th>Image</th><th>Item</th><th>Quantity</th><th>Total Weight</th></tr></thead>
             <tbody><tr t-foreach="lines" t-as="l">
               <td><img t-if="l.item_id.image" t-att-src="image_data_uri(l.item_id.image)" style="max-height:3rem;border-radius:6px"/></td>
               <td t-esc="l.item_id.name"/><td t-esc="l.quantity"/><td t-esc="round(l.quantity*l.weight,2)"/>
@@ -157,7 +157,7 @@
                   if(!window.L){return setTimeout(init,200);}
                   var map=L.map('wmap').setView([lat,lng],14);
                   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
-                  var mk=L.marker([lat,lng]).addTo(map).bindPopup('السائق').openPopup();
+                  var mk=L.marker([lat,lng]).addTo(map).bindPopup('Driver').openPopup();
                   setInterval(function(){
                     fetch('/waste/track/'+tid).then(function(r){return r.json();}).then(function(d){
                       if(d &amp;&amp; (d.lat||d.lng)){var ll=[d.lat,d.lng];mk.setLatLng(ll);map.panTo(ll);}
@@ -197,7 +197,7 @@
                   <input type="datetime-local" class="form-control" name="request_datetime" required="True"/></div>
                 <div class="col-md-8"><label class="form-label fw-bold small text-muted">♻️ الصنف</label>
                   <select class="form-select" name="item_id"><t t-foreach="items" t-as="i"><option t-att-value="i[0]" t-esc="i[1]"/></t></select></div>
-                <div class="col-md-4"><label class="form-label fw-bold small text-muted">الكمية</label>
+                <div class="col-md-4"><label class="form-label fw-bold small text-muted">Quantity</label>
                   <input type="number" class="form-control" name="quantity" value="1" min="1"/></div>
                 <div class="col-12"><label class="form-label fw-bold small text-muted">📝 ملاحظات</label>
                   <textarea class="form-control" name="notes" rows="2"/></div>

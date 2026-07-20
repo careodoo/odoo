@@ -16,14 +16,14 @@ from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
 STATES = [
-    ('draft', 'مسودة'),
-    ('scheduled', 'مجدول'),
-    ('pickuped', 'تم الالتقاط'),
-    ('arrived', 'وصل للمعالجة'),
-    ('processing', 'قيد المعالجة'),
-    ('delivered', 'سُلّم للمحرقة'),
-    ('completed', 'مكتمل'),
-    ('cancelled', 'ملغى'),
+    ('draft', 'Draft'),
+    ('scheduled', 'Scheduled'),
+    ('pickuped', 'Picked Up'),
+    ('arrived', 'Arrived at Treatment'),
+    ('processing', 'Under Treatment'),
+    ('delivered', 'Delivered to Incinerator'),
+    ('completed', 'Completed'),
+    ('cancelled', 'Cancelled'),
 ]
 OPEN_STATES = ('draft', 'scheduled', 'pickuped', 'arrived', 'processing')
 FLOW = ['draft', 'scheduled', 'pickuped', 'arrived', 'processing', 'delivered', 'completed']
@@ -31,16 +31,16 @@ FLOW = ['draft', 'scheduled', 'pickuped', 'arrived', 'processing', 'delivered', 
 
 class WasteType(models.Model):
     _name = 'cafm.waste.type'
-    _description = 'نوع طلب النفايات'
+    _description = 'Waste Order Type'
     name = fields.Char(required=True, translate=True)
     active = fields.Boolean(default=True)
 
 
 class WasteCenter(models.Model):
     _name = 'cafm.waste.center'
-    _description = 'مركز المعالجة / المحرقة'
+    _description = 'Treatment Centre / Incinerator'
     name = fields.Char(required=True, translate=True)
-    is_incinerator = fields.Boolean(string='محرقة حكومية')
+    is_incinerator = fields.Boolean(string='Government Incinerator')
     address = fields.Char()
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
     active = fields.Boolean(default=True)
@@ -48,33 +48,33 @@ class WasteCenter(models.Model):
 
 class WasteItem(models.Model):
     _name = 'cafm.waste.item'
-    _description = 'صنف نفايات'
+    _description = 'Waste Item'
     _inherit = ['mail.thread']
     name = fields.Char(required=True, translate=True)
-    image = fields.Binary(string='صورة')
-    type_id = fields.Many2one('cafm.waste.type', string='النوع', tracking=True)
+    image = fields.Binary(string='Image')
+    type_id = fields.Many2one('cafm.waste.type', string='Type', tracking=True)
     notes = fields.Html()
-    width = fields.Float(string='العرض', tracking=True)
-    height = fields.Float(string='الارتفاع', tracking=True)
-    weight = fields.Float(string='الوزن (كجم)', tracking=True)
+    width = fields.Float(string='Width', tracking=True)
+    height = fields.Float(string='Height', tracking=True)
+    weight = fields.Float(string='Weight (kg)', tracking=True)
     active = fields.Boolean(default=True)
 
 
 class WastePickupLocation(models.Model):
     _name = 'cafm.waste.pickup.location'
-    _description = 'موقع التقاط'
+    _description = 'Pickup Location'
     name = fields.Char(required=True)
-    address = fields.Char(string='العنوان')
-    project_id = fields.Many2one('cafm.waste.project', string='المشروع')
+    address = fields.Char(string='Address')
+    project_id = fields.Many2one('cafm.waste.project', string='Project')
     active = fields.Boolean(default=True)
 
 
 class WasteTeam(models.Model):
     _name = 'cafm.waste.team'
-    _description = 'فريق رفع النفايات'
+    _description = 'Waste Collection Team'
     name = fields.Char(required=True)
-    project_id = fields.Many2one('cafm.waste.project', string='المشروع')
-    employee_ids = fields.Many2many('hr.employee', string='الأعضاء')
+    project_id = fields.Many2one('cafm.waste.project', string='Project')
+    employee_ids = fields.Many2many('hr.employee', string='Members')
     member_count = fields.Integer(compute='_compute_member_count')
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
     active = fields.Boolean(default=True)
@@ -86,38 +86,38 @@ class WasteTeam(models.Model):
 
 class WasteProject(models.Model):
     _name = 'cafm.waste.project'
-    _description = 'مشروع نفايات (عقد عميل)'
+    _description = 'Waste Project (Client Contract)'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _rec_name = 'name'
 
     name = fields.Char(required=True, tracking=True)
-    sequence = fields.Char(string='الرقم التسلسلي', readonly=True, copy=False)
+    sequence = fields.Char(string='Sequence Number', readonly=True, copy=False)
     active = fields.Boolean(default=True)
-    contact_id = fields.Many2one('res.partner', string='جهة العميل', tracking=True)
-    cafm_client_id = fields.Many2one('care.cafm.client', string='عميل المرافق', tracking=True)
-    start_date = fields.Date(string='تاريخ البداية')
-    end_date = fields.Date(string='تاريخ النهاية')
+    contact_id = fields.Many2one('res.partner', string='Client Entity', tracking=True)
+    cafm_client_id = fields.Many2one('care.cafm.client', string='Facility Client', tracking=True)
+    start_date = fields.Date(string='Start Date')
+    end_date = fields.Date(string='End Date')
     image = fields.Binary()
     notes = fields.Html()
-    pickup_location_ids = fields.One2many('cafm.waste.pickup.location', 'project_id', string='مواقع الالتقاط')
-    team_ids = fields.One2many('cafm.waste.team', 'project_id', string='الفرق')
+    pickup_location_ids = fields.One2many('cafm.waste.pickup.location', 'project_id', string='Pickup Locations')
+    team_ids = fields.One2many('cafm.waste.team', 'project_id', string='Teams')
     # ---- default operation team (new orders inherit these; still editable) ----
     default_ops_manager_id = fields.Many2one(
-        'res.users', string='مسؤول العمليات الافتراضي', tracking=True,
-        help='يُنبَّه فور وصول أي طلب نقل جديد في هذا المشروع، ويقوم بإسناد السائق.')
+        'res.users', string='Default Operations Officer', tracking=True,
+        help='Notified as soon as any new transfer order arrives in this project, and assigns the driver.')
     driver_user_ids = fields.Many2many(
         'res.users', 'cafm_waste_project_driver_rel', 'project_id', 'user_id',
-        string='السائقون المسجّلون في الخدمة', tracking=True,
-        help='مجموعة السائقين التي يختار منها مسؤول العمليات عند إسناد الطلب.')
+        string='Drivers Registered in the Service', tracking=True,
+        help='The pool of drivers the operations officer selects from when assigning the order.')
     default_driver_id = fields.Many2one(
-        'res.users', string='السائق الافتراضي', tracking=True,
+        'res.users', string='Default Driver', tracking=True,
         domain="[('id','in',driver_user_ids)]",
-        help='اختياري — يُسنَد تلقائيًا للطلبات الجديدة. اتركه فارغًا ليقوم مسؤول العمليات بالإسناد يدويًا.')
+        help='Optional — assigned automatically to new orders. Leave empty so the operations officer assigns manually.')
     default_receiver_id = fields.Many2one(
-        'res.users', string='مستلم الكميات الافتراضي', tracking=True,
-        help='مستلم مركز المعالجة الذي يسجّل الكميات المستلمة.')
-    order_ids = fields.One2many('cafm.waste.order', 'project_id', string='الطلبات')
-    trip_ids = fields.One2many('cafm.waste.trip', 'project_id', string='الرحلات')
+        'res.users', string='Default Quantity Receiver', tracking=True,
+        help='The treatment centre receiver who records the received quantities.')
+    order_ids = fields.One2many('cafm.waste.order', 'project_id', string='Orders')
+    trip_ids = fields.One2many('cafm.waste.trip', 'project_id', string='Trips')
     order_count = fields.Integer(compute='_compute_counts')
     trip_count = fields.Integer(compute='_compute_counts')
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
@@ -142,64 +142,64 @@ class WasteProject(models.Model):
 
 class WasteOrderLine(models.Model):
     _name = 'cafm.waste.order.line'
-    _description = 'سطر طلب نفايات'
-    order_id = fields.Many2one('cafm.waste.order', string='الطلب', ondelete='cascade')
-    item_id = fields.Many2one('cafm.waste.item', string='الصنف', required=True)
-    width = fields.Float(related='item_id.width', string='العرض')
-    height = fields.Float(related='item_id.height', string='الارتفاع')
-    weight = fields.Float(related='item_id.weight', string='الوزن')
-    quantity = fields.Float(string='الكمية', default=1.0)
+    _description = 'Waste Order Line'
+    order_id = fields.Many2one('cafm.waste.order', string='Order', ondelete='cascade')
+    item_id = fields.Many2one('cafm.waste.item', string='Item', required=True)
+    width = fields.Float(related='item_id.width', string='Width')
+    height = fields.Float(related='item_id.height', string='Height')
+    weight = fields.Float(related='item_id.weight', string='Weight')
+    quantity = fields.Float(string='Quantity', default=1.0)
     active = fields.Boolean(default=True)
 
 
 class WasteTripLine(models.Model):
     _name = 'cafm.waste.trip.line'
-    _description = 'سطر رحلة نفايات'
-    trip_id = fields.Many2one('cafm.waste.trip', string='الرحلة', ondelete='cascade')
-    order_id = fields.Many2one('cafm.waste.order', string='الطلب')
-    item_id = fields.Many2one('cafm.waste.item', string='الصنف', required=True)
-    width = fields.Float(related='item_id.width', string='العرض')
-    height = fields.Float(related='item_id.height', string='الارتفاع')
-    weight = fields.Float(related='item_id.weight', string='الوزن')
-    quantity = fields.Float(string='الكمية', default=1.0)
+    _description = 'Waste Trip Line'
+    trip_id = fields.Many2one('cafm.waste.trip', string='Trip', ondelete='cascade')
+    order_id = fields.Many2one('cafm.waste.order', string='Order')
+    item_id = fields.Many2one('cafm.waste.item', string='Item', required=True)
+    width = fields.Float(related='item_id.width', string='Width')
+    height = fields.Float(related='item_id.height', string='Height')
+    weight = fields.Float(related='item_id.weight', string='Weight')
+    quantity = fields.Float(string='Quantity', default=1.0)
     active = fields.Boolean(default=True)
 
 
 class WasteTrip(models.Model):
     _name = 'cafm.waste.trip'
-    _description = 'رحلة نقل نفايات'
+    _description = 'Waste Transfer Trip'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'sequence desc, id desc'
     _rec_name = 'sequence'
 
-    sequence = fields.Char(string='الرقم التسلسلي', readonly=True, copy=False)
-    reference = fields.Char(string='المرجع', compute='_compute_reference', store=True)
-    pickup_location_id = fields.Many2one('cafm.waste.pickup.location', string='موقع الالتقاط', tracking=True)
-    center_id = fields.Many2one('cafm.waste.center', string='مركز المعالجة', tracking=True)
-    type_id = fields.Many2one('cafm.waste.type', string='النوع', tracking=True)
-    company_id = fields.Many2one('res.company', string='الشركة', default=lambda s: s.env.company)
-    project_id = fields.Many2one('cafm.waste.project', string='المشروع', tracking=True)
-    pickuped_datetime = fields.Datetime(string='وقت الالتقاط', tracking=True)
-    contact_id = fields.Many2one('res.partner', string='جهة العميل', tracking=True)
-    trip_date = fields.Date(string='تاريخ الرحلة', tracking=True)
-    trip_line_ids = fields.One2many('cafm.waste.trip.line', 'trip_id', string='الأصناف')
-    states = fields.Selection(STATES, string='الحالة', default='draft', tracking=True)
-    team_id = fields.Many2one('cafm.waste.team', string='الفريق', tracking=True)
-    order_id = fields.Many2one('cafm.waste.order', string='الطلب')
+    sequence = fields.Char(string='Sequence Number', readonly=True, copy=False)
+    reference = fields.Char(string='Reference', compute='_compute_reference', store=True)
+    pickup_location_id = fields.Many2one('cafm.waste.pickup.location', string='Pickup Location', tracking=True)
+    center_id = fields.Many2one('cafm.waste.center', string='Treatment Centre', tracking=True)
+    type_id = fields.Many2one('cafm.waste.type', string='Type', tracking=True)
+    company_id = fields.Many2one('res.company', string='Company', default=lambda s: s.env.company)
+    project_id = fields.Many2one('cafm.waste.project', string='Project', tracking=True)
+    pickuped_datetime = fields.Datetime(string='Pickup Time', tracking=True)
+    contact_id = fields.Many2one('res.partner', string='Client Entity', tracking=True)
+    trip_date = fields.Date(string='Trip Date', tracking=True)
+    trip_line_ids = fields.One2many('cafm.waste.trip.line', 'trip_id', string='Items')
+    states = fields.Selection(STATES, string='Status', default='draft', tracking=True)
+    team_id = fields.Many2one('cafm.waste.team', string='Team', tracking=True)
+    order_id = fields.Many2one('cafm.waste.order', string='Order')
     media_ids = fields.Many2many('ir.attachment', 'cafm_waste_trip_media_rel', 'trip_id', 'attachment_id',
-                                 string='صور وفيديوهات الرحلة')
+                                 string='Trip Photos and Videos')
     # live driver GPS tracking
-    driver_id = fields.Many2one('res.users', string='السائق', tracking=True)
+    driver_id = fields.Many2one('res.users', string='Driver', tracking=True)
     # driver acknowledgement — the crew accepts the job before moving
-    driver_accepted = fields.Boolean(string='قبِل السائق', copy=False, tracking=True)
-    driver_accepted_at = fields.Datetime(string='وقت القبول', copy=False)
-    driver_lat = fields.Float(string='خط العرض', digits=(10, 7))
-    driver_lng = fields.Float(string='خط الطول', digits=(10, 7))
-    driver_loc_time = fields.Datetime(string='آخر تحديث للموقع')
+    driver_accepted = fields.Boolean(string='Driver Accepted', copy=False, tracking=True)
+    driver_accepted_at = fields.Datetime(string='Acceptance Time', copy=False)
+    driver_lat = fields.Float(string='Latitude', digits=(10, 7))
+    driver_lng = fields.Float(string='Longitude', digits=(10, 7))
+    driver_loc_time = fields.Datetime(string='Last Location Update')
     # stored so they can be grouped/sorted/aggregated (same reason as the order)
-    total_weight = fields.Float(compute='_compute_totals', store=True, string='مجموع أوزان الأصناف')
-    total_quantity = fields.Float(compute='_compute_totals', store=True, string='إجمالي الكمية')
-    total_qty_weight = fields.Float(compute='_compute_totals', store=True, string='الوزن الكلي')
+    total_weight = fields.Float(compute='_compute_totals', store=True, string='Total Item Weights')
+    total_quantity = fields.Float(compute='_compute_totals', store=True, string='Total Quantity')
+    total_qty_weight = fields.Float(compute='_compute_totals', store=True, string='Total Weight')
     active = fields.Boolean(default=True)
 
     @api.depends('trip_line_ids.quantity', 'trip_line_ids.weight', 'trip_line_ids.item_id.weight')
@@ -237,8 +237,8 @@ class WasteTrip(models.Model):
             return
         try:
             self.env['care.cafm.notification'].sudo().push(
-                self.driver_id, _('🚛 رحلة نفايات جديدة %s') % (self.sequence or ''),
-                _('أُسندت إليك رحلة %s — الالتقاط من %s. افتح «رحلات النفايات» لمشاركة موقعك.')
+                self.driver_id, _('🚛 New Waste Trip %s') % (self.sequence or ''),
+                _('Trip %s has been assigned to you — pickup from %s. Open Waste Trips to share your location.')
                 % (self.sequence or '', self.pickup_location_id.name or '—'),
                 ntype='task')
         except Exception:
@@ -251,47 +251,47 @@ class WasteTrip(models.Model):
 
 class WasteOrder(models.Model):
     _name = 'cafm.waste.order'
-    _description = 'طلب نقل ومعالجة نفايات'
+    _description = 'Waste Transfer and Treatment Order'
     _inherit = ['mail.thread', 'mail.activity.mixin', 'portal.mixin']
     _order = 'serial desc, id desc'
     _rec_name = 'serial'
 
-    serial = fields.Char(string='الرقم التسلسلي', readonly=True, copy=False)
+    serial = fields.Char(string='Sequence Number', readonly=True, copy=False)
     active = fields.Boolean(default=True)
-    project_id = fields.Many2one('cafm.waste.project', string='المشروع', tracking=True)
-    contact_id = fields.Many2one(related='project_id.contact_id', store=True, string='جهة العميل')
-    type_id = fields.Many2one('cafm.waste.type', string='النوع', tracking=True)
-    pickup_location_id = fields.Many2one('cafm.waste.pickup.location', string='موقع الالتقاط', tracking=True)
-    order_datetime = fields.Datetime(string='وقت الالتقاط', tracking=True)
-    request_datetime = fields.Datetime(string='وقت الطلب', default=fields.Datetime.now)
-    notes = fields.Html(string='ملاحظات')
-    states = fields.Selection(STATES, string='الحالة', default='draft', copy=False, tracking=True)
-    order_line_ids = fields.One2many('cafm.waste.order.line', 'order_id', string='الأصناف')
-    trip_id = fields.Many2one('cafm.waste.trip', string='الرحلة', tracking=True)
-    trip_line_ids = fields.One2many(related='trip_id.trip_line_ids', string='أصناف الرحلة')
+    project_id = fields.Many2one('cafm.waste.project', string='Project', tracking=True)
+    contact_id = fields.Many2one(related='project_id.contact_id', store=True, string='Client Entity')
+    type_id = fields.Many2one('cafm.waste.type', string='Type', tracking=True)
+    pickup_location_id = fields.Many2one('cafm.waste.pickup.location', string='Pickup Location', tracking=True)
+    order_datetime = fields.Datetime(string='Pickup Time', tracking=True)
+    request_datetime = fields.Datetime(string='Order Time', default=fields.Datetime.now)
+    notes = fields.Html(string='Notes')
+    states = fields.Selection(STATES, string='Status', default='draft', copy=False, tracking=True)
+    order_line_ids = fields.One2many('cafm.waste.order.line', 'order_id', string='Items')
+    trip_id = fields.Many2one('cafm.waste.trip', string='Trip', tracking=True)
+    trip_line_ids = fields.One2many(related='trip_id.trip_line_ids', string='Trip Items')
 
     # operation roles + proof (live on the order — smarter than the legacy split)
     # defaulted from the project's team on create, but always editable afterwards.
-    ops_manager_id = fields.Many2one('res.users', string='مسؤول العمليات', tracking=True)
-    driver_id = fields.Many2one('res.users', string='السائق', tracking=True,
+    ops_manager_id = fields.Many2one('res.users', string='Operations Officer', tracking=True)
+    driver_id = fields.Many2one('res.users', string='Driver', tracking=True,
                                 domain="[('id','in',available_driver_ids)]")
-    receiver_id = fields.Many2one('res.users', string='مستلم الكميات', tracking=True)
+    receiver_id = fields.Many2one('res.users', string='Quantity Receiver', tracking=True)
     # the project's driver pool — drives the driver_id domain in the form
     available_driver_ids = fields.Many2many(
-        'res.users', string='السائقون المتاحون',
-        compute='_compute_available_drivers', help='السائقون المسجّلون في مشروع هذا الطلب.')
-    proof_image = fields.Image(string='صورة إثبات', max_width=1920, max_height=1920)
+        'res.users', string='Available Drivers',
+        compute='_compute_available_drivers', help='The drivers registered in the project of this order.')
+    proof_image = fields.Image(string='Proof Photo', max_width=1920, max_height=1920)
     media_ids = fields.Many2many('ir.attachment', 'cafm_waste_order_media_rel', 'order_id', 'attachment_id',
-                                 string='صور وفيديوهات الإثبات',
-                                 help='صور وفيديوهات إضافية دالة على تنفيذ الرفع والمعالجة.')
-    final_weight = fields.Float(string='الوزن النهائي المستلم')
-    final_note = fields.Char(string='ملاحظة الاستلام')
+                                 string='Proof Photos and Videos',
+                                 help='Additional photos and videos evidencing the collection and treatment work.')
+    final_weight = fields.Float(string='Final Received Weight')
+    final_note = fields.Char(string='Receipt Note')
 
     # stored: the graph/pivot dashboards aggregate these as measures, which is a
     # read_group → they must exist as real columns or Odoo raises
     # "Cannot convert field ... to SQL".
-    total_quantity = fields.Float(compute='_compute_totals', store=True, string='إجمالي الكمية')
-    total_weight = fields.Float(compute='_compute_totals', store=True, string='الوزن الكلي')
+    total_quantity = fields.Float(compute='_compute_totals', store=True, string='Total Quantity')
+    total_weight = fields.Float(compute='_compute_totals', store=True, string='Total Weight')
     qr_url = fields.Char(compute='_compute_qr_url', string='QR')
 
     def effective_lines(self):
@@ -353,14 +353,14 @@ class WasteOrder(models.Model):
             return
         if mgr.partner_id:
             self.message_subscribe(partner_ids=mgr.partner_id.ids)
-        body = _('طلب نقل جديد %s — %s%s') % (
+        body = _('New Transfer Order %s — %s%s') % (
             self.serial or '', self.project_id.name or '',
-            _(' · بانتظار إسناد سائق') if not self.driver_id else '')
+            _(' · Awaiting driver assignment') if not self.driver_id else '')
         self.message_post(body=body, partner_ids=mgr.partner_id.ids if mgr.partner_id else None)
         if 'care.cafm.notification' in self.env:
             try:
                 self.env['care.cafm.notification'].sudo().push(
-                    mgr, _('🗑️ طلب نقل نفايات جديد'), body, ntype='task',
+                    mgr, _('🗑️ New Waste Transfer Order'), body, ntype='task',
                     action_url='waste/order/%s' % self.id)
             except Exception:
                 pass
@@ -368,7 +368,7 @@ class WasteOrder(models.Model):
         if not self.driver_id:
             try:
                 self.activity_schedule('mail.mail_activity_data_todo', user_id=mgr.id,
-                                       summary=_('إسناد سائق للطلب %s') % (self.serial or ''),
+                                       summary=_('Assign a driver to order %s') % (self.serial or ''),
                                        note=body)
             except Exception:
                 pass
@@ -378,7 +378,7 @@ class WasteOrder(models.Model):
         self.ensure_one()
         return {
             'type': 'ir.actions.act_window',
-            'name': _('إسناد سائق'),
+            'name': _('Assign Driver'),
             'res_model': 'cafm.waste.assign.driver',
             'view_mode': 'form',
             'target': 'new',
@@ -394,12 +394,12 @@ class WasteOrder(models.Model):
             self.action_to_schedule()
         if self.trip_id:
             self.trip_id.driver_id = driver.id
-        self.message_post(body=_('🚛 تم إسناد الطلب إلى السائق %s') % driver.name)
+        self.message_post(body=_('🚛 The order has been assigned to driver %s') % driver.name)
         # close the "assign a driver" to-do
         try:
             self.activity_ids.filtered(
                 lambda a: a.user_id == self.ops_manager_id).action_feedback(
-                    feedback=_('تم إسناد السائق %s') % driver.name)
+                    feedback=_('Driver %s has been assigned.') % driver.name)
         except Exception:
             pass
         return True
@@ -492,13 +492,13 @@ class WasteOrder(models.Model):
 
     # ---- notifications ---------------------------------------------------
     _CLIENT_MSG = {
-        'scheduled': ('📅 تم جدولة طلبكم', 'تم جدولة طلب رفع النفايات %s وسيصل الفريق قريبًا.'),
-        'pickuped': ('🚛 تم الالتقاط', 'تم رفع النفايات من موقعكم للطلب %s.'),
-        'arrived': ('🏭 وصلت للمعالجة', 'وصلت شحنة الطلب %s إلى مركز المعالجة.'),
-        'processing': ('♻️ جارٍ المعالجة', 'جارٍ معالجة نفايات الطلب %s.'),
-        'delivered': ('🔥 سُلّمت للمحرقة', 'تم تسليم نفايات الطلب %s إلى المحرقة الحكومية.'),
-        'completed': ('✅ اكتمل الطلب', 'اكتمل طلب رفع ومعالجة النفايات %s. شكرًا لكم.'),
-        'cancelled': ('✖ تم إلغاء الطلب', 'تم إلغاء طلب النفايات %s.'),
+        'scheduled': ('📅 Your Order Has Been Scheduled', 'Waste collection order %s has been scheduled and the team will arrive shortly.'),
+        'pickuped': ('🚛 Picked Up', 'The waste has been collected from your location for order %s.'),
+        'arrived': ('🏭 Arrived at Treatment', 'The shipment for order %s has arrived at the treatment centre.'),
+        'processing': ('♻️ Treatment in Progress', 'The waste for order %s is currently being treated.'),
+        'delivered': ('🔥 Delivered to Incinerator', 'The waste for order %s has been delivered to the government incinerator.'),
+        'completed': ('✅ Order Completed', 'Waste collection and treatment order %s has been completed. Thank you.'),
+        'cancelled': ('✖ Order Cancelled', 'Waste order %s has been cancelled.'),
     }
 
     def _client_users(self):
@@ -531,13 +531,13 @@ class WasteOrder(models.Model):
         self.ensure_one()
         if 'care.cafm.notification' not in self.env:
             return
-        for user, label in [(self.ops_manager_id, 'مسؤول العمليات'),
-                            (self.driver_id, 'السائق'), (self.receiver_id, 'مستلم الكميات')]:
+        for user, label in [(self.ops_manager_id, 'Operations Officer'),
+                            (self.driver_id, 'Driver'), (self.receiver_id, 'Quantity Receiver')]:
             if user:
                 try:
                     self.env['care.cafm.notification'].sudo().push(
-                        user, _('طلب نفايات %s') % (self.serial or ''),
-                        _('أُسند إليك دور «%s» في الطلب %s') % (label, self.serial or ''),
+                        user, _('Waste Order %s') % (self.serial or ''),
+                        _('You have been assigned the role %s on order %s') % (label, self.serial or ''),
                         ntype='task', action_url='/waste/order/%s' % self.id)
                 except Exception:
                     pass
@@ -593,14 +593,14 @@ class WasteOrder(models.Model):
 class WasteAssignDriver(models.TransientModel):
     """Ops-manager wizard: pick a driver from the project's registered pool."""
     _name = 'cafm.waste.assign.driver'
-    _description = 'إسناد سائق لطلب نقل'
+    _description = 'Assign Driver to a Transfer Order'
 
-    order_id = fields.Many2one('cafm.waste.order', string='الطلب', required=True, ondelete='cascade')
-    project_id = fields.Many2one(related='order_id.project_id', string='المشروع')
+    order_id = fields.Many2one('cafm.waste.order', string='Order', required=True, ondelete='cascade')
+    project_id = fields.Many2one(related='order_id.project_id', string='Project')
     available_driver_ids = fields.Many2many(
-        'res.users', string='السائقون المتاحون',
-        compute='_compute_available', help='السائقون المسجّلون في مشروع هذا الطلب.')
-    driver_id = fields.Many2one('res.users', string='السائق', required=True,
+        'res.users', string='Available Drivers',
+        compute='_compute_available', help='The drivers registered in the project of this order.')
+    driver_id = fields.Many2one('res.users', string='Driver', required=True,
                                 domain="[('id','in',available_driver_ids)]")
 
     @api.depends('order_id')
@@ -619,7 +619,7 @@ class WastePeriodReport(models.AbstractModel):
     the per-order report — printing one page per order for a whole month is a
     200-page document with no totals."""
     _name = 'report.care_cafm_waste.report_waste_period_doc'
-    _description = 'تقرير النفايات الإجمالي للفترة'
+    _description = 'Overall Waste Report for the Period'
 
     @api.model
     def _get_report_values(self, docids, data=None):

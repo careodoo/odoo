@@ -14,17 +14,17 @@ from odoo.exceptions import UserError
 class ValetZone(models.Model):
     """A parking area the service covers — a garage, a basement, a forecourt."""
     _name = 'care.valet.zone'
-    _description = 'منطقة صف السيارات'
+    _description = 'Valet Parking Zone'
     _order = 'facility_id, name'
 
-    name = fields.Char(string='المنطقة', required=True, translate=True)
-    code = fields.Char(string='الرمز')
-    facility_id = fields.Many2one('care.cafm.facility', string='المرفق', required=True)
-    capacity = fields.Integer(string='السعة (مواقف)', default=50)
-    spot_ids = fields.One2many('care.valet.spot', 'zone_id', string='المواقف')
-    occupied = fields.Integer(compute='_compute_stats', string='مشغولة')
-    free = fields.Integer(compute='_compute_stats', string='متاحة')
-    occupancy = fields.Float(compute='_compute_stats', string='الإشغال %')
+    name = fields.Char(string='Zone', required=True, translate=True)
+    code = fields.Char(string='Code')
+    facility_id = fields.Many2one('care.cafm.facility', string='Facility', required=True)
+    capacity = fields.Integer(string='Capacity (Spots)', default=50)
+    spot_ids = fields.One2many('care.valet.spot', 'zone_id', string='Spots')
+    occupied = fields.Integer(compute='_compute_stats', string='Occupied')
+    free = fields.Integer(compute='_compute_stats', string='Available')
+    occupancy = fields.Float(compute='_compute_stats', string='Occupancy %')
     active = fields.Boolean(default=True)
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
 
@@ -41,78 +41,78 @@ class ValetZone(models.Model):
 class ValetSpot(models.Model):
     """One numbered bay."""
     _name = 'care.valet.spot'
-    _description = 'موقف'
+    _description = 'Spot'
     _order = 'zone_id, name'
 
-    name = fields.Char(string='رقم الموقف', required=True)
-    zone_id = fields.Many2one('care.valet.zone', string='المنطقة', required=True, ondelete='cascade')
-    facility_id = fields.Many2one(related='zone_id.facility_id', store=True, string='المرفق')
+    name = fields.Char(string='Spot Number', required=True)
+    zone_id = fields.Many2one('care.valet.zone', string='Zone', required=True, ondelete='cascade')
+    facility_id = fields.Many2one(related='zone_id.facility_id', store=True, string='Facility')
     state = fields.Selection([
-        ('free', 'متاح'), ('occupied', 'مشغول'), ('blocked', 'معطّل'),
-    ], string='الحالة', default='free', required=True, index=True)
-    ticket_id = fields.Many2one('care.valet.ticket', string='التذكرة الحالية', readonly=True)
-    note = fields.Char(string='ملاحظة')
+        ('free', 'Available'), ('occupied', 'Occupied'), ('blocked', 'Out of Service'),
+    ], string='Status', default='free', required=True, index=True)
+    ticket_id = fields.Many2one('care.valet.ticket', string='Current Ticket', readonly=True)
+    note = fields.Char(string='Note')
     active = fields.Boolean(default=True)
 
 
 class ValetTicket(models.Model):
     """A guest's car, from hand-over to hand-back."""
     _name = 'care.valet.ticket'
-    _description = 'تذكرة صف سيارة'
+    _description = 'Valet Ticket'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'received_at desc, id desc'
 
-    name = fields.Char(string='رقم التذكرة', default='/', copy=False, readonly=True, index=True)
-    facility_id = fields.Many2one('care.cafm.facility', string='المرفق', required=True, tracking=True)
-    zone_id = fields.Many2one('care.valet.zone', string='المنطقة', tracking=True,
+    name = fields.Char(string='Ticket Number', default='/', copy=False, readonly=True, index=True)
+    facility_id = fields.Many2one('care.cafm.facility', string='Facility', required=True, tracking=True)
+    zone_id = fields.Many2one('care.valet.zone', string='Zone', tracking=True,
                               domain="[('facility_id','=',facility_id)]")
-    spot_id = fields.Many2one('care.valet.spot', string='الموقف', tracking=True,
+    spot_id = fields.Many2one('care.valet.spot', string='Spot', tracking=True,
                               domain="[('zone_id','=',zone_id)]")
     # the car
-    plate = fields.Char(string='رقم اللوحة', required=True, tracking=True, index=True)
-    car_make = fields.Char(string='الماركة')
-    car_model = fields.Char(string='الموديل')
-    car_color = fields.Char(string='اللون')
+    plate = fields.Char(string='Plate Number', required=True, tracking=True, index=True)
+    car_make = fields.Char(string='Make')
+    car_model = fields.Char(string='Model')
+    car_color = fields.Char(string='Color')
     # the guest
-    guest_name = fields.Char(string='اسم الضيف')
-    guest_phone = fields.Char(string='هاتف الضيف', index=True)
+    guest_name = fields.Char(string='Guest Name')
+    guest_phone = fields.Char(string='Guest Phone', index=True)
     # the crew
-    received_by = fields.Many2one('hr.employee', string='استلمها', tracking=True)
-    parked_by = fields.Many2one('hr.employee', string='صفّها')
-    delivered_by = fields.Many2one('hr.employee', string='سلّمها', tracking=True)
-    shift_id = fields.Many2one('care.valet.shift', string='الوردية', index=True)
+    received_by = fields.Many2one('hr.employee', string='Checked In By', tracking=True)
+    parked_by = fields.Many2one('hr.employee', string='Parked By')
+    delivered_by = fields.Many2one('hr.employee', string='Handed Over By', tracking=True)
+    shift_id = fields.Many2one('care.valet.shift', string='Shift', index=True)
     # timing
-    received_at = fields.Datetime(string='وقت الاستلام', default=fields.Datetime.now, required=True, tracking=True)
-    parked_at = fields.Datetime(string='وقت الصف', readonly=True)
-    requested_at = fields.Datetime(string='وقت الطلب', readonly=True, tracking=True)
-    delivered_at = fields.Datetime(string='وقت التسليم', readonly=True, tracking=True)
-    park_minutes = fields.Float(string='مدة الوقوف (دقيقة)', compute='_compute_times', store=True)
-    retrieval_minutes = fields.Float(string='زمن الإحضار (دقيقة)', compute='_compute_times', store=True)
-    sla_minutes = fields.Integer(string='المستهدف للإحضار (دقيقة)', default=7)
-    is_late = fields.Boolean(string='تأخر الإحضار', compute='_compute_times', store=True)
+    received_at = fields.Datetime(string='Check-In Time', default=fields.Datetime.now, required=True, tracking=True)
+    parked_at = fields.Datetime(string='Parking Time', readonly=True)
+    requested_at = fields.Datetime(string='Request Time', readonly=True, tracking=True)
+    delivered_at = fields.Datetime(string='Handover Time', readonly=True, tracking=True)
+    park_minutes = fields.Float(string='Parking Duration (Minutes)', compute='_compute_times', store=True)
+    retrieval_minutes = fields.Float(string='Retrieval Time (Minutes)', compute='_compute_times', store=True)
+    sla_minutes = fields.Integer(string='Retrieval Target (Minutes)', default=7)
+    is_late = fields.Boolean(string='Retrieval Delayed', compute='_compute_times', store=True)
     # money
-    fee = fields.Float(string='الرسوم', tracking=True)
-    tip = fields.Float(string='الإكرامية')
+    fee = fields.Float(string='Fees', tracking=True)
+    tip = fields.Float(string='Tip')
     payment_method = fields.Selection([
-        ('cash', 'نقدًا'), ('knet', 'كي نت'), ('card', 'بطاقة'), ('free', 'مجاني/ضيف'),
-    ], string='طريقة الدفع', default='cash', tracking=True)
-    paid = fields.Boolean(string='مدفوع', tracking=True)
+        ('cash', 'Cash'), ('knet', 'KNET'), ('card', 'Card'), ('free', 'Complimentary/Guest'),
+    ], string='Payment Method', default='cash', tracking=True)
+    paid = fields.Boolean(string='Paid', tracking=True)
     # condition
-    damage_note = fields.Text(string='ملاحظات حالة المركبة')
-    has_damage = fields.Boolean(string='بها ملاحظات ضرر', tracking=True)
-    key_tag = fields.Char(string='رقم علاقة المفتاح')
+    damage_note = fields.Text(string='Vehicle Condition Notes')
+    has_damage = fields.Boolean(string='Has Damage Notes', tracking=True)
+    key_tag = fields.Char(string='Key Tag Number')
     # A guest holds a printed ticket, not an account. The token on that ticket
     # is what lets them ask for the car back without logging in — so it must be
     # unguessable and belong to exactly one ticket.
-    qr_token = fields.Char(string='رمز التذكرة', copy=False, index=True, readonly=True)
-    requested_by_guest = fields.Boolean(string='طلبها الضيف بنفسه', readonly=True)
+    qr_token = fields.Char(string='Ticket Code', copy=False, index=True, readonly=True)
+    requested_by_guest = fields.Boolean(string='Requested by Guest', readonly=True)
     state = fields.Selection([
-        ('received', 'مُستلَمة'), ('parked', 'مركونة'), ('requested', 'مطلوبة'),
-        ('delivered', 'سُلِّمت'), ('cancelled', 'ملغاة'),
-    ], string='الحالة', default='received', required=True, tracking=True, index=True)
+        ('received', 'Checked In'), ('parked', 'Parked'), ('requested', 'Requested'),
+        ('delivered', 'Delivered'), ('cancelled', 'Cancelled'),
+    ], string='Status', default='received', required=True, tracking=True, index=True)
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
 
-    _sql_constraints = [('valet_name_uniq', 'unique(name)', 'رقم التذكرة يجب أن يكون فريدًا.')]
+    _sql_constraints = [('valet_name_uniq', 'unique(name)', 'The ticket number must be unique.')]
 
     @api.depends('received_at', 'delivered_at', 'requested_at', 'sla_minutes')
     def _compute_times(self):
@@ -140,21 +140,21 @@ class ValetTicket(models.Model):
             if spot:
                 t.spot_id = spot
             if not t.spot_id:
-                raise UserError(_('اختر الموقف أولاً.'))
+                raise UserError(_('Please select a parking spot first.'))
             if t.spot_id.state == 'occupied' and t.spot_id.ticket_id != t:
-                raise UserError(_('الموقف %s مشغول بالفعل.') % t.spot_id.name)
+                raise UserError(_('Spot %s is already occupied.') % t.spot_id.name)
             t.write({'state': 'parked', 'parked_at': fields.Datetime.now(),
                      'parked_by': t.parked_by.id or t.received_by.id})
             t.spot_id.write({'state': 'occupied', 'ticket_id': t.id})
-            t.message_post(body=_('🅿️ رُكنت في الموقف %s.') % t.spot_id.name)
+            t.message_post(body=_('🅿️ Parked in spot %s.') % t.spot_id.name)
 
     def action_request(self, by_guest=False):
         """Guest asked for the car back — starts the retrieval clock."""
         for t in self:
             t.write({'state': 'requested', 'requested_at': fields.Datetime.now(),
                      'requested_by_guest': by_guest})
-            t.message_post(body=_('🔔 طلب الضيف إحضار المركبة%s.')
-                           % (_(' (بمسح رمز التذكرة)') if by_guest else ''))
+            t.message_post(body=_('🔔 The guest requested vehicle retrieval%s.')
+                           % (_(' (by scanning the ticket code)') if by_guest else ''))
             t._notify_crew()
 
     def _notify_crew(self):
@@ -175,7 +175,7 @@ class ValetTicket(models.Model):
         where = self.spot_id.name or self.zone_id.name or ''
         try:
             self.env['care.cafm.notification'].sudo().push(
-                users, _('🚗 طلب إحضار مركبة'),
+                users, _('🚗 Vehicle Retrieval Request'),
                 '%s — %s%s' % (self.plate, self.name, (' · %s' % where) if where else ''),
                 ntype='alert', action_url='/cafm/m/valet')
         except Exception:
@@ -195,8 +195,8 @@ class ValetTicket(models.Model):
             t.write(vals)
             if t.spot_id:
                 t.spot_id.write({'state': 'free', 'ticket_id': False})
-            t.message_post(body=_('✅ سُلّمت المركبة للضيف%s.')
-                           % ((' خلال %d دقيقة' % t.retrieval_minutes) if t.retrieval_minutes else ''))
+            t.message_post(body=_('✅ The vehicle was handed over to the guest%s.')
+                           % ((' within %d minutes' % t.retrieval_minutes) if t.retrieval_minutes else ''))
 
     def action_cancel(self):
         for t in self:
@@ -208,20 +208,20 @@ class ValetTicket(models.Model):
 class ValetShift(models.Model):
     """An attendant's shift — the takings and volume behind it."""
     _name = 'care.valet.shift'
-    _description = 'وردية فاليه'
+    _description = 'Valet Shift'
     _order = 'start_at desc'
 
-    name = fields.Char(string='الوردية', default='/', copy=False, readonly=True)
-    facility_id = fields.Many2one('care.cafm.facility', string='المرفق', required=True)
-    employee_id = fields.Many2one('hr.employee', string='الموظف', required=True)
-    start_at = fields.Datetime(string='البداية', default=fields.Datetime.now, required=True)
-    end_at = fields.Datetime(string='النهاية')
-    ticket_ids = fields.One2many('care.valet.ticket', 'shift_id', string='التذاكر')
-    ticket_count = fields.Integer(compute='_compute_totals', store=True, string='عدد التذاكر')
-    total_fees = fields.Float(compute='_compute_totals', store=True, string='إجمالي الرسوم')
-    total_tips = fields.Float(compute='_compute_totals', store=True, string='إجمالي الإكراميات')
-    cash_due = fields.Float(compute='_compute_totals', store=True, string='النقد المستحق للتسليم')
-    state = fields.Selection([('open', 'مفتوحة'), ('closed', 'مغلقة')], default='open', required=True)
+    name = fields.Char(string='Shift', default='/', copy=False, readonly=True)
+    facility_id = fields.Many2one('care.cafm.facility', string='Facility', required=True)
+    employee_id = fields.Many2one('hr.employee', string='Employee', required=True)
+    start_at = fields.Datetime(string='Start', default=fields.Datetime.now, required=True)
+    end_at = fields.Datetime(string='End')
+    ticket_ids = fields.One2many('care.valet.ticket', 'shift_id', string='Tickets')
+    ticket_count = fields.Integer(compute='_compute_totals', store=True, string='Ticket Count')
+    total_fees = fields.Float(compute='_compute_totals', store=True, string='Total Fees')
+    total_tips = fields.Float(compute='_compute_totals', store=True, string='Total Tips')
+    cash_due = fields.Float(compute='_compute_totals', store=True, string='Cash Due for Handover')
+    state = fields.Selection([('open', 'Open'), ('closed', 'Closed')], default='open', required=True)
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
 
     @api.depends('ticket_ids.fee', 'ticket_ids.tip', 'ticket_ids.paid', 'ticket_ids.payment_method')

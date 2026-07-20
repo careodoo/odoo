@@ -90,7 +90,7 @@
     <field name="view_mode">tree,form</field>
   </record>
   <record id="action_pest_visit" model="ir.actions.act_window">
-    <field name="name">الزيارات</field><field name="res_model">care.pest.visit</field>
+    <field name="name">Visits</field><field name="res_model">care.pest.visit</field>
     <field name="view_mode">tree,form</field>
   </record>
   <record id="action_pest_station" model="ir.actions.act_window">

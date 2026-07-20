@@ -14,7 +14,7 @@ _logger = logging.getLogger(__name__)
 
 class WasteMigrate(models.AbstractModel):
     _name = 'cafm.waste.migrate'
-    _description = 'ترحيل بيانات النفايات من service_order'
+    _description = 'Migrate waste data from service_order'
 
     @api.model
     def run(self):
@@ -53,7 +53,7 @@ class WasteOrderMigrate(models.Model):
         type_map = self._map_by_name(S('service.type').search([]), 'cafm.waste.type')
         center_map = self._map_by_name(
             S('service.center').search([]), 'cafm.waste.center',
-            extra=lambda r: {'is_incinerator': True} if 'حكوم' in (r.name or '') or 'incinerat' in (r.name or '').lower() else {})
+            extra=lambda r: {'is_incinerator': True} if 'Government' in (r.name or '') or 'incinerat' in (r.name or '').lower() else {})
         item_map = {}
         for it in S('service.item').search([]):
             new = S('cafm.waste.item').search([('name', '=', it.name)], limit=1)
