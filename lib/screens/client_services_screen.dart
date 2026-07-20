@@ -23,6 +23,7 @@ class _ClientServicesScreenState extends State<ClientServicesScreen> {
     'agriculture': (Color(0xFF16A34A), Icons.park_rounded, 'الزراعة'),
     'facade': (Color(0xFF7C3AED), Icons.location_city_rounded, 'الواجهات'),
     'maintenance': (Color(0xFFF7A23B), Icons.build_rounded, 'الصيانة'),
+    'handling': (Color(0xFF0D9488), Icons.local_shipping_rounded, 'المناولة'),
   };
 
   @override
