@@ -3,6 +3,7 @@
 stock, movements, and a scan-to-issue flow (worker scans a product barcode to
 consume it from a store to a facility/location). Scoped to the client's
 facilities."""
+from odoo import _
 from odoo.http import request, Controller, route
 
 from .api import _auth, _ok, _err, _body, API, _person_name
@@ -522,3 +523,69 @@ class InventoryClientApi(Controller):
         except Exception as e:
             return _err(str(e), 422)
         return _ok({'id': move.id, 'name': move.name, 'on_hand': move.item_id.on_hand if move.item_id else None})
+
+    @route(API + '/client/inv/lookup', type='http', auth='public', methods=['GET'],
+           csrf=False, cors='*')
+    def inv_lookup(self, **kw):
+        """What is this code, before anyone commits to issuing it.
+
+        The issue sheet used to show a bare barcode and ask for a quantity —
+        the worker had no way to tell whether they had scanned the right
+        thing, and an unregistered code failed only after they pressed
+        confirm. This answers first: the product, its photo, what is on the
+        shelf, and a plain "not in this store" when it is not.
+        """
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        code = (request.httprequest.args.get('code') or '').strip()
+        store_id = request.httprequest.args.get('store_id')
+        if not code:
+            return _err('أدخل الرمز', 422)
+        base = env['ir.config_parameter'].sudo().get_param('web.base.url', '').rstrip('/')
+        Prod = env['product.product'].sudo()
+        prod = Prod.search(['|', ('barcode', '=', code), ('default_code', '=', code)], limit=1)
+        if not prod:
+            prod = Prod.search(['|', ('name', 'ilike', code),
+                                ('default_code', 'ilike', code)], limit=1)
+        if not prod:
+            return _ok({'found': False, 'code': code,
+                        'message': _('This code is not registered in the system.')})
+        item = None
+        if store_id:
+            item = env['care.cafm.stock.item'].sudo().search(
+                [('store_id', '=', int(store_id)), ('product_id', '=', prod.id)], limit=1)
+        return _ok({
+            'found': True, 'code': code,
+            'product_id': prod.id, 'name': prod.display_name,
+            'default_code': prod.default_code or None,
+            'uom': prod.uom_id.name or None,
+            'image': ('%s/web/image/product.product/%s/image_256' % (base, prod.id)
+                      if prod.image_128 else None),
+            'in_store': bool(item),
+            'on_hand': item.on_hand if item else 0.0,
+            'min_qty': item.min_qty if item else 0.0,
+            'low': bool(item and item.low_stock),
+            'max_issue': item.max_issue_qty if item else 0.0,
+            'allowed': bool(item and item.allow_worker_issue) if item else False,
+            'message': None if item else _('This item is not stocked in this store.'),
+        })
+
+    @route(API + '/client/inv/locations', type='http', auth='public', methods=['GET'],
+           csrf=False, cors='*')
+    def inv_locations(self, **kw):
+        """Destinations with their QR code and NFC tag, so a worker can scan
+        where they are standing instead of hunting a dropdown of two hundred."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        facs = self._facilities(env)
+        locs = env['care.cafm.location'].sudo().search(
+            [('facility_id', 'in', facs.ids)], limit=500) if facs else []
+        return _ok({'locations': [{
+            'id': l.id, 'name': l.name,
+            'path': getattr(l, 'complete_name', '') or l.name,
+            'code': l.code or None,
+            'nfc_uid': getattr(l, 'nfc_uid', False) or None,
+            'facility': l.facility_id.name or None,
+        } for l in locs]})
