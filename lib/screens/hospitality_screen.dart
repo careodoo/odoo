@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
@@ -37,15 +39,43 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
   final List<Map<String, dynamic>> _cart = [];
   final _room = TextEditingController();
 
+  Timer? _live;
+
   @override
   void initState() {
     super.initState();
     _tabs = TabController(length: 3, vsync: this);
     _load();
+    // A kitchen display that needs pulling down is a kitchen display nobody
+    // trusts — the queue moves while you are looking at it. Poll only while
+    // the kitchen tab is open, so no other screen pays for it.
+    _tabs.addListener(_liveToggle);
+  }
+
+  void _liveToggle() {
+    if (_tabs.index == 2) {
+      _live ??= Timer.periodic(const Duration(seconds: 12), (_) {
+        if (mounted && _tabs.index == 2) _refreshKitchen();
+      });
+    } else {
+      _live?.cancel();
+      _live = null;
+    }
+  }
+
+  /// Only the kitchen payload — refreshing the whole menu every twelve
+  /// seconds would fight the user who is mid-order on another tab.
+  Future<void> _refreshKitchen() async {
+    try {
+      final k = await context.read<AuthProvider>().api.hospKitchen();
+      if (mounted) setState(() => _kitchen = k);
+    } catch (_) {/* a missed tick is not worth an error */}
   }
 
   @override
   void dispose() {
+    _live?.cancel();
+    _tabs.removeListener(_liveToggle);
     _tabs.dispose();
     _room.dispose();
     super.dispose();

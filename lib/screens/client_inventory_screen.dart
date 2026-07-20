@@ -3,6 +3,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import 'scan_screen.dart';
 import '../core/widgets.dart';
 import 'searchable_picker.dart';
 import 'consumption_analytics_screen.dart';
@@ -453,29 +454,142 @@ class _ClientInventoryScreenState extends State<ClientInventoryScreen> {
   Future<void> _scanIssue() async {
     final code = await Navigator.push<String>(context, MaterialPageRoute(builder: (_) => const _ScanPage()));
     if (code == null || code.isEmpty || !mounted) return;
+    await _issueSheet(code);
+  }
+
+  /// The issue sheet, rebuilt.
+  ///
+  /// It used to show a bare barcode and ask for a quantity — a worker had no
+  /// way to tell whether they had scanned the right thing, and an
+  /// unregistered code failed only after they pressed confirm. Now the item
+  /// identifies itself first: name, photo, what is on the shelf, and a plain
+  /// refusal when the code is not in the system at all.
+  Future<void> _issueSheet(String code) async {
+    Map<String, dynamic> info;
+    try {
+      info = await context.read<AuthProvider>().api.invLookup(code, storeId: _storeId);
+    } catch (e) {
+      if (mounted) _snack('$e', const Color(0xFFE11D48));
+      return;
+    }
+    if (!mounted) return;
+    if (info['found'] != true || info['in_store'] != true) {
+      await showDialog(
+        context: context,
+        builder: (c) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          icon: const Icon(Icons.search_off_rounded, size: 44, color: Color(0xFFE11D48)),
+          title: Text(
+              info['found'] == true
+                  ? tr('غير متوفّر في هذا المخزن', 'Not stocked in this store')
+                  : tr('صنف غير مسجّل', 'Unregistered item'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text('${info['name'] ?? code}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            Text('${info['message'] ?? ''}',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600)),
+          ]),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(c),
+                child: Text(tr('حسنًا', 'OK'))),
+          ],
+        ),
+      );
+      return;
+    }
+
     final qtyCtrl = TextEditingController(text: '1');
     int? locId;
+    String locLabel = '';
+    final onHand = numOf(info['on_hand']);
+    final maxIssue = numOf(info['max_issue']);
+
     final go = await showModalBottomSheet<bool>(
       context: context, isScrollControlled: true, showDragHandle: true,
       builder: (ctx) => StatefulBuilder(builder: (ctx, setSt) => Padding(
         padding: EdgeInsets.fromLTRB(18, 4, 18, MediaQuery.of(ctx).viewInsets.bottom + 18),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(tr('صرف من المخزون', 'Issue from stock'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: _navy)),
-          const SizedBox(height: 4),
-          Text('${tr('الباركود', 'Barcode')}: $code', style: const TextStyle(color: Colors.grey, fontSize: 13)),
-          const SizedBox(height: 14),
-          DropdownButtonFormField<int>(
-            initialValue: locId, isExpanded: true,
-            decoration: InputDecoration(labelText: tr('وجهة الصرف (مبنى › دور › مكتب)', 'Destination (building › floor › office)'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.place_outlined)),
-            items: [for (final l in _locations) DropdownMenuItem(value: l['id'] as int, child: Text('${l['path'] ?? l['name']}', overflow: TextOverflow.ellipsis))],
-            onChanged: (v) => setSt(() => locId = v),
-          ),
+          // The item, so the worker can see they scanned the right thing.
+          Row(children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: '${info['image'] ?? ''}'.isNotEmpty
+                  ? Image.network('${info['image']}', width: 64, height: 64, fit: BoxFit.cover,
+                      errorBuilder: (c, e, st) => _imgBox())
+                  : _imgBox(),
+            ),
+            const SizedBox(width: 12),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('${info['name']}',
+                  maxLines: 2, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _navy)),
+              const SizedBox(height: 3),
+              Row(children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                      color: (info['low'] == true ? const Color(0xFFE11D48) : const Color(0xFF16A34A))
+                          .withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(20)),
+                  child: Text(
+                      '${tr('الرصيد', 'On hand')} ${onHand.toStringAsFixed(0)} ${info['uom'] ?? ''}',
+                      style: TextStyle(
+                          fontSize: 11.5, fontWeight: FontWeight.w800,
+                          color: info['low'] == true
+                              ? const Color(0xFFE11D48) : const Color(0xFF16A34A))),
+                ),
+                const SizedBox(width: 7),
+                Text('${info['default_code'] ?? code}',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+              ]),
+            ])),
+          ]),
+          const SizedBox(height: 16),
+          // Destination: scan where you are standing, or search for it.
+          Row(children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  final picked = await _pickLocation();
+                  if (picked != null) setSt(() {
+                    locId = picked.$1; locLabel = picked.$2;
+                  });
+                },
+                icon: const Icon(Icons.place_outlined, size: 18),
+                style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                label: Text(
+                    locLabel.isEmpty ? tr('وجهة الصرف', 'Destination') : locLabel,
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+              ),
+            ),
+          ]),
           const SizedBox(height: 12),
-          TextField(controller: qtyCtrl, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: tr('الكمية', 'Quantity'), border: const OutlineInputBorder())),
+          TextField(controller: qtyCtrl, keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                  labelText: tr('الكمية', 'Quantity'),
+                  helperText: maxIssue > 0
+                      ? tr('حد الصرف للمرة: ${maxIssue.toStringAsFixed(0)}',
+                           'Max per issue: ${maxIssue.toStringAsFixed(0)}')
+                      : null,
+                  border: const OutlineInputBorder())),
           const SizedBox(height: 16),
           SizedBox(width: double.infinity, height: 50, child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(backgroundColor: _navy, foregroundColor: Colors.white),
-            onPressed: () => Navigator.pop(ctx, true), icon: const Icon(Icons.check), label: Text(tr('تأكيد الصرف', 'Confirm issue')),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: _navy, foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+            onPressed: () => Navigator.pop(ctx, true),
+            icon: const Icon(Icons.check),
+            label: Text(tr('تأكيد الصرف', 'Confirm issue'),
+                style: const TextStyle(fontWeight: FontWeight.w900)),
           )),
         ]),
       )),
@@ -483,16 +597,107 @@ class _ClientInventoryScreenState extends State<ClientInventoryScreen> {
     if (go != true || !mounted) return;
     try {
       final qty = double.tryParse(qtyCtrl.text) ?? 1.0;
-      final res = await context.read<AuthProvider>().api.clientInvIssue(_storeId!, barcode: code, quantity: qty, locationId: locId);
+      final res = await context.read<AuthProvider>().api
+          .clientInvIssue(_storeId!, barcode: code, quantity: qty, locationId: locId);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('✅ ${res['product']} → ${res['location'] ?? '—'} · ${tr('المتبقّي', 'left')}: ${res['on_hand']}'),
-          backgroundColor: const Color(0xFF16A34A)));
+        _snack('✅ ${res['product']} → ${res['location'] ?? '—'} · '
+               '${tr('المتبقّي', 'left')}: ${res['on_hand']}', const Color(0xFF16A34A));
         _boot();
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: const Color(0xFFE11D48)));
+      if (mounted) _snack('$e', const Color(0xFFE11D48));
     }
+  }
+
+  Widget _imgBox() => Container(
+        width: 64, height: 64,
+        color: _navy.withValues(alpha: 0.07),
+        child: Icon(Icons.inventory_2_outlined, color: _navy.withValues(alpha: 0.4)),
+      );
+
+  void _snack(String m, Color c) => ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(m), backgroundColor: c, behavior: SnackBarBehavior.floating));
+
+  /// Pick a destination by scanning its QR or NFC tag, or by searching.
+  /// A dropdown of two hundred locations is not a picker, it is a punishment.
+  Future<(int, String)?> _pickLocation() async {
+    Map<String, dynamic> d;
+    try {
+      d = await context.read<AuthProvider>().api.invLocations();
+    } catch (e) {
+      if (mounted) _snack('$e', const Color(0xFFE11D48));
+      return null;
+    }
+    final locs = ((d['locations'] as List?) ?? const []).cast<Map>();
+    if (!mounted) return null;
+    final ctrl = TextEditingController();
+    return showModalBottomSheet<(int, String)?>(
+      context: context, isScrollControlled: true, showDragHandle: true,
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setSt) {
+        final q = ctrl.text.trim().toLowerCase();
+        final list = q.isEmpty
+            ? locs
+            : locs.where((l) =>
+                '${l['path'] ?? l['name']}'.toLowerCase().contains(q) ||
+                '${l['code'] ?? ''}'.toLowerCase().contains(q)).toList();
+        return Padding(
+          padding: EdgeInsets.fromLTRB(14, 4, 14, MediaQuery.of(ctx).viewInsets.bottom + 14),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Row(children: [
+              Expanded(child: TextField(
+                controller: ctrl, autofocus: true,
+                onChanged: (_) => setSt(() {}),
+                decoration: InputDecoration(
+                    hintText: tr('ابحث عن الموقع…', 'Search a location…'),
+                    prefixIcon: const Icon(Icons.search),
+                    border: const OutlineInputBorder(), isDense: true),
+              )),
+              const SizedBox(width: 8),
+              IconButton(
+                tooltip: tr('مسح QR أو NFC', 'Scan QR or NFC'),
+                icon: const Icon(Icons.qr_code_scanner_rounded),
+                onPressed: () async {
+                  final scanned = await Navigator.push<String>(ctx,
+                      MaterialPageRoute(builder: (_) => const ScanScreen(returnCode: true)));
+                  if (scanned == null) return;
+                  final v = scanned.trim().toLowerCase();
+                  final hit = locs.firstWhere(
+                      (l) => '${l['code'] ?? ''}'.toLowerCase() == v ||
+                             '${l['nfc_uid'] ?? ''}'.toLowerCase() == v,
+                      orElse: () => const {});
+                  if (hit.isEmpty) {
+                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                        content: Text(tr('لا موقع بهذا الرمز', 'No location with that code'))));
+                    return;
+                  }
+                  Navigator.pop(ctx, (intOf(hit['id']), '${hit['path'] ?? hit['name']}'));
+                },
+              ),
+            ]),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 320,
+              child: ListView.builder(
+                itemCount: list.length,
+                itemBuilder: (_, i) {
+                  final l = list[i];
+                  return ListTile(
+                    dense: true,
+                    leading: const Icon(Icons.place_outlined, size: 18),
+                    title: Text('${l['path'] ?? l['name']}',
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                    subtitle: Text('${l['code'] ?? ''}',
+                        style: const TextStyle(fontSize: 11)),
+                    onTap: () => Navigator.pop(ctx, (intOf(l['id']), '${l['path'] ?? l['name']}')),
+                  );
+                },
+              ),
+            ),
+          ]),
+        );
+      }),
+    );
   }
 }
 

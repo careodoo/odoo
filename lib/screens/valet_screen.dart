@@ -81,7 +81,10 @@ class _ValetScreenState extends State<ValetScreen>
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: _gold,
+        // Green, not the header gold. The action that STARTS something should
+        // not wear the same colour as the bar it sits against — it read as
+        // part of the chrome instead of a button.
+        backgroundColor: const Color(0xFF16A34A),
         onPressed: () => _newTicket(d),
         icon: const Icon(Icons.directions_car_rounded),
         label: Text(tr('استلام مركبة', 'Take a car'), style: const TextStyle(fontWeight: FontWeight.w900)),
@@ -233,14 +236,15 @@ class _ValetScreenState extends State<ValetScreen>
       builder: (_, child) {
         final t = Curves.easeInOut.transform(_pulse.value);
         return Container(
-          margin: const EdgeInsets.fromLTRB(12, 10, 12, 2),
+          margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
+            // A soft edge rather than a glowing slab: it has to be noticed,
+            // not to dominate a screen the crew works in all day.
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFE11D48).withValues(alpha: 0.20 + 0.28 * t),
-                blurRadius: 14 + 12 * t,
-                spreadRadius: 1 + 2 * t,
+                color: const Color(0xFFE11D48).withValues(alpha: 0.12 + 0.16 * t),
+                blurRadius: 8 + 6 * t,
               ),
             ],
           ),
@@ -248,12 +252,12 @@ class _ValetScreenState extends State<ValetScreen>
         );
       },
       child: Container(
-        padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+        padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
               colors: [Color(0xFFE11D48), Color(0xFF9F1239)],
               begin: Alignment.topRight, end: Alignment.bottomLeft),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
@@ -268,7 +272,7 @@ class _ValetScreenState extends State<ValetScreen>
             ),
           ]),
           const SizedBox(height: 9),
-          for (final t in wanted.take(4))
+          for (final t in wanted.take(2))
             Padding(
               padding: const EdgeInsets.only(bottom: 7),
               child: Row(children: [
@@ -309,8 +313,8 @@ class _ValetScreenState extends State<ValetScreen>
                 ),
               ]),
             ),
-          if (wanted.length > 4)
-            Text('+${wanted.length - 4} ${tr('أخرى', 'more')}',
+          if (wanted.length > 2)
+            Text('+${wanted.length - 2} ${tr('أخرى', 'more')}',
                 style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.85), fontSize: 11.5)),
         ]),

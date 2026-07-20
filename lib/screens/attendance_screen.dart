@@ -443,17 +443,25 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         margin: const EdgeInsets.only(bottom: 6),
         child: ListTile(
           dense: true,
-          leading: Container(
-            width: 8, height: 8,
-            decoration: BoxDecoration(
-                color: r['open'] == true ? const Color(0xFF16A34A) : Colors.grey.shade400,
-                shape: BoxShape.circle),
-          ),
+          // Two timestamps side by side never said which way the punch went.
+          // The icon and its colour answer that before the text is read.
+          leading: Builder(builder: (_) {
+            final out = r['punch'] == 'out';
+            final c = out ? const Color(0xFFE11D48) : const Color(0xFF16A34A);
+            return Container(
+              width: 30, height: 30,
+              decoration: BoxDecoration(
+                  color: c.withValues(alpha: 0.12), shape: BoxShape.circle),
+              child: Icon(out ? Icons.logout_rounded : Icons.login_rounded,
+                  size: 16, color: c),
+            );
+          }),
           title: Text('${r['employee']}',
               maxLines: 1, overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
           subtitle: Text(
-              '${r['date'] ?? '—'} · ${_hm(r['check_in'])} → ${_hm(r['check_out'])}'
+              '${r['punch_label'] ?? ''} ${r['punch_at'] ?? ''} · '
+              '${_hm(r['check_in'])} → ${_hm(r['check_out'])}'
               '${r['facility'] != null ? ' · ${r['facility']}' : ''}',
               maxLines: 1, overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 10.5, color: Colors.grey.shade600)),

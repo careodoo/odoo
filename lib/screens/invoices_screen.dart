@@ -58,12 +58,90 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
           return DraggableScrollableSheet(
             expand: false,
             initialChildSize: 0.75,
-            builder: (_, sc) => ListView(controller: sc, padding: const EdgeInsets.all(18), children: [
-              Text('${m['name']}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-              Text('${m['amount_total']} ${m['currency'] ?? ''}',
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF7A1340))),
-              const SizedBox(height: 8),
-              Row(children: [
+            builder: (_, sc) => ListView(controller: sc, padding: EdgeInsets.zero, children: [
+              // A header that answers the question the invoice is opened for:
+              // is it paid, and how much is left. The old sheet led with a
+              // number and left the status to be inferred from two rows near
+              // the bottom.
+              Builder(builder: (_) {
+                final residual = numOf(m['amount_residual']);
+                final total = numOf(m['amount_total']);
+                final paid = numOf(m['amount_paid']);
+                final done = residual <= 0.001 && total > 0;
+                final part = paid > 0 && residual > 0.001;
+                final c = done
+                    ? const Color(0xFF16A34A)
+                    : (part ? const Color(0xFFF59E0B) : const Color(0xFF7A1340));
+                final label = done
+                    ? tr('مدفوعة بالكامل', 'Paid in full')
+                    : (part ? tr('مدفوعة جزئيًا', 'Partly paid') : tr('غير مدفوعة', 'Unpaid'));
+                return Container(
+                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                        colors: [c, Color.lerp(c, Colors.black, 0.28)!],
+                        begin: Alignment.topRight, end: Alignment.bottomLeft),
+                  ),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(children: [
+                      Expanded(
+                        child: Text('${m['name']}',
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900)),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+                        decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.22),
+                            borderRadius: BorderRadius.circular(20)),
+                        child: Text(label,
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w900)),
+                      ),
+                    ]),
+                    const SizedBox(height: 10),
+                    Text('${m['amount_total']} ${m['currency'] ?? ''}',
+                        style: const TextStyle(
+                            color: Colors.white, fontSize: 27, fontWeight: FontWeight.w900)),
+                    if (residual > 0.001) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                          '${tr('المتبقّي', 'Outstanding')}: ${m['amount_residual']} '
+                          '${m['currency'] ?? ''}',
+                          style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.92),
+                              fontSize: 12.5, fontWeight: FontWeight.w700)),
+                    ],
+                    if (total > 0) ...[
+                      const SizedBox(height: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: LinearProgressIndicator(
+                          value: (paid / total).clamp(0.0, 1.0),
+                          minHeight: 7,
+                          color: Colors.white,
+                          backgroundColor: Colors.white.withValues(alpha: 0.25),
+                        ),
+                      ),
+                    ],
+                    if (m['invoice_date'] != null || m['due_date'] != null) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                          [
+                            if (m['invoice_date'] != null)
+                              '${tr('التاريخ', 'Date')}: ${m['invoice_date']}',
+                            if (m['due_date'] != null)
+                              '${tr('الاستحقاق', 'Due')}: ${m['due_date']}',
+                          ].join('   ·   '),
+                          style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.85), fontSize: 11.5)),
+                    ],
+                  ]),
+                );
+              }),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
+                child: Row(children: [
                 if (m['pay_url'] != null && (m['amount_residual'] as num) > 0)
                   Expanded(
                       child: FilledButton.icon(
@@ -80,20 +158,27 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                               fileName: 'invoice-${m['name'] ?? ''}.pdf'))),
                       icon: const Icon(Icons.picture_as_pdf),
                       label: const Text('PDF')),
-              ]),
+                ]),
+              ),
               const Divider(height: 24),
               ...((m['lines'] as List?) ?? []).map((l) => ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 18),
                     dense: true,
                     title: Text('${l['name'] ?? ''}'),
                     subtitle: Text('${l['qty']} × ${l['price']}'),
                     trailing: Text('${l['subtotal']}', style: const TextStyle(fontWeight: FontWeight.w700)),
                   )),
               const Divider(),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                child: Column(children: [
               _kv(tr('قبل الضريبة', 'Untaxed'), '${m['amount_untaxed']}'),
               _kv(tr('الضريبة', 'Tax'), '${m['amount_tax']}'),
               _kv(tr('الإجمالي', 'Total'), '${m['amount_total']} ${m['currency'] ?? ''}', bold: true),
               _kv(tr('المدفوع', 'Paid'), '${m['amount_paid']}', color: const Color(0xFF16A34A)),
               _kv(tr('المتبقّي', 'Residual'), '${m['amount_residual']}', color: const Color(0xFFE11D48)),
+                ]),
+              ),
               if (payments.isNotEmpty) ...[
                 const SizedBox(height: 10),
                 Text(tr('سجلّات الدفع', 'Payment records'), style: const TextStyle(fontWeight: FontWeight.w800)),

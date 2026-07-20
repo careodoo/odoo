@@ -617,6 +617,18 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
               await _net.get(_u('/app/config'))))['data'] as Map);
 
+  /// What a scanned code actually is, before anyone commits to issuing it.
+  Future<Map<String, dynamic>> invLookup(String code, {int? storeId}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/client/inv/lookup?code=${Uri.encodeQueryComponent(code)}'
+                  '${storeId != null ? '&store_id=$storeId' : ''}'),
+              headers: await _headers())))['data'] as Map);
+
+  /// Destinations with their QR code and NFC tag.
+  Future<Map<String, dynamic>> invLocations() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/client/inv/locations'), headers: await _headers())))['data'] as Map);
+
   // ---- hospitality pantry ---------------------------------------------------
   /// Supplies with their balance in servings, plus recent purchases.
   Future<Map<String, dynamic>> hospStock() async =>
