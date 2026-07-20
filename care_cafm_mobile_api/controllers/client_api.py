@@ -3921,7 +3921,7 @@ class ClientApi(Controller):
         A = env['care.cafm.asset'].sudo().search([('facility_id', '=', fid)])
         out['assets'] = {
             'total': len(A),
-            'care_owned': len(A.filtered(lambda a: a.ownership == 'care')),
+            'care_owned': len(A.filtered(lambda a: a.ownership == 'company')),
             'client_owned': len(A.filtered(lambda a: a.ownership == 'client')),
             'by_status': [{'status': s, 'count': len(A.filtered(lambda a, s=s: a.status == s))}
                           for s in set(A.mapped('status')) if s],

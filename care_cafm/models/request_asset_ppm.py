@@ -22,9 +22,9 @@ class CafmAsset(models.Model):
     # not the same record. The client maintains their own equipment; CARE
     # equipment is ours to describe, and a client edit to it would quietly
     # rewrite our own asset register.
-    ownership = fields.Selection([
-        ('care', 'CARE-owned'), ('client', 'Client-owned'),
-    ], string='Ownership', default='care', required=True, tracking=True, index=True)
+    # An ownership field already existed with values company / client — adding
+    # a second one shadowed it and reported every asset as unclassified. The
+    # rules below use the field that was already there.
     client_editable = fields.Boolean(string='Client may edit',
                                      compute='_compute_client_editable')
 
@@ -58,7 +58,7 @@ class CafmAsset(models.Model):
                 self.env.user.has_group('base.group_erp_manager')
             if not staff:
                 touched = [f for f in vals if f in self.CORE_FIELDS]
-                blocked = self.filtered(lambda a: a.ownership == 'care')
+                blocked = self.filtered(lambda a: a.ownership == 'company')
                 if touched and blocked:
                     raise UserError(_(
                         'This asset belongs to CARE. You can add notes and '
@@ -69,7 +69,7 @@ class CafmAsset(models.Model):
     def unlink(self):
         staff = self.env.user.has_group('base.group_system') or \
             self.env.user.has_group('base.group_erp_manager')
-        if not staff and self.filtered(lambda a: a.ownership == 'care'):
+        if not staff and self.filtered(lambda a: a.ownership == 'company'):
             raise UserError(_('A CARE-owned asset cannot be deleted here.'))
         return super().unlink()
 
