@@ -35,11 +35,34 @@ def _base_url():
         'web.base.url', 'https://ecare.care-kw.com').rstrip('/')
 
 
+
+def _caller():
+    """The app carries a bearer token, not a session cookie. These routes were
+    auth='user', so every print from the app was redirected to the login page
+    and arrived as HTML — which is the "error" when printing a ticket. Accept
+    the token, fall back to a real web session for the back office."""
+    req = request.httprequest
+    tok = (req.args.get('token')
+           or (req.headers.get('Authorization', '').replace('Bearer ', '').strip() or None))
+    if tok:
+        try:
+            user = request.env['care.cafm.mobile.token'].sudo().resolve(tok)
+            if user:
+                return user
+        except Exception:
+            pass
+    u = request.env.user
+    return u if u and not u._is_public() else None
+
+
 class ValetTicketPortal(http.Controller):
 
     # ---------------- the printable ticket (staff) ----------------
-    @http.route('/valet/ticket/<int:tid>/print', type='http', auth='user', website=False)
+    @http.route('/valet/ticket/<int:tid>/print', type='http', auth='public',
+                website=False, csrf=False, cors='*')
     def ticket_print(self, tid, **kw):
+        if not _caller():
+            return request.make_response(_('غير مصرّح'), status=401)
         t = request.env['care.valet.ticket'].sudo().browse(tid).exists()
         if not t:
             return request.not_found()
@@ -114,10 +137,13 @@ td{padding:8px 18px;border-bottom:1px solid #eef1f5}
                 .replace('__QR__', str(qr_block)))
         return request.make_response(page, headers=[('Content-Type', 'text/html; charset=utf-8')])
 
-    @http.route('/valet/ticket/<int:tid>/pdf', type='http', auth='user', website=False)
+    @http.route('/valet/ticket/<int:tid>/pdf', type='http', auth='public',
+                website=False, csrf=False, cors='*')
     def ticket_pdf(self, tid, **kw):
         """The same slip as a PDF, so the app can show it inline and offer
         print and share instead of throwing the user into a browser."""
+        if not _caller():
+            return request.make_response(_('غير مصرّح'), status=401)
         t = request.env['care.valet.ticket'].sudo().browse(tid).exists()
         if not t:
             return request.not_found()
