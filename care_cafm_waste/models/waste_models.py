@@ -52,11 +52,11 @@ class WasteItem(models.Model):
     _inherit = ['mail.thread']
     name = fields.Char(required=True, translate=True)
     image = fields.Binary(string='صورة')
-    type_id = fields.Many2one('cafm.waste.type', string='النوع')
+    type_id = fields.Many2one('cafm.waste.type', string='النوع', tracking=True)
     notes = fields.Html()
-    width = fields.Float(string='العرض')
-    height = fields.Float(string='الارتفاع')
-    weight = fields.Float(string='الوزن (كجم)')
+    width = fields.Float(string='العرض', tracking=True)
+    height = fields.Float(string='الارتفاع', tracking=True)
+    weight = fields.Float(string='الوزن (كجم)', tracking=True)
     active = fields.Boolean(default=True)
 
 

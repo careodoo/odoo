@@ -209,7 +209,7 @@ class PoolTask(models.Model):
     _order = 'done_at desc, id desc'
 
     pool_id = fields.Many2one('care.pool.pool', string='المسبح', required=True,
-                              ondelete='cascade', index=True)
+                              ondelete='cascade', index=True, tracking=True)
     facility_id = fields.Many2one(related='pool_id.facility_id', store=True, index=True)
     task_type = fields.Selection([
         ('backwash', 'غسيل عكسي للفلتر'), ('vacuum', 'كنس القاع'),
@@ -218,12 +218,12 @@ class PoolTask(models.Model):
         ('dose', 'إضافة مواد كيميائية'), ('shock', 'صدمة كلورية'),
         ('drain', 'تصريف وإعادة تعبئة'), ('repair', 'إصلاح'),
     ], string='نوع العمل', required=True, tracking=True)
-    done_at = fields.Datetime(string='وقت التنفيذ', default=fields.Datetime.now, required=True)
-    done_by = fields.Many2one('hr.employee', string='المنفّذ')
-    chemical = fields.Char(string='المادة المستخدمة')
-    quantity = fields.Float(string='الكمية')
-    uom_name = fields.Char(string='الوحدة', default='كجم')
+    done_at = fields.Datetime(string='وقت التنفيذ', default=fields.Datetime.now, required=True, tracking=True)
+    done_by = fields.Many2one('hr.employee', string='المنفّذ', tracking=True)
+    chemical = fields.Char(string='المادة المستخدمة', tracking=True)
+    quantity = fields.Float(string='الكمية', tracking=True)
+    uom_name = fields.Char(string='الوحدة', default='كجم', tracking=True)
     filter_pressure = fields.Float(string='ضغط الفلتر (bar)',
-                                   help='ارتفاعه عن الطبيعي بمقدار 0.5 يعني وقت الغسيل العكسي.')
-    note = fields.Char(string='ملاحظة')
+                                   help='ارتفاعه عن الطبيعي بمقدار 0.5 يعني وقت الغسيل العكسي.', tracking=True)
+    note = fields.Char(string='ملاحظة', tracking=True)
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
