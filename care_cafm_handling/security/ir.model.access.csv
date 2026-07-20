@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_handling_equipment_user,handling.equipment.user,model_care_handling_equipment,base.group_user,1,1,1,0
+access_handling_equipment_mgr,handling.equipment.mgr,model_care_handling_equipment,base.group_system,1,1,1,1
+access_handling_job_user,handling.job.user,model_care_handling_job,base.group_user,1,1,1,0
+access_handling_job_mgr,handling.job.mgr,model_care_handling_job,base.group_system,1,1,1,1

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_handling_job_tree" model="ir.ui.view">
+    <field name="name">care.handling.job.tree</field>
+    <field name="model">care.handling.job</field>
+    <field name="arch" type="xml">
+      <tree decoration-danger="damaged == True" decoration-success="state == 'verified'" decoration-muted="state == 'cancelled'">
+        <field name="name"/>
+        <field name="facility_id"/>
+        <field name="move_type"/>
+        <field name="cargo"/>
+        <field name="priority"/>
+        <field name="crew_lead_id"/>
+        <field name="damaged" column_invisible="1"/>
+        <field name="state"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_handling_job_form" model="ir.ui.view">
+    <field name="name">care.handling.job.form</field>
+    <field name="model">care.handling.job</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="action_schedule" string="Schedule" type="object" invisible="state != 'draft'" class="btn-primary"/>
+          <button name="action_start" string="Start" type="object" invisible="state != 'scheduled'" class="btn-primary"/>
+          <button name="action_deliver" string="Deliver" type="object" invisible="state != 'in_progress'" class="btn-primary"/>
+          <button name="action_verify" string="Verify" type="object" invisible="state != 'delivered'" class="btn-primary"/>
+          <button name="action_to_workorder" string="Raise repair work order" type="object" invisible="state not in ('delivered','verified') or not damaged"/>
+          <button name="action_cancel" string="Cancel" type="object"/>
+          <field name="state" widget="statusbar"/>
+          <field name="damaged" invisible="1"/>
+        </header>
+        <sheet>
+          <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+          <group>
+            <group>
+              <field name="facility_id"/><field name="move_type"/>
+              <field name="cargo"/><field name="cargo_category"/>
+              <field name="quantity"/><field name="weight_kg"/><field name="fragile"/>
+            </group>
+            <group>
+              <field name="from_location_id"/><field name="from_text"/>
+              <field name="to_location_id"/><field name="to_text"/>
+              <field name="priority"/><field name="scheduled_at"/>
+            </group>
+          </group>
+          <notebook>
+            <page string="Crew and equipment">
+              <group>
+                <field name="crew_lead_id"/><field name="team_id"/>
+                <field name="crew_ids" widget="many2many_tags"/>
+                <field name="equipment_ids" widget="many2many_tags"/>
+              </group>
+            </page>
+            <page string="Condition and proof">
+              <group>
+                <group string="At pickup">
+                  <field name="condition_in"/><field name="photo_in" widget="image"/>
+                </group>
+                <group string="At delivery">
+                  <field name="condition_out"/><field name="photo_out" widget="image"/>
+                  <field name="received_by"/><field name="signature" widget="image"/>
+                </group>
+              </group>
+              <field name="damage_note" placeholder="Any marks or handling notes"/>
+            </page>
+          </notebook>
+        </sheet>
+        <div class="oe_chatter">
+          <field name="message_follower_ids"/><field name="activity_ids"/><field name="message_ids"/>
+        </div>
+      </form>
+    </field>
+  </record>
+  <record id="action_handling_job" model="ir.actions.act_window">
+    <field name="name">Handling Jobs</field>
+    <field name="res_model">care.handling.job</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+  <record id="view_handling_equipment_tree" model="ir.ui.view">
+    <field name="name">care.handling.equipment.tree</field>
+    <field name="model">care.handling.equipment</field>
+    <field name="arch" type="xml">
+      <tree><field name="name"/><field name="kind"/><field name="capacity_kg"/>
+        <field name="facility_id"/><field name="available"/></tree>
+    </field>
+  </record>
+  <record id="action_handling_equipment" model="ir.actions.act_window">
+    <field name="name">Handling Equipment</field>
+    <field name="res_model">care.handling.equipment</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+  <menuitem id="menu_handling_root" name="Material Handling" sequence="46"/>
+  <menuitem id="menu_handling_jobs" parent="menu_handling_root" action="action_handling_job" sequence="10"/>
+  <menuitem id="menu_handling_equipment" parent="menu_handling_root" action="action_handling_equipment" sequence="20"/>
+</odoo>

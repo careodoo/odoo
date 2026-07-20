@@ -120,6 +120,31 @@ def _t(ar, en):
     return en if (request.env.context.get('lang') or '').startswith('en') else ar
 
 
+def _r_handling_job(r):
+    """A move is read for: what, where to, and did it arrive intact."""
+    frm = getattr(r.from_location_id, 'name', '') or getattr(r, 'from_text', '') or ''
+    to = getattr(r.to_location_id, 'name', '') or getattr(r, 'to_text', '') or ''
+    pills = list(_state_pill(r, 'state', 'info'))
+    if getattr(r, 'damaged', False):
+        pills.append((_t('وصل بتلف', 'Damaged'), 'danger'))
+    if getattr(r, 'fragile', False):
+        pills.append((_t('قابل للكسر', 'Fragile'), 'warn'))
+    if getattr(r, 'priority', '') in ('urgent', 'critical'):
+        pills.append((_sel(r, 'priority').get(r.priority, ''), 'danger'))
+    return (r.cargo or r.display_name,
+            ' → '.join(filter(None, [frm, to])), pills)
+
+
+def _r_handling_equip(r):
+    pills = [(_t('متاح', 'Available') if getattr(r, 'available', True)
+              else _t('مشغول', 'In use'),
+              'ok' if getattr(r, 'available', True) else 'warn')]
+    cap = getattr(r, 'capacity_kg', 0)
+    if cap:
+        pills.append(('%.0f كجم' % cap, 'muted'))
+    return (r.display_name, _sel(r, 'kind').get(getattr(r, 'kind', ''), ''), pills)
+
+
 def _r_key_hub(r):
     """A hub is read for: how many keys, who holds it, and where it is."""
     keys = getattr(r, 'key_ids', None)
@@ -613,6 +638,27 @@ def REGISTRY():
             Section('shifts', 'الورديات', 'care.valet.shift',
                     _r_generic(lambda r: r.display_name,
                                lambda r: _d(getattr(r, 'date', None))), icon='\U0001f552'),
+        ]),
+        'handling': ('المناولة', '📦', [
+            Section('jobs', 'مهام المناولة', 'care.handling.job',
+                    _r_handling_job, icon='🚚',
+                    empty_text='لا مهام مناولة بعد.',
+                    create=Create('طلب مناولة', 'request_create', [
+                        Field('cargo', 'ما المطلوب نقله', 'char', required=True),
+                        Field('cargo_category', 'الفئة', 'select', options='cargo_category'),
+                        Field('move_type', 'نوع النقل', 'select', options='move_type'),
+                        Field('from_location_id', 'من', 'm2o',
+                              comodel='care.cafm.location', domain_facility=True),
+                        Field('to_location_id', 'إلى', 'm2o',
+                              comodel='care.cafm.location', domain_facility=True),
+                        Field('quantity', 'عدد القطع', 'int'),
+                        Field('weight_kg', 'الوزن (كجم)', 'float'),
+                        Field('fragile', 'قابل للكسر', 'bool'),
+                        Field('priority', 'الأولوية', 'select', options='priority'),
+                    ])),
+            Section('equipment', 'المعدّات', 'care.handling.equipment',
+                    _r_handling_equip, icon='🏗️', scope='none',
+                    empty_text='لا معدّات مسجّلة.'),
         ]),
         'inventory': ('المخزون', '📦', [
             Section('stores', 'المخازن', 'care.cafm.store',
