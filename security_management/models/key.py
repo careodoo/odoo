@@ -98,6 +98,10 @@ class SecurityKey(models.Model):
     ], string='Key Type', default='room', tracking=True)
     description = fields.Text(string='Description')
     barcode = fields.Char(string='Barcode', readonly=True, copy=False)
+    # A key ring in a pocket is not scanned by camera in a dark corridor.
+    # A tag on the fob is tapped in one motion, which is the difference
+    # between a log that gets kept and one that gets skipped.
+    nfc_uid = fields.Char(string='NFC tag', copy=False, index=True, tracking=True)
     qr_code = fields.Binary(string='QR Code', readonly=True, copy=False, attachment=True)
     qr_code_text = fields.Char(string='QR Code Text', readonly=True, copy=False)
 

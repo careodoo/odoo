@@ -120,6 +120,41 @@ def _t(ar, en):
     return en if (request.env.context.get('lang') or '').startswith('en') else ar
 
 
+def _r_key_hub(r):
+    """A hub is read for: how many keys, who holds it, and where it is."""
+    keys = getattr(r, 'key_ids', None)
+    pills = [('%d %s' % (len(keys) if keys else 0, _t('مفتاح', 'keys')), 'info')]
+    resp = getattr(r, 'responsible_id', None)
+    if resp and resp.name:
+        pills.append((resp.name, 'muted'))
+    return (r.display_name,
+            ' \u00b7 '.join(filter(None, [getattr(r, 'code', '') or '',
+                                          getattr(r, 'location', '') or ''])),
+            pills)
+
+
+def _r_key(r):
+    """A key is read for: which door, and is it out."""
+    st = getattr(r, 'state', '') or ''
+    out = st in ('issued', 'out', 'borrowed')
+    pills = list(_state_pill(r, 'state', 'warn' if out else 'ok'))
+    if getattr(r, 'nfc_uid', False):
+        pills.append((_t('بشريحة NFC', 'NFC tagged'), 'muted'))
+    return (r.display_name,
+            ' \u00b7 '.join(filter(None, [
+                '%s %s' % (_t('باب', 'door'), getattr(r, 'door_number', '') or ''),
+                '%s %s' % (_t('رقم', 'no.'), getattr(r, 'key_number', '') or '')])),
+            pills)
+
+
+def _r_cashier(r):
+    """A cashier report is read for: what was collected, and does it balance."""
+    total = getattr(r, 'total_amount', 0) or getattr(r, 'amount_total', 0) or 0
+    pills = [('%.3f' % total, 'ok' if total else 'muted')]
+    pills += list(_state_pill(r, 'state', 'info'))
+    return (r.display_name, _d(getattr(r, 'date', None)), pills)
+
+
 def _r_facade_permit(r):
     """A permit is read for one thing: may the crew go up or not."""
     safe = getattr(r, 'is_safe', False)
@@ -248,6 +283,18 @@ def REGISTRY():
                     _r_generic(lambda r: r.display_name,
                                lambda r: _d(getattr(r, 'date', None)),
                                lambda r: _state_pill(r)), icon='🔎'),
+            # These two systems existed in full inside security_management and
+            # were simply never shown to the client — building them again
+            # would have been the expensive way to answer the request.
+            Section('keyhubs', 'أقفال المفاتيح', 'security.key.hub',
+                    _r_key_hub, icon='🗄️', scope='none',
+                    empty_text='لا توجد أقفال مفاتيح مسجّلة.'),
+            Section('keys', 'المفاتيح', 'security.key',
+                    _r_key, icon='🔑', scope='none',
+                    empty_text='لا مفاتيح مسجّلة.'),
+            Section('cashier', 'كاشير المواقف', 'security.cashier.report',
+                    _r_cashier, icon='💵', scope='none',
+                    empty_text='لا تقارير كاشير.'),
             Section('guards', 'الحرّاس', 'security.guard',
                     _r_generic(lambda r: r.display_name,
                                lambda r: getattr(r, 'job_title', '') or ''), icon='👮'),

@@ -14,6 +14,83 @@ class SecurityIncidentReport(models.Model):
     reporter_id = fields.Many2one('res.users', string='Reported By', default=lambda self: self.env.user, required=True, tracking=True)
     premise_id = fields.Many2one('security.premise', string='Premise', required=True, tracking=True)
     location = fields.Char(string='Specific Location', help="Specific location within the premise", tracking=True)
+    # ---- what an incident report has to carry ---------------------------
+    # A typed description is what the reporter remembers, not what happened.
+    # Photos, video and a coordinate are what an insurer, a police report or
+    # a client dispute will actually ask for — and none of them can be
+    # reconstructed an hour later.
+    latitude = fields.Float(string='Latitude', digits=(10, 7), tracking=True)
+    longitude = fields.Float(string='Longitude', digits=(10, 7), tracking=True)
+    located = fields.Boolean(string='Location captured', compute='_compute_located',
+                             store=True)
+    map_url = fields.Char(string='Map link', compute='_compute_located')
+    media_ids = fields.One2many('security.incident.media', 'incident_id',
+                                string='Photos & video')
+    media_count = fields.Integer(string='Attachments', compute='_compute_media')
+    update_ids = fields.One2many('security.incident.update', 'incident_id',
+                                 string='Updates')
+    update_count = fields.Integer(string='Updates', compute='_compute_media')
+    live_url = fields.Char(string='Live stream link', tracking=True,
+                           help='A link to a live feed from the phone while the '
+                                'incident is still unfolding.')
+    live_active = fields.Boolean(string='Streaming now', tracking=True)
+    workorder_id = fields.Many2one('care.cafm.workorder', string='Work order',
+                                   readonly=True, copy=False,
+                                   help='Raised from this incident.')
+
+    @api.depends('latitude', 'longitude')
+    def _compute_located(self):
+        for r in self:
+            r.located = bool(r.latitude and r.longitude)
+            r.map_url = ('https://maps.google.com/?q=%s,%s'
+                         % (r.latitude, r.longitude)) if r.located else False
+
+    def _compute_media(self):
+        for r in self:
+            r.media_count = len(r.media_ids)
+            r.update_count = len(r.update_ids)
+
+    def action_add_update(self, text, user_id=None):
+        """An incident is not a snapshot. What happened next belongs on the
+        same record, timestamped, not in a chat nobody can find later."""
+        self.ensure_one()
+        return self.env['security.incident.update'].create({
+            'incident_id': self.id, 'body': text,
+            'user_id': user_id or self.env.uid,
+        })
+
+    def action_to_workorder(self, team_id=None, service_id=None):
+        """Escalate to work. An incident that needs a repair should not be
+        retyped by someone else into a second system."""
+        self.ensure_one()
+        if self.workorder_id:
+            raise UserError(_('A work order was already raised from this incident.'))
+        WO = self.env['care.cafm.workorder'].sudo()
+        fac = getattr(self.premise_id, 'cafm_facility_id', False)
+        vals = {
+            'title': _('From incident %s: %s') % (self.name, self.incident_type or ''),
+            'description': self.description or '',
+            'priority': {'critical': '3', 'high': '2'}.get(self.severity, '1'),
+        }
+        if fac:
+            vals['facility_id'] = fac.id
+        if team_id:
+            vals['team_id'] = int(team_id)
+        if service_id:
+            vals['service_id'] = int(service_id)
+        else:
+            # A work order needs a service. Default to the Security service so
+            # the escalation never fails for want of a dropdown value.
+            svc = self.env['care.cafm.service'].sudo().search(
+                [('service_type', '=', 'security')], limit=1) or \
+                self.env['care.cafm.service'].sudo().search([], limit=1)
+            if svc:
+                vals['service_id'] = svc.id
+        wo = WO.create(vals)
+        self.workorder_id = wo.id
+        self.message_post(body=_('🧾 Work order %s raised from this incident.') % wo.display_name)
+        return wo
+
     
     incident_type = fields.Selection([
         ('theft', 'Theft/Burglary'),
@@ -105,3 +182,33 @@ class SecurityIncidentReport(models.Model):
             'target': 'new',
             'context': {'default_incident_id': self.id},
         }
+
+
+class SecurityIncidentMedia(models.Model):
+    """A photo or a clip, taken at the scene."""
+    _name = 'security.incident.media'
+    _description = 'Incident Media'
+    _order = 'create_date desc, id desc'
+
+    incident_id = fields.Many2one('security.incident.report', required=True,
+                                  ondelete='cascade', index=True)
+    name = fields.Char(string='Caption')
+    kind = fields.Selection([('photo', 'Photo'), ('video', 'Video')],
+                            string='Type', default='photo', required=True)
+    file = fields.Binary(string='File', attachment=True, required=True)
+    filename = fields.Char(string='File name')
+    taken_at = fields.Datetime(string='Taken at', default=fields.Datetime.now)
+    user_id = fields.Many2one('res.users', string='By', default=lambda s: s.env.user)
+
+
+class SecurityIncidentUpdate(models.Model):
+    """What happened next — kept on the incident, in order."""
+    _name = 'security.incident.update'
+    _description = 'Incident Update'
+    _order = 'create_date desc, id desc'
+
+    incident_id = fields.Many2one('security.incident.report', required=True,
+                                  ondelete='cascade', index=True)
+    body = fields.Text(string='Update', required=True)
+    user_id = fields.Many2one('res.users', string='By', default=lambda s: s.env.user)
+    at = fields.Datetime(string='At', default=fields.Datetime.now)

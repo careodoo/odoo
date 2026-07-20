@@ -310,3 +310,5 @@ access_security_weekday_user,security.weekday.user,model_security_weekday,securi
 access_security_weekday_guard,security.weekday.guard,model_security_weekday,security_management.group_security_guard,1,0,0,0
 access_security_weekday_manager,security.weekday.manager,model_security_weekday,security_management.group_security_manager,1,1,1,0
 access_security_weekday_admin,security.weekday.admin,model_security_weekday,security_management.group_security_admin,1,1,1,1
+access_security_incident_media_user,security_incident_media.user,model_security_incident_media,base.group_user,1,1,1,1
+access_security_incident_update_user,security_incident_update.user,model_security_incident_update,base.group_user,1,1,1,1
