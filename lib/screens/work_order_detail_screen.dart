@@ -519,7 +519,7 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> with Widg
       title: Text(tr('إضافة ملاحظة', 'Add note')),
       content: TextField(controller: ctrl, maxLines: 3, decoration: InputDecoration(hintText: tr('اكتب ملاحظة...', 'Write a note...'))),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('إلغاء')),
+        TextButton(onPressed: () => Navigator.pop(context, false), child: Text(tr('إلغاء', 'Cancel'))),
         FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(tr('إرسال', 'Send'))),
       ],
     ));

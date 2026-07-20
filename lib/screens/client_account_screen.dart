@@ -126,7 +126,7 @@ class _ClientAccountScreenState extends State<ClientAccountScreen> {
       builder: (ctx) => Padding(
         padding: EdgeInsets.fromLTRB(18, 18, 18, MediaQuery.of(ctx).viewInsets.bottom + 18),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('تغيير كلمة المرور', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: _navy)),
+          Text(tr('تغيير كلمة المرور', 'Change password'), style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: _navy)),
           const SizedBox(height: 14),
           _pwField(oldC, tr('كلمة المرور الحالية', 'Current password')),
           const SizedBox(height: 10),

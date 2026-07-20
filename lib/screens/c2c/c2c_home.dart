@@ -827,9 +827,9 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
                   for (final t in [
                     tr('يمكن إلغاء الاشتراك في أي وقت من صفحة «اشتراكاتي».',
                         'You can cancel any time from "My subscriptions".'),
-                    'الإلغاء قبل بدء أول زيارة: استرداد كامل.',
-                    'بعد بدء الخدمة: تُحتسب الزيارات المنفّذة ويُسترد الباقي.',
-                    'لا رسوم إلغاء خفية — الشفافية أساس تعاملنا.',
+                    tr('الإلغاء قبل بدء أول زيارة: استرداد كامل.', 'Cancel before the first visit: full refund.'),
+                    tr('بعد بدء الخدمة: تُحتسب الزيارات المنفّذة ويُسترد الباقي.', 'After the service starts: completed visits are charged, the rest refunded.'),
+                    tr('لا رسوم إلغاء خفية — الشفافية أساس تعاملنا.', 'No hidden cancellation fees — transparency is how we work.'),
                   ])
                     Padding(padding: const EdgeInsets.only(bottom: 5), child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start, children: [

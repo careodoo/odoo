@@ -38,7 +38,7 @@ void main() async {
               const Icon(Icons.error_outline_rounded,
                   size: 44, color: Color(0xFFE11D48)),
               const SizedBox(height: 12),
-              const Text('تعذّر عرض هذه الشاشة',
+              Text(tr('تعذّر عرض هذه الشاشة', 'Could not render this screen'),
                   textAlign: TextAlign.center,
                   style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
               const SizedBox(height: 4),

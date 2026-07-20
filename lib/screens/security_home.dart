@@ -72,7 +72,7 @@ class SecurityHome extends StatelessWidget {
               if (p.isSupervisor)
                 _Tile(
                   icon: '🧭', label: 'لوحة المشرف',
-                  sub: 'إحصائيات · إسناد',
+                  sub: tr('إحصائيات · إسناد', 'Stats · assignment'),
                   onTap: () => Navigator.push(context,
                       MaterialPageRoute(builder: (_) => const SupervisorScreen())),
                 ),

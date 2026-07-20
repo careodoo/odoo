@@ -259,7 +259,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
               Text('${rate.round()}%',
                   style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w900)),
-              const Text('حضور',
+              Text(tr('حضور', 'Attendance'),
                   style: TextStyle(color: Colors.white70, fontSize: 6.5, fontWeight: FontWeight.w700)),
             ]),
           ),

@@ -188,7 +188,7 @@ class _ClientAgriScreenState extends State<ClientAgriScreen> {
             maxLines: 2, overflow: TextOverflow.ellipsis),
         trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
           _pill('${r['health_label']}', hc),
-          if (overdue) const Padding(padding: EdgeInsets.only(top: 3), child: Text('⚠️ فحص', style: TextStyle(fontSize: 10, color: Color(0xFFE11D48)))),
+          if (overdue) Padding(padding: EdgeInsets.only(top: 3), child: Text(tr('⚠️ فحص', '⚠️ Inspect'), style: TextStyle(fontSize: 10, color: Color(0xFFE11D48)))),
         ]),
         onTap: () => _openPlant(r['id'] as int),
       );

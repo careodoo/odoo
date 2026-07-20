@@ -31,7 +31,7 @@ class _AdminHomeState extends State<AdminHome> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('🏢 لوحة الشركة'),
+        title: Text(tr('🏢 لوحة الشركة', '🏢 Company board')),
         actions: [
           IconButton(icon: const Icon(Icons.notifications_outlined),
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()))),

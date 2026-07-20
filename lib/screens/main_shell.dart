@@ -124,7 +124,7 @@ class _MainShellState extends State<MainShell> {
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13))),
               TextButton(
                 onPressed: () => context.read<AuthProvider>().exitImpersonation().then((_) => setState(() => _idx = 0)),
-                child: const Text('رجوع للأدمن', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+                child: Text(tr('رجوع للأدمن', 'Back to admin'), style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
               ),
             ]),
           ),

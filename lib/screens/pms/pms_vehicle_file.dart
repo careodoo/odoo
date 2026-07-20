@@ -59,10 +59,10 @@ class _PmsVehicleFileScreenState extends State<PmsVehicleFileScreen> {
                 border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
               ),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: const [
+                Row(children: [
                   Icon(Icons.local_gas_station_rounded, size: 15, color: Color(0xFFF7A23B)),
                   SizedBox(width: 6),
-                  Text('سجل الوقود', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Pms.ink)),
+                  Text(tr('سجل الوقود', 'Fuel log'), style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Pms.ink)),
                 ]),
                 const SizedBox(height: 4),
                 MoreList(

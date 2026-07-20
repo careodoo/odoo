@@ -113,7 +113,7 @@ class _SecurityPositioningScreenState extends State<SecurityPositioningScreen> {
                   ],
                 ),
                 if (_geocoding)
-                  const Positioned(top: 10, right: 10, child: _Chip(text: 'تحديد المواقع…')),
+                  Positioned(top: 10, right: 10, child: _Chip(text: tr('تحديد المواقع…', 'Locating…'))),
                 // coverage legend
                 Positioned(left: 10, bottom: 10, child: _legend()),
               ]),

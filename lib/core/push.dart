@@ -23,7 +23,7 @@ class Push {
   /// in the shade. Matches the manifest's default-channel meta-data.
   static const _channel = AndroidNotificationChannel(
     'care_high', 'إشعارات CARE',
-    description: 'تنبيهات المهام والرسائل',
+    description: 'Task and message alerts',
     importance: Importance.high,
   );
 

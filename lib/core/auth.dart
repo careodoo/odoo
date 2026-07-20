@@ -189,7 +189,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     } catch (e) {
-      error = 'تعذّر إنشاء الحساب';
+      error = tr('تعذّر إنشاء الحساب', 'Could not create the account');
       notifyListeners();
       return false;
     }

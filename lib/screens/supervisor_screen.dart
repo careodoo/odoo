@@ -108,7 +108,7 @@ class _SupervisorScreenState extends State<SupervisorScreen> {
                 Text(tr('المهام غير المُسندة / الجديدة', 'Unassigned / new tasks'), style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 8),
                 if (d.assignable.isEmpty)
-                  const Padding(padding: EdgeInsets.all(16), child: Text('لا مهام بانتظار الإسناد ✓', style: TextStyle(color: Color(0xFF9CB2CD)))),
+                  Padding(padding: EdgeInsets.all(16), child: Text(tr('لا مهام بانتظار الإسناد ✓', 'Nothing awaiting assignment ✓'), style: TextStyle(color: Color(0xFF9CB2CD)))),
                 for (final w in d.assignable) _assignCard(w as Map),
                 const SizedBox(height: 20),
                 Text(tr('أحمال الفريق', 'Team load'), style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
