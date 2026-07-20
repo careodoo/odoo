@@ -507,6 +507,53 @@ class _ValetScreenState extends State<ValetScreen>
   /// Read the plate off a photo of the car. An attendant holding keys in one
   /// hand should not be typing a plate with the other, and a mistyped plate is
   /// the one error this service cannot recover from.
+
+  /// Look the plate up and fill in what the registry already holds.
+  Future<void> _prefillFromPlate(String read, void Function(void Function()) setSt) async {
+    Map<String, dynamic> v;
+    try {
+      v = await context.read<AuthProvider>().api.valetPlate(read);
+    } catch (_) {
+      _snack('${tr('قُرئت اللوحة', 'Plate read')}: $read', c: const Color(0xFF16A34A));
+      return;
+    }
+    if (!mounted) return;
+    if (v['known'] != true) {
+      _snack('${tr('مركبة جديدة', 'New vehicle')}: $read', c: const Color(0xFF16A34A));
+      return;
+    }
+    setSt(() {
+      if ('${v['make'] ?? ''}'.isNotEmpty) _prefill['make'] = '${v['make']}';
+      if ('${v['color'] ?? ''}'.isNotEmpty) _prefill['color'] = '${v['color']}';
+      if ('${v['owner'] ?? ''}'.isNotEmpty) _prefill['owner'] = '${v['owner']}';
+      if ('${v['phone'] ?? ''}'.isNotEmpty) _prefill['phone'] = '${v['phone']}';
+    });
+    // A blocked car must stop the crew before the key changes hands, and a
+    // VIP must be known before the guest is halfway to the door.
+    if (v['blocked'] == true) {
+      await showDialog(
+        context: context,
+        builder: (c) => AlertDialog(
+          icon: const Icon(Icons.block_rounded, size: 42, color: Color(0xFFE11D48)),
+          title: Text(tr('مركبة ممنوعة', 'Blocked vehicle'), textAlign: TextAlign.center),
+          content: Text('${v['plate']}\n${v['block_reason'] ?? ''}',
+              textAlign: TextAlign.center),
+          actions: [TextButton(onPressed: () => Navigator.pop(c), child: Text(tr('حسنًا', 'OK')))],
+        ),
+      );
+      return;
+    }
+    final bits = <String>[
+      if (v['vip'] == true) '⭐ VIP',
+      '${tr('زيارة رقم', 'Visit')} ${intOf(v['visits']) + 1}',
+      if ('${v['owner'] ?? ''}'.isNotEmpty) '${v['owner']}',
+      if ('${v['notes'] ?? ''}'.isNotEmpty) '📌 ${v['notes']}',
+    ];
+    _snack(bits.join(' · '), c: const Color(0xFF0891B2));
+  }
+
+  final Map<String, String> _prefill = {};
+
   Future<String?> _scanPlate() async {
     try {
       final shot = await ImagePicker().pickImage(
@@ -587,11 +634,13 @@ class _ValetScreenState extends State<ValetScreen>
                           padding: const EdgeInsets.symmetric(horizontal: 14)),
                       onPressed: () async {
                         final read = await _scanPlate();
-                        if (read != null && read.isNotEmpty) {
-                          setSt(() => plate.text = read);
-                          _snack('${tr('قُرئت اللوحة', 'Plate read')}: $read',
-                              c: const Color(0xFF16A34A));
-                        }
+                        if (read == null || read.isEmpty) return;
+                        setSt(() => plate.text = read);
+                        // A plate the camera reads is only half the answer.
+                        // If this car has been here before, everything we
+                        // already know about it fills itself in — and a
+                        // blocked or VIP car says so before the key is taken.
+                        await _prefillFromPlate(read, setSt);
                       },
                       icon: const Icon(Icons.document_scanner_rounded, size: 18),
                       label: Text(tr('تصوير', 'Scan'),

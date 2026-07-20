@@ -820,10 +820,37 @@ class _ClientHomeState extends State<ClientHome> {
         ),
       );
 
-  Widget _woCard(Map w, ColorScheme cs) => Card(
+  /// One wrench for every service told the reader nothing — a cleaning job
+  /// and a security incident looked identical in the list they scan fastest.
+  static const _svcIcon = <String, (IconData, int)>{
+    'cleaning': (Icons.cleaning_services_rounded, 0xFF0EA5E9),
+    'security': (Icons.shield_rounded, 0xFFE11D48),
+    'agriculture': (Icons.park_rounded, 0xFF16A34A),
+    'landscape': (Icons.park_rounded, 0xFF16A34A),
+    'maintenance': (Icons.handyman_rounded, 0xFF1E5F8C),
+    'facade': (Icons.apartment_rounded, 0xFF8B5CF6),
+    'waste': (Icons.recycling_rounded, 0xFF16A34A),
+    'hospitality': (Icons.local_cafe_rounded, 0xFF8A6D3B),
+    'valet': (Icons.directions_car_rounded, 0xFFB45309),
+    'pest': (Icons.pest_control_rounded, 0xFF7C3AED),
+    'pool': (Icons.pool_rounded, 0xFF0891B2),
+    'watertank': (Icons.water_drop_rounded, 0xFF0EA5E9),
+    'disinfection': (Icons.sanitizer_rounded, 0xFF0EA5A5),
+  };
+
+  Widget _woCard(Map w, ColorScheme cs) {
+    final sv = _svcIcon['${w['service_type'] ?? ''}'] ??
+        (Icons.build_circle_outlined, 0xFF64748B);
+    return Card(
         child: ListTile(
           dense: true,
-          leading: const Icon(Icons.build_circle_outlined),
+          leading: Container(
+            width: 34, height: 34,
+            decoration: BoxDecoration(
+                color: Color(sv.$2).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10)),
+            child: Icon(sv.$1, size: 18, color: Color(sv.$2)),
+          ),
           title: Text('${w['title']}', style: const TextStyle(fontWeight: FontWeight.w700)),
           subtitle: Text('${w['service_type']} · ${w['facility']}',
               style: TextStyle(color: cs.outline, fontSize: 12)),
@@ -832,4 +859,5 @@ class _ClientHomeState extends State<ClientHome> {
               builder: (_) => WorkOrderDetailScreen(id: w['id'] as int, title: '${w['title']}'))),
         ),
       );
+  }
 }

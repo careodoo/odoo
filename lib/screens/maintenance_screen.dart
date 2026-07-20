@@ -16,12 +16,16 @@ class MaintenanceScreen extends StatefulWidget {
   State<MaintenanceScreen> createState() => _MaintenanceScreenState();
 }
 
-const _accent = Color(0xFFF7A23B);
+// Amber read as a warning on every screen it touched — a maintenance service
+// is not a permanent alert. Steel blue carries the engineering feel and
+// leaves amber free to mean what it means everywhere else: attention needed.
+const _accent = Color(0xFF1E5F8C);
+const _accentDark = Color(0xFF12405F);
 const _navy = Color(0xFF0E3A5F);
 
 const _sevColors = {
   'low': Color(0xFF64748B), 'medium': Color(0xFF0891B2),
-  'high': Color(0xFFF7A23B), 'critical': Color(0xFFE5484D),
+  'high': Color(0xFFF59E0B), 'critical': Color(0xFFE5484D),
 };
 const _stateColors = {
   'reported': Color(0xFF0891B2), 'diagnosed': Color(0xFF7C3AED),

@@ -629,6 +629,22 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/client/inv/locations'), headers: await _headers())))['data'] as Map);
 
+  /// What the plate already knows — visits, owner, VIP or blocked, notes.
+  Future<Map<String, dynamic>> valetPlate(String plate) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/valet/plate?plate=${Uri.encodeQueryComponent(plate)}'),
+              headers: await _headers())))['data'] as Map);
+
+  Future<List<dynamic>> valetDrivers({int? facilityId}) async =>
+      ((await _handle(await _net.get(
+              _u('/valet/drivers${facilityId != null ? '?facility_id=$facilityId' : ''}'),
+              headers: await _headers())))['data'] as Map)['drivers'] as List;
+
+  Future<Map<String, dynamic>> valetPark(int ticketId, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/valet/ticket/$ticketId/park'),
+              headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
   // ---- hospitality pantry ---------------------------------------------------
   /// Supplies with their balance in servings, plus recent purchases.
   Future<Map<String, dynamic>> hospStock() async =>
