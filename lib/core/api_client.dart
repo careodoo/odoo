@@ -1647,6 +1647,24 @@ class ApiClient {
               _u('/pms/pettycash/$cashId/action'), headers: await _headers(),
               body: jsonEncode({'action': action}))))['data'] as Map);
 
+  /// Dashboard-section delegations for a project + candidate supervisors.
+  Future<Map<String, dynamic>> pmsDelegations(int projectId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/pms/project/$projectId/delegations'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsDelegate(int projectId, Map<String, dynamic> vals) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/pms/project/$projectId/delegate'), headers: await _headers(),
+              body: jsonEncode(vals))))['data'] as Map);
+
+  Future<void> pmsDelegationRevoke(int delegationId) async =>
+      _handle(await _net.post(_u('/pms/delegation/$delegationId/revoke'), headers: await _headers()));
+
+  /// Sections delegated TO me (what I follow up).
+  Future<Map<String, dynamic>> pmsMyDelegations() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/pms/my-delegations'), headers: await _headers())))['data'] as Map);
+
   /// Form metadata for a new task: departments, categories, assignable users.
   Future<Map<String, dynamic>> pmsTaskMeta(int projectId) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

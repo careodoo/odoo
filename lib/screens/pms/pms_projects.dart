@@ -194,8 +194,15 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
         final list = (snap.data?['sections'] as List?) ?? const [];
         if (list.isEmpty) return const SizedBox.shrink();
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(tr('إدارة المشروع', 'Manage project'),
-              style: const TextStyle(fontWeight: FontWeight.w900, color: Pms.ink, fontSize: 15)),
+          Row(children: [
+            Text(tr('إدارة المشروع', 'Manage project'),
+                style: const TextStyle(fontWeight: FontWeight.w900, color: Pms.ink, fontSize: 15)),
+            const Spacer(),
+            Icon(Icons.touch_app_rounded, size: 13, color: Pms.slate),
+            const SizedBox(width: 3),
+            Text(tr('اضغط مطوّلاً للتفويض', 'Long-press to delegate'),
+                style: const TextStyle(fontSize: 10, color: Pms.slate, fontWeight: FontWeight.w600)),
+          ]),
           const SizedBox(height: 8),
           GridView.count(
             crossAxisCount: 4, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
@@ -210,6 +217,7 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
                     onTap: () => Navigator.push(ctx, MaterialPageRoute(
                         builder: (_) => PmsSectionScreen(
                             projectId: widget.projectId, code: code, label: '${x['label']}'))),
+                    onLongPress: () => _delegateSheet(code, '${x['label']}'),
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
                       decoration: BoxDecoration(
@@ -429,6 +437,116 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
           ]),
         ),
       ),
+    );
+  }
+
+  /// Delegate follow-up of a dashboard section to a supervisor (manager only).
+  Future<void> _delegateSheet(String code, String label) async {
+    final api = context.read<AuthProvider>().api;
+    Map<String, dynamic> data;
+    try {
+      data = await api.pmsDelegations(widget.projectId);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      }
+      return;
+    }
+    if (!mounted) return;
+    final users = ((data['users'] as List?) ?? const []).cast<Map>();
+    var current = ((data['delegations'] as List?) ?? const [])
+        .cast<Map>()
+        .where((d) => d['section_code'] == code)
+        .toList();
+    int? pick;
+    await showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setSheet) {
+        Future<void> refresh() async {
+          final d = await api.pmsDelegations(widget.projectId);
+          setSheet(() => current = ((d['delegations'] as List?) ?? const [])
+              .cast<Map>().where((x) => x['section_code'] == code).toList());
+        }
+        return Padding(
+          padding: EdgeInsets.fromLTRB(18, 14, 18, MediaQuery.of(ctx).viewInsets.bottom + 20),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              const Icon(Icons.supervisor_account_rounded, color: Pms.violet),
+              const SizedBox(width: 8),
+              Expanded(child: Text(tr('تفويض متابعة: $label', 'Delegate: $label'),
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16))),
+            ]),
+            const SizedBox(height: 6),
+            Text(tr('اختر مشرفًا ليتابع هذا القسم نيابةً عنك.',
+                'Assign a supervisor to follow up this section for you.'),
+                style: const TextStyle(color: Pms.slate, fontSize: 12)),
+            const SizedBox(height: 14),
+            if (current.isNotEmpty) ...[
+              Text(tr('المفوَّضون حاليًا', 'Currently delegated'),
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: Pms.ink)),
+              const SizedBox(height: 6),
+              for (final d in current)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(color: Pms.violet.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(12)),
+                  child: Row(children: [
+                    const Icon(Icons.person_rounded, size: 18, color: Pms.violet),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text('${d['delegate']}',
+                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5))),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 18, color: Pms.red),
+                      onPressed: () async {
+                        try {
+                          await api.pmsDelegationRevoke(d['id'] as int);
+                          await refresh();
+                        } catch (_) {}
+                      },
+                    ),
+                  ]),
+                ),
+              const SizedBox(height: 12),
+            ],
+            DropdownButtonFormField<int>(
+              value: pick, isExpanded: true,
+              decoration: InputDecoration(labelText: tr('المشرف', 'Supervisor'),
+                  prefixIcon: const Icon(Icons.badge_rounded),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+              items: [for (final u in users) DropdownMenuItem(value: u['id'] as int,
+                  child: Text('${u['name']}', overflow: TextOverflow.ellipsis))],
+              onChanged: (v) => setSheet(() => pick = v),
+            ),
+            const SizedBox(height: 14),
+            SizedBox(width: double.infinity, height: 48, child: FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: Pms.violet,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+              onPressed: pick == null ? null : () async {
+                try {
+                  await api.pmsDelegate(widget.projectId, {
+                    'delegate_id': pick, 'section_code': code, 'section_label': label,
+                  });
+                  await refresh();
+                  setSheet(() => pick = null);
+                  if (ctx.mounted) {
+                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                        backgroundColor: Pms.green,
+                        content: Text(tr('تم التفويض وإشعار المشرف', 'Delegated and notified'))));
+                  }
+                } catch (e) {
+                  if (ctx.mounted) {
+                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+                  }
+                }
+              },
+              icon: const Icon(Icons.check_rounded),
+              label: Text(tr('تفويض', 'Delegate'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+            )),
+          ]),
+        );
+      }),
     );
   }
 
