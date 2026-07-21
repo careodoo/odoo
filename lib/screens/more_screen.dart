@@ -104,7 +104,9 @@ class MoreScreen extends StatelessWidget {
     tile(Icons.local_cafe_rounded, tr('الضيافة', 'Hospitality'), const HospitalityScreen(), c: const Color(0xFF8A6D3B));
     if (p.canAddWorkers)
       tile(Icons.campaign_rounded, tr('مركز الإشعارات', 'Notification center'), const NotifySendScreen(), c: const Color(0xFFEA580C));
-    if (p.role != 'client') tile(Icons.qr_code_scanner_rounded, tr('مسح رمز الموقع', 'Scan location'), const ScanScreen(), c: const Color(0xFF0891B2));
+    // everyone — including clients — can scan a location's QR or tap its NFC
+    // tag to jump straight to it (the picker handles both).
+    tile(Icons.qr_code_scanner_rounded, tr('مسح موقع (QR / NFC)', 'Scan location (QR / NFC)'), const ScanScreen(), c: const Color(0xFF0891B2));
 
     // ===== Estate & assets (client / back-office only) =====
     if (!isField) {

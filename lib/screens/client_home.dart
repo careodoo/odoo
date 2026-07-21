@@ -35,6 +35,7 @@ import 'schedules_screen.dart';
 import 'attendance_screen.dart';
 import 'notify_send_screen.dart';
 import 'occupancy_screen.dart';
+import 'scan_screen.dart';
 
 /// The client's cockpit — everything the module holds for this customer:
 /// buildings, services, teams, live work-order activity. Fully data-driven, so
@@ -404,6 +405,7 @@ class _ClientHomeState extends State<ClientHome> {
       (Icons.verified_rounded, 'الجودة', 'Quality', 0xFF16A34A, const QualityScreen(), null),
       (Icons.sensors_rounded, 'النشاط', 'Live', 0xFF0891B2, const ClientActivityScreen(), 'workorders'),
       (Icons.event_repeat_rounded, 'الجدولة', 'Schedules', 0xFF0D9488, const SchedulesScreen(), 'workorders'),
+      (Icons.qr_code_scanner_rounded, 'مسح موقع', 'Scan', 0xFF0EA5A4, const ScanScreen(), null),
     ];
     final services = <(IconData, String, String, int, Widget, String?)>[
       (Icons.cleaning_services_rounded, 'النظافة', 'Cleaning', 0xFF0EA5E9, const ClientCleaningScreen(), 'cleaning'),
