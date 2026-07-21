@@ -5,3 +5,4 @@ from . import device
 from . import account_deletion
 from . import orders_report
 from . import chat
+from . import client_service_pref

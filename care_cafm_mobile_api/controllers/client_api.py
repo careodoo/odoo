@@ -909,6 +909,42 @@ class ClientApi(Controller):
             } for r in recs],
         })
 
+    # ---- per-service client settings (More → service settings) --------------
+    def _pref_partner(self, env):
+        p = env.user.partner_id
+        return p.commercial_partner_id or p
+
+    @route(API + '/client/service-settings', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def service_settings_get(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.cafm.client.service.pref' not in env:
+            return _ok({'services': []})
+        Section = env['care.cafm.portal.section'].sudo()
+        secs = Section.search([('service_type', '!=', False), ('active', '=', True)], order='sequence')
+        prefs = env['care.cafm.client.service.pref'].sudo().get_for(
+            self._pref_partner(env), secs.mapped('code'))
+        return _ok({'services': [{
+            'code': s.code, 'name': s.name, 'icon': s.icon or '🧩',
+            'prefs': prefs.get(s.code, {}),
+        } for s in secs]})
+
+    @route(API + '/client/service-settings', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def service_settings_set(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.cafm.client.service.pref' not in env:
+            return _err('غير متاح', 404)
+        b = _body()
+        code = b.get('service_code')
+        if not code:
+            return _err('رمز الخدمة مطلوب', 422)
+        env['care.cafm.client.service.pref'].sudo().set_for(
+            self._pref_partner(env), code, b.get('prefs') or {})
+        return _ok({'ok': True})
+
     @route(API + '/client/employee/<int:eid>/attendance', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def client_employee_attendance(self, eid, **kw):
         """Every attendance record for one worker on this client's sites."""

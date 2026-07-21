@@ -11,3 +11,4 @@ access_acct_del_user,acct.del.user,model_care_account_deletion,base.group_user,1
 acc_care_app_settings_mgr,care.app.settings.mgr,model_care_app_settings,base.group_system,1,1,1,1
 access_care_chat_message_user,care.chat.message.user,model_care_chat_message,base.group_user,1,1,1,0
 access_care_chat_message_portal,care.chat.message.portal,model_care_chat_message,base.group_portal,1,1,1,0
+acc_client_service_pref,care.cafm.client.service.pref,model_care_cafm_client_service_pref,base.group_user,1,1,1,1
