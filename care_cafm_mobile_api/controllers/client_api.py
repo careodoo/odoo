@@ -867,6 +867,48 @@ class ClientApi(Controller):
                     'assigned_team': r.assigned_team_id.name if r.assigned_team_id else None,
                     'planned_at': str(r.planned_at or '')[:16] or None})
 
+    # ---- material handling: jobs + stats (a real board, not work orders) -----
+    @route(API + '/client/handling/jobs', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def handling_jobs(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.handling.job' not in env:
+            return _ok({'jobs': [], 'stats': {}})
+        M = env['care.handling.job'].sudo()
+        st = dict(M._fields['state'].selection)
+        pr = dict(M._fields['priority'].selection) if 'priority' in M._fields else {}
+        mt = dict(M._fields['move_type'].selection) if 'move_type' in M._fields else {}
+        fids = self._fac_ids(env)
+        recs = M.search([('facility_id', 'in', fids)], order='id desc', limit=100)
+        if kw.get('state'):
+            recs = recs.filtered(lambda r: r.state == kw['state'])
+        def cnt(s):
+            return sum(1 for r in recs if r.state == s)
+        return _ok({
+            'stats': {
+                'total': len(recs),
+                'open': sum(1 for r in recs if r.state in ('draft', 'scheduled', 'in_progress')),
+                'delivered': cnt('delivered') + cnt('verified'),
+                'weight': round(sum(r.weight_kg or 0.0 for r in recs), 1),
+                'pieces': sum(r.quantity or 0 for r in recs),
+            },
+            'jobs': [{
+                'id': r.id, 'name': r.name,
+                'facility': r.facility_id.name or None,
+                'cargo': r.cargo, 'category': r.cargo_category,
+                'quantity': r.quantity, 'weight': r.weight_kg or 0.0,
+                'fragile': r.fragile,
+                'move_type': mt.get(r.move_type, r.move_type),
+                'from': r.from_location_id.name if r.from_location_id else (r.from_text or None),
+                'to': r.to_location_id.name if r.to_location_id else (r.to_text or None),
+                'priority': pr.get(getattr(r, 'priority', False), None),
+                'state': r.state, 'state_label': st.get(r.state, r.state),
+                'crew': r.crew_lead_id.name if r.crew_lead_id else (r.team_id.name if r.team_id else None),
+                'scheduled_at': str(r.scheduled_at or '')[:16] or None,
+            } for r in recs],
+        })
+
     @route(API + '/client/employee/<int:eid>/attendance', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def client_employee_attendance(self, eid, **kw):
         """Every attendance record for one worker on this client's sites."""
