@@ -35,6 +35,7 @@ import 'material_policy_screen.dart';
 import 'support_screen.dart';
 import 'valet_screen.dart';
 import 'hospitality_screen.dart';
+import 'hosp_suppliers_screen.dart';
 import 'update_gate.dart';
 
 /// A polished home for everything this user can reach — styled like the CARE 2
@@ -136,6 +137,8 @@ class MoreScreen extends StatelessWidget {
       if (isClient || p.isAdmin) tile(Icons.description_rounded, tr('العقود', 'Contracts'), const ContractsScreen(), c: const Color(0xFF0B6EA8));
       // per-service settings — a client tunes notifications/reports per service
       if (isClient) tile(Icons.tune_rounded, tr('إعدادات الخدمات', 'Service settings'), const ServiceSettingsScreen(), c: const Color(0xFF6366F1));
+      // hospitality pantry setup: suppliers + registered materials
+      if (isClient || p.canAddWorkers) tile(Icons.storefront_rounded, tr('الموردون والمواد', 'Suppliers & materials'), const HospSuppliersScreen(), c: const Color(0xFF8A6D3B));
       if (p.canAddWorkers) {
         tile(Icons.settings_suggest_rounded, tr('إدارة المنشأة', 'Manage facility'), const ManageScreen(), c: const Color(0xFF6366F1));
         tile(Icons.nfc_rounded, tr('برمجة شرائح NFC', 'NFC tags'), const NfcProvisionScreen(), c: const Color(0xFF6D28D9));

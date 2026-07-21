@@ -431,12 +431,16 @@ class _ClientHomeState extends State<ClientHome> {
       (Icons.inventory_2_rounded, 'المخزون', 'Inventory', 0xFF7C3AED, const ClientInventoryScreen(), 'inventory'),
       (Icons.schedule_rounded, 'الحضور', 'Attendance', 0xFF0891B2, const AttendanceScreen(), 'team'),
       (Icons.groups_rounded, 'الفريق', 'Team', 0xFF2563EB, const ClientTeamScreen(), 'team'),
+      (Icons.meeting_room_rounded, 'الإشغال', 'Occupancy', 0xFF0E7A5F, const OccupancyScreen(), 'facilities'),
+      (Icons.insights_rounded, 'تحليلات المكان', 'Site analytics', 0xFF4338CA, const ClientAnalyticsScreen(), null),
       (Icons.campaign_rounded, 'إشعار', 'Notify', 0xFFDB2777, const NotifySendScreen(), null),
     ];
     final money = <(IconData, String, String, int, Widget, String?)>[
       (Icons.storefront_rounded, 'المتجر', 'Shop', 0xFF0EA5E9, const ShopScreen(), 'shop'),
       (Icons.receipt_long_rounded, 'طلباتي', 'Orders', 0xFFEA580C, const OrdersScreen(), null),
       (Icons.credit_card_rounded, 'الفواتير', 'Invoices', 0xFF9D174D, const InvoicesScreen(), null),
+      (Icons.request_quote_rounded, 'كشف الحساب', 'Statement', 0xFF0F766E, const ClientAnalyticsScreen(), null),
+      (Icons.description_rounded, 'العقود', 'Contracts', 0xFF0B6EA8, const ContractsScreen(), null),
     ];
 
     List<T> vis<T extends (IconData, String, String, int, Widget, String?)>(List<T> l) =>
