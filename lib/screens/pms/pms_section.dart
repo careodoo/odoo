@@ -80,6 +80,7 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
     final createAction = const {
       'deliveries': 'delivery', 'petty': 'expense',
       'timesheet': 'timesheet', 'requests': 'docrequest',
+      'assets': 'custody',
     }[widget.code];
     return Scaffold(
       backgroundColor: Pms.bg,
@@ -230,6 +231,7 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
         'petty': tr('مصروف جديد', 'New expense'),
         'timesheet': tr('كشف جديد', 'New sheet'),
         'requests': tr('طلب مستند', 'Doc request'),
+        'assets': tr('طلب عهدة', 'Request custody'),
       }[widget.code] ?? tr('إضافة', 'Add');
 
   /// The create sheet, built per-section from its options endpoint.
@@ -424,6 +426,13 @@ class _CreateSheetState extends State<_CreateSheet> {
   DateTime? _from, _to;
 
   @override
+  void initState() {
+    super.initState();
+    // The custody form gates its Save button on the name text — rebuild as it changes.
+    _a.addListener(() => setState(() {}));
+  }
+
+  @override
   void dispose() {
     _a.dispose(); _b.dispose(); _c.dispose();
     super.dispose();
@@ -574,6 +583,30 @@ class _CreateSheetState extends State<_CreateSheet> {
           _submit(_pick1 != null, () => {
             'employee_id': _pick1, if (_pick2 != null) 'doc_type': _pick2,
             'description': _a.text.trim(),
+          }),
+        ];
+      case 'assets':
+        final emps = (widget.options['employees'] as List?) ?? const [];
+        final types = (widget.options['item_types'] as List?) ?? const [];
+        return [
+          _title(tr('طلب عهدة', 'Request custody')),
+          _text(_a, tr('اسم العهدة *', 'Custody item *')),
+          if (types.isNotEmpty) _dropStr(tr('نوع العهدة', 'Type'), types),
+          if (emps.isEmpty)
+            Padding(padding: const EdgeInsets.only(bottom: 10),
+                child: Text(tr('لا موظفين في قسم هذا المشروع.', 'No employees in this project department.'),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)))
+          else
+            _dropInt(tr('الموظف المستلم *', 'Assigned to *'), emps, 'id', 'name'),
+          _text(_b, tr('القيمة (اختياري)', 'Value (optional)'),
+              type: const TextInputType.numberWithOptions(decimal: true)),
+          _text(_c, tr('الوصف / ملاحظات', 'Description / notes'), lines: 2),
+          _submit(_a.text.trim().isNotEmpty && _pick1 != null, () => {
+            'name': _a.text.trim(),
+            if (_pick2 != null) 'item_type': _pick2,
+            if (_pick1 != null) 'employee_id': _pick1,
+            if (_b.text.trim().isNotEmpty) 'value': _b.text.trim(),
+            if (_c.text.trim().isNotEmpty) 'description': _c.text.trim(),
           }),
         ];
       default:
