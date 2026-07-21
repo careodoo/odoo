@@ -62,12 +62,17 @@ jobs:
         run: sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/' android/app/build.gradle.kts || true
 
       - name: Configure release signing (CONSISTENT key so upgrades install + Play accepts)
+        id: sign
         env:
           KS_B64: ${{ secrets.RELEASE_KEYSTORE_B64 }}
           KS_PASS: ${{ secrets.RELEASE_STORE_PASSWORD }}
           KEY_PASS: ${{ secrets.RELEASE_KEY_PASSWORD }}
           KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
         run: |
+          # publish=true only when we sign with the real Play key, so we never
+          # publish a Release with a wrong-key APK/AAB that Play rejects and that
+          # confuses which file to install.
+          if [ -n "$KS_B64" ]; then echo "publish=true" >> "$GITHUB_OUTPUT"; else echo "publish=false" >> "$GITHUB_OUTPUT"; fi
           # The committed android/app/build.gradle.kts already signs from
           # android/key.properties → android/care-release.jks. We only need to
           # PROVIDE those two files. Previously CI had neither, so it fell back
@@ -137,6 +142,7 @@ jobs:
             care-mobile-v${{ steps.ver.outputs.name }}.aab
 
       - name: Publish Release with APK + AAB
+        if: steps.sign.outputs.publish == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.ver.outputs.name }}-build${{ github.run_number }}
