@@ -1,0 +1,336 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../core/auth.dart';
+import '../../core/i18n.dart';
+import '../attendance_screen.dart';
+
+/// The «My» module — the signed-in user's own hub: who they are, how they're
+/// doing, the services they can start, and their requests with live statuses.
+/// Shared by the management and project-management shells.
+class MyScreen extends StatefulWidget {
+  final Color accent;
+  const MyScreen({super.key, this.accent = const Color(0xFF4F46E5)});
+  @override
+  State<MyScreen> createState() => _MyScreenState();
+}
+
+class _MyScreenState extends State<MyScreen> {
+  Map<String, dynamic>? _d;
+  String? _error;
+  bool _busy = false;
+
+  static const _ink = Color(0xFF1E293B);
+  static const _slate = Color(0xFF64748B);
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _error = null);
+    try {
+      final d = await context.read<AuthProvider>().api.myHub();
+      if (mounted) setState(() => _d = d);
+    } catch (e) {
+      if (mounted) setState(() => _error = '$e');
+    }
+  }
+
+  Color get _c => widget.accent;
+
+  static const _reqTint = {
+    'leaves': Color(0xFF16A34A),
+    'permissions': Color(0xFF0891B2),
+    'loans': Color(0xFFD97706),
+    'expenses': Color(0xFF7C3AED),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F6FA),
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: _c,
+        child: _error != null
+            ? ListView(children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 120, 24, 24),
+                  child: Column(children: [
+                    const Icon(Icons.cloud_off_rounded, size: 44, color: _slate),
+                    const SizedBox(height: 12),
+                    Text(tr('تعذّر تحميل صفحتك', 'Could not load your page'),
+                        style: const TextStyle(fontWeight: FontWeight.w800, color: _ink)),
+                    const SizedBox(height: 6),
+                    Text('$_error', textAlign: TextAlign.center,
+                        style: const TextStyle(color: _slate, fontSize: 12)),
+                  ]),
+                )
+              ])
+            : _d == null
+                ? Center(child: CircularProgressIndicator(color: _c))
+                : _body(_d!),
+      ),
+    );
+  }
+
+  Widget _body(Map d) {
+    final p = (d['profile'] as Map?) ?? const {};
+    final stats = ((d['stats'] as List?) ?? const []).cast<Map>();
+    final services = ((d['services'] as List?) ?? const []).cast<Map>();
+    final requests = ((d['requests'] as List?) ?? const []).cast<Map>();
+    return ListView(padding: EdgeInsets.zero, children: [
+      _headerCard(p, stats),
+      _sectionTitle(tr('الخدمات الذاتية', 'Self-service'), Icons.grid_view_rounded),
+      _servicesGrid(services),
+      _sectionTitle(tr('طلباتي', 'My requests'), Icons.receipt_long_rounded,
+          trailing: '${requests.length}'),
+      if (requests.isEmpty)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: Text(tr('لا طلبات بعد', 'No requests yet'),
+              style: const TextStyle(color: _slate, fontSize: 12.5)),
+        )
+      else
+        for (final r in requests) _requestCard(r),
+      const SizedBox(height: 30),
+    ]);
+  }
+
+  // ---- header: avatar + identity + stat strip ---------------------------
+  Widget _headerCard(Map p, List<Map> stats) {
+    final initial = '${p['name'] ?? '?'}'.trim();
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+            colors: [_c, _c.withValues(alpha: 0.78)],
+            begin: Alignment.topRight, end: Alignment.bottomLeft),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+          child: Column(children: [
+            Row(children: [
+              CircleAvatar(
+                radius: 30,
+                backgroundColor: Colors.white24,
+                backgroundImage: p['avatar_url'] != null
+                    ? NetworkImage('${p['avatar_url']}')
+                    : null,
+                child: p['avatar_url'] == null
+                    ? Text(initial.isEmpty ? '?' : initial.characters.first,
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 22))
+                    : null,
+              ),
+              const SizedBox(width: 14),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('${p['name'] ?? ''}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+                if (p['job'] != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text('${p['job']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 12.5, fontWeight: FontWeight.w600)),
+                  ),
+                if (p['department'] != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 1),
+                    child: Text('${p['department']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11)),
+                  ),
+              ])),
+              if (p['is_manager'] == true)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(20)),
+                  child: Text(tr('مدير', 'Manager'),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 10)),
+                ),
+            ]),
+            if (stats.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(16)),
+                child: Row(children: [
+                  for (var i = 0; i < stats.length; i++) ...[
+                    if (i > 0) Container(width: 1, height: 28, color: Colors.white24),
+                    Expanded(child: Column(children: [
+                      Text('${stats[i]['value'] ?? 0}',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+                      const SizedBox(height: 2),
+                      Text(gLang == 'en' ? '${stats[i]['en'] ?? ''}' : '${stats[i]['ar'] ?? ''}',
+                          maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 9.5, fontWeight: FontWeight.w700)),
+                    ])),
+                  ],
+                ]),
+              ),
+            ],
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionTitle(String t, IconData ic, {String? trailing}) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
+        child: Row(children: [
+          Icon(ic, size: 18, color: _c),
+          const SizedBox(width: 7),
+          Text(t, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5, color: _ink)),
+          const Spacer(),
+          if (trailing != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(color: _c.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(20)),
+              child: Text(trailing, style: TextStyle(color: _c, fontWeight: FontWeight.w800, fontSize: 11)),
+            ),
+        ]),
+      );
+
+  // ---- services as professional icon tiles ------------------------------
+  Widget _servicesGrid(List<Map> services) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: GridView.count(
+          crossAxisCount: 3,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 1.02,
+          children: [for (final s in services) _serviceTile(s)],
+        ),
+      );
+
+  Widget _serviceTile(Map s) => Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _openService('${s['key']}'),
+          child: Container(
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
+            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Container(
+                padding: const EdgeInsets.all(11),
+                decoration: BoxDecoration(color: _c.withValues(alpha: 0.10), shape: BoxShape.circle),
+                child: Text('${s['icon'] ?? '•'}', style: const TextStyle(fontSize: 22)),
+              ),
+              const SizedBox(height: 8),
+              Text(gLang == 'en' ? '${s['en'] ?? ''}' : '${s['ar'] ?? ''}',
+                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5, color: _ink)),
+            ]),
+          ),
+        ),
+      );
+
+  void _openService(String key) {
+    if (key == 'attendance') {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendanceScreen()));
+      return;
+    }
+    // Leave / permission / loan / expense / timesheet create-flows are being
+    // rolled out; the request list below already reflects them live.
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(tr('سيتوفّر إنشاء الطلب هنا قريبًا', 'Creating this request here is coming soon')),
+        backgroundColor: _c));
+  }
+
+  // ---- my requests, each clickable + deletable if draft -----------------
+  Widget _requestCard(Map r) {
+    final tint = _reqTint['${r['source']}'] ?? _slate;
+    final canDelete = r['can_delete'] == true;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Row(children: [
+        Container(width: 5, height: 76, color: tint),
+        Expanded(child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 11, 8, 11),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Text('${r['icon'] ?? ''} ', style: const TextStyle(fontSize: 13)),
+              Text(gLang == 'en' ? '${r['en'] ?? ''}' : '${r['ar'] ?? ''}',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: tint)),
+              const Spacer(),
+              if (r['state'] != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(color: tint.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(20)),
+                  child: Text('${r['state']}', style: TextStyle(color: tint, fontWeight: FontWeight.w800, fontSize: 10)),
+                ),
+            ]),
+            const SizedBox(height: 5),
+            Text('${r['title']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: _ink)),
+            const SizedBox(height: 3),
+            Row(children: [
+              if (r['date'] != null)
+                Text('${r['date']}', style: const TextStyle(color: _slate, fontSize: 10.5)),
+              if (r['amount'] != null) ...[
+                const SizedBox(width: 10),
+                Text('${r['amount']}', style: TextStyle(color: tint, fontWeight: FontWeight.w800, fontSize: 11.5)),
+              ],
+            ]),
+          ]),
+        )),
+        if (canDelete)
+          IconButton(
+            tooltip: tr('حذف', 'Delete'),
+            icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFE11D48), size: 20),
+            onPressed: _busy ? null : () => _confirmDelete(r),
+          ),
+      ]),
+    );
+  }
+
+  Future<void> _confirmDelete(Map r) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text(tr('حذف الطلب', 'Delete request'),
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+        content: Text(tr('سيُحذف «${r['title']}». لا يمكن التراجع.',
+            '"${r['title']}" will be deleted. This cannot be undone.')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('تراجع', 'Back'))),
+          FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE11D48)),
+              onPressed: () => Navigator.pop(c, true),
+              child: Text(tr('حذف', 'Delete'))),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      await context.read<AuthProvider>().api.myDelete('${r['source']}', r['id'] as int);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تم الحذف', 'Deleted')), backgroundColor: const Color(0xFF16A34A)));
+      await _load();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('$e'), backgroundColor: const Color(0xFFE11D48)));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+}

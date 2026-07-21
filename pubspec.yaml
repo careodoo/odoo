@@ -1,7 +1,7 @@
 name: care_mobile
 description: Care CAFM field app — one app, a different professional face per service (security, cleaning, agriculture, facade). Consumes the Odoo /api/v1 token API.
 publish_to: "none"
-version: 3.29.0+2146
+version: 3.30.0+2147
 
 environment:
   sdk: ">=3.3.0 <4.0.0"

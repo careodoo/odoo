@@ -6,6 +6,7 @@ import '../../core/widgets.dart';
 import '../notifications_screen.dart';
 import 'pms_projects.dart';
 import 'pms_tasks.dart';
+import '../my/my_screen.dart';
 
 class Pms {
   static const violet = Color(0xFF7C3AED);
@@ -34,6 +35,7 @@ class _PmsShellState extends State<PmsShell> {
       const _T(Icons.space_dashboard_rounded, 'لوحة المشاريع', 'Dashboard', PmsDashboard()),
       const _T(Icons.account_tree_rounded, 'المشاريع', 'Projects', PmsProjectsScreen()),
       const _T(Icons.checklist_rounded, 'مهامي', 'My tasks', PmsTasksScreen(filter: 'mine', title: 'مهامي')),
+      const _T(Icons.account_circle_rounded, 'My', 'My', MyScreen(accent: Pms.violet)),
       const _T(Icons.notifications_rounded, 'الإشعارات', 'Alerts', NotificationsScreen()),
     ];
     final idx = _tab.clamp(0, tabs.length - 1);

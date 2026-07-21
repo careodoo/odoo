@@ -88,7 +88,7 @@ class _RootShellState extends State<RootShell> {
           case 'pms':
             return const PmsShell();
           case 'management':
-            return const ManagementHome();
+            return const ManagementShell();
           default:
             return C2CShell(canSwitchCafm: cafmSwitch, showModeSwitch: true);
         }

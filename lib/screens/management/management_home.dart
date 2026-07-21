@@ -2,7 +2,51 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
+import '../my/my_screen.dart';
 import 'management_list.dart';
+
+/// Management app shell — Systems and the personal «My» hub, side by side.
+class ManagementShell extends StatefulWidget {
+  const ManagementShell({super.key});
+  @override
+  State<ManagementShell> createState() => _ManagementShellState();
+}
+
+class _ManagementShellState extends State<ManagementShell> {
+  int _tab = 0;
+  @override
+  Widget build(BuildContext context) {
+    final bodies = [const ManagementHome(), const MyScreen(accent: Mgmt.red)];
+    final idx = _tab.clamp(0, bodies.length - 1);
+    return Scaffold(
+      backgroundColor: Mgmt.bg,
+      body: IndexedStack(index: idx, children: bodies),
+      bottomNavigationBar: NavigationBarTheme(
+        data: NavigationBarThemeData(
+          backgroundColor: Colors.white,
+          indicatorColor: Mgmt.red.withValues(alpha: 0.14),
+          labelTextStyle: WidgetStateProperty.all(
+              const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+        ),
+        child: NavigationBar(
+          height: 62,
+          selectedIndex: idx,
+          onDestinationSelected: (i) => setState(() => _tab = i),
+          destinations: [
+            NavigationDestination(
+                icon: const Icon(Icons.grid_view_rounded),
+                selectedIcon: const Icon(Icons.grid_view_rounded, color: Mgmt.red),
+                label: tr('الأنظمة', 'Systems')),
+            NavigationDestination(
+                icon: const Icon(Icons.account_circle_rounded),
+                selectedIcon: const Icon(Icons.account_circle_rounded, color: Mgmt.red),
+                label: 'My'),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class Mgmt {
   static const red = Color(0xFFC0392B);
