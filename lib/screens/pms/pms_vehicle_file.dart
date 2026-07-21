@@ -52,6 +52,8 @@ class _PmsVehicleFileScreenState extends State<PmsVehicleFileScreen> {
           return ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 24), children: [
             _identity(v, (d['fuel_total'] ?? 0)),
             const SizedBox(height: 12),
+            if (((d['details'] as List?) ?? const []).isNotEmpty) ...[
+              _detailsSection(d['details'] as List), const SizedBox(height: 0)],
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -137,6 +139,41 @@ class _PmsVehicleFileScreenState extends State<PmsVehicleFileScreen> {
           ]),
         ]),
       );
+
+  Widget _detailsSection(List sections) => Column(children: [
+        for (final s in sections.cast<Map>()) Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+              color: Colors.white, borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
+          clipBehavior: Clip.antiAlias,
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(13, 10, 13, 9),
+              decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade100))),
+              child: Text('${s['title']}',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: _c)),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(13, 4, 13, 10),
+              child: Column(children: [
+                for (final f in ((s['fields'] as List?) ?? const []).cast<Map>())
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6.5),
+                    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      SizedBox(width: 110, child: Text('${f['label']}',
+                          style: const TextStyle(color: Pms.slate, fontSize: 12))),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text('${f['value']}',
+                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Pms.ink))),
+                    ]),
+                  ),
+              ]),
+            ),
+          ]),
+        ),
+      ]);
 
   Widget _chip(IconData ic, String t) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
