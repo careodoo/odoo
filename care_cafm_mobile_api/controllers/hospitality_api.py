@@ -456,6 +456,32 @@ class HospitalityApi(Controller):
             'uoms': [{'code': c, 'label': l} for c, l in uom.items()],
         })
 
+    @route(API + '/hosp/supplier/save', type='http', auth='public', methods=['POST'],
+           csrf=False, cors='*')
+    def hosp_supplier_save(self, **kw):
+        """Register a supplier we buy consumables from, or correct one."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        b = _body()
+        name = (b.get('name') or '').strip()
+        if not name:
+            return _err('اسم المورّد مطلوب', 422)
+        P = env['res.partner'].sudo()
+        vals = {'name': name, 'phone': b.get('phone') or False,
+                'email': b.get('email') or False, 'is_company': True}
+        if b.get('id'):
+            rec = P.browse(int(b['id'])).exists()
+            if not rec:
+                return _err('غير موجود', 404)
+            rec.write(vals)
+            if not rec.supplier_rank:
+                rec.supplier_rank = 1
+        else:
+            rec = P.create(dict(vals, supplier_rank=1))
+        return _ok({'id': rec.id, 'name': rec.name,
+                    'phone': rec.phone or None, 'email': rec.email or None})
+
     @route(API + '/hosp/supply/save', type='http', auth='public', methods=['POST'],
            csrf=False, cors='*')
     def hosp_supply_save(self, **kw):
