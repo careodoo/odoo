@@ -23,6 +23,8 @@ class _HospStockScreenState extends State<HospStockScreen>
   Map<String, dynamic>? _d;
   String? _error;
   bool _busy = false;
+  String? _supCat;      // supplies category filter (null = all)
+  bool _supLowOnly = false;
 
   static const _brown = Color(0xFF8A6D3B);
   static const _navy = Color(0xFF0E3A5F);
@@ -50,6 +52,56 @@ class _HospStockScreenState extends State<HospStockScreen>
 
   List<Map> get _supplies =>
       ((_d?['supplies'] as List?) ?? const []).cast<Map>();
+
+  /// Distinct categories present in the supplies, as (code, label).
+  List<(String, String)> get _supCategories {
+    final seen = <String, String>{};
+    for (final s in _supplies) {
+      final c = '${s['category'] ?? ''}';
+      if (c.isNotEmpty) seen[c] = '${s['category_label'] ?? c}';
+    }
+    final out = seen.entries.map((e) => (e.key, e.value)).toList();
+    out.sort((a, b) => a.$2.compareTo(b.$2));
+    return out;
+  }
+
+  List<Map> get _filteredSupplies => _supplies.where((s) {
+        if (_supCat != null && '${s['category'] ?? ''}' != _supCat) return false;
+        if (_supLowOnly && s['low'] != true) return false;
+        return true;
+      }).toList();
+
+  Widget _supplyFilters() => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(children: [
+            _supChip(null, tr('الكل', 'All'), _supCat == null && !_supLowOnly),
+            _supChipLow(),
+            for (final c in _supCategories) _supChip(c.$1, c.$2, _supCat == c.$1),
+          ]),
+        ),
+      );
+
+  Widget _supChip(String? code, String label, bool on) => Padding(
+        padding: const EdgeInsets.only(left: 6),
+        child: ChoiceChip(
+          label: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+          selected: on,
+          selectedColor: _brown.withValues(alpha: 0.16),
+          onSelected: (_) => setState(() { _supCat = code; if (code != null) _supLowOnly = false; }),
+        ),
+      );
+
+  Widget _supChipLow() => Padding(
+        padding: const EdgeInsets.only(left: 6),
+        child: FilterChip(
+          label: Text(tr('تحت الحد', 'Low'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+          selected: _supLowOnly,
+          selectedColor: const Color(0xFFE11D48).withValues(alpha: 0.14),
+          onSelected: (v) => setState(() { _supLowOnly = v; if (v) _supCat = null; }),
+        ),
+      );
   List<Map> get _purchases =>
       ((_d?['purchases'] as List?) ?? const []).cast<Map>();
 
@@ -98,7 +150,12 @@ class _HospStockScreenState extends State<HospStockScreen>
                   padding: const EdgeInsets.fromLTRB(12, 12, 12, 90),
                   children: [
                     _summary(t),
-                    for (final s in _supplies) _supplyCard(s),
+                    _supplyFilters(),
+                    for (final s in _filteredSupplies) _supplyCard(s),
+                    if (_filteredSupplies.isEmpty)
+                      Padding(padding: const EdgeInsets.all(28),
+                          child: Center(child: Text(tr('لا مستهلكات بهذا الفلتر', 'Nothing matches this filter'),
+                              style: const TextStyle(color: Colors.black45)))),
                   ],
                 ),
               ),
