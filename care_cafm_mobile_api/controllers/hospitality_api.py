@@ -421,6 +421,10 @@ class HospitalityApi(Controller):
         p = env['care.hosp.purchase'].sudo().browse(pid).exists()
         if not p:
             return _err('غير موجود', 404)
+        # scope: purchase must belong to a facility the caller manages — these
+        # actions move money (unit_cost) and pantry stock.
+        if p.facility_id.id not in self._facilities(env).ids:
+            return _err('غير مصرّح', 403)
         fn = {'submit': p.action_submit, 'approve': p.action_approve,
               'receive': p.action_receive, 'cancel': p.action_cancel}.get(act)
         if not fn:

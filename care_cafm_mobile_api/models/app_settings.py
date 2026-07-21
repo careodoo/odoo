@@ -45,6 +45,41 @@ class CareAppSettings(models.Model):
         string='إظهار بيانات الإقامة والوثائق', default=True,
         help='عند التعطيل تُخفى تواريخ الإقامة والتصاريح من ملف العامل.')
 
+    # ---- media server -----------------------------------------------------
+    # Two selectable strategies, chosen later from this same screen:
+    #  · local   → serve every image/video from this Odoo server (default)
+    #  · cdn     → keep files here but hand the app/portal a different base URL
+    #              (a CDN / reverse-proxy in front of Odoo) — no data migration
+    #  · offload → store the attachment BYTES themselves on an external location
+    #              (Odoo's native ir_attachment.location, e.g. a mount or S3 URI)
+    media_mode = fields.Selection([
+        ('local', 'على هذا السيرفر (افتراضي)'),
+        ('cdn', 'رابط سيرفر وسائط منفصل (CDN / إعادة توجيه)'),
+        ('offload', 'تخزين خارجي كامل للملفات'),
+    ], string='مصدر الوسائط', default='local',
+        help='يحدّد من أين يجلب التطبيق والبورتال الصور والفيديوهات.')
+    media_cdn_base = fields.Char(
+        string='رابط سيرفر الوسائط (CDN)',
+        help='مثال: https://media.care-kw.com — تُبنى كل روابط الصور/الفيديو من هذا '
+             'الرابط بدل رابط الخادم. اتركه فارغًا للوضع المحلي.')
+    media_offload_location = fields.Char(
+        string='موقع التخزين الخارجي',
+        help='قيمة ir_attachment.location في Odoo — مثل file:///mnt/media أو رابط '
+             'تخزين S3 حسب الوحدة المثبّتة. تُطبَّق على المرفقات الجديدة.')
+    media_status = fields.Char(string='الحالة', compute='_compute_media_status')
+
+    @api.depends('media_mode', 'media_cdn_base', 'media_offload_location')
+    def _compute_media_status(self):
+        for s in self:
+            if s.media_mode == 'cdn':
+                s.media_status = ('✅ الوسائط من: %s' % s.media_cdn_base) if s.media_cdn_base \
+                    else '⚠ اختر وضع CDN لكن الرابط فارغ — يعمل محليًا'
+            elif s.media_mode == 'offload':
+                s.media_status = ('✅ تخزين خارجي: %s' % s.media_offload_location) if s.media_offload_location \
+                    else '⚠ اختر التخزين الخارجي لكن الموقع فارغ'
+            else:
+                s.media_status = 'الوسائط تُخدَم من هذا السيرفر'
+
     # ---- maintenance ------------------------------------------------------
     maintenance = fields.Boolean(string='وضع الصيانة',
                                  help='يعرض للتطبيق رسالة صيانة بدل المحتوى.')
@@ -113,13 +148,34 @@ class CareAppSettings(models.Model):
             # a new key invalidates the cached OAuth token
             self.env['ir.config_parameter'].sudo().set_param('care.fcm.access_token', '')
             self.env['ir.config_parameter'].sudo().set_param('care.fcm.access_token_exp', '0')
+        # media server — mirror to fast, cached config params that _abs() reads,
+        # and drive Odoo's native external-storage hook for the offload mode.
+        P = self.env['ir.config_parameter'].sudo()
+        if 'media_mode' in vals:
+            P.set_param('care.media.mode', vals.get('media_mode') or 'local')
+        if 'media_cdn_base' in vals:
+            P.set_param('care.media.cdn_base', (vals.get('media_cdn_base') or '').strip().rstrip('/'))
+        if 'media_offload_location' in vals or 'media_mode' in vals:
+            rec = self[:1]
+            if rec.media_mode == 'offload' and rec.media_offload_location:
+                P.set_param('ir_attachment.location', rec.media_offload_location.strip())
+            elif 'media_mode' in vals and vals.get('media_mode') != 'offload':
+                # leaving offload → stop forcing an external location for new files
+                P.set_param('ir_attachment.location', '')
         return res
 
     @api.model
     def default_get(self, fields_list):
         vals = super().default_get(fields_list)
+        P = self.env['ir.config_parameter'].sudo()
         if 'fcm_credentials' in fields_list:
-            vals['fcm_credentials'] = self.env['ir.config_parameter'].sudo().get_param('care.fcm.credentials')
+            vals['fcm_credentials'] = P.get_param('care.fcm.credentials')
+        if 'media_mode' in fields_list:
+            vals['media_mode'] = P.get_param('care.media.mode', 'local')
+        if 'media_cdn_base' in fields_list:
+            vals['media_cdn_base'] = P.get_param('care.media.cdn_base', '')
+        if 'media_offload_location' in fields_list:
+            vals['media_offload_location'] = P.get_param('ir_attachment.location', '')
         return vals
 
     # ---- actions ----------------------------------------------------------

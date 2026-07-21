@@ -4,7 +4,7 @@
     'version': '17.0.1.0',
     'summary': 'Central projects/contracts hub: tasks, kinds, forwarding, groups, portal, dashboards',
     'author': 'CARE',
-    'depends': ['project', 'hr', 'mail', 'fleet', 'care_experience', 'portal', 'website', 'purchase_report', 'sale', 'account'],
+    'depends': ['project', 'hr', 'mail', 'fleet', 'care_experience', 'care_housing', 'portal', 'website', 'purchase_report', 'sale', 'account'],
     'data': [
         'security/pms_groups.xml',
         'security/ir.model.access.csv',

@@ -10,6 +10,7 @@ from datetime import datetime, time, timedelta
 import pytz
 
 from odoo import api, fields, models, _
+from odoo.exceptions import ValidationError
 
 TZ = 'Asia/Kuwait'
 
@@ -52,11 +53,38 @@ class CafmSchedule(models.Model):
         ('minute', 'دقيقة'), ('hour', 'ساعة'), ('day', 'يوم'),
     ], string='وحدة التنبيه', default='minute', required=True)
     remind_minutes = fields.Integer(compute='_compute_every', store=True)
+    # A shift preset drives the window (and therefore the auto-stop time): pick
+    # "الصباحية" and generation stops at the end of the morning shift.
+    shift = fields.Selection([
+        ('custom', 'مخصّص'),
+        ('morning', 'الوردية الصباحية (٦ص–٢م)'),
+        ('evening', 'الوردية المسائية (٢م–١٠م)'),
+        ('night', 'الوردية الليلية (١٠م–٦ص)'),
+    ], string='الوردية', default='custom', tracking=True,
+        help='اختيار وردية يضبط نافذة العمل ووقت الإيقاف تلقائياً على نهايتها.')
+    stop_mode = fields.Selection([
+        ('window', 'الإيقاف عند نهاية النافذة/الوردية'),
+        ('none', 'بلا إيقاف تلقائي (طوال اليوم)'),
+    ], string='نمط الإيقاف', default='window', tracking=True,
+        help='«عند نهاية النافذة» يوقف توليد المهام بعد نهاية الوردية؛ '
+             '«بلا إيقاف» يولّدها طوال اليوم.')
     window_start = fields.Float(string='بداية النافذة', default=7.0, help='بصيغة 24 ساعة')
-    window_end = fields.Float(string='نهاية النافذة', default=19.0)
+    window_end = fields.Float(string='نهاية النافذة (وقت الإيقاف)', default=19.0)
     days = fields.Char(string='الأيام', default='السبت–الخميس')
     grace_minutes = fields.Integer(string='مهلة السماح (دقيقة)', default=10,
                                    help='بعدها تُعتبر الزيارة متأخرة.')
+    # ad-hoc exceptions: skip specific days (holidays) or specific hours on a range
+    exception_ids = fields.One2many('care.cafm.schedule.exception', 'schedule_id',
+                                    string='الاستثناءات',
+                                    help='فترات لا يُولَّد فيها عمل — إجازات أو ساعات إيقاف محددة.')
+
+    SHIFT_WINDOWS = {'morning': (6.0, 14.0), 'evening': (14.0, 22.0), 'night': (22.0, 24.0)}
+
+    @api.onchange('shift')
+    def _onchange_shift(self):
+        w = self.SHIFT_WINDOWS.get(self.shift)
+        if w:
+            self.window_start, self.window_end = w
 
     # temporary pause (paused/pause_until) vs permanent stop (active=False)
     paused = fields.Boolean(string='موقوف مؤقتاً', default=False, tracking=True)
@@ -160,16 +188,23 @@ class CafmSchedule(models.Model):
         self.ensure_one()
         tz = pytz.timezone(self.env.user.tz or TZ)
         out = []
+        # a whole-day exception (holiday / stop-day) skips the day entirely
+        if any(e._blocks_day(day) for e in self.exception_ids):
+            return out
         start = self.window_start or 0.0
-        end = self.window_end or 24.0
+        # stop_mode='none' → run all day; else stop at the window/shift end
+        end = 24.0 if self.stop_mode == 'none' else (self.window_end or 24.0)
         step = max(1, self.every_minutes or 60)
         mins = int(start * 60)
         end_mins = int(end * 60)
         while mins <= end_mins:
             hh, mm = divmod(mins, 60)
             if hh < 24:
-                local = tz.localize(datetime.combine(day, time(hh, mm)))
-                out.append(local.astimezone(pytz.utc).replace(tzinfo=None))
+                hour = mins / 60.0
+                # skip any hour that falls inside an hours-exception for this day
+                if not any(e._blocks_hour(day, hour) for e in self.exception_ids):
+                    local = tz.localize(datetime.combine(day, time(hh, mm)))
+                    out.append(local.astimezone(pytz.utc).replace(tzinfo=None))
             mins += step
         return out
 
@@ -340,3 +375,44 @@ class CafmScheduleOccurrence(models.Model):
             'state': 'late' if (self.planned_time and now > self.planned_time + timedelta(minutes=grace)) else 'done',
         })
         return True
+
+
+class WorkScheduleException(models.Model):
+    """A window during which a schedule generates no work — a public holiday, a
+    site closure, or just 'no rounds between 1pm and 3pm on these dates'."""
+    _name = 'care.cafm.schedule.exception'
+    _description = 'استثناء جدول العمل'
+    _order = 'date_from desc, id desc'
+
+    schedule_id = fields.Many2one('care.cafm.schedule', string='الجدول',
+                                  required=True, ondelete='cascade', index=True)
+    name = fields.Char(string='السبب', required=True)
+    date_from = fields.Date(string='من تاريخ', required=True,
+                            default=fields.Date.context_today)
+    date_to = fields.Date(string='إلى تاريخ', required=True,
+                          default=fields.Date.context_today,
+                          help='شامل — الاستثناء يغطّي هذا اليوم أيضاً.')
+    whole_day = fields.Boolean(string='يوم كامل', default=True,
+                               help='مفعّل: توقّف طوال اليوم. معطّل: توقّف ساعات محددة فقط.')
+    hour_from = fields.Float(string='من الساعة', default=0.0, help='بصيغة 24 ساعة')
+    hour_to = fields.Float(string='إلى الساعة', default=24.0)
+
+    @api.constrains('date_from', 'date_to')
+    def _check_dates(self):
+        for e in self:
+            if e.date_to < e.date_from:
+                raise ValidationError(_('«إلى تاريخ» يجب أن يكون بعد «من تاريخ».'))
+
+    def _in_range(self, day):
+        self.ensure_one()
+        return self.date_from <= day <= self.date_to
+
+    def _blocks_day(self, day):
+        """True if this exception cancels the WHOLE given day."""
+        return self.whole_day and self._in_range(day)
+
+    def _blocks_hour(self, day, hour):
+        """True if this exception cancels a specific hour on the given day."""
+        if self.whole_day or not self._in_range(day):
+            return False
+        return (self.hour_from or 0.0) <= hour < (self.hour_to or 24.0)

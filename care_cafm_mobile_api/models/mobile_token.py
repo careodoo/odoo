@@ -51,8 +51,23 @@ class MobileToken(models.Model):
         if rec.expiry and rec.expiry < now:
             rec.active = False
             return None
-        rec.write({'last_used': now,
-                   'expiry': now + timedelta(days=self.TOKEN_TTL_DAYS)})
+        # Bookkeeping (slide expiry + stamp last_used) must NOT run on every
+        # request: the app fires many parallel calls, and concurrent UPDATEs to
+        # the same token row raise 'could not serialize access due to concurrent
+        # update', which poisons the request's transaction and fails it. So we
+        # (1) throttle to at most once/hour, and (2) write in a SEPARATE cursor
+        # so a serialization clash can never break the actual API request.
+        if not rec.last_used or (now - rec.last_used) > timedelta(hours=1):
+            rid = rec.id
+            new_expiry = now + timedelta(days=self.TOKEN_TTL_DAYS)
+            try:
+                with self.env.registry.cursor() as newcr:
+                    newcr.execute(
+                        "UPDATE care_cafm_mobile_token SET last_used=%s, expiry=%s WHERE id=%s",
+                        (now, new_expiry, rid))
+                    newcr.commit()
+            except Exception:
+                pass  # never let token bookkeeping break a valid request
         return rec.user_id
 
     @api.model

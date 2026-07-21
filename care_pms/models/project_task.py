@@ -194,22 +194,107 @@ class ProjectTask(models.Model):
             _logger.warning('care_pms notify failed (non-fatal): %s', e)
 
     # ----- crons -----
+    def _pms_digest_rows(self, tasks, base_url, days=True):
+        """One HTML table row per task, with a per-task open link."""
+        now = fields.Datetime.now()
+        out = ''
+        for t in tasks.sorted(lambda x: (x.priority != '1', x.date_deadline or now)):
+            url = '%s/web#id=%s&model=project.task&view_type=form' % (base_url, t.id)
+            late_txt = ''
+            if days and t.date_deadline:
+                d = (now.date() - t.date_deadline).days if hasattr(t.date_deadline, 'day') else 0
+                late_txt = ('<span style="color:#c0392b;font-weight:bold;">%s يوم</span>' % d) if d > 0 else '—'
+            prio = '🔴' if t.priority == '1' else ''
+            out += (
+                '<tr>'
+                '<td style="padding:8px 12px;border-bottom:1px solid #eef1f6;font-size:13px;color:#1d2433;font-weight:bold;">%s %s</td>'
+                '<td style="padding:8px 12px;border-bottom:1px solid #eef1f6;font-size:12px;color:#5b6577;">%s</td>'
+                '<td style="padding:8px 12px;border-bottom:1px solid #eef1f6;font-size:12px;color:#5b6577;white-space:nowrap;">%s</td>'
+                '<td style="padding:8px 12px;border-bottom:1px solid #eef1f6;font-size:12px;text-align:center;">%s</td>'
+                '<td style="padding:8px 12px;border-bottom:1px solid #eef1f6;text-align:center;">'
+                '<a href="%s" style="color:#2f6df6;font-weight:bold;font-size:12px;text-decoration:none;">فتح ←</a></td>'
+                '</tr>') % (prio, escape(t.name or ''), escape(t.project_id.name or '—'),
+                           escape(str(t.date_deadline or '—')), late_txt or '—', url)
+        return out
+
+    def _pms_digest_html(self, recipient_name, overdue, pending, base_url):
+        """One professional CARE-branded digest listing ALL of a person's
+        overdue tasks + pending forwards — sent once a day, not per task."""
+        sections = ''
+        if overdue:
+            sections += (
+                '<div style="background:#fff4f2;border:1px solid #ffd4cc;color:#c0392b;border-radius:8px;'
+                'padding:10px 14px;font-weight:bold;font-size:13px;margin:0 0 14px;">'
+                '🚨 لديك <b>%d</b> تاسك متجاوز موعد استحقاقه.</div>'
+                '<table style="width:100%%;border-collapse:collapse;border:1px solid #eef1f6;border-radius:8px;overflow:hidden;">'
+                '<tr style="background:#f6f8fc;"><th style="padding:8px 12px;text-align:right;font-size:11px;color:#8a93a8;">التاسك</th>'
+                '<th style="padding:8px 12px;text-align:right;font-size:11px;color:#8a93a8;">المشروع</th>'
+                '<th style="padding:8px 12px;text-align:right;font-size:11px;color:#8a93a8;">الاستحقاق</th>'
+                '<th style="padding:8px 12px;text-align:center;font-size:11px;color:#8a93a8;">التأخّر</th>'
+                '<th style="padding:8px 12px;text-align:center;font-size:11px;color:#8a93a8;"></th></tr>'
+                '%s</table>') % (len(overdue), self._pms_digest_rows(overdue, base_url))
+        if pending:
+            sections += (
+                '<div style="background:#fff8ec;border:1px solid #ffe1ac;color:#a86400;border-radius:8px;'
+                'padding:10px 14px;font-weight:bold;font-size:13px;margin:18px 0 14px;">'
+                '⏰ لديك <b>%d</b> طلب إحالة بانتظار قبولك أو رفضك.</div>'
+                '<table style="width:100%%;border-collapse:collapse;border:1px solid #eef1f6;border-radius:8px;overflow:hidden;">'
+                '<tr style="background:#f6f8fc;"><th style="padding:8px 12px;text-align:right;font-size:11px;color:#8a93a8;">التاسك</th>'
+                '<th style="padding:8px 12px;text-align:right;font-size:11px;color:#8a93a8;">المشروع</th>'
+                '<th style="padding:8px 12px;text-align:right;font-size:11px;color:#8a93a8;">الاستحقاق</th>'
+                '<th style="padding:8px 12px;text-align:center;font-size:11px;color:#8a93a8;">التأخّر</th>'
+                '<th style="padding:8px 12px;text-align:center;font-size:11px;color:#8a93a8;"></th></tr>'
+                '%s</table>') % (len(pending), self._pms_digest_rows(pending, base_url, days=False))
+        return Markup((
+            '<div style="max-width:640px;margin:auto;font-family:Tahoma,Arial,sans-serif;direction:rtl;'
+            'border:1px solid #e4e8f0;border-radius:14px;overflow:hidden;background:#fff;">'
+            '<div style="background:#15213b;padding:16px 22px;">'
+            '<span style="color:#f0663c;font-weight:bold;font-size:20px;">CARE</span>'
+            '<span style="color:#aeb8cc;font-size:12px;font-weight:bold;"> · الملخّص اليومي للتاسكات</span></div>'
+            '<div style="background:#e2513f;height:6px;"></div>'
+            '<div style="padding:22px;">'
+            '<h2 style="margin:0 0 6px;color:#15213b;font-size:19px;">صباح الخير %s</h2>'
+            '<p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 16px;">هذا ملخّص واحد بكل ما يحتاج انتباهك اليوم — بدل رسالة لكل تاسك.</p>'
+            '%s'
+            '<div style="text-align:center;margin-top:22px;">'
+            '<a href="%s/web#action=&model=project.task&view_type=list" style="display:inline-block;background:#2f6df6;'
+            'color:#fff;padding:11px 26px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:14px;">فتح كل التاسكات ←</a></div>'
+            '</div>'
+            '<div style="background:#f6f8fc;padding:13px 22px;color:#8a93a8;font-size:11px;text-align:center;">'
+            'ملخّص يومي آلي من نظام إدارة المشاريع · CARE — يُرسل مرة واحدة يوميًا</div>'
+            '</div>') % (escape(recipient_name or ''), sections, base_url))
+
     @api.model
     def cron_pms_escalate_overdue(self):
-        overdue = self.search([('is_overdue', '=', True)])
-        for task in overdue:
-            managers = task.project_id.user_id.partner_id if task.project_id.user_id else False
-            if managers:
-                task._pms_notify(managers, _('تاسك متأخّر'),
-                                 _('تصعيد: تاسك متأخّر 🚨'),
-                                 _('التاسك التالي تجاوز موعد استحقاقه ويحتاج تدخّلك.'),
-                                 accent='#e2513f')
-        # unaccepted forwards
-        pending = self.search([('forward_state', '=', 'pending')])
-        for task in pending:
-            if task.forward_to_id:
-                task._pms_notify(task.forward_to_id.partner_id, _('تذكير: طلب إحالة بانتظارك'),
-                                 _('تذكير: طلب إحالة بانتظارك ⏰'),
-                                 _('لديك طلب إحالة لهذا التاسك ما زال بانتظار قبولك أو رفضك.'),
-                                 accent='#e08a00')
+        """Daily: send ONE consolidated digest per recipient instead of a
+        separate email per task (per-task email spam was the pain point)."""
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url', '')
+        # group overdue tasks by the manager who must act on them
+        buckets = {}   # partner -> {'overdue': tasks, 'pending': tasks}
+        for task in self.search([('is_overdue', '=', True)]):
+            mgr = task.project_id.user_id.partner_id if task.project_id.user_id else False
+            if mgr and mgr.email:
+                buckets.setdefault(mgr, {'overdue': self.browse(), 'pending': self.browse()})
+                buckets[mgr]['overdue'] |= task
+        # pending forwards go to the person they wait on
+        for task in self.search([('forward_state', '=', 'pending')]):
+            p = task.forward_to_id.partner_id if task.forward_to_id else False
+            if p and p.email:
+                buckets.setdefault(p, {'overdue': self.browse(), 'pending': self.browse()})
+                buckets[p]['pending'] |= task
+        Mail = self.env['mail.mail'].sudo()
+        for partner, data in buckets.items():
+            n = len(data['overdue']) + len(data['pending'])
+            if not n:
+                continue
+            subject = _('ملخّصك اليومي: %s بند بحاجة انتباهك') % n
+            try:
+                Mail.create({
+                    'subject': subject,
+                    'body_html': self._pms_digest_html(partner.name, data['overdue'], data['pending'], base_url),
+                    'email_to': partner.email,
+                    'auto_delete': True,
+                }).send()
+            except Exception as e:
+                _logger.warning('care_pms daily digest failed for %s (non-fatal): %s', partner.email, e)
         return True

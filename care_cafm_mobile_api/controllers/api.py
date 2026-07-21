@@ -124,10 +124,27 @@ def _service_dict(s):
             'icon': s.icon, 'color': s.color}
 
 
+def _media_base():
+    """The base URL every image/video is served from. Normally this server, but
+    when a separate media server (CDN) is configured in App Settings, that base
+    is handed to the app/portal instead — no file migration, the CDN proxies us.
+    Cached config-param read, so it is cheap even at 50+ calls per request."""
+    try:
+        P = request.env['ir.config_parameter'].sudo()
+        if P.get_param('care.media.mode') == 'cdn':
+            base = (P.get_param('care.media.cdn_base') or '').strip().rstrip('/')
+            if base:
+                return base
+    except Exception:
+        pass
+    return request.httprequest.host_url.rstrip('/')
+
+
 def _abs(url):
-    """Make a relative /web/content URL absolute for the mobile app."""
+    """Make a relative /web/content URL absolute — via the media server if one
+    is configured, otherwise this host."""
     if url and url.startswith('/'):
-        return request.httprequest.host_url.rstrip('/') + url
+        return _media_base() + url
     return url
 
 

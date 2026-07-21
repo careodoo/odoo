@@ -43,6 +43,14 @@
               <field name="outdated_count" readonly="1" invisible="not min_version"/>
             </group>
           </group>
+          <group string="🖼️ سيرفر الوسائط (الصور والفيديو)">
+            <field name="media_mode" widget="radio"/>
+            <field name="media_cdn_base" placeholder="https://media.care-kw.com"
+                   invisible="media_mode != 'cdn'" required="media_mode == 'cdn'"/>
+            <field name="media_offload_location" placeholder="file:///mnt/media"
+                   invisible="media_mode != 'offload'" required="media_mode == 'offload'"/>
+            <field name="media_status" readonly="1"/>
+          </group>
           <group string="🛠️ الصيانة">
             <field name="maintenance"/>
             <field name="maintenance_message" invisible="not maintenance"/>

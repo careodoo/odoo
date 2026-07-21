@@ -142,6 +142,9 @@ class C2CSubscriptionRequest(models.Model):
         ('converted', 'محوّل لعقد'), ('cancelled', 'ملغى'),
     ], string='الحالة', default='new', required=True, tracking=True)
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
+    # Upayments track id of the last hosted charge for THIS record; verified
+    # server-side against the gateway before the subscription is activated.
+    upay_track_id = fields.Char(string='مرجع بوابة الدفع', copy=False, index=True)
 
     @api.model_create_multi
     def create(self, vals_list):

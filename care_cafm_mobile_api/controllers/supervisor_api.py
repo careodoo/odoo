@@ -121,6 +121,13 @@ class SupervisorApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
+        # same gate as create_task — only supervisors/managers (or a client
+        # partner allowed to add workers) may (re)assign a work order.
+        _cp = env.user.partner_id.commercial_partner_id or env.user.partner_id
+        if not (env.user.has_group('base.group_erp_manager') or env.user.has_group('base.group_system')
+                or env.user.has_group('security_management.group_security_manager')
+                or (_cp and _cp.sudo().cafm_can_add_workers)):
+            return _err('غير مسموح بإسناد المهام', 403)
         emp_id = _body().get('employee_id')
         if not emp_id:
             return _err('employee_id مطلوب', 422)

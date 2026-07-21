@@ -745,6 +745,60 @@ class ClientApi(Controller):
             return _err('غير مصرّح', 401)
         return _ok(self._attendance_data(env, request.httprequest.args))
 
+    def _my_open_attendance(self, env, emp):
+        return env['hr.attendance'].sudo().search(
+            [('employee_id', '=', emp.id), ('check_out', '=', False)],
+            order='check_in desc', limit=1)
+
+    @route(API + '/client/attendance/status', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def attendance_status(self, **kw):
+        """Am I currently checked in? (drives the punch button in the app)."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        emp = env.user.employee_id
+        if not emp:
+            return _err('لا يوجد ملف موظف مرتبط بحسابك', 404)
+        openn = self._my_open_attendance(env, emp.sudo())
+        return _ok({
+            'employee': emp.name,
+            'checked_in': bool(openn),
+            'since': str(openn.check_in or '')[:16] or None,
+        })
+
+    @route(API + '/client/attendance/punch', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def attendance_punch(self, **kw):
+        """Self check-in / check-out from the app — toggles like a fingerprint
+        punch, and stamps GPS if the app sends it."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        emp = env.user.employee_id
+        if not emp:
+            return _err('لا يوجد ملف موظف مرتبط بحسابك', 404)
+        emp = emp.sudo()
+        b = _body()
+        lat, lng = b.get('lat'), b.get('lng')
+        Att = env['hr.attendance'].sudo()
+        now = fields.Datetime.now()
+        openn = self._my_open_attendance(env, emp)
+        try:
+            if openn:                                   # currently in → check out
+                vals = {'check_out': now}
+                if lat and lng and 'out_latitude' in Att._fields:
+                    vals.update({'out_latitude': float(lat), 'out_longitude': float(lng)})
+                openn.write(vals)
+                return _ok({'checked_in': False, 'time': str(now)[:16],
+                            'message': 'تم تسجيل الانصراف'})
+            vals = {'employee_id': emp.id, 'check_in': now}   # currently out → check in
+            if lat and lng and 'in_latitude' in Att._fields:
+                vals.update({'in_latitude': float(lat), 'in_longitude': float(lng)})
+            Att.create(vals)
+            return _ok({'checked_in': True, 'time': str(now)[:16],
+                        'message': 'تم تسجيل الحضور'})
+        except Exception as e:
+            return _err(str(e) or 'تعذّر تسجيل الحضور', 422)
+
     @route(API + '/client/employee/<int:eid>/attendance', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def client_employee_attendance(self, eid, **kw):
         """Every attendance record for one worker on this client's sites."""
@@ -2911,23 +2965,32 @@ class ClientApi(Controller):
         a = env['ir.attachment'].sudo().browse(aid).exists()
         if not a:
             return request.not_found()
-        # authorise: the client who owns the facility, the worker the record is
-        # assigned to, or a supervisor/admin.
+        # authorise (DEFAULT DENY): the client who owns the facility, the worker
+        # the record is assigned to, a supervisor/admin, or — for any other model
+        # — only if the caller can actually read the parent under record rules.
+        # Never fall through to serving an arbitrary attachment.
+        u = env.user
+        allowed = bool(u.has_group('base.group_erp_manager') or u.has_group('base.group_system'))
         fld = self._ATT_MODEL_FACILITY.get(a.res_model)
-        if fld and a.res_id:
+        if not allowed and fld and a.res_id:
             rec = env[a.res_model].sudo().browse(a.res_id).exists()
             fac = rec and rec[fld]
             allowed = bool(fac and fac.id in self._fac_ids(env))
-            if not allowed:
-                u = env.user
-                allowed = bool(u.has_group('base.group_erp_manager') or u.has_group('base.group_system'))
             if not allowed and u_emp_id(env) and rec and 'employee_id' in rec._fields:
                 allowed = rec.employee_id.id == u_emp_id(env)
             if not allowed and u_emp_id(env) and rec and 'assignee_id' in rec._fields:
                 allowed = rec.assignee_id.id == u_emp_id(env)
-            if not allowed:
-                return request.not_found()
-        elif a.res_model in self._ATT_MODEL_FACILITY:
+        elif not allowed and a.res_model and a.res_id:
+            # not a facility-scoped model → require genuine read access (record
+            # rules) for THIS user; blocks cross-tenant invoices/HR docs/etc.
+            try:
+                rec = env[a.res_model].browse(a.res_id)
+                rec.check_access_rights('read')
+                rec.check_access_rule('read')
+                allowed = True
+            except Exception:
+                allowed = False
+        if not allowed:
             return request.not_found()
         data = a.raw or b''
         return request.make_response(data, headers=[
@@ -2973,6 +3036,10 @@ class ClientApi(Controller):
         o = env['care.cafm.observation'].sudo().browse(oid).exists()
         if not o:
             return _err('غير موجود', 404)
+        # scope: only observations on a facility the caller owns (same guard the
+        # sibling observation routes use) — no cross-tenant assignment.
+        if not (o.facility_id and o.facility_id.id in self._fac_ids(env)):
+            return _err('غير مصرّح', 403)
         eid = _body().get('employee_id')
         if not eid:
             return _err('اختر الفني/العامل', 422)
@@ -3723,7 +3790,9 @@ class ClientApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        if False:
+        # renaming facilities/assets/teams is a back-office action — managers only
+        if not (env.user.has_group('base.group_erp_manager')
+                or env.user.has_group('base.group_system')):
             return _err('غير مسموح', 403)
         b = _body()
         kind, rid = b.get('kind'), b.get('id')

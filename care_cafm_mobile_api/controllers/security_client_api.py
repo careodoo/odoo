@@ -418,3 +418,50 @@ class SecurityClientApi(Controller):
             'state': r.state if 'state' in r._fields else None,
             'state_label': st.get(getattr(r, 'state', False), getattr(r, 'state', None)),
         } for r in recs])
+
+    @route(API + '/client/security/cashier', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def sec_cashier(self, **kw):
+        """Gate-cashier board: today's takings, per-cashier breakdown, and the
+        latest receipts — all scoped to this client's gate-pass payments."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        g = self._guard(env)
+        if g:
+            return g
+        pids, cids = self._scope(env)
+        Pay = env['security.gate.pass.payment'].sudo() if 'security.gate.pass.payment' in env else None
+        if Pay is None:
+            return _ok({'available': False})
+        meth = _sel(Pay, 'payment_method')
+        stt = _sel(Pay, 'state')
+        today = fields.Date.today()
+        dom = [('client_id', 'in', cids)] if cids else []
+        payments = Pay.search(dom, order='payment_date desc, id desc', limit=120)
+        today_pays = payments.filtered(lambda p: p.payment_date == today)
+        cashiers = {}
+        for p in today_pays:
+            c = p.cashier_id
+            key = c.id or 0
+            cashiers.setdefault(key, {
+                'name': (c.name if c else None) or '—',
+                'gate': (c.gate_id.name if c and c.gate_id else None),
+                'count': 0, 'amount': 0.0})
+            cashiers[key]['count'] += 1
+            cashiers[key]['amount'] = round(cashiers[key]['amount'] + (p.amount or 0.0), 3)
+        return _ok({
+            'available': True,
+            'currency': (payments[:1].currency_id.name if payments else None) or 'KWD',
+            'today_total': round(sum(today_pays.mapped('amount')), 3),
+            'today_count': len(today_pays),
+            'cashiers': sorted(cashiers.values(), key=lambda x: -x['amount']),
+            'recent': [{
+                'id': p.id, 'name': p.name, 'amount': round(p.amount or 0.0, 3),
+                'method': meth.get(p.payment_method, p.payment_method),
+                'visitor': p.visitor_name or (p.visitor_id.name if p.visitor_id else None),
+                'company': p.visitor_company or None,
+                'date': str(p.payment_date or ''),
+                'state': stt.get(p.state, p.state),
+                'cashier': p.cashier_id.name if p.cashier_id else None,
+            } for p in payments[:50]],
+        })

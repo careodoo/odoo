@@ -43,6 +43,7 @@ acc_cafm_shift_type_m,care.cafm.shift.type.m,model_care_cafm_shift_type,hr.group
 acc_cafm_schedule_u,care.cafm.schedule.u,model_care_cafm_schedule,base.group_user,1,1,1,0
 acc_cafm_schedule_m,care.cafm.schedule.m,model_care_cafm_schedule,hr.group_hr_manager,1,1,1,1
 acc_cafm_sched_occ_u,care.cafm.schedule.occurrence.u,model_care_cafm_schedule_occurrence,base.group_user,1,1,1,1
+acc_cafm_sched_exc_u,care.cafm.schedule.exception.u,model_care_cafm_schedule_exception,base.group_user,1,1,1,1
 acc_cafm_offboard_u,care.cafm.offboard.request.u,model_care_cafm_offboard_request,base.group_user,1,1,1,0
 acc_cafm_offboard_m,care.cafm.offboard.request.m,model_care_cafm_offboard_request,hr.group_hr_manager,1,1,1,1
 acc_cafm_store_u,care.cafm.store.u,model_care_cafm_store,base.group_user,1,1,1,0

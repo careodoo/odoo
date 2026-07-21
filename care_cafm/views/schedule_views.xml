@@ -42,7 +42,9 @@
                         <group string="التكرار والنافذة">
                             <label for="every_minutes"/>
                             <div class="o_row"><field name="every_minutes"/> <span>دقيقة</span></div>
-                            <label for="window_start" string="النافذة"/>
+                            <field name="shift"/>
+                            <field name="stop_mode"/>
+                            <label for="window_start" string="النافذة (بداية — إيقاف)"/>
                             <div class="o_row"><field name="window_start" widget="float_time"/> — <field name="window_end" widget="float_time"/></div>
                             <field name="days"/>
                             <field name="grace_minutes"/>
@@ -65,6 +67,19 @@
                     </group>
                     <field name="instructions" placeholder="المطلوب تنفيذه في كل زيارة…"/>
                     <notebook>
+                        <page string="⛔ الاستثناءات" name="exceptions">
+                            <p class="text-muted">فترات لا يُولَّد فيها عمل — إجازة أو توقّف لساعات محددة على مدى أيام.</p>
+                            <field name="exception_ids">
+                                <tree editable="bottom">
+                                    <field name="name"/>
+                                    <field name="date_from"/>
+                                    <field name="date_to"/>
+                                    <field name="whole_day" widget="boolean_toggle"/>
+                                    <field name="hour_from" widget="float_time" invisible="whole_day"/>
+                                    <field name="hour_to" widget="float_time" invisible="whole_day"/>
+                                </tree>
+                            </field>
+                        </page>
                         <page string="🔁 التكرارات" name="occ">
                             <field name="occurrence_ids" readonly="1">
                                 <tree decoration-success="state=='done'" decoration-warning="state=='late'" decoration-danger="state=='missed'" decoration-muted="state=='pending'">

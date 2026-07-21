@@ -50,6 +50,9 @@ class C2CBooking(models.Model):
     payment_state = fields.Selection([
         ('unpaid', 'غير مدفوع'), ('paid', 'مدفوع'), ('refunded', 'مُسترجع'),
     ], string='حالة الدفع', default='unpaid', tracking=True)
+    # Upayments track id of the last hosted charge for THIS record; the payment
+    # callbacks verify this id server-side against the gateway before marking paid.
+    upay_track_id = fields.Char(string='مرجع بوابة الدفع', copy=False, index=True)
     discount_code = fields.Char(string='كود الخصم')
     discount_amount = fields.Float(string='قيمة الخصم')
     state = fields.Selection([

@@ -403,9 +403,18 @@ class C2CClientApi(Controller):
         for it in (b.get('items') or []):
             if it.get('product_id'):
                 p = env['product.product'].sudo().browse(int(it['product_id'])).exists()
-                if p:
-                    lines.append((0, 0, {'product_id': p.id, 'quantity': float(it.get('quantity') or 1),
-                                         'price_unit': float(it.get('price') or p.lst_price)}))
+                # only real, sellable products — and NEVER trust a client-supplied
+                # price: the unit price always comes from the catalogue server-side
+                if not p or not p.active or not p.sale_ok:
+                    continue
+                try:
+                    qty = float(it.get('quantity') or 1)
+                except (TypeError, ValueError):
+                    qty = 1.0
+                if qty <= 0:
+                    continue
+                lines.append((0, 0, {'product_id': p.id, 'quantity': qty,
+                                     'price_unit': p.lst_price}))
         if not lines:
             return _err('السلة فارغة', 422)
         vals = {
@@ -730,9 +739,32 @@ class C2CClientApi(Controller):
                    'Authorization': 'Bearer %s' % key}
         r = requests.post(url, json=payload, headers=headers, timeout=20)
         d = r.json()
-        if r.status_code in (200, 201) and (d.get('data') or {}).get('link'):
-            return d['data']['link']
+        data = d.get('data') or {}
+        if r.status_code in (200, 201) and data.get('link'):
+            # track_id identifies this charge at the gateway; we store it so the
+            # payment callbacks can verify the result server-side (never trust
+            # the return-URL / webhook params).
+            return data['link'], (data.get('track_id') or data.get('trackId') or '')
         raise Exception((d.get('message') or 'تعذّر إنشاء رابط الدفع'))
+
+    def _upay_verify(self, prov, track_id):
+        """Ask Upayments directly whether this track_id was actually CAPTURED.
+        Returns True only on a gateway-confirmed capture — this is what makes the
+        public callbacks safe: an attacker cannot forge a CAPTURED status."""
+        if not track_id:
+            return False
+        import requests
+        host = 'uapi.upayments.com' if prov.state == 'enabled' else 'sandboxapi.upayments.com'
+        url = 'https://%s/api/v1/get-payment-status/%s' % (host, track_id)
+        headers = {'Accept': 'application/json',
+                   'Authorization': 'Bearer %s' % prov.upay_application_key}
+        try:
+            resp = requests.get(url, headers=headers, timeout=15)
+            res = resp.json()
+            return bool(res.get('status')) and \
+                (((res.get('data') or {}).get('transaction') or {}).get('result') == 'CAPTURED')
+        except Exception:
+            return False
 
     @route(API + '/c2c/pay/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
     def c2c_pay_create(self, **kw):
@@ -767,10 +799,14 @@ class C2CClientApi(Controller):
         if amount <= 0:
             return _err('لا مبلغ مستحق', 422)
         try:
-            link = self._upay_charge(env, prov, reference=reference, amount=amount,
-                                     description=name, product_name=name, customer=cust)
+            link, track_id = self._upay_charge(env, prov, reference=reference, amount=amount,
+                                                description=name, product_name=name, customer=cust)
         except Exception as e:
             return _err(str(e) or 'تعذّر إنشاء رابط الدفع', 502)
+        # remember which gateway charge belongs to this record, so the callback
+        # can verify the payment server-side before flipping it to paid/active
+        if track_id:
+            rec.sudo().upay_track_id = track_id
         return _ok({'link': link, 'reference': reference, 'amount': amount})
 
     @route(['/c2c/pay/return', '/c2c/pay/cancel'], type='http', auth='public', methods=['GET', 'POST'], csrf=False, website=True)
@@ -778,22 +814,11 @@ class C2CClientApi(Controller):
         """Landing page after the hosted payment — a simple branded result the
         in-app WebView detects by URL to close and refresh."""
         ok = 'cancel' not in request.httprequest.path
-        # Upayment returns a status/result in the query; trust success on return
-        # in sandbox, and reconcile the target if we can read the reference.
+        # NEVER trust the return-URL params to decide "paid" — they are fully
+        # attacker-controllable. Look the record up by reference, then verify its
+        # OWN stored gateway track_id server-side against Upayments.
         ref = kw.get('reference') or kw.get('order_id') or kw.get('reference_id') or ''
-        result = (kw.get('result') or kw.get('payment_status') or '').lower()
-        paid = ok and result not in ('failed', 'cancelled', 'canceled')
-        try:
-            if paid and ref.startswith('BK-'):
-                b = request.env['c2c.booking'].sudo().browse(int(ref[3:])).exists()
-                if b and 'payment_state' in b._fields:
-                    b.write({'payment_state': 'paid'})
-            elif paid and ref.startswith('SUB-'):
-                srec = request.env['c2c.subscription.request'].sudo().browse(int(ref[4:])).exists()
-                if srec and srec.state == 'new':
-                    srec.write({'state': 'active'})
-        except Exception:
-            pass
+        paid = ok and self._c2c_reconcile_ref(ref)
         color = '#16A34A' if paid else '#C0392B'
         icon = '✅' if paid else '✖'
         title = 'تم الدفع بنجاح' if paid else 'لم يكتمل الدفع'
@@ -811,22 +836,45 @@ class C2CClientApi(Controller):
 
     @route('/c2c/pay/webhook', type='http', auth='public', methods=['GET', 'POST'], csrf=False)
     def c2c_pay_webhook(self, **kw):
-        """Upayment server-to-server notification — reconcile the target."""
+        """Upayment server-to-server notification. The params are untrusted; we
+        only use the reference to locate the record, then verify its stored
+        track_id against the gateway before reconciling."""
         ref = kw.get('reference') or kw.get('order_id') or ''
-        result = (kw.get('result') or kw.get('payment_status') or '').lower()
-        paid = result in ('captured', 'success', 'paid', 'successful', '')
-        try:
-            if paid and ref.startswith('BK-'):
-                b = request.env['c2c.booking'].sudo().browse(int(ref[3:])).exists()
-                if b and 'payment_state' in b._fields:
-                    b.write({'payment_state': 'paid'})
-            elif paid and ref.startswith('SUB-'):
-                srec = request.env['c2c.subscription.request'].sudo().browse(int(ref[4:])).exists()
-                if srec and srec.state == 'new':
-                    srec.write({'state': 'active'})
-        except Exception:
-            pass
+        self._c2c_reconcile_ref(ref)
         return request.make_response('OK', headers=[('Content-Type', 'text/plain')])
+
+    def _c2c_reconcile_ref(self, ref):
+        """Mark a BK-/SUB- reference paid ONLY if the gateway confirms its own
+        stored track_id was CAPTURED. Returns True when it ends up paid/active.
+        Idempotent and forgery-proof: no client-supplied field decides payment."""
+        ref = ref or ''
+        prov = self._upay_provider(request.env)
+        if not prov or prov.state == 'disabled':
+            return False
+        try:
+            if ref.startswith('BK-'):
+                b = request.env['c2c.booking'].sudo().browse(int(ref[3:])).exists()
+                if not b or 'payment_state' not in b._fields:
+                    return False
+                if b.payment_state == 'paid':
+                    return True
+                if self._upay_verify(prov, b.upay_track_id):
+                    b.write({'payment_state': 'paid'})
+                    b.message_post(body='💳 تأكيد الدفع من بوابة Upayments (تحقّق خادمي).')
+                    return True
+            elif ref.startswith('SUB-'):
+                s = request.env['c2c.subscription.request'].sudo().browse(int(ref[4:])).exists()
+                if not s:
+                    return False
+                if s.state == 'active':
+                    return True
+                if s.state == 'new' and self._upay_verify(prov, s.upay_track_id):
+                    s.write({'state': 'active'})
+                    s.message_post(body='💳 تأكيد الدفع وتفعيل الاشتراك (تحقّق خادمي).')
+                    return True
+        except Exception:
+            return False
+        return False
 
     @route(API + '/c2c/rfq/options', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def c2c_rfq_options(self, **kw):

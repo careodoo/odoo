@@ -5,4 +5,12 @@
     <field name="code">care.handling.job</field>
     <field name="prefix">HND/%(year)s/</field><field name="padding">4</field>
   </record>
+
+  <!-- portal/app section so «المناولة» appears as a launchable service -->
+  <record id="section_handling" model="care.cafm.portal.section">
+    <field name="name">المناولة</field>
+    <field name="code">handling</field>
+    <field name="icon">📦</field>
+    <field name="sequence">70</field>
+  </record>
 </data></odoo>

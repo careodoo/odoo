@@ -95,7 +95,7 @@ def _r_hosp_item(r):
     sub = ' \u00b7 '.join(filter(None, [
         getattr(r.category_id, 'name', '') or '',
         '%d دقيقة' % r.prep_minutes if getattr(r, 'prep_minutes', 0) else '']))
-    pills = [('%.3f د.ك' % (r.cost or 0.0), 'muted')]
+    pills = [('%.3f د.ك' % (getattr(r, 'unit_cost', 0.0) or 0.0), 'muted')]
     if not getattr(r, 'active', True):
         pills.append(('موقوف', 'danger'))
     return (r.display_name, sub, pills)
@@ -370,7 +370,6 @@ def REGISTRY():
                         Field('template_id', 'قالب الفحص', 'm2o',
                               comodel='care.cafm.clean.audit.template'),
                         Field('audit_date', 'التاريخ والوقت', 'datetime'),
-                        Field('note', 'الملاحظات', 'text'),
                     ])),
             Section('schedules', 'الجداول', 'care.cafm.clean.schedule',
                     _r_generic(lambda r: r.display_name,
@@ -386,7 +385,7 @@ def REGISTRY():
                     empty_text='لا مستهلكات مسجّلة.',
                     create=Create('تسجيل مستهلك', 'inventory_policy', [
                         Field('name', 'الاسم', 'char', required=True),
-                        Field('uom_name', 'الوحدة', 'char'),
+                        Field('unit', 'الوحدة', 'char'),
                         Field('on_hand', 'الرصيد', 'float'),
                         Field('min_qty', 'حد إعادة الطلب', 'float'),
                     ])),
@@ -432,9 +431,7 @@ def REGISTRY():
                     create=Create('إضافة واجهة', 'structure_manage', [
                         Field('name', 'اسم الواجهة', 'char', required=True),
                         Field('method', 'طريقة الوصول', 'select', options='method'),
-                        Field('area_sqm', 'المساحة (م²)', 'float'),
-                        Field('floors', 'عدد الأدوار', 'int'),
-                        Field('clean_cycle_days', 'دورة التنظيف (يوم)', 'int'),
+                        Field('frequency', 'التكرار', 'select', options='frequency'),
                     ])),
         ]),
         'waste': ('نقل ومعالجة النفايات', '♻️', [
@@ -890,7 +887,7 @@ class ServicePages(http.Controller):
                 vals[f.name] = raw
         return env[section.model].sudo().create(vals)
 
-    def _field_input(self, f, facs):
+    def _field_input(self, f, facs, model=None):
         env = request.env
         if f.kind == 'm2o':
             recs = env[f.comodel].sudo().search(
@@ -904,7 +901,17 @@ class ServicePages(http.Controller):
         if f.kind == 'select':
             opts = f.options
             if isinstance(opts, str):
-                opts = env[f.model_hint]._fields[opts].selection if False else []
+                # options is a field name on the create's model → pull its real
+                # selection (handles method-based selections + translations).
+                field_name, opts = opts, []
+                if model and model in env:
+                    fld = env[model]._fields.get(field_name)
+                    if fld:
+                        try:
+                            opts = fld._description_selection(env)
+                        except Exception:
+                            sel = getattr(fld, 'selection', None)
+                            opts = list(sel) if isinstance(sel, (list, tuple)) else []
             body = Markup('').join(
                 Markup('<option value="%s"%s>%s</option>') % (
                     v, Markup(' selected' if v == f.default else ''), esc(l))
@@ -934,10 +941,11 @@ class ServicePages(http.Controller):
         rows = Markup('')
         for f in c.fields:
             if f.kind == 'bool':
-                rows += self._field_input(f, facs)
+                rows += self._field_input(f, facs, section.model)
                 continue
             rows += Markup('<label>%s%s</label>%s') % (
-                esc(f.label), Markup(' *' if f.required else ''), self._field_input(f, facs))
+                esc(f.label), Markup(' *' if f.required else ''),
+                self._field_input(f, facs, section.model))
             if f.help:
                 rows += Markup('<div class="muted" style="margin-top:3px">%s</div>') % esc(f.help)
         fopts = Markup('').join(

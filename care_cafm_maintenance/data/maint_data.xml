@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data noupdate="1">
-        <!-- portal/app section so the Maintenance console is visible to clients -->
-        <record id="section_maintenance" model="care.cafm.portal.section">
-            <field name="name">الصيانة</field>
-            <field name="code">maintenance</field>
-            <field name="always_on" eval="True"/>
-        </record>
+        <!-- portal/app section for Maintenance is seeded by care_cafm as
+             psec_maintenance (code=maintenance); do not redefine it here to
+             avoid a duplicate on the unique 'code' constraint. -->
 
         <!-- fault reference sequence -->
         <record id="seq_maint_fault" model="ir.sequence">
