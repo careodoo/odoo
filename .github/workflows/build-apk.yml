@@ -89,30 +89,56 @@ jobs:
       - name: Bump nfc_manager compileSdk (it pins 31, AndroidX needs >=34)
         run: find ~/.pub-cache -path "*nfc_manager*/android/build.gradle" -exec sed -i 's/compileSdkVersion 31/compileSdkVersion 34/' {} + || true
 
+      - name: Read app version from pubspec
+        id: ver
+        run: |
+          # "3.7.0+2124" → name 3.7.0 ; the build-number stays the run number so
+          # the Android versionCode always increases no matter what.
+          VNAME=$(grep -E '^version:' pubspec.yaml | sed -E 's/version:[[:space:]]*//; s/\+.*//')
+          echo "name=$VNAME" >> "$GITHUB_OUTPUT"
+          echo "App version: $VNAME (build ${{ github.run_number }})"
+
       - name: Build release APK
         run: |
           flutter build apk --release \
             --build-number=${{ github.run_number }} \
-            --build-name=1.0.${{ github.run_number }} \
+            --build-name=${{ steps.ver.outputs.name }} \
             --dart-define=CARE_API_BASE=https://ecare.care-kw.com/api/v1 \
             --dart-define=BUILD_NUMBER=${{ github.run_number }}
 
-      - name: Rename APK
-        run: cp build/app/outputs/flutter-apk/app-release.apk care-mobile-${{ github.run_number }}.apk
+      - name: Build release App Bundle (.aab for Google Play)
+        run: |
+          flutter build appbundle --release \
+            --build-number=${{ github.run_number }} \
+            --build-name=${{ steps.ver.outputs.name }} \
+            --dart-define=CARE_API_BASE=https://ecare.care-kw.com/api/v1 \
+            --dart-define=BUILD_NUMBER=${{ github.run_number }}
 
-      - name: Upload APK artifact
+      - name: Rename artifacts
+        run: |
+          cp build/app/outputs/flutter-apk/app-release.apk care-mobile-v${{ steps.ver.outputs.name }}.apk
+          cp build/app/outputs/bundle/release/app-release.aab care-mobile-v${{ steps.ver.outputs.name }}.aab
+
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: care-mobile-apk
-          path: care-mobile-${{ github.run_number }}.apk
+          name: care-mobile-build
+          path: |
+            care-mobile-v${{ steps.ver.outputs.name }}.apk
+            care-mobile-v${{ steps.ver.outputs.name }}.aab
 
-      - name: Publish Release with APK
+      - name: Publish Release with APK + AAB
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: mobile-v1.0.0-${{ github.run_number }}
-          name: Care Mobile APK build ${{ github.run_number }}
-          files: care-mobile-${{ github.run_number }}.apk
+          tag_name: v${{ steps.ver.outputs.name }}-build${{ github.run_number }}
+          name: CARE Mobile v${{ steps.ver.outputs.name }} (build ${{ github.run_number }})
+          files: |
+            care-mobile-v${{ steps.ver.outputs.name }}.apk
+            care-mobile-v${{ steps.ver.outputs.name }}.aab
           body: |
-            APK جاهز للتثبيت على أندرويد (release).
+            **CARE Mobile v${{ steps.ver.outputs.name }}** — build ${{ github.run_number }}
+
+            📱 `care-mobile-v${{ steps.ver.outputs.name }}.apk` — تثبيت مباشر على أندرويد (release)
+            📦 `care-mobile-v${{ steps.ver.outputs.name }}.aab` — للرفع على Google Play
+
             الخادم: https://ecare.care-kw.com/api/v1
-            دخول تجريبي: cafmtest / cafm12345
