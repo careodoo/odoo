@@ -92,6 +92,25 @@ class MoreScreen extends StatelessWidget {
         ));
 
 
+    // ===== Systems — for a user who can reach more than one interface =====
+    final auth = context.read<AuthProvider>();
+    final ifaces = auth.interfaces ?? const {};
+    final systems = <(String, String, String, IconData, int)>[
+      ('cafm', 'إدارة المرافق', 'Facilities (CAFM)', Icons.apartment_rounded, 0xFFC0392B),
+      ('pms', 'إدارة المشاريع', 'Projects (PMS)', Icons.account_tree_rounded, 0xFF2563EB),
+      ('c2c', 'CARE 2 CARE', 'CARE 2 CARE', Icons.home_repair_service_rounded, 0xFF0EA5A4),
+      ('management', 'الإدارة الخلفية', 'Management', Icons.dashboard_customize_rounded, 0xFF714B67),
+    ].where((s) => ifaces[s.$1] == true).toList();
+    if (systems.length > 1) {
+      header(tr('الأنظمة المتاحة لك', 'Your systems'));
+      for (final s in systems) {
+        tile(s.$4, tr(s.$2, s.$3), null, c: Color(s.$5),
+            onTap: () => auth.setAppMode(s.$1 == 'management' ? 'backend' : s.$1));
+      }
+      tile(Icons.swap_horiz_rounded, tr('شاشة التبديل بين الأنظمة', 'System switcher'), null,
+          c: const Color(0xFF6366F1), onTap: () => auth.setAppMode('choose'));
+    }
+
     // ===== Work & operations =====
     header(tr('العمل والعمليات', 'Work & operations'));
     tile(Icons.assignment_rounded, isField ? tr('مهامي', 'My tasks') : tr('أوامر العمل', 'Work orders'), const WorkOrdersScreen(), c: _navy);
