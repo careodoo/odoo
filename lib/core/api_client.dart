@@ -1622,6 +1622,11 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.post(_u('/pms/project/$projectId/task/create'),
           headers: await _headers(), body: jsonEncode(vals))))['data'] as Map);
 
+  /// Form metadata for a new task: departments, categories, assignable users.
+  Future<Map<String, dynamic>> pmsTaskMeta(int projectId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/pms/project/$projectId/task-meta'), headers: await _headers())))['data'] as Map);
+
   // ---- management (native back-office) -------------------------------------
   /// Systems this user may access (server applies Odoo permissions).
   Future<List<dynamic>> managementApps() async =>

@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
@@ -47,41 +49,155 @@ class _PmsTasksScreenState extends State<PmsTasksScreen> {
     final name = TextEditingController();
     final desc = TextEditingController();
     bool urgent = false;
+    bool committed = false;
+    DateTime? deadline;
+    int? deptId;
+    String? photoB64;
+    List<Map> departments = const [];
+    // Pull the form's choices (departments) up front; failure is non-fatal.
+    try {
+      final meta = await context.read<AuthProvider>().api.pmsTaskMeta(widget.projectId!);
+      departments = ((meta['departments'] as List?) ?? const []).cast<Map>();
+    } catch (_) {}
+    if (!mounted) return;
+
+    Future<void> pickPhoto(void Function(void Function()) setSheet, ImageSource src) async {
+      try {
+        final x = await ImagePicker().pickImage(source: src, maxWidth: 1600, imageQuality: 70);
+        if (x == null) return;
+        final bytes = await x.readAsBytes();
+        setSheet(() => photoB64 = base64Encode(bytes));
+      } catch (_) {}
+    }
+
     final ok = await showModalBottomSheet<bool>(
       context: context, isScrollControlled: true, showDragHandle: true,
+      backgroundColor: Colors.white,
       builder: (ctx) => StatefulBuilder(builder: (ctx, setSheet) => Padding(
         padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.of(ctx).viewInsets.bottom + 16),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(tr('مهمة جديدة', 'New task'),
-              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Pms.ink)),
-          const SizedBox(height: 12),
-          TextField(
-            controller: name, autofocus: true,
-            decoration: InputDecoration(
-                labelText: tr('عنوان المهمة', 'Task title'), border: const OutlineInputBorder()),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: desc, maxLines: 3,
-            decoration: InputDecoration(
-                labelText: tr('الوصف (اختياري)', 'Description (optional)'),
-                border: const OutlineInputBorder()),
-          ),
-          const SizedBox(height: 8),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            value: urgent, onChanged: (v) => setSheet(() => urgent = v),
-            title: Text(tr('عاجلة', 'Urgent'), style: const TextStyle(fontSize: 13.5)),
-            activeThumbColor: Pms.violet,
-          ),
-          const SizedBox(height: 4),
-          SizedBox(width: double.infinity, child: FilledButton.icon(
-            style: FilledButton.styleFrom(backgroundColor: Pms.violet),
-            onPressed: () => Navigator.pop(ctx, true),
-            icon: const Icon(Icons.check_rounded),
-            label: Text(tr('إنشاء', 'Create')),
-          )),
-        ]),
+        child: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              const Icon(Icons.add_task_rounded, color: Pms.violet),
+              const SizedBox(width: 8),
+              Text(tr('مهمة جديدة', 'New task'),
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: Pms.ink)),
+            ]),
+            const SizedBox(height: 14),
+            TextField(
+              controller: name, autofocus: true,
+              decoration: InputDecoration(
+                  labelText: tr('عنوان المهمة', 'Task title'),
+                  prefixIcon: const Icon(Icons.title_rounded),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: desc, maxLines: 3,
+              decoration: InputDecoration(
+                  labelText: tr('كل تفاصيل المهمة', 'All task details'),
+                  alignLabelWithHint: true,
+                  prefixIcon: const Icon(Icons.notes_rounded),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+            ),
+            const SizedBox(height: 12),
+            // department
+            if (departments.isNotEmpty)
+              DropdownButtonFormField<int>(
+                value: deptId,
+                isExpanded: true,
+                decoration: InputDecoration(
+                    labelText: tr('القسم', 'Department'),
+                    prefixIcon: const Icon(Icons.apartment_rounded),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                items: [
+                  for (final d in departments)
+                    DropdownMenuItem(value: d['id'] as int,
+                        child: Text('${d['name']}', overflow: TextOverflow.ellipsis)),
+                ],
+                onChanged: (v) => setSheet(() => deptId = v),
+              ),
+            const SizedBox(height: 12),
+            // deadline
+            InkWell(
+              onTap: () async {
+                final d = await showDatePicker(context: ctx,
+                    initialDate: deadline ?? DateTime.now(),
+                    firstDate: DateTime.now().subtract(const Duration(days: 1)),
+                    lastDate: DateTime(2100));
+                if (d != null) setSheet(() => deadline = d);
+              },
+              child: InputDecorator(
+                decoration: InputDecoration(
+                    labelText: tr('الموعد النهائي', 'Deadline'),
+                    prefixIcon: const Icon(Icons.event_rounded),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                child: Text(deadline == null
+                    ? tr('اختياري — اضغط للتحديد', 'Optional — tap to set')
+                    : deadline!.toIso8601String().substring(0, 10),
+                    style: TextStyle(fontWeight: FontWeight.w700,
+                        color: deadline == null ? Pms.slate : Pms.ink)),
+              ),
+            ),
+            const SizedBox(height: 6),
+            // commitment
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              value: committed, onChanged: (v) => setSheet(() => committed = v),
+              title: Text(tr('ملتزم بوقت التنفيذ', 'Committed to an execution time'),
+                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+              subtitle: Text(tr('هل لهذه المهمة التزام بموعد محدّد؟', 'Does this task carry a firm deadline?'),
+                  style: const TextStyle(fontSize: 11)),
+              activeThumbColor: Pms.green,
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              value: urgent, onChanged: (v) => setSheet(() => urgent = v),
+              title: Text(tr('عاجلة', 'Urgent'), style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+              activeThumbColor: Pms.red,
+            ),
+            const SizedBox(height: 6),
+            // photo
+            Text(tr('صورة (اختياري)', 'Photo (optional)'),
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: Pms.slate)),
+            const SizedBox(height: 8),
+            Row(children: [
+              if (photoB64 != null) ...[
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.memory(base64Decode(photoB64!), width: 64, height: 64, fit: BoxFit.cover),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: () => setSheet(() => photoB64 = null),
+                  icon: const Icon(Icons.close_rounded, color: Pms.red)),
+                const Spacer(),
+              ],
+              if (photoB64 == null) ...[
+                Expanded(child: OutlinedButton.icon(
+                  onPressed: () => pickPhoto(setSheet, ImageSource.camera),
+                  icon: const Icon(Icons.photo_camera_rounded, size: 18),
+                  label: Text(tr('كاميرا', 'Camera')),
+                )),
+                const SizedBox(width: 8),
+                Expanded(child: OutlinedButton.icon(
+                  onPressed: () => pickPhoto(setSheet, ImageSource.gallery),
+                  icon: const Icon(Icons.photo_library_rounded, size: 18),
+                  label: Text(tr('المعرض', 'Gallery')),
+                )),
+              ],
+            ]),
+            const SizedBox(height: 18),
+            SizedBox(width: double.infinity, height: 48, child: FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: Pms.violet,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+              onPressed: () => Navigator.pop(ctx, true),
+              icon: const Icon(Icons.check_rounded),
+              label: Text(tr('إنشاء المهمة', 'Create task'),
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+            )),
+          ]),
+        ),
       )),
     );
     if (ok != true || name.text.trim().isEmpty) return;
@@ -90,6 +206,10 @@ class _PmsTasksScreenState extends State<PmsTasksScreen> {
         'name': name.text.trim(),
         if (desc.text.trim().isNotEmpty) 'description': desc.text.trim(),
         if (urgent) 'priority': '1',
+        if (deptId != null) 'department_id': deptId,
+        if (deadline != null) 'date_deadline': deadline!.toIso8601String().substring(0, 10),
+        'time_committed': committed,
+        if (photoB64 != null) 'image': photoB64,
       });
       if (!mounted) return;
       _reload();
@@ -366,6 +486,11 @@ class _PmsTaskDetailState extends State<PmsTaskDetail> {
                 if (d['date_end'] != null) _kv(Icons.done_all_rounded, tr('تاريخ الإنجاز', 'Ended'), '${d['date_end']}'),
                 if (d['partner'] != null) _kv(Icons.business_rounded, tr('العميل', 'Customer'), '${(d['partner'] as Map)['name']}'),
                 if (d['department'] != null) _kv(Icons.apartment_rounded, tr('القسم', 'Department'), '${(d['department'] as Map)['name']}'),
+                if (d['time_committed'] != null)
+                  _kv(d['time_committed'] == true ? Icons.verified_rounded : Icons.schedule_outlined,
+                      tr('الالتزام بوقت التنفيذ', 'Time commitment'),
+                      d['time_committed'] == true ? tr('ملتزم', 'Committed') : tr('غير ملتزم', 'Not committed'),
+                      color: d['time_committed'] == true ? Pms.green : Pms.slate),
                 if (d['category'] != null) _kv(Icons.category_rounded, tr('التصنيف', 'Category'), '${(d['category'] as Map)['name']}'),
                 if (d['parent'] != null) _kv(Icons.subdirectory_arrow_right_rounded, tr('مهمة أصل', 'Parent'), '${(d['parent'] as Map)['name']}'),
                 if ((d['allocated_hours'] as num? ?? 0) > 0 || (d['effective_hours'] as num? ?? 0) > 0)
@@ -387,6 +512,27 @@ class _PmsTaskDetailState extends State<PmsTaskDetail> {
                 decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: Colors.black12)),
                 child: Text(desc, style: const TextStyle(fontSize: 13, height: 1.5, color: Pms.ink)),
+              ),
+            ],
+            // photos
+            if (((d['photos'] as List?) ?? const []).isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _section(tr('الصور', 'Photos')),
+              SizedBox(
+                height: 96,
+                child: ListView(scrollDirection: Axis.horizontal, children: [
+                  for (final p in (d['photos'] as List))
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network('$p', width: 96, height: 96, fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                                width: 96, height: 96, color: Colors.black12,
+                                child: const Icon(Icons.broken_image_rounded, color: Pms.slate))),
+                      ),
+                    ),
+                ]),
               ),
             ],
             // subtasks
