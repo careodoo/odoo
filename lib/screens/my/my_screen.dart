@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import '../attendance_screen.dart';
+import '../pms/pms_section.dart';
 
 /// The «My» module — the signed-in user's own hub: who they are, how they're
 /// doing, the services they can start, and their requests with live statuses.
@@ -28,6 +29,8 @@ class _MyScreenState extends State<MyScreen> {
     _load();
   }
 
+  List<Map> _delegations = const [];
+
   Future<void> _load() async {
     setState(() => _error = null);
     try {
@@ -36,6 +39,11 @@ class _MyScreenState extends State<MyScreen> {
     } catch (e) {
       if (mounted) setState(() => _error = '$e');
     }
+    // Sections delegated to me — non-fatal if it fails.
+    try {
+      final dg = await context.read<AuthProvider>().api.pmsMyDelegations();
+      if (mounted) setState(() => _delegations = ((dg['delegations'] as List?) ?? const []).cast<Map>());
+    } catch (_) {}
   }
 
   Color get _c => widget.accent;
@@ -83,6 +91,11 @@ class _MyScreenState extends State<MyScreen> {
     final requests = ((d['requests'] as List?) ?? const []).cast<Map>();
     return ListView(padding: EdgeInsets.zero, children: [
       _headerCard(p, stats),
+      if (_delegations.isNotEmpty) ...[
+        _sectionTitle(tr('مفوَّض إليّ للمتابعة', 'Delegated to me'),
+            Icons.assignment_ind_rounded, trailing: '${_delegations.length}'),
+        for (final dg in _delegations) _delegationCard(dg),
+      ],
       _sectionTitle(tr('الخدمات الذاتية', 'Self-service'), Icons.grid_view_rounded),
       _servicesGrid(services),
       _sectionTitle(tr('طلباتي', 'My requests'), Icons.receipt_long_rounded,
@@ -192,6 +205,58 @@ class _MyScreenState extends State<MyScreen> {
               child: Text(trailing, style: TextStyle(color: _c, fontWeight: FontWeight.w800, fontSize: 11)),
             ),
         ]),
+      );
+
+  Widget _delegationCard(Map dg) => Container(
+        margin: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: _c.withValues(alpha: 0.25)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => PmsSectionScreen(
+                    projectId: dg['project_id'] as int,
+                    code: '${dg['section_code']}',
+                    label: '${dg['section_label']}'))),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(children: [
+                Container(
+                  padding: const EdgeInsets.all(9),
+                  decoration: BoxDecoration(color: _c.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(11)),
+                  child: Icon(Icons.folder_shared_rounded, color: _c, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('${dg['section_label']}',
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: _ink)),
+                  const SizedBox(height: 2),
+                  Text('${dg['project'] ?? ''}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: _slate, fontSize: 11.5)),
+                  if (dg['granted_by'] != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(tr('من: ${dg['granted_by']}', 'By: ${dg['granted_by']}'),
+                          style: const TextStyle(color: _slate, fontSize: 10.5)),
+                    ),
+                ])),
+                if (dg['date_until'] != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(color: const Color(0xFFF59E0B).withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
+                    child: Text('${tr('حتى', 'until')} ${dg['date_until']}',
+                        style: const TextStyle(color: Color(0xFFB45309), fontWeight: FontWeight.w700, fontSize: 9.5)),
+                  ),
+                Icon(Icons.chevron_left_rounded, color: _c.withValues(alpha: 0.5)),
+              ]),
+            ),
+          ),
+        ),
       );
 
   // ---- services as professional icon tiles ------------------------------
