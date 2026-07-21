@@ -164,10 +164,22 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
 
   // ---------------------------------------------------------------- menu tab
   Widget _menuTab() {
+    // Everything here is built defensively: a single malformed item or a cast
+    // that throws would, in a release build, replace this whole tab with a
+    // blank grey ErrorWidget — which is exactly the "empty menu" symptom. So
+    // each piece is isolated and the screen ALWAYS shows something truthful.
     final cats = ((_menu!['categories'] as List?) ?? const []).cast<Map>();
     var items = ((_menu!['items'] as List?) ?? const []).cast<Map>();
-    if (_cat != null) items = items.where((i) => i['category_id'] == _cat).toList();
+    if (_cat != null) {
+      items = items.where((i) => intOf(i['category_id'], -1) == _cat).toList();
+    }
     final favs = ((_menu!['favorites'] as List?) ?? const []).cast<Map>();
+    // Raw proof line: the first item names as plain text. If item CARDS ever
+    // fail to paint but this shows names, the data arrived and the bug is in a
+    // card; if this shows "0", the app genuinely received no items.
+    final proof = items.isEmpty
+        ? '—'
+        : items.take(4).map((i) => '${i['name']}').join('، ');
 
     return RefreshIndicator(
       color: _brown,
@@ -180,29 +192,76 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
           width: double.infinity,
           color: const Color(0xFFFFF3CD),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: Text(
-            'نسخة ${AppVersion.value} · ${items.length} صنف · ${cats.length} فئة',
-            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF7A5B00)),
-          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(
+              'نسخة ${AppVersion.value} · ${items.length} صنف · ${cats.length} فئة',
+              style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Color(0xFF7A5B00)),
+            ),
+            Text(proof,
+                maxLines: 2, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 10.5, color: Color(0xFF7A5B00))),
+          ]),
         ),
-        _limitsStrip(),
-        if (favs.isNotEmpty) _favourites(favs),
+        _safe(_limitsStrip),
+        if (favs.isNotEmpty) _safe(() => _favourites(favs)),
         SizedBox(
           height: 44,
           child: ListView(scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), children: [
             _catChip(null, tr('الكل', 'All'), '🍽️', _brown),
             for (final c in cats)
-              _catChip(c['id'] as int, '${c['name']}', '${c['icon'] ?? '☕'}',
-                  _hex('${c['color'] ?? '#8a6d3b'}')),
+              _safe(() => _catChip(intOf(c['id'], 0), '${c['name']}', '${c['icon'] ?? '☕'}',
+                  _hex('${c['color'] ?? '#8a6d3b'}'))),
           ]),
         ),
-        if (items.isEmpty) _empty(tr('لا أصناف متاحة', 'Nothing available')),
-        for (final i in items) _itemCard(i),
+        if (items.isEmpty)
+          _empty(tr('لا أصناف متاحة', 'Nothing available'))
+        else
+          // Each card is error-boundaried: a bad item degrades to a plain tile
+          // instead of blanking the entire menu.
+          for (final i in items)
+            _safe(() => _itemCard(i), fallback: _plainItem(i)),
         const SizedBox(height: 90),
       ]),
     );
   }
+
+  /// Build [w]; if it throws, show [fallback] (or a tiny error chip) instead of
+  /// letting the exception blank the whole list in a release build.
+  Widget _safe(Widget Function() w, {Widget? fallback}) {
+    try {
+      return w();
+    } catch (e) {
+      return fallback ??
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: Text('⚠ $e',
+                style: const TextStyle(fontSize: 10, color: Colors.redAccent)),
+          );
+    }
+  }
+
+  /// Absolute-minimum item row — no images, no casts — so a menu can never be
+  /// blank even if the rich card fails.
+  Widget _plainItem(Map i) => Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.grey.shade200)),
+        child: Row(children: [
+          Text('${i['icon'] ?? '☕'}  ', style: const TextStyle(fontSize: 22)),
+          Expanded(
+            child: Text('${i['name']}',
+                style: const TextStyle(fontWeight: FontWeight.w800, color: _navy)),
+          ),
+          IconButton(
+            icon: const Icon(Icons.add_circle, color: _brown),
+            onPressed: () => _configure(i),
+          ),
+        ]),
+      );
 
   Color _hex(String h) {
     final v = h.replaceAll('#', '');
