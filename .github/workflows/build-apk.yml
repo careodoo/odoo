@@ -142,7 +142,6 @@ jobs:
             care-mobile-v${{ steps.ver.outputs.name }}.aab
 
       - name: Publish Release with APK + AAB
-        if: steps.sign.outputs.publish == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.ver.outputs.name }}-build${{ github.run_number }}
@@ -152,8 +151,10 @@ jobs:
             care-mobile-v${{ steps.ver.outputs.name }}.aab
           body: |
             **CARE Mobile v${{ steps.ver.outputs.name }}** — build ${{ github.run_number }}
+            التوقيع: ${{ steps.sign.outputs.publish == 'true' && 'مفتاح Play الصحيح ✅' || '⚠️ مفتاح مؤقّت — للتثبيت المباشر فقط. لرفع Google Play استخدم AAB من مجلد dist أو أضِف RELEASE_KEYSTORE_B64.' }}
 
-            📱 `care-mobile-v${{ steps.ver.outputs.name }}.apk` — تثبيت مباشر على أندرويد (release)
-            📦 `care-mobile-v${{ steps.ver.outputs.name }}.aab` — للرفع على Google Play
+            📱 `care-mobile-v${{ steps.ver.outputs.name }}.apk` — **تثبيت مباشر** على أندرويد
+            📦 `care-mobile-v${{ steps.ver.outputs.name }}.aab` — Google Play (يحتاج مفتاح Play)
 
+            ⚠️ أول مرة فقط: احذف التطبيق القديم قبل التثبيت (تغيّر التوقيع).
             الخادم: https://ecare.care-kw.com/api/v1
