@@ -1010,6 +1010,16 @@ class ApiClient {
         await _net.get(_u('/client/attendance?$qs'), headers: await _headers())))['data'] as Map);
   }
 
+  /// Per-service client settings (notifications, weekly report, thresholds).
+  Future<List<dynamic>> serviceSettings() async =>
+      ((await _handle(await _net.get(
+              _u('/client/service-settings'), headers: await _headers())))['data'] as Map)['services'] as List;
+
+  Future<void> saveServiceSetting(String code, Map<String, dynamic> prefs) async =>
+      _handle(await _net.post(_u('/client/service-settings'),
+          headers: await _headers(),
+          body: jsonEncode({'service_code': code, 'prefs': prefs})));
+
   /// Material-handling jobs for my sites, with movement stats.
   Future<Map<String, dynamic>> handlingJobs({String? state}) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
