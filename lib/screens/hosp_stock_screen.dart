@@ -1,3 +1,4 @@
+import 'hosp_suppliers_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -115,7 +116,17 @@ class _HospStockScreenState extends State<HospStockScreen>
         foregroundColor: Colors.white,
         title: Text(tr('مخزون الضيافة', 'Hospitality pantry'),
             style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-        actions: [IconButton(icon: const Icon(Icons.refresh), onPressed: _load)],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.storefront_rounded),
+            tooltip: tr('الموردون والمواد', 'Suppliers & materials'),
+            onPressed: () async {
+              await Navigator.push(context, MaterialPageRoute(builder: (_) => const HospSuppliersScreen()));
+              if (mounted) _load();
+            },
+          ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
+        ],
         bottom: TabBar(
           controller: _tabs,
           indicatorColor: Colors.white,

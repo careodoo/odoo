@@ -678,6 +678,21 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/hosp/stock'), headers: await _headers())))['data'] as Map);
 
+  /// Suppliers we buy consumables from + the material categories/units.
+  Future<Map<String, dynamic>> hospSuppliers() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/hosp/suppliers'), headers: await _headers())))['data'] as Map);
+
+  /// Register / correct a supplier (partner). Returns the saved supplier.
+  Future<Map<String, dynamic>> hospSupplierSave(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/hosp/supplier/save'), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  /// Register / correct a material (consumable) in the catalogue.
+  Future<Map<String, dynamic>> hospSupplySave(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/hosp/supply/save'), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
   Future<Map<String, dynamic>> hospPurchaseCreate(Map<String, dynamic> body) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/hosp/purchase/create'),
