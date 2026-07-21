@@ -799,6 +799,74 @@ class ClientApi(Controller):
         except Exception as e:
             return _err(str(e) or 'تعذّر تسجيل الحضور', 422)
 
+    # ---- disinfection rounds: list + assign (worker/team + planned time) -----
+    @route(API + '/client/disinfect/rounds', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def disinfect_rounds(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.disinfect.round' not in env:
+            return _ok({'rounds': [], 'workers': [], 'teams': []})
+        M = env['care.disinfect.round'].sudo()
+        st = dict(M._fields['state'].selection)
+        pr = dict(M._fields['priority'].selection) if 'priority' in M._fields else {}
+        fids = self._fac_ids(env)
+        dom = [('facility_id', 'in', fids)]
+        if kw.get('state'):
+            dom.append(('state', '=', kw['state']))
+        recs = M.search(dom, order='planned_at desc, id desc', limit=100)
+        workers = env['hr.employee'].sudo().search([], limit=300)
+        teams = env['care.cafm.team'].sudo().search([('facility_id', 'in', fids)]) \
+            if 'care.cafm.team' in env else env['hr.employee'].browse()
+        return _ok({
+            'rounds': [{
+                'id': r.id, 'name': r.name,
+                'facility': r.facility_id.name or None,
+                'location': r.location_id.name if r.location_id else None,
+                'product': r.product_id.name if r.product_id else None,
+                'state': r.state, 'state_label': st.get(r.state, r.state),
+                'priority': r.priority if 'priority' in r._fields else None,
+                'priority_label': pr.get(getattr(r, 'priority', False), None),
+                'planned_at': str(r.planned_at or '')[:16] or None,
+                'assigned_to': r.assigned_to.name if r.assigned_to else None,
+                'assigned_team': r.assigned_team_id.name if r.assigned_team_id else None,
+                'can_assign': r.state in ('draft', 'assigned'),
+            } for r in recs],
+            'workers': [{'id': e.id, 'name': e.name} for e in workers],
+            'teams': [{'id': t.id, 'name': t.name} for t in teams],
+        })
+
+    @route(API + '/client/disinfect/<int:rid>/assign', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def disinfect_assign(self, rid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        r = env['care.disinfect.round'].sudo().browse(rid).exists()
+        if not r:
+            return _err('غير موجود', 404)
+        if not (r.facility_id and r.facility_id.id in self._fac_ids(env)):
+            return _err('غير مصرّح', 403)
+        b = _body()
+        vals = {}
+        if b.get('employee_id'):
+            vals['assigned_to'] = int(b['employee_id'])
+        if b.get('team_id'):
+            vals['assigned_team_id'] = int(b['team_id'])
+        if b.get('planned_at'):
+            vals['planned_at'] = b['planned_at']
+        if not (vals.get('assigned_to') or vals.get('assigned_team_id')
+                or r.assigned_to or r.assigned_team_id):
+            return _err('اختر عاملًا أو فريقًا للإسناد', 422)
+        r.write(vals)
+        try:
+            r.action_assign()
+        except Exception as e:
+            return _err(str(e) or 'تعذّر الإسناد', 422)
+        return _ok({'id': r.id, 'state': r.state,
+                    'assigned_to': r.assigned_to.name if r.assigned_to else None,
+                    'assigned_team': r.assigned_team_id.name if r.assigned_team_id else None,
+                    'planned_at': str(r.planned_at or '')[:16] or None})
+
     @route(API + '/client/employee/<int:eid>/attendance', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def client_employee_attendance(self, eid, **kw):
         """Every attendance record for one worker on this client's sites."""
