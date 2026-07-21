@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'client_activity_screen.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
@@ -14,10 +15,11 @@ import 'client_waste_screen.dart';
 import 'client_account_screen.dart';
 
 class _Tab {
-  const _Tab(this.icon, this.label, this.screen);
+  const _Tab(this.icon, this.label, this.screen, {this.live = false});
   final IconData icon;
   final String label;
   final Widget screen;
+  final bool live; // renders a red "live" dot on the icon
 }
 
 /// Persistent bottom navigation shell — a nav bar with everything, role-aware.
@@ -64,11 +66,15 @@ class _MainShellState extends State<MainShell> {
           _Tab(Icons.person_rounded, tr('حسابي', 'Account'), const ClientAccountScreen()),
         ];
       }
+      // A client is an organisation, not one employee — "my achievements" makes
+      // no sense for them. Give them a LIVE feed of what's happening on their
+      // sites right now, with a red live dot.
       return [
         home,
         _Tab(Icons.assignment_rounded, tr('أوامر العمل', 'Work orders'), const ClientWorkOrdersScreen()),
         _Tab(Icons.insights_rounded, tr('الإحصائيات', 'Analytics'), const ClientAnalyticsScreen()),
-        mine, more,
+        _Tab(Icons.sensors_rounded, tr('لايف', 'Live'), const ClientActivityScreen(), live: true),
+        more,
       ];
     }
     if (profile.isAdmin) {
@@ -105,7 +111,21 @@ class _MainShellState extends State<MainShell> {
         onDestinationSelected: (i) => setState(() => _idx = i),
         destinations: [
           for (final t in tabs)
-            NavigationDestination(icon: Icon(t.icon), label: t.label),
+            NavigationDestination(
+              icon: t.live
+                  ? Stack(clipBehavior: Clip.none, children: [
+                      Icon(t.icon),
+                      Positioned(right: -3, top: -2, child: Container(
+                        width: 9, height: 9,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE11D48), shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                      )),
+                    ])
+                  : Icon(t.icon),
+              label: t.label,
+            ),
         ],
       ),
     );
