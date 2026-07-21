@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/widgets.dart';
 import 'package:provider/provider.dart';
 import '../../core/auth.dart';
@@ -99,7 +100,39 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
                 Text('${e['job']}', style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12.5, fontWeight: FontWeight.w600)),
               if (e['department'] != null)
                 Text('${e['department']}', style: TextStyle(color: Colors.white.withValues(alpha: 0.65), fontSize: 10.5)),
+              if (e['duty_label'] != null) Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                  decoration: BoxDecoration(
+                      color: e['duty'] == 'on_site' ? const Color(0xFF16A34A)
+                          : e['duty'] == 'attended' ? const Color(0xFF0891B2) : Colors.white24,
+                      borderRadius: BorderRadius.circular(20)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(e['duty'] == 'off' ? Icons.person_off_rounded : Icons.fmd_good_rounded,
+                        size: 11, color: Colors.white),
+                    const SizedBox(width: 4),
+                    Text('${e['duty_label']}',
+                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
+                  ]),
+                ),
+              ),
             ])),
+          ]),
+          const SizedBox(height: 12),
+          // contact quick-actions
+          Row(children: [
+            if (e['phone'] != null || e['mobile'] != null) ...[
+              _quickBtn(Icons.call_rounded, tr('اتصال', 'Call'),
+                  () => _launch('tel:${e['mobile'] ?? e['phone']}')),
+              const SizedBox(width: 8),
+              _quickBtn(Icons.chat_rounded, 'واتساب',
+                  () => _launch('https://wa.me/${'${e['mobile'] ?? e['phone']}'.replaceAll(RegExp(r'[^0-9]'), '')}')),
+            ],
+            if (e['email'] != null) ...[
+              const SizedBox(width: 8),
+              _quickBtn(Icons.email_rounded, tr('بريد', 'Email'), () => _launch('mailto:${e['email']}')),
+            ],
           ]),
           const SizedBox(height: 12),
           Wrap(spacing: 8, runSpacing: 8, children: [
@@ -109,6 +142,31 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
             if (e['wage'] != null) _chip(Icons.payments_rounded, tr('الأجر: ${e['wage']}', 'Wage: ${e['wage']}')),
           ]),
         ]),
+      );
+
+  Future<void> _launch(String uri) async {
+    try {
+      await launchUrl(Uri.parse(uri), mode: LaunchMode.externalApplication);
+    } catch (_) {}
+  }
+
+  Widget _quickBtn(IconData ic, String label, VoidCallback onTap) => Expanded(
+        child: Material(
+          color: Colors.white.withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(11),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(11),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 9),
+              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Icon(ic, size: 15, color: Colors.white),
+                const SizedBox(width: 6),
+                Text(label, style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w800)),
+              ]),
+            ),
+          ),
+        ),
       );
 
   Widget _chip(IconData ic, String t) => Container(
