@@ -368,42 +368,12 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
             final pct = (numOf(d['progress'], 0)).toDouble();
             final stages = (d['stages'] as List?) ?? [];
             return ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 24), children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.black12)),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Row(children: [
-                    Expanded(child: Text(tr('نسبة الإنجاز', 'Progress'),
-                        style: const TextStyle(fontWeight: FontWeight.w800, color: Pms.ink))),
-                    Text('${pct.toStringAsFixed(1)}%',
-                        style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18,
-                            color: pct >= 80 ? Pms.green : (pct >= 40 ? Pms.amber : Pms.violet))),
-                  ]),
-                  const SizedBox(height: 8),
-                  ClipRRect(borderRadius: BorderRadius.circular(6),
-                    child: LinearProgressIndicator(value: (pct / 100).clamp(0, 1), minHeight: 8,
-                        backgroundColor: Pms.bg,
-                        valueColor: AlwaysStoppedAnimation(pct >= 80 ? Pms.green : (pct >= 40 ? Pms.amber : Pms.violet)))),
-                  const SizedBox(height: 12),
-                  Row(children: [
-                    _stat('${d['tasks']}', tr('مهمة', 'tasks'), Pms.slate),
-                    _stat('${d['open']}', tr('مفتوحة', 'open'), Pms.amber),
-                    _stat('${d['done']}', tr('منجزة', 'done'), Pms.green),
-                  ]),
-                  const Divider(height: 22),
-                  if (d['partner'] != null) _kv(Icons.business_rounded, tr('العميل', 'Client'), '${(d['partner'] as Map)['name']}'),
-                  if (d['manager'] != null) _kv(Icons.person_rounded, tr('مدير المشروع', 'Manager'), '${(d['manager'] as Map)['name']}'),
-                  if (d['date_start'] != null) _kv(Icons.play_arrow_rounded, tr('البداية', 'Start'), '${d['date_start']}'),
-                  if (d['date_end'] != null) _kv(Icons.flag_rounded, tr('النهاية', 'End'), '${d['date_end']}'),
-                ]),
-              ),
-              const SizedBox(height: 14),
+              _projectHero(d, pct),
+              const SizedBox(height: 16),
               // Everything about the project as clickable headline counts —
               // workers, vehicles, correspondence, custody, materials, cash.
               if (((d['stats'] as List?) ?? const []).isNotEmpty) ...[
-                Text(tr('إحصائيات المشروع', 'Project statistics'),
-                    style: const TextStyle(fontWeight: FontWeight.w900, color: Pms.ink, fontSize: 15)),
+                _miniHead(tr('إحصائيات المشروع', 'Project statistics'), Icons.insights_rounded, Pms.violet),
                 const SizedBox(height: 8),
                 GridView.count(
                   crossAxisCount: 3, shrinkWrap: true,
@@ -411,7 +381,7 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
                   mainAxisSpacing: 9, crossAxisSpacing: 9, childAspectRatio: 1.28,
                   children: [for (final s in (d['stats'] as List)) _statCard(s as Map)],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
               ],
               // Everything the portal exposes for a project — materials, team,
               // fuel, compliance… — reachable from the project itself.
@@ -460,6 +430,65 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
         const SizedBox(width: 7),
         Text(t, style: const TextStyle(fontWeight: FontWeight.w900, color: Pms.ink, fontSize: 15)),
       ]);
+
+  /// A professional project hero — completion ring, task split, and the key
+  /// facts (client / manager / dates), all in one organized card.
+  Widget _projectHero(Map d, double pct) {
+    Widget stat(String v, String l) => Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(v, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 17)),
+          Text(l, style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 10, fontWeight: FontWeight.w700)),
+        ]);
+    Widget info(IconData ic, String label, String value) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(children: [
+            Icon(ic, size: 15, color: Colors.white.withValues(alpha: 0.85)),
+            const SizedBox(width: 8),
+            Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 11.5)),
+            const Spacer(),
+            Flexible(child: Text(value, maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12))),
+          ]),
+        );
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: [Pms.violet, Pms.deep, Color(0xFF3B0F73)],
+            begin: Alignment.topRight, end: Alignment.bottomLeft),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Pms.violet.withValues(alpha: 0.32), blurRadius: 14, offset: const Offset(0, 6))],
+      ),
+      child: Column(children: [
+        Row(children: [
+          SizedBox(
+            width: 84, height: 84,
+            child: Stack(alignment: Alignment.center, children: [
+              SizedBox(width: 84, height: 84, child: CircularProgressIndicator(
+                value: (pct / 100).clamp(0, 1), strokeWidth: 8, strokeCap: StrokeCap.round,
+                backgroundColor: Colors.white.withValues(alpha: 0.18),
+                valueColor: const AlwaysStoppedAnimation(Colors.white))),
+              Column(mainAxisSize: MainAxisSize.min, children: [
+                Text('${pct.toStringAsFixed(0)}%', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 19, height: 1)),
+                Text(tr('إنجاز', 'done'), style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 9)),
+              ]),
+            ]),
+          ),
+          const SizedBox(width: 16),
+          Expanded(child: Row(children: [
+            Expanded(child: stat('${d['tasks'] ?? 0}', tr('مهمة', 'tasks'))),
+            Container(width: 1, height: 30, color: Colors.white24),
+            Expanded(child: stat('${d['open'] ?? 0}', tr('مفتوحة', 'open'))),
+            Container(width: 1, height: 30, color: Colors.white24),
+            Expanded(child: stat('${d['done'] ?? 0}', tr('منجزة', 'done'))),
+          ])),
+        ]),
+        Divider(height: 24, color: Colors.white.withValues(alpha: 0.18)),
+        if (d['partner'] != null) info(Icons.business_rounded, tr('العميل', 'Client'), '${(d['partner'] as Map)['name']}'),
+        if (d['manager'] != null) info(Icons.person_rounded, tr('مدير المشروع', 'Manager'), '${(d['manager'] as Map)['name']}'),
+        if (d['date_start'] != null) info(Icons.play_arrow_rounded, tr('البداية', 'Start'), '${d['date_start']}'),
+        if (d['date_end'] != null) info(Icons.flag_rounded, tr('النهاية', 'End'), '${d['date_end']}'),
+      ]),
+    );
+  }
 
   Widget _teamPreview(List<Map> team) {
     final base = context.read<AuthProvider>().api.baseUrl.replaceAll('/api/v1', '');
