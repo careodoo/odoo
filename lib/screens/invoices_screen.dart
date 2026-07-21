@@ -339,7 +339,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                     title: Text('${m['name']}', style: const TextStyle(fontWeight: FontWeight.w800)),
                     subtitle: Text('${m['period'] ?? ''} · ${m['date'] ?? ''}'),
                     trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
-                      Text('${m['amount_residual']}', style: TextStyle(color: (m['amount_residual'] as num) > 0 ? const Color(0xFFE11D48) : const Color(0xFF16A34A), fontWeight: FontWeight.w800)),
+                      Text('${m['amount_residual']}', style: TextStyle(color: numOf(m['amount_residual']) > 0 ? const Color(0xFFE11D48) : const Color(0xFF16A34A), fontWeight: FontWeight.w800)),
                       Row(mainAxisSize: MainAxisSize.min, children: [
                         _pill('${m['payment_label'] ?? ''}', pc),
                         const SizedBox(width: 4),
