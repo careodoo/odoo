@@ -122,17 +122,24 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
                 : all.where((r) {
                     final m = r as Map;
                     final hay = '${m['title'] ?? ''} ${m['subtitle'] ?? ''} '
-                        '${(m['badges'] as List?)?.join(' ') ?? ''}'.toLowerCase();
-                    return hay.contains(_q.toLowerCase());
+                        '${(m['badges'] as List?)?.join(' ') ?? ''} ${m['search'] ?? ''}'.toLowerCase();
+                    // Odoo-style multi-search: comma separates OR alternatives;
+                    // spaces within an alternative are AND. So "أحمد, civ 123"
+                    // matches «أحمد» OR (a row with both «civ» and «123»).
+                    return _q.toLowerCase().split(',').map((g) => g.trim()).where((g) => g.isNotEmpty)
+                        .any((group) => group.split(RegExp(r'\s+')).every((w) => hay.contains(w)));
                   }).toList();
             return ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 24), children: [
               if (stats.isNotEmpty) _statsBand(stats),
-              if (all.length > 8) ...[
+              if (all.length > 8 || widget.code == 'team') ...[
                 const SizedBox(height: 10),
                 TextField(
                   onChanged: (v) => setState(() => _q = v),
                   decoration: InputDecoration(
-                    hintText: tr('ابحث…', 'Search…'),
+                    hintText: widget.code == 'team'
+                        ? tr('اسم / بادج / مدني / جواز — وأكثر من اسم بفاصلة',
+                            'Name / badge / civil ID / passport — several by comma')
+                        : tr('ابحث…', 'Search…'),
                     prefixIcon: const Icon(Icons.search_rounded, size: 19),
                     isDense: true, filled: true, fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -219,6 +226,12 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
         return (const Color(0xFF16A34A), Colors.white);
       case 'open':
         return (const Color(0xFF16A34A), Colors.white);
+      case 'on_site':                       // worker on site now
+        return (const Color(0xFF16A34A), Colors.white);
+      case 'attended':                      // attended today, not on site
+        return (const Color(0xFF0891B2), Colors.white);
+      case 'off':                           // not in today
+        return (Colors.grey.shade400, Colors.white);
       case 'draft':
         return (Colors.grey.shade300, Colors.black87);
       default:
