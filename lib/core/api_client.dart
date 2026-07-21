@@ -1010,6 +1010,12 @@ class ApiClient {
         await _net.get(_u('/client/attendance?$qs'), headers: await _headers())))['data'] as Map);
   }
 
+  /// Material-handling jobs for my sites, with movement stats.
+  Future<Map<String, dynamic>> handlingJobs({String? state}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/client/handling/jobs${state != null ? '?state=$state' : ''}'),
+          headers: await _headers())))['data'] as Map);
+
   /// Disinfection rounds for my sites + the workers/teams I can assign them to.
   Future<Map<String, dynamic>> disinfectRounds({String? state}) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

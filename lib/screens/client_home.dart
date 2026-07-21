@@ -25,6 +25,7 @@ import 'maintenance_screen.dart';
 import 'valet_screen.dart';
 import 'hospitality_screen.dart';
 import 'specialty_service_screen.dart';
+import 'handling_screen.dart';
 import 'client_cleaning_screen.dart';
 import 'client_facade_screen.dart';
 import 'client_inventory_screen.dart';
@@ -422,7 +423,7 @@ class _ClientHomeState extends State<ClientHome> {
       (Icons.water_drop_rounded, 'خزانات المياه', 'Water tanks', 0xFF0E7A5F,
           const SpecialtyServiceScreen(spec: ServiceSpec.watertank), 'watertank'),
       (Icons.local_shipping_rounded, 'المناولة', 'Handling', 0xFF0D9488,
-          const SpecialtyServiceScreen(spec: ServiceSpec.handling), 'handling'),
+          const HandlingScreen(), 'handling'),
     ];
     final place = <(IconData, String, String, int, Widget, String?)>[
       (Icons.business_rounded, 'المباني', 'Buildings', 0xFF4F46E5, const ClientStructureScreen(), 'facilities'),
