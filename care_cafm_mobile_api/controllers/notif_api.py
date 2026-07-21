@@ -60,6 +60,8 @@ class NotifApi(Controller):
             return _err('رمز الجهاز مطلوب', 422)
         dev = env['care.cafm.device'].sudo().register(
             env.user, token, platform=b.get('platform', 'android'), device_name=b.get('device_name'))
+        if b.get('app_version') and 'app_version' in dev._fields:
+            dev.app_version = b.get('app_version')
         return _ok({'id': dev.id, 'registered': True})
 
     @route(API + '/notifications/unregister', type='http', auth='public', methods=['POST'], csrf=False, cors='*')

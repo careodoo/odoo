@@ -419,6 +419,50 @@ class SecurityClientApi(Controller):
             'state_label': st.get(getattr(r, 'state', False), getattr(r, 'state', None)),
         } for r in recs])
 
+    @route(API + '/client/security/keyhubs', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def sec_keyhubs(self, **kw):
+        """Key hubs → the keys in each → their latest in/out log. The physical
+        key-custody board from security_management, scoped to the client."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        g = self._guard(env)
+        if g:
+            return g
+        pids, cids = self._scope(env)
+        Hub = env['security.key.hub'].sudo() if 'security.key.hub' in env else None
+        if Hub is None:
+            return _ok([])
+        kst = _sel(env['security.key'], 'state') if 'security.key' in env else {}
+        hubs = Hub.search([('premise_id', 'in', pids)], limit=60)
+        out = []
+        for h in hubs:
+            keys = []
+            for k in h.key_ids:
+                logs = k.log_ids.sorted('timestamp', reverse=True)[:5] if 'log_ids' in k._fields else k.env['security.key.log'].browse()
+                keys.append({
+                    'id': k.id, 'name': k.name,
+                    'key_number': k.key_number if 'key_number' in k._fields else None,
+                    'door': k.door_number if 'door_number' in k._fields else None,
+                    'nfc': (k.nfc_uid or None) if 'nfc_uid' in k._fields else None,
+                    'state': k.state, 'state_label': kst.get(k.state, k.state),
+                    'holder': k.current_holder_id.name if getattr(k, 'current_holder_id', False) else None,
+                    'out_since': str(getattr(k, 'check_out_time', '') or '')[:16] or None,
+                    'logs': [{
+                        'op': l.operation,
+                        'by': l.security_employee_id.name if getattr(l, 'security_employee_id', False) else None,
+                        'at': str(l.timestamp or '')[:16],
+                    } for l in logs],
+                })
+            out.append({
+                'id': h.id, 'name': h.name, 'code': h.code, 'location': h.location,
+                'responsible': h.responsible_id.name if h.responsible_id else None,
+                'key_count': len(h.key_ids),
+                'out_count': sum(1 for k in h.key_ids if k.state == 'checked_out'),
+                'keys': keys,
+            })
+        return _ok(out)
+
     @route(API + '/client/security/cashier', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def sec_cashier(self, **kw):
         """Gate-cashier board: today's takings, per-cashier breakdown, and the

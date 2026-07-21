@@ -82,8 +82,13 @@ class HospitalityApi(Controller):
         if g:
             return g
         facs = self._facilities(env)
-        items = env['care.hosp.item'].sudo().search([('available', '=', True)])
-        items = items.filtered(lambda i: not i.facility_ids or (i.facility_ids & facs))
+        all_items = env['care.hosp.item'].sudo().search([('available', '=', True)])
+        items = all_items.filtered(lambda i: not i.facility_ids or (i.facility_ids & facs))
+        import logging
+        logging.getLogger('care.hosp.menu.debug').warning(
+            'HOSP_MENU_DEBUG user=%s facs=%s all_items=%s shown=%s ua=%r',
+            env.user.login, len(facs), len(all_items), len(items),
+            request.httprequest.headers.get('User-Agent'))
         cats = env['care.hosp.category'].sudo().search([])
         favs = env['care.hosp.favorite'].sudo().search(
             [('user_id', '=', env.user.id)], order='times_used desc', limit=8)
