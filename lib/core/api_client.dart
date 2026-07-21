@@ -1090,6 +1090,20 @@ class ApiClient {
           headers: await _headers(),
           body: jsonEncode({if (lat != null) 'lat': lat, if (lng != null) 'lng': lng}))))['data'] as Map);
 
+  /// Departments to choose when creating a timesheet.
+  Future<Map<String, dynamic>> timesheetDepartments() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/client/timesheet/departments'), headers: await _headers())))['data'] as Map);
+
+  /// Create a timesheet for a department + period; generates from attendance
+  /// and optionally submits it for approval.
+  Future<Map<String, dynamic>> timesheetCreate({
+    required int departmentId, required String dateFrom, required String dateTo, bool submit = true}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/client/timesheet/create'), headers: await _headers(),
+          body: jsonEncode({'department_id': departmentId, 'date_from': dateFrom,
+              'date_to': dateTo, 'submit': submit}))))['data'] as Map);
+
   /// Every attendance record for one worker on this client's sites.
   Future<Map<String, dynamic>> clientEmployeeAttendance(int eid, {String period = 'all'}) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

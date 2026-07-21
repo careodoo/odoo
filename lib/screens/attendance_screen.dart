@@ -161,6 +161,116 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         shareText: tr('سجل الحضور والانصراف', 'Attendance records'));
   }
 
+  /// Create a timesheet for a department + period, generate it from the
+  /// biometric attendance, and (optionally) submit it for approval.
+  Future<void> _createTimesheet() async {
+    final api = context.read<AuthProvider>().api;
+    List<Map> deps = const [];
+    int? own;
+    try {
+      final m = await api.timesheetDepartments();
+      deps = ((m['departments'] as List?) ?? const []).cast<Map>();
+      own = m['own_department'] as int?;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      }
+      return;
+    }
+    if (!mounted) return;
+    int? dept = own;
+    final now = DateTime.now();
+    DateTime from = DateTime(now.year, now.month, 1);
+    DateTime to = now;
+    bool submit = true;
+    bool busy = false;
+
+    await showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setSheet) {
+        Future<void> pick(bool isFrom) async {
+          final d = await showDatePicker(context: ctx,
+              initialDate: isFrom ? from : to,
+              firstDate: DateTime(2020), lastDate: DateTime(2100));
+          if (d != null) setSheet(() => isFrom ? from = d : to = d);
+        }
+        String fmt(DateTime d) => d.toIso8601String().substring(0, 10);
+        return Padding(
+          padding: EdgeInsets.fromLTRB(18, 14, 18, MediaQuery.of(ctx).viewInsets.bottom + 20),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              const Icon(Icons.post_add_rounded, color: Color(0xFF0E3A5F)),
+              const SizedBox(width: 8),
+              Text(tr('إنشاء كشف ساعات', 'Create timesheet'),
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16.5)),
+            ]),
+            const SizedBox(height: 14),
+            DropdownButtonFormField<int>(
+              value: dept, isExpanded: true,
+              decoration: InputDecoration(labelText: tr('القسم', 'Department'),
+                  prefixIcon: const Icon(Icons.apartment_rounded),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+              items: [for (final d in deps) DropdownMenuItem(value: d['id'] as int,
+                  child: Text('${d['name']}', overflow: TextOverflow.ellipsis))],
+              onChanged: (v) => setSheet(() => dept = v),
+            ),
+            const SizedBox(height: 12),
+            Row(children: [
+              Expanded(child: InkWell(
+                onTap: () => pick(true),
+                child: InputDecorator(
+                  decoration: InputDecoration(labelText: tr('من', 'From'),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                  child: Text(fmt(from), style: const TextStyle(fontWeight: FontWeight.w700))),
+              )),
+              const SizedBox(width: 10),
+              Expanded(child: InkWell(
+                onTap: () => pick(false),
+                child: InputDecorator(
+                  decoration: InputDecoration(labelText: tr('إلى', 'To'),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                  child: Text(fmt(to), style: const TextStyle(fontWeight: FontWeight.w700))),
+              )),
+            ]),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              value: submit, onChanged: (v) => setSheet(() => submit = v),
+              activeThumbColor: const Color(0xFF16A34A),
+              title: Text(tr('تقديم للاعتماد بعد الإنشاء', 'Submit for approval after creating'),
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(width: double.infinity, height: 48, child: FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0E3A5F),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+              onPressed: (dept == null || busy) ? null : () async {
+                setSheet(() => busy = true);
+                try {
+                  final res = await api.timesheetCreate(departmentId: dept!,
+                      dateFrom: fmt(from), dateTo: fmt(to), submit: submit);
+                  if (!ctx.mounted) return;
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      backgroundColor: const Color(0xFF16A34A),
+                      content: Text(tr('تم إنشاء الكشف (${res['lines'] ?? 0} سطر)${res['submitted'] == true ? ' وتقديمه' : ''}',
+                          'Timesheet created (${res['lines'] ?? 0} lines)${res['submitted'] == true ? ' and submitted' : ''}'))));
+                } catch (e) {
+                  setSheet(() => busy = false);
+                  ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: const Color(0xFFE11D48)));
+                }
+              },
+              icon: busy
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.check_rounded),
+              label: Text(tr('إنشاء', 'Create'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+            )),
+          ]),
+        );
+      }),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -168,6 +278,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       appBar: AppBar(
         title: Text(tr('الحضور والانصراف', 'Attendance')),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.post_add_rounded),
+            tooltip: tr('إنشاء كشف ساعات', 'Create timesheet'),
+            onPressed: _createTimesheet,
+          ),
           IconButton(
             icon: const Icon(Icons.grid_on_rounded),
             tooltip: tr('تصدير Excel', 'Export Excel'),
