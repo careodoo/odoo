@@ -1010,6 +1010,24 @@ class ApiClient {
         await _net.get(_u('/client/attendance?$qs'), headers: await _headers())))['data'] as Map);
   }
 
+  /// Disinfection rounds for my sites + the workers/teams I can assign them to.
+  Future<Map<String, dynamic>> disinfectRounds({String? state}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/client/disinfect/rounds${state != null ? '?state=$state' : ''}'),
+          headers: await _headers())))['data'] as Map);
+
+  /// Assign a round to a worker and/or team, with an optional planned time.
+  Future<Map<String, dynamic>> disinfectAssign(int id,
+          {int? employeeId, int? teamId, String? plannedAt}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/client/disinfect/$id/assign'),
+          headers: await _headers(),
+          body: jsonEncode({
+            if (employeeId != null) 'employee_id': employeeId,
+            if (teamId != null) 'team_id': teamId,
+            if (plannedAt != null) 'planned_at': plannedAt,
+          }))))['data'] as Map);
+
   /// Am I currently checked in? (drives the self-punch button).
   Future<Map<String, dynamic>> attendanceStatus() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

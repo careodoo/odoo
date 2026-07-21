@@ -5,6 +5,7 @@ import '../core/i18n.dart';
 import '../core/widgets.dart';
 import 'work_order_detail_screen.dart';
 import 'svc_sections_hub.dart';
+import 'disinfection_rounds_screen.dart';
 
 const _navy = Color(0xFF0E3A5F);
 
@@ -201,6 +202,15 @@ class _SpecialtyServiceScreenState extends State<SpecialtyServiceScreen> {
         backgroundColor: s.color, foregroundColor: Colors.white,
         title: Text(tr(s.ar, s.en), style: const TextStyle(fontWeight: FontWeight.w900)),
         actions: [
+          // Disinfection rounds carry a real assign flow (worker/team + planned
+          // time) that generic work orders don't — surface it here.
+          if (s.code == 'disinfection')
+            IconButton(
+              tooltip: tr('جولات التعقيم وإسنادها', 'Rounds & assignment'),
+              icon: const Icon(Icons.assignment_ind_rounded),
+              onPressed: () => Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => const DisinfectionRoundsScreen())),
+            ),
           // The real records of this service — readings, cleanings, stations,
           // rounds — not just its work orders.
           IconButton(
