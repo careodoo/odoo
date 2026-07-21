@@ -34,13 +34,23 @@ class _ManagementHomeState extends State<ManagementHome> {
     'invoices': Color(0xFF4F46E5), 'projects': Color(0xFF15803D),
   };
 
+  Map<String, dynamic>? _me;
+
   @override
   void initState() {
     super.initState();
     _reload();
+    _loadMe();
   }
 
   void _reload() => setState(() => _f = context.read<AuthProvider>().api.managementApps());
+
+  Future<void> _loadMe() async {
+    try {
+      final me = await context.read<AuthProvider>().api.managementMe();
+      if (mounted) setState(() => _me = me);
+    } catch (_) {/* header stats are optional */}
+  }
 
   String _fmt(num n) {
     if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
@@ -91,6 +101,7 @@ class _ManagementHomeState extends State<ManagementHome> {
               ]),
             ),
           ),
+          if (_me != null) SliverToBoxAdapter(child: _meBand(_me!)),
           FutureBuilder<List<dynamic>>(
             future: _f,
             builder: (_, snap) {
@@ -124,6 +135,73 @@ class _ManagementHomeState extends State<ManagementHome> {
       ),
     );
   }
+
+  Widget _meBand(Map me) {
+    final stats = ((me['stats'] as List?) ?? const []).cast<Map>();
+    final base = context.read<AuthProvider>().api.baseUrl.replaceAll('/api/v1', '');
+    final initial = '${me['name'] ?? '?'}'.trim();
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 14, 12, 0),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12, offset: const Offset(0, 4))],
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: Image.network('$base${me['avatar_url']}',
+                width: 52, height: 52, fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                    width: 52, height: 52,
+                    decoration: BoxDecoration(color: Mgmt.red.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(28)),
+                    alignment: Alignment.center,
+                    child: Text(initial.isEmpty ? '?' : initial.characters.first,
+                        style: const TextStyle(color: Mgmt.red, fontWeight: FontWeight.w900, fontSize: 20)))),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('${me['name'] ?? ''}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15.5, color: Mgmt.ink)),
+            if (me['job'] != null || me['department'] != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text([me['job'], me['department']].where((x) => x != null).join(' · '),
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Mgmt.slate, fontSize: 12)),
+              ),
+          ])),
+          if (me['is_manager'] == true)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              decoration: BoxDecoration(color: Mgmt.red.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(20)),
+              child: Text(tr('مدير', 'Manager'),
+                  style: const TextStyle(color: Mgmt.red, fontWeight: FontWeight.w800, fontSize: 10.5)),
+            ),
+        ]),
+        if (stats.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          Row(children: [
+            for (var i = 0; i < stats.length; i++) ...[
+              if (i > 0) Container(width: 1, height: 30, color: Colors.grey.shade200),
+              Expanded(child: _statCell(stats[i])),
+            ],
+          ]),
+        ],
+      ]),
+    );
+  }
+
+  Widget _statCell(Map s) => Column(children: [
+        Text('${s['value'] ?? 0}',
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 19, color: Mgmt.ink)),
+        const SizedBox(height: 2),
+        Text(gLang == 'en' ? '${s['en'] ?? ''}' : '${s['ar'] ?? ''}',
+            maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
+            style: const TextStyle(color: Mgmt.slate, fontSize: 10.5, fontWeight: FontWeight.w700)),
+      ]);
 
   Widget _card(Map a) {
     final c = _tint['${a['key']}'] ?? Mgmt.slate;

@@ -1643,6 +1643,16 @@ class ApiClient {
               _u('/management/$key/$id/action'),
               headers: await _headers(), body: jsonEncode({'action': action}))))['data'] as Map);
 
+  /// Current user: name, avatar, role and live header stats.
+  Future<Map<String, dynamic>> managementMe() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/management/me'), headers: await _headers())))['data'] as Map);
+
+  /// Save whitelisted edited fields (server enforces which fields + ACL).
+  Future<void> managementWrite(String key, int id, Map<String, dynamic> vals) async =>
+      _handle(await _net.post(_u('/management/$key/$id/write'),
+          headers: await _headers(), body: jsonEncode(vals)));
+
   // ---- waste operations (ops manager) -------------------------------------
   /// Orders this ops manager owns. filter: unassigned | open | done
   Future<List<dynamic>> wasteOpsOrders({String filter = 'open'}) async =>
