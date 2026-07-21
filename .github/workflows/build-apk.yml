@@ -61,29 +61,33 @@ jobs:
       - name: Force compileSdk 36 (nfc_manager needs >=34)
         run: sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/' android/app/build.gradle.kts || true
 
-      - name: Configure stable release signing (so upgrades install over old app)
+      - name: Configure release signing (CONSISTENT key so upgrades install + Play accepts)
+        env:
+          KS_B64: ${{ secrets.RELEASE_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          KEY_PASS: ${{ secrets.RELEASE_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
         run: |
-          cp ci/care_release.keystore android/app/care_release.keystore
-          python3 - <<'PY'
-          import pathlib
-          p = pathlib.Path("android/app/build.gradle.kts")
-          s = p.read_text()
-          sign = ('    signingConfigs {\n'
-                  '        create("release") {\n'
-                  '            storeFile = file("care_release.keystore")\n'
-                  '            storePassword = "carefm2026"\n'
-                  '            keyAlias = "carefm"\n'
-                  '            keyPassword = "carefm2026"\n'
-                  '        }\n'
-                  '    }\n'
-                  '    buildTypes {')
-          if 'create("release")' not in s:
-              s = s.replace("buildTypes {", sign, 1)
-          s = s.replace('signingConfig = signingConfigs.getByName("debug")',
-                        'signingConfig = signingConfigs.getByName("release")')
-          p.write_text(s)
-          print("signing configured:", 'create("release")' in p.read_text())
-          PY
+          # The committed android/app/build.gradle.kts already signs from
+          # android/key.properties → android/care-release.jks. We only need to
+          # PROVIDE those two files. Previously CI had neither, so it fell back
+          # to an EPHEMERAL debug key that changed every run — different
+          # fingerprint each build, so no APK could upgrade over another and
+          # Play rejected them. Never let that happen again.
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > android/care-release.jks
+            printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=care-release.jks\n' \
+              "$KS_PASS" "$KEY_PASS" "$KEY_ALIAS" > android/key.properties
+            echo "✅ Signing with the Play UPLOAD key from the RELEASE_KEYSTORE_B64 secret."
+          else
+            echo "⚠️  RELEASE_KEYSTORE_B64 secret is NOT set — falling back to the committed"
+            echo "    ci/care_release.keystore (consistent, but NOT the Play key)."
+            cp ci/care_release.keystore android/care-release.jks
+            printf 'storePassword=carefm2026\nkeyPassword=carefm2026\nkeyAlias=carefm\nstoreFile=care-release.jks\n' > android/key.properties
+          fi
+          echo "storeFile fingerprint:"
+          keytool -list -keystore android/care-release.jks \
+            -storepass "$(grep storePassword android/key.properties | cut -d= -f2)" 2>/dev/null | grep -i SHA1 || true
 
       - name: Install dependencies
         run: flutter pub get

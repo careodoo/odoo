@@ -49,3 +49,4 @@ dist/*.keep
 # release signing (keep secret)
 android/key.properties
 android/care-release.jks
+RELEASE_KEYSTORE_B64.txt
