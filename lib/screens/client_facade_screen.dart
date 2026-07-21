@@ -1,3 +1,4 @@
+import 'schedules_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
@@ -26,6 +27,7 @@ class _ClientFacadeScreenState extends State<ClientFacadeScreen> {
   static const _kinds = <(String, String, String, IconData)>[
     ('permits', 'التصاريح', 'Permits', Icons.health_and_safety_rounded),
     ('zones', 'الواجهات', 'Elevations', Icons.location_city_rounded),
+    ('schedules', 'الجدولة', 'Schedules', Icons.event_repeat_rounded),
   ];
 
   @override
@@ -45,7 +47,13 @@ class _ClientFacadeScreenState extends State<ClientFacadeScreen> {
   void _loadKind(String k) => setState(() {
         _kind = k;
         _q = '';
-        _list = context.read<AuthProvider>().api.clientFacade(k);
+        if (k == 'schedules') {
+          // reuse the work-schedule system, filtered to facade cleaning cycles
+          _list = context.read<AuthProvider>().api.clientSchedules().then(
+              (all) => all.where((s) => (s as Map)['service_type'] == 'facade').toList());
+        } else {
+          _list = context.read<AuthProvider>().api.clientFacade(k);
+        }
       });
 
   @override
@@ -53,15 +61,25 @@ class _ClientFacadeScreenState extends State<ClientFacadeScreen> {
     final s = _summary ?? const {};
     final label = (() { final k = _kinds.firstWhere((x) => x.$1 == _kind); return tr(k.$2, k.$3); })();
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: _c, foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_moderator_rounded),
-        label: Text(tr('إصدار تصريح', 'Issue permit'), style: const TextStyle(fontWeight: FontWeight.w900)),
-        onPressed: () async {
-          final created = await FacadePermitCreateSheet.open(context);
-          if (created == true && mounted) { _loadSummary(); _loadKind('permits'); }
-        },
-      ),
+      floatingActionButton: _kind == 'schedules'
+          ? FloatingActionButton.extended(
+              backgroundColor: const Color(0xFF0D9488), foregroundColor: Colors.white,
+              icon: const Icon(Icons.event_repeat_rounded),
+              label: Text(tr('جدولة جديدة', 'New schedule'), style: const TextStyle(fontWeight: FontWeight.w900)),
+              onPressed: () async {
+                await Navigator.push(context, MaterialPageRoute(builder: (_) => const SchedulesScreen()));
+                if (mounted) _loadKind('schedules');
+              },
+            )
+          : FloatingActionButton.extended(
+              backgroundColor: _c, foregroundColor: Colors.white,
+              icon: const Icon(Icons.add_moderator_rounded),
+              label: Text(tr('إصدار تصريح', 'Issue permit'), style: const TextStyle(fontWeight: FontWeight.w900)),
+              onPressed: () async {
+                final created = await FacadePermitCreateSheet.open(context);
+                if (created == true && mounted) { _loadSummary(); _loadKind('permits'); }
+              },
+            ),
       appBar: AppBar(
         title: Text(tr('الواجهات', 'Facade')),
         actions: [
@@ -149,6 +167,24 @@ class _ClientFacadeScreenState extends State<ClientFacadeScreen> {
       );
 
   Widget _row(Map r) {
+    if (_kind == 'schedules') {
+      final rs = '${r['run_state']}';
+      final (c, lbl) = rs == 'running'
+          ? (const Color(0xFF16A34A), tr('يعمل', 'Running'))
+          : (rs == 'paused'
+              ? (const Color(0xFFF59E0B), tr('موقوف', 'Paused'))
+              : (const Color(0xFF94A3B8), tr('متوقف', 'Stopped')));
+      return ListTile(
+        leading: const Text('🔁', style: TextStyle(fontSize: 20)),
+        title: Text('${r['name']}', style: const TextStyle(fontWeight: FontWeight.w700)),
+        subtitle: Text([
+          if (r['location'] != null) '${r['location']}',
+          '${tr('كل', 'every')} ${r['every_minutes'] ?? 0} ${tr('دقيقة', 'min')}',
+          '👷 ${r['employee'] ?? '—'}',
+        ].join(' · '), maxLines: 2, overflow: TextOverflow.ellipsis),
+        trailing: _pill(lbl, c),
+      );
+    }
     if (_kind == 'zones') {
       final due = r['is_due'] == true;
       return ListTile(
