@@ -4,6 +4,8 @@ import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/service_ui.dart';
 import 'client_workorder_create.dart';
+import 'schedules_screen.dart';
+import 'hosp_suppliers_screen.dart';
 
 /// Client-facing cleaning suite: overview + quality audits (accept/dispute),
 /// schedule compliance, cleaning rounds and consumables ledger (scoped to the
@@ -54,13 +56,27 @@ class _ClientCleaningScreenState extends State<ClientCleaningScreen> {
     final sc = (s['avg_score'] ?? 0);
     final label = (() { final k = _kinds.firstWhere((x) => x.$1 == _kind); return tr(k.$2, k.$3); })();
     return Scaffold(
+      // the "add" action follows the open tab — a schedule on the schedules
+      // tab, otherwise a cleaning task at any location.
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: _c, foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_task_rounded),
-        label: Text(tr('مهمة نظافة', 'Cleaning task'), style: const TextStyle(fontWeight: FontWeight.w900)),
+        icon: Icon(_kind == 'schedules' ? Icons.event_repeat_rounded : Icons.add_task_rounded),
+        label: Text(
+            _kind == 'schedules' ? tr('جدولة نظافة', 'New schedule')
+                : _kind == 'consumables' ? tr('مادة نظافة', 'Add material')
+                : tr('مهمة نظافة', 'Cleaning task'),
+            style: const TextStyle(fontWeight: FontWeight.w900)),
         onPressed: () async {
-          // Reuse the pro work-order sheet, preset to the cleaning service so the
-          // client can raise a cleaning task at any location and assign a worker.
+          if (_kind == 'schedules') {
+            await Navigator.push(context, MaterialPageRoute(builder: (_) => const SchedulesScreen()));
+            if (mounted) { _loadSummary(); _loadKind(_kind); }
+            return;
+          }
+          if (_kind == 'consumables') {
+            await Navigator.push(context, MaterialPageRoute(builder: (_) => const HospSuppliersScreen()));
+            if (mounted) { _loadSummary(); _loadKind(_kind); }
+            return;
+          }
           final created = await ClientWorkorderCreateSheet.open(context, presetServiceType: 'cleaning');
           if (created == true && mounted) { _loadSummary(); _loadKind(_kind); }
         },
