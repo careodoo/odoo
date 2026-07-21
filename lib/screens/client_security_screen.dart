@@ -8,6 +8,7 @@ import 'security_gatepass_create.dart';
 import 'client_workorder_create.dart';
 import 'security_positioning_screen.dart';
 import 'security_cashier_screen.dart';
+import 'security_keyhubs_screen.dart';
 
 /// The client's security service in full: what is happening on their premises
 /// right now, then every record behind it — incidents, patrols, gate passes,
@@ -90,6 +91,11 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
       appBar: AppBar(
         title: Text(tr('الأمن', 'Security')),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.vpn_key_rounded),
+            tooltip: tr('هبات المفاتيح', 'Key hubs'),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityKeyhubsScreen())),
+          ),
           IconButton(
             icon: const Icon(Icons.point_of_sale_rounded),
             tooltip: tr('صندوق البوابة', 'Gate cashier'),
