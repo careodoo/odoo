@@ -1063,6 +1063,11 @@ class ApiClient {
       List<dynamic>.from((await _handle(
               await _net.get(_u('/client/security/$kind'), headers: await _headers())))['data'] as List);
 
+  /// Gate-cashier board: today's takings, per-cashier breakdown, receipts.
+  Future<Map<String, dynamic>> securityCashier() async =>
+      Map<String, dynamic>.from((await _handle(
+              await _net.get(_u('/client/security/cashier'), headers: await _headers())))['data'] as Map);
+
   Future<Map<String, dynamic>> clientSecurityOptions() async =>
       Map<String, dynamic>.from((await _handle(
               await _net.get(_u('/client/security/options'), headers: await _headers())))['data'] as Map);
