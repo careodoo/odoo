@@ -292,6 +292,20 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
                 ]),
               ),
               const SizedBox(height: 14),
+              // Everything about the project as clickable headline counts —
+              // workers, vehicles, correspondence, custody, materials, cash.
+              if (((d['stats'] as List?) ?? const []).isNotEmpty) ...[
+                Text(tr('إحصائيات المشروع', 'Project statistics'),
+                    style: const TextStyle(fontWeight: FontWeight.w900, color: Pms.ink, fontSize: 15)),
+                const SizedBox(height: 8),
+                GridView.count(
+                  crossAxisCount: 3, shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 9, crossAxisSpacing: 9, childAspectRatio: 1.28,
+                  children: [for (final s in (d['stats'] as List)) _statCard(s as Map)],
+                ),
+                const SizedBox(height: 14),
+              ],
               // Everything the portal exposes for a project — materials, team,
               // fuel, compliance… — reachable from the project itself.
               _sections(),
@@ -366,4 +380,69 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
           Expanded(child: Text(v, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Pms.ink))),
         ]),
       );
+
+  static const _statIcons = {
+    'checklist': Icons.checklist_rounded,
+    'groups': Icons.groups_rounded,
+    'directions_car': Icons.directions_car_rounded,
+    'mail': Icons.mail_rounded,
+    'inventory_2': Icons.inventory_2_rounded,
+    'inventory': Icons.inventory_rounded,
+    'payments': Icons.payments_rounded,
+  };
+  static const _statColors = {
+    '__tasks__': Pms.violet, 'team': Color(0xFF2563EB), 'fuel': Color(0xFF0D9488),
+    '__letters__': Color(0xFF9333EA), 'assets': Color(0xFF0E7490),
+    'materials': Color(0xFF7C3AED), 'petty': Color(0xFFD97706),
+  };
+
+  Widget _statCard(Map s) {
+    final code = '${s['code']}';
+    final c = _statColors[code] ?? Pms.violet;
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(15),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(15),
+        onTap: () => _openStat(code, '${s['label']}'),
+        child: Container(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: c.withValues(alpha: 0.22))),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Container(
+                width: 30, height: 30, alignment: Alignment.center,
+                decoration: BoxDecoration(color: c.withValues(alpha: 0.11), borderRadius: BorderRadius.circular(9)),
+                child: Icon(_statIcons['${s['icon']}'] ?? Icons.insights_rounded, size: 17, color: c),
+              ),
+              const Spacer(),
+              Icon(Icons.chevron_left_rounded, size: 18, color: c.withValues(alpha: 0.5)),
+            ]),
+            const Spacer(),
+            Text('${s['count']}',
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: c, height: 1)),
+            const SizedBox(height: 1),
+            Text('${s['label']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Pms.ink)),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  void _openStat(String code, String label) {
+    if (code == '__tasks__') {
+      Navigator.push(context, MaterialPageRoute(
+          builder: (_) => PmsTasksScreen(filter: '', title: widget.name, projectId: widget.projectId)));
+    } else if (code == '__letters__') {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('الكتب والمراسلات تُدار من نظام المراسلات',
+              'Correspondence is managed in the letters system'))));
+    } else {
+      Navigator.push(context, MaterialPageRoute(
+          builder: (_) => PmsSectionScreen(projectId: widget.projectId, code: code, label: label)));
+    }
+  }
 }
