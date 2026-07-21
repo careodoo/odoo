@@ -425,6 +425,14 @@ class _HospStockScreenState extends State<HospStockScreen>
   Future<void> _orderSheet() async {
     final picked = <int, double>{};
     var source = 'care';
+    int? supplierId;
+    // the suppliers to pick from when ordering externally
+    List<Map> suppliers = const [];
+    try {
+      final sd = await context.read<AuthProvider>().api.hospSuppliers();
+      suppliers = ((sd['suppliers'] as List?) ?? const []).cast<Map>();
+    } catch (_) {/* external picker just stays empty */}
+    if (!mounted) return;
     final ok = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -464,6 +472,34 @@ class _HospStockScreenState extends State<HospStockScreen>
                   onSelectionChanged: (v) => setSt(() => source = v.first),
                 ),
               ),
+              // external orders MUST name the supplier — show the picker here
+              if (source == 'external')
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 0, 14, 6),
+                  child: DropdownButtonFormField<int>(
+                    value: supplierId,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: tr('المورّد الخارجي', 'External supplier'),
+                      filled: true, fillColor: Colors.white,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      isDense: true,
+                    ),
+                    items: [
+                      for (final s in suppliers)
+                        DropdownMenuItem(value: intOf(s['id']), child: Text('${s['name']}')),
+                    ],
+                    onChanged: (v) => setSt(() => supplierId = v),
+                  ),
+                ),
+              if (source == 'external' && suppliers.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+                  child: Text(
+                      tr('لا موردون مسجّلون — أضِفهم من 🏪 الموردون والمواد.',
+                          'No suppliers yet — add them from 🏪 Suppliers & materials.'),
+                      style: const TextStyle(fontSize: 11.5, color: Color(0xFFB45309))),
+                ),
               Expanded(
                 child: ListView(
                   controller: sc,
@@ -522,10 +558,13 @@ class _HospStockScreenState extends State<HospStockScreen>
                           backgroundColor: _brown,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14))),
-                      onPressed: picked.isEmpty ? null : () => Navigator.pop(c, true),
+                      onPressed: (picked.isEmpty || (source == 'external' && supplierId == null))
+                          ? null
+                          : () => Navigator.pop(c, true),
                       child: Text(
-                          '${tr('إنشاء الطلب', 'Create order')}'
-                          '${picked.isEmpty ? '' : ' (${picked.length})'}',
+                          source == 'external' && supplierId == null
+                              ? tr('اختر المورّد أولًا', 'Pick a supplier first')
+                              : '${tr('إنشاء الطلب', 'Create order')}${picked.isEmpty ? '' : ' (${picked.length})'}',
                           style: const TextStyle(
                               fontWeight: FontWeight.w900, fontSize: 15)),
                     ),
@@ -542,6 +581,7 @@ class _HospStockScreenState extends State<HospStockScreen>
     try {
       await context.read<AuthProvider>().api.hospPurchaseCreate({
         'source': source,
+        if (source == 'external' && supplierId != null) 'partner_id': supplierId,
         'lines': [
           for (final e in picked.entries)
             {'supply_id': e.key, 'quantity': e.value, 'by_pack': true},
