@@ -83,16 +83,27 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
 
   Future<void> _load() async {
     final api = context.read<AuthProvider>().api;
+    // Load each part independently — a failing orders/kitchen call must NEVER
+    // stop the menu from rendering (that was a silent way the menu "wouldn't
+    // show" even though the catalogue loaded fine).
+    Map<String, dynamic>? m, o, k;
     try {
-      final m = await api.hospMenu();
-      final o = await api.hospMyOrders();
-      Map<String, dynamic>? k;
-      try {
-        k = await api.hospKitchen();
-      } catch (_) {/* not kitchen staff — the tab simply stays empty */}
-      if (mounted) setState(() { _menu = m; _orders = o; _kitchen = k; });
+      m = await api.hospMenu();
     } catch (e) {
-      if (mounted) _snack('$e');
+      if (mounted) _snack('${tr('تعذّر تحميل المنيو', 'Could not load menu')}: $e');
+    }
+    try {
+      o = await api.hospMyOrders();
+    } catch (_) {/* orders failing does not blank the menu */}
+    try {
+      k = await api.hospKitchen();
+    } catch (_) {/* not kitchen staff — the tab simply stays empty */}
+    if (mounted) {
+      setState(() {
+        if (m != null) _menu = m;
+        if (o != null) _orders = o;
+        _kitchen = k;
+      });
     }
   }
 
