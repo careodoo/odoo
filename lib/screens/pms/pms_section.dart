@@ -337,13 +337,28 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
             Text('${r['title']}',
                 maxLines: 2, overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-            if (r['subtitle'] != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Text('${r['subtitle']}',
-                    maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 10.5, color: Colors.grey.shade600)),
+            Row(children: [
+              if (r['badge'] != null) Padding(
+                padding: const EdgeInsets.only(top: 3, bottom: 1),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  decoration: BoxDecoration(color: _c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(5)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.badge_rounded, size: 10, color: _c),
+                    const SizedBox(width: 3),
+                    Text('${r['badge']}', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: _c, letterSpacing: 0.3)),
+                  ]),
+                ),
               ),
+              if (r['badge'] != null && r['subtitle'] != null) const SizedBox(width: 6),
+              if (r['subtitle'] != null)
+                Flexible(child: Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text('${r['subtitle']}',
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 10.5, color: Colors.grey.shade600)),
+                )),
+            ]),
           ])),
           Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
             if (r['value'] != null)

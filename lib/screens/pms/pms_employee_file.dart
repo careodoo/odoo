@@ -60,6 +60,8 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
           return ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 24), children: [
             _identity(e),
             const SizedBox(height: 12),
+            if (((d['details'] as List?) ?? const []).isNotEmpty) ...[
+              _detailsSection(d['details'] as List), const SizedBox(height: 0)],
             if (compliance.isNotEmpty) ...[_compliance(compliance), const SizedBox(height: 12)],
             _recordBlock(tr('طلبات المستندات', 'Document requests'), Icons.description_rounded,
                 const Color(0xFF8B5CF6), docs, showState: true),
@@ -135,12 +137,71 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
             ],
           ]),
           const SizedBox(height: 12),
+          // Important data — badge highlighted, no manager.
           Wrap(spacing: 8, runSpacing: 8, children: [
-            if (e['phone'] != null) _chip(Icons.phone_rounded, '${e['phone']}'),
+            if (e['badge'] != null) _badgeChip('${e['badge']}'),
+            if (e['civil'] != null) _chip(Icons.credit_card_rounded, tr('مدني: ${e['civil']}', 'Civil: ${e['civil']}')),
             if (e['nationality'] != null) _chip(Icons.public_rounded, '${e['nationality']}'),
-            if (e['manager'] != null) _chip(Icons.supervisor_account_rounded, '${e['manager']}'),
+            if (e['residency_end'] != null) _chip(Icons.event_busy_rounded, tr('الإقامة: ${e['residency_end']}', 'Residency: ${e['residency_end']}')),
             if (e['wage'] != null) _chip(Icons.payments_rounded, tr('الأجر: ${e['wage']}', 'Wage: ${e['wage']}')),
           ]),
+        ]),
+      );
+
+  /// The Badge ID — the worker's key identifier, given a distinct, prominent pill.
+  Widget _badgeChip(String badge) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+        decoration: BoxDecoration(
+            color: Colors.white, borderRadius: BorderRadius.circular(10),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 4, offset: const Offset(0, 2))]),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.badge_rounded, size: 14, color: _c),
+          const SizedBox(width: 5),
+          Text(tr('بادج', 'Badge'), style: TextStyle(color: _c.withValues(alpha: 0.7), fontSize: 9.5, fontWeight: FontWeight.w700)),
+          const SizedBox(width: 4),
+          Text(badge, style: TextStyle(color: _c, fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+        ]),
+      );
+
+  Widget _detailsSection(List sections) => Column(children: [
+        for (final s in sections.cast<Map>()) Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+              color: Colors.white, borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
+          clipBehavior: Clip.antiAlias,
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(13, 10, 13, 9),
+              decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade100))),
+              child: Text('${s['title']}',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: _c)),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(13, 4, 13, 10),
+              child: Column(children: [
+                for (final f in ((s['fields'] as List?) ?? const []).cast<Map>())
+                  _detailRow('${f['label']}', '${f['value']}',
+                      highlight: '${f['label']}'.contains('بادج')),
+              ]),
+            ),
+          ]),
+        ),
+      ]);
+
+  Widget _detailRow(String label, String value, {bool highlight = false}) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6.5),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          SizedBox(width: 118, child: Text(label,
+              style: const TextStyle(color: Pms.slate, fontSize: 12))),
+          const SizedBox(width: 8),
+          Expanded(child: highlight
+              ? Align(alignment: AlignmentDirectional.centerStart, child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(color: _c.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(7)),
+                  child: Text(value, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: _c, letterSpacing: 0.5))))
+              : Text(value, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Pms.ink))),
         ]),
       );
 
