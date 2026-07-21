@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'i18n.dart';
+import 'app_version.dart';
 
 /// Thin client over the Odoo `/api/v1` token API.
 ///
@@ -1493,7 +1494,8 @@ class ApiClient {
   Future<void> registerDevice(String token, {String platform = 'android', String? deviceName}) async =>
       _handle(await _net.post(_u('/notifications/register'),
           headers: await _headers(),
-          body: jsonEncode({'token': token, 'platform': platform, 'device_name': deviceName})));
+          body: jsonEncode({'token': token, 'platform': platform, 'device_name': deviceName,
+                            'app_version': AppVersion.value})));
 
   Future<void> unregisterDevice(String token) async =>
       _handle(await _net.post(_u('/notifications/unregister'),

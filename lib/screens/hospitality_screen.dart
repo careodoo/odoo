@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import '../core/app_version.dart';
 import 'hosp_stock_screen.dart';
 import '../core/widgets.dart';
 
@@ -172,6 +173,18 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
       color: _brown,
       onRefresh: _load,
       child: ListView(padding: EdgeInsets.zero, children: [
+        // DIAGNOSTIC (temporary): proves at a glance which build is running and
+        // how many items the app actually received. If this line is absent, the
+        // installed build is OLD.
+        Container(
+          width: double.infinity,
+          color: const Color(0xFFFFF3CD),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Text(
+            'نسخة ${AppVersion.value} · ${items.length} صنف · ${cats.length} فئة',
+            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF7A5B00)),
+          ),
+        ),
         _limitsStrip(),
         if (favs.isNotEmpty) _favourites(favs),
         SizedBox(
