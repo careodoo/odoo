@@ -301,6 +301,7 @@ class _MyScreenState extends State<MyScreen> {
   // Service key → the create-form source it maps to (null = handled elsewhere).
   static const _serviceSource = {
     'leave': 'leaves', 'loan': 'loans', 'permission': 'permissions',
+    'expense': 'expenses',
   };
 
   Future<void> _openService(String key) async {
