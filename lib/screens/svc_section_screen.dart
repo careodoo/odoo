@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../core/auth.dart';
 import '../core/i18n.dart';
-import '../core/record_report.dart';
 
 /// Any service section, from the backend's own declaration.
 ///
@@ -137,170 +136,250 @@ class _SvcSectionScreenState extends State<SvcSectionScreen> {
     );
   }
 
+  Widget _pill(Map p) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+            color: (_pillColors['${p['c']}'] ?? _pillColors['info']!)
+                .withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(20)),
+        child: Text('${p['t']}',
+            style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+                color: _pillColors['${p['c']}'] ?? _pillColors['info']!)),
+      );
+
   Widget _card(Map r) {
     final pills = ((r['pills'] as List?) ?? const []).cast<Map>();
-    // Every record opens. A list you cannot drill into is a report, not a
-    // system, and the pills alone never carry enough to act on.
-    return InkWell(
-      onTap: () => _openRow(r),
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(13),
+    // Every record opens to its full description. An accent rail and a chevron
+    // say "this is tappable"; the only action on the row is remove — no report.
+    return Container(
+      margin: const EdgeInsets.only(bottom: 11),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 3))
+        ],
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('${r['title'] ?? ''}',
-            style: const TextStyle(
-                fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF14202B))),
-        if ('${r['subtitle'] ?? ''}'.isNotEmpty) ...[
-          const SizedBox(height: 3),
-          Text('${r['subtitle']}',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-        ],
-        if (pills.isNotEmpty) ...[
-          const SizedBox(height: 9),
-          Wrap(spacing: 6, runSpacing: 6, children: [
-            for (final p in pills)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                decoration: BoxDecoration(
-                    color: (_pillColors['${p['c']}'] ?? _pillColors['info']!)
-                        .withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20)),
-                child: Text('${p['t']}',
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: _pillColors['${p['c']}'] ?? _pillColors['info']!)),
+      clipBehavior: Clip.antiAlias,
+      child: IntrinsicHeight(
+        child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Container(width: 5, color: widget.accent),
+          Expanded(
+            child: InkWell(
+              onTap: () => _openRow(r),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(13, 12, 8, 12),
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(children: [
+                        Expanded(
+                          child: Text('${r['title'] ?? ''}',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 14.5,
+                                  color: Color(0xFF14202B))),
+                        ),
+                        Icon(Icons.chevron_left_rounded,
+                            color: Colors.grey.shade400, size: 22),
+                      ]),
+                      if ('${r['subtitle'] ?? ''}'.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text('${r['subtitle']}',
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey.shade600)),
+                      ],
+                      if (pills.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Wrap(spacing: 6, runSpacing: 6, children: [
+                          for (final p in pills) _pill(p)
+                        ]),
+                      ],
+                      if (_canCancel) ...[
+                        const SizedBox(height: 12),
+                        Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: _smallBtn(
+                              Icons.delete_outline_rounded,
+                              tr('حذف', 'Delete'),
+                              const Color(0xFFE11D48),
+                              () => _confirmCancel(
+                                  intOf(r['id']), '${r['title']}')),
+                        ),
+                      ],
+                    ]),
               ),
-          ]),
-        ],
-        const SizedBox(height: 10),
-        Row(children: [
-          _smallBtn(Icons.picture_as_pdf_outlined, tr('تقرير', 'Report'),
-              const Color(0xFF64748B), () {
-            final model = '${(_d?['section'] as Map?)?['model'] ?? ''}'
-                .replaceAll('.', '_');
-            if (model.isEmpty) return;
-            openRecordReport(context,
-                code: model, id: (r['id'] as num).toInt(), title: '${r['title']}');
-          }),
-          if (_canCancel) ...[
-            const SizedBox(width: 8),
-            _smallBtn(Icons.delete_outline_rounded, tr('إلغاء', 'Cancel'),
-                const Color(0xFFE11D48),
-                () => _confirmCancel((r['id'] as num).toInt(), '${r['title']}')),
-          ],
+            ),
+          ),
         ]),
-      ]),
-    ),
+      ),
     );
   }
 
-  /// The record itself, with its actions in one place.
+  /// The record itself — its full free-text description and every readable
+  /// field, fetched on open. No report; the only action is remove.
   void _openRow(Map r) {
-    final pills = ((r['pills'] as List?) ?? const []).cast<Map>();
-    final model = '${(_d?['section'] as Map?)?['model'] ?? ''}'.replaceAll('.', '_');
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
-      builder: (c) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Container(
-                width: 40, height: 4, margin: const EdgeInsets.only(bottom: 14),
-                decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(3))),
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: Text('${r['title'] ?? ''}',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w900, fontSize: 16.5)),
+      builder: (c) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.62,
+        minChildSize: 0.4,
+        maxChildSize: 0.94,
+        builder: (_, sc) => _rowDetailBody(c, sc, r),
+      ),
+    );
+  }
+
+  Widget _sheetLabel(String t) => Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: Text(t,
+            style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w900,
+                color: Colors.grey.shade500,
+                letterSpacing: 0.3)),
+      );
+
+  Widget _detailRow(Map d, bool last) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+        decoration: BoxDecoration(
+            border: last
+                ? null
+                : Border(bottom: BorderSide(color: Colors.grey.shade100))),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(
+            flex: 4,
+            child: Text('${d['label'] ?? ''}',
+                style: TextStyle(
+                    fontSize: 12.5,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w600)),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            flex: 6,
+            child: Text('${d['value'] ?? ''}',
+                textAlign: TextAlign.end,
+                style: const TextStyle(
+                    fontSize: 12.5,
+                    color: Color(0xFF14202B),
+                    fontWeight: FontWeight.w700)),
+          ),
+        ]),
+      );
+
+  Widget _rowDetailBody(BuildContext c, ScrollController sc, Map r) {
+    final pills = ((r['pills'] as List?) ?? const []).cast<Map>();
+    return FutureBuilder<Map<String, dynamic>>(
+      future: context
+          .read<AuthProvider>()
+          .api
+          .svcRecord(widget.code, widget.sectionKey, intOf(r['id'])),
+      builder: (ctx, snap) {
+        final full = snap.data ?? const {};
+        final desc = '${full['description'] ?? ''}';
+        final details = ((full['details'] as List?) ?? const []).cast<Map>();
+        final loading = snap.connectionState == ConnectionState.waiting;
+        return ListView(
+          controller: sc,
+          padding: const EdgeInsets.fromLTRB(18, 12, 18, 24),
+          children: [
+            Center(
+              child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(3))),
             ),
+            Text('${r['title'] ?? ''}',
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
             if ('${r['subtitle'] ?? ''}'.isNotEmpty) ...[
               const SizedBox(height: 5),
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: Text('${r['subtitle']}',
-                    style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600)),
-              ),
+              Text('${r['subtitle']}',
+                  style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600)),
             ],
             if (pills.isNotEmpty) ...[
               const SizedBox(height: 12),
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: Wrap(spacing: 6, runSpacing: 6, children: [
-                  for (final p in pills)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                          color: (_pillColors['${p['c']}'] ?? _pillColors['info']!)
-                              .withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(20)),
-                      child: Text('${p['t']}',
-                          style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w800,
-                              color: _pillColors['${p['c']}'] ??
-                                  _pillColors['info']!)),
-                    ),
-                ]),
+              Wrap(spacing: 6, runSpacing: 6, children: [
+                for (final p in pills) _pill(p)
+              ]),
+            ],
+            if (desc.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              _sheetLabel(tr('الوصف', 'Description')),
+              const SizedBox(height: 6),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(13),
+                decoration: BoxDecoration(
+                    color: const Color(0xFFF4F6FA),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border(
+                        right: BorderSide(color: widget.accent, width: 3))),
+                child: Text(desc,
+                    style: const TextStyle(
+                        fontSize: 13.5, height: 1.5, color: Color(0xFF1F2A37))),
               ),
             ],
-            const SizedBox(height: 18),
-            Row(children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: model.isEmpty
-                      ? null
-                      : () {
-                          Navigator.pop(c);
-                          openRecordReport(context,
-                              code: model,
-                              id: intOf(r['id']),
-                              title: '${r['title']}');
-                        },
-                  icon: const Icon(Icons.picture_as_pdf_outlined, size: 17),
-                  style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+            const SizedBox(height: 16),
+            if (loading)
+              const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 26),
+                  child: Center(child: CircularProgressIndicator()))
+            else if (details.isNotEmpty) ...[
+              _sheetLabel(tr('التفاصيل الكاملة', 'Full details')),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.grey.shade200)),
+                child: Column(children: [
+                  for (var i = 0; i < details.length; i++)
+                    _detailRow(details[i], i == details.length - 1),
+                ]),
+              ),
+            ] else if (desc.isEmpty) ...[
+              Text(tr('لا تفاصيل إضافية', 'No further details'),
+                  style: TextStyle(fontSize: 12.5, color: Colors.grey.shade500)),
+            ],
+            if (_canCancel) ...[
+              const SizedBox(height: 22),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFE11D48),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12))),
-                  label: Text(tr('تقرير PDF', 'PDF report'),
-                      style: const TextStyle(fontWeight: FontWeight.w800)),
+                  onPressed: () {
+                    Navigator.pop(c);
+                    _confirmCancel(intOf(r['id']), '${r['title']}');
+                  },
+                  icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                  label: Text(tr('حذف السجل', 'Delete record'),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w800, fontSize: 14.5)),
                 ),
               ),
-              if (_canCancel) ...[
-                const SizedBox(width: 9),
-                Expanded(
-                  child: FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFFE11D48),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12))),
-                    onPressed: () {
-                      Navigator.pop(c);
-                      _confirmCancel(intOf(r['id']), '${r['title']}');
-                    },
-                    icon: const Icon(Icons.delete_outline_rounded, size: 17),
-                    label: Text(tr('إلغاء', 'Cancel'),
-                        style: const TextStyle(fontWeight: FontWeight.w800)),
-                  ),
-                ),
-              ],
-            ]),
-          ]),
-        ),
-      ),
+            ],
+          ],
+        );
+      },
     );
   }
 
@@ -344,17 +423,17 @@ class _SvcSectionScreenState extends State<SvcSectionScreen> {
         ),
       );
 
-  /// Cancelling names what will happen — the server picks the least
-  /// destructive path (cancel state, else archive, else delete).
+  /// Deleting the record — the server picks the least destructive path
+  /// (archive if the model supports it, else a real delete).
   Future<void> _confirmCancel(int id, String title) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        title: Text(tr('إلغاء السجل', 'Cancel record'),
+        title: Text(tr('حذف السجل', 'Delete record'),
             style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
         content: Text(
-            tr('سيُلغى «$title» — إن كانت له حالة إلغاء تُستخدم، وإلا يُؤرشف.',
-               '"$title" will be cancelled, or archived if it has no cancel state.'),
+            tr('سيُحذف «$title». لا يمكن التراجع.',
+               '"$title" will be deleted. This cannot be undone.'),
             style: const TextStyle(fontSize: 13.5)),
         actions: [
           TextButton(
@@ -363,7 +442,7 @@ class _SvcSectionScreenState extends State<SvcSectionScreen> {
           FilledButton(
               style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE11D48)),
               onPressed: () => Navigator.pop(c, true),
-              child: Text(tr('إلغاء السجل', 'Cancel it'))),
+              child: Text(tr('حذف', 'Delete'))),
         ],
       ),
     );
@@ -375,7 +454,7 @@ class _SvcSectionScreenState extends State<SvcSectionScreen> {
           .api
           .svcCancel(widget.code, widget.sectionKey, id);
       if (!mounted) return;
-      _snack(tr('تم الإلغاء', 'Cancelled'), const Color(0xFF16A34A));
+      _snack(tr('تم الحذف', 'Deleted'), const Color(0xFF16A34A));
       await _load();
     } catch (e) {
       if (mounted) _snack('$e', const Color(0xFFE11D48));

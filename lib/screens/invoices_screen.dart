@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import 'pdf_report_screen.dart';
+import 'payment_webview_screen.dart';
 
 /// Client invoices — totals, list (paid/unpaid + period + approval), and a
 /// detail sheet with pay/PDF links and accept/reject.
@@ -32,16 +32,51 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
 
   void _load() => _future = context.read<AuthProvider>().api.clientInvoices();
 
-  Future<void> _open(String url) async {
-    // don't gate on canLaunchUrl — it can report false even when a handler
-    // exists; just try, and tell the user if it genuinely fails.
-    final u = Uri.parse(url);
+  /// In-app UPayments checkout: ask the server for a hosted-payment link, open
+  /// it in a WebView, then settle the sheet once the gateway returns.
+  Future<void> _payInApp(BuildContext sheetCtx, int id) async {
+    final api = context.read<AuthProvider>().api;
+    final messenger = ScaffoldMessenger.of(context);
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()));
+    Map<String, dynamic> link;
     try {
-      if (await launchUrl(u, mode: LaunchMode.externalApplication)) return;
-    } catch (_) {}
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(tr('تعذّر فتح الرابط', 'Could not open link'))));
+      link = await api.invoicePayLink(id);
+    } catch (e) {
+      if (mounted) Navigator.of(context).pop(); // close spinner
+      messenger.showSnackBar(SnackBar(
+          content: Text('${tr('تعذّر بدء الدفع', 'Could not start payment')}: $e')));
+      return;
+    }
+    if (mounted) Navigator.of(context).pop(); // close spinner
+    final url = '${link['payment_url'] ?? ''}';
+    if (url.isEmpty) {
+      messenger.showSnackBar(SnackBar(
+          content: Text(tr('رابط الدفع غير متاح', 'Payment link unavailable'))));
+      return;
+    }
+    if (!mounted) return;
+    final paid = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(builder: (_) => PaymentWebViewScreen(url: url)));
+    if (paid == true) {
+      // Give the webhook a beat, then confirm settlement from the server.
+      bool settled = false;
+      for (var i = 0; i < 4 && !settled; i++) {
+        await Future.delayed(const Duration(seconds: 2));
+        try {
+          final st = await api.invoicePayStatus(id);
+          settled = st['paid'] == true;
+        } catch (_) {}
+      }
+      messenger.showSnackBar(SnackBar(
+          backgroundColor: settled ? const Color(0xFF16A34A) : const Color(0xFFF59E0B),
+          content: Text(settled
+              ? tr('تم الدفع بنجاح ✅', 'Paid successfully ✅')
+              : tr('تم استلام الدفع، جارٍ التأكيد…', 'Payment received, confirming…'))));
+      if (Navigator.of(sheetCtx).canPop()) Navigator.of(sheetCtx).pop();
+      setState(() => _load());
     }
   }
 
@@ -154,9 +189,9 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.fromLTRB(14, 6, 14, 6),
                   children: [
-                    if (m['pay_url'] != null && numOf(m['amount_residual']) > 0.001)
-                      _actBtn(Icons.payment_rounded, tr('ادفع', 'Pay'), const Color(0xFF2563EB),
-                          filled: true, onTap: () => _open('${m['pay_url']}')),
+                    if (numOf(m['amount_residual']) > 0.001)
+                      _actBtn(Icons.payment_rounded, tr('ادفع الآن', 'Pay now'), const Color(0xFF2563EB),
+                          filled: true, onTap: () => _payInApp(ctx, id)),
                     if (m['pdf_url'] != null)
                       _actBtn(Icons.picture_as_pdf_rounded, 'PDF', const Color(0xFF7A1340),
                           onTap: () => Navigator.push(context, MaterialPageRoute(

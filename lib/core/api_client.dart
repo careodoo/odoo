@@ -598,6 +598,18 @@ class ApiClient {
       _handle(await _net.post(_u('/client/invoice/$id/reject'),
           headers: await _headers(), body: jsonEncode({'comment': comment})));
 
+  /// Create a UPayments hosted-payment link for an invoice; returns
+  /// {payment_url, ref, amount, currency, return_url, cancel_url}.
+  Future<Map<String, dynamic>> invoicePayLink(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/client/invoice/$id/pay-link'),
+              headers: await _headers(), body: '{}')))['data'] as Map);
+
+  /// Poll settlement after the checkout WebView closes.
+  Future<Map<String, dynamic>> invoicePayStatus(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/client/invoice/$id/pay-status'), headers: await _headers())))['data'] as Map);
+
   // ---- client-scoped assets register ---------------------------------------
   Future<Map<String, dynamic>> clientAssetsSummary() async =>
       Map<String, dynamic>.from((await _handle(
@@ -719,6 +731,12 @@ class ApiClient {
   Future<Map<String, dynamic>> svcSection(String code, String key, {int page = 1}) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/client/svc/$code/$key?page=$page'),
+              headers: await _headers())))['data'] as Map);
+
+  /// One record in full — {title, subtitle, pills, description, details:[{label,value}]}.
+  Future<Map<String, dynamic>> svcRecord(String code, String key, int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/client/svc/$code/$key/$id'),
               headers: await _headers())))['data'] as Map);
 
   Future<Map<String, dynamic>> svcAdd(String code, String key, Map<String, dynamic> body) async =>
