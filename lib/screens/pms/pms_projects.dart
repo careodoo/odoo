@@ -422,7 +422,7 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
               ],
               if (((d['upcoming'] as List?) ?? const []).isNotEmpty) ...[
                 const SizedBox(height: 16),
-                _miniHead(tr('مواعيد قادمة', 'Upcoming deadlines'), Icons.event_upcoming_rounded, Pms.amber),
+                _miniHead(tr('مواعيد قادمة', 'Upcoming deadlines'), Icons.upcoming_rounded, Pms.amber),
                 const SizedBox(height: 8),
                 for (final t in (d['upcoming'] as List).take(4)) _taskMini(t as Map),
               ],
