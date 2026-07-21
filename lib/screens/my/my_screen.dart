@@ -233,15 +233,26 @@ class _MyScreenState extends State<MyScreen> {
         ),
       );
 
-  void _openService(String key) {
-    if (key == 'attendance') {
+  // Service key → the create-form source it maps to (null = handled elsewhere).
+  static const _serviceSource = {'leave': 'leaves', 'loan': 'loans'};
+
+  Future<void> _openService(String key) async {
+    if (key == 'attendance' || key == 'timesheet') {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendanceScreen()));
       return;
     }
-    // Leave / permission / loan / expense / timesheet create-flows are being
-    // rolled out; the request list below already reflects them live.
+    final source = _serviceSource[key];
+    if (source != null) {
+      final created = await showModalBottomSheet<bool>(
+        context: context, isScrollControlled: true, backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+        builder: (_) => _MyCreateSheet(source: source, accent: _c),
+      );
+      if (created == true) _load();
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(tr('سيتوفّر إنشاء الطلب هنا قريبًا', 'Creating this request here is coming soon')),
+        content: Text(tr('سيتوفّر إنشاء هذا الطلب هنا قريبًا', 'Creating this request here is coming soon')),
         backgroundColor: _c));
   }
 
@@ -332,5 +343,173 @@ class _MyScreenState extends State<MyScreen> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+}
+
+/// A form that builds itself from the server's field spec, for a self-service
+/// request (leave, loan, …). The server validates and creates.
+class _MyCreateSheet extends StatefulWidget {
+  final String source;
+  final Color accent;
+  const _MyCreateSheet({required this.source, required this.accent});
+  @override
+  State<_MyCreateSheet> createState() => _MyCreateSheetState();
+}
+
+class _MyCreateSheetState extends State<_MyCreateSheet> {
+  Map<String, dynamic>? _meta;
+  String? _error;
+  bool _busy = false;
+  final Map<String, dynamic> _vals = {};
+  final Map<String, TextEditingController> _ctrls = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final m = await context.read<AuthProvider>().api.myMeta(widget.source);
+      if (mounted) setState(() => _meta = m);
+    } catch (e) {
+      if (mounted) setState(() => _error = '$e');
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final c in _ctrls.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _pickDate(String name, bool withTime) async {
+    final init = DateTime.tryParse('${_vals[name] ?? ''}') ?? DateTime.now();
+    final d = await showDatePicker(context: context, initialDate: init,
+        firstDate: DateTime(2020), lastDate: DateTime(2100));
+    if (d == null) return;
+    var out = d;
+    if (withTime) {
+      final t = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(init));
+      if (t != null) out = DateTime(d.year, d.month, d.day, t.hour, t.minute);
+    }
+    setState(() => _vals[name] = withTime
+        ? '${out.toIso8601String().substring(0, 16).replaceFirst('T', ' ')}:00'
+        : out.toIso8601String().substring(0, 10));
+  }
+
+  InputDecoration _dec(String label) => InputDecoration(
+        labelText: label, isDense: true,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      );
+
+  Widget _field(Map f) {
+    final name = '${f['name']}';
+    final t = '${f['type']}';
+    if (t == 'm2o' || t == 'selection') {
+      final opts = ((f['options'] as List?) ?? const []).cast<Map>();
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: DropdownButtonFormField(
+          value: _vals[name], isExpanded: true, decoration: _dec('${f['label']}'),
+          items: [for (final o in opts) DropdownMenuItem(value: o['v'], child: Text('${o['l']}', overflow: TextOverflow.ellipsis))],
+          onChanged: (v) => setState(() => _vals[name] = v),
+        ),
+      );
+    }
+    if (t == 'date' || t == 'datetime') {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: InkWell(
+          onTap: () => _pickDate(name, t == 'datetime'),
+          child: InputDecorator(
+            decoration: _dec('${f['label']}'),
+            child: Row(children: [
+              Icon(Icons.event_rounded, size: 18, color: widget.accent),
+              const SizedBox(width: 8),
+              Text('${_vals[name] ?? tr('اختر', 'Pick')}', style: const TextStyle(fontWeight: FontWeight.w700)),
+            ]),
+          ),
+        ),
+      );
+    }
+    final isNum = t == 'float' || t == 'integer';
+    _ctrls[name] ??= TextEditingController();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextField(
+        controller: _ctrls[name],
+        keyboardType: isNum ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
+        maxLines: t == 'text' ? 3 : 1,
+        decoration: _dec('${f['label']}'),
+      ),
+    );
+  }
+
+  Future<void> _save() async {
+    final fields = ((_meta?['fields'] as List?) ?? const []).cast<Map>();
+    for (final f in fields) {
+      final name = '${f['name']}';
+      final t = '${f['type']}';
+      if (_ctrls.containsKey(name)) {
+        final raw = _ctrls[name]!.text.trim();
+        if (raw.isEmpty) continue;
+        _vals[name] = (t == 'float') ? (double.tryParse(raw) ?? 0)
+            : (t == 'integer') ? (int.tryParse(raw) ?? 0) : raw;
+      }
+    }
+    setState(() => _busy = true);
+    try {
+      await context.read<AuthProvider>().api.myCreate(widget.source, _vals);
+      if (!mounted) return;
+      Navigator.pop(context, true);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تم إرسال الطلب', 'Request submitted')), backgroundColor: const Color(0xFF16A34A)));
+    } catch (e) {
+      if (mounted) {
+        setState(() => _busy = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: const Color(0xFFE11D48)));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: DraggableScrollableSheet(
+        expand: false, initialChildSize: 0.6, maxChildSize: 0.92,
+        builder: (_, sc) {
+          if (_error != null) {
+            return Center(child: Padding(padding: const EdgeInsets.all(24), child: Text('$_error')));
+          }
+          if (_meta == null) {
+            return const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()));
+          }
+          final fields = ((_meta!['fields'] as List?) ?? const []).cast<Map>();
+          return ListView(controller: sc, padding: const EdgeInsets.fromLTRB(20, 14, 20, 20), children: [
+            Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(4)))),
+            Text('${_meta!['title'] ?? tr('طلب جديد', 'New request')}',
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: _MyScreenState._ink)),
+            const SizedBox(height: 16),
+            for (final f in fields) _field(f),
+            const SizedBox(height: 8),
+            SizedBox(height: 48, child: FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: widget.accent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+              onPressed: _busy ? null : _save,
+              icon: _busy
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.send_rounded),
+              label: Text(tr('إرسال الطلب', 'Submit request'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+            )),
+          ]);
+        },
+      ),
+    );
   }
 }

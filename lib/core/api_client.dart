@@ -1680,6 +1680,16 @@ class ApiClient {
   Future<void> myDelete(String source, int id) async =>
       _handle(await _net.post(_u('/my/$source/$id/delete'), headers: await _headers()));
 
+  /// Form spec for creating a self-service request (fields + options).
+  Future<Map<String, dynamic>> myMeta(String source) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/my/$source/meta'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> myCreate(String source, Map<String, dynamic> vals) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/my/$source/create'), headers: await _headers(),
+              body: jsonEncode(vals))))['data'] as Map);
+
   // ---- waste operations (ops manager) -------------------------------------
   /// Orders this ops manager owns. filter: unassigned | open | done
   Future<List<dynamic>> wasteOpsOrders({String filter = 'open'}) async =>
