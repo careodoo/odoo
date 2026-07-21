@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "933708109070",
+    "project_id": "care-mobile-35f4b",
+    "storage_bucket": "care-mobile-35f4b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:933708109070:android:fd8a3a358f7ed06b96b35f",
+        "android_client_info": {
+          "package_name": "care.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBt6iyTJt2JVOFkAOxxMhsvIUv4eePRc2o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
