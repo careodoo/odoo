@@ -529,7 +529,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
   /// count come from the service's own bookings, so nothing here is decoration
   /// pretending to be data.
   Widget _popularCard(Map s, int idx) {
-    final rating = (s['rating'] ?? 0) is num ? (s['rating'] as num).toDouble() : 0.0;
+    final rating = (s['rating'] ?? 0) is num ? numOf(s['rating']).toDouble() : 0.0;
     final bookings = (s['bookings'] ?? 0) is num ? (s['bookings'] as num).toInt() : 0;
     final mins = (s['duration_min'] ?? 0) is num ? (s['duration_min'] as num).toInt() : 0;
     return GestureDetector(
@@ -918,7 +918,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
       final r = await auth.api.c2cSubscribe(plan['id'] as int, note: note.text);
       if (!mounted) return;
       // Offer to pay the plan value now via the hosted checkout.
-      if (r['id'] != null && (plan['price'] ?? 0) is num && (plan['price'] as num) > 0) {
+      if (r['id'] != null && (plan['price'] ?? 0) is num && numOf(plan['price']) > 0) {
         final payNow = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           title: Text(tr('الدفع الآن', 'Pay now')),

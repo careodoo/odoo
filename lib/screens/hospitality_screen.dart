@@ -802,7 +802,7 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
     final c = _stateColors['${o['state']}'] ?? Colors.grey;
     final items = ((o['lines'] as List?) ?? const [])
         .cast<Map>()
-        .map((l) => '${l['item']}×${(l['qty'] as num).toInt()}'
+        .map((l) => '${l['item']}×${numOf(l['qty']).toInt()}'
             '${l['options'] != null ? ' (${l['options']})' : ''}')
         .join(' · ');
     return Padding(
@@ -853,7 +853,7 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
             // `false != null` is true, so the old guard let int.parse('false')
             // run and threw inside build. That is the grey screen.
             if ((numOf(o['rating'], 0)) > 0)
-              Text('★' * ((o['rating'] as num).toInt().clamp(0, 5)),
+              Text('★' * (numOf(o['rating']).toInt().clamp(0, 5)),
                   style: const TextStyle(color: Color(0xFFF59E0B), fontWeight: FontWeight.w900))
             else if (o['state'] == 'delivered')
               TextButton(
@@ -1008,7 +1008,7 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('${l['item']} × ${(l['qty'] as num).toInt()}',
+                Text('${l['item']} × ${numOf(l['qty']).toInt()}',
                     style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
                 if (l['options'] != null)
                   Text('${l['options']}',

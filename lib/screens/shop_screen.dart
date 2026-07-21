@@ -50,9 +50,9 @@ class _ShopScreenState extends State<ShopScreen> {
     return r;
   }
 
-  int get _cartCount => _cart.values.fold(0, (a, b) => a + (b['qty'] as int));
+  int get _cartCount => _cart.values.fold(0, (a, b) => a + intOf(b['qty']));
   double get _cartTotal =>
-      _cart.values.fold(0.0, (a, b) => a + (b['qty'] as int) * (b['price'] as num).toDouble());
+      _cart.values.fold(0.0, (a, b) => a + intOf(b['qty']) * numOf(b['price']).toDouble());
 
   void _add(Map p) => setState(() {
         final id = p['id'] as int;
@@ -237,7 +237,7 @@ class _ShopScreenState extends State<ShopScreen> {
   Widget _cartLine(MapEntry<int, Map<String, dynamic>> e, void Function(VoidCallback) sync) {
     final v = e.value;
     final qty = v['qty'] as int;
-    final price = (v['price'] as num).toDouble();
+    final price = numOf(v['price']).toDouble();
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(9),
@@ -460,7 +460,7 @@ class _ShopScreenState extends State<ShopScreen> {
             Text(tr('إجمالي الكميات', 'Total qty'),
                 style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
             const Spacer(),
-            Text('${_cart.values.fold<int>(0, (a, v) => a + (v['qty'] as int))}',
+            Text('${_cart.values.fold<int>(0, (a, v) => a + intOf(v['qty']))}',
                 style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
           ]),
           const Divider(height: 16),

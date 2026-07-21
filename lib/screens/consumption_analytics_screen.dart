@@ -132,7 +132,7 @@ class _ConsumptionAnalyticsScreenState extends State<ConsumptionAnalyticsScreen>
 
   Widget _section((String, String, String, IconData, Color, String) s, List<Map> rows) {
     if (rows.isEmpty) return const SizedBox.shrink();
-    final maxQty = rows.fold<double>(1, (m, r) => (r['qty'] as num?)?.toDouble() != null && (r['qty'] as num) > m ? (r['qty'] as num).toDouble() : m);
+    final maxQty = rows.fold<double>(1, (m, r) => (r['qty'] as num?)?.toDouble() != null && numOf(r['qty']) > m ? numOf(r['qty']).toDouble() : m);
     return Container(
       margin: const EdgeInsets.only(top: 12),
       decoration: BoxDecoration(

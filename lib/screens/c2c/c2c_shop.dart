@@ -27,8 +27,8 @@ class _C2CShopScreenState extends State<C2CShopScreen> {
 
   void _load() => setState(() => _data = context.read<AuthProvider>().api.c2cProducts(categoryId: _cat, q: _q));
 
-  int get _cartCount => _cart.values.fold(0, (a, b) => a + (b['qty'] as int));
-  double get _cartTotal => _cart.values.fold(0.0, (a, b) => a + ((b['product']['price'] as num).toDouble() * (b['qty'] as int)));
+  int get _cartCount => _cart.values.fold(0, (a, b) => a + intOf(b['qty']));
+  double get _cartTotal => _cart.values.fold(0.0, (a, b) => a + (numOf(b['product']['price']).toDouble() * intOf(b['qty'])));
 
   void _add(Map p) => setState(() {
         final id = p['id'] as int;
@@ -236,7 +236,7 @@ class _C2CShopScreenState extends State<C2CShopScreen> {
                 IconButton(onPressed: () => tweak(id, -1), icon: const Icon(Icons.remove_circle_outline, size: 20)),
                 Text('$qty', style: const TextStyle(fontWeight: FontWeight.w800)),
                 IconButton(onPressed: () => tweak(id, 1), icon: const Icon(Icons.add_circle_outline, size: 20)),
-                SizedBox(width: 62, child: Text('${((p['price'] as num).toDouble() * qty).toStringAsFixed(1)}', textAlign: TextAlign.end, style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w800))),
+                SizedBox(width: 62, child: Text('${(numOf(p['price']).toDouble() * qty).toStringAsFixed(1)}', textAlign: TextAlign.end, style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w800))),
               ]));
             })),
             const Divider(height: 22),
@@ -359,7 +359,7 @@ class _C2CShopScreenState extends State<C2CShopScreen> {
                   const Icon(Icons.check_rounded, size: 15, color: C2C.slate),
                   const SizedBox(width: 6),
                   Expanded(child: Text('${(l as Map)['product']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12.5, color: C2C.ink))),
-                  Text('×${(l['qty'] as num).toStringAsFixed(0)}', style: const TextStyle(color: C2C.slate, fontSize: 12, fontWeight: FontWeight.w700)),
+                  Text('×${numOf(l['qty']).toStringAsFixed(0)}', style: const TextStyle(color: C2C.slate, fontSize: 12, fontWeight: FontWeight.w700)),
                 ]))),
                 if (lines.length > 3) Align(alignment: Alignment.centerRight, child: Text(tr('+${lines.length - 3} أصناف أخرى', '+${lines.length - 3} more'), style: const TextStyle(color: C2C.slate, fontSize: 11.5))),
                 const Divider(height: 20),
@@ -367,7 +367,7 @@ class _C2CShopScreenState extends State<C2CShopScreen> {
               Row(children: [
                 Text(tr('الإجمالي', 'Total'), style: const TextStyle(fontWeight: FontWeight.w800, color: C2C.ink)),
                 const Spacer(),
-                Text('${(res['amount_total'] as num).toStringAsFixed(2)} ${res['currency'] ?? 'KWD'}', style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w900, fontSize: 18)),
+                Text('${numOf(res['amount_total']).toStringAsFixed(2)} ${res['currency'] ?? 'KWD'}', style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w900, fontSize: 18)),
               ]),
               const SizedBox(height: 6),
               Row(children: [

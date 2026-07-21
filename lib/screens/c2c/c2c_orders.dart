@@ -94,7 +94,7 @@ class _C2COrdersScreenState extends State<C2COrdersScreen> {
               const SizedBox(width: 5),
               Text(tr('${o['item_count']} صنف', '${o['item_count']} items'), style: const TextStyle(color: C2C.slate, fontSize: 12.5)),
               const Spacer(),
-              Text('${(o['amount_total'] as num).toStringAsFixed(2)} KWD', style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w900, fontSize: 15)),
+              Text('${numOf(o['amount_total']).toStringAsFixed(2)} KWD', style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w900, fontSize: 15)),
             ]),
             if (state != 'cancelled') Padding(padding: const EdgeInsets.only(top: 12), child: _miniTrack(o['progress'] is int ? o['progress'] as int : 0)),
           ]),
@@ -185,7 +185,7 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
           _kv(Icons.payments_outlined, tr('الدفع', 'Payment'), '${o['payment_method_label']} · ${o['payment_label']}'),
         ])),
         // total
-        Container(margin: const EdgeInsets.fromLTRB(16, 12, 16, 4), padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: C2C.bg, borderRadius: BorderRadius.circular(14)), child: Row(children: [Text(tr('الإجمالي', 'Total'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: C2C.ink)), const Spacer(), Text('${(o['amount_total'] as num).toStringAsFixed(2)} ${o['currency'] ?? 'KWD'}', style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w900, fontSize: 19))])),
+        Container(margin: const EdgeInsets.fromLTRB(16, 12, 16, 4), padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: C2C.bg, borderRadius: BorderRadius.circular(14)), child: Row(children: [Text(tr('الإجمالي', 'Total'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: C2C.ink)), const Spacer(), Text('${numOf(o['amount_total']).toStringAsFixed(2)} ${o['currency'] ?? 'KWD'}', style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w900, fontSize: 19))])),
         // cancel
         if (o['cancellable'] == true) Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 20), child: SizedBox(width: double.infinity, height: 48, child: OutlinedButton.icon(
           style: OutlinedButton.styleFrom(foregroundColor: C2C.red, side: const BorderSide(color: C2C.red), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
@@ -221,8 +221,8 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
           const SizedBox(width: 10),
           Expanded(child: Text('${l['product']}', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13))),
           const SizedBox(width: 8),
-          Text('×${(l['qty'] as num).toStringAsFixed(0)}', style: const TextStyle(color: C2C.slate, fontWeight: FontWeight.w700)),
-          SizedBox(width: 66, child: Text('${(l['subtotal'] as num).toStringAsFixed(2)}', textAlign: TextAlign.end, style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w800))),
+          Text('×${numOf(l['qty']).toStringAsFixed(0)}', style: const TextStyle(color: C2C.slate, fontWeight: FontWeight.w700)),
+          SizedBox(width: 66, child: Text('${numOf(l['subtotal']).toStringAsFixed(2)}', textAlign: TextAlign.end, style: const TextStyle(color: C2C.red, fontWeight: FontWeight.w800))),
         ]),
       );
 

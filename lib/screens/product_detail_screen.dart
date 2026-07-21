@@ -148,7 +148,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       decoration: BoxDecoration(
                           color: const Color(0xFF16A34A), borderRadius: BorderRadius.circular(6)),
                       child: Text(
-                          '-${(100 - ((p['price'] as num) * 100 / (p['list_price'] as num))).round()}%',
+                          '-${(100 - (numOf(p['price']) * 100 / (p['list_price'] as num))).round()}%',
                           style: const TextStyle(
                               fontSize: 9.5, fontWeight: FontWeight.w900, color: Colors.white)),
                     ),
