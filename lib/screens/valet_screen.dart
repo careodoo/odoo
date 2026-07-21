@@ -184,10 +184,11 @@ class _ValetScreenState extends State<ValetScreen>
               color: _gold,
               onRefresh: _load,
               child: ListView(padding: EdgeInsets.zero, children: [
-                // Requested cars ride above everything else, whatever filter
-                // is on — a guest is already waiting at the door.
-                _wantedBanner(((d['tickets'] as List?) ?? const []).cast<Map>()),
+                // The header first (the professional gradient board), THEN the
+                // "cars wanted now" banner tucked just under it — visible but no
+                // longer crashing into the app bar.
                 _header(stats, d),
+                _wantedBanner(((d['tickets'] as List?) ?? const []).cast<Map>()),
                 _zones(((d['zones'] as List?) ?? const []).cast<Map>()),
                 _chips(stats),
                 if (tickets.isEmpty)

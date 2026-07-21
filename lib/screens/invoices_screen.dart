@@ -146,48 +146,46 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
               }),
               // ALL actions live here, right under the header — pay, print,
               // accept, reject — instead of being scattered top and bottom.
-              Padding(
-                padding: const EdgeInsets.fromLTRB(14, 14, 14, 6),
-                child: Wrap(spacing: 8, runSpacing: 8, children: [
-                  if (m['pay_url'] != null && numOf(m['amount_residual']) > 0.001)
-                    FilledButton.icon(
-                        onPressed: () => _open('${m['pay_url']}'),
-                        icon: const Icon(Icons.payment_rounded, size: 19),
-                        label: Text(tr('ادفع الآن', 'Pay now'),
-                            style: const TextStyle(fontWeight: FontWeight.w800))),
-                  if (m['pdf_url'] != null)
-                    OutlinedButton.icon(
-                        onPressed: () => Navigator.push(context, MaterialPageRoute(
-                            builder: (_) => PdfReportScreen(
-                                url: '${m['pdf_url']}',
-                                title: tr('فاتورة ${m['name'] ?? ''}', 'Invoice ${m['name'] ?? ''}'),
-                                fileName: 'invoice-${m['name'] ?? ''}.pdf'))),
-                        icon: const Icon(Icons.picture_as_pdf_rounded, size: 19),
-                        label: const Text('PDF')),
-                  if ((m['client_approval'] ?? 'pending') == 'pending') ...[
-                    FilledButton.icon(
-                        style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
-                        onPressed: () => _decision(ctx, id, true),
-                        icon: const Icon(Icons.check_circle_rounded, size: 19),
-                        label: Text(tr('قبول', 'Accept'),
-                            style: const TextStyle(fontWeight: FontWeight.w800))),
-                    OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFE11D48)),
-                        onPressed: () => _decision(ctx, id, false),
-                        icon: const Icon(Icons.cancel_rounded, size: 19),
-                        label: Text(tr('رفض', 'Reject'))),
+              // small, consistent actions in ONE horizontal row (scrolls if
+              // they don't all fit) instead of wrapping to two rows.
+              SizedBox(
+                height: 40,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.fromLTRB(14, 6, 14, 6),
+                  children: [
+                    if (m['pay_url'] != null && numOf(m['amount_residual']) > 0.001)
+                      _actBtn(Icons.payment_rounded, tr('ادفع', 'Pay'), const Color(0xFF2563EB),
+                          filled: true, onTap: () => _open('${m['pay_url']}')),
+                    if (m['pdf_url'] != null)
+                      _actBtn(Icons.picture_as_pdf_rounded, 'PDF', const Color(0xFF7A1340),
+                          onTap: () => Navigator.push(context, MaterialPageRoute(
+                              builder: (_) => PdfReportScreen(
+                                  url: '${m['pdf_url']}',
+                                  title: tr('فاتورة ${m['name'] ?? ''}', 'Invoice ${m['name'] ?? ''}'),
+                                  fileName: 'invoice-${m['name'] ?? ''}.pdf')))),
+                    if ((m['client_approval'] ?? 'pending') == 'pending') ...[
+                      _actBtn(Icons.check_circle_rounded, tr('قبول', 'Accept'), const Color(0xFF16A34A),
+                          filled: true, onTap: () => _decision(ctx, id, true)),
+                      _actBtn(Icons.cancel_rounded, tr('رفض', 'Reject'), const Color(0xFFE11D48),
+                          onTap: () => _decision(ctx, id, false)),
+                    ],
                   ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              // lined, tabular invoice items — a header row then bordered rows
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Column(children: [
+                  _lineRow(tr('البند', 'Item'), tr('كمية', 'Qty'), tr('السعر', 'Price'),
+                      tr('الإجمالي', 'Total'), header: true),
+                  for (final l in ((m['lines'] as List?) ?? const []))
+                    _lineRow('${l['name'] ?? ''}', '${l['qty'] ?? ''}',
+                        '${l['price'] ?? ''}', '${l['subtotal'] ?? ''}'),
                 ]),
               ),
-              const Divider(height: 20),
-              ...((m['lines'] as List?) ?? []).map((l) => ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 18),
-                    dense: true,
-                    title: Text('${l['name'] ?? ''}'),
-                    subtitle: Text('${l['qty']} × ${l['price']}'),
-                    trailing: Text('${l['subtotal']}', style: const TextStyle(fontWeight: FontWeight.w700)),
-                  )),
-              const Divider(),
+              const SizedBox(height: 10),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 18),
                 child: Column(children: [
@@ -250,6 +248,59 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     }
   }
+
+  /// A small, consistent action button for the invoice actions row.
+  Widget _actBtn(IconData icon, String label, Color color,
+          {bool filled = false, required VoidCallback onTap}) =>
+      Padding(
+        padding: const EdgeInsets.only(left: 8),
+        child: Material(
+          color: filled ? color : Colors.white,
+          borderRadius: BorderRadius.circular(9),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(9),
+            onTap: onTap,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(9),
+                border: filled ? null : Border.all(color: color),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(icon, size: 16, color: filled ? Colors.white : color),
+                const SizedBox(width: 5),
+                Text(label, style: TextStyle(
+                    fontSize: 12.5, fontWeight: FontWeight.w800,
+                    color: filled ? Colors.white : color)),
+              ]),
+            ),
+          ),
+        ),
+      );
+
+  /// One ruled row of the invoice item table.
+  Widget _lineRow(String item, String qty, String price, String total,
+          {bool header = false}) =>
+      Container(
+        decoration: BoxDecoration(
+          color: header ? const Color(0xFFF1F3F7) : Colors.white,
+          border: const Border(bottom: BorderSide(color: Color(0xFFE7EAF0))),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        child: Row(children: [
+          Expanded(flex: 5, child: Text(item, maxLines: 2, overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 12.5,
+                  fontWeight: header ? FontWeight.w900 : FontWeight.w600,
+                  color: header ? const Color(0xFF64748B) : const Color(0xFF1D2433)))),
+          Expanded(flex: 2, child: Text(qty, textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, fontWeight: header ? FontWeight.w900 : FontWeight.w500))),
+          Expanded(flex: 3, child: Text(price, textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, fontWeight: header ? FontWeight.w900 : FontWeight.w500))),
+          Expanded(flex: 3, child: Text(total, textAlign: TextAlign.end,
+              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800,
+                  color: header ? const Color(0xFF64748B) : const Color(0xFF1D2433)))),
+        ]),
+      );
 
   Widget _kv(String k, String v, {bool bold = false, Color? color}) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 2),
