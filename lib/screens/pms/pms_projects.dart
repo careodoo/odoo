@@ -416,6 +416,22 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
               // Everything the portal exposes for a project — materials, team,
               // fuel, compliance… — reachable from the project itself.
               _sections(),
+              if (((d['team_preview'] as List?) ?? const []).isNotEmpty) ...[
+                const SizedBox(height: 16),
+                _teamPreview((d['team_preview'] as List).cast<Map>()),
+              ],
+              if (((d['upcoming'] as List?) ?? const []).isNotEmpty) ...[
+                const SizedBox(height: 16),
+                _miniHead(tr('مواعيد قادمة', 'Upcoming deadlines'), Icons.event_upcoming_rounded, Pms.amber),
+                const SizedBox(height: 8),
+                for (final t in (d['upcoming'] as List).take(4)) _taskMini(t as Map),
+              ],
+              if (((d['recent_tasks'] as List?) ?? const []).isNotEmpty) ...[
+                const SizedBox(height: 16),
+                _miniHead(tr('آخر النشاط', 'Recent activity'), Icons.history_rounded, const Color(0xFF0891B2)),
+                const SizedBox(height: 8),
+                for (final t in (d['recent_tasks'] as List).take(4)) _taskMini(t as Map),
+              ],
               const SizedBox(height: 14),
               Row(children: [
                 Text(tr('المراحل', 'Stages'), style: const TextStyle(fontWeight: FontWeight.w900, color: Pms.ink, fontSize: 15)),
@@ -434,6 +450,111 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
                       style: const TextStyle(color: Pms.slate)))),
             ]);
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _miniHead(String t, IconData ic, Color c) => Row(children: [
+        Icon(ic, size: 17, color: c),
+        const SizedBox(width: 7),
+        Text(t, style: const TextStyle(fontWeight: FontWeight.w900, color: Pms.ink, fontSize: 15)),
+      ]);
+
+  Widget _teamPreview(List<Map> team) {
+    final base = context.read<AuthProvider>().api.baseUrl.replaceAll('/api/v1', '');
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Icon(Icons.groups_rounded, size: 17, color: Color(0xFF0D9488)),
+          const SizedBox(width: 7),
+          Text(tr('فريق المشروع', 'Project team'),
+              style: const TextStyle(fontWeight: FontWeight.w900, color: Pms.ink, fontSize: 14.5)),
+          const Spacer(),
+          TextButton(
+            onPressed: () => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => PmsSectionScreen(projectId: widget.projectId, code: 'team', label: tr('الفريق', 'Team')))),
+            child: Text(tr('الكل', 'All')),
+          ),
+        ]),
+        const SizedBox(height: 6),
+        SizedBox(
+          height: 78,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: team.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (_, i) {
+              final e = team[i];
+              return SizedBox(
+                width: 60,
+                child: Column(children: [
+                  CircleAvatar(
+                    radius: 24, backgroundColor: const Color(0xFF0D9488).withValues(alpha: 0.12),
+                    backgroundImage: e['avatar'] != null ? NetworkImage('$base${e['avatar']}') : null,
+                    child: e['avatar'] == null
+                        ? Text('${e['name'] ?? '?'}'.characters.first,
+                            style: const TextStyle(color: Color(0xFF0D9488), fontWeight: FontWeight.w900))
+                        : null,
+                  ),
+                  const SizedBox(height: 4),
+                  Text('${e['name'] ?? ''}', maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: Pms.ink)),
+                ]),
+              );
+            },
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _taskMini(Map t) {
+    final overdue = t['overdue'] == true;
+    final done = t['done'] == true;
+    final c = done ? Pms.green : (overdue ? Pms.red : Pms.violet);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 7),
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () async {
+            await Navigator.push(context, MaterialPageRoute(builder: (_) => PmsTaskDetail(taskId: t['id'] as int)));
+            _reload();
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
+            child: Row(children: [
+              Container(width: 8, height: 8, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
+              const SizedBox(width: 10),
+              Expanded(child: Text('${t['name']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Pms.ink,
+                      decoration: done ? TextDecoration.lineThrough : null))),
+              if (t['deadline'] != null) ...[
+                const SizedBox(width: 8),
+                Icon(Icons.event_rounded, size: 12, color: overdue ? Pms.red : Pms.slate),
+                const SizedBox(width: 3),
+                Text('${t['deadline']}'.split(' ').first,
+                    style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: overdue ? Pms.red : Pms.slate)),
+              ],
+              if (t['stage'] != null) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(color: c.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(20)),
+                  child: Text('${(t['stage'] as Map)['name']}', style: TextStyle(color: c, fontSize: 9, fontWeight: FontWeight.w800)),
+                ),
+              ],
+            ]),
+          ),
         ),
       ),
     );
