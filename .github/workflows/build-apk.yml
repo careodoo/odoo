@@ -27,6 +27,11 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          # PINNED: 'stable' with no version auto-updated to a newer Flutter after
+          # 2026-07-16 that broke `flutter build apk` — every CI run since then
+          # failed at that step (no releases past build 87). 3.44.6 is the version
+          # that builds cleanly locally; keep it pinned.
+          flutter-version: 3.44.6
 
       - name: Show versions
         run: flutter --version
