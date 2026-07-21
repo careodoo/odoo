@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import '../core/deeplink.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -79,9 +80,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final read = n['is_read'] == true;
     return Card(
       child: ListTile(
-        onTap: read ? null : () async {
-          await context.read<AuthProvider>().api.markNotifRead(n['id'] as int);
-          if (mounted) setState(_load);
+        // Tapping a notification now OPENS its record (and marks it read).
+        onTap: () async {
+          if (!read) {
+            await context.read<AuthProvider>().api.markNotifRead(n['id'] as int);
+            if (mounted) setState(_load);
+          }
+          if (mounted) {
+            final opened = openActionUrl(context, n['action_url'] as String?);
+            if (!opened && mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(tr('لا سجل مرتبط بهذا الإشعار', 'No record linked to this notification')),
+                behavior: SnackBarBehavior.floating));
+            }
+          }
         },
         leading: CircleAvatar(backgroundColor: meta.$2.withValues(alpha: 0.15), child: Icon(meta.$1, color: meta.$2)),
         title: Text('${n['title']}',

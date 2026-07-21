@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:geolocator/geolocator.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/widgets.dart';
@@ -28,14 +29,115 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     ('month', 'الشهر', 'Month'), ('year', 'السنة', 'Year'), ('all', 'الكل', 'All'),
   ];
 
+  Map<String, dynamic>? _punch;   // {employee, checked_in, since}
+  bool _punchBusy = false;
+
   @override
   void initState() {
     super.initState();
     _load();
+    _loadPunch();
   }
 
   void _load() => _future = context.read<AuthProvider>().api.clientAttendanceData(
       period: _period, employeeId: _employeeId, facilityId: _facilityId);
+
+  Future<void> _loadPunch() async {
+    try {
+      final s = await context.read<AuthProvider>().api.attendanceStatus();
+      if (mounted) setState(() => _punch = s);
+    } catch (_) {
+      if (mounted) setState(() => _punch = {'_unavailable': true});
+    }
+  }
+
+  /// Best-effort GPS so the punch carries where it happened — never blocks it.
+  Future<(double?, double?)> _whereAmI() async {
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) return (null, null);
+      var p = await Geolocator.checkPermission();
+      if (p == LocationPermission.denied) p = await Geolocator.requestPermission();
+      if (p == LocationPermission.denied || p == LocationPermission.deniedForever) return (null, null);
+      final pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.medium,
+          timeLimit: const Duration(seconds: 6));
+      return (pos.latitude, pos.longitude);
+    } catch (_) {
+      return (null, null);
+    }
+  }
+
+  Future<void> _doPunch() async {
+    setState(() => _punchBusy = true);
+    try {
+      final (lat, lng) = await _whereAmI();
+      final r = await context.read<AuthProvider>().api.attendancePunch(lat: lat, lng: lng);
+      if (!mounted) return;
+      final inNow = r['checked_in'] == true;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(inNow ? tr('تم تسجيل الحضور ✅', 'Checked in ✅')
+                             : tr('تم تسجيل الانصراف 👋', 'Checked out 👋')),
+        backgroundColor: inNow ? const Color(0xFF16A34A) : const Color(0xFF64748B),
+        behavior: SnackBarBehavior.floating,
+      ));
+      await _loadPunch();
+      setState(_load);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('$e'), backgroundColor: const Color(0xFFE11D48),
+          behavior: SnackBarBehavior.floating));
+    } finally {
+      if (mounted) setState(() => _punchBusy = false);
+    }
+  }
+
+  Widget _punchCard() {
+    final p = _punch;
+    if (p == null) {
+      return const Padding(padding: EdgeInsets.symmetric(vertical: 18),
+          child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))));
+    }
+    if (p['_unavailable'] == true) return const SizedBox.shrink();  // no employee file
+    final inNow = p['checked_in'] == true;
+    final accent = inNow ? const Color(0xFF16A34A) : _navy;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [accent, accent.withOpacity(0.82)],
+            begin: Alignment.topLeft, end: Alignment.bottomRight),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [BoxShadow(color: accent.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 6))],
+      ),
+      child: Row(children: [
+        Container(width: 46, height: 46, decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+            child: Icon(inNow ? Icons.logout_rounded : Icons.login_rounded, color: Colors.white)),
+        const SizedBox(width: 14),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('${p['employee'] ?? ''}',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
+          const SizedBox(height: 3),
+          Text(inNow
+                  ? '${tr('حاضر منذ', 'On since')} ${p['since'] ?? ''}'
+                  : tr('لست مسجّلًا حاليًا', 'You are not checked in'),
+              style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600)),
+        ])),
+        FilledButton(
+          onPressed: _punchBusy ? null : _doPunch,
+          style: FilledButton.styleFrom(
+            backgroundColor: Colors.white, foregroundColor: accent,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          child: _punchBusy
+              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+              : Text(inNow ? tr('انصراف', 'Check out') : tr('حضور', 'Check in'),
+                  style: const TextStyle(fontWeight: FontWeight.w900)),
+        ),
+      ]),
+    );
+  }
 
   /// Opens the server-rendered PDF — the same _attendance_data this screen
   /// reads — inside the app, where it can be shared or printed.
@@ -108,6 +210,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             return RefreshIndicator(
               onRefresh: () async => setState(_load),
               child: ListView(padding: const EdgeInsets.fromLTRB(12, 4, 12, 24), children: [
+                _punchCard(),
                 _totals(totals),
                 const SizedBox(height: 12),
                 _tabs(shifts.length, workers.length, records.length),

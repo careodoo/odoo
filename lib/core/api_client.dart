@@ -1010,6 +1010,18 @@ class ApiClient {
         await _net.get(_u('/client/attendance?$qs'), headers: await _headers())))['data'] as Map);
   }
 
+  /// Am I currently checked in? (drives the self-punch button).
+  Future<Map<String, dynamic>> attendanceStatus() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/client/attendance/status'), headers: await _headers())))['data'] as Map);
+
+  /// Self check-in / check-out — toggles like a fingerprint punch.
+  Future<Map<String, dynamic>> attendancePunch({double? lat, double? lng}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/client/attendance/punch'),
+          headers: await _headers(),
+          body: jsonEncode({if (lat != null) 'lat': lat, if (lng != null) 'lng': lng}))))['data'] as Map);
+
   /// Every attendance record for one worker on this client's sites.
   Future<Map<String, dynamic>> clientEmployeeAttendance(int eid, {String period = 'all'}) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

@@ -6,9 +6,14 @@ import 'core/theme.dart';
 import 'core/i18n.dart';
 import 'core/app_version.dart';
 import 'core/push.dart';
+import 'core/deeplink.dart';
 import 'screens/c2c/root_shell.dart';
 import 'screens/c2c/c2c_shell.dart';
 import 'screens/language_onboarding.dart';
+
+/// App-wide navigator so a tapped push notification can open its record even
+/// from a cold start (no BuildContext at hand otherwise).
+final navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   // PackageInfo talks over a platform channel, so the binding must exist first
@@ -23,6 +28,12 @@ void main() async {
   await Push.init()
       .timeout(const Duration(seconds: 8), onTimeout: () {})
       .catchError((_) {});
+  // Route a tapped push notification to its record (was previously unwired, so
+  // taps opened nothing). Drains any tap that arrived during cold start.
+  Push.attach((url) {
+    final c = navigatorKey.currentContext;
+    if (c != null) openActionUrl(c, url);
+  });
 
   // In release Flutter paints a bare grey box when a widget throws, which is
   // exactly what a user reports as "the page is grey and won't open" — with
@@ -75,6 +86,7 @@ class CareApp extends StatelessWidget {
     final theme = ServiceTheme.of(auth.profile?.role ?? 'worker');
     return MaterialApp(
       title: 'CARE',
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       locale: Locale(gLang),
       theme: buildTheme(theme),

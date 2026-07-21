@@ -49,6 +49,10 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      clipBehavior: Clip.antiAlias,
       builder: (_) => FutureBuilder<Map<String, dynamic>>(
         future: context.read<AuthProvider>().api.clientInvoice(id),
         builder: (ctx, snap) {
@@ -57,7 +61,8 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
           final payments = (m['payments'] as List?) ?? [];
           return DraggableScrollableSheet(
             expand: false,
-            initialChildSize: 0.75,
+            initialChildSize: 0.8,
+            maxChildSize: 0.95,
             builder: (_, sc) => ListView(controller: sc, padding: EdgeInsets.zero, children: [
               // A header that answers the question the invoice is opened for:
               // is it paid, and how much is left. The old sheet led with a
@@ -139,28 +144,42 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                   ]),
                 );
               }),
+              // ALL actions live here, right under the header — pay, print,
+              // accept, reject — instead of being scattered top and bottom.
               Padding(
-                padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
-                child: Row(children: [
-                if (m['pay_url'] != null && (m['amount_residual'] as num) > 0)
-                  Expanded(
-                      child: FilledButton.icon(
-                          onPressed: () => _open('${m['pay_url']}'),
-                          icon: const Icon(Icons.payment),
-                          label: Text(tr('ادفع الآن', 'Pay now')))),
-                if (m['pay_url'] != null && (m['amount_residual'] as num) > 0) const SizedBox(width: 8),
-                if (m['pdf_url'] != null)
-                  OutlinedButton.icon(
-                      onPressed: () => Navigator.push(context, MaterialPageRoute(
-                          builder: (_) => PdfReportScreen(
-                              url: '${m['pdf_url']}',
-                              title: tr('فاتورة ${m['name'] ?? ''}', 'Invoice ${m['name'] ?? ''}'),
-                              fileName: 'invoice-${m['name'] ?? ''}.pdf'))),
-                      icon: const Icon(Icons.picture_as_pdf),
-                      label: const Text('PDF')),
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 6),
+                child: Wrap(spacing: 8, runSpacing: 8, children: [
+                  if (m['pay_url'] != null && numOf(m['amount_residual']) > 0.001)
+                    FilledButton.icon(
+                        onPressed: () => _open('${m['pay_url']}'),
+                        icon: const Icon(Icons.payment_rounded, size: 19),
+                        label: Text(tr('ادفع الآن', 'Pay now'),
+                            style: const TextStyle(fontWeight: FontWeight.w800))),
+                  if (m['pdf_url'] != null)
+                    OutlinedButton.icon(
+                        onPressed: () => Navigator.push(context, MaterialPageRoute(
+                            builder: (_) => PdfReportScreen(
+                                url: '${m['pdf_url']}',
+                                title: tr('فاتورة ${m['name'] ?? ''}', 'Invoice ${m['name'] ?? ''}'),
+                                fileName: 'invoice-${m['name'] ?? ''}.pdf'))),
+                        icon: const Icon(Icons.picture_as_pdf_rounded, size: 19),
+                        label: const Text('PDF')),
+                  if ((m['client_approval'] ?? 'pending') == 'pending') ...[
+                    FilledButton.icon(
+                        style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
+                        onPressed: () => _decision(ctx, id, true),
+                        icon: const Icon(Icons.check_circle_rounded, size: 19),
+                        label: Text(tr('قبول', 'Accept'),
+                            style: const TextStyle(fontWeight: FontWeight.w800))),
+                    OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFE11D48)),
+                        onPressed: () => _decision(ctx, id, false),
+                        icon: const Icon(Icons.cancel_rounded, size: 19),
+                        label: Text(tr('رفض', 'Reject'))),
+                  ],
                 ]),
               ),
-              const Divider(height: 24),
+              const Divider(height: 20),
               ...((m['lines'] as List?) ?? []).map((l) => ListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 18),
                     dense: true,
@@ -190,21 +209,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                       trailing: Text('${p['amount']}', style: const TextStyle(fontWeight: FontWeight.w700)),
                     )),
               ],
-              const SizedBox(height: 12),
-              if ((m['client_approval'] ?? 'pending') == 'pending')
-                Row(children: [
-                  Expanded(
-                      child: FilledButton(
-                          style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
-                          onPressed: () => _decision(ctx, id, true),
-                          child: Text(tr('قبول الفاتورة', 'Accept')))),
-                  const SizedBox(width: 8),
-                  Expanded(
-                      child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFE11D48)),
-                          onPressed: () => _decision(ctx, id, false),
-                          child: Text(tr('رفض', 'Reject')))),
-                ]),
+              const SizedBox(height: 20),
             ]),
           );
         },
