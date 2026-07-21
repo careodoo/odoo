@@ -19,6 +19,7 @@ class _PmsProjectsScreenState extends State<PmsProjectsScreen> {
   final _search = TextEditingController();
   Timer? _deb;
   String _q = '';
+  String _sort = 'name'; // name | progress | at_risk | open
 
   @override
   void initState() {
@@ -74,17 +75,36 @@ class _PmsProjectsScreenState extends State<PmsProjectsScreen> {
               future: _f,
               builder: (_, snap) {
                 if (!snap.hasData) return const Center(child: CircularProgressIndicator());
-                final rows = snap.data!;
+                final rows = snap.data!.cast<Map>().toList();
                 if (rows.isEmpty) {
                   return ListView(children: [Padding(padding: const EdgeInsets.only(top: 90),
                       child: Center(child: Text(tr('لا مشاريع', 'No projects'),
                           style: const TextStyle(color: Pms.slate, fontWeight: FontWeight.w700))))]);
                 }
-                return ListView.separated(
+                final n = rows.length;
+                final avg = n > 0 ? rows.map((p) => numOf(p['progress'], 0)).reduce((a, b) => a + b) / n : 0.0;
+                final atRisk = rows.where((p) => p['health'] == 'at_risk').length;
+                final totalOpen = rows.map((p) => numOf(p['open'], 0)).fold<num>(0, (a, b) => a + b);
+                rows.sort((a, b) {
+                  switch (_sort) {
+                    case 'progress': return numOf(b['progress'], 0).compareTo(numOf(a['progress'], 0));
+                    case 'open': return numOf(b['open'], 0).compareTo(numOf(a['open'], 0));
+                    case 'at_risk': return numOf(b['overdue'], 0).compareTo(numOf(a['overdue'], 0));
+                    default: return '${a['name']}'.compareTo('${b['name']}');
+                  }
+                });
+                return ListView(
                   padding: const EdgeInsets.fromLTRB(12, 10, 12, 20),
-                  itemCount: rows.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 9),
-                  itemBuilder: (_, i) => _card(rows[i] as Map),
+                  children: [
+                    _summaryBand(n, avg.toDouble(), atRisk, totalOpen.toInt()),
+                    const SizedBox(height: 12),
+                    _sortRow(),
+                    const SizedBox(height: 10),
+                    for (final p in rows) Padding(
+                      padding: const EdgeInsets.only(bottom: 9),
+                      child: _card(p),
+                    ),
+                  ],
                 );
               },
             ),
@@ -94,8 +114,74 @@ class _PmsProjectsScreenState extends State<PmsProjectsScreen> {
     );
   }
 
+  static const _healthColors = {
+    'on_track': Pms.green, 'at_risk': Pms.red, 'done': Color(0xFF0891B2),
+  };
+  String _healthLabel(String h) => {
+        'on_track': tr('على المسار', 'On track'),
+        'at_risk': tr('متعثّر', 'At risk'),
+        'done': tr('مكتمل', 'Completed'),
+      }[h] ?? h;
+
+  Widget _summaryBand(int n, double avg, int atRisk, int open) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(colors: [Pms.violet, Pms.deep],
+              begin: Alignment.topRight, end: Alignment.bottomLeft),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [BoxShadow(color: Pms.violet.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 5))],
+        ),
+        child: Row(children: [
+          _sumCell('$n', tr('مشروع', 'Projects')),
+          _sumDivider(),
+          _sumCell('${avg.toStringAsFixed(0)}%', tr('متوسط الإنجاز', 'Avg progress')),
+          _sumDivider(),
+          _sumCell('$open', tr('مهام مفتوحة', 'Open tasks')),
+          _sumDivider(),
+          _sumCell('$atRisk', tr('متعثّرة', 'At risk'), warn: atRisk > 0),
+        ]),
+      );
+
+  Widget _sumCell(String v, String l, {bool warn = false}) => Expanded(
+        child: Column(children: [
+          Text(v, style: TextStyle(color: warn ? const Color(0xFFFFD1D1) : Colors.white,
+              fontWeight: FontWeight.w900, fontSize: 18)),
+          const SizedBox(height: 2),
+          Text(l, maxLines: 2, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 9.5, fontWeight: FontWeight.w700, height: 1.15)),
+        ]),
+      );
+
+  Widget _sumDivider() => Container(width: 1, height: 30, color: Colors.white24);
+
+  Widget _sortRow() {
+    const opts = [
+      ('name', 'الاسم', 'Name'), ('progress', 'الأعلى إنجازًا', 'Progress'),
+      ('open', 'الأكثر مهامًا', 'Most tasks'), ('at_risk', 'المتعثّرة', 'At risk'),
+    ];
+    return SizedBox(
+      height: 32,
+      child: ListView(scrollDirection: Axis.horizontal, children: [
+        for (final o in opts) Padding(
+          padding: const EdgeInsets.only(left: 6),
+          child: ChoiceChip(
+            label: Text(tr(o.$2, o.$3), style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+            selected: _sort == o.$1,
+            selectedColor: Pms.violet,
+            labelStyle: TextStyle(color: _sort == o.$1 ? Colors.white : Pms.ink),
+            onSelected: (_) => setState(() => _sort = o.$1),
+          ),
+        ),
+      ]),
+    );
+  }
+
   Widget _card(Map p) {
     final pct = (numOf(p['progress'], 0)).toDouble();
+    final health = '${p['health'] ?? 'on_track'}';
+    final hc = _healthColors[health] ?? Pms.slate;
+    final barC = pct >= 80 ? Pms.green : (pct >= 40 ? Pms.amber : Pms.violet);
+    final overdue = numOf(p['overdue'], 0).toInt();
     return Material(
       color: Colors.white, borderRadius: BorderRadius.circular(16),
       child: InkWell(
@@ -103,51 +189,64 @@ class _PmsProjectsScreenState extends State<PmsProjectsScreen> {
         onTap: () => Navigator.push(context, MaterialPageRoute(
             builder: (_) => PmsProjectDetail(projectId: p['id'] as int, name: '${p['name']}'))),
         child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.black12)),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Container(padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: Pms.violet.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(11)),
-                  child: const Icon(Icons.account_tree_rounded, color: Pms.violet, size: 19)),
-              const SizedBox(width: 10),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('${p['name']}', maxLines: 2, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Pms.ink, height: 1.25)),
-                if (p['partner'] != null)
-                  Text('${(p['partner'] as Map)['name']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
+          child: IntrinsicHeight(child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Container(width: 5, color: hc),
+            Expanded(child: Padding(
+              padding: const EdgeInsets.fromLTRB(13, 13, 13, 12),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Expanded(child: Text('${p['name']}', maxLines: 2, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Pms.ink, height: 1.25))),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(color: hc.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
+                    child: Text(_healthLabel(health),
+                        style: TextStyle(color: hc, fontWeight: FontWeight.w800, fontSize: 9.5)),
+                  ),
+                ]),
+                if (p['partner'] != null) Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text('${(p['partner'] as Map)['name']}', maxLines: 1, overflow: TextOverflow.ellipsis,
                       style: const TextStyle(color: Pms.slate, fontSize: 11.5)),
-              ])),
-              Text('${pct.toStringAsFixed(0)}%',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15,
-                      color: pct >= 80 ? Pms.green : (pct >= 40 ? Pms.amber : Pms.violet))),
-            ]),
-            const SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: LinearProgressIndicator(
-                value: (pct / 100).clamp(0, 1), minHeight: 6,
-                backgroundColor: Pms.bg,
-                valueColor: AlwaysStoppedAnimation(pct >= 80 ? Pms.green : (pct >= 40 ? Pms.amber : Pms.violet)),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(children: [
-              _chip(Icons.checklist_rounded, tr('${p['tasks']} مهمة', '${p['tasks']} tasks'), Pms.slate),
-              const SizedBox(width: 6),
-              _chip(Icons.pending_actions_rounded, tr('${p['open']} مفتوحة', '${p['open']} open'), Pms.amber),
-              const SizedBox(width: 6),
-              _chip(Icons.check_circle_rounded, tr('${p['done']} منجزة', '${p['done']} done'), Pms.green),
-            ]),
-            if (p['manager'] != null) Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Row(children: [
-                const Icon(Icons.person_rounded, size: 14, color: Pms.slate),
-                const SizedBox(width: 5),
-                Text('${(p['manager'] as Map)['name']}', style: const TextStyle(fontSize: 11.5, color: Pms.slate)),
+                ),
+                const SizedBox(height: 10),
+                Row(children: [
+                  Expanded(child: ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(value: (pct / 100).clamp(0, 1), minHeight: 7,
+                        backgroundColor: Pms.bg, valueColor: AlwaysStoppedAnimation(barC)),
+                  )),
+                  const SizedBox(width: 8),
+                  Text('${pct.toStringAsFixed(0)}%',
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: barC)),
+                ]),
+                const SizedBox(height: 9),
+                Wrap(spacing: 6, runSpacing: 6, children: [
+                  _chip(Icons.pending_actions_rounded, '${p['open']} ${tr('مفتوحة', 'open')}', Pms.amber),
+                  _chip(Icons.check_circle_rounded, '${p['done']} ${tr('منجزة', 'done')}', Pms.green),
+                  if (overdue > 0) _chip(Icons.local_fire_department_rounded, '$overdue ${tr('متأخرة', 'overdue')}', Pms.red),
+                  if (numOf(p['team'], 0) > 0) _chip(Icons.groups_rounded, '${p['team']} ${tr('عامل', 'staff')}', const Color(0xFF0D9488)),
+                ]),
+                if (p['manager'] != null) Padding(
+                  padding: const EdgeInsets.only(top: 9),
+                  child: Row(children: [
+                    const Icon(Icons.person_rounded, size: 14, color: Pms.slate),
+                    const SizedBox(width: 5),
+                    Expanded(child: Text('${(p['manager'] as Map)['name']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 11.5, color: Pms.slate))),
+                    if (p['date_end'] != null) ...[
+                      const Icon(Icons.flag_rounded, size: 13, color: Pms.slate),
+                      const SizedBox(width: 3),
+                      Text('${p['date_end']}', style: const TextStyle(fontSize: 10.5, color: Pms.slate)),
+                    ],
+                  ]),
+                ),
               ]),
-            ),
-          ]),
+            )),
+          ])),
         ),
       ),
     );
