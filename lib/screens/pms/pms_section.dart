@@ -78,7 +78,7 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
   Widget build(BuildContext context) {
     // Sections that accept a new record → an action label for the FAB.
     final createAction = const {
-      'deliveries': 'delivery', 'petty': 'expense',
+      'deliveries': 'delivery', 'petty': 'pettycash',
       'timesheet': 'timesheet', 'requests': 'docrequest',
       'assets': 'custody',
     }[widget.code];
@@ -232,6 +232,7 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
         'timesheet': tr('كشف جديد', 'New sheet'),
         'requests': tr('طلب مستند', 'Doc request'),
         'assets': tr('طلب عهدة', 'Request custody'),
+        'petty': tr('طلب عهدة نقدية', 'Request cash custody'),
       }[widget.code] ?? tr('إضافة', 'Add');
 
   /// The create sheet, built per-section from its options endpoint.
@@ -398,10 +399,22 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
         } else if (opens == 'vehicle' && r['vehicle_id'] != null) {
           Navigator.push(context, MaterialPageRoute(
               builder: (_) => PmsVehicleFileScreen(vehicleId: r['vehicle_id'] as int, name: '${r['title']}')));
+        } else if (opens == 'pettycash') {
+          _openPetty(r['id'] as int);
         }
       },
       child: inner,
     );
+  }
+
+  Future<void> _openPetty(int cid) async {
+    await showModalBottomSheet<bool>(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => _PettyDetailSheet(cashId: cid, color: _c),
+    );
+    // Refresh the list in case a workflow action changed a record's state.
+    if (mounted) setState(_load);
   }
 }
 
@@ -428,8 +441,9 @@ class _CreateSheetState extends State<_CreateSheet> {
   @override
   void initState() {
     super.initState();
-    // The custody form gates its Save button on the name text — rebuild as it changes.
+    // Some forms gate Save on a text/amount field — rebuild as they change.
     _a.addListener(() => setState(() {}));
+    _b.addListener(() => setState(() {}));
   }
 
   @override
@@ -536,22 +550,23 @@ class _CreateSheetState extends State<_CreateSheet> {
           }),
         ];
       case 'petty':
-        final cats = (widget.options['categories'] as List?) ?? const [];
-        final cash = (widget.options['cash'] as List?) ?? const [];
+        // A professional cash-custody REQUEST (طلب عهدة نقدية); expenses and
+        // settlement are handled from the custody's own detail sheet.
+        const benTypes = [
+          {'value': 'project', 'label': 'مشروع'},
+          {'value': 'department', 'label': 'إدارة'},
+          {'value': 'person', 'label': 'شخص'},
+        ];
         return [
-          _title(tr('مصروف نقدي جديد', 'New petty-cash expense')),
-          _text(_a, tr('البيان', 'Description')),
-          _text(_b, tr('المبلغ', 'Amount'), type: TextInputType.number),
-          if (cats.isNotEmpty) _dropStr(tr('التصنيف', 'Category'), cats),
-          if (cash.isNotEmpty)
-            _dropInt(tr('من عهدة (اختياري)', 'From cash (optional)'), cash, 'id', 'name')
-          else
-            _text(_c, tr('قيمة العهدة الجديدة', 'New cash amount'), type: TextInputType.number),
+          _title(tr('طلب عهدة نقدية', 'Request cash custody')),
+          _text(_b, tr('مبلغ العهدة *', 'Custody amount *'),
+              type: const TextInputType.numberWithOptions(decimal: true)),
+          _dropStr(tr('صرف إلى', 'Disbursed to'), benTypes),
+          _text(_a, tr('سبب العهدة', 'Reason'), lines: 2),
           _submit((double.tryParse(_b.text.trim()) ?? 0) > 0, () => {
-            'name': _a.text.trim(), 'amount': double.tryParse(_b.text.trim()) ?? 0,
-            if (_pick2 != null) 'category': _pick2,
-            if (_pick1 != null) 'cash_id': _pick1
-            else if (_c.text.trim().isNotEmpty) 'cash_amount': double.tryParse(_c.text.trim()),
+            'amount': double.tryParse(_b.text.trim()) ?? 0,
+            'beneficiary_type': _pick2 ?? 'project',
+            'reason': _a.text.trim(),
           }),
         ];
       case 'timesheet':
@@ -613,4 +628,179 @@ class _CreateSheetState extends State<_CreateSheet> {
         return [const SizedBox.shrink()];
     }
   }
+}
+
+/// Cash-custody detail — the money at a glance (amount / spent / remaining),
+/// the expenses behind it, and the workflow buttons to move it forward
+/// (request → approve → disburse → settle → close).
+class _PettyDetailSheet extends StatefulWidget {
+  final int cashId;
+  final Color color;
+  const _PettyDetailSheet({required this.cashId, required this.color});
+  @override
+  State<_PettyDetailSheet> createState() => _PettyDetailSheetState();
+}
+
+class _PettyDetailSheetState extends State<_PettyDetailSheet> {
+  Map<String, dynamic>? _d;
+  String? _error;
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final d = await context.read<AuthProvider>().api.pmsPettyDetail(widget.cashId);
+      if (mounted) setState(() => _d = d);
+    } catch (e) {
+      if (mounted) setState(() => _error = '$e');
+    }
+  }
+
+  Future<void> _run(String action) async {
+    setState(() => _busy = true);
+    try {
+      final res = await context.read<AuthProvider>().api.pmsPettyAction(widget.cashId, action);
+      if (mounted) setState(() { _d = {...?_d, 'state': res['state'], 'actions': res['actions']}; _busy = false; });
+      await _load();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(tr('تم تنفيذ الإجراء', 'Done')), backgroundColor: Pms.green));
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _busy = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+      }
+    }
+  }
+
+  Widget _money(String label, num? v, Color c) => Expanded(
+        child: Column(children: [
+          Text('${v ?? 0}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: c)),
+          const SizedBox(height: 2),
+          Text(label, style: const TextStyle(fontSize: 10.5, color: Pms.slate, fontWeight: FontWeight.w700)),
+        ]),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      expand: false, initialChildSize: 0.62, maxChildSize: 0.95, minChildSize: 0.4,
+      builder: (_, sc) {
+        if (_error != null) {
+          return Center(child: Padding(padding: const EdgeInsets.all(24), child: Text('$_error')));
+        }
+        if (_d == null) return const SizedBox(height: 220, child: Center(child: CircularProgressIndicator()));
+        final d = _d!;
+        final actions = (d['actions'] as List?) ?? const [];
+        final expenses = (d['expenses'] as List?) ?? const [];
+        return Stack(children: [
+          ListView(controller: sc, padding: EdgeInsets.zero, children: [
+            // header
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [widget.color, widget.color.withValues(alpha: 0.75)],
+                    begin: Alignment.topRight, end: Alignment.bottomLeft),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(22))),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Center(child: Container(width: 42, height: 4,
+                    decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(4)))),
+                const SizedBox(height: 12),
+                Row(children: [
+                  const Icon(Icons.payments_rounded, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text('${d['name'] ?? ''}',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16))),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(20)),
+                    child: Text('${d['state_label'] ?? ''}',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 11)),
+                  ),
+                ]),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(14)),
+                  child: Row(children: [
+                    _money(tr('العهدة', 'Custody'), d['amount'] as num?, Colors.white),
+                    Container(width: 1, height: 30, color: Colors.white24),
+                    _money(tr('المصروف', 'Spent'), d['spent'] as num?, Colors.white),
+                    Container(width: 1, height: 30, color: Colors.white24),
+                    _money(tr('المتبقّي', 'Remaining'), d['remaining'] as num?, Colors.white),
+                  ]),
+                ),
+              ]),
+            ),
+            // workflow actions
+            if (actions.isNotEmpty) Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 2),
+              child: Wrap(spacing: 8, runSpacing: 8, children: [
+                for (final a in actions)
+                  SizedBox(height: 42, child: (a as Map)['style'] == 'primary'
+                    ? ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: widget.color, foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                        onPressed: _busy ? null : () => _run('${a['key']}'),
+                        child: Text('${a['ar']}', style: const TextStyle(fontWeight: FontWeight.w800)))
+                    : OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                        onPressed: _busy ? null : () => _run('${a['key']}'),
+                        child: Text('${a['ar']}', style: const TextStyle(fontWeight: FontWeight.w800)))),
+              ]),
+            ),
+            // meta
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
+              child: Column(children: [
+                if (d['reason'] != null) _kvp(tr('السبب', 'Reason'), '${d['reason']}'),
+                if (d['custodian'] != null) _kvp(tr('المسؤول', 'Custodian'), '${d['custodian']}'),
+                if (d['request_date'] != null) _kvp(tr('تاريخ الطلب', 'Requested'), '${d['request_date']}'),
+                if (d['disbursed_date'] != null) _kvp(tr('تاريخ الصرف', 'Disbursed'), '${d['disbursed_date']}'),
+                _kvp(tr('عدد التسويات', 'Settlements'), '${d['settlements'] ?? 0}'),
+              ]),
+            ),
+            // expenses
+            if (expenses.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 14, 18, 6),
+                child: Text(tr('المصروفات (${expenses.length})', 'Expenses (${expenses.length})'),
+                    style: const TextStyle(fontWeight: FontWeight.w900, color: Pms.ink, fontSize: 14)),
+              ),
+              for (final e in expenses)
+                Container(
+                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.black12)),
+                  child: Row(children: [
+                    Expanded(child: Text('${(e as Map)['name']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5))),
+                    Text('${e['amount'] ?? ''}', style: TextStyle(fontWeight: FontWeight.w900, color: widget.color)),
+                  ]),
+                ),
+            ],
+            const SizedBox(height: 24),
+          ]),
+          if (_busy) const Positioned.fill(child: ColoredBox(color: Color(0x11000000),
+              child: Center(child: CircularProgressIndicator()))),
+        ]);
+      },
+    );
+  }
+
+  Widget _kvp(String k, String v) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          SizedBox(width: 100, child: Text(k, style: const TextStyle(color: Pms.slate, fontSize: 12))),
+          Expanded(child: Text(v, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Pms.ink))),
+        ]),
+      );
 }

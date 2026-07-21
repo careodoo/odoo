@@ -1636,6 +1636,17 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.post(_u('/pms/project/$projectId/task/create'),
           headers: await _headers(), body: jsonEncode(vals))))['data'] as Map);
 
+  /// Cash-custody detail (amount/spent/remaining/state + available actions).
+  Future<Map<String, dynamic>> pmsPettyDetail(int cashId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/pms/pettycash/$cashId'), headers: await _headers())))['data'] as Map);
+
+  /// Run a cash-custody workflow action (request/approve/disburse/settle/close).
+  Future<Map<String, dynamic>> pmsPettyAction(int cashId, String action) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/pms/pettycash/$cashId/action'), headers: await _headers(),
+              body: jsonEncode({'action': action}))))['data'] as Map);
+
   /// Form metadata for a new task: departments, categories, assignable users.
   Future<Map<String, dynamic>> pmsTaskMeta(int projectId) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
