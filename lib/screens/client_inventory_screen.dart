@@ -231,37 +231,85 @@ class _ClientInventoryScreenState extends State<ClientInventoryScreen> {
   // ------------------------------------------------------------------ cards --
   Widget _itemCard(Map r) {
     final low = r['low_stock'] == true;
+    final onHand = numOf(r['on_hand']);
+    final reorder = numOf(r['min_qty'] ?? r['to_reorder']);
+    // a visual fill: how healthy is the stock vs its reorder level
+    final ratio = reorder > 0 ? (onHand / (reorder * 2)).clamp(0.05, 1.0) : (onHand > 0 ? 1.0 : 0.05);
+    final barColor = low ? const Color(0xFFE11D48) : (onHand <= 0 ? Colors.grey : const Color(0xFF16A34A));
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: low ? const Color(0xFFF5C2C7) : const Color(0xFFE7EAF0))),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         onTap: () => _openItem(r),
         child: Padding(
-          padding: const EdgeInsets.all(11),
-          child: Row(children: [
-            _thumb(r),
-            const SizedBox(width: 12),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('${r['product']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: _navy)),
-              const SizedBox(height: 3),
-              Wrap(spacing: 6, runSpacing: 4, children: [
-                if (r['store'] != null) _tag('${r['store']}', const Color(0xFF6366F1)),
-                if (r['barcode'] != null) _tag('${r['barcode']}', const Color(0xFF64748B)),
-                if (low) _tag(tr('منخفض', 'Low'), const Color(0xFFE11D48)),
+          padding: const EdgeInsets.all(12),
+          child: Column(children: [
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              _thumb(r, size: 62),
+              const SizedBox(width: 12),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('${r['product']}', maxLines: 2, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: _navy)),
+                const SizedBox(height: 4),
+                Wrap(spacing: 6, runSpacing: 4, children: [
+                  if (r['store'] != null) _tag('🏬 ${r['store']}', const Color(0xFF6366F1)),
+                  if (r['barcode'] != null) _tag('${r['barcode']}', const Color(0xFF64748B)),
+                  if (low) _tag(tr('منخفض', 'Low'), const Color(0xFFE11D48)),
+                ]),
+              ])),
+              const SizedBox(width: 8),
+              Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                Text('${r['on_hand']}',
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 19,
+                        color: low ? const Color(0xFFE11D48) : const Color(0xFF16A34A))),
+                Text('${r['uom'] ?? ''}', style: TextStyle(fontSize: 10.5, color: Colors.grey.shade500)),
               ]),
-            ])),
-            const SizedBox(width: 8),
-            Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text('${r['on_hand']}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: low ? const Color(0xFFE11D48) : const Color(0xFF16A34A))),
-              Text('${r['uom'] ?? ''}', style: TextStyle(fontSize: 10.5, color: Colors.grey.shade500)),
-              if (low) Text('${tr('اطلب', 'reorder')} ${r['to_reorder']}', style: const TextStyle(fontSize: 9.5, color: Color(0xFFE11D48), fontWeight: FontWeight.w700)),
+            ]),
+            const SizedBox(height: 9),
+            // stock-health bar
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: ratio, minHeight: 5,
+                color: barColor, backgroundColor: barColor.withValues(alpha: 0.12),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(children: [
+              if (low)
+                Expanded(child: Text('${tr('يُعاد الطلب عند', 'Reorder at')} ${r['to_reorder'] ?? reorder}',
+                    style: const TextStyle(fontSize: 10.5, color: Color(0xFFE11D48), fontWeight: FontWeight.w700)))
+              else
+                const Spacer(),
+              // quick actions right on the card
+              _miniAct(Icons.north_east_rounded, tr('صرف', 'Issue'), const Color(0xFFB45309), () => _openItem(r)),
+              const SizedBox(width: 6),
+              _miniAct(Icons.history_rounded, tr('الحركات', 'History'), const Color(0xFF2563EB), () => _openItem(r)),
             ]),
           ]),
         ),
       ),
     );
   }
+
+  Widget _miniAct(IconData icon, String label, Color c, VoidCallback onTap) => InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+          decoration: BoxDecoration(
+              color: c.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(8)),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 14, color: c),
+            const SizedBox(width: 4),
+            Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: c)),
+          ]),
+        ),
+      );
 
   Widget _moveCard(Map r) {
     final t = '${r['type_raw']}';
@@ -299,14 +347,15 @@ class _ClientInventoryScreenState extends State<ClientInventoryScreen> {
         'transfer': Icons.swap_horiz_rounded, 'adjust': Icons.tune_rounded, 'return': Icons.undo_rounded,
       }[t] ?? Icons.inventory_2_rounded;
 
-  Widget _thumb(Map r) {
+  Widget _thumb(Map r, {double size = 46}) {
     final url = r['image'] != null ? '${context.read<AuthProvider>().api.baseUrl}${r['image']}' : null;
     return Container(
-      width: 46, height: 46, clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(color: _navy.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(11)),
+      width: size, height: size, clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(color: _navy.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(13)),
       child: url != null
-          ? Image.network(url, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Center(child: Text('📦', style: TextStyle(fontSize: 20))))
-          : const Center(child: Text('📦', style: TextStyle(fontSize: 20))),
+          ? Image.network(url, fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Center(child: Text('📦', style: TextStyle(fontSize: size * 0.42))))
+          : Center(child: Text('📦', style: TextStyle(fontSize: size * 0.42))),
     );
   }
 
