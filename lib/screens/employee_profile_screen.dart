@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import '../core/widgets.dart';
 import 'employee_attendance_screen.dart';
 
 /// Full worker profile (data sourced from the HR Employees module) plus rich
@@ -216,39 +218,130 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
     return s.substring(11, 16);
   }
 
-  Widget _profileCard(Map p, ColorScheme cs) {
-    Widget avatar;
+  static const _navy = Color(0xFF0E3A5F);
+  static const _brand = Color(0xFF1D6FA3);
+
+  Future<void> _launch(String uri) async {
+    try {
+      await launchUrl(Uri.parse(uri), mode: LaunchMode.externalApplication);
+    } catch (_) {}
+  }
+
+  ImageProvider? _avatarOf(Map p) {
     final photo = p['photo'] as String?;
     if (photo != null && photo.startsWith('data:image')) {
       try {
-        avatar = CircleAvatar(radius: 34, backgroundImage: MemoryImage(base64Decode(photo.split(',').last)));
-      } catch (_) {
-        avatar = CircleAvatar(radius: 34, child: Text('${p['name'] ?? '?'}'.characters.first));
-      }
-    } else {
-      avatar = CircleAvatar(radius: 34, child: Text('${p['name'] ?? '?'}'.characters.first));
+        return MemoryImage(base64Decode(photo.split(',').last));
+      } catch (_) {}
     }
-    Widget row(IconData i, String? v) => v == null || v.isEmpty ? const SizedBox.shrink() : Padding(
-          padding: const EdgeInsets.symmetric(vertical: 3),
-          child: Row(children: [Icon(i, size: 16, color: cs.outline), const SizedBox(width: 8), Expanded(child: Text(v))]),
-        );
-    return Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [
-        avatar,
-        const SizedBox(width: 14),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('${p['name'] ?? ''}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-          if (p['job'] != null) Text('${p['job']}', style: TextStyle(color: cs.outline)),
-        ])),
+    return avatarImage(photo);
+  }
+
+  Widget _profileCard(Map p, ColorScheme cs) {
+    final name = '${p['name'] ?? ''}';
+    final phone = (p['mobile'] as String?) ?? (p['work_phone'] as String?);
+    final email = p['work_email'] as String?;
+    final img = _avatarOf(p);
+    return Column(children: [
+      // professional gradient hero
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+              colors: [_brand, _navy], begin: Alignment.topRight, end: Alignment.bottomLeft),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: _navy.withValues(alpha: 0.3), blurRadius: 14, offset: const Offset(0, 6))],
+        ),
+        child: Column(children: [
+          CircleAvatar(
+            radius: 42, backgroundColor: Colors.white24, backgroundImage: img,
+            child: img == null
+                ? Text(name.isEmpty ? '?' : name.characters.first,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 30))
+                : null,
+          ),
+          const SizedBox(height: 12),
+          Text(name, textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 19)),
+          if (p['job'] != null) ...[
+            const SizedBox(height: 3),
+            Text('${p['job']}', textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 13, fontWeight: FontWeight.w600)),
+          ],
+          if (p['department'] != null) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(20)),
+              child: Text('${p['department']}',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11.5)),
+            ),
+          ],
+          const SizedBox(height: 16),
+          // contact quick-actions
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            if (phone != null && phone.isNotEmpty) ...[
+              _quick(Icons.call_rounded, tr('اتصال', 'Call'), () => _launch('tel:$phone')),
+              const SizedBox(width: 10),
+              _quick(Icons.chat_rounded, 'واتساب', () => _launch('https://wa.me/${phone.replaceAll(RegExp(r'[^0-9]'), '')}')),
+            ],
+            if (email != null && email.isNotEmpty) ...[
+              const SizedBox(width: 10),
+              _quick(Icons.email_rounded, tr('بريد', 'Email'), () => _launch('mailto:$email')),
+            ],
+            const SizedBox(width: 10),
+            _quick(Icons.fingerprint_rounded, tr('الحضور', 'Attend.'), _openAttendance),
+          ]),
+        ]),
+      ),
+      const SizedBox(height: 14),
+      // full details card
+      Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+            color: Colors.white, borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
+        child: Column(children: [
+          _detail(Icons.badge_rounded, tr('المسمّى الوظيفي', 'Job title'), p['job'] as String?),
+          _detail(Icons.apartment_rounded, tr('القسم', 'Department'), p['department'] as String?),
+          _detail(Icons.place_rounded, tr('موقع العمل', 'Work location'), p['work_location'] as String?),
+          _detail(Icons.supervisor_account_rounded, tr('المدير المباشر', 'Manager'), p['manager'] as String?),
+          _detail(Icons.phone_rounded, tr('هاتف العمل', 'Work phone'), p['work_phone'] as String?),
+          _detail(Icons.smartphone_rounded, tr('الجوال', 'Mobile'), p['mobile'] as String?),
+          _detail(Icons.email_rounded, tr('البريد', 'Email'), p['work_email'] as String?),
+          _detail(Icons.event_available_rounded, tr('تاريخ الالتحاق', 'Joined'), p['joining'] as String?),
+        ]),
+      ),
+    ]);
+  }
+
+  Widget _quick(IconData i, String label, VoidCallback onTap) => Column(children: [
+        Material(
+          color: Colors.white.withValues(alpha: 0.2),
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onTap,
+            child: Padding(padding: const EdgeInsets.all(11), child: Icon(i, color: Colors.white, size: 20)),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+      ]);
+
+  Widget _detail(IconData i, String label, String? value) {
+    if (value == null || value.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(i, size: 17, color: _brand),
+        const SizedBox(width: 10),
+        SizedBox(width: 108, child: Text(label, style: const TextStyle(color: Color(0xFF64748B), fontSize: 12))),
+        Expanded(child: Text(value,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Color(0xFF14202B)))),
       ]),
-      const Divider(height: 20),
-      row(Icons.apartment, p['department'] as String?),
-      row(Icons.badge, p['work_location'] as String?),
-      row(Icons.person, p['manager'] != null ? '${tr('المدير', 'Manager')}: ${p['manager']}' : null),
-      row(Icons.phone, p['work_phone'] as String? ?? p['mobile'] as String?),
-      row(Icons.email, p['work_email'] as String?),
-      row(Icons.event, p['joining'] != null ? '${tr('التحاق', 'Joined')}: ${p['joining']}' : null),
-    ])));
+    );
   }
 
   Widget _kpiGrid(Map k) {
