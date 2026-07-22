@@ -23,6 +23,7 @@ const Map<String, IconData> kPmsSectionIcons = {
   'finance': Icons.account_balance_rounded,
   'contracts': Icons.assignment_rounded,
   'performance': Icons.trending_up_rounded,
+  'invoices': Icons.receipt_long_rounded,
 };
 
 const Map<String, Color> kPmsSectionColors = {
@@ -40,6 +41,7 @@ const Map<String, Color> kPmsSectionColors = {
   'finance': Color(0xFF15803D),
   'contracts': Color(0xFF9333EA),
   'performance': Color(0xFF0891B2),
+  'invoices': Color(0xFF9D174D),
 };
 
 /// One project section — the same shape the portal shows, rendered natively.

@@ -638,6 +638,7 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
     'description': Icons.description_rounded,
     'timer': Icons.timer_rounded,
     'payments': Icons.payments_rounded,
+    'receipt_long': Icons.receipt_long_rounded,
   };
   static const _statColors = {
     '__tasks__': Pms.violet, '__open__': Color(0xFFF59E0B), '__done__': Color(0xFF16A34A),
@@ -645,7 +646,7 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
     'compliance': Color(0xFFE5484D), 'fuel': Color(0xFF0D9488), '__letters__': Color(0xFF9333EA),
     'assets': Color(0xFF0E7490), 'materials': Color(0xFF7C3AED), 'deliveries': Color(0xFF6366F1),
     'supplies': Color(0xFF0EA5E9), 'requests': Color(0xFF8B5CF6), 'timesheet': Color(0xFF7C3AED),
-    'petty': Color(0xFFD97706),
+    'petty': Color(0xFFD97706), 'invoices': Color(0xFF9D174D),
   };
 
   Widget _statCard(Map s) {
