@@ -1640,6 +1640,14 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.post(_u('/pms/employee/$eid/loan-create'),
           headers: await _headers(), body: jsonEncode(body)))) ['data'] as Map);
 
+  /// Material ledger detail (receipts in, issues out, available).
+  Future<Map<String, dynamic>> pmsMaterialDetail(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/material/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<void> pmsMaterialDelete(int id) async =>
+      _handle(await _net.post(_u('/pms/material/$id/delete'), headers: await _headers()));
+
   /// Project invoice detail (professional view — same shape as the client one).
   Future<Map<String, dynamic>> pmsInvoice(int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

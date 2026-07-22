@@ -596,10 +596,21 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
           _openSupply(r['id'] as int);
         } else if (opens == 'invoice') {
           _openInvoice(r['id'] as int);
+        } else if (opens == 'material') {
+          _openMaterial(r['id'] as int);
         }
       },
       child: inner,
     );
+  }
+
+  Future<void> _openMaterial(int id) async {
+    await showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => _MaterialDetailSheet(materialId: id, color: _c),
+    );
+    if (mounted) setState(_load);
   }
 
   Future<void> _openInvoice(int id) async {
@@ -2384,4 +2395,147 @@ class _InvoiceDetailSheetState extends State<_InvoiceDetailSheet> {
           Text(v, style: TextStyle(fontSize: bold ? 15 : 12.5, fontWeight: FontWeight.w900, color: color ?? Pms.ink)),
         ]),
       );
+}
+
+/// Material ledger: available balance + receipts (in) and issues (out) — the
+/// full history of a material, organised into clear sections.
+class _MaterialDetailSheet extends StatefulWidget {
+  final int materialId;
+  final Color color;
+  const _MaterialDetailSheet({required this.materialId, required this.color});
+  @override
+  State<_MaterialDetailSheet> createState() => _MaterialDetailSheetState();
+}
+
+class _MaterialDetailSheetState extends State<_MaterialDetailSheet> {
+  Map<String, dynamic>? _d;
+  String? _error;
+  bool _busy = false;
+
+  @override
+  void initState() { super.initState(); _load(); }
+
+  Future<void> _load() async {
+    try {
+      final d = await context.read<AuthProvider>().api.pmsMaterialDetail(widget.materialId);
+      if (mounted) setState(() { _d = d; _error = null; });
+    } catch (e) { if (mounted) setState(() => _error = '$e'); }
+  }
+
+  Future<void> _delete() async {
+    final ok = await showDialog<bool>(context: context, builder: (c) => AlertDialog(
+      title: Text(tr('حذف المادة', 'Delete material')),
+      content: Text(tr('هل أنت متأكد؟ لا يمكن الحذف إن وُجدت حركات مرتبطة.', 'Are you sure?')),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('إلغاء', 'Cancel'))),
+        FilledButton(style: FilledButton.styleFrom(backgroundColor: Pms.red),
+            onPressed: () => Navigator.pop(c, true), child: Text(tr('حذف', 'Delete'))),
+      ],
+    ));
+    if (ok != true) return;
+    setState(() => _busy = true);
+    try {
+      await context.read<AuthProvider>().api.pmsMaterialDelete(widget.materialId);
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تم حذف المادة', 'Material deleted')), backgroundColor: Pms.green));
+    } catch (e) {
+      if (mounted) { setState(() => _busy = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red)); }
+    }
+  }
+
+  Widget _stat(String v, String l, Color c) => Expanded(child: Column(children: [
+        Text(v, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: c)),
+        Text(l, style: const TextStyle(fontSize: 10.5, color: Pms.slate, fontWeight: FontWeight.w700)),
+      ]));
+
+  Widget _sectionHead(String t, IconData ic, Color c, int n) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+        child: Row(children: [
+          Icon(ic, size: 17, color: c), const SizedBox(width: 7),
+          Text('$t ($n)', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Pms.ink)),
+        ]),
+      );
+
+  Widget _ledgerRow(String title, String? sub, dynamic qty, Color c, {String? state}) => Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.black12)),
+        child: Row(children: [
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+            if (sub != null) Text(sub, style: const TextStyle(fontSize: 10.5, color: Pms.slate)),
+          ])),
+          if (state != null) Container(margin: const EdgeInsets.only(right: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(color: c.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(6)),
+              child: Text(state, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: c))),
+          Text('$qty', style: TextStyle(fontWeight: FontWeight.w900, color: c, fontSize: 14)),
+        ]),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      expand: false, initialChildSize: 0.85, maxChildSize: 0.96, minChildSize: 0.5,
+      builder: (_, sc) {
+        if (_error != null) return Center(child: Padding(padding: const EdgeInsets.all(24), child: Text('$_error', style: const TextStyle(color: Pms.red))));
+        if (_d == null) return const Center(child: CircularProgressIndicator());
+        final d = _d!;
+        final receipts = (d['receipts'] as List?) ?? const [];
+        final issues = (d['issues'] as List?) ?? const [];
+        final low = d['is_low'] == true;
+        return Stack(children: [ListView(controller: sc, padding: EdgeInsets.zero, children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(18, 12, 18, 16),
+            decoration: BoxDecoration(borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+                gradient: LinearGradient(colors: [widget.color, widget.color.withValues(alpha: 0.75)],
+                    begin: Alignment.topRight, end: Alignment.bottomLeft)),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Center(child: Container(width: 42, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(4)))),
+              const SizedBox(height: 12),
+              Row(children: [
+                if (d['image'] != null) Padding(padding: const EdgeInsets.only(left: 10),
+                    child: ClipRRect(borderRadius: BorderRadius.circular(10),
+                        child: Image.network('${d['image']}', width: 44, height: 44, fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const SizedBox(width: 44, height: 44)))),
+                Expanded(child: Text('${d['name']}',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16))),
+                IconButton(onPressed: _busy ? null : _delete, icon: const Icon(Icons.delete_outline_rounded, color: Colors.white)),
+              ]),
+              if (low) Padding(padding: const EdgeInsets.only(top: 4),
+                  child: Text('⚠ ${tr('المخزون منخفض', 'Low stock')}', style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w800))),
+              const SizedBox(height: 12),
+              Container(padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(14)),
+                child: Row(children: [
+                  _stat('${d['received'] ?? 0}', tr('استُلم', 'Received'), Colors.white),
+                  Container(width: 1, height: 30, color: Colors.white24),
+                  _stat('${d['issued'] ?? 0}', tr('صُرف', 'Issued'), Colors.white),
+                  Container(width: 1, height: 30, color: Colors.white24),
+                  _stat('${d['available'] ?? 0}', '${tr('المتاح', 'Available')} ${d['uom'] ?? ''}', Colors.white),
+                ])),
+            ]),
+          ),
+          // receipts (in)
+          _sectionHead(tr('التوريدات (وارد)', 'Receipts (in)'), Icons.south_west_rounded, const Color(0xFF16A34A), receipts.length),
+          if (receipts.isEmpty) const Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('—', style: TextStyle(color: Pms.slate))),
+          for (final r in receipts)
+            _ledgerRow('${(r as Map)['ref'] ?? tr('توريد', 'Receipt')}', '${r['date'] ?? ''}', '+${r['qty']}', const Color(0xFF16A34A)),
+          // issues (out)
+          _sectionHead(tr('الصرف (صادر)', 'Issues (out)'), Icons.north_east_rounded, Pms.red, issues.length),
+          if (issues.isEmpty) const Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('—', style: TextStyle(color: Pms.slate))),
+          for (final i in issues)
+            _ledgerRow('${(i as Map)['note'] ?? tr('صرف', 'Issue')}', '${i['date'] ?? ''}', '-${i['qty']}', Pms.red,
+                state: i['state_label'] != null ? '${i['state_label']}' : null),
+          const SizedBox(height: 24),
+        ]),
+        if (_busy) const Positioned.fill(child: ColoredBox(color: Color(0x11000000), child: Center(child: CircularProgressIndicator()))),
+        ]);
+      },
+    );
+  }
 }
