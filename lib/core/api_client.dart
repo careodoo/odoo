@@ -82,6 +82,12 @@ class ApiClient {
 
   Uri _u(String path) => Uri.parse('$baseUrl$path');
 
+  /// Server origin (without the /api/vN suffix) — for /web/image URLs.
+  String get origin => baseUrl.replaceFirst(RegExp(r'/api/v\d+/?$'), '');
+
+  /// Public avatar of a user (no token needed).
+  String userAvatarUrl(int userId) => '$origin/web/image/res.users/$userId/avatar_256';
+
   /// Returns the decoded `data` payload, or throws [ApiException].
   Future<dynamic> _handle(http.Response r) async {
     dynamic body;
@@ -1888,6 +1894,17 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/my/$source/create'), headers: await _headers(),
               body: jsonEncode(vals))))['data'] as Map);
+
+  /// One self-service request in full detail (fields + printable report path).
+  Future<Map<String, dynamic>> myDetail(String source, int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/my/$source/$id'), headers: await _headers())))['data'] as Map);
+
+  /// Respond to a follow-up delegation assigned to me: accept | reject.
+  Future<Map<String, dynamic>> pmsDelegationRespond(int id, String act, {String? note}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/pms/delegation/$id/$act'), headers: await _headers(),
+              body: jsonEncode({if (note != null) 'note': note}))))['data'] as Map);
 
   // ---- waste operations (ops manager) -------------------------------------
   /// Orders this ops manager owns. filter: unassigned | open | done

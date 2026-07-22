@@ -4,6 +4,8 @@ import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import '../attendance_screen.dart';
 import '../pms/pms_section.dart';
+import '../pms/pms_employee_file.dart';
+import '../pdf_report_screen.dart';
 
 /// The «My» module — the signed-in user's own hub: who they are, how they're
 /// doing, the services they can start, and their requests with live statuses.
@@ -207,29 +209,37 @@ class _MyScreenState extends State<MyScreen> {
         ]),
       );
 
-  Widget _delegationCard(Map dg) => Container(
-        margin: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: _c.withValues(alpha: 0.25)),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () => Navigator.push(context, MaterialPageRoute(
-                builder: (_) => PmsSectionScreen(
-                    projectId: dg['project_id'] as int,
-                    code: '${dg['section_code']}',
-                    label: '${dg['section_label']}'))),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(children: [
+  Widget _delegationCard(Map dg) {
+    final pending = '${dg['state'] ?? 'accepted'}' == 'pending';
+    return Container(
+      margin: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: (pending ? const Color(0xFFF59E0B) : _c).withValues(alpha: 0.30)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: pending
+              ? null
+              : () => Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => PmsSectionScreen(
+                      projectId: dg['project_id'] as int,
+                      code: '${dg['section_code']}',
+                      label: '${dg['section_label']}'))),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(children: [
+              Row(children: [
                 Container(
                   padding: const EdgeInsets.all(9),
-                  decoration: BoxDecoration(color: _c.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(11)),
-                  child: Icon(Icons.folder_shared_rounded, color: _c, size: 20),
+                  decoration: BoxDecoration(
+                      color: (pending ? const Color(0xFFF59E0B) : _c).withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(11)),
+                  child: Icon(pending ? Icons.assignment_late_rounded : Icons.folder_shared_rounded,
+                      color: pending ? const Color(0xFFB45309) : _c, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -251,13 +261,56 @@ class _MyScreenState extends State<MyScreen> {
                     decoration: BoxDecoration(color: const Color(0xFFF59E0B).withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
                     child: Text('${tr('حتى', 'until')} ${dg['date_until']}',
                         style: const TextStyle(color: Color(0xFFB45309), fontWeight: FontWeight.w700, fontSize: 9.5)),
-                  ),
-                Icon(Icons.chevron_left_rounded, color: _c.withValues(alpha: 0.5)),
+                  )
+                else if (!pending)
+                  Icon(Icons.chevron_left_rounded, color: _c.withValues(alpha: 0.5)),
               ]),
-            ),
+              if (pending) ...[
+                const SizedBox(height: 10),
+                Row(children: [
+                  Expanded(child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFE11D48),
+                        side: const BorderSide(color: Color(0xFFE11D48)),
+                        padding: const EdgeInsets.symmetric(vertical: 9)),
+                    onPressed: _busy ? null : () => _respondDelegation(dg, 'reject'),
+                    icon: const Icon(Icons.close_rounded, size: 16),
+                    label: Text(tr('رفض', 'Reject'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                  )),
+                  const SizedBox(width: 8),
+                  Expanded(child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF16A34A),
+                        padding: const EdgeInsets.symmetric(vertical: 9)),
+                    onPressed: _busy ? null : () => _respondDelegation(dg, 'accept'),
+                    icon: const Icon(Icons.check_rounded, size: 16),
+                    label: Text(tr('قبول', 'Accept'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                  )),
+                ]),
+              ],
+            ]),
           ),
         ),
-      );
+      ),
+    );
+  }
+
+  Future<void> _respondDelegation(Map dg, String act) async {
+    setState(() => _busy = true);
+    try {
+      await context.read<AuthProvider>().api.pmsDelegationRespond(dg['id'] as int, act);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(act == 'accept' ? tr('تم قبول التفويض', 'Delegation accepted') : tr('تم رفض التفويض', 'Delegation rejected')),
+          backgroundColor: act == 'accept' ? const Color(0xFF16A34A) : const Color(0xFFE11D48)));
+      await _load();
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$e'), backgroundColor: const Color(0xFFE11D48)));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   // ---- services as professional icon tiles ------------------------------
   Widget _servicesGrid(List<Map> services) => Padding(
@@ -305,6 +358,19 @@ class _MyScreenState extends State<MyScreen> {
   };
 
   Future<void> _openService(String key) async {
+    if (key == 'profile') {
+      final p = (_d?['profile'] as Map?) ?? const {};
+      final eid = p['employee_id'];
+      if (eid == null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(tr('لا يوجد ملف موظف مرتبط بحسابك', 'No employee file linked to your account')),
+            backgroundColor: _c));
+        return;
+      }
+      Navigator.push(context, MaterialPageRoute(
+          builder: (_) => PmsEmployeeFileScreen(employeeId: eid as int, name: '${p['name'] ?? tr('بياناتي', 'My data')}')));
+      return;
+    }
     if (key == 'attendance' || key == 'timesheet') {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendanceScreen()));
       return;
@@ -336,7 +402,9 @@ class _MyScreenState extends State<MyScreen> {
         border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
       ),
       clipBehavior: Clip.antiAlias,
-      child: Row(children: [
+      child: InkWell(
+        onTap: () => _openRequest(r),
+        child: Row(children: [
         Container(width: 5, height: 76, color: tint),
         Expanded(child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 11, 8, 11),
@@ -372,9 +440,24 @@ class _MyScreenState extends State<MyScreen> {
             tooltip: tr('حذف', 'Delete'),
             icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFE11D48), size: 20),
             onPressed: _busy ? null : () => _confirmDelete(r),
-          ),
+          )
+        else
+          Padding(padding: const EdgeInsets.only(left: 6),
+              child: Icon(Icons.chevron_left_rounded, color: tint.withValues(alpha: 0.5))),
       ]),
+      ),
     );
+  }
+
+  Future<void> _openRequest(Map r) async {
+    await showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => _MyRequestSheet(
+          source: '${r['source']}', id: r['id'] as int,
+          accent: _reqTint['${r['source']}'] ?? _c),
+    );
+    if (mounted) _load();
   }
 
   Future<void> _confirmDelete(Map r) async {
@@ -578,6 +661,104 @@ class _MyCreateSheetState extends State<_MyCreateSheet> {
           ]);
         },
       ),
+    );
+  }
+}
+
+/// One self-service request in full detail: its fields, status, a printable
+/// report where one exists (leave), and share/print actions.
+class _MyRequestSheet extends StatefulWidget {
+  final String source;
+  final int id;
+  final Color accent;
+  const _MyRequestSheet({required this.source, required this.id, required this.accent});
+  @override
+  State<_MyRequestSheet> createState() => _MyRequestSheetState();
+}
+
+class _MyRequestSheetState extends State<_MyRequestSheet> {
+  Map<String, dynamic>? _d;
+  String? _error;
+
+  @override
+  void initState() { super.initState(); _load(); }
+
+  Future<void> _load() async {
+    try {
+      final d = await context.read<AuthProvider>().api.myDetail(widget.source, widget.id);
+      if (mounted) setState(() => _d = d);
+    } catch (e) {
+      if (mounted) setState(() => _error = '$e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.7, minChildSize: 0.4, maxChildSize: 0.95, expand: false,
+      builder: (context, sc) {
+        if (_error != null) {
+          return Center(child: Padding(padding: const EdgeInsets.all(24),
+              child: Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF64748B)))));
+        }
+        if (_d == null) return const Center(child: CircularProgressIndicator());
+        final d = _d!;
+        final fields = ((d['fields'] as List?) ?? const []).cast<Map>();
+        final reportPath = d['report_path'];
+        return ListView(controller: sc, padding: EdgeInsets.zero, children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [widget.accent, widget.accent.withValues(alpha: 0.78)],
+                  begin: Alignment.topRight, end: Alignment.bottomLeft),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+            ),
+            child: Row(children: [
+              Text('${d['icon'] ?? ''}', style: const TextStyle(fontSize: 26)),
+              const SizedBox(width: 10),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(gLang == 'en' ? '${d['en'] ?? ''}' : '${d['ar'] ?? ''}',
+                    style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w700)),
+                Text('${d['title'] ?? ''}', maxLines: 2, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+              ])),
+              if (d['state'] != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(9)),
+                  child: Text('${d['state']}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11)),
+                ),
+            ]),
+          ),
+          Padding(padding: const EdgeInsets.fromLTRB(18, 12, 18, 6), child: Column(children: [
+            for (final f in fields) Padding(
+              padding: const EdgeInsets.symmetric(vertical: 7),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                SizedBox(width: 120, child: Text('${f['label']}',
+                    style: const TextStyle(color: Color(0xFF64748B), fontSize: 12.5))),
+                const SizedBox(width: 8),
+                Expanded(child: Text('${f['value']}', textAlign: TextAlign.end,
+                    style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF1E293B), fontSize: 13))),
+              ]),
+            ),
+          ])),
+          if (reportPath != null) Padding(
+            padding: const EdgeInsets.fromLTRB(18, 8, 18, 24),
+            child: SizedBox(width: double.infinity, child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(foregroundColor: widget.accent,
+                  side: BorderSide(color: widget.accent.withValues(alpha: 0.5)),
+                  padding: const EdgeInsets.symmetric(vertical: 12)),
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+                  path: '$reportPath', title: tr('تقرير الطلب', 'Request report'),
+                  fileName: '${widget.source}-${widget.id}.pdf'))),
+              icon: const Icon(Icons.print_rounded, size: 18),
+              label: Text(tr('طباعة / مشاركة التقرير', 'Print / share report'),
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+            )),
+          )
+          else const SizedBox(height: 20),
+        ]);
+      },
     );
   }
 }

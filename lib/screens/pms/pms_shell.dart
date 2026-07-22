@@ -3,10 +3,10 @@ import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import '../../core/widgets.dart';
-import '../notifications_screen.dart';
 import 'pms_projects.dart';
 import 'pms_tasks.dart';
 import '../my/my_screen.dart';
+import 'pms_more.dart';
 
 class Pms {
   // Brand identity: red with gray. `violet`/`deep` are the primary red pair
@@ -38,9 +38,29 @@ class _PmsShellState extends State<PmsShell> {
       const _T(Icons.account_tree_rounded, 'المشاريع', 'Projects', PmsProjectsScreen()),
       const _T(Icons.checklist_rounded, 'مهامي', 'My tasks', PmsTasksScreen(filter: 'mine', title: 'مهامي')),
       const _T(Icons.account_circle_rounded, 'My', 'My', MyScreen(accent: Pms.violet)),
-      const _T(Icons.notifications_rounded, 'الإشعارات', 'Alerts', NotificationsScreen()),
+      const _T(Icons.more_horiz_rounded, 'المزيد', 'More', PmsMoreScreen()),
     ];
     final idx = _tab.clamp(0, tabs.length - 1);
+
+    // «My» tab shows the signed-in user's avatar instead of a generic icon.
+    final auth = context.watch<AuthProvider>();
+    final p = auth.profile;
+    final avatarUrl = p != null ? auth.api.userAvatarUrl(p.userId) : null;
+    Widget myIcon(bool selected) => Container(
+          padding: const EdgeInsets.all(1.5),
+          decoration: BoxDecoration(shape: BoxShape.circle,
+              border: Border.all(color: selected ? Pms.violet : Colors.transparent, width: 2)),
+          child: CircleAvatar(
+            radius: 12,
+            backgroundColor: Pms.violet.withValues(alpha: 0.12),
+            backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+            onBackgroundImageError: (_, __) {},
+            child: avatarUrl == null
+                ? Icon(Icons.account_circle_rounded, size: 20, color: selected ? Pms.violet : Pms.slate)
+                : null,
+          ),
+        );
+
     return Scaffold(
       backgroundColor: Pms.bg,
       body: IndexedStack(index: idx, children: [for (final t in tabs) t.body]),
@@ -55,9 +75,11 @@ class _PmsShellState extends State<PmsShell> {
           selectedIndex: idx,
           onDestinationSelected: (i) => setState(() => _tab = i),
           destinations: [
-            for (final t in tabs)
-              NavigationDestination(icon: Icon(t.icon), selectedIcon: Icon(t.icon, color: Pms.violet),
-                  label: gLang == 'en' ? t.en : t.ar),
+            for (var i = 0; i < tabs.length; i++)
+              NavigationDestination(
+                icon: i == 3 ? myIcon(false) : Icon(tabs[i].icon),
+                selectedIcon: i == 3 ? myIcon(true) : Icon(tabs[i].icon, color: Pms.violet),
+                label: gLang == 'en' ? tabs[i].en : tabs[i].ar),
           ],
         ),
       ),
