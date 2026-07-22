@@ -1645,6 +1645,25 @@ class ApiClient {
           headers: await _headers(),
           body: jsonEncode({if (reason != null) 'reason': reason}))))['data'] as Map);
 
+  // ---- close-request workflow ----
+  Future<Map<String, dynamic>> pmsTaskClose(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(_u('/pms/task/$id/close'),
+          headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsTaskRequestClose(int id, {String? note}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(_u('/pms/task/$id/request-close'),
+          headers: await _headers(),
+          body: jsonEncode({if (note != null) 'note': note}))))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsTaskApproveClose(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(_u('/pms/task/$id/approve-close'),
+          headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsTaskRejectClose(int id, {String? reason}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(_u('/pms/task/$id/reject-close'),
+          headers: await _headers(),
+          body: jsonEncode({if (reason != null) 'reason': reason}))))['data'] as Map);
+
   /// Internal users a task may be forwarded to.
   Future<List<dynamic>> pmsForwardUsers(int projectId) async =>
       List<dynamic>.from((await _handle(

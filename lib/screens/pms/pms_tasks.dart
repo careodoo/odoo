@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'pms_shell.dart' show Pms;
+import 'pms_section.dart' show PmsPhotoView;
 
 /// Task list for a filter / project / stage.
 class PmsTasksScreen extends StatefulWidget {
@@ -551,12 +552,19 @@ class _PmsTaskDetailState extends State<PmsTaskDetail> {
                   for (final p in (d['photos'] as List))
                     Padding(
                       padding: const EdgeInsets.only(left: 8),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network('$p', width: 96, height: 96, fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                                width: 96, height: 96, color: Colors.black12,
-                                child: const Icon(Icons.broken_image_rounded, color: Pms.slate))),
+                      child: GestureDetector(
+                        onTap: () => Navigator.push(context, MaterialPageRoute(
+                            builder: (_) => PmsPhotoView(url: '$p', title: tr('صورة المهمة', 'Task photo')))),
+                        child: Hero(
+                          tag: 'taskphoto-$p',
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network('$p', width: 96, height: 96, fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
+                                    width: 96, height: 96, color: Colors.black12,
+                                    child: const Icon(Icons.broken_image_rounded, color: Pms.slate))),
+                          ),
+                        ),
                       ),
                     ),
                 ]),
@@ -601,6 +609,8 @@ class _PmsTaskDetailState extends State<PmsTaskDetail> {
             // ---- forwarding / routing ----
             const SizedBox(height: 12),
             _forwardBlock(d),
+            // ---- close / close-request ----
+            _closeBlock(d),
             // chatter
             const SizedBox(height: 12),
             Row(children: [
@@ -625,8 +635,28 @@ class _PmsTaskDetailState extends State<PmsTaskDetail> {
                     Text('${m['date'] ?? ''}'.split('.').first,
                         style: const TextStyle(fontSize: 10, color: Pms.slate)),
                   ]),
-                  const SizedBox(height: 4),
-                  Text(_strip('${m['body']}'), style: const TextStyle(fontSize: 12, height: 1.4)),
+                  if (_strip('${m['body']}').trim().isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(_strip('${m['body']}'), style: const TextStyle(fontSize: 12, height: 1.4)),
+                  ],
+                  // images attached to this comment, shown inline & tappable
+                  if (((m['images'] as List?) ?? const []).isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Wrap(spacing: 8, runSpacing: 8, children: [
+                      for (final im in (m['images'] as List))
+                        GestureDetector(
+                          onTap: () => Navigator.push(context, MaterialPageRoute(
+                              builder: (_) => PmsPhotoView(url: '$im', title: tr('صورة', 'Photo')))),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.network('$im', width: 84, height: 84, fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
+                                    width: 84, height: 84, color: Colors.black12,
+                                    child: const Icon(Icons.broken_image_rounded, color: Pms.slate))),
+                          ),
+                        ),
+                    ]),
+                  ],
                 ]),
               ),
             if (msgs.isEmpty) Padding(padding: const EdgeInsets.all(14),
@@ -642,11 +672,6 @@ class _PmsTaskDetailState extends State<PmsTaskDetail> {
         child: Text(t, style: const TextStyle(fontWeight: FontWeight.w900, color: Pms.ink, fontSize: 14)),
       );
 
-  Widget _pill(String t, Color c) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-        decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
-        child: Text(t, style: TextStyle(color: c, fontSize: 11, fontWeight: FontWeight.w800)),
-      );
 
   /// A white-on-gradient pill for the hero header.
   Widget _hPill(String t) => Container(
@@ -755,6 +780,87 @@ class _PmsTaskDetailState extends State<PmsTaskDetail> {
         'accepted': tr('مقبولة', 'Accepted'),
         'rejected': tr('مرفوضة', 'Rejected'),
       }[s] ?? s;
+
+  /// The close / close-request panel. A plain assignee on a deadline task can
+  /// only «request to close»; the creator/manager approves — or it auto-closes
+  /// after 48h. Everyone else with write access closes directly.
+  Widget _closeBlock(Map d) {
+    if (d['done'] == true) return const SizedBox.shrink();
+    if (d['can_write'] != true) return const SizedBox.shrink();
+    final cs = '${d['close_state'] ?? 'none'}';
+    final needsReq = d['needs_close_request'] == true;
+    final canClose = d['can_close_directly'] == true;
+    final isApprover = d['is_close_approver'] == true;
+
+    // A close request is pending.
+    if (cs == 'requested') {
+      return Container(
+        margin: const EdgeInsets.only(top: 12),
+        padding: const EdgeInsets.all(13),
+        decoration: BoxDecoration(color: const Color(0xFFFFF8EC), borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFFFE1AC))),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.hourglass_top_rounded, size: 18, color: Color(0xFFA86400)),
+            const SizedBox(width: 8),
+            Expanded(child: Text(tr('طلب إغلاق بانتظار الاعتماد', 'Close request pending'),
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: Color(0xFFA86400)))),
+          ]),
+          if (d['close_requested_by'] != null) Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text('${tr('طلبه', 'Requested by')}: ${d['close_requested_by']}'
+                '${d['close_requested_on'] != null ? '  •  ${d['close_requested_on']}' : ''}',
+                style: const TextStyle(fontSize: 11.5, color: Pms.slate)),
+          ),
+          if (isApprover) ...[
+            const SizedBox(height: 10),
+            Row(children: [
+              Expanded(child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(foregroundColor: Pms.red, side: const BorderSide(color: Pms.red),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11))),
+                onPressed: _busy ? null : () => _closeAction('reject'),
+                icon: const Icon(Icons.close_rounded, size: 17),
+                label: Text(tr('رفض', 'Reject'), style: const TextStyle(fontWeight: FontWeight.w800)),
+              )),
+              const SizedBox(width: 8),
+              Expanded(child: FilledButton.icon(
+                style: FilledButton.styleFrom(backgroundColor: Pms.green,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11))),
+                onPressed: _busy ? null : () => _closeAction('approve'),
+                icon: const Icon(Icons.check_rounded, size: 18),
+                label: Text(tr('اعتماد الإغلاق', 'Approve'), style: const TextStyle(fontWeight: FontWeight.w800)),
+              )),
+            ]),
+          ] else
+            Padding(padding: const EdgeInsets.only(top: 6),
+                child: Text(tr('سيُعتمد من منشئ التاسك، أو يُغلق تلقائيًا خلال 48 ساعة.',
+                    'Awaiting the creator, or auto-closes within 48h.'),
+                    style: const TextStyle(fontSize: 11.5, color: Pms.slate))),
+        ]),
+      );
+    }
+
+    // No pending request → offer the right close affordance.
+    final restricted = needsReq && !canClose;
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: SizedBox(width: double.infinity, height: 48, child: restricted
+          ? FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE08A00),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+              onPressed: _busy ? null : () => _closeAction('request'),
+              icon: const Icon(Icons.assignment_turned_in_rounded),
+              label: Text(tr('طلب إغلاق التاسك', 'Request to close'),
+                  style: const TextStyle(fontWeight: FontWeight.w900)))
+          : FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: Pms.green,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+              onPressed: _busy ? null : () => _closeAction('close'),
+              icon: const Icon(Icons.check_circle_rounded),
+              label: Text(tr('إغلاق التاسك', 'Close task'),
+                  style: const TextStyle(fontWeight: FontWeight.w900)))),
+    );
+  }
 
   Future<void> _forward(Map d) async {
     final proj = d['project'] as Map?;
@@ -868,6 +974,67 @@ class _PmsTaskDetailState extends State<PmsTaskDetail> {
       _reload();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(tr('✅ تم نقل المهمة', '✅ Task moved')), backgroundColor: Pms.green));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _closeAction(String kind) async {
+    // kind: 'close' | 'request' | 'approve' | 'reject'
+    String? note;
+    if (kind == 'request' || kind == 'reject') {
+      final c = TextEditingController();
+      final ok = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text(
+            kind == 'request' ? tr('طلب إغلاق التاسك', 'Request to close')
+                              : tr('رفض الإغلاق', 'Reject close'),
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+        content: TextField(controller: c, maxLines: 3, autofocus: true,
+            decoration: InputDecoration(
+                hintText: kind == 'request'
+                    ? tr('ملاحظة (اختياري)…', 'Note (optional)…')
+                    : tr('سبب الرفض…', 'Reason…'),
+                filled: true, fillColor: Pms.bg,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none))),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('إلغاء', 'Cancel'))),
+          ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: kind == 'reject' ? Pms.red : Pms.violet, foregroundColor: Colors.white),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(tr('تأكيد', 'Confirm'))),
+        ],
+      ));
+      if (ok != true || !mounted) return;
+      note = c.text.trim();
+    }
+    setState(() => _busy = true);
+    try {
+      final api = context.read<AuthProvider>().api;
+      String msg;
+      switch (kind) {
+        case 'close':
+          await api.pmsTaskClose(widget.taskId);
+          msg = tr('تم إغلاق التاسك', 'Task closed');
+          break;
+        case 'request':
+          await api.pmsTaskRequestClose(widget.taskId, note: note);
+          msg = tr('تم إرسال طلب الإغلاق للاعتماد', 'Close request sent');
+          break;
+        case 'approve':
+          await api.pmsTaskApproveClose(widget.taskId);
+          msg = tr('تم اعتماد إغلاق التاسك', 'Close approved');
+          break;
+        default:
+          await api.pmsTaskRejectClose(widget.taskId, reason: note);
+          msg = tr('تم رفض طلب الإغلاق', 'Close rejected');
+      }
+      if (!mounted) return;
+      _reload();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ $msg'), backgroundColor: Pms.green));
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
     } finally {
