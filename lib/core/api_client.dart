@@ -1566,6 +1566,34 @@ class ApiClient {
   Future<void> pmsSupplyReceive(int supplyId) async =>
       _handle(await _net.post(_u('/pms/supply/$supplyId/receive'), headers: await _headers()));
 
+  /// Rich attendance query for a project: filters month|date range|worker|status|q.
+  Future<Map<String, dynamic>> pmsAttendanceRecords(int projectId,
+      {String? month, String? dateFrom, String? dateTo, int? employeeId, String? status, String? q}) async {
+    final qs = <String>[];
+    if (month != null && month.isNotEmpty) qs.add('month=$month');
+    if (dateFrom != null && dateFrom.isNotEmpty) qs.add('date_from=$dateFrom');
+    if (dateTo != null && dateTo.isNotEmpty) qs.add('date_to=$dateTo');
+    if (employeeId != null) qs.add('employee_id=$employeeId');
+    if (status != null && status.isNotEmpty) qs.add('status=$status');
+    if (q != null && q.isNotEmpty) qs.add('q=${Uri.encodeQueryComponent(q)}');
+    final suffix = qs.isEmpty ? '' : '?${qs.join('&')}';
+    return Map<String, dynamic>.from((await _handle(await _net.get(
+        _u('/pms/project/$projectId/attendance/records$suffix'), headers: await _headers())))['data'] as Map);
+  }
+
+  /// Build the attendance PDF report path (PdfReportScreen adds the token).
+  String pmsAttendanceReportPath(int projectId,
+      {String? month, String? dateFrom, String? dateTo, int? employeeId, String? status}) {
+    final qs = <String>[];
+    if (month != null && month.isNotEmpty) qs.add('month=$month');
+    if (dateFrom != null && dateFrom.isNotEmpty) qs.add('date_from=$dateFrom');
+    if (dateTo != null && dateTo.isNotEmpty) qs.add('date_to=$dateTo');
+    if (employeeId != null) qs.add('employee_id=$employeeId');
+    if (status != null && status.isNotEmpty) qs.add('status=$status');
+    final suffix = qs.isEmpty ? '' : '?${qs.join('&')}';
+    return '/pms/project/$projectId/attendance/report$suffix';
+  }
+
   /// Full supply document: header + product lines (image/qty/received/state) + voucher.
   Future<Map<String, dynamic>> pmsSupplyDetail(int supplyId) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

@@ -7,6 +7,7 @@ import '../../core/i18n.dart';
 import 'pms_shell.dart';
 import 'pms_employee_file.dart';
 import 'pms_vehicle_file.dart';
+import 'pms_attendance_advanced.dart';
 import '../pdf_report_screen.dart';
 
 /// Icons for the section codes the API advertises. Kept here rather than sent
@@ -153,6 +154,18 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
                     _attSeg(tr('الغياب', 'Absent'), 1, Icons.person_off_rounded, absentees.length),
                   ]),
                 ),
+              ],
+              if (widget.code == 'attendance') ...[
+                const SizedBox(height: 10),
+                SizedBox(width: double.infinity, height: 46, child: FilledButton.icon(
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0E3A5F),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => AttendanceAdvancedScreen(projectId: widget.projectId))),
+                  icon: const Icon(Icons.tune_rounded, size: 19),
+                  label: Text(tr('فلاتر متقدّمة + تقرير PDF', 'Advanced filters + PDF report'),
+                      style: const TextStyle(fontWeight: FontWeight.w900)),
+                )),
               ],
               if (all.length > 4 || widget.code == 'team') ...[
                 const SizedBox(height: 10),
