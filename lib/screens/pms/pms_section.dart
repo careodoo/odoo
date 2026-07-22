@@ -7,6 +7,7 @@ import '../../core/i18n.dart';
 import 'pms_shell.dart';
 import 'pms_employee_file.dart';
 import 'pms_vehicle_file.dart';
+import '../pdf_report_screen.dart';
 
 /// Icons for the section codes the API advertises. Kept here rather than sent
 /// from the server: the server names the section, the app decides how it looks.
@@ -883,9 +884,57 @@ class _PettyDetailSheetState extends State<_PettyDetailSheet> {
                 if (d['custodian'] != null) _kvp(tr('المسؤول', 'Custodian'), '${d['custodian']}'),
                 if (d['request_date'] != null) _kvp(tr('تاريخ الطلب', 'Requested'), '${d['request_date']}'),
                 if (d['disbursed_date'] != null) _kvp(tr('تاريخ الصرف', 'Disbursed'), '${d['disbursed_date']}'),
-                _kvp(tr('عدد التسويات', 'Settlements'), '${d['settlements'] ?? 0}'),
               ]),
             ),
+            // settlements — with a printable report each
+            if (((d['settlement_list'] as List?) ?? const []).isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 14, 18, 6),
+                child: Text(tr('التسويات', 'Settlements'),
+                    style: const TextStyle(fontWeight: FontWeight.w900, color: Pms.ink, fontSize: 14)),
+              ),
+              for (final s in (d['settlement_list'] as List).cast<Map>())
+                Container(
+                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+                  padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.black12)),
+                  child: Row(children: [
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('${s['name']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+                      Row(children: [
+                        if (s['date'] != null) Text('${s['date']}', style: const TextStyle(fontSize: 10.5, color: Pms.slate)),
+                        if (s['amount'] != null) ...[
+                          const SizedBox(width: 8),
+                          Text('${s['amount']}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: widget.color)),
+                        ],
+                        if (s['state_label'] != null) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                            decoration: BoxDecoration(color: widget.color.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(6)),
+                            child: Text('${s['state_label']}', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: widget.color)),
+                          ),
+                        ],
+                      ]),
+                    ])),
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(foregroundColor: widget.color,
+                          side: BorderSide(color: widget.color.withValues(alpha: 0.5)),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                      onPressed: () => Navigator.push(context, MaterialPageRoute(
+                          builder: (_) => PdfReportScreen(
+                              path: '/api/v1/pms/settlement/${s['id']}/report',
+                              title: tr('تقرير التسوية', 'Settlement report'),
+                              fileName: 'settlement-${s['id']}.pdf'))),
+                      icon: const Icon(Icons.print_rounded, size: 16),
+                      label: Text(tr('طباعة', 'Print'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5)),
+                    ),
+                  ]),
+                ),
+            ],
             // expenses
             if (expenses.isNotEmpty) ...[
               Padding(
