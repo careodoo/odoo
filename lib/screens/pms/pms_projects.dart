@@ -313,6 +313,8 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
                   final c = kPmsSectionColors[code] ?? Pms.violet;
                   final delegated = x['delegated'] == true;
                   final delegate = '${x['delegate'] ?? ''}';
+                  // Simple, clean, professional: a soft-tinted icon chip + label,
+                  // centered; delegation shown as one small corner dot.
                   return Material(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
@@ -323,59 +325,39 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
                               projectId: widget.projectId, code: code, label: '${x['label']}'))),
                       onLongPress: () => _delegateSheet(code, '${x['label']}'),
                       child: Container(
-                        padding: const EdgeInsets.all(11),
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                              color: delegated ? Pms.amber.withValues(alpha: 0.55) : c.withValues(alpha: 0.18),
-                              width: delegated ? 1.4 : 1),
-                          gradient: LinearGradient(colors: [c.withValues(alpha: 0.10), Colors.white],
-                              begin: Alignment.topRight, end: Alignment.bottomLeft),
-                          boxShadow: [BoxShadow(color: c.withValues(alpha: 0.10),
-                              blurRadius: 8, offset: const Offset(0, 3))],
+                          border: Border.all(color: const Color(0xFFEDEFF3)),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            // icon + delegation badge overlay
-                            Stack(clipBehavior: Clip.none, children: [
+                        child: Stack(clipBehavior: Clip.none, children: [
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
                               Container(
-                                width: 40, height: 40, alignment: Alignment.center,
+                                width: 46, height: 46, alignment: Alignment.center,
                                 decoration: BoxDecoration(
-                                    gradient: LinearGradient(colors: [c, Color.lerp(c, Colors.black, 0.22)!],
-                                        begin: Alignment.topLeft, end: Alignment.bottomRight),
-                                    borderRadius: BorderRadius.circular(12),
-                                    boxShadow: [BoxShadow(color: c.withValues(alpha: 0.35),
-                                        blurRadius: 6, offset: const Offset(0, 3))]),
-                                child: Icon(kPmsSectionIcons[code] ?? Icons.folder_rounded, size: 21, color: Colors.white),
+                                    color: c.withValues(alpha: 0.10),
+                                    borderRadius: BorderRadius.circular(14)),
+                                child: Icon(kPmsSectionIcons[code] ?? Icons.folder_rounded, size: 22, color: c),
                               ),
-                              if (delegated)
-                                Positioned(top: -5, right: -5, child: Container(
-                                  padding: const EdgeInsets.all(3),
-                                  decoration: BoxDecoration(color: Pms.amber, shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 1.6),
-                                      boxShadow: [BoxShadow(color: Pms.amber.withValues(alpha: 0.5), blurRadius: 4)]),
-                                  child: const Icon(Icons.assignment_ind_rounded, size: 11, color: Colors.white),
-                                )),
-                            ]),
-                            const SizedBox(height: 6),
-                            Text('${x['label']}',
-                                maxLines: 2, overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800,
-                                    color: Pms.ink, height: 1.2)),
-                            if (delegated)
-                              Padding(padding: const EdgeInsets.only(top: 3),
-                                child: Row(children: [
-                                  const Icon(Icons.person_pin_rounded, size: 10, color: Pms.amber),
-                                  const SizedBox(width: 2),
-                                  Expanded(child: Text(
-                                      delegate.isNotEmpty ? '${tr('مفوّض', 'Deleg.')}: $delegate' : tr('مفوّض', 'Delegated'),
-                                      maxLines: 1, overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 8.5, fontWeight: FontWeight.w700, color: Pms.amber))),
-                                ])),
-                          ],
-                        ),
+                              const SizedBox(height: 8),
+                              Text('${x['label']}',
+                                  textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
+                                      color: Pms.ink, height: 1.2)),
+                            ],
+                          ),
+                          if (delegated) Positioned(top: -2, right: -2, child: Tooltip(
+                            message: delegate.isNotEmpty ? '${tr('مفوّض إلى', 'Delegated to')}: $delegate' : tr('مفوّض', 'Delegated'),
+                            child: Container(width: 16, height: 16, alignment: Alignment.center,
+                              decoration: BoxDecoration(color: Pms.amber, shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 1.5)),
+                              child: const Icon(Icons.person_rounded, size: 9, color: Colors.white)),
+                          )),
+                        ]),
                       ),
                     ),
                   );

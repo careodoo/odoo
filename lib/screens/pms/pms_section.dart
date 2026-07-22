@@ -1951,6 +1951,54 @@ class _SupplyDetailSheetState extends State<_SupplyDetailSheet> {
 }
 
 /// Searchable employee picker sheet — filters by name AND badge as you type.
+/// A consistent, professional employee row for ANY employee picker:
+/// photo, name, badge, worker status, and a ✈ mark if on leave.
+Widget empPickTile(Map e, VoidCallback onTap, {bool selected = false}) {
+  final onLeave = e['on_leave'] == true;
+  return ListTile(
+    onTap: onTap,
+    selected: selected, selectedTileColor: Pms.violet.withValues(alpha: 0.06),
+    leading: CircleAvatar(radius: 22, backgroundColor: Pms.bg,
+        backgroundImage: e['avatar'] != null ? NetworkImage('${e['avatar']}') : null,
+        child: e['avatar'] == null ? const Icon(Icons.person, color: Pms.slate) : null),
+    title: Text('${e['name']}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+    subtitle: Padding(
+      padding: const EdgeInsets.only(top: 3),
+      child: Wrap(spacing: 6, runSpacing: 4, children: [
+        if (e['badge'] != null) Container(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+          decoration: BoxDecoration(color: Pms.violet.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(6)),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.badge_rounded, size: 11, color: Pms.violet),
+            const SizedBox(width: 3),
+            Text('${e['badge']}', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: Pms.violet)),
+          ]),
+        ),
+        if (onLeave) const _MiniTag(icon: Icons.flight_rounded, label: 'إجازة', color: Color(0xFF2563EB)),
+        if (e['status'] != null) _MiniTag(icon: Icons.circle, label: '${e['status']}', color: Pms.slate),
+      ]),
+    ),
+    trailing: selected ? const Icon(Icons.check_circle_rounded, color: Pms.violet) : null,
+  );
+}
+
+class _MiniTag extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  const _MiniTag({required this.icon, required this.label, required this.color});
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(6)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, size: 10, color: color),
+          const SizedBox(width: 3),
+          Text(label, style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: color)),
+        ]),
+      );
+}
+
 class _EmpSearchSheet extends StatefulWidget {
   final List emps;
   const _EmpSearchSheet({required this.emps});
@@ -1967,7 +2015,7 @@ class _EmpSearchSheetState extends State<_EmpSearchSheet> {
         ? widget.emps
         : widget.emps.where((e) {
             final m = e as Map;
-            final hay = '${m['name'] ?? ''} ${m['badge'] ?? ''}'.toLowerCase();
+            final hay = '${m['search'] ?? '${m['name'] ?? ''} ${m['badge'] ?? ''}'}'.toLowerCase();
             // comma = OR, spaces = AND (same idiom as the section search)
             return q.split(',').map((g) => g.trim()).where((g) => g.isNotEmpty)
                 .any((group) => group.split(RegExp(r'\s+')).every((w) => hay.contains(w)));
@@ -1996,18 +2044,7 @@ class _EmpSearchSheetState extends State<_EmpSearchSheet> {
               ? Center(child: Text(tr('لا نتائج', 'No matches'), style: const TextStyle(color: Pms.slate)))
               : ListView.builder(
                   controller: sc, itemCount: list.length,
-                  itemBuilder: (_, i) {
-                    final e = list[i] as Map;
-                    return ListTile(
-                      leading: CircleAvatar(backgroundColor: Pms.bg,
-                          child: const Icon(Icons.person, color: Pms.slate, size: 20)),
-                      title: Text('${e['name']}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-                      subtitle: e['badge'] != null
-                          ? Text('${tr('بادج', 'Badge')}: ${e['badge']}', style: const TextStyle(fontSize: 12))
-                          : null,
-                      onTap: () => Navigator.pop(context, e['id'] as int),
-                    );
-                  },
+                  itemBuilder: (_, i) => empPickTile(list[i] as Map, () => Navigator.pop(context, (list[i] as Map)['id'] as int)),
                 )),
         ]),
       ),
