@@ -11,6 +11,7 @@ import 'pms_employee_file.dart';
 import 'pms_vehicle_file.dart';
 import 'pms_attendance_advanced.dart';
 import 'pms_performance.dart';
+import 'pms_finance.dart';
 import '../pdf_report_screen.dart';
 
 /// Icons for the section codes the API advertises. Kept here rather than sent
@@ -197,6 +198,18 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
                   icon: const Icon(Icons.insights_rounded, size: 19),
                   label: Text(tr('لوحة الأداء الكاملة (KPIs)', 'Full performance dashboard'),
                       style: const TextStyle(fontWeight: FontWeight.w900)),
+                )),
+              ],
+              if (widget.code == 'finance') ...[
+                const SizedBox(height: 10),
+                SizedBox(width: double.infinity, height: 46, child: FilledButton.icon(
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF15213B),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => FinanceScreen(projectId: widget.projectId))),
+                  icon: const Icon(Icons.account_balance_rounded, size: 19),
+                  label: Text(tr('لوحة المالية الكاملة (العقد + المصاريف + التارجت)', 'Full finance dashboard'),
+                      style: const TextStyle(fontWeight: FontWeight.w800)),
                 )),
               ],
               if (all.length > 4 || widget.code == 'team') ...[

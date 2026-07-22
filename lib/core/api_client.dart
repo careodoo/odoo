@@ -1602,6 +1602,11 @@ class ApiClient {
         _u('/pms/project/$projectId/attendance/records$suffix'), headers: await _headers())))['data'] as Map);
   }
 
+  /// Finance dashboard for a project (contract, costs, Kuwait target).
+  Future<Map<String, dynamic>> pmsFinance(int projectId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/project/$projectId/finance'), headers: await _headers())))['data'] as Map);
+
   /// Rich performance KPI dashboard for a project.
   Future<Map<String, dynamic>> pmsPerformance(int projectId) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
