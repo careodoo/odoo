@@ -304,38 +304,53 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
           ]),
           const SizedBox(height: 8),
           GridView.count(
-            crossAxisCount: 4, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 8, crossAxisSpacing: 8, childAspectRatio: 0.86,
+            crossAxisCount: 3, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 10, crossAxisSpacing: 10, childAspectRatio: 1.02,
             children: [
               for (final x in list)
                 Builder(builder: (ctx) {
                   final code = '${(x as Map)['code']}';
                   final c = kPmsSectionColors[code] ?? Pms.violet;
-                  return InkWell(
-                    borderRadius: BorderRadius.circular(14),
-                    onTap: () => Navigator.push(ctx, MaterialPageRoute(
-                        builder: (_) => PmsSectionScreen(
-                            projectId: widget.projectId, code: code, label: '${x['label']}'))),
-                    onLongPress: () => _delegateSheet(code, '${x['label']}'),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: c.withValues(alpha: 0.2)),
-                      ),
-                      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        Container(
-                          width: 32, height: 32, alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                              color: c.withValues(alpha: 0.11), borderRadius: BorderRadius.circular(10)),
-                          child: Icon(kPmsSectionIcons[code] ?? Icons.folder_rounded, size: 16, color: c),
+                  return Material(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () => Navigator.push(ctx, MaterialPageRoute(
+                          builder: (_) => PmsSectionScreen(
+                              projectId: widget.projectId, code: code, label: '${x['label']}'))),
+                      onLongPress: () => _delegateSheet(code, '${x['label']}'),
+                      child: Container(
+                        padding: const EdgeInsets.all(11),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: c.withValues(alpha: 0.18)),
+                          gradient: LinearGradient(colors: [c.withValues(alpha: 0.10), Colors.white],
+                              begin: Alignment.topRight, end: Alignment.bottomLeft),
+                          boxShadow: [BoxShadow(color: c.withValues(alpha: 0.10),
+                              blurRadius: 8, offset: const Offset(0, 3))],
                         ),
-                        const SizedBox(height: 5),
-                        Text('${x['label']}',
-                            maxLines: 2, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: c, height: 1.2)),
-                      ]),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(
+                              width: 40, height: 40, alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                  gradient: LinearGradient(colors: [c, Color.lerp(c, Colors.black, 0.22)!],
+                                      begin: Alignment.topLeft, end: Alignment.bottomRight),
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [BoxShadow(color: c.withValues(alpha: 0.35),
+                                      blurRadius: 6, offset: const Offset(0, 3))]),
+                              child: Icon(kPmsSectionIcons[code] ?? Icons.folder_rounded, size: 21, color: Colors.white),
+                            ),
+                            Text('${x['label']}',
+                                maxLines: 2, overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800,
+                                    color: Pms.ink, height: 1.2)),
+                          ],
+                        ),
+                      ),
                     ),
                   );
                 }),
