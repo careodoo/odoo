@@ -1637,6 +1637,20 @@ class ApiClient {
           headers: await _headers(), body: jsonEncode(vals))))['data'] as Map);
 
   /// Cash-custody detail (amount/spent/remaining/state + available actions).
+  Future<Map<String, dynamic>> pmsTimesheetDetail(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/pms/timesheet/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsTimesheetLineWrite(int lineId, int actual) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/pms/timesheet/line/$lineId'), headers: await _headers(),
+              body: jsonEncode({'actual': actual}))))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsTimesheetAction(int id, String action) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/pms/timesheet/$id/action'), headers: await _headers(),
+              body: jsonEncode({'action': action}))))['data'] as Map);
+
   Future<Map<String, dynamic>> pmsPettyDetail(int cashId) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/pms/pettycash/$cashId'), headers: await _headers())))['data'] as Map);

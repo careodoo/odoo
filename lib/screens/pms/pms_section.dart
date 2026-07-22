@@ -470,10 +470,21 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
               builder: (_) => PmsVehicleFileScreen(vehicleId: r['vehicle_id'] as int, name: '${r['title']}')));
         } else if (opens == 'pettycash') {
           _openPetty(r['id'] as int);
+        } else if (opens == 'timesheet') {
+          _openTimesheet(r['id'] as int);
         }
       },
       child: inner,
     );
+  }
+
+  Future<void> _openTimesheet(int id) async {
+    await showModalBottomSheet<bool>(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => _TimesheetSheet(timesheetId: id, color: _c),
+    );
+    if (mounted) setState(_load);
   }
 
   Future<void> _openPetty(int cid) async {
@@ -888,6 +899,252 @@ class _PettyDetailSheetState extends State<_PettyDetailSheet> {
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           SizedBox(width: 100, child: Text(k, style: const TextStyle(color: Pms.slate, fontSize: 12))),
           Expanded(child: Text(v, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Pms.ink))),
+        ]),
+      );
+}
+
+/// A timesheet: its lines with the editable «actual» days (draft only), plus
+/// submit-for-approval and delete-draft — the module's policy, on a phone.
+class _TimesheetSheet extends StatefulWidget {
+  final int timesheetId;
+  final Color color;
+  const _TimesheetSheet({required this.timesheetId, required this.color});
+  @override
+  State<_TimesheetSheet> createState() => _TimesheetSheetState();
+}
+
+class _TimesheetSheetState extends State<_TimesheetSheet> {
+  Map<String, dynamic>? _d;
+  String? _error;
+  bool _busy = false;
+  String _q = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final d = await context.read<AuthProvider>().api.pmsTimesheetDetail(widget.timesheetId);
+      if (mounted) setState(() => _d = d);
+    } catch (e) {
+      if (mounted) setState(() => _error = '$e');
+    }
+  }
+
+  Future<void> _editLine(Map line) async {
+    final ctrl = TextEditingController(text: '${line['actual'] ?? 0}');
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('${line['employee']}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(tr('المتوقّع: ${line['count'] ?? 0} يوم', 'Expected: ${line['count'] ?? 0}'),
+              style: const TextStyle(color: Pms.slate, fontSize: 12)),
+          const SizedBox(height: 12),
+          TextField(
+            controller: ctrl, keyboardType: TextInputType.number, autofocus: true,
+            decoration: InputDecoration(labelText: tr('الأيام الفعلية', 'Actual days'),
+                border: const OutlineInputBorder()),
+          ),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('إلغاء', 'Cancel'))),
+          FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: widget.color),
+              onPressed: () => Navigator.pop(c, true), child: Text(tr('حفظ', 'Save'))),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    final v = int.tryParse(ctrl.text.trim());
+    if (v == null) return;
+    try {
+      final res = await context.read<AuthProvider>().api.pmsTimesheetLineWrite(line['id'] as int, v);
+      setState(() { line['actual'] = res['actual']; line['diff'] = res['diff']; });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+      }
+    }
+  }
+
+  Future<void> _run(String action, {bool confirm = false}) async {
+    if (confirm) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (c) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(tr('حذف المسودة', 'Delete draft'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+          content: Text(tr('سيُحذف الكشف نهائيًّا. متابعة؟', 'The sheet will be permanently deleted. Continue?')),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('تراجع', 'Back'))),
+            FilledButton(style: FilledButton.styleFrom(backgroundColor: Pms.red),
+                onPressed: () => Navigator.pop(c, true), child: Text(tr('حذف', 'Delete'))),
+          ],
+        ),
+      );
+      if (ok != true) return;
+    }
+    setState(() => _busy = true);
+    try {
+      final res = await context.read<AuthProvider>().api.pmsTimesheetAction(widget.timesheetId, action);
+      if (!mounted) return;
+      if (res['deleted'] != null || action == 'delete') {
+        Navigator.pop(context, true);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(tr('تم حذف المسودة', 'Draft deleted')), backgroundColor: Pms.green));
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تم تقديم الكشف للاعتماد', 'Timesheet submitted')), backgroundColor: Pms.green));
+      await _load();
+      setState(() => _busy = false);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _busy = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      expand: false, initialChildSize: 0.85, maxChildSize: 0.96, minChildSize: 0.5,
+      builder: (_, sc) {
+        if (_error != null) return Center(child: Padding(padding: const EdgeInsets.all(24), child: Text('$_error')));
+        if (_d == null) return const SizedBox(height: 240, child: Center(child: CircularProgressIndicator()));
+        final d = _d!;
+        final canEdit = d['can_edit'] == true;
+        final actions = (d['actions'] as List?) ?? const [];
+        final allLines = (d['lines'] as List?) ?? const [];
+        final lines = _q.isEmpty ? allLines
+            : allLines.where((l) => '${(l as Map)['search'] ?? ''}'.contains(_q.toLowerCase())).toList();
+        return Stack(children: [
+          Column(children: [
+            // header
+            Container(
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [widget.color, Color.lerp(widget.color, Colors.black, 0.3)!],
+                    begin: Alignment.topRight, end: Alignment.bottomLeft),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(22))),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Center(child: Container(width: 40, height: 4,
+                    decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(4)))),
+                const SizedBox(height: 12),
+                Row(children: [
+                  const Icon(Icons.timer_rounded, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text('${d['name'] ?? ''}',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15))),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(20)),
+                    child: Text('${d['state_label'] ?? ''}',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 11)),
+                  ),
+                ]),
+                const SizedBox(height: 6),
+                Text('${d['date_from'] ?? ''} → ${d['date_to'] ?? ''}${d['department'] != null ? ' · ${d['department']}' : ''}',
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 11.5)),
+                if (canEdit) Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(tr('اضغط على أي سطر لتعديل الأيام الفعلية', 'Tap a row to edit actual days'),
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 10.5)),
+                ),
+              ]),
+            ),
+            // search
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+              child: TextField(
+                onChanged: (v) => setState(() => _q = v),
+                decoration: InputDecoration(
+                  hintText: tr('ابحث بالاسم…', 'Search by name…'),
+                  prefixIcon: const Icon(Icons.search_rounded, size: 19),
+                  isDense: true, filled: true, fillColor: Pms.bg,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
+              ),
+            ),
+            // lines
+            Expanded(child: ListView.builder(
+              controller: sc,
+              padding: const EdgeInsets.fromLTRB(12, 4, 12, 90),
+              itemCount: lines.length,
+              itemBuilder: (_, i) {
+                final l = lines[i] as Map;
+                final diff = l['diff'];
+                final dc = (diff is num && diff < 0) ? Pms.red : (diff is num && diff > 0 ? Pms.amber : Pms.green);
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 6),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
+                  clipBehavior: Clip.antiAlias,
+                  child: Material(color: Colors.transparent, child: InkWell(
+                    onTap: canEdit ? () => _editLine(l) : null,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      child: Row(children: [
+                        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text('${l['employee']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+                          if (l['badge'] != null) Text('${tr('بادج', 'Badge')} ${l['badge']}',
+                              style: const TextStyle(fontSize: 9.5, color: Pms.slate)),
+                        ])),
+                        _tsNum(tr('متوقّع', 'Exp'), '${l['count'] ?? 0}', Pms.slate),
+                        _tsNum(tr('فعلي', 'Act'), '${l['actual'] ?? 0}', widget.color),
+                        _tsNum(tr('فرق', 'Diff'), '${l['diff'] ?? 0}', dc),
+                        if (canEdit) const Padding(padding: EdgeInsets.only(right: 4),
+                            child: Icon(Icons.edit_rounded, size: 15, color: Pms.slate)),
+                      ]),
+                    ),
+                  )),
+                );
+              },
+            )),
+          ]),
+          // actions bar
+          if (actions.isNotEmpty) Positioned(left: 0, right: 0, bottom: 0, child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: Colors.white, boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0, -3))]),
+            child: Row(children: [
+              for (final a in actions) Expanded(child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: SizedBox(height: 46, child: (a as Map)['style'] == 'primary'
+                  ? ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(backgroundColor: widget.color, foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                      onPressed: _busy ? null : () => _run('${a['key']}'),
+                      icon: const Icon(Icons.send_rounded, size: 18),
+                      label: Text('${a['ar']}', style: const TextStyle(fontWeight: FontWeight.w800)))
+                  : OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(foregroundColor: Pms.red,
+                          side: const BorderSide(color: Pms.red),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                      onPressed: _busy ? null : () => _run('${a['key']}', confirm: a['confirm'] == true),
+                      icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                      label: Text('${a['ar']}', style: const TextStyle(fontWeight: FontWeight.w800)))),
+              )),
+            ]),
+          )),
+        ]);
+      },
+    );
+  }
+
+  Widget _tsNum(String label, String v, Color c) => Container(
+        width: 48,
+        margin: const EdgeInsets.only(right: 4),
+        child: Column(children: [
+          Text(v, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: c)),
+          Text(label, style: const TextStyle(fontSize: 8.5, color: Pms.slate)),
         ]),
       );
 }
