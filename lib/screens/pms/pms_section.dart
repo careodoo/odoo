@@ -70,6 +70,10 @@ class PmsSectionScreen extends StatefulWidget {
 }
 
 class _PmsSectionScreenState extends State<PmsSectionScreen> {
+  final _searchCtrl = TextEditingController();
+  final List<String> _pins = []; // pinned search terms (cumulative)
+  @override
+  void dispose() { _searchCtrl.dispose(); super.dispose(); }
   Future<Map<String, dynamic>>? _f;
   String _q = '';
   int _attTab = 0; // attendance: 0 = present records, 1 = absentees
@@ -136,17 +140,20 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
             final all = (hasTabs && _attTab == 1)
                 ? secondList
                 : ((d['rows'] as List?) ?? const []);
-            final rows = _q.isEmpty
+            // Cumulative search: every pinned term OR the live text is an
+            // alternative; a row matches if it satisfies ANY of them. So the
+            // user types a badge → Enter (pins it) → types another → both stay.
+            final terms = [..._pins, if (_q.trim().isNotEmpty) _q.trim()];
+            final rows = terms.isEmpty
                 ? all
                 : all.where((r) {
                     final m = r as Map;
                     final hay = '${m['title'] ?? ''} ${m['subtitle'] ?? ''} '
                         '${(m['badges'] as List?)?.join(' ') ?? ''} ${m['search'] ?? ''}'.toLowerCase();
-                    // Odoo-style multi-search: comma separates OR alternatives;
-                    // spaces within an alternative are AND. So "أحمد, civ 123"
-                    // matches «أحمد» OR (a row with both «civ» and «123»).
-                    return _q.toLowerCase().split(',').map((g) => g.trim()).where((g) => g.isNotEmpty)
-                        .any((group) => group.split(RegExp(r'\s+')).every((w) => hay.contains(w)));
+                    // each term: comma = OR alternatives, spaces = AND
+                    return terms.any((term) => term.toLowerCase().split(',').map((g) => g.trim())
+                        .where((g) => g.isNotEmpty)
+                        .any((group) => group.split(RegExp(r'\s+')).every((w) => hay.contains(w))));
                   }).toList();
             return ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 24), children: [
               if (stats.isNotEmpty) _statsBand(stats),
@@ -195,17 +202,55 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
               if (all.length > 4 || widget.code == 'team') ...[
                 const SizedBox(height: 10),
                 TextField(
+                  controller: _searchCtrl,
                   onChanged: (v) => setState(() => _q = v),
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: (v) {
+                    final t = v.trim();
+                    if (t.isEmpty) return;
+                    setState(() { if (!_pins.contains(t)) _pins.add(t); _q = ''; _searchCtrl.clear(); });
+                  },
                   decoration: InputDecoration(
                     hintText: widget.code == 'team'
-                        ? tr('اسم / بادج / مدني / جواز — وأكثر من اسم بفاصلة',
-                            'Name / badge / civil ID / passport — several by comma')
+                        ? tr('ابحث برقم/اسم ثم اضغط Enter لتثبيته وإضافة آخر',
+                            'Type a badge/name, press Enter to pin, add more')
                         : tr('ابحث…', 'Search…'),
                     prefixIcon: const Icon(Icons.search_rounded, size: 19),
+                    suffixIcon: (_q.isNotEmpty)
+                        ? IconButton(icon: const Icon(Icons.add_circle_rounded, size: 20, color: Pms.violet),
+                            tooltip: tr('تثبيت', 'Pin'),
+                            onPressed: () {
+                              final t = _q.trim();
+                              if (t.isEmpty) return;
+                              setState(() { if (!_pins.contains(t)) _pins.add(t); _q = ''; _searchCtrl.clear(); });
+                            })
+                        : null,
                     isDense: true, filled: true, fillColor: Colors.white,
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                   ),
+                ),
+                // pinned terms (cumulative), each removable
+                if (_pins.isNotEmpty) Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Wrap(spacing: 6, runSpacing: 6, children: [
+                    for (final p in _pins)
+                      Chip(
+                        label: Text(p, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                        backgroundColor: Pms.violet.withValues(alpha: 0.10),
+                        side: BorderSide(color: Pms.violet.withValues(alpha: 0.3)),
+                        labelStyle: const TextStyle(color: Pms.violet),
+                        visualDensity: VisualDensity.compact,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        onDeleted: () => setState(() => _pins.remove(p)),
+                        deleteIconColor: Pms.violet,
+                      ),
+                    if (_pins.length > 1) ActionChip(
+                      label: Text(tr('مسح الكل', 'Clear all'), style: const TextStyle(fontSize: 11)),
+                      onPressed: () => setState(() => _pins.clear()),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ]),
                 ),
               ],
               const SizedBox(height: 10),
