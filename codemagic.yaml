@@ -1,48 +1,57 @@
 # Codemagic CI/CD for the CARE Flutter app (repo root is the Flutter project).
 #
-# One-time setup in Codemagic before the first run:
-#   1. Team → Integrations → App Store Connect: add the .p8 API key
-#      (Issuer ID + Key ID) and name the integration `care_appstore`.
-#   2. (optional, Android) Integrations → Google Play + Android code signing
-#      with the care-release.jks upload key (alias `care`, pass Care2026Store).
-#   3. Environment variable group `appstore` may hold extra secure vars.
-#
-# The iOS bundle identifier below (com.carekw.care) MUST match the App ID
-# registered in the Apple Developer account and the app in App Store Connect.
+# App Store Connect auth is done ENTIRELY with environment variables (no named
+# integration needed). Add these to a variable group called `appstore`
+# (App settings → Environment variables → group: appstore):
+#   APP_STORE_CONNECT_ISSUER_ID       = 96770401-8bdd-48c3-94d9-11efc4774b50
+#   APP_STORE_CONNECT_KEY_IDENTIFIER  = MANR2LGK8P            (the CARE CI key)
+#   APP_STORE_CONNECT_PRIVATE_KEY     = <full contents of AuthKey_MANR2LGK8P.p8>  (Secret)
+# The app record + bundle id com.carekw.care already exist in App Store Connect.
 
 workflows:
   ios-appstore:
     name: CARE iOS → App Store
     instance_type: mac_mini_m2
     max_build_duration: 60
-    integrations:
-      app_store_connect: care_appstore
     environment:
       groups:
-        - appstore
+        - appstore                    # holds the 3 APP_STORE_CONNECT_* vars
+      vars:
+        BUNDLE_ID: "com.carekw.care"
       flutter: stable
       xcode: latest
       cocoapods: default
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.carekw.care
     scripts:
       - name: Flutter pub get
         script: flutter pub get
-      - name: Set up code signing
+      - name: Initialize keychain
+        script: keychain initialize
+      - name: Fetch signing files (creates cert + profile if missing)
+        # app-store-connect auto-reads APP_STORE_CONNECT_ISSUER_ID /
+        # _KEY_IDENTIFIER / _PRIVATE_KEY from the environment.
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+      - name: Add certificates to keychain
+        script: keychain add-certificates
+      - name: Apply provisioning profiles to the Xcode project
         script: xcode-project use-profiles
       - name: Build IPA
         script: |
           flutter build ipa --release \
             --build-name=$(grep -E '^version:' pubspec.yaml | sed -E 's/version:[[:space:]]*//; s/\+.*//') \
             --build-number=$(($(date +%s)/60)) \
-            --dart-define=CARE_API_BASE=https://ecare.care-kw.com/api/v1
+            --dart-define=CARE_API_BASE=https://ecare.care-kw.com/api/v1 \
+            --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
     publishing:
       app_store_connect:
-        auth: integration
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
         # Flip to true once TestFlight looks good, to auto-submit for review:
         submit_to_app_store: false
