@@ -491,7 +491,6 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
   }
 
   Widget _teamPreview(List<Map> team) {
-    final base = context.read<AuthProvider>().api.baseUrl.replaceAll('/api/v1', '');
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
       decoration: BoxDecoration(
@@ -524,7 +523,8 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
                 child: Column(children: [
                   CircleAvatar(
                     radius: 24, backgroundColor: const Color(0xFF0D9488).withValues(alpha: 0.12),
-                    backgroundImage: e['avatar'] != null ? NetworkImage('$base${e['avatar']}') : null,
+                    backgroundImage: e['avatar'] != null ? NetworkImage('${e['avatar']}') : null,
+                    onBackgroundImageError: (_, __) {},
                     child: e['avatar'] == null
                         ? Text('${e['name'] ?? '?'}'.characters.first,
                             style: const TextStyle(color: Color(0xFF0D9488), fontWeight: FontWeight.w900))
@@ -621,36 +621,31 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
         ),
       );
 
-  Widget _stat(String v, String l, Color c) => Expanded(
-        child: Column(children: [
-          Text(v, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: c)),
-          Text(l, style: const TextStyle(fontSize: 11, color: Pms.slate)),
-        ]),
-      );
-
-  Widget _kv(IconData i, String k, String v) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Icon(i, size: 16, color: Pms.slate),
-          const SizedBox(width: 8),
-          SizedBox(width: 92, child: Text(k, style: const TextStyle(color: Pms.slate, fontSize: 12))),
-          Expanded(child: Text(v, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Pms.ink))),
-        ]),
-      );
-
   static const _statIcons = {
     'checklist': Icons.checklist_rounded,
+    'pending_actions': Icons.pending_actions_rounded,
+    'check_circle': Icons.check_circle_rounded,
+    'local_fire_department': Icons.local_fire_department_rounded,
     'groups': Icons.groups_rounded,
+    'fmd_good': Icons.fmd_good_rounded,
+    'verified_user': Icons.verified_user_rounded,
     'directions_car': Icons.directions_car_rounded,
     'mail': Icons.mail_rounded,
     'inventory_2': Icons.inventory_2_rounded,
     'inventory': Icons.inventory_rounded,
+    'receipt': Icons.receipt_long_rounded,
+    'local_shipping': Icons.local_shipping_rounded,
+    'description': Icons.description_rounded,
+    'timer': Icons.timer_rounded,
     'payments': Icons.payments_rounded,
   };
   static const _statColors = {
-    '__tasks__': Pms.violet, 'team': Color(0xFF2563EB), 'fuel': Color(0xFF0D9488),
-    '__letters__': Color(0xFF9333EA), 'assets': Color(0xFF0E7490),
-    'materials': Color(0xFF7C3AED), 'petty': Color(0xFFD97706),
+    '__tasks__': Pms.violet, '__open__': Color(0xFFF59E0B), '__done__': Color(0xFF16A34A),
+    '__overdue__': Color(0xFFE11D48), 'team': Color(0xFF2563EB), 'attendance': Color(0xFF0EA5E9),
+    'compliance': Color(0xFFE5484D), 'fuel': Color(0xFF0D9488), '__letters__': Color(0xFF9333EA),
+    'assets': Color(0xFF0E7490), 'materials': Color(0xFF7C3AED), 'deliveries': Color(0xFF6366F1),
+    'supplies': Color(0xFF0EA5E9), 'requests': Color(0xFF8B5CF6), 'timesheet': Color(0xFF7C3AED),
+    'petty': Color(0xFFD97706),
   };
 
   Widget _statCard(Map s) {
@@ -658,31 +653,33 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
     final c = _statColors[code] ?? Pms.violet;
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(15),
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(16),
         onTap: () => _openStat(code, '${s['label']}'),
         child: Container(
           padding: const EdgeInsets.all(11),
           decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: c.withValues(alpha: 0.22))),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: c.withValues(alpha: 0.18)),
+              gradient: LinearGradient(colors: [c.withValues(alpha: 0.10), Colors.white],
+                  begin: Alignment.topRight, end: Alignment.bottomLeft)),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
               Container(
-                width: 30, height: 30, alignment: Alignment.center,
-                decoration: BoxDecoration(color: c.withValues(alpha: 0.11), borderRadius: BorderRadius.circular(9)),
-                child: Icon(_statIcons['${s['icon']}'] ?? Icons.insights_rounded, size: 17, color: c),
+                width: 32, height: 32, alignment: Alignment.center,
+                decoration: BoxDecoration(color: c.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
+                child: Icon(_statIcons['${s['icon']}'] ?? Icons.insights_rounded, size: 18, color: c),
               ),
               const Spacer(),
-              Icon(Icons.chevron_left_rounded, size: 18, color: c.withValues(alpha: 0.5)),
+              Icon(Icons.chevron_left_rounded, size: 17, color: c.withValues(alpha: 0.5)),
             ]),
             const Spacer(),
             Text('${s['count']}',
                 style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: c, height: 1)),
-            const SizedBox(height: 1),
-            Text('${s['label']}', maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Pms.ink)),
+            const SizedBox(height: 2),
+            Text('${s['label']}', maxLines: 2, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 10.5, color: Pms.ink, height: 1.15)),
           ]),
         ),
       ),
@@ -799,10 +796,15 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
     );
   }
 
+  static const _taskFilters = {
+    '__tasks__': '', '__open__': 'open', '__done__': 'done', '__overdue__': 'overdue',
+  };
+
   void _openStat(String code, String label) {
-    if (code == '__tasks__') {
+    if (_taskFilters.containsKey(code)) {
       Navigator.push(context, MaterialPageRoute(
-          builder: (_) => PmsTasksScreen(filter: '', title: widget.name, projectId: widget.projectId)));
+          builder: (_) => PmsTasksScreen(
+              filter: _taskFilters[code]!, title: label, projectId: widget.projectId)));
     } else if (code == '__letters__') {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(tr('الكتب والمراسلات تُدار من نظام المراسلات',

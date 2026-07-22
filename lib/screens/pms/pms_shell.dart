@@ -9,11 +9,13 @@ import 'pms_tasks.dart';
 import '../my/my_screen.dart';
 
 class Pms {
-  static const violet = Color(0xFF7C3AED);
-  static const deep = Color(0xFF5B21B6);
-  static const bg = Color(0xFFF6F5FB);
-  static const ink = Color(0xFF1E1B33);
-  static const slate = Color(0xFF64748B);
+  // Brand identity: red with gray. `violet`/`deep` are the primary red pair
+  // (name kept so the whole app follows from one place); surfaces are neutral gray.
+  static const violet = Color(0xFFC0392B); // primary red
+  static const deep = Color(0xFF8E2A20); // deep red (gradients)
+  static const bg = Color(0xFFF3F4F6); // gray surface
+  static const ink = Color(0xFF1F2933); // charcoal text
+  static const slate = Color(0xFF6B7280); // gray accent
   static const amber = Color(0xFFF59E0B);
   static const red = Color(0xFFE11D48);
   static const green = Color(0xFF16A34A);
