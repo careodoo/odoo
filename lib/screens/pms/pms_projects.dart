@@ -458,9 +458,9 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
           child: Row(children: [
             Icon(ic, size: 15, color: Colors.white.withValues(alpha: 0.85)),
             const SizedBox(width: 8),
-            Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 11.5)),
-            const Spacer(),
-            Flexible(child: Text(value, maxLines: 1, overflow: TextOverflow.ellipsis,
+            Text('$label:', style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 11.5)),
+            const SizedBox(width: 6),
+            Expanded(child: Text(value, maxLines: 1, overflow: TextOverflow.ellipsis,
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12))),
           ]),
         );
