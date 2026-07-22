@@ -504,20 +504,145 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
       );
     }
     if (type == 'documents') {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-        child: SizedBox(width: double.infinity, child: FilledButton.icon(
-          style: FilledButton.styleFrom(backgroundColor: color,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11))),
-          onPressed: _busy ? null : _uploadDoc,
-          icon: const Icon(Icons.upload_file_rounded, size: 18),
-          label: Text(tr('رفع مستند جديد للاعتماد', 'Upload document for approval'),
-              style: const TextStyle(fontWeight: FontWeight.w800)),
-        )),
-      );
+      return _barBtn(Icons.upload_file_rounded, tr('رفع مستند جديد للاعتماد', 'Upload document for approval'),
+          color, _uploadDoc);
+    }
+    if (type == 'leaves') {
+      return _barBtn(Icons.add_circle_rounded, tr('تقديم إجازة لهذا العامل', 'Submit leave for this worker'),
+          color, _submitLeave);
+    }
+    if (type == 'loans') {
+      return _barBtn(Icons.add_circle_rounded, tr('تقديم سلفة لهذا العامل', 'Submit loan for this worker'),
+          color, _submitLoan);
     }
     return const SizedBox.shrink();
   }
+
+  Widget _barBtn(IconData ic, String label, Color c, VoidCallback onTap) => Padding(
+        padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+        child: SizedBox(width: double.infinity, child: FilledButton.icon(
+          style: FilledButton.styleFrom(backgroundColor: c,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11))),
+          onPressed: _busy ? null : onTap,
+          icon: Icon(ic, size: 18),
+          label: Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
+        )),
+      );
+
+  Future<void> _submitLeave() async {
+    final api = context.read<AuthProvider>().api;
+    List<dynamic> types;
+    try { types = await api.pmsLeaveTypes(widget.employeeId); } catch (_) { types = const []; }
+    if (!mounted) return;
+    int? typeId = types.isNotEmpty ? (types.first as Map)['id'] as int : null;
+    DateTime from = DateTime.now(), to = DateTime.now().add(const Duration(days: 1));
+    final note = TextEditingController();
+    final ok = await showModalBottomSheet<bool>(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => StatefulBuilder(builder: (ctx, ss) => Padding(
+        padding: EdgeInsets.fromLTRB(18, 16, 18, MediaQuery.of(ctx).viewInsets.bottom + 18),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(tr('تقديم إجازة', 'Submit leave'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<int>(
+            initialValue: typeId, isExpanded: true,
+            decoration: InputDecoration(labelText: tr('نوع الإجازة', 'Leave type'), border: const OutlineInputBorder(), isDense: true),
+            items: [for (final t in types) DropdownMenuItem(value: (t as Map)['id'] as int, child: Text('${t['name']}'))],
+            onChanged: (v) => ss(() => typeId = v)),
+          const SizedBox(height: 10),
+          Row(children: [
+            Expanded(child: _dateBtn(tr('من', 'From'), from, (d) => ss(() => from = d))),
+            const SizedBox(width: 8),
+            Expanded(child: _dateBtn(tr('إلى', 'To'), to, (d) => ss(() => to = d))),
+          ]),
+          const SizedBox(height: 10),
+          TextField(controller: note, decoration: InputDecoration(labelText: tr('ملاحظة (اختياري)', 'Note'), border: const OutlineInputBorder(), isDense: true)),
+          const SizedBox(height: 14),
+          SizedBox(width: double.infinity, height: 46, child: FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: color),
+            onPressed: typeId == null ? null : () => Navigator.pop(ctx, true),
+            child: Text(tr('تقديم', 'Submit'), style: const TextStyle(fontWeight: FontWeight.w900)))),
+        ]),
+      )),
+    );
+    if (ok != true) return;
+    setState(() => _busy = true);
+    try {
+      await api.pmsLeaveCreate(widget.employeeId, {
+        'leave_type_id': typeId,
+        'date_from': from.toIso8601String().substring(0, 10),
+        'date_to': to.toIso8601String().substring(0, 10),
+        'note': note.text.trim(),
+      });
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تم تقديم الإجازة', 'Leave submitted')), backgroundColor: Pms.green));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+    } finally { if (mounted) setState(() => _busy = false); }
+  }
+
+  Future<void> _submitLoan() async {
+    final api = context.read<AuthProvider>().api;
+    final amount = TextEditingController();
+    final inst = TextEditingController(text: '1');
+    final reason = TextEditingController();
+    final ok = await showModalBottomSheet<bool>(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(18, 16, 18, MediaQuery.of(ctx).viewInsets.bottom + 18),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(tr('تقديم سلفة', 'Submit loan'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+          const SizedBox(height: 12),
+          TextField(controller: amount, keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(labelText: tr('المبلغ *', 'Amount *'), border: const OutlineInputBorder(), isDense: true)),
+          const SizedBox(height: 10),
+          TextField(controller: inst, keyboardType: TextInputType.number,
+              decoration: InputDecoration(labelText: tr('عدد الأقساط', 'Installments'), border: const OutlineInputBorder(), isDense: true)),
+          const SizedBox(height: 10),
+          TextField(controller: reason, decoration: InputDecoration(labelText: tr('السبب', 'Reason'), border: const OutlineInputBorder(), isDense: true)),
+          const SizedBox(height: 14),
+          SizedBox(width: double.infinity, height: 46, child: FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: color),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(tr('تقديم', 'Submit'), style: const TextStyle(fontWeight: FontWeight.w900)))),
+        ]),
+      ),
+    );
+    if (ok != true) return;
+    final amt = double.tryParse(amount.text.trim().replaceAll(',', '.'));
+    if (amt == null || amt <= 0) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('أدخل مبلغًا صحيحًا', 'Enter a valid amount'))));
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      await api.pmsLoanCreate(widget.employeeId, {
+        'amount': amt, 'installments': int.tryParse(inst.text.trim()) ?? 1, 'reason': reason.text.trim(),
+      });
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تم تقديم السلفة', 'Loan submitted')), backgroundColor: Pms.green));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+    } finally { if (mounted) setState(() => _busy = false); }
+  }
+
+  Widget _dateBtn(String label, DateTime val, ValueChanged<DateTime> onPick) => InkWell(
+        onTap: () async {
+          final d = await showDatePicker(context: context, initialDate: val,
+              firstDate: DateTime(2020), lastDate: DateTime(2100));
+          if (d != null) onPick(d);
+        },
+        child: InputDecorator(
+          decoration: InputDecoration(labelText: label, border: const OutlineInputBorder(), isDense: true),
+          child: Text(val.toIso8601String().substring(0, 10), style: const TextStyle(fontWeight: FontWeight.w700)),
+        ),
+      );
 
   Future<void> _openExcel() async {
     setState(() => _busy = true);
@@ -613,6 +738,16 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
           _kv(tr('الأيام', 'Days'), '${m['days']}'),
           _kv(tr('العودة', 'Returned'), ret != null ? '$ret' : tr('لم يُسجّل', 'not recorded'),
               vc: ret != null ? Pms.green : Pms.amber),
+          const SizedBox(height: 8),
+          SizedBox(width: double.infinity, height: 40, child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(foregroundColor: color, side: BorderSide(color: color),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+                path: context.read<AuthProvider>().api.pmsLeaveReportPath(m['id'] as int),
+                title: tr('تقرير الإجازة', 'Leave report'), fileName: 'leave.pdf'))),
+            icon: const Icon(Icons.print_rounded, size: 17),
+            label: Text(tr('طباعة تقرير الإجازة', 'Print leave report'), style: const TextStyle(fontWeight: FontWeight.w800)),
+          )),
         ]);
       case 'transfers':
         return _wrap([

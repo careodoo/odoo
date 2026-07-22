@@ -1620,6 +1620,21 @@ class ApiClient {
     return '/pms/project/$projectId/attendance/report$suffix';
   }
 
+  // ---- PM submits leave / loan for a worker ----
+  Future<List<dynamic>> pmsLeaveTypes(int eid) async =>
+      List<dynamic>.from((await _handle(await _net.get(
+          _u('/pms/employee/$eid/leave-types'), headers: await _headers())))['data']['types'] as List);
+
+  Future<Map<String, dynamic>> pmsLeaveCreate(int eid, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(_u('/pms/employee/$eid/leave-create'),
+          headers: await _headers(), body: jsonEncode(body)))) ['data'] as Map);
+
+  String pmsLeaveReportPath(int id) => '/pms/leave/$id/report';
+
+  Future<Map<String, dynamic>> pmsLoanCreate(int eid, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(_u('/pms/employee/$eid/loan-create'),
+          headers: await _headers(), body: jsonEncode(body)))) ['data'] as Map);
+
   /// Project invoice detail (professional view — same shape as the client one).
   Future<Map<String, dynamic>> pmsInvoice(int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
