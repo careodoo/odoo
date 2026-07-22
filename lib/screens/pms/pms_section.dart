@@ -80,7 +80,7 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
     final createAction = const {
       'deliveries': 'delivery', 'petty': 'pettycash',
       'timesheet': 'timesheet', 'requests': 'docrequest',
-      'assets': 'custody',
+      'assets': 'custody', 'fuel': 'fuel',
     }[widget.code];
     return Scaffold(
       backgroundColor: Pms.bg,
@@ -131,7 +131,7 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
                   }).toList();
             return ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 24), children: [
               if (stats.isNotEmpty) _statsBand(stats),
-              if (all.length > 8 || widget.code == 'team') ...[
+              if (all.length > 4 || widget.code == 'team') ...[
                 const SizedBox(height: 10),
                 TextField(
                   onChanged: (v) => setState(() => _q = v),
@@ -246,6 +246,7 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
         'requests': tr('طلب مستند', 'Doc request'),
         'assets': tr('طلب عهدة', 'Request custody'),
         'petty': tr('طلب عهدة نقدية', 'Request cash custody'),
+        'fuel': tr('تسجيل تعبئة', 'Add fuel'),
       }[widget.code] ?? tr('إضافة', 'Add');
 
   /// The create sheet, built per-section from its options endpoint.
@@ -650,6 +651,24 @@ class _CreateSheetState extends State<_CreateSheet> {
             if (_pick1 != null) 'employee_id': _pick1,
             if (_b.text.trim().isNotEmpty) 'value': _b.text.trim(),
             if (_c.text.trim().isNotEmpty) 'description': _c.text.trim(),
+          }),
+        ];
+      case 'fuel':
+        final vehicles = (widget.options['vehicles'] as List?) ?? const [];
+        return [
+          _title(tr('تسجيل تعبئة وقود', 'Add fuel record')),
+          if (vehicles.isEmpty)
+            Padding(padding: const EdgeInsets.only(bottom: 10),
+                child: Text(tr('لا سيارات في قسم هذا المشروع.', 'No vehicles in this project department.'),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)))
+          else
+            _dropInt(tr('السيارة', 'Vehicle'), vehicles, 'id', 'name'),
+          _text(_b, tr('اللترات', 'Litres'), type: const TextInputType.numberWithOptions(decimal: true)),
+          _text(_a, tr('قراءة العدّاد (اختياري)', 'Odometer (optional)'), type: TextInputType.number),
+          _submit(_pick1 != null && (double.tryParse(_b.text.trim()) ?? 0) > 0, () => {
+            'vehicle_id': _pick1,
+            'liters': double.tryParse(_b.text.trim()) ?? 0,
+            if (_a.text.trim().isNotEmpty) 'odometer': double.tryParse(_a.text.trim()),
           }),
         ];
       default:
