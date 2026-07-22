@@ -28,10 +28,20 @@ workflows:
         script: keychain initialize
       - name: Fetch signing files (creates cert + profile if missing)
         # app-store-connect auto-reads APP_STORE_CONNECT_ISSUER_ID /
-        # _KEY_IDENTIFIER / _PRIVATE_KEY from the environment.
+        # _KEY_IDENTIFIER / _PRIVATE_KEY from the environment. Creating a
+        # distribution certificate needs a certificate private key: reuse the
+        # CERTIFICATE_PRIVATE_KEY env var if set (recommended so builds share ONE
+        # cert), otherwise generate a fresh one for this build.
         script: |
+          if [ -n "$CERTIFICATE_PRIVATE_KEY" ]; then
+            printf '%s' "$CERTIFICATE_PRIVATE_KEY" > /tmp/cert_key.pem
+          else
+            echo "CERTIFICATE_PRIVATE_KEY not set — generating a temporary one."
+            openssl genrsa -out /tmp/cert_key.pem 2048
+          fi
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
+            --certificate-key=@file:/tmp/cert_key.pem \
             --create
       - name: Add certificates to keychain
         script: keychain add-certificates
