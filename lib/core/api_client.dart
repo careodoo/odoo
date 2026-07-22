@@ -1581,6 +1581,11 @@ class ApiClient {
         _u('/pms/project/$projectId/attendance/records$suffix'), headers: await _headers())))['data'] as Map);
   }
 
+  /// Rich performance KPI dashboard for a project.
+  Future<Map<String, dynamic>> pmsPerformance(int projectId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/project/$projectId/performance'), headers: await _headers())))['data'] as Map);
+
   /// Build the attendance PDF report path (PdfReportScreen adds the token).
   String pmsAttendanceReportPath(int projectId,
       {String? month, String? dateFrom, String? dateTo, int? employeeId, String? status}) {

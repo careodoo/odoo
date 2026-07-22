@@ -8,6 +8,7 @@ import 'pms_shell.dart';
 import 'pms_employee_file.dart';
 import 'pms_vehicle_file.dart';
 import 'pms_attendance_advanced.dart';
+import 'pms_performance.dart';
 import '../pdf_report_screen.dart';
 
 /// Icons for the section codes the API advertises. Kept here rather than sent
@@ -164,6 +165,18 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
                       builder: (_) => AttendanceAdvancedScreen(projectId: widget.projectId))),
                   icon: const Icon(Icons.tune_rounded, size: 19),
                   label: Text(tr('فلاتر متقدّمة + تقرير PDF', 'Advanced filters + PDF report'),
+                      style: const TextStyle(fontWeight: FontWeight.w900)),
+                )),
+              ],
+              if (widget.code == 'performance') ...[
+                const SizedBox(height: 10),
+                SizedBox(width: double.infinity, height: 46, child: FilledButton.icon(
+                  style: FilledButton.styleFrom(backgroundColor: Pms.violet,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => PerformanceScreen(projectId: widget.projectId))),
+                  icon: const Icon(Icons.insights_rounded, size: 19),
+                  label: Text(tr('لوحة الأداء الكاملة (KPIs)', 'Full performance dashboard'),
                       style: const TextStyle(fontWeight: FontWeight.w900)),
                 )),
               ],
