@@ -381,7 +381,9 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
     if (!mounted) return;
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context, isScrollControlled: true, showDragHandle: true,
-      builder: (ctx) => _CreateSheet(code: widget.code, color: _c, options: opts),
+      builder: (ctx) => (widget.code == 'fuel' && opts['new_fuel'] == true)
+          ? _FuelCreateSheet(color: _c, options: opts)
+          : _CreateSheet(code: widget.code, color: _c, options: opts),
     );
     if (result == null) return;
     try {
@@ -612,10 +614,21 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
           _openMaterial(r['id'] as int);
         } else if (opens == 'suspension') {
           _openSuspension(r['id'] as int);
+        } else if (opens == 'fuel') {
+          _openFuel(r['id'] as int);
         }
       },
       child: inner,
     );
+  }
+
+  Future<void> _openFuel(int id) async {
+    await showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => _FuelDetailSheet(fuelId: id, color: _c),
+    );
+    if (mounted) setState(_load);
   }
 
   Future<void> _openSuspension(int id) async {
@@ -2774,5 +2787,379 @@ class SuspensionDetailSheetState extends State<SuspensionDetailSheet> {
           icon: Icon(ic, size: 18),
           label: Text(t, style: const TextStyle(fontWeight: FontWeight.w800)),
         )),
+      );
+}
+
+/// Fuel fill create form — choose prepaid card or cash custody, capture the
+/// receipt photo, and log amount/liters/odometer for a project vehicle.
+class _FuelCreateSheet extends StatefulWidget {
+  final Color color;
+  final Map<String, dynamic> options;
+  const _FuelCreateSheet({required this.color, required this.options});
+  @override
+  State<_FuelCreateSheet> createState() => _FuelCreateSheetState();
+}
+
+class _FuelCreateSheetState extends State<_FuelCreateSheet> {
+  String _method = 'card';
+  int? _cardId, _pettyId, _vehicleId, _driverId;
+  final _amount = TextEditingController();
+  final _liters = TextEditingController();
+  final _odo = TextEditingController();
+  final _station = TextEditingController();
+  final _note = TextEditingController();
+  String? _receipt;
+
+  @override
+  void initState() {
+    super.initState();
+    _amount.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _amount.dispose(); _liters.dispose(); _odo.dispose(); _station.dispose(); _note.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pick(ImageSource src) async {
+    final x = await ImagePicker().pickImage(source: src, maxWidth: 1600, imageQuality: 70);
+    if (x != null) { final b = await x.readAsBytes(); setState(() => _receipt = base64Encode(b)); }
+  }
+
+  InputDecoration _dec(String l) => InputDecoration(labelText: l, isDense: true, border: const OutlineInputBorder());
+
+  @override
+  Widget build(BuildContext context) {
+    final cards = (widget.options['cards'] as List?) ?? const [];
+    final petty = (widget.options['petty'] as List?) ?? const [];
+    final vehicles = (widget.options['vehicles'] as List?) ?? const [];
+    final drivers = (widget.options['drivers'] as List?) ?? const [];
+    final ok = (double.tryParse(_amount.text.trim()) ?? 0) > 0 &&
+        (_method == 'card' ? _cardId != null : true);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+      child: ListView(shrinkWrap: true, children: [
+        Padding(padding: const EdgeInsets.only(bottom: 12),
+            child: Text(tr('تسجيل تعبئة وقود', 'Log fuel fill'),
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: widget.color))),
+        // method segmented
+        Row(children: [
+          _methodChip('card', tr('بطاقة مسبقة الدفع', 'Prepaid card'), Icons.credit_card_rounded),
+          const SizedBox(width: 8),
+          _methodChip('cash', tr('عهدة نقدية', 'Cash custody'), Icons.payments_rounded),
+        ]),
+        const SizedBox(height: 12),
+        if (_method == 'card')
+          _dropInt(tr('بطاقة الوقود *', 'Fuel card *'), cards, (v) => setState(() => _cardId = v), _cardId)
+        else
+          _dropInt(tr('العهدة النقدية', 'Cash custody'), petty, (v) => setState(() => _pettyId = v), _pettyId),
+        if (vehicles.isNotEmpty)
+          _dropInt(tr('المركبة', 'Vehicle'), vehicles, (v) => setState(() => _vehicleId = v), _vehicleId),
+        if (drivers.isNotEmpty)
+          _dropInt(tr('السائق', 'Driver'), drivers, (v) => setState(() => _driverId = v), _driverId, labelKey: 'name'),
+        Padding(padding: const EdgeInsets.only(bottom: 10),
+            child: TextField(controller: _amount, keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: _dec(tr('المبلغ *', 'Amount *')))),
+        Padding(padding: const EdgeInsets.only(bottom: 10),
+            child: TextField(controller: _liters, keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: _dec(tr('اللترات', 'Litres')))),
+        Padding(padding: const EdgeInsets.only(bottom: 10),
+            child: TextField(controller: _odo, keyboardType: TextInputType.number, decoration: _dec(tr('قراءة العدّاد', 'Odometer')))),
+        Padding(padding: const EdgeInsets.only(bottom: 10),
+            child: TextField(controller: _station, decoration: _dec(tr('المحطة', 'Station')))),
+        // receipt
+        Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(color: Pms.bg, borderRadius: BorderRadius.circular(12)),
+          child: Row(children: [
+            if (_receipt != null)
+              ClipRRect(borderRadius: BorderRadius.circular(8),
+                  child: Image.memory(base64Decode(_receipt!), width: 46, height: 46, fit: BoxFit.cover))
+            else
+              Icon(Icons.receipt_long_rounded, color: Colors.grey.shade400, size: 30),
+            const SizedBox(width: 10),
+            Expanded(child: Text(_receipt == null ? tr('أرفق صورة الإيصال', 'Attach receipt photo') : tr('تم إرفاق الإيصال', 'Receipt attached'),
+                style: TextStyle(color: Colors.grey.shade700, fontSize: 12.5, fontWeight: FontWeight.w700))),
+            IconButton(icon: const Icon(Icons.photo_camera_rounded), color: widget.color, onPressed: () => _pick(ImageSource.camera)),
+            IconButton(icon: const Icon(Icons.photo_library_rounded), color: widget.color, onPressed: () => _pick(ImageSource.gallery)),
+          ]),
+        ),
+        Padding(padding: const EdgeInsets.only(bottom: 12),
+            child: TextField(controller: _note, maxLines: 2, decoration: _dec(tr('ملاحظات', 'Notes')))),
+        SizedBox(width: double.infinity, child: FilledButton.icon(
+          style: FilledButton.styleFrom(backgroundColor: widget.color, padding: const EdgeInsets.symmetric(vertical: 13)),
+          onPressed: ok ? () => Navigator.pop(context, <String, dynamic>{
+            'method': _method,
+            if (_method == 'card') 'card_id': _cardId,
+            if (_method == 'cash' && _pettyId != null) 'petty_cash_id': _pettyId,
+            if (_vehicleId != null) 'vehicle_id': _vehicleId,
+            if (_driverId != null) 'driver_id': _driverId,
+            'amount': double.tryParse(_amount.text.trim()) ?? 0,
+            if (_liters.text.trim().isNotEmpty) 'liters': double.tryParse(_liters.text.trim()),
+            if (_odo.text.trim().isNotEmpty) 'odometer': double.tryParse(_odo.text.trim()),
+            if (_station.text.trim().isNotEmpty) 'station': _station.text.trim(),
+            if (_note.text.trim().isNotEmpty) 'note': _note.text.trim(),
+            if (_receipt != null) 'receipt': _receipt,
+            'confirm': true,
+          }) : null,
+          icon: const Icon(Icons.local_gas_station_rounded, size: 18),
+          label: Text(tr('حفظ وتأكيد', 'Save & confirm'), style: const TextStyle(fontWeight: FontWeight.w800)),
+        )),
+      ]),
+    );
+  }
+
+  Widget _methodChip(String v, String label, IconData ic) => Expanded(
+        child: GestureDetector(
+          onTap: () => setState(() => _method = v),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 11),
+            decoration: BoxDecoration(
+              color: _method == v ? widget.color : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _method == v ? widget.color : Colors.black26),
+            ),
+            child: Column(children: [
+              Icon(ic, size: 20, color: _method == v ? Colors.white : widget.color),
+              const SizedBox(height: 4),
+              Text(label, textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _method == v ? Colors.white : Pms.ink)),
+            ]),
+          ),
+        ),
+      );
+
+  Widget _dropInt(String label, List opts, ValueChanged<int?> onChanged, int? value, {String labelKey = 'name'}) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: DropdownButtonFormField<int>(
+          initialValue: value, isExpanded: true, decoration: _dec(label),
+          items: [for (final o in opts) DropdownMenuItem(value: o['id'] as int,
+              child: Text('${o[labelKey]}', maxLines: 1, overflow: TextOverflow.ellipsis))],
+          onChanged: onChanged,
+        ),
+      );
+}
+
+/// Fuel fill detail — full record, receipt image, and edit/confirm actions.
+/// The latest fill for a vehicle stays editable; older ones are locked.
+class _FuelDetailSheet extends StatefulWidget {
+  final int fuelId;
+  final Color color;
+  const _FuelDetailSheet({required this.fuelId, required this.color});
+  @override
+  State<_FuelDetailSheet> createState() => _FuelDetailSheetState();
+}
+
+class _FuelDetailSheetState extends State<_FuelDetailSheet> {
+  Map<String, dynamic>? _d;
+  String? _error;
+  bool _busy = false;
+
+  @override
+  void initState() { super.initState(); _load(); }
+
+  Future<void> _load() async {
+    try {
+      final d = await context.read<AuthProvider>().api.pmsFuel(widget.fuelId);
+      if (mounted) setState(() => _d = d);
+    } catch (e) {
+      if (mounted) setState(() => _error = '$e');
+    }
+  }
+
+  Future<void> _act(String act) async {
+    setState(() => _busy = true);
+    try {
+      final d = await context.read<AuthProvider>().api.pmsFuelAction(widget.fuelId, act);
+      if (!mounted) return;
+      if (act == 'delete') { Navigator.pop(context); return; }
+      setState(() { _d = d; _busy = false; });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: const Color(0xFFE5484D)));
+    }
+  }
+
+  Future<void> _editAmount() async {
+    final d = _d!;
+    final ctrl = TextEditingController(text: '${d['amount'] ?? ''}');
+    final litCtrl = TextEditingController(text: '${d['liters'] ?? ''}');
+    final odoCtrl = TextEditingController(text: '${d['odometer'] ?? ''}');
+    final ok = await showDialog<bool>(context: context, builder: (c) => AlertDialog(
+      title: Text(tr('تعديل التعبئة', 'Edit fill')),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        TextField(controller: ctrl, keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(labelText: tr('المبلغ', 'Amount'))),
+        TextField(controller: litCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(labelText: tr('اللترات', 'Litres'))),
+        TextField(controller: odoCtrl, keyboardType: TextInputType.number,
+            decoration: InputDecoration(labelText: tr('العدّاد', 'Odometer'))),
+      ]),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('إلغاء', 'Cancel'))),
+        FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(tr('حفظ', 'Save'))),
+      ],
+    ));
+    if (ok != true) return;
+    setState(() => _busy = true);
+    try {
+      final d2 = await context.read<AuthProvider>().api.pmsFuelUpdate(widget.fuelId, {
+        'amount': double.tryParse(ctrl.text.trim()) ?? 0,
+        if (litCtrl.text.trim().isNotEmpty) 'liters': double.tryParse(litCtrl.text.trim()),
+        if (odoCtrl.text.trim().isNotEmpty) 'odometer': double.tryParse(odoCtrl.text.trim()),
+      });
+      if (!mounted) return;
+      setState(() { _d = d2; _busy = false; });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: const Color(0xFFE5484D)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85, minChildSize: 0.5, maxChildSize: 0.96, expand: false,
+      builder: (context, sc) {
+        if (_error != null) {
+          return Center(child: Padding(padding: const EdgeInsets.all(24),
+              child: Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey))));
+        }
+        if (_d == null) return const Center(child: CircularProgressIndicator());
+        final d = _d!;
+        final editable = d['editable'] == true;
+        return Stack(children: [
+          ListView(controller: sc, padding: EdgeInsets.zero, children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [widget.color, widget.color.withValues(alpha: 0.78)],
+                    begin: Alignment.topLeft, end: Alignment.bottomRight),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  const Icon(Icons.local_gas_station_rounded, color: Colors.white, size: 26),
+                  const SizedBox(width: 10),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('${d['vehicle'] ?? d['name'] ?? ''}',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+                    Text('${d['name'] ?? ''} · ${d['date'] ?? ''}',
+                        style: const TextStyle(color: Colors.white70, fontSize: 11.5)),
+                  ])),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                        color: d['state'] == 'confirmed' ? const Color(0xFF16A34A) : Colors.white24,
+                        borderRadius: BorderRadius.circular(9)),
+                    child: Text('${d['state_label'] ?? ''}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11)),
+                  ),
+                ]),
+                const SizedBox(height: 10),
+                Row(children: [
+                  Expanded(child: _stat('${d['amount'] ?? 0} ${d['currency'] ?? ''}', tr('المبلغ', 'Amount'), Colors.white)),
+                  Container(width: 1, height: 30, color: Colors.white24),
+                  Expanded(child: _stat('${d['liters'] ?? 0}', tr('لتر', 'Litres'), Colors.white)),
+                  Container(width: 1, height: 30, color: Colors.white24),
+                  Expanded(child: _stat('${d['price_per_liter'] ?? 0}', tr('سعر اللتر', 'Price/L'), Colors.white)),
+                ]),
+              ]),
+            ),
+            Padding(padding: const EdgeInsets.fromLTRB(18, 12, 18, 6), child: Column(children: [
+              _kv(tr('طريقة الدفع', 'Method'), '${d['method_label'] ?? ''}'),
+              if (d['card'] != null) _kv(tr('البطاقة', 'Card'), '${d['card']} (${tr('الرصيد', 'balance')}: ${d['card_balance'] ?? '—'})'),
+              if (d['petty'] != null) _kv(tr('العهدة النقدية', 'Cash custody'), '${d['petty']}'),
+              if (d['driver'] != null) _kv(tr('السائق', 'Driver'), '${d['driver']}'),
+              if (d['odometer'] != null) _kv(tr('العدّاد', 'Odometer'), '${d['odometer']}'),
+              if (d['station'] != null) _kv(tr('المحطة', 'Station'), '${d['station']}'),
+              if (d['note'] != null) _kv(tr('ملاحظات', 'Notes'), '${d['note']}'),
+            ])),
+            if (d['receipt_url'] != null) Padding(
+              padding: const EdgeInsets.fromLTRB(18, 4, 18, 4),
+              child: GestureDetector(
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PmsPhotoView(
+                    url: '${d['receipt_url']}', title: tr('الإيصال', 'Receipt')))),
+                child: ClipRRect(borderRadius: BorderRadius.circular(12),
+                    child: Image.network('${d['receipt_url']}',
+                        height: 180, width: double.infinity, fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(height: 60, color: Pms.bg,
+                            child: const Center(child: Icon(Icons.image_not_supported_rounded, color: Colors.grey))))),
+              ),
+            ),
+            if (!editable) Padding(padding: const EdgeInsets.fromLTRB(18, 8, 18, 0),
+              child: Container(padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: const Color(0xFFFEF3C7), borderRadius: BorderRadius.circular(10)),
+                child: Row(children: [
+                  const Icon(Icons.lock_rounded, size: 16, color: Color(0xFFB45309)),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(tr('عملية مقفلة — سُجّلت تعبئة أحدث منها لنفس المركبة.', 'Locked — a newer fill exists for this vehicle.'),
+                      style: const TextStyle(color: Color(0xFF92400E), fontSize: 11.5, fontWeight: FontWeight.w700))),
+                ]))),
+            Padding(padding: const EdgeInsets.fromLTRB(18, 12, 18, 24), child: Column(children: [
+              Row(children: [
+                Expanded(child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(foregroundColor: widget.color,
+                      side: BorderSide(color: widget.color.withValues(alpha: 0.5)), padding: const EdgeInsets.symmetric(vertical: 11)),
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+                      path: context.read<AuthProvider>().api.pmsFuelReportPath(widget.fuelId),
+                      title: tr('إيصال الوقود', 'Fuel receipt'), fileName: 'fuel-${widget.fuelId}.pdf'))),
+                  icon: const Icon(Icons.print_rounded, size: 18),
+                  label: Text(tr('طباعة/مشاركة', 'Print/share'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                )),
+                if (editable) ...[
+                  const SizedBox(width: 8),
+                  Expanded(child: FilledButton.icon(
+                    style: FilledButton.styleFrom(backgroundColor: widget.color, padding: const EdgeInsets.symmetric(vertical: 11)),
+                    onPressed: _busy ? null : _editAmount,
+                    icon: const Icon(Icons.edit_rounded, size: 18),
+                    label: Text(tr('تعديل', 'Edit'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                  )),
+                ],
+              ]),
+              if (d['can_confirm'] == true) Padding(padding: const EdgeInsets.only(top: 8),
+                child: SizedBox(width: double.infinity, child: FilledButton.icon(
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A), padding: const EdgeInsets.symmetric(vertical: 12)),
+                  onPressed: _busy ? null : () => _act('confirm'),
+                  icon: const Icon(Icons.check_circle_rounded, size: 18),
+                  label: Text(tr('تأكيد العملية', 'Confirm'), style: const TextStyle(fontWeight: FontWeight.w800)),
+                ))),
+              if (d['can_draft'] == true) Padding(padding: const EdgeInsets.only(top: 8),
+                child: SizedBox(width: double.infinity, child: OutlinedButton.icon(
+                  onPressed: _busy ? null : () => _act('draft'),
+                  icon: const Icon(Icons.undo_rounded, size: 18),
+                  label: Text(tr('إعادة لمسودة', 'Reset to draft'), style: const TextStyle(fontWeight: FontWeight.w800)),
+                ))),
+              if (editable) Padding(padding: const EdgeInsets.only(top: 8),
+                child: SizedBox(width: double.infinity, child: TextButton.icon(
+                  style: TextButton.styleFrom(foregroundColor: const Color(0xFFE11D48)),
+                  onPressed: _busy ? null : () => _act('delete'),
+                  icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                  label: Text(tr('حذف العملية', 'Delete'), style: const TextStyle(fontWeight: FontWeight.w800)),
+                ))),
+            ])),
+          ]),
+          if (_busy) const Positioned.fill(child: ColoredBox(color: Color(0x11000000), child: Center(child: CircularProgressIndicator()))),
+        ]);
+      },
+    );
+  }
+
+  Widget _stat(String v, String l, Color c) => Column(children: [
+        Text(v, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: c, fontWeight: FontWeight.w900, fontSize: 14)),
+        const SizedBox(height: 2),
+        Text(l, style: TextStyle(color: c.withValues(alpha: 0.8), fontSize: 9.5, fontWeight: FontWeight.w700)),
+      ]);
+
+  Widget _kv(String k, String v) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          SizedBox(width: 120, child: Text(k, style: const TextStyle(color: Pms.slate, fontSize: 12.5))),
+          const SizedBox(width: 8),
+          Expanded(child: Text(v, textAlign: TextAlign.end, style: const TextStyle(fontWeight: FontWeight.w700, color: Pms.ink, fontSize: 13))),
+        ]),
       );
 }
