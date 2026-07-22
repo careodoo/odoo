@@ -1620,6 +1620,11 @@ class ApiClient {
     return '/pms/project/$projectId/attendance/report$suffix';
   }
 
+  /// Project invoice detail (professional view — same shape as the client one).
+  Future<Map<String, dynamic>> pmsInvoice(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/invoice/$id'), headers: await _headers())))['data'] as Map);
+
   /// Full supply document: header + product lines (image/qty/received/state) + voucher.
   Future<Map<String, dynamic>> pmsSupplyDetail(int supplyId) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

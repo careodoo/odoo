@@ -536,9 +536,19 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
           _openTimesheet(r['id'] as int);
         } else if (opens == 'supply') {
           _openSupply(r['id'] as int);
+        } else if (opens == 'invoice') {
+          _openInvoice(r['id'] as int);
         }
       },
       child: inner,
+    );
+  }
+
+  Future<void> _openInvoice(int id) async {
+    await showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => _InvoiceDetailSheet(invoiceId: id),
     );
   }
 
@@ -2003,4 +2013,153 @@ class _EmpSearchSheetState extends State<_EmpSearchSheet> {
       ),
     );
   }
+}
+
+/// Professional project-invoice detail — mirrors the CAFM client invoice view
+/// (paid-status header, tabular lines, totals, payment records, PDF).
+class _InvoiceDetailSheet extends StatefulWidget {
+  final int invoiceId;
+  const _InvoiceDetailSheet({required this.invoiceId});
+  @override
+  State<_InvoiceDetailSheet> createState() => _InvoiceDetailSheetState();
+}
+
+class _InvoiceDetailSheetState extends State<_InvoiceDetailSheet> {
+  Map<String, dynamic>? _m;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final m = await context.read<AuthProvider>().api.pmsInvoice(widget.invoiceId);
+      if (mounted) setState(() => _m = m);
+    } catch (e) {
+      if (mounted) setState(() => _error = '$e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      expand: false, initialChildSize: 0.85, maxChildSize: 0.96, minChildSize: 0.5,
+      builder: (_, sc) {
+        if (_error != null) {
+          return Center(child: Padding(padding: const EdgeInsets.all(24),
+              child: Text('$_error', style: const TextStyle(color: Pms.red))));
+        }
+        if (_m == null) return const Center(child: CircularProgressIndicator());
+        final m = _m!;
+        final residual = numOf(m['amount_residual']);
+        final total = numOf(m['amount_total']);
+        final paid = numOf(m['amount_paid']);
+        final done = residual <= 0.001 && total > 0;
+        final part = paid > 0 && residual > 0.001;
+        final c = done ? const Color(0xFF16A34A) : (part ? const Color(0xFFF59E0B) : const Color(0xFF7A1340));
+        final label = done ? tr('مدفوعة بالكامل', 'Paid in full')
+            : (part ? tr('مدفوعة جزئيًا', 'Partly paid') : tr('غير مدفوعة', 'Unpaid'));
+        final payments = (m['payments'] as List?) ?? const [];
+        return ListView(controller: sc, padding: EdgeInsets.zero, children: [
+          Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(top: 10, bottom: 4),
+              decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(4)))),
+          // status header
+          Container(
+            margin: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 15),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(colors: [c, Color.lerp(c, Colors.black, 0.28)!],
+                    begin: Alignment.topRight, end: Alignment.bottomLeft)),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Expanded(child: Text('${m['name']}', style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900))),
+                Container(padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(20)),
+                    child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w900))),
+              ]),
+              if (m['project'] != null) Padding(padding: const EdgeInsets.only(top: 3),
+                  child: Text('${m['project']}', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 11.5))),
+              const SizedBox(height: 10),
+              Text('${m['amount_total']} ${m['currency'] ?? ''}',
+                  style: const TextStyle(color: Colors.white, fontSize: 27, fontWeight: FontWeight.w900)),
+              if (residual > 0.001) Padding(padding: const EdgeInsets.only(top: 4),
+                  child: Text('${tr('المتبقّي', 'Outstanding')}: ${m['amount_residual']} ${m['currency'] ?? ''}',
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.92), fontSize: 12.5, fontWeight: FontWeight.w700))),
+              if (total > 0) Padding(padding: const EdgeInsets.only(top: 10),
+                  child: ClipRRect(borderRadius: BorderRadius.circular(6),
+                      child: LinearProgressIndicator(value: (paid / total).clamp(0.0, 1.0), minHeight: 7,
+                          color: Colors.white, backgroundColor: Colors.white.withValues(alpha: 0.25)))),
+              if (m['invoice_date'] != null || m['due_date'] != null) Padding(padding: const EdgeInsets.only(top: 10),
+                  child: Text([
+                    if (m['invoice_date'] != null) '${tr('التاريخ', 'Date')}: ${m['invoice_date']}',
+                    if (m['due_date'] != null) '${tr('الاستحقاق', 'Due')}: ${m['due_date']}',
+                  ].join('   ·   '), style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 11.5))),
+            ]),
+          ),
+          if (m['pdf_url'] != null) Padding(padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+            child: SizedBox(width: double.infinity, height: 44, child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF7A1340),
+                  side: const BorderSide(color: Color(0xFF7A1340)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+                  url: '${m['pdf_url']}', title: tr('فاتورة ${m['name'] ?? ''}', 'Invoice ${m['name'] ?? ''}'),
+                  fileName: 'invoice-${m['name'] ?? ''}.pdf'))),
+              icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
+              label: Text(tr('عرض / طباعة PDF', 'View / print PDF'), style: const TextStyle(fontWeight: FontWeight.w800)),
+            ))),
+          const SizedBox(height: 12),
+          // lines table
+          Padding(padding: const EdgeInsets.symmetric(horizontal: 14), child: Column(children: [
+            _lineRow(tr('البند', 'Item'), tr('كمية', 'Qty'), tr('السعر', 'Price'), tr('الإجمالي', 'Total'), header: true),
+            for (final l in ((m['lines'] as List?) ?? const []))
+              _lineRow('${(l as Map)['name'] ?? ''}', '${l['qty'] ?? ''}', '${l['price'] ?? ''}', '${l['subtotal'] ?? ''}'),
+          ])),
+          const SizedBox(height: 12),
+          Padding(padding: const EdgeInsets.symmetric(horizontal: 18), child: Column(children: [
+            _tot(tr('قبل الضريبة', 'Untaxed'), '${m['amount_untaxed']}'),
+            _tot(tr('الضريبة', 'Tax'), '${m['amount_tax']}'),
+            _tot(tr('الإجمالي', 'Total'), '${m['amount_total']} ${m['currency'] ?? ''}', bold: true),
+            _tot(tr('المدفوع', 'Paid'), '${m['amount_paid']}', color: const Color(0xFF16A34A)),
+            _tot(tr('المتبقّي', 'Residual'), '${m['amount_residual']}', color: const Color(0xFFE11D48)),
+          ])),
+          if (payments.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 18),
+                child: Text(tr('سجلّات الدفع', 'Payment records'), style: const TextStyle(fontWeight: FontWeight.w800))),
+            for (final p in payments) ListTile(dense: true,
+                leading: const Icon(Icons.payments_rounded, color: Color(0xFF16A34A)),
+                title: Text('${(p as Map)['name'] ?? ''}'),
+                subtitle: Text('${p['method'] ?? ''} · ${p['date'] ?? ''}'),
+                trailing: Text('${p['amount']}', style: const TextStyle(fontWeight: FontWeight.w700))),
+          ],
+          const SizedBox(height: 24),
+        ]);
+      },
+    );
+  }
+
+  Widget _lineRow(String a, String b, String cc, String d, {bool header = false}) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+        decoration: BoxDecoration(
+            color: header ? Pms.bg : Colors.white,
+            border: Border(bottom: BorderSide(color: Colors.black.withValues(alpha: 0.06)))),
+        child: Row(children: [
+          Expanded(flex: 4, child: Text(a, style: TextStyle(fontSize: 12, fontWeight: header ? FontWeight.w800 : FontWeight.w600))),
+          Expanded(flex: 1, child: Text(b, textAlign: TextAlign.center, style: TextStyle(fontSize: 11.5, fontWeight: header ? FontWeight.w800 : FontWeight.w600))),
+          Expanded(flex: 2, child: Text(cc, textAlign: TextAlign.center, style: TextStyle(fontSize: 11.5, fontWeight: header ? FontWeight.w800 : FontWeight.w600))),
+          Expanded(flex: 2, child: Text(d, textAlign: TextAlign.end, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: header ? Pms.ink : Pms.violet))),
+        ]),
+      );
+
+  Widget _tot(String k, String v, {bool bold = false, Color? color}) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        child: Row(children: [
+          Text(k, style: TextStyle(fontSize: 12.5, color: Pms.slate, fontWeight: bold ? FontWeight.w900 : FontWeight.w600)),
+          const Spacer(),
+          Text(v, style: TextStyle(fontSize: bold ? 15 : 12.5, fontWeight: FontWeight.w900, color: color ?? Pms.ink)),
+        ]),
+      );
 }

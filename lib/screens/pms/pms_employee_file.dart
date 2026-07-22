@@ -81,13 +81,24 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
         ),
         child: Column(children: [
           Row(children: [
-            CircleAvatar(
-              radius: 30, backgroundColor: Colors.white.withValues(alpha: 0.18),
-              backgroundImage: avatarImage(e['photo'] as String?),
-              child: e['photo'] == null
-                  ? Text('${e['name']}'.characters.first,
-                      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900))
-                  : null,
+            GestureDetector(
+              onTap: e['photo'] == null ? null : () => Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => PmsPhotoView(url: '${e['photo']}', title: '${e['name']}'))),
+              child: Stack(alignment: Alignment.bottomRight, children: [
+                CircleAvatar(
+                  radius: 30, backgroundColor: Colors.white.withValues(alpha: 0.18),
+                  backgroundImage: avatarImage(e['photo'] as String?),
+                  child: e['photo'] == null
+                      ? Text('${e['name']}'.characters.first,
+                          style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900))
+                      : null,
+                ),
+                if (e['photo'] != null) Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  child: const Icon(Icons.zoom_in_rounded, size: 13, color: Pms.ink),
+                ),
+              ]),
             ),
             const SizedBox(width: 13),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
