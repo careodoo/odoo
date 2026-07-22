@@ -305,12 +305,14 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
           const SizedBox(height: 8),
           GridView.count(
             crossAxisCount: 3, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 10, crossAxisSpacing: 10, childAspectRatio: 1.02,
+            mainAxisSpacing: 10, crossAxisSpacing: 10, childAspectRatio: 0.88,
             children: [
               for (final x in list)
                 Builder(builder: (ctx) {
                   final code = '${(x as Map)['code']}';
                   final c = kPmsSectionColors[code] ?? Pms.violet;
+                  final delegated = x['delegated'] == true;
+                  final delegate = '${x['delegate'] ?? ''}';
                   return Material(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
@@ -324,7 +326,9 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
                         padding: const EdgeInsets.all(11),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: c.withValues(alpha: 0.18)),
+                          border: Border.all(
+                              color: delegated ? Pms.amber.withValues(alpha: 0.55) : c.withValues(alpha: 0.18),
+                              width: delegated ? 1.4 : 1),
                           gradient: LinearGradient(colors: [c.withValues(alpha: 0.10), Colors.white],
                               begin: Alignment.topRight, end: Alignment.bottomLeft),
                           boxShadow: [BoxShadow(color: c.withValues(alpha: 0.10),
@@ -334,20 +338,42 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Container(
-                              width: 40, height: 40, alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                  gradient: LinearGradient(colors: [c, Color.lerp(c, Colors.black, 0.22)!],
-                                      begin: Alignment.topLeft, end: Alignment.bottomRight),
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: [BoxShadow(color: c.withValues(alpha: 0.35),
-                                      blurRadius: 6, offset: const Offset(0, 3))]),
-                              child: Icon(kPmsSectionIcons[code] ?? Icons.folder_rounded, size: 21, color: Colors.white),
-                            ),
+                            // icon + delegation badge overlay
+                            Stack(clipBehavior: Clip.none, children: [
+                              Container(
+                                width: 40, height: 40, alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                    gradient: LinearGradient(colors: [c, Color.lerp(c, Colors.black, 0.22)!],
+                                        begin: Alignment.topLeft, end: Alignment.bottomRight),
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [BoxShadow(color: c.withValues(alpha: 0.35),
+                                        blurRadius: 6, offset: const Offset(0, 3))]),
+                                child: Icon(kPmsSectionIcons[code] ?? Icons.folder_rounded, size: 21, color: Colors.white),
+                              ),
+                              if (delegated)
+                                Positioned(top: -5, right: -5, child: Container(
+                                  padding: const EdgeInsets.all(3),
+                                  decoration: BoxDecoration(color: Pms.amber, shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white, width: 1.6),
+                                      boxShadow: [BoxShadow(color: Pms.amber.withValues(alpha: 0.5), blurRadius: 4)]),
+                                  child: const Icon(Icons.assignment_ind_rounded, size: 11, color: Colors.white),
+                                )),
+                            ]),
+                            const SizedBox(height: 6),
                             Text('${x['label']}',
                                 maxLines: 2, overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800,
                                     color: Pms.ink, height: 1.2)),
+                            if (delegated)
+                              Padding(padding: const EdgeInsets.only(top: 3),
+                                child: Row(children: [
+                                  const Icon(Icons.person_pin_rounded, size: 10, color: Pms.amber),
+                                  const SizedBox(width: 2),
+                                  Expanded(child: Text(
+                                      delegate.isNotEmpty ? '${tr('مفوّض', 'Deleg.')}: $delegate' : tr('مفوّض', 'Delegated'),
+                                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 8.5, fontWeight: FontWeight.w700, color: Pms.amber))),
+                                ])),
                           ],
                         ),
                       ),
@@ -393,7 +419,7 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
                 GridView.count(
                   crossAxisCount: 3, shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 9, crossAxisSpacing: 9, childAspectRatio: 0.95,
+                  mainAxisSpacing: 9, crossAxisSpacing: 9, childAspectRatio: 0.86,
                   children: [for (final s in (d['stats'] as List)) _statCard(s as Map)],
                 ),
                 const SizedBox(height: 16),
@@ -677,34 +703,61 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
           padding: const EdgeInsets.all(11),
           decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: c.withValues(alpha: 0.18)),
-              gradient: LinearGradient(colors: [c.withValues(alpha: 0.10), Colors.white],
-                  begin: Alignment.topRight, end: Alignment.bottomLeft)),
+              border: Border.all(color: c.withValues(alpha: 0.16)),
+              color: Colors.white,
+              boxShadow: [BoxShadow(color: c.withValues(alpha: 0.08), blurRadius: 8, offset: const Offset(0, 3))]),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(children: [
+              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                // gradient icon badge (professional KPI look)
                 Container(
-                  width: 30, height: 30, alignment: Alignment.center,
-                  decoration: BoxDecoration(color: c.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(9)),
-                  child: Icon(_statIcons['${s['icon']}'] ?? Icons.insights_rounded, size: 17, color: c),
+                  width: 32, height: 32, alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                      gradient: LinearGradient(colors: [c, Color.lerp(c, Colors.black, 0.24)!],
+                          begin: Alignment.topLeft, end: Alignment.bottomRight),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [BoxShadow(color: c.withValues(alpha: 0.35), blurRadius: 5, offset: const Offset(0, 2))]),
+                  child: Icon(_statIcons['${s['icon']}'] ?? Icons.insights_rounded, size: 17, color: Colors.white),
                 ),
                 const Spacer(),
-                Icon(Icons.chevron_left_rounded, size: 16, color: c.withValues(alpha: 0.5)),
+                // tiny bar-chart motif → reads as "statistics"
+                _miniBars(c),
               ]),
               Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
                 Text('${s['count']}',
                     maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: c, height: 1)),
-                const SizedBox(height: 3),
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: Pms.ink, height: 1)),
+                const SizedBox(height: 2),
                 Text('${s['label']}', maxLines: 2, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 10, color: Pms.ink, height: 1.15)),
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 10, color: Pms.slate, height: 1.15)),
+                const SizedBox(height: 6),
+                // bottom accent bar (KPI footer)
+                Container(height: 3, decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: [c, c.withValues(alpha: 0.15)]),
+                    borderRadius: BorderRadius.circular(3))),
               ]),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  /// A tiny 4-bar chart motif that makes a card read as a statistic.
+  Widget _miniBars(Color c) {
+    const hs = [7.0, 12.0, 9.0, 15.0];
+    return Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        for (var i = 0; i < hs.length; i++) Padding(
+          padding: const EdgeInsets.only(left: 1.5),
+          child: Container(width: 3, height: hs[i],
+              decoration: BoxDecoration(
+                  color: c.withValues(alpha: i == hs.length - 1 ? 0.9 : 0.35),
+                  borderRadius: BorderRadius.circular(2))),
+        ),
+      ],
     );
   }
 
