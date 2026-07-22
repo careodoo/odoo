@@ -969,6 +969,93 @@ class _PettyDetailSheetState extends State<_PettyDetailSheet> {
     }
   }
 
+  Future<void> _addExpense() async {
+    final name = TextEditingController();
+    final amount = TextEditingController();
+    final invoice = TextEditingController();
+    String cat = 'misc';
+    String? photo;
+    final remaining = numOf((_d ?? const {})['remaining'], 0);
+    const cats = {'maintenance': 'صيانة', 'fuel': 'وقود', 'transport': 'نقل', 'supplies': 'مستلزمات', 'misc': 'أخرى'};
+    final ok = await showModalBottomSheet<bool>(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => StatefulBuilder(builder: (ctx, ss) => Padding(
+        padding: EdgeInsets.fromLTRB(18, 16, 18, MediaQuery.of(ctx).viewInsets.bottom + 18),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(Icons.add_shopping_cart_rounded, color: widget.color),
+            const SizedBox(width: 8),
+            Text(tr('إضافة بند مصروف', 'Add expense'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+            const Spacer(),
+            Text('${tr('المتبقّي', 'Remaining')}: $remaining',
+                style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Pms.slate)),
+          ]),
+          const SizedBox(height: 12),
+          TextField(controller: name, decoration: InputDecoration(labelText: tr('الوصف *', 'Description *'), border: const OutlineInputBorder(), isDense: true)),
+          const SizedBox(height: 10),
+          Row(children: [
+            Expanded(child: TextField(controller: amount, keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(labelText: tr('المبلغ (د.ك) *', 'Amount *'), border: const OutlineInputBorder(), isDense: true))),
+            const SizedBox(width: 8),
+            Expanded(child: DropdownButtonFormField<String>(
+              initialValue: cat, isExpanded: true,
+              decoration: InputDecoration(labelText: tr('الفئة', 'Category'), border: const OutlineInputBorder(), isDense: true),
+              items: [for (final e in cats.entries) DropdownMenuItem(value: e.key, child: Text(e.value))],
+              onChanged: (v) => ss(() => cat = v ?? 'misc'))),
+          ]),
+          const SizedBox(height: 10),
+          TextField(controller: invoice, decoration: InputDecoration(labelText: tr('رقم الفاتورة (اختياري)', 'Invoice no.'), border: const OutlineInputBorder(), isDense: true)),
+          const SizedBox(height: 12),
+          // receipt photo
+          Row(children: [
+            if (photo != null) ...[
+              ClipRRect(borderRadius: BorderRadius.circular(10),
+                  child: Image.memory(base64Decode(photo!), width: 54, height: 54, fit: BoxFit.cover)),
+              IconButton(icon: const Icon(Icons.close_rounded, size: 18, color: Pms.red), onPressed: () => ss(() => photo = null)),
+              const Spacer(),
+            ],
+            OutlinedButton.icon(onPressed: () async {
+              final x = await ImagePicker().pickImage(source: ImageSource.camera, maxWidth: 1600, imageQuality: 70);
+              if (x != null) { final b = await x.readAsBytes(); ss(() => photo = base64Encode(b)); }
+            }, icon: const Icon(Icons.photo_camera_rounded, size: 18), label: Text(tr('كاميرا', 'Camera'))),
+            const SizedBox(width: 6),
+            OutlinedButton.icon(onPressed: () async {
+              final x = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1600, imageQuality: 70);
+              if (x != null) { final b = await x.readAsBytes(); ss(() => photo = base64Encode(b)); }
+            }, icon: const Icon(Icons.photo_library_rounded, size: 18), label: Text(tr('معرض', 'Gallery'))),
+          ]),
+          const SizedBox(height: 14),
+          SizedBox(width: double.infinity, height: 46, child: FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: widget.color),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(tr('إضافة', 'Add'), style: const TextStyle(fontWeight: FontWeight.w900)))),
+        ]),
+      )),
+    );
+    if (ok != true) return;
+    final amt = double.tryParse(amount.text.trim().replaceAll(',', '.'));
+    if (name.text.trim().isEmpty || amt == null || amt <= 0) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('أدخل الوصف والمبلغ', 'Enter description & amount'))));
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      await context.read<AuthProvider>().api.pmsPettyExpenseAdd(widget.cashId, {
+        'name': name.text.trim(), 'amount': amt, 'category': cat,
+        if (invoice.text.trim().isNotEmpty) 'invoice_number': invoice.text.trim(),
+        if (photo != null) 'attachment': photo, 'filename': 'receipt.jpg',
+      });
+      await _load();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تمت إضافة البند', 'Expense added')), backgroundColor: Pms.green));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Widget _money(String label, num? v, Color c) => Expanded(
         child: Column(children: [
           Text('${v ?? 0}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: c)),
@@ -1106,25 +1193,53 @@ class _PettyDetailSheetState extends State<_PettyDetailSheet> {
                 ),
             ],
             // expenses
-            if (expenses.isNotEmpty) ...[
-              Padding(
-                padding: const EdgeInsets.fromLTRB(18, 14, 18, 6),
-                child: Text(tr('المصروفات (${expenses.length})', 'Expenses (${expenses.length})'),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 6),
+              child: Row(children: [
+                Text(tr('المصروفات (${expenses.length})', 'Expenses (${expenses.length})'),
                     style: const TextStyle(fontWeight: FontWeight.w900, color: Pms.ink, fontSize: 14)),
-              ),
-              for (final e in expenses)
-                Container(
-                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 6),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.black12)),
-                  child: Row(children: [
-                    Expanded(child: Text('${(e as Map)['name']}', maxLines: 1, overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5))),
-                    Text('${e['amount'] ?? ''}', style: TextStyle(fontWeight: FontWeight.w900, color: widget.color)),
-                  ]),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: _busy ? null : _addExpense,
+                  icon: const Icon(Icons.add_circle_rounded, size: 18),
+                  label: Text(tr('إضافة بند', 'Add')),
                 ),
-            ],
+              ]),
+            ),
+            for (final e in expenses)
+              Container(
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.black12)),
+                child: Row(children: [
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('${(e as Map)['name']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+                    if (e['date'] != null || e['category'] != null)
+                      Text([e['date'], e['category']].where((x) => x != null).join(' · '),
+                          style: const TextStyle(fontSize: 10.5, color: Pms.slate)),
+                  ])),
+                  // receipt icon → open in app
+                  if (e['receipt'] != null) IconButton(
+                    padding: EdgeInsets.zero, constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                    icon: Icon(('${e['receipt']}'.toLowerCase().endsWith('.pdf'))
+                        ? Icons.picture_as_pdf_rounded : Icons.receipt_long_rounded, size: 19, color: widget.color),
+                    tooltip: tr('عرض المرفق', 'View receipt'),
+                    onPressed: () {
+                      final url = '${e['receipt']}';
+                      if (url.toLowerCase().endsWith('.pdf')) {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+                            url: url, title: tr('إيصال', 'Receipt'))));
+                      } else {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => PmsPhotoView(
+                            url: url, title: '${e['name']}')));
+                      }
+                    },
+                  ),
+                  Text('${e['amount'] ?? ''}', style: TextStyle(fontWeight: FontWeight.w900, color: widget.color)),
+                ]),
+              ),
             const SizedBox(height: 24),
           ]),
           if (_busy) const Positioned.fill(child: ColoredBox(color: Color(0x11000000),
@@ -1467,7 +1582,7 @@ class _SettlementSheetState extends State<_SettlementSheet> {
     } catch (_) {}
   }
 
-  Future<void> _submit() async {
+  Future<void> _submit({bool asDraft = false}) async {
     setState(() => _busy = true);
     try {
       await context.read<AuthProvider>().api.pmsPettySettlement(widget.cashId, {
@@ -1475,12 +1590,14 @@ class _SettlementSheetState extends State<_SettlementSheet> {
         'date': _date.toIso8601String().substring(0, 10),
         'expenses': _expenses,
         'images': _images,
-        'submit': true,
+        'submit': !asDraft,
       });
       if (!mounted) return;
       Navigator.pop(context, true);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(tr('تم تقديم التسوية للاعتماد', 'Settlement submitted')), backgroundColor: Pms.green));
+          content: Text(asDraft ? tr('حُفظت كمسودة', 'Saved as draft')
+                                : tr('تم تقديم التسوية للاعتماد', 'Settlement submitted')),
+          backgroundColor: Pms.green));
     } catch (e) {
       if (mounted) {
         setState(() => _busy = false);
@@ -1580,16 +1697,26 @@ class _SettlementSheetState extends State<_SettlementSheet> {
                 icon: const Icon(Icons.attach_file_rounded, size: 18), label: Text(tr('ملف', 'File'))),
           ]),
           const SizedBox(height: 22),
-          SizedBox(height: 50, child: FilledButton.icon(
-            style: FilledButton.styleFrom(backgroundColor: widget.color,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
-            onPressed: _busy ? null : _submit,
-            icon: _busy
-                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Icon(Icons.send_rounded),
-            label: Text(tr('تقديم التسوية للاعتماد', 'Submit for approval'),
-                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
-          )),
+          Row(children: [
+            Expanded(child: SizedBox(height: 50, child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(foregroundColor: widget.color, side: BorderSide(color: widget.color),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+              onPressed: _busy ? null : () => _submit(asDraft: true),
+              icon: const Icon(Icons.save_rounded, size: 18),
+              label: Text(tr('حفظ كمسودة', 'Save draft'), style: const TextStyle(fontWeight: FontWeight.w900)),
+            ))),
+            const SizedBox(width: 10),
+            Expanded(flex: 2, child: SizedBox(height: 50, child: FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: widget.color,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+              onPressed: _busy ? null : () => _submit(),
+              icon: _busy
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.send_rounded),
+              label: Text(tr('تقديم للاعتماد', 'Submit for approval'),
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+            ))),
+          ]),
         ]),
       ),
     );

@@ -1775,6 +1775,12 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/pms/pettycash/$cashId'), headers: await _headers())))['data'] as Map);
 
+  /// Add an expense line (with optional receipt photo) to a cash custody.
+  Future<Map<String, dynamic>> pmsPettyExpenseAdd(int cashId, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/pms/pettycash/$cashId/expense'), headers: await _headers(),
+              body: jsonEncode(body))))['data'] as Map);
+
   /// Create + submit a settlement for a cash custody (data, expenses, receipts).
   Future<Map<String, dynamic>> pmsPettySettlement(int cashId, Map<String, dynamic> body) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
