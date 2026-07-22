@@ -1807,15 +1807,23 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/pms/timesheet/$id'), headers: await _headers())))['data'] as Map);
 
-  Future<Map<String, dynamic>> pmsTimesheetLineWrite(int lineId, int actual) async =>
+  /// Edit a line: the adjusted (معدّل) days + optional note/document.
+  Future<Map<String, dynamic>> pmsTimesheetLineWrite(int lineId, Map<String, dynamic> body) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/pms/timesheet/line/$lineId'), headers: await _headers(),
-              body: jsonEncode({'actual': actual}))))['data'] as Map);
+              body: jsonEncode(body))))['data'] as Map);
+
+  /// HR approves/rejects one line (approved days = salary days).
+  Future<Map<String, dynamic>> pmsTimesheetLineAction(int lineId, String act) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/pms/timesheet/line/$lineId/$act'), headers: await _headers())))['data'] as Map);
 
   Future<Map<String, dynamic>> pmsTimesheetAction(int id, String action) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/pms/timesheet/$id/action'), headers: await _headers(),
               body: jsonEncode({'action': action}))))['data'] as Map);
+
+  String pmsTimesheetReportPath(int id) => '/pms/timesheet/$id/report';
 
   Future<Map<String, dynamic>> pmsPettyDetail(int cashId) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

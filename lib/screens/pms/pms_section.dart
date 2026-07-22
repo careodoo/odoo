@@ -877,16 +877,19 @@ class _CreateSheetState extends State<_CreateSheet> {
           }),
         ];
       case 'timesheet':
+        final tsEmps = (widget.options['employees'] as List?) ?? const [];
         return [
           _title(tr('كشف ساعات جديد', 'New timesheet')),
           Padding(padding: const EdgeInsets.only(bottom: 10),
-              child: Text(tr('يُولَّد آليًا من حضور البصمة للفترة المحددة ثم يُرسَل للاعتماد.',
-                  'Generated from biometric attendance for the period, then submitted for approval.'),
+              child: Text(tr('يُولَّد آليًا من أيام البصمة للفترة المحددة كمسودّة ليراجعها ويعدّلها ثم تعتمدها الموارد البشرية.',
+                  'Generated from biometric days for the period as a draft to review/adjust, then HR approves.'),
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 11.5, height: 1.5))),
           _dateField(tr('من', 'From'), _from, (d) => setState(() => _from = d)),
           _dateField(tr('إلى', 'To'), _to, (d) => setState(() => _to = d)),
+          if (tsEmps.isNotEmpty) _empPicker(tr('عامل محدّد (اختياري — كشف مخصّص)', 'Specific worker (optional — custom sheet)'), tsEmps),
           _submit(_from != null && _to != null, () => {
             'date_from': _fmtDate(_from!), 'date_to': _fmtDate(_to!),
+            if (_pick1 != null) 'employee_id': _pick1,
           }),
         ];
       case 'requests':
@@ -1365,21 +1368,42 @@ class _TimesheetSheetState extends State<_TimesheetSheet> {
   }
 
   Future<void> _editLine(Map line) async {
-    final ctrl = TextEditingController(text: '${line['actual'] ?? 0}');
+    final newModel = line.containsKey('adjusted');
+    final ctrl = TextEditingController(text: '${(newModel ? line['adjusted'] : line['actual']) ?? 0}');
+    final noteCtrl = TextEditingController(text: '${line['note'] ?? ''}');
+    String? doc;
     final ok = await showDialog<bool>(
       context: context,
-      builder: (c) => AlertDialog(
+      builder: (c) => StatefulBuilder(builder: (c, ss) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('${line['employee']}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text(tr('المتوقّع: ${line['count'] ?? 0} يوم', 'Expected: ${line['count'] ?? 0}'),
+          Text(tr('أيام البصمة: ${line['biometric'] ?? line['actual'] ?? 0}', 'Biometric: ${line['biometric'] ?? line['actual'] ?? 0}'),
               style: const TextStyle(color: Pms.slate, fontSize: 12)),
           const SizedBox(height: 12),
           TextField(
             controller: ctrl, keyboardType: TextInputType.number, autofocus: true,
-            decoration: InputDecoration(labelText: tr('الأيام الفعلية', 'Actual days'),
-                border: const OutlineInputBorder()),
+            decoration: InputDecoration(labelText: newModel ? tr('الأيام المعدّلة', 'Adjusted days') : tr('الأيام الفعلية', 'Actual days'),
+                border: const OutlineInputBorder(), isDense: true),
           ),
+          if (newModel) ...[
+            const SizedBox(height: 10),
+            TextField(controller: noteCtrl, maxLines: 2,
+                decoration: InputDecoration(labelText: tr('ملاحظة التعديل', 'Adjustment note'), border: const OutlineInputBorder(), isDense: true)),
+            const SizedBox(height: 8),
+            Row(children: [
+              Expanded(child: Text(doc == null ? tr('إرفاق مستند (اختياري)', 'Attach doc (optional)') : tr('تم الإرفاق', 'Attached'),
+                  style: const TextStyle(fontSize: 11.5, color: Pms.slate))),
+              IconButton(icon: const Icon(Icons.photo_camera_rounded), color: widget.color, onPressed: () async {
+                final x = await ImagePicker().pickImage(source: ImageSource.camera, maxWidth: 1600, imageQuality: 70);
+                if (x != null) { final b = await x.readAsBytes(); ss(() => doc = base64Encode(b)); }
+              }),
+              IconButton(icon: const Icon(Icons.photo_library_rounded), color: widget.color, onPressed: () async {
+                final x = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1600, imageQuality: 70);
+                if (x != null) { final b = await x.readAsBytes(); ss(() => doc = base64Encode(b)); }
+              }),
+            ]),
+          ],
         ]),
         actions: [
           TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('إلغاء', 'Cancel'))),
@@ -1387,18 +1411,45 @@ class _TimesheetSheetState extends State<_TimesheetSheet> {
               style: FilledButton.styleFrom(backgroundColor: widget.color),
               onPressed: () => Navigator.pop(c, true), child: Text(tr('حفظ', 'Save'))),
         ],
-      ),
+      )),
     );
     if (ok != true) return;
     final v = int.tryParse(ctrl.text.trim());
     if (v == null) return;
     try {
-      final res = await context.read<AuthProvider>().api.pmsTimesheetLineWrite(line['id'] as int, v);
-      setState(() { line['actual'] = res['actual']; line['diff'] = res['diff']; });
+      final body = newModel
+          ? {'adjusted': v, 'note': noteCtrl.text.trim(), if (doc != null) 'document': doc}
+          : {'actual': v};
+      final res = await context.read<AuthProvider>().api.pmsTimesheetLineWrite(line['id'] as int, body);
+      setState(() {
+        if (newModel) { line['adjusted'] = res['adjusted']; line['note'] = res['note']; line['has_doc'] = res['has_doc']; }
+        else { line['actual'] = res['biometric']; }
+        line['diff'] = res['diff'];
+      });
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
       }
+    }
+  }
+
+  Future<void> _lineAction(Map line, String act) async {
+    setState(() => _busy = true);
+    try {
+      final res = await context.read<AuthProvider>().api.pmsTimesheetLineAction(line['id'] as int, act);
+      if (!mounted) return;
+      setState(() {
+        line['line_state'] = res['line_state'];
+        line['approved'] = res['approved'];
+        line['line_state_label'] = act == 'approve' ? tr('معتمد', 'Approved') : tr('مرفوض', 'Rejected');
+        line['can_approve'] = false; line['can_reject'] = false; line['can_edit'] = false;
+        _busy = false;
+      });
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
     }
   }
 
@@ -1430,7 +1481,7 @@ class _TimesheetSheetState extends State<_TimesheetSheet> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(tr('تم تقديم الكشف للاعتماد', 'Timesheet submitted')), backgroundColor: Pms.green));
+          content: Text(tr('تم تنفيذ الإجراء', 'Done')), backgroundColor: Pms.green));
       await _load();
       setState(() => _busy = false);
     } catch (e) {
@@ -1470,8 +1521,15 @@ class _TimesheetSheetState extends State<_TimesheetSheet> {
                 Row(children: [
                   const Icon(Icons.timer_rounded, color: Colors.white),
                   const SizedBox(width: 8),
-                  Expanded(child: Text('${d['name'] ?? ''}',
+                  Expanded(child: Text('${d['name'] ?? ''}${d['period'] != null ? ' · ${d['period']}' : ''}',
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15))),
+                  IconButton(
+                    tooltip: tr('طباعة (QR + توقيع)', 'Print (QR + signature)'),
+                    icon: const Icon(Icons.print_rounded, color: Colors.white),
+                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+                        path: context.read<AuthProvider>().api.pmsTimesheetReportPath(widget.timesheetId),
+                        title: tr('كشف الحضور', 'Timesheet'), fileName: 'timesheet-${widget.timesheetId}.pdf'))),
+                  ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(20)),
@@ -1482,9 +1540,24 @@ class _TimesheetSheetState extends State<_TimesheetSheet> {
                 const SizedBox(height: 6),
                 Text('${d['date_from'] ?? ''} → ${d['date_to'] ?? ''}${d['department'] != null ? ' · ${d['department']}' : ''}',
                     style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 11.5)),
+                if ((d['stats'] as Map?)?.isNotEmpty ?? false) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(12)),
+                    child: Row(children: [
+                      for (final e in (d['stats'] as Map).entries) ...[
+                        Expanded(child: Column(children: [
+                          Text('${e.value}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
+                          Text('${e.key}', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 8.5, fontWeight: FontWeight.w700)),
+                        ])),
+                      ],
+                    ]),
+                  ),
+                ],
                 if (canEdit) Padding(
                   padding: const EdgeInsets.only(top: 6),
-                  child: Text(tr('اضغط على أي سطر لتعديل الأيام الفعلية', 'Tap a row to edit actual days'),
+                  child: Text(tr('اضغط على أي سطر لتعديل الأيام المعدّلة', 'Tap a row to edit adjusted days'),
                       style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 10.5)),
                 ),
               ]),
@@ -1509,43 +1582,75 @@ class _TimesheetSheetState extends State<_TimesheetSheet> {
               itemCount: lines.length,
               itemBuilder: (_, i) {
                 final l = lines[i] as Map;
-                final diff = l['diff'];
-                final dc = (diff is num && diff < 0) ? Pms.red : (diff is num && diff > 0 ? Pms.amber : Pms.green);
+                final newModel = l.containsKey('adjusted');
+                final lineEdit = newModel ? (l['can_edit'] == true) : canEdit;
+                final st = '${l['line_state'] ?? ''}';
+                final sc = st == 'approved' ? Pms.green : (st == 'rejected' ? Pms.red : Pms.amber);
                 return Container(
                   margin: const EdgeInsets.only(bottom: 6),
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
                   clipBehavior: Clip.antiAlias,
                   child: Material(color: Colors.transparent, child: InkWell(
-                    onTap: canEdit ? () => _editLine(l) : null,
+                    onTap: lineEdit ? () => _editLine(l) : null,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      child: Row(children: [
-                        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text('${l['employee']}', maxLines: 1, overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
-                          if (l['badge'] != null) Text('${tr('بادج', 'Badge')} ${l['badge']}',
-                              style: const TextStyle(fontSize: 9.5, color: Pms.slate)),
-                        ])),
-                        _tsNum(tr('متوقّع', 'Exp'), '${l['count'] ?? 0}', Pms.slate),
-                        _tsNum(tr('فعلي', 'Act'), '${l['actual'] ?? 0}', widget.color),
-                        _tsNum(tr('فرق', 'Diff'), '${l['diff'] ?? 0}', dc),
-                        if (canEdit) Material(
-                          color: widget.color.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(9),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(9),
-                            onTap: () => _editLine(l),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                Icon(Icons.edit_rounded, size: 13, color: widget.color),
-                                const SizedBox(width: 3),
-                                Text(tr('تعديل', 'Edit'),
-                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: widget.color)),
-                              ]),
-                            ),
+                      child: Column(children: [
+                        Row(children: [
+                          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Row(children: [
+                              Flexible(child: Text('${l['employee']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5))),
+                              if (newModel && l['line_state_label'] != null) Padding(
+                                padding: const EdgeInsets.only(right: 5),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                  decoration: BoxDecoration(color: sc.withValues(alpha: 0.13), borderRadius: BorderRadius.circular(6)),
+                                  child: Text('${l['line_state_label']}', style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w900, color: sc)),
+                                ),
+                              ),
+                            ]),
+                            if (l['badge'] != null) Text('${tr('بادج', 'Badge')} ${l['badge']}',
+                                style: const TextStyle(fontSize: 9.5, color: Pms.slate)),
+                            if (newModel && l['note'] != null) Text('📝 ${l['note']}',
+                                maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 9.5, color: Pms.slate)),
+                          ])),
+                          if (newModel) ...[
+                            _tsNum(tr('بصمة', 'Bio'), '${l['biometric'] ?? 0}', Pms.slate),
+                            _tsNum(tr('معدّل', 'Adj'), '${l['adjusted'] ?? 0}', widget.color),
+                            _tsNum(tr('معتمد', 'Appr'), '${l['approved'] ?? 0}', Pms.green),
+                          ] else ...[
+                            _tsNum(tr('متوقّع', 'Exp'), '${l['count'] ?? 0}', Pms.slate),
+                            _tsNum(tr('فعلي', 'Act'), '${l['actual'] ?? 0}', widget.color),
+                            _tsNum(tr('فرق', 'Diff'), '${l['diff'] ?? 0}', Pms.green),
+                          ],
+                          if (lineEdit) Icon(Icons.edit_rounded, size: 15, color: widget.color),
+                          if (newModel && l['has_doc'] == true) Padding(
+                            padding: const EdgeInsets.only(right: 3),
+                            child: GestureDetector(
+                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PmsPhotoView(
+                                  url: '${l['doc_url']}', title: tr('مستند التعديل', 'Adjustment doc')))),
+                              child: const Icon(Icons.attach_file_rounded, size: 15, color: Pms.slate)),
                           ),
+                        ]),
+                        // HR approve/reject per line
+                        if (newModel && (l['can_approve'] == true || l['can_reject'] == true)) Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Row(children: [
+                            Expanded(child: OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(foregroundColor: Pms.red, side: const BorderSide(color: Pms.red),
+                                  padding: const EdgeInsets.symmetric(vertical: 6), visualDensity: VisualDensity.compact),
+                              onPressed: _busy ? null : () => _lineAction(l, 'reject'),
+                              icon: const Icon(Icons.close_rounded, size: 14),
+                              label: Text(tr('رفض', 'Reject'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)))),
+                            const SizedBox(width: 6),
+                            Expanded(child: FilledButton.icon(
+                              style: FilledButton.styleFrom(backgroundColor: Pms.green,
+                                  padding: const EdgeInsets.symmetric(vertical: 6), visualDensity: VisualDensity.compact),
+                              onPressed: _busy ? null : () => _lineAction(l, 'approve'),
+                              icon: const Icon(Icons.check_rounded, size: 14),
+                              label: Text(tr('اعتماد', 'Approve'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)))),
+                          ]),
                         ),
                       ]),
                     ),
@@ -1562,20 +1667,27 @@ class _TimesheetSheetState extends State<_TimesheetSheet> {
             child: Row(children: [
               for (final a in actions) Expanded(child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: SizedBox(height: 46, child: (a as Map)['style'] == 'primary'
-                  ? ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(backgroundColor: widget.color, foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                      onPressed: _busy ? null : () => _run('${a['key']}'),
-                      icon: const Icon(Icons.send_rounded, size: 18),
-                      label: Text('${a['ar']}', style: const TextStyle(fontWeight: FontWeight.w800)))
-                  : OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(foregroundColor: Pms.red,
-                          side: const BorderSide(color: Pms.red),
+                child: SizedBox(height: 46, child: () {
+                  final style = '${(a as Map)['style']}';
+                  final c = style == 'success' ? Pms.green : (style == 'danger' ? Pms.red : widget.color);
+                  final ic = style == 'success' ? Icons.done_all_rounded
+                      : (style == 'danger' ? (a['key'] == 'delete' ? Icons.delete_outline_rounded : Icons.block_rounded)
+                          : Icons.send_rounded);
+                  if (style == 'primary' || style == 'success') {
+                    return ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(backgroundColor: c, foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                        onPressed: _busy ? null : () => _run('${a['key']}'),
+                        icon: Icon(ic, size: 18),
+                        label: Text('${a['ar']}', style: const TextStyle(fontWeight: FontWeight.w800)));
+                  }
+                  return OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(foregroundColor: c, side: BorderSide(color: c),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                       onPressed: _busy ? null : () => _run('${a['key']}', confirm: a['confirm'] == true),
-                      icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                      label: Text('${a['ar']}', style: const TextStyle(fontWeight: FontWeight.w800)))),
+                      icon: Icon(ic, size: 18),
+                      label: Text('${a['ar']}', style: const TextStyle(fontWeight: FontWeight.w800)));
+                }()),
               )),
             ]),
           )),
