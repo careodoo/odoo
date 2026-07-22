@@ -264,7 +264,6 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
 
   String _createLabel() => {
         'deliveries': tr('تسليم جديد', 'New delivery'),
-        'petty': tr('مصروف جديد', 'New expense'),
         'timesheet': tr('كشف جديد', 'New sheet'),
         'requests': tr('طلب مستند', 'Doc request'),
         'assets': tr('طلب عهدة', 'Request custody'),
@@ -476,10 +475,21 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
           _openPetty(r['id'] as int);
         } else if (opens == 'timesheet') {
           _openTimesheet(r['id'] as int);
+        } else if (opens == 'supply') {
+          _openSupply(r['id'] as int);
         }
       },
       child: inner,
     );
+  }
+
+  Future<void> _openSupply(int id) async {
+    await showModalBottomSheet<bool>(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => _SupplyDetailSheet(supplyId: id, color: _c),
+    );
+    if (mounted) setState(_load);
   }
 
   Future<void> _openTimesheet(int id) async {
@@ -1424,4 +1434,383 @@ class _SettlementSheetState extends State<_SettlementSheet> {
       ),
     );
   }
+}
+
+/// Full-screen, pinch-to-zoom image viewer — used by the supply voucher and any
+/// tappable photo across the PMS app.
+class PmsPhotoView extends StatelessWidget {
+  final String url;
+  final String? title;
+  const PmsPhotoView({super.key, required this.url, this.title});
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: Colors.black,
+        appBar: AppBar(
+          backgroundColor: Colors.black, foregroundColor: Colors.white, elevation: 0,
+          title: Text(title ?? tr('عرض الصورة', 'Photo'), overflow: TextOverflow.ellipsis),
+        ),
+        body: Center(
+          child: InteractiveViewer(
+            minScale: 0.8, maxScale: 5,
+            child: Image.network(url,
+                loadingBuilder: (c, w, p) => p == null ? w
+                    : const CircularProgressIndicator(color: Colors.white),
+                errorBuilder: (c, e, s) => const Icon(Icons.broken_image_rounded,
+                    color: Colors.white54, size: 60)),
+          ),
+        ),
+      );
+}
+
+/// Supply document detail: product lines with images/quantities, per-product
+/// Receive (with quantity) / Reject (with reason), and the delivery voucher.
+class _SupplyDetailSheet extends StatefulWidget {
+  final int supplyId;
+  final Color color;
+  const _SupplyDetailSheet({required this.supplyId, required this.color});
+  @override
+  State<_SupplyDetailSheet> createState() => _SupplyDetailSheetState();
+}
+
+class _SupplyDetailSheetState extends State<_SupplyDetailSheet> {
+  Map<String, dynamic>? _d;
+  String? _error;
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final d = await context.read<AuthProvider>().api.pmsSupplyDetail(widget.supplyId);
+      if (mounted) setState(() { _d = d; _error = null; });
+    } catch (e) {
+      if (mounted) setState(() => _error = '$e');
+    }
+  }
+
+  Color _stateColor(String s) => switch (s) {
+        'received' => Pms.green,
+        'partial' => Pms.amber,
+        'rejected' => Pms.red,
+        'sent' => const Color(0xFF2563EB),
+        _ => Pms.slate,
+      };
+
+  Future<void> _receiveLine(Map line) async {
+    final ctrl = TextEditingController(text: '${numOf(line['qty'], 0)}');
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dc) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(tr('استلام المنتج', 'Receive item'),
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text('${line['name']}', style: const TextStyle(fontSize: 12.5, color: Pms.slate)),
+          const SizedBox(height: 12),
+          TextField(controller: ctrl, keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              autofocus: true,
+              decoration: InputDecoration(
+                  labelText: tr('الكمية المستلمة', 'Received quantity'),
+                  suffixText: '${line['uom'] ?? ''}',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
+          const SizedBox(height: 4),
+          Align(alignment: AlignmentDirectional.centerStart,
+              child: Text(tr('المطلوب: ${numOf(line['qty'], 0)}', 'Ordered: ${numOf(line['qty'], 0)}'),
+                  style: const TextStyle(fontSize: 11, color: Pms.slate))),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dc, false), child: Text(tr('إلغاء', 'Cancel'))),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Pms.green),
+            onPressed: () => Navigator.pop(dc, true),
+            child: Text(tr('تأكيد الاستلام', 'Receive')),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    final qty = double.tryParse(ctrl.text.trim().replaceAll(',', '.')) ?? numOf(line['qty'], 0).toDouble();
+    if (qty <= 0) return;
+    setState(() => _busy = true);
+    try {
+      await context.read<AuthProvider>().api.pmsSupplyLineReceive(line['id'] as int, qty);
+      await _load();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تم استلام المنتج', 'Item received')), backgroundColor: Pms.green));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _rejectLine(Map line) async {
+    final ctrl = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dc) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(tr('رفض الاستلام', 'Reject receipt'),
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+        content: TextField(controller: ctrl, maxLines: 2, autofocus: true,
+            decoration: InputDecoration(
+                labelText: tr('سبب الرفض', 'Reason'),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dc, false), child: Text(tr('إلغاء', 'Cancel'))),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Pms.red),
+            onPressed: () => Navigator.pop(dc, true),
+            child: Text(tr('رفض', 'Reject')),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    setState(() => _busy = true);
+    try {
+      await context.read<AuthProvider>().api.pmsSupplyLineReject(line['id'] as int, ctrl.text.trim());
+      await _load();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تم رفض المنتج', 'Item rejected')), backgroundColor: Pms.red));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _attachVoucher() async {
+    final src = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (bc) => SafeArea(child: Wrap(children: [
+        ListTile(leading: const Icon(Icons.photo_camera_rounded), title: Text(tr('كاميرا', 'Camera')),
+            onTap: () => Navigator.pop(bc, ImageSource.camera)),
+        ListTile(leading: const Icon(Icons.photo_library_rounded), title: Text(tr('المعرض', 'Gallery')),
+            onTap: () => Navigator.pop(bc, ImageSource.gallery)),
+      ])),
+    );
+    if (src == null) return;
+    try {
+      final x = await ImagePicker().pickImage(source: src, maxWidth: 1800, imageQuality: 72);
+      if (x == null) return;
+      setState(() => _busy = true);
+      final b64 = base64Encode(await x.readAsBytes());
+      await context.read<AuthProvider>().api.pmsSupplyVoucher(widget.supplyId, b64, 'delivery_voucher.jpg');
+      await _load();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تم إرفاق سند التسليم', 'Delivery voucher attached')), backgroundColor: Pms.green));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _openVoucher(Map voucher) async {
+    final api = context.read<AuthProvider>().api;
+    final path = '${voucher['path']}';
+    if (voucher['is_pdf'] == true) {
+      if (!mounted) return;
+      Navigator.push(context, MaterialPageRoute(
+          builder: (_) => PdfReportScreen(path: path, title: '${voucher['name']}')));
+      return;
+    }
+    final token = await api.token;
+    final origin = api.baseUrl.replaceFirst(RegExp(r'/api/v\d+/?$'), '');
+    final url = '$origin$path?token=${Uri.encodeQueryComponent(token ?? '')}';
+    if (!mounted) return;
+    Navigator.push(context, MaterialPageRoute(
+        builder: (_) => PmsPhotoView(url: url, title: '${voucher['name']}')));
+  }
+
+  Future<void> _receiveAll() async {
+    setState(() => _busy = true);
+    try {
+      await context.read<AuthProvider>().api.pmsSupplyReceive(widget.supplyId);
+      await _load();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تم استلام كل البنود', 'All items received')), backgroundColor: Pms.green));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      expand: false, initialChildSize: 0.9, maxChildSize: 0.96, minChildSize: 0.5,
+      builder: (_, sc) {
+        if (_error != null) {
+          return Center(child: Padding(padding: const EdgeInsets.all(24),
+              child: Text('$_error', style: const TextStyle(color: Pms.red))));
+        }
+        if (_d == null) return const Center(child: CircularProgressIndicator());
+        final d = _d!;
+        final lines = (d['lines'] as List?) ?? const [];
+        final sm = (d['summary'] as Map?) ?? const {};
+        final voucher = d['voucher'] as Map?;
+        final st = '${d['state']}';
+        final pending = numOf(sm['pending'], 0);
+        return ListView(controller: sc, padding: const EdgeInsets.fromLTRB(16, 12, 16, 24), children: [
+          Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 14),
+              decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(4)))),
+          // header
+          Row(children: [
+            Container(width: 44, height: 44,
+                decoration: BoxDecoration(color: widget.color.withValues(alpha: .12),
+                    borderRadius: BorderRadius.circular(12)),
+                child: Icon(Icons.local_shipping_rounded, color: widget.color)),
+            const SizedBox(width: 12),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('${d['name']}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+              if (d['source'] != null)
+                Text('${tr('المصدر', 'Source')}: ${d['source']}',
+                    style: const TextStyle(fontSize: 11.5, color: Pms.slate)),
+            ])),
+            Container(padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+                decoration: BoxDecoration(color: _stateColor(st).withValues(alpha: .13),
+                    borderRadius: BorderRadius.circular(20)),
+                child: Text('${d['state_label']}',
+                    style: TextStyle(color: _stateColor(st), fontWeight: FontWeight.w900, fontSize: 11.5))),
+          ]),
+          const SizedBox(height: 14),
+          // summary chips
+          Row(children: [
+            _sum(tr('البنود', 'Items'), sm['total'], Pms.ink),
+            _sum(tr('مستلم', 'Received'), sm['received'], Pms.green),
+            _sum(tr('مرفوض', 'Rejected'), sm['rejected'], Pms.red),
+            _sum(tr('منتظر', 'Pending'), sm['pending'], Pms.amber),
+          ]),
+          const SizedBox(height: 16),
+          // delivery voucher
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: Pms.bg, borderRadius: BorderRadius.circular(14)),
+            child: Row(children: [
+              const Icon(Icons.description_rounded, color: Pms.slate),
+              const SizedBox(width: 10),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(tr('سند التسليم', 'Delivery voucher'),
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                Text(voucher != null ? '${voucher['name']}' : tr('غير مرفق', 'Not attached'),
+                    style: const TextStyle(fontSize: 11.5, color: Pms.slate)),
+              ])),
+              if (voucher != null)
+                IconButton(onPressed: () => _openVoucher(voucher),
+                    icon: const Icon(Icons.visibility_rounded), color: widget.color),
+              IconButton(onPressed: _busy ? null : _attachVoucher,
+                  icon: Icon(voucher != null ? Icons.autorenew_rounded : Icons.upload_rounded),
+                  color: Pms.slate),
+            ]),
+          ),
+          const SizedBox(height: 16),
+          Text(tr('المنتجات', 'Products'),
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Pms.ink)),
+          const SizedBox(height: 8),
+          for (final l in lines) _lineCard(l as Map),
+          if (pending > 0) ...[
+            const SizedBox(height: 14),
+            SizedBox(width: double.infinity, height: 48, child: FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: Pms.green,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+              onPressed: _busy ? null : _receiveAll,
+              icon: const Icon(Icons.done_all_rounded),
+              label: Text(tr('استلام كل البنود المتبقية ($pending)', 'Receive all pending ($pending)'),
+                  style: const TextStyle(fontWeight: FontWeight.w900)),
+            )),
+          ],
+        ]);
+      },
+    );
+  }
+
+  Widget _sum(String label, dynamic v, Color c) => Expanded(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(color: c.withValues(alpha: .09), borderRadius: BorderRadius.circular(12)),
+          child: Column(children: [
+            Text('${v ?? 0}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: c)),
+            const SizedBox(height: 2),
+            Text(label, style: const TextStyle(fontSize: 10.5, color: Pms.slate, fontWeight: FontWeight.w700)),
+          ]),
+        ),
+      );
+
+  Widget _lineCard(Map l) {
+    final ls = '${l['line_state']}';
+    final img = l['image'];
+    final done = ls == 'received';
+    final rejected = ls == 'rejected';
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE5E7EB))),
+      child: Column(children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: img != null
+                ? Image.network('$img', width: 52, height: 52, fit: BoxFit.cover,
+                    errorBuilder: (c, e, s) => _imgPlaceholder())
+                : _imgPlaceholder(),
+          ),
+          const SizedBox(width: 11),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('${l['name']}', maxLines: 2, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+            const SizedBox(height: 3),
+            Text('${tr('الكمية', 'Qty')}: ${numOf(l['qty'], 0)} ${l['uom'] ?? ''}'
+                '${done ? '  •  ${tr('مستلم', 'received')}: ${numOf(l['received_qty'], 0)}' : ''}',
+                style: const TextStyle(fontSize: 12, color: Pms.slate, fontWeight: FontWeight.w600)),
+            if (rejected && l['reject_reason'] != null)
+              Padding(padding: const EdgeInsets.only(top: 3),
+                  child: Text('${tr('السبب', 'Reason')}: ${l['reject_reason']}',
+                      style: const TextStyle(fontSize: 11.5, color: Pms.red))),
+          ])),
+          Container(padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              decoration: BoxDecoration(color: _stateColor(ls).withValues(alpha: .13),
+                  borderRadius: BorderRadius.circular(16)),
+              child: Text('${l['line_state_label']}',
+                  style: TextStyle(color: _stateColor(ls), fontWeight: FontWeight.w800, fontSize: 10.5))),
+        ]),
+        if (ls == 'pending') ...[
+          const SizedBox(height: 9),
+          Row(children: [
+            Expanded(child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(foregroundColor: Pms.red,
+                  side: const BorderSide(color: Pms.red),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+              onPressed: _busy ? null : () => _rejectLine(l),
+              icon: const Icon(Icons.close_rounded, size: 17),
+              label: Text(tr('رفض', 'Reject'), style: const TextStyle(fontWeight: FontWeight.w800)),
+            )),
+            const SizedBox(width: 8),
+            Expanded(child: FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: Pms.green,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+              onPressed: _busy ? null : () => _receiveLine(l),
+              icon: const Icon(Icons.check_rounded, size: 18),
+              label: Text(tr('استلام', 'Receive'), style: const TextStyle(fontWeight: FontWeight.w800)),
+            )),
+          ]),
+        ],
+      ]),
+    );
+  }
+
+  Widget _imgPlaceholder() => Container(width: 52, height: 52,
+      color: Pms.bg, child: const Icon(Icons.inventory_2_rounded, color: Pms.slate, size: 24));
 }

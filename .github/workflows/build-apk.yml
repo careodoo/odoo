@@ -141,6 +141,32 @@ jobs:
             care-mobile-v${{ steps.ver.outputs.name }}.apk
             care-mobile-v${{ steps.ver.outputs.name }}.aab
 
+      - name: Compose release body
+        run: |
+          SIGN_LINE='⚠️ مفتاح مؤقّت — للتثبيت المباشر فقط. لرفع Google Play استخدم AAB من مجلد dist أو أضِف RELEASE_KEYSTORE_B64.'
+          if [ "${{ steps.sign.outputs.publish }}" = "true" ]; then SIGN_LINE='مفتاح Play الصحيح ✅'; fi
+          {
+            echo "**CARE Mobile v${{ steps.ver.outputs.name }}** — build ${{ github.run_number }}"
+            echo ""
+            echo "### 📝 ما تم في هذا الإصدار"
+            # The current release notes live between the CURRENT/END markers in
+            # RELEASE_NOTES.md — authored per release. Fall back to the last commit.
+            if [ -f RELEASE_NOTES.md ] && grep -q '<!--CURRENT-->' RELEASE_NOTES.md; then
+              sed -n '/<!--CURRENT-->/,/<!--END-->/p' RELEASE_NOTES.md | grep -v -- '<!--'
+            else
+              git log -1 --pretty=%s
+            fi
+            echo ""
+            echo "التوقيع: $SIGN_LINE"
+            echo ""
+            echo "📱 \`care-mobile-v${{ steps.ver.outputs.name }}.apk\` — **تثبيت مباشر** على أندرويد"
+            echo "📦 \`care-mobile-v${{ steps.ver.outputs.name }}.aab\` — Google Play (يحتاج مفتاح Play)"
+            echo ""
+            echo "⚠️ أول مرة فقط: احذف التطبيق القديم قبل التثبيت (تغيّر التوقيع)."
+            echo "الخادم: https://ecare.care-kw.com/api/v1"
+          } > RELEASE_BODY.md
+          cat RELEASE_BODY.md
+
       - name: Publish Release with APK + AAB
         uses: softprops/action-gh-release@v2
         with:
@@ -149,12 +175,4 @@ jobs:
           files: |
             care-mobile-v${{ steps.ver.outputs.name }}.apk
             care-mobile-v${{ steps.ver.outputs.name }}.aab
-          body: |
-            **CARE Mobile v${{ steps.ver.outputs.name }}** — build ${{ github.run_number }}
-            التوقيع: ${{ steps.sign.outputs.publish == 'true' && 'مفتاح Play الصحيح ✅' || '⚠️ مفتاح مؤقّت — للتثبيت المباشر فقط. لرفع Google Play استخدم AAB من مجلد dist أو أضِف RELEASE_KEYSTORE_B64.' }}
-
-            📱 `care-mobile-v${{ steps.ver.outputs.name }}.apk` — **تثبيت مباشر** على أندرويد
-            📦 `care-mobile-v${{ steps.ver.outputs.name }}.aab` — Google Play (يحتاج مفتاح Play)
-
-            ⚠️ أول مرة فقط: احذف التطبيق القديم قبل التثبيت (تغيّر التوقيع).
-            الخادم: https://ecare.care-kw.com/api/v1
+          body_path: RELEASE_BODY.md

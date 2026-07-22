@@ -1566,6 +1566,25 @@ class ApiClient {
   Future<void> pmsSupplyReceive(int supplyId) async =>
       _handle(await _net.post(_u('/pms/supply/$supplyId/receive'), headers: await _headers()));
 
+  /// Full supply document: header + product lines (image/qty/received/state) + voucher.
+  Future<Map<String, dynamic>> pmsSupplyDetail(int supplyId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/supply/$supplyId'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsSupplyLineReceive(int lineId, double qty) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/supply/line/$lineId/receive'), headers: await _headers(),
+          body: jsonEncode({'qty': qty}))))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsSupplyLineReject(int lineId, String reason) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/supply/line/$lineId/reject'), headers: await _headers(),
+          body: jsonEncode({'reason': reason}))))['data'] as Map);
+
+  Future<void> pmsSupplyVoucher(int supplyId, String base64Data, String filename) async =>
+      _handle(await _net.post(_u('/pms/supply/$supplyId/voucher'), headers: await _headers(),
+          body: jsonEncode({'data': base64Data, 'filename': filename})));
+
   Future<Map<String, dynamic>> pmsEmployeeFile(int id) async =>
       Map<String, dynamic>.from((await _handle(
           await _net.get(_u('/pms/employee/$id/file'), headers: await _headers())))['data'] as Map);

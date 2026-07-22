@@ -182,7 +182,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     final now = DateTime.now();
     DateTime from = DateTime(now.year, now.month, 1);
     DateTime to = now;
-    bool submit = true;
     bool busy = false;
 
     await showModalBottomSheet(
@@ -233,12 +232,19 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   child: Text(fmt(to), style: const TextStyle(fontWeight: FontWeight.w700))),
               )),
             ]),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              value: submit, onChanged: (v) => setSheet(() => submit = v),
-              activeThumbColor: const Color(0xFF16A34A),
-              title: Text(tr('تقديم للاعتماد بعد الإنشاء', 'Submit for approval after creating'),
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+            Container(
+              padding: const EdgeInsets.all(11),
+              decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(11),
+                  border: Border.all(color: const Color(0xFFBFDBFE))),
+              child: Row(children: [
+                const Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFF2563EB)),
+                const SizedBox(width: 8),
+                Expanded(child: Text(
+                    tr('سيُنشأ الكشف كمسودة — يمكنك تعديل أيام العمال ثم تقديمه للاعتماد.',
+                       'Created as a draft — adjust worker days, then submit for approval.'),
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1E40AF)))),
+              ]),
             ),
             const SizedBox(height: 10),
             SizedBox(width: double.infinity, height: 48, child: FilledButton.icon(
@@ -248,13 +254,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 setSheet(() => busy = true);
                 try {
                   final res = await api.timesheetCreate(departmentId: dept!,
-                      dateFrom: fmt(from), dateTo: fmt(to), submit: submit);
+                      dateFrom: fmt(from), dateTo: fmt(to), submit: false);
                   if (!ctx.mounted) return;
                   Navigator.pop(ctx);
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       backgroundColor: const Color(0xFF16A34A),
-                      content: Text(tr('تم إنشاء الكشف (${res['lines'] ?? 0} سطر)${res['submitted'] == true ? ' وتقديمه' : ''}',
-                          'Timesheet created (${res['lines'] ?? 0} lines)${res['submitted'] == true ? ' and submitted' : ''}'))));
+                      content: Text(tr('تم إنشاء الكشف كمسودة (${res['lines'] ?? 0} سطر)',
+                          'Timesheet created as draft (${res['lines'] ?? 0} lines)'))));
                 } catch (e) {
                   setSheet(() => busy = false);
                   ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: const Color(0xFFE11D48)));
