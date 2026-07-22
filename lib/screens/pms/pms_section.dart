@@ -83,7 +83,7 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
     final createAction = const {
       'deliveries': 'delivery', 'petty': 'pettycash',
       'timesheet': 'timesheet', 'requests': 'docrequest',
-      'assets': 'custody', 'fuel': 'fuel',
+      'assets': 'custody', 'fuel': 'fuel', 'materials': 'material',
     }[widget.code];
     return Scaffold(
       backgroundColor: Pms.bg,
@@ -267,6 +267,7 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
         'assets': tr('طلب عهدة', 'Request custody'),
         'petty': tr('طلب عهدة نقدية', 'Request cash custody'),
         'fuel': tr('تسجيل تعبئة', 'Add fuel'),
+        'materials': tr('إضافة مادة', 'Add material'),
       }[widget.code] ?? tr('إضافة', 'Add');
 
   /// The create sheet, built per-section from its options endpoint.
@@ -611,6 +612,12 @@ class _CreateSheetState extends State<_CreateSheet> {
 
   List<Widget> _fields() {
     switch (widget.code) {
+      case 'materials':
+        return [
+          _title(tr('إضافة مادة', 'Add material')),
+          _text(_a, tr('اسم المادة *', 'Material name *')),
+          _submit(_a.text.trim().isNotEmpty, () => {'name': _a.text.trim()}),
+        ];
       case 'deliveries':
         final materials = (widget.options['materials'] as List?) ?? const [];
         return [
