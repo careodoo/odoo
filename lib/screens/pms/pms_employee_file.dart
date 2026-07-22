@@ -223,6 +223,7 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
     ('uniform', 'اليونيفورم', Icons.checkroom_rounded, Color(0xFF0EA5E9), 'uniform'),
     ('vehicles', 'السيارات', Icons.directions_car_rounded, Color(0xFF334155), 'vehicles'),
     ('violations', 'المخالفات المرورية', Icons.report_rounded, Color(0xFFDC2626), 'violations'),
+    ('legal', 'الحالة القانونية', Icons.balance_rounded, Color(0xFF7C2D12), 'legal'),
     ('devices', 'أجهزة البصمة', Icons.fingerprint_rounded, Color(0xFF475569), 'devices'),
   ];
 
@@ -686,6 +687,16 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
           _titleRow('${m['device'] ?? tr('جهاز بصمة', 'Device')}'),
           if (m['uid'] != null) _kv(tr('معرّف المستخدم', 'UID'), '${m['uid']}'),
           if (m['templates'] != null) _kv(tr('البصمات', 'Templates'), '${m['templates']}'),
+        ]);
+      case 'legal':
+        return _wrap([
+          _titleRow('${m['name'] ?? tr('قضية', 'Case')}',
+              trailing: '${m['state_label'] ?? ''}', tc: _stateColor('${m['state']}')),
+          if (m['ref'] != null) _kv(tr('رقم المرجع', 'Ref'), '${m['ref']}'),
+          if (m['court'] != null) _kv(tr('المحكمة', 'Court'), '${m['court']}'),
+          if (m['hearing'] != null) _kv(tr('جلسة', 'Hearing'), '${m['hearing']}'),
+          if (m['next'] != null) _kv(tr('الموعد القادم', 'Next'), '${m['next']}', vc: Pms.amber),
+          if (m['details'] != null) _kv(tr('التفاصيل', 'Details'), '${m['details']}'),
         ]);
       case 'attendance':
         return _wrap([
