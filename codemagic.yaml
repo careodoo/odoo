@@ -1,0 +1,75 @@
+# Codemagic CI/CD for the CARE Flutter app (repo root is the Flutter project).
+#
+# One-time setup in Codemagic before the first run:
+#   1. Team → Integrations → App Store Connect: add the .p8 API key
+#      (Issuer ID + Key ID) and name the integration `care_appstore`.
+#   2. (optional, Android) Integrations → Google Play + Android code signing
+#      with the care-release.jks upload key (alias `care`, pass Care2026Store).
+#   3. Environment variable group `appstore` may hold extra secure vars.
+#
+# The iOS bundle identifier below (com.carekw.care) MUST match the App ID
+# registered in the Apple Developer account and the app in App Store Connect.
+
+workflows:
+  ios-appstore:
+    name: CARE iOS → App Store
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    integrations:
+      app_store_connect: care_appstore
+    environment:
+      groups:
+        - appstore
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.carekw.care
+    scripts:
+      - name: Flutter pub get
+        script: flutter pub get
+      - name: Set up code signing
+        script: xcode-project use-profiles
+      - name: Build IPA
+        script: |
+          flutter build ipa --release \
+            --build-name=$(grep -E '^version:' pubspec.yaml | sed -E 's/version:[[:space:]]*//; s/\+.*//') \
+            --build-number=$(($(date +%s)/60)) \
+            --dart-define=CARE_API_BASE=https://ecare.care-kw.com/api/v1
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        # Flip to true once TestFlight looks good, to auto-submit for review:
+        submit_to_app_store: false
+
+  android-play:
+    name: CARE Android → Google Play (optional)
+    instance_type: linux_x2
+    max_build_duration: 45
+    environment:
+      android_signing:
+        - care_upload            # the care-release.jks uploaded in Codemagic
+      groups:
+        - google_play
+      flutter: stable
+    scripts:
+      - name: Flutter pub get
+        script: flutter pub get
+      - name: Build AAB
+        script: |
+          flutter build appbundle --release \
+            --build-name=$(grep -E '^version:' pubspec.yaml | sed -E 's/version:[[:space:]]*//; s/\+.*//') \
+            --build-number=$(($(date +%s)/60)) \
+            --dart-define=CARE_API_BASE=https://ecare.care-kw.com/api/v1
+    artifacts:
+      - build/**/outputs/bundle/**/*.aab
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: true
