@@ -1072,7 +1072,7 @@ class _TimesheetSheetState extends State<_TimesheetSheet> {
               child: TextField(
                 onChanged: (v) => setState(() => _q = v),
                 decoration: InputDecoration(
-                  hintText: tr('ابحث بالاسم…', 'Search by name…'),
+                  hintText: tr('ابحث بالاسم أو البادج…', 'Search by name or badge…'),
                   prefixIcon: const Icon(Icons.search_rounded, size: 19),
                   isDense: true, filled: true, fillColor: Pms.bg,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
