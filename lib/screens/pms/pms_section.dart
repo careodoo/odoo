@@ -1107,8 +1107,23 @@ class _TimesheetSheetState extends State<_TimesheetSheet> {
                         _tsNum(tr('متوقّع', 'Exp'), '${l['count'] ?? 0}', Pms.slate),
                         _tsNum(tr('فعلي', 'Act'), '${l['actual'] ?? 0}', widget.color),
                         _tsNum(tr('فرق', 'Diff'), '${l['diff'] ?? 0}', dc),
-                        if (canEdit) const Padding(padding: EdgeInsets.only(right: 4),
-                            child: Icon(Icons.edit_rounded, size: 15, color: Pms.slate)),
+                        if (canEdit) Material(
+                          color: widget.color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(9),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(9),
+                            onTap: () => _editLine(l),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                Icon(Icons.edit_rounded, size: 13, color: widget.color),
+                                const SizedBox(width: 3),
+                                Text(tr('تعديل', 'Edit'),
+                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: widget.color)),
+                              ]),
+                            ),
+                          ),
+                        ),
                       ]),
                     ),
                   )),
