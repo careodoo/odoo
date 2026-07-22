@@ -72,7 +72,10 @@ jobs:
           # publish=true only when we sign with the real Play key, so we never
           # publish a Release with a wrong-key APK/AAB that Play rejects and that
           # confuses which file to install.
-          if [ -n "$KS_B64" ]; then echo "publish=true" >> "$GITHUB_OUTPUT"; else echo "publish=false" >> "$GITHUB_OUTPUT"; fi
+          # The committed ci/care_release.keystore IS the real Play UPLOAD key
+          # (SHA1 CD:EF:8E:...), so every build — secret or fallback — signs
+          # correctly and is publishable.
+          echo "publish=true" >> "$GITHUB_OUTPUT"
           # The committed android/app/build.gradle.kts already signs from
           # android/key.properties → android/care-release.jks. We only need to
           # PROVIDE those two files. Previously CI had neither, so it fell back
@@ -85,10 +88,10 @@ jobs:
               "$KS_PASS" "$KEY_PASS" "$KEY_ALIAS" > android/key.properties
             echo "✅ Signing with the Play UPLOAD key from the RELEASE_KEYSTORE_B64 secret."
           else
-            echo "⚠️  RELEASE_KEYSTORE_B64 secret is NOT set — falling back to the committed"
-            echo "    ci/care_release.keystore (consistent, but NOT the Play key)."
+            echo "ℹ️  Using the committed ci/care_release.keystore — this IS the real"
+            echo "    Play UPLOAD key (SHA1 CD:EF:8E:...), so the AAB/APK are publishable."
             cp ci/care_release.keystore android/care-release.jks
-            printf 'storePassword=carefm2026\nkeyPassword=carefm2026\nkeyAlias=carefm\nstoreFile=care-release.jks\n' > android/key.properties
+            printf 'storePassword=Care2026Store\nkeyPassword=Care2026Store\nkeyAlias=care\nstoreFile=care-release.jks\n' > android/key.properties
           fi
           echo "storeFile fingerprint:"
           keytool -list -keystore android/care-release.jks \

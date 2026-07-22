@@ -124,10 +124,15 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
             }
             final d = snap.data ?? const {};
             final stats = (d['stats'] as Map?) ?? const {};
+            // Two-tab sections: attendance (present/absent) OR requests
+            // (outgoing/incoming). Both expose a second list + tab labels.
+            final incoming = d['incoming'] as List?;
             final absentees = d['absentees'] as List?;
-            final hasTabs = absentees != null;
+            final secondList = incoming ?? absentees;
+            final hasTabs = secondList != null;
+            final isReqTabs = incoming != null;
             final all = (hasTabs && _attTab == 1)
-                ? absentees
+                ? secondList
                 : ((d['rows'] as List?) ?? const []);
             final rows = _q.isEmpty
                 ? all
@@ -150,9 +155,14 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
                   child: Row(children: [
-                    _attSeg(tr('الحضور', 'Present'), 0, Icons.how_to_reg_rounded,
+                    _attSeg(
+                        isReqTabs ? '${d['tab_out'] ?? tr('الصادرة', 'Outgoing')}' : tr('الحضور', 'Present'),
+                        0, isReqTabs ? Icons.outbox_rounded : Icons.how_to_reg_rounded,
                         ((d['rows'] as List?) ?? const []).length),
-                    _attSeg(tr('الغياب', 'Absent'), 1, Icons.person_off_rounded, absentees.length),
+                    _attSeg(
+                        isReqTabs ? '${d['tab_in'] ?? tr('الواردة', 'Incoming')}' : tr('الغياب', 'Absent'),
+                        1, isReqTabs ? Icons.inbox_rounded : Icons.person_off_rounded,
+                        secondList.length),
                   ]),
                 ),
               ],
@@ -597,6 +607,39 @@ class _CreateSheetState extends State<_CreateSheet> {
         ),
       );
 
+  /// Searchable employee picker (by name + badge) — a dropdown is unusable for
+  /// hundreds of workers.
+  Widget _empPicker(String label, List emps) {
+    Map? sel;
+    for (final e in emps) {
+      if ((e as Map)['id'] == _pick1) { sel = e; break; }
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: InkWell(
+        onTap: () async {
+          final picked = await showModalBottomSheet<int>(
+            context: context, isScrollControlled: true, backgroundColor: Colors.white,
+            shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+            builder: (_) => _EmpSearchSheet(emps: emps),
+          );
+          if (picked != null) setState(() => _pick1 = picked);
+        },
+        child: InputDecorator(
+          decoration: InputDecoration(labelText: label, border: const OutlineInputBorder(), isDense: true,
+              prefixIcon: const Icon(Icons.person_search_rounded, size: 20)),
+          child: Text(
+            sel != null
+                ? '${sel['name']}${sel['badge'] != null ? ' · ${sel['badge']}' : ''}'
+                : tr('اختر الموظف (بحث بالاسم/البادج)', 'Pick employee (search name/badge)'),
+            maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: sel == null ? Colors.grey : null, fontWeight: sel != null ? FontWeight.w700 : null),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _dropInt(String label, List opts, String idKey, String labelKey) => Padding(
         padding: const EdgeInsets.only(bottom: 10),
         child: DropdownButtonFormField<int>(
@@ -718,7 +761,7 @@ class _CreateSheetState extends State<_CreateSheet> {
                 child: Text(tr('لا موظفين في قسم هذا المشروع.', 'No employees in this project department.'),
                     style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)))
           else
-            _dropInt(tr('الموظف', 'Employee'), emps, 'id', 'name'),
+            _empPicker(tr('الموظف', 'Employee'), emps),
           if (types.isNotEmpty) _dropStr(tr('نوع المستند', 'Document type'), types),
           _text(_a, tr('ملاحظات (اختياري)', 'Notes (optional)'), lines: 2),
           _submit(_pick1 != null, () => {
@@ -738,7 +781,7 @@ class _CreateSheetState extends State<_CreateSheet> {
                 child: Text(tr('لا موظفين في قسم هذا المشروع.', 'No employees in this project department.'),
                     style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)))
           else
-            _dropInt(tr('الموظف المستلم *', 'Assigned to *'), emps, 'id', 'name'),
+            _empPicker(tr('الموظف المستلم *', 'Assigned to *'), emps),
           _text(_b, tr('القيمة (اختياري)', 'Value (optional)'),
               type: const TextInputType.numberWithOptions(decimal: true)),
           _text(_c, tr('الوصف / ملاحظات', 'Description / notes'), lines: 2),
@@ -1839,4 +1882,69 @@ class _SupplyDetailSheetState extends State<_SupplyDetailSheet> {
 
   Widget _imgPlaceholder() => Container(width: 52, height: 52,
       color: Pms.bg, child: const Icon(Icons.inventory_2_rounded, color: Pms.slate, size: 24));
+}
+
+/// Searchable employee picker sheet — filters by name AND badge as you type.
+class _EmpSearchSheet extends StatefulWidget {
+  final List emps;
+  const _EmpSearchSheet({required this.emps});
+  @override
+  State<_EmpSearchSheet> createState() => _EmpSearchSheetState();
+}
+
+class _EmpSearchSheetState extends State<_EmpSearchSheet> {
+  String _q = '';
+  @override
+  Widget build(BuildContext context) {
+    final q = _q.trim().toLowerCase();
+    final list = q.isEmpty
+        ? widget.emps
+        : widget.emps.where((e) {
+            final m = e as Map;
+            final hay = '${m['name'] ?? ''} ${m['badge'] ?? ''}'.toLowerCase();
+            // comma = OR, spaces = AND (same idiom as the section search)
+            return q.split(',').map((g) => g.trim()).where((g) => g.isNotEmpty)
+                .any((group) => group.split(RegExp(r'\s+')).every((w) => hay.contains(w)));
+          }).toList();
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: DraggableScrollableSheet(
+        expand: false, initialChildSize: 0.8, maxChildSize: 0.95, minChildSize: 0.5,
+        builder: (_, sc) => Column(children: [
+          Container(width: 40, height: 4, margin: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(4))),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+            child: TextField(
+              autofocus: true,
+              onChanged: (v) => setState(() => _q = v),
+              decoration: InputDecoration(
+                hintText: tr('ابحث بالاسم أو البادج… (فاصلة = أو)', 'Search name or badge… (comma = OR)'),
+                prefixIcon: const Icon(Icons.search_rounded),
+                isDense: true, filled: true, fillColor: Pms.bg,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+            ),
+          ),
+          Expanded(child: list.isEmpty
+              ? Center(child: Text(tr('لا نتائج', 'No matches'), style: const TextStyle(color: Pms.slate)))
+              : ListView.builder(
+                  controller: sc, itemCount: list.length,
+                  itemBuilder: (_, i) {
+                    final e = list[i] as Map;
+                    return ListTile(
+                      leading: CircleAvatar(backgroundColor: Pms.bg,
+                          child: const Icon(Icons.person, color: Pms.slate, size: 20)),
+                      title: Text('${e['name']}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                      subtitle: e['badge'] != null
+                          ? Text('${tr('بادج', 'Badge')}: ${e['badge']}', style: const TextStyle(fontSize: 12))
+                          : null,
+                      onTap: () => Navigator.pop(context, e['id'] as int),
+                    );
+                  },
+                )),
+        ]),
+      ),
+    );
+  }
 }
