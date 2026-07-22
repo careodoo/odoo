@@ -63,6 +63,7 @@ class PmsSectionScreen extends StatefulWidget {
 class _PmsSectionScreenState extends State<PmsSectionScreen> {
   Future<Map<String, dynamic>>? _f;
   String _q = '';
+  int _attTab = 0; // attendance: 0 = present records, 1 = absentees
 
   Color get _c => kPmsSectionColors[widget.code] ?? Pms.violet;
 
@@ -116,7 +117,11 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
             }
             final d = snap.data ?? const {};
             final stats = (d['stats'] as Map?) ?? const {};
-            final all = (d['rows'] as List?) ?? const [];
+            final absentees = d['absentees'] as List?;
+            final hasTabs = absentees != null;
+            final all = (hasTabs && _attTab == 1)
+                ? absentees
+                : ((d['rows'] as List?) ?? const []);
             final rows = _q.isEmpty
                 ? all
                 : all.where((r) {
@@ -131,6 +136,19 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
                   }).toList();
             return ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 24), children: [
               if (stats.isNotEmpty) _statsBand(stats),
+              if (hasTabs) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
+                  child: Row(children: [
+                    _attSeg(tr('الحضور', 'Present'), 0, Icons.how_to_reg_rounded,
+                        ((d['rows'] as List?) ?? const []).length),
+                    _attSeg(tr('الغياب', 'Absent'), 1, Icons.person_off_rounded, absentees.length),
+                  ]),
+                ),
+              ],
               if (all.length > 4 || widget.code == 'team') ...[
                 const SizedBox(height: 10),
                 TextField(
@@ -299,6 +317,26 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
             content: Text('$e'), backgroundColor: const Color(0xFFE5484D)));
       }
     }
+  }
+
+  Widget _attSeg(String label, int idx, IconData ic, int count) {
+    final on = _attTab == idx;
+    final c = idx == 1 ? const Color(0xFFE11D48) : _c;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() { _attTab = idx; _q = ''; }),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 9),
+          decoration: BoxDecoration(color: on ? c : Colors.transparent, borderRadius: BorderRadius.circular(9)),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(ic, size: 15, color: on ? Colors.white : c),
+            const SizedBox(width: 6),
+            Text('$label ($count)',
+                style: TextStyle(color: on ? Colors.white : Pms.ink, fontWeight: FontWeight.w800, fontSize: 12)),
+          ]),
+        ),
+      ),
+    );
   }
 
   Widget _row(Map r) {
