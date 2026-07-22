@@ -1685,10 +1685,12 @@ class ApiClient {
               headers: await _headers(), body: jsonEncode({'priority': starred}))))['data'] as Map);
 
   /// Forward a task to another internal user (PMS routing).
-  Future<Map<String, dynamic>> pmsTaskForward(int id, int toUserId, {String? reason}) async =>
+  Future<Map<String, dynamic>> pmsTaskForward(int id, int toUserId, {String? reason, String? deadline}) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(_u('/pms/task/$id/forward'),
           headers: await _headers(),
-          body: jsonEncode({'forward_to_id': toUserId, if (reason != null) 'reason': reason}))))['data'] as Map);
+          body: jsonEncode({'forward_to_id': toUserId,
+            if (reason != null) 'reason': reason,
+            if (deadline != null && deadline.isNotEmpty) 'deadline': deadline}))))['data'] as Map);
 
   Future<Map<String, dynamic>> pmsTaskAccept(int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(_u('/pms/task/$id/accept'),
@@ -1700,9 +1702,10 @@ class ApiClient {
           body: jsonEncode({if (reason != null) 'reason': reason}))))['data'] as Map);
 
   // ---- close-request workflow ----
-  Future<Map<String, dynamic>> pmsTaskClose(int id) async =>
+  Future<Map<String, dynamic>> pmsTaskClose(int id, {String? note}) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(_u('/pms/task/$id/close'),
-          headers: await _headers())))['data'] as Map);
+          headers: await _headers(),
+          body: jsonEncode({if (note != null && note.isNotEmpty) 'note': note}))))['data'] as Map);
 
   Future<Map<String, dynamic>> pmsTaskRequestClose(int id, {String? note}) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(_u('/pms/task/$id/request-close'),

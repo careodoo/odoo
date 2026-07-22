@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'package:share_plus/share_plus.dart';
 import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
@@ -1528,21 +1530,54 @@ class _SettlementSheetState extends State<_SettlementSheet> {
 
 /// Full-screen, pinch-to-zoom image viewer — used by the supply voucher and any
 /// tappable photo across the PMS app.
-class PmsPhotoView extends StatelessWidget {
+class PmsPhotoView extends StatefulWidget {
   final String url;
   final String? title;
   const PmsPhotoView({super.key, required this.url, this.title});
+  @override
+  State<PmsPhotoView> createState() => _PmsPhotoViewState();
+}
+
+class _PmsPhotoViewState extends State<PmsPhotoView> {
+  bool _sharing = false;
+
+  Future<void> _share() async {
+    setState(() => _sharing = true);
+    try {
+      final res = await http.get(Uri.parse(widget.url));
+      final ct = res.headers['content-type'] ?? 'image/jpeg';
+      final ext = ct.contains('png') ? 'png' : ct.contains('pdf') ? 'pdf' : 'jpg';
+      await Share.shareXFiles(
+          [XFile.fromData(res.bodyBytes, mimeType: ct, name: 'CARE-image.$ext')],
+          text: widget.title);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(tr('تعذّرت المشاركة', 'Could not share'))));
+    } finally {
+      if (mounted) setState(() => _sharing = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
         backgroundColor: Colors.black,
         appBar: AppBar(
           backgroundColor: Colors.black, foregroundColor: Colors.white, elevation: 0,
-          title: Text(title ?? tr('عرض الصورة', 'Photo'), overflow: TextOverflow.ellipsis),
+          title: Text(widget.title ?? tr('عرض الصورة', 'Photo'), overflow: TextOverflow.ellipsis),
+          actions: [
+            IconButton(
+              tooltip: tr('مشاركة / طباعة', 'Share / print'),
+              onPressed: _sharing ? null : _share,
+              icon: _sharing
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.ios_share_rounded),
+            ),
+          ],
         ),
         body: Center(
           child: InteractiveViewer(
             minScale: 0.8, maxScale: 5,
-            child: Image.network(url,
+            child: Image.network(widget.url,
                 loadingBuilder: (c, w, p) => p == null ? w
                     : const CircularProgressIndicator(color: Colors.white),
                 errorBuilder: (c, e, s) => const Icon(Icons.broken_image_rounded,

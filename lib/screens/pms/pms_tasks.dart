@@ -26,8 +26,9 @@ class _PmsTasksScreenState extends State<PmsTasksScreen> {
   late String _filter = widget.filter;
 
   static const _filters = [
-    ['', 'الكل', 'All'], ['open', 'مفتوحة', 'Open'], ['overdue', 'متأخرة', 'Overdue'],
-    ['today', 'اليوم', 'Today'], ['mine', 'مهامي', 'Mine'], ['done', 'منجزة', 'Done'],
+    ['', 'الكل', 'All'], ['starred', '⭐ المميّزة', '⭐ Starred'], ['open', 'مفتوحة', 'Open'],
+    ['overdue', 'متأخرة', 'Overdue'], ['today', 'اليوم', 'Today'],
+    ['mine', 'مهامي', 'Mine'], ['done', 'منجزة', 'Done'],
   ];
 
   @override
@@ -45,6 +46,53 @@ class _PmsTasksScreenState extends State<PmsTasksScreen> {
 
   void _reload() => setState(() => _f = context.read<AuthProvider>().api.pmsTasks(
       projectId: widget.projectId, stageId: widget.stageId, filter: _filter, q: _q));
+
+  /// Searchable department picker sheet (professional, filters by name).
+  Future<int?> _pickDepartment(BuildContext ctx, List<Map> depts, int? current) {
+    String q = '';
+    return showModalBottomSheet<int>(
+      context: ctx, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => StatefulBuilder(builder: (c, ss) {
+        final ql = q.trim().toLowerCase();
+        final list = ql.isEmpty ? depts
+            : depts.where((d) => '${d['name']}'.toLowerCase().contains(ql)).toList();
+        return Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(c).viewInsets.bottom),
+          child: DraggableScrollableSheet(
+            expand: false, initialChildSize: 0.75, maxChildSize: 0.95, minChildSize: 0.4,
+            builder: (_, sc) => Column(children: [
+              Container(width: 40, height: 4, margin: const EdgeInsets.symmetric(vertical: 11),
+                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(4))),
+              Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 8), child: Row(children: [
+                const Icon(Icons.apartment_rounded, color: Pms.violet),
+                const SizedBox(width: 8),
+                Text(tr('اختر القسم', 'Pick department'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+              ])),
+              Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: TextField(autofocus: true, onChanged: (v) => ss(() => q = v),
+                  decoration: InputDecoration(hintText: tr('ابحث عن قسم…', 'Search department…'),
+                      prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                      isDense: true, filled: true, fillColor: Pms.bg,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)))),
+              Expanded(child: ListView.builder(controller: sc, itemCount: list.length,
+                itemBuilder: (_, i) {
+                  final d = list[i];
+                  final sel = d['id'] == current;
+                  return ListTile(
+                    leading: CircleAvatar(backgroundColor: Pms.violet.withValues(alpha: 0.12),
+                        child: const Icon(Icons.apartment_rounded, color: Pms.violet, size: 20)),
+                    title: Text('${d['name']}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+                    trailing: sel ? const Icon(Icons.check_circle_rounded, color: Pms.violet) : null,
+                    onTap: () => Navigator.pop(c, d['id'] as int),
+                  );
+                })),
+            ]),
+          ),
+        );
+      }),
+    );
+  }
 
   Future<void> _createTask() async {
     final name = TextEditingController();
@@ -102,21 +150,27 @@ class _PmsTasksScreenState extends State<PmsTasksScreen> {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
             ),
             const SizedBox(height: 12),
-            // department
+            // department — searchable professional picker
             if (departments.isNotEmpty)
-              DropdownButtonFormField<int>(
-                value: deptId,
-                isExpanded: true,
-                decoration: InputDecoration(
-                    labelText: tr('القسم', 'Department'),
-                    prefixIcon: const Icon(Icons.apartment_rounded),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
-                items: [
-                  for (final d in departments)
-                    DropdownMenuItem(value: d['id'] as int,
-                        child: Text('${d['name']}', overflow: TextOverflow.ellipsis)),
-                ],
-                onChanged: (v) => setSheet(() => deptId = v),
+              InkWell(
+                onTap: () async {
+                  final picked = await _pickDepartment(ctx, departments, deptId);
+                  if (picked != null) setSheet(() => deptId = picked);
+                },
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                      labelText: tr('القسم', 'Department'),
+                      prefixIcon: const Icon(Icons.apartment_rounded),
+                      suffixIcon: const Icon(Icons.search_rounded),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                  child: Text(
+                    deptId == null
+                        ? tr('اختر القسم (بحث)', 'Pick department (search)')
+                        : '${departments.firstWhere((d) => d['id'] == deptId, orElse: () => {'name': ''})['name']}',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: deptId == null ? Pms.slate : Pms.ink, fontWeight: FontWeight.w700),
+                  ),
+                ),
               ),
             const SizedBox(height: 12),
             // deadline
@@ -299,19 +353,23 @@ class _PmsTasksScreenState extends State<PmsTasksScreen> {
                 if (!snap.hasData) return const Center(child: CircularProgressIndicator());
                 final rows = (snap.data!['rows'] as List?) ?? [];
                 final total = snap.data!['count'] ?? 0;
-                if (rows.isEmpty) {
-                  return ListView(children: [Padding(padding: const EdgeInsets.only(top: 90),
-                      child: Center(child: Text(tr('لا مهام', 'No tasks'),
-                          style: const TextStyle(color: Pms.slate, fontWeight: FontWeight.w700))))]);
-                }
+                final stats = (snap.data!['stats'] as Map?) ?? const {};
                 return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 20),
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 20),
                   itemCount: rows.length + 1,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (_, i) => SizedBox(height: i == 0 ? 0 : 8),
                   itemBuilder: (_, i) => i == 0
-                      ? Padding(padding: const EdgeInsets.only(bottom: 2),
-                          child: Text(tr('عرض ${rows.length} من $total', 'Showing ${rows.length} of $total'),
-                              style: const TextStyle(color: Pms.slate, fontSize: 11.5, fontWeight: FontWeight.w700)))
+                      ? Column(children: [
+                          if (stats.isNotEmpty) _statsBand(stats),
+                          if (rows.isNotEmpty) Padding(padding: const EdgeInsets.fromLTRB(2, 12, 2, 4),
+                              child: Row(children: [
+                                Text(tr('عرض ${rows.length} من $total', 'Showing ${rows.length} of $total'),
+                                    style: const TextStyle(color: Pms.slate, fontSize: 11.5, fontWeight: FontWeight.w700)),
+                              ]))
+                          else Padding(padding: const EdgeInsets.only(top: 70),
+                              child: Center(child: Text(tr('لا مهام', 'No tasks'),
+                                  style: const TextStyle(color: Pms.slate, fontWeight: FontWeight.w700)))),
+                        ])
                       : _card(rows[i - 1] as Map),
                 );
               },
@@ -322,9 +380,52 @@ class _PmsTasksScreenState extends State<PmsTasksScreen> {
     );
   }
 
+  /// Header KPI band for the task list.
+  Widget _statsBand(Map s) {
+    Widget cell(String v, String label, Color c, IconData ic) => Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 3),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(13),
+            border: Border.all(color: c.withValues(alpha: 0.18)),
+            boxShadow: [BoxShadow(color: c.withValues(alpha: 0.06), blurRadius: 6, offset: const Offset(0, 2))]),
+        child: Column(children: [
+          Icon(ic, size: 15, color: c),
+          const SizedBox(height: 3),
+          Text('${s[label == 'المجموع' ? 'total' : label] ?? 0}',
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: c)),
+        ]),
+      ),
+    );
+    return Row(children: [
+      cell('${s['total']}', 'المجموع', Pms.ink, Icons.list_alt_rounded),
+      cell('${s['open']}', 'open', const Color(0xFF2563EB), Icons.pending_actions_rounded),
+      cell('${s['done']}', 'done', Pms.green, Icons.check_circle_rounded),
+      cell('${s['overdue']}', 'overdue', Pms.red, Icons.local_fire_department_rounded),
+      cell('${s['urgent']}', 'urgent', Pms.amber, Icons.priority_high_rounded),
+    ]);
+  }
+
+  /// Deadline colour by proximity: red overdue, orange ≤2d, amber ≤7d, else slate.
+  (Color, String) _deadlineStyle(Map t) {
+    if (t['overdue'] == true) return (Pms.red, tr('متأخرة', 'overdue'));
+    final s = '${t['deadline']}';
+    if (s.length < 10) return (Pms.slate, '');
+    final dd = DateTime.tryParse(s.substring(0, 10));
+    if (dd == null) return (Pms.slate, '');
+    final days = dd.difference(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)).inDays;
+    if (days <= 0) return (const Color(0xFFDC2626), tr('اليوم', 'today'));
+    if (days <= 2) return (const Color(0xFFEA580C), tr('خلال $days يوم', 'in ${days}d'));
+    if (days <= 7) return (Pms.amber, tr('خلال $days يوم', 'in ${days}d'));
+    return (Pms.slate, '');
+  }
+
   Widget _card(Map t) {
     final overdue = t['overdue'] == true;
     final done = t['done'] == true;
+    final urgent = t['urgent'] == true || t['priority'] == '1';
+    final forwarded = (t['forward_state'] ?? 'none') != 'none' && t['forward_state'] != null;
+    final (dlColor, dlNote) = _deadlineStyle(t);
     return Material(
       color: Colors.white, borderRadius: BorderRadius.circular(14),
       child: InkWell(
@@ -337,12 +438,23 @@ class _PmsTasksScreenState extends State<PmsTasksScreen> {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: overdue ? Pms.red.withValues(alpha: 0.5) : Colors.black12),
+            border: Border.all(color: overdue ? Pms.red.withValues(alpha: 0.5)
+                : urgent ? Pms.amber.withValues(alpha: 0.5) : Colors.black12),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            // top row: urgent badge + forwarded icon + name + stage
             Row(children: [
-              if (t['priority'] == '1') const Padding(padding: EdgeInsets.only(left: 4),
-                  child: Icon(Icons.star_rounded, color: Pms.amber, size: 16)),
+              if (urgent) Container(
+                margin: const EdgeInsets.only(left: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(color: Pms.amber, borderRadius: BorderRadius.circular(6)),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  const Icon(Icons.priority_high_rounded, size: 11, color: Colors.white),
+                  Text(tr('عاجل', 'Urgent'), style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w900)),
+                ]),
+              ),
+              if (forwarded) const Padding(padding: EdgeInsets.only(left: 5),
+                  child: Icon(Icons.alt_route_rounded, size: 16, color: Color(0xFF7C3AED))),
               Expanded(child: Text('${t['name']}', maxLines: 2, overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, height: 1.25,
                       color: done ? Pms.slate : Pms.ink,
@@ -360,17 +472,21 @@ class _PmsTasksScreenState extends State<PmsTasksScreen> {
               child: Text('${(t['project'] as Map)['name']}', maxLines: 1, overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: Pms.slate, fontSize: 11)),
             ),
-            const SizedBox(height: 7),
+            const SizedBox(height: 8),
             Row(children: [
               if (t['deadline'] != null) ...[
-                Icon(Icons.event_rounded, size: 13, color: overdue ? Pms.red : Pms.slate),
-                const SizedBox(width: 4),
-                Text('${t['deadline']}'.substring(0, 10),
-                    style: TextStyle(fontSize: 11, fontWeight: overdue ? FontWeight.w800 : FontWeight.w600,
-                        color: overdue ? Pms.red : Pms.slate)),
-                if (overdue) Padding(padding: const EdgeInsets.only(right: 5),
-                    child: Text(tr(' • متأخرة', ' • overdue'),
-                        style: const TextStyle(fontSize: 10.5, color: Pms.red, fontWeight: FontWeight.w800))),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  decoration: BoxDecoration(color: dlColor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(7)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.event_rounded, size: 12, color: dlColor),
+                    const SizedBox(width: 3),
+                    Text('${t['deadline']}'.substring(0, 10),
+                        style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: dlColor)),
+                    if (dlNote.isNotEmpty) Text('  •  $dlNote',
+                        style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: dlColor)),
+                  ]),
+                ),
               ],
               const Spacer(),
               if ((t['subtasks'] as int? ?? 0) > 0) Padding(
@@ -381,20 +497,27 @@ class _PmsTasksScreenState extends State<PmsTasksScreen> {
                   Text('${t['subtasks']}', style: const TextStyle(fontSize: 11, color: Pms.slate)),
                 ]),
               ),
+              // assignee avatars (real photos, overlapping)
               for (final a in ((t['assignees'] as List?) ?? []).take(3))
-                Padding(
-                  padding: const EdgeInsets.only(left: 3),
-                  child: CircleAvatar(radius: 10, backgroundColor: Pms.violet.withValues(alpha: 0.15),
-                      child: Text('${(a as Map)['name']}'.characters.first,
-                          style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Pms.deep))),
-                ),
+                Padding(padding: const EdgeInsets.only(left: 2), child: _avatar(a as Map, 11)),
             ]),
           ]),
         ),
       ),
     );
   }
+
 }
+
+/// Round assignee/user avatar (real photo with an initial fallback).
+Widget _avatar(Map a, double r) => CircleAvatar(
+      radius: r, backgroundColor: Pms.violet.withValues(alpha: 0.15),
+      backgroundImage: a['avatar'] != null ? NetworkImage('${a['avatar']}') : null,
+      child: a['avatar'] == null
+          ? Text('${a['name'] ?? '?'}'.characters.first,
+              style: TextStyle(fontSize: r * 0.85, fontWeight: FontWeight.w900, color: Pms.deep))
+          : null,
+    );
 
 /// Full task detail — every field, plus stage / priority / note actions.
 class PmsTaskDetail extends StatefulWidget {
@@ -475,9 +598,11 @@ class _PmsTaskDetailState extends State<PmsTaskDetail> {
                     style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 12),
                 Wrap(spacing: 7, runSpacing: 7, children: [
+                  if (d['urgent'] == true || d['priority'] == '1') _hPill('🔥 ${tr('عاجل', 'Urgent')}'),
                   if (d['stage'] != null) _hPill('${(d['stage'] as Map)['name']}'),
                   if (d['done'] == true) _hPill('✓ ${tr('منجزة', 'Done')}'),
                   if (overdue) _hPill('⏰ ${tr('متأخرة', 'Overdue')}'),
+                  if ((d['forward_state'] ?? 'none') != 'none') _hPill('↪ ${tr('محالة', 'Forwarded')}'),
                   if (d['time_committed'] == true) _hPill('🎯 ${tr('ملتزم بوقت', 'Committed')}'),
                   for (final t in ((d['tags'] as List?) ?? [])) _hPill('$t'),
                 ]),
@@ -525,9 +650,23 @@ class _PmsTaskDetailState extends State<PmsTaskDetail> {
                   _kv(Icons.schedule_rounded, tr('الساعات', 'Hours'),
                       tr('${d['allocated_hours']} مخصّصة · ${d['effective_hours']} منفَّذة',
                          '${d['allocated_hours']} allocated · ${d['effective_hours']} spent')),
-                if ((d['assignees'] as List?)?.isNotEmpty == true)
-                  _kv(Icons.people_rounded, tr('المسؤولون', 'Assignees'),
-                      ((d['assignees'] as List).map((a) => (a as Map)['name']).join('، '))),
+                if ((d['assignees'] as List?)?.isNotEmpty == true) Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    const Icon(Icons.people_rounded, size: 16, color: Pms.slate),
+                    const SizedBox(width: 9),
+                    SizedBox(width: 96, child: Text(tr('المسؤولون', 'Assignees'),
+                        style: const TextStyle(color: Pms.slate, fontSize: 12))),
+                    Expanded(child: Wrap(spacing: 8, runSpacing: 6, children: [
+                      for (final a in (d['assignees'] as List))
+                        Row(mainAxisSize: MainAxisSize.min, children: [
+                          _avatar(a as Map, 12),
+                          const SizedBox(width: 5),
+                          Text('${a['name']}', style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Pms.ink)),
+                        ]),
+                    ])),
+                  ]),
+                ),
               ]),
             ),
             // description
@@ -593,17 +732,9 @@ class _PmsTaskDetailState extends State<PmsTaskDetail> {
             // stage actions
             if (d['can_write'] == true && stages.isNotEmpty) ...[
               const SizedBox(height: 12),
-              _section(tr('نقل إلى مرحلة', 'Move to stage')),
-              Wrap(spacing: 7, runSpacing: 7, children: [
-                for (final s in stages)
-                  ActionChip(
-                    label: Text('${(s as Map)['name']}',
-                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12,
-                            color: (d['stage'] as Map?)?['id'] == s['id'] ? Colors.white : Pms.ink)),
-                    backgroundColor: (d['stage'] as Map?)?['id'] == s['id'] ? Pms.violet : Colors.white,
-                    side: BorderSide(color: (d['stage'] as Map?)?['id'] == s['id'] ? Pms.violet : Colors.black12),
-                    onPressed: _busy || (d['stage'] as Map?)?['id'] == s['id'] ? null : () => _move(s['id'] as int),
-                  ),
+              _section(tr('مراحل المهمة', 'Task stage')),
+              Wrap(spacing: 8, runSpacing: 8, children: [
+                for (final s in stages) _stageButton(d, s as Map),
               ]),
             ],
             // ---- forwarding / routing ----
@@ -875,46 +1006,112 @@ class _PmsTaskDetailState extends State<PmsTaskDetail> {
     if (!mounted) return;
     int? picked;
     final reason = TextEditingController();
+    String q = '';
+    bool changeDeadline = false;
+    final curDeadline = '${d['deadline'] ?? ''}';
+    DateTime? newDeadline = curDeadline.length >= 10 ? DateTime.tryParse(curDeadline.substring(0, 10)) : null;
     final ok = await showModalBottomSheet<bool>(
-      context: context, isScrollControlled: true, showDragHandle: true,
-      builder: (ctx) => StatefulBuilder(builder: (ctx, setSheet) => Padding(
-        padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.of(ctx).viewInsets.bottom + 16),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(tr('إحالة المهمة إلى', 'Forward task to'),
-              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Pms.ink)),
-          const SizedBox(height: 10),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 280),
-            child: ListView(shrinkWrap: true, children: [
-              for (final u in users)
-                RadioListTile<int>(
-                  dense: true,
-                  value: u['id'] as int, groupValue: picked,
-                  onChanged: (v) => setSheet(() => picked = v),
-                  title: Text('${u['name']}', style: const TextStyle(fontSize: 13)),
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setSheet) {
+        final ql = q.trim().toLowerCase();
+        final list = ql.isEmpty ? users : users.where((u) {
+          final hay = '${(u as Map)['search'] ?? '${u['name']}'}'.toLowerCase();
+          return ql.split(',').map((g) => g.trim()).where((g) => g.isNotEmpty)
+              .any((g) => g.split(RegExp(r'\s+')).every((w) => hay.contains(w)));
+        }).toList();
+        return Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+          child: DraggableScrollableSheet(
+            expand: false, initialChildSize: 0.85, maxChildSize: 0.95, minChildSize: 0.5,
+            builder: (_, sc) => Column(children: [
+              Container(width: 40, height: 4, margin: const EdgeInsets.symmetric(vertical: 11),
+                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(4))),
+              Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 8), child: Row(children: [
+                const Icon(Icons.alt_route_rounded, color: Color(0xFF7C3AED)),
+                const SizedBox(width: 8),
+                Text(tr('إحالة المهمة إلى', 'Forward task to'),
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+              ])),
+              Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: TextField(
+                  onChanged: (v) => setSheet(() => q = v),
+                  decoration: InputDecoration(
+                    hintText: tr('ابحث بالاسم أو الوظيفة أو القسم…', 'Search name/job/dept…'),
+                    prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                    isDense: true, filled: true, fillColor: Pms.bg,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)),
+                )),
+              Expanded(child: ListView.builder(
+                controller: sc, itemCount: list.length,
+                itemBuilder: (_, i) {
+                  final u = list[i] as Map;
+                  final sel = picked == u['id'];
+                  return ListTile(
+                    leading: _avatar(u, 18),
+                    title: Text('${u['name']}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+                    subtitle: (u['job'] != null || u['department'] != null)
+                        ? Text([u['job'], u['department']].where((x) => x != null).join(' · '),
+                            style: const TextStyle(fontSize: 11.5))
+                        : null,
+                    trailing: sel ? const Icon(Icons.check_circle_rounded, color: Color(0xFF7C3AED)) : null,
+                    selected: sel, selectedTileColor: const Color(0xFF7C3AED).withValues(alpha: 0.06),
+                    onTap: () => setSheet(() => picked = u['id'] as int),
+                  );
+                },
+              )),
+              // deadline option + reason + submit
+              Padding(padding: const EdgeInsets.fromLTRB(16, 6, 16, 14), child: Column(children: [
+                Container(
+                  decoration: BoxDecoration(color: Pms.bg, borderRadius: BorderRadius.circular(12)),
+                  child: Column(children: [
+                    SwitchListTile(
+                      dense: true, contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                      value: changeDeadline, onChanged: (v) => setSheet(() => changeDeadline = v),
+                      title: Text(tr('تغيير موعد الاستحقاق', 'Change the deadline'),
+                          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
+                      subtitle: Text(changeDeadline
+                          ? '${newDeadline?.toIso8601String().substring(0, 10) ?? ''}'
+                          : tr('إبقاء الموعد الحالي: ${curDeadline.isEmpty ? 'بدون' : curDeadline.substring(0, curDeadline.length.clamp(0, 10))}',
+                              'Keep current'),
+                          style: const TextStyle(fontSize: 11)),
+                    ),
+                    if (changeDeadline) Padding(padding: const EdgeInsets.only(bottom: 8),
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final dd = await showDatePicker(context: ctx, initialDate: newDeadline ?? DateTime.now(),
+                              firstDate: DateTime(2020), lastDate: DateTime(2100));
+                          if (dd != null) setSheet(() => newDeadline = dd);
+                        },
+                        icon: const Icon(Icons.event_rounded, size: 17),
+                        label: Text(newDeadline?.toIso8601String().substring(0, 10) ?? tr('اختر تاريخًا', 'Pick a date')),
+                      )),
+                  ]),
                 ),
+                const SizedBox(height: 8),
+                TextField(controller: reason,
+                    decoration: InputDecoration(hintText: tr('سبب الإحالة (اختياري)', 'Reason (optional)'),
+                        isDense: true, border: const OutlineInputBorder())),
+                const SizedBox(height: 10),
+                SizedBox(width: double.infinity, height: 46, child: FilledButton.icon(
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF7C3AED),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  onPressed: picked == null ? null : () => Navigator.pop(ctx, true),
+                  icon: const Icon(Icons.send_rounded, size: 18),
+                  label: Text(tr('إحالة المهمة', 'Forward task'), style: const TextStyle(fontWeight: FontWeight.w900)),
+                )),
+              ])),
             ]),
           ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: reason,
-            decoration: InputDecoration(
-              hintText: tr('سبب الإحالة (اختياري)', 'Reason (optional)'),
-              border: const OutlineInputBorder(), isDense: true),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(width: double.infinity, child: FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Pms.violet),
-            onPressed: picked == null ? null : () => Navigator.pop(ctx, true),
-            child: Text(tr('إحالة', 'Forward')),
-          )),
-        ]),
-      )),
+        );
+      }),
     );
     if (ok != true || picked == null) return;
     setState(() => _busy = true);
     try {
-      await context.read<AuthProvider>().api.pmsTaskForward(widget.taskId, picked!, reason: reason.text.trim());
+      await context.read<AuthProvider>().api.pmsTaskForward(widget.taskId, picked!,
+          reason: reason.text.trim(),
+          deadline: changeDeadline ? newDeadline?.toIso8601String().substring(0, 10) : null);
       _reload();
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(tr('تمت الإحالة', 'Forwarded')), backgroundColor: Pms.green));
@@ -966,6 +1163,93 @@ class _PmsTaskDetailState extends State<PmsTaskDetail> {
     }
   }
 
+  // Colour a stage by what it means, so the buttons read as states.
+  Color _stageColor(String name) {
+    final n = name.toLowerCase();
+    if (RegExp(r'done|complete|closed|finish|منجز|مكتمل|مغلق|منته|انجاز|إنجاز').hasMatch(n)) return Pms.green;
+    if (RegExp(r'progress|doing|قيد|جاري|تنفيذ|بدأ').hasMatch(n)) return const Color(0xFF2563EB);
+    if (RegExp(r'delay|hold|wait|pending|late|متأخر|مؤجل|معلق|انتظار|تأجيل').hasMatch(n)) return const Color(0xFFEA580C);
+    if (RegExp(r'new|todo|backlog|جديد|قائمة|لم').hasMatch(n)) return Pms.slate;
+    if (RegExp(r'cancel|reject|ملغ|مرفوض').hasMatch(n)) return Pms.red;
+    return Pms.violet;
+  }
+
+  bool _isDoneStage(String name) =>
+      RegExp(r'done|complete|closed|finish|منجز|مكتمل|مغلق|منته|انجاز|إنجاز').hasMatch(name.toLowerCase());
+
+  Widget _stageButton(Map d, Map s) {
+    final current = (d['stage'] as Map?)?['id'] == s['id'];
+    final c = _stageColor('${s['name']}');
+    final isDone = _isDoneStage('${s['name']}');
+    return Material(
+      color: current ? c : Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: _busy || current ? null : () => isDone ? _doneWithNote(s['id'] as int) : _move(s['id'] as int),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: current ? c : c.withValues(alpha: 0.35), width: 1.4),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(isDone ? Icons.check_circle_rounded : (current ? Icons.radio_button_checked_rounded : Icons.circle_outlined),
+                size: 14, color: current ? Colors.white : c),
+            const SizedBox(width: 6),
+            Text('${s['name']}', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12,
+                color: current ? Colors.white : c)),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _doneWithNote(int stageId) async {
+    final c = TextEditingController();
+    final ok = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      title: Row(children: [
+        const Icon(Icons.check_circle_rounded, color: Pms.green),
+        const SizedBox(width: 8),
+        Text(tr('إغلاق المهمة', 'Close task'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+      ]),
+      content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(tr('اكتب ما تم إنجازه — سيُسجّل في المتابعة:', 'What was done — logged in the activity:'),
+            style: const TextStyle(fontSize: 12.5, color: Pms.slate)),
+        const SizedBox(height: 10),
+        TextField(controller: c, maxLines: 4, autofocus: true,
+            decoration: InputDecoration(hintText: tr('تم تنفيذ…', 'Completed…'),
+                filled: true, fillColor: Pms.bg,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none))),
+      ]),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('إلغاء', 'Cancel'))),
+        ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(backgroundColor: Pms.green, foregroundColor: Colors.white),
+          onPressed: () => Navigator.pop(ctx, true),
+          icon: const Icon(Icons.check_rounded, size: 18),
+          label: Text(tr('إغلاق', 'Close'))),
+      ],
+    ));
+    if (ok != true || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      final api = context.read<AuthProvider>().api;
+      // move to the done stage, then close (with the note → chatter)
+      await api.pmsTaskStage(widget.taskId, stageId);
+      await api.pmsTaskClose(widget.taskId, note: c.text.trim());
+      if (!mounted) return;
+      _reload();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('✅ تم إغلاق المهمة', '✅ Task closed')), backgroundColor: Pms.green));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _move(int stageId) async {
     setState(() => _busy = true);
     try {
@@ -984,26 +1268,30 @@ class _PmsTaskDetailState extends State<PmsTaskDetail> {
   Future<void> _closeAction(String kind) async {
     // kind: 'close' | 'request' | 'approve' | 'reject'
     String? note;
-    if (kind == 'request' || kind == 'reject') {
+    if (kind == 'request' || kind == 'reject' || kind == 'close') {
       final c = TextEditingController();
       final ok = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: Text(
             kind == 'request' ? tr('طلب إغلاق التاسك', 'Request to close')
-                              : tr('رفض الإغلاق', 'Reject close'),
+                : kind == 'reject' ? tr('رفض الإغلاق', 'Reject close')
+                : tr('إغلاق المهمة', 'Close task'),
             style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
         content: TextField(controller: c, maxLines: 3, autofocus: true,
             decoration: InputDecoration(
-                hintText: kind == 'request'
-                    ? tr('ملاحظة (اختياري)…', 'Note (optional)…')
-                    : tr('سبب الرفض…', 'Reason…'),
+                hintText: kind == 'reject'
+                    ? tr('سبب الرفض…', 'Reason…')
+                    : kind == 'close'
+                        ? tr('ما تم إنجازه (يُسجّل في المتابعة)…', 'What was done (logged)…')
+                        : tr('ملاحظة (اختياري)…', 'Note (optional)…'),
                 filled: true, fillColor: Pms.bg,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none))),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('إلغاء', 'Cancel'))),
           ElevatedButton(
               style: ElevatedButton.styleFrom(
-                  backgroundColor: kind == 'reject' ? Pms.red : Pms.violet, foregroundColor: Colors.white),
+                  backgroundColor: kind == 'reject' ? Pms.red : kind == 'close' ? Pms.green : Pms.violet,
+                  foregroundColor: Colors.white),
               onPressed: () => Navigator.pop(ctx, true),
               child: Text(tr('تأكيد', 'Confirm'))),
         ],
@@ -1017,7 +1305,7 @@ class _PmsTaskDetailState extends State<PmsTaskDetail> {
       String msg;
       switch (kind) {
         case 'close':
-          await api.pmsTaskClose(widget.taskId);
+          await api.pmsTaskClose(widget.taskId, note: note);
           msg = tr('تم إغلاق التاسك', 'Task closed');
           break;
         case 'request':
