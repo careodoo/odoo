@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
@@ -767,6 +769,18 @@ class _PettyDetailSheetState extends State<_PettyDetailSheet> {
   }
 
   Future<void> _run(String action) async {
+    // «تقديم التسوية» opens a real settlement record to fill + attach, not a
+    // one-tap state change.
+    if (action == 'settle') {
+      final done = await showModalBottomSheet<bool>(
+        context: context, isScrollControlled: true, backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+        builder: (_) => _SettlementSheet(cashId: widget.cashId, color: widget.color,
+            remaining: numOf((_d ?? const {})['remaining'], 0).toDouble()),
+      );
+      if (done == true) await _load();
+      return;
+    }
     setState(() => _busy = true);
     try {
       final res = await context.read<AuthProvider>().api.pmsPettyAction(widget.cashId, action);
@@ -1169,4 +1183,196 @@ class _TimesheetSheetState extends State<_TimesheetSheet> {
           Text(label, style: const TextStyle(fontSize: 8.5, color: Pms.slate)),
         ]),
       );
+}
+
+/// The cash-custody settlement record: enter the settlement data, list the
+/// expenses being settled, attach receipts, then submit for approval.
+class _SettlementSheet extends StatefulWidget {
+  final int cashId;
+  final Color color;
+  final double remaining;
+  const _SettlementSheet({required this.cashId, required this.color, required this.remaining});
+  @override
+  State<_SettlementSheet> createState() => _SettlementSheetState();
+}
+
+class _SettlementSheetState extends State<_SettlementSheet> {
+  final _note = TextEditingController();
+  DateTime _date = DateTime.now();
+  final List<Map<String, dynamic>> _expenses = [];
+  final List<String> _images = [];
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _note.dispose();
+    super.dispose();
+  }
+
+  double get _total => _expenses.fold(0.0, (a, e) => a + ((e['amount'] as num?)?.toDouble() ?? 0));
+
+  Future<void> _addExpense() async {
+    final name = TextEditingController();
+    final amount = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(tr('بند مصروف', 'Expense line'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          TextField(controller: name, autofocus: true,
+              decoration: InputDecoration(labelText: tr('البيان', 'Description'), border: const OutlineInputBorder())),
+          const SizedBox(height: 10),
+          TextField(controller: amount, keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(labelText: tr('المبلغ', 'Amount'), border: const OutlineInputBorder())),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('إلغاء', 'Cancel'))),
+          FilledButton(style: FilledButton.styleFrom(backgroundColor: widget.color),
+              onPressed: () => Navigator.pop(c, true), child: Text(tr('إضافة', 'Add'))),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    final amt = double.tryParse(amount.text.trim()) ?? 0;
+    if (name.text.trim().isEmpty || amt <= 0) return;
+    setState(() => _expenses.add({'name': name.text.trim(), 'amount': amt}));
+  }
+
+  Future<void> _pickImage(ImageSource src) async {
+    try {
+      final x = await ImagePicker().pickImage(source: src, maxWidth: 1600, imageQuality: 70);
+      if (x == null) return;
+      final bytes = await x.readAsBytes();
+      setState(() => _images.add(base64Encode(bytes)));
+    } catch (_) {}
+  }
+
+  Future<void> _submit() async {
+    setState(() => _busy = true);
+    try {
+      await context.read<AuthProvider>().api.pmsPettySettlement(widget.cashId, {
+        'note': _note.text.trim(),
+        'date': _date.toIso8601String().substring(0, 10),
+        'expenses': _expenses,
+        'images': _images,
+        'submit': true,
+      });
+      if (!mounted) return;
+      Navigator.pop(context, true);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تم تقديم التسوية للاعتماد', 'Settlement submitted')), backgroundColor: Pms.green));
+    } catch (e) {
+      if (mounted) {
+        setState(() => _busy = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: DraggableScrollableSheet(
+        expand: false, initialChildSize: 0.75, maxChildSize: 0.95,
+        builder: (_, sc) => ListView(controller: sc, padding: const EdgeInsets.fromLTRB(18, 12, 18, 20), children: [
+          Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 14),
+              decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(4)))),
+          Row(children: [
+            Icon(Icons.fact_check_rounded, color: widget.color),
+            const SizedBox(width: 8),
+            Text(tr('تقديم تسوية العهدة', 'Custody settlement'),
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16.5)),
+          ]),
+          const SizedBox(height: 4),
+          Text(tr('المتبقّي من العهدة: ${widget.remaining}', 'Remaining: ${widget.remaining}'),
+              style: const TextStyle(color: Pms.slate, fontSize: 12)),
+          const SizedBox(height: 14),
+          // date
+          InkWell(
+            onTap: () async {
+              final d = await showDatePicker(context: context, initialDate: _date,
+                  firstDate: DateTime(2020), lastDate: DateTime(2100));
+              if (d != null) setState(() => _date = d);
+            },
+            child: InputDecorator(
+              decoration: InputDecoration(labelText: tr('تاريخ التسوية', 'Settlement date'),
+                  prefixIcon: const Icon(Icons.event_rounded),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+              child: Text(_date.toIso8601String().substring(0, 10), style: const TextStyle(fontWeight: FontWeight.w700)),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(controller: _note, maxLines: 2,
+              decoration: InputDecoration(labelText: tr('ملاحظات التسوية', 'Notes'),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
+          const SizedBox(height: 16),
+          // expenses
+          Row(children: [
+            Text(tr('بنود المصروفات', 'Expense lines'),
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: Pms.ink)),
+            const Spacer(),
+            TextButton.icon(onPressed: _addExpense, icon: const Icon(Icons.add_rounded, size: 18),
+                label: Text(tr('إضافة بند', 'Add'))),
+          ]),
+          if (_expenses.isEmpty)
+            Text(tr('لا بنود بعد', 'No lines yet'), style: const TextStyle(color: Pms.slate, fontSize: 12))
+          else
+            for (var i = 0; i < _expenses.length; i++) Container(
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(color: Pms.bg, borderRadius: BorderRadius.circular(10)),
+              child: Row(children: [
+                Expanded(child: Text('${_expenses[i]['name']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5))),
+                Text('${_expenses[i]['amount']}', style: TextStyle(fontWeight: FontWeight.w900, color: widget.color)),
+                IconButton(icon: const Icon(Icons.close_rounded, size: 17, color: Pms.red),
+                    onPressed: () => setState(() => _expenses.removeAt(i))),
+              ]),
+            ),
+          if (_expenses.isNotEmpty) Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Row(children: [
+              const Spacer(),
+              Text(tr('الإجمالي: ${_total.toStringAsFixed(2)}', 'Total: ${_total.toStringAsFixed(2)}'),
+                  style: TextStyle(fontWeight: FontWeight.w900, color: widget.color, fontSize: 13)),
+            ]),
+          ),
+          const SizedBox(height: 16),
+          // attachments
+          Text(tr('المرفقات (إيصالات)', 'Attachments (receipts)'),
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: Pms.ink)),
+          const SizedBox(height: 8),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            for (var i = 0; i < _images.length; i++)
+              Stack(children: [
+                ClipRRect(borderRadius: BorderRadius.circular(10),
+                    child: Image.memory(base64Decode(_images[i]), width: 62, height: 62, fit: BoxFit.cover)),
+                Positioned(right: 0, top: 0, child: GestureDetector(
+                  onTap: () => setState(() => _images.removeAt(i)),
+                  child: Container(decoration: const BoxDecoration(color: Pms.red, shape: BoxShape.circle),
+                      child: const Icon(Icons.close, size: 15, color: Colors.white)),
+                )),
+              ]),
+            OutlinedButton.icon(onPressed: () => _pickImage(ImageSource.camera),
+                icon: const Icon(Icons.photo_camera_rounded, size: 18), label: Text(tr('كاميرا', 'Camera'))),
+            OutlinedButton.icon(onPressed: () => _pickImage(ImageSource.gallery),
+                icon: const Icon(Icons.attach_file_rounded, size: 18), label: Text(tr('ملف', 'File'))),
+          ]),
+          const SizedBox(height: 22),
+          SizedBox(height: 50, child: FilledButton.icon(
+            style: FilledButton.styleFrom(backgroundColor: widget.color,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+            onPressed: _busy ? null : _submit,
+            icon: _busy
+                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Icon(Icons.send_rounded),
+            label: Text(tr('تقديم التسوية للاعتماد', 'Submit for approval'),
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+          )),
+        ]),
+      ),
+    );
+  }
 }
