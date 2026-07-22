@@ -1686,6 +1686,22 @@ class ApiClient {
           _u('/pms/project/$id/$action/create'), headers: await _headers(),
           body: jsonEncode(vals))))['data'] as Map);
 
+  // ---- Work suspension (طلب الإيقاف عن العمل) ----
+  Future<Map<String, dynamic>> pmsSuspension(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/suspension/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsSuspensionCreate(int eid, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/employee/$eid/suspension-create'), headers: await _headers(),
+          body: jsonEncode(body))))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsSuspensionAction(int id, String act) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/suspension/$id/$act'), headers: await _headers())))['data'] as Map);
+
+  String pmsSuspensionReportPath(int id) => '/pms/suspension/$id/report';
+
   Future<Map<String, dynamic>> pmsProject(int id) async =>
       Map<String, dynamic>.from((await _handle(
               await _net.get(_u('/pms/project/$id'), headers: await _headers())))['data'] as Map);

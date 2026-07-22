@@ -32,6 +32,7 @@ const Map<String, IconData> kPmsSectionIcons = {
   'contracts': Icons.assignment_rounded,
   'performance': Icons.trending_up_rounded,
   'invoices': Icons.receipt_long_rounded,
+  'suspension': Icons.block_rounded,
 };
 
 const Map<String, Color> kPmsSectionColors = {
@@ -50,6 +51,7 @@ const Map<String, Color> kPmsSectionColors = {
   'contracts': Color(0xFF9333EA),
   'performance': Color(0xFF0891B2),
   'invoices': Color(0xFF9D174D),
+  'suspension': Color(0xFFD97706),
 };
 
 /// One project section — the same shape the portal shows, rendered natively.
@@ -96,6 +98,7 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
       'deliveries': 'delivery', 'petty': 'pettycash',
       'timesheet': 'timesheet', 'requests': 'docrequest',
       'assets': 'custody', 'fuel': 'fuel', 'materials': 'material',
+      'suspension': 'suspension',
     }[widget.code];
     return Scaffold(
       backgroundColor: Pms.bg,
@@ -366,6 +369,7 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
         'petty': tr('طلب عهدة نقدية', 'Request cash custody'),
         'fuel': tr('تسجيل تعبئة', 'Add fuel'),
         'materials': tr('إضافة مادة', 'Add material'),
+        'suspension': tr('طلب إيقاف عن العمل', 'New suspension'),
       }[widget.code] ?? tr('إضافة', 'Add');
 
   /// The create sheet, built per-section from its options endpoint.
@@ -381,7 +385,15 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
     );
     if (result == null) return;
     try {
-      await context.read<AuthProvider>().api.pmsSectionCreate(widget.projectId, action, result);
+      if (widget.code == 'suspension') {
+        // Suspension is raised against a worker, then optionally submitted to HR.
+        final eid = result.remove('employee_id');
+        if (eid == null) throw tr('اختر العامل', 'Pick the worker');
+        result['project_id'] = widget.projectId;
+        await context.read<AuthProvider>().api.pmsSuspensionCreate(eid as int, result);
+      } else {
+        await context.read<AuthProvider>().api.pmsSectionCreate(widget.projectId, action, result);
+      }
       if (!mounted) return;
       setState(_load);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -598,10 +610,21 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
           _openInvoice(r['id'] as int);
         } else if (opens == 'material') {
           _openMaterial(r['id'] as int);
+        } else if (opens == 'suspension') {
+          _openSuspension(r['id'] as int);
         }
       },
       child: inner,
     );
+  }
+
+  Future<void> _openSuspension(int id) async {
+    await showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => SuspensionDetailSheet(suspensionId: id, color: _c),
+    );
+    if (mounted) setState(_load);
   }
 
   Future<void> _openMaterial(int id) async {
@@ -911,6 +934,34 @@ class _CreateSheetState extends State<_CreateSheet> {
             'vehicle_id': _pick1,
             'liters': double.tryParse(_b.text.trim()) ?? 0,
             if (_a.text.trim().isNotEmpty) 'odometer': double.tryParse(_a.text.trim()),
+          }),
+        ];
+      case 'suspension':
+        final emps = (widget.options['employees'] as List?) ?? const [];
+        final reasons = (widget.options['reasons'] as List?) ?? const [];
+        return [
+          _title(tr('طلب إيقاف عن العمل', 'Work suspension request')),
+          Padding(padding: const EdgeInsets.only(bottom: 10),
+              child: Text(tr('يُرسَل الطلب إلى الموارد البشرية لاعتماده. بعد الاعتماد يُصبح العامل «موقوف بطلب» ويُرفع من قائمة المشروع.',
+                  'Sent to HR for approval. Once approved the worker becomes "Suspended" and is removed from the project list.'),
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 11.5, height: 1.5))),
+          if (emps.isEmpty)
+            Padding(padding: const EdgeInsets.only(bottom: 10),
+                child: Text(tr('لا موظفين في قسم هذا المشروع.', 'No employees in this project department.'),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)))
+          else
+            _empPicker(tr('العامل *', 'Worker *'), emps),
+          if (reasons.isNotEmpty) _dropStr(tr('سبب الإيقاف *', 'Reason *'), reasons),
+          if (_pick2 == 'other') _text(_b, tr('اذكر السبب', 'Specify reason')),
+          _dateField(tr('تاريخ سريان الإيقاف', 'Effective date'), _from, (d) => setState(() => _from = d)),
+          _text(_a, tr('تفاصيل / ملاحظات', 'Details / notes'), lines: 3),
+          _submit(_pick1 != null && _pick2 != null, () => {
+            'employee_id': _pick1,
+            'reason': _pick2,
+            if (_pick2 == 'other' && _b.text.trim().isNotEmpty) 'other_reason': _b.text.trim(),
+            if (_from != null) 'effective_date': _fmtDate(_from!),
+            if (_a.text.trim().isNotEmpty) 'note': _a.text.trim(),
+            'submit': true,
           }),
         ];
       default:
@@ -2538,4 +2589,190 @@ class _MaterialDetailSheetState extends State<_MaterialDetailSheet> {
       },
     );
   }
+}
+
+/// Work-suspension request detail — worker snapshot, reason, allowance flag,
+/// the HR workflow buttons (submit → approve / reject) and a printable report.
+class SuspensionDetailSheet extends StatefulWidget {
+  final int suspensionId;
+  final Color color;
+  const SuspensionDetailSheet({required this.suspensionId, required this.color});
+  @override
+  State<SuspensionDetailSheet> createState() => SuspensionDetailSheetState();
+}
+
+class SuspensionDetailSheetState extends State<SuspensionDetailSheet> {
+  Map<String, dynamic>? _d;
+  String? _error;
+  bool _busy = false;
+
+  @override
+  void initState() { super.initState(); _load(); }
+
+  Future<void> _load() async {
+    try {
+      final d = await context.read<AuthProvider>().api.pmsSuspension(widget.suspensionId);
+      if (mounted) setState(() => _d = d);
+    } catch (e) {
+      if (mounted) setState(() => _error = '$e');
+    }
+  }
+
+  Future<void> _act(String act) async {
+    setState(() => _busy = true);
+    try {
+      final d = await context.read<AuthProvider>().api.pmsSuspensionAction(widget.suspensionId, act);
+      if (!mounted) return;
+      setState(() { _d = d; _busy = false; });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تم', 'Done')), backgroundColor: const Color(0xFF16A34A)));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('$e'), backgroundColor: const Color(0xFFE5484D)));
+    }
+  }
+
+  Color _stateColor(String? s) => switch (s) {
+        'approved' => const Color(0xFF16A34A),
+        'submitted' => const Color(0xFF0891B2),
+        'rejected' => const Color(0xFFE11D48),
+        _ => Colors.grey.shade500,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.9, minChildSize: 0.5, maxChildSize: 0.96, expand: false,
+      builder: (context, sc) {
+        if (_error != null) {
+          return Center(child: Padding(padding: const EdgeInsets.all(30),
+              child: Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey))));
+        }
+        if (_d == null) return const Center(child: CircularProgressIndicator());
+        final d = _d!;
+        return Stack(children: [
+          ListView(controller: sc, padding: EdgeInsets.zero, children: [
+            // header
+            Container(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [widget.color, widget.color.withValues(alpha: 0.78)],
+                    begin: Alignment.topLeft, end: Alignment.bottomRight),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  CircleAvatar(radius: 26, backgroundColor: Colors.white24,
+                      backgroundImage: d['avatar'] != null ? NetworkImage('${d['avatar']}') : null,
+                      onBackgroundImageError: (_, __) {},
+                      child: d['avatar'] == null ? const Icon(Icons.person, color: Colors.white) : null),
+                  const SizedBox(width: 12),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('${d['employee'] ?? ''}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 17)),
+                    if (d['job'] != null)
+                      Text('${d['job']}', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                  ])),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(color: _stateColor(d['state'] as String?), borderRadius: BorderRadius.circular(9)),
+                    child: Text('${d['state_label'] ?? ''}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11)),
+                  ),
+                ]),
+                const SizedBox(height: 10),
+                Wrap(spacing: 6, runSpacing: 6, children: [
+                  if (d['name'] != null) _chip('${d['name']}', Icons.tag_rounded),
+                  if (d['badge'] != null) _chip('${d['badge']}', Icons.badge_rounded),
+                  if (d['project'] != null) _chip('${d['project']}', Icons.business_rounded),
+                ]),
+              ]),
+            ),
+            // meta
+            Padding(padding: const EdgeInsets.fromLTRB(16, 14, 16, 4), child: Column(children: [
+              _kv(tr('السبب', 'Reason'), '${d['reason_label'] ?? ''}${d['other_reason'] != null ? ' — ${d['other_reason']}' : ''}'),
+              _kv(tr('تاريخ الطلب', 'Request date'), '${d['date'] ?? '—'}'),
+              _kv(tr('تاريخ سريان الإيقاف', 'Effective date'), '${d['effective_date'] ?? '—'}'),
+              _kv(tr('القسم', 'Department'), '${d['department'] ?? '—'}'),
+              _kv(tr('الأجر', 'Wage'), d['wage'] != null ? '${d['wage']} ${d['currency'] ?? ''}' : '—'),
+              _kvWidget(tr('لديه بدلات؟', 'Has allowances?'), Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(d['has_allowance'] == true ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                    size: 16, color: d['has_allowance'] == true ? const Color(0xFF16A34A) : const Color(0xFFE11D48)),
+                const SizedBox(width: 4),
+                Text(d['has_allowance'] == true ? tr('نعم', 'Yes') : tr('لا', 'No'),
+                    style: TextStyle(fontWeight: FontWeight.w800, color: d['has_allowance'] == true ? const Color(0xFF16A34A) : const Color(0xFFE11D48))),
+                if (d['allowance_note'] != null) ...[const SizedBox(width: 6),
+                  Flexible(child: Text('${d['allowance_note']}', style: const TextStyle(color: Pms.slate, fontSize: 12), overflow: TextOverflow.ellipsis))],
+              ])),
+              if (d['requested_by'] != null) _kv(tr('مقدّم الطلب', 'Requested by'), '${d['requested_by']}'),
+              if (d['approved_by'] != null) _kv(tr('اعتمده', 'Approved by'), '${d['approved_by']}'),
+              if (d['approval_date'] != null) _kv(tr('تاريخ الاعتماد', 'Approval date'), '${d['approval_date']}'),
+            ])),
+            if (d['note'] != null) Padding(padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
+              child: Container(width: double.infinity, padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: Pms.bg, borderRadius: BorderRadius.circular(12)),
+                child: Text('${d['note']}', style: const TextStyle(color: Pms.ink, height: 1.5, fontSize: 13)))),
+            // print / share
+            Padding(padding: const EdgeInsets.fromLTRB(16, 10, 16, 4), child: Row(children: [
+              Expanded(child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(foregroundColor: widget.color,
+                    side: BorderSide(color: widget.color.withValues(alpha: 0.5)),
+                    padding: const EdgeInsets.symmetric(vertical: 11)),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+                    path: context.read<AuthProvider>().api.pmsSuspensionReportPath(widget.suspensionId),
+                    title: tr('طلب إيقاف عن العمل', 'Suspension request'),
+                    fileName: 'suspension-${widget.suspensionId}.pdf'))),
+                icon: const Icon(Icons.print_rounded, size: 18),
+                label: Text(tr('طباعة / مشاركة التقرير', 'Print / share'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+              )),
+            ])),
+            // workflow actions
+            Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 24), child: Column(children: [
+              if (d['can_submit'] == true) _actBtn(tr('إرسال إلى الموارد البشرية', 'Submit to HR'),
+                  Icons.send_rounded, const Color(0xFF0891B2), () => _act('submit')),
+              if (d['can_approve'] == true) _actBtn(tr('اعتماد الإيقاف', 'Approve suspension'),
+                  Icons.verified_rounded, const Color(0xFF16A34A), () => _act('approve')),
+              if (d['can_reject'] == true) _actBtn(tr('رفض', 'Reject'),
+                  Icons.close_rounded, const Color(0xFFE11D48), () => _act('reject')),
+              if (d['can_reset'] == true) _actBtn(tr('إعادة لمسودة', 'Reset to draft'),
+                  Icons.undo_rounded, Colors.grey.shade600, () => _act('reset')),
+            ])),
+          ]),
+          if (_busy) const Positioned.fill(child: ColoredBox(color: Color(0x11000000), child: Center(child: CircularProgressIndicator()))),
+        ]);
+      },
+    );
+  }
+
+  Widget _chip(String t, IconData ic) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(ic, size: 12, color: Colors.white),
+          const SizedBox(width: 4),
+          Text(t, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+        ]),
+      );
+
+  Widget _kv(String k, String v) => _kvWidget(k, Text(v,
+      textAlign: TextAlign.end, style: const TextStyle(fontWeight: FontWeight.w700, color: Pms.ink, fontSize: 13)));
+
+  Widget _kvWidget(String k, Widget v) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          SizedBox(width: 130, child: Text(k, style: const TextStyle(color: Pms.slate, fontSize: 12.5))),
+          const SizedBox(width: 8),
+          Expanded(child: Align(alignment: Alignment.centerRight, child: v)),
+        ]),
+      );
+
+  Widget _actBtn(String t, IconData ic, Color c, VoidCallback onTap) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: SizedBox(width: double.infinity, child: FilledButton.icon(
+          style: FilledButton.styleFrom(backgroundColor: c, padding: const EdgeInsets.symmetric(vertical: 13)),
+          onPressed: _busy ? null : onTap,
+          icon: Icon(ic, size: 18),
+          label: Text(t, style: const TextStyle(fontWeight: FontWeight.w800)),
+        )),
+      );
 }

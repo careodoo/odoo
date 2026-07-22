@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'pms_shell.dart';
-import 'pms_section.dart' show PmsPhotoView;
+import 'pms_section.dart' show PmsPhotoView, SuspensionDetailSheet;
 import '../pdf_report_screen.dart';
 
 /// The employee file a project manager sees: identity, wage, compliance dates,
@@ -62,6 +62,10 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
             // professional sections hub — each opens its own detail
             _sectionsHub(d),
             const SizedBox(height: 14),
+            if (((d['suspension'] as Map?)?['available'] ?? false) == true) ...[
+              _suspensionCard(d['suspension'] as Map, e),
+              const SizedBox(height: 14),
+            ],
             if (((d['details'] as List?) ?? const []).isNotEmpty) ...[
               _miniHead(tr('كل بيانات العامل', 'All employee data'), Icons.badge_rounded),
               const SizedBox(height: 8),
@@ -292,6 +296,129 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
         ),
       ),
     );
+  }
+
+  // ===== Work suspension (طلب الإيقاف عن العمل) =====
+  static const _suspColor = Color(0xFFD97706);
+
+  Widget _suspensionCard(Map s, Map emp) {
+    final rows = (s['rows'] as List?) ?? const [];
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white, borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _suspColor.withValues(alpha: 0.25)),
+        boxShadow: [BoxShadow(color: _suspColor.withValues(alpha: 0.07), blurRadius: 8, offset: const Offset(0, 3))],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+          decoration: BoxDecoration(gradient: LinearGradient(
+              colors: [_suspColor, Color.lerp(_suspColor, Colors.black, 0.22)!])),
+          child: Row(children: [
+            const Icon(Icons.block_rounded, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Expanded(child: Text(tr('الإيقاف عن العمل', 'Work suspension'),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14))),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(9)),
+              child: Text('${rows.length}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+            ),
+          ]),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(children: [
+            if ((s['can_create'] ?? false) == true)
+              SizedBox(width: double.infinity, child: FilledButton.icon(
+                style: FilledButton.styleFrom(backgroundColor: _suspColor, padding: const EdgeInsets.symmetric(vertical: 12)),
+                onPressed: () => _newSuspension(emp),
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: Text(tr('طلب إيقاف عن العمل', 'New suspension request'),
+                    style: const TextStyle(fontWeight: FontWeight.w800)),
+              )),
+            if (rows.isEmpty) Padding(padding: const EdgeInsets.only(top: 10),
+                child: Text(tr('لا طلبات إيقاف سابقة.', 'No previous suspension requests.'),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5))),
+            for (final r in rows.cast<Map>()) _suspRow(r),
+          ]),
+        ),
+      ]),
+    );
+  }
+
+  Widget _suspRow(Map r) {
+    Color sc = switch ('${r['state']}') {
+      'approved' => const Color(0xFF16A34A),
+      'submitted' => const Color(0xFF0891B2),
+      'rejected' => const Color(0xFFE11D48),
+      _ => Colors.grey.shade500,
+    };
+    return InkWell(
+      onTap: () async {
+        await showModalBottomSheet(
+          context: context, isScrollControlled: true, backgroundColor: Colors.white,
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+          builder: (_) => SuspensionDetailSheet(suspensionId: r['id'] as int, color: _suspColor),
+        );
+        if (mounted) setState(() => _f = context.read<AuthProvider>().api.pmsEmployeeFile(widget.employeeId));
+      },
+      child: Container(
+        margin: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(color: Pms.bg, borderRadius: BorderRadius.circular(11)),
+        child: Row(children: [
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('${r['reason'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: Pms.ink)),
+            const SizedBox(height: 2),
+            Text('${r['name'] ?? ''} · ${r['date'] ?? ''}', style: const TextStyle(color: Pms.slate, fontSize: 11)),
+          ])),
+          if (r['has_allowance'] == true) Padding(padding: const EdgeInsets.only(right: 6),
+            child: Icon(Icons.payments_rounded, size: 15, color: Colors.grey.shade500)),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(color: sc, borderRadius: BorderRadius.circular(8)),
+            child: Text('${r['state_label'] ?? ''}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 10)),
+          ),
+          const Icon(Icons.chevron_left_rounded, color: Pms.slate),
+        ]),
+      ),
+    );
+  }
+
+  Future<void> _newSuspension(Map emp) async {
+    final api = context.read<AuthProvider>().api;
+    List reasons = const [];
+    try {
+      // reasons list lives on the suspension model; fetch via a project options
+      // call is not available here — use a static, translated fallback list.
+    } catch (_) {}
+    reasons = const [
+      {'value': 'client_request', 'label': 'طلب من العميل'},
+      {'value': 'misconduct', 'label': 'مخالفة / خطأ من العامل'},
+      {'value': 'absence', 'label': 'غياب متكرّر'},
+      {'value': 'performance', 'label': 'ضعف الأداء'},
+      {'value': 'behaviour', 'label': 'سوء سلوك'},
+      {'value': 'investigation', 'label': 'تحت التحقيق'},
+      {'value': 'other', 'label': 'أخرى'},
+    ];
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context, isScrollControlled: true, showDragHandle: true,
+      builder: (_) => _SuspCreateSheet(reasons: reasons, color: _suspColor, empName: '${emp['name'] ?? ''}'),
+    );
+    if (result == null) return;
+    try {
+      await api.pmsSuspensionCreate(widget.employeeId, result);
+      if (!mounted) return;
+      setState(() => _f = api.pmsEmployeeFile(widget.employeeId));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تم إرسال طلب الإيقاف إلى الموارد البشرية', 'Suspension request sent to HR')),
+          backgroundColor: const Color(0xFF16A34A)));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('$e'), backgroundColor: const Color(0xFFE5484D)));
+    }
   }
 
   Future<void> _openSection(String title, String type, List items, Color c) async {
@@ -861,5 +988,89 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
                 vc: k == 'balance_amount' ? Pms.red : Pms.ink),
         ]);
     }
+  }
+}
+
+/// Compact create form for a worker's suspension request (the worker is already
+/// known from the file), sent straight to HR for approval.
+class _SuspCreateSheet extends StatefulWidget {
+  final List reasons;
+  final Color color;
+  final String empName;
+  const _SuspCreateSheet({required this.reasons, required this.color, required this.empName});
+  @override
+  State<_SuspCreateSheet> createState() => _SuspCreateSheetState();
+}
+
+class _SuspCreateSheetState extends State<_SuspCreateSheet> {
+  String? _reason;
+  final _note = TextEditingController();
+  final _other = TextEditingController();
+  DateTime? _eff;
+
+  @override
+  void dispose() { _note.dispose(); _other.dispose(); super.dispose(); }
+
+  String _fmt(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Padding(padding: const EdgeInsets.only(bottom: 6),
+          child: Text(tr('طلب إيقاف عن العمل', 'Work suspension request'),
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: widget.color))),
+        Text('${tr('العامل', 'Worker')}: ${widget.empName}', style: const TextStyle(color: Pms.slate, fontSize: 12.5)),
+        const SizedBox(height: 8),
+        Padding(padding: const EdgeInsets.only(bottom: 10),
+          child: Text(tr('يُرسَل الطلب إلى الموارد البشرية لاعتماده. بعد الاعتماد يُصبح العامل «موقوف بطلب» ويُرفع من قائمة المشروع.',
+              'Sent to HR for approval. Once approved the worker becomes "Suspended" and removed from the project list.'),
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 11.5, height: 1.5))),
+        DropdownButtonFormField<String>(
+          initialValue: _reason,
+          decoration: InputDecoration(labelText: tr('سبب الإيقاف *', 'Reason *'),
+              border: const OutlineInputBorder(), isDense: true),
+          isExpanded: true,
+          items: [for (final o in widget.reasons)
+            DropdownMenuItem(value: '${o['value']}', child: Text('${o['label']}'))],
+          onChanged: (v) => setState(() => _reason = v),
+        ),
+        const SizedBox(height: 10),
+        if (_reason == 'other') Padding(padding: const EdgeInsets.only(bottom: 10),
+          child: TextField(controller: _other, decoration: InputDecoration(
+              labelText: tr('اذكر السبب', 'Specify reason'), border: const OutlineInputBorder(), isDense: true))),
+        InkWell(
+          onTap: () async {
+            final now = DateTime.now();
+            final d = await showDatePicker(context: context, initialDate: _eff ?? now,
+                firstDate: DateTime(now.year - 1), lastDate: DateTime(now.year + 1));
+            if (d != null) setState(() => _eff = d);
+          },
+          child: InputDecorator(
+            decoration: InputDecoration(labelText: tr('تاريخ سريان الإيقاف', 'Effective date'),
+                border: const OutlineInputBorder(), isDense: true),
+            child: Text(_eff == null ? tr('اختر', 'Pick') : _fmt(_eff!),
+                style: TextStyle(color: _eff == null ? Colors.grey : null)),
+          ),
+        ),
+        const SizedBox(height: 10),
+        TextField(controller: _note, maxLines: 3, decoration: InputDecoration(
+            labelText: tr('تفاصيل / ملاحظات', 'Details / notes'), border: const OutlineInputBorder(), isDense: true)),
+        const SizedBox(height: 12),
+        SizedBox(width: double.infinity, child: FilledButton.icon(
+          style: FilledButton.styleFrom(backgroundColor: widget.color, padding: const EdgeInsets.symmetric(vertical: 13)),
+          onPressed: _reason == null ? null : () => Navigator.pop(context, <String, dynamic>{
+            'reason': _reason,
+            if (_reason == 'other' && _other.text.trim().isNotEmpty) 'other_reason': _other.text.trim(),
+            if (_eff != null) 'effective_date': _fmt(_eff!),
+            if (_note.text.trim().isNotEmpty) 'note': _note.text.trim(),
+            'submit': true,
+          }),
+          icon: const Icon(Icons.send_rounded, size: 18),
+          label: Text(tr('إرسال إلى الموارد البشرية', 'Submit to HR'), style: const TextStyle(fontWeight: FontWeight.w800)),
+        )),
+      ]),
+    );
   }
 }
