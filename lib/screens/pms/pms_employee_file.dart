@@ -1,11 +1,14 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../core/widgets.dart';
 import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'pms_shell.dart';
 import 'pms_section.dart' show PmsPhotoView;
+import '../pdf_report_screen.dart';
 
 /// The employee file a project manager sees: identity, wage, compliance dates,
 /// docs, loans, penalties, bonuses and recent attendance. Server-scoped to the
@@ -409,13 +412,22 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
 }
 
 /// Bottom sheet listing one section's records, formatted per type.
-class _EmpSectionSheet extends StatelessWidget {
+class _EmpSectionSheet extends StatefulWidget {
   final String title, type;
   final List items;
   final Color color;
   final int employeeId;
   const _EmpSectionSheet({required this.title, required this.type, required this.items,
       required this.color, required this.employeeId});
+  @override
+  State<_EmpSectionSheet> createState() => _EmpSectionSheetState();
+}
+
+class _EmpSectionSheetState extends State<_EmpSectionSheet> {
+  String get type => widget.type;
+  List get items => widget.items;
+  Color get color => widget.color;
+  bool _busy = false;
 
   Color _stateColor(String s) {
     final l = s.toLowerCase();
@@ -437,11 +449,12 @@ class _EmpSectionSheet extends StatelessWidget {
           child: Row(children: [
             Icon(Icons.folder_open_rounded, color: color),
             const SizedBox(width: 8),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+            Text(widget.title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
             const Spacer(),
             Text('${items.length}', style: TextStyle(fontWeight: FontWeight.w900, color: color, fontSize: 15)),
           ]),
         ),
+        _actionBar(),
         Expanded(child: items.isEmpty
             ? Center(child: Padding(padding: const EdgeInsets.all(30),
                 child: Text(tr('لا سجلات في هذا القسم', 'No records'), style: const TextStyle(color: Pms.slate))))
@@ -450,6 +463,106 @@ class _EmpSectionSheet extends StatelessWidget {
                 itemBuilder: (_, i) => _card(context, items[i] as Map))),
       ]),
     );
+  }
+
+  // per-type action bar (attendance report/excel, doc upload)
+  Widget _actionBar() {
+    if (type == 'attendance') {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+        child: Row(children: [
+          Expanded(child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(foregroundColor: color, side: BorderSide(color: color),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11))),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+                path: context.read<AuthProvider>().api.pmsEmpAttReportPath(widget.employeeId),
+                title: tr('تقرير الحضور', 'Attendance report')))),
+            icon: const Icon(Icons.picture_as_pdf_rounded, size: 17),
+            label: Text(tr('تقرير PDF', 'PDF'), style: const TextStyle(fontWeight: FontWeight.w800)),
+          )),
+          const SizedBox(width: 8),
+          Expanded(child: FilledButton.icon(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11))),
+            onPressed: _busy ? null : _openExcel,
+            icon: const Icon(Icons.table_chart_rounded, size: 17),
+            label: Text(tr('تصدير Excel', 'Excel'), style: const TextStyle(fontWeight: FontWeight.w800)),
+          )),
+        ]),
+      );
+    }
+    if (type == 'documents') {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+        child: SizedBox(width: double.infinity, child: FilledButton.icon(
+          style: FilledButton.styleFrom(backgroundColor: color,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11))),
+          onPressed: _busy ? null : _uploadDoc,
+          icon: const Icon(Icons.upload_file_rounded, size: 18),
+          label: Text(tr('رفع مستند جديد للاعتماد', 'Upload document for approval'),
+              style: const TextStyle(fontWeight: FontWeight.w800)),
+        )),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
+  Future<void> _openExcel() async {
+    setState(() => _busy = true);
+    try {
+      final url = await context.read<AuthProvider>().api.pmsEmpAttExcelUrl(widget.employeeId);
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _uploadDoc() async {
+    final api = context.read<AuthProvider>().api;
+    List<dynamic> types;
+    try {
+      types = await api.pmsEmpDocTypes(widget.employeeId);
+    } catch (_) {
+      types = const [{'code': 'other', 'label': 'أخرى'}];
+    }
+    if (!mounted) return;
+    String? docType = types.isNotEmpty ? '${(types.first as Map)['code']}' : 'other';
+    final src = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (bc) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Padding(padding: const EdgeInsets.all(12),
+            child: StatefulBuilder(builder: (c, ss) => DropdownButtonFormField<String>(
+              initialValue: docType,
+              decoration: InputDecoration(labelText: tr('نوع المستند', 'Document type'), border: const OutlineInputBorder()),
+              items: [for (final t in types) DropdownMenuItem(value: '${(t as Map)['code']}', child: Text('${t['label']}'))],
+              onChanged: (v) { docType = v; ss(() {}); },
+            ))),
+        ListTile(leading: const Icon(Icons.photo_camera_rounded), title: Text(tr('كاميرا', 'Camera')),
+            onTap: () => Navigator.pop(bc, ImageSource.camera)),
+        ListTile(leading: const Icon(Icons.photo_library_rounded), title: Text(tr('المعرض', 'Gallery')),
+            onTap: () => Navigator.pop(bc, ImageSource.gallery)),
+      ])),
+    );
+    if (src == null) return;
+    try {
+      final x = await ImagePicker().pickImage(source: src, maxWidth: 1800, imageQuality: 72);
+      if (x == null) return;
+      setState(() => _busy = true);
+      final b64 = base64Encode(await x.readAsBytes());
+      await api.pmsEmpDocRequest(widget.employeeId, {
+        'doc_type': docType ?? 'other', 'data': b64, 'filename': 'document.jpg',
+      });
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تم إرسال المستند لاعتماد HR', 'Sent to HR for approval')), backgroundColor: Pms.green));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   Widget _wrap(List<Widget> children) => Container(
@@ -523,6 +636,16 @@ class _EmpSectionSheet extends StatelessWidget {
               trailing: '${m['state_label'] ?? ''}', tc: _stateColor('${m['state']}')),
           _kv(tr('الفترة', 'Period'), '${m['from'] ?? ''} → ${m['to'] ?? ''}'),
           if (m['net'] != null) _kv(tr('الصافي', 'Net'), '${m['net']}', vc: Pms.green),
+          const SizedBox(height: 8),
+          SizedBox(width: double.infinity, height: 40, child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(foregroundColor: color, side: BorderSide(color: color),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+                path: context.read<AuthProvider>().api.pmsPayslipReportPath(m['id'] as int),
+                title: tr('كشف الراتب', 'Payslip'), fileName: 'payslip.pdf'))),
+            icon: const Icon(Icons.print_rounded, size: 17),
+            label: Text(tr('طباعة الكشف', 'Print payslip'), style: const TextStyle(fontWeight: FontWeight.w800)),
+          )),
         ]);
       case 'appraisals':
         return _wrap([

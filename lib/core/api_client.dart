@@ -1566,6 +1566,27 @@ class ApiClient {
   Future<void> pmsSupplyReceive(int supplyId) async =>
       _handle(await _net.post(_u('/pms/supply/$supplyId/receive'), headers: await _headers()));
 
+  // ---- employee profile: payslip / attendance report+excel / doc upload ----
+  String pmsPayslipReportPath(int id) => '/pms/payslip/$id/report';
+  String pmsEmpAttReportPath(int eid, {String? month}) =>
+      '/pms/employee/$eid/attendance/report${month != null && month.isNotEmpty ? '?month=$month' : ''}';
+
+  /// Full authenticated URL for the employee attendance .xlsx (token appended).
+  Future<String> pmsEmpAttExcelUrl(int eid, {String? month}) async {
+    final origin = baseUrl.replaceFirst(RegExp(r'/api/v\d+/?$'), '');
+    final tok = await token;
+    final m = (month != null && month.isNotEmpty) ? '&month=$month' : '';
+    return '$origin/pms/employee/$eid/attendance/excel?token=${Uri.encodeQueryComponent(tok ?? '')}$m';
+  }
+
+  Future<List<dynamic>> pmsEmpDocTypes(int eid) async =>
+      List<dynamic>.from((await _handle(await _net.get(
+          _u('/pms/employee/$eid/doc-types'), headers: await _headers())))['data']['types'] as List);
+
+  Future<void> pmsEmpDocRequest(int eid, Map<String, dynamic> body) async =>
+      _handle(await _net.post(_u('/pms/employee/$eid/doc-request'),
+          headers: await _headers(), body: jsonEncode(body)));
+
   /// Rich attendance query for a project: filters month|date range|worker|status|q.
   Future<Map<String, dynamic>> pmsAttendanceRecords(int projectId,
       {String? month, String? dateFrom, String? dateTo, int? employeeId, String? status, String? q}) async {
