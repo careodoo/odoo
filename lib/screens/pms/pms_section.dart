@@ -33,6 +33,7 @@ const Map<String, IconData> kPmsSectionIcons = {
   'performance': Icons.trending_up_rounded,
   'invoices': Icons.receipt_long_rounded,
   'suspension': Icons.block_rounded,
+  'items': Icons.playlist_add_check_rounded,
 };
 
 const Map<String, Color> kPmsSectionColors = {
@@ -52,6 +53,7 @@ const Map<String, Color> kPmsSectionColors = {
   'performance': Color(0xFF0891B2),
   'invoices': Color(0xFF9D174D),
   'suspension': Color(0xFFD97706),
+  'items': Color(0xFF0F766E),
 };
 
 /// One project section — the same shape the portal shows, rendered natively.
@@ -98,7 +100,7 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
       'deliveries': 'delivery', 'petty': 'pettycash',
       'timesheet': 'timesheet', 'requests': 'docrequest',
       'assets': 'custody', 'fuel': 'fuel', 'materials': 'material',
-      'suspension': 'suspension',
+      'suspension': 'suspension', 'items': 'items',
     }[widget.code];
     return Scaffold(
       backgroundColor: Pms.bg,
@@ -370,6 +372,7 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
         'fuel': tr('تسجيل تعبئة', 'Add fuel'),
         'materials': tr('إضافة مادة', 'Add material'),
         'suspension': tr('طلب إيقاف عن العمل', 'New suspension'),
+        'items': tr('طلب أصناف جديد', 'New item request'),
       }[widget.code] ?? tr('إضافة', 'Add');
 
   /// The create sheet, built per-section from its options endpoint.
@@ -383,11 +386,15 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
       context: context, isScrollControlled: true, showDragHandle: true,
       builder: (ctx) => (widget.code == 'fuel' && opts['new_fuel'] == true)
           ? _FuelCreateSheet(color: _c, options: opts)
-          : _CreateSheet(code: widget.code, color: _c, options: opts),
+          : widget.code == 'items'
+              ? _ItemRequestCreateSheet(color: _c)
+              : _CreateSheet(code: widget.code, color: _c, options: opts),
     );
     if (result == null) return;
     try {
-      if (widget.code == 'suspension') {
+      if (widget.code == 'items') {
+        await context.read<AuthProvider>().api.pmsItemRequestCreate(widget.projectId, result);
+      } else if (widget.code == 'suspension') {
         // Suspension is raised against a worker, then optionally submitted to HR.
         final eid = result.remove('employee_id');
         if (eid == null) throw tr('اختر العامل', 'Pick the worker');
@@ -616,10 +623,21 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
           _openSuspension(r['id'] as int);
         } else if (opens == 'fuel') {
           _openFuel(r['id'] as int);
+        } else if (opens == 'item_request') {
+          _openItemRequest(r['id'] as int);
         }
       },
       child: inner,
     );
+  }
+
+  Future<void> _openItemRequest(int id) async {
+    await showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => _ItemRequestDetailSheet(requestId: id, color: _c),
+    );
+    if (mounted) setState(_load);
   }
 
   Future<void> _openFuel(int id) async {
@@ -3273,5 +3291,287 @@ class _FuelDetailSheetState extends State<_FuelDetailSheet> {
           const SizedBox(width: 8),
           Expanded(child: Text(v, textAlign: TextAlign.end, style: const TextStyle(fontWeight: FontWeight.w700, color: Pms.ink, fontSize: 13))),
         ]),
+      );
+}
+
+/// Create an item/material request with any number of lines (item, qty, unit),
+/// an optional needed-by date, priority and note — sent to procurement.
+class _ItemRequestCreateSheet extends StatefulWidget {
+  final Color color;
+  const _ItemRequestCreateSheet({required this.color});
+  @override
+  State<_ItemRequestCreateSheet> createState() => _ItemRequestCreateSheetState();
+}
+
+class _ItemLine {
+  final name = TextEditingController();
+  final qty = TextEditingController(text: '1');
+  final uom = TextEditingController(text: 'وحدة');
+}
+
+class _ItemRequestCreateSheetState extends State<_ItemRequestCreateSheet> {
+  final List<_ItemLine> _lines = [_ItemLine()];
+  final _note = TextEditingController();
+  DateTime? _needed;
+  bool _urgent = false;
+
+  @override
+  void dispose() {
+    for (final l in _lines) { l.name.dispose(); l.qty.dispose(); l.uom.dispose(); }
+    _note.dispose();
+    super.dispose();
+  }
+
+  String _fmt(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  bool get _valid => _lines.any((l) => l.name.text.trim().isNotEmpty && (double.tryParse(l.qty.text.trim()) ?? 0) > 0);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+      child: ListView(shrinkWrap: true, children: [
+        Padding(padding: const EdgeInsets.only(bottom: 10),
+            child: Text(tr('طلب أصناف جديد', 'New item request'),
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: widget.color))),
+        // lines
+        for (var i = 0; i < _lines.length; i++) Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(color: Pms.bg, borderRadius: BorderRadius.circular(12)),
+          child: Column(children: [
+            Row(children: [
+              Container(width: 22, height: 22, alignment: Alignment.center,
+                  decoration: BoxDecoration(color: widget.color.withValues(alpha: 0.15), shape: BoxShape.circle),
+                  child: Text('${i + 1}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: widget.color))),
+              const SizedBox(width: 8),
+              Expanded(child: TextField(controller: _lines[i].name,
+                  decoration: InputDecoration(hintText: tr('اسم الصنف *', 'Item name *'), isDense: true, border: const OutlineInputBorder()))),
+              if (_lines.length > 1) IconButton(
+                icon: const Icon(Icons.remove_circle_outline_rounded, color: Color(0xFFE11D48), size: 20),
+                onPressed: () => setState(() => _lines.removeAt(i)),
+              ),
+            ]),
+            const SizedBox(height: 8),
+            Row(children: [
+              Expanded(child: TextField(controller: _lines[i].qty, keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(labelText: tr('الكمية', 'Qty'), isDense: true, border: const OutlineInputBorder()))),
+              const SizedBox(width: 8),
+              Expanded(child: TextField(controller: _lines[i].uom,
+                  decoration: InputDecoration(labelText: tr('الوحدة', 'Unit'), isDense: true, border: const OutlineInputBorder()))),
+            ]),
+          ]),
+        ),
+        Align(alignment: Alignment.centerRight, child: TextButton.icon(
+          onPressed: () => setState(() => _lines.add(_ItemLine())),
+          icon: Icon(Icons.add_circle_rounded, color: widget.color),
+          label: Text(tr('إضافة صنف', 'Add item'), style: TextStyle(color: widget.color, fontWeight: FontWeight.w800)),
+        )),
+        // meta
+        Row(children: [
+          Expanded(child: InkWell(
+            onTap: () async {
+              final now = DateTime.now();
+              final d = await showDatePicker(context: context, initialDate: _needed ?? now,
+                  firstDate: now, lastDate: DateTime(now.year + 1));
+              if (d != null) setState(() => _needed = d);
+            },
+            child: InputDecorator(
+              decoration: InputDecoration(labelText: tr('مطلوب بحلول', 'Needed by'), isDense: true, border: const OutlineInputBorder()),
+              child: Text(_needed == null ? tr('اختياري', 'Optional') : _fmt(_needed!),
+                  style: TextStyle(color: _needed == null ? Colors.grey : null)),
+            ),
+          )),
+          const SizedBox(width: 10),
+          Column(children: [
+            Text(tr('عاجل', 'Urgent'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+            Switch(value: _urgent, activeColor: const Color(0xFFE11D48), onChanged: (v) => setState(() => _urgent = v)),
+          ]),
+        ]),
+        const SizedBox(height: 10),
+        TextField(controller: _note, maxLines: 2,
+            decoration: InputDecoration(labelText: tr('سبب الطلب / ملاحظات', 'Reason / notes'), isDense: true, border: const OutlineInputBorder())),
+        const SizedBox(height: 12),
+        SizedBox(width: double.infinity, child: FilledButton.icon(
+          style: FilledButton.styleFrom(backgroundColor: widget.color, padding: const EdgeInsets.symmetric(vertical: 13)),
+          onPressed: _valid ? () => Navigator.pop(context, <String, dynamic>{
+            'priority': _urgent ? '1' : '0',
+            if (_needed != null) 'needed_by': _fmt(_needed!),
+            if (_note.text.trim().isNotEmpty) 'note': _note.text.trim(),
+            'submit': true,
+            'lines': [
+              for (final l in _lines)
+                if (l.name.text.trim().isNotEmpty && (double.tryParse(l.qty.text.trim()) ?? 0) > 0)
+                  {'name': l.name.text.trim(), 'qty': double.tryParse(l.qty.text.trim()) ?? 0, 'uom': l.uom.text.trim()}
+            ],
+          }) : null,
+          icon: const Icon(Icons.send_rounded, size: 18),
+          label: Text(tr('إرسال للاعتماد', 'Submit'), style: const TextStyle(fontWeight: FontWeight.w800)),
+        )),
+      ]),
+    );
+  }
+}
+
+/// Item-request detail — lines, status, the created supply link, and the
+/// procurement approve/reject + print actions.
+class _ItemRequestDetailSheet extends StatefulWidget {
+  final int requestId;
+  final Color color;
+  const _ItemRequestDetailSheet({required this.requestId, required this.color});
+  @override
+  State<_ItemRequestDetailSheet> createState() => _ItemRequestDetailSheetState();
+}
+
+class _ItemRequestDetailSheetState extends State<_ItemRequestDetailSheet> {
+  Map<String, dynamic>? _d;
+  String? _error;
+  bool _busy = false;
+
+  @override
+  void initState() { super.initState(); _load(); }
+
+  Future<void> _load() async {
+    try {
+      final d = await context.read<AuthProvider>().api.pmsItemRequest(widget.requestId);
+      if (mounted) setState(() => _d = d);
+    } catch (e) {
+      if (mounted) setState(() => _error = '$e');
+    }
+  }
+
+  Future<void> _act(String act, {String? reason}) async {
+    setState(() => _busy = true);
+    try {
+      final d = await context.read<AuthProvider>().api.pmsItemRequestAction(widget.requestId, act, reason: reason);
+      if (!mounted) return;
+      if (act == 'delete') { Navigator.pop(context); return; }
+      setState(() { _d = d; _busy = false; });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: const Color(0xFFE5484D)));
+    }
+  }
+
+  Color _sc(String? s) => switch (s) {
+        'approved' => const Color(0xFF16A34A),
+        'submitted' => const Color(0xFF0891B2),
+        'rejected' => const Color(0xFFE11D48),
+        _ => Colors.grey.shade500,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85, minChildSize: 0.5, maxChildSize: 0.96, expand: false,
+      builder: (context, sc) {
+        if (_error != null) {
+          return Center(child: Padding(padding: const EdgeInsets.all(24),
+              child: Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey))));
+        }
+        if (_d == null) return const Center(child: CircularProgressIndicator());
+        final d = _d!;
+        final lines = (d['lines'] as List?) ?? const [];
+        return Stack(children: [
+          ListView(controller: sc, padding: EdgeInsets.zero, children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [widget.color, widget.color.withValues(alpha: 0.78)],
+                    begin: Alignment.topLeft, end: Alignment.bottomRight),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  const Icon(Icons.playlist_add_check_rounded, color: Colors.white, size: 24),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text('${d['name'] ?? ''}',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16))),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(color: _sc(d['state'] as String?), borderRadius: BorderRadius.circular(9)),
+                    child: Text('${d['state_label'] ?? ''}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11)),
+                  ),
+                ]),
+                const SizedBox(height: 10),
+                Wrap(spacing: 6, runSpacing: 6, children: [
+                  if (d['priority'] == '1') _chip(tr('عاجل', 'Urgent'), Icons.priority_high_rounded),
+                  if (d['requested_by'] != null) _chip('${d['requested_by']}', Icons.person_rounded),
+                  if (d['needed_by'] != null) _chip('${tr('بحلول', 'by')} ${d['needed_by']}', Icons.event_rounded),
+                  if (d['supply'] != null) _chip('${d['supply']}', Icons.local_shipping_rounded),
+                ]),
+              ]),
+            ),
+            // lines table
+            Padding(padding: const EdgeInsets.fromLTRB(16, 12, 16, 4), child: Column(children: [
+              for (var i = 0; i < lines.length; i++)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: Pms.bg, borderRadius: BorderRadius.circular(10)),
+                  child: Row(children: [
+                    Container(width: 22, height: 22, alignment: Alignment.center,
+                        decoration: BoxDecoration(color: widget.color.withValues(alpha: 0.15), shape: BoxShape.circle),
+                        child: Text('${i + 1}', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: widget.color))),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text('${(lines[i] as Map)['name']}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Pms.ink))),
+                    Text('${(lines[i] as Map)['qty']} ${(lines[i] as Map)['uom'] ?? ''}',
+                        style: TextStyle(fontWeight: FontWeight.w900, color: widget.color, fontSize: 13)),
+                  ]),
+                ),
+            ])),
+            if (d['note'] != null) Padding(padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+              child: Container(width: double.infinity, padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: Pms.bg, borderRadius: BorderRadius.circular(12)),
+                child: Text('${d['note']}', style: const TextStyle(color: Pms.ink, height: 1.5, fontSize: 13)))),
+            if (d['approved_by'] != null) Padding(padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+              child: Text('${tr('اعتمده', 'Approved by')}: ${d['approved_by']} · ${d['approval_date'] ?? ''}',
+                  style: const TextStyle(color: Pms.slate, fontSize: 11.5))),
+            // print + actions
+            Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 24), child: Column(children: [
+              SizedBox(width: double.infinity, child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(foregroundColor: widget.color,
+                    side: BorderSide(color: widget.color.withValues(alpha: 0.5)), padding: const EdgeInsets.symmetric(vertical: 11)),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+                    path: context.read<AuthProvider>().api.pmsItemRequestReportPath(widget.requestId),
+                    title: tr('طلب أصناف', 'Item request'), fileName: 'item-request-${widget.requestId}.pdf'))),
+                icon: const Icon(Icons.print_rounded, size: 18),
+                label: Text(tr('طباعة / مشاركة', 'Print / share'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+              )),
+              if (d['can_submit'] == true) _btn(tr('إرسال للاعتماد', 'Submit'), Icons.send_rounded, const Color(0xFF0891B2), () => _act('submit')),
+              if (d['can_approve'] == true) _btn(tr('اعتماد وإنشاء توريد', 'Approve → supply'), Icons.verified_rounded, const Color(0xFF16A34A), () => _act('approve')),
+              if (d['can_reject'] == true) _btn(tr('رفض', 'Reject'), Icons.close_rounded, const Color(0xFFE11D48), () => _act('reject')),
+              if (d['can_reset'] == true) _btn(tr('إعادة لمسودة', 'Reset to draft'), Icons.undo_rounded, Colors.grey.shade600, () => _act('reset')),
+              if (d['can_submit'] == true) _btn(tr('حذف المسودة', 'Delete draft'), Icons.delete_outline_rounded, const Color(0xFFE11D48), () => _act('delete'), outline: true),
+            ])),
+          ]),
+          if (_busy) const Positioned.fill(child: ColoredBox(color: Color(0x11000000), child: Center(child: CircularProgressIndicator()))),
+        ]);
+      },
+    );
+  }
+
+  Widget _chip(String t, IconData ic) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(ic, size: 12, color: Colors.white),
+          const SizedBox(width: 4),
+          Text(t, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+        ]),
+      );
+
+  Widget _btn(String t, IconData ic, Color c, VoidCallback onTap, {bool outline = false}) => Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: SizedBox(width: double.infinity, child: outline
+            ? OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(foregroundColor: c, side: BorderSide(color: c), padding: const EdgeInsets.symmetric(vertical: 12)),
+                onPressed: _busy ? null : onTap, icon: Icon(ic, size: 18),
+                label: Text(t, style: const TextStyle(fontWeight: FontWeight.w800)))
+            : FilledButton.icon(
+                style: FilledButton.styleFrom(backgroundColor: c, padding: const EdgeInsets.symmetric(vertical: 12)),
+                onPressed: _busy ? null : onTap, icon: Icon(ic, size: 18),
+                label: Text(t, style: const TextStyle(fontWeight: FontWeight.w800)))),
       );
 }
