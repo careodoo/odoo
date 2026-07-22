@@ -109,27 +109,32 @@ jobs:
       - name: Read app version from pubspec
         id: ver
         run: |
-          # "3.7.0+2124" → name 3.7.0 ; the build-number stays the run number so
-          # the Android versionCode always increases no matter what.
+          # "3.7.0+2124" → name 3.7.0.
           VNAME=$(grep -E '^version:' pubspec.yaml | sed -E 's/version:[[:space:]]*//; s/\+.*//')
           echo "name=$VNAME" >> "$GITHUB_OUTPUT"
-          echo "App version: $VNAME (build ${{ github.run_number }})"
+          # Android versionCode: the older MANUAL uploads used the pubspec +NNNN
+          # (up to 2132), but CI's run_number is only ~265 — lower, so Play refused
+          # the upgrade ("existing users can't upgrade"). Offset by 10000 so the
+          # code is ALWAYS above any legacy code AND still strictly increasing.
+          VCODE=$((10000 + ${{ github.run_number }}))
+          echo "code=$VCODE" >> "$GITHUB_OUTPUT"
+          echo "App version: $VNAME (versionCode $VCODE, build ${{ github.run_number }})"
 
       - name: Build release APK
         run: |
           flutter build apk --release \
-            --build-number=${{ github.run_number }} \
+            --build-number=${{ steps.ver.outputs.code }} \
             --build-name=${{ steps.ver.outputs.name }} \
             --dart-define=CARE_API_BASE=https://ecare.care-kw.com/api/v1 \
-            --dart-define=BUILD_NUMBER=${{ github.run_number }}
+            --dart-define=BUILD_NUMBER=${{ steps.ver.outputs.code }}
 
       - name: Build release App Bundle (.aab for Google Play)
         run: |
           flutter build appbundle --release \
-            --build-number=${{ github.run_number }} \
+            --build-number=${{ steps.ver.outputs.code }} \
             --build-name=${{ steps.ver.outputs.name }} \
             --dart-define=CARE_API_BASE=https://ecare.care-kw.com/api/v1 \
-            --dart-define=BUILD_NUMBER=${{ github.run_number }}
+            --dart-define=BUILD_NUMBER=${{ steps.ver.outputs.code }}
 
       - name: Rename artifacts
         run: |
