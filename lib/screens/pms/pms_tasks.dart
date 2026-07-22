@@ -444,32 +444,59 @@ class _PmsTaskDetailState extends State<PmsTaskDetail> {
           final msgs = (d['messages'] as List?) ?? [];
           final kids = (d['children'] as List?) ?? [];
           return ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 24), children: [
-            // header
+            // professional gradient hero — colour reflects the task's state
             Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.black12)),
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: d['done'] == true
+                      ? [Pms.green, const Color(0xFF0F7A3D)]
+                      : overdue
+                          ? [Pms.red, const Color(0xFF9B1C31)]
+                          : [Pms.violet, Pms.deep],
+                  begin: Alignment.topRight, end: Alignment.bottomLeft),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [BoxShadow(color: Pms.violet.withValues(alpha: 0.28), blurRadius: 14, offset: const Offset(0, 6))],
+              ),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: [
+                Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Expanded(child: Text('${d['name']}',
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Pms.ink, height: 1.3))),
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: Colors.white, height: 1.3))),
                   IconButton(
                     tooltip: tr('أولوية', 'Priority'),
                     icon: Icon(d['priority'] == '1' ? Icons.star_rounded : Icons.star_border_rounded,
-                        color: Pms.amber),
+                        color: d['priority'] == '1' ? Pms.amber : Colors.white),
                     onPressed: d['can_write'] == true && !_busy
                         ? () => _setPriority(d['priority'] != '1') : null,
                   ),
                 ]),
                 if (d['project'] != null) Text('${(d['project'] as Map)['name']}',
-                    style: const TextStyle(color: Pms.slate, fontSize: 12)),
-                const SizedBox(height: 10),
-                Wrap(spacing: 6, runSpacing: 6, children: [
-                  if (d['stage'] != null) _pill('${(d['stage'] as Map)['name']}', Pms.violet),
-                  if (d['done'] == true) _pill(tr('منجزة', 'Done'), Pms.green),
-                  if (overdue) _pill(tr('متأخرة', 'Overdue'), Pms.red),
-                  for (final t in ((d['tags'] as List?) ?? [])) _pill('$t', Pms.slate),
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 12),
+                Wrap(spacing: 7, runSpacing: 7, children: [
+                  if (d['stage'] != null) _hPill('${(d['stage'] as Map)['name']}'),
+                  if (d['done'] == true) _hPill('✓ ${tr('منجزة', 'Done')}'),
+                  if (overdue) _hPill('⏰ ${tr('متأخرة', 'Overdue')}'),
+                  if (d['time_committed'] == true) _hPill('🎯 ${tr('ملتزم بوقت', 'Committed')}'),
+                  for (final t in ((d['tags'] as List?) ?? [])) _hPill('$t'),
                 ]),
+                if (d['deadline'] != null) Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(12)),
+                    child: Row(children: [
+                      const Icon(Icons.event_rounded, size: 16, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Text(tr('الموعد النهائي', 'Deadline'),
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 11.5)),
+                      const Spacer(),
+                      Text('${d['deadline']}'.split(' ').first,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13)),
+                    ]),
+                  ),
+                ),
               ]),
             ),
             const SizedBox(height: 12),
@@ -619,6 +646,13 @@ class _PmsTaskDetailState extends State<PmsTaskDetail> {
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
         decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
         child: Text(t, style: TextStyle(color: c, fontSize: 11, fontWeight: FontWeight.w800)),
+      );
+
+  /// A white-on-gradient pill for the hero header.
+  Widget _hPill(String t) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(20)),
+        child: Text(t, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
       );
 
   Widget _kv(IconData i, String k, String v, {Color? color}) => Padding(
