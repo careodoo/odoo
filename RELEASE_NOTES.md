@@ -1,12 +1,14 @@
 # CARE Mobile — ملاحظات الإصدار
 
 <!--CURRENT-->
-- **إصلاح ظهور نسخة iOS في App Store Connect:** توحيد معرّف الحزمة (Bundle ID) في مشروع Xcode ليطابق `com.carekw.care` المستخدم في التوقيع والرفع (كان المشروع لا يزال `care.app`) — كان هذا التعارض يمنع وصول النسخة إلى App Store Connect.
+- **أيقونة iOS:** تفعيل توليد أيقونة التطبيق لنظام iOS (كانت النسخة تظهر بأيقونة فلاتر الافتراضية) — الآن بشعار CARE، وبلا قناة ألفا (متوافق مع App Store).
+- **امتثال التصدير (iOS):** إضافة `ITSAppUsesNonExemptEncryption=false` — يمنع ظهور «Missing Compliance» مع كل نسخة (التطبيق يستخدم HTTPS القياسي فقط).
 <!--END-->
 
 ---
 
 ## الإصدارات السابقة
+- v3.72.0 — توحيد Bundle ID (com.carekw.care) لوصول نسخة iOS إلى App Store Connect.
 - v3.71.0 — إصلاح رفع Google Play (versionCode فوق 10000).
 - v3.70.0 — إصلاح بناء iOS نهائيًا (mobile_scanner 7.x = Apple Vision، بلا GoogleMLKit).
 - v3.69.0 — محاولة توحيد MLKit (mobile_scanner 6.x).
