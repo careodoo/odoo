@@ -132,7 +132,7 @@ class _PresenceScanScreenState extends State<PresenceScanScreen> {
               ? const Center(child: CircularProgressIndicator(color: Colors.white))
               : Stack(children: [
                   MobileScanner(controller: _c!, onDetect: _onDetect,
-                      errorBuilder: (_, __, ___) => Center(child: Text(
+                      errorBuilder: (_, __) => Center(child: Text(
                           tr('تعذّر تشغيل الكاميرا', 'Camera unavailable'),
                           style: const TextStyle(color: Colors.white70)))),
                   // aiming frame
