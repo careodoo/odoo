@@ -4,8 +4,8 @@ import '../../core/widgets.dart';
 import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
-import '../../core/service_ui.dart';
 import 'pms_shell.dart';
+import 'pms_section.dart' show PmsPhotoView;
 
 /// The employee file a project manager sees: identity, wage, compliance dates,
 /// docs, loans, penalties, bonuses and recent attendance. Server-scoped to the
@@ -52,26 +52,17 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
           final d = snap.data ?? const {};
           final e = (d['employee'] as Map?) ?? const {};
           final compliance = (d['compliance'] as List?) ?? const [];
-          final docs = (d['docs'] as List?) ?? const [];
-          final loans = (d['loans'] as List?) ?? const [];
-          final penalties = (d['penalties'] as List?) ?? const [];
-          final bonuses = (d['bonuses'] as List?) ?? const [];
-          final att = (d['attendance'] as List?) ?? const [];
           return ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 24), children: [
             _identity(e),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
+            if (compliance.isNotEmpty) ...[_compliance(compliance), const SizedBox(height: 14)],
+            // professional sections hub — each opens its own detail
+            _sectionsHub(d),
+            const SizedBox(height: 14),
             if (((d['details'] as List?) ?? const []).isNotEmpty) ...[
-              _detailsSection(d['details'] as List), const SizedBox(height: 0)],
-            if (compliance.isNotEmpty) ...[_compliance(compliance), const SizedBox(height: 12)],
-            _recordBlock(tr('طلبات المستندات', 'Document requests'), Icons.description_rounded,
-                const Color(0xFF8B5CF6), docs, showState: true),
-            _recordBlock(tr('السُّلف', 'Loans'), Icons.savings_rounded,
-                const Color(0xFF0891B2), loans, amountKey: 'amount'),
-            _recordBlock(tr('الجزاءات', 'Penalties'), Icons.gavel_rounded,
-                const Color(0xFFE5484D), penalties, amountKey: 'amount', showState: true),
-            _recordBlock(tr('المكافآت', 'Bonuses'), Icons.emoji_events_rounded,
-                const Color(0xFF16A34A), bonuses, amountKey: 'amount', showState: true),
-            if (att.isNotEmpty) ...[const SizedBox(height: 4), _attendance(att)],
+              _miniHead(tr('كل بيانات العامل', 'All employee data'), Icons.badge_rounded),
+              const SizedBox(height: 8),
+              _detailsSection(d['details'] as List)],
           ]);
         },
       ),
@@ -137,6 +128,14 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
             ],
           ]),
           const SizedBox(height: 12),
+          // status marks (worker status / on-leave airplane) + tags
+          if (((e['marks'] as List?) ?? const []).isNotEmpty || ((e['tags'] as List?) ?? const []).isNotEmpty) ...[
+            Wrap(spacing: 6, runSpacing: 6, children: [
+              for (final m in (e['marks'] as List? ?? const [])) _markChip(m as Map),
+              for (final t in (e['tags'] as List? ?? const [])) _tagChip('${(t as Map)['name']}'),
+            ]),
+            const SizedBox(height: 10),
+          ],
           // Important data — badge highlighted, no manager.
           Wrap(spacing: 8, runSpacing: 8, children: [
             if (e['badge'] != null) _badgeChip('${e['badge']}'),
@@ -147,6 +146,42 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
           ]),
         ]),
       );
+
+  static const _markIcons = {
+    'flight': Icons.flight_rounded, 'badge': Icons.badge_rounded,
+    'gavel': Icons.gavel_rounded, 'block': Icons.block_rounded,
+  };
+
+  Widget _markChip(Map m) {
+    final c = _hex('${m['color'] ?? '#6B7280'}');
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 3)]),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(_markIcons['${m['icon']}'] ?? Icons.circle, size: 13, color: c),
+        const SizedBox(width: 4),
+        Text('${m['label']}', style: TextStyle(color: c, fontSize: 10.5, fontWeight: FontWeight.w900)),
+      ]),
+    );
+  }
+
+  Widget _tagChip(String t) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18),
+            borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white38)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.sell_rounded, size: 11, color: Colors.white70),
+          const SizedBox(width: 4),
+          Text(t, style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w700)),
+        ]),
+      );
+
+  static Color _hex(String h) {
+    h = h.replaceAll('#', '');
+    if (h.length == 6) h = 'FF$h';
+    return Color(int.tryParse(h, radix: 16) ?? 0xFF6B7280);
+  }
 
   /// The Badge ID — the worker's key identifier, given a distinct, prominent pill.
   Widget _badgeChip(String badge) => Container(
@@ -162,6 +197,96 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
           Text(badge, style: TextStyle(color: _c, fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
         ]),
       );
+
+  Widget _miniHead(String t, IconData ic) => Row(children: [
+        Icon(ic, size: 17, color: _c),
+        const SizedBox(width: 7),
+        Text(t, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5, color: Pms.ink)),
+      ]);
+
+  // (key, label, icon, color, type)
+  static const List<(String, String, IconData, Color, String)> _secDefs = [
+    ('attendance', 'الحضور والانصراف', Icons.schedule_rounded, Color(0xFF2563EB), 'attendance'),
+    ('leaves', 'الإجازات', Icons.beach_access_rounded, Color(0xFF0891B2), 'leaves'),
+    ('transfers', 'الانتقالات', Icons.swap_horiz_rounded, Color(0xFF7C3AED), 'transfers'),
+    ('documents', 'المستندات والصور', Icons.folder_shared_rounded, Color(0xFFB45309), 'documents'),
+    ('docs', 'طلبات المستندات', Icons.description_rounded, Color(0xFF8B5CF6), 'docs'),
+    ('payslips', 'كشوف الرواتب', Icons.receipt_long_rounded, Color(0xFF16A34A), 'payslips'),
+    ('loans', 'السُّلف', Icons.savings_rounded, Color(0xFF0D9488), 'loans'),
+    ('penalties', 'الجزاءات', Icons.gavel_rounded, Color(0xFFE5484D), 'money'),
+    ('bonuses', 'المكافآت', Icons.emoji_events_rounded, Color(0xFFF59E0B), 'money'),
+    ('appraisals', 'التقييمات', Icons.star_rounded, Color(0xFFEA580C), 'appraisals'),
+    ('skills', 'المهارات', Icons.psychology_rounded, Color(0xFF6366F1), 'skills'),
+    ('uniform', 'اليونيفورم', Icons.checkroom_rounded, Color(0xFF0EA5E9), 'uniform'),
+    ('vehicles', 'السيارات', Icons.directions_car_rounded, Color(0xFF334155), 'vehicles'),
+    ('violations', 'المخالفات المرورية', Icons.report_rounded, Color(0xFFDC2626), 'violations'),
+    ('devices', 'أجهزة البصمة', Icons.fingerprint_rounded, Color(0xFF475569), 'devices'),
+  ];
+
+  Widget _sectionsHub(Map d) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _miniHead(tr('سجلات العامل', 'Employee records'), Icons.dashboard_rounded),
+      const SizedBox(height: 8),
+      GridView.count(
+        crossAxisCount: 3, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 9, crossAxisSpacing: 9, childAspectRatio: 0.95,
+        children: [
+          for (final s in _secDefs)
+            _hubTile(s.$2, s.$3, s.$4, s.$5, ((d[s.$1] as List?) ?? const []).length,
+                (d[s.$1] as List?) ?? const []),
+        ],
+      ),
+    ]);
+  }
+
+  Widget _hubTile(String label, IconData ic, Color c, String type, int count, List items) {
+    final empty = count == 0;
+    return Material(
+      color: Colors.white, borderRadius: BorderRadius.circular(15),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(15),
+        onTap: () => _openSection(label, type, items, c),
+        child: Container(
+          padding: const EdgeInsets.all(9),
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: c.withValues(alpha: 0.16)),
+              boxShadow: [BoxShadow(color: c.withValues(alpha: 0.07), blurRadius: 7, offset: const Offset(0, 3))]),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(children: [
+                Container(width: 30, height: 30, alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                      gradient: LinearGradient(colors: [c, Color.lerp(c, Colors.black, 0.22)!]),
+                      borderRadius: BorderRadius.circular(9)),
+                  child: Icon(ic, size: 16, color: Colors.white)),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                      color: empty ? const Color(0xFFF1F5F9) : c.withValues(alpha: 0.13),
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Text('$count', style: TextStyle(
+                      color: empty ? Pms.slate : c, fontWeight: FontWeight.w900, fontSize: 12)),
+                ),
+              ]),
+              Text(label, maxLines: 2, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: Pms.ink, height: 1.2)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openSection(String title, String type, List items, Color c) async {
+    await showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => _EmpSectionSheet(title: title, type: type, items: items, color: c,
+          employeeId: widget.employeeId),
+    );
+  }
 
   Widget _detailsSection(List sections) => Column(children: [
         for (final s in sections.cast<Map>()) Container(
@@ -281,95 +406,180 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
         ]),
       );
 
-  Widget _recordBlock(String title, IconData ic, Color c, List rows,
-      {String? amountKey, bool showState = false}) {
-    if (rows.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
-        ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Icon(ic, size: 15, color: c),
-            const SizedBox(width: 6),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Pms.ink)),
-            const SizedBox(width: 6),
-            Text('${rows.length}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: c)),
+}
+
+/// Bottom sheet listing one section's records, formatted per type.
+class _EmpSectionSheet extends StatelessWidget {
+  final String title, type;
+  final List items;
+  final Color color;
+  final int employeeId;
+  const _EmpSectionSheet({required this.title, required this.type, required this.items,
+      required this.color, required this.employeeId});
+
+  Color _stateColor(String s) {
+    final l = s.toLowerCase();
+    if (l.contains('done') || l.contains('approve') || l.contains('valid') || l.contains('paid') || l.contains('confirm')) return Pms.green;
+    if (l.contains('reject') || l.contains('cancel') || l.contains('refuse')) return Pms.red;
+    if (l.contains('draft') || l.contains('submit') || l.contains('pending') || l.contains('wait')) return Pms.amber;
+    return Pms.slate;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      expand: false, initialChildSize: 0.75, maxChildSize: 0.95, minChildSize: 0.4,
+      builder: (_, sc) => Column(children: [
+        Container(width: 40, height: 4, margin: const EdgeInsets.symmetric(vertical: 11),
+            decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(4))),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
+          child: Row(children: [
+            Icon(Icons.folder_open_rounded, color: color),
+            const SizedBox(width: 8),
+            Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+            const Spacer(),
+            Text('${items.length}', style: TextStyle(fontWeight: FontWeight.w900, color: color, fontSize: 15)),
           ]),
-          const SizedBox(height: 8),
-          for (final r in rows) Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(children: [
-              Expanded(child: Text('${r['name']}',
-                  maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700))),
-              if (amountKey != null && r[amountKey] != null)
-                Text('${r[amountKey]}',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: c)),
-              if (showState && r['state_label'] != null) ...[
-                const SizedBox(width: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(color: c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-                  child: Text('${r['state_label']}',
-                      style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: c)),
-                ),
-              ],
-            ]),
-          ),
-        ]),
-      ),
+        ),
+        Expanded(child: items.isEmpty
+            ? Center(child: Padding(padding: const EdgeInsets.all(30),
+                child: Text(tr('لا سجلات في هذا القسم', 'No records'), style: const TextStyle(color: Pms.slate))))
+            : ListView.builder(controller: sc, padding: const EdgeInsets.fromLTRB(14, 0, 14, 24),
+                itemCount: items.length,
+                itemBuilder: (_, i) => _card(context, items[i] as Map))),
+      ]),
     );
   }
 
-  Widget _attendance(List att) => Container(
+  Widget _wrap(List<Widget> children) => Container(
+        margin: const EdgeInsets.only(bottom: 9),
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
-        ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Icon(Icons.schedule_rounded, size: 15, color: Color(0xFF2F6DF6)),
-            SizedBox(width: 6),
-            Text(tr('آخر الحضور', 'Recent attendance'), style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Pms.ink)),
-          ]),
-          const SizedBox(height: 4),
-          // The file lists the last 30 punches; paging keeps it readable.
-          MoreList(
-            items: att,
-            color: const Color(0xFF2F6DF6),
-            pageSize: 7,
-            itemBuilder: (_, r, __) {
-              final m = r as Map;
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(children: [
-                  Container(width: 7, height: 7,
-                      decoration: BoxDecoration(
-                          color: m['open'] == true ? const Color(0xFF16A34A) : Colors.grey.shade400,
-                          shape: BoxShape.circle)),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text('${m['date'] ?? '—'}',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700))),
-                  Text('${_hm(m['check_in'])} → ${_hm(m['check_out'])}',
-                      style: TextStyle(fontSize: 10.5, color: Colors.grey.shade600)),
-                  const SizedBox(width: 8),
-                  Text(tr('${m['hours']} س', '${m['hours']}h'),
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF0891B2))),
-                ]),
-              );
-            },
-          ),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(13),
+            border: Border.all(color: const Color(0xFFE5E7EB))),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
+      );
+
+  Widget _titleRow(String t, {String? trailing, Color? tc}) => Row(children: [
+        Expanded(child: Text(t, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5))),
+        if (trailing != null)
+          Container(padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+              decoration: BoxDecoration(color: (tc ?? Pms.slate).withValues(alpha: 0.13), borderRadius: BorderRadius.circular(14)),
+              child: Text(trailing, style: TextStyle(color: tc ?? Pms.slate, fontWeight: FontWeight.w800, fontSize: 11))),
+      ]);
+
+  Widget _kv(String k, String v, {Color? vc}) => Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Row(children: [
+          Text('$k: ', style: const TextStyle(fontSize: 11.5, color: Pms.slate, fontWeight: FontWeight.w600)),
+          Expanded(child: Text(v, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: vc ?? Pms.ink))),
         ]),
       );
 
-  String _hm(dynamic v) {
-    final s = '${v ?? ''}';
-    return s.length >= 16 ? s.substring(11, 16) : '—';
+  Widget _card(BuildContext context, Map m) {
+    switch (type) {
+      case 'leaves':
+        final ret = m['returned'];
+        return _wrap([
+          _titleRow('${m['type'] ?? tr('إجازة', 'Leave')}',
+              trailing: '${m['state_label'] ?? ''}', tc: _stateColor('${m['state']}')),
+          _kv(tr('من', 'From'), '${m['from'] ?? '—'}'),
+          _kv(tr('إلى', 'To'), '${m['to'] ?? '—'}'),
+          _kv(tr('الأيام', 'Days'), '${m['days']}'),
+          _kv(tr('العودة', 'Returned'), ret != null ? '$ret' : tr('لم يُسجّل', 'not recorded'),
+              vc: ret != null ? Pms.green : Pms.amber),
+        ]);
+      case 'transfers':
+        return _wrap([
+          _titleRow(tr('نقل', 'Transfer'), trailing: '${m['state_label'] ?? ''}', tc: _stateColor('${m['state']}')),
+          _kv(tr('من قسم', 'From'), '${m['from'] ?? '—'}'),
+          _kv(tr('إلى قسم', 'To'), '${m['to'] ?? '—'}'),
+          _kv(tr('التاريخ', 'Date'), '${m['date'] ?? '—'}'),
+        ]);
+      case 'documents':
+        final imgs = (m['images'] as List?) ?? const [];
+        final days = m['days'];
+        final expColor = days == null ? Pms.slate : (days < 0 ? Pms.red : days < 30 ? Pms.amber : Pms.green);
+        return _wrap([
+          _titleRow('${m['type'] ?? tr('مستند', 'Document')}'),
+          if (m['number'] != null) _kv(tr('الرقم', 'No.'), '${m['number']}'),
+          if (m['issue'] != null) _kv(tr('الإصدار', 'Issued'), '${m['issue']}'),
+          if (m['expiry'] != null) _kv(tr('الانتهاء', 'Expiry'),
+              '${m['expiry']}${days != null ? '  (${days < 0 ? tr('منتهٍ', 'expired') : '$days ${tr('يوم', 'd')}'})' : ''}', vc: expColor),
+          if (imgs.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 8), child: Wrap(spacing: 8, runSpacing: 8, children: [
+            for (final im in imgs) GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => PmsPhotoView(url: '$im', title: '${m['type'] ?? ''}'))),
+              child: ClipRRect(borderRadius: BorderRadius.circular(9),
+                  child: Image.network('$im', width: 78, height: 78, fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(width: 78, height: 78, color: Pms.bg,
+                          child: const Icon(Icons.insert_drive_file_rounded, color: Pms.slate)))),
+            ),
+          ])),
+        ]);
+      case 'payslips':
+        return _wrap([
+          _titleRow('${m['name'] ?? tr('كشف راتب', 'Payslip')}',
+              trailing: '${m['state_label'] ?? ''}', tc: _stateColor('${m['state']}')),
+          _kv(tr('الفترة', 'Period'), '${m['from'] ?? ''} → ${m['to'] ?? ''}'),
+          if (m['net'] != null) _kv(tr('الصافي', 'Net'), '${m['net']}', vc: Pms.green),
+        ]);
+      case 'appraisals':
+        return _wrap([
+          _titleRow(tr('تقييم', 'Appraisal'), trailing: '${m['state_label'] ?? ''}', tc: _stateColor('${m['state']}')),
+          if (m['date'] != null) _kv(tr('التاريخ', 'Date'), '${m['date']}'),
+          if (m['score'] != null) _kv(tr('النتيجة', 'Score'), '${m['score']}', vc: color),
+        ]);
+      case 'skills':
+        final p = (m['progress'] is num) ? (m['progress'] as num).toDouble() : null;
+        return _wrap([
+          _titleRow('${m['name'] ?? ''}', trailing: m['level'] != null ? '${m['level']}' : null, tc: color),
+          if (p != null) Padding(padding: const EdgeInsets.only(top: 8),
+              child: ClipRRect(borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(value: (p / 100).clamp(0, 1), minHeight: 7,
+                      backgroundColor: Pms.bg, valueColor: AlwaysStoppedAnimation(color)))),
+        ]);
+      case 'uniform':
+        return _wrap([
+          _titleRow('${m['type'] ?? tr('يونيفورم', 'Uniform')}',
+              trailing: m['signed'] == true ? tr('موقّع', 'signed') : null, tc: Pms.green),
+          if (m['date'] != null) _kv(tr('التاريخ', 'Date'), '${m['date']}'),
+        ]);
+      case 'vehicles':
+        return _wrap([
+          _titleRow('${m['plate'] ?? m['model'] ?? tr('مركبة', 'Vehicle')}'),
+          if (m['model'] != null) _kv(tr('الطراز', 'Model'), '${m['model']}'),
+        ]);
+      case 'violations':
+        return _wrap([
+          _titleRow('${m['type'] ?? tr('مخالفة', 'Violation')}',
+              trailing: '${m['state_label'] ?? ''}', tc: _stateColor('${m['state']}')),
+          if (m['date'] != null) _kv(tr('التاريخ', 'Date'), '${m['date']}'),
+          if (m['vehicle'] != null) _kv(tr('المركبة', 'Vehicle'), '${m['vehicle']}'),
+          if (m['amount'] != null) _kv(tr('المبلغ', 'Amount'), '${m['amount']}', vc: Pms.red),
+        ]);
+      case 'devices':
+        return _wrap([
+          _titleRow('${m['device'] ?? tr('جهاز بصمة', 'Device')}'),
+          if (m['uid'] != null) _kv(tr('معرّف المستخدم', 'UID'), '${m['uid']}'),
+          if (m['templates'] != null) _kv(tr('البصمات', 'Templates'), '${m['templates']}'),
+        ]);
+      case 'attendance':
+        return _wrap([
+          _titleRow('${m['date'] ?? ''}',
+              trailing: m['open'] == true ? tr('بالموقع', 'on site') : '${m['hours']} ${tr('س', 'h')}',
+              tc: m['open'] == true ? Pms.green : color),
+          _kv(tr('دخول', 'In'), '${m['check_in'] ?? '—'}'),
+          _kv(tr('خروج', 'Out'), '${m['check_out'] ?? '—'}'),
+        ]);
+      default: // money (loans/penalties/bonuses), docs
+        return _wrap([
+          _titleRow('${m['name'] ?? ''}',
+              trailing: m['state_label'] != null ? '${m['state_label']}' : null, tc: _stateColor('${m['state']}')),
+          for (final k in ['amount', 'loan_amount', 'balance_amount', 'total_amount'])
+            if (m[k] != null) _kv(k == 'balance_amount' ? tr('المتبقّي', 'Balance') : tr('المبلغ', 'Amount'), '${m[k]}',
+                vc: k == 'balance_amount' ? Pms.red : Pms.ink),
+        ]);
+    }
   }
 }

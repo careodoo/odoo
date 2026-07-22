@@ -380,6 +380,19 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
     );
   }
 
+  static IconData _markIcon(String k) => switch (k) {
+        'flight' => Icons.flight_rounded,
+        'badge' => Icons.badge_rounded,
+        'gavel' => Icons.gavel_rounded,
+        'block' => Icons.block_rounded,
+        _ => Icons.circle,
+      };
+  static Color _hexColor(String h) {
+    h = h.replaceAll('#', '');
+    if (h.length == 6) h = 'FF$h';
+    return Color(int.tryParse(h, radix: 16) ?? 0xFF6B7280);
+  }
+
   Widget _row(Map r) {
     final badges = (r['badges'] as List?) ?? const [];
     final sc = _stateColors(r['state'] as String?);
@@ -414,9 +427,17 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
             const SizedBox(width: 9),
           ],
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('${r['title']}',
-                maxLines: 2, overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+            Row(children: [
+              Flexible(child: Text('${r['title']}',
+                  maxLines: 2, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13))),
+              // status marks (airplane if on leave, worker status)
+              for (final mk in ((r['marks'] as List?) ?? const [])) Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Icon(_markIcon('${(mk as Map)['icon']}'), size: 14,
+                    color: _hexColor('${mk['color'] ?? '#6B7280'}')),
+              ),
+            ]),
             Row(children: [
               if (r['badge'] != null) Padding(
                 padding: const EdgeInsets.only(top: 3, bottom: 1),
