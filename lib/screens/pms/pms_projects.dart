@@ -378,7 +378,7 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
                 GridView.count(
                   crossAxisCount: 3, shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 9, crossAxisSpacing: 9, childAspectRatio: 1.28,
+                  mainAxisSpacing: 9, crossAxisSpacing: 9, childAspectRatio: 0.95,
                   children: [for (final s in (d['stats'] as List)) _statCard(s as Map)],
                 ),
                 const SizedBox(height: 16),
@@ -665,23 +665,29 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
               border: Border.all(color: c.withValues(alpha: 0.18)),
               gradient: LinearGradient(colors: [c.withValues(alpha: 0.10), Colors.white],
                   begin: Alignment.topRight, end: Alignment.bottomLeft)),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Container(
-                width: 32, height: 32, alignment: Alignment.center,
-                decoration: BoxDecoration(color: c.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                child: Icon(_statIcons['${s['icon']}'] ?? Icons.insights_rounded, size: 18, color: c),
-              ),
-              const Spacer(),
-              Icon(Icons.chevron_left_rounded, size: 17, color: c.withValues(alpha: 0.5)),
-            ]),
-            const Spacer(),
-            Text('${s['count']}',
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: c, height: 1)),
-            const SizedBox(height: 2),
-            Text('${s['label']}', maxLines: 2, overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 10.5, color: Pms.ink, height: 1.15)),
-          ]),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(children: [
+                Container(
+                  width: 30, height: 30, alignment: Alignment.center,
+                  decoration: BoxDecoration(color: c.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(9)),
+                  child: Icon(_statIcons['${s['icon']}'] ?? Icons.insights_rounded, size: 17, color: c),
+                ),
+                const Spacer(),
+                Icon(Icons.chevron_left_rounded, size: 16, color: c.withValues(alpha: 0.5)),
+              ]),
+              Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                Text('${s['count']}',
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: c, height: 1)),
+                const SizedBox(height: 3),
+                Text('${s['label']}', maxLines: 2, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 10, color: Pms.ink, height: 1.15)),
+              ]),
+            ],
+          ),
         ),
       ),
     );
