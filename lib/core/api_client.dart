@@ -2069,6 +2069,21 @@ class ApiClient {
               _u('/management/purchases/$id/update'),
               headers: await _headers(), body: jsonEncode(vals))))['data'] as Map);
 
+  // ---- Config-driven generic create ------------------------------------
+  Future<Map<String, dynamic>> managementCreateMeta(String key) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/management/$key/create-meta'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> managementRelationSearch(String model, String q) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/management/relation/search?model=${Uri.encodeQueryComponent(model)}${q.isEmpty ? '' : '&q=${Uri.encodeQueryComponent(q)}'}'),
+              headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> managementGenericCreate(String key, Map<String, dynamic> vals) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/management/$key/generic-create'),
+              headers: await _headers(), body: jsonEncode(vals))))['data'] as Map);
+
   /// A vehicle's log records (services / contracts / drivers / odometer).
   Future<Map<String, dynamic>> managementFleetLog(int id, String code) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

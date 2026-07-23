@@ -99,24 +99,13 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Mgmt.bg,
-      floatingActionButton: (_last?['can_create'] == true &&
-              (_isProposals || widget.appKey == 'crm' || widget.appKey == 'purchases'))
+      floatingActionButton: (_last?['can_create'] == true)
           ? FloatingActionButton.extended(
               backgroundColor: widget.accent,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.add_rounded),
-              label: Text(
-                  _isProposals
-                      ? tr('عرض سعر جديد', 'New quotation')
-                      : widget.appKey == 'purchases'
-                          ? tr('أمر شراء جديد', 'New purchase')
-                          : tr('فرصة جديدة', 'New opportunity'),
-                  style: const TextStyle(fontWeight: FontWeight.w800)),
-              onPressed: _isProposals
-                  ? _createProposal
-                  : widget.appKey == 'purchases'
-                      ? _createPo
-                      : _createCrm)
+              label: Text(_fabLabel(), style: const TextStyle(fontWeight: FontWeight.w800)),
+              onPressed: _onCreate)
           : null,
       appBar: AppBar(
         backgroundColor: widget.accent, foregroundColor: Colors.white, elevation: 0,
@@ -440,6 +429,36 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
     if (created == null || !mounted) return;
     _reload();
     await _openDetail(created['id'] as int, '${created['title'] ?? ''}');
+  }
+
+  String _fabLabel() {
+    if (_isProposals) return tr('عرض سعر جديد', 'New quotation');
+    if (widget.appKey == 'purchases') return tr('أمر شراء جديد', 'New purchase');
+    if (widget.appKey == 'crm') return tr('فرصة جديدة', 'New opportunity');
+    return tr('إضافة جديد', 'Add new');
+  }
+
+  void _onCreate() {
+    if (_isProposals) {
+      _createProposal();
+    } else if (widget.appKey == 'purchases') {
+      _createPo();
+    } else if (widget.appKey == 'crm') {
+      _createCrm();
+    } else {
+      _createGeneric();
+    }
+  }
+
+  Future<void> _createGeneric() async {
+    final created = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => _GenericCreateSheet(appKey: widget.appKey, accent: widget.accent),
+    );
+    if (created == null || !mounted) return;
+    _reload();
+    if (created['id'] != null) await _openDetail(created['id'] as int, '${created['title'] ?? ''}');
   }
 
   // ---- Tenders: logo + countdown + rich card ----------------------------
@@ -3967,6 +3986,287 @@ class _ProductSearchSheetState extends State<_ProductSearchSheet> {
                     );
                   },
                 ),
+        ),
+      ]),
+    );
+  }
+}
+
+/// A config-driven create form: renders fields from the server's create-meta
+/// (char/text/number/date/selection/many2one) and posts a generic create.
+class _GenericCreateSheet extends StatefulWidget {
+  const _GenericCreateSheet({required this.appKey, required this.accent});
+  final String appKey;
+  final Color accent;
+  @override
+  State<_GenericCreateSheet> createState() => _GenericCreateSheetState();
+}
+
+class _GenericCreateSheetState extends State<_GenericCreateSheet> {
+  bool _loading = true, _busy = false;
+  String? _err, _titleAr, _titleEn;
+  List<Map> _fields = [];
+  final Map<String, dynamic> _vals = {};        // name -> raw value
+  final Map<String, String> _labels = {};       // name -> chosen m2o label
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final m = await context.read<AuthProvider>().api.managementCreateMeta(widget.appKey);
+      if (mounted) setState(() {
+        _fields = ((m['fields'] as List?) ?? const []).cast<Map>();
+        _titleAr = '${m['ar']}'; _titleEn = '${m['en']}';
+        _loading = false;
+      });
+    } catch (e) {
+      if (mounted) setState(() { _err = '$e'; _loading = false; });
+    }
+  }
+
+  Future<void> _pickDate(String name) async {
+    final cur = _vals[name];
+    final init = (cur is String && cur.isNotEmpty) ? DateTime.tryParse(cur) ?? DateTime.now() : DateTime.now();
+    final d = await showDatePicker(context: context, initialDate: init, firstDate: DateTime(2010), lastDate: DateTime(2100));
+    if (d != null) setState(() => _vals[name] = d.toIso8601String().substring(0, 10));
+  }
+
+  Future<void> _pickRelation(Map f) async {
+    final name = '${f['name']}';
+    if (f['search'] != null) {
+      final picked = await showModalBottomSheet<Map>(
+        context: context, isScrollControlled: true, backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        builder: (_) => _RelationSearchSheet(model: '${f['search']}', title: gLang == 'en' ? '${f['en']}' : '${f['ar']}', accent: widget.accent),
+      );
+      if (picked != null) setState(() { _vals[name] = picked['v']; _labels[name] = '${picked['l']}'; });
+    } else {
+      final opts = ((f['options'] as List?) ?? const []).cast<Map>();
+      final chosen = await showModalBottomSheet<int>(
+        context: context, isScrollControlled: true, backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        builder: (_) => _PickerSheet(title: gLang == 'en' ? '${f['en']}' : '${f['ar']}', options: opts, accent: widget.accent),
+      );
+      if (chosen != null) {
+        setState(() {
+          _vals[name] = chosen;
+          _labels[name] = '${opts.firstWhere((o) => o['v'] == chosen, orElse: () => {'l': ''})['l']}';
+        });
+      }
+    }
+  }
+
+  Future<void> _submit() async {
+    for (final f in _fields) {
+      if (f['required'] == true && (_vals['${f['name']}'] == null || '${_vals['${f['name']}']}'.trim().isEmpty)) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(tr('«${f['ar']}» مطلوب', '"${f['en']}" is required')), backgroundColor: Mgmt.red));
+        return;
+      }
+    }
+    setState(() => _busy = true);
+    try {
+      final res = await context.read<AuthProvider>().api.managementGenericCreate(widget.appKey, _vals);
+      if (mounted) Navigator.pop(context, res);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _busy = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Mgmt.red));
+      }
+    }
+  }
+
+  InputDecoration _dec(String hint) => InputDecoration(
+        hintText: hint, isDense: true, filled: true, fillColor: Mgmt.bg,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      );
+
+  Widget _fieldWidget(Map f) {
+    final name = '${f['name']}';
+    final type = '${f['type']}';
+    final label = gLang == 'en' ? '${f['en']}' : '${f['ar']}';
+    final req = f['required'] == true ? ' *' : '';
+    Widget input;
+    if (type == 'many2one') {
+      input = InkWell(
+        borderRadius: BorderRadius.circular(12), onTap: () => _pickRelation(f),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+          decoration: BoxDecoration(color: Mgmt.bg, borderRadius: BorderRadius.circular(12)),
+          child: Row(children: [
+            Expanded(child: Text(_labels[name] ?? tr('اختر…', 'Select…'), maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 13, color: _labels[name] == null ? Mgmt.slate : Mgmt.ink, fontWeight: _labels[name] == null ? FontWeight.w500 : FontWeight.w700))),
+            const Icon(Icons.chevron_left_rounded, color: Mgmt.slate),
+          ]),
+        ),
+      );
+    } else if (type == 'selection') {
+      final opts = ((f['options'] as List?) ?? const []).cast<Map>();
+      input = Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(color: Mgmt.bg, borderRadius: BorderRadius.circular(12)),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: _vals[name] as String?, isExpanded: true, hint: Text(tr('اختر', 'Select'), style: const TextStyle(fontSize: 13, color: Mgmt.slate)),
+            items: [for (final o in opts) DropdownMenuItem(value: '${o['v']}', child: Text('${o['l']}', style: const TextStyle(fontSize: 13)))],
+            onChanged: (v) => setState(() => _vals[name] = v),
+          ),
+        ),
+      );
+    } else if (type == 'date') {
+      input = InkWell(
+        borderRadius: BorderRadius.circular(12), onTap: () => _pickDate(name),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+          decoration: BoxDecoration(color: Mgmt.bg, borderRadius: BorderRadius.circular(12)),
+          child: Row(children: [
+            Icon(Icons.event_rounded, size: 18, color: widget.accent), const SizedBox(width: 10),
+            Text('${_vals[name] ?? tr('اختر التاريخ', 'Pick date')}', style: TextStyle(fontSize: 13, color: _vals[name] == null ? Mgmt.slate : Mgmt.ink, fontWeight: FontWeight.w700)),
+          ]),
+        ),
+      );
+    } else {
+      input = TextField(
+        keyboardType: (type == 'float' || type == 'monetary' || type == 'integer') ? TextInputType.number : null,
+        maxLines: type == 'text' ? 3 : 1,
+        onChanged: (v) => _vals[name] = v,
+        decoration: _dec(label),
+      );
+    }
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Padding(padding: const EdgeInsets.fromLTRB(2, 14, 2, 6),
+          child: Text('$label$req', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: Mgmt.ink))),
+      input,
+    ]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final title = gLang == 'en' ? (_titleEn ?? 'Create') : (_titleAr ?? 'إضافة');
+    return DraggableScrollableSheet(
+      expand: false, initialChildSize: 0.9, maxChildSize: 0.96, minChildSize: 0.5,
+      builder: (_, sc) => Column(children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [widget.accent, widget.accent.withValues(alpha: 0.72)], begin: Alignment.topRight, end: Alignment.bottomLeft),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(22))),
+          child: Column(children: [
+            Center(child: Container(width: 42, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(4)))),
+            const SizedBox(height: 12),
+            Row(children: [
+              const Icon(Icons.add_circle_rounded, color: Colors.white), const SizedBox(width: 8),
+              Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16))),
+              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded, color: Colors.white)),
+            ]),
+          ]),
+        ),
+        Expanded(
+          child: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : _err != null
+                  ? Center(child: Padding(padding: const EdgeInsets.all(30), child: Text(_err!, textAlign: TextAlign.center, style: const TextStyle(color: Mgmt.slate))))
+                  : ListView(controller: sc, padding: const EdgeInsets.fromLTRB(16, 4, 16, 24), children: [
+                      for (final f in _fields) _fieldWidget(f),
+                      const SizedBox(height: 22),
+                      SizedBox(
+                        height: 50,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(backgroundColor: widget.accent, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                          onPressed: _busy ? null : _submit,
+                          icon: _busy ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.check_rounded),
+                          label: Text(tr('إنشاء', 'Create'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                        ),
+                      ),
+                    ]),
+        ),
+      ]),
+    );
+  }
+}
+
+/// Live relation search (res.partner / hr.employee / fleet.vehicle …) → {v,l}.
+class _RelationSearchSheet extends StatefulWidget {
+  const _RelationSearchSheet({required this.model, required this.title, required this.accent});
+  final String model, title;
+  final Color accent;
+  @override
+  State<_RelationSearchSheet> createState() => _RelationSearchSheetState();
+}
+
+class _RelationSearchSheetState extends State<_RelationSearchSheet> {
+  Timer? _deb;
+  bool _busy = false;
+  List<Map> _results = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _search('');
+  }
+
+  @override
+  void dispose() {
+    _deb?.cancel();
+    super.dispose();
+  }
+
+  void _onChanged(String v) {
+    _deb?.cancel();
+    _deb = Timer(const Duration(milliseconds: 350), () => _search(v.trim()));
+  }
+
+  Future<void> _search(String q) async {
+    setState(() => _busy = true);
+    try {
+      final r = await context.read<AuthProvider>().api.managementRelationSearch(widget.model, q);
+      if (mounted) setState(() { _results = ((r['options'] as List?) ?? const []).cast<Map>(); _busy = false; });
+    } catch (_) {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      expand: false, initialChildSize: 0.85, maxChildSize: 0.95, minChildSize: 0.5,
+      builder: (_, sc) => Column(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+          child: Row(children: [
+            Expanded(child: Text(widget.title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15))),
+            IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded)),
+          ]),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: TextField(
+            autofocus: true, onChanged: _onChanged,
+            decoration: InputDecoration(
+              hintText: tr('ابحث…', 'Search…'),
+              prefixIcon: const Icon(Icons.search_rounded, size: 20),
+              suffixIcon: _busy ? const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))) : null,
+              filled: true, fillColor: Mgmt.bg, isDense: true,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: ListView.separated(
+            controller: sc,
+            itemCount: _results.length,
+            separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade100),
+            itemBuilder: (_, i) => ListTile(
+              title: Text('${_results[i]['l']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600)),
+              onTap: () => Navigator.pop(context, Map<String, dynamic>.from(_results[i])),
+            ),
+          ),
         ),
       ]),
     );
