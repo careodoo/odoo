@@ -57,8 +57,10 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
   Timer? _debounce;
   String _q = '';
   Map<String, dynamic>? _last;
+  final Map<String, String> _filters = {}; // dept / etype / emp_status / state
 
   bool get _isProposals => widget.appKey == 'proposals';
+  bool get _isEmployees => widget.appKey == 'employees';
 
   @override
   void initState() {
@@ -74,9 +76,21 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
   }
 
   void _reload() {
-    final fut = context.read<AuthProvider>().api.managementList(widget.appKey, q: _q);
+    final fut = context.read<AuthProvider>().api
+        .managementList(widget.appKey, q: _q, filters: _filters.isEmpty ? null : _filters);
     fut.then((d) { if (mounted) setState(() => _last = d); }).catchError((_) {});
     setState(() => _f = fut);
+  }
+
+  void _setFilter(String key, String? value) {
+    setState(() {
+      if (value == null) {
+        _filters.remove(key);
+      } else {
+        _filters[key] = value;
+      }
+    });
+    _reload();
   }
 
   Future<void> _export() async {
@@ -93,6 +107,98 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
       _q = v.trim();
       _reload();
     });
+  }
+
+  Widget _employeeFilterBar() {
+    final flt = (_last?['filters'] as Map?) ?? const {};
+    final depts = ((flt['departments'] as List?) ?? const []).cast<Map>();
+    final types = ((flt['types'] as List?) ?? const []).cast<Map>();
+    String? deptLabel() {
+      final id = _filters['dept'];
+      if (id == null) return null;
+      final m = depts.where((d) => '${d['v']}' == id);
+      return m.isEmpty ? null : '${m.first['l']}';
+    }
+    String? typeLabel() {
+      final v = _filters['etype'];
+      if (v == null) return null;
+      final m = types.where((t) => '${t['v']}' == v);
+      return m.isEmpty ? null : '${m.first['l']}';
+    }
+    final status = _filters['emp_status'] ?? 'active';
+    Widget chip(String label, bool active, VoidCallback onTap, {VoidCallback? onClear}) => Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: Material(
+            color: active ? widget.accent.withValues(alpha: 0.12) : Mgmt.bg,
+            borderRadius: BorderRadius.circular(20),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: onTap,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: active ? widget.accent.withValues(alpha: 0.4) : Colors.black12)),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Text(label, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: active ? widget.accent : Mgmt.slate)),
+                  if (active && onClear != null) ...[
+                    const SizedBox(width: 4),
+                    InkWell(onTap: onClear, child: Icon(Icons.close_rounded, size: 14, color: widget.accent)),
+                  ] else
+                    Icon(Icons.expand_more_rounded, size: 15, color: active ? widget.accent : Mgmt.slate),
+                ]),
+              ),
+            ),
+          ),
+        );
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(children: [
+          chip(deptLabel() ?? tr('القسم', 'Department'), _filters['dept'] != null,
+              () async {
+                final opts = depts.map((d) => {'v': d['v'], 'l': d['l']}).toList().cast<Map>();
+                final chosen = await showModalBottomSheet<int>(
+                  context: context, isScrollControlled: true, backgroundColor: Colors.white,
+                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                  builder: (_) => _PickerSheet(title: tr('اختر القسم', 'Select department'), options: opts, accent: widget.accent),
+                );
+                if (chosen != null) _setFilter('dept', '$chosen');
+              },
+              onClear: () => _setFilter('dept', null)),
+          chip(typeLabel() ?? tr('نوع التوظيف', 'Type'), _filters['etype'] != null,
+              () async {
+                final chosen = await showModalBottomSheet<String>(
+                  context: context, backgroundColor: Colors.white,
+                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                  builder: (_) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    for (final t in types)
+                      ListTile(title: Text('${t['l']}'), onTap: () => Navigator.pop(context, '${t['v']}')),
+                  ])),
+                );
+                if (chosen != null) _setFilter('etype', chosen);
+              },
+              onClear: () => _setFilter('etype', null)),
+          // status segmented (active / archived / all)
+          for (final s in [
+            {'v': 'active', 'l': tr('نشطون', 'Active')},
+            {'v': 'archived', 'l': tr('مؤرشفون', 'Archived')},
+            {'v': 'all', 'l': tr('الكل', 'All')},
+          ])
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: ChoiceChip(
+                label: Text('${s['l']}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                selected: status == s['v'],
+                selectedColor: widget.accent.withValues(alpha: 0.15),
+                onSelected: (_) => _setFilter('emp_status', s['v'] == 'active' ? null : '${s['v']}'),
+              ),
+            ),
+        ]),
+      ),
+    );
   }
 
   @override
@@ -138,6 +244,7 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
             ),
           ),
         ),
+        if (_isEmployees) _employeeFilterBar(),
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async => _reload(),

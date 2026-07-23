@@ -1949,10 +1949,16 @@ class ApiClient {
       List<dynamic>.from((await _handle(
               await _net.get(_u('/management/apps'), headers: await _headers())))['data'] as List);
 
-  Future<Map<String, dynamic>> managementList(String key, {String q = ''}) async =>
-      Map<String, dynamic>.from((await _handle(await _net.get(
-              _u('/management/$key/list${q.isEmpty ? '' : '?q=${Uri.encodeQueryComponent(q)}'}'),
-              headers: await _headers())))['data'] as Map);
+  Future<Map<String, dynamic>> managementList(String key,
+      {String q = '', Map<String, String>? filters}) async {
+    final params = <String, String>{if (q.isNotEmpty) 'q': q, ...?filters};
+    final qs = params.entries
+        .map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}')
+        .join('&');
+    return Map<String, dynamic>.from((await _handle(await _net.get(
+            _u('/management/$key/list${qs.isEmpty ? '' : '?$qs'}'),
+            headers: await _headers())))['data'] as Map);
+  }
 
   Future<Map<String, dynamic>> managementDetail(String key, int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
