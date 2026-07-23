@@ -11,7 +11,10 @@ import 'excel_export.dart';
 /// الحضور والانصراف — who is expected on each shift, who actually turned up,
 /// who is missing, and every punch behind those numbers. Printable.
 class AttendanceScreen extends StatefulWidget {
-  const AttendanceScreen({super.key});
+  /// When set, the screen is locked to this employee's own records (used from
+  /// the «My» page so a manager sees THEIR attendance, not their team's).
+  final int? lockEmployeeId;
+  const AttendanceScreen({super.key, this.lockEmployeeId});
   @override
   State<AttendanceScreen> createState() => _AttendanceScreenState();
 }
@@ -22,6 +25,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   String _period = 'month';
   int? _employeeId;
   int? _facilityId;
+
+  bool get _locked => widget.lockEmployeeId != null;
 
   static const _navy = Color(0xFF0E3A5F);
   static const _periods = [
@@ -35,12 +40,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.lockEmployeeId != null) _employeeId = widget.lockEmployeeId;
     _load();
     _loadPunch();
   }
 
   void _load() => _future = context.read<AuthProvider>().api.clientAttendanceData(
-      period: _period, employeeId: _employeeId, facilityId: _facilityId);
+      period: _period, employeeId: _locked ? widget.lockEmployeeId : _employeeId, facilityId: _facilityId);
 
   Future<void> _loadPunch() async {
     try {
@@ -142,6 +148,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   /// Opens the server-rendered PDF — the same _attendance_data this screen
   /// reads — inside the app, where it can be shared or printed.
   void _print({int? employeeId}) {
+    employeeId ??= _locked ? widget.lockEmployeeId : null;
     final q = StringBuffer('/cafm/attendance/report?period=$_period');
     if (employeeId != null) q.write('&employee_id=$employeeId');
     if (_facilityId != null) q.write('&facility_id=$_facilityId');
@@ -152,6 +159,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   void _exportExcel({int? employeeId}) {
+    employeeId ??= _locked ? widget.lockEmployeeId : null;
     final q = StringBuffer('/cafm/attendance/export?period=$_period');
     if (employeeId != null) q.write('&employee_id=$employeeId');
     if (_facilityId != null) q.write('&facility_id=$_facilityId');

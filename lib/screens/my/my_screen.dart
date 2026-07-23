@@ -372,7 +372,10 @@ class _MyScreenState extends State<MyScreen> {
       return;
     }
     if (key == 'attendance' || key == 'timesheet') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendanceScreen()));
+      // From «My», always show the signed-in user's OWN attendance.
+      final eid = (_d?['profile'] as Map?)?['employee_id'];
+      Navigator.push(context, MaterialPageRoute(
+          builder: (_) => AttendanceScreen(lockEmployeeId: eid is int ? eid : null)));
       return;
     }
     final source = _serviceSource[key];

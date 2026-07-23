@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'management_home.dart' show Mgmt;
-import 'management_employee.dart';
+import '../pms/pms_employee_file.dart';
 import '../pdf_report_screen.dart';
 import '../excel_export.dart';
 
@@ -181,10 +181,11 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
       );
 
   Future<void> _openDetail(int id, String title) async {
-    // Employees open the rich, PMS-style file (all fields + every sub-module).
+    // Employees open the full PMS-style file: photo, tags, and the tappable
+    // icon-tile hub (documents, payslips, leaves, allowances, EOS, skills…).
     if (widget.appKey == 'employees') {
       Navigator.push(context, MaterialPageRoute(
-          builder: (_) => ManagementEmployeeScreen(employeeId: id, name: title, accent: widget.accent)));
+          builder: (_) => PmsEmployeeFileScreen(employeeId: id, name: title)));
       return;
     }
     Map<String, dynamic>? d;
