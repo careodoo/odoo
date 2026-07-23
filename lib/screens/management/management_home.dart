@@ -250,6 +250,7 @@ class _ManagementHomeState extends State<ManagementHome> {
   Widget _card(Map a) {
     final c = _tint['${a['key']}'] ?? Mgmt.slate;
     final n = numOf(a['count'], 0);
+    final pending = numOf(a['pending'], 0).toInt();
     return Material(
       color: Colors.white, borderRadius: BorderRadius.circular(16),
       child: InkWell(
@@ -269,8 +270,19 @@ class _ManagementHomeState extends State<ManagementHome> {
                   decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
                   child: Text('${a['icon']}', style: const TextStyle(fontSize: 20))),
               const Spacer(),
-              Icon(Icons.chevron_left_rounded, color: c.withValues(alpha: 0.5)),
+              if (pending > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(color: const Color(0xFFE11D48), borderRadius: BorderRadius.circular(20)),
+                  child: Text(pending > 99 ? '99+' : '$pending',
+                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900)),
+                )
+              else
+                Icon(Icons.chevron_left_rounded, color: c.withValues(alpha: 0.5)),
             ]),
+            if (pending > 0) Padding(padding: const EdgeInsets.only(top: 4),
+              child: Text(tr('$pending بانتظار إجراء', '$pending need action'),
+                  style: const TextStyle(color: Color(0xFFE11D48), fontSize: 9.5, fontWeight: FontWeight.w700))),
             const Spacer(),
             Text(_fmt(n), style: TextStyle(fontWeight: FontWeight.w900, fontSize: 24, color: c, height: 1)),
             const SizedBox(height: 2),
