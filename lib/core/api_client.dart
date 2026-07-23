@@ -2035,6 +2035,30 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/management/purchases/recipients'), headers: await _headers())))['data'] as Map);
 
+  // ---- Purchase order create / edit -------------------------------------
+  Future<Map<String, dynamic>> managementPoMeta() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/management/purchases/meta'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> managementProductsSearch(String q) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/management/products/search${q.isEmpty ? '' : '?q=${Uri.encodeQueryComponent(q)}'}'),
+              headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> managementPoCreate(Map<String, dynamic> vals) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/management/purchases/create'),
+              headers: await _headers(), body: jsonEncode(vals))))['data'] as Map);
+
+  Future<Map<String, dynamic>> managementPoEditData(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/management/purchases/$id/edit-data'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> managementPoUpdate(int id, Map<String, dynamic> vals) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/management/purchases/$id/update'),
+              headers: await _headers(), body: jsonEncode(vals))))['data'] as Map);
+
   /// A vehicle's log records (services / contracts / drivers / odometer).
   Future<Map<String, dynamic>> managementFleetLog(int id, String code) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

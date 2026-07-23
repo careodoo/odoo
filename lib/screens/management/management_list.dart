@@ -99,14 +99,24 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Mgmt.bg,
-      floatingActionButton: (_last?['can_create'] == true && (_isProposals || widget.appKey == 'crm'))
+      floatingActionButton: (_last?['can_create'] == true &&
+              (_isProposals || widget.appKey == 'crm' || widget.appKey == 'purchases'))
           ? FloatingActionButton.extended(
               backgroundColor: widget.accent,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.add_rounded),
-              label: Text(_isProposals ? tr('عرض سعر جديد', 'New quotation') : tr('فرصة جديدة', 'New opportunity'),
+              label: Text(
+                  _isProposals
+                      ? tr('عرض سعر جديد', 'New quotation')
+                      : widget.appKey == 'purchases'
+                          ? tr('أمر شراء جديد', 'New purchase')
+                          : tr('فرصة جديدة', 'New opportunity'),
                   style: const TextStyle(fontWeight: FontWeight.w800)),
-              onPressed: _isProposals ? _createProposal : _createCrm)
+              onPressed: _isProposals
+                  ? _createProposal
+                  : widget.appKey == 'purchases'
+                      ? _createPo
+                      : _createCrm)
           : null,
       appBar: AppBar(
         backgroundColor: widget.accent, foregroundColor: Colors.white, elevation: 0,
@@ -412,6 +422,20 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
       builder: (_) => _CrmCreateSheet(accent: widget.accent),
+    );
+    if (created == null || !mounted) return;
+    _reload();
+    await _openDetail(created['id'] as int, '${created['title'] ?? ''}');
+  }
+
+  Future<void> _createPo() async {
+    final created = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => _PoFormSheet(accent: widget.accent),
     );
     if (created == null || !mounted) return;
     _reload();
@@ -1855,22 +1879,41 @@ class _DetailSheetState extends State<_DetailSheet> {
           ],
         ]),
       ),
-      // ---- send-to-vendor (purchase orders)
-      if (o['can_send'] == true)
+      // ---- send-to-vendor + edit (purchase orders)
+      if (widget.appKey == 'purchases')
         Padding(
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
-          child: SizedBox(
-            width: double.infinity, height: 46,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
-              onPressed: _busy ? null : _sendPo,
-              icon: const Icon(Icons.send_rounded, size: 18),
-              label: Text(tr('إرسال أمر الشراء', 'Send purchase order'),
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5)),
+          child: Row(children: [
+            if (o['can_send'] == true) ...[
+              Expanded(
+                child: SizedBox(
+                  height: 46,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+                    onPressed: _busy ? null : _sendPo,
+                    icon: const Icon(Icons.send_rounded, size: 17),
+                    label: Text(tr('إرسال', 'Send'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+            Expanded(
+              child: SizedBox(
+                height: 46,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                      foregroundColor: widget.accent, side: BorderSide(color: widget.accent),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+                  onPressed: _busy ? null : _editPo,
+                  icon: const Icon(Icons.edit_rounded, size: 17),
+                  label: Text(tr('تعديل', 'Edit'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                ),
+              ),
             ),
-          ),
+          ]),
         ),
       // ---- delivery + invoice tabs (purchase orders)
       if ((o['tabs'] as List?)?.isNotEmpty == true)
@@ -1974,6 +2017,18 @@ class _DetailSheetState extends State<_DetailSheet> {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Mgmt.red));
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _editPo() async {
+    final saved = await showModalBottomSheet<bool>(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => _PoFormSheet(accent: widget.accent, editId: d['id'] as int),
+    );
+    if (saved == true && mounted) {
+      await _reload();
+      widget.onChanged();
     }
   }
 
@@ -3357,6 +3412,387 @@ class _RecipientPickerState extends State<_RecipientPicker> {
               onTap: () => Navigator.pop(context, '${filtered[i]['email']}'),
             ),
           ),
+        ),
+      ]),
+    );
+  }
+}
+
+/// Create or edit a purchase order — vendor picker, a line editor with live
+/// product search, reference + notes. Returns {id,title} (create) or true (edit).
+class _PoFormSheet extends StatefulWidget {
+  const _PoFormSheet({required this.accent, this.editId});
+  final Color accent;
+  final int? editId;
+  @override
+  State<_PoFormSheet> createState() => _PoFormSheetState();
+}
+
+class _PoFormSheetState extends State<_PoFormSheet> {
+  bool _loading = true, _busy = false;
+  String? _err, _currency = '';
+  bool _linesEditable = true;
+  int? _partnerId;
+  String? _partnerName;
+  final _ref = TextEditingController();
+  final _notes = TextEditingController();
+  List<Map<String, dynamic>> _vendors = [];
+  final List<Map<String, dynamic>> _lines = [];
+
+  bool get _isEdit => widget.editId != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _ref.dispose(); _notes.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    try {
+      final api = context.read<AuthProvider>().api;
+      final meta = await api.managementPoMeta();
+      _vendors = ((meta['vendors'] as List?) ?? const []).cast<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      _currency = '${meta['currency'] ?? ''}';
+      if (_isEdit) {
+        final ed = await api.managementPoEditData(widget.editId!);
+        _partnerId = ed['partner_id'] as int?;
+        _partnerName = ed['partner_name'] as String?;
+        _ref.text = '${ed['partner_ref'] ?? ''}';
+        _notes.text = '${ed['notes'] ?? ''}';
+        _linesEditable = ed['lines_editable'] == true;
+        _currency = '${ed['currency'] ?? _currency}';
+        for (final l in ((ed['lines'] as List?) ?? const []).cast<Map>()) {
+          _lines.add({'product_id': l['product_id'], 'name': l['name'], 'qty': l['qty'], 'price': l['price'], 'uom': l['uom']});
+        }
+      }
+      if (mounted) setState(() => _loading = false);
+    } catch (e) {
+      if (mounted) setState(() { _err = '$e'; _loading = false; });
+    }
+  }
+
+  double get _total {
+    double t = 0;
+    for (final l in _lines) {
+      t += ((l['qty'] as num?) ?? 0) * ((l['price'] as num?) ?? 0);
+    }
+    return t;
+  }
+
+  Future<void> _pickVendor() async {
+    final opts = _vendors.map((e) => {'v': e['v'], 'l': e['l']}).toList().cast<Map>();
+    final chosen = await showModalBottomSheet<int>(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => _PickerSheet(title: tr('اختر المورّد', 'Select vendor'), options: opts, accent: widget.accent),
+    );
+    if (chosen != null) {
+      setState(() {
+        _partnerId = chosen;
+        _partnerName = '${_vendors.firstWhere((e) => e['v'] == chosen)['l']}';
+      });
+    }
+  }
+
+  Future<void> _addLine() async {
+    final prod = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => _ProductSearchSheet(accent: widget.accent),
+    );
+    if (prod != null) {
+      setState(() => _lines.add({
+            'product_id': prod['id'], 'name': prod['name'],
+            'qty': 1.0, 'price': prod['price'], 'uom': prod['uom'],
+          }));
+    }
+  }
+
+  Future<void> _editLineQtyPrice(int i) async {
+    final l = _lines[i];
+    final qtyC = TextEditingController(text: '${l['qty']}');
+    final priceC = TextEditingController(text: '${l['price']}');
+    final ok = await showDialog<bool>(context: context, builder: (c) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      title: Text('${l['name']}', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        TextField(controller: qtyC, keyboardType: TextInputType.number,
+            decoration: InputDecoration(labelText: tr('الكمية', 'Quantity'))),
+        TextField(controller: priceC, keyboardType: TextInputType.number,
+            decoration: InputDecoration(labelText: tr('السعر', 'Unit price'))),
+      ]),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('إلغاء', 'Cancel'))),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: widget.accent, foregroundColor: Colors.white),
+          onPressed: () => Navigator.pop(c, true), child: Text(tr('حفظ', 'Save'))),
+      ],
+    ));
+    if (ok == true) {
+      setState(() {
+        l['qty'] = double.tryParse(qtyC.text) ?? l['qty'];
+        l['price'] = double.tryParse(priceC.text) ?? l['price'];
+      });
+    }
+  }
+
+  Future<void> _save() async {
+    if (_partnerId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('اختر المورّد', 'Select a vendor')), backgroundColor: Mgmt.red));
+      return;
+    }
+    if (!_isEdit && _lines.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('أضف بندًا واحدًا على الأقل', 'Add at least one line')), backgroundColor: Mgmt.red));
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      final api = context.read<AuthProvider>().api;
+      final lines = _lines.map((l) => {'product_id': l['product_id'], 'name': l['name'], 'qty': l['qty'], 'price': l['price']}).toList();
+      if (_isEdit) {
+        await api.managementPoUpdate(widget.editId!, {
+          'partner_id': _partnerId, 'partner_ref': _ref.text.trim(), 'notes': _notes.text.trim(),
+          if (_linesEditable) 'lines': lines,
+        });
+        if (mounted) Navigator.pop(context, true);
+      } else {
+        final res = await api.managementPoCreate({
+          'partner_id': _partnerId, 'partner_ref': _ref.text.trim(), 'notes': _notes.text.trim(), 'lines': lines,
+        });
+        if (mounted) Navigator.pop(context, res);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _busy = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Mgmt.red));
+      }
+    }
+  }
+
+  InputDecoration _dec(String hint) => InputDecoration(
+        hintText: hint, isDense: true, filled: true, fillColor: Mgmt.bg,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      );
+
+  Widget _label(String t) => Padding(
+        padding: const EdgeInsets.fromLTRB(2, 14, 2, 6),
+        child: Text(t, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: Mgmt.ink)),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final money = (_currency ?? '').isEmpty ? '' : ' $_currency';
+    return DraggableScrollableSheet(
+      expand: false, initialChildSize: 0.92, maxChildSize: 0.96, minChildSize: 0.5,
+      builder: (_, sc) => Column(children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [widget.accent, widget.accent.withValues(alpha: 0.72)],
+                begin: Alignment.topRight, end: Alignment.bottomLeft),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(22))),
+          child: Column(children: [
+            Center(child: Container(width: 42, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(4)))),
+            const SizedBox(height: 12),
+            Row(children: [
+              const Text('🛒 ', style: TextStyle(fontSize: 18)),
+              Expanded(child: Text(_isEdit ? tr('تعديل أمر الشراء', 'Edit purchase order') : tr('أمر شراء جديد', 'New purchase order'),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16))),
+              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded, color: Colors.white)),
+            ]),
+          ]),
+        ),
+        Expanded(
+          child: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : _err != null
+                  ? Center(child: Padding(padding: const EdgeInsets.all(30), child: Text(_err!, textAlign: TextAlign.center, style: const TextStyle(color: Mgmt.slate))))
+                  : ListView(controller: sc, padding: const EdgeInsets.fromLTRB(16, 4, 16, 24), children: [
+                      _label('${tr('المورّد', 'Vendor')} *'),
+                      InkWell(
+                        borderRadius: BorderRadius.circular(12), onTap: _pickVendor,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+                          decoration: BoxDecoration(color: Mgmt.bg, borderRadius: BorderRadius.circular(12)),
+                          child: Row(children: [
+                            Icon(Icons.storefront_rounded, size: 18, color: widget.accent),
+                            const SizedBox(width: 10),
+                            Expanded(child: Text(_partnerName ?? tr('اختر المورّد', 'Select vendor'),
+                                maxLines: 1, overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 13, color: _partnerName == null ? Mgmt.slate : Mgmt.ink,
+                                    fontWeight: _partnerName == null ? FontWeight.w500 : FontWeight.w700))),
+                            const Icon(Icons.chevron_left_rounded, color: Mgmt.slate),
+                          ]),
+                        ),
+                      ),
+                      // lines
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16, bottom: 6),
+                        child: Row(children: [
+                          Text(tr('البنود', 'Lines'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: Mgmt.ink)),
+                          const Spacer(),
+                          if (_linesEditable)
+                            TextButton.icon(onPressed: _addLine, icon: const Icon(Icons.add_rounded, size: 18),
+                                style: TextButton.styleFrom(foregroundColor: widget.accent),
+                                label: Text(tr('إضافة بند', 'Add line'), style: const TextStyle(fontWeight: FontWeight.w800))),
+                        ]),
+                      ),
+                      if (!_linesEditable)
+                        Container(
+                          padding: const EdgeInsets.all(10), margin: const EdgeInsets.only(bottom: 6),
+                          decoration: BoxDecoration(color: const Color(0xFFF59E0B).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                          child: Text(tr('لا يمكن تعديل البنود بعد التأكيد — يمكن تعديل بيانات الرأس فقط.', 'Lines are locked after confirmation — header only.'),
+                              style: const TextStyle(color: Color(0xFFB45309), fontSize: 11, fontWeight: FontWeight.w700)),
+                        ),
+                      if (_lines.isEmpty)
+                        Padding(padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: Center(child: Text(tr('لا بنود بعد', 'No lines yet'), style: const TextStyle(color: Mgmt.slate)))),
+                      for (int i = 0; i < _lines.length; i++)
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(11),
+                          decoration: BoxDecoration(color: Mgmt.bg, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.black.withValues(alpha: 0.05))),
+                          child: Row(children: [
+                            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              Text('${_lines[i]['name']}', maxLines: 2, overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Mgmt.ink)),
+                              const SizedBox(height: 3),
+                              Text('${_lines[i]['qty']} × ${_lines[i]['price']}$money  =  ${(((_lines[i]['qty'] as num?) ?? 0) * ((_lines[i]['price'] as num?) ?? 0)).toStringAsFixed(3)}$money',
+                                  style: TextStyle(color: widget.accent, fontSize: 11.5, fontWeight: FontWeight.w800)),
+                            ])),
+                            if (_linesEditable) ...[
+                              IconButton(onPressed: () => _editLineQtyPrice(i), icon: Icon(Icons.edit_rounded, size: 18, color: widget.accent)),
+                              IconButton(onPressed: () => setState(() => _lines.removeAt(i)), icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Mgmt.red)),
+                            ],
+                          ]),
+                        ),
+                      // total
+                      Container(
+                        margin: const EdgeInsets.only(top: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        decoration: BoxDecoration(color: widget.accent.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
+                        child: Row(children: [
+                          Text(tr('الإجمالي (قبل الضريبة)', 'Subtotal'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: Mgmt.ink)),
+                          const Spacer(),
+                          Text('${_total.toStringAsFixed(3)}$money', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: widget.accent)),
+                        ]),
+                      ),
+                      _label(tr('مرجع المورّد', 'Vendor reference')),
+                      TextField(controller: _ref, decoration: _dec(tr('رقم عرض السعر لدى المورّد', 'Vendor quote ref'))),
+                      _label(tr('ملاحظات', 'Notes')),
+                      TextField(controller: _notes, maxLines: 3, decoration: _dec(tr('ملاحظات…', 'Notes…'))),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        height: 50,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(backgroundColor: widget.accent, foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                          onPressed: _busy ? null : _save,
+                          icon: _busy
+                              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                              : Icon(_isEdit ? Icons.save_rounded : Icons.add_rounded),
+                          label: Text(_isEdit ? tr('حفظ التعديلات', 'Save changes') : tr('إنشاء أمر الشراء', 'Create purchase order'),
+                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                        ),
+                      ),
+                    ]),
+        ),
+      ]),
+    );
+  }
+}
+
+/// Live product search that returns the chosen product {id,name,price,uom}.
+class _ProductSearchSheet extends StatefulWidget {
+  const _ProductSearchSheet({required this.accent});
+  final Color accent;
+  @override
+  State<_ProductSearchSheet> createState() => _ProductSearchSheetState();
+}
+
+class _ProductSearchSheetState extends State<_ProductSearchSheet> {
+  Timer? _deb;
+  bool _busy = false;
+  List<Map> _results = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _search('');
+  }
+
+  @override
+  void dispose() {
+    _deb?.cancel();
+    super.dispose();
+  }
+
+  void _onChanged(String v) {
+    _deb?.cancel();
+    _deb = Timer(const Duration(milliseconds: 350), () => _search(v.trim()));
+  }
+
+  Future<void> _search(String q) async {
+    setState(() => _busy = true);
+    try {
+      final r = await context.read<AuthProvider>().api.managementProductsSearch(q);
+      if (mounted) setState(() { _results = ((r['products'] as List?) ?? const []).cast<Map>(); _busy = false; });
+    } catch (_) {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      expand: false, initialChildSize: 0.85, maxChildSize: 0.95, minChildSize: 0.5,
+      builder: (_, sc) => Column(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+          child: Row(children: [
+            Expanded(child: Text(tr('اختر منتجًا', 'Select product'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15))),
+            IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded)),
+          ]),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: TextField(
+            autofocus: true, onChanged: _onChanged,
+            decoration: InputDecoration(
+              hintText: tr('ابحث بالاسم أو الكود…', 'Search by name or code…'),
+              prefixIcon: const Icon(Icons.search_rounded, size: 20),
+              suffixIcon: _busy ? const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))) : null,
+              filled: true, fillColor: Mgmt.bg, isDense: true,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: _results.isEmpty
+              ? Center(child: Text(_busy ? '' : tr('لا نتائج', 'No results'), style: const TextStyle(color: Mgmt.slate)))
+              : ListView.separated(
+                  controller: sc,
+                  itemCount: _results.length,
+                  separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade100),
+                  itemBuilder: (_, i) {
+                    final p = _results[i];
+                    return ListTile(
+                      title: Text('${p['name']}', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                      subtitle: Text([if ('${p['code'] ?? ''}'.isNotEmpty) '${p['code']}', if (p['uom'] != null) '${p['uom']}'].join(' · '),
+                          style: const TextStyle(fontSize: 11, color: Mgmt.slate)),
+                      trailing: Text('${p['price']}', style: TextStyle(fontWeight: FontWeight.w900, color: widget.accent)),
+                      onTap: () => Navigator.pop(context, Map<String, dynamic>.from(p)),
+                    );
+                  },
+                ),
         ),
       ]),
     );
