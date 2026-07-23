@@ -473,6 +473,7 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
                     if (r['doc'] != null) return _docCard(r);
                     if (r['att'] != null) return _attCard(r);
                     if (r['dev'] != null) return _devCard(r);
+                    if (r['appr'] != null) return _apprCard(r);
                     return _row(r);
                   },
                 );
@@ -1228,6 +1229,45 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
                 Wrap(spacing: 6, runSpacing: 4, children: [
                   if (l['letter_type'] != null) _tag('📄 ${l['letter_type']}', Mgmt.slate),
                   if (l['date'] != null) _tag('📅 ${'${l['date']}'.split(' ').first}', Mgmt.slate),
+                ]),
+              ]),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  // ---- Approvals (approval.request) -------------------------------------
+  Widget _apprCard(Map r) {
+    final a = (r['appr'] as Map?) ?? const {};
+    return Material(
+      color: Colors.white, borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _openDetail(r['id'] as int, '${r['title']}'),
+        child: Container(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.black12)),
+          child: Row(children: [
+            _logoBox('${a['photo_b64'] ?? ''}', '${a['owner'] ?? r['title']}', size: 46),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Expanded(child: Text('${r['title']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: Mgmt.ink))),
+                  mgmtStateChip(r),
+                ]),
+                if (a['category'] != null)
+                  Padding(padding: const EdgeInsets.only(top: 2),
+                      child: Text('📋 ${a['category']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Mgmt.slate, fontSize: 11, fontWeight: FontWeight.w600))),
+                const SizedBox(height: 5),
+                Wrap(spacing: 6, runSpacing: 4, children: [
+                  if (a['owner'] != null) _tag('👤 ${a['owner']}', Mgmt.slate),
+                  if ((a['approvers'] as num?) != null && (a['approvers'] as num) > 0) _tag('✍️ ${a['approvers']}', Mgmt.slate),
+                  if ((a['amount'] as num?) != null && (a['amount'] as num) > 0) _tag('💰 ${a['amount']}', widget.accent),
+                  if (a['date'] != null) _tag('📅 ${'${a['date']}'.split(' ').first}', Mgmt.slate),
                 ]),
               ]),
             ),
@@ -3213,6 +3253,32 @@ class _DetailSheetState extends State<_DetailSheet> {
     }
   }
 
+  Widget _approvalBlock() {
+    final ap = d['approval'] as Map?;
+    if (ap == null) return const SizedBox.shrink();
+    final info = (ap['service_info'] as List?) ?? const [];
+    final approvers = (ap['approvers'] as List?) ?? const [];
+    return Column(children: [
+      if (info.isNotEmpty)
+        _cardWrap([_sectionHead('📋', tr('بيانات الطلب', 'Request details')), _infoRows(info)]),
+      if (approvers.isNotEmpty)
+        _cardWrap([
+          _sectionHead('✍️', tr('المعتمدون', 'Approvers')),
+          for (final a in approvers.cast<Map>())
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              child: Row(children: [
+                Icon(Icons.account_circle_rounded, size: 20, color: Mgmt.slate),
+                const SizedBox(width: 8),
+                Expanded(child: Text('${a['name']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Mgmt.ink))),
+                if (a['status'] != null) mgmtStateChip(a),
+              ]),
+            ),
+        ]),
+    ]);
+  }
+
   Widget _deviceBlock() {
     final dev = d['device'] as Map?;
     if (dev == null) return const SizedBox.shrink();
@@ -3469,7 +3535,8 @@ class _DetailSheetState extends State<_DetailSheet> {
     final isReqinv = d['reqinv'] != null;
     final isDocument = d['document'] != null;
     final isDevice = d['device'] != null;
-    final richDetail = isProposal || isTender || isOrder || isFleet || isCrm || isLeave || isExperience || isVservice || isLetter || isReqinv || isDocument || isDevice;
+    final isApproval = d['approval'] != null;
+    final richDetail = isProposal || isTender || isOrder || isFleet || isCrm || isLeave || isExperience || isVservice || isLetter || isReqinv || isDocument || isDevice || isApproval;
     final amount = richDetail ? null : d['amount'];
     return DraggableScrollableSheet(
       expand: false, initialChildSize: 0.82, maxChildSize: 0.96, minChildSize: 0.45,
@@ -3535,6 +3602,7 @@ class _DetailSheetState extends State<_DetailSheet> {
           if (isReqinv) _reqinvBlock(),
           if (isDocument) _documentBlock(),
           if (isDevice) _deviceBlock(),
+          if (isApproval) _approvalBlock(),
           // ---- amount highlight
           if (amount != null)
             Container(
