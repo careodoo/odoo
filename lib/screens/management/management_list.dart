@@ -1787,7 +1787,8 @@ class _DetailSheetState extends State<_DetailSheet> {
     final enabled = count > 0;
     final label = gLang == 'en' ? '${tab['en']}' : '${tab['ar']}';
     return SizedBox(
-      width: (MediaQuery.of(context).size.width - 28 - 20 - 18) / 3,
+      // exactly 3 tiles per row: full width − card margins(28) − padding(20) − 2 gaps(18)
+      width: ((MediaQuery.of(context).size.width - 28 - 20 - 18) / 3) - 1,
       child: Opacity(
         opacity: enabled ? 1 : 0.5,
         child: Material(
