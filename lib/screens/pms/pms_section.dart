@@ -35,6 +35,7 @@ const Map<String, IconData> kPmsSectionIcons = {
   'suspension': Icons.block_rounded,
   'items': Icons.playlist_add_check_rounded,
   'manpower': Icons.groups_3_rounded,
+  'permits': Icons.verified_user_rounded,
 };
 
 const Map<String, Color> kPmsSectionColors = {
@@ -56,6 +57,7 @@ const Map<String, Color> kPmsSectionColors = {
   'suspension': Color(0xFFD97706),
   'items': Color(0xFF0F766E),
   'manpower': Color(0xFF4338CA),
+  'permits': Color(0xFF0D9488),
 };
 
 /// One project section — the same shape the portal shows, rendered natively.
@@ -103,6 +105,7 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
       'timesheet': 'timesheet', 'requests': 'docrequest',
       'assets': 'custody', 'fuel': 'fuel', 'materials': 'material',
       'suspension': 'suspension', 'items': 'items', 'manpower': 'manpower',
+      'permits': 'permits',
     }[widget.code];
     return Scaffold(
       backgroundColor: Pms.bg,
@@ -376,6 +379,7 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
         'suspension': tr('طلب إيقاف عن العمل', 'New suspension'),
         'items': tr('طلب أصناف جديد', 'New item request'),
         'manpower': tr('طلب قوى عاملة', 'New requisition'),
+        'permits': tr('تصريح جديد', 'New permit'),
       }[widget.code] ?? tr('إضافة', 'Add');
 
   /// The create sheet, built per-section from its options endpoint.
@@ -393,11 +397,15 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
               ? _ItemRequestCreateSheet(color: _c)
               : widget.code == 'manpower'
                   ? _ManpowerCreateSheet(color: _c, options: opts)
-                  : _CreateSheet(code: widget.code, color: _c, options: opts),
+                  : widget.code == 'permits'
+                      ? _PermitCreateSheet(color: _c, options: opts)
+                      : _CreateSheet(code: widget.code, color: _c, options: opts),
     );
     if (result == null) return;
     try {
-      if (widget.code == 'manpower') {
+      if (widget.code == 'permits') {
+        await context.read<AuthProvider>().api.pmsPermitCreate(widget.projectId, result);
+      } else if (widget.code == 'manpower') {
         await context.read<AuthProvider>().api.pmsManpowerCreate(widget.projectId, result);
       } else if (widget.code == 'items') {
         await context.read<AuthProvider>().api.pmsItemRequestCreate(widget.projectId, result);
@@ -634,10 +642,21 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
           _openItemRequest(r['id'] as int);
         } else if (opens == 'manpower') {
           _openManpower(r['id'] as int);
+        } else if (opens == 'permit') {
+          _openPermit(r['id'] as int);
         }
       },
       child: inner,
     );
+  }
+
+  Future<void> _openPermit(int id) async {
+    await showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => _PermitDetailSheet(permitId: id, color: _c),
+    );
+    if (mounted) setState(_load);
   }
 
   Future<void> _openManpower(int id) async {
@@ -3883,5 +3902,274 @@ class _ManpowerDetailSheetState extends State<_ManpowerDetailSheet> {
                 style: FilledButton.styleFrom(backgroundColor: c, padding: const EdgeInsets.symmetric(vertical: 12)),
                 onPressed: _busy ? null : onTap, icon: Icon(ic, size: 18),
                 label: Text(t, style: const TextStyle(fontWeight: FontWeight.w800)))),
+      );
+}
+
+/// Create a project permit — type (security/health/food…), authority, number,
+/// issue/expiry dates, responsible and an attached photo of the permit.
+class _PermitCreateSheet extends StatefulWidget {
+  final Color color;
+  final Map<String, dynamic> options;
+  const _PermitCreateSheet({required this.color, required this.options});
+  @override
+  State<_PermitCreateSheet> createState() => _PermitCreateSheetState();
+}
+
+class _PermitCreateSheetState extends State<_PermitCreateSheet> {
+  final _title = TextEditingController();
+  final _authority = TextEditingController();
+  final _number = TextEditingController();
+  final _note = TextEditingController();
+  String? _type;
+  int? _responsible;
+  DateTime? _issue, _expiry;
+  String? _photo;
+
+  @override
+  void initState() {
+    super.initState();
+    _title.addListener(() => setState(() {}));
+    final types = (widget.options['types'] as List?) ?? const [];
+    if (types.isNotEmpty) _type = '${(types.first as Map)['value']}';
+  }
+
+  @override
+  void dispose() {
+    _title.dispose(); _authority.dispose(); _number.dispose(); _note.dispose();
+    super.dispose();
+  }
+
+  String _fmt(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  InputDecoration _dec(String l) => InputDecoration(labelText: l, isDense: true, border: const OutlineInputBorder());
+
+  Future<void> _pick(ImageSource src) async {
+    final x = await ImagePicker().pickImage(source: src, maxWidth: 1600, imageQuality: 72);
+    if (x != null) { final b = await x.readAsBytes(); setState(() => _photo = base64Encode(b)); }
+  }
+
+  Widget _date(String l, DateTime? v, ValueChanged<DateTime> on) => InkWell(
+        onTap: () async {
+          final now = DateTime.now();
+          final d = await showDatePicker(context: context, initialDate: v ?? now,
+              firstDate: DateTime(now.year - 5), lastDate: DateTime(now.year + 10));
+          if (d != null) on(d);
+        },
+        child: InputDecorator(decoration: _dec(l),
+            child: Text(v == null ? tr('اختر', 'Pick') : _fmt(v), style: TextStyle(color: v == null ? Colors.grey : null))),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final types = (widget.options['types'] as List?) ?? const [];
+    final emps = (widget.options['employees'] as List?) ?? const [];
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+      child: ListView(shrinkWrap: true, children: [
+        Padding(padding: const EdgeInsets.only(bottom: 12),
+            child: Text(tr('تصريح مشروع جديد', 'New project permit'),
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: widget.color))),
+        Padding(padding: const EdgeInsets.only(bottom: 10), child: TextField(controller: _title, decoration: _dec(tr('اسم التصريح *', 'Permit title *')))),
+        if (types.isNotEmpty) Padding(padding: const EdgeInsets.only(bottom: 10),
+          child: DropdownButtonFormField<String>(initialValue: _type, isExpanded: true, decoration: _dec(tr('النوع', 'Type')),
+            items: [for (final t in types) DropdownMenuItem(value: '${(t as Map)['value']}', child: Text('${t['label']}'))],
+            onChanged: (v) => setState(() => _type = v))),
+        Padding(padding: const EdgeInsets.only(bottom: 10), child: TextField(controller: _authority, decoration: _dec(tr('الجهة المُصدِرة', 'Authority')))),
+        Padding(padding: const EdgeInsets.only(bottom: 10), child: TextField(controller: _number, decoration: _dec(tr('رقم التصريح', 'Permit number')))),
+        Row(children: [
+          Expanded(child: _date(tr('الإصدار', 'Issue'), _issue, (d) => setState(() => _issue = d))),
+          const SizedBox(width: 8),
+          Expanded(child: _date(tr('الانتهاء', 'Expiry'), _expiry, (d) => setState(() => _expiry = d))),
+        ]),
+        const SizedBox(height: 10),
+        if (emps.isNotEmpty) Padding(padding: const EdgeInsets.only(bottom: 10),
+          child: DropdownButtonFormField<int>(initialValue: _responsible, isExpanded: true, decoration: _dec(tr('المسؤول', 'Responsible')),
+            items: [for (final e in emps) DropdownMenuItem(value: (e as Map)['id'] as int, child: Text('${e['name']}', overflow: TextOverflow.ellipsis))],
+            onChanged: (v) => setState(() => _responsible = v))),
+        Container(margin: const EdgeInsets.only(bottom: 10), padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(color: Pms.bg, borderRadius: BorderRadius.circular(12)),
+          child: Row(children: [
+            if (_photo != null) ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.memory(base64Decode(_photo!), width: 44, height: 44, fit: BoxFit.cover))
+            else Icon(Icons.badge_rounded, color: Colors.grey.shade400, size: 28),
+            const SizedBox(width: 10),
+            Expanded(child: Text(_photo == null ? tr('أرفق صورة التصريح', 'Attach permit photo') : tr('تم الإرفاق', 'Attached'),
+                style: TextStyle(color: Colors.grey.shade700, fontSize: 12.5, fontWeight: FontWeight.w700))),
+            IconButton(icon: const Icon(Icons.photo_camera_rounded), color: widget.color, onPressed: () => _pick(ImageSource.camera)),
+            IconButton(icon: const Icon(Icons.photo_library_rounded), color: widget.color, onPressed: () => _pick(ImageSource.gallery)),
+          ])),
+        Padding(padding: const EdgeInsets.only(bottom: 12), child: TextField(controller: _note, maxLines: 2, decoration: _dec(tr('ملاحظات', 'Notes')))),
+        SizedBox(width: double.infinity, child: FilledButton.icon(
+          style: FilledButton.styleFrom(backgroundColor: widget.color, padding: const EdgeInsets.symmetric(vertical: 13)),
+          onPressed: _title.text.trim().isEmpty ? null : () => Navigator.pop(context, <String, dynamic>{
+            'title': _title.text.trim(),
+            'permit_type': _type ?? 'security',
+            if (_authority.text.trim().isNotEmpty) 'authority': _authority.text.trim(),
+            if (_number.text.trim().isNotEmpty) 'permit_number': _number.text.trim(),
+            if (_issue != null) 'issue_date': _fmt(_issue!),
+            if (_expiry != null) 'expiry_date': _fmt(_expiry!),
+            if (_responsible != null) 'responsible_id': _responsible,
+            if (_note.text.trim().isNotEmpty) 'note': _note.text.trim(),
+            if (_photo != null) 'attachment': _photo,
+            'activate': true,
+          }),
+          icon: const Icon(Icons.verified_user_rounded, size: 18),
+          label: Text(tr('حفظ وتفعيل', 'Save & activate'), style: const TextStyle(fontWeight: FontWeight.w800)),
+        )),
+      ]),
+    );
+  }
+}
+
+/// Permit detail — validity status, dates, the attached image, and the
+/// activate/renew/archive actions + a printable report.
+class _PermitDetailSheet extends StatefulWidget {
+  final int permitId;
+  final Color color;
+  const _PermitDetailSheet({required this.permitId, required this.color});
+  @override
+  State<_PermitDetailSheet> createState() => _PermitDetailSheetState();
+}
+
+class _PermitDetailSheetState extends State<_PermitDetailSheet> {
+  Map<String, dynamic>? _d;
+  String? _error;
+  bool _busy = false;
+
+  @override
+  void initState() { super.initState(); _load(); }
+
+  Future<void> _load() async {
+    try {
+      final d = await context.read<AuthProvider>().api.pmsPermit(widget.permitId);
+      if (mounted) setState(() => _d = d);
+    } catch (e) {
+      if (mounted) setState(() => _error = '$e');
+    }
+  }
+
+  Future<void> _act(String act) async {
+    setState(() => _busy = true);
+    try {
+      final d = await context.read<AuthProvider>().api.pmsPermitAction(widget.permitId, act);
+      if (!mounted) return;
+      if (act == 'delete') { Navigator.pop(context); return; }
+      setState(() { _d = d; _busy = false; });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: const Color(0xFFE5484D)));
+    }
+  }
+
+  Color _statusColor(String? s) => switch (s) {
+        'valid' => const Color(0xFF16A34A),
+        'expiring' => const Color(0xFFD97706),
+        'expired' => const Color(0xFFE11D48),
+        _ => Colors.grey.shade500,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85, minChildSize: 0.5, maxChildSize: 0.96, expand: false,
+      builder: (context, sc) {
+        if (_error != null) {
+          return Center(child: Padding(padding: const EdgeInsets.all(24),
+              child: Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey))));
+        }
+        if (_d == null) return const Center(child: CircularProgressIndicator());
+        final d = _d!;
+        final sc2 = _statusColor(d['status'] as String?);
+        return Stack(children: [
+          ListView(controller: sc, padding: EdgeInsets.zero, children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [widget.color, widget.color.withValues(alpha: 0.78)],
+                    begin: Alignment.topLeft, end: Alignment.bottomRight),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  const Icon(Icons.verified_user_rounded, color: Colors.white, size: 24),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text('${d['title'] ?? ''}',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16))),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(color: sc2, borderRadius: BorderRadius.circular(9)),
+                    child: Text('${d['status_label'] ?? ''}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11)),
+                  ),
+                ]),
+                const SizedBox(height: 8),
+                Wrap(spacing: 6, runSpacing: 6, children: [
+                  _chip('${d['permit_type_label'] ?? ''}', Icons.category_rounded),
+                  if (d['permit_number'] != null) _chip('${d['permit_number']}', Icons.tag_rounded),
+                  if (d['expiry_date'] != null) _chip('${tr('ينتهي', 'Expires')} ${d['expiry_date']} (${d['days_to_expiry']} ${tr('يوم', 'd')})', Icons.event_busy_rounded),
+                ]),
+              ]),
+            ),
+            Padding(padding: const EdgeInsets.fromLTRB(16, 12, 16, 4), child: Column(children: [
+              _kv(tr('المرجع', 'Ref'), '${d['name'] ?? ''}'),
+              if (d['authority'] != null) _kv(tr('الجهة المُصدِرة', 'Authority'), '${d['authority']}'),
+              if (d['responsible'] != null) _kv(tr('المسؤول', 'Responsible'), '${d['responsible']}'),
+              if (d['issue_date'] != null) _kv(tr('تاريخ الإصدار', 'Issued'), '${d['issue_date']}'),
+              _kv(tr('الحالة', 'State'), '${d['state_label'] ?? ''}'),
+              if (d['note'] != null) _kv(tr('ملاحظات', 'Notes'), '${d['note']}'),
+            ])),
+            if (d['attachment_url'] != null) Padding(padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+              child: GestureDetector(
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PmsPhotoView(url: '${d['attachment_url']}', title: '${d['title']}'))),
+                child: ClipRRect(borderRadius: BorderRadius.circular(12),
+                    child: Image.network('${d['attachment_url']}', height: 190, width: double.infinity, fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(height: 60, color: Pms.bg, child: const Center(child: Icon(Icons.image_not_supported_rounded, color: Colors.grey))))),
+              )),
+            Padding(padding: const EdgeInsets.fromLTRB(16, 10, 16, 24), child: Column(children: [
+              SizedBox(width: double.infinity, child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(foregroundColor: widget.color, side: BorderSide(color: widget.color.withValues(alpha: 0.5)), padding: const EdgeInsets.symmetric(vertical: 11)),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+                    path: context.read<AuthProvider>().api.pmsPermitReportPath(widget.permitId),
+                    title: tr('تصريح', 'Permit'), fileName: 'permit-${widget.permitId}.pdf'))),
+                icon: const Icon(Icons.print_rounded, size: 18),
+                label: Text(tr('طباعة / مشاركة', 'Print / share'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+              )),
+              if (d['can_activate'] == true) _btn(tr('تفعيل', 'Activate'), Icons.check_circle_rounded, const Color(0xFF16A34A), () => _act('activate')),
+              if (d['can_renew'] == true) _btn(tr('بدء التجديد', 'Start renewal'), Icons.autorenew_rounded, const Color(0xFFD97706), () => _act('renew')),
+              if (d['can_archive'] == true) _btn(tr('أرشفة', 'Archive'), Icons.archive_rounded, Colors.grey.shade600, () => _act('archive'), outline: true),
+            ])),
+          ]),
+          if (_busy) const Positioned.fill(child: ColoredBox(color: Color(0x11000000), child: Center(child: CircularProgressIndicator()))),
+        ]);
+      },
+    );
+  }
+
+  Widget _chip(String t, IconData ic) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(ic, size: 12, color: Colors.white),
+          const SizedBox(width: 4),
+          Flexible(child: Text(t, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700))),
+        ]),
+      );
+
+  Widget _kv(String k, String v) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          SizedBox(width: 120, child: Text(k, style: const TextStyle(color: Pms.slate, fontSize: 12.5))),
+          const SizedBox(width: 8),
+          Expanded(child: Text(v, textAlign: TextAlign.end, style: const TextStyle(fontWeight: FontWeight.w700, color: Pms.ink, fontSize: 13))),
+        ]),
+      );
+
+  Widget _btn(String t, IconData ic, Color c, VoidCallback onTap, {bool outline = false}) => Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: SizedBox(width: double.infinity, child: outline
+            ? OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(foregroundColor: c, side: BorderSide(color: c), padding: const EdgeInsets.symmetric(vertical: 12)),
+                onPressed: _busy ? null : onTap, icon: Icon(ic, size: 18), label: Text(t, style: const TextStyle(fontWeight: FontWeight.w800)))
+            : FilledButton.icon(
+                style: FilledButton.styleFrom(backgroundColor: c, padding: const EdgeInsets.symmetric(vertical: 12)),
+                onPressed: _busy ? null : onTap, icon: Icon(ic, size: 18), label: Text(t, style: const TextStyle(fontWeight: FontWeight.w800)))),
       );
 }

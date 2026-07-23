@@ -1741,6 +1741,22 @@ class ApiClient {
 
   String pmsManpowerReportPath(int id) => '/pms/manpower/$id/report';
 
+  // ---- Project Permits (التصاريح) ----
+  Future<Map<String, dynamic>> pmsPermit(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/permit/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsPermitCreate(int projectId, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/project/$projectId/permit/create'), headers: await _headers(),
+          body: jsonEncode(body))))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsPermitAction(int id, String act) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/permit/$id/$act'), headers: await _headers())))['data'] as Map);
+
+  String pmsPermitReportPath(int id) => '/pms/permit/$id/report';
+
   // ---- Fuel (prepaid cards / cash + receipt) ----
   Future<Map<String, dynamic>> pmsFuel(int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
