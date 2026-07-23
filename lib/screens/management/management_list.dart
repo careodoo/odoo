@@ -43,9 +43,11 @@ Widget mgmtStateChip(Map src, {double fontSize = 10}) {
 /// The server returns only rows this user may read.
 class ManagementListScreen extends StatefulWidget {
   const ManagementListScreen({
-    super.key, required this.appKey, required this.title, required this.icon, required this.accent});
+    super.key, required this.appKey, required this.title, required this.icon, required this.accent,
+    this.initialFilters});
   final String appKey, title, icon;
   final Color accent;
+  final Map<String, String>? initialFilters;
 
   @override
   State<ManagementListScreen> createState() => _ManagementListScreenState();
@@ -65,6 +67,7 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialFilters != null) _filters.addAll(widget.initialFilters!);
     _reload();
   }
 

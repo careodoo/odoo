@@ -4,7 +4,8 @@ import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'management_home.dart' show Mgmt;
-import 'management_list.dart' show mgmtHex;
+import 'management_list.dart' show mgmtHex, ManagementListScreen;
+import 'housing_hub_screen.dart';
 
 /// Executive analytics dashboard — KPIs + charts across all management systems.
 class ManagementAnalyticsScreen extends StatefulWidget {
@@ -73,7 +74,8 @@ class _ManagementAnalyticsScreenState extends State<ManagementAnalyticsScreen> {
               ]),
               if (charts['proposals_by_state'] != null)
                 _barsCard('📊 ${tr('عروض الأسعار حسب الحالة', 'Proposals by state')}',
-                    (charts['proposals_by_state'] as List).cast<Map>(), cur: '', money: false),
+                    (charts['proposals_by_state'] as List).cast<Map>(), cur: '', money: false,
+                    onRowTap: (e) => _openProposalsState(e['code'] as String?)),
               if (charts['crm_stages'] != null)
                 _barsCard('🎯 ${tr('الفرص حسب المرحلة (الإيراد المتوقع)', 'CRM pipeline by stage')}',
                     (charts['crm_stages'] as List).cast<Map>(), cur: cur, money: true),
@@ -84,28 +86,65 @@ class _ManagementAnalyticsScreenState extends State<ManagementAnalyticsScreen> {
     );
   }
 
+  static const Map<String, String> _kpiApp = {
+    'sales': 'sales', 'purchases': 'purchases', 'pipeline': 'proposals',
+    'crm': 'crm', 'tenders': 'tenders', 'employees': 'employees',
+  };
+
+  void _openKpi(Map k) {
+    final key = '${k['key']}';
+    final accent = mgmtHex('${k['color'] ?? ''}', Mgmt.red);
+    if (key == 'occupancy') {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => HousingHubScreen(accent: accent)));
+      return;
+    }
+    final app = _kpiApp[key];
+    if (app == null) return;
+    Navigator.push(context, MaterialPageRoute(builder: (_) => ManagementListScreen(
+        appKey: app, title: gLang == 'en' ? '${k['en']}' : '${k['ar']}',
+        icon: '${k['icon'] ?? ''}', accent: accent)));
+  }
+
+  void _openProposalsState(String? code) {
+    if (code == null) return;
+    Navigator.push(context, MaterialPageRoute(builder: (_) => ManagementListScreen(
+        appKey: 'proposals', title: tr('عروض الأسعار', 'Proposals'), icon: '📊',
+        accent: const Color(0xFF7C3AED), initialFilters: {'state': code})));
+  }
+
   Widget _kpiGrid(List<Map> kpis, String cur) => GridView.count(
         crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
         mainAxisSpacing: 10, crossAxisSpacing: 10, childAspectRatio: 1.7,
         children: [
           for (final k in kpis)
-            Container(
-              padding: const EdgeInsets.all(13),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 9, offset: const Offset(0, 3))]),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Row(children: [
-                  Text('${k['icon'] ?? ''}', style: const TextStyle(fontSize: 17)),
-                  const Spacer(),
-                  Container(width: 9, height: 9, decoration: BoxDecoration(color: mgmtHex('${k['color'] ?? ''}', Mgmt.red), shape: BoxShape.circle)),
-                ]),
-                Text('${fmt(k['value'] as num? ?? 0)}${k['unit'] != null ? ' ${k['unit']}' : ''}',
-                    maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: mgmtHex('${k['color'] ?? ''}', Mgmt.ink))),
-                Text(gLang == 'en' ? '${k['en']}' : '${k['ar']}',
-                    maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Mgmt.slate, fontSize: 11, fontWeight: FontWeight.w700)),
-              ]),
+            Material(
+              color: Colors.white, borderRadius: BorderRadius.circular(16),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: (_kpiApp.containsKey('${k['key']}') || '${k['key']}' == 'occupancy') ? () => _openKpi(k) : null,
+                child: Container(
+                  padding: const EdgeInsets.all(13),
+                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(16),
+                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 9, offset: const Offset(0, 3))]),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    Row(children: [
+                      Text('${k['icon'] ?? ''}', style: const TextStyle(fontSize: 17)),
+                      const Spacer(),
+                      Container(width: 9, height: 9, decoration: BoxDecoration(color: mgmtHex('${k['color'] ?? ''}', Mgmt.red), shape: BoxShape.circle)),
+                    ]),
+                    Text('${fmt(k['value'] as num? ?? 0)}${k['unit'] != null ? ' ${k['unit']}' : ''}',
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: mgmtHex('${k['color'] ?? ''}', Mgmt.ink))),
+                    Row(children: [
+                      Expanded(child: Text(gLang == 'en' ? '${k['en']}' : '${k['ar']}',
+                          maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Mgmt.slate, fontSize: 11, fontWeight: FontWeight.w700))),
+                      if (_kpiApp.containsKey('${k['key']}') || '${k['key']}' == 'occupancy')
+                        const Icon(Icons.chevron_left_rounded, size: 16, color: Mgmt.slate),
+                    ]),
+                  ]),
+                ),
+              ),
             ),
         ],
       );
@@ -181,13 +220,16 @@ class _ManagementAnalyticsScreenState extends State<ManagementAnalyticsScreen> {
     ]));
   }
 
-  Widget _barsCard(String title, List<Map> data, {required String cur, required bool money}) {
+  Widget _barsCard(String title, List<Map> data, {required String cur, required bool money, void Function(Map)? onRowTap}) {
     final maxV = [
       ...data.map((e) => (e['value'] as num?)?.toDouble() ?? 0), 1.0,
     ].reduce(math.max);
     return _card(title, Column(children: [
       for (final e in data)
-        Padding(
+        InkWell(
+          onTap: onRowTap == null ? null : () => onRowTap(e),
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 5),
           child: Row(children: [
             SizedBox(width: 96, child: Text('${e['label']}', maxLines: 1, overflow: TextOverflow.ellipsis,
@@ -208,6 +250,7 @@ class _ManagementAnalyticsScreenState extends State<ManagementAnalyticsScreen> {
                 textAlign: TextAlign.end, maxLines: 1, overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Mgmt.ink))),
           ]),
+        ),
         ),
     ]));
   }
