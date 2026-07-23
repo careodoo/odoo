@@ -1257,26 +1257,49 @@ class _DetailSheetState extends State<_DetailSheet> {
 
   // ---- Proposals: professional detail blocks ----------------------------
   Future<void> _sendProposal() async {
-    final ok = await showDialog<bool>(context: context, builder: (c) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      title: Text(tr('إرسال إلى العميل', 'Send to client'),
-          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-      content: Text(tr(
-          'سيتم إرسال هذا العرض بالبريد إلى ${(d['proposal'] as Map?)?['send_email'] ?? 'العميل'}.',
-          'This quotation will be emailed to ${(d['proposal'] as Map?)?['send_email'] ?? 'the client'}.')),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('تراجع', 'Back'))),
-        ElevatedButton.icon(
-          style: ElevatedButton.styleFrom(backgroundColor: widget.accent, foregroundColor: Colors.white),
-          onPressed: () => Navigator.pop(c, true),
-          icon: const Icon(Icons.send_rounded, size: 16),
-          label: Text(tr('إرسال', 'Send'))),
-      ],
-    ));
-    if (ok != true || !mounted) return;
+    final clientEmail = '${(d['proposal'] as Map?)?['send_email'] ?? ''}';
+    final choice = await showModalBottomSheet<String>(
+      context: context, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Padding(padding: const EdgeInsets.all(16),
+            child: Text(tr('إرسال عرض السعر إلى', 'Send quotation to'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15))),
+        if (clientEmail.isNotEmpty)
+          ListTile(
+            leading: const Icon(Icons.person_rounded, color: Color(0xFF16A34A)),
+            title: Text(tr('العميل', 'The client')), subtitle: Text(clientEmail),
+            onTap: () => Navigator.pop(context, 'client')),
+        ListTile(
+          leading: Icon(Icons.person_search_rounded, color: widget.accent),
+          title: Text(tr('اختيار مستلم آخر', 'Choose another recipient')),
+          onTap: () => Navigator.pop(context, 'other')),
+        const SizedBox(height: 8),
+      ])),
+    );
+    if (choice == null || !mounted) return;
+    String? email;
+    if (choice == 'other') {
+      Map<String, dynamic> rec;
+      try {
+        rec = await context.read<AuthProvider>().api.managementPoRecipients();
+      } catch (e) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Mgmt.red));
+        return;
+      }
+      if (!mounted) return;
+      final opts = ((rec['recipients'] as List?) ?? const [])
+          .map((e) => {'v': e['v'], 'l': '${e['l']}  ·  ${e['email']}', 'email': e['email']}).toList().cast<Map>();
+      final picked = await showModalBottomSheet<String>(
+        context: context, isScrollControlled: true, backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        builder: (_) => _RecipientPicker(options: opts, accent: widget.accent),
+      );
+      if (picked == null || !mounted) return;
+      email = picked;
+    }
     setState(() => _busy = true);
     try {
-      final res = await context.read<AuthProvider>().api.managementProposalSend(d['id'] as int);
+      final res = await context.read<AuthProvider>().api.managementProposalSend(d['id'] as int, email: email);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(tr('✅ أُرسل العرض إلى ${res['email']}', '✅ Sent to ${res['email']}')),
@@ -1288,6 +1311,18 @@ class _DetailSheetState extends State<_DetailSheet> {
       }
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _editProposal() async {
+    final saved = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => _ProposalCreateSheet(accent: widget.accent, editId: d['id'] as int),
+    );
+    if (saved != null && mounted) {
+      await _reload();
+      widget.onChanged();
     }
   }
 
@@ -1394,23 +1429,66 @@ class _DetailSheetState extends State<_DetailSheet> {
               ),
           ]),
         ),
-      // ---- send-to-client
-      if (p['can_send'] == true)
-        Padding(
-          padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
-          child: SizedBox(
-            width: double.infinity, height: 46,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
-              onPressed: _busy ? null : _sendProposal,
-              icon: const Icon(Icons.send_rounded, size: 18),
-              label: Text(tr('إرسال إلى العميل', 'Send to client'),
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5)),
+      // ---- send-to-client + edit
+      Padding(
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+        child: Row(children: [
+          if (p['can_send'] == true) ...[
+            Expanded(
+              child: SizedBox(
+                height: 46,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+                  onPressed: _busy ? null : _sendProposal,
+                  icon: const Icon(Icons.send_rounded, size: 17),
+                  label: Text(tr('إرسال', 'Send'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+          Expanded(
+            child: SizedBox(
+              height: 46,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                    foregroundColor: widget.accent, side: BorderSide(color: widget.accent),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+                onPressed: _busy ? null : _editProposal,
+                icon: const Icon(Icons.edit_rounded, size: 17),
+                label: Text(tr('تعديل', 'Edit'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+              ),
             ),
           ),
-        ),
+        ]),
+      ),
+      // ---- linked contract(s)
+      if ((p['contracts'] as List?)?.isNotEmpty == true)
+        _cardWrap([
+          _sectionHead('📜', tr('العقود المرتبطة', 'Linked contracts')),
+          for (final ct in (p['contracts'] as List).cast<Map>())
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => openManagementRecord(context, 'experience', ct['id'] as int, title: '${ct['name']}', accent: widget.accent),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  child: Row(children: [
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('${ct['name']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Mgmt.ink)),
+                      if (ct['start'] != null)
+                        Text('📅 ${'${ct['start']}'.split(' ').first}', style: const TextStyle(color: Mgmt.slate, fontSize: 10.5)),
+                    ])),
+                    mgmtStateChip(ct),
+                    const Icon(Icons.chevron_left_rounded, color: Mgmt.slate),
+                  ]),
+                ),
+              ),
+            ),
+        ]),
       // ---- cost breakdown
       if (breakdown.isNotEmpty)
         Container(
@@ -2700,8 +2778,9 @@ class _EditSheetState extends State<_EditSheet> {
 /// pickers (customers, service types, modes) from the server, then posts the
 /// chosen values. Returns {id, ref, title} on success.
 class _ProposalCreateSheet extends StatefulWidget {
-  const _ProposalCreateSheet({required this.accent});
+  const _ProposalCreateSheet({required this.accent, this.editId});
   final Color accent;
+  final int? editId;
   @override
   State<_ProposalCreateSheet> createState() => _ProposalCreateSheetState();
 }
@@ -2712,11 +2791,16 @@ class _ProposalCreateSheetState extends State<_ProposalCreateSheet> {
   String? _err;
 
   int? _partnerId, _serviceTypeId;
+  String? _partnerName;
   String? _proposalDate, _expireDate, _mobDate, _mode;
+  bool _linesEditable = true;
   final _site = TextEditingController();
   final _period = TextEditingController();
   final _margin = TextEditingController(text: '20');
   final _notes = TextEditingController();
+  final List<Map<String, dynamic>> _services = [];
+
+  bool get _isEdit => widget.editId != null;
 
   @override
   void initState() {
@@ -2733,11 +2817,45 @@ class _ProposalCreateSheetState extends State<_ProposalCreateSheet> {
 
   Future<void> _load() async {
     try {
-      final m = await context.read<AuthProvider>().api.managementProposalMeta();
+      final api = context.read<AuthProvider>().api;
+      final m = await api.managementProposalMeta();
+      if (_isEdit) {
+        final ed = await api.managementProposalEditData(widget.editId!);
+        _partnerId = ed['partner_id'] as int?;
+        _partnerName = ed['partner_name'] as String?;
+        _serviceTypeId = ed['service_type_id'] as int?;
+        _proposalDate = ed['proposal_date'] as String?;
+        _expireDate = ed['expire_date'] as String?;
+        _mobDate = ed['mobilization_date'] as String?;
+        _mode = ed['mode'] as String?;
+        _site.text = '${ed['service_site'] ?? ''}';
+        _period.text = ((ed['proposal_period'] as num?) ?? 0) > 0 ? '${ed['proposal_period']}' : '';
+        _margin.text = ((ed['target_margin_pct'] as num?) ?? 0) > 0 ? '${ed['target_margin_pct']}' : '';
+        _notes.text = '${ed['notes'] ?? ''}';
+        _linesEditable = ed['lines_editable'] == true;
+        for (final s in ((ed['services'] as List?) ?? const []).cast<Map>()) {
+          _services.add({'service_id': s['service_id'], 'name': s['name'], 'quantity': s['quantity']});
+        }
+      }
       if (mounted) setState(() { _meta = m; _loading = false; });
     } catch (e) {
       if (mounted) setState(() { _err = '$e'; _loading = false; });
     }
+  }
+
+  Future<void> _addService() async {
+    final opts = ((_meta?['services'] as List?) ?? const []).cast<Map>()
+        .map((e) => {'v': e['v'], 'l': '${e['l']}${(e['type'] ?? '').toString().isNotEmpty ? '  ·  ${e['type']}' : ''}'})
+        .toList().cast<Map>();
+    if (opts.isEmpty) return;
+    final chosen = await showModalBottomSheet<int>(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => _PickerSheet(title: tr('اختر الخدمة', 'Select service'), options: opts, accent: widget.accent),
+    );
+    if (chosen == null) return;
+    final svc = ((_meta?['services'] as List?) ?? const []).cast<Map>().firstWhere((e) => e['v'] == chosen);
+    setState(() => _services.add({'service_id': chosen, 'name': svc['l'], 'quantity': 1}));
   }
 
   Future<void> _pick(String which) async {
@@ -2769,7 +2887,8 @@ class _ProposalCreateSheetState extends State<_ProposalCreateSheet> {
   String? _customerLabel() {
     final list = ((_meta?['customers'] as List?) ?? const []).cast<Map>();
     final m = list.where((e) => e['v'] == _partnerId);
-    return m.isEmpty ? null : '${m.first['l']}';
+    if (m.isNotEmpty) return '${m.first['l']}';
+    return _partnerName; // edit mode: name came from edit-data
   }
 
   Future<void> _submit() async {
@@ -2780,20 +2899,28 @@ class _ProposalCreateSheetState extends State<_ProposalCreateSheet> {
     }
     setState(() => _busy = true);
     try {
+      final api = context.read<AuthProvider>().api;
+      final services = _services.map((s) => {'service_id': s['service_id'], 'quantity': s['quantity']}).toList();
       final vals = <String, dynamic>{
         'partner_id': _partnerId,
-        if (_serviceTypeId != null) 'service_type_id': _serviceTypeId,
+        'service_type_id': _serviceTypeId,
         if (_proposalDate != null) 'proposal_date': _proposalDate,
         if (_expireDate != null) 'expire_date': _expireDate,
         if (_mobDate != null) 'mobilization_date': _mobDate,
-        if (_site.text.trim().isNotEmpty) 'service_site': _site.text.trim(),
+        'service_site': _site.text.trim(),
         if (_mode != null) 'mode': _mode,
-        if (_period.text.trim().isNotEmpty) 'proposal_period': _period.text.trim(),
+        'proposal_period': _period.text.trim(),
         if (_margin.text.trim().isNotEmpty) 'target_margin_pct': _margin.text.trim(),
-        if (_notes.text.trim().isNotEmpty) 'notes': _notes.text.trim(),
+        'notes': _notes.text.trim(),
+        if (_linesEditable) 'services': services,
       };
-      final res = await context.read<AuthProvider>().api.managementProposalCreate(vals);
-      if (mounted) Navigator.pop(context, res);
+      if (_isEdit) {
+        await api.managementProposalUpdate(widget.editId!, vals);
+        if (mounted) Navigator.pop(context, {'id': widget.editId, 'edited': true});
+      } else {
+        final res = await api.managementProposalCreate(vals);
+        if (mounted) Navigator.pop(context, res);
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _busy = false);
@@ -2852,7 +2979,7 @@ class _ProposalCreateSheetState extends State<_ProposalCreateSheet> {
             const SizedBox(height: 12),
             Row(children: [
               const Text('📊 ', style: TextStyle(fontSize: 18)),
-              Expanded(child: Text(tr('عرض سعر جديد', 'New quotation'),
+              Expanded(child: Text(_isEdit ? tr('تعديل عرض السعر', 'Edit quotation') : tr('عرض سعر جديد', 'New quotation'),
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16))),
               IconButton(onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close_rounded, color: Colors.white)),
@@ -2898,6 +3025,52 @@ class _ProposalCreateSheetState extends State<_ProposalCreateSheet> {
                         _label(tr('نمط الفوترة', 'Billing mode')),
                         _dropdownStr(modes, _mode, (v) => setState(() => _mode = v), tr('اختر', 'Select')),
                       ],
+                      // ---- services (proposal.service catalog)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16, bottom: 6),
+                        child: Row(children: [
+                          Text(tr('الخدمات', 'Services'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: Mgmt.ink)),
+                          const Spacer(),
+                          if (_linesEditable)
+                            TextButton.icon(onPressed: _addService, icon: const Icon(Icons.add_rounded, size: 18),
+                                style: TextButton.styleFrom(foregroundColor: widget.accent),
+                                label: Text(tr('إضافة خدمة', 'Add service'), style: const TextStyle(fontWeight: FontWeight.w800))),
+                        ]),
+                      ),
+                      if (!_linesEditable)
+                        Container(
+                          padding: const EdgeInsets.all(10), margin: const EdgeInsets.only(bottom: 6),
+                          decoration: BoxDecoration(color: const Color(0xFFF59E0B).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                          child: Text(tr('الخدمات تُعدّل في حالة المسودة فقط.', 'Services editable only in draft.'),
+                              style: const TextStyle(color: Color(0xFFB45309), fontSize: 11, fontWeight: FontWeight.w700)),
+                        ),
+                      if (_services.isEmpty)
+                        Padding(padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Text(tr('لا خدمات بعد', 'No services yet'), style: const TextStyle(color: Mgmt.slate, fontSize: 12))),
+                      for (int i = 0; i < _services.length; i++)
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.fromLTRB(12, 8, 6, 8),
+                          decoration: BoxDecoration(color: Mgmt.bg, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.black.withValues(alpha: 0.05))),
+                          child: Row(children: [
+                            Expanded(child: Text('${_services[i]['name']}', maxLines: 2, overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Mgmt.ink))),
+                            SizedBox(
+                              width: 62,
+                              child: TextFormField(
+                                initialValue: '${_services[i]['quantity']}',
+                                keyboardType: TextInputType.number, textAlign: TextAlign.center,
+                                enabled: _linesEditable,
+                                decoration: InputDecoration(labelText: tr('عدد', 'Qty'), isDense: true,
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8)),
+                                onChanged: (v) => _services[i]['quantity'] = double.tryParse(v) ?? 1,
+                              ),
+                            ),
+                            if (_linesEditable)
+                              IconButton(onPressed: () => setState(() => _services.removeAt(i)),
+                                  icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Mgmt.red)),
+                          ]),
+                        ),
                       _label(tr('هامش الربح المستهدف %', 'Target margin %')),
                       TextField(controller: _margin, keyboardType: TextInputType.number, decoration: _dec('20')),
                       _label(tr('ملاحظات', 'Notes')),
@@ -2912,8 +3085,8 @@ class _ProposalCreateSheetState extends State<_ProposalCreateSheet> {
                           onPressed: _busy ? null : _submit,
                           icon: _busy
                               ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                              : const Icon(Icons.add_rounded),
-                          label: Text(tr('إنشاء العرض', 'Create quotation'),
+                              : Icon(_isEdit ? Icons.save_rounded : Icons.add_rounded),
+                          label: Text(_isEdit ? tr('حفظ التعديلات', 'Save changes') : tr('إنشاء العرض', 'Create quotation'),
                               style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
                         ),
                       ),
