@@ -2006,6 +2006,17 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/management/tenders/$id/tab/$code'), headers: await _headers())))['data'] as Map);
 
+  /// Pickers (customers, stages, users) for the create-opportunity form.
+  Future<Map<String, dynamic>> managementCrmMeta() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/management/crm/meta'), headers: await _headers())))['data'] as Map);
+
+  /// Create a new CRM opportunity. Returns {id, title}.
+  Future<Map<String, dynamic>> managementCrmCreate(Map<String, dynamic> vals) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/management/crm/create'),
+              headers: await _headers(), body: jsonEncode(vals))))['data'] as Map);
+
   // ---- «My» self-service hub ----------------------------------------------
   Future<Map<String, dynamic>> myHub() async =>
       Map<String, dynamic>.from((await _handle(

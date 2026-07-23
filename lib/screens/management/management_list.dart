@@ -91,14 +91,14 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Mgmt.bg,
-      floatingActionButton: (_isProposals && _last?['can_create'] == true)
+      floatingActionButton: (_last?['can_create'] == true && (_isProposals || widget.appKey == 'crm'))
           ? FloatingActionButton.extended(
               backgroundColor: widget.accent,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.add_rounded),
-              label: Text(tr('عرض سعر جديد', 'New quotation'),
+              label: Text(_isProposals ? tr('عرض سعر جديد', 'New quotation') : tr('فرصة جديدة', 'New opportunity'),
                   style: const TextStyle(fontWeight: FontWeight.w800)),
-              onPressed: _createProposal)
+              onPressed: _isProposals ? _createProposal : _createCrm)
           : null,
       appBar: AppBar(
         backgroundColor: widget.accent, foregroundColor: Colors.white, elevation: 0,
@@ -387,6 +387,20 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
     if (created == null || !mounted) return;
     _reload();
     // open the fresh quotation straight away
+    await _openDetail(created['id'] as int, '${created['title'] ?? ''}');
+  }
+
+  Future<void> _createCrm() async {
+    final created = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => _CrmCreateSheet(accent: widget.accent),
+    );
+    if (created == null || !mounted) return;
+    _reload();
     await _openDetail(created['id'] as int, '${created['title'] ?? ''}');
   }
 
@@ -2585,6 +2599,226 @@ class _PickerSheetState extends State<_PickerSheet> {
               onTap: () => Navigator.pop(context, filtered[i]['v'] as int),
             ),
           ),
+        ),
+      ]),
+    );
+  }
+}
+
+/// Create a new CRM opportunity — professional form with searchable customer
+/// picker, stage/owner dropdowns and contact fields. Returns {id, title}.
+class _CrmCreateSheet extends StatefulWidget {
+  const _CrmCreateSheet({required this.accent});
+  final Color accent;
+  @override
+  State<_CrmCreateSheet> createState() => _CrmCreateSheetState();
+}
+
+class _CrmCreateSheetState extends State<_CrmCreateSheet> {
+  Map<String, dynamic>? _meta;
+  bool _loading = true, _busy = false;
+  String? _err;
+
+  int? _partnerId, _stageId, _userId;
+  final _name = TextEditingController();
+  final _contact = TextEditingController();
+  final _email = TextEditingController();
+  final _phone = TextEditingController();
+  final _revenue = TextEditingController();
+  final _desc = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _name.dispose(); _contact.dispose(); _email.dispose();
+    _phone.dispose(); _revenue.dispose(); _desc.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    try {
+      final m = await context.read<AuthProvider>().api.managementCrmMeta();
+      if (mounted) setState(() {
+        _meta = m; _loading = false;
+        _userId = m['me'] as int?;
+        final stages = (m['stages'] as List?) ?? const [];
+        if (stages.isNotEmpty) _stageId = stages.first['v'] as int?;
+      });
+    } catch (e) {
+      if (mounted) setState(() { _err = '$e'; _loading = false; });
+    }
+  }
+
+  Future<void> _pickCustomer() async {
+    final list = ((_meta?['customers'] as List?) ?? const []).cast<Map>();
+    final chosen = await showModalBottomSheet<int>(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => _PickerSheet(title: tr('اختر العميل', 'Select customer'), options: list, accent: widget.accent),
+    );
+    if (chosen != null) setState(() => _partnerId = chosen);
+  }
+
+  String? _customerLabel() {
+    final list = ((_meta?['customers'] as List?) ?? const []).cast<Map>();
+    final m = list.where((e) => e['v'] == _partnerId);
+    return m.isEmpty ? null : '${m.first['l']}';
+  }
+
+  Future<void> _submit() async {
+    if (_name.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('أدخل عنوان الفرصة', 'Enter an opportunity title')), backgroundColor: Mgmt.red));
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      final vals = <String, dynamic>{
+        'name': _name.text.trim(),
+        if (_partnerId != null) 'partner_id': _partnerId,
+        if (_stageId != null) 'stage_id': _stageId,
+        if (_userId != null) 'user_id': _userId,
+        if (_contact.text.trim().isNotEmpty) 'contact_name': _contact.text.trim(),
+        if (_email.text.trim().isNotEmpty) 'email_from': _email.text.trim(),
+        if (_phone.text.trim().isNotEmpty) 'phone': _phone.text.trim(),
+        if (_revenue.text.trim().isNotEmpty) 'expected_revenue': _revenue.text.trim(),
+        if (_desc.text.trim().isNotEmpty) 'description': _desc.text.trim(),
+      };
+      final res = await context.read<AuthProvider>().api.managementCrmCreate(vals);
+      if (mounted) Navigator.pop(context, res);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _busy = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Mgmt.red));
+      }
+    }
+  }
+
+  InputDecoration _dec(String hint) => InputDecoration(
+        hintText: hint, isDense: true, filled: true, fillColor: Mgmt.bg,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      );
+
+  Widget _label(String t) => Padding(
+        padding: const EdgeInsets.fromLTRB(2, 14, 2, 6),
+        child: Text(t, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: Mgmt.ink)),
+      );
+
+  Widget _tap(String? value, String hint, IconData icon, VoidCallback onTap) => InkWell(
+        borderRadius: BorderRadius.circular(12), onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+          decoration: BoxDecoration(color: Mgmt.bg, borderRadius: BorderRadius.circular(12)),
+          child: Row(children: [
+            Icon(icon, size: 18, color: widget.accent),
+            const SizedBox(width: 10),
+            Expanded(child: Text(value ?? hint, maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 13, color: value == null ? Mgmt.slate : Mgmt.ink,
+                    fontWeight: value == null ? FontWeight.w500 : FontWeight.w700))),
+            const Icon(Icons.chevron_left_rounded, color: Mgmt.slate),
+          ]),
+        ),
+      );
+
+  Widget _dropdown(List<Map> opts, int? value, ValueChanged<int?> onChanged, String hint) =>
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(color: Mgmt.bg, borderRadius: BorderRadius.circular(12)),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<int>(
+            value: value, isExpanded: true, hint: Text(hint, style: const TextStyle(fontSize: 13, color: Mgmt.slate)),
+            items: [for (final o in opts) DropdownMenuItem(value: o['v'] as int, child: Text('${o['l']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13)))],
+            onChanged: onChanged,
+          ),
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final stages = ((_meta?['stages'] as List?) ?? const []).cast<Map>();
+    final users = ((_meta?['users'] as List?) ?? const []).cast<Map>();
+    return DraggableScrollableSheet(
+      expand: false, initialChildSize: 0.9, maxChildSize: 0.96, minChildSize: 0.5,
+      builder: (_, sc) => Column(children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [widget.accent, widget.accent.withValues(alpha: 0.72)],
+                begin: Alignment.topRight, end: Alignment.bottomLeft),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(22))),
+          child: Column(children: [
+            Center(child: Container(width: 42, height: 4,
+                decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(4)))),
+            const SizedBox(height: 12),
+            Row(children: [
+              const Text('🎯 ', style: TextStyle(fontSize: 18)),
+              Expanded(child: Text(tr('فرصة جديدة', 'New opportunity'),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16))),
+              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded, color: Colors.white)),
+            ]),
+          ]),
+        ),
+        Expanded(
+          child: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : _err != null
+                  ? Center(child: Padding(padding: const EdgeInsets.all(30),
+                      child: Text(_err!, textAlign: TextAlign.center, style: const TextStyle(color: Mgmt.slate))))
+                  : ListView(controller: sc, padding: const EdgeInsets.fromLTRB(16, 4, 16, 24), children: [
+                      _label('${tr('عنوان الفرصة', 'Opportunity title')} *'),
+                      TextField(controller: _name, decoration: _dec(tr('مثال: عقد نظافة برج...', 'e.g. Cleaning contract...'))),
+                      _label(tr('العميل', 'Customer')),
+                      _tap(_customerLabel(), tr('اختر العميل', 'Select customer'), Icons.business_rounded, _pickCustomer),
+                      Row(children: [
+                        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          _label(tr('المرحلة', 'Stage')),
+                          _dropdown(stages, _stageId, (v) => setState(() => _stageId = v), tr('اختر', 'Select')),
+                        ])),
+                        const SizedBox(width: 10),
+                        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          _label(tr('المندوب', 'Owner')),
+                          _dropdown(users, _userId, (v) => setState(() => _userId = v), tr('اختر', 'Select')),
+                        ])),
+                      ]),
+                      _label(tr('الإيراد المتوقع', 'Expected revenue')),
+                      TextField(controller: _revenue, keyboardType: TextInputType.number, decoration: _dec('0.000')),
+                      _label(tr('جهة الاتصال', 'Contact name')),
+                      TextField(controller: _contact, decoration: _dec(tr('اسم الشخص', 'Person name'))),
+                      Row(children: [
+                        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          _label(tr('البريد', 'Email')),
+                          TextField(controller: _email, keyboardType: TextInputType.emailAddress, decoration: _dec('name@company.com')),
+                        ])),
+                        const SizedBox(width: 10),
+                        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          _label(tr('الهاتف', 'Phone')),
+                          TextField(controller: _phone, keyboardType: TextInputType.phone, decoration: _dec('+965...')),
+                        ])),
+                      ]),
+                      _label(tr('ملاحظات', 'Notes')),
+                      TextField(controller: _desc, maxLines: 3, decoration: _dec(tr('تفاصيل الفرصة…', 'Opportunity details…'))),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        height: 50,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: widget.accent, foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                          onPressed: _busy ? null : _submit,
+                          icon: _busy
+                              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                              : const Icon(Icons.add_rounded),
+                          label: Text(tr('إنشاء الفرصة', 'Create opportunity'),
+                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                        ),
+                      ),
+                    ]),
         ),
       ]),
     );
