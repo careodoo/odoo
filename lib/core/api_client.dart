@@ -2017,6 +2017,30 @@ class ApiClient {
               _u('/management/crm/create'),
               headers: await _headers(), body: jsonEncode(vals))))['data'] as Map);
 
+  // ---- Purchase orders: deliveries / invoices / send --------------------
+  Future<Map<String, dynamic>> managementPoDeliveries(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/management/purchases/$id/deliveries'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> managementPickingValidate(int pickingId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/management/picking/$pickingId/validate'),
+              headers: await _headers(), body: '{}')))['data'] as Map);
+
+  Future<Map<String, dynamic>> managementPoInvoices(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/management/purchases/$id/invoices'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> managementPoRecipients() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/management/purchases/recipients'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> managementPoSend(int id, {String? email}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/management/purchases/$id/send'),
+              headers: await _headers(),
+              body: jsonEncode({if (email != null) 'email': email}))))['data'] as Map);
+
   // ---- «My» self-service hub ----------------------------------------------
   Future<Map<String, dynamic>> myHub() async =>
       Map<String, dynamic>.from((await _handle(

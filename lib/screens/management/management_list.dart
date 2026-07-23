@@ -1750,6 +1750,8 @@ class _DetailSheetState extends State<_DetailSheet> {
           if (st.isNotEmpty) ...[
             const SizedBox(height: 12),
             Wrap(spacing: 8, runSpacing: 8, children: [
+              if (st['recv_ar'] != null)
+                _statusPill('🚚', gLang == 'en' ? '${st['recv_en']}' : '${st['recv_ar']}', mgmtHex('${st['recv_color']}', Mgmt.slate)),
               if (st['inv_ar'] != null)
                 _statusPill('🧾', gLang == 'en' ? '${st['inv_en']}' : '${st['inv_ar']}', mgmtHex('${st['inv_color']}', Mgmt.slate)),
               if (st['pay_label'] != null)
@@ -1758,6 +1760,58 @@ class _DetailSheetState extends State<_DetailSheet> {
           ],
         ]),
       ),
+      // ---- send-to-vendor (purchase orders)
+      if (o['can_send'] == true)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+          child: SizedBox(
+            width: double.infinity, height: 46,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+              onPressed: _busy ? null : _sendPo,
+              icon: const Icon(Icons.send_rounded, size: 18),
+              label: Text(tr('إرسال أمر الشراء', 'Send purchase order'),
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5)),
+            ),
+          ),
+        ),
+      // ---- delivery + invoice tabs (purchase orders)
+      if ((o['tabs'] as List?)?.isNotEmpty == true)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+          child: Row(children: [
+            for (final tab in (o['tabs'] as List).cast<Map>()) ...[
+              Expanded(
+                child: Material(
+                  color: widget.accent.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(14),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: _busy ? null : () => _openPoTab('${tab['code']}', gLang == 'en' ? '${tab['en']}' : '${tab['ar']}'),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: widget.accent.withValues(alpha: 0.16))),
+                      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        Text('${tab['icon']}', style: const TextStyle(fontSize: 20)),
+                        const SizedBox(width: 8),
+                        Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text(gLang == 'en' ? '${tab['en']}' : '${tab['ar']}',
+                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5, color: Mgmt.ink)),
+                          Text('${tab['count']}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: widget.accent)),
+                        ]),
+                      ]),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ]),
+        ),
       if (info.isNotEmpty)
         _cardWrap([
           _sectionHead('🏢', tr('بيانات الطرف والتفاصيل', 'Partner & details')),
@@ -1765,6 +1819,158 @@ class _DetailSheetState extends State<_DetailSheet> {
         ]),
     ]);
   }
+
+  Future<void> _openPoTab(String code, String label) async {
+    if (code == 'deliveries') return _openDeliveries(label);
+    return _openPoInvoices(label);
+  }
+
+  Future<void> _sendPo() async {
+    // choose recipient: vendor (default) or pick another
+    final choice = await showModalBottomSheet<String>(
+      context: context, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Padding(padding: const EdgeInsets.all(16),
+            child: Text(tr('إرسال أمر الشراء إلى', 'Send purchase order to'),
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15))),
+        ListTile(
+          leading: const Icon(Icons.storefront_rounded, color: Color(0xFF16A34A)),
+          title: Text(tr('المورّد', 'The vendor')),
+          subtitle: Text('${(d['order'] as Map?)?['send_email'] ?? ''}'),
+          onTap: () => Navigator.pop(context, 'vendor')),
+        ListTile(
+          leading: Icon(Icons.person_search_rounded, color: widget.accent),
+          title: Text(tr('اختيار مستلم آخر', 'Choose another recipient')),
+          onTap: () => Navigator.pop(context, 'other')),
+        const SizedBox(height: 8),
+      ])),
+    );
+    if (choice == null || !mounted) return;
+    String? email;
+    if (choice == 'other') {
+      Map<String, dynamic> rec;
+      try {
+        rec = await context.read<AuthProvider>().api.managementPoRecipients();
+      } catch (e) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Mgmt.red));
+        return;
+      }
+      if (!mounted) return;
+      final opts = ((rec['recipients'] as List?) ?? const [])
+          .map((e) => {'v': e['v'], 'l': '${e['l']}  ·  ${e['email']}', 'email': e['email']}).toList().cast<Map>();
+      final pickedEmail = await showModalBottomSheet<String>(
+        context: context, isScrollControlled: true, backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        builder: (_) => _RecipientPicker(options: opts, accent: widget.accent),
+      );
+      if (pickedEmail == null || !mounted) return;
+      email = pickedEmail;
+    }
+    setState(() => _busy = true);
+    try {
+      final res = await context.read<AuthProvider>().api.managementPoSend(d['id'] as int, email: email);
+      if (!mounted) return;
+      await _reload();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('✅ أُرسل إلى ${res['email']}', '✅ Sent to ${res['email']}')),
+          backgroundColor: const Color(0xFF16A34A)));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Mgmt.red));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _openDeliveries(String label) async {
+    setState(() => _busy = true);
+    Map<String, dynamic>? res;
+    try {
+      res = await context.read<AuthProvider>().api.managementPoDeliveries(d['id'] as int);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Mgmt.red));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+    if (res == null || !mounted) return;
+    await showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => _DeliveriesSheet(
+          poId: d['id'] as int, accent: widget.accent, initial: res!, onChanged: _reload),
+    );
+  }
+
+  Future<void> _openPoInvoices(String label) async {
+    setState(() => _busy = true);
+    Map<String, dynamic>? res;
+    try {
+      res = await context.read<AuthProvider>().api.managementPoInvoices(d['id'] as int);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Mgmt.red));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+    if (res == null || !mounted) return;
+    final invoices = (res['invoices'] as List?) ?? const [];
+    await showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => DraggableScrollableSheet(
+        expand: false, initialChildSize: 0.7, maxChildSize: 0.95, minChildSize: 0.4,
+        builder: (_, sc) => Column(children: [
+          _sheetHeader('🧾 ${tr('الفواتير', 'Invoices')} · ${invoices.length}'),
+          Expanded(
+            child: invoices.isEmpty
+                ? Center(child: Text(tr('لا فواتير', 'No invoices'), style: const TextStyle(color: Mgmt.slate, fontWeight: FontWeight.w700)))
+                : ListView.separated(
+                    controller: sc, padding: const EdgeInsets.all(12),
+                    itemCount: invoices.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (_, i) {
+                      final inv = invoices[i] as Map;
+                      final cur = '${inv['currency'] ?? ''}';
+                      return Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                            color: Mgmt.bg, borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.black.withValues(alpha: 0.05))),
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Row(children: [
+                            Expanded(child: Text('${inv['name']}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Mgmt.ink))),
+                            Text('${(inv['amount'] as num?)?.toStringAsFixed(3) ?? '0'} $cur',
+                                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: widget.accent)),
+                          ]),
+                          const SizedBox(height: 6),
+                          Wrap(spacing: 6, runSpacing: 6, children: [
+                            mgmtStateChip(inv),
+                            if (inv['payment'] != null)
+                              _statusPill('💳', '${inv['payment']}', mgmtHex('${inv['payment_color']}', Mgmt.slate)),
+                            if ((inv['residual'] as num?) != null && (inv['residual'] as num) > 0)
+                              _statusPill('⏳', '${tr('متبقّي', 'Due')} ${(inv['residual'] as num).toStringAsFixed(3)} $cur', Mgmt.red),
+                            if (inv['date'] != null) _statusPill('📅', '${'${inv['date']}'.split(' ').first}', Mgmt.slate),
+                          ]),
+                        ]),
+                      );
+                    },
+                  ),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Widget _sheetHeader(String title) => Container(
+        padding: const EdgeInsets.fromLTRB(18, 14, 12, 12),
+        decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [widget.accent, widget.accent.withValues(alpha: 0.72)],
+                begin: Alignment.topRight, end: Alignment.bottomLeft),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(22))),
+        child: Row(children: [
+          Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15))),
+          IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded, color: Colors.white)),
+        ]),
+      );
 
   Widget _miniKV(String k, String v) => Row(children: [
         Expanded(child: Text(k, style: const TextStyle(color: Mgmt.slate, fontSize: 11, fontWeight: FontWeight.w600))),
@@ -2832,6 +3038,198 @@ class _CrmCreateSheetState extends State<_CrmCreateSheet> {
                         ),
                       ),
                     ]),
+        ),
+      ]),
+    );
+  }
+}
+
+/// The purchase order's deliveries (stock pickings) with a one-tap "Receive"
+/// action per picking that isn't done yet.
+class _DeliveriesSheet extends StatefulWidget {
+  const _DeliveriesSheet({required this.poId, required this.accent, required this.initial, required this.onChanged});
+  final int poId;
+  final Color accent;
+  final Map<String, dynamic> initial;
+  final VoidCallback onChanged;
+  @override
+  State<_DeliveriesSheet> createState() => _DeliveriesSheetState();
+}
+
+class _DeliveriesSheetState extends State<_DeliveriesSheet> {
+  late Map<String, dynamic> d = widget.initial;
+  bool _busy = false;
+
+  Future<void> _reload() async {
+    try {
+      final r = await context.read<AuthProvider>().api.managementPoDeliveries(widget.poId);
+      if (mounted) setState(() => d = r);
+    } catch (_) {}
+  }
+
+  Future<void> _receive(int pickingId) async {
+    final ok = await showDialog<bool>(context: context, builder: (c) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      title: Text(tr('تأكيد الاستلام', 'Confirm receipt'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+      content: Text(tr('سيتم استلام كل الكميات وتأكيد التسليم.', 'All quantities will be received and the delivery validated.')),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('تراجع', 'Back'))),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white),
+          onPressed: () => Navigator.pop(c, true), child: Text(tr('استلام', 'Receive'))),
+      ],
+    ));
+    if (ok != true || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      await context.read<AuthProvider>().api.managementPickingValidate(pickingId);
+      if (!mounted) return;
+      await _reload();
+      widget.onChanged();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('✅ تم تأكيد الاستلام', '✅ Receipt confirmed')), backgroundColor: const Color(0xFF16A34A)));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Mgmt.red));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final list = (d['deliveries'] as List?) ?? const [];
+    return DraggableScrollableSheet(
+      expand: false, initialChildSize: 0.75, maxChildSize: 0.95, minChildSize: 0.4,
+      builder: (_, sc) => Stack(children: [
+        Column(children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(18, 14, 12, 12),
+            decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [widget.accent, widget.accent.withValues(alpha: 0.72)],
+                    begin: Alignment.topRight, end: Alignment.bottomLeft),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(22))),
+            child: Row(children: [
+              Expanded(child: Text('🚚 ${tr('التسليمات', 'Deliveries')} · ${list.length}',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15))),
+              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded, color: Colors.white)),
+            ]),
+          ),
+          Expanded(
+            child: list.isEmpty
+                ? Center(child: Text(tr('لا تسليمات', 'No deliveries'), style: const TextStyle(color: Mgmt.slate, fontWeight: FontWeight.w700)))
+                : ListView.separated(
+                    controller: sc, padding: const EdgeInsets.all(12),
+                    itemCount: list.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (_, i) {
+                      final pk = list[i] as Map;
+                      final moves = (pk['moves'] as List?) ?? const [];
+                      final canRecv = pk['can_validate'] == true;
+                      return Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                            color: Mgmt.bg, borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.black.withValues(alpha: 0.05))),
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Row(children: [
+                            Expanded(child: Text('${pk['name']}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Mgmt.ink))),
+                            mgmtStateChip({'state': gLang == 'en' ? pk['state_en'] : pk['state_ar'], 'state_color': pk['state_color']}),
+                          ]),
+                          if (pk['type'] != null || pk['scheduled'] != null)
+                            Padding(padding: const EdgeInsets.only(top: 3),
+                              child: Text([
+                                if (pk['type'] != null) '${pk['type']}',
+                                if (pk['scheduled'] != null) '📅 ${'${pk['scheduled']}'.split(' ').first}',
+                              ].join('  ·  '), style: const TextStyle(color: Mgmt.slate, fontSize: 10.5))),
+                          if (moves.isNotEmpty) ...[
+                            const Divider(height: 14),
+                            for (final mv in moves.cast<Map>())
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 2),
+                                child: Row(children: [
+                                  Expanded(child: Text('${mv['product']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 11.5, color: Mgmt.ink, fontWeight: FontWeight.w600))),
+                                  Text('${mv['done']}/${mv['demand']}',
+                                      style: const TextStyle(fontSize: 11, color: Mgmt.slate, fontWeight: FontWeight.w800)),
+                                ]),
+                              ),
+                          ],
+                          if (canRecv) Padding(
+                            padding: const EdgeInsets.only(top: 10),
+                            child: SizedBox(
+                              width: double.infinity, height: 40,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11))),
+                                onPressed: _busy ? null : () => _receive(pk['id'] as int),
+                                icon: const Icon(Icons.check_circle_rounded, size: 17),
+                                label: Text(tr('تأكيد الاستلام', 'Receive'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5)),
+                              ),
+                            ),
+                          ),
+                        ]),
+                      );
+                    },
+                  ),
+          ),
+        ]),
+        if (_busy) const Positioned.fill(child: ColoredBox(color: Color(0x11000000), child: Center(child: CircularProgressIndicator()))),
+      ]),
+    );
+  }
+}
+
+/// Searchable recipient picker that returns the chosen email.
+class _RecipientPicker extends StatefulWidget {
+  const _RecipientPicker({required this.options, required this.accent});
+  final List<Map> options;
+  final Color accent;
+  @override
+  State<_RecipientPicker> createState() => _RecipientPickerState();
+}
+
+class _RecipientPickerState extends State<_RecipientPicker> {
+  String _q = '';
+  @override
+  Widget build(BuildContext context) {
+    final filtered = _q.isEmpty
+        ? widget.options
+        : widget.options.where((o) => '${o['l']}'.toLowerCase().contains(_q.toLowerCase())).toList();
+    return DraggableScrollableSheet(
+      expand: false, initialChildSize: 0.8, maxChildSize: 0.95, minChildSize: 0.5,
+      builder: (_, sc) => Column(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+          child: Row(children: [
+            Expanded(child: Text(tr('اختر المستلم', 'Select recipient'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15))),
+            IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded)),
+          ]),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: TextField(
+            autofocus: true,
+            onChanged: (v) => setState(() => _q = v),
+            decoration: InputDecoration(
+              hintText: tr('ابحث…', 'Search…'),
+              prefixIcon: const Icon(Icons.search_rounded, size: 20),
+              filled: true, fillColor: Mgmt.bg, isDense: true,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: ListView.separated(
+            controller: sc,
+            itemCount: filtered.length,
+            separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade100),
+            itemBuilder: (_, i) => ListTile(
+              title: Text('${filtered[i]['l']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+              onTap: () => Navigator.pop(context, '${filtered[i]['email']}'),
+            ),
+          ),
         ),
       ]),
     );
