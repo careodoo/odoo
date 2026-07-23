@@ -329,6 +329,7 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
                     if (r['fl'] != null) return _fleetCard(r);
                     if (r['xp'] != null) return _experienceCard(r);
                     if (r['vs'] != null) return _vsCard(r);
+                    if (r['lt'] != null) return _letterCard(r);
                     return _row(r);
                   },
                 );
@@ -1040,6 +1041,50 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
                     _tag('🛣️ ${(v['odometer'] as num).toStringAsFixed(0)} ${tr('كم', 'km')}', Mgmt.slate),
                   if (v['fuel'] != null) _tag('⛽ ${v['fuel']}', Mgmt.slate),
                   if (v['year'] != null) _tag('📆 ${v['year']}', Mgmt.slate),
+                ]),
+              ]),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  // ---- Correspondence / letters -----------------------------------------
+  Widget _letterCard(Map r) {
+    final l = (r['lt'] as Map?) ?? const {};
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _openDetail(r['id'] as int, '${r['title']}'),
+        child: Container(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.black12)),
+          child: Row(children: [
+            _logoBox('${l['photo_b64'] ?? ''}', '${l['employee'] ?? r['title']}', size: 46),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    margin: const EdgeInsetsDirectional.only(end: 6),
+                    decoration: BoxDecoration(color: widget.accent.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(6)),
+                    child: Text('✉️ ${r['title']}', style: TextStyle(color: widget.accent, fontWeight: FontWeight.w900, fontSize: 10.5)),
+                  ),
+                  const Spacer(),
+                  mgmtStateChip(r),
+                ]),
+                const SizedBox(height: 4),
+                if (l['employee'] != null)
+                  Text('👤 ${l['employee']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: Mgmt.ink)),
+                const SizedBox(height: 3),
+                Wrap(spacing: 6, runSpacing: 4, children: [
+                  if (l['letter_type'] != null) _tag('📄 ${l['letter_type']}', Mgmt.slate),
+                  if (l['date'] != null) _tag('📅 ${'${l['date']}'.split(' ').first}', Mgmt.slate),
                 ]),
               ]),
             ),
@@ -2798,6 +2843,45 @@ class _DetailSheetState extends State<_DetailSheet> {
     ]);
   }
 
+  Widget _letterBlock() {
+    final l = d['letter'] as Map?;
+    if (l == null) return const SizedBox.shrink();
+    final info = (l['service_info'] as List?) ?? const [];
+    final photo = '${l['photo_b64'] ?? ''}';
+    final body = '${l['body'] ?? ''}';
+    return Column(children: [
+      Container(
+        margin: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [widget.accent.withValues(alpha: 0.10), widget.accent.withValues(alpha: 0.03)], begin: Alignment.topRight, end: Alignment.bottomLeft),
+            borderRadius: BorderRadius.circular(18), border: Border.all(color: widget.accent.withValues(alpha: 0.18))),
+        child: Row(children: [
+          if (photo.isNotEmpty)
+            ClipRRect(borderRadius: BorderRadius.circular(28), child: Image.memory(base64Decode(photo), width: 52, height: 52, fit: BoxFit.cover, gaplessPlayback: true)),
+          if (photo.isNotEmpty) const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+            Text('${l['employee'] ?? ''}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5, color: Mgmt.ink)),
+            if (l['letter_type'] != null)
+              Padding(padding: const EdgeInsets.only(top: 2),
+                  child: Text('📄 ${l['letter_type']}', style: const TextStyle(color: Mgmt.slate, fontSize: 12, fontWeight: FontWeight.w600))),
+          ])),
+        ]),
+      ),
+      if (info.isNotEmpty)
+        _cardWrap([_sectionHead('✉️', tr('بيانات الخطاب', 'Letter details')), _infoRows(info)]),
+      if (body.isNotEmpty)
+        _cardWrap([
+          _sectionHead('📝', tr('نص الخطاب', 'Letter body')),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 4, 14, 12),
+            child: Text(body, style: const TextStyle(color: Mgmt.ink, fontSize: 12.5, height: 1.5)),
+          ),
+        ]),
+    ]);
+  }
+
   Widget _vserviceBlock() {
     final v = d['vservice'] as Map?;
     if (v == null) return const SizedBox.shrink();
@@ -2839,7 +2923,8 @@ class _DetailSheetState extends State<_DetailSheet> {
     final isLeave = d['leave'] != null;
     final isExperience = d['experience'] != null;
     final isVservice = d['vservice'] != null;
-    final richDetail = isProposal || isTender || isOrder || isFleet || isCrm || isLeave || isExperience || isVservice;
+    final isLetter = d['letter'] != null;
+    final richDetail = isProposal || isTender || isOrder || isFleet || isCrm || isLeave || isExperience || isVservice || isLetter;
     final amount = richDetail ? null : d['amount'];
     return DraggableScrollableSheet(
       expand: false, initialChildSize: 0.82, maxChildSize: 0.96, minChildSize: 0.45,
@@ -2901,6 +2986,7 @@ class _DetailSheetState extends State<_DetailSheet> {
           if (isLeave) _leaveBlock(),
           if (isExperience) _experienceBlock(),
           if (isVservice) _vserviceBlock(),
+          if (isLetter) _letterBlock(),
           // ---- amount highlight
           if (amount != null)
             Container(
