@@ -145,6 +145,68 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
     );
   }
 
+  Widget _docFilterBar() {
+    final folders = (((_last?['filters'] as Map?)?['folders'] as List?) ?? const []).cast<Map>();
+    String? folderLabel() {
+      final id = _filters['folder'];
+      if (id == null) return null;
+      final m = folders.where((f) => '${f['v']}' == id);
+      return m.isEmpty ? null : '${m.first['l']}';
+    }
+    final ftype = _filters['ftype'];
+    Widget chip(String label, bool active, VoidCallback onTap, {VoidCallback? onClear}) => Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: Material(
+            color: active ? widget.accent.withValues(alpha: 0.12) : Mgmt.bg,
+            borderRadius: BorderRadius.circular(20),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20), onTap: onTap,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: active ? widget.accent.withValues(alpha: 0.4) : Colors.black12)),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Text(label, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: active ? widget.accent : Mgmt.slate)),
+                  if (active && onClear != null) ...[const SizedBox(width: 4), InkWell(onTap: onClear, child: Icon(Icons.close_rounded, size: 14, color: widget.accent))]
+                  else Icon(Icons.expand_more_rounded, size: 15, color: active ? widget.accent : Mgmt.slate),
+                ]),
+              ),
+            ),
+          ),
+        );
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(children: [
+          chip(folderLabel() ?? tr('المجلّد', 'Folder'), _filters['folder'] != null, () async {
+            final opts = folders.map((f) => {'v': f['v'], 'l': f['l']}).toList().cast<Map>();
+            final chosen = await showModalBottomSheet<int>(
+              context: context, isScrollControlled: true, backgroundColor: Colors.white,
+              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+              builder: (_) => _PickerSheet(title: tr('اختر المجلّد', 'Select folder'), options: opts, accent: widget.accent),
+            );
+            if (chosen != null) _setFilter('folder', '$chosen');
+          }, onClear: () => _setFilter('folder', null)),
+          for (final t in [
+            {'v': 'image', 'l': '🖼️ ${tr('صور', 'Images')}'},
+            {'v': 'pdf', 'l': '📕 PDF'},
+          ])
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: ChoiceChip(
+                label: Text('${t['l']}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                selected: ftype == t['v'],
+                selectedColor: widget.accent.withValues(alpha: 0.15),
+                onSelected: (_) => _setFilter('ftype', ftype == t['v'] ? null : '${t['v']}'),
+              ),
+            ),
+        ]),
+      ),
+    );
+  }
+
   Widget _employeeFilterBar() {
     final flt = (_last?['filters'] as Map?) ?? const {};
     final depts = ((flt['departments'] as List?) ?? const []).cast<Map>();
@@ -281,6 +343,7 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
           ),
         ),
         if (_isEmployees) _employeeFilterBar(),
+        if (widget.appKey == 'files') _docFilterBar(),
         if ((_last?['state_filters'] as List?)?.isNotEmpty == true) _stateFilterBar(),
         Expanded(
           child: RefreshIndicator(
@@ -334,6 +397,7 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
                     if (r['vs'] != null) return _vsCard(r);
                     if (r['lt'] != null) return _letterCard(r);
                     if (r['ri'] != null) return _reqinvCard(r);
+                    if (r['doc'] != null) return _docCard(r);
                     return _row(r);
                   },
                 );
@@ -1092,6 +1156,66 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
                 ]),
               ]),
             ),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  // ---- Documents (documents.document) -----------------------------------
+  IconData _fileIcon(Map f) {
+    if (f['is_image'] == true) return Icons.image_rounded;
+    if (f['is_pdf'] == true) return Icons.picture_as_pdf_rounded;
+    if (f['url'] != null) return Icons.link_rounded;
+    return Icons.insert_drive_file_rounded;
+  }
+
+  Color _fileColor(Map f) {
+    if (f['is_image'] == true) return const Color(0xFF0EA5E9);
+    if (f['is_pdf'] == true) return Mgmt.red;
+    return widget.accent;
+  }
+
+  String _fileSize(num? bytes) {
+    final b = (bytes ?? 0).toDouble();
+    if (b >= 1048576) return '${(b / 1048576).toStringAsFixed(1)} MB';
+    if (b >= 1024) return '${(b / 1024).toStringAsFixed(0)} KB';
+    return '${b.toStringAsFixed(0)} B';
+  }
+
+  Widget _docCard(Map r) {
+    final f = (r['doc'] as Map?) ?? const {};
+    final fc = _fileColor(f);
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _openDetail(r['id'] as int, '${r['title']}'),
+        child: Container(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.black12)),
+          child: Row(children: [
+            Container(
+              width: 46, height: 46, alignment: Alignment.center,
+              decoration: BoxDecoration(color: fc.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(11)),
+              child: Icon(_fileIcon(f), color: fc, size: 24),
+            ),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('${f['name'] ?? r['title']}', maxLines: 2, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: Mgmt.ink, height: 1.25)),
+                const SizedBox(height: 4),
+                Wrap(spacing: 6, runSpacing: 4, children: [
+                  if (f['folder'] != null) _tag('📁 ${f['folder']}', Mgmt.slate),
+                  if (f['owner'] != null) _tag('👤 ${f['owner']}', Mgmt.slate),
+                  if ((f['size'] as num?) != null && (f['size'] as num) > 0) _tag('💾 ${_fileSize(f['size'] as num?)}', Mgmt.slate),
+                  if (f['date'] != null) _tag('📅 ${'${f['date']}'.split(' ').first}', Mgmt.slate),
+                ]),
+              ]),
+            ),
+            const Icon(Icons.chevron_left_rounded, color: Mgmt.slate),
           ]),
         ),
       ),
@@ -2901,6 +3025,85 @@ class _DetailSheetState extends State<_DetailSheet> {
     ]);
   }
 
+  IconData _fileIcon(Map f) {
+    if (f['is_image'] == true) return Icons.image_rounded;
+    if (f['is_pdf'] == true) return Icons.picture_as_pdf_rounded;
+    if (f['url'] != null) return Icons.link_rounded;
+    return Icons.insert_drive_file_rounded;
+  }
+
+  Color _fileColor(Map f) {
+    if (f['is_image'] == true) return const Color(0xFF0EA5E9);
+    if (f['is_pdf'] == true) return Mgmt.red;
+    return widget.accent;
+  }
+
+  Future<void> _openDocFile(Map f) async {
+    final id = f['att_id'];
+    if (f['is_image'] == true && id != null) {
+      final url = _token == null ? '${f['att_url']}' : '${f['att_url']}?token=$_token';
+      Navigator.push(context, MaterialPageRoute(builder: (_) => MediaViewerScreen(
+          media: [{'url': url, 'name': f['name'], 'type': 'image'}], token: _token)));
+    } else if (id != null) {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+          path: '/management/attachment/$id', title: '${f['name']}', fileName: '${f['name']}')));
+    } else if (f['url'] != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${f['url']}')));
+    }
+  }
+
+  Widget _documentBlock() {
+    final doc = d['document'] as Map?;
+    if (doc == null) return const SizedBox.shrink();
+    final f = (doc['file'] as Map?) ?? const {};
+    final info = (doc['service_info'] as List?) ?? const [];
+    final fc = _fileColor(f);
+    final canOpen = f['att_id'] != null || f['url'] != null;
+    return Column(children: [
+      Container(
+        margin: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+            color: Colors.white, borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
+        child: Column(children: [
+          // image preview or file-type icon
+          if (f['is_image'] == true && f['att_id'] != null && _token != null)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network('${f['att_url']}?token=$_token',
+                  height: 180, width: double.infinity, fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Icon(_fileIcon(f), size: 64, color: fc)),
+            )
+          else
+            Container(
+              height: 120, width: double.infinity, alignment: Alignment.center,
+              decoration: BoxDecoration(color: fc.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
+              child: Icon(_fileIcon(f), size: 56, color: fc),
+            ),
+          const SizedBox(height: 12),
+          Text('${f['name'] ?? ''}', textAlign: TextAlign.center, maxLines: 3, overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: Mgmt.ink)),
+          if (canOpen) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity, height: 46,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(backgroundColor: fc, foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+                onPressed: () => _openDocFile(f),
+                icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                label: Text(tr('فتح الملف', 'Open file'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5)),
+              ),
+            ),
+          ],
+        ]),
+      ),
+      if (info.isNotEmpty)
+        _cardWrap([_sectionHead('🗂️', tr('بيانات الوثيقة', 'Document details')), _infoRows(info)]),
+    ]);
+  }
+
   Widget _reqinvBlock() {
     final ri = d['reqinv'] as Map?;
     if (ri == null) return const SizedBox.shrink();
@@ -3074,7 +3277,8 @@ class _DetailSheetState extends State<_DetailSheet> {
     final isVservice = d['vservice'] != null;
     final isLetter = d['letter'] != null;
     final isReqinv = d['reqinv'] != null;
-    final richDetail = isProposal || isTender || isOrder || isFleet || isCrm || isLeave || isExperience || isVservice || isLetter || isReqinv;
+    final isDocument = d['document'] != null;
+    final richDetail = isProposal || isTender || isOrder || isFleet || isCrm || isLeave || isExperience || isVservice || isLetter || isReqinv || isDocument;
     final amount = richDetail ? null : d['amount'];
     return DraggableScrollableSheet(
       expand: false, initialChildSize: 0.82, maxChildSize: 0.96, minChildSize: 0.45,
@@ -3138,6 +3342,7 @@ class _DetailSheetState extends State<_DetailSheet> {
           if (isVservice) _vserviceBlock(),
           if (isLetter) _letterBlock(),
           if (isReqinv) _reqinvBlock(),
+          if (isDocument) _documentBlock(),
           // ---- amount highlight
           if (amount != null)
             Container(
