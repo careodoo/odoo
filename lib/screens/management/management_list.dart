@@ -327,6 +327,7 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
                     if (r['ord'] != null) return _orderCard(r, currency);
                     if (r['exp'] != null) return _expenseCard(r);
                     if (r['fl'] != null) return _fleetCard(r);
+                    if (r['xp'] != null) return _experienceCard(r);
                     return _row(r);
                   },
                 );
@@ -1038,6 +1039,53 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
                     _tag('🛣️ ${(v['odometer'] as num).toStringAsFixed(0)} ${tr('كم', 'km')}', Mgmt.slate),
                   if (v['fuel'] != null) _tag('⛽ ${v['fuel']}', Mgmt.slate),
                   if (v['year'] != null) _tag('📆 ${v['year']}', Mgmt.slate),
+                ]),
+              ]),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  // ---- Experience / contracts -------------------------------------------
+  Widget _experienceCard(Map r) {
+    final x = (r['xp'] as Map?) ?? const {};
+    final exp = (x['expiry'] as Map?) ?? const {};
+    final expColor = mgmtHex('${exp['color'] ?? ''}', Mgmt.slate);
+    final days = (x['days_to_expiry'] as num?)?.toInt() ?? 0;
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _openDetail(r['id'] as int, '${r['title']}'),
+        child: Container(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.black12)),
+          child: Row(children: [
+            _logoBox('${x['logo_b64'] ?? ''}', '${x['partner'] ?? r['title']}', size: 46),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Expanded(child: Text('${x['partner'] ?? r['title']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Mgmt.ink))),
+                  mgmtStateChip(r),
+                ]),
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text('${r['title']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Mgmt.slate, fontSize: 10.5, fontWeight: FontWeight.w600)),
+                ),
+                const SizedBox(height: 5),
+                Wrap(spacing: 6, runSpacing: 4, children: [
+                  _tag('⏳ ${days >= 0 ? tr('متبقٍ $days يوم', '$days days left') : tr('منتهٍ', 'Expired')}', expColor),
+                  if ((x['renewed'] as num?) != null && (x['renewed'] as num) > 0)
+                    _tag('🔄 ${x['renewed']}', const Color(0xFFF59E0B)),
+                  if ((x['guarantees'] as num?) != null && (x['guarantees'] as num) > 0)
+                    _tag('🛡️ ${x['guarantees']}', Mgmt.slate),
+                  if (x['start'] != null) _tag('📅 ${'${x['start']}'.split(' ').first}', Mgmt.slate),
                 ]),
               ]),
             ),
@@ -2574,6 +2622,127 @@ class _DetailSheetState extends State<_DetailSheet> {
     ]);
   }
 
+  Future<void> _openExpLog(String code, String label) async {
+    setState(() => _busy = true);
+    Map<String, dynamic>? res;
+    try {
+      res = await context.read<AuthProvider>().api.managementExperienceLog(d['id'] as int, code);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Mgmt.red));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+    if (res == null || !mounted) return;
+    await _showLines(label, (res['lines'] as List?) ?? const []);
+  }
+
+  Widget _experienceBlock() {
+    final x = d['experience'] as Map?;
+    if (x == null) return const SizedBox.shrink();
+    final exp = (x['expiry'] as Map?) ?? const {};
+    final info = (x['service_info'] as List?) ?? const [];
+    final refs = (x['refs'] as List?) ?? const [];
+    final tabs = (x['tabs'] as List?) ?? const [];
+    final expColor = mgmtHex('${exp['color'] ?? ''}', Mgmt.slate);
+    final days = (x['days_to_expiry'] as num?)?.toInt() ?? 0;
+    return Column(children: [
+      // expiry + renewed banner
+      Container(
+        margin: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+            gradient: LinearGradient(
+                colors: [expColor.withValues(alpha: 0.12), expColor.withValues(alpha: 0.03)],
+                begin: Alignment.topRight, end: Alignment.bottomLeft),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: expColor.withValues(alpha: 0.25))),
+        child: Row(children: [
+          Icon(days >= 0 ? Icons.verified_rounded : Icons.error_rounded, color: expColor, size: 30),
+          const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(days >= 0 ? tr('متبقٍ على الانتهاء', 'Time to expiry') : tr('العقد منتهٍ', 'Contract expired'),
+                style: const TextStyle(color: Mgmt.slate, fontSize: 11.5, fontWeight: FontWeight.w700)),
+            Text(days >= 0 ? tr('$days يوم', '$days days') : tr('منذ ${-days} يوم', '${-days} days ago'),
+                style: TextStyle(color: expColor, fontWeight: FontWeight.w900, fontSize: 19)),
+          ])),
+          if (x['is_renewed'] == true)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(color: const Color(0xFFF59E0B).withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20)),
+              child: Text('🔄 ${tr('ممدّد', 'Renewed')}', style: const TextStyle(color: Color(0xFFB45309), fontSize: 11, fontWeight: FontWeight.w900)),
+            ),
+        ]),
+      ),
+      // source references (proposal / tender) — openable
+      if (refs.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+          child: Row(children: [
+            for (final ref in refs.cast<Map>()) ...[
+              Expanded(
+                child: Material(
+                  color: widget.accent.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(13),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(13),
+                    onTap: () => openManagementRecord(context, '${ref['key']}', ref['id'] as int, title: '${ref['name']}', accent: widget.accent),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(13), border: Border.all(color: widget.accent.withValues(alpha: 0.16))),
+                      child: Row(children: [
+                        Text('${ref['icon']} ', style: const TextStyle(fontSize: 17)),
+                        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                          Text(gLang == 'en' ? '${ref['en']}' : '${ref['ar']}', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: widget.accent)),
+                          Text('${ref['name']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10, color: Mgmt.slate)),
+                        ])),
+                        const Icon(Icons.chevron_left_rounded, size: 16, color: Mgmt.slate),
+                      ]),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ]),
+        ),
+      // renewals / guarantees / lines tabs
+      if (tabs.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+          child: Row(children: [
+            for (final tab in tabs.cast<Map>()) ...[
+              Expanded(
+                child: Material(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(13),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(13),
+                    onTap: ((tab['count'] as num?) ?? 0) > 0 && !_busy
+                        ? () => _openExpLog('${tab['code']}', gLang == 'en' ? '${tab['en']}' : '${tab['ar']}')
+                        : null,
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(13), border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
+                      child: Column(children: [
+                        Text('${tab['icon']}', style: const TextStyle(fontSize: 18)),
+                        const SizedBox(height: 3),
+                        Text('${tab['count']}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: widget.accent)),
+                        Text(gLang == 'en' ? '${tab['en']}' : '${tab['ar']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Mgmt.slate, fontSize: 9.5, fontWeight: FontWeight.w700)),
+                      ]),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ]),
+        ),
+      if (info.isNotEmpty)
+        _cardWrap([_sectionHead('📄', tr('بيانات العقد', 'Contract details')), _infoRows(info)]),
+    ]);
+  }
+
   @override
   Widget build(BuildContext context) {
     final actions = (d['actions'] as List?) ?? [];
@@ -2585,7 +2754,8 @@ class _DetailSheetState extends State<_DetailSheet> {
     final isFleet = d['fleet'] != null;
     final isCrm = d['crm'] != null;
     final isLeave = d['leave'] != null;
-    final richDetail = isProposal || isTender || isOrder || isFleet || isCrm || isLeave;
+    final isExperience = d['experience'] != null;
+    final richDetail = isProposal || isTender || isOrder || isFleet || isCrm || isLeave || isExperience;
     final amount = richDetail ? null : d['amount'];
     return DraggableScrollableSheet(
       expand: false, initialChildSize: 0.82, maxChildSize: 0.96, minChildSize: 0.45,
@@ -2645,6 +2815,7 @@ class _DetailSheetState extends State<_DetailSheet> {
           if (isFleet) _fleetBlock(),
           if (isCrm) _crmBlock(),
           if (isLeave) _leaveBlock(),
+          if (isExperience) _experienceBlock(),
           // ---- amount highlight
           if (amount != null)
             Container(

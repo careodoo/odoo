@@ -2090,6 +2090,11 @@ class ApiClient {
               _u('/management/$key/generic-create'),
               headers: await _headers(), body: jsonEncode(vals))))['data'] as Map);
 
+  /// An experience/contract's renewal / guarantee / line records.
+  Future<Map<String, dynamic>> managementExperienceLog(int id, String code) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/management/experience/$id/log/$code'), headers: await _headers())))['data'] as Map);
+
   /// A vehicle's log records (services / contracts / drivers / odometer).
   Future<Map<String, dynamic>> managementFleetLog(int id, String code) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
