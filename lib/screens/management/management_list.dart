@@ -1752,6 +1752,175 @@ class _DetailSheetState extends State<_DetailSheet> {
         child: Text('$icon $label', style: TextStyle(color: c, fontSize: 11.5, fontWeight: FontWeight.w800)),
       );
 
+  Widget _fleetBlock() {
+    final v = d['fleet'] as Map?;
+    if (v == null) return const SizedBox.shrink();
+    final specs = (v['service_info'] as List?) ?? (v['specs'] as List?) ?? const [];
+    final counts = (v['counts'] as List?) ?? const [];
+    final img = '${v['image_b64'] ?? ''}';
+    return Column(children: [
+      // photo banner + plate
+      Container(
+        margin: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(18), color: widget.accent.withValues(alpha: 0.06)),
+        child: Column(children: [
+          SizedBox(
+            height: 150, width: double.infinity,
+            child: img.isEmpty
+                ? Icon(Icons.directions_car_rounded, size: 60, color: widget.accent.withValues(alpha: 0.5))
+                : Image.memory(base64Decode(img), fit: BoxFit.cover, gaplessPlayback: true,
+                    errorBuilder: (_, __, ___) => Icon(Icons.directions_car_rounded, size: 60, color: widget.accent.withValues(alpha: 0.5))),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(children: [
+              if ('${v['plate'] ?? ''}'.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(color: Mgmt.ink, borderRadius: BorderRadius.circular(7)),
+                  child: Text('🔖 ${v['plate']}',
+                      style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: 2)),
+                ),
+              const Spacer(),
+              if (v['model'] != null)
+                Flexible(child: Text('${v['model']}', textAlign: TextAlign.end, maxLines: 2, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: Mgmt.ink))),
+            ]),
+          ),
+        ]),
+      ),
+      // count tiles
+      if (counts.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+          child: Row(children: [
+            for (final ct in counts.cast<Map>()) ...[
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  decoration: BoxDecoration(
+                      color: Colors.white, borderRadius: BorderRadius.circular(13),
+                      border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
+                  child: Column(children: [
+                    Text('${ct['icon']}', style: const TextStyle(fontSize: 18)),
+                    const SizedBox(height: 3),
+                    Text('${ct['count']}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: widget.accent)),
+                    Text(gLang == 'en' ? '${ct['en']}' : '${ct['ar']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Mgmt.slate, fontSize: 9.5, fontWeight: FontWeight.w700)),
+                  ]),
+                ),
+              ),
+            ],
+          ]),
+        ),
+      if (specs.isNotEmpty)
+        _cardWrap([_sectionHead('🚗', tr('مواصفات المركبة', 'Vehicle specs')), _infoRows(specs)]),
+    ]);
+  }
+
+  Widget _crmBlock() {
+    final c = d['crm'] as Map?;
+    if (c == null) return const SizedBox.shrink();
+    final h = (c['header'] as Map?) ?? const {};
+    final info = (c['service_info'] as List?) ?? const [];
+    final cur = '${h['currency'] ?? ''}';
+    final prob = (h['probability'] as num?)?.toDouble() ?? 0;
+    final stageColor = mgmtHex('${h['stage_color'] ?? ''}', widget.accent);
+    final probColor = prob >= 70 ? const Color(0xFF16A34A) : (prob >= 40 ? const Color(0xFFF59E0B) : Mgmt.slate);
+    return Column(children: [
+      Container(
+        margin: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+            gradient: LinearGradient(
+                colors: [widget.accent.withValues(alpha: 0.10), widget.accent.withValues(alpha: 0.03)],
+                begin: Alignment.topRight, end: Alignment.bottomLeft),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: widget.accent.withValues(alpha: 0.18))),
+        child: Row(children: [
+          Expanded(child: _kpiCell(tr('الإيراد المتوقع', 'Expected revenue'),
+              '${(h['expected'] as num?)?.toStringAsFixed(3) ?? '0'}${cur.isEmpty ? '' : ' $cur'}', widget.accent, big: true)),
+          Container(width: 1, height: 40, color: Colors.black.withValues(alpha: 0.08)),
+          const SizedBox(width: 12),
+          Column(mainAxisSize: MainAxisSize.min, children: [
+            _pctRing(prob, probColor),
+            const SizedBox(height: 4),
+            Text('${prob.toStringAsFixed(0)}%', style: TextStyle(color: probColor, fontWeight: FontWeight.w900, fontSize: 12)),
+          ]),
+        ]),
+      ),
+      if (h['stage'] != null)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                  color: stageColor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: stageColor.withValues(alpha: 0.34))),
+              child: Text('🎯 ${h['stage']}', style: TextStyle(color: stageColor, fontSize: 12, fontWeight: FontWeight.w800)),
+            ),
+          ),
+        ),
+      if (info.isNotEmpty)
+        _cardWrap([_sectionHead('📇', tr('بيانات الفرصة والتواصل', 'Opportunity & contact')), _infoRows(info)]),
+    ]);
+  }
+
+  Widget _leaveBlock() {
+    final lv = d['leave'] as Map?;
+    if (lv == null) return const SizedBox.shrink();
+    final info = (lv['service_info'] as List?) ?? const [];
+    final photo = '${lv['photo_b64'] ?? ''}';
+    return Column(children: [
+      Container(
+        margin: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+            gradient: LinearGradient(
+                colors: [widget.accent.withValues(alpha: 0.10), widget.accent.withValues(alpha: 0.03)],
+                begin: Alignment.topRight, end: Alignment.bottomLeft),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: widget.accent.withValues(alpha: 0.18))),
+        child: Row(children: [
+          if (photo.isNotEmpty)
+            ClipRRect(borderRadius: BorderRadius.circular(30),
+                child: Image.memory(base64Decode(photo), width: 54, height: 54, fit: BoxFit.cover, gaplessPlayback: true)),
+          if (photo.isNotEmpty) const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+            Text('${lv['employee'] ?? ''}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5, color: Mgmt.ink)),
+            if (lv['leave_type'] != null)
+              Padding(padding: const EdgeInsets.only(top: 2),
+                  child: Text('🌴 ${lv['leave_type']}', style: const TextStyle(color: Mgmt.slate, fontSize: 12, fontWeight: FontWeight.w600))),
+          ])),
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Text('${lv['days'] ?? 0}', style: TextStyle(color: widget.accent, fontWeight: FontWeight.w900, fontSize: 22)),
+            Text(tr('يوم', 'days'), style: const TextStyle(color: Mgmt.slate, fontSize: 10.5, fontWeight: FontWeight.w700)),
+          ]),
+        ]),
+      ),
+      Container(
+        margin: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+            color: Colors.white, borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
+        child: Row(children: [
+          Expanded(child: _dateChip('📅', tr('من', 'From'), '${lv['date_from'] ?? ''}'.split(' ').first)),
+          const Icon(Icons.arrow_forward_rounded, size: 16, color: Mgmt.slate),
+          Expanded(child: Align(alignment: AlignmentDirectional.centerEnd,
+              child: _dateChip('🏁', tr('إلى', 'To'), '${lv['date_to'] ?? ''}'.split(' ').first))),
+        ]),
+      ),
+      if (info.isNotEmpty)
+        _cardWrap([_sectionHead('📋', tr('تفاصيل الإجازة', 'Leave details')), _infoRows(info)]),
+    ]);
+  }
+
   @override
   Widget build(BuildContext context) {
     final actions = (d['actions'] as List?) ?? [];
@@ -1760,7 +1929,10 @@ class _DetailSheetState extends State<_DetailSheet> {
     final isProposal = d['proposal'] != null;
     final isTender = d['tender'] != null;
     final isOrder = d['order'] != null;
-    final richDetail = isProposal || isTender || isOrder;
+    final isFleet = d['fleet'] != null;
+    final isCrm = d['crm'] != null;
+    final isLeave = d['leave'] != null;
+    final richDetail = isProposal || isTender || isOrder || isFleet || isCrm || isLeave;
     final amount = richDetail ? null : d['amount'];
     return DraggableScrollableSheet(
       expand: false, initialChildSize: 0.82, maxChildSize: 0.96, minChildSize: 0.45,
@@ -1813,10 +1985,13 @@ class _DetailSheetState extends State<_DetailSheet> {
               ),
             ]),
           ),
-          // ---- proposals / tenders / orders: professional financial blocks
+          // ---- professional detail blocks per system
           if (isProposal) _proposalBlock(),
           if (isTender) _tenderBlock(),
           if (isOrder) _orderBlock(),
+          if (isFleet) _fleetBlock(),
+          if (isCrm) _crmBlock(),
+          if (isLeave) _leaveBlock(),
           // ---- amount highlight
           if (amount != null)
             Container(
