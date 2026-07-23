@@ -172,6 +172,7 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
                     if (widget.appKey == 'crm') return _crmCard(r, currency);
                     if (r['ord'] != null) return _orderCard(r, currency);
                     if (r['exp'] != null) return _expenseCard(r);
+                    if (r['fl'] != null) return _fleetCard(r);
                     return _row(r);
                   },
                 );
@@ -762,6 +763,72 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
               const SizedBox(height: 4),
               mgmtStateChip(r),
             ]),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  // ---- Fleet (vehicles) -------------------------------------------------
+  Widget _fleetCard(Map r) {
+    final v = (r['fl'] as Map?) ?? const {};
+    final stColor = mgmtHex('${v['state_color'] ?? ''}', const Color(0xFF16A34A));
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _openDetail(r['id'] as int, '${r['title']}'),
+        child: Container(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.black12)),
+          child: Row(children: [
+            SizedBox(
+              width: 56, height: 56,
+              child: '${v['image_b64'] ?? ''}'.isEmpty
+                  ? Container(
+                      decoration: BoxDecoration(
+                          color: widget.accent.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(11)),
+                      child: Icon(Icons.directions_car_rounded, color: widget.accent, size: 26))
+                  : ClipRRect(
+                      borderRadius: BorderRadius.circular(11),
+                      child: Image.memory(base64Decode('${v['image_b64']}'),
+                          width: 56, height: 56, fit: BoxFit.cover, gaplessPlayback: true,
+                          errorBuilder: (_, __, ___) => Icon(Icons.directions_car_rounded, color: widget.accent, size: 26))),
+            ),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Expanded(
+                    child: Text('${v['model'] ?? r['title']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Mgmt.ink)),
+                  ),
+                  if (r['state'] != null) mgmtStateChip(r),
+                ]),
+                if ('${v['plate'] ?? ''}'.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 3),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                          color: Mgmt.ink, borderRadius: BorderRadius.circular(5)),
+                      child: Text('🔖 ${v['plate']}',
+                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                    ),
+                  ),
+                const SizedBox(height: 5),
+                Wrap(spacing: 6, runSpacing: 4, children: [
+                  if (v['driver'] != null) _tag('🧑‍✈️ ${v['driver']}', const Color(0xFF16A34A))
+                  else _tag(tr('بدون سائق', 'No driver'), Mgmt.slate),
+                  if ((v['odometer'] as num?) != null && (v['odometer'] as num) > 0)
+                    _tag('🛣️ ${(v['odometer'] as num).toStringAsFixed(0)} ${tr('كم', 'km')}', Mgmt.slate),
+                  if (v['fuel'] != null) _tag('⛽ ${v['fuel']}', Mgmt.slate),
+                  if (v['year'] != null) _tag('📆 ${v['year']}', Mgmt.slate),
+                ]),
+              ]),
+            ),
           ]),
         ),
       ),
@@ -1612,6 +1679,79 @@ class _DetailSheetState extends State<_DetailSheet> {
     );
   }
 
+  Widget _orderBlock() {
+    final o = d['order'] as Map?;
+    if (o == null) return const SizedBox.shrink();
+    final h = (o['header'] as Map?) ?? const {};
+    final st = (o['status'] as Map?) ?? const {};
+    final info = (o['service_info'] as List?) ?? const [];
+    final cur = '${h['currency'] ?? ''}';
+    String m(dynamic v) => '${(v as num?)?.toStringAsFixed(3) ?? '0.000'}${cur.isEmpty ? '' : ' $cur'}';
+    final hasPaid = h['residual'] != null;
+    final residual = (h['residual'] as num?)?.toDouble() ?? 0;
+    return Column(children: [
+      Container(
+        margin: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+            gradient: LinearGradient(
+                colors: [widget.accent.withValues(alpha: 0.10), widget.accent.withValues(alpha: 0.03)],
+                begin: Alignment.topRight, end: Alignment.bottomLeft),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: widget.accent.withValues(alpha: 0.18))),
+        child: Column(children: [
+          Row(children: [
+            Expanded(child: _kpiCell(tr('الإجمالي', 'Total'), m(h['total']), widget.accent, big: true)),
+            Container(width: 1, height: 40, color: Colors.black.withValues(alpha: 0.08)),
+            const SizedBox(width: 10),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+              _miniKV(tr('قبل الضريبة', 'Untaxed'), m(h['untaxed'])),
+              const SizedBox(height: 4),
+              _miniKV(tr('الضريبة', 'Tax'), m(h['tax'])),
+            ])),
+          ]),
+          if (hasPaid) ...[
+            const Divider(height: 20),
+            Row(children: [
+              Expanded(child: _kpiCell(tr('المدفوع', 'Paid'), m(h['paid']), const Color(0xFF16A34A))),
+              Container(width: 1, height: 34, color: Colors.black.withValues(alpha: 0.08)),
+              const SizedBox(width: 10),
+              Expanded(child: _kpiCell(tr('المتبقّي', 'Residual'), m(h['residual']),
+                  residual > 0 ? Mgmt.red : const Color(0xFF16A34A))),
+            ]),
+          ],
+          if (st.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              if (st['inv_ar'] != null)
+                _statusPill('🧾', gLang == 'en' ? '${st['inv_en']}' : '${st['inv_ar']}', mgmtHex('${st['inv_color']}', Mgmt.slate)),
+              if (st['pay_label'] != null)
+                _statusPill('💳', '${st['pay_label']}', mgmtHex('${st['pay_color']}', Mgmt.slate)),
+            ]),
+          ],
+        ]),
+      ),
+      if (info.isNotEmpty)
+        _cardWrap([
+          _sectionHead('🏢', tr('بيانات الطرف والتفاصيل', 'Partner & details')),
+          _infoRows(info),
+        ]),
+    ]);
+  }
+
+  Widget _miniKV(String k, String v) => Row(children: [
+        Expanded(child: Text(k, style: const TextStyle(color: Mgmt.slate, fontSize: 11, fontWeight: FontWeight.w600))),
+        Text(v, style: const TextStyle(color: Mgmt.ink, fontSize: 12, fontWeight: FontWeight.w800)),
+      ]);
+
+  Widget _statusPill(String icon, String label, Color c) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+        decoration: BoxDecoration(
+            color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: c.withValues(alpha: 0.34))),
+        child: Text('$icon $label', style: TextStyle(color: c, fontSize: 11.5, fontWeight: FontWeight.w800)),
+      );
+
   @override
   Widget build(BuildContext context) {
     final actions = (d['actions'] as List?) ?? [];
@@ -1619,7 +1759,8 @@ class _DetailSheetState extends State<_DetailSheet> {
     final canEdit = d['can_edit'] == true;
     final isProposal = d['proposal'] != null;
     final isTender = d['tender'] != null;
-    final richDetail = isProposal || isTender;
+    final isOrder = d['order'] != null;
+    final richDetail = isProposal || isTender || isOrder;
     final amount = richDetail ? null : d['amount'];
     return DraggableScrollableSheet(
       expand: false, initialChildSize: 0.82, maxChildSize: 0.96, minChildSize: 0.45,
@@ -1672,9 +1813,10 @@ class _DetailSheetState extends State<_DetailSheet> {
               ),
             ]),
           ),
-          // ---- proposals / tenders: professional financial + service blocks
+          // ---- proposals / tenders / orders: professional financial blocks
           if (isProposal) _proposalBlock(),
           if (isTender) _tenderBlock(),
+          if (isOrder) _orderBlock(),
           // ---- amount highlight
           if (amount != null)
             Container(
