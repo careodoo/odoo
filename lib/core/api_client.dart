@@ -1775,6 +1775,12 @@ class ApiClient {
   Future<void> pmsSavedFilterDelete(int id) async =>
       _handle(await _net.post(_u('/pms/saved-filter/$id/delete'), headers: await _headers()));
 
+  /// Generic viewer for any notification's linked record (grouped fields + report).
+  Future<Map<String, dynamic>> pmsGenericRecord(String model, int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/record?model=${Uri.encodeQueryComponent(model)}&id=$id'),
+          headers: await _headers())))['data'] as Map);
+
   // ---- Fuel (prepaid cards / cash + receipt) ----
   Future<Map<String, dynamic>> pmsFuel(int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

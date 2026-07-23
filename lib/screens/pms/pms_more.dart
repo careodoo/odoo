@@ -5,6 +5,7 @@ import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import '../../core/widgets.dart';
 import '../../core/app_version.dart';
+import '../../core/account_deletion.dart';
 import '../notifications_screen.dart';
 import '../update_gate.dart';
 import '../pms/pms_employee_file.dart';
@@ -113,6 +114,8 @@ class PmsMoreScreen extends StatelessWidget {
             onTap: () => _about(context)),
         _tile(context, Icons.logout_rounded, tr('تسجيل الخروج', 'Sign out'), const Color(0xFFE11D48),
             danger: true, onTap: () => auth.logout()),
+        _tile(context, Icons.delete_forever_rounded, tr('حذف الحساب', 'Delete account'), const Color(0xFFB91C1C),
+            danger: true, onTap: () => showDeleteAccountFlow(context)),
 
         const SizedBox(height: 22),
         Center(child: Text('CARE', style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w900, letterSpacing: 2))),

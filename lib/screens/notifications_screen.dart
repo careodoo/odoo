@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/deeplink.dart';
+import 'generic_record_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -87,7 +88,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             if (mounted) setState(_load);
           }
           if (mounted) {
-            final opened = openActionUrl(context, n['action_url'] as String?);
+            var opened = openActionUrl(context, n['action_url'] as String?);
+            // fall back to the generic record viewer via res_model/res_id
+            if (!opened && n['res_model'] != null && n['res_id'] != null) {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => GenericRecordScreen(
+                  model: '${n['res_model']}', recordId: n['res_id'] as int, title: '${n['title']}')));
+              opened = true;
+            }
             if (!opened && mounted) {
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text(tr('لا سجل مرتبط بهذا الإشعار', 'No record linked to this notification')),

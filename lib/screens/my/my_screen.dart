@@ -6,6 +6,7 @@ import '../attendance_screen.dart';
 import '../pms/pms_section.dart';
 import '../pms/pms_employee_file.dart';
 import '../pdf_report_screen.dart';
+import '../../core/account_deletion.dart';
 
 /// The «My» module — the signed-in user's own hub: who they are, how they're
 /// doing, the services they can start, and their requests with live statuses.
@@ -110,7 +111,15 @@ class _MyScreenState extends State<MyScreen> {
         )
       else
         for (final r in requests) _requestCard(r),
-      const SizedBox(height: 30),
+      // Account controls — deletion must always be reachable (App Store 5.1.1v).
+      const SizedBox(height: 20),
+      Center(child: TextButton.icon(
+        onPressed: () => showDeleteAccountFlow(context),
+        icon: const Icon(Icons.delete_forever_rounded, size: 18, color: Color(0xFFB91C1C)),
+        label: Text(tr('حذف الحساب', 'Delete account'),
+            style: const TextStyle(color: Color(0xFFB91C1C), fontWeight: FontWeight.w800)),
+      )),
+      const SizedBox(height: 24),
     ]);
   }
 

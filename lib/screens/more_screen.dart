@@ -37,6 +37,7 @@ import 'valet_screen.dart';
 import 'hospitality_screen.dart';
 import 'hosp_suppliers_screen.dart';
 import 'update_gate.dart';
+import '../core/account_deletion.dart';
 
 /// A polished home for everything this user can reach — styled like the CARE 2
 /// CARE account page: a vibrant header, the systems rail (top icons) for
@@ -199,6 +200,8 @@ class MoreScreen extends StatelessWidget {
         onTap: () => _about(context));
     tile(Icons.logout_rounded, tr('تسجيل الخروج', 'Sign out'), null, c: _red, danger: true,
         onTap: () => context.read<AuthProvider>().logout());
+    tile(Icons.delete_forever_rounded, tr('حذف الحساب', 'Delete account'), null, c: const Color(0xFFB91C1C), danger: true,
+        onTap: () => showDeleteAccountFlow(context));
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F9),
