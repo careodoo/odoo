@@ -6,6 +6,7 @@ import '../../core/i18n.dart';
 import 'management_home.dart' show Mgmt;
 import 'management_list.dart' show mgmtHex, ManagementListScreen;
 import 'housing_hub_screen.dart';
+import '../excel_export.dart';
 
 /// Executive analytics dashboard — KPIs + charts across all management systems.
 class ManagementAnalyticsScreen extends StatefulWidget {
@@ -74,6 +75,15 @@ class _ManagementAnalyticsScreenState extends State<ManagementAnalyticsScreen> {
       appBar: AppBar(
         backgroundColor: Mgmt.red, foregroundColor: Colors.white, elevation: 0,
         title: Text('📈 ${tr('لوحة التحليلات', 'Analytics')}'),
+        actions: [
+          IconButton(
+            tooltip: tr('تصدير Excel', 'Export to Excel'),
+            icon: const Icon(Icons.file_download_outlined),
+            onPressed: () => exportExcelFile(context,
+                path: '/management/analytics/export?period=$_period&lang=$gLang',
+                fileName: 'analytics-$_period.xlsx'),
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async => _reload(),
