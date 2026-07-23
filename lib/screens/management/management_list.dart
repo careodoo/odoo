@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/auth.dart';
@@ -164,7 +165,10 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
                       ]);
                     }
                     final r = rows[i - 1] as Map;
-                    return _isProposals ? _proposalCard(r, currency) : _row(r);
+                    if (_isProposals) return _proposalCard(r, currency);
+                    if (widget.appKey == 'tenders') return _tenderCard(r, currency);
+                    if (widget.appKey == 'employees') return _employeeCard(r);
+                    return _row(r);
                   },
                 );
               },
@@ -377,6 +381,168 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
     _reload();
     // open the fresh quotation straight away
     await _openDetail(created['id'] as int, '${created['title'] ?? ''}');
+  }
+
+  // ---- Tenders: logo + countdown + rich card ----------------------------
+  Widget _logoBox(String? b64, String fallbackText, {double size = 46}) {
+    Widget fb() => Container(
+        width: size, height: size,
+        decoration: BoxDecoration(
+            color: widget.accent.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(11)),
+        alignment: Alignment.center,
+        child: Text(fallbackText.trim().isEmpty ? '?' : fallbackText.trim().characters.first,
+            style: TextStyle(color: widget.accent, fontWeight: FontWeight.w900, fontSize: size * 0.4)));
+    if (b64 == null || b64.isEmpty) return fb();
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(11),
+      child: Image.memory(base64Decode(b64),
+          width: size, height: size, fit: BoxFit.cover, gaplessPlayback: true,
+          errorBuilder: (_, __, ___) => fb()),
+    );
+  }
+
+  Widget _tenderCard(Map r, String currency) {
+    final tn = (r['tn'] as Map?) ?? const {};
+    final cur = '${tn['currency'] ?? currency}';
+    final money = cur.isEmpty ? '' : ' $cur';
+    final dl = (tn['deadline'] as Map?) ?? const {};
+    final dlColor = mgmtHex('${dl['color'] ?? ''}', Mgmt.slate);
+    final prob = (tn['win_probability'] as num?)?.toDouble() ?? 0;
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => _openDetail(r['id'] as int, '${r['title']}'),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 11),
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.black12)),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              _logoBox('${tn['logo_b64'] ?? ''}', '${tn['organization'] ?? r['title']}'),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('${tn['organization'] ?? r['title']}',
+                      maxLines: 2, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Mgmt.ink, height: 1.25)),
+                  if ('${tn['tender_no'] ?? ''}'.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text('#️⃣ ${tn['tender_no']}',
+                          maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Mgmt.slate, fontSize: 10.5, fontWeight: FontWeight.w600)),
+                    ),
+                ]),
+              ),
+              mgmtStateChip(r),
+            ]),
+            const Divider(height: 15),
+            Row(children: [
+              // deadline countdown
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+                  decoration: BoxDecoration(
+                      color: dlColor.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: dlColor.withValues(alpha: 0.30))),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon((dl['urgent'] == true) ? Icons.timer_rounded : Icons.event_available_rounded, size: 14, color: dlColor),
+                    const SizedBox(width: 5),
+                    Flexible(child: Text(gLang == 'en' ? '${dl['en']}' : '${dl['ar']}',
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: dlColor, fontSize: 11, fontWeight: FontWeight.w800))),
+                  ]),
+                ),
+              ),
+              const SizedBox(width: 8),
+              if ((tn['price'] as num?) != null && (tn['price'] as num) > 0)
+                Text('${(tn['price'] as num).toStringAsFixed(3)}$money',
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: widget.accent)),
+            ]),
+            const SizedBox(height: 8),
+            Wrap(spacing: 6, runSpacing: 6, children: [
+              if (tn['closing_date'] != null)
+                _tag('📅 ${'${tn['closing_date']}'.split(' ').first}', Mgmt.slate),
+              if ((tn['guarantee'] as num?) != null && (tn['guarantee'] as num) > 0)
+                _tag('🛡️ ${(tn['guarantee'] as num).toStringAsFixed(0)}$money', Mgmt.slate),
+              if (prob > 0)
+                _tag('📈 ${prob.toStringAsFixed(0)}%',
+                    prob >= 60 ? const Color(0xFF16A34A) : (prob >= 35 ? const Color(0xFFF59E0B) : Mgmt.slate)),
+              if ((tn['care_rank'] as num?) != null && (tn['care_rank'] as num) > 0)
+                _tag('🥇 ${tr('ترتيبنا', 'Rank')} ${tn['care_rank']}', widget.accent),
+              if (tn['winner'] != null)
+                _tag('🏆 ${tn['winner']}', const Color(0xFF16A34A)),
+            ]),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  // ---- Employees: photo + status + attendance ---------------------------
+  Widget _employeeCard(Map r) {
+    final e = (r['emp'] as Map?) ?? const {};
+    final attColor = mgmtHex('${e['attendance_color'] ?? ''}', Mgmt.slate);
+    final presColor = mgmtHex('${e['presence_color'] ?? ''}', Mgmt.slate);
+    final onDuty = '${e['attendance']}' == 'checked_in';
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _openDetail(r['id'] as int, '${r['title']}'),
+        child: Container(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.black12)),
+          child: Row(children: [
+            Stack(children: [
+              _logoBox('${e['photo_b64'] ?? ''}', '${r['title']}', size: 48),
+              if (onDuty)
+                Positioned(
+                  right: 0, bottom: 0,
+                  child: Container(
+                    width: 14, height: 14,
+                    decoration: BoxDecoration(
+                        color: const Color(0xFF16A34A), shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2)),
+                  ),
+                ),
+            ]),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('${r['title']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: Mgmt.ink)),
+                if (e['job'] != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 1),
+                    child: Text('${e['job']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Mgmt.slate, fontSize: 11.5, fontWeight: FontWeight.w600)),
+                  ),
+                if (e['department'] != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 1),
+                    child: Text('🏢 ${e['department']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Mgmt.slate, fontSize: 10)),
+                  ),
+                const SizedBox(height: 5),
+                Wrap(spacing: 6, runSpacing: 4, children: [
+                  _tag(gLang == 'en' ? '${e['attendance_en']}' : '${e['attendance_ar']}', attColor),
+                  _tag(gLang == 'en' ? '${e['presence_en']}' : '${e['presence_ar']}', presColor),
+                  if (e['employee_type'] != null) _tag('${e['employee_type']}', Mgmt.slate),
+                  if (e['active'] == false) _tag(tr('مؤرشف', 'Archived'), Mgmt.red),
+                ]),
+              ]),
+            ),
+            const Icon(Icons.chevron_left_rounded, color: Mgmt.slate),
+          ]),
+        ),
+      ),
+    );
   }
 
   Widget _avatar(Map r) => Container(
@@ -938,13 +1104,308 @@ class _DetailSheetState extends State<_DetailSheet> {
         ]),
       );
 
+  Widget _sectionHead(String icon, String title) => Container(
+        padding: const EdgeInsets.fromLTRB(14, 11, 14, 9),
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade100))),
+        child: Row(children: [
+          Text('$icon ', style: const TextStyle(fontSize: 14)),
+          Text(title, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: widget.accent)),
+        ]),
+      );
+
+  Widget _cardWrap(List<Widget> children) => Container(
+        margin: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+        decoration: BoxDecoration(
+            color: Colors.white, borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
+      );
+
+  Widget _infoRows(List info) => Padding(
+        padding: const EdgeInsets.fromLTRB(6, 4, 6, 8),
+        child: Column(children: [
+          for (final f in info.cast<Map>())
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('${f['icon'] ?? '•'}  ', style: const TextStyle(fontSize: 13)),
+                SizedBox(width: 108, child: Text(gLang == 'en' ? '${f['en']}' : '${f['ar']}',
+                    style: const TextStyle(color: Mgmt.slate, fontSize: 11.5))),
+                const SizedBox(width: 6),
+                Expanded(child: Text('${f['value']}',
+                    style: const TextStyle(color: Mgmt.ink, fontSize: 12.5, fontWeight: FontWeight.w700))),
+              ]),
+            ),
+        ]),
+      );
+
+  Future<void> _openTenderTab(String code, String label) async {
+    setState(() => _busy = true);
+    Map<String, dynamic>? res;
+    try {
+      res = await context.read<AuthProvider>().api.managementTenderTab(d['id'] as int, code);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Mgmt.red));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+    if (res == null || !mounted) return;
+    final lines = (res['lines'] as List?) ?? const [];
+    await showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => DraggableScrollableSheet(
+        expand: false, initialChildSize: 0.75, maxChildSize: 0.95, minChildSize: 0.4,
+        builder: (_, sc) => Column(children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(18, 14, 12, 12),
+            decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [widget.accent, widget.accent.withValues(alpha: 0.72)],
+                    begin: Alignment.topRight, end: Alignment.bottomLeft),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(22))),
+            child: Row(children: [
+              Expanded(child: Text('$label · ${lines.length}',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15))),
+              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded, color: Colors.white)),
+            ]),
+          ),
+          Expanded(
+            child: lines.isEmpty
+                ? Center(child: Text(tr('لا بيانات', 'No data'), style: const TextStyle(color: Mgmt.slate, fontWeight: FontWeight.w700)))
+                : ListView.separated(
+                    controller: sc, padding: const EdgeInsets.all(12),
+                    itemCount: lines.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (_, i) {
+                      final l = lines[i] as Map;
+                      final pairs = (l['pairs'] as List?) ?? const [];
+                      return Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                            color: Mgmt.bg, borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.black.withValues(alpha: 0.05))),
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text('${l['name']}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: Mgmt.ink)),
+                          if (pairs.isNotEmpty) const SizedBox(height: 6),
+                          for (final p in pairs.cast<Map>())
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 3),
+                              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                SizedBox(width: 120, child: Text('${p['label']}',
+                                    style: const TextStyle(color: Mgmt.slate, fontSize: 11))),
+                                const SizedBox(width: 6),
+                                Expanded(child: Text('${p['value']}',
+                                    style: TextStyle(
+                                        color: (p['type'] == 'float' || p['type'] == 'monetary') ? widget.accent : Mgmt.ink,
+                                        fontSize: 12, fontWeight: FontWeight.w700))),
+                              ]),
+                            ),
+                        ]),
+                      );
+                    },
+                  ),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Widget _tenderBlock() {
+    final t = d['tender'] as Map?;
+    if (t == null) return const SizedBox.shrink();
+    final h = (t['header'] as Map?) ?? const {};
+    final dates = (t['dates'] as Map?) ?? const {};
+    final info = (t['service_info'] as List?) ?? const [];
+    final tabs = (t['tabs'] as List?) ?? const [];
+    final prep = (t['prep'] as Map?) ?? const {};
+    final cur = '${h['currency'] ?? ''}';
+    String m(dynamic v) => '${(v as num?)?.toStringAsFixed(3) ?? '0.000'}${cur.isEmpty ? '' : ' $cur'}';
+    final dl = (dates['deadline'] as Map?) ?? const {};
+    final dlColor = mgmtHex('${dl['color'] ?? ''}', Mgmt.slate);
+    final prob = (h['win_probability'] as num?)?.toDouble() ?? 0;
+    final probColor = prob >= 60 ? const Color(0xFF16A34A) : (prob >= 35 ? const Color(0xFFF59E0B) : Mgmt.slate);
+    final prep1 = (prep['checklist_total'] as num?) ?? 0;
+    final prep2 = (prep['requirement_total'] as num?) ?? 0;
+
+    return Column(children: [
+      // financial KPI card
+      Container(
+        margin: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+            gradient: LinearGradient(
+                colors: [widget.accent.withValues(alpha: 0.10), widget.accent.withValues(alpha: 0.03)],
+                begin: Alignment.topRight, end: Alignment.bottomLeft),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: widget.accent.withValues(alpha: 0.18))),
+        child: Column(children: [
+          Row(children: [
+            Expanded(child: _kpiCell(tr('قيمة المناقصة', 'Tender value'), m(h['price']), widget.accent, big: true)),
+            if ((h['our_price'] as num?) != null && (h['our_price'] as num) > 0) ...[
+              Container(width: 1, height: 40, color: Colors.black.withValues(alpha: 0.08)),
+              const SizedBox(width: 10),
+              Expanded(child: _kpiCell(tr('سعرنا', 'Our price'), m(h['our_price']), Mgmt.ink, big: true)),
+            ],
+          ]),
+          const Divider(height: 20),
+          Row(children: [
+            Expanded(child: _kpiCell(tr('احتمالية الفوز', 'Win prob.'), '${prob.toStringAsFixed(0)}%', probColor)),
+            _pctRing(prob, probColor),
+            const SizedBox(width: 10),
+            Container(width: 1, height: 34, color: Colors.black.withValues(alpha: 0.08)),
+            const SizedBox(width: 10),
+            Expanded(child: _kpiCell(tr('الضمان', 'Guarantee'), m(h['guarantee']), Mgmt.ink)),
+          ]),
+          if ((h['price_gap'] as num?) != null && (h['price_gap'] as num) != 0) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
+              child: Row(children: [
+                Text('📊 ${tr('فارق السعر', 'Price gap')}', style: const TextStyle(color: Mgmt.slate, fontSize: 11, fontWeight: FontWeight.w700)),
+                const Spacer(),
+                Text('${m(h['price_gap'])}  ·  ${(h['price_gap_pct'] as num?)?.toStringAsFixed(1) ?? '0'}%',
+                    style: const TextStyle(color: Mgmt.ink, fontSize: 11.5, fontWeight: FontWeight.w800)),
+              ]),
+            ),
+          ],
+        ]),
+      ),
+      // dates & deadline strip
+      Container(
+        margin: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+            color: Colors.white, borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
+        child: Wrap(spacing: 14, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
+          if (dates['issue_date'] != null) _dateChip('📢', tr('الطرح', 'Issued'), '${dates['issue_date']}'.split(' ').first),
+          if (dates['closing_date'] != null) _dateChip('⏰', tr('الإغلاق', 'Closing'), '${dates['closing_date']}'.split(' ').first),
+          if (dates['meeting_date'] != null) _dateChip('🤝', tr('الاجتماع', 'Meeting'), '${dates['meeting_date']}'.split(' ').first),
+          if ((dates['period'] as num?) != null && (dates['period'] as num) > 0)
+            _dateChip('🗓️', tr('المدة', 'Period'), '${dates['period']} ${tr('شهر', 'mo')}'),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+            decoration: BoxDecoration(
+                color: dlColor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: dlColor.withValues(alpha: 0.34))),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon((dl['urgent'] == true) ? Icons.timer_rounded : Icons.event_available_rounded, size: 13, color: dlColor),
+              const SizedBox(width: 5),
+              Text(gLang == 'en' ? '${dl['en']}' : '${dl['ar']}',
+                  style: TextStyle(color: dlColor, fontSize: 10.5, fontWeight: FontWeight.w800)),
+            ]),
+          ),
+        ]),
+      ),
+      // preparation progress
+      if (prep1 > 0 || prep2 > 0)
+        Container(
+          margin: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          decoration: BoxDecoration(
+              color: Colors.white, borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
+          child: Row(children: [
+            if (prep1 > 0)
+              Expanded(child: _progressLine('✅ ${tr('التحضير', 'Checklist')}',
+                  (prep['checklist_pct'] as num?)?.toDouble() ?? 0, '${prep['checklist_done']}/${prep['checklist_total']}')),
+            if (prep1 > 0 && prep2 > 0) const SizedBox(width: 16),
+            if (prep2 > 0)
+              Expanded(child: _progressLine('📋 ${tr('المتطلبات', 'Requirements')}',
+                  (prep['requirement_pct'] as num?)?.toDouble() ?? 0, '${prep['requirement_ready']}/${prep['requirement_total']}')),
+          ]),
+        ),
+      // tab tiles (backend tabs: price analysis, manpower, …)
+      if (tabs.isNotEmpty)
+        _cardWrap([
+          _sectionHead('🗂️', tr('التبويبات والتحليلات', 'Tabs & analysis')),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
+            child: Wrap(spacing: 9, runSpacing: 9, children: [
+              for (final tab in tabs.cast<Map>()) _tabTile(tab),
+            ]),
+          ),
+        ]),
+      // organization & tender info
+      if (info.isNotEmpty)
+        _cardWrap([
+          _sectionHead('🏢', tr('بيانات الجهة والمناقصة', 'Organization & tender')),
+          _infoRows(info),
+        ]),
+    ]);
+  }
+
+  Widget _progressLine(String label, double pct, String frac) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Expanded(child: Text(label, style: const TextStyle(color: Mgmt.ink, fontSize: 11.5, fontWeight: FontWeight.w800))),
+            Text(frac, style: const TextStyle(color: Mgmt.slate, fontSize: 10.5, fontWeight: FontWeight.w700)),
+          ]),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+                value: (pct.clamp(0, 100)) / 100.0, minHeight: 7,
+                backgroundColor: widget.accent.withValues(alpha: 0.12),
+                valueColor: AlwaysStoppedAnimation(widget.accent)),
+          ),
+        ],
+      );
+
+  Widget _tabTile(Map tab) {
+    final count = (tab['count'] as num?)?.toInt() ?? 0;
+    final enabled = count > 0;
+    final label = gLang == 'en' ? '${tab['en']}' : '${tab['ar']}';
+    return SizedBox(
+      width: (MediaQuery.of(context).size.width - 28 - 20 - 18) / 3,
+      child: Opacity(
+        opacity: enabled ? 1 : 0.5,
+        child: Material(
+          color: widget.accent.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(13),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(13),
+            onTap: enabled && !_busy ? () => _openTenderTab('${tab['code']}', label) : null,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+              decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(13),
+                  border: Border.all(color: widget.accent.withValues(alpha: 0.16))),
+              child: Column(children: [
+                Stack(clipBehavior: Clip.none, children: [
+                  Text('${tab['icon']}', style: const TextStyle(fontSize: 22)),
+                  if (count > 0)
+                    Positioned(
+                      right: -10, top: -6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(color: widget.accent, borderRadius: BorderRadius.circular(10)),
+                        child: Text('$count', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
+                      ),
+                    ),
+                ]),
+                const SizedBox(height: 7),
+                Text(label, maxLines: 2, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Mgmt.ink, height: 1.15)),
+              ]),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final actions = (d['actions'] as List?) ?? [];
     final sections = (d['sections'] as List?) ?? [];
     final canEdit = d['can_edit'] == true;
     final isProposal = d['proposal'] != null;
-    final amount = isProposal ? null : d['amount'];
+    final isTender = d['tender'] != null;
+    final richDetail = isProposal || isTender;
+    final amount = richDetail ? null : d['amount'];
     return DraggableScrollableSheet(
       expand: false, initialChildSize: 0.82, maxChildSize: 0.96, minChildSize: 0.45,
       builder: (_, sc) => Stack(children: [
@@ -996,8 +1457,9 @@ class _DetailSheetState extends State<_DetailSheet> {
               ),
             ]),
           ),
-          // ---- proposals: professional financial + service blocks
+          // ---- proposals / tenders: professional financial + service blocks
           if (isProposal) _proposalBlock(),
+          if (isTender) _tenderBlock(),
           // ---- amount highlight
           if (amount != null)
             Container(
@@ -1046,10 +1508,10 @@ class _DetailSheetState extends State<_DetailSheet> {
           _reportsCard(),
           // ---- line items
           _linesCard(),
-          // ---- professional grouped sections (proposal block replaces these)
-          if (!isProposal) for (final s in sections) _sectionCard(s as Map),
+          // ---- professional grouped sections (rich blocks replace these)
+          if (!richDetail) for (final s in sections) _sectionCard(s as Map),
           // fallback flat list if the server sent no sections
-          if (!isProposal && sections.isEmpty)
+          if (!richDetail && sections.isEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
               child: Column(children: [

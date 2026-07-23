@@ -2001,6 +2001,11 @@ class ApiClient {
               _u('/management/proposals/create'),
               headers: await _headers(), body: jsonEncode(vals))))['data'] as Map);
 
+  /// One tender tab's line items (price analysis, manpower, requirements, …).
+  Future<Map<String, dynamic>> managementTenderTab(int id, String code) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/management/tenders/$id/tab/$code'), headers: await _headers())))['data'] as Map);
+
   // ---- «My» self-service hub ----------------------------------------------
   Future<Map<String, dynamic>> myHub() async =>
       Map<String, dynamic>.from((await _handle(
