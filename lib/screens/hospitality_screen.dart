@@ -359,108 +359,83 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
   /// sits on it — the way a printed menu or a delivery app presents a dish.
   /// The old row was an emoji in a tinted square, which told you nothing about
   /// what arrives.
+  // Simplified, release-safe layout: no Stack/StackFit.expand, no
+  // CrossAxisAlignment.stretch, no Expanded inside a stretched Row, no
+  // Image.network — the constructs that were blanking the whole card in
+  // release builds. An emoji tile + a min-height column always paints.
   Widget _itemCard(Map i) {
     final servable = i['servable'] == true;
-    final img = '${i['image'] ?? ''}';
     final cost = numOf(i['cost']);
-    return Opacity(
-      opacity: servable ? 1 : 0.55,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+    final icon = '${i['icon'] ?? '☕'}';
+    final desc = '${i['description'] ?? ''}';
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      child: Opacity(
+        opacity: servable ? 1 : 0.6,
         child: Material(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           child: InkWell(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
             onTap: servable ? () => _configure(i) : null,
             child: Container(
+              padding: const EdgeInsets.all(11),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: Colors.grey.shade200),
               ),
-              clipBehavior: Clip.antiAlias,
-              child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                SizedBox(
-                  width: 104, height: 104,
-                  child: Stack(fit: StackFit.expand, children: [
-                    if (img.isNotEmpty)
-                      Image.network(img, fit: BoxFit.cover,
-                          loadingBuilder: (c, w, p) => p == null
-                              ? w
-                              : Container(color: _brown.withValues(alpha: 0.06)),
-                          errorBuilder: (c, e, st) => _imgFallback(i))
-                    else
-                      _imgFallback(i),
-                    if (!servable)
-                      Container(
-                        color: Colors.black.withValues(alpha: 0.42),
-                        alignment: Alignment.center,
-                        child: Padding(
-                          padding: const EdgeInsets.all(6),
-                          child: Text(
-                              '${_hhmm(i['serve_from'])}–${_hhmm(i['serve_to'])}',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w900)),
-                        ),
-                      ),
-                  ]),
+              child: Row(children: [
+                Container(
+                  width: 54, height: 54, alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                      color: _brown.withValues(alpha: 0.09),
+                      borderRadius: BorderRadius.circular(12)),
+                  child: Text(icon, style: const TextStyle(fontSize: 26)),
                 ),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 11, 10, 11),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text('${i['name']}',
-                            maxLines: 1, overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 15,
-                                color: _navy)),
-                        if (i['description'] != null) ...[
-                          const SizedBox(height: 3),
-                          Text('${i['description']}',
-                              maxLines: 2, overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                  fontSize: 11.5,
-                                  height: 1.35,
-                                  color: Colors.grey.shade600)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('${i['name'] ?? ''}',
+                          maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5, color: _navy)),
+                      if (desc.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(desc, maxLines: 1, overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600)),
+                        ),
+                      const SizedBox(height: 5),
+                      Row(children: [
+                        Text(
+                            cost > 0
+                                ? '${cost.toStringAsFixed(3)} ${tr('د.ك', 'KWD')}'
+                                : tr('بلا تكلفة', 'No charge'),
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: _brown)),
+                        const SizedBox(width: 8),
+                        Icon(Icons.schedule_rounded, size: 12, color: Colors.grey.shade500),
+                        const SizedBox(width: 3),
+                        Text('${intOf(i['prep_minutes'], 5)} ${tr('د', 'm')}',
+                            style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                        if (!servable) ...[
+                          const SizedBox(width: 8),
+                          Flexible(child: Text(
+                              '${_hhmm(i['serve_from'])}–${_hhmm(i['serve_to'])}',
+                              maxLines: 1, overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: Color(0xFFB45309)))),
                         ],
-                        const SizedBox(height: 7),
-                        Row(children: [
-                          Text(
-                              cost > 0
-                                  ? '${cost.toStringAsFixed(3)} ${tr('د.ك', 'KWD')}'
-                                  : tr('بلا تكلفة', 'No charge'),
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 13,
-                                  color: _brown)),
-                          const SizedBox(width: 9),
-                          Icon(Icons.schedule_rounded,
-                              size: 13, color: Colors.grey.shade500),
-                          const SizedBox(width: 3),
-                          Text('${intOf(i['prep_minutes'], 5)} ${tr('د', 'm')}',
-                              style: TextStyle(
-                                  fontSize: 11.5, color: Colors.grey.shade600)),
-                          const Spacer(),
-                          if (servable)
-                            Container(
-                              width: 30, height: 30,
-                              decoration: BoxDecoration(
-                                  color: _brown, borderRadius: BorderRadius.circular(9)),
-                              child: const Icon(Icons.add_rounded,
-                                  color: Colors.white, size: 19),
-                            ),
-                        ]),
-                      ],
-                    ),
+                      ]),
+                    ],
                   ),
                 ),
+                if (servable)
+                  Container(
+                    width: 32, height: 32,
+                    decoration: BoxDecoration(color: _brown, borderRadius: BorderRadius.circular(9)),
+                    child: const Icon(Icons.add_rounded, color: Colors.white, size: 19),
+                  ),
               ]),
             ),
           ),
@@ -468,14 +443,6 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
       ),
     );
   }
-
-  /// No photo yet: the item's own emoji on its category tint still reads as a
-  /// menu, where a broken-image glyph would not.
-  Widget _imgFallback(Map i) => Container(
-        color: _brown.withValues(alpha: 0.09),
-        alignment: Alignment.center,
-        child: Text('${i['icon'] ?? '☕'}', style: const TextStyle(fontSize: 34)),
-      );
 
   String _hhmm(dynamic v) {
     final d = dblOf(v, 0.0);
