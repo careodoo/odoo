@@ -9,6 +9,7 @@ import '../pms/pms_employee_file.dart';
 import '../pdf_report_screen.dart';
 import '../excel_export.dart';
 import '../media_viewer_screen.dart';
+import 'management_analytics.dart';
 
 /// Parse a `#RRGGBB` string into a Color (falls back to slate).
 Color mgmtHex(String? hex, [Color fallback = Mgmt.slate]) {
@@ -144,6 +145,72 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
       ),
     );
   }
+
+  // Horizontal row of employee sub-module icons + a full-stats shortcut.
+  static const List<(String, String, String, String, int)> _empModules = [
+    ('attendance', '⏱️', 'الحضور', 'Attendance', 0xFF2563EB),
+    ('leaves', '🌴', 'الإجازات', 'Leaves', 0xFF0891B2),
+    ('hr_allowances', '💵', 'البدلات', 'Allowances', 0xFF0D9488),
+    ('hr_loans', '💰', 'السُّلف', 'Loans', 0xFF7C3AED),
+    ('hr_bonuses', '🎁', 'المكافآت', 'Bonuses', 0xFFF59E0B),
+    ('hr_penalties', '⚠️', 'الجزاءات', 'Penalties', 0xFFE5484D),
+    ('hr_eos', '🏁', 'إنهاء الخدمة', 'End of service', 0xFFB91C1C),
+    ('hr_permissions', '🕒', 'الاستئذانات', 'Permissions', 0xFF6D28D9),
+    ('hr_custody', '🧰', 'العهد', 'Custody', 0xFF9A3412),
+    ('correspondence', '✉️', 'المراسلات', 'Letters', 0xFF8B5CF6),
+  ];
+
+  Widget _employeeModulesRow() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
+      child: SizedBox(
+        height: 76,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          children: [
+            _empModTile('__stats', '📈', tr('الإحصائيات', 'Analytics'), Mgmt.red, isStats: true),
+            for (final m in _empModules)
+              _empModTile(m.$1, m.$2, gLang == 'en' ? m.$4 : m.$3, Color(m.$5)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _empModTile(String key, String icon, String label, Color c, {bool isStats = false}) => SizedBox(
+        width: 72,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () {
+              if (isStats) {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const ManagementAnalyticsScreen()));
+              } else {
+                final m = _empModules.firstWhere((e) => e.$1 == key);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => ManagementListScreen(
+                    appKey: key, title: gLang == 'en' ? m.$4 : m.$3, icon: icon, accent: c)));
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Container(
+                  width: 42, height: 42, alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                      color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(13),
+                      border: Border.all(color: c.withValues(alpha: 0.2))),
+                  child: Text(icon, style: const TextStyle(fontSize: 20)),
+                ),
+                const SizedBox(height: 4),
+                Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: isStats ? Mgmt.red : Mgmt.ink)),
+              ]),
+            ),
+          ),
+        ),
+      );
 
   Widget _attFilterBar() {
     final depts = (((_last?['filters'] as Map?)?['departments'] as List?) ?? const []).cast<Map>();
@@ -415,6 +482,7 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
           ),
         ),
         if (_isEmployees) _employeeFilterBar(),
+        if (_isEmployees) _employeeModulesRow(),
         if (widget.appKey == 'attendance') _attFilterBar(),
         if (widget.appKey == 'files') _docFilterBar(),
         if ((_last?['state_filters'] as List?)?.isNotEmpty == true) _stateFilterBar(),
