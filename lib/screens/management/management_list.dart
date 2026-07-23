@@ -78,6 +78,13 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
     setState(() => _f = fut);
   }
 
+  Future<void> _export() async {
+    final q = _q.isEmpty ? '' : '&q=${Uri.encodeQueryComponent(_q)}';
+    await exportExcelFile(context,
+        path: '/management/${widget.appKey}/export?lang=$gLang$q',
+        fileName: '${widget.appKey}.xlsx');
+  }
+
   void _onSearch(String v) {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 420), () {
@@ -106,6 +113,12 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
           Text('${widget.icon} '),
           Expanded(child: Text(widget.title, overflow: TextOverflow.ellipsis)),
         ]),
+        actions: [
+          IconButton(
+            tooltip: tr('تصدير Excel', 'Export to Excel'),
+            icon: const Icon(Icons.file_download_outlined),
+            onPressed: _export),
+        ],
       ),
       body: Column(children: [
         Container(
