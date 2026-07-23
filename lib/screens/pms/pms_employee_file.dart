@@ -226,6 +226,10 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
   static const List<(String, String, IconData, Color, String)> _secDefs = [
     ('attendance', 'الحضور والانصراف', Icons.schedule_rounded, Color(0xFF2563EB), 'attendance'),
     ('leaves', 'الإجازات', Icons.beach_access_rounded, Color(0xFF0891B2), 'leaves'),
+    ('allowances', 'البدلات', Icons.payments_rounded, Color(0xFF0D9488), 'allowances'),
+    ('eos', 'إنهاء الخدمة', Icons.logout_rounded, Color(0xFFB91C1C), 'eos'),
+    ('permissions', 'الاستئذانات', Icons.access_time_rounded, Color(0xFF6D28D9), 'permissions'),
+    ('custody', 'العهد', Icons.inventory_2_rounded, Color(0xFF9A3412), 'custody'),
     ('transfers', 'الانتقالات', Icons.swap_horiz_rounded, Color(0xFF7C3AED), 'transfers'),
     ('documents', 'المستندات والصور', Icons.folder_shared_rounded, Color(0xFFB45309), 'documents'),
     ('docs', 'طلبات المستندات', Icons.description_rounded, Color(0xFF8B5CF6), 'docs'),
@@ -658,6 +662,10 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
   static const Map<String, String> _subCreateModel = {
     'bonuses': 'bonus.request',
     'penalties': 'penalty.request',
+    'allowances': 'care.allowance',
+    'eos': 'care.eos',
+    'permissions': 'permission.request',
+    'custody': 'care.custody',
   };
 
   Future<void> _empSubCreate(String model) async {
