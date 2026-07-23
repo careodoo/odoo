@@ -8,6 +8,7 @@ import 'management_home.dart' show Mgmt;
 import '../pms/pms_employee_file.dart';
 import '../pdf_report_screen.dart';
 import '../excel_export.dart';
+import '../media_viewer_screen.dart';
 
 /// Parse a `#RRGGBB` string into a Color (falls back to slate).
 Color mgmtHex(String? hex, [Color fallback = Mgmt.slate]) {
@@ -931,6 +932,15 @@ class _DetailSheet extends StatefulWidget {
 class _DetailSheetState extends State<_DetailSheet> {
   late Map<String, dynamic> d = widget.initial;
   bool _busy = false;
+  String? _token;
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<AuthProvider>().api.token.then((t) {
+      if (mounted) setState(() => _token = t);
+    });
+  }
 
   Future<void> _run(Map a) async {
     if (a['confirm'] == true) {
@@ -1048,6 +1058,74 @@ class _DetailSheetState extends State<_DetailSheet> {
           path: path, title: gLang == 'en' ? '${r['en']}' : '${r['ar']}',
           fileName: '${widget.appKey}-${d['id']}.pdf')));
     }
+  }
+
+  // ---- Attachments (chatter + direct): openable, zoomable, shareable ----
+  String _attUrl(Map a) => _token == null ? '${a['url']}' : '${a['url']}?token=$_token';
+
+  Future<void> _openAttachment(Map a, List<Map> images) async {
+    if (a['is_image'] == true) {
+      final media = images.map((m) => {'url': _attUrl(m), 'name': m['name'], 'type': 'image'}).toList();
+      final idx = images.indexWhere((m) => m['id'] == a['id']);
+      Navigator.push(context, MaterialPageRoute(
+          builder: (_) => MediaViewerScreen(media: media, index: idx < 0 ? 0 : idx, token: _token)));
+    } else if (a['is_pdf'] == true) {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+          path: '/management/attachment/${a['id']}', title: '${a['name']}', fileName: '${a['name']}')));
+    } else {
+      // other file types: open the download/share viewer
+      Navigator.push(context, MaterialPageRoute(builder: (_) => MediaViewerScreen(
+          media: [{'url': _attUrl(a), 'name': a['name'], 'type': a['mimetype']}], token: _token)));
+    }
+  }
+
+  Widget _attachmentTile(Map a, List<Map> images) {
+    final isImg = a['is_image'] == true;
+    final isPdf = a['is_pdf'] == true;
+    return SizedBox(
+      width: 96,
+      child: Column(children: [
+        Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => _openAttachment(a, images),
+            child: Container(
+              width: 96, height: 84,
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+                  color: Mgmt.bg),
+              child: isImg && _token != null
+                  ? Image.network(_attUrl(a), fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.image_rounded, color: Mgmt.slate)))
+                  : Center(child: Icon(isPdf ? Icons.picture_as_pdf_rounded : Icons.insert_drive_file_rounded,
+                      size: 30, color: isPdf ? Mgmt.red : widget.accent)),
+            ),
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text('${a['name']}', maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 9.5, color: Mgmt.slate, fontWeight: FontWeight.w600)),
+      ]),
+    );
+  }
+
+  Widget _attachmentsCard() {
+    final atts = ((d['attachments'] as List?) ?? const []).cast<Map>();
+    if (atts.isEmpty) return const SizedBox.shrink();
+    final images = atts.where((a) => a['is_image'] == true).toList();
+    return _cardWrap([
+      _sectionHead('📎', '${tr('المرفقات', 'Attachments')} (${atts.length})'),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
+        child: Wrap(spacing: 10, runSpacing: 10, children: [
+          for (final a in atts) _attachmentTile(a, images),
+        ]),
+      ),
+    ]);
   }
 
   Widget _reportsCard() {
@@ -1459,7 +1537,24 @@ class _DetailSheetState extends State<_DetailSheet> {
       if (mounted) setState(() => _busy = false);
     }
     if (res == null || !mounted) return;
-    final lines = (res['lines'] as List?) ?? const [];
+    await _showLines(label, (res['lines'] as List?) ?? const []);
+  }
+
+  Future<void> _openFleetLog(String code, String label) async {
+    setState(() => _busy = true);
+    Map<String, dynamic>? res;
+    try {
+      res = await context.read<AuthProvider>().api.managementFleetLog(d['id'] as int, code);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Mgmt.red));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+    if (res == null || !mounted) return;
+    await _showLines(label, (res['lines'] as List?) ?? const []);
+  }
+
+  Future<void> _showLines(String label, List lines) async {
     await showModalBottomSheet(
       context: context, isScrollControlled: true, backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
@@ -1990,6 +2085,7 @@ class _DetailSheetState extends State<_DetailSheet> {
     if (v == null) return const SizedBox.shrink();
     final specs = (v['service_info'] as List?) ?? (v['specs'] as List?) ?? const [];
     final counts = (v['counts'] as List?) ?? const [];
+    final contract = v['contract'] as Map?;
     final img = '${v['image_b64'] ?? ''}';
     return Column(children: [
       // photo banner + plate
@@ -2023,26 +2119,56 @@ class _DetailSheetState extends State<_DetailSheet> {
           ),
         ]),
       ),
-      // count tiles
+      // contract expiry chip
+      if (contract != null && contract['expiry'] != null)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+                color: mgmtHex('${contract['color']}', Mgmt.slate).withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: mgmtHex('${contract['color']}', Mgmt.slate).withValues(alpha: 0.3))),
+            child: Row(children: [
+              Icon(Icons.event_available_rounded, size: 17, color: mgmtHex('${contract['color']}', Mgmt.slate)),
+              const SizedBox(width: 8),
+              Expanded(child: Text(tr('انتهاء العقد', 'Contract expiry'),
+                  style: const TextStyle(color: Mgmt.ink, fontSize: 12, fontWeight: FontWeight.w700))),
+              Text('${'${contract['expiry']}'.split(' ').first}  ·  ${contract['days']} ${tr('يوم', 'd')}',
+                  style: TextStyle(color: mgmtHex('${contract['color']}', Mgmt.slate), fontSize: 12, fontWeight: FontWeight.w900)),
+            ]),
+          ),
+        ),
+      // count tiles (tappable → the vehicle's log records)
       if (counts.isNotEmpty)
         Padding(
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
           child: Row(children: [
             for (final ct in counts.cast<Map>()) ...[
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  decoration: BoxDecoration(
-                      color: Colors.white, borderRadius: BorderRadius.circular(13),
-                      border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
-                  child: Column(children: [
-                    Text('${ct['icon']}', style: const TextStyle(fontSize: 18)),
-                    const SizedBox(height: 3),
-                    Text('${ct['count']}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: widget.accent)),
-                    Text(gLang == 'en' ? '${ct['en']}' : '${ct['ar']}', maxLines: 1, overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Mgmt.slate, fontSize: 9.5, fontWeight: FontWeight.w700)),
-                  ]),
+                child: Material(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(13),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(13),
+                    onTap: ((ct['count'] as num?) ?? 0) > 0 && !_busy
+                        ? () => _openFleetLog('${ct['code']}', gLang == 'en' ? '${ct['en']}' : '${ct['ar']}')
+                        : null,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(13),
+                          border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
+                      child: Column(children: [
+                        Text('${ct['icon']}', style: const TextStyle(fontSize: 18)),
+                        const SizedBox(height: 3),
+                        Text('${ct['count']}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: widget.accent)),
+                        Text(gLang == 'en' ? '${ct['en']}' : '${ct['ar']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Mgmt.slate, fontSize: 9.5, fontWeight: FontWeight.w700)),
+                      ]),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -2270,6 +2396,7 @@ class _DetailSheetState extends State<_DetailSheet> {
             ]),
           ),
           // ---- reports (pdf viewer / xlsx download)
+          _attachmentsCard(),
           _reportsCard(),
           // ---- line items
           _linesCard(),

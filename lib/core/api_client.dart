@@ -2035,6 +2035,11 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/management/purchases/recipients'), headers: await _headers())))['data'] as Map);
 
+  /// A vehicle's log records (services / contracts / drivers / odometer).
+  Future<Map<String, dynamic>> managementFleetLog(int id, String code) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/management/fleet/$id/log/$code'), headers: await _headers())))['data'] as Map);
+
   Future<Map<String, dynamic>> managementPoSend(int id, {String? email}) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/management/purchases/$id/send'),
