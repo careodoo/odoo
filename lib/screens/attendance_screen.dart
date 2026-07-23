@@ -46,7 +46,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   void _load() => _future = context.read<AuthProvider>().api.clientAttendanceData(
-      period: _period, employeeId: _locked ? widget.lockEmployeeId : _employeeId, facilityId: _facilityId);
+      period: _period, employeeId: _locked ? widget.lockEmployeeId : _employeeId,
+      facilityId: _locked ? null : _facilityId, personal: _locked);
 
   Future<void> _loadPunch() async {
     try {
@@ -290,13 +291,15 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr('الحضور والانصراف', 'Attendance')),
+        title: Text(_locked ? tr('حضوري', 'My attendance') : tr('الحضور والانصراف', 'Attendance')),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.post_add_rounded),
-            tooltip: tr('إنشاء كشف ساعات', 'Create timesheet'),
-            onPressed: _createTimesheet,
-          ),
+          // «Create timesheet» is a team/manager action — hidden in the personal view.
+          if (!_locked)
+            IconButton(
+              icon: const Icon(Icons.post_add_rounded),
+              tooltip: tr('إنشاء كشف ساعات', 'Create timesheet'),
+              onPressed: _createTimesheet,
+            ),
           IconButton(
             icon: const Icon(Icons.grid_on_rounded),
             tooltip: tr('تصدير Excel', 'Export Excel'),
@@ -338,26 +341,41 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             final records = (d['records'] as List?) ?? const [];
             return RefreshIndicator(
               onRefresh: () async => setState(_load),
-              child: ListView(padding: const EdgeInsets.fromLTRB(12, 4, 12, 24), children: [
-                _punchCard(),
-                _totals(totals),
-                const SizedBox(height: 12),
-                _tabs(shifts.length, workers.length, records.length),
-                const SizedBox(height: 10),
-                if (_tab == 0) ...[
-                  if (shifts.isEmpty)
-                    _empty(tr('لا ورديات معرّفة لعاملي منشآتك.\nيلزم تسجيل الأعضاء في الفِرَق وتحديد ورديتهم.',
-                        'No shifts defined for your sites.\nTeam members need a shift assigned.'), cs)
-                  else
-                    for (final s in shifts) _shiftBlock(s as Map),
-                ] else if (_tab == 1) ...[
-                  if (workers.isEmpty) _empty(tr('لا عاملين في هذه الفترة.', 'No workers in this period.'), cs),
-                  for (final w in workers) _workerRow(w as Map),
-                ] else ...[
-                  if (records.isEmpty) _empty(tr('لا سجلات في هذه الفترة.', 'No records in this period.'), cs),
-                  for (final r in records) _recordRow(r as Map),
-                ],
-              ]),
+              child: _locked
+                  // Personal view: punch + my totals + only MY records. No
+                  // team tabs / shifts / workers.
+                  ? ListView(padding: const EdgeInsets.fromLTRB(12, 4, 12, 24), children: [
+                      _punchCard(),
+                      _totals(totals),
+                      const SizedBox(height: 14),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4, bottom: 8),
+                        child: Text('🗓️ ${tr('سجلاتي', 'My records')} (${records.length})',
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+                      ),
+                      if (records.isEmpty) _empty(tr('لا سجلات في هذه الفترة.', 'No records in this period.'), cs),
+                      for (final r in records) _recordRow(r as Map),
+                    ])
+                  : ListView(padding: const EdgeInsets.fromLTRB(12, 4, 12, 24), children: [
+                      _punchCard(),
+                      _totals(totals),
+                      const SizedBox(height: 12),
+                      _tabs(shifts.length, workers.length, records.length),
+                      const SizedBox(height: 10),
+                      if (_tab == 0) ...[
+                        if (shifts.isEmpty)
+                          _empty(tr('لا ورديات معرّفة لعاملي منشآتك.\nيلزم تسجيل الأعضاء في الفِرَق وتحديد ورديتهم.',
+                              'No shifts defined for your sites.\nTeam members need a shift assigned.'), cs)
+                        else
+                          for (final s in shifts) _shiftBlock(s as Map),
+                      ] else if (_tab == 1) ...[
+                        if (workers.isEmpty) _empty(tr('لا عاملين في هذه الفترة.', 'No workers in this period.'), cs),
+                        for (final w in workers) _workerRow(w as Map),
+                      ] else ...[
+                        if (records.isEmpty) _empty(tr('لا سجلات في هذه الفترة.', 'No records in this period.'), cs),
+                        for (final r in records) _recordRow(r as Map),
+                      ],
+                    ]),
             );
           },
         )),

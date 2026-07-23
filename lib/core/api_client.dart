@@ -1040,11 +1040,12 @@ class ApiClient {
           as Map)['schedules'] as List);
 
   Future<Map<String, dynamic>> clientAttendanceData({
-    String period = 'all', int? employeeId, int? facilityId,
+    String period = 'all', int? employeeId, int? facilityId, bool personal = false,
   }) async {
     final p = <String, String>{'period': period};
     if (employeeId != null) p['employee_id'] = '$employeeId';
     if (facilityId != null) p['facility_id'] = '$facilityId';
+    if (personal) p['personal'] = '1';
     final qs = p.entries.map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}').join('&');
     return Map<String, dynamic>.from((await _handle(
         await _net.get(_u('/client/attendance?$qs'), headers: await _headers())))['data'] as Map);
