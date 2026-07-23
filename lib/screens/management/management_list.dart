@@ -109,6 +109,39 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
     });
   }
 
+  Widget _stateFilterBar() {
+    final states = ((_last?['state_filters'] as List?) ?? const []).cast<Map>();
+    final sel = _filters['state'];
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: ChoiceChip(
+              label: Text(tr('الكل', 'All'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+              selected: sel == null,
+              selectedColor: widget.accent.withValues(alpha: 0.15),
+              onSelected: (_) => _setFilter('state', null),
+            ),
+          ),
+          for (final s in states)
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: ChoiceChip(
+                label: Text('${s['l']}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                selected: sel == '${s['v']}',
+                selectedColor: widget.accent.withValues(alpha: 0.15),
+                onSelected: (_) => _setFilter('state', sel == '${s['v']}' ? null : '${s['v']}'),
+              ),
+            ),
+        ]),
+      ),
+    );
+  }
+
   Widget _employeeFilterBar() {
     final flt = (_last?['filters'] as Map?) ?? const {};
     final depts = ((flt['departments'] as List?) ?? const []).cast<Map>();
@@ -245,6 +278,7 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
           ),
         ),
         if (_isEmployees) _employeeFilterBar(),
+        if ((_last?['state_filters'] as List?)?.isNotEmpty == true) _stateFilterBar(),
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async => _reload(),
