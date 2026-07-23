@@ -682,13 +682,117 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
       final iso = '${when.year}-${when.month.toString().padLeft(2, '0')}-${when.day.toString().padLeft(2, '0')} ${when.hour.toString().padLeft(2, '0')}:${when.minute.toString().padLeft(2, '0')}:00';
       final res = await api.clientWasteCreate(projId, pickupId: pickId, typeId: typeId, itemId: itemId, qty: double.tryParse(qtyCtrl.text) ?? 1.0, requestDatetime: iso, notes: notesCtrl.text);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ ${res['serial']}'), backgroundColor: const Color(0xFF16A34A)));
         _load();
         _loadSummary();
+        await _wasteCongrats(res);
       }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     }
+  }
+
+  /// Congrats dialog after a trip is booked: the full trip card + a QR that
+  /// leads to the trip record, and a Share button (professional PDF w/ QR).
+  Future<void> _wasteCongrats(Map res) async {
+    const green = Color(0xFF16A34A);
+    final items = (res['items'] as List?) ?? const [];
+    Widget kv(String k, String? v) => (v == null || v.isEmpty) ? const SizedBox.shrink()
+        : Padding(padding: const EdgeInsets.symmetric(vertical: 3), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            SizedBox(width: 96, child: Text(k, style: const TextStyle(color: Color(0xFF64748B), fontSize: 12))),
+            const SizedBox(width: 6),
+            Expanded(child: Text(v, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Color(0xFF0F172A)))),
+          ]));
+    await showDialog(context: context, barrierDismissible: true, builder: (ctx) => Dialog(
+      insetPadding: const EdgeInsets.all(18),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+          // celebratory header
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(colors: [green, Color(0xFF0E7C43)], begin: Alignment.topRight, end: Alignment.bottomLeft),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+            child: Column(children: [
+              Container(width: 58, height: 58, alignment: Alignment.center,
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
+                child: const Text('🎉', style: TextStyle(fontSize: 30))),
+              const SizedBox(height: 10),
+              Text(tr('تم إنشاء طلب النقل بنجاح', 'Trip request created'),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 17)),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(20)),
+                child: Text('${res['serial'] ?? ''}',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5)),
+              ),
+            ]),
+          ),
+          Padding(padding: const EdgeInsets.fromLTRB(18, 16, 18, 6), child: Column(children: [
+            // QR that leads to the trip record
+            if (res['qr_image_url'] != null) Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.black12)),
+              child: Column(children: [
+                Image.network('${res['qr_image_url']}', width: 150, height: 150, fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const SizedBox(width: 150, height: 150, child: Icon(Icons.qr_code_2_rounded, size: 90, color: Colors.black26))),
+                const SizedBox(height: 4),
+                Text(tr('امسح الرمز لعرض الرحلة', 'Scan to view the trip'),
+                    style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B))),
+              ]),
+            ),
+            const SizedBox(height: 14),
+            Align(alignment: AlignmentDirectional.centerStart, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              kv(tr('المشروع', 'Project'), res['project'] as String?),
+              kv(tr('موقع الالتقاط', 'Pickup'), res['pickup'] as String?),
+              kv(tr('النوع', 'Type'), res['type'] as String?),
+              kv(tr('الموعد', 'Date/time'), (res['request_datetime'] as String?)?.replaceAll('T', ' ')),
+              if (res['total_weight'] != null) kv(tr('الوزن التقديري', 'Est. weight'), '${res['total_weight']} كجم'),
+              if (res['notes'] != null) kv(tr('ملاحظات', 'Notes'), res['notes'] as String?),
+            ])),
+            if (items.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Column(children: [
+                  for (final it in items.cast<Map>())
+                    Padding(padding: const EdgeInsets.symmetric(vertical: 2), child: Row(children: [
+                      Expanded(child: Text('${it['name']}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
+                      Text('${it['qty']} × ${it['unit_weight']} = ${it['total_weight']} كجم',
+                          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                    ])),
+                ]),
+              ),
+            ],
+          ])),
+          Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 16), child: Column(children: [
+            SizedBox(width: double.infinity, child: FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: green, padding: const EdgeInsets.symmetric(vertical: 13)),
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+                    path: '/api/v1/client/waste/order/${res['id']}/report',
+                    title: tr('تفاصيل الرحلة', 'Trip details'),
+                    fileName: 'waste-order-${res['serial'] ?? res['id']}.pdf')));
+              },
+              icon: const Icon(Icons.ios_share_rounded, size: 18),
+              label: Text(tr('مشاركة تفاصيل الرحلة (PDF + QR)', 'Share trip (PDF + QR)'),
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+            )),
+            const SizedBox(height: 6),
+            SizedBox(width: double.infinity, child: TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(tr('تم', 'Done'), style: const TextStyle(fontWeight: FontWeight.w800)),
+            )),
+          ])),
+        ])),
+      ),
+    ));
   }
 }
 
