@@ -145,6 +145,78 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
     );
   }
 
+  Widget _attFilterBar() {
+    final depts = (((_last?['filters'] as Map?)?['departments'] as List?) ?? const []).cast<Map>();
+    String? deptLabel() {
+      final id = _filters['dept'];
+      if (id == null) return null;
+      final m = depts.where((d) => '${d['v']}' == id);
+      return m.isEmpty ? null : '${m.first['l']}';
+    }
+    final period = _filters['period'];
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Material(
+              color: _filters['dept'] != null ? widget.accent.withValues(alpha: 0.12) : Mgmt.bg,
+              borderRadius: BorderRadius.circular(20),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () async {
+                  final opts = depts.map((d) => {'v': d['v'], 'l': d['l']}).toList().cast<Map>();
+                  final chosen = await showModalBottomSheet<int>(
+                    context: context, isScrollControlled: true, backgroundColor: Colors.white,
+                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                    builder: (_) => _PickerSheet(title: tr('اختر القسم', 'Select department'), options: opts, accent: widget.accent),
+                  );
+                  if (chosen != null) _setFilter('dept', '$chosen');
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: _filters['dept'] != null ? widget.accent.withValues(alpha: 0.4) : Colors.black12)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Text(deptLabel() ?? tr('القسم', 'Department'), style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: _filters['dept'] != null ? widget.accent : Mgmt.slate)),
+                    if (_filters['dept'] != null) ...[const SizedBox(width: 4), InkWell(onTap: () => _setFilter('dept', null), child: Icon(Icons.close_rounded, size: 14, color: widget.accent))]
+                    else Icon(Icons.expand_more_rounded, size: 15, color: _filters['dept'] != null ? widget.accent : Mgmt.slate),
+                  ]),
+                ),
+              ),
+            ),
+          ),
+          for (final t in [
+            {'v': 'today', 'l': tr('اليوم', 'Today')},
+            {'v': 'week', 'l': tr('الأسبوع', 'Week')},
+            {'v': 'month', 'l': tr('الشهر', 'Month')},
+          ])
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: ChoiceChip(
+                label: Text('${t['l']}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                selected: period == t['v'],
+                selectedColor: widget.accent.withValues(alpha: 0.15),
+                onSelected: (_) => _setFilter('period', period == t['v'] ? null : '${t['v']}'),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: ChoiceChip(
+              label: Text('🟢 ${tr('مفتوح', 'Open')}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+              selected: _filters['open'] == '1',
+              selectedColor: const Color(0xFF16A34A).withValues(alpha: 0.15),
+              onSelected: (_) => _setFilter('open', _filters['open'] == '1' ? null : '1'),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+
   Widget _docFilterBar() {
     final folders = (((_last?['filters'] as Map?)?['folders'] as List?) ?? const []).cast<Map>();
     String? folderLabel() {
@@ -343,6 +415,7 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
           ),
         ),
         if (_isEmployees) _employeeFilterBar(),
+        if (widget.appKey == 'attendance') _attFilterBar(),
         if (widget.appKey == 'files') _docFilterBar(),
         if ((_last?['state_filters'] as List?)?.isNotEmpty == true) _stateFilterBar(),
         Expanded(
@@ -398,6 +471,8 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
                     if (r['lt'] != null) return _letterCard(r);
                     if (r['ri'] != null) return _reqinvCard(r);
                     if (r['doc'] != null) return _docCard(r);
+                    if (r['att'] != null) return _attCard(r);
+                    if (r['dev'] != null) return _devCard(r);
                     return _row(r);
                   },
                 );
@@ -1156,6 +1231,92 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
                 ]),
               ]),
             ),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  // ---- Attendance (hr.attendance) ---------------------------------------
+  Widget _attCard(Map r) {
+    final a = (r['att'] as Map?) ?? const {};
+    final open = a['open'] == true;
+    return Material(
+      color: Colors.white, borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _openDetail(r['id'] as int, '${r['title']}'),
+        child: Container(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.black12)),
+          child: Row(children: [
+            Stack(children: [
+              _logoBox('${a['photo_b64'] ?? ''}', '${a['employee'] ?? r['title']}', size: 46),
+              if (open)
+                Positioned(right: 0, bottom: 0, child: Container(width: 14, height: 14,
+                    decoration: BoxDecoration(color: const Color(0xFF16A34A), shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)))),
+            ]),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('${a['employee'] ?? r['title']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Mgmt.ink)),
+                if (a['department'] != null)
+                  Text('🏢 ${a['department']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Mgmt.slate, fontSize: 10.5)),
+                const SizedBox(height: 5),
+                Wrap(spacing: 6, runSpacing: 4, children: [
+                  if (a['check_in'] != null) _tag('🟢 ${'${a['check_in']}'.split(' ').length > 1 ? '${a['check_in']}'.split(' ')[1] : a['check_in']}', const Color(0xFF16A34A)),
+                  if (a['check_out'] != null)
+                    _tag('🔴 ${'${a['check_out']}'.split(' ').length > 1 ? '${a['check_out']}'.split(' ')[1] : a['check_out']}', Mgmt.red)
+                  else _tag(tr('مفتوح', 'Open'), const Color(0xFF16A34A)),
+                  if ((a['hours'] as num?) != null && (a['hours'] as num) > 0) _tag('⏳ ${a['hours']} ${tr('س', 'h')}', widget.accent),
+                  if (a['date'] != null) _tag('📅 ${'${a['date']}'.split(' ').first}', Mgmt.slate),
+                ]),
+              ]),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  // ---- Biometric devices (attendance.device) ----------------------------
+  Widget _devCard(Map r) {
+    final v = (r['dev'] as Map?) ?? const {};
+    final stalled = v['stalled'] == true;
+    final sc = stalled ? Mgmt.red : const Color(0xFF16A34A);
+    return Material(
+      color: Colors.white, borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _openDetail(r['id'] as int, '${r['title']}'),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.black12)),
+          child: Row(children: [
+            Container(
+              width: 46, height: 46, alignment: Alignment.center,
+              decoration: BoxDecoration(color: sc.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(11)),
+              child: Icon(stalled ? Icons.error_rounded : Icons.fingerprint_rounded, color: sc, size: 24),
+            ),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Expanded(child: Text('${v['name'] ?? r['title']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Mgmt.ink))),
+                  mgmtStateChip(r),
+                ]),
+                const SizedBox(height: 4),
+                Wrap(spacing: 6, runSpacing: 4, children: [
+                  if (v['ip'] != null) _tag('🌐 ${v['ip']}${v['port'] != null ? ':${v['port']}' : ''}', Mgmt.slate),
+                  if (v['location'] != null) _tag('📍 ${v['location']}', Mgmt.slate),
+                  _tag(stalled ? tr('⚠️ متوقّف', '⚠️ Stalled') : tr('✅ يعمل', '✅ Online'), sc),
+                ]),
+              ]),
+            ),
+            const Icon(Icons.chevron_left_rounded, color: Mgmt.slate),
           ]),
         ),
       ),
@@ -3052,6 +3213,35 @@ class _DetailSheetState extends State<_DetailSheet> {
     }
   }
 
+  Widget _deviceBlock() {
+    final dev = d['device'] as Map?;
+    if (dev == null) return const SizedBox.shrink();
+    final info = (dev['service_info'] as List?) ?? const [];
+    final stalled = dev['stalled'] == true;
+    final sc = stalled ? Mgmt.red : const Color(0xFF16A34A);
+    return Column(children: [
+      Container(
+        margin: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+            color: sc.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: sc.withValues(alpha: 0.25))),
+        child: Row(children: [
+          Icon(stalled ? Icons.error_rounded : Icons.fingerprint_rounded, color: sc, size: 32),
+          const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(stalled ? tr('الجهاز متوقّف', 'Device stalled') : tr('الجهاز يعمل', 'Device online'),
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: sc)),
+            Text(tr('استخدم الأزرار لفحص الاتصال أو سحب البصمات', 'Use the buttons to check connection or fetch attendance'),
+                style: const TextStyle(color: Mgmt.slate, fontSize: 11)),
+          ])),
+        ]),
+      ),
+      if (info.isNotEmpty)
+        _cardWrap([_sectionHead('🔌', tr('بيانات الجهاز', 'Device details')), _infoRows(info)]),
+    ]);
+  }
+
   Widget _documentBlock() {
     final doc = d['document'] as Map?;
     if (doc == null) return const SizedBox.shrink();
@@ -3278,7 +3468,8 @@ class _DetailSheetState extends State<_DetailSheet> {
     final isLetter = d['letter'] != null;
     final isReqinv = d['reqinv'] != null;
     final isDocument = d['document'] != null;
-    final richDetail = isProposal || isTender || isOrder || isFleet || isCrm || isLeave || isExperience || isVservice || isLetter || isReqinv || isDocument;
+    final isDevice = d['device'] != null;
+    final richDetail = isProposal || isTender || isOrder || isFleet || isCrm || isLeave || isExperience || isVservice || isLetter || isReqinv || isDocument || isDevice;
     final amount = richDetail ? null : d['amount'];
     return DraggableScrollableSheet(
       expand: false, initialChildSize: 0.82, maxChildSize: 0.96, minChildSize: 0.45,
@@ -3343,6 +3534,7 @@ class _DetailSheetState extends State<_DetailSheet> {
           if (isLetter) _letterBlock(),
           if (isReqinv) _reqinvBlock(),
           if (isDocument) _documentBlock(),
+          if (isDevice) _deviceBlock(),
           // ---- amount highlight
           if (amount != null)
             Container(
