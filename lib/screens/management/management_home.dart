@@ -6,6 +6,7 @@ import '../../core/i18n.dart';
 import '../my/my_screen.dart';
 import 'management_list.dart';
 import 'management_search.dart';
+import 'housing_hub_screen.dart';
 
 /// Management app shell — Systems and the personal «My» hub, side by side.
 class ManagementShell extends StatefulWidget {
@@ -276,11 +277,13 @@ class _ManagementHomeState extends State<ManagementHome> {
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () => Navigator.push(context, MaterialPageRoute(
-            builder: (_) => ManagementListScreen(
-                appKey: '${a['key']}',
-                title: gLang == 'en' ? '${a['en']}' : '${a['ar']}',
-                icon: '${a['icon']}',
-                accent: c))),
+            builder: (_) => '${a['key']}' == 'hostels'
+                ? HousingHubScreen(accent: c)
+                : ManagementListScreen(
+                    appKey: '${a['key']}',
+                    title: gLang == 'en' ? '${a['en']}' : '${a['ar']}',
+                    icon: '${a['icon']}',
+                    accent: c))),
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(

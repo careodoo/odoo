@@ -2075,6 +2075,32 @@ class ApiClient {
               _u('/management/purchases/$id/update'),
               headers: await _headers(), body: jsonEncode(vals))))['data'] as Map);
 
+  // ---- Housing «السكن» hub ---------------------------------------------
+  Future<Map<String, dynamic>> managementHousingHub() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/management/housing/hub'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> managementHousingBeds({int? hostel, String? status, String q = ''}) async {
+    final p = <String, String>{
+      if (hostel != null) 'hostel': '$hostel',
+      if (status != null) 'status': status,
+      if (q.isNotEmpty) 'q': q,
+    };
+    final qs = p.entries.map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}').join('&');
+    return Map<String, dynamic>.from((await _handle(await _net.get(
+            _u('/management/housing/beds${qs.isEmpty ? '' : '?$qs'}'), headers: await _headers())))['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> managementHousingAssign(int bedId, int employeeId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/management/housing/bed/$bedId/assign'),
+              headers: await _headers(), body: jsonEncode({'employee_id': employeeId}))))['data'] as Map);
+
+  Future<Map<String, dynamic>> managementHousingVacate(int bedId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/management/housing/bed/$bedId/vacate'),
+              headers: await _headers(), body: '{}')))['data'] as Map);
+
   // ---- Config-driven generic create ------------------------------------
   Future<Map<String, dynamic>> managementCreateMeta(String key) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

@@ -4438,7 +4438,7 @@ class _GenericCreateSheetState extends State<_GenericCreateSheet> {
       final picked = await showModalBottomSheet<Map>(
         context: context, isScrollControlled: true, backgroundColor: Colors.white,
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-        builder: (_) => _RelationSearchSheet(model: '${f['search']}', title: gLang == 'en' ? '${f['en']}' : '${f['ar']}', accent: widget.accent),
+        builder: (_) => RelationSearchSheet(model: '${f['search']}', title: gLang == 'en' ? '${f['en']}' : '${f['ar']}', accent: widget.accent),
       );
       if (picked != null) setState(() { _vals[name] = picked['v']; _labels[name] = '${picked['l']}'; });
     } else {
@@ -4588,15 +4588,15 @@ class _GenericCreateSheetState extends State<_GenericCreateSheet> {
 }
 
 /// Live relation search (res.partner / hr.employee / fleet.vehicle …) → {v,l}.
-class _RelationSearchSheet extends StatefulWidget {
-  const _RelationSearchSheet({required this.model, required this.title, required this.accent});
+class RelationSearchSheet extends StatefulWidget {
+  const RelationSearchSheet({required this.model, required this.title, required this.accent});
   final String model, title;
   final Color accent;
   @override
-  State<_RelationSearchSheet> createState() => _RelationSearchSheetState();
+  State<RelationSearchSheet> createState() => RelationSearchSheetState();
 }
 
-class _RelationSearchSheetState extends State<_RelationSearchSheet> {
+class RelationSearchSheetState extends State<RelationSearchSheet> {
   Timer? _deb;
   bool _busy = false;
   List<Map> _results = [];
