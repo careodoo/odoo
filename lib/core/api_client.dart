@@ -1958,6 +1958,11 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/management/$key/$id'), headers: await _headers())))['data'] as Map);
 
+  /// Global search across all management systems → results grouped by system.
+  Future<Map<String, dynamic>> managementSearch(String q) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/management/search?q=${Uri.encodeQueryComponent(q)}'), headers: await _headers())))['data'] as Map);
+
   /// Rich employee file: every readable field grouped + all related sub-modules.
   Future<Map<String, dynamic>> managementEmployeeFull(int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

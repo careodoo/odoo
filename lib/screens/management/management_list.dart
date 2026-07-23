@@ -209,6 +209,32 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
   }
 }
 
+/// Open one management record from anywhere (e.g. global search): employees →
+/// the rich PMS file, everything else → the detail sheet with its actions.
+Future<void> openManagementRecord(BuildContext context, String key, int id,
+    {String title = '', Color accent = Mgmt.red}) async {
+  if (key == 'employees') {
+    Navigator.push(context, MaterialPageRoute(
+        builder: (_) => PmsEmployeeFileScreen(employeeId: id, name: title)));
+    return;
+  }
+  Map<String, dynamic>? d;
+  try {
+    d = await context.read<AuthProvider>().api.managementDetail(key, id);
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Mgmt.red));
+    }
+    return;
+  }
+  if (!context.mounted || d == null) return;
+  await showModalBottomSheet(
+    context: context, isScrollControlled: true, backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+    builder: (_) => _DetailSheet(appKey: key, accent: accent, initial: d!, onChanged: () {}),
+  );
+}
+
 /// Record detail + its whitelisted workflow actions.
 class _DetailSheet extends StatefulWidget {
   const _DetailSheet({required this.appKey, required this.accent, required this.initial, required this.onChanged});

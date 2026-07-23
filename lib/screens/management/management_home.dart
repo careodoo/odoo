@@ -4,6 +4,7 @@ import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import '../my/my_screen.dart';
 import 'management_list.dart';
+import 'management_search.dart';
 
 /// Management app shell — Systems and the personal «My» hub, side by side.
 class ManagementShell extends StatefulWidget {
@@ -114,6 +115,12 @@ class _ManagementHomeState extends State<ManagementHome> {
             pinned: true, expandedHeight: 128, backgroundColor: Mgmt.deep,
             foregroundColor: Colors.white, automaticallyImplyLeading: false,
             actions: [
+              IconButton(
+                tooltip: tr('بحث شامل', 'Global search'),
+                icon: const Icon(Icons.search_rounded),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => const ManagementSearchScreen())),
+              ),
               IconButton(
                 tooltip: tr('تبديل الوضع', 'Switch mode'),
                 icon: const Icon(Icons.swap_horiz_rounded),
