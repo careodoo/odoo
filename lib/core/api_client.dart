@@ -1757,6 +1757,24 @@ class ApiClient {
 
   String pmsPermitReportPath(int id) => '/pms/permit/$id/report';
 
+  // ---- Saved filters / worker-list segments ----
+  Future<List<dynamic>> pmsSavedFilters({int? projectId, String? section}) async {
+    final q = <String>[];
+    if (projectId != null) q.add('project_id=$projectId');
+    if (section != null) q.add('section=$section');
+    final suffix = q.isEmpty ? '' : '?${q.join('&')}';
+    return List<dynamic>.from((await _handle(await _net.get(
+        _u('/pms/saved-filters$suffix'), headers: await _headers())))['data']['filters'] as List);
+  }
+
+  Future<Map<String, dynamic>> pmsSavedFilterCreate(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/saved-filters/create'), headers: await _headers(),
+          body: jsonEncode(body))))['data'] as Map);
+
+  Future<void> pmsSavedFilterDelete(int id) async =>
+      _handle(await _net.post(_u('/pms/saved-filter/$id/delete'), headers: await _headers()));
+
   // ---- Fuel (prepaid cards / cash + receipt) ----
   Future<Map<String, dynamic>> pmsFuel(int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

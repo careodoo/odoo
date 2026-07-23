@@ -273,7 +273,23 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
                       onPressed: () => setState(() => _pins.clear()),
                       visualDensity: VisualDensity.compact,
                     ),
+                    ActionChip(
+                      avatar: const Icon(Icons.bookmark_add_rounded, size: 15, color: Color(0xFF16A34A)),
+                      label: Text(tr('حفظ القائمة', 'Save list'), style: const TextStyle(fontSize: 11, color: Color(0xFF16A34A), fontWeight: FontWeight.w800)),
+                      onPressed: _saveCurrentFilter,
+                      visualDensity: VisualDensity.compact,
+                    ),
                   ]),
+                ),
+                // recall a saved list
+                Padding(padding: const EdgeInsets.only(top: 6),
+                  child: Align(alignment: AlignmentDirectional.centerStart,
+                    child: TextButton.icon(
+                      onPressed: _openSavedFilters,
+                      icon: const Icon(Icons.bookmarks_rounded, size: 16),
+                      label: Text(tr('القوائم المحفوظة', 'Saved lists'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                      style: TextButton.styleFrom(foregroundColor: _c, padding: const EdgeInsets.symmetric(horizontal: 8), visualDensity: VisualDensity.compact),
+                    )),
                 ),
               ],
               const SizedBox(height: 10),
@@ -657,6 +673,96 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
       builder: (_) => _PermitDetailSheet(permitId: id, color: _c),
     );
     if (mounted) setState(_load);
+  }
+
+  // ---- saved filters (worker-list segments) ----
+  Future<void> _saveCurrentFilter() async {
+    final terms = [..._pins, if (_q.trim().isNotEmpty) _q.trim()];
+    if (terms.isEmpty) return;
+    final ctrl = TextEditingController();
+    final name = await showDialog<String>(context: context, builder: (c) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Text(tr('حفظ القائمة', 'Save list'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        Text(tr('${terms.length} كلمة بحث ستُحفظ باسم:', '${terms.length} terms will be saved as:'),
+            style: const TextStyle(color: Pms.slate, fontSize: 12)),
+        const SizedBox(height: 10),
+        TextField(controller: ctrl, autofocus: true,
+            decoration: InputDecoration(hintText: tr('مثال: عمال الوردية الليلية', 'e.g. Night shift crew'), border: const OutlineInputBorder())),
+      ]),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(c), child: Text(tr('إلغاء', 'Cancel'))),
+        FilledButton(style: FilledButton.styleFrom(backgroundColor: _c),
+            onPressed: () => Navigator.pop(c, ctrl.text.trim()), child: Text(tr('حفظ', 'Save'))),
+      ],
+    ));
+    if (name == null || name.isEmpty) return;
+    try {
+      await context.read<AuthProvider>().api.pmsSavedFilterCreate({
+        'name': name, 'project_id': widget.projectId, 'section': widget.code, 'terms': terms,
+      });
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تم حفظ القائمة', 'List saved')), backgroundColor: const Color(0xFF16A34A)));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+    }
+  }
+
+  Future<void> _openSavedFilters() async {
+    List<dynamic> filters = const [];
+    try {
+      filters = await context.read<AuthProvider>().api.pmsSavedFilters(projectId: widget.projectId, section: widget.code);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+      return;
+    }
+    if (!mounted) return;
+    await showModalBottomSheet(context: context, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (ctx) => StatefulBuilder(builder: (ctx, ss) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(Icons.bookmarks_rounded, color: _c),
+            const SizedBox(width: 8),
+            Text(tr('القوائم المحفوظة', 'Saved lists'), style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: _c)),
+          ]),
+          const SizedBox(height: 12),
+          if (filters.isEmpty)
+            Padding(padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Text(tr('لا قوائم محفوظة لهذا القسم بعد. ثبّت كلمات البحث ثم اضغط «حفظ القائمة».',
+                    'No saved lists yet. Pin some terms then tap "Save list".'), style: const TextStyle(color: Pms.slate, fontSize: 12.5)))
+          else
+            ...filters.cast<Map>().map((f) => Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(color: Pms.bg, borderRadius: BorderRadius.circular(12)),
+              child: ListTile(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                leading: Icon(Icons.filter_list_rounded, color: _c),
+                title: Text('${f['name']}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                subtitle: Text(((f['terms'] as List?) ?? const []).join(' · '), maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 11, color: Pms.slate)),
+                trailing: IconButton(icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFE11D48), size: 20),
+                  onPressed: () async {
+                    try {
+                      await context.read<AuthProvider>().api.pmsSavedFilterDelete(f['id'] as int);
+                      ss(() => filters = filters.where((x) => x != f).toList());
+                    } catch (_) {}
+                  }),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  setState(() {
+                    _pins
+                      ..clear()
+                      ..addAll(((f['terms'] as List?) ?? const []).map((e) => '$e'));
+                    _q = ''; _searchCtrl.clear();
+                  });
+                },
+              ),
+            )),
+        ]),
+      )),
+    );
   }
 
   Future<void> _openManpower(int id) async {
