@@ -169,7 +169,9 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
                     if (widget.appKey == 'tenders') return _tenderCard(r, currency);
                     if (widget.appKey == 'employees') return _employeeCard(r);
                     if (widget.appKey == 'leaves') return _leaveCard(r);
+                    if (widget.appKey == 'crm') return _crmCard(r, currency);
                     if (r['ord'] != null) return _orderCard(r, currency);
+                    if (r['exp'] != null) return _expenseCard(r);
                     return _row(r);
                   },
                 );
@@ -190,7 +192,9 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.black12)),
             child: Row(children: [
-              if (r['image'] != null)
+              if ('${r['logo_b64'] ?? ''}'.isNotEmpty)
+                _logoBox('${r['logo_b64']}', '${r['title']}', size: 40)
+              else if (r['image'] != null)
                 ClipRRect(borderRadius: BorderRadius.circular(10),
                     child: Image.network('${context.read<AuthProvider>().api.baseUrl.replaceAll('/api/v1', '')}${r['image']}',
                         width: 40, height: 40, fit: BoxFit.cover,
@@ -654,6 +658,110 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
                 ]),
               ]),
             ),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  // ---- CRM (opportunities) ----------------------------------------------
+  Widget _crmCard(Map r, String currency) {
+    final o = (r['crm'] as Map?) ?? const {};
+    final cur = '${o['currency'] ?? currency}';
+    final money = cur.isEmpty ? '' : ' $cur';
+    final prob = (o['probability'] as num?)?.toDouble() ?? 0;
+    final stageColor = mgmtHex('${o['stage_color'] ?? ''}', widget.accent);
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _openDetail(r['id'] as int, '${r['title']}'),
+        child: Container(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.black12)),
+          child: Row(children: [
+            _logoBox('${o['logo_b64'] ?? ''}', '${o['partner'] ?? r['title']}', size: 46),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('${r['title']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Mgmt.ink)),
+                if (o['partner'] != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 1),
+                    child: Text('🏢 ${o['partner']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Mgmt.slate, fontSize: 11)),
+                  ),
+                const SizedBox(height: 5),
+                Wrap(spacing: 6, runSpacing: 4, children: [
+                  if (o['stage'] != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                          color: stageColor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: stageColor.withValues(alpha: 0.34))),
+                      child: Text('${o['stage']}', style: TextStyle(color: stageColor, fontSize: 10, fontWeight: FontWeight.w800)),
+                    ),
+                  if (prob > 0) _tag('📈 ${prob.toStringAsFixed(0)}%',
+                      prob >= 70 ? const Color(0xFF16A34A) : (prob >= 40 ? const Color(0xFFF59E0B) : Mgmt.slate)),
+                  if (o['salesperson'] != null) _tag('👤 ${o['salesperson']}', Mgmt.slate),
+                ]),
+              ]),
+            ),
+            if ((o['expected'] as num?) != null && (o['expected'] as num) > 0)
+              Text('${(o['expected'] as num).toStringAsFixed(0)}$money',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: widget.accent)),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  // ---- Employee expenses ------------------------------------------------
+  Widget _expenseCard(Map r) {
+    final e = (r['exp'] as Map?) ?? const {};
+    final cur = '${e['currency'] ?? ''}';
+    final money = cur.isEmpty ? '' : ' $cur';
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _openDetail(r['id'] as int, '${r['title']}'),
+        child: Container(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.black12)),
+          child: Row(children: [
+            _logoBox('${e['photo_b64'] ?? ''}', '${e['employee'] ?? r['title']}', size: 46),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('${r['title']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Mgmt.ink)),
+                if (e['employee'] != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 1),
+                    child: Text('👤 ${e['employee']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Mgmt.slate, fontSize: 11)),
+                  ),
+                const SizedBox(height: 5),
+                Wrap(spacing: 6, runSpacing: 4, children: [
+                  if ((e['lines'] as num?) != null && (e['lines'] as num) > 0)
+                    _tag('🧾 ${e['lines']} ${tr('بند', 'items')}', Mgmt.slate),
+                  if (e['payment_mode'] != null) _tag('💳 ${e['payment_mode']}', Mgmt.slate),
+                ]),
+              ]),
+            ),
+            Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              if ((e['amount'] as num?) != null)
+                Text('${(e['amount'] as num).toStringAsFixed(3)}$money',
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: widget.accent)),
+              const SizedBox(height: 4),
+              mgmtStateChip(r),
+            ]),
           ]),
         ),
       ),
