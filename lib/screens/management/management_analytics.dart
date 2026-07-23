@@ -16,6 +16,7 @@ class ManagementAnalyticsScreen extends StatefulWidget {
 
 class _ManagementAnalyticsScreenState extends State<ManagementAnalyticsScreen> {
   late Future<Map<String, dynamic>> _f;
+  String _period = 'all';
 
   @override
   void initState() {
@@ -23,7 +24,41 @@ class _ManagementAnalyticsScreenState extends State<ManagementAnalyticsScreen> {
     _reload();
   }
 
-  void _reload() => setState(() => _f = context.read<AuthProvider>().api.managementAnalytics());
+  void _reload() => setState(() => _f = context.read<AuthProvider>().api.managementAnalytics(period: _period));
+
+  void _setPeriod(String p) {
+    if (p == _period) return;
+    setState(() => _period = p);
+    _reload();
+  }
+
+  Widget _periodBar() {
+    Widget chip(String v, String label) => Expanded(
+          child: GestureDetector(
+            onTap: () => _setPeriod(v),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              padding: const EdgeInsets.symmetric(vertical: 9),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                  color: _period == v ? Mgmt.red : Colors.white,
+                  borderRadius: BorderRadius.circular(11),
+                  border: Border.all(color: _period == v ? Mgmt.red : Colors.black12)),
+              child: Text(label, style: TextStyle(
+                  fontWeight: FontWeight.w800, fontSize: 12.5,
+                  color: _period == v ? Colors.white : Mgmt.slate)),
+            ),
+          ),
+        );
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(children: [
+        chip('all', tr('الكل', 'All')),
+        chip('year', tr('هذه السنة', 'This year')),
+        chip('month', tr('هذا الشهر', 'This month')),
+      ]),
+    );
+  }
 
   static String fmt(num v) {
     final a = v.abs();
@@ -55,6 +90,8 @@ class _ManagementAnalyticsScreenState extends State<ManagementAnalyticsScreen> {
             final kpis = ((d['kpis'] as List?) ?? const []).cast<Map>();
             final charts = (d['charts'] as Map?) ?? const {};
             return ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 28), children: [
+              _periodBar(),
+              const SizedBox(height: 8),
               _kpiGrid(kpis, cur),
               if (charts['trend'] != null) _trendCard(charts['trend'] as Map, cur),
               Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
