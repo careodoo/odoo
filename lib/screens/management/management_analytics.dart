@@ -89,9 +89,11 @@ class _ManagementAnalyticsScreenState extends State<ManagementAnalyticsScreen> {
             final cur = '${d['currency'] ?? ''}';
             final kpis = ((d['kpis'] as List?) ?? const []).cast<Map>();
             final charts = (d['charts'] as Map?) ?? const {};
+            final attention = ((d['attention'] as List?) ?? const []).cast<Map>();
             return ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 28), children: [
               _periodBar(),
               const SizedBox(height: 8),
+              if (attention.isNotEmpty) _attentionCard(attention),
               _kpiGrid(kpis, cur),
               if (charts['trend'] != null) _trendCard(charts['trend'] as Map, cur),
               Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -147,6 +149,54 @@ class _ManagementAnalyticsScreenState extends State<ManagementAnalyticsScreen> {
     Navigator.push(context, MaterialPageRoute(builder: (_) => ManagementListScreen(
         appKey: 'proposals', title: tr('عروض الأسعار', 'Proposals'), icon: '📊',
         accent: const Color(0xFF7C3AED), initialFilters: {'state': code})));
+  }
+
+  void _openAttention(Map a) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => ManagementListScreen(
+        appKey: '${a['key']}', title: gLang == 'en' ? '${a['en']}' : '${a['ar']}',
+        icon: '${a['icon'] ?? ''}', accent: mgmtHex('${a['color'] ?? ''}', Mgmt.red),
+        initialFilters: '${a['states'] ?? ''}'.isEmpty ? null : {'state': '${a['states']}'})));
+  }
+
+  Widget _attentionCard(List<Map> items) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.35)),
+          boxShadow: [BoxShadow(color: const Color(0xFFF59E0B).withValues(alpha: 0.08), blurRadius: 9, offset: const Offset(0, 3))]),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Text('⚡ ', style: TextStyle(fontSize: 15)),
+          Text(tr('يحتاج إجراء', 'Needs attention'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFFB45309))),
+        ]),
+        const SizedBox(height: 4),
+        for (final a in items)
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () => _openAttention(a),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+                child: Row(children: [
+                  Text('${a['icon'] ?? ''} ', style: const TextStyle(fontSize: 15)),
+                  Expanded(child: Text(gLang == 'en' ? '${a['en']}' : '${a['ar']}',
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Mgmt.ink))),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                    decoration: BoxDecoration(color: mgmtHex('${a['color'] ?? ''}', Mgmt.red), borderRadius: BorderRadius.circular(20)),
+                    child: Text('${a['count']}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11.5)),
+                  ),
+                  const Icon(Icons.chevron_left_rounded, size: 17, color: Mgmt.slate),
+                ]),
+              ),
+            ),
+          ),
+      ]),
+    );
   }
 
   Widget _kpiGrid(List<Map> kpis, String cur) => GridView.count(
