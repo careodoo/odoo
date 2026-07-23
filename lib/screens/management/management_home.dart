@@ -174,7 +174,7 @@ class _ManagementHomeState extends State<ManagementHome> {
                 padding: const EdgeInsets.fromLTRB(12, 14, 12, 24),
                 sliver: SliverGrid(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2, childAspectRatio: 1.42, crossAxisSpacing: 10, mainAxisSpacing: 10),
+                      crossAxisCount: 2, childAspectRatio: 1.55, crossAxisSpacing: 10, mainAxisSpacing: 10),
                   delegate: SliverChildBuilderDelegate(
                     (_, i) => _card(apps[i] as Map),
                     childCount: apps.length,
@@ -282,33 +282,46 @@ class _ManagementHomeState extends State<ManagementHome> {
                 icon: '${a['icon']}',
                 accent: c))),
         child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.black12)),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 3))],
+          ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Container(padding: const EdgeInsets.all(9),
-                  decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
-                  child: Text('${a['icon']}', style: const TextStyle(fontSize: 20))),
-              const Spacer(),
+            // ---- icon + record count side by side; small red badge in corner
+            Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+              Container(
+                width: 32, height: 32, alignment: Alignment.center,
+                decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
+                child: Text('${a['icon']}', style: const TextStyle(fontSize: 15)),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(_fmt(n), maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 19, color: c, height: 1)),
+              ),
               if (pending > 0)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                  decoration: BoxDecoration(color: const Color(0xFFE11D48), borderRadius: BorderRadius.circular(20)),
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(color: const Color(0xFFE11D48), borderRadius: BorderRadius.circular(9)),
                   child: Text(pending > 99 ? '99+' : '$pending',
-                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900)),
-                )
-              else
-                Icon(Icons.chevron_left_rounded, color: c.withValues(alpha: 0.5)),
+                      style: const TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.w900)),
+                ),
             ]),
-            if (pending > 0) Padding(padding: const EdgeInsets.only(top: 4),
-              child: Text(tr('$pending بانتظار إجراء', '$pending need action'),
-                  style: const TextStyle(color: Color(0xFFE11D48), fontSize: 9.5, fontWeight: FontWeight.w700))),
             const Spacer(),
-            Text(_fmt(n), style: TextStyle(fontWeight: FontWeight.w900, fontSize: 24, color: c, height: 1)),
-            const SizedBox(height: 2),
+            // ---- label (wraps to two lines, never spills out)
             Text(gLang == 'en' ? '${a['en']}' : '${a['ar']}',
-                maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Mgmt.ink)),
+                maxLines: 2, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: Mgmt.ink, height: 1.15)),
+            if (pending > 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(tr('بانتظار إجراء', 'Need action'),
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Color(0xFFE11D48), fontSize: 9, fontWeight: FontWeight.w700)),
+              ),
           ]),
         ),
       ),
