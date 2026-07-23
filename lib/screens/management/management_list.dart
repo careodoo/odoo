@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'management_home.dart' show Mgmt;
+import '../pdf_report_screen.dart';
+import '../excel_export.dart';
 
 /// Native list for one management system (purchases, tenders, employees, …).
 /// The server returns only rows this user may read.
@@ -316,6 +318,96 @@ class _DetailSheetState extends State<_DetailSheet> {
     );
   }
 
+  String _reportPath(Map r) =>
+      '/api/v1/management/${widget.appKey}/${d['id']}/report?report=${Uri.encodeQueryComponent('${r['report']}')}';
+
+  Future<void> _openReport(Map r) async {
+    final path = _reportPath(r);
+    if ('${r['type']}' == 'xlsx') {
+      await exportExcelFile(context, path: path,
+          fileName: '${widget.appKey}-${d['id']}.xlsx');
+    } else {
+      if (!mounted) return;
+      Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+          path: path, title: gLang == 'en' ? '${r['en']}' : '${r['ar']}',
+          fileName: '${widget.appKey}-${d['id']}.pdf')));
+    }
+  }
+
+  Widget _reportsCard() {
+    final reports = (d['reports'] as List?) ?? const [];
+    if (reports.isEmpty) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(Icons.description_rounded, size: 16, color: widget.accent),
+          const SizedBox(width: 6),
+          Text(tr('التقارير', 'Reports'), style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: widget.accent)),
+        ]),
+        const SizedBox(height: 10),
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          for (final r in reports.cast<Map>())
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                  foregroundColor: '${r['type']}' == 'xlsx' ? const Color(0xFF16A34A) : widget.accent,
+                  side: BorderSide(color: ('${r['type']}' == 'xlsx' ? const Color(0xFF16A34A) : widget.accent).withValues(alpha: 0.5)),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11))),
+              onPressed: _busy ? null : () => _openReport(r),
+              icon: Icon('${r['type']}' == 'xlsx' ? Icons.table_chart_rounded : Icons.picture_as_pdf_rounded, size: 16),
+              label: Text(gLang == 'en' ? '${r['en']}' : '${r['ar']}',
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5)),
+            ),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _linesCard() {
+    final lines = (d['lines'] as List?) ?? const [];
+    if (lines.isEmpty) return const SizedBox.shrink();
+    final cur = d['currency'] ?? '';
+    return Container(
+      margin: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
+      clipBehavior: Clip.antiAlias,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(14, 11, 14, 9),
+          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade100))),
+          child: Row(children: [
+            Text('🧾 ', style: const TextStyle(fontSize: 14)),
+            Text(tr('البنود (${lines.length})', 'Line items (${lines.length})'),
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: widget.accent)),
+          ]),
+        ),
+        for (final l in lines.cast<Map>())
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(children: [
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('${l['name']}', maxLines: 2, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Mgmt.ink)),
+                if (l['qty'] != null || l['price'] != null)
+                  Text([
+                    if (l['qty'] != null) '${tr('كمية', 'Qty')}: ${l['qty']}',
+                    if (l['price'] != null) '${tr('سعر', 'Unit')}: ${l['price']}',
+                  ].join('  ·  '), style: const TextStyle(fontSize: 10, color: Mgmt.slate)),
+              ])),
+              if (l['subtotal'] != null)
+                Text('${l['subtotal']} $cur',
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: widget.accent)),
+            ]),
+          ),
+      ]),
+    );
+  }
+
   Widget _sectionCard(Map s) {
     final fields = (s['fields'] as List?) ?? const [];
     if (fields.isEmpty) return const SizedBox.shrink();
@@ -438,6 +530,10 @@ class _DetailSheetState extends State<_DetailSheet> {
                 ),
             ]),
           ),
+          // ---- reports (pdf viewer / xlsx download)
+          _reportsCard(),
+          // ---- line items
+          _linesCard(),
           // ---- professional grouped sections
           for (final s in sections) _sectionCard(s as Map),
           // fallback flat list if the server sent no sections
