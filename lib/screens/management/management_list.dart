@@ -168,6 +168,8 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
                     if (_isProposals) return _proposalCard(r, currency);
                     if (widget.appKey == 'tenders') return _tenderCard(r, currency);
                     if (widget.appKey == 'employees') return _employeeCard(r);
+                    if (widget.appKey == 'leaves') return _leaveCard(r);
+                    if (r['ord'] != null) return _orderCard(r, currency);
                     return _row(r);
                   },
                 );
@@ -552,6 +554,111 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
         child: Text('${r['title']}'.trim().isEmpty ? '?' : '${r['title']}'.trim().characters.first,
             style: TextStyle(color: widget.accent, fontWeight: FontWeight.w900)),
       );
+
+  // ---- Orders (sales / purchases / invoices) ----------------------------
+  Widget _orderCard(Map r, String currency) {
+    final o = (r['ord'] as Map?) ?? const {};
+    final cur = '${o['currency'] ?? currency}';
+    final money = cur.isEmpty ? '' : ' $cur';
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _openDetail(r['id'] as int, '${r['title']}'),
+        child: Container(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.black12)),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              _logoBox('${o['logo_b64'] ?? ''}', '${o['partner'] ?? r['title']}', size: 42),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('${o['partner'] ?? r['title']}',
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Mgmt.ink)),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text('${r['title']}',
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Mgmt.slate, fontSize: 10.5, fontWeight: FontWeight.w600)),
+                  ),
+                ]),
+              ),
+              Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                if ((o['amount'] as num?) != null)
+                  Text('${(o['amount'] as num).toStringAsFixed(3)}$money',
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: widget.accent)),
+                const SizedBox(height: 4),
+                mgmtStateChip(r),
+              ]),
+            ]),
+            const SizedBox(height: 8),
+            Wrap(spacing: 6, runSpacing: 6, children: [
+              if (r['date'] != null) _tag('📅 ${'${r['date']}'.split(' ').first}', Mgmt.slate),
+              if ((o['lines'] as num?) != null && (o['lines'] as num) > 0)
+                _tag('🧾 ${o['lines']} ${tr('بند', 'items')}', Mgmt.slate),
+              if (o['inv_ar'] != null)
+                _tag(gLang == 'en' ? '${o['inv_en']}' : '${o['inv_ar']}', mgmtHex('${o['inv_color']}', Mgmt.slate)),
+              if (o['pay_label'] != null)
+                _tag('💳 ${o['pay_label']}', mgmtHex('${o['pay_color']}', Mgmt.slate)),
+              if (o['salesperson'] != null) _tag('👤 ${o['salesperson']}', Mgmt.slate),
+            ]),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  // ---- Leaves (time off) ------------------------------------------------
+  Widget _leaveCard(Map r) {
+    final l = (r['lv'] as Map?) ?? const {};
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _openDetail(r['id'] as int, '${r['title']}'),
+        child: Container(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.black12)),
+          child: Row(children: [
+            _logoBox('${l['photo_b64'] ?? ''}', '${l['employee'] ?? r['title']}', size: 46),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Expanded(
+                    child: Text('${l['employee'] ?? r['title']}',
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: Mgmt.ink)),
+                  ),
+                  mgmtStateChip(r),
+                ]),
+                if (l['leave_type'] != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text('🌴 ${l['leave_type']}',
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Mgmt.slate, fontSize: 11.5, fontWeight: FontWeight.w600)),
+                  ),
+                const SizedBox(height: 5),
+                Wrap(spacing: 6, runSpacing: 4, children: [
+                  if ((l['days'] as num?) != null)
+                    _tag('⏱️ ${l['days']} ${tr('يوم', 'days')}', widget.accent),
+                  if (l['date_from'] != null)
+                    _tag('${'${l['date_from']}'.split(' ').first} → ${'${l['date_to'] ?? ''}'.split(' ').first}', Mgmt.slate),
+                ]),
+              ]),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
 
   Future<void> _openDetail(int id, String title) async {
     // Employees open the full PMS-style file: photo, tags, and the tappable
