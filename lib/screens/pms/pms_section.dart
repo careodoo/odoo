@@ -34,6 +34,7 @@ const Map<String, IconData> kPmsSectionIcons = {
   'invoices': Icons.receipt_long_rounded,
   'suspension': Icons.block_rounded,
   'items': Icons.playlist_add_check_rounded,
+  'manpower': Icons.groups_3_rounded,
 };
 
 const Map<String, Color> kPmsSectionColors = {
@@ -54,6 +55,7 @@ const Map<String, Color> kPmsSectionColors = {
   'invoices': Color(0xFF9D174D),
   'suspension': Color(0xFFD97706),
   'items': Color(0xFF0F766E),
+  'manpower': Color(0xFF4338CA),
 };
 
 /// One project section — the same shape the portal shows, rendered natively.
@@ -100,7 +102,7 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
       'deliveries': 'delivery', 'petty': 'pettycash',
       'timesheet': 'timesheet', 'requests': 'docrequest',
       'assets': 'custody', 'fuel': 'fuel', 'materials': 'material',
-      'suspension': 'suspension', 'items': 'items',
+      'suspension': 'suspension', 'items': 'items', 'manpower': 'manpower',
     }[widget.code];
     return Scaffold(
       backgroundColor: Pms.bg,
@@ -373,6 +375,7 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
         'materials': tr('إضافة مادة', 'Add material'),
         'suspension': tr('طلب إيقاف عن العمل', 'New suspension'),
         'items': tr('طلب أصناف جديد', 'New item request'),
+        'manpower': tr('طلب قوى عاملة', 'New requisition'),
       }[widget.code] ?? tr('إضافة', 'Add');
 
   /// The create sheet, built per-section from its options endpoint.
@@ -388,11 +391,15 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
           ? _FuelCreateSheet(color: _c, options: opts)
           : widget.code == 'items'
               ? _ItemRequestCreateSheet(color: _c)
-              : _CreateSheet(code: widget.code, color: _c, options: opts),
+              : widget.code == 'manpower'
+                  ? _ManpowerCreateSheet(color: _c, options: opts)
+                  : _CreateSheet(code: widget.code, color: _c, options: opts),
     );
     if (result == null) return;
     try {
-      if (widget.code == 'items') {
+      if (widget.code == 'manpower') {
+        await context.read<AuthProvider>().api.pmsManpowerCreate(widget.projectId, result);
+      } else if (widget.code == 'items') {
         await context.read<AuthProvider>().api.pmsItemRequestCreate(widget.projectId, result);
       } else if (widget.code == 'suspension') {
         // Suspension is raised against a worker, then optionally submitted to HR.
@@ -625,10 +632,21 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
           _openFuel(r['id'] as int);
         } else if (opens == 'item_request') {
           _openItemRequest(r['id'] as int);
+        } else if (opens == 'manpower') {
+          _openManpower(r['id'] as int);
         }
       },
       child: inner,
     );
+  }
+
+  Future<void> _openManpower(int id) async {
+    await showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => _ManpowerDetailSheet(requestId: id, color: _c),
+    );
+    if (mounted) setState(_load);
   }
 
   Future<void> _openItemRequest(int id) async {
@@ -1682,32 +1700,34 @@ class _TimesheetSheetState extends State<_TimesheetSheet> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(color: Colors.white, boxShadow: [
               BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0, -3))]),
-            child: Row(children: [
-              for (final a in actions) Expanded(child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: SizedBox(height: 46, child: () {
-                  final style = '${(a as Map)['style']}';
-                  final c = style == 'success' ? Pms.green : (style == 'danger' ? Pms.red : widget.color);
-                  final ic = style == 'success' ? Icons.done_all_rounded
-                      : (style == 'danger' ? (a['key'] == 'delete' ? Icons.delete_outline_rounded : Icons.block_rounded)
-                          : Icons.send_rounded);
-                  if (style == 'primary' || style == 'success') {
-                    return ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(backgroundColor: c, foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                        onPressed: _busy ? null : () => _run('${a['key']}'),
-                        icon: Icon(ic, size: 18),
-                        label: Text('${a['ar']}', style: const TextStyle(fontWeight: FontWeight.w800)));
-                  }
-                  return OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(foregroundColor: c, side: BorderSide(color: c),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                      onPressed: _busy ? null : () => _run('${a['key']}', confirm: a['confirm'] == true),
-                      icon: Icon(ic, size: 18),
-                      label: Text('${a['ar']}', style: const TextStyle(fontWeight: FontWeight.w800)));
-                }()),
-              )),
-            ]),
+            child: SafeArea(top: false, child: Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.center, children: [
+              for (final a in actions) () {
+                final style = '${(a as Map)['style']}';
+                final c = style == 'success' ? Pms.green : (style == 'danger' ? Pms.red : widget.color);
+                final ic = style == 'success' ? Icons.done_all_rounded
+                    : (style == 'danger' ? (a['key'] == 'delete' ? Icons.delete_outline_rounded : Icons.block_rounded)
+                        : Icons.send_rounded);
+                final btnStyle = ButtonStyle(
+                  padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
+                  shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                );
+                if (style == 'primary' || style == 'success') {
+                  return ElevatedButton.icon(
+                      style: btnStyle.copyWith(
+                          backgroundColor: WidgetStateProperty.all(c), foregroundColor: WidgetStateProperty.all(Colors.white)),
+                      onPressed: _busy ? null : () => _run('${a['key']}'),
+                      icon: Icon(ic, size: 17),
+                      label: Text('${a['ar']}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)));
+                }
+                return OutlinedButton.icon(
+                    style: btnStyle.copyWith(
+                        foregroundColor: WidgetStateProperty.all(c),
+                        side: WidgetStateProperty.all(BorderSide(color: c))),
+                    onPressed: _busy ? null : () => _run('${a['key']}', confirm: a['confirm'] == true),
+                    icon: Icon(ic, size: 17),
+                    label: Text('${a['ar']}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)));
+              }(),
+            ])),
           )),
         ]);
       },
@@ -3559,6 +3579,296 @@ class _ItemRequestDetailSheetState extends State<_ItemRequestDetailSheet> {
           Icon(ic, size: 12, color: Colors.white),
           const SizedBox(width: 4),
           Text(t, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+        ]),
+      );
+
+  Widget _btn(String t, IconData ic, Color c, VoidCallback onTap, {bool outline = false}) => Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: SizedBox(width: double.infinity, child: outline
+            ? OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(foregroundColor: c, side: BorderSide(color: c), padding: const EdgeInsets.symmetric(vertical: 12)),
+                onPressed: _busy ? null : onTap, icon: Icon(ic, size: 18),
+                label: Text(t, style: const TextStyle(fontWeight: FontWeight.w800)))
+            : FilledButton.icon(
+                style: FilledButton.styleFrom(backgroundColor: c, padding: const EdgeInsets.symmetric(vertical: 12)),
+                onPressed: _busy ? null : onTap, icon: Icon(ic, size: 18),
+                label: Text(t, style: const TextStyle(fontWeight: FontWeight.w800)))),
+      );
+}
+
+/// Create a manpower requisition — type (local/overseas), required jobs, count,
+/// location, salary, working hours and the reason — sent up the approval chain.
+class _ManpowerCreateSheet extends StatefulWidget {
+  final Color color;
+  final Map<String, dynamic> options;
+  const _ManpowerCreateSheet({required this.color, required this.options});
+  @override
+  State<_ManpowerCreateSheet> createState() => _ManpowerCreateSheetState();
+}
+
+class _ManpowerCreateSheetState extends State<_ManpowerCreateSheet> {
+  String? _type;
+  final Set<int> _jobs = {};
+  final _count = TextEditingController(text: '1');
+  final _location = TextEditingController();
+  final _salary = TextEditingController();
+  final _hours = TextEditingController(text: '8');
+  final _reason = TextEditingController();
+  final _specific = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _count.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _count.dispose(); _location.dispose(); _salary.dispose();
+    _hours.dispose(); _reason.dispose(); _specific.dispose();
+    super.dispose();
+  }
+
+  InputDecoration _dec(String l) => InputDecoration(labelText: l, isDense: true, border: const OutlineInputBorder());
+
+  @override
+  Widget build(BuildContext context) {
+    final types = (widget.options['types'] as List?) ?? const [];
+    final jobs = (widget.options['jobs'] as List?) ?? const [];
+    final ok = _type != null && (int.tryParse(_count.text.trim()) ?? 0) > 0;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+      child: ListView(shrinkWrap: true, children: [
+        Padding(padding: const EdgeInsets.only(bottom: 12),
+            child: Text(tr('طلب قوى عاملة', 'Manpower requisition'),
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: widget.color))),
+        // type
+        Row(children: [
+          for (final t in types) Expanded(child: Padding(
+            padding: const EdgeInsets.only(left: 6),
+            child: GestureDetector(
+              onTap: () => setState(() => _type = '${t['value']}'),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 11),
+                decoration: BoxDecoration(
+                  color: _type == '${t['value']}' ? widget.color : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _type == '${t['value']}' ? widget.color : Colors.black26)),
+                child: Text('${t['label']}', textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800,
+                        color: _type == '${t['value']}' ? Colors.white : Pms.ink)),
+              ),
+            ),
+          )),
+        ]),
+        const SizedBox(height: 12),
+        // jobs (multi-select chips)
+        if (jobs.isNotEmpty) ...[
+          Align(alignment: Alignment.centerRight, child: Text(tr('المسمّى الوظيفي المطلوب', 'Required titles'),
+              style: const TextStyle(fontSize: 12, color: Pms.slate, fontWeight: FontWeight.w700))),
+          const SizedBox(height: 6),
+          Wrap(spacing: 6, runSpacing: 6, children: [
+            for (final j in jobs)
+              FilterChip(
+                label: Text('${(j as Map)['name']}', style: const TextStyle(fontSize: 11.5)),
+                selected: _jobs.contains(j['id']),
+                selectedColor: widget.color.withValues(alpha: 0.18),
+                onSelected: (v) => setState(() => v ? _jobs.add(j['id'] as int) : _jobs.remove(j['id'])),
+              ),
+          ]),
+          const SizedBox(height: 12),
+        ],
+        Row(children: [
+          Expanded(child: TextField(controller: _count, keyboardType: TextInputType.number, decoration: _dec(tr('العدد المطلوب *', 'Count *')))),
+          const SizedBox(width: 8),
+          Expanded(child: TextField(controller: _hours, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: _dec(tr('ساعات العمل', 'Work hours')))),
+        ]),
+        const SizedBox(height: 10),
+        TextField(controller: _salary, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: _dec(tr('الراتب المخصّص', 'Assigned salary'))),
+        const SizedBox(height: 10),
+        TextField(controller: _location, decoration: _dec(tr('الموقع', 'Location'))),
+        const SizedBox(height: 10),
+        TextField(controller: _reason, maxLines: 2, decoration: _dec(tr('سبب الطلب', 'Requirement reason'))),
+        const SizedBox(height: 10),
+        TextField(controller: _specific, maxLines: 2, decoration: _dec(tr('متطلّبات خاصة', 'Specific requirements'))),
+        const SizedBox(height: 12),
+        SizedBox(width: double.infinity, child: FilledButton.icon(
+          style: FilledButton.styleFrom(backgroundColor: widget.color, padding: const EdgeInsets.symmetric(vertical: 13)),
+          onPressed: ok ? () => Navigator.pop(context, <String, dynamic>{
+            'type': _type,
+            if (_jobs.isNotEmpty) 'job_ids': _jobs.toList(),
+            'requirement_number': int.tryParse(_count.text.trim()) ?? 1,
+            if (_hours.text.trim().isNotEmpty) 'working_hours': double.tryParse(_hours.text.trim()),
+            if (_salary.text.trim().isNotEmpty) 'salary': double.tryParse(_salary.text.trim()),
+            if (_location.text.trim().isNotEmpty) 'location': _location.text.trim(),
+            if (_reason.text.trim().isNotEmpty) 'requirement_reason': _reason.text.trim(),
+            if (_specific.text.trim().isNotEmpty) 'specific_requirements': _specific.text.trim(),
+            'submit': true,
+          }) : null,
+          icon: const Icon(Icons.send_rounded, size: 18),
+          label: Text(tr('إرسال للاعتماد', 'Submit'), style: const TextStyle(fontWeight: FontWeight.w800)),
+        )),
+      ]),
+    );
+  }
+}
+
+/// Manpower requisition detail — full request, the approval chain state, and
+/// submit/approve/reject + a printable QR report.
+class _ManpowerDetailSheet extends StatefulWidget {
+  final int requestId;
+  final Color color;
+  const _ManpowerDetailSheet({required this.requestId, required this.color});
+  @override
+  State<_ManpowerDetailSheet> createState() => _ManpowerDetailSheetState();
+}
+
+class _ManpowerDetailSheetState extends State<_ManpowerDetailSheet> {
+  Map<String, dynamic>? _d;
+  String? _error;
+  bool _busy = false;
+
+  @override
+  void initState() { super.initState(); _load(); }
+
+  Future<void> _load() async {
+    try {
+      final d = await context.read<AuthProvider>().api.pmsManpower(widget.requestId);
+      if (mounted) setState(() => _d = d);
+    } catch (e) {
+      if (mounted) setState(() => _error = '$e');
+    }
+  }
+
+  Future<void> _act(String act) async {
+    setState(() => _busy = true);
+    try {
+      final d = await context.read<AuthProvider>().api.pmsManpowerAction(widget.requestId, act);
+      if (!mounted) return;
+      if (act == 'delete') { Navigator.pop(context); return; }
+      setState(() { _d = d; _busy = false; });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: const Color(0xFFE5484D)));
+    }
+  }
+
+  Color _sc(String? s) => switch (s) {
+        'approve' => const Color(0xFF16A34A),
+        'submit' => const Color(0xFF0891B2),
+        'reject' => const Color(0xFFE11D48),
+        _ => Colors.grey.shade500,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85, minChildSize: 0.5, maxChildSize: 0.96, expand: false,
+      builder: (context, sc) {
+        if (_error != null) {
+          return Center(child: Padding(padding: const EdgeInsets.all(24),
+              child: Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey))));
+        }
+        if (_d == null) return const Center(child: CircularProgressIndicator());
+        final d = _d!;
+        final titles = (d['titles'] as List?) ?? const [];
+        return Stack(children: [
+          ListView(controller: sc, padding: EdgeInsets.zero, children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [widget.color, widget.color.withValues(alpha: 0.78)],
+                    begin: Alignment.topLeft, end: Alignment.bottomRight),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  const Icon(Icons.groups_3_rounded, color: Colors.white, size: 24),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(titles.isEmpty ? '${d['name'] ?? ''}' : titles.join('، '),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15))),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(color: _sc(d['state'] as String?), borderRadius: BorderRadius.circular(9)),
+                    child: Text('${d['state_label'] ?? ''}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11)),
+                  ),
+                ]),
+                const SizedBox(height: 10),
+                Row(children: [
+                  Expanded(child: _stat('${d['requirement_number'] ?? 0}', tr('العدد المطلوب', 'Count'), Colors.white)),
+                  Container(width: 1, height: 30, color: Colors.white24),
+                  Expanded(child: _stat('${d['type_label'] ?? ''}', tr('النوع', 'Type'), Colors.white)),
+                  if (d['salary'] != null) ...[
+                    Container(width: 1, height: 30, color: Colors.white24),
+                    Expanded(child: _stat('${d['salary']}', tr('الراتب', 'Salary'), Colors.white)),
+                  ],
+                ]),
+              ]),
+            ),
+            // approval chain
+            Padding(padding: const EdgeInsets.fromLTRB(16, 12, 16, 4), child: Row(children: [
+              _step(tr('إرسال', 'Submit'), d['state'] != 'draft'),
+              _stepLine(),
+              _step(tr('الموارد البشرية', 'HR'), d['hr_approve'] == true),
+              _stepLine(),
+              _step(tr('المدير', 'Manager'), d['manager_approve'] == true),
+              _stepLine(),
+              _step(tr('اعتماد', 'Approved'), d['state'] == 'approve'),
+            ])),
+            Padding(padding: const EdgeInsets.fromLTRB(16, 10, 16, 4), child: Column(children: [
+              _kv(tr('المرجع', 'Ref'), '${d['name'] ?? ''}'),
+              if (d['location'] != null) _kv(tr('الموقع', 'Location'), '${d['location']}'),
+              if (d['working_hours'] != null) _kv(tr('ساعات العمل', 'Work hours'), '${d['working_hours']}'),
+              if (d['department'] != null) _kv(tr('القسم', 'Department'), '${d['department']}'),
+              if (d['request_date'] != null) _kv(tr('تاريخ الطلب', 'Date'), '${d['request_date']}'),
+              if (d['requirement_reason'] != null) _kv(tr('سبب الطلب', 'Reason'), '${d['requirement_reason']}'),
+              if (d['specific_requirements'] != null) _kv(tr('متطلّبات خاصة', 'Specific'), '${d['specific_requirements']}'),
+            ])),
+            Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 24), child: Column(children: [
+              SizedBox(width: double.infinity, child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(foregroundColor: widget.color,
+                    side: BorderSide(color: widget.color.withValues(alpha: 0.5)), padding: const EdgeInsets.symmetric(vertical: 11)),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+                    path: context.read<AuthProvider>().api.pmsManpowerReportPath(widget.requestId),
+                    title: tr('طلب قوى عاملة', 'Manpower requisition'), fileName: 'manpower-${widget.requestId}.pdf'))),
+                icon: const Icon(Icons.print_rounded, size: 18),
+                label: Text(tr('طباعة (QR) / مشاركة', 'Print (QR) / share'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+              )),
+              if (d['can_submit'] == true) _btn(tr('إرسال للاعتماد', 'Submit'), Icons.send_rounded, const Color(0xFF0891B2), () => _act('submit')),
+              if (d['can_approve'] == true) _btn(tr('اعتماد', 'Approve'), Icons.verified_rounded, const Color(0xFF16A34A), () => _act('approve')),
+              if (d['can_reject'] == true) _btn(tr('رفض', 'Reject'), Icons.close_rounded, const Color(0xFFE11D48), () => _act('reject')),
+              if (d['can_submit'] == true) _btn(tr('حذف المسودة', 'Delete draft'), Icons.delete_outline_rounded, const Color(0xFFE11D48), () => _act('delete'), outline: true),
+            ])),
+          ]),
+          if (_busy) const Positioned.fill(child: ColoredBox(color: Color(0x11000000), child: Center(child: CircularProgressIndicator()))),
+        ]);
+      },
+    );
+  }
+
+  Widget _stat(String v, String l, Color c) => Column(children: [
+        Text(v, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: c, fontWeight: FontWeight.w900, fontSize: 14)),
+        const SizedBox(height: 2),
+        Text(l, style: TextStyle(color: c.withValues(alpha: 0.8), fontSize: 9, fontWeight: FontWeight.w700)),
+      ]);
+
+  Widget _step(String t, bool done) => Column(children: [
+        Container(width: 26, height: 26, alignment: Alignment.center,
+            decoration: BoxDecoration(color: done ? const Color(0xFF16A34A) : Colors.grey.shade300, shape: BoxShape.circle),
+            child: Icon(done ? Icons.check_rounded : Icons.circle, size: done ? 15 : 8, color: Colors.white)),
+        const SizedBox(height: 3),
+        Text(t, style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w700, color: done ? const Color(0xFF16A34A) : Pms.slate)),
+      ]);
+
+  Widget _stepLine() => Expanded(child: Container(height: 2, margin: const EdgeInsets.only(bottom: 14), color: Colors.grey.shade300));
+
+  Widget _kv(String k, String v) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          SizedBox(width: 110, child: Text(k, style: const TextStyle(color: Pms.slate, fontSize: 12.5))),
+          const SizedBox(width: 8),
+          Expanded(child: Text(v, textAlign: TextAlign.end, style: const TextStyle(fontWeight: FontWeight.w700, color: Pms.ink, fontSize: 13))),
         ]),
       );
 
