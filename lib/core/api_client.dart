@@ -2075,6 +2075,18 @@ class ApiClient {
               _u('/management/purchases/$id/update'),
               headers: await _headers(), body: jsonEncode(vals))))['data'] as Map);
 
+  // ---- Employee sub-module quick-create --------------------------------
+  Future<Map<String, dynamic>> managementEmpSubMeta(String model) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/management/emp-sub/create-meta?model=${Uri.encodeQueryComponent(model)}'),
+              headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> managementEmpSubCreate(String model, int employeeId, Map<String, dynamic> vals) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/management/emp-sub/create'),
+              headers: await _headers(),
+              body: jsonEncode({'model': model, 'employee_id': employeeId, ...vals}))))['data'] as Map);
+
   // ---- Housing «السكن» hub ---------------------------------------------
   Future<Map<String, dynamic>> managementHousingHub() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

@@ -252,19 +252,19 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
         children: [
           for (final s in _secDefs)
             _hubTile(s.$2, s.$3, s.$4, s.$5, ((d[s.$1] as List?) ?? const []).length,
-                (d[s.$1] as List?) ?? const []),
+                (d[s.$1] as List?) ?? const [], s.$1),
         ],
       ),
     ]);
   }
 
-  Widget _hubTile(String label, IconData ic, Color c, String type, int count, List items) {
+  Widget _hubTile(String label, IconData ic, Color c, String type, int count, List items, String sectionKey) {
     final empty = count == 0;
     return Material(
       color: Colors.white, borderRadius: BorderRadius.circular(15),
       child: InkWell(
         borderRadius: BorderRadius.circular(15),
-        onTap: () => _openSection(label, type, items, c),
+        onTap: () => _openSection(label, type, items, c, sectionKey),
         child: Container(
           padding: const EdgeInsets.all(9),
           decoration: BoxDecoration(
@@ -421,13 +421,15 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
     }
   }
 
-  Future<void> _openSection(String title, String type, List items, Color c) async {
+  Future<void> _openSection(String title, String type, List items, Color c, [String sectionKey = '']) async {
     await showModalBottomSheet(
       context: context, isScrollControlled: true, backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
       builder: (_) => _EmpSectionSheet(title: title, type: type, items: items, color: c,
-          employeeId: widget.employeeId),
+          employeeId: widget.employeeId, sectionKey: sectionKey),
     );
+    // refresh the file after a section may have created a record
+    if (mounted) setState(() => _f = context.read<AuthProvider>().api.pmsEmployeeFile(widget.employeeId));
   }
 
   Widget _detailsSection(List sections) => Column(children: [
@@ -556,8 +558,9 @@ class _EmpSectionSheet extends StatefulWidget {
   final List items;
   final Color color;
   final int employeeId;
+  final String sectionKey;
   const _EmpSectionSheet({required this.title, required this.type, required this.items,
-      required this.color, required this.employeeId});
+      required this.color, required this.employeeId, this.sectionKey = ''});
   @override
   State<_EmpSectionSheet> createState() => _EmpSectionSheetState();
 }
@@ -642,7 +645,49 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
       return _barBtn(Icons.add_circle_rounded, tr('تقديم سلفة لهذا العامل', 'Submit loan for this worker'),
           color, _submitLoan);
     }
+    // employee sub-module quick-create (bonus / penalty …)
+    final subModel = _subCreateModel[widget.sectionKey];
+    if (subModel != null) {
+      return _barBtn(Icons.add_circle_rounded, tr('إضافة سجل جديد', 'Add new record'),
+          color, () => _empSubCreate(subModel));
+    }
     return const SizedBox.shrink();
+  }
+
+  // section key -> employee sub-module model (backend emp-sub create)
+  static const Map<String, String> _subCreateModel = {
+    'bonuses': 'bonus.request',
+    'penalties': 'penalty.request',
+  };
+
+  Future<void> _empSubCreate(String model) async {
+    final api = context.read<AuthProvider>().api;
+    Map<String, dynamic> meta;
+    try {
+      meta = await api.managementEmpSubMeta(model);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+      return;
+    }
+    if (!mounted) return;
+    final vals = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white, showDragHandle: true,
+      builder: (_) => _EmpSubCreateForm(meta: meta, color: color),
+    );
+    if (vals == null || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      await api.managementEmpSubCreate(model, widget.employeeId, vals);
+      if (!mounted) return;
+      Navigator.pop(context); // close section sheet; parent reloads the file
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('✅ تم إضافة السجل', '✅ Record added')), backgroundColor: const Color(0xFF16A34A)));
+    } catch (e) {
+      if (mounted) {
+        setState(() => _busy = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+      }
+    }
   }
 
   Widget _barBtn(IconData ic, String label, Color c, VoidCallback onTap) => Padding(
@@ -1071,6 +1116,116 @@ class _SuspCreateSheetState extends State<_SuspCreateSheet> {
           label: Text(tr('إرسال إلى الموارد البشرية', 'Submit to HR'), style: const TextStyle(fontWeight: FontWeight.w800)),
         )),
       ]),
+    );
+  }
+}
+
+/// A compact create form for an employee sub-module (bonus / penalty …),
+/// built from the server's field meta. Returns the entered values (or null).
+class _EmpSubCreateForm extends StatefulWidget {
+  const _EmpSubCreateForm({required this.meta, required this.color});
+  final Map<String, dynamic> meta;
+  final Color color;
+  @override
+  State<_EmpSubCreateForm> createState() => _EmpSubCreateFormState();
+}
+
+class _EmpSubCreateFormState extends State<_EmpSubCreateForm> {
+  final Map<String, dynamic> _vals = {};
+
+  List get _fields => (widget.meta['fields'] as List?) ?? const [];
+
+  Future<void> _pickDate(String name) async {
+    final cur = _vals[name];
+    final init = (cur is String && cur.isNotEmpty) ? DateTime.tryParse(cur) ?? DateTime.now() : DateTime.now();
+    final d = await showDatePicker(context: context, initialDate: init, firstDate: DateTime(2010), lastDate: DateTime(2100));
+    if (d != null) setState(() => _vals[name] = d.toIso8601String().substring(0, 10));
+  }
+
+  void _submit() {
+    for (final f in _fields.cast<Map>()) {
+      if (f['required'] == true && (_vals['${f['name']}'] == null || '${_vals['${f['name']}']}'.trim().isEmpty)) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(tr('«${f['ar']}» مطلوب', '"${f['en']}" required')), backgroundColor: Pms.red));
+        return;
+      }
+    }
+    Navigator.pop(context, Map<String, dynamic>.from(_vals));
+  }
+
+  InputDecoration _dec(String h) => InputDecoration(
+        hintText: h, isDense: true, filled: true, fillColor: Pms.bg,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      );
+
+  Widget _field(Map f) {
+    final name = '${f['name']}';
+    final type = '${f['type']}';
+    final label = gLang == 'en' ? '${f['en']}' : '${f['ar']}';
+    Widget input;
+    if (type == 'selection') {
+      final opts = ((f['options'] as List?) ?? const []).cast<Map>();
+      input = Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(color: Pms.bg, borderRadius: BorderRadius.circular(12)),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: _vals[name] as String?, isExpanded: true, hint: Text(tr('اختر', 'Select'), style: const TextStyle(fontSize: 13, color: Pms.slate)),
+            items: [for (final o in opts) DropdownMenuItem(value: '${o['v']}', child: Text('${o['l']}', style: const TextStyle(fontSize: 13)))],
+            onChanged: (v) => setState(() => _vals[name] = v),
+          ),
+        ),
+      );
+    } else if (type == 'date' || type == 'datetime') {
+      input = InkWell(
+        borderRadius: BorderRadius.circular(12), onTap: () => _pickDate(name),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+          decoration: BoxDecoration(color: Pms.bg, borderRadius: BorderRadius.circular(12)),
+          child: Row(children: [
+            Icon(Icons.event_rounded, size: 18, color: widget.color), const SizedBox(width: 10),
+            Text('${_vals[name] ?? tr('اختر التاريخ', 'Pick date')}', style: TextStyle(fontSize: 13, color: _vals[name] == null ? Pms.slate : Pms.ink, fontWeight: FontWeight.w700)),
+          ]),
+        ),
+      );
+    } else {
+      input = TextField(
+        keyboardType: (type == 'float' || type == 'monetary' || type == 'integer') ? TextInputType.number : null,
+        maxLines: type == 'text' ? 3 : 1,
+        onChanged: (v) => _vals[name] = v,
+        decoration: _dec(label),
+      );
+    }
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Padding(padding: const EdgeInsets.fromLTRB(2, 12, 2, 6),
+          child: Text('$label${f['required'] == true ? ' *' : ''}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: Pms.ink))),
+      input,
+    ]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final title = gLang == 'en' ? '${widget.meta['en']}' : '${widget.meta['ar']}';
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(Icons.add_circle_rounded, color: widget.color), const SizedBox(width: 8),
+            Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+          ]),
+          for (final f in _fields.cast<Map>()) _field(f),
+          const SizedBox(height: 18),
+          SizedBox(width: double.infinity, height: 48, child: FilledButton.icon(
+            style: FilledButton.styleFrom(backgroundColor: widget.color, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+            onPressed: _submit,
+            icon: const Icon(Icons.check_rounded),
+            label: Text(tr('إضافة', 'Add'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+          )),
+        ]),
+      ),
     );
   }
 }
