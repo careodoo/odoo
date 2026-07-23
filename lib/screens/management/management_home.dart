@@ -7,6 +7,7 @@ import '../my/my_screen.dart';
 import 'management_list.dart';
 import 'management_search.dart';
 import 'housing_hub_screen.dart';
+import 'management_analytics.dart';
 
 /// Management app shell — Systems and the personal «My» hub, side by side.
 class ManagementShell extends StatefulWidget {
@@ -117,6 +118,12 @@ class _ManagementHomeState extends State<ManagementHome> {
             pinned: true, expandedHeight: 128, backgroundColor: Mgmt.deep,
             foregroundColor: Colors.white, automaticallyImplyLeading: false,
             actions: [
+              IconButton(
+                tooltip: tr('لوحة التحليلات', 'Analytics'),
+                icon: const Icon(Icons.insights_rounded),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => const ManagementAnalyticsScreen())),
+              ),
               IconButton(
                 tooltip: tr('بحث شامل', 'Global search'),
                 icon: const Icon(Icons.search_rounded),

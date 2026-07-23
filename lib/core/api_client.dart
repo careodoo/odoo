@@ -2087,6 +2087,11 @@ class ApiClient {
               headers: await _headers(),
               body: jsonEncode({'model': model, 'employee_id': employeeId, ...vals}))))['data'] as Map);
 
+  /// Cross-system analytics (KPIs + chart series) for the management dashboard.
+  Future<Map<String, dynamic>> managementAnalytics() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/management/analytics'), headers: await _headers())))['data'] as Map);
+
   // ---- Housing «السكن» hub ---------------------------------------------
   Future<Map<String, dynamic>> managementHousingHub() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
