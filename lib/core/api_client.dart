@@ -1984,6 +1984,23 @@ class ApiClient {
       _handle(await _net.post(_u('/management/$key/$id/write'),
           headers: await _headers(), body: jsonEncode(vals)));
 
+  /// Email a proposal (quotation) straight to its customer.
+  Future<Map<String, dynamic>> managementProposalSend(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/management/proposals/$id/send'),
+              headers: await _headers(), body: '{}')))['data'] as Map);
+
+  /// Pickers (customers, service types, modes) for the create-proposal form.
+  Future<Map<String, dynamic>> managementProposalMeta() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/management/proposals/meta'), headers: await _headers())))['data'] as Map);
+
+  /// Create a new proposal (quotation). Returns {id, ref, title}.
+  Future<Map<String, dynamic>> managementProposalCreate(Map<String, dynamic> vals) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/management/proposals/create'),
+              headers: await _headers(), body: jsonEncode(vals))))['data'] as Map);
+
   // ---- «My» self-service hub ----------------------------------------------
   Future<Map<String, dynamic>> myHub() async =>
       Map<String, dynamic>.from((await _handle(

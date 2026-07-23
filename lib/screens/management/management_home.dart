@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/auth.dart';
@@ -189,7 +190,6 @@ class _ManagementHomeState extends State<ManagementHome> {
 
   Widget _meBand(Map me) {
     final stats = ((me['stats'] as List?) ?? const []).cast<Map>();
-    final base = context.read<AuthProvider>().api.baseUrl.replaceAll('/api/v1', '');
     final initial = '${me['name'] ?? '?'}'.trim();
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 14, 12, 0),
@@ -201,17 +201,7 @@ class _ManagementHomeState extends State<ManagementHome> {
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(28),
-            child: Image.network('$base${me['avatar_url']}',
-                width: 52, height: 52, fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                    width: 52, height: 52,
-                    decoration: BoxDecoration(color: Mgmt.red.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(28)),
-                    alignment: Alignment.center,
-                    child: Text(initial.isEmpty ? '?' : initial.characters.first,
-                        style: const TextStyle(color: Mgmt.red, fontWeight: FontWeight.w900, fontSize: 20)))),
-          ),
+          _avatar(me, initial),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('${me['name'] ?? ''}', maxLines: 1, overflow: TextOverflow.ellipsis,
@@ -234,9 +224,9 @@ class _ManagementHomeState extends State<ManagementHome> {
         ]),
         if (stats.isNotEmpty) ...[
           const SizedBox(height: 14),
-          Row(children: [
+          Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
             for (var i = 0; i < stats.length; i++) ...[
-              if (i > 0) Container(width: 1, height: 30, color: Colors.grey.shade200),
+              if (i > 0) Container(width: 1, height: 40, color: Colors.grey.shade200),
               Expanded(child: _statCell(stats[i])),
             ],
           ]),
@@ -245,13 +235,36 @@ class _ManagementHomeState extends State<ManagementHome> {
     );
   }
 
-  Widget _statCell(Map s) => Column(children: [
-        Text('${s['value'] ?? 0}',
-            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 19, color: Mgmt.ink)),
-        const SizedBox(height: 2),
-        Text(gLang == 'en' ? '${s['en'] ?? ''}' : '${s['ar'] ?? ''}',
-            maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
-            style: const TextStyle(color: Mgmt.slate, fontSize: 10.5, fontWeight: FontWeight.w700)),
+  Widget _avatar(Map me, String initial) {
+    final b64 = '${me['avatar_b64'] ?? ''}';
+    Widget fallback() => Container(
+        width: 52, height: 52,
+        decoration: BoxDecoration(color: Mgmt.red.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(28)),
+        alignment: Alignment.center,
+        child: Text(initial.isEmpty ? '?' : initial.characters.first,
+            style: const TextStyle(color: Mgmt.red, fontWeight: FontWeight.w900, fontSize: 20)));
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: b64.isEmpty
+          ? fallback()
+          : Image.memory(base64Decode(b64),
+              width: 52, height: 52, fit: BoxFit.cover, gaplessPlayback: true,
+              errorBuilder: (_, __, ___) => fallback()),
+    );
+  }
+
+  // Stat cell: value + label. The label wraps to two lines so long Arabic
+  // captions ("بانتظار اعتمادك") never spill past the divider.
+  Widget _statCell(Map s) => Column(mainAxisSize: MainAxisSize.min, children: [
+        Text('${s['value'] ?? 0}', maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Mgmt.ink)),
+        const SizedBox(height: 3),
+        SizedBox(
+          height: 26,
+          child: Text(gLang == 'en' ? '${s['en'] ?? ''}' : '${s['ar'] ?? ''}',
+              maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
+              style: const TextStyle(color: Mgmt.slate, fontSize: 9.5, fontWeight: FontWeight.w700, height: 1.2)),
+        ),
       ]);
 
   Widget _card(Map a) {
