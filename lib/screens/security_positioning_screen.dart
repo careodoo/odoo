@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/widgets.dart';
+import '../core/geo.dart';
 
 /// Live security positioning: every premise on an interactive OpenStreetMap
 /// (geocoded from its name/address — no GPS field needed), each pin colored by
@@ -24,6 +25,7 @@ class _SecurityPositioningScreenState extends State<SecurityPositioningScreen> {
   final Map<int, LatLng> _coords = {};
   final _mapController = MapController();
   bool _geocoding = false;
+  LatLng? _myLoc;
 
   static const _navy = Color(0xFF0E3A5F);
   static const _kwCenter = LatLng(29.3759, 47.9774);
@@ -35,6 +37,7 @@ class _SecurityPositioningScreenState extends State<SecurityPositioningScreen> {
   void initState() {
     super.initState();
     _future = _loadAndGeocode();
+    Geo.current().then((l) { if (mounted && l != null) setState(() => _myLoc = l); });
   }
 
   Future<Map<String, dynamic>> _loadAndGeocode() async {
@@ -95,6 +98,7 @@ class _SecurityPositioningScreenState extends State<SecurityPositioningScreen> {
                     child: _pin(p),
                   ),
                 ),
+            if (_myLoc != null) Geo.meMarker(_myLoc!),
           ];
           final center = _coords.values.isNotEmpty ? _coords.values.first : _kwCenter;
           return Column(children: [
@@ -116,6 +120,17 @@ class _SecurityPositioningScreenState extends State<SecurityPositioningScreen> {
                   Positioned(top: 10, right: 10, child: _Chip(text: tr('تحديد المواقع…', 'Locating…'))),
                 // coverage legend
                 Positioned(left: 10, bottom: 10, child: _legend()),
+                // زر «موقعي»: يمركز الخريطة على موقع المستخدم
+                Positioned(right: 10, bottom: 10, child: FloatingActionButton.small(
+                  heroTag: 'pos_myloc', backgroundColor: Colors.white, foregroundColor: const Color(0xFF1A73E8),
+                  onPressed: () async {
+                    var l = _myLoc ?? await Geo.current();
+                    if (l == null) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('تعذّر تحديد موقعك — فعّل خدمة الموقع والإذن', 'Could not get your location — enable location & permission')))); return; }
+                    if (mounted) setState(() => _myLoc = l);
+                    _mapController.move(l, 15);
+                  },
+                  child: const Icon(Icons.my_location_rounded, size: 20),
+                )),
               ]),
             ),
             // ===== ranked list =====

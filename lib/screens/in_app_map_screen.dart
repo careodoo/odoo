@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/i18n.dart';
+import '../core/geo.dart';
 
 /// An in-app interactive map for a place, rendered from a text query. Uses
 /// OpenStreetMap tiles via flutter_map (NO API key, no Google billing) and the
@@ -21,6 +22,8 @@ class InAppMapScreen extends StatefulWidget {
 
 class _InAppMapScreenState extends State<InAppMapScreen> {
   LatLng? _point;
+  LatLng? _myLoc;
+  final _mapController = MapController();
   String? _error;
   bool _loading = true;
 
@@ -32,6 +35,7 @@ class _InAppMapScreenState extends State<InAppMapScreen> {
   void initState() {
     super.initState();
     _geocode();
+    Geo.current().then((l) { if (mounted && l != null) setState(() => _myLoc = l); });
   }
 
   Future<void> _geocode() async {
@@ -88,6 +92,7 @@ class _InAppMapScreenState extends State<InAppMapScreen> {
       ),
       body: Stack(children: [
         FlutterMap(
+          mapController: _mapController,
           options: MapOptions(initialCenter: center, initialZoom: _point != null ? 16 : 11),
           children: [
             TileLayer(
@@ -95,13 +100,14 @@ class _InAppMapScreenState extends State<InAppMapScreen> {
               userAgentPackageName: 'com.care.app',
               maxZoom: 19,
             ),
-            if (_point != null)
-              MarkerLayer(markers: [
+            MarkerLayer(markers: [
+              if (_point != null)
                 Marker(
                   point: _point!, width: 46, height: 46,
                   child: const Icon(Icons.location_on_rounded, color: Color(0xFFC0392B), size: 46),
                 ),
-              ]),
+              if (_myLoc != null) Geo.meMarker(_myLoc!),
+            ]),
             // OSM attribution (required by the tile usage policy).
             const RichAttributionWidget(attributions: [
               TextSourceAttribution('OpenStreetMap contributors'),
@@ -125,6 +131,20 @@ class _InAppMapScreenState extends State<InAppMapScreen> {
               ]),
             ),
           ),
+        // زر «موقعي»
+        Positioned(
+          right: 14, bottom: 82,
+          child: SafeArea(child: FloatingActionButton.small(
+            heroTag: 'inapp_myloc', backgroundColor: Colors.white, foregroundColor: const Color(0xFF1A73E8),
+            onPressed: () async {
+              var l = _myLoc ?? await Geo.current();
+              if (l == null) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('تعذّر تحديد موقعك', 'Could not get your location')))); return; }
+              if (mounted) setState(() => _myLoc = l);
+              _mapController.move(l, 15);
+            },
+            child: const Icon(Icons.my_location_rounded, size: 20),
+          )),
+        ),
         Positioned(
           left: 14, right: 14, bottom: 16,
           child: SafeArea(child: SizedBox(

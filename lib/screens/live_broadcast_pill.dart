@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/live_broadcast.dart';
+import '../main.dart' show navigatorKey;
 import 'security_broadcast_screen.dart';
 
 /// مؤشّر عائم يظهر فوق كل شاشات التطبيق طالما هناك بثّ نشط مُصغّر — يذكّر الحارس
@@ -51,8 +52,10 @@ class _PillState extends State<_Pill> with SingleTickerProviderStateMixin {
   }
 
   void _open() {
+    // المؤشّر يعلو الـ Navigator في الشجرة، فنستخدم المفتاح العام للعودة لشاشة
+    // البثّ الكاملة (تستأنف نفس الجلسة الحيّة).
     final svc = LiveBroadcast.instance;
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => SecurityBroadcastScreen(
+    navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => SecurityBroadcastScreen(
         incidentId: svc.incidentId, providerId: -1, cohost: svc.cohost)));
   }
 

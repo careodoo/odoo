@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import '../core/live_broadcast.dart';
 import 'security_broadcast_screen.dart';
 import 'stream_view_screen.dart';
 
@@ -11,6 +12,26 @@ import 'stream_view_screen.dart';
 /// SDK داخل التطبيق (تفادياً لمشكلة Agora مع AGP 9).
 class Stream {
   static Future<void> goLive(BuildContext context, {int? incidentId, String? title}) async {
+    // منع بثّين معاً: إن كان هناك بثّ نشط، نطلب العودة إليه أو إيقافه أولاً
+    if (LiveBroadcast.instance.isLive) {
+      final c = await _activeStreamDialog(context);
+      if (c == 'resume') {
+        if (!context.mounted) return;
+        Navigator.push(context, MaterialPageRoute(builder: (_) => SecurityBroadcastScreen(
+            incidentId: LiveBroadcast.instance.incidentId, providerId: -1,
+            cohost: LiveBroadcast.instance.cohost)));
+        return;
+      } else if (c == 'stop') {
+        final api2 = context.read<AuthProvider>().api;
+        final iid = LiveBroadcast.instance.incidentId, co = LiveBroadcast.instance.cohost;
+        await LiveBroadcast.instance.end();
+        try { if (co) { await api2.securityStreamCohostStop(iid); } else { await api2.securityStreamStop(iid); } } catch (_) {}
+        // ثم نكمل لبدء بثّ جديد
+      } else {
+        return; // إلغاء
+      }
+    }
+    if (!context.mounted) return;
     final api = context.read<AuthProvider>().api;
     List<dynamic> provs;
     try {
@@ -134,6 +155,29 @@ class Stream {
   static void watch(BuildContext context, int incidentId, {String? title, bool isClient = false}) {
     Navigator.push(context, MaterialPageRoute(
         builder: (_) => StreamViewScreen(incidentId: incidentId, isClient: isClient)));
+  }
+
+  /// حوار عند وجود بثّ نشط: العودة إليه / إيقافه وبدء جديد / إلغاء.
+  static Future<String?> _activeStreamDialog(BuildContext context) {
+    return showModalBottomSheet<String>(context: context, backgroundColor: const Color(0xFF152238),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        const Padding(padding: EdgeInsets.fromLTRB(14, 16, 14, 4),
+            child: Text('لديك بثّ مباشر نشط', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16))),
+        const Padding(padding: EdgeInsets.symmetric(horizontal: 14),
+            child: Text('لا يمكن تشغيل بثّين معاً. اختر:', style: TextStyle(color: Color(0xFF9CB2CD), fontSize: 12.5))),
+        const SizedBox(height: 8),
+        ListTile(leading: const Icon(Icons.videocam_rounded, color: Color(0xFFE5484D)),
+            title: const Text('العودة للبثّ الحالي', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            onTap: () => Navigator.pop(_, 'resume')),
+        ListTile(leading: const Icon(Icons.stop_circle_rounded, color: Color(0xFFF7A23B)),
+            title: const Text('إيقاف الحالي وبدء بثّ جديد', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            onTap: () => Navigator.pop(_, 'stop')),
+        ListTile(leading: const Icon(Icons.close_rounded, color: Color(0xFF9CB2CD)),
+            title: const Text('إلغاء', style: TextStyle(color: Color(0xFF9CB2CD))),
+            onTap: () => Navigator.pop(_, null)),
+        const SizedBox(height: 8),
+      ])));
   }
 
   static void _err(BuildContext c, String m) => ScaffoldMessenger.of(c).showSnackBar(

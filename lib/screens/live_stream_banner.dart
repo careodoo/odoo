@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import '../core/live_broadcast.dart';
 import 'stream_view_screen.dart';
 import 'security_broadcast_screen.dart';
 
@@ -109,16 +110,22 @@ class _LiveStreamBannerState extends State<LiveStreamBanner> with WidgetsBinding
             Text('${s['premise']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFCBA6A8), fontSize: 11)),
         ])),
         const SizedBox(width: 8),
-        // أزرار: مشاهدة / مشاركة (المشاركة للفريق فقط، لا العميل)
+        // أزرار: الباثّ نفسه (عودة/إيقاف)، وإلا مشاهدة (+ مشاركة للفريق)
         Column(mainAxisSize: MainAxisSize.min, children: [
-          _btn(Icons.play_arrow_rounded, tr('مشاهدة', 'Watch'), _red,
-              () => Navigator.push(context, MaterialPageRoute(builder: (_) =>
-                  StreamViewScreen(incidentId: s['incident_id'] as int, isClient: widget.isClient)))),
-          if (!widget.isClient && !mine) ...[
+          if (mine && !widget.isClient) ...[
+            _btn(Icons.videocam_rounded, tr('العودة للبثّ', 'Resume'), _red, () => _resume(s)),
             const SizedBox(height: 6),
-            _btn(Icons.video_call_rounded, tr('مشاركة', 'Join'), _green,
+            _btn(Icons.stop_rounded, tr('إيقاف', 'Stop'), const Color(0xFF64748B), () => _stopMine(s)),
+          ] else ...[
+            _btn(Icons.play_arrow_rounded, tr('مشاهدة', 'Watch'), _red,
                 () => Navigator.push(context, MaterialPageRoute(builder: (_) =>
-                    SecurityBroadcastScreen(incidentId: s['incident_id'] as int, providerId: -1, cohost: true)))),
+                    StreamViewScreen(incidentId: s['incident_id'] as int, isClient: widget.isClient)))),
+            if (!widget.isClient) ...[
+              const SizedBox(height: 6),
+              _btn(Icons.video_call_rounded, tr('مشاركة', 'Join'), _green,
+                  () => Navigator.push(context, MaterialPageRoute(builder: (_) =>
+                      SecurityBroadcastScreen(incidentId: s['incident_id'] as int, providerId: -1, cohost: true)))),
+            ],
           ],
         ]),
       ]),
@@ -134,6 +141,21 @@ class _LiveStreamBannerState extends State<LiveStreamBanner> with WidgetsBinding
           icon: Icon(i, size: 15), label: Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
         ),
       );
+
+  /// الباثّ يعود لشاشة بثّه الكاملة (تستأنف الجلسة الحيّة).
+  void _resume(Map s) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) =>
+        SecurityBroadcastScreen(incidentId: s['incident_id'] as int, providerId: -1)));
+  }
+
+  /// الباثّ يوقف بثّه من البانر مباشرة.
+  Future<void> _stopMine(Map s) async {
+    final iid = s['incident_id'] as int;
+    final api = context.read<AuthProvider>().api;
+    try { await LiveBroadcast.instance.end(); } catch (_) {}
+    try { await api.securityStreamStop(iid); } catch (_) {}
+    _tick();
+  }
 
   MemoryImage? _decode(String b64) {
     if (b64.isEmpty) return null;

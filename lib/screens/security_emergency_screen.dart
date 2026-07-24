@@ -8,6 +8,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import '../core/geo.dart';
 import 'security_stream_screen.dart';
 
 /// Panic / SOS. Raising requires a biometric confirmation, captures GPS, and
@@ -73,11 +74,14 @@ class _SecurityEmergencyMapScreenState extends State<SecurityEmergencyMapScreen>
   static const _kwCenter = LatLng(29.3759, 47.9774);
   List<Map> _items = const [];
   Timer? _poll;
+  LatLng? _myLoc;
+  final _map = MapController();
 
   @override
   void initState() {
     super.initState();
     _load();
+    Geo.current().then((l) { if (mounted && l != null) setState(() => _myLoc = l); });
     _poll = Timer.periodic(const Duration(seconds: 8), (_) { if (mounted) _load(); });
   }
 
@@ -125,6 +129,7 @@ class _SecurityEmergencyMapScreenState extends State<SecurityEmergencyMapScreen>
         markers.add(Marker(point: p, width: 46, height: 46, child: const _Pulse()));
       }
     }
+    if (_myLoc != null) markers.add(Geo.meMarker(_myLoc!));
     final center = markers.isNotEmpty ? markers.first.point : _kwCenter;
     return Scaffold(
       backgroundColor: const Color(0xFF0B1220),
@@ -132,13 +137,26 @@ class _SecurityEmergencyMapScreenState extends State<SecurityEmergencyMapScreen>
           title: Text('🚨 ${tr('نداءات الاستغاثة', 'SOS alerts')} (${_items.length})'),
           actions: [IconButton(icon: const Icon(Icons.refresh_rounded), onPressed: _load)]),
       body: Column(children: [
-        SizedBox(height: 300, child: FlutterMap(
+        SizedBox(height: 300, child: Stack(children: [
+          FlutterMap(
+          mapController: _map,
           options: MapOptions(initialCenter: center, initialZoom: 13),
           children: [
             TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'com.carekw.care_mobile'),
             MarkerLayer(markers: markers),
           ],
-        )),
+        ),
+          Positioned(right: 10, bottom: 10, child: FloatingActionButton.small(
+            heroTag: 'sos_myloc', backgroundColor: Colors.white, foregroundColor: const Color(0xFF1A73E8),
+            onPressed: () async {
+              var l = _myLoc ?? await Geo.current();
+              if (l == null) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('تعذّر تحديد موقعك', 'Could not get your location')))); return; }
+              if (mounted) setState(() => _myLoc = l);
+              _map.move(l, 15);
+            },
+            child: const Icon(Icons.my_location_rounded, size: 20),
+          )),
+        ])),
         Expanded(child: _items.isEmpty
             ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                 const Icon(Icons.verified_user_rounded, size: 70, color: Color(0xFF37C98A)),

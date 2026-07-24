@@ -1,3 +1,4 @@
+import '../core/geo.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -20,6 +21,7 @@ class _WasteTripMapScreenState extends State<WasteTripMapScreen> {
   final _map = MapController();
   Timer? _timer;
   LatLng? _driver;
+  LatLng? _myLoc;
   String? _updated, _driverName;
   bool _loading = true;
 
@@ -27,6 +29,7 @@ class _WasteTripMapScreenState extends State<WasteTripMapScreen> {
   void initState() {
     super.initState();
     _poll();
+    Geo.current().then((l) { if (mounted && l != null) setState(() => _myLoc = l); });
     _timer = Timer.periodic(const Duration(seconds: 15), (_) => _poll());
   }
 
@@ -78,9 +81,20 @@ class _WasteTripMapScreenState extends State<WasteTripMapScreen> {
                       TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'com.care.app'),
                       MarkerLayer(markers: [
                         Marker(point: _driver!, width: 54, height: 54, child: _driverPin()),
+                        if (_myLoc != null) Geo.meMarker(_myLoc!),
                       ]),
                     ],
                   ),
+                  Positioned(right: 12, bottom: 84, child: FloatingActionButton.small(
+                    heroTag: 'waste_myloc', backgroundColor: Colors.white, foregroundColor: const Color(0xFF1A73E8),
+                    onPressed: () async {
+                      var l = _myLoc ?? await Geo.current();
+                      if (l == null) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('تعذّر تحديد موقعك', 'Could not get your location')))); return; }
+                      if (mounted) setState(() => _myLoc = l);
+                      _map.move(l, 15);
+                    },
+                    child: const Icon(Icons.my_location_rounded, size: 20),
+                  )),
                   Positioned(left: 12, right: 12, bottom: 12, child: _infoCard()),
                 ]),
     );
