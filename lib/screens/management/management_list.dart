@@ -463,14 +463,6 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Mgmt.bg,
-      floatingActionButton: (_last?['can_create'] == true)
-          ? FloatingActionButton.extended(
-              backgroundColor: widget.accent,
-              foregroundColor: Colors.white,
-              icon: const Icon(Icons.add_rounded),
-              label: Text(_fabLabel(), style: const TextStyle(fontWeight: FontWeight.w800)),
-              onPressed: _onCreate)
-          : null,
       appBar: AppBar(
         backgroundColor: widget.accent, foregroundColor: Colors.white, elevation: 0,
         title: Row(children: [
@@ -478,6 +470,27 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
           Expanded(child: Text(widget.title, overflow: TextOverflow.ellipsis)),
         ]),
         actions: [
+          // Create lives at the TOP as a professional pill (not a bottom FAB).
+          if (_last?['can_create'] == true)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              child: Material(
+                color: Colors.white.withValues(alpha: 0.20),
+                borderRadius: BorderRadius.circular(20),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: _onCreate,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      const Icon(Icons.add_rounded, size: 18, color: Colors.white),
+                      const SizedBox(width: 4),
+                      Text(_fabLabel(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12.5)),
+                    ]),
+                  ),
+                ),
+              ),
+            ),
           // Biometric devices live inside the Attendance icon.
           if (widget.appKey == 'attendance')
             IconButton(
@@ -1812,6 +1825,54 @@ class _DetailSheetState extends State<_DetailSheet> {
     context.read<AuthProvider>().api.token.then((t) {
       if (mounted) setState(() => _token = t);
     });
+  }
+
+  // Prominent workflow-action bar shown right under the record header. Primary
+  // actions (approve/confirm/submit …) read as filled buttons; secondary as
+  // outlines; destructive in red — so the required action stands out at a glance.
+  Widget _actionBar(List actions) {
+    if (actions.isEmpty) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white, borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: widget.accent.withValues(alpha: 0.14)),
+        boxShadow: [BoxShadow(color: widget.accent.withValues(alpha: 0.06), blurRadius: 10, offset: const Offset(0, 3))],
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(Icons.bolt_rounded, size: 15, color: widget.accent),
+          const SizedBox(width: 5),
+          Text(tr('الإجراءات المتاحة', 'Available actions'),
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11.5, color: widget.accent)),
+        ]),
+        const SizedBox(height: 10),
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          for (final a in actions)
+            SizedBox(
+              height: 42,
+              child: (a as Map)['style'] == 'primary'
+                  ? ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: widget.accent, foregroundColor: Colors.white, elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                      icon: const Icon(Icons.check_circle_rounded, size: 17),
+                      onPressed: _busy ? null : () => _run(a),
+                      label: Text(gLang == 'en' ? '${a['en']}' : '${a['ar']}',
+                          style: const TextStyle(fontWeight: FontWeight.w800)))
+                  : OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                          foregroundColor: a['style'] == 'danger' ? Mgmt.red : Mgmt.slate,
+                          side: BorderSide(color: a['style'] == 'danger' ? Mgmt.red : Colors.black26),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                      onPressed: _busy ? null : () => _run(a),
+                      child: Text(gLang == 'en' ? '${a['en']}' : '${a['ar']}',
+                          style: const TextStyle(fontWeight: FontWeight.w800))),
+            ),
+        ]),
+      ]),
+    );
   }
 
   Future<void> _run(Map a) async {
@@ -3900,6 +3961,8 @@ class _DetailSheetState extends State<_DetailSheet> {
               ),
             ]),
           ),
+          // ---- workflow actions: a prominent bar right under the header
+          _actionBar(actions),
           // ---- professional detail blocks per system
           if (isProposal) _proposalBlock(),
           if (isTender) _tenderBlock(),
@@ -3933,32 +3996,6 @@ class _DetailSheetState extends State<_DetailSheet> {
                     style: TextStyle(color: widget.accent, fontWeight: FontWeight.w900, fontSize: 17)),
               ]),
             ),
-          // ---- actions
-          if (actions.isNotEmpty) Padding(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 2),
-            child: Wrap(spacing: 8, runSpacing: 8, children: [
-              for (final a in actions)
-                SizedBox(
-                  height: 42,
-                  child: (a as Map)['style'] == 'primary'
-                      ? ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: widget.accent, foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                          onPressed: _busy ? null : () => _run(a),
-                          child: Text(gLang == 'en' ? '${a['en']}' : '${a['ar']}',
-                              style: const TextStyle(fontWeight: FontWeight.w800)))
-                      : OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                              foregroundColor: a['style'] == 'danger' ? Mgmt.red : Mgmt.slate,
-                              side: BorderSide(color: a['style'] == 'danger' ? Mgmt.red : Colors.black26),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                          onPressed: _busy ? null : () => _run(a),
-                          child: Text(gLang == 'en' ? '${a['en']}' : '${a['ar']}',
-                              style: const TextStyle(fontWeight: FontWeight.w800))),
-                ),
-            ]),
-          ),
           // ---- reports (pdf viewer / xlsx download)
           _attachmentsCard(),
           _reportsCard(),

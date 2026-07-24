@@ -21,7 +21,7 @@ class _ManagementInboxScreenState extends State<ManagementInboxScreen> {
   String? _filter; // selected source key, null = all
 
   static const _tint = {
-    'purchases': Color(0xFF2563EB), 'sales': Color(0xFF16A34A), 'tenders': Color(0xFF7C3AED),
+    'purchases': Color(0xFF2563EB), 'sales': Color(0xFF16A34A), 'tenders': Color(0xFF0F766E),
     'proposals': Color(0xFF0891B2), 'leaves': Color(0xFF0EA5E9), 'expenses': Color(0xFFEA580C),
     'purchase_requests': Color(0xFF2563EB), 'approvals': Color(0xFFDB2777),
     'invoice_requests': Color(0xFF9333EA), 'experience': Color(0xFF059669),
