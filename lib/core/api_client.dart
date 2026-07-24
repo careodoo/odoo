@@ -533,6 +533,12 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/stream/watch/$incidentId'), headers: await _headers())))['data'] as Map);
 
+  /// إشعار عميل الموقع بالبلاغ (للبلاغات الحرجة).
+  Future<Map<String, dynamic>> securityNotifyClient(int incidentId) async {
+    final res = await _handle(await _net.post(_u('/security/incident/$incidentId/notify_client'), headers: await _headers()));
+    return Map<String, dynamic>.from(res['data'] as Map);
+  }
+
   // ---- دوريات الحارس --------------------------------------------------------
   Future<Map<String, dynamic>> securityMyPatrols() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
@@ -1336,6 +1342,13 @@ class ApiClient {
   Future<Map<String, dynamic>> clientSecurityGatepassCreate(Map<String, dynamic> body) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/client/security/gatepass/create'), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  /// العميل يطلب بثاً مباشراً لبلاغ في موقعه → يُشعَر الحارس المعني.
+  Future<Map<String, dynamic>> clientSecurityRequestStream(int incidentId, {String? note}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/client/security/incident/$incidentId/request_stream'),
+              headers: await _headers(),
+              body: jsonEncode({if (note != null && note.isNotEmpty) 'note': note}))))['data'] as Map);
 
   // ---- client-scoped agriculture / landscaping suite -----------------------
   Future<Map<String, dynamic>> clientAgriSummary() async =>

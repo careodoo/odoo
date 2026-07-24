@@ -394,9 +394,92 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
                 ]),
               ),
             ),
+            // زر طلب بث مباشر: يظهر للبلاغات الحرجة/العالية غير المغلقة فقط
+            if (_kind == 'incidents' && _isCritical(r) && !_isClosed(r))
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFFDC2626),
+                        padding: const EdgeInsets.symmetric(vertical: 14)),
+                    onPressed: () => _requestStream(r),
+                    icon: const Icon(Icons.live_tv_rounded, size: 20),
+                    label: Text(tr('طلب بث مباشر من الموقع', 'Request live stream'),
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+                  ),
+                ),
+              ),
           ]),
         ),
       ),
     );
+  }
+
+  bool _isCritical(Map r) {
+    final s = '${r['severity_raw'] ?? r['severity'] ?? ''}'.toLowerCase();
+    return s.contains('critical') || s.contains('high') ||
+        s.contains('حرج') || s.contains('عالي');
+  }
+
+  bool _isClosed(Map r) {
+    final s = '${r['state'] ?? ''}'.toLowerCase();
+    return s.contains('closed') || s.contains('resolved') || s.contains('cancel');
+  }
+
+  /// العميل يطلب بثاً مباشراً لبلاغ في موقعه → يُشعَر الحارس المعني ليفتح البث.
+  Future<void> _requestStream(Map r) async {
+    final id = r['id'];
+    if (id == null) return;
+    // ملاحظة اختيارية من العميل
+    final noteCtl = TextEditingController();
+    final go = await showDialog<bool>(
+      context: context,
+      builder: (dc) => AlertDialog(
+        backgroundColor: Theme.of(context).cardColor,
+        title: Text(tr('طلب بث مباشر', 'Request live stream'),
+            style: const TextStyle(fontWeight: FontWeight.w900)),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(tr('سيصل طلبك للحارس المعني بالبلاغ ليفتح بثاً مباشراً من الموقع.',
+                  'The assigned guard will be asked to open a live stream from the site.'),
+              style: TextStyle(fontSize: 12.5, color: Colors.grey.shade700, height: 1.5)),
+          const SizedBox(height: 12),
+          TextField(
+            controller: noteCtl,
+            maxLines: 2,
+            decoration: InputDecoration(
+              hintText: tr('ملاحظة (اختياري)', 'Note (optional)'),
+              border: const OutlineInputBorder(),
+              isDense: true,
+            ),
+          ),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dc, false), child: Text(tr('إلغاء', 'Cancel'))),
+          FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+              onPressed: () => Navigator.pop(dc, true),
+              child: Text(tr('إرسال الطلب', 'Send request'))),
+        ],
+      ),
+    );
+    if (go != true || !mounted) return;
+    try {
+      final res = await context.read<AuthProvider>().api
+          .clientSecurityRequestStream(id as int, note: noteCtl.text.trim());
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: const Color(0xFF16A34A),
+        content: Text('${res['message'] ?? tr('أُرسل الطلب', 'Request sent')}'
+            ' (${res['notified'] ?? 0})'),
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: const Color(0xFFE11D48),
+        content: Text('$e'.replaceFirst('Exception: ', '')),
+      ));
+    }
   }
 }
