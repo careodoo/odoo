@@ -13,6 +13,7 @@ import 'client_analytics_screen.dart';
 import 'client_services_screen.dart';
 import 'client_workorders_screen.dart';
 import 'contracts_screen.dart';
+import 'live_stream_banner.dart';
 import 'manage_screen.dart';
 import 'requests_screen.dart';
 import 'quality_screen.dart';
@@ -99,6 +100,7 @@ class _ClientHomeState extends State<ClientHome> {
               children: [
                 _hero(d, k, cs),
                 const SizedBox(height: 10),
+                const LiveStreamBanner(isClient: true),
                 _miniBar(p),
                 const SizedBox(height: 14),
                 _cockpit(k),

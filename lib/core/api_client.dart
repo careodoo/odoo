@@ -516,7 +516,7 @@ class ApiClient {
     return List<dynamic>.from((res['data'] as Map)['providers'] as List);
   }
 
-  Future<Map<String, dynamic>> securityStreamStart({int? incidentId, int? providerId, List<int>? viewerIds, String url = '', double? latitude, double? longitude}) async {
+  Future<Map<String, dynamic>> securityStreamStart({int? incidentId, int? providerId, List<int>? viewerIds, String url = '', double? latitude, double? longitude, String? audience}) async {
     final res = await _handle(await _net.post(_u('/security/stream/start'), headers: await _headers(),
         body: jsonEncode({
           if (incidentId != null) 'incident_id': incidentId,
@@ -524,8 +524,15 @@ class ApiClient {
           if (viewerIds != null) 'viewer_ids': viewerIds, 'url': url,
           if (latitude != null) 'latitude': latitude,
           if (longitude != null) 'longitude': longitude,
+          if (audience != null) 'audience': audience,
         })));
     return Map<String, dynamic>.from(res['data'] as Map);
+  }
+
+  /// البثوث الحيّة على مواقع العميل (لبانر هيدر تطبيق العميل).
+  Future<List<dynamic>> clientSecurityStreamActive() async {
+    final res = await _handle(await _net.get(_u('/client/security/stream/active'), headers: await _headers()));
+    return List<dynamic>.from((res['data'] as Map)['items'] as List);
   }
 
   Future<void> securityStreamStop(int incidentId) async =>

@@ -38,20 +38,45 @@ class Stream {
         ]));
       if (provider == null) return;
     }
-    // اختيار المشاهدين: الفريق كامل أو أعضاء محدّدون
-    List<int>? viewerIds;
+    // اختيار الجمهور: الكل (فريق + عميل) / العميل فقط / الفريق فقط
+    String? audience;
     if (context.mounted) {
+      audience = await _pickAudience(context);
+      if (audience == null) return; // ألغى
+    }
+    // لو «الفريق فقط»: نتيح اختيار أعضاء محدّدين
+    List<int>? viewerIds;
+    if (audience == 'team' && context.mounted) {
       viewerIds = await _pickViewers(context);
-      if (viewerIds == null && context.mounted) {
-        // ألغى الاختيار
-        return;
-      }
+      if (viewerIds == null) return;
     }
     if (!context.mounted) return;
     // شاشة البثّ الاحترافية تتولّى إنشاء الجلسة والنشر (WebRTC) والمشاهدين والدردشة
     Navigator.push(context, MaterialPageRoute(builder: (_) => SecurityBroadcastScreen(
-        incidentId: incidentId, providerId: provider!['id'] as int,
+        incidentId: incidentId, providerId: provider!['id'] as int, audience: audience,
         viewerIds: (viewerIds != null && viewerIds.isNotEmpty) ? viewerIds : null)));
+  }
+
+  /// اختيار جمهور البثّ. يعيد 'all' | 'client' | 'team' أو null إن ألغى.
+  static Future<String?> _pickAudience(BuildContext context) async {
+    return showModalBottomSheet<String>(context: context, backgroundColor: const Color(0xFF152238),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        const Padding(padding: EdgeInsets.all(14), child: Text('لمن يظهر البثّ؟', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16))),
+        ListTile(leading: const Icon(Icons.public_rounded, color: Color(0xFF37C98A)),
+            title: const Text('الكل (الفريق + العميل)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            subtitle: const Text('يراه فريق الأمن وعميل الموقع', style: TextStyle(color: Color(0xFF9CB2CD), fontSize: 12)),
+            onTap: () => Navigator.pop(_, 'all')),
+        ListTile(leading: const Icon(Icons.business_rounded, color: Color(0xFF4AA8FF)),
+            title: const Text('العميل فقط', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            subtitle: const Text('يراه عميل الموقع فقط', style: TextStyle(color: Color(0xFF9CB2CD), fontSize: 12)),
+            onTap: () => Navigator.pop(_, 'client')),
+        ListTile(leading: const Icon(Icons.groups_rounded, color: Color(0xFFF7A23B)),
+            title: const Text('الفريق فقط', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            subtitle: const Text('يراه فريق الأمن فقط (اختيار الأعضاء)', style: TextStyle(color: Color(0xFF9CB2CD), fontSize: 12)),
+            onTap: () => Navigator.pop(_, 'team')),
+        const SizedBox(height: 8),
+      ])));
   }
 
   /// اختيار مشاهدي البث: يعيد قائمة user_ids المحدّدة، أو [] للفريق كامل،

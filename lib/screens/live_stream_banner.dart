@@ -11,7 +11,9 @@ import 'security_broadcast_screen.dart';
 /// بأيقونة حمراء نابضة + اسم وصورة الباثّ + الموقع + عدّاد المشاهدين، مع
 /// «مشاهدة» و«مشاركة». يستطلع الحالة دورياً ويختفي عند انتهاء كل البثوث.
 class LiveStreamBanner extends StatefulWidget {
-  const LiveStreamBanner({super.key});
+  /// isClient: بانر هيدر تطبيق العميل (بثوث مواقعه، مشاهدة فقط بلا «مشاركة»).
+  final bool isClient;
+  const LiveStreamBanner({super.key, this.isClient = false});
   @override
   State<LiveStreamBanner> createState() => _LiveStreamBannerState();
 }
@@ -31,7 +33,8 @@ class _LiveStreamBannerState extends State<LiveStreamBanner> {
 
   Future<void> _tick() async {
     try {
-      final items = await context.read<AuthProvider>().api.securityStreamActive();
+      final api = context.read<AuthProvider>().api;
+      final items = widget.isClient ? await api.clientSecurityStreamActive() : await api.securityStreamActive();
       if (mounted) setState(() => _items = items.cast<Map>());
     } catch (_) {}
   }
@@ -92,11 +95,12 @@ class _LiveStreamBannerState extends State<LiveStreamBanner> {
             Text('${s['premise']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFCBA6A8), fontSize: 11)),
         ])),
         const SizedBox(width: 8),
-        // أزرار: مشاهدة / مشاركة
+        // أزرار: مشاهدة / مشاركة (المشاركة للفريق فقط، لا العميل)
         Column(mainAxisSize: MainAxisSize.min, children: [
           _btn(Icons.play_arrow_rounded, tr('مشاهدة', 'Watch'), _red,
-              () => Navigator.push(context, MaterialPageRoute(builder: (_) => StreamViewScreen(incidentId: s['incident_id'] as int)))),
-          if (!mine) ...[
+              () => Navigator.push(context, MaterialPageRoute(builder: (_) =>
+                  StreamViewScreen(incidentId: s['incident_id'] as int, isClient: widget.isClient)))),
+          if (!widget.isClient && !mine) ...[
             const SizedBox(height: 6),
             _btn(Icons.video_call_rounded, tr('مشاركة', 'Join'), _green,
                 () => Navigator.push(context, MaterialPageRoute(builder: (_) =>

@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/webrtc_stream.dart';
+import '../core/live_broadcast.dart';
 import 'stream_chat_layer.dart';
 
 /// شاشة بثّ الحارس الاحترافية: معاينة الكاميرا الحيّة داخل التطبيق (WebRTC/WHIP)،
@@ -20,8 +21,9 @@ class SecurityBroadcastScreen extends StatefulWidget {
   final int providerId;
   final List<int>? viewerIds;
   final bool cohost; // وضع المشاركة: يبثّ كـ co-host داخل بثّ قائم
+  final String? audience; // 'all' | 'client' | 'team'
   const SecurityBroadcastScreen(
-      {super.key, this.incidentId, required this.providerId, this.viewerIds, this.cohost = false});
+      {super.key, this.incidentId, required this.providerId, this.viewerIds, this.cohost = false, this.audience});
 
   @override
   State<SecurityBroadcastScreen> createState() => _SecurityBroadcastScreenState();
@@ -34,7 +36,8 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
   static const _green = Color(0xFF37C98A);
   static const _muteGrey = Color(0xFF9CB2CD);
 
-  WhipBroadcaster? _bc;
+  // الناشر يعيش في الخدمة العامّة ليستمرّ عند التصغير
+  WhipBroadcaster? get _bc => LiveBroadcast.instance.bc;
   Map<String, dynamic>? _session;
   Timer? _elapsed, _pollViewers;
   int _seconds = 0, _viewers = 0;
@@ -53,6 +56,16 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
 
   Future<void> _begin() async {
     try {
+      // استئناف بثّ مصغّر قائم لنفس البلاغ (بدل بدء جديد)
+      final svc = LiveBroadcast.instance;
+      if (svc.isLive && svc.incidentId == (widget.incidentId ?? 0)) {
+        _session = svc.session;
+        _webrtc = true;
+        _seconds = svc.elapsedSeconds;
+        _startTimers();
+        if (mounted) setState(() => _starting = false);
+        return;
+      }
       // 1) الأذونات
       final cam = await Permission.camera.request();
       final mic = await Permission.microphone.request();
@@ -75,7 +88,7 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
           : await api.securityStreamStart(
               incidentId: widget.incidentId, providerId: widget.providerId,
               viewerIds: (widget.viewerIds?.isNotEmpty ?? false) ? widget.viewerIds : null,
-              latitude: lat, longitude: lng);
+              latitude: lat, longitude: lng, audience: widget.audience);
       _session = s;
       final whip = '${s['whip_url'] ?? ''}';
       if (whip.isNotEmpty) {
@@ -83,7 +96,7 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
         _webrtc = true;
         final bc = WhipBroadcaster();
         await bc.start(whip);
-        _bc = bc;
+        LiveBroadcast.instance.begin(bc, s, _iid, widget.cohost);
         _startTimers();
       } else {
         // رجوع لوضع RTMP (Larix)
@@ -138,14 +151,21 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
       ),
     );
     if (ok != true) return;
+    final iid = _iid;
     _elapsed?.cancel(); _pollViewers?.cancel();
-    try { await _bc?.stop(); } catch (_) {}
+    try { await LiveBroadcast.instance.end(); } catch (_) {}
     try {
       final api = context.read<AuthProvider>().api;
-      if (widget.cohost) { await api.securityStreamCohostStop(_iid); }
-      else { await api.securityStreamStop(_iid); }
+      if (widget.cohost) { await api.securityStreamCohostStop(iid); }
+      else { await api.securityStreamStop(iid); }
     } catch (_) {}
     if (mounted) Navigator.pop(context);
+  }
+
+  /// تصغير: نغلق الشاشة ويستمرّ البثّ في الخدمة (يظهر المؤشّر العائم).
+  void _minimize() {
+    _elapsed?.cancel(); _pollViewers?.cancel();
+    Navigator.pop(context);
   }
 
   void _showViewers() {
@@ -189,8 +209,8 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
 
   @override
   void dispose() {
+    // لا نوقف الناشر هنا — الخدمة تملكه ليستمرّ البثّ عند التصغير
     _elapsed?.cancel(); _pollViewers?.cancel();
-    _bc?.stop();
     super.dispose();
   }
 
@@ -198,7 +218,7 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, _) { if (!didPop) _stop(); },
+      onPopInvokedWithResult: (didPop, _) { if (!didPop) _minimize(); },
       child: Scaffold(
         backgroundColor: _bg,
         body: SafeArea(
@@ -253,6 +273,10 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
               Text(_clock, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12.5, fontFeatures: [FontFeature.tabularFigures()])),
             ])),
         const Spacer(),
+        InkWell(onTap: _minimize, borderRadius: BorderRadius.circular(20),
+            child: Container(padding: const EdgeInsets.all(8), margin: const EdgeInsets.only(left: 8),
+                decoration: BoxDecoration(color: Colors.black.withValues(alpha: .45), shape: BoxShape.circle),
+                child: const Icon(Icons.picture_in_picture_alt_rounded, color: Colors.white, size: 17))),
         InkWell(onTap: _showChat, borderRadius: BorderRadius.circular(20),
             child: Container(padding: const EdgeInsets.all(8), margin: const EdgeInsets.only(left: 8),
                 decoration: BoxDecoration(color: Colors.black.withValues(alpha: .45), shape: BoxShape.circle),

@@ -10,6 +10,7 @@ import 'core/deeplink.dart';
 import 'screens/c2c/root_shell.dart';
 import 'screens/c2c/c2c_shell.dart';
 import 'screens/language_onboarding.dart';
+import 'screens/live_broadcast_pill.dart';
 
 /// App-wide navigator so a tapped push notification can open its record even
 /// from a cold start (no BuildContext at hand otherwise).
@@ -92,7 +93,8 @@ class CareApp extends StatelessWidget {
       theme: buildTheme(theme),
       builder: (ctx, child) => Directionality(
         textDirection: gIsRtl ? TextDirection.rtl : TextDirection.ltr,
-        child: child!,
+        // المؤشّر العائم للبثّ يعلو كل الشاشات عند وجود بثّ مُصغّر
+        child: Stack(children: [child!, const LiveBroadcastPill()]),
       ),
       home: auth.loading
           ? const _Splash()
