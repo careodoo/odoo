@@ -41,6 +41,7 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
   final _room = TextEditingController();
 
   Timer? _live;
+  Timer? _tick; // 1s ticker so per-order countdowns move smoothly
 
   @override
   void initState() {
@@ -58,9 +59,14 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
       _live ??= Timer.periodic(const Duration(seconds: 12), (_) {
         if (mounted && _tabs.index == 2) _refreshKitchen();
       });
+      _tick ??= Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted && _tabs.index == 2) setState(() {});
+      });
     } else {
       _live?.cancel();
       _live = null;
+      _tick?.cancel();
+      _tick = null;
     }
   }
 
@@ -76,6 +82,7 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
   @override
   void dispose() {
     _live?.cancel();
+    _tick?.cancel();
     _tabs.removeListener(_liveToggle);
     _tabs.dispose();
     _room.dispose();
@@ -901,14 +908,46 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
           ),
         ),
         if (approvals.isNotEmpty) ...[
-          _sectionTitle('🔐 ${tr('بانتظار الاعتماد', 'Awaiting approval')}'),
+          _sectionTitle('🔐 ${tr('بانتظار الاعتماد', 'Awaiting approval')} (${approvals.length})'),
           for (final o in approvals) _kdsCard(o, approval: true),
         ],
         if (orders.isEmpty && approvals.isEmpty)
           _empty(tr('لا طلبات في الطابور', 'Nothing in the queue')),
-        for (final o in orders) _kdsCard(o),
+        // All orders, grouped by state so nothing is hidden.
+        ..._kdsSection('🆕 ${tr('جديدة', 'New')}', orders.where((o) => o['state'] == 'placed').toList()),
+        ..._kdsSection('👨‍🍳 ${tr('قيد التحضير', 'Preparing')}', orders.where((o) => o['state'] == 'accepted' || o['state'] == 'preparing').toList()),
+        ..._kdsSection('✅ ${tr('جاهزة', 'Ready')}', orders.where((o) => o['state'] == 'ready').toList()),
       ]),
     );
+  }
+
+  List<Widget> _kdsSection(String title, List<Map> items) {
+    if (items.isEmpty) return const [];
+    return [
+      _sectionTitle('$title (${items.length})'),
+      for (final o in items) _kdsCard(o),
+    ];
+  }
+
+  // Live remaining time (mm:ss) from placed_at + prep_target; negative = late.
+  String _countdown(Map o) {
+    final placed = DateTime.tryParse('${o['placed_at'] ?? ''}'.replaceFirst(' ', 'T'));
+    final target = numOf(o['prep_target'], 5).toDouble();
+    if (placed == null) return '—';
+    final deadline = placed.add(Duration(seconds: (target * 60).round()));
+    final diff = deadline.difference(DateTime.now());
+    final late = diff.isNegative;
+    final s = diff.abs().inSeconds;
+    final mm = (s ~/ 60).toString().padLeft(2, '0');
+    final ss = (s % 60).toString().padLeft(2, '0');
+    return '${late ? '+' : ''}$mm:$ss';
+  }
+
+  bool _isLate(Map o) {
+    final placed = DateTime.tryParse('${o['placed_at'] ?? ''}'.replaceFirst(' ', 'T'));
+    final target = numOf(o['prep_target'], 5).toDouble();
+    if (placed == null) return o['is_late'] == true;
+    return DateTime.now().isAfter(placed.add(Duration(seconds: (target * 60).round())));
   }
 
   Widget _ks(String v, String l) => Expanded(child: Column(children: [
@@ -925,12 +964,13 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
     final waited = (numOf(o['wait_minutes'], 0)).toDouble();
     final target = (numOf(o['prep_target'], 5)).toDouble();
     final ratio = target > 0 ? waited / target : 0;
+    final late = !approval && o['state'] != 'ready' && _isLate(o);
     Color edge;
     if (approval) {
       edge = const Color(0xFFA78BFA);
     } else if (o['state'] == 'ready') {
       edge = const Color(0xFF16A34A);
-    } else if (ratio >= 1) {
+    } else if (late || ratio >= 1) {
       edge = const Color(0xFFE11D48);
     } else if (ratio >= 0.7) {
       edge = const Color(0xFFF59E0B);
@@ -958,7 +998,14 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
           Row(children: [
             Expanded(child: Text('${o['name']}',
                 style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15.5, color: _navy))),
-            _tag('${waited.toInt()} ${tr('د', 'm')}', edge),
+            if (!approval && o['state'] != 'ready') ...[
+              Icon(late ? Icons.timer_off_rounded : Icons.timer_rounded, size: 14, color: edge),
+              const SizedBox(width: 3),
+              _tag('${late ? tr('متأخر ', 'late ') : ''}${_countdown(o)}', edge),
+            ] else if (o['state'] == 'ready')
+              _tag('✅ ${tr('جاهز', 'Ready')}', edge)
+            else
+              _tag('${waited.toInt()} ${tr('د', 'm')}', edge),
           ]),
           Text([o['requester'], o['room']].where((x) => x != null).join(' · '),
               style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600)),
@@ -991,11 +1038,15 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
               const SizedBox(width: 8),
               Expanded(child: _kbtn(o, 'reject', tr('رفض', 'Reject'), const Color(0xFFE11D48))),
             ])
-          else
+          else ...[
             Row(children: [
               if (o['state'] == 'placed')
                 Expanded(child: _kbtn(o, 'accept', tr('قبول', 'Accept'), const Color(0xFF4AA8FF))),
-              if (o['state'] == 'placed' || o['state'] == 'accepted') ...[
+              if (o['state'] == 'accepted') ...[
+                const SizedBox(width: 8),
+                Expanded(child: _kbtn(o, 'preparing', tr('بدء التحضير', 'Start'), const Color(0xFFF59E0B))),
+              ],
+              if (o['state'] == 'placed' || o['state'] == 'accepted' || o['state'] == 'preparing') ...[
                 const SizedBox(width: 8),
                 Expanded(child: _kbtn(o, 'ready', tr('جاهز', 'Ready'), const Color(0xFF16A34A))),
               ],
@@ -1004,6 +1055,18 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
                 Expanded(child: _kbtn(o, 'deliver', tr('تم التقديم', 'Served'), _brown)),
               ],
             ]),
+            // Kitchen can cancel when a requested item is unavailable — the
+            // requester is notified with the reason.
+            if (o['state'] != 'ready') Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: SizedBox(width: double.infinity, child: TextButton.icon(
+                onPressed: _busy ? null : () => _kitchenUnavailable(o),
+                icon: const Icon(Icons.block_rounded, size: 16, color: Color(0xFFE11D48)),
+                label: Text(tr('غير متوفر / إلغاء', 'Unavailable / Cancel'),
+                    style: const TextStyle(color: Color(0xFFE11D48), fontWeight: FontWeight.w800, fontSize: 12)),
+              )),
+            ),
+          ],
           ])),
         ]),
       ),
@@ -1022,6 +1085,39 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
     try {
       await context.read<AuthProvider>().api.hospKitchenAct((o['id'] as num).toInt(), act);
       await _load();
+    } catch (e) {
+      if (mounted) _snack('$e'.replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _kitchenUnavailable(Map o) async {
+    final ctrl = TextEditingController();
+    final reason = await showDialog<String>(context: context, builder: (c) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      title: Text(tr('إلغاء الطلب', 'Cancel order'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        Text(tr('سيصل إشعار للطالب بسبب الإلغاء.', 'The requester will be notified with the reason.'),
+            style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600)),
+        const SizedBox(height: 10),
+        TextField(controller: ctrl, autofocus: true,
+            decoration: InputDecoration(labelText: tr('السبب (مثال: الصنف غير متوفر)', 'Reason (e.g. item unavailable)'),
+                border: const OutlineInputBorder())),
+      ]),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(c), child: Text(tr('تراجع', 'Back'))),
+        FilledButton(style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE11D48)),
+            onPressed: () => Navigator.pop(c, ctrl.text.trim().isEmpty ? tr('غير متوفر', 'Unavailable') : ctrl.text.trim()),
+            child: Text(tr('إلغاء وإشعار', 'Cancel & notify'))),
+      ],
+    ));
+    if (reason == null) return;
+    setState(() => _busy = true);
+    try {
+      await context.read<AuthProvider>().api.hospKitchenAct((o['id'] as num).toInt(), 'unavailable', reason: reason);
+      await _load();
+      if (mounted) _snack(tr('أُلغي الطلب وأُشعِر الطالب', 'Order cancelled, requester notified'));
     } catch (e) {
       if (mounted) _snack('$e'.replaceFirst('Exception: ', ''));
     } finally {

@@ -691,6 +691,23 @@ class ApiClient {
               _u('/security/incident/$id/to_workorder'),
               headers: await _headers())))['data'] as Map);
 
+  /// Run an incident workflow transition (report/investigate/resolve/close/reset/police).
+  Future<Map<String, dynamic>> incidentAction(int id, String key, {Map<String, dynamic>? extra}) async {
+    final res = await _handle(await _net.post(_u('/security/incident/$id/action'),
+        headers: await _headers(), body: jsonEncode({'key': key, ...?extra})));
+    return Map<String, dynamic>.from(res['data'] as Map);
+  }
+
+  Future<void> incidentFollowup(int id, bool required, {String? date, String? notes}) async =>
+      _handle(await _net.post(_u('/security/incident/$id/followup'), headers: await _headers(),
+          body: jsonEncode({'required': required, if (date != null) 'date': date, if (notes != null) 'notes': notes})));
+
+  /// A token-authenticated URL for an incident media file (loads in <Image>/browser).
+  Future<String> incidentMediaUrl(int mediaId) async {
+    final t = await token ?? '';
+    return '$baseUrl/security/incident/media/$mediaId/raw?token=$t';
+  }
+
   // ---- hospitality pantry ---------------------------------------------------
   /// Supplies with their balance in servings, plus recent purchases.
   Future<Map<String, dynamic>> hospStock() async =>
@@ -796,9 +813,11 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
               await _net.get(_u('/hosp/kitchen'), headers: await _headers())))['data'] as Map);
 
-  Future<Map<String, dynamic>> hospKitchenAct(int id, String act) async =>
-      Map<String, dynamic>.from((await _handle(await _net.post(
-              _u('/hosp/kitchen/$id/$act'), headers: await _headers())))['data'] as Map);
+  Future<Map<String, dynamic>> hospKitchenAct(int id, String act, {String? reason}) async {
+    final res = await _handle(await _net.post(_u('/hosp/kitchen/$id/$act'),
+        headers: await _headers(), body: reason == null ? null : jsonEncode({'reason': reason})));
+    return Map<String, dynamic>.from(res['data'] as Map);
+  }
 
   Future<Map<String, dynamic>> valetBoard() async =>
       Map<String, dynamic>.from((await _handle(
