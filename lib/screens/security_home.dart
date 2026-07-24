@@ -14,6 +14,7 @@ import 'security_inspections_screen.dart';
 import 'security_gatepasses_screen.dart';
 import 'security_emergency_screen.dart';
 import 'security_stream_screen.dart';
+import 'live_stream_banner.dart';
 import 'security_patrols_screen.dart';
 import 'supervisor_screen.dart';
 import 'shift_card.dart';
@@ -66,6 +67,7 @@ class SecurityHome extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
+          const LiveStreamBanner(),
           MyStatsRow(counts: p.counts),
           const SizedBox(height: 14),
           GridView.count(

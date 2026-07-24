@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import 'security_broadcast_screen.dart';
+import 'stream_view_screen.dart';
 
 /// البث المباشر عبر مزوّد خارجي. المدير يُعدّ عدة خدمات في الباك ايند
 /// (RTMP/HLS)، والحارس يختار مزوّداً فيولّد الخادم رابط إدخال (يبثّ إليه عبر
@@ -47,15 +47,11 @@ class Stream {
         return;
       }
     }
-    try {
-      final s = await api.securityStreamStart(
-          incidentId: incidentId, providerId: provider['id'] as int,
-          viewerIds: (viewerIds != null && viewerIds.isNotEmpty) ? viewerIds : null);
-      if (!context.mounted) return;
-      _showLiveSheet(context, s);
-    } catch (e) {
-      if (context.mounted) _err(context, '$e'.replaceFirst('Exception: ', ''));
-    }
+    if (!context.mounted) return;
+    // شاشة البثّ الاحترافية تتولّى إنشاء الجلسة والنشر (WebRTC) والمشاهدين والدردشة
+    Navigator.push(context, MaterialPageRoute(builder: (_) => SecurityBroadcastScreen(
+        incidentId: incidentId, providerId: provider!['id'] as int,
+        viewerIds: (viewerIds != null && viewerIds.isNotEmpty) ? viewerIds : null)));
   }
 
   /// اختيار مشاهدي البث: يعيد قائمة user_ids المحدّدة، أو [] للفريق كامل،
@@ -108,65 +104,11 @@ class Stream {
     return selected.toList();
   }
 
-  /// بعد بدء البث: نعرض رابط الإدخال (للحارس ليبثّ إليه عبر أداة RTMP) + تأكيد
-  /// أن الفريق أُشعِر.
-  static void _showLiveSheet(BuildContext context, Map s) {
-    final ingest = '${s['ingest_url'] ?? ''}';
-    final playback = '${s['playback_url'] ?? ''}';
-    showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: const Color(0xFF0F1B2E),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Row(children: [
-            Container(width: 10, height: 10, decoration: const BoxDecoration(color: Color(0xFFE5484D), shape: BoxShape.circle)),
-            const SizedBox(width: 8),
-            Text('🔴 ${tr('أنت الآن على الهواء', 'You are live')}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
-          ]),
-          const SizedBox(height: 6),
-          Text('${tr('عبر', 'via')} ${s['provider'] ?? ''} — ${tr('أُشعِر الفريق للمشاهدة', 'team notified to watch')}',
-              style: const TextStyle(color: Color(0xFF9CB2CD), fontSize: 12)),
-          if (ingest.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Text(tr('رابط البث (ألصقه في تطبيق البث لديك RTMP):', 'Broadcast URL (paste in your RTMP app):'),
-                style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: const Color(0xFF152238), borderRadius: BorderRadius.circular(10)),
-              child: Row(children: [
-                Expanded(child: SelectableText(ingest, style: const TextStyle(color: Color(0xFF4AA8FF), fontSize: 11.5))),
-                IconButton(icon: const Icon(Icons.copy_rounded, color: Colors.white, size: 18),
-                    onPressed: () { Clipboard.setData(ClipboardData(text: ingest)); ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(tr('نُسخ الرابط', 'Copied')), backgroundColor: const Color(0xFF16A34A))); }),
-              ]),
-            ),
-          ],
-          const SizedBox(height: 16),
-          if (playback.isNotEmpty)
-            OutlinedButton.icon(
-              onPressed: () => launchUrl(Uri.parse(playback), mode: LaunchMode.externalApplication),
-              icon: const Icon(Icons.play_circle_rounded, color: Color(0xFF37C98A)),
-              style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF37C98A), side: const BorderSide(color: Color(0xFF37C98A))),
-              label: Text(tr('معاينة رابط المشاهدة', 'Preview watch link'))),
-          const SizedBox(height: 10),
-          FilledButton(style: FilledButton.styleFrom(backgroundColor: const Color(0xFF152238)),
-              onPressed: () => Navigator.pop(context), child: Text(tr('تم', 'Done'))),
-        ]),
-      ));
-  }
-
-  static Future<void> watch(BuildContext context, int incidentId, {String? title}) async {
-    try {
-      final s = await context.read<AuthProvider>().api.securityStreamWatch(incidentId);
-      if (!context.mounted) return;
-      if (s['live'] != true) { _err(context, tr('لا يوجد بث مباشر حالياً', 'No live stream right now')); return; }
-      final url = '${s['url'] ?? ''}';
-      if (url.isEmpty) { _err(context, tr('لم يُرفق رابط للبث', 'No stream link attached')); return; }
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    } catch (e) {
-      if (context.mounted) _err(context, '$e'.replaceFirst('Exception: ', ''));
-    }
+  /// فتح شاشة مشاهدة البثّ الحيّ داخل التطبيق (WebRTC). [isClient] تستخدم نقطة
+  /// نهاية العميل المقيّدة بنطاقه.
+  static void watch(BuildContext context, int incidentId, {String? title, bool isClient = false}) {
+    Navigator.push(context, MaterialPageRoute(
+        builder: (_) => StreamViewScreen(incidentId: incidentId, isClient: isClient)));
   }
 
   static void _err(BuildContext c, String m) => ScaffoldMessenger.of(c).showSnackBar(

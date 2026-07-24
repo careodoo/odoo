@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/service_ui.dart';
+import 'stream_view_screen.dart';
 import 'excel_export.dart';
 import 'security_gatepass_create.dart';
 import 'client_workorder_create.dart';
@@ -394,23 +395,43 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
                 ]),
               ),
             ),
-            // زر طلب بث مباشر: يظهر للبلاغات الحرجة/العالية غير المغلقة فقط
-            if (_kind == 'incidents' && _isCritical(r) && !_isClosed(r))
+            // بثّ البلاغ: زر «مشاهدة البثّ المباشر» (يفتح المشغّل داخل التطبيق؛
+            // يتعامل مع حالة عدم وجود بثّ)، وزر «طلب بثّ» للحرجة غير المغلقة.
+            if (_kind == 'incidents') ...[
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
                 child: SizedBox(
                   width: double.infinity,
-                  child: FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFFDC2626),
-                        padding: const EdgeInsets.symmetric(vertical: 14)),
-                    onPressed: () => _requestStream(r),
-                    icon: const Icon(Icons.live_tv_rounded, size: 20),
-                    label: Text(tr('طلب بث مباشر من الموقع', 'Request live stream'),
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFDC2626),
+                        side: const BorderSide(color: Color(0xFFDC2626)),
+                        padding: const EdgeInsets.symmetric(vertical: 13)),
+                    onPressed: () => Navigator.push(context, MaterialPageRoute(
+                        builder: (_) => StreamViewScreen(incidentId: r['id'] as int, isClient: true))),
+                    icon: const Icon(Icons.play_circle_fill_rounded, size: 20),
+                    label: Text(tr('مشاهدة البثّ المباشر', 'Watch live stream'),
                         style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
                   ),
                 ),
               ),
+              if (_isCritical(r) && !_isClosed(r))
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFFDC2626),
+                          padding: const EdgeInsets.symmetric(vertical: 14)),
+                      onPressed: () => _requestStream(r),
+                      icon: const Icon(Icons.live_tv_rounded, size: 20),
+                      label: Text(tr('طلب بث مباشر من الموقع', 'Request live stream'),
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+                    ),
+                  ),
+                ),
+            ],
           ]),
         ),
       ),

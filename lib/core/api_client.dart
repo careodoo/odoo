@@ -516,12 +516,14 @@ class ApiClient {
     return List<dynamic>.from((res['data'] as Map)['providers'] as List);
   }
 
-  Future<Map<String, dynamic>> securityStreamStart({int? incidentId, int? providerId, List<int>? viewerIds, String url = ''}) async {
+  Future<Map<String, dynamic>> securityStreamStart({int? incidentId, int? providerId, List<int>? viewerIds, String url = '', double? latitude, double? longitude}) async {
     final res = await _handle(await _net.post(_u('/security/stream/start'), headers: await _headers(),
         body: jsonEncode({
           if (incidentId != null) 'incident_id': incidentId,
           if (providerId != null) 'provider_id': providerId,
           if (viewerIds != null) 'viewer_ids': viewerIds, 'url': url,
+          if (latitude != null) 'latitude': latitude,
+          if (longitude != null) 'longitude': longitude,
         })));
     return Map<String, dynamic>.from(res['data'] as Map);
   }
@@ -532,6 +534,61 @@ class ApiClient {
   Future<Map<String, dynamic>> securityStreamWatch(int incidentId) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/stream/watch/$incidentId'), headers: await _headers())))['data'] as Map);
+
+  /// مشاهد يغادر البثّ (لتحديث عدّاد الحارس).
+  Future<void> securityStreamLeave(int incidentId) async =>
+      _handle(await _net.post(_u('/security/stream/leave/$incidentId'), headers: await _headers(), body: '{}'));
+
+  /// قائمة المشاهدين الحاليين + العدّاد (يستدعيها الحارس دورياً).
+  Future<Map<String, dynamic>> securityStreamViewers(int incidentId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/stream/viewers/$incidentId'), headers: await _headers())))['data'] as Map);
+
+  /// بيانات البثّ الكاملة لبلاغٍ (للحالة/الأيقونة).
+  Future<Map<String, dynamic>> securityStreamInfo(int incidentId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/stream/info/$incidentId'), headers: await _headers())))['data'] as Map);
+
+  /// العميل يشاهد بثّ بلاغٍ في موقعه (مقيّد بنطاق مواقعه).
+  Future<Map<String, dynamic>> clientSecurityWatchStream(int incidentId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/client/security/incident/$incidentId/watch'), headers: await _headers())))['data'] as Map);
+
+  // ---- البثوث الحيّة + الدردشة + المشاركة ---------------------------------
+  /// البثوث الحيّة الحالية (لبانر الرئيسية).
+  Future<List<dynamic>> securityStreamActive() async {
+    final res = await _handle(await _net.get(_u('/security/stream/active'), headers: await _headers()));
+    return List<dynamic>.from((res['data'] as Map)['items'] as List);
+  }
+
+  /// رسائل دردشة البثّ (after=<id> لجلب الجديد فقط).
+  Future<Map<String, dynamic>> securityStreamMessages(int incidentId, {int after = 0, bool isClient = false}) async {
+    final path = isClient ? '/client/security/incident/$incidentId/messages?after=$after'
+                          : '/security/stream/$incidentId/messages?after=$after';
+    return Map<String, dynamic>.from((await _handle(await _net.get(_u(path), headers: await _headers())))['data'] as Map);
+  }
+
+  /// إرسال رسالة على البثّ.
+  Future<void> securityStreamPostMessage(int incidentId, String body, {bool isClient = false}) async {
+    final path = isClient ? '/client/security/incident/$incidentId/message'
+                          : '/security/stream/$incidentId/message';
+    await _handle(await _net.post(_u(path), headers: await _headers(), body: jsonEncode({'body': body})));
+  }
+
+  /// عضو فريق يشارك في البثّ (co-host) — يرجع رابط النشر الخاص به.
+  Future<Map<String, dynamic>> securityStreamCohostStart(int incidentId, {double? latitude, double? longitude}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/security/stream/$incidentId/cohost/start'), headers: await _headers(),
+              body: jsonEncode({if (latitude != null) 'latitude': latitude, if (longitude != null) 'longitude': longitude}))))['data'] as Map);
+
+  Future<void> securityStreamCohostStop(int incidentId) async =>
+      _handle(await _net.post(_u('/security/stream/$incidentId/cohost/stop'), headers: await _headers(), body: '{}'));
+
+  /// المشاركون الأحياء في البثّ (لعرض PiP).
+  Future<List<dynamic>> securityStreamCohosts(int incidentId) async {
+    final res = await _handle(await _net.get(_u('/security/stream/$incidentId/cohosts'), headers: await _headers()));
+    return List<dynamic>.from((res['data'] as Map)['cohosts'] as List);
+  }
 
   /// إشعار عميل الموقع بالبلاغ (للبلاغات الحرجة).
   Future<Map<String, dynamic>> securityNotifyClient(int incidentId) async {

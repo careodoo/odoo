@@ -40,6 +40,14 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // نقتصر على arm64-v8a (APK + AAB): مكتبات flutter_webrtc/mlkit الأصلية
+        // تُحشر لكل المعماريات فتتضخّم الحزمة فوق 100MB (حدّ GitHub). arm64 يغطّي
+        // ~99% من الأجهزة. نستخدم .add() لا += (الأخيرة تعدّل نسخة فلا تؤثّر).
+        ndk {
+            abiFilters.clear()
+            abiFilters.add("arm64-v8a")
+        }
     }
 
     signingConfigs {
