@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'webrtc_stream.dart';
+import 'foreground_stream.dart';
 
 /// خدمة بثّ عامّة (singleton) تحمل الناشر الحيّ خارج الشاشة، فيستمرّ البثّ عند
 /// «تصغير» شاشة البثّ والعودة لباقي التطبيق. مؤشّر عائم يظهر في كل الشاشات
@@ -30,6 +31,8 @@ class LiveBroadcast {
     cohost = co;
     startEpochMs = DateTime.now().millisecondsSinceEpoch;
     live.value = true;
+    // خدمة أمامية: يستمرّ البثّ حتى بعد قفل الشاشة/الخروج من التطبيق
+    StreamForeground.start(iid);
   }
 
   /// إيقاف البثّ نهائياً وتحرير الموارد.
@@ -37,6 +40,7 @@ class LiveBroadcast {
     try {
       await bc?.stop();
     } catch (_) {}
+    await StreamForeground.stop();
     bc = null;
     session = null;
     incidentId = 0;
