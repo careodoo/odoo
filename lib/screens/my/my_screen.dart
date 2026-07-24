@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/auth.dart';
@@ -123,6 +124,20 @@ class _MyScreenState extends State<MyScreen> {
     ]);
   }
 
+  // base64 avatar (token auth can't use /web/image) with initial fallback.
+  Widget _avatar(String b64, String initial) {
+    Widget fallback() => CircleAvatar(
+          radius: 30, backgroundColor: Colors.white24,
+          child: Text(initial.isEmpty ? '?' : initial.characters.first,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 22)));
+    if (b64.isEmpty) return fallback();
+    try {
+      return CircleAvatar(radius: 30, backgroundColor: Colors.white24, backgroundImage: MemoryImage(base64Decode(b64)));
+    } catch (_) {
+      return fallback();
+    }
+  }
+
   // ---- header: avatar + identity + stat strip ---------------------------
   Widget _headerCard(Map p, List<Map> stats) {
     final initial = '${p['name'] ?? '?'}'.trim();
@@ -138,17 +153,7 @@ class _MyScreenState extends State<MyScreen> {
           padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
           child: Column(children: [
             Row(children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundColor: Colors.white24,
-                backgroundImage: p['avatar_url'] != null
-                    ? NetworkImage('${p['avatar_url']}')
-                    : null,
-                child: p['avatar_url'] == null
-                    ? Text(initial.isEmpty ? '?' : initial.characters.first,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 22))
-                    : null,
-              ),
+              _avatar('${p['avatar_b64'] ?? ''}', initial),
               const SizedBox(width: 14),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text('${p['name'] ?? ''}', maxLines: 1, overflow: TextOverflow.ellipsis,
@@ -183,15 +188,18 @@ class _MyScreenState extends State<MyScreen> {
                     borderRadius: BorderRadius.circular(16)),
                 child: Row(children: [
                   for (var i = 0; i < stats.length; i++) ...[
-                    if (i > 0) Container(width: 1, height: 28, color: Colors.white24),
-                    Expanded(child: Column(children: [
-                      Text('${stats[i]['value'] ?? 0}',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
-                      const SizedBox(height: 2),
-                      Text(gLang == 'en' ? '${stats[i]['en'] ?? ''}' : '${stats[i]['ar'] ?? ''}',
-                          maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 9.5, fontWeight: FontWeight.w700)),
-                    ])),
+                    if (i > 0) Container(width: 1, height: 30, color: Colors.white24),
+                    Expanded(child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      child: Column(children: [
+                        Text('${stats[i]['value'] ?? 0}',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 17)),
+                        const SizedBox(height: 3),
+                        Text('${stats[i]['icon'] ?? ''} ${gLang == 'en' ? stats[i]['en'] ?? '' : stats[i]['ar'] ?? ''}',
+                            maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 9, fontWeight: FontWeight.w700, height: 1.2)),
+                      ]),
+                    )),
                   ],
                 ]),
               ),

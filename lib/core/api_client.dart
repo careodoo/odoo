@@ -2088,6 +2088,35 @@ class ApiClient {
               headers: await _headers(),
               body: jsonEncode({'model': model, 'employee_id': employeeId, ...vals}))))['data'] as Map);
 
+  /// Add an update entry onto a legal case (also posts to its chatter).
+  Future<void> managementLegalUpdate(int rid, {required String name, String details = ''}) async =>
+      _handle(await _net.post(_u('/management/legal/$rid/update'),
+          headers: await _headers(), body: jsonEncode({'name': name, 'details': details})));
+
+  /// Per-key {count,pending} for the Employees sub-module icon row (red badges).
+  Future<Map<String, dynamic>> managementEmpModules() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/management/emp_modules'), headers: await _headers())))['data'] as Map);
+
+  /// Approvals inbox — records awaiting the current user's action, grouped by
+  /// source system (the featured «الاعتمادات» tile).
+  Future<Map<String, dynamic>> managementInbox() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/management/inbox'), headers: await _headers())))['data'] as Map);
+
+  // ---- Management access administration (managers) ----------------------
+  Future<Map<String, dynamic>> managementAccessMeta() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/management/access/meta'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> managementAccessGet(int userId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/management/access/$userId'), headers: await _headers())))['data'] as Map);
+
+  Future<void> managementAccessSave(int userId, Map<String, dynamic> cfg) async =>
+      _handle(await _net.post(_u('/management/access/$userId'),
+          headers: await _headers(), body: jsonEncode(cfg)));
+
   /// Cross-system analytics (KPIs + chart series) for the management dashboard.
   Future<Map<String, dynamic>> managementAnalytics({String period = 'all'}) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

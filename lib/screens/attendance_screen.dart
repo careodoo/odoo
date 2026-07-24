@@ -353,8 +353,19 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         child: Text('🗓️ ${tr('سجلاتي', 'My records')} (${records.length})',
                             style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
                       ),
-                      if (records.isEmpty) _empty(tr('لا سجلات في هذه الفترة.', 'No records in this period.'), cs),
-                      for (final r in records) _recordRow(r as Map),
+                      if (records.isEmpty)
+                        _empty(tr('لا سجلات في هذه الفترة.', 'No records in this period.'), cs)
+                      else
+                        // A plain, unadorned list of the user's own punches.
+                        Container(
+                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+                          child: Column(children: [
+                            for (var i = 0; i < records.length; i++) ...[
+                              if (i > 0) Divider(height: 1, color: Colors.grey.shade200),
+                              _myRecordRow(records[i] as Map),
+                            ],
+                          ]),
+                        ),
                     ])
                   : ListView(padding: const EdgeInsets.fromLTRB(12, 4, 12, 24), children: [
                       _punchCard(),
@@ -720,6 +731,29 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           onTap: () => _openWorker(r['employee_id'] as int, '${r['employee']}'),
         ),
       );
+
+  // Plain personal punch row: date · in → out · hours. No card, no navigation.
+  Widget _myRecordRow(Map r) {
+    final out = r['punch'] == 'out';
+    final c = out ? const Color(0xFFE11D48) : const Color(0xFF16A34A);
+    final dateStr = '${r['check_in'] ?? ''}';
+    final date = dateStr.length >= 10 ? dateStr.substring(0, 10) : (r['punch_at'] ?? '');
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      child: Row(children: [
+        Icon(out ? Icons.logout_rounded : Icons.login_rounded, size: 17, color: c),
+        const SizedBox(width: 10),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('$date', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+          const SizedBox(height: 2),
+          Text('${_hm(r['check_in'])} → ${_hm(r['check_out'])}',
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+        ])),
+        Text(tr('${r['hours']} س', '${r['hours']}h'),
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: Color(0xFF0891B2))),
+      ]),
+    );
+  }
 
   String _hm(dynamic v) {
     final s = '${v ?? ''}';

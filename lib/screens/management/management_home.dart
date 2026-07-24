@@ -8,6 +8,8 @@ import 'management_list.dart';
 import 'management_search.dart';
 import 'housing_hub_screen.dart';
 import 'management_analytics.dart';
+import 'management_inbox.dart';
+import 'management_access.dart';
 
 /// Management app shell — Systems and the personal «My» hub, side by side.
 class ManagementShell extends StatefulWidget {
@@ -83,12 +85,14 @@ class _ManagementHomeState extends State<ManagementHome> {
   };
 
   Map<String, dynamic>? _me;
+  Map<String, dynamic>? _inbox;
 
   @override
   void initState() {
     super.initState();
     _reload();
     _loadMe();
+    _loadInbox();
   }
 
   void _reload() => setState(() => _f = context.read<AuthProvider>().api.managementApps());
@@ -98,6 +102,13 @@ class _ManagementHomeState extends State<ManagementHome> {
       final me = await context.read<AuthProvider>().api.managementMe();
       if (mounted) setState(() => _me = me);
     } catch (_) {/* header stats are optional */}
+  }
+
+  Future<void> _loadInbox() async {
+    try {
+      final ib = await context.read<AuthProvider>().api.managementInbox();
+      if (mounted) setState(() => _inbox = ib);
+    } catch (_) {/* the featured tile is optional */}
   }
 
   String _fmt(num n) {
@@ -118,6 +129,13 @@ class _ManagementHomeState extends State<ManagementHome> {
             pinned: true, expandedHeight: 128, backgroundColor: Mgmt.deep,
             foregroundColor: Colors.white, automaticallyImplyLeading: false,
             actions: [
+              if (_me?['is_manager'] == true)
+                IconButton(
+                  tooltip: tr('صلاحيات الإدارة', 'Access control'),
+                  icon: const Icon(Icons.admin_panel_settings_rounded),
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => const ManagementAccessScreen())),
+                ),
               IconButton(
                 tooltip: tr('لوحة التحليلات', 'Analytics'),
                 icon: const Icon(Icons.insights_rounded),
@@ -162,6 +180,7 @@ class _ManagementHomeState extends State<ManagementHome> {
             ),
           ),
           if (_me != null) SliverToBoxAdapter(child: _meBand(_me!)),
+          SliverToBoxAdapter(child: _inboxTile()),
           FutureBuilder<List<dynamic>>(
             future: _f,
             builder: (_, snap) {
@@ -192,6 +211,105 @@ class _ManagementHomeState extends State<ManagementHome> {
             },
           ),
         ]),
+      ),
+    );
+  }
+
+  // Featured «الاعتمادات» tile — full width, above the systems grid. Shows the
+  // total awaiting the user plus the source workflows each with its own count.
+  Widget _inboxTile() {
+    final ib = _inbox;
+    if (ib == null) return const SizedBox.shrink();
+    final total = (ib['total'] ?? 0) as int;
+    final sources = ((ib['sources'] as List?) ?? const []).cast<Map>();
+    final has = total > 0;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 14, 12, 0),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () async {
+            await Navigator.push(context, MaterialPageRoute(builder: (_) => const ManagementInboxScreen()));
+            _loadInbox();
+          },
+          child: Container(
+            padding: EdgeInsets.fromLTRB(16, 14, 12, sources.isEmpty ? 14 : 10),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: has ? const [Mgmt.red, Mgmt.deep, Color(0xFF5B1810)]
+                            : const [Color(0xFF334155), Color(0xFF1E293B)],
+                begin: Alignment.topRight, end: Alignment.bottomLeft),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [BoxShadow(
+                  color: (has ? Mgmt.red : const Color(0xFF334155)).withValues(alpha: 0.30),
+                  blurRadius: 18, offset: const Offset(0, 8))],
+            ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Container(
+                  width: 48, height: 48,
+                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(14)),
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.assignment_turned_in_rounded, color: Colors.white, size: 26),
+                ),
+                const SizedBox(width: 13),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    Text(tr('الاعتمادات', 'Approvals inbox'),
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 17)),
+                    const SizedBox(width: 8),
+                    if (has) Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(color: const Color(0xFFDC2626), borderRadius: BorderRadius.circular(11),
+                          border: Border.all(color: Colors.white, width: 1.3)),
+                      child: Text('$total', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
+                    ),
+                  ]),
+                  const SizedBox(height: 2),
+                  Text(has ? tr('لديك $total طلبًا بانتظار اعتمادك', '$total requests awaiting your action')
+                           : tr('لا يوجد ما ينتظر اعتمادك حاليًا', 'Nothing awaiting you right now'),
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.82), fontSize: 11.5)),
+                ])),
+                Icon(Icons.chevron_left_rounded, color: Colors.white.withValues(alpha: 0.9)),
+              ]),
+              if (sources.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                SizedBox(height: 58, child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: sources.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (_, i) {
+                    final s = sources[i];
+                    final count = (s['count'] ?? 0) as int;
+                    return Container(
+                      width: 62,
+                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.13), borderRadius: BorderRadius.circular(13)),
+                      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        Stack(clipBehavior: Clip.none, children: [
+                          Text('${s['icon']}', style: const TextStyle(fontSize: 20)),
+                          if (count > 0) Positioned(right: -9, top: -5, child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            constraints: const BoxConstraints(minWidth: 15),
+                            decoration: BoxDecoration(color: const Color(0xFFDC2626), borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.white, width: 1)),
+                            child: Text('$count', textAlign: TextAlign.center,
+                                style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
+                          )),
+                        ]),
+                        const SizedBox(height: 4),
+                        Text(gLang == 'en' ? '${s['en']}' : '${s['ar']}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.w700)),
+                      ]),
+                    );
+                  },
+                )),
+              ],
+            ]),
+          ),
+        ),
       ),
     );
   }

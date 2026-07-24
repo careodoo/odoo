@@ -61,6 +61,7 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
   String _q = '';
   Map<String, dynamic>? _last;
   final Map<String, String> _filters = {}; // dept / etype / emp_status / state
+  Map<String, dynamic> _empBadges = {}; // per-key {count,pending} for the emp row
 
   bool get _isProposals => widget.appKey == 'proposals';
   bool get _isEmployees => widget.appKey == 'employees';
@@ -70,6 +71,14 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
     super.initState();
     if (widget.initialFilters != null) _filters.addAll(widget.initialFilters!);
     _reload();
+    if (_isEmployees) _loadEmpBadges();
+  }
+
+  Future<void> _loadEmpBadges() async {
+    try {
+      final b = await context.read<AuthProvider>().api.managementEmpModules();
+      if (mounted) setState(() => _empBadges = b);
+    } catch (_) {/* badges are optional */}
   }
 
   @override
@@ -157,6 +166,7 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
     ('hr_eos', '🏁', 'إنهاء الخدمة', 'End of service', 0xFFB91C1C),
     ('hr_permissions', '🕒', 'الاستئذانات', 'Permissions', 0xFF6D28D9),
     ('hr_custody', '🧰', 'العهد', 'Custody', 0xFF9A3412),
+    ('documents', '📁', 'المستندات', 'Documents', 0xFF475569),
     ('correspondence', '✉️', 'المراسلات', 'Letters', 0xFF8B5CF6),
   ];
 
@@ -196,13 +206,24 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
               child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Container(
-                  width: 42, height: 42, alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                      color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(13),
-                      border: Border.all(color: c.withValues(alpha: 0.2))),
-                  child: Text(icon, style: const TextStyle(fontSize: 20)),
-                ),
+                Stack(clipBehavior: Clip.none, children: [
+                  Container(
+                    width: 42, height: 42, alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                        color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(13),
+                        border: Border.all(color: c.withValues(alpha: 0.2))),
+                    child: Text(icon, style: const TextStyle(fontSize: 20)),
+                  ),
+                  if (!isStats && (((_empBadges[key] as Map?)?['pending'] ?? 0) as int) > 0)
+                    Positioned(right: -6, top: -6, child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      constraints: const BoxConstraints(minWidth: 17),
+                      decoration: BoxDecoration(color: const Color(0xFFDC2626), borderRadius: BorderRadius.circular(9),
+                          border: Border.all(color: Colors.white, width: 1.4)),
+                      child: Text('${((_empBadges[key] as Map)['pending'])}', textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w900)),
+                    )),
+                ]),
                 const SizedBox(height: 4),
                 Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: isStats ? Mgmt.red : Mgmt.ink)),
@@ -457,10 +478,19 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
           Expanded(child: Text(widget.title, overflow: TextOverflow.ellipsis)),
         ]),
         actions: [
-          IconButton(
-            tooltip: tr('تصدير Excel', 'Export to Excel'),
-            icon: const Icon(Icons.file_download_outlined),
-            onPressed: _export),
+          // Biometric devices live inside the Attendance icon.
+          if (widget.appKey == 'attendance')
+            IconButton(
+              tooltip: tr('أجهزة البصمة', 'Biometric devices'),
+              icon: const Icon(Icons.fingerprint_rounded),
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ManagementListScreen(
+                  appKey: 'bio_devices', title: tr('أجهزة البصمة', 'Biometric devices'), icon: '🔌', accent: const Color(0xFF6D28D9))))),
+          // Only surface Export when there is actually something to export.
+          if (((_last?['items'] as List?)?.isNotEmpty ?? false))
+            IconButton(
+              tooltip: tr('تصدير Excel', 'Export to Excel'),
+              icon: const Icon(Icons.file_download_outlined),
+              onPressed: _export),
         ],
       ),
       body: Column(children: [
@@ -542,6 +572,7 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
                     if (r['att'] != null) return _attCard(r);
                     if (r['dev'] != null) return _devCard(r);
                     if (r['appr'] != null) return _apprCard(r);
+                    if (r['lg'] != null) return _legalCard(r);
                     return _row(r);
                   },
                 );
@@ -1538,6 +1569,64 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
                 _tag('📄 ${ri['invoice_count']} ${tr('فاتورة', 'inv')}', const Color(0xFF16A34A)),
               if (ri['delivered'] == true) _tag('🚚 ${tr('مُسلّمة', 'Delivered')}', const Color(0xFF16A34A)),
               if (ri['date'] != null) _tag('📅 ${'${ri['date']}'.split(' ').first}', Mgmt.slate),
+            ]),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  // ---- Legal cases (hr.lawsuit) -----------------------------------------
+  Widget _legalCard(Map r) {
+    final lg = (r['lg'] as Map?) ?? const {};
+    final sc = mgmtHex('${lg['state_color'] ?? '#64748B'}');
+    final stLabel = gLang == 'en' ? '${lg['state_en'] ?? ''}' : '${lg['state_ar'] ?? ''}';
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _openDetail(r['id'] as int, '${lg['party'] ?? r['title']}'),
+        child: Container(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.black12),
+            // a thin severity rail on the leading edge by state
+            gradient: LinearGradient(colors: [sc.withValues(alpha: 0.06), Colors.white], stops: const [0, 0.15],
+                begin: AlignmentDirectional.centerStart, end: AlignmentDirectional.centerEnd),
+          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Container(
+                width: 44, height: 44, alignment: Alignment.center,
+                decoration: BoxDecoration(color: sc.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
+                child: const Text('⚖️', style: TextStyle(fontSize: 22)),
+              ),
+              const SizedBox(width: 11),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Expanded(child: Text('${lg['party'] ?? '—'}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Mgmt.ink))),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                    decoration: BoxDecoration(color: sc.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
+                    child: Text(stLabel, style: TextStyle(color: sc, fontWeight: FontWeight.w900, fontSize: 10)),
+                  ),
+                ]),
+                const SizedBox(height: 3),
+                Text('${lg['code'] ?? ''}${lg['court'] != null ? ' · ${lg['court']}' : ''}',
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 11.5, color: Mgmt.slate)),
+              ])),
+            ]),
+            const SizedBox(height: 8),
+            Wrap(spacing: 6, runSpacing: 4, children: [
+              if (lg['ref_no'] != null) _tag('#️⃣ ${lg['ref_no']}', Mgmt.slate),
+              if (lg['hearing_date'] != null) _tag('📅 ${'${lg['hearing_date']}'.split(' ').first}', const Color(0xFFF59E0B)),
+              if (lg['next_appointment'] != null) _tag('⏰ ${'${lg['next_appointment']}'.split(' ').first}', const Color(0xFF0EA5E9)),
+              if ((lg['updates'] as num?) != null && (lg['updates'] as num) > 0)
+                _tag('🗒️ ${lg['updates']} ${tr('تحديث', 'updates')}', const Color(0xFF7C3AED)),
             ]),
           ]),
         ),
@@ -3519,6 +3608,159 @@ class _DetailSheetState extends State<_DetailSheet> {
     ]);
   }
 
+  // ---- Legal cases (hr.lawsuit) -----------------------------------------
+  Widget _legalBlock() {
+    final lg = d['legal'] as Map?;
+    if (lg == null) return const SizedBox.shrink();
+    final h = (lg['header'] as Map?) ?? const {};
+    final parties = ((lg['parties'] as List?) ?? const []).cast<Map>();
+    final details = lg['details'];
+    final updates = ((lg['updates'] as List?) ?? const []).cast<Map>();
+    final sc = mgmtHex('${h['state_color'] ?? ''}', widget.accent);
+    final canEdit = d['can_edit'] != false && (d['actions'] != null); // updates gated like edits
+    Widget dateChip(String icon, String? label, String? val, Color c) => val == null ? const SizedBox.shrink()
+        : Expanded(child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+            decoration: BoxDecoration(color: c.withValues(alpha: 0.07), borderRadius: BorderRadius.circular(13),
+                border: Border.all(color: c.withValues(alpha: 0.16))),
+            child: Column(children: [
+              Text(icon, style: const TextStyle(fontSize: 15)),
+              const SizedBox(height: 3),
+              Text(label ?? '', style: const TextStyle(fontSize: 9, color: Mgmt.slate)),
+              Text('$val'.split(' ').first, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10.5, color: c)),
+            ]),
+          ));
+    return Column(children: [
+      // case header — code + ref + state + key dates
+      Container(
+        margin: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [sc.withValues(alpha: 0.10), sc.withValues(alpha: 0.03)], begin: Alignment.topRight, end: Alignment.bottomLeft),
+            borderRadius: BorderRadius.circular(18), border: Border.all(color: sc.withValues(alpha: 0.18))),
+        child: Column(children: [
+          Row(children: [
+            const Text('⚖️', style: TextStyle(fontSize: 20)),
+            const SizedBox(width: 8),
+            Expanded(child: Text('${h['code'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Mgmt.ink))),
+            if (h['ref_no'] != null) _statusPill('#️⃣', '${h['ref_no']}', sc),
+          ]),
+          if (h['filing_date'] != null || h['hearing_date'] != null || h['next_appointment'] != null) ...[
+            const SizedBox(height: 12),
+            Row(children: [
+              dateChip('📌', tr('الرفع', 'Filed'), h['filing_date'] as String?, Mgmt.slate),
+              dateChip('📅', tr('الجلسة', 'Hearing'), h['hearing_date'] as String?, const Color(0xFFF59E0B)),
+              dateChip('⏰', tr('الموعد القادم', 'Next'), h['next_appointment'] as String?, const Color(0xFF0EA5E9)),
+            ]),
+          ],
+        ]),
+      ),
+      if (parties.isNotEmpty)
+        _cardWrap([_sectionHead('👥', tr('أطراف القضية', 'Parties')), _infoRows(parties)]),
+      if (details != null && '$details'.trim().isNotEmpty)
+        _cardWrap([
+          _sectionHead('📝', tr('تفاصيل القضية', 'Case details')),
+          Padding(padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+              child: Text('$details', style: const TextStyle(fontSize: 12.5, color: Mgmt.ink, height: 1.5))),
+        ]),
+      // updates log (timeline) + add button
+      _cardWrap([
+        Row(children: [
+          Expanded(child: _sectionHead('🗒️', tr('سجل التحديثات', 'Updates log'))),
+          if (canEdit) Padding(
+            padding: const EdgeInsetsDirectional.only(end: 12),
+            child: Material(
+              color: widget.accent.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: _busy ? null : _addLegalUpdate,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.add_rounded, size: 15, color: widget.accent),
+                    const SizedBox(width: 3),
+                    Text(tr('تحديث', 'Add'), style: TextStyle(color: widget.accent, fontWeight: FontWeight.w800, fontSize: 11)),
+                  ]),
+                ),
+              ),
+            ),
+          ),
+        ]),
+        if (updates.isEmpty)
+          Padding(padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+              child: Text(tr('لا توجد تحديثات بعد', 'No updates yet'), style: const TextStyle(color: Mgmt.slate, fontSize: 12))),
+        for (var i = 0; i < updates.length; i++) _legalUpdateRow(updates[i], i == updates.length - 1),
+      ]),
+    ]);
+  }
+
+  Widget _legalUpdateRow(Map u, bool last) => Padding(
+        padding: const EdgeInsets.fromLTRB(14, 0, 14, 0),
+        child: IntrinsicHeight(child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Column(children: [
+            Container(width: 11, height: 11, margin: const EdgeInsets.only(top: 3),
+                decoration: BoxDecoration(color: widget.accent, shape: BoxShape.circle,
+                    border: Border.all(color: widget.accent.withValues(alpha: 0.25), width: 3))),
+            if (!last) Expanded(child: Container(width: 2, color: widget.accent.withValues(alpha: 0.18))),
+          ]),
+          const SizedBox(width: 11),
+          Expanded(child: Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Expanded(child: Text('${u['name'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: Mgmt.ink))),
+                if (u['datetime'] != null) Text('${u['datetime']}', style: const TextStyle(fontSize: 10, color: Mgmt.slate)),
+              ]),
+              if (u['details'] != null && '${u['details']}'.trim().isNotEmpty)
+                Padding(padding: const EdgeInsets.only(top: 2),
+                    child: Text('${u['details']}', style: const TextStyle(fontSize: 11.5, color: Mgmt.slate, height: 1.4))),
+              if (u['partner'] != null)
+                Padding(padding: const EdgeInsets.only(top: 2), child: Text('👤 ${u['partner']}', style: const TextStyle(fontSize: 10.5, color: Mgmt.slate))),
+            ]),
+          )),
+        ])),
+      );
+
+  Future<void> _addLegalUpdate() async {
+    final nameC = TextEditingController();
+    final detailsC = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text(tr('تحديث جديد على القضية', 'New case update'), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          TextField(controller: nameC, autofocus: true,
+              decoration: InputDecoration(labelText: tr('العنوان *', 'Title *'), border: const OutlineInputBorder())),
+          const SizedBox(height: 10),
+          TextField(controller: detailsC, maxLines: 3,
+              decoration: InputDecoration(labelText: tr('التفاصيل', 'Details'), border: const OutlineInputBorder())),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('إلغاء', 'Cancel'))),
+          FilledButton(style: FilledButton.styleFrom(backgroundColor: widget.accent),
+              onPressed: () => Navigator.pop(c, true), child: Text(tr('حفظ', 'Save'))),
+        ],
+      ),
+    );
+    if (ok != true || nameC.text.trim().isEmpty) return;
+    if (!mounted) return;
+    setState(() => _busy = true);
+    try {
+      await context.read<AuthProvider>().api.managementLegalUpdate(
+          d['id'] as int, name: nameC.text.trim(), details: detailsC.text.trim());
+      await _reload();
+      widget.onChanged();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('✅ أُضيف التحديث', '✅ Update added')), backgroundColor: const Color(0xFF16A34A)));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Mgmt.red));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Widget _letterBlock() {
     final l = d['letter'] as Map?;
     if (l == null) return const SizedBox.shrink();
@@ -3604,7 +3846,8 @@ class _DetailSheetState extends State<_DetailSheet> {
     final isDocument = d['document'] != null;
     final isDevice = d['device'] != null;
     final isApproval = d['approval'] != null;
-    final richDetail = isProposal || isTender || isOrder || isFleet || isCrm || isLeave || isExperience || isVservice || isLetter || isReqinv || isDocument || isDevice || isApproval;
+    final isLegal = d['legal'] != null;
+    final richDetail = isProposal || isTender || isOrder || isFleet || isCrm || isLeave || isExperience || isVservice || isLetter || isReqinv || isDocument || isDevice || isApproval || isLegal;
     final amount = richDetail ? null : d['amount'];
     return DraggableScrollableSheet(
       expand: false, initialChildSize: 0.82, maxChildSize: 0.96, minChildSize: 0.45,
@@ -3671,6 +3914,7 @@ class _DetailSheetState extends State<_DetailSheet> {
           if (isDocument) _documentBlock(),
           if (isDevice) _deviceBlock(),
           if (isApproval) _approvalBlock(),
+          if (isLegal) _legalBlock(),
           // ---- amount highlight
           if (amount != null)
             Container(
