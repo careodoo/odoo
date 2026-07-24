@@ -499,15 +499,29 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
               await _net.get(_u('/security/record/$kind/$id'), headers: await _headers())))['data'] as Map);
 
-  Future<Map<String, dynamic>> createIncident({
-    required String type,
-    required String severity,
-    required String description,
-  }) async {
-    final body = await _handle(await _net.post(_u('/security/incidents'),
-        headers: await _headers(),
-        body: jsonEncode({'type': type, 'severity': severity, 'description': description})));
-    return Map<String, dynamic>.from(body['data'] as Map);
+  /// Create an incident with the full field set (all optional except desc).
+  Future<Map<String, dynamic>> createIncident(Map<String, dynamic> body) async {
+    final res = await _handle(await _net.post(_u('/security/incidents'),
+        headers: await _headers(), body: jsonEncode(body)));
+    return Map<String, dynamic>.from(res['data'] as Map);
+  }
+
+  /// The current guard's own team(s) + fellow members (photo/role/presence).
+  Future<Map<String, dynamic>> securityMyTeam() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/my_team'), headers: await _headers())))['data'] as Map);
+
+  /// Options for the incident create form (premises/guards/teams/types/severities).
+  Future<Map<String, dynamic>> incidentMeta() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/incident/meta'), headers: await _headers())))['data'] as Map);
+
+  /// Paginated + searchable incidents list with header stats.
+  Future<Map<String, dynamic>> securityIncidents({String q = '', String state = 'all', int offset = 0, int limit = 30}) async {
+    final res = await _handle(await _net.get(
+        _u('/security/incidents?q=${Uri.encodeQueryComponent(q)}&state=$state&offset=$offset&limit=$limit'),
+        headers: await _headers()));
+    return Map<String, dynamic>.from(res['data'] as Map);
   }
 
   // ---- contracted services (segmented menu) --------------------------------

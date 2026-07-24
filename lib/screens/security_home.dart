@@ -8,6 +8,7 @@ import 'workorders_screen.dart';
 import 'security_incidents_screen.dart';
 import 'security_list_screen.dart';
 import 'security_section_screen.dart';
+import 'security_my_team_screen.dart';
 import 'supervisor_screen.dart';
 import 'shift_card.dart';
 
@@ -116,7 +117,9 @@ class SecurityHome extends StatelessWidget {
                     builder: (_) => SecurityListScreen(kind: 'gatepasses', title: tr('تصاريح البوابة', 'Gate passes')))),
               ),
               _secTile(context, '👮', tr('الحرّاس', 'Guards'), tr('الحالة والموقع', 'Status & location'), 'guards'),
-              _secTile(context, '👥', tr('الفِرَق', 'Teams'), tr('القادة والأعضاء', 'Leaders & members'), 'teams'),
+              _Tile(
+                icon: '👥', label: tr('فريقي', 'My team'), sub: tr('أعضاء فريقي وحالتهم', 'My team members'),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityMyTeamScreen()))),
               _secTile(context, '🗓️', tr('الجداول والورديات', 'Schedules'), tr('التعيينات', 'Assignments'), 'schedules'),
               _secTile(context, '📍', tr('نقاط الدوريات', 'Patrol points'), tr('QR ونوع النقطة', 'QR & type'), 'patrol_points'),
               _secTile(context, '🧾', tr('سجلّات الدوريات', 'Patrol logs'), tr('المسح والوقت', 'Scans & time'), 'patrol_logs'),
