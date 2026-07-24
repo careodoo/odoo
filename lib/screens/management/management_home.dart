@@ -9,6 +9,7 @@ import 'management_search.dart';
 import 'housing_hub_screen.dart';
 import 'management_analytics.dart';
 import 'management_inbox.dart';
+import 'management_payroll_hub.dart';
 import 'management_access.dart';
 
 /// Management app shell — Systems and the personal «My» hub, side by side.
@@ -81,7 +82,7 @@ class _ManagementHomeState extends State<ManagementHome> {
     'purchases': Color(0xFF2563EB), 'sales': Color(0xFF16A34A), 'tenders': Color(0xFF0F766E),
     'proposals': Color(0xFF0891B2), 'employees': Color(0xFFF59E0B), 'documents': Color(0xFF64748B),
     'experience': Color(0xFFD97706), 'fleet': Color(0xFF0D9488), 'crm': Color(0xFFDB2777),
-    'invoices': Color(0xFF4F46E5), 'projects': Color(0xFF15803D),
+    'invoices': Color(0xFF4F46E5), 'projects': Color(0xFF15803D), 'payroll_hub': Color(0xFF7C3AED),
   };
 
   Map<String, dynamic>? _me;
@@ -404,6 +405,8 @@ class _ManagementHomeState extends State<ManagementHome> {
         onTap: () => Navigator.push(context, MaterialPageRoute(
             builder: (_) => '${a['key']}' == 'hostels'
                 ? HousingHubScreen(accent: c)
+                : '${a['key']}' == 'payroll_hub'
+                ? ManagementPayrollHub(accent: c)
                 : ManagementListScreen(
                     appKey: '${a['key']}',
                     title: gLang == 'en' ? '${a['en']}' : '${a['ar']}',

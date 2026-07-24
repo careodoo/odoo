@@ -2286,6 +2286,15 @@ class ApiClient {
               _u('/management/housing/bed/$bedId/assign'),
               headers: await _headers(), body: jsonEncode({'employee_id': employeeId}))))['data'] as Map);
 
+  Future<Map<String, dynamic>> managementHousingMaintenance({int? hostel}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/management/housing/maintenance${hostel != null ? '?hostel=$hostel' : ''}'),
+              headers: await _headers())))['data'] as Map);
+
+  Future<void> managementHousingMaintenanceCreate(Map<String, dynamic> body) async =>
+      _handle(await _net.post(_u('/management/housing/maintenance'),
+          headers: await _headers(), body: jsonEncode(body)));
+
   Future<Map<String, dynamic>> managementHousingVacate(int bedId) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/management/housing/bed/$bedId/vacate'),

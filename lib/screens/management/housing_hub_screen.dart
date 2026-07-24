@@ -34,6 +34,14 @@ class _HousingHubScreenState extends State<HousingHubScreen> {
       appBar: AppBar(
         backgroundColor: widget.accent, foregroundColor: Colors.white, elevation: 0,
         title: Text('🏠 ${tr('السكن', 'Housing')}'),
+        actions: [
+          IconButton(
+            tooltip: tr('الصيانة', 'Maintenance'),
+            icon: const Icon(Icons.handyman_rounded),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => _HousingMaintenanceScreen(accent: widget.accent))),
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async => _reload(),
@@ -354,6 +362,131 @@ class _BedsScreenState extends State<_BedsScreen> {
               ? IconButton(onPressed: _busy ? null : () => _vacate(b), icon: const Icon(Icons.logout_rounded, color: Mgmt.red), tooltip: tr('إخلاء', 'Vacate'))
               : IconButton(onPressed: _busy ? null : () => _assign(b), icon: Icon(Icons.person_add_rounded, color: widget.accent), tooltip: tr('تسكين', 'Assign')),
       ]),
+    );
+  }
+}
+
+/// Housing maintenance sub-module — list of maintenance records with expected /
+/// actual cost totals + add.
+class _HousingMaintenanceScreen extends StatefulWidget {
+  const _HousingMaintenanceScreen({required this.accent});
+  final Color accent;
+  @override
+  State<_HousingMaintenanceScreen> createState() => _HousingMaintenanceScreenState();
+}
+
+class _HousingMaintenanceScreenState extends State<_HousingMaintenanceScreen> {
+  Map<String, dynamic>? _d;
+  bool _loading = true, _busy = false;
+
+  @override
+  void initState() { super.initState(); _load(); }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    try {
+      final d = await context.read<AuthProvider>().api.managementHousingMaintenance();
+      if (mounted) setState(() { _d = d; _loading = false; });
+    } catch (_) { if (mounted) setState(() => _loading = false); }
+  }
+
+  Future<void> _add() async {
+    final hostels = ((_d?['hostels'] as List?) ?? const []).cast<Map>();
+    Map? hostel;
+    final name = TextEditingController();
+    final exp = TextEditingController();
+    final act = TextEditingController();
+    final ok = await showDialog<bool>(context: context, builder: (c) => StatefulBuilder(builder: (c, setD) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      title: Text(tr('صيانة جديدة', 'New maintenance'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+      content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        TextField(controller: name, autofocus: true, decoration: InputDecoration(labelText: tr('الوصف *', 'Description *'), border: const OutlineInputBorder())),
+        const SizedBox(height: 10),
+        InkWell(
+          onTap: () async {
+            final h = await showModalBottomSheet<Map>(context: c, backgroundColor: Colors.white,
+              builder: (_) => ListView(shrinkWrap: true, children: [for (final hh in hostels) ListTile(title: Text('${hh['l']}'), onTap: () => Navigator.pop(_, hh))]));
+            if (h != null) setD(() => hostel = h);
+          },
+          child: InputDecorator(decoration: InputDecoration(labelText: tr('المبنى *', 'Building *'), border: const OutlineInputBorder()),
+              child: Text(hostel == null ? tr('اختر…', 'Select…') : '${hostel!['l']}'))),
+        const SizedBox(height: 10),
+        TextField(controller: exp, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: tr('التكلفة المتوقعة', 'Expected cost'), border: const OutlineInputBorder())),
+        const SizedBox(height: 10),
+        TextField(controller: act, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: tr('التكلفة الفعلية', 'Actual cost'), border: const OutlineInputBorder())),
+      ])),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('إلغاء', 'Cancel'))),
+        FilledButton(style: FilledButton.styleFrom(backgroundColor: widget.accent), onPressed: () => Navigator.pop(c, true), child: Text(tr('حفظ', 'Save'))),
+      ])));
+    if (ok != true || name.text.trim().isEmpty || hostel == null) return;
+    setState(() => _busy = true);
+    try {
+      await context.read<AuthProvider>().api.managementHousingMaintenanceCreate({
+        'name': name.text.trim(), 'hostel_id': hostel!['v'],
+        'expected_cost': double.tryParse(exp.text.trim()) ?? 0,
+        'actual_cost': double.tryParse(act.text.trim()) ?? 0,
+      });
+      await _load();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('✅ أُضيفت', '✅ Added')), backgroundColor: const Color(0xFF16A34A)));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Mgmt.red));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = ((_d?['items'] as List?) ?? const []).cast<Map>();
+    final exp = _d?['total_expected'] ?? 0;
+    final act = _d?['total_actual'] ?? 0;
+    return Scaffold(
+      backgroundColor: Mgmt.bg,
+      appBar: AppBar(backgroundColor: widget.accent, foregroundColor: Colors.white, title: Text('🔧 ${tr('صيانة السكن', 'Housing maintenance')}')),
+      floatingActionButton: (_d?['can_create'] == true)
+          ? FloatingActionButton.extended(backgroundColor: widget.accent, foregroundColor: Colors.white,
+              onPressed: _busy ? null : _add, icon: const Icon(Icons.add_rounded), label: Text(tr('إضافة', 'Add')))
+          : null,
+      body: _loading ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(onRefresh: _load, child: ListView(padding: const EdgeInsets.all(12), children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+                child: Row(children: [
+                  Expanded(child: Column(children: [
+                    Text('${(exp as num).toStringAsFixed(0)}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: widget.accent)),
+                    Text(tr('التكلفة المتوقعة', 'Expected'), style: const TextStyle(color: Mgmt.slate, fontSize: 11)),
+                  ])),
+                  Container(width: 1, height: 36, color: Colors.grey.shade200),
+                  Expanded(child: Column(children: [
+                    Text('${(act as num).toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF16A34A))),
+                    Text(tr('التكلفة الفعلية', 'Actual'), style: const TextStyle(color: Mgmt.slate, fontSize: 11)),
+                  ])),
+                ]),
+              ),
+              const SizedBox(height: 10),
+              if (items.isEmpty) Padding(padding: const EdgeInsets.only(top: 60), child: Center(child: Text(tr('لا سجلات صيانة', 'No maintenance records'), style: const TextStyle(color: Mgmt.slate)))),
+              for (final m in items) Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.black12)),
+                child: Row(children: [
+                  Container(width: 40, height: 40, alignment: Alignment.center,
+                      decoration: BoxDecoration(color: widget.accent.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(11)),
+                      child: Icon(Icons.handyman_rounded, color: widget.accent, size: 20)),
+                  const SizedBox(width: 11),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('${m['name'] ?? ''}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Mgmt.ink)),
+                    Text([m['hostel'], m['room']].where((x) => x != null).join(' · '), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Mgmt.slate, fontSize: 11)),
+                  ])),
+                  Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                    Text('${(m['actual_cost'] as num?)?.toStringAsFixed(0) ?? 0}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF16A34A))),
+                    Text('${tr('متوقع', 'exp')} ${(m['expected_cost'] as num?)?.toStringAsFixed(0) ?? 0}', style: const TextStyle(color: Mgmt.slate, fontSize: 10)),
+                  ]),
+                ]),
+              ),
+            ])),
     );
   }
 }
