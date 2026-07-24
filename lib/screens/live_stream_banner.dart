@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import 'stream_view_screen.dart';
@@ -18,29 +19,42 @@ class LiveStreamBanner extends StatefulWidget {
   State<LiveStreamBanner> createState() => _LiveStreamBannerState();
 }
 
-class _LiveStreamBannerState extends State<LiveStreamBanner> {
+class _LiveStreamBannerState extends State<LiveStreamBanner> with WidgetsBindingObserver {
   static const _red = Color(0xFFE5484D);
   static const _green = Color(0xFF37C98A);
   List<Map> _items = const [];
   Timer? _poll;
+  StreamSubscription? _fcmSub;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _tick();
-    _poll = Timer.periodic(const Duration(seconds: 10), (_) => _tick());
+    // استطلاع سريع (شبه فوري) — يظهر البثّ خلال ثوانٍ دون رفرش يدوي
+    _poll = Timer.periodic(const Duration(seconds: 4), (_) => _tick());
+    // ظهور فوري عند وصول إشعار البثّ (push)
+    _fcmSub = FirebaseMessaging.onMessage.listen((_) => _tick());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _tick(); // تحديث عند فتح التطبيق
   }
 
   Future<void> _tick() async {
     try {
       final api = context.read<AuthProvider>().api;
       final items = widget.isClient ? await api.clientSecurityStreamActive() : await api.securityStreamActive();
+      // لا نمسح البانر عند خطأ شبكة عابر — فقط عند استجابة ناجحة فارغة
       if (mounted) setState(() => _items = items.cast<Map>());
     } catch (_) {}
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _fcmSub?.cancel();
     _poll?.cancel();
     super.dispose();
   }

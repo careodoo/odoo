@@ -110,6 +110,7 @@ class WhipBroadcaster {
 /// مشاهد WHEP — يستقبل الفيديو الحيّ من رابط المشاهدة ويعرضه.
 class WhepViewer {
   RTCPeerConnection? _pc;
+  MediaStream? _remote; // stream مُجمّع (صوت + فيديو) نضمن به عرض الفيديو
   String? _resourceUrl;
   final RTCVideoRenderer renderer = RTCVideoRenderer();
   final void Function()? onTrack; // يُستدعى عند وصول أول فيديو
@@ -120,6 +121,11 @@ class WhepViewer {
     await renderer.initialize();
     _pc = await createPeerConnection(_kIce);
 
+    // نجمع كل المسارات الواردة في stream واحد ونعرضه — لتفادي «صوت بلا صورة»
+    // الناتج عن ضبط srcObject على مسار الصوت قبل وصول الفيديو.
+    _remote = await createLocalMediaStream('whep_remote');
+    renderer.srcObject = _remote;
+
     // مستقبِل فقط (فيديو + صوت)
     await _pc!.addTransceiver(
         kind: RTCRtpMediaType.RTCRtpMediaTypeVideo,
@@ -128,9 +134,13 @@ class WhepViewer {
         kind: RTCRtpMediaType.RTCRtpMediaTypeAudio,
         init: RTCRtpTransceiverInit(direction: TransceiverDirection.RecvOnly));
 
-    _pc!.onTrack = (RTCTrackEvent e) {
-      if (e.streams.isNotEmpty) {
-        renderer.srcObject = e.streams.first;
+    _pc!.onTrack = (RTCTrackEvent e) async {
+      try {
+        await _remote?.addTrack(e.track);
+      } catch (_) {}
+      // نُعيد ربط العرض عند وصول الفيديو (يجبر إعادة الرسم)
+      if (e.track.kind == 'video') {
+        renderer.srcObject = _remote;
         onTrack?.call();
       }
     };
@@ -161,8 +171,10 @@ class WhepViewer {
     } catch (_) {}
     try {
       await _pc?.close();
+      await _remote?.dispose();
     } catch (_) {}
     _pc = null;
+    _remote = null;
     renderer.srcObject = null;
     await renderer.dispose();
   }
