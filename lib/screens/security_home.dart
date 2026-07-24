@@ -9,6 +9,9 @@ import 'security_incidents_screen.dart';
 import 'security_list_screen.dart';
 import 'security_section_screen.dart';
 import 'security_my_team_screen.dart';
+import 'security_keys_screen.dart';
+import 'security_inspections_screen.dart';
+import 'security_gatepasses_screen.dart';
 import 'supervisor_screen.dart';
 import 'shift_card.dart';
 
@@ -106,15 +109,15 @@ class SecurityHome extends StatelessWidget {
               ),
               _Tile(
                 icon: '🔑', label: tr('المفاتيح', 'Keys'),
-                sub: tr('العهدة والحالة', 'Custody & status'),
+                sub: tr('مسح وصرف وإرجاع', 'Scan · out · in'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(
-                    builder: (_) => const SecurityListScreen(kind: 'keys', title: 'عهدة المفاتيح'))),
+                    builder: (_) => const SecurityKeysScreen())),
               ),
               _Tile(
                 icon: '🚪', label: tr('تصاريح البوابة', 'Gate passes'),
                 sub: tr('الزوّار', 'Visitors'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(
-                    builder: (_) => SecurityListScreen(kind: 'gatepasses', title: tr('تصاريح البوابة', 'Gate passes')))),
+                    builder: (_) => const SecurityGatePassesScreen())),
               ),
               _secTile(context, '👮', tr('الحرّاس', 'Guards'), tr('الحالة والموقع', 'Status & location'), 'guards'),
               _Tile(
@@ -123,7 +126,9 @@ class SecurityHome extends StatelessWidget {
               _secTile(context, '🗓️', tr('الجداول والورديات', 'Schedules'), tr('التعيينات', 'Assignments'), 'schedules'),
               _secTile(context, '📍', tr('نقاط الدوريات', 'Patrol points'), tr('QR ونوع النقطة', 'QR & type'), 'patrol_points'),
               _secTile(context, '🧾', tr('سجلّات الدوريات', 'Patrol logs'), tr('المسح والوقت', 'Scans & time'), 'patrol_logs'),
-              _secTile(context, '🔎', tr('التفتيشات', 'Inspections'), tr('النوع والخطورة', 'Type & severity'), 'inspections'),
+              _Tile(
+                icon: '🔎', label: tr('التفتيشات', 'Inspections'), sub: tr('فحص · إسناد · أمر عمل', 'Check · assign · WO'),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityInspectionsScreen()))),
               _secTile(context, '✅', tr('مهام الأمن', 'Security tasks'), tr('الإسناد والتقدّم', 'Assignee & progress'), 'tasks'),
             ],
           ),

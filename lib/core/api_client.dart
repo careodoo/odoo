@@ -506,6 +506,74 @@ class ApiClient {
     return Map<String, dynamic>.from(res['data'] as Map);
   }
 
+  // ---- Gate passes ----------------------------------------------------------
+  Future<Map<String, dynamic>> securityGatepasses({String state = '', String q = ''}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/gatepasses/board?state=$state&q=${Uri.encodeQueryComponent(q)}'),
+              headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> securityGatepassDetail(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/gatepass/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> securityGatepassAction(int id, String key, {String? reason}) async {
+    final res = await _handle(await _net.post(_u('/security/gatepass/$id/action'),
+        headers: await _headers(), body: jsonEncode({'key': key, if (reason != null) 'reason': reason})));
+    return Map<String, dynamic>.from(res['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> securityGatepassScan(String code) async {
+    final res = await _handle(await _net.post(_u('/security/gatepass/scan'),
+        headers: await _headers(), body: jsonEncode({'code': code})));
+    return Map<String, dynamic>.from(res['data'] as Map);
+  }
+
+  // ---- Inspections ----------------------------------------------------------
+  Future<Map<String, dynamic>> securityInspections({String state = '', String q = ''}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/inspections?state=$state&q=${Uri.encodeQueryComponent(q)}'),
+              headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> securityInspectionDetail(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/inspection/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> securityInspectionAction(int id, String path, Map<String, dynamic> body) async {
+    final res = await _handle(await _net.post(_u('/security/inspection/$id/$path'),
+        headers: await _headers(), body: jsonEncode(body)));
+    return Map<String, dynamic>.from(res['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> securityWoServices() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/wo_services'), headers: await _headers())))['data'] as Map);
+
+  // ---- Key custody ----------------------------------------------------------
+  Future<Map<String, dynamic>> securityKeysBoard({String tab = '', String q = '', String hub = ''}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/keys/board?tab=$tab&q=${Uri.encodeQueryComponent(q)}&hub=$hub'),
+              headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> securityKeyMeta() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/key/meta'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> securityKeyScan(String code) async {
+    final res = await _handle(await _net.post(_u('/security/key/scan'),
+        headers: await _headers(), body: jsonEncode({'code': code})));
+    return Map<String, dynamic>.from(res['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> securityKeyDetail(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/key/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> securityKeyAction(int id, String act, Map<String, dynamic> body) async {
+    final res = await _handle(await _net.post(_u('/security/key/$id/$act'),
+        headers: await _headers(), body: jsonEncode(body)));
+    return Map<String, dynamic>.from(res['data'] as Map);
+  }
+
   /// The current guard's own team(s) + fellow members (photo/role/presence).
   Future<Map<String, dynamic>> securityMyTeam() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

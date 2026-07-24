@@ -12,6 +12,10 @@ import 'supervisor_screen.dart';
 import 'admin_home.dart';
 import 'security_incidents_screen.dart';
 import 'security_list_screen.dart';
+import 'security_my_team_screen.dart';
+import 'security_keys_screen.dart';
+import 'security_inspections_screen.dart';
+import 'security_gatepasses_screen.dart';
 import 'service_screen.dart';
 import 'cleaning_audit_screen.dart';
 import 'appraisal_screen.dart';
@@ -64,6 +68,7 @@ class MoreScreen extends StatelessWidget {
     final isClient = p.role == 'client';
     final isBoss = p.isSupervisor || p.isAdmin;
     final isField = !isClient && !isBoss && !p.canAddWorkers;
+    final isSecurity = p.role == 'security'; // a guard: hide non-security field tools
     final items = <Widget>[];
     var toolCount = 0;
 
@@ -116,12 +121,13 @@ class MoreScreen extends StatelessWidget {
     header(tr('العمل والعمليات', 'Work & operations'));
     tile(Icons.assignment_rounded, isField ? tr('مهامي', 'My tasks') : tr('أوامر العمل', 'Work orders'), const WorkOrdersScreen(), c: _navy);
     tile(Icons.forum_rounded, tr('التواصل والمحادثات', 'Messages & directory'), const ChatHubScreen(), c: const Color(0xFF0E7490));
-    tile(Icons.fact_check_rounded, tr('الجودة والجولات', 'Quality & rounds'), const QualityScreen(), c: const Color(0xFF0EA5A4));
+    if (!isSecurity) tile(Icons.fact_check_rounded, tr('الجودة والجولات', 'Quality & rounds'), const QualityScreen(), c: const Color(0xFF0EA5A4));
     if (!isField) tile(Icons.inbox_rounded, tr('طلبات الخدمة', 'Service requests'), const RequestsScreen(), c: const Color(0xFFE6295C));
     tile(Icons.event_repeat_rounded, tr('جدولة الأعمال', 'Work schedules'), const SchedulesScreen(), c: const Color(0xFF0D9488));
     if (!isField) tile(Icons.handyman_rounded, tr('الصيانة', 'Maintenance'), const MaintenanceScreen(), c: const Color(0xFFF7A23B));
-    tile(Icons.directions_car_rounded, tr('صف السيارات', 'Valet parking'), const ValetScreen(), c: const Color(0xFFB45309));
-    tile(Icons.local_cafe_rounded, tr('الضيافة', 'Hospitality'), const HospitalityScreen(), c: const Color(0xFF8A6D3B));
+    // Valet & hospitality are not a security guard's tools.
+    if (!isSecurity) tile(Icons.directions_car_rounded, tr('صف السيارات', 'Valet parking'), const ValetScreen(), c: const Color(0xFFB45309));
+    if (!isSecurity) tile(Icons.local_cafe_rounded, tr('الضيافة', 'Hospitality'), const HospitalityScreen(), c: const Color(0xFF8A6D3B));
     if (p.canAddWorkers)
       tile(Icons.campaign_rounded, tr('مركز الإشعارات', 'Notification center'), const NotifySendScreen(), c: const Color(0xFFEA580C));
     // everyone — including clients — can scan a location's QR or tap its NFC
@@ -136,7 +142,8 @@ class MoreScreen extends StatelessWidget {
     }
     // ===== My tools (everyone) — a worker still needs stock + attendance =====
     header(isField ? tr('أدواتي', 'My tools') : tr('المخزون والحضور', 'Inventory & attendance'));
-    tile(Icons.inventory_2_rounded, isField ? tr('صرف مواد', 'Issue materials') : tr('المخزون', 'Inventory'), const ClientInventoryScreen(), c: const Color(0xFF0E3A5F));
+    // a guard doesn't issue materials from a store
+    if (!isSecurity) tile(Icons.inventory_2_rounded, isField ? tr('صرف مواد', 'Issue materials') : tr('المخزون', 'Inventory'), const ClientInventoryScreen(), c: const Color(0xFF0E3A5F));
     tile(Icons.fingerprint_rounded, tr('الحضور والانصراف', 'Attendance'), const AttendanceScreen(), c: const Color(0xFF7C3AED));
     if (!isField) tile(Icons.insights_rounded, tr('التحليلات والتقارير', 'Analytics & reports'), const ClientAnalyticsScreen(), c: const Color(0xFF2563EB));
 
@@ -147,9 +154,11 @@ class MoreScreen extends StatelessWidget {
     if (p.role == 'security') {
       header(tr('الأمن', 'Security'));
       tile(Icons.report_rounded, tr('البلاغات الأمنية', 'Incidents'), const SecurityIncidentsScreen(), c: const Color(0xFFE5484D));
+      tile(Icons.groups_rounded, tr('فريقي', 'My team'), const SecurityMyTeamScreen(), c: const Color(0xFF4AA8FF));
       tile(Icons.route_rounded, tr('الدوريات', 'Patrols'), SecurityListScreen(kind: 'patrols', title: tr('الدوريات', 'Patrols')), c: const Color(0xFF0891B2));
-      tile(Icons.vpn_key_rounded, tr('عهدة المفاتيح', 'Key custody'), SecurityListScreen(kind: 'keys', title: tr('عهدة المفاتيح', 'Key custody')), c: const Color(0xFFF59E0B));
-      tile(Icons.badge_rounded, tr('تصاريح البوابة', 'Gate passes'), SecurityListScreen(kind: 'gatepasses', title: tr('تصاريح البوابة', 'Gate passes')), c: const Color(0xFF16A34A));
+      tile(Icons.vpn_key_rounded, tr('عهدة المفاتيح', 'Key custody'), const SecurityKeysScreen(), c: const Color(0xFFF59E0B));
+      tile(Icons.badge_rounded, tr('تصاريح البوابة', 'Gate passes'), const SecurityGatePassesScreen(), c: const Color(0xFF16A34A));
+      tile(Icons.search_rounded, tr('التفتيشات', 'Inspections'), const SecurityInspectionsScreen(), c: const Color(0xFF7C3AED));
     }
 
     // ===== Contracts & administration (client / back-office only) =====
