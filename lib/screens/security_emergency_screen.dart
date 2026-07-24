@@ -8,6 +8,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import 'security_stream_screen.dart';
 
 /// Panic / SOS. Raising requires a biometric confirmation, captures GPS, and
 /// broadcasts to the guard's team; responders see the raiser on a live map and
@@ -180,6 +181,19 @@ class _SecurityEmergencyMapScreenState extends State<SecurityEmergencyMapScreen>
             style: FilledButton.styleFrom(backgroundColor: const Color(0xFF37C98A)),
             label: Text(tr('إنهاء', 'Resolve'), style: const TextStyle(fontWeight: FontWeight.w800)))),
         ]),
+        const SizedBox(height: 8),
+        // stream: raiser can go live on their own alert; others can watch.
+        SizedBox(width: double.infinity, child: e['mine'] == true
+            ? FilledButton.icon(
+                onPressed: () => Stream.goLive(context, incidentId: e['id'] as int, title: tr('بث مباشر', 'Live')),
+                icon: const Icon(Icons.videocam_rounded, size: 16),
+                style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE5484D)),
+                label: Text(tr('بث مباشر من موقعي', 'Go live from my location'), style: const TextStyle(fontWeight: FontWeight.w800)))
+            : OutlinedButton.icon(
+                onPressed: () => Stream.watch(context, e['id'] as int, title: '${e['guard'] ?? ''}'),
+                icon: const Icon(Icons.live_tv_rounded, size: 16, color: Color(0xFFE5484D)),
+                style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFE5484D), side: const BorderSide(color: Color(0xFFE5484D))),
+                label: Text(tr('مشاهدة بث الحارس', 'Watch guard\'s stream'), style: const TextStyle(fontWeight: FontWeight.w800)))),
       ]),
     ));
   }

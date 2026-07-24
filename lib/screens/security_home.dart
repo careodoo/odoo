@@ -13,6 +13,7 @@ import 'security_keys_screen.dart';
 import 'security_inspections_screen.dart';
 import 'security_gatepasses_screen.dart';
 import 'security_emergency_screen.dart';
+import 'security_stream_screen.dart';
 import 'supervisor_screen.dart';
 import 'shift_card.dart';
 
@@ -100,6 +101,11 @@ class SecurityHome extends StatelessWidget {
                 icon: '🆘', label: tr('نداءات الاستغاثة', 'SOS alerts'),
                 sub: tr('خريطة حيّة للفريق', 'Live team map'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityEmergencyMapScreen())),
+              ),
+              _Tile(
+                icon: '🎥', label: tr('بث مباشر', 'Go live'),
+                sub: tr('بث كاميرا للفريق', 'Broadcast to team'),
+                onTap: () => Stream.goLive(context),
               ),
               _Tile(
                 icon: '📝', label: tr('البلاغات الأمنية', 'Incidents'),

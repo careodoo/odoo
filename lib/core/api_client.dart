@@ -506,6 +506,24 @@ class ApiClient {
     return Map<String, dynamic>.from(res['data'] as Map);
   }
 
+  // ---- Live streaming (Agora) -----------------------------------------------
+  Future<Map<String, dynamic>> securityStreamConfig() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/stream/config'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> securityStreamStart({int? incidentId, List<int>? viewerIds, String url = ''}) async {
+    final res = await _handle(await _net.post(_u('/security/stream/start'), headers: await _headers(),
+        body: jsonEncode({if (incidentId != null) 'incident_id': incidentId, if (viewerIds != null) 'viewer_ids': viewerIds, 'url': url})));
+    return Map<String, dynamic>.from(res['data'] as Map);
+  }
+
+  Future<void> securityStreamStop(int incidentId) async =>
+      _handle(await _net.post(_u('/security/stream/stop'), headers: await _headers(), body: jsonEncode({'incident_id': incidentId})));
+
+  Future<Map<String, dynamic>> securityStreamWatch(int incidentId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/stream/watch/$incidentId'), headers: await _headers())))['data'] as Map);
+
   // ---- Emergency / panic ----------------------------------------------------
   Future<Map<String, dynamic>> securityEmergencyRaise({double? lat, double? lng, String note = ''}) async {
     final res = await _handle(await _net.post(_u('/security/emergency'),
