@@ -170,6 +170,8 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
     ('hr_eos', '🏁', 'إنهاء الخدمة', 'End of service', 0xFFB91C1C),
     ('hr_permissions', '🕒', 'الاستئذانات', 'Permissions', 0xFF6D28D9),
     ('hr_custody', '🧰', 'العهد', 'Custody', 0xFF9A3412),
+    ('passports', '🛂', 'الجوازات', 'Passports', 0xFF0369A1),
+    ('recruitment', '🧑‍💼', 'التوظيف', 'Recruitment', 0xFF7C3AED),
     ('documents', '📁', 'المستندات', 'Documents', 0xFF475569),
     ('correspondence', '✉️', 'المراسلات', 'Letters', 0xFF8B5CF6),
   ];
@@ -607,6 +609,7 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
                     if (r['appr'] != null) return _apprCard(r);
                     if (r['lg'] != null) return _legalCard(r);
                     if (r['pt'] != null) return _petrolCard(r);
+                    if (r['pp'] != null) return _passportCard(r);
                     return _row(r);
                   },
                 );
@@ -1764,6 +1767,41 @@ class _ManagementListScreenState extends State<ManagementListScreen> {
   String _num(dynamic v) {
     final n = v is num ? v : double.tryParse('$v') ?? 0;
     return n == n.roundToDouble() ? n.toInt().toString() : n.toStringAsFixed(1);
+  }
+
+  // ---- Passports (care.passport) ----------------------------------------
+  Widget _passportCard(Map r) {
+    final pp = (r['pp'] as Map?) ?? const {};
+    final exColor = mgmtHex('${pp['expiry_color'] ?? ''}', Mgmt.slate);
+    final stColor = mgmtHex('${pp['state_color'] ?? ''}', Mgmt.slate);
+    return Material(
+      color: Colors.white, borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _openDetail(r['id'] as int, '${pp['employee'] ?? r['title']}'),
+        child: Container(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.black12)),
+          child: Row(children: [
+            _logoBox('${pp['photo_b64'] ?? ''}', '${pp['employee'] ?? ''}', size: 44),
+            const SizedBox(width: 11),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('${pp['employee'] ?? '—'}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Mgmt.ink)),
+              const SizedBox(height: 2),
+              Text('🛂 ${pp['passport_no'] ?? '—'}${pp['country'] != null ? ' · ${pp['country']}' : ''}',
+                  maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11.5, color: Mgmt.slate)),
+              const SizedBox(height: 5),
+              Wrap(spacing: 6, runSpacing: 4, children: [
+                _tag(gLang == 'en' ? '${pp['state_en']}' : '${pp['state_ar']}', stColor),
+                _tag('${gLang == 'en' ? pp['expiry_en'] : pp['expiry_ar']}${pp['expiry_date'] != null ? ' · ${pp['expiry_date']}' : ''}', exColor),
+                if (pp['holder'] != null) _tag('🤝 ${pp['holder']}', const Color(0xFFF59E0B)),
+              ]),
+            ])),
+          ]),
+        ),
+      ),
+    );
   }
 
   // ---- Vehicle service --------------------------------------------------
@@ -4026,6 +4064,118 @@ class _DetailSheetState extends State<_DetailSheet> {
     }
   }
 
+  // ---- Passports (care.passport) ----------------------------------------
+  Widget _passportBlock() {
+    final p = d['passport'] as Map?;
+    if (p == null) return const SizedBox.shrink();
+    final h = (p['header'] as Map?) ?? const {};
+    final info = ((p['info'] as List?) ?? const []).cast<Map>();
+    final moves = ((p['movements'] as List?) ?? const []).cast<Map>();
+    final isOut = h['state'] == 'out';
+    final exColor = mgmtHex('${h['expiry_color'] ?? ''}', Mgmt.slate);
+    final canEdit = d['can_edit'] != false;
+    return Column(children: [
+      // status header
+      Container(
+        margin: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [exColor.withValues(alpha: 0.10), exColor.withValues(alpha: 0.03)], begin: Alignment.topRight, end: Alignment.bottomLeft),
+            borderRadius: BorderRadius.circular(18), border: Border.all(color: exColor.withValues(alpha: 0.18))),
+        child: Row(children: [
+          const Text('🛂', style: TextStyle(fontSize: 24)),
+          const SizedBox(width: 10),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('${h['passport_no'] ?? '—'}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Mgmt.ink)),
+            const SizedBox(height: 3),
+            Wrap(spacing: 6, children: [
+              _statusPill('📄', gLang == 'en' ? '${h['state_en']}' : '${h['state_ar']}', mgmtHex('${h['state_color'] ?? ''}', Mgmt.slate)),
+              _statusPill('⏰', '${gLang == 'en' ? h['expiry_en'] : h['expiry_ar']}${h['expiry_date'] != null ? ' · ${h['expiry_date']}' : ''}', exColor),
+            ]),
+          ])),
+        ]),
+      ),
+      // check-in / check-out
+      if (canEdit)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+          child: isOut
+              ? SizedBox(width: double.infinity, child: FilledButton.icon(
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A), minimumSize: const Size(0, 46)),
+                  onPressed: _busy ? null : _passportCheckin,
+                  icon: const Icon(Icons.login_rounded, size: 18),
+                  label: Text(tr('إرجاع للأرشيف', 'Return to archive'), style: const TextStyle(fontWeight: FontWeight.w900))))
+              : SizedBox(width: double.infinity, child: FilledButton.icon(
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFFF59E0B), minimumSize: const Size(0, 46)),
+                  onPressed: _busy ? null : _passportCheckout,
+                  icon: const Icon(Icons.logout_rounded, size: 18),
+                  label: Text(tr('إخراج الجواز', 'Check out'), style: const TextStyle(fontWeight: FontWeight.w900)))),
+        ),
+      if (info.isNotEmpty)
+        _cardWrap([_sectionHead('🛂', tr('بيانات الجواز', 'Passport details')), _infoRows(info)]),
+      if (moves.isNotEmpty)
+        _cardWrap([
+          _sectionHead('🔄', tr('حركات الجواز (${moves.length})', 'Movements (${moves.length})')),
+          for (final m in moves.take(20))
+            _petrolLine(
+                '${m['type_label'] ?? ''}${m['custodian'] != null ? ' · ${m['custodian']}' : ''}',
+                m['date'], m['type'] == 'out' ? tr('خروج', 'OUT') : tr('دخول', 'IN'),
+                m['shelf'], m['type'] == 'out' ? const Color(0xFFF59E0B) : const Color(0xFF16A34A)),
+        ]),
+    ]);
+  }
+
+  Future<void> _passportCheckout() async {
+    final reasons = {'travel_leave': tr('سفر - إجازة', 'Travel - Leave'), 'final_exit': tr('خروج نهائي', 'Final Exit'), 'pro_residency': tr('مندوب - إقامة', 'PRO - Residency')};
+    String reason = 'travel_leave';
+    final ok = await showDialog<bool>(context: context, builder: (c) => StatefulBuilder(builder: (c, setD) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      title: Text(tr('إخراج الجواز', 'Check out passport'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        for (final e in reasons.entries) RadioListTile<String>(
+          contentPadding: EdgeInsets.zero, dense: true,
+          value: e.key, groupValue: reason, title: Text(e.value, style: const TextStyle(fontSize: 13)),
+          onChanged: (v) => setD(() => reason = v!)),
+      ]),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('إلغاء', 'Cancel'))),
+        FilledButton(style: FilledButton.styleFrom(backgroundColor: const Color(0xFFF59E0B)),
+            onPressed: () => Navigator.pop(c, true), child: Text(tr('إخراج', 'Check out'))),
+      ])));
+    if (ok != true) return;
+    await _passportMove('checkout', {'reason': reason});
+  }
+
+  Future<void> _passportCheckin() async {
+    final shelf = TextEditingController();
+    final ok = await showDialog<bool>(context: context, builder: (c) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      title: Text(tr('إرجاع الجواز', 'Return passport'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+      content: TextField(controller: shelf, autofocus: true,
+          decoration: InputDecoration(labelText: tr('الموقع/الرف', 'Shelf / location'), border: const OutlineInputBorder())),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('إلغاء', 'Cancel'))),
+        FilledButton(style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
+            onPressed: () => Navigator.pop(c, true), child: Text(tr('إرجاع', 'Return'))),
+      ]));
+    if (ok != true) return;
+    await _passportMove('checkin', {'shelf_location': shelf.text.trim()});
+  }
+
+  Future<void> _passportMove(String dir, Map<String, dynamic> body) async {
+    setState(() => _busy = true);
+    try {
+      await context.read<AuthProvider>().api.managementPassportMove(d['id'] as int, dir, body);
+      await _reload();
+      widget.onChanged();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('✅ تم', '✅ Done')), backgroundColor: const Color(0xFF16A34A)));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Mgmt.red));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   // ---- Legal cases (hr.lawsuit) -----------------------------------------
   Widget _legalBlock() {
     final lg = d['legal'] as Map?;
@@ -4296,7 +4446,8 @@ class _DetailSheetState extends State<_DetailSheet> {
     final isApproval = d['approval'] != null;
     final isLegal = d['legal'] != null;
     final isPetrol = d['petrol'] != null;
-    final richDetail = isProposal || isTender || isOrder || isFleet || isCrm || isLeave || isExperience || isVservice || isLetter || isReqinv || isDocument || isDevice || isApproval || isLegal || isPetrol;
+    final isPassport = d['passport'] != null;
+    final richDetail = isProposal || isTender || isOrder || isFleet || isCrm || isLeave || isExperience || isVservice || isLetter || isReqinv || isDocument || isDevice || isApproval || isLegal || isPetrol || isPassport;
     final amount = richDetail ? null : d['amount'];
     return DraggableScrollableSheet(
       expand: false, initialChildSize: 0.82, maxChildSize: 0.96, minChildSize: 0.45,
@@ -4367,6 +4518,7 @@ class _DetailSheetState extends State<_DetailSheet> {
           if (isApproval) _approvalBlock(),
           if (isLegal) _legalBlock(),
           if (isPetrol) _petrolBlock(),
+          if (isPassport) _passportBlock(),
           // ---- amount highlight
           if (amount != null)
             Container(

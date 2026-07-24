@@ -12,6 +12,7 @@ import 'security_my_team_screen.dart';
 import 'security_keys_screen.dart';
 import 'security_inspections_screen.dart';
 import 'security_gatepasses_screen.dart';
+import 'security_emergency_screen.dart';
 import 'supervisor_screen.dart';
 import 'shift_card.dart';
 
@@ -92,8 +93,13 @@ class SecurityHome extends StatelessWidget {
               ),
               _Tile(
                 icon: '🚨', label: tr('زر الطوارئ', 'Panic'),
-                sub: tr('بلاغ فوري', 'Instant report'), danger: true,
-                onTap: () => _panic(context),
+                sub: tr('بلاغ فوري بالبصمة', 'Biometric SOS'), danger: true,
+                onTap: () => Emergency.raise(context),
+              ),
+              _Tile(
+                icon: '🆘', label: tr('نداءات الاستغاثة', 'SOS alerts'),
+                sub: tr('خريطة حيّة للفريق', 'Live team map'),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityEmergencyMapScreen())),
               ),
               _Tile(
                 icon: '📝', label: tr('البلاغات الأمنية', 'Incidents'),
@@ -143,27 +149,6 @@ class SecurityHome extends StatelessWidget {
             builder: (_) => SecuritySectionScreen(kind: kind, title: label))),
       );
 
-  void _panic(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(tr('🚨 تأكيد الطوارئ', '🚨 Confirm emergency')),
-        content: Text(tr('سيتم إرسال بلاغ طوارئ فوري إلى غرفة العمليات. متابعة؟', 'An immediate emergency alert will be sent to the control room. Continue?')),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('إلغاء', 'Cancel'))),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE5484D)),
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(tr('🚨 تم إرسال بلاغ الطوارئ', '🚨 Emergency alert sent'))));
-            },
-            child: Text(tr('إرسال البلاغ', 'Submit report')),
-          ),
-        ],
-      ),
-    );
-  }
 
 }
 

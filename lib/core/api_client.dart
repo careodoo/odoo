@@ -506,6 +506,21 @@ class ApiClient {
     return Map<String, dynamic>.from(res['data'] as Map);
   }
 
+  // ---- Emergency / panic ----------------------------------------------------
+  Future<Map<String, dynamic>> securityEmergencyRaise({double? lat, double? lng, String note = ''}) async {
+    final res = await _handle(await _net.post(_u('/security/emergency'),
+        headers: await _headers(), body: jsonEncode({if (lat != null) 'lat': lat, if (lng != null) 'lng': lng, 'note': note})));
+    return Map<String, dynamic>.from(res['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> securityEmergencies() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/emergencies'), headers: await _headers())))['data'] as Map);
+
+  Future<void> securityEmergencyStop(int id, String reason) async =>
+      _handle(await _net.post(_u('/security/emergency/$id/stop'),
+          headers: await _headers(), body: jsonEncode({'reason': reason})));
+
   // ---- Gate passes ----------------------------------------------------------
   Future<Map<String, dynamic>> securityGatepasses({String state = '', String q = ''}) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
@@ -2188,6 +2203,11 @@ class ApiClient {
               _u('/management/emp-sub/create'),
               headers: await _headers(),
               body: jsonEncode({'model': model, 'employee_id': employeeId, ...vals}))))['data'] as Map);
+
+  /// Check a passport out to a custodian (out) or back into the archive (in).
+  Future<void> managementPassportMove(int id, String dir, Map<String, dynamic> body) async =>
+      _handle(await _net.post(_u('/management/passport/$id/$dir'),
+          headers: await _headers(), body: jsonEncode(body)));
 
   /// Add a fuel charge (refill) to a tank.
   Future<void> managementPetrolCharge(int tankId, Map<String, dynamic> body) async =>
