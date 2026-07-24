@@ -23,8 +23,19 @@ class Push {
   /// in the shade. Matches the manifest's default-channel meta-data.
   static const _channel = AndroidNotificationChannel(
     'care_high', 'إشعارات CARE',
-    description: 'Task and message alerts',
+    description: 'تنبيهات المهام والرسائل',
     importance: Importance.high,
+  );
+
+  // قناة الاستغاثة: أقصى أهمية + نغمة إنذار مميّزة (sos_alert في res/raw).
+  // تُستخدم لإشعارات النوع alert (نداء استغاثة/بث مباشر) فقط.
+  static const _sosChannel = AndroidNotificationChannel(
+    'care_sos', 'نداءات الاستغاثة',
+    description: 'تنبيهات الطوارئ العاجلة',
+    importance: Importance.max,
+    sound: RawResourceAndroidNotificationSound('sos_alert'),
+    playSound: true,
+    enableVibration: true,
   );
 
   /// Tapping a notification should land on the right screen. The shell sets
@@ -48,9 +59,9 @@ class Push {
         ),
         onDidReceiveNotificationResponse: (r) => _open(r.payload),
       );
-      await _local
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(_channel);
+      final android = _local.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      await android?.createNotificationChannel(_channel);
+      await android?.createNotificationChannel(_sosChannel); // قناة الاستغاثة بالصوت المميّز
     } catch (e) {
       debugPrint('push: local notifications failed: $e');
     }
@@ -85,6 +96,9 @@ class Push {
     final title = n?.title ?? m.data['title'] as String?;
     final body = n?.body ?? m.data['body'] as String?;
     if (title == null && body == null) return;
+    // إشعارات الطوارئ (alert) تُعرض على قناة الاستغاثة بالنغمة المميّزة.
+    final isSos = '${m.data['ntype'] ?? ''}' == 'alert';
+    final ch = isSos ? _sosChannel : _channel;
     try {
       await _local.show(
         m.hashCode,
@@ -92,12 +106,16 @@ class Push {
         body,
         NotificationDetails(
           android: AndroidNotificationDetails(
-            _channel.id, _channel.name,
-            channelDescription: _channel.description,
-            importance: Importance.high, priority: Priority.high,
+            ch.id, ch.name,
+            channelDescription: ch.description,
+            importance: isSos ? Importance.max : Importance.high, priority: Priority.high,
             icon: '@mipmap/ic_launcher',
+            sound: isSos ? const RawResourceAndroidNotificationSound('sos_alert') : null,
+            fullScreenIntent: isSos, // تنبيه بارز على الشاشة عند الطوارئ
           ),
-          iOS: const DarwinNotificationDetails(),
+          // iOS: الصوت المميّز يحتاج ملف .caf مُضمّن (غير متوفّر بعد) — نُبقي
+          // الصوت الافتراضي هنا؛ نغمة الاستغاثة المخصّصة تعمل على أندرويد.
+          iOS: const DarwinNotificationDetails(presentSound: true),
         ),
         payload: m.data['action_url'] as String?,
       );
