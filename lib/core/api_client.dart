@@ -511,9 +511,18 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/stream/config'), headers: await _headers())))['data'] as Map);
 
-  Future<Map<String, dynamic>> securityStreamStart({int? incidentId, List<int>? viewerIds, String url = ''}) async {
+  Future<List<dynamic>> securityStreamProviders() async {
+    final res = await _handle(await _net.get(_u('/security/stream/providers'), headers: await _headers()));
+    return List<dynamic>.from((res['data'] as Map)['providers'] as List);
+  }
+
+  Future<Map<String, dynamic>> securityStreamStart({int? incidentId, int? providerId, List<int>? viewerIds, String url = ''}) async {
     final res = await _handle(await _net.post(_u('/security/stream/start'), headers: await _headers(),
-        body: jsonEncode({if (incidentId != null) 'incident_id': incidentId, if (viewerIds != null) 'viewer_ids': viewerIds, 'url': url})));
+        body: jsonEncode({
+          if (incidentId != null) 'incident_id': incidentId,
+          if (providerId != null) 'provider_id': providerId,
+          if (viewerIds != null) 'viewer_ids': viewerIds, 'url': url,
+        })));
     return Map<String, dynamic>.from(res['data'] as Map);
   }
 
@@ -523,6 +532,26 @@ class ApiClient {
   Future<Map<String, dynamic>> securityStreamWatch(int incidentId) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/stream/watch/$incidentId'), headers: await _headers())))['data'] as Map);
+
+  // ---- دوريات الحارس --------------------------------------------------------
+  Future<Map<String, dynamic>> securityMyPatrols() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/my_patrols'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> securityPatrolDetail(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/patrol/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> securityPatrolAction(int id, String path) async {
+    final res = await _handle(await _net.post(_u('/security/patrol/$id/$path'), headers: await _headers()));
+    return Map<String, dynamic>.from(res['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> securityPatrolScan(String code, int patrolId) async {
+    final res = await _handle(await _net.post(_u('/security/patrol/scan'),
+        headers: await _headers(), body: jsonEncode({'code': code, 'patrol_id': patrolId})));
+    return Map<String, dynamic>.from(res['data'] as Map);
+  }
 
   // ---- Emergency / panic ----------------------------------------------------
   Future<Map<String, dynamic>> securityEmergencyRaise({double? lat, double? lng, String note = ''}) async {

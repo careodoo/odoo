@@ -14,6 +14,7 @@ import 'security_inspections_screen.dart';
 import 'security_gatepasses_screen.dart';
 import 'security_emergency_screen.dart';
 import 'security_stream_screen.dart';
+import 'security_patrols_screen.dart';
 import 'supervisor_screen.dart';
 import 'shift_card.dart';
 
@@ -117,7 +118,7 @@ class SecurityHome extends StatelessWidget {
                 icon: '🚶', label: tr('الدوريات', 'Patrols'),
                 sub: tr('المسارات والحالة', 'Routes & status'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(
-                    builder: (_) => SecurityListScreen(kind: 'patrols', title: tr('الدوريات', 'Patrols')))),
+                    builder: (_) => const SecurityPatrolsScreen())),
               ),
               _Tile(
                 icon: '🔑', label: tr('المفاتيح', 'Keys'),

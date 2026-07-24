@@ -16,6 +16,7 @@ import 'security_my_team_screen.dart';
 import 'security_keys_screen.dart';
 import 'security_inspections_screen.dart';
 import 'security_gatepasses_screen.dart';
+import 'security_patrols_screen.dart';
 import 'service_screen.dart';
 import 'cleaning_audit_screen.dart';
 import 'appraisal_screen.dart';
@@ -155,7 +156,7 @@ class MoreScreen extends StatelessWidget {
       header(tr('الأمن', 'Security'));
       tile(Icons.report_rounded, tr('البلاغات الأمنية', 'Incidents'), const SecurityIncidentsScreen(), c: const Color(0xFFE5484D));
       tile(Icons.groups_rounded, tr('فريقي', 'My team'), const SecurityMyTeamScreen(), c: const Color(0xFF4AA8FF));
-      tile(Icons.route_rounded, tr('الدوريات', 'Patrols'), SecurityListScreen(kind: 'patrols', title: tr('الدوريات', 'Patrols')), c: const Color(0xFF0891B2));
+      tile(Icons.route_rounded, tr('الدوريات', 'Patrols'), const SecurityPatrolsScreen(), c: const Color(0xFF0891B2));
       tile(Icons.vpn_key_rounded, tr('عهدة المفاتيح', 'Key custody'), const SecurityKeysScreen(), c: const Color(0xFFF59E0B));
       tile(Icons.badge_rounded, tr('تصاريح البوابة', 'Gate passes'), const SecurityGatePassesScreen(), c: const Color(0xFF16A34A));
       tile(Icons.search_rounded, tr('التفتيشات', 'Inspections'), const SecurityInspectionsScreen(), c: const Color(0xFF7C3AED));
