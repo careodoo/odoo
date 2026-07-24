@@ -2107,10 +2107,32 @@ class ApiClient {
               headers: await _headers(),
               body: jsonEncode({'model': model, 'employee_id': employeeId, ...vals}))))['data'] as Map);
 
+  /// Add a fuel charge (refill) to a tank.
+  Future<void> managementPetrolCharge(int tankId, Map<String, dynamic> body) async =>
+      _handle(await _net.post(_u('/management/petrol/$tankId/charge'),
+          headers: await _headers(), body: jsonEncode(body)));
+
+  /// Record a fuel use (consumption) on a tank.
+  Future<void> managementPetrolUse(int tankId, Map<String, dynamic> body) async =>
+      _handle(await _net.post(_u('/management/petrol/$tankId/use'),
+          headers: await _headers(), body: jsonEncode(body)));
+
   /// Add an update entry onto a legal case (also posts to its chatter).
   Future<void> managementLegalUpdate(int rid, {required String name, String details = ''}) async =>
       _handle(await _net.post(_u('/management/legal/$rid/update'),
           headers: await _headers(), body: jsonEncode({'name': name, 'details': details})));
+
+  /// Append the bearer token to an absolute app URL so <Image>/browser can load
+  /// it (endpoints accept ?token= as a fallback to the Authorization header).
+  Future<String> tokenizedUrl(String absUrl) async {
+    final t = await token ?? '';
+    return '$absUrl${absUrl.contains('?') ? '&' : '?'}token=$t';
+  }
+
+  /// A real Odoo documents.share link (+ token download URL) for a document.
+  Future<Map<String, dynamic>> managementDocumentShare(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/management/document/$id/share'), headers: await _headers())))['data'] as Map);
 
   /// Per-key {count,pending} for the Employees sub-module icon row (red badges).
   Future<Map<String, dynamic>> managementEmpModules() async =>
