@@ -53,6 +53,19 @@ class StreamSession(models.Model):
                 s.share_key = uuid.uuid4().hex
         return self.share_key
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        recs = super().create(vals_list)
+        recs.filtered(lambda s: (s.snapshot or s.recording_file) and not s.share_key)._ensure_share_key()
+        return recs
+
+    def write(self, vals):
+        res = super().write(vals)
+        # توليد مفتاح المشاركة تلقائياً عند إرفاق لقطة/تسجيل (لا داخل compute)
+        if 'snapshot' in vals or 'recording_file' in vals:
+            self.filtered(lambda s: (s.snapshot or s.recording_file) and not s.share_key)._ensure_share_key()
+        return res
+
     @api.depends('recording_url', 'recording_file')
     def _compute_has_recording(self):
         for s in self:
@@ -71,9 +84,9 @@ class StreamSession(models.Model):
                     '<iframe src="%s" style="position:absolute;top:0;left:0;width:100%%;height:100%%;border:none" '
                     'allow="autoplay;encrypted-media;picture-in-picture" allowfullscreen="true"></iframe></div>' % iframe)
                 continue
-            if s.recording_file:
-                key = s._ensure_share_key()
-                src = '/stream/rec/%s/file?k=%s' % (s.id, key)
+            if s.recording_file and s.share_key:
+                # لا نكتب داخل compute — المفتاح يُولَّد في create/write عند الإرفاق
+                src = '/stream/rec/%s/file?k=%s' % (s.id, s.share_key)
             elif s.recording_url:
                 src = s.recording_url
             if src:
