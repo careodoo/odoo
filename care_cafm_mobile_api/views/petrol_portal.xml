@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="portal_petrol" name="بورتال الوقود">
+        <t t-call="portal.portal_layout">
+            <t t-set="no_breadcrumbs" t-value="True"/>
+            <div class="o_care_petrol">
+                <style>
+                    .o_care_petrol{padding:8px 4px 40px}
+                    .o_care_petrol .cp-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+                    .o_care_petrol .cp-badge{width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#E8873B,#243447);display:flex;align-items:center;justify-content:center;font-size:22px}
+                    .o_care_petrol h3{margin:0;font-weight:800}
+                    .o_care_petrol .cp-stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+                    .o_care_petrol .cp-stat{flex:1;min-width:120px;background:#fff;border:1px solid #eef0f4;border-radius:14px;padding:12px 16px;box-shadow:0 2px 8px rgba(0,0,0,.03)}
+                    .o_care_petrol .cp-stat .n{font-size:22px;font-weight:800}
+                    .o_care_petrol .cp-stat .l{font-size:12px;color:#8a94a6}
+                    .o_care_petrol .cp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:24px}
+                    .o_care_petrol .cp-tank{background:#fff;border:1px solid #eef0f4;border-radius:16px;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+                    .o_care_petrol .cp-bar{height:9px;background:#eef0f4;border-radius:6px;overflow:hidden;margin:8px 0}
+                    .o_care_petrol .cp-bar span{display:block;height:100%}
+                    .o_care_petrol table{width:100%;font-size:13px}
+                    .o_care_petrol .cp-sec{font-weight:800;margin:18px 0 8px;color:#243447}
+                    .o_care_petrol .badge-low{background:#DC2626;color:#fff;font-size:11px;padding:2px 8px;border-radius:20px}
+                </style>
+                <t t-if="not available">
+                    <div class="alert alert-info">موديول البترول غير مثبّت.</div>
+                </t>
+                <t t-else="">
+                    <div class="cp-head">
+                        <div class="cp-badge">⛽</div>
+                        <div><h3>إدارة الوقود</h3><div style="color:#8a94a6;font-size:13px">الخزّانات والمداولات الداخلية</div></div>
+                    </div>
+                    <div class="cp-stats">
+                        <div class="cp-stat"><div class="n" style="color:#E8873B"><t t-esc="stats['tanks']"/></div><div class="l">الخزّانات</div></div>
+                        <div class="cp-stat"><div class="n" style="color:#3B82F6"><t t-esc="stats['capacity']"/></div><div class="l">السعة</div></div>
+                        <div class="cp-stat"><div class="n" style="color:#16A34A"><t t-esc="stats['balance']"/></div><div class="l">الرصيد</div></div>
+                        <div class="cp-stat"><div class="n" style="color:#8B5CF6"><t t-esc="stats['avg_fill']"/>%</div><div class="l">متوسط الامتلاء</div></div>
+                        <div class="cp-stat"><div class="n" style="color:#DC2626"><t t-esc="stats['low']"/></div><div class="l">خزّانات منخفضة</div></div>
+                    </div>
+
+                    <div class="cp-grid">
+                        <t t-foreach="tanks" t-as="t">
+                            <div class="cp-tank">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <strong t-esc="t['name']"/>
+                                    <span t-if="t['low']" class="badge-low">منخفض</span>
+                                    <span t-else="" class="text-muted" style="font-size:12px" t-esc="t['stage'] or ''"/>
+                                </div>
+                                <div class="cp-bar">
+                                    <span t-attf-style="width:#{t['fill_pct'] if t['fill_pct'] &lt; 100 else 100}%;background:#{'#DC2626' if t['low'] else '#E8873B'}"/>
+                                </div>
+                                <div class="d-flex justify-content-between text-muted" style="font-size:12px">
+                                    <span>الرصيد: <strong t-esc="t['balance']"/></span>
+                                    <span><t t-esc="t['fill_pct']"/>%</span>
+                                    <span>السعة: <t t-esc="t['capacity']"/></span>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+
+                    <div class="cp-sec">أحدث عمليات الشحن</div>
+                    <table class="table table-sm">
+                        <thead><tr><th>المرجع</th><th>الخزّان</th><th>التاريخ</th><th>الكمية</th><th>التكلفة</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="charges" t-as="c">
+                                <td t-esc="c['name']"/><td t-esc="c['tank'] or ''"/><td t-esc="c['charge_date'] or ''"/>
+                                <td t-esc="c['quantity']"/><td t-esc="c['cost']"/>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="cp-sec">أحدث عمليات الاستهلاك</div>
+                    <table class="table table-sm">
+                        <thead><tr><th>المرجع</th><th>المركبة</th><th>الخزّان</th><th>الكمية</th><th>العدّاد</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="uses" t-as="u">
+                                <td t-esc="u['name']"/><td t-esc="u['vehicle'] or ''"/><td t-esc="u['tank'] or ''"/>
+                                <td t-esc="u['quantity']"/><td t-esc="u['odometer_value']"/>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="cp-sec">أحدث التحويلات</div>
+                    <table class="table table-sm">
+                        <thead><tr><th>من</th><th>إلى</th><th>الكمية</th><th>التاريخ</th><th>الحالة</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="transfers" t-as="x">
+                                <td t-esc="x['from_tank'] or ''"/><td t-esc="x['to_tank'] or ''"/><td t-esc="x['quantity']"/>
+                                <td t-esc="x['date'] or ''"/><td t-esc="x['state_label']"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <template id="portal_petrol_menu" inherit_id="portal.portal_my_home" name="الوقود في حسابي" priority="82">
+        <xpath expr="//div[@id='portal_common_category']" position="inside">
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="title">إدارة الوقود</t>
+                <t t-set="text">الخزّانات والمداولات الداخلية</t>
+                <t t-set="url" t-value="'/my/petrol'"/>
+                <t t-set="config_card" t-value="True"/>
+            </t>
+        </xpath>
+    </template>
+</odoo>

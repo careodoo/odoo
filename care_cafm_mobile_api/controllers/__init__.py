@@ -8,7 +8,9 @@ from . import client_api
 from . import security_client_api
 from . import security_portal
 from . import petrol_api
+from . import petrol_portal
 from . import training_api
+from . import training_portal
 from . import agri_client_api
 from . import cleaning_client_api
 from . import facade_client_api

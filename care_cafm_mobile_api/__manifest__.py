@@ -16,6 +16,8 @@
         'views/app_center_views.xml',
         'views/stream_provider_views.xml',
         'views/broadcasts_portal.xml',
+        'views/petrol_portal.xml',
+        'views/training_portal.xml',
         'views/notification_views.xml',
         'views/account_deletion_views.xml',
         'reports/orders_report.xml',
