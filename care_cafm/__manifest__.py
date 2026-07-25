@@ -31,6 +31,8 @@
         'views/stats_views.xml',
         'data/demo_data.xml',
         'views/cafm_menus.xml',
+        'views/service_launcher.xml',
+        'data/service_launcher_data.xml',
     ],
     'assets': {
         'web.assets_backend': [

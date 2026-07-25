@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- كانبان بطاقات الخدمات: أيقونة ملوّنة + اسم + وصف + عدد السجلات، تفتح فعل الخدمة -->
+    <record id="view_cafm_service_launcher_kanban" model="ir.ui.view">
+        <field name="name">cafm.service.launcher.kanban</field>
+        <field name="model">cafm.service.launcher</field>
+        <field name="arch" type="xml">
+            <kanban class="o_cafm_services_board o_kanban_dashboard" create="false" records_draggable="false">
+                <field name="name"/>
+                <field name="subtitle"/>
+                <field name="icon"/>
+                <field name="color"/>
+                <field name="count"/>
+                <field name="installed"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card" style="border:none;box-shadow:none;background:transparent;padding:6px">
+                            <button type="object" name="open_service"
+                                    t-attf-class="o_cafm_svc_btn w-100 border-0"
+                                    t-attf-style="width:100%;border:none;border-radius:18px;padding:22px 14px;cursor:pointer;color:#fff;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.12);background:linear-gradient(135deg, {{record.color.raw_value or '#C0392B'}}, rgba(0,0,0,.28));opacity:{{record.installed.raw_value ? '1' : '.45'}};">
+                                <div style="width:56px;height:56px;margin:0 auto 12px;border-radius:16px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center">
+                                    <i t-attf-class="fa fa-2x {{record.icon.raw_value or 'fa-th-large'}}"/>
+                                </div>
+                                <div style="font-weight:800;font-size:15px;line-height:1.2" t-esc="record.name.value"/>
+                                <t t-if="record.subtitle.value">
+                                    <div style="opacity:.85;font-size:12px;margin-top:3px" t-esc="record.subtitle.value"/>
+                                </t>
+                                <t t-if="record.installed.raw_value">
+                                    <div style="margin-top:10px;display:inline-block;padding:2px 12px;border-radius:20px;background:rgba(255,255,255,.22);font-size:12.5px;font-weight:700">
+                                        <t t-esc="record.count.value"/> <span>سجل</span>
+                                    </div>
+                                </t>
+                                <t t-else="">
+                                    <div style="margin-top:10px;font-size:11.5px;opacity:.9">غير مثبّتة</div>
+                                </t>
+                            </button>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_cafm_service_launcher_form" model="ir.ui.view">
+        <field name="name">cafm.service.launcher.form</field>
+        <field name="model">cafm.service.launcher</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="open_service" type="object" string="فتح الخدمة" class="btn-primary" icon="fa-external-link"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" placeholder="اسم الخدمة"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="subtitle"/>
+                            <field name="icon" placeholder="fa-car"/>
+                            <field name="color" widget="color"/>
+                        </group>
+                        <group>
+                            <field name="action_xmlid" placeholder="care_cafm_valet.action_valet_ticket"/>
+                            <field name="sequence"/>
+                            <field name="active"/>
+                            <field name="installed"/>
+                            <field name="count"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_cafm_services_board" model="ir.actions.act_window">
+        <field name="name">خدمات إدارة المرافق</field>
+        <field name="res_model">cafm.service.launcher</field>
+        <field name="view_mode">kanban,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">لا توجد خدمات معرّفة بعد</p>
+            <p>ستظهر هنا بطاقات كل خدمات إدارة المرافق.</p>
+        </field>
+    </record>
+
+    <!-- صفحة الخدمات كأول عنصر بارز في المديول -->
+    <menuitem id="menu_cafm_services_board" name="🗂️ خدمات المرافق"
+              parent="menu_cafm_root" action="action_cafm_services_board" sequence="3"/>
+</odoo>

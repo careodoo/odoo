@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- بذور بطاقات الخدمات — مرجعية الفعل نصّية تُحلّ وقت التشغيل (بلا اعتماد) -->
+    <data noupdate="1">
+        <record id="svc_valet" model="cafm.service.launcher">
+            <field name="name">صف السيارات</field>
+            <field name="subtitle">تذاكر الفاليه والمناطق والورديات</field>
+            <field name="icon">fa-car</field>
+            <field name="color">#8E44AD</field>
+            <field name="sequence">10</field>
+            <field name="action_xmlid">care_cafm_valet.action_valet_ticket</field>
+        </record>
+        <record id="svc_pest" model="cafm.service.launcher">
+            <field name="name">مكافحة الحشرات</field>
+            <field name="subtitle">الزيارات والبرامج ومحطّات الطُّعم</field>
+            <field name="icon">fa-bug</field>
+            <field name="color">#16A085</field>
+            <field name="sequence">20</field>
+            <field name="action_xmlid">care_cafm_pest.action_pest_visit</field>
+        </record>
+        <record id="svc_pool" model="cafm.service.launcher">
+            <field name="name">صيانة المسابح</field>
+            <field name="subtitle">المسابح والقراءات والمهام</field>
+            <field name="icon">fa-tint</field>
+            <field name="color">#2980B9</field>
+            <field name="sequence">30</field>
+            <field name="action_xmlid">care_cafm_pool.action_pool</field>
+        </record>
+        <record id="svc_watertank" model="cafm.service.launcher">
+            <field name="name">خزّانات المياه</field>
+            <field name="subtitle">الخزّانات وعمليات التنظيف</field>
+            <field name="icon">fa-database</field>
+            <field name="color">#2C82C9</field>
+            <field name="sequence">40</field>
+            <field name="action_xmlid">care_cafm_watertank.action_tank</field>
+        </record>
+        <record id="svc_disinfect" model="cafm.service.launcher">
+            <field name="name">التعقيم</field>
+            <field name="subtitle">جولات التعقيم والمنتجات</field>
+            <field name="icon">fa-shield</field>
+            <field name="color">#27AE60</field>
+            <field name="sequence">50</field>
+            <field name="action_xmlid">care_cafm_disinfect.action_dis_round</field>
+        </record>
+        <record id="svc_hospitality" model="cafm.service.launcher">
+            <field name="name">الضيافة</field>
+            <field name="subtitle">طلبات الضيافة والأصناف والمحطّات</field>
+            <field name="icon">fa-coffee</field>
+            <field name="color">#D35400</field>
+            <field name="sequence">60</field>
+            <field name="action_xmlid">care_cafm_hospitality.action_hosp_order</field>
+        </record>
+        <record id="svc_handling" model="cafm.service.launcher">
+            <field name="name">مناولة المواد</field>
+            <field name="subtitle">مهام المناولة والمعدّات</field>
+            <field name="icon">fa-truck</field>
+            <field name="color">#7F8C8D</field>
+            <field name="sequence">70</field>
+            <field name="action_xmlid">care_cafm_handling.action_handling_job</field>
+        </record>
+        <record id="svcl_cleaning" model="cafm.service.launcher">
+            <field name="name">النظافة</field>
+            <field name="subtitle">الجداول والتدقيق والقوالب</field>
+            <field name="icon">fa-magic</field>
+            <field name="color">#1ABC9C</field>
+            <field name="sequence">80</field>
+            <field name="action_xmlid">care_cafm_cleaning.action_sched</field>
+        </record>
+        <record id="svcl_agri" model="cafm.service.launcher">
+            <field name="name">التنسيق الزراعي</field>
+            <field name="subtitle">النباتات والمناطق والأنواع</field>
+            <field name="icon">fa-leaf</field>
+            <field name="color">#27AE60</field>
+            <field name="sequence">90</field>
+            <field name="action_xmlid">care_cafm_agri.action_plant</field>
+        </record>
+        <record id="svc_facade" model="cafm.service.launcher">
+            <field name="name">تنظيف الواجهات</field>
+            <field name="subtitle">التصاريح والمناطق</field>
+            <field name="icon">fa-building</field>
+            <field name="color">#34495E</field>
+            <field name="sequence">100</field>
+            <field name="action_xmlid">care_cafm_facade.action_fpermit</field>
+        </record>
+    </data>
+</odoo>

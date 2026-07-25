@@ -66,3 +66,5 @@ access_care_cafm_stock_request_user,care_cafm_stock_request.user,model_care_cafm
 access_care_cafm_stock_request_mgr,care_cafm_stock_request.mgr,model_care_cafm_stock_request,base.group_system,1,1,1,1
 access_care_cafm_stock_request_line_user,care_cafm_stock_request_line.user,model_care_cafm_stock_request_line,base.group_user,1,1,1,0
 access_care_cafm_stock_request_line_mgr,care_cafm_stock_request_line.mgr,model_care_cafm_stock_request_line,base.group_system,1,1,1,1
+access_cafm_svc_launcher_user,cafm.service.launcher.user,model_cafm_service_launcher,base.group_user,1,0,0,0
+access_cafm_svc_launcher_mgr,cafm.service.launcher.mgr,model_cafm_service_launcher,base.group_system,1,1,1,1
