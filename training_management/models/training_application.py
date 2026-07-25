@@ -17,7 +17,7 @@ class TrainingApplication(models.Model):
     project_id = fields.Many2one('project.project', required=True)
     task_ids = fields.One2many('project.task', 'application_id', string='Tasks')
     task_count = fields.Integer(compute='compute_task_count', store=True)
-    date = fields.Date(default=fields.date.today(), required=True, string='Create Date')
+    date = fields.Date(default=fields.Date.context_today, required=True, string='Create Date')
     date_start = fields.Date(string='Start Date', required=True)
     date_end = fields.Date(string='End Date', required=True)
     description = fields.Text()
@@ -42,13 +42,12 @@ class TrainingApplication(models.Model):
         stage = self.env['application.stage'].search([('is_default', '=', True)], limit=1)
         return stage.id if stage else False
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New')) == _('New'):
-            vals['name'] = self.env['ir.sequence'].next_by_code('training.application') or _('New')
-
-        result = super(TrainingApplication, self).create(vals)
-        return result
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', _('New')) == _('New'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('training.application') or _('New')
+        return super(TrainingApplication, self).create(vals_list)
 
     @api.depends('task_ids')
     def compute_task_count(self):
@@ -78,7 +77,6 @@ class TrainingApplication(models.Model):
             'name': _('Application Tasks'),
             'type': 'ir.actions.act_window',
             'view_mode': 'kanban,tree,form,calendar,pivot,graph,activity',
-            'view_type': 'form',
             'res_model': 'project.task',
             'domain': [('application_id', '=', self.id)],
             'target': 'current',
