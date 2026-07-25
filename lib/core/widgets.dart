@@ -133,19 +133,23 @@ class NotifBell extends StatelessWidget {
       children: [
         IconButton(
           icon: const Icon(Icons.notifications_outlined),
+          tooltip: tr('الإشعارات', 'Notifications'),
           onPressed: () => Navigator.push(context,
               MaterialPageRoute(builder: (_) => const NotificationsScreen())),
         ),
+        // الشارة فوق الأيقونة — IgnorePointer حتى لا تبتلع الضغطة (كانت تمنع الفتح)
         if (unread > 0)
           Positioned(
             top: 8, right: 6,
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-              decoration: const BoxDecoration(color: Color(0xFFE5484D), shape: BoxShape.circle),
-              child: Text('$unread',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
+            child: IgnorePointer(
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                decoration: const BoxDecoration(color: Color(0xFFE5484D), shape: BoxShape.circle),
+                child: Text(unread > 99 ? '99+' : '$unread',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
+              ),
             ),
           ),
       ],

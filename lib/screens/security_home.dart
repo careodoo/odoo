@@ -17,6 +17,7 @@ import 'security_stream_screen.dart';
 import 'live_stream_banner.dart';
 import 'heartbeat_pinger.dart';
 import 'security_patrols_screen.dart';
+import 'security_patrol_log_screen.dart';
 import 'supervisor_screen.dart';
 import 'security_supervisor_screen.dart';
 import 'stream_archive_screen.dart';
@@ -138,6 +139,12 @@ class SecurityHome extends StatelessWidget {
                 sub: tr('المسارات والحالة', 'Routes & status'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(
                     builder: (_) => const SecurityPatrolsScreen())),
+              ),
+              _Tile(
+                icon: '🗒️', label: tr('سجل الجولات', 'Patrol log'),
+                sub: tr('المواعيد والإنجاز', 'Times & completion'),
+                onTap: () => Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => const SecurityPatrolLogScreen())),
               ),
               _Tile(
                 icon: '🔑', label: tr('المفاتيح', 'Keys'),

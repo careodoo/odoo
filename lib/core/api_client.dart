@@ -604,10 +604,12 @@ class ApiClient {
     return List<dynamic>.from((res['data'] as Map)['items'] as List);
   }
 
-  /// تفاصيل بثّ مؤرشف (رابط التسجيل + الدردشة + المشاهدون).
-  Future<Map<String, dynamic>> securityStreamArchiveDetail(int sid) async =>
-      Map<String, dynamic>.from((await _handle(await _net.get(
-              _u('/security/stream/archive/$sid'), headers: await _headers())))['data'] as Map);
+  /// تفاصيل بثّ مؤرشف (رابط التسجيل + الدردشة + المشاهدون) — فريق أو عميل.
+  Future<Map<String, dynamic>> securityStreamArchiveDetail(int sid, {bool isClient = false}) async {
+    final path = isClient ? '/client/security/stream/archive/$sid' : '/security/stream/archive/$sid';
+    return Map<String, dynamic>.from(
+        (await _handle(await _net.get(_u(path), headers: await _headers())))['data'] as Map);
+  }
 
   /// إشعار عميل الموقع بالبلاغ (للبلاغات الحرجة).
   Future<Map<String, dynamic>> securityNotifyClient(int incidentId) async {
@@ -623,6 +625,13 @@ class ApiClient {
   Future<Map<String, dynamic>> securityPatrolDetail(int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/patrol/$id'), headers: await _headers())))['data'] as Map);
+
+  /// سجل الجولات لكامل مواقع الفريق (مع مواعيد الإنجاز الفعلية) — فلتر بالحالة اختياري.
+  Future<Map<String, dynamic>> securityPatrolLog({String? status}) async {
+    final q = status != null ? '?status=$status' : '';
+    return Map<String, dynamic>.from((await _handle(await _net.get(
+            _u('/security/patrol_log$q'), headers: await _headers())))['data'] as Map);
+  }
 
   Future<Map<String, dynamic>> securityPatrolAction(int id, String path) async {
     final res = await _handle(await _net.post(_u('/security/patrol/$id/$path'), headers: await _headers()));

@@ -57,6 +57,13 @@ class _SecuritySupervisorScreenState extends State<SecuritySupervisorScreen> {
 
   List<Map> get _guards => ((_opts?['guards'] as List?) ?? const []).cast<Map>();
   List<Map> get _routes => ((_opts?['routes'] as List?) ?? const []).cast<Map>();
+  List<Map> get _teams => ((_opts?['teams'] as List?) ?? const []).cast<Map>();
+  List<Map> get _premises => ((_opts?['premises'] as List?) ?? const []).cast<Map>();
+  List<Map> get _categories => ((_opts?['task_categories'] as List?) ?? const []).cast<Map>();
+  // القوائم [value,label] من الخادم
+  List<List> get _inspTypes => ((_opts?['inspection_types'] as List?) ?? const []).map((e) => (e as List)).toList();
+  List<List> get _severities => ((_opts?['severities'] as List?) ?? const []).map((e) => (e as List)).toList();
+  List<List> get _passTypes => ((_opts?['pass_types'] as List?) ?? const []).map((e) => (e as List)).toList();
 
   @override
   Widget build(BuildContext context) {
@@ -178,59 +185,164 @@ class _SecuritySupervisorScreenState extends State<SecuritySupervisorScreen> {
             items: items, onChanged: onCh)),
       );
 
+  // منتقي تاريخ (اختياري وقت) — يعرض القيمة المختارة ويستدعي onPick بنص ISO
+  Widget _dateTf(String label, DateTime? value, bool withTime, ValueChanged<DateTime> onPick) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () async {
+            final now = DateTime.now();
+            final d = await showDatePicker(context: context, initialDate: value ?? now,
+                firstDate: DateTime(now.year - 1), lastDate: DateTime(now.year + 3),
+                builder: (c, w) => Theme(data: ThemeData.dark().copyWith(colorScheme: const ColorScheme.dark(primary: _blue, surface: _card)), child: w!));
+            if (d == null || !mounted) return;
+            TimeOfDay? t;
+            if (withTime) {
+              t = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(value ?? now),
+                  builder: (c, w) => Theme(data: ThemeData.dark().copyWith(colorScheme: const ColorScheme.dark(primary: _blue, surface: _card)), child: w!));
+            }
+            onPick(DateTime(d.year, d.month, d.day, t?.hour ?? 0, t?.minute ?? 0));
+          },
+          child: Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            decoration: BoxDecoration(color: _card, borderRadius: BorderRadius.circular(12)),
+            child: Row(children: [
+              Icon(withTime ? Icons.event_note_rounded : Icons.event_rounded, color: _blue, size: 18),
+              const SizedBox(width: 10),
+              Expanded(child: Text(value == null ? label : _fmt(value, withTime),
+                  style: TextStyle(color: value == null ? _grey : Colors.white, fontWeight: value == null ? FontWeight.normal : FontWeight.w700))),
+              if (value != null) const Icon(Icons.check_circle_rounded, color: _green, size: 16),
+            ])),
+        ),
+      );
+
+  String _fmt(DateTime d, bool t) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    final date = '${d.year}-${two(d.month)}-${two(d.day)}';
+    return t ? '$date ${two(d.hour)}:${two(d.minute)}' : date;
+  }
+
+  String _iso(DateTime d, bool t) => t ? '${_fmt(d, false)} ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}:00' : _fmt(d, false);
+
+  Widget _label(String t) => Padding(padding: const EdgeInsets.only(bottom: 6, top: 4),
+      child: Text(t, style: const TextStyle(color: _grey, fontSize: 12, fontWeight: FontWeight.w800)));
+
   void _taskForm() {
-    final name = TextEditingController(); final desc = TextEditingController();
-    int? guard; String prio = '1';
+    final name = TextEditingController(); final desc = TextEditingController(); final dur = TextEditingController();
+    int? guard; int? team; int? cat; String prio = '1';
+    DateTime? startD; DateTime? deadline;
     _sheet(tr('مهمة جديدة', 'New task'), (set) => [
-      _tf(name, tr('عنوان المهمة', 'Task title')),
-      _tf(desc, tr('الوصف (اختياري)', 'Description (optional)'), lines: 2),
+      _label(tr('بيانات المهمة', 'Task details')),
+      _tf(name, tr('عنوان المهمة *', 'Task title *')),
+      _tf(desc, tr('الوصف والتعليمات', 'Description & instructions'), lines: 3),
+      _dropdown<int>(tr('التصنيف', 'Category'), cat, [for (final c in _categories) DropdownMenuItem(value: c['id'] as int, child: Text('${c['name']}'))], (v) => set(() => cat = v)),
+      _label(tr('الإسناد', 'Assignment')),
+      _dropdown<int>(tr('الفريق', 'Team'), team, [for (final t in _teams) DropdownMenuItem(value: t['id'] as int, child: Text('${t['name']}${t['shift'] != null ? ' · ${t['shift']}' : ''}'))], (v) => set(() => team = v)),
       _dropdown<int>(tr('إسناد لحارس', 'Assign to guard'), guard, [for (final g in _guards) DropdownMenuItem(value: g['id'] as int, child: Text('${g['name']}'))], (v) => set(() => guard = v)),
       _dropdown<String>(tr('الأولوية', 'Priority'), prio, [
         DropdownMenuItem(value: '0', child: Text(tr('منخفض', 'Low'))), DropdownMenuItem(value: '1', child: Text(tr('عادي', 'Normal'))),
         DropdownMenuItem(value: '2', child: Text(tr('مرتفع', 'High'))), DropdownMenuItem(value: '3', child: Text(tr('عاجل', 'Urgent')))], (v) => set(() => prio = v ?? '1')),
+      _label(tr('التوقيت', 'Scheduling')),
+      _dateTf(tr('تاريخ البدء', 'Start date'), startD, true, (d) => set(() => startD = d)),
+      _dateTf(tr('الموعد النهائي', 'Deadline'), deadline, true, (d) => set(() => deadline = d)),
+      _tf(dur, tr('المدة المقدّرة (ساعات)', 'Estimated duration (hours)'), kb: const TextInputType.numberWithOptions(decimal: true)),
     ], () async {
       if (name.text.trim().isEmpty) throw Exception(tr('العنوان مطلوب', 'Title required'));
       await context.read<AuthProvider>().api.securitySupTaskCreate({
         'name': name.text.trim(), if (desc.text.trim().isNotEmpty) 'description': desc.text.trim(),
-        if (guard != null) 'assigned_guard_id': guard, 'priority': prio});
+        if (cat != null) 'category_id': cat, if (team != null) 'team_id': team,
+        if (guard != null) 'assigned_guard_id': guard, 'priority': prio,
+        if (startD != null) 'start_date': _iso(startD!, true),
+        if (deadline != null) 'deadline': _iso(deadline!, true),
+        if (dur.text.trim().isNotEmpty) 'duration': dur.text.trim()});
     });
   }
 
   void _patrolForm() {
-    int? route; int? guard;
+    int? route; int? guard; int? team; String ptype = 'routine';
+    DateTime? sched;
     _sheet(tr('دورية جديدة', 'New patrol'), (set) => [
-      _dropdown<int>(tr('المسار', 'Route'), route, [for (final r in _routes) DropdownMenuItem(value: r['id'] as int, child: Text('${r['name']}'))], (v) => set(() => route = v)),
+      _label(tr('المسار والنوع', 'Route & type')),
+      _dropdown<int>(tr('المسار *', 'Route *'), route, [for (final r in _routes) DropdownMenuItem(value: r['id'] as int, child: Text('${r['name']}${r['premise'] != null ? ' · ${r['premise']}' : ''}'))], (v) => set(() => route = v)),
+      _dropdown<String>(tr('نوع الدورية', 'Patrol type'), ptype, [
+        DropdownMenuItem(value: 'routine', child: Text(tr('روتينية', 'Routine'))), DropdownMenuItem(value: 'special', child: Text(tr('خاصة', 'Special'))),
+        DropdownMenuItem(value: 'emergency', child: Text(tr('طارئة', 'Emergency')))], (v) => set(() => ptype = v ?? 'routine')),
+      _label(tr('الإسناد والتوقيت', 'Assignment & timing')),
+      _dropdown<int>(tr('الفريق', 'Team'), team, [for (final t in _teams) DropdownMenuItem(value: t['id'] as int, child: Text('${t['name']}'))], (v) => set(() => team = v)),
       _dropdown<int>(tr('الحارس', 'Guard'), guard, [for (final g in _guards) DropdownMenuItem(value: g['id'] as int, child: Text('${g['name']}'))], (v) => set(() => guard = v)),
+      _dateTf(tr('موعد بدء الدورية', 'Scheduled start'), sched, true, (d) => set(() => sched = d)),
     ], () async {
       if (route == null) throw Exception(tr('اختر المسار', 'Select route'));
-      await context.read<AuthProvider>().api.securitySupPatrolCreate({'route_id': route, if (guard != null) 'guard_id': guard});
+      await context.read<AuthProvider>().api.securitySupPatrolCreate({
+        'route_id': route, 'patrol_type': ptype,
+        if (team != null) 'team_id': team, if (guard != null) 'guard_id': guard,
+        if (sched != null) 'scheduled_start': _iso(sched!, true)});
     });
   }
 
   void _gatepassForm() {
-    final person = TextEditingController(); final purpose = TextEditingController();
+    final person = TextEditingController(); final phone = TextEditingController();
+    final idnum = TextEditingController(); final purpose = TextEditingController();
+    String ptype = 'personal'; int? prem;
+    DateTime? startD; DateTime? endD;
     _sheet(tr('تصريح دخول', 'Gate pass'), (set) => [
-      _tf(person, tr('اسم الشخص', 'Person name')),
-      _tf(purpose, tr('الغرض', 'Purpose')),
+      _label(tr('نوع التصريح والموقع', 'Type & premise')),
+      _dropdown<String>(tr('نوع التصريح', 'Pass type'), ptype,
+          _passTypes.isNotEmpty
+              ? [for (final p in _passTypes) DropdownMenuItem(value: '${p[0]}', child: Text('${p[1]}'))]
+              : [DropdownMenuItem(value: 'personal', child: Text(tr('شخص', 'Personal'))), DropdownMenuItem(value: 'vehicle', child: Text(tr('مركبة', 'Vehicle')))],
+          (v) => set(() => ptype = v ?? 'personal')),
+      _dropdown<int>(tr('الموقع', 'Premise'), prem, [for (final p in _premises) DropdownMenuItem(value: p['id'] as int, child: Text('${p['name']}'))], (v) => set(() => prem = v)),
+      _label(tr('بيانات الزائر', 'Visitor details')),
+      _tf(person, tr('اسم الشخص *', 'Person name *')),
+      _tf(phone, tr('رقم الهاتف', 'Phone'), kb: TextInputType.phone),
+      _tf(idnum, tr('رقم الهوية', 'ID number')),
+      _tf(purpose, tr('الغرض من الزيارة', 'Purpose of visit'), lines: 2),
+      _label(tr('فترة الصلاحية', 'Validity period')),
+      _dateTf(tr('من تاريخ', 'Valid from'), startD, false, (d) => set(() => startD = d)),
+      _dateTf(tr('إلى تاريخ', 'Valid until'), endD, false, (d) => set(() => endD = d)),
     ], () async {
       if (person.text.trim().isEmpty) throw Exception(tr('الاسم مطلوب', 'Name required'));
-      await context.read<AuthProvider>().api.securitySupGatepassCreate({'person_name': person.text.trim(), 'purpose': purpose.text.trim()});
+      await context.read<AuthProvider>().api.securitySupGatepassCreate({
+        'person_name': person.text.trim(), 'pass_type': ptype,
+        if (phone.text.trim().isNotEmpty) 'phone': phone.text.trim(),
+        if (idnum.text.trim().isNotEmpty) 'id_number': idnum.text.trim(),
+        if (purpose.text.trim().isNotEmpty) 'purpose': purpose.text.trim(),
+        if (prem != null) 'premise_id': prem,
+        if (startD != null) 'start_date': _iso(startD!, false),
+        if (endD != null) 'end_date': _iso(endD!, false)});
     });
   }
 
   void _inspectionForm() {
-    final desc = TextEditingController(); String type = 'routine'; String sev = 'medium';
+    final desc = TextEditingController(); final area = TextEditingController(); final action = TextEditingController();
+    String type = 'routine'; String sev = 'medium'; int? prem;
+    DateTime? followUp;
     _sheet(tr('سجل تفتيش', 'Inspection'), (set) => [
-      _dropdown<String>(tr('النوع', 'Type'), type, [
-        DropdownMenuItem(value: 'routine', child: Text(tr('روتيني', 'Routine'))), DropdownMenuItem(value: 'special', child: Text(tr('خاص', 'Special'))),
-        DropdownMenuItem(value: 'follow_up', child: Text(tr('متابعة', 'Follow-up'))), DropdownMenuItem(value: 'audit', child: Text(tr('تدقيق', 'Audit')))], (v) => set(() => type = v ?? 'routine')),
-      _dropdown<String>(tr('الخطورة', 'Severity'), sev, [
-        DropdownMenuItem(value: 'low', child: Text(tr('منخفض', 'Low'))), DropdownMenuItem(value: 'medium', child: Text(tr('متوسط', 'Medium'))),
-        DropdownMenuItem(value: 'high', child: Text(tr('عالٍ', 'High'))), DropdownMenuItem(value: 'critical', child: Text(tr('حرج', 'Critical')))], (v) => set(() => sev = v ?? 'medium')),
-      _tf(desc, tr('الوصف/الملاحظات', 'Description'), lines: 3),
+      _label(tr('تصنيف التفتيش', 'Inspection classification')),
+      _dropdown<String>(tr('النوع', 'Type'), type,
+          _inspTypes.isNotEmpty
+              ? [for (final t in _inspTypes) DropdownMenuItem(value: '${t[0]}', child: Text('${t[1]}'))]
+              : [DropdownMenuItem(value: 'routine', child: Text(tr('روتيني', 'Routine')))],
+          (v) => set(() => type = v ?? 'routine')),
+      _dropdown<String>(tr('درجة الخطورة', 'Severity'), sev,
+          _severities.isNotEmpty
+              ? [for (final s in _severities) DropdownMenuItem(value: '${s[0]}', child: Text('${s[1]}'))]
+              : [DropdownMenuItem(value: 'medium', child: Text(tr('متوسط', 'Medium')))],
+          (v) => set(() => sev = v ?? 'medium')),
+      _dropdown<int>(tr('الموقع', 'Premise'), prem, [for (final p in _premises) DropdownMenuItem(value: p['id'] as int, child: Text('${p['name']}'))], (v) => set(() => prem = v)),
+      _label(tr('التفاصيل', 'Details')),
+      _tf(area, tr('المنطقة/القسم المُفتَّش', 'Inspected area / section')),
+      _tf(desc, tr('الملاحظات والمخالفات', 'Findings & violations'), lines: 3),
+      _tf(action, tr('الإجراء التصحيحي المطلوب', 'Required corrective action'), lines: 2),
+      _dateTf(tr('تاريخ المتابعة', 'Follow-up date'), followUp, false, (d) => set(() => followUp = d)),
     ], () async {
       await context.read<AuthProvider>().api.securitySupInspectionCreate({
-        'inspection_type': type, 'severity': sev, 'issue_description': desc.text.trim()});
+        'inspection_type': type, 'severity': sev,
+        if (prem != null) 'premise_id': prem,
+        if (area.text.trim().isNotEmpty) 'area': area.text.trim(),
+        'issue_description': desc.text.trim(),
+        if (action.text.trim().isNotEmpty) 'corrective_action': action.text.trim(),
+        if (followUp != null) 'follow_up_date': _iso(followUp!, false)});
     });
   }
 

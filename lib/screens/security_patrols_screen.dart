@@ -218,3 +218,10 @@ class _PatrolSheetState extends State<_PatrolSheet> {
     );
   }
 }
+
+/// مُشغِّل عام لفتح ورقة تفاصيل الدورية من أي شاشة (سجل الجولات مثلاً).
+class PatrolSheetLauncher {
+  static Future<void> open(BuildContext context, int id) => showModalBottomSheet(
+        context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+        builder: (_) => _PatrolSheet(id: id));
+}
