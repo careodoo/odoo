@@ -1,3 +1,4 @@
+import '../petrol_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -84,6 +85,11 @@ class PmsMoreScreen extends StatelessWidget {
         _tile(context, Icons.notifications_rounded, tr('الإشعارات', 'Notifications'), const Color(0xFF6366F1),
             badge: unread,
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()))),
+
+        // ===== أدوات =====
+        _header(tr('أدوات', 'Tools')),
+        _tile(context, Icons.local_gas_station_rounded, tr('إدارة الوقود', 'Fuel management'), const Color(0xFFE8873B),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PetrolScreen()))),
 
         // ===== systems =====
         if (systems.length > 1) ...[

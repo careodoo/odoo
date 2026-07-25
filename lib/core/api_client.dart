@@ -2639,6 +2639,68 @@ class ApiClient {
   Future<Map<String, dynamic>> c2cStaffAvailable(bool available) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(_u('/c2c/staff/available'),
               headers: await _headers(), body: jsonEncode({'available': available}))))['data'] as Map);
+
+  // ---- موديول البترول/خزّانات الوقود (care_petrol) ------------------------
+  Future<Map<String, dynamic>> petrolOverview() async =>
+      Map<String, dynamic>.from((await _handle(
+              await _net.get(_u('/petrol/overview'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> petrolOptions() async =>
+      Map<String, dynamic>.from((await _handle(
+              await _net.get(_u('/petrol/options'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> petrolTanks({int? stage, bool low = false, String? q, String? sort}) async {
+    final p = <String>[];
+    if (stage != null) p.add('stage=$stage');
+    if (low) p.add('low=1');
+    if (q != null && q.isNotEmpty) p.add('q=${Uri.encodeQueryComponent(q)}');
+    if (sort != null) p.add('sort=$sort');
+    final qs = p.isEmpty ? '' : '?${p.join('&')}';
+    return Map<String, dynamic>.from((await _handle(
+            await _net.get(_u('/petrol/tanks$qs'), headers: await _headers())))['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> petrolTank(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+              await _net.get(_u('/petrol/tank/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> petrolCharges({int? tank, String? dateFrom, String? dateTo}) async {
+    final p = <String>[];
+    if (tank != null) p.add('tank=$tank');
+    if (dateFrom != null) p.add('date_from=$dateFrom');
+    if (dateTo != null) p.add('date_to=$dateTo');
+    final qs = p.isEmpty ? '' : '?${p.join('&')}';
+    return Map<String, dynamic>.from((await _handle(
+            await _net.get(_u('/petrol/charges$qs'), headers: await _headers())))['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> petrolUses({int? tank, int? vehicle, String? dateFrom, String? dateTo}) async {
+    final p = <String>[];
+    if (tank != null) p.add('tank=$tank');
+    if (vehicle != null) p.add('vehicle=$vehicle');
+    if (dateFrom != null) p.add('date_from=$dateFrom');
+    if (dateTo != null) p.add('date_to=$dateTo');
+    final qs = p.isEmpty ? '' : '?${p.join('&')}';
+    return Map<String, dynamic>.from((await _handle(
+            await _net.get(_u('/petrol/uses$qs'), headers: await _headers())))['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> petrolTransfers({int? tank, String? state}) async {
+    final p = <String>[];
+    if (tank != null) p.add('tank=$tank');
+    if (state != null) p.add('state=$state');
+    final qs = p.isEmpty ? '' : '?${p.join('&')}';
+    return Map<String, dynamic>.from((await _handle(
+            await _net.get(_u('/petrol/transfers$qs'), headers: await _headers())))['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> petrolCreate(String kind, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(_u('/petrol/$kind/create'),
+              headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<Map<String, dynamic>> petrolTransferConfirm(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/petrol/transfer/$id/confirm'), headers: await _headers())))['data'] as Map);
 }
 
 class ApiException implements Exception {
