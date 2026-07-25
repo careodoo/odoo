@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_fuel_root" name="الوقود" sequence="55"
+              groups="care_fuel.group_fuel_user"/>
+    <menuitem id="menu_fuel_entries" name="عمليات التعبئة" parent="menu_fuel_root"
+              action="action_fuel_entry" sequence="10"/>
+    <menuitem id="menu_fuel_cards" name="بطاقات الوقود" parent="menu_fuel_root"
+              action="action_fuel_card" sequence="20"/>
+</odoo>

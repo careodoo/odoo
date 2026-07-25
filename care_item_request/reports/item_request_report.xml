@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_item_request" model="ir.actions.report">
+        <field name="name">طلب أصناف</field>
+        <field name="model">care.item.request</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_item_request.report_item_request_doc</field>
+        <field name="report_file">care_item_request.report_item_request_doc</field>
+        <field name="binding_model_id" ref="model_care_item_request"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_item_request_doc">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.basic_layout">
+                    <div class="page" style="font-family:Tahoma,Arial,sans-serif;direction:rtl;color:#1d2433;padding:10px 20px;">
+                        <div style="display:flex;align-items:center;border-bottom:3px solid #15213b;padding-bottom:10px;margin-bottom:12px;">
+                            <div style="flex:1;">
+                                <span style="color:#f0663c;font-weight:bold;font-size:26px;">CARE</span>
+                                <div style="color:#8a93a8;font-size:12px;font-weight:bold;">فور كير المعتمد · طلب أصناف</div>
+                            </div>
+                            <div style="text-align:left;">
+                                <div style="background:#15213b;color:#fff;padding:6px 14px;border-radius:6px;font-weight:bold;font-size:14px;">طلب أصناف</div>
+                                <div style="font-size:12px;margin-top:4px;"><t t-out="doc.name"/></div>
+                                <div t-if="doc.priority=='1'" style="color:#c0392b;font-weight:bold;font-size:12px;">⚠ عاجل</div>
+                            </div>
+                        </div>
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px;">
+                            <tr>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;width:22%;">المشروع</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><t t-out="doc.project_id.name or '—'"/></td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;width:22%;">تاريخ الطلب</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><t t-out="doc.request_date"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;">مقدّم الطلب</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><t t-out="doc.requested_by.name or '—'"/></td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;">مطلوب بحلول</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><t t-out="doc.needed_by or '—'"/></td>
+                            </tr>
+                        </table>
+                        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                            <thead>
+                                <tr style="background:#15213b;color:#fff;">
+                                    <th style="padding:6px;border:1px solid #15213b;">#</th>
+                                    <th style="padding:6px;border:1px solid #15213b;">الصنف</th>
+                                    <th style="padding:6px;border:1px solid #15213b;">الكمية</th>
+                                    <th style="padding:6px;border:1px solid #15213b;">الوحدة</th>
+                                    <th style="padding:6px;border:1px solid #15213b;">ملاحظة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="doc.line_ids" t-as="l">
+                                    <td style="padding:5px;border:1px solid #e4e8f0;text-align:center;"><t t-out="l_index + 1"/></td>
+                                    <td style="padding:5px;border:1px solid #e4e8f0;"><t t-out="l.name"/></td>
+                                    <td style="padding:5px;border:1px solid #e4e8f0;text-align:center;font-weight:bold;"><t t-out="l.qty"/></td>
+                                    <td style="padding:5px;border:1px solid #e4e8f0;text-align:center;"><t t-out="l.uom_name or '—'"/></td>
+                                    <td style="padding:5px;border:1px solid #e4e8f0;"><t t-out="l.note or ''"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div t-if="doc.note" style="margin-top:10px;border:1px solid #e4e8f0;border-radius:6px;padding:8px 10px;font-size:12px;color:#555;">
+                            <b>ملاحظات:</b> <t t-out="doc.note"/>
+                        </div>
+                        <table style="width:100%;margin-top:36px;font-size:13px;text-align:center;">
+                            <tr>
+                                <td style="width:50%;padding:0 20px;">
+                                    <div style="border-top:1px solid #333;padding-top:6px;font-weight:bold;">مدير المشروع</div>
+                                    <div style="color:#8a93a8;font-size:12px;"><t t-out="doc.requested_by.name or ''"/></div>
+                                </td>
+                                <td style="width:50%;padding:0 20px;">
+                                    <div style="border-top:1px solid #333;padding-top:6px;font-weight:bold;">اعتماد المشتريات</div>
+                                    <div style="color:#8a93a8;font-size:12px;"><t t-out="doc.approved_by.name or '............'"/></div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_users_form_pms_flag" model="ir.ui.view">
+        <field name="name">res.users.form.pms.flag</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='login']" position="after">
+                <field name="pms_app_user"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

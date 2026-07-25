@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="seq_care_suspension" model="ir.sequence">
+            <field name="name">Work Suspension Request</field>
+            <field name="code">care.suspension.request</field>
+            <field name="prefix">SUS/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+    </data>
+</odoo>

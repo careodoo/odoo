@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_item_req_user,item.req.user,model_care_item_request,base.group_user,1,1,1,0
+access_item_req_mgr,item.req.mgr,model_care_item_request,group_item_manager,1,1,1,1
+access_item_req_line_user,item.req.line.user,model_care_item_request_line,base.group_user,1,1,1,1
+access_item_req_line_mgr,item.req.line.mgr,model_care_item_request_line,group_item_manager,1,1,1,1

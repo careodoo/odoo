@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_suspension" model="ir.actions.report">
+        <field name="name">طلب إيقاف عن العمل</field>
+        <field name="model">care.suspension.request</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_suspension.report_suspension_doc</field>
+        <field name="report_file">care_suspension.report_suspension_doc</field>
+        <field name="binding_model_id" ref="model_care_suspension_request"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_suspension_doc">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.basic_layout">
+                    <div class="page" style="font-family:Tahoma,Arial,sans-serif;direction:rtl;color:#1d2433;padding:8px 18px;">
+                        <!-- header -->
+                        <div style="display:flex;align-items:center;border-bottom:3px solid #15213b;padding-bottom:10px;margin-bottom:14px;">
+                            <div style="flex:1;">
+                                <span style="color:#f0663c;font-weight:bold;font-size:26px;">CARE</span>
+                                <div style="color:#8a93a8;font-size:12px;font-weight:bold;">فور كير المعتمد · إدارة الموارد البشرية</div>
+                            </div>
+                            <div style="text-align:left;">
+                                <div style="background:#15213b;color:#fff;padding:6px 14px;border-radius:6px;font-weight:bold;font-size:14px;">طلب إيقاف عن العمل</div>
+                                <div style="font-size:12px;margin-top:4px;"><t t-out="doc.name"/></div>
+                            </div>
+                        </div>
+
+                        <!-- meta -->
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:14px;">
+                            <tr>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;width:22%;">المشروع</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><t t-out="doc.project_id.name or '—'"/></td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;width:22%;">تاريخ الطلب</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><t t-out="doc.date"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;">تاريخ سريان الإيقاف</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><t t-out="doc.effective_date"/></td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;">الحالة</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><span t-field="doc.state"/></td>
+                            </tr>
+                        </table>
+
+                        <!-- worker details -->
+                        <h3 style="color:#15213b;font-size:15px;border-right:4px solid #f0663c;padding-right:8px;margin:14px 0 8px;">بيانات العامل</h3>
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                            <tr>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;width:22%;">الاسم</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><t t-out="doc.employee_id.name"/></td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;width:22%;">البادج</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><t t-out="doc.badge or '—'"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;">المسمى الوظيفي</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><t t-out="doc.job_title or '—'"/></td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;">القسم</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><t t-out="doc.department_id.name or '—'"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;">الأجر</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><t t-out="doc.wage"/> <t t-out="doc.currency_id.name"/></td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;">لديه بدلات؟</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;">
+                                    <t t-if="doc.has_allowance"><span style="color:#16a34a;font-weight:bold;">نعم</span> — <t t-out="doc.allowance_note or ''"/></t>
+                                    <t t-else=""><span style="color:#c0392b;font-weight:bold;">لا</span></t>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- reason -->
+                        <h3 style="color:#15213b;font-size:15px;border-right:4px solid #f0663c;padding-right:8px;margin:14px 0 8px;">سبب الإيقاف</h3>
+                        <div style="border:1px solid #e4e8f0;border-radius:6px;padding:10px 12px;font-size:13px;">
+                            <div style="font-weight:bold;"><span t-field="doc.reason"/><t t-if="doc.other_reason"> — <t t-out="doc.other_reason"/></t></div>
+                            <div t-if="doc.note" style="color:#555;margin-top:6px;line-height:1.7;"><t t-out="doc.note"/></div>
+                        </div>
+
+                        <!-- signatures -->
+                        <table style="width:100%;margin-top:40px;font-size:13px;text-align:center;">
+                            <tr>
+                                <td style="width:50%;padding:0 20px;">
+                                    <div style="border-top:1px solid #333;padding-top:6px;font-weight:bold;">مدير المشروع</div>
+                                    <div style="color:#8a93a8;font-size:12px;margin-top:2px;"><t t-out="doc.requested_by.name or ''"/></div>
+                                    <div style="color:#8a93a8;font-size:11px;">التوقيع / التاريخ</div>
+                                </td>
+                                <td style="width:50%;padding:0 20px;">
+                                    <div style="border-top:1px solid #333;padding-top:6px;font-weight:bold;">اعتماد الموارد البشرية</div>
+                                    <div style="color:#8a93a8;font-size:12px;margin-top:2px;"><t t-out="doc.approved_by.name or '............'"/></div>
+                                    <div style="color:#8a93a8;font-size:11px;">التوقيع / التاريخ</div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

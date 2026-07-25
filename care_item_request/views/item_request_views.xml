@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_item_request_form" model="ir.ui.view">
+        <field name="name">care.item.request.form</field>
+        <field name="model">care.item.request</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_submit" type="object" string="إرسال للاعتماد"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_approve" type="object" string="اعتماد" class="btn-primary"
+                            invisible="state != 'submitted'" groups="care_item_request.group_item_manager"/>
+                    <button name="action_reject" type="object" string="رفض"
+                            invisible="state != 'submitted'" groups="care_item_request.group_item_manager"/>
+                    <button name="action_reset" type="object" string="إعادة لمسودة"
+                            invisible="state not in ('submitted','rejected')"/>
+                    <button name="action_print" type="object" string="طباعة" class="btn-secondary"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="department_id" readonly="1"/>
+                            <field name="requested_by" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="request_date"/>
+                            <field name="needed_by"/>
+                            <field name="priority" widget="radio" options="{'horizontal': true}"/>
+                        </group>
+                    </group>
+                    <field name="line_ids">
+                        <tree editable="bottom">
+                            <field name="product_id"/>
+                            <field name="name"/>
+                            <field name="qty"/>
+                            <field name="uom_name"/>
+                            <field name="note"/>
+                        </tree>
+                    </field>
+                    <group>
+                        <field name="note" placeholder="سبب الطلب / ملاحظات..."/>
+                        <field name="reject_reason" invisible="state != 'rejected'"/>
+                        <field name="supply_id" invisible="not supply_id" readonly="1"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_item_request_tree" model="ir.ui.view">
+        <field name="name">care.item.request.tree</field>
+        <field name="model">care.item.request</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state=='approved'" decoration-muted="state=='rejected'"
+                  decoration-info="state=='submitted'" decoration-bf="priority=='1'">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="requested_by"/>
+                <field name="request_date"/>
+                <field name="line_count" string="أصناف"/>
+                <field name="priority"/>
+                <field name="state" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_item_request_search" model="ir.ui.view">
+        <field name="name">care.item.request.search</field>
+        <field name="model">care.item.request</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="project_id"/>
+                <filter name="draft" string="مسودة" domain="[('state','=','draft')]"/>
+                <filter name="submitted" string="بانتظار الاعتماد" domain="[('state','=','submitted')]"/>
+                <filter name="approved" string="معتمد" domain="[('state','=','approved')]"/>
+                <filter name="urgent" string="عاجل" domain="[('priority','=','1')]"/>
+                <group expand="0" string="تجميع">
+                    <filter name="g_project" string="المشروع" context="{'group_by':'project_id'}"/>
+                    <filter name="g_state" string="الحالة" context="{'group_by':'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_item_request" model="ir.actions.act_window">
+        <field name="name">طلبات الأصناف</field>
+        <field name="res_model">care.item.request</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_item_request_search"/>
+    </record>
+
+    <menuitem id="menu_item_request_root" name="طلب الأصناف" sequence="56"
+              groups="care_item_request.group_item_user"/>
+    <menuitem id="menu_item_request" name="طلبات الأصناف" parent="menu_item_request_root"
+              action="action_item_request" sequence="10"/>
+</odoo>

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_fuel_entry_form" model="ir.ui.view">
+        <field name="name">care.fuel.entry.form</field>
+        <field name="model">care.fuel.entry</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_confirm" type="object" string="تأكيد" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_draft" type="object" string="إعادة لمسودة"
+                            invisible="state != 'confirmed'"/>
+                    <button name="action_print" type="object" string="طباعة الإيصال" class="btn-secondary"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="مقفلة" bg_color="text-bg-danger"
+                            invisible="is_latest"/>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="date"/>
+                            <field name="project_id"/>
+                            <field name="vehicle_id"/>
+                            <field name="driver_id"/>
+                            <field name="odometer"/>
+                            <field name="station"/>
+                        </group>
+                        <group>
+                            <field name="method" widget="radio"/>
+                            <field name="card_id" invisible="method != 'card'"
+                                   required="method == 'card'"/>
+                            <field name="petty_cash_id" invisible="method != 'cash'"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="amount"/>
+                            <field name="liters"/>
+                            <field name="price_per_liter"/>
+                            <field name="is_latest" invisible="1"/>
+                        </group>
+                    </group>
+                    <group string="الإيصال">
+                        <field name="receipt" filename="receipt_filename" widget="image"
+                               options="{'accept': 'image/*'}"/>
+                        <field name="receipt_filename" invisible="1"/>
+                    </group>
+                    <field name="note" placeholder="ملاحظات..."/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_fuel_entry_tree" model="ir.ui.view">
+        <field name="name">care.fuel.entry.tree</field>
+        <field name="model">care.fuel.entry</field>
+        <field name="arch" type="xml">
+            <tree decoration-info="state=='draft'" decoration-success="state=='confirmed'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="project_id"/>
+                <field name="vehicle_id"/>
+                <field name="method"/>
+                <field name="card_id"/>
+                <field name="liters" sum="اللترات"/>
+                <field name="amount" sum="الإجمالي"/>
+                <field name="state" widget="badge"/>
+                <field name="currency_id" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_fuel_entry_search" model="ir.ui.view">
+        <field name="name">care.fuel.entry.search</field>
+        <field name="model">care.fuel.entry</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="vehicle_id"/>
+                <field name="card_id"/>
+                <filter name="draft" string="مسودة" domain="[('state','=','draft')]"/>
+                <filter name="confirmed" string="مؤكّدة" domain="[('state','=','confirmed')]"/>
+                <separator/>
+                <filter name="by_card" string="بطاقة" domain="[('method','=','card')]"/>
+                <filter name="by_cash" string="عهدة نقدية" domain="[('method','=','cash')]"/>
+                <group expand="0" string="تجميع">
+                    <filter name="g_project" string="المشروع" context="{'group_by':'project_id'}"/>
+                    <filter name="g_vehicle" string="المركبة" context="{'group_by':'vehicle_id'}"/>
+                    <filter name="g_method" string="طريقة الدفع" context="{'group_by':'method'}"/>
+                    <filter name="g_date" string="الشهر" context="{'group_by':'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_fuel_entry" model="ir.actions.act_window">
+        <field name="name">عمليات التعبئة</field>
+        <field name="res_model">care.fuel.entry</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_fuel_entry_search"/>
+    </record>
+</odoo>

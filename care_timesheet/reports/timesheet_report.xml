@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_timesheet" model="ir.actions.report">
+        <field name="name">كشف الحضور والاعتماد</field>
+        <field name="model">care.timesheet</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_timesheet.report_timesheet_doc</field>
+        <field name="report_file">care_timesheet.report_timesheet_doc</field>
+        <field name="binding_model_id" ref="model_care_timesheet"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_timesheet_doc">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.basic_layout">
+                    <div class="page" style="font-family:Tahoma,Arial,sans-serif;direction:rtl;color:#1d2433;padding:10px 20px;">
+                        <!-- header with QR -->
+                        <div style="display:flex;align-items:center;border-bottom:3px solid #15213b;padding-bottom:10px;margin-bottom:12px;">
+                            <div style="flex:1;">
+                                <span style="color:#f0663c;font-weight:bold;font-size:26px;">CARE</span>
+                                <div style="color:#8a93a8;font-size:12px;font-weight:bold;">فور كير المعتمد · كشف الحضور الشهري</div>
+                            </div>
+                            <div style="text-align:center;">
+                                <img t-att-src="'/report/barcode/?barcode_type=QR&amp;value=%s&amp;width=120&amp;height=120' % ('CARE-TS-%s' % doc.name)"
+                                     style="width:80px;height:80px;"/>
+                                <div style="font-size:9px;color:#8a93a8;"><t t-out="doc.name"/></div>
+                            </div>
+                        </div>
+                        <!-- meta -->
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px;">
+                            <tr>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;width:22%;">القسم</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><t t-out="doc.department_id.name or '—'"/></td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;width:22%;">الفترة</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><t t-out="doc.period_label or ''"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;">من</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><t t-out="doc.date_from"/></td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;">إلى</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><t t-out="doc.date_to"/></td>
+                            </tr>
+                        </table>
+                        <!-- lines -->
+                        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                            <thead>
+                                <tr style="background:#15213b;color:#fff;">
+                                    <th style="padding:6px;border:1px solid #15213b;">#</th>
+                                    <th style="padding:6px;border:1px solid #15213b;">العامل</th>
+                                    <th style="padding:6px;border:1px solid #15213b;">البادج</th>
+                                    <th style="padding:6px;border:1px solid #15213b;">أيام البصمة</th>
+                                    <th style="padding:6px;border:1px solid #15213b;">المعدّل</th>
+                                    <th style="padding:6px;border:1px solid #15213b;">المعتمد</th>
+                                    <th style="padding:6px;border:1px solid #15213b;">الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="doc.line_ids" t-as="l">
+                                    <td style="padding:5px;border:1px solid #e4e8f0;text-align:center;"><t t-out="l_index + 1"/></td>
+                                    <td style="padding:5px;border:1px solid #e4e8f0;"><t t-out="l.employee_id.name or '—'"/></td>
+                                    <td style="padding:5px;border:1px solid #e4e8f0;text-align:center;"><t t-out="l.badge or '—'"/></td>
+                                    <td style="padding:5px;border:1px solid #e4e8f0;text-align:center;"><t t-out="l.actual"/></td>
+                                    <td style="padding:5px;border:1px solid #e4e8f0;text-align:center;"><t t-out="l.adjusted_days"/></td>
+                                    <td style="padding:5px;border:1px solid #e4e8f0;text-align:center;font-weight:bold;"><t t-out="l.approved_days"/></td>
+                                    <td style="padding:5px;border:1px solid #e4e8f0;text-align:center;">
+                                        <t t-if="l.line_state=='approved'"><span style="color:#16a34a;font-weight:bold;">معتمد</span></t>
+                                        <t t-elif="l.line_state=='rejected'"><span style="color:#c0392b;font-weight:bold;">مرفوض</span></t>
+                                        <t t-else="">بانتظار</t>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr style="background:#f6f8fc;font-weight:bold;">
+                                    <td colspan="3" style="padding:6px;border:1px solid #e4e8f0;text-align:left;">الإجمالي</td>
+                                    <td style="padding:6px;border:1px solid #e4e8f0;text-align:center;"><t t-out="doc.total_biometric"/></td>
+                                    <td style="padding:6px;border:1px solid #e4e8f0;"></td>
+                                    <td style="padding:6px;border:1px solid #e4e8f0;text-align:center;color:#16a34a;"><t t-out="doc.total_approved"/></td>
+                                    <td style="padding:6px;border:1px solid #e4e8f0;"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <div style="margin-top:8px;font-size:11px;color:#8a93a8;">المعتمد = عدد أيام الراتب.</div>
+                        <!-- signatures -->
+                        <table style="width:100%;margin-top:36px;font-size:13px;text-align:center;">
+                            <tr>
+                                <td style="width:33%;padding:0 14px;">
+                                    <div style="border-top:1px solid #333;padding-top:6px;font-weight:bold;">مدير المشروع</div>
+                                    <div style="color:#8a93a8;font-size:11px;">التوقيع / التاريخ</div>
+                                </td>
+                                <td style="width:33%;padding:0 14px;">
+                                    <div style="border-top:1px solid #333;padding-top:6px;font-weight:bold;">الموارد البشرية</div>
+                                    <div style="color:#8a93a8;font-size:11px;">التوقيع / التاريخ</div>
+                                </td>
+                                <td style="width:33%;padding:0 14px;">
+                                    <div style="border-top:1px solid #333;padding-top:6px;font-weight:bold;">المالية</div>
+                                    <div style="color:#8a93a8;font-size:11px;">التوقيع / التاريخ</div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

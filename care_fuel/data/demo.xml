@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="demo_card_1" model="care.fuel.card">
+            <field name="name">CARD-7788-0012</field>
+            <field name="provider">محطات الوقود الوطنية</field>
+            <field name="initial_balance">500</field>
+            <field name="state">active</field>
+        </record>
+        <record id="demo_topup_1" model="care.fuel.card.topup">
+            <field name="card_id" ref="demo_card_1"/>
+            <field name="date" eval="(DateTime.today())"/>
+            <field name="amount">300</field>
+            <field name="reference">TOPUP-3391</field>
+        </record>
+
+        <record id="demo_entry_1" model="care.fuel.entry">
+            <field name="name">FUEL/DEMO/00001</field>
+            <field name="method">card</field>
+            <field name="card_id" ref="demo_card_1"/>
+            <field name="amount">42.5</field>
+            <field name="liters">250</field>
+            <field name="odometer">102340</field>
+            <field name="station">محطة العدان</field>
+            <field name="state">confirmed</field>
+            <field name="note">تعبئة تجريبية عبر البطاقة.</field>
+        </record>
+        <record id="demo_entry_2" model="care.fuel.entry">
+            <field name="name">FUEL/DEMO/00002</field>
+            <field name="method">cash</field>
+            <field name="amount">30</field>
+            <field name="liters">176</field>
+            <field name="odometer">103010</field>
+            <field name="station">محطة صباح السالم</field>
+            <field name="state">draft</field>
+            <field name="note">تعبئة تجريبية نقدية بانتظار الإيصال.</field>
+        </record>
+    </data>
+</odoo>

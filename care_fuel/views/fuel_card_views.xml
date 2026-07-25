@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_fuel_card_form" model="ir.ui.view">
+        <field name="name">care.fuel.card.form</field>
+        <field name="model">care.fuel.card</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_entries" type="object" class="oe_stat_button" icon="fa-tint">
+                            <field name="entry_count" widget="statinfo" string="عمليات التعبئة"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="رقم البطاقة"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="provider"/>
+                            <field name="project_id"/>
+                            <field name="vehicle_id"/>
+                            <field name="driver_id"/>
+                        </group>
+                        <group>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="initial_balance"/>
+                            <field name="topup_total"/>
+                            <field name="consumed"/>
+                            <field name="balance" class="oe_subtotal_footer_separator"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="الشحن">
+                            <field name="topup_ids">
+                                <tree editable="bottom">
+                                    <field name="date"/>
+                                    <field name="amount" sum="الإجمالي"/>
+                                    <field name="reference"/>
+                                    <field name="note"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                    <field name="note" placeholder="ملاحظات..."/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_fuel_card_tree" model="ir.ui.view">
+        <field name="name">care.fuel.card.tree</field>
+        <field name="model">care.fuel.card</field>
+        <field name="arch" type="xml">
+            <tree decoration-muted="state=='blocked'">
+                <field name="name"/>
+                <field name="provider"/>
+                <field name="project_id"/>
+                <field name="vehicle_id"/>
+                <field name="balance"/>
+                <field name="state" widget="badge"/>
+                <field name="currency_id" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_fuel_card" model="ir.actions.act_window">
+        <field name="name">بطاقات الوقود</field>
+        <field name="res_model">care.fuel.card</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_permit" model="ir.actions.report">
+        <field name="name">تصريح مشروع</field>
+        <field name="model">care.project.permit</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_permits.report_permit_doc</field>
+        <field name="report_file">care_permits.report_permit_doc</field>
+        <field name="binding_model_id" ref="model_care_project_permit"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_permit_doc">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.basic_layout">
+                    <div class="page" style="font-family:Tahoma,Arial,sans-serif;direction:rtl;color:#1d2433;padding:10px 20px;">
+                        <div style="display:flex;align-items:center;border-bottom:3px solid #15213b;padding-bottom:10px;margin-bottom:14px;">
+                            <div style="flex:1;">
+                                <span style="color:#f0663c;font-weight:bold;font-size:26px;">CARE</span>
+                                <div style="color:#8a93a8;font-size:12px;font-weight:bold;">فور كير المعتمد · تصاريح المشاريع</div>
+                            </div>
+                            <div style="text-align:left;">
+                                <div style="background:#15213b;color:#fff;padding:6px 14px;border-radius:6px;font-weight:bold;font-size:14px;">تصريح مشروع</div>
+                                <div style="font-size:12px;margin-top:4px;"><t t-out="doc.name"/></div>
+                            </div>
+                        </div>
+                        <h2 style="color:#15213b;margin:4px 0 12px;"><t t-out="doc.title"/></h2>
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                            <tr>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;width:25%;">المشروع</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><t t-out="doc.project_id.name or '—'"/></td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;width:25%;">النوع</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><span t-field="doc.permit_type"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;">الجهة المُصدِرة</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><t t-out="doc.authority or '—'"/></td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;">رقم التصريح</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><t t-out="doc.permit_number or '—'"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;">تاريخ الإصدار</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><t t-out="doc.issue_date or '—'"/></td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;">تاريخ الانتهاء</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;">
+                                    <t t-out="doc.expiry_date or '—'"/>
+                                    <t t-if="doc.status=='expired'"><span style="color:#c0392b;font-weight:bold;"> (منتهٍ)</span></t>
+                                    <t t-elif="doc.status=='expiring'"><span style="color:#d97706;font-weight:bold;"> (قارب الانتهاء)</span></t>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;">المسؤول</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><t t-out="doc.responsible_id.name or '—'"/></td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;background:#f6f8fc;font-weight:bold;">الحالة</td>
+                                <td style="padding:6px 10px;border:1px solid #e4e8f0;"><span t-field="doc.state"/></td>
+                            </tr>
+                        </table>
+                        <div t-if="doc.note" style="margin-top:10px;border:1px solid #e4e8f0;border-radius:6px;padding:8px 10px;font-size:12px;color:#555;">
+                            <b>ملاحظات:</b> <t t-out="doc.note"/>
+                        </div>
+                        <div t-if="doc.attachment" style="margin-top:14px;text-align:center;">
+                            <img t-att-src="'data:image/png;base64,%s' % doc.attachment.decode()" style="max-width:70%;max-height:360px;border:1px solid #e4e8f0;border-radius:6px;"/>
+                        </div>
+                        <table style="width:100%;margin-top:34px;font-size:13px;text-align:center;">
+                            <tr>
+                                <td style="width:50%;padding:0 20px;">
+                                    <div style="border-top:1px solid #333;padding-top:6px;font-weight:bold;">مدير المشروع</div>
+                                    <div style="color:#8a93a8;font-size:11px;">التوقيع / التاريخ</div>
+                                </td>
+                                <td style="width:50%;padding:0 20px;">
+                                    <div style="border-top:1px solid #333;padding-top:6px;font-weight:bold;">إدارة الالتزام</div>
+                                    <div style="color:#8a93a8;font-size:11px;">التوقيع / التاريخ</div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_fuel_card_user,fuel.card.user,model_care_fuel_card,group_fuel_user,1,0,0,0
+access_fuel_card_mgr,fuel.card.mgr,model_care_fuel_card,group_fuel_manager,1,1,1,1
+access_fuel_topup_user,fuel.topup.user,model_care_fuel_card_topup,group_fuel_user,1,0,0,0
+access_fuel_topup_mgr,fuel.topup.mgr,model_care_fuel_card_topup,group_fuel_manager,1,1,1,1
+access_fuel_entry_user,fuel.entry.user,model_care_fuel_entry,group_fuel_user,1,1,1,0
+access_fuel_entry_mgr,fuel.entry.mgr,model_care_fuel_entry,group_fuel_manager,1,1,1,1

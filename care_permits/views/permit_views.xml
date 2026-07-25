@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_permit_form" model="ir.ui.view">
+        <field name="name">care.project.permit.form</field>
+        <field name="model">care.project.permit</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_activate" type="object" string="تفعيل" class="btn-primary"
+                            invisible="state == 'active'"/>
+                    <button name="action_start_renewal" type="object" string="بدء التجديد"
+                            invisible="state != 'active'"/>
+                    <button name="action_archive_permit" type="object" string="أرشفة"
+                            invisible="state == 'archived'"/>
+                    <button name="action_print" type="object" string="طباعة" class="btn-secondary"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,active,renewing"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="منتهٍ" bg_color="text-bg-danger"
+                            invisible="status != 'expired'"/>
+                    <widget name="web_ribbon" title="قارب الانتهاء" bg_color="text-bg-warning"
+                            invisible="status != 'expiring'"/>
+                    <div class="oe_title">
+                        <label for="title"/>
+                        <h1><field name="title" placeholder="اسم التصريح"/></h1>
+                        <field name="name" readonly="1"/>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="department_id" readonly="1"/>
+                            <field name="permit_type"/>
+                            <field name="authority"/>
+                            <field name="permit_number"/>
+                            <field name="responsible_id"/>
+                        </group>
+                        <group>
+                            <field name="issue_date"/>
+                            <field name="expiry_date"/>
+                            <field name="days_to_expiry" readonly="1"/>
+                            <field name="status" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="المرفق">
+                        <field name="attachment" filename="attachment_filename" widget="image"
+                               options="{'accept': 'image/*'}"/>
+                        <field name="attachment_filename" invisible="1"/>
+                    </group>
+                    <field name="note" placeholder="ملاحظات..."/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_permit_tree" model="ir.ui.view">
+        <field name="name">care.project.permit.tree</field>
+        <field name="model">care.project.permit</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="status=='expired'" decoration-warning="status=='expiring'"
+                  decoration-success="status=='valid'">
+                <field name="name"/>
+                <field name="title"/>
+                <field name="project_id"/>
+                <field name="permit_type"/>
+                <field name="authority"/>
+                <field name="expiry_date"/>
+                <field name="days_to_expiry"/>
+                <field name="status" widget="badge"
+                       decoration-success="status=='valid'" decoration-warning="status=='expiring'"
+                       decoration-danger="status=='expired'"/>
+                <field name="state" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_permit_search" model="ir.ui.view">
+        <field name="name">care.project.permit.search</field>
+        <field name="model">care.project.permit</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="title"/>
+                <field name="project_id"/>
+                <field name="permit_number"/>
+                <field name="authority"/>
+                <filter name="valid" string="ساري" domain="[('status','=','valid')]"/>
+                <filter name="expiring" string="قارب الانتهاء" domain="[('status','=','expiring')]"/>
+                <filter name="expired" string="منتهٍ" domain="[('status','=','expired')]"/>
+                <separator/>
+                <filter name="security" string="أمني" domain="[('permit_type','=','security')]"/>
+                <filter name="health" string="صحي" domain="[('permit_type','=','health')]"/>
+                <filter name="food" string="أغذية" domain="[('permit_type','=','food')]"/>
+                <group expand="0" string="تجميع">
+                    <filter name="g_project" string="المشروع" context="{'group_by':'project_id'}"/>
+                    <filter name="g_type" string="النوع" context="{'group_by':'permit_type'}"/>
+                    <filter name="g_status" string="الصلاحية" context="{'group_by':'status'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_permit" model="ir.actions.act_window">
+        <field name="name">تصاريح المشاريع</field>
+        <field name="res_model">care.project.permit</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_permit_search"/>
+    </record>
+
+    <menuitem id="menu_permit_root" name="تصاريح المشاريع" sequence="57"
+              groups="care_permits.group_permit_user"/>
+    <menuitem id="menu_permit" name="التصاريح" parent="menu_permit_root"
+              action="action_permit" sequence="10"/>
+</odoo>

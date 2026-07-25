@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="module_care_fuel_category" model="ir.module.category">
+        <field name="name">Fuel</field>
+    </record>
+
+    <record id="group_fuel_user" model="res.groups">
+        <field name="name">تسجيل الوقود</field>
+        <field name="category_id" ref="module_care_fuel_category"/>
+    </record>
+
+    <record id="group_fuel_manager" model="res.groups">
+        <field name="name">مدير الوقود</field>
+        <field name="category_id" ref="module_care_fuel_category"/>
+        <field name="implied_ids" eval="[(4, ref('group_fuel_user'))]"/>
+        <field name="users" eval="[(4, ref('base.user_admin'))]"/>
+    </record>
+
+    <!-- ERP managers get full fuel management out of the box. -->
+    <record id="base.group_erp_manager" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('care_fuel.group_fuel_manager'))]"/>
+    </record>
+</odoo>

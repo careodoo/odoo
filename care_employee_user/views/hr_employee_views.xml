@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_employee_form_app_user" model="ir.ui.view">
+        <field name="name">hr.employee.form.app.user</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="حساب المستخدم" name="app_user">
+                    <group>
+                        <group string="الحساب المرتبط">
+                            <field name="user_id" readonly="1"/>
+                            <field name="linked_user_share" readonly="1"
+                                   invisible="not user_id"/>
+                            <field name="app_user_pms"/>
+                            <button name="action_unlink_app_user" type="object"
+                                    string="فك الربط" class="btn-link text-danger"
+                                    invisible="not user_id"
+                                    confirm="سيتم فك ربط الحساب بهذا العامل. متابعة؟"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="① إنشاء حساب جديد وربطه" invisible="user_id">
+                            <field name="app_user_type" widget="radio"/>
+                            <div class="text-muted" colspan="2"
+                                 style="font-size:12px">
+                                ملاحظة: مستخدم «عام (Public)» لا يستطيع الدخول للتطبيق أو رؤية أي بيانات — استخدم «بورتال» ليعمل مع التطبيق.
+                            </div>
+                            <button name="action_create_app_user" type="object"
+                                    string="إنشاء حساب وربطه بالعامل" class="btn-primary"/>
+                        </group>
+                        <group string="② أو ربط حساب موجود" invisible="user_id">
+                            <field name="link_user_id"
+                                   options="{'no_create': True}"/>
+                            <button name="action_link_existing_user" type="object"
+                                    string="ربط الحساب المحدد" class="btn-secondary"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
