@@ -279,6 +279,22 @@ class MobileApi(http.Controller):
         tok = request.env['care.cafm.mobile.token'].sudo().issue(user, b.get('device'))
         return _ok(self._me_payload(request.env(user=user.id)), token=tok.token, expiry=str(tok.expiry))
 
+    @http.route(API + '/auth/forgot', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def forgot_password(self, **kw):
+        """إرسال رابط استعادة كلمة المرور إلى بريد المستخدم (نسيت كلمة السر)."""
+        b = _body()
+        login = (b.get('login') or b.get('email') or '').strip().lower()
+        if not login:
+            return _err('أدخل البريد الإلكتروني أو اسم المستخدم', 422)
+        try:
+            # reset_password (من auth_signup) يرسل رابط استعادة موقّعاً للبريد
+            request.env['res.users'].sudo().reset_password(login)
+        except Exception:
+            # لا نكشف إن كان الحساب موجوداً أو له بريد (حماية من التعداد)
+            pass
+        return _ok({'sent': True,
+                    'message': 'إن كان لهذا الحساب بريد مسجّل فستصلك رسالة لاستعادة كلمة المرور.'})
+
     @http.route(API + '/auth/logout', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
     def logout(self, **kw):
         rec = request.env['care.cafm.mobile.token'].sudo().search(
