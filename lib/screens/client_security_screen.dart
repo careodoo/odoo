@@ -5,6 +5,7 @@ import '../core/i18n.dart';
 import '../core/service_ui.dart';
 import 'stream_view_screen.dart';
 import 'security_supervisor_screen.dart';
+import 'stream_archive_screen.dart';
 import 'excel_export.dart';
 import 'security_gatepass_create.dart';
 import 'client_workorder_create.dart';
@@ -22,7 +23,8 @@ class ClientSecurityScreen extends StatefulWidget {
 }
 
 class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
-  static const _c = Color(0xFFE5484D);
+  // ستايل داكن احترافي بدل الأحمر (navy عميق)
+  static const _c = Color(0xFF1E3A5F);
   static const _kindColors = {
     'incidents': Color(0xFFE5484D), 'patrols': Color(0xFF2563EB),
     'gatepasses': Color(0xFF16A34A), 'visitors': Color(0xFF7C3AED),
@@ -85,40 +87,15 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
     final label = (() { final k = _kinds.firstWhere((x) => x.$1 == _kind); return tr(k.$2, k.$3); })();
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: _kc, foregroundColor: Colors.white,
+        backgroundColor: _c, foregroundColor: Colors.white,
         icon: const Icon(Icons.add_rounded),
         label: Text(tr('إجراء أمني', 'Security action'), style: const TextStyle(fontWeight: FontWeight.w900)),
         onPressed: _actionMenu,
       ),
       appBar: AppBar(
+        backgroundColor: _c, foregroundColor: Colors.white,
         title: Text(tr('الأمن', 'Security')),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add_task_rounded),
-            tooltip: tr('أدوات الإدارة (إنشاء/إسناد)', 'Manage (create/assign)'),
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecuritySupervisorScreen())),
-          ),
-          IconButton(
-            icon: const Icon(Icons.vpn_key_rounded),
-            tooltip: tr('هبات المفاتيح', 'Key hubs'),
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityKeyhubsScreen())),
-          ),
-          IconButton(
-            icon: const Icon(Icons.point_of_sale_rounded),
-            tooltip: tr('صندوق البوابة', 'Gate cashier'),
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityCashierScreen())),
-          ),
-          IconButton(
-            icon: const Icon(Icons.map_rounded),
-            tooltip: tr('خريطة التموضع', 'Positioning map'),
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityPositioningScreen())),
-          ),
-          IconButton(
-            icon: const Icon(Icons.grid_on_rounded),
-            tooltip: tr('تصدير تصاريح الدخول', 'Export gate passes'),
-            onPressed: () => exportExcelFile(context, path: '/cafm/security/gatepasses/export',
-                fileName: 'gate-passes.xlsx', shareText: tr('تصاريح الدخول', 'Gate passes')),
-          ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             onPressed: () { _loadSummary(); _loadKind(_kind); _prefetchCounts(); },
@@ -132,7 +109,7 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
             title: tr('الأمن', 'Security'),
             subtitle: tr('${s['premises'] ?? 0} موقع تحت الحراسة', '${s['premises'] ?? 0} premises guarded'),
             icon: Icons.shield_rounded,
-            color: _kc,
+            color: _c,
             stats: [
               (tr('بلاغ مفتوح', 'open'), '${s['incidents_open'] ?? 0}',
                   ((s['incidents_open'] ?? 0) as int) > 0 ? const Color(0xFFDC2626) : null),
@@ -149,7 +126,9 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
             ][i]),
           ),
           const SizedBox(height: 12),
-          ServiceTabs(kinds: _kinds, current: _kind, onSelect: _loadKind, color: _kc, counts: _counts),
+          _toolsRow(),
+          const SizedBox(height: 12),
+          ServiceTabs(kinds: _kinds, current: _kind, onSelect: _loadKind, color: _c, counts: _counts),
           const SizedBox(height: 10),
           FutureBuilder<List<dynamic>>(
             future: _list,
@@ -200,6 +179,44 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
       ),
     );
   }
+
+  /// صف أدوات الأمن تحت الهيدر (نُقلت من أيقونات الـ AppBar).
+  Widget _toolsRow() => SizedBox(
+        height: 78,
+        child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 2), children: [
+          _toolBtn(Icons.add_task_rounded, tr('أدوات الإدارة', 'Manage'),
+              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecuritySupervisorScreen()))),
+          _toolBtn(Icons.movie_creation_rounded, tr('سجل البثّ', 'Broadcasts'),
+              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StreamArchiveScreen(isClient: true)))),
+          _toolBtn(Icons.vpn_key_rounded, tr('هبات المفاتيح', 'Key hubs'),
+              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityKeyhubsScreen()))),
+          _toolBtn(Icons.point_of_sale_rounded, tr('صندوق البوابة', 'Cashier'),
+              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityCashierScreen()))),
+          _toolBtn(Icons.map_rounded, tr('التموضع', 'Map'),
+              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityPositioningScreen()))),
+          _toolBtn(Icons.grid_on_rounded, tr('تصدير', 'Export'),
+              () => exportExcelFile(context, path: '/cafm/security/gatepasses/export',
+                  fileName: 'gate-passes.xlsx', shareText: tr('تصاريح الدخول', 'Gate passes'))),
+        ]),
+      );
+
+  Widget _toolBtn(IconData i, String label, VoidCallback onTap) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(13), onTap: onTap,
+          child: Container(
+            width: 78, padding: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(color: _c.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(13),
+                border: Border.all(color: _c.withValues(alpha: 0.20))),
+            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Icon(i, color: _c, size: 24),
+              const SizedBox(height: 5),
+              Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: _c, fontSize: 10.5, fontWeight: FontWeight.w800)),
+            ]),
+          ),
+        ),
+      );
 
   /// The client's security actions in one menu: raise a security work order or
   /// issue a gate pass.

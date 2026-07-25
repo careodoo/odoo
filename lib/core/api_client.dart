@@ -597,6 +597,18 @@ class ApiClient {
     return List<dynamic>.from((res['data'] as Map)['cohosts'] as List);
   }
 
+  /// سجل البثوث المؤرشفة + تسجيلاتها (فريق أو عميل).
+  Future<List<dynamic>> securityStreamArchive({bool isClient = false}) async {
+    final path = isClient ? '/client/security/stream/archive' : '/security/stream/archive';
+    final res = await _handle(await _net.get(_u(path), headers: await _headers()));
+    return List<dynamic>.from((res['data'] as Map)['items'] as List);
+  }
+
+  /// تفاصيل بثّ مؤرشف (رابط التسجيل + الدردشة + المشاهدون).
+  Future<Map<String, dynamic>> securityStreamArchiveDetail(int sid) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/stream/archive/$sid'), headers: await _headers())))['data'] as Map);
+
   /// إشعار عميل الموقع بالبلاغ (للبلاغات الحرجة).
   Future<Map<String, dynamic>> securityNotifyClient(int incidentId) async {
     final res = await _handle(await _net.post(_u('/security/incident/$incidentId/notify_client'), headers: await _headers()));

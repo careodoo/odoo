@@ -1,0 +1,181 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import '../core/auth.dart';
+import '../core/i18n.dart';
+
+/// سجل كل عمليات البثّ المؤرشفة بتفاصيلها + إعادة تشغيل التسجيلات داخل التطبيق
+/// (مشغّل Cloudflare عبر WebView). يعمل للفريق والعميل (isClient يقيّده بمواقعه).
+class StreamArchiveScreen extends StatefulWidget {
+  final bool isClient;
+  const StreamArchiveScreen({super.key, this.isClient = false});
+  @override
+  State<StreamArchiveScreen> createState() => _StreamArchiveScreenState();
+}
+
+class _StreamArchiveScreenState extends State<StreamArchiveScreen> {
+  static const _bg = Color(0xFF0B1220);
+  static const _card = Color(0xFF152238);
+  static const _blue = Color(0xFF4AA8FF);
+  static const _green = Color(0xFF37C98A);
+  static const _grey = Color(0xFF9CB2CD);
+
+  List<Map> _items = const [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final l = await context.read<AuthProvider>().api.securityStreamArchive(isClient: widget.isClient);
+      if (mounted) setState(() { _items = l.cast<Map>(); _loading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  String _dur(int s) {
+    if (s <= 0) return '—';
+    final h = s ~/ 3600, m = (s % 3600) ~/ 60, sec = s % 60;
+    return h > 0 ? '$h:${m.toString().padLeft(2, '0')}:${sec.toString().padLeft(2, '0')}'
+                 : '$m:${sec.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: _bg,
+      appBar: AppBar(backgroundColor: const Color(0xFF1E3A5F), foregroundColor: Colors.white,
+          title: Text(tr('سجل البثّ', 'Broadcasts archive')),
+          actions: [IconButton(onPressed: () { setState(() => _loading = true); _load(); }, icon: const Icon(Icons.refresh_rounded))]),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator(color: _blue))
+          : _items.isEmpty
+              ? _empty()
+              : RefreshIndicator(
+                  onRefresh: _load, color: _blue,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(12),
+                    itemCount: _items.length,
+                    itemBuilder: (_, i) => _card_(_items[i]),
+                  )),
+    );
+  }
+
+  Widget _empty() => Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        const Icon(Icons.movie_creation_outlined, size: 64, color: _grey),
+        const SizedBox(height: 12),
+        Text(tr('لا بثوث مؤرشفة بعد', 'No archived broadcasts yet'), style: const TextStyle(color: _grey, fontWeight: FontWeight.w700)),
+      ]));
+
+  Widget _card_(Map b) {
+    final rec = b['has_recording'] == true;
+    final thumb = '${b['thumbnail'] ?? ''}';
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(color: _card, borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: .06))),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _open(b),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          // الصورة المصغّرة + شارة التسجيل/المدة
+          Stack(children: [
+            AspectRatio(aspectRatio: 16 / 8, child: thumb.isNotEmpty
+                ? Image.network(thumb, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _thumbPlaceholder())
+                : _thumbPlaceholder()),
+            if (rec) Positioned(right: 8, top: 8, child: _pill(Icons.play_circle_fill_rounded, tr('تسجيل', 'Recording'), _green)),
+            Positioned(left: 8, bottom: 8, child: _pill(Icons.schedule_rounded, _dur((b['duration'] as int?) ?? 0), Colors.black.withValues(alpha: .6))),
+            Positioned(right: 8, bottom: 8, child: _pill(Icons.visibility_rounded, '${b['peak_viewers'] ?? 0}', Colors.black.withValues(alpha: .6))),
+          ]),
+          Padding(padding: const EdgeInsets.all(12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              const Icon(Icons.person_rounded, color: _blue, size: 15), const SizedBox(width: 6),
+              Expanded(child: Text('${b['guard'] ?? tr('حارس', 'Guard')}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14))),
+            ]),
+            const SizedBox(height: 4),
+            if ((b['premise'] ?? '').toString().isNotEmpty)
+              Row(children: [const Icon(Icons.place_rounded, color: _grey, size: 13), const SizedBox(width: 5),
+                Expanded(child: Text('${b['premise']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: _grey, fontSize: 12)))]),
+            const SizedBox(height: 4),
+            Row(children: [
+              const Icon(Icons.event_rounded, color: _grey, size: 12), const SizedBox(width: 5),
+              Text('${b['started_at'] ?? ''}'.replaceFirst('T', ' '), style: const TextStyle(color: _grey, fontSize: 11)),
+              const Spacer(),
+              if (rec) Row(children: [const Icon(Icons.play_arrow_rounded, color: _green, size: 16),
+                Text(tr('تشغيل', 'Play'), style: const TextStyle(color: _green, fontSize: 12, fontWeight: FontWeight.w800))])
+              else Text(tr('قيد المعالجة', 'Processing'), style: const TextStyle(color: _grey, fontSize: 11)),
+            ]),
+          ])),
+        ]),
+      ),
+    );
+  }
+
+  Widget _thumbPlaceholder() => Container(color: const Color(0xFF0E1A2E),
+      child: const Center(child: Icon(Icons.videocam_off_rounded, color: _grey, size: 34)));
+
+  Widget _pill(IconData i, String t, Color c) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(20)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(i, color: Colors.white, size: 12), const SizedBox(width: 3),
+          Text(t, style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w800)),
+        ]),
+      );
+
+  void _open(Map b) {
+    if (b['has_recording'] != true || '${b['recording_url'] ?? ''}'.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          backgroundColor: _card,
+          content: Text(tr('لا يزال التسجيل قيد المعالجة على الخادم — حاول لاحقاً',
+              'Recording still processing on the server — try later'))));
+      return;
+    }
+    // مشغّل Cloudflare عبر iframe داخل التطبيق
+    final iframe = '${b['recording_url']}'.replaceFirst('/manifest/video.m3u8', '/iframe');
+    Navigator.push(context, MaterialPageRoute(builder: (_) => _PlayerScreen(url: iframe, title: '${b['guard'] ?? ''} · ${b['premise'] ?? ''}')));
+  }
+}
+
+/// مشغّل التسجيل داخل التطبيق (WebView على مشغّل Cloudflare).
+class _PlayerScreen extends StatefulWidget {
+  final String url;
+  final String title;
+  const _PlayerScreen({required this.url, required this.title});
+  @override
+  State<_PlayerScreen> createState() => _PlayerScreenState();
+}
+
+class _PlayerScreenState extends State<_PlayerScreen> {
+  late final WebViewController _c;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0xFF000000))
+      ..setNavigationDelegate(NavigationDelegate(onPageFinished: (_) { if (mounted) setState(() => _loading = false); }))
+      ..loadRequest(Uri.parse(widget.url));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(backgroundColor: Colors.black, foregroundColor: Colors.white,
+          title: Text(widget.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 15))),
+      body: Stack(children: [
+        WebViewWidget(controller: _c),
+        if (_loading) const Center(child: CircularProgressIndicator(color: Color(0xFF4AA8FF))),
+      ]),
+    );
+  }
+}

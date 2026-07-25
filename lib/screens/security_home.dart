@@ -19,6 +19,7 @@ import 'heartbeat_pinger.dart';
 import 'security_patrols_screen.dart';
 import 'supervisor_screen.dart';
 import 'security_supervisor_screen.dart';
+import 'stream_archive_screen.dart';
 import 'shift_card.dart';
 
 /// The security app's face — deliberately different: a dark "command centre"
@@ -119,6 +120,12 @@ class SecurityHome extends StatelessWidget {
                 icon: '🎥', label: tr('بث مباشر', 'Go live'),
                 sub: tr('بث كاميرا للفريق', 'Broadcast to team'),
                 onTap: () => Stream.goLive(context),
+              ),
+              _Tile(
+                icon: '🎬', label: tr('سجل البثّ', 'Broadcasts archive'),
+                sub: tr('التسجيلات وإعادة التشغيل', 'Recordings & replay'),
+                onTap: () => Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => const StreamArchiveScreen())),
               ),
               _Tile(
                 icon: '📝', label: tr('البلاغات الأمنية', 'Incidents'),
