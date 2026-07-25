@@ -121,6 +121,16 @@ class ApiClient {
     return Map<String, dynamic>.from(body['data'] as Map);
   }
 
+  /// نسيت كلمة السر — يطلب من الخادم إرسال رابط استعادة لبريد الحساب.
+  Future<String> forgotPassword(String login) async {
+    login = login.trim().replaceAll(' ', '');
+    if (login.contains('@')) login = login.toLowerCase();
+    final r = await _net.post(_u('/auth/forgot'),
+        headers: await _headers(), body: jsonEncode({'login': login}));
+    final body = await _handle(r) as Map;
+    return '${(body['data'] as Map?)?['message'] ?? 'تم الإرسال'}';
+  }
+
   /// Public self-registration → CARE 2 CARE customer; auto-logs in.
   Future<Map<String, dynamic>> signup({required String name, String? email, String? phone, required String password, String? device}) async {
     final r = await _net.post(_u('/auth/signup'),

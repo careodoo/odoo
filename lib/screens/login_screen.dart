@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
@@ -17,12 +18,26 @@ class _LoginScreenState extends State<LoginScreen> {
   final _pass = TextEditingController();
   bool _busy = false;
   bool _obscure = true;
+  bool _remember = true;
   Map<String, dynamic>? _brand;
+
+  static const _store = FlutterSecureStorage();
+  static const _kRememberLogin = 'remember_login';
 
   @override
   void initState() {
     super.initState();
     _loadBrand();
+    _loadRemembered();
+  }
+
+  Future<void> _loadRemembered() async {
+    try {
+      final saved = await _store.read(key: _kRememberLogin);
+      if (saved != null && saved.isNotEmpty && mounted) {
+        setState(() { _login.text = saved; _remember = true; });
+      }
+    } catch (_) {/* لا يؤثّر على الدخول */}
   }
 
   Future<void> _loadBrand() async {
@@ -43,6 +58,14 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_login.text.isEmpty || _pass.text.isEmpty) return;
     setState(() => _busy = true);
     final ok = await context.read<AuthProvider>().login(_login.text.trim(), _pass.text);
+    // «تذكرني»: نحفظ اسم المستخدم لملئه لاحقاً، أو نمحوه إن أُلغي الخيار
+    try {
+      if (ok && _remember) {
+        await _store.write(key: _kRememberLogin, value: _login.text.trim());
+      } else if (!_remember) {
+        await _store.delete(key: _kRememberLogin);
+      }
+    } catch (_) {}
     if (mounted) setState(() => _busy = false);
     if (ok && mounted && Navigator.canPop(context)) {
       // opened on-demand from guest mode → close and reveal the signed-in tree
@@ -50,6 +73,41 @@ class _LoginScreenState extends State<LoginScreen> {
     } else if (!ok && mounted) {
       final err = context.read<AuthProvider>().error ?? tr('فشل الدخول', 'Login failed');
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+    }
+  }
+
+  /// نسيت كلمة السر — يطلب البريد ثم يرسل رابط الاستعادة.
+  Future<void> _forgotPassword() async {
+    final ctrl = TextEditingController(text: _login.text.trim());
+    final email = await showDialog<String>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: Text(tr('استعادة كلمة المرور', 'Reset password')),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(tr('أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور.',
+              'Enter your email and we will send you a reset link.'),
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+          const SizedBox(height: 14),
+          TextField(controller: ctrl, keyboardType: TextInputType.emailAddress, autofocus: true,
+            decoration: InputDecoration(
+              labelText: tr('البريد الإلكتروني', 'Email'),
+              prefixIcon: const Icon(Icons.email_outlined),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(d), child: Text(tr('إلغاء', 'Cancel'))),
+          FilledButton(onPressed: () => Navigator.pop(d, ctrl.text.trim()),
+              child: Text(tr('إرسال', 'Send'))),
+        ],
+      ),
+    );
+    if (email == null || email.isEmpty || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final msg = await context.read<AuthProvider>().api.forgotPassword(email);
+      messenger.showSnackBar(SnackBar(content: Text(msg), backgroundColor: const Color(0xFF16A34A)));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('$e'.replaceFirst('Exception: ', ''))));
     }
   }
 
@@ -181,7 +239,35 @@ class _LoginScreenState extends State<LoginScreen> {
               onPressed: () => setState(() => _obscure = !_obscure),
             ),
           ),
-          const SizedBox(height: 22),
+          // «تذكرني» + «نسيت كلمة السر؟»
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () => setState(() => _remember = !_remember),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    SizedBox(width: 22, height: 22, child: Checkbox(
+                      value: _remember, activeColor: red, visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      onChanged: (v) => setState(() => _remember = v ?? false))),
+                    const SizedBox(width: 6),
+                    Text(tr('تذكّرني', 'Remember me'),
+                        style: TextStyle(fontSize: 13, color: Colors.grey.shade700, fontWeight: FontWeight.w600)),
+                  ]),
+                ),
+              ),
+              TextButton(
+                onPressed: _busy ? null : _forgotPassword,
+                style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 6)),
+                child: Text(tr('نسيت كلمة السر؟', 'Forgot password?'),
+                    style: const TextStyle(fontSize: 13, color: red, fontWeight: FontWeight.w800)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
           Material(
             color: Colors.transparent,
             child: Ink(
