@@ -711,6 +711,34 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/my_team'), headers: await _headers())))['data'] as Map);
 
+  // ---- أدوات مشرف الأمن (إنشاء/إسناد/إشعار/حالة الفريق) ------------------
+  Future<Map<String, dynamic>> securitySupOptions() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/sup/options'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> _supPost(String path, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u(path), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<Map<String, dynamic>> securitySupTaskCreate(Map<String, dynamic> b) => _supPost('/security/sup/task/create', b);
+  Future<Map<String, dynamic>> securitySupPatrolCreate(Map<String, dynamic> b) => _supPost('/security/sup/patrol/create', b);
+  Future<Map<String, dynamic>> securitySupGatepassCreate(Map<String, dynamic> b) => _supPost('/security/sup/gatepass/create', b);
+  Future<Map<String, dynamic>> securitySupInspectionCreate(Map<String, dynamic> b) => _supPost('/security/sup/inspection/create', b);
+  Future<Map<String, dynamic>> securitySupNotify(String message, {String? title, List<int>? guardIds}) =>
+      _supPost('/security/sup/notify', {'message': message, if (title != null) 'title': title, if (guardIds != null) 'guard_ids': guardIds});
+
+  /// حالة نشاط أعضاء الفريق (للوحة المشرف).
+  Future<Map<String, dynamic>> securitySupPresence() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/sup/presence'), headers: await _headers())))['data'] as Map);
+
+  /// نبضة حالة الحارس (حركة/نبض قلب/سكون) — تُرسَل دورياً.
+  Future<void> securityGuardHeartbeat({bool? moving, int? heartRate, bool? still, int? battery}) async =>
+      _handle(await _net.post(_u('/security/guard/heartbeat'), headers: await _headers(), body: jsonEncode({
+        if (moving != null) 'moving': moving, if (heartRate != null) 'heart_rate': heartRate,
+        if (still != null) 'still': still, if (battery != null) 'battery': battery,
+      })));
+
   /// Options for the incident create form (premises/guards/teams/types/severities).
   Future<Map<String, dynamic>> incidentMeta() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

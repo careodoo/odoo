@@ -7,6 +7,12 @@ import '../models/models.dart';
 import 'work_order_detail_screen.dart';
 
 const _navy = Color(0xFF0E3A5F);
+// ثيم داكن متّسق مع تطبيق الأمن
+const _dbg = Color(0xFF0B1220);
+const _dcard = Color(0xFF152238);
+const _dtext = Color(0xFFEAF1FB);
+const _dgrey = Color(0xFF9CB2CD);
+const _dborder = Color(0xFF24344C);
 
 /// My work orders — a professional register: a live count strip, state filters
 /// and search, then rich cards. Actions (start / finish / proof) live inside the
@@ -82,9 +88,9 @@ class _WorkOrdersScreenState extends State<WorkOrdersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6FA),
+      backgroundColor: _dbg,
       appBar: AppBar(
-        backgroundColor: _navy, foregroundColor: Colors.white,
+        backgroundColor: const Color(0xFF1E3A5F), foregroundColor: Colors.white,
         title: Text(tr('أوامر العمل', 'Work orders'), style: const TextStyle(fontWeight: FontWeight.w900)),
       ),
       body: RefreshIndicator(
@@ -126,12 +132,12 @@ class _WorkOrdersScreenState extends State<WorkOrdersScreen> {
     final done = all.where((w) => !w.isOpen).length;
     Widget cell(String v, String l, Color c) => Expanded(child: Column(children: [
           Text(v, style: TextStyle(color: c, fontSize: 17, fontWeight: FontWeight.w900)),
-          Text(l, style: TextStyle(fontSize: 10, color: Colors.grey.shade600, fontWeight: FontWeight.w700)),
+          Text(l, style: const TextStyle(fontSize: 10, color: _dgrey, fontWeight: FontWeight.w700)),
         ]));
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 10, 12, 2),
       padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.grey.shade200)),
+      decoration: BoxDecoration(color: _dcard, borderRadius: BorderRadius.circular(14), border: Border.all(color: _dborder)),
       child: Row(children: [
         cell('$open', tr('مفتوحة', 'Open'), const Color(0xFF0891B2)),
         cell('$active', tr('قيد التنفيذ', 'Active'), const Color(0xFFF7A23B)),
@@ -145,12 +151,14 @@ class _WorkOrdersScreenState extends State<WorkOrdersScreen> {
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
         child: TextField(
           onChanged: (v) => setState(() => _q = v),
+          style: const TextStyle(color: _dtext),
           decoration: InputDecoration(
             hintText: tr('بحث بالعنوان أو الرقم أو الموقع…', 'Search title, ref or location…'),
-            prefixIcon: const Icon(Icons.search_rounded, size: 20),
-            filled: true, fillColor: Colors.white, isDense: true,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+            hintStyle: const TextStyle(color: _dgrey),
+            prefixIcon: const Icon(Icons.search_rounded, size: 20, color: _dgrey),
+            filled: true, fillColor: _dcard, isDense: true,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _dborder)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _dborder)),
           ),
         ),
       );
@@ -162,9 +170,9 @@ class _WorkOrdersScreenState extends State<WorkOrdersScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
             child: ChoiceChip(
               selected: _filter == f.$1,
-              label: Text(tr(f.$2, f.$3), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: _filter == f.$1 ? Colors.white : _navy)),
-              selectedColor: _navy, backgroundColor: Colors.white,
-              side: BorderSide(color: _filter == f.$1 ? _navy : Colors.grey.shade300),
+              label: Text(tr(f.$2, f.$3), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: _filter == f.$1 ? Colors.white : _dgrey)),
+              selectedColor: const Color(0xFF1E3A5F), backgroundColor: _dcard,
+              side: BorderSide(color: _filter == f.$1 ? const Color(0xFF4AA8FF) : _dborder),
               onSelected: (_) => setState(() => _filter = f.$1),
             ),
           ),
@@ -180,7 +188,7 @@ class _WorkOrdersScreenState extends State<WorkOrdersScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Material(
-        color: Colors.white, borderRadius: BorderRadius.circular(15),
+        color: _dcard, borderRadius: BorderRadius.circular(15),
         child: InkWell(
           borderRadius: BorderRadius.circular(15),
           onTap: () async {
@@ -191,7 +199,7 @@ class _WorkOrdersScreenState extends State<WorkOrdersScreen> {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: late ? const Color(0xFFE5484D).withValues(alpha: 0.35) : Colors.grey.shade200),
+              border: Border.all(color: late ? const Color(0xFFE5484D).withValues(alpha: 0.45) : _dborder),
             ),
             padding: const EdgeInsets.all(12),
             child: Row(children: [
@@ -200,16 +208,16 @@ class _WorkOrdersScreenState extends State<WorkOrdersScreen> {
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
                   Expanded(child: Text(w.title, maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: _navy))),
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: _dtext))),
                   WoStateBadge(w.state),
                 ]),
                 const SizedBox(height: 5),
                 Row(children: [
-                  Icon(Icons.apartment_rounded, size: 13, color: Colors.grey.shade500),
+                  Icon(Icons.apartment_rounded, size: 13, color: _dgrey),
                   const SizedBox(width: 4),
                   Expanded(child: Text('${w.facility}${w.location != null ? ' · ${w.location}' : ''}',
                       maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600))),
+                      style: TextStyle(fontSize: 11.5, color: _dgrey))),
                 ]),
                 const SizedBox(height: 7),
                 Wrap(spacing: 6, runSpacing: 5, children: [
@@ -223,7 +231,7 @@ class _WorkOrdersScreenState extends State<WorkOrdersScreen> {
                 ]),
               ])),
               const SizedBox(width: 4),
-              const Icon(Icons.chevron_left_rounded, color: Colors.grey, size: 20),
+              const Icon(Icons.chevron_left_rounded, color: _dgrey, size: 20),
             ]),
           ),
         ),
@@ -241,9 +249,9 @@ class _WorkOrdersScreenState extends State<WorkOrdersScreen> {
 
   Widget _msg(String text) => ListView(children: [
         const SizedBox(height: 100),
-        Icon(Icons.assignment_outlined, size: 56, color: Colors.grey.shade300),
+        Icon(Icons.assignment_outlined, size: 56, color: _dborder),
         const SizedBox(height: 12),
         Center(child: Text(text, textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w600))),
+            style: TextStyle(color: _dgrey, fontWeight: FontWeight.w600))),
       ]);
 }

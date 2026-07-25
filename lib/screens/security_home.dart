@@ -15,8 +15,10 @@ import 'security_gatepasses_screen.dart';
 import 'security_emergency_screen.dart';
 import 'security_stream_screen.dart';
 import 'live_stream_banner.dart';
+import 'heartbeat_pinger.dart';
 import 'security_patrols_screen.dart';
 import 'supervisor_screen.dart';
+import 'security_supervisor_screen.dart';
 import 'shift_card.dart';
 
 /// The security app's face — deliberately different: a dark "command centre"
@@ -67,6 +69,7 @@ class SecurityHome extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
+          const HeartbeatPinger(),
           const LiveStreamBanner(),
           MyStatsRow(counts: p.counts),
           const SizedBox(height: 14),
@@ -78,6 +81,13 @@ class SecurityHome extends StatelessWidget {
             crossAxisSpacing: 12,
             childAspectRatio: 1.05,
             children: [
+              if (p.isSupervisor)
+                _Tile(
+                  icon: '🎖️', label: tr('أدوات المشرف', 'Supervisor tools'),
+                  sub: tr('مهام · دوريات · تصاريح · حالة الفريق', 'Assign · patrols · team status'),
+                  onTap: () => Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const SecuritySupervisorScreen())),
+                ),
               if (p.isSupervisor)
                 _Tile(
                   icon: '🧭', label: 'لوحة المشرف',

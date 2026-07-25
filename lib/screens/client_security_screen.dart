@@ -4,6 +4,7 @@ import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/service_ui.dart';
 import 'stream_view_screen.dart';
+import 'security_supervisor_screen.dart';
 import 'excel_export.dart';
 import 'security_gatepass_create.dart';
 import 'client_workorder_create.dart';
@@ -92,6 +93,11 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
       appBar: AppBar(
         title: Text(tr('الأمن', 'Security')),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.add_task_rounded),
+            tooltip: tr('أدوات الإدارة (إنشاء/إسناد)', 'Manage (create/assign)'),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecuritySupervisorScreen())),
+          ),
           IconButton(
             icon: const Icon(Icons.vpn_key_rounded),
             tooltip: tr('هبات المفاتيح', 'Key hubs'),
