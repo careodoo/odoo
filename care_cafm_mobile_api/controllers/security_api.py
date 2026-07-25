@@ -806,19 +806,8 @@ class SecurityMobileApi(Controller):
         if 'security.patrol' not in env:
             return _ok({'items': [], 'stats': {}})
         P = env['security.patrol'].sudo()
-        g = self._my_guard(env)
-        # نطاق مواقع الفريق (يشمل زملاء الحارس على نفس المنشآت)
-        prem_ids = []
-        if g and g.security_employee_id and g.security_employee_id.team_ids:
-            prem_ids = g.security_employee_id.team_ids.mapped('premise_id').ids
-        is_mgr = env.user.has_group('base.group_erp_manager') or env.user.has_group('base.group_system')
-        if prem_ids and 'premise_id' in P._fields:
-            dom = [('premise_id', 'in', prem_ids)]
-        elif g:
-            dom = [('guard_id', '=', g.id)]
-        elif is_mgr:
-            dom = []  # مدير النظام فقط: كل السجل
-        else:
+        dom = self._patrol_log_domain(env)
+        if dom is None:
             return _ok({'items': [], 'stats': {}})  # لا حارس ولا مدير → لا شيء (لا تسريب)
         if status in ('scheduled', 'in_progress', 'completed', 'cancelled'):
             dom = dom + [('state', '=', status)]
@@ -833,6 +822,51 @@ class SecurityMobileApi(Controller):
                 'completed': P.search_count(base + [('state', '=', 'completed')]),
             },
         })
+
+    def _patrol_log_domain(self, env):
+        """نطاق سجل الجولات المشترك بين العرض والتصدير."""
+        P = env['security.patrol'].sudo()
+        g = self._my_guard(env)
+        prem_ids = []
+        if g and g.security_employee_id and g.security_employee_id.team_ids:
+            prem_ids = g.security_employee_id.team_ids.mapped('premise_id').ids
+        is_mgr = env.user.has_group('base.group_erp_manager') or env.user.has_group('base.group_system')
+        if prem_ids and 'premise_id' in P._fields:
+            return [('premise_id', 'in', prem_ids)]
+        if g:
+            return [('guard_id', '=', g.id)]
+        if is_mgr:
+            return []
+        return None  # لا حارس ولا مدير
+
+    @route('/cafm/security/patrol_log/export', type='http', auth='public', methods=['GET'], csrf=False)
+    def patrol_log_export(self, **kw):
+        """تصدير سجل الجولات إلى Excel (مواعيد مجدولة/فعلية + مدّة + إنجاز + حارس)."""
+        from odoo import _
+        from .client_api import _xlsx_response, _report_env
+        env = _report_env()
+        if not env:
+            return request.redirect('/web/login')
+        if 'security.patrol' not in env:
+            return request.not_found()
+        dom = self._patrol_log_domain(env)
+        if dom is None:
+            dom = [('id', '=', 0)]
+        recs = env['security.patrol'].sudo().search(dom, order='scheduled_start desc, id desc', limit=5000)
+        columns = [_('#'), _('الجولة'), _('المسار'), _('الموقع'), _('الحارس'), _('النوع'),
+                   _('المجدول'), _('البدء الفعلي'), _('الإنجاز الفعلي'), _('المدّة (ساعة)'),
+                   _('النقاط'), _('الإنجاز %'), _('الحالة')]
+        rows = []
+        for i, p in enumerate(recs, 1):
+            d = self._patrol_dict2(p)
+            rows.append([i, d['name'] or '', d['route'] or '', d['premise'] or '', d['guard'] or '',
+                         d['patrol_type'] or '', d['scheduled_start'] or '', d['actual_start'] or '',
+                         d['actual_end'] or '', d['actual_duration'] or 0,
+                         '%s/%s' % (d['points_done'], d['points_total']), d['completion'] or 0,
+                         d['state_label'] or ''])
+        meta = [(_('عدد الجولات'), len(recs)),
+                (_('منجَزة'), env['security.patrol'].sudo().search_count(dom + [('state', '=', 'completed')]) if dom != [('id', '=', 0)] else 0)]
+        return _xlsx_response(_('سجل الجولات'), columns, rows, 'patrol-log.xlsx', meta)
 
     @route(API + '/security/patrol/<int:pid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def patrol_detail(self, pid, **kw):
