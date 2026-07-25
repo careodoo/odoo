@@ -74,17 +74,16 @@ class PurchaseRequest(models.Model):
             if rec.signature_lines:
                 rec.signature_users = [(6, 0, [u.id for u in rec.signature_lines.mapped('employee_id').mapped('user_id')])]
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New')) == _('New'):
-            department_id = vals.get('department_id')
-            department = self.env['hr.department'].browse(department_id)
-            if not department.short_code:
-                raise UserError(_("Department {} has no short code".format(department.name)))
-            vals['name'] = department.short_code + '/' + self.env['ir.sequence'].next_by_code('purchase.request') + '/' + str(date.today().year) or _('New')
-
-        result = super(PurchaseRequest, self).create(vals)
-        return result
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', _('New')) == _('New'):
+                department_id = vals.get('department_id')
+                department = self.env['hr.department'].browse(department_id)
+                if not department.short_code:
+                    raise UserError(_("Department {} has no short code".format(department.name)))
+                vals['name'] = department.short_code + '/' + self.env['ir.sequence'].next_by_code('purchase.request') + '/' + str(date.today().year) or _('New')
+        return super(PurchaseRequest, self).create(vals_list)
 
     def show_results(self):
         domain = []
@@ -178,7 +177,7 @@ class PurchaseSign(models.Model):
     company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env.company, required=True)
     rec_name = fields.Char(compute='compute_rec_name', store=True)
 
-    @api.depends('purchase_order_id')
+    @api.depends('purchase_order_id', 'request_id')
     def compute_rec_name(self):
         for rec in self:
             rec.rec_name = ''

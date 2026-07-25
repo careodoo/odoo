@@ -37,7 +37,7 @@ class CostCenter(models.Model):
     @api.depends('month_ids.remaining_budget')
     def compute_remaining_budget(self):
         for rec in self:
-            rec.remaining_annual_budget = sum(rec.month_ids.mapped('remaining_budget')) if rec.month_ids else False
+            rec.remaining_annual_budget = sum(rec.month_ids.mapped('remaining_budget')) if rec.month_ids else 0.0
 
     def get_monthly_budget(self, date):
         budget = 0
@@ -163,7 +163,6 @@ class CostCenter(models.Model):
             'name': 'Transfer Budget',
             'type': 'ir.actions.act_window',
             'view_mode': 'form',
-            'view_type': 'form',
             'res_model': 'cost.center.transfer.budget',
             'target': 'new',
             'context': {
@@ -176,7 +175,6 @@ class CostCenter(models.Model):
             'name': 'Add Extra Budget',
             'type': 'ir.actions.act_window',
             'view_mode': 'form',
-            'view_type': 'form',
             'res_model': 'cost.center.extra.budget',
             'target': 'new',
             'context': {
@@ -233,6 +231,7 @@ class CostCenterExtraBudget(models.Model):
         ('draft', 'Draft'), ('sent', 'Sent'), ('confirm', 'Confirm')
     ], default='draft')
 
+    @api.depends('signature_lines.confirm', 'signature_lines.employee_id', 'signature_users')
     def compute_user_confirmed(self):
         for rec in self:
             rec.user_confirmed = False
@@ -300,7 +299,9 @@ class CostCenterTransferBudget(models.Model):
             raise UserError("Amount is more than remaining budget!")
 
     def button_transfer(self):
-        self.from_month.remaining_budget -= self.amount
+        # remaining_budget حقل محسوب (total - used) لا يجوز الكتابة عليه مباشرةً
+        # لأنه يُعاد حسابه؛ نخفض ميزانية التحويل بالمصدر فينخفض المتبقّي تبعاً.
+        self.from_month.transfer_budget -= self.amount
         self.to_month.transfer_budget += self.amount
 
 

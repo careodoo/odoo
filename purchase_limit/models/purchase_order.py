@@ -14,20 +14,23 @@ class PurchaseOrder(models.Model):
             if rec.signature_lines:
                 rec.signature_users = [(6, 0, [u.id for u in rec.signature_lines.mapped('employee_id').mapped('user_id')])]
 
-    @api.model
-    def create(self, vals):
-        res = super(PurchaseOrder, self).create(vals)
-        if res.amount_total and res.cost_center_id:
-            if res.cost_center_id.purchase_limit and res.amount_total > res.cost_center_id.purchase_limit:
-                raise ValidationError("You have exceeded purchase limit for {} cost center".format(res.cost_center_id.name))
-        return res
+    def _check_purchase_limit(self):
+        # يتحقّق من عدم تجاوز حدّ الشراء لكل أمر على حِدة (آمن مع تعدّد السجلات)
+        for rec in self:
+            cc = rec.cost_center_id
+            if rec.amount_total and cc and cc.purchase_limit and rec.amount_total > cc.purchase_limit:
+                raise ValidationError(
+                    "You have exceeded purchase limit for {} cost center".format(cc.name))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._check_purchase_limit()
+        return records
 
     def write(self, vals):
         res = super().write(vals)
-        if self.amount_total and self.cost_center_id:
-            if self.cost_center_id.purchase_limit and self.amount_total > self.cost_center_id.purchase_limit:
-                raise ValidationError(
-                    "You have exceeded purchase limit for {} cost center".format(self.cost_center_id.name))
+        self._check_purchase_limit()
         return res
 
     def button_confirm(self):

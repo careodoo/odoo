@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- ============ أفعال الموديولات الفرعية لمركز التكلفة ============ -->
+        <record id="action_cost_center_month" model="ir.actions.act_window">
+            <field name="name">الميزانيات الشهرية</field>
+            <field name="res_model">cost.center.month</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'search_default_group_cost_center': 1}</field>
+        </record>
+
+        <record id="action_cost_center_extra" model="ir.actions.act_window">
+            <field name="name">الميزانيات الإضافية</field>
+            <field name="res_model">cost.center.extra.budget</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="action_cost_center_transfer" model="ir.actions.act_window">
+            <field name="name">تحويلات الميزانية</field>
+            <field name="res_model">cost.center.transfer.budget</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="action_default_cost_center_sign" model="ir.actions.act_window">
+            <field name="name">المعتمِدون الافتراضيون</field>
+            <field name="res_model">default.cost.center.sign</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- ============ تطبيق مستقلّ منظّم: مراكز التكلفة ============ -->
+        <menuitem id="menu_cost_center_root" name="💰 مراكز التكلفة"
+                  sequence="53" groups="purchase_limit.group_cost_center_user"/>
+
+        <!-- العمليات -->
+        <menuitem id="menu_cost_center_ops" name="العمليات"
+                  parent="menu_cost_center_root" sequence="10"/>
+        <menuitem id="menu_cc_centers" name="🏢 مراكز التكلفة"
+                  parent="menu_cost_center_ops" sequence="10"
+                  action="purchase_report.cost_center_action"/>
+        <menuitem id="menu_cc_month" name="📅 الميزانيات الشهرية"
+                  parent="menu_cost_center_ops" sequence="20"
+                  action="action_cost_center_month"/>
+        <menuitem id="menu_cc_extra" name="➕ الميزانيات الإضافية"
+                  parent="menu_cost_center_ops" sequence="30"
+                  action="action_cost_center_extra"/>
+        <menuitem id="menu_cc_transfer" name="🔄 تحويلات الميزانية"
+                  parent="menu_cost_center_ops" sequence="40"
+                  action="action_cost_center_transfer"/>
+
+        <!-- الإعداد (للمديرين) -->
+        <menuitem id="menu_cost_center_config" name="الإعداد"
+                  parent="menu_cost_center_root" sequence="90"
+                  groups="purchase_limit.group_cost_center_manager"/>
+        <menuitem id="menu_cc_default_sign" name="✍️ المعتمِدون الافتراضيون"
+                  parent="menu_cost_center_config" sequence="10"
+                  action="action_default_cost_center_sign"/>
+    </data>
+</odoo>

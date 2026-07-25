@@ -29,6 +29,7 @@
         'data/server_action.xml',
         'data/mail_template_data.xml',
         'views/cost_center.xml',
+        'views/cost_center_menus.xml',
         'views/purchase_order.xml',
         'views/cost_center_sign.xml',
         'views/purchase_sign.xml',
