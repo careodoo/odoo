@@ -238,6 +238,35 @@ class SecurityClientApi(Controller):
             pass
         return _ok({'items': [self._archive_dict(s) for s in sess]})
 
+    @route(API + '/client/security/stream/archive/<int:sid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def sec_stream_archive_detail(self, sid, **kw):
+        """تفاصيل بثّ مؤرشف على موقع العميل: التسجيل + الدردشة + المشاهدون —
+        مقيّد بنطاق مواقع العميل حتى لا يرى تفاصيل بثٍّ ليس له."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.stream.session' not in env:
+            return _err('غير متاح', 404)
+        s = env['care.stream.session'].sudo().browse(sid)
+        pids, cids = self._scope(env)
+        allowed = self._premise_incident_ids(env, pids)
+        if not s.exists() or s.incident_id not in allowed or s.audience not in ('all', 'client'):
+            return _err('غير موجود', 404)
+        if not s.recording_url:
+            try:
+                s._fetch_recording()
+            except Exception:
+                pass
+        d = self._archive_dict(s)
+        d['client'] = s.client_name or None
+        d['audience'] = s.audience
+        d['messages'] = [{
+            'name': m.user_name or 'مستخدم', 'body': m.body, 'kind': m.kind,
+            'is_client': m.is_client, 'at': str(m.created_at or '')[11:16],
+        } for m in s.message_ids]
+        d['viewers_list'] = [{'name': v.user_name, 'joined': str(v.joined_at or '')[11:16]} for v in s.viewer_ids]
+        return _ok(d)
+
     @route(API + '/client/security/incident/<int:iid>/watch', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def sec_incident_watch(self, iid, **kw):
         """العميل يشاهد بثّ بلاغٍ في موقعه — يُسجَّل مشاهداً ويُرجع روابط ومعلومات

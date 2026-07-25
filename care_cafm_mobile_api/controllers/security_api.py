@@ -739,12 +739,24 @@ class SecurityMobileApi(Controller):
         F = p._fields
         pts = list(p.patrol_point_ids) if 'patrol_point_ids' in F else []
         scanned = set(p.log_ids.mapped('point_id').ids) if 'log_ids' in F else set()
+        def _dt(f):
+            return str(p[f] or '')[:16] or None if f in F else None
+        # الوقت الفعلي للبدء/الإنجاز — الحقول تختلف بين إصدارات الموديل
+        a_start = _dt('actual_start_time') or _dt('start_time')
+        a_end = _dt('actual_end_time') or _dt('end_time')
+        adur = (p.actual_duration if 'actual_duration' in F else 0.0) or 0.0
         d = {
             'id': p.id, 'name': p.name, 'state': p.state,
             'state_label': dict(p._fields['state'].selection).get(p.state, p.state),
             'route': p.route_id.name if ('route_id' in F and p.route_id) else None,
             'premise': p.premise_id.name if ('premise_id' in F and p.premise_id) else None,
-            'scheduled_start': str(p.scheduled_start or '')[:16] or None,
+            'guard': p.guard_id.name if ('guard_id' in F and p.guard_id) else None,
+            'patrol_type': (dict(p._fields['patrol_type'].selection).get(p.patrol_type, p.patrol_type)
+                            if 'patrol_type' in F and p.patrol_type else None),
+            'scheduled_start': _dt('scheduled_start'),
+            'scheduled_end': _dt('scheduled_end'),
+            'actual_start': a_start, 'actual_end': a_end,
+            'actual_duration': round(adur, 2),
             'points_total': len(pts), 'points_done': len([1 for pt in pts if pt.id in scanned]),
             'completion': round(p.completion_rate or 0.0, 0) if 'completion_rate' in F else 0,
         }
@@ -781,6 +793,42 @@ class SecurityMobileApi(Controller):
                 'scheduled': P.search_count(dom + [('state', '=', 'scheduled')]),
                 'in_progress': P.search_count(dom + [('state', '=', 'in_progress')]),
                 'completed': P.search_count(dom + [('state', '=', 'completed')]),
+            },
+        })
+
+    @route(API + '/security/patrol_log', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def patrol_log(self, scope='team', status=None, **kw):
+        """سجل الجولات لكامل مواقع فريق الحارس (لا دورياته وحده): المجدولة والجارية
+        والمنجَزة مع مواعيد البدء/الإنجاز الفعلية والمدّة ونِسَب الإنجاز. مرتّب زمنياً."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'security.patrol' not in env:
+            return _ok({'items': [], 'stats': {}})
+        P = env['security.patrol'].sudo()
+        g = self._my_guard(env)
+        # نطاق مواقع الفريق (يشمل زملاء الحارس على نفس المنشآت)
+        prem_ids = []
+        if g and g.security_employee_id and g.security_employee_id.team_ids:
+            prem_ids = g.security_employee_id.team_ids.mapped('premise_id').ids
+        if prem_ids and 'premise_id' in P._fields:
+            dom = [('premise_id', 'in', prem_ids)]
+        elif g:
+            dom = ['|', ('guard_id', '=', g.id),
+                   ('guard_id.security_employee_id.team_ids.premise_id', 'in', prem_ids or [0])]
+        else:
+            dom = []  # مشرف/مدير: كل السجل
+        if status in ('scheduled', 'in_progress', 'completed', 'cancelled'):
+            dom = dom + [('state', '=', status)]
+        recs = P.search(dom, order='scheduled_start desc, id desc', limit=120)
+        base = [d for d in dom if not (isinstance(d, (list, tuple)) and d and d[0] == 'state')]
+        return _ok({
+            'items': [self._patrol_dict2(p) for p in recs],
+            'stats': {
+                'total': P.search_count(base),
+                'scheduled': P.search_count(base + [('state', '=', 'scheduled')]),
+                'in_progress': P.search_count(base + [('state', '=', 'in_progress')]),
+                'completed': P.search_count(base + [('state', '=', 'completed')]),
             },
         })
 

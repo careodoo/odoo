@@ -187,7 +187,9 @@ class SecuritySupervisorApi(Controller):
             dc = self._default_client(env)
             client = int(b['client_id']) if b.get('client_id') else (dc.id if dc else False)
             today = fields.Date.today()
-            prem = self._default_premise(env)
+            # الموقع: من الطلب إن حُدِّد، وإلا الموقع الافتراضي للمشرف
+            prem = (env['security.premise'].sudo().browse(int(b['premise_id']))
+                    if b.get('premise_id') else self._default_premise(env))
             # الزائر شريك (res.partner) — ننشئه بـ SQL لتخطّي mail thread (يطلق
             # خطأ بيئياً: حقل project.task.is_closed مفقود يُقيَّم عبر التتبّع).
             from odoo import SUPERUSER_ID
@@ -332,6 +334,16 @@ class SecuritySupervisorApi(Controller):
         }
         if b.get('timestamp'):
             vals['timestamp'] = b['timestamp']
+        # حقول تفصيلية إضافية — تُكتب فقط إن كانت موجودة في الموديل
+        extra = {
+            'area': b.get('area'), 'location': b.get('area'),
+            'corrective_action': b.get('corrective_action'),
+            'action_required': b.get('corrective_action'),
+            'follow_up_date': b.get('follow_up_date'),
+        }
+        for f, v in extra.items():
+            if v and f in I._fields and f not in vals:
+                vals[f] = v
         try:
             rec = I.create(vals)
         except Exception as e:
