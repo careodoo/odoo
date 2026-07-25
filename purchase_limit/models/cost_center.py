@@ -34,6 +34,22 @@ class CostCenter(models.Model):
     def diff_year(self, start, end):
         return end.year - start.year - ((end.month, end.day) < (start.month, start.day))
 
+    # مؤشّرات لوحة القيادة (غير مخزّنة — للعرض في الكانبان)
+    dash_total = fields.Float(string='إجمالي الميزانية', compute='_compute_dashboard')
+    dash_used = fields.Float(string='المستهلك', compute='_compute_dashboard')
+    dash_remaining = fields.Float(string='المتبقّي', compute='_compute_dashboard')
+    dash_usage = fields.Float(string='نسبة الاستهلاك %', compute='_compute_dashboard')
+
+    @api.depends('month_ids.total_budget', 'month_ids.used_budget', 'month_ids.remaining_budget')
+    def _compute_dashboard(self):
+        for rec in self:
+            total = sum(rec.month_ids.mapped('total_budget'))
+            used = sum(rec.month_ids.mapped('used_budget'))
+            rec.dash_total = total
+            rec.dash_used = used
+            rec.dash_remaining = sum(rec.month_ids.mapped('remaining_budget'))
+            rec.dash_usage = round((used / total * 100) if total else 0.0, 1)
+
     @api.depends('month_ids.remaining_budget')
     def compute_remaining_budget(self):
         for rec in self:

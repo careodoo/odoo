@@ -1,6 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
+        <!-- ============ لوحة كانبان احترافية لمراكز التكلفة (مؤشّرات الميزانية) ============ -->
+        <record id="view_cost_center_kanban" model="ir.ui.view">
+            <field name="name">cost.center.kanban</field>
+            <field name="model">cost.center</field>
+            <field name="arch" type="xml">
+                <kanban class="o_kanban_dashboard" create="true">
+                    <field name="name"/>
+                    <field name="type"/>
+                    <field name="dash_total"/>
+                    <field name="dash_used"/>
+                    <field name="dash_remaining"/>
+                    <field name="dash_usage"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div class="oe_kanban_global_click" style="padding:14px;border-radius:14px">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <strong style="font-size:15px" t-esc="record.name.value"/>
+                                    <span class="badge rounded-pill text-bg-secondary" t-esc="record.type.value"/>
+                                </div>
+                                <div class="progress" style="height:8px;border-radius:6px">
+                                    <div class="progress-bar"
+                                         t-attf-style="width:#{Math.min(record.dash_usage.raw_value or 0,100)}%;background:#{(record.dash_usage.raw_value or 0) >= 90 ? '#DC2626' : (record.dash_usage.raw_value or 0) >= 70 ? '#F59E0B' : '#16A34A'}"/>
+                                </div>
+                                <div class="text-muted mt-1" style="font-size:12px">
+                                    <t t-esc="record.dash_usage.value"/>% مستهلك
+                                </div>
+                                <div class="row mt-2 text-center">
+                                    <div class="col-4">
+                                        <div style="font-size:11px;color:#888">الإجمالي</div>
+                                        <strong style="color:#2563EB" t-esc="record.dash_total.value"/>
+                                    </div>
+                                    <div class="col-4">
+                                        <div style="font-size:11px;color:#888">المستهلك</div>
+                                        <strong style="color:#DC2626" t-esc="record.dash_used.value"/>
+                                    </div>
+                                    <div class="col-4">
+                                        <div style="font-size:11px;color:#888">المتبقّي</div>
+                                        <strong style="color:#16A34A" t-esc="record.dash_remaining.value"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <!-- إضافة الكانبان كواجهة أولى لفعل مراكز التكلفة -->
+        <record id="purchase_report.cost_center_action" model="ir.actions.act_window">
+            <field name="view_mode">kanban,tree,form</field>
+        </record>
+
         <!-- ============ أفعال الموديولات الفرعية لمركز التكلفة ============ -->
         <record id="action_cost_center_month" model="ir.actions.act_window">
             <field name="name">الميزانيات الشهرية</field>
