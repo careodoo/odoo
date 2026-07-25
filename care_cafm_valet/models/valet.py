@@ -177,7 +177,7 @@ class ValetTicket(models.Model):
             self.env['care.cafm.notification'].sudo().push(
                 users, _('🚗 Vehicle Retrieval Request'),
                 '%s — %s%s' % (self.plate, self.name, (' · %s' % where) if where else ''),
-                ntype='alert', action_url='/cafm/m/valet')
+                ntype='alert', action_url='/cafm/m/valet', record=self)
         except Exception:
             pass
 

@@ -56,7 +56,13 @@ class PMManagerPortal(CustomerPortal):
             {'label': 'التايم شيت', 'url': b + '/timesheet', 'icon': '🗓️', 'active': active == 'timesheet'},
             {'label': 'الملف المالي', 'url': b + '/finance', 'icon': '💵', 'active': active == 'finance'},
             {'label': 'أداء الفريق', 'url': b + '/performance', 'icon': '📈', 'active': active == 'performance'},
-        ]
+        ] + ([
+            {'label': 'الإيقاف عن العمل', 'url': b + '/suspension', 'icon': '⛔', 'active': active == 'suspension'},
+        ] if 'care.suspension.request' in request.env else []) + ([
+            {'label': 'طلب الأصناف', 'url': b + '/items', 'icon': '📋', 'active': active == 'items'},
+        ] if 'care.item.request' in request.env else []) + ([
+            {'label': 'التصاريح', 'url': b + '/permits', 'icon': '🛂', 'active': active == 'permits'},
+        ] if 'care.project.permit' in request.env else [])
 
     def _base(self, menu, title, **extra):
         v = {'menu': menu, 'user_name': request.env.user.name, 'title': title,
@@ -342,11 +348,47 @@ class PMManagerPortal(CustomerPortal):
         p, red = self._proj_or_redirect(project_id)
         if red:
             return red
+        env = request.env
         dept = p.pms_department_id.id
-        uses = (request.env['petrol.tank.use'].sudo().search([('vehicle_id.department_id', '=', dept)], limit=100)
-                if dept and 'petrol.tank.use' in request.env else request.env['petrol.tank.use'].sudo().browse())
+        # New fuel module (cards / cash + receipt) supersedes the tank log.
+        if 'care.fuel.entry' in env:
+            entries = env['care.fuel.entry'].sudo().search([('project_id', '=', p.id)], limit=100)
+            cards = env['care.fuel.card'].sudo().search([('project_id', '=', p.id)])
+            vehicles = env['fleet.vehicle'].sudo().search([('department_id', '=', dept)], limit=300) if dept else env['fleet.vehicle'].browse()
+            return request.render('care_pms.pm_p_fuel', self._base(
+                self._menu_project(p, 'fuel'), p.name, project=p, new_fuel=True,
+                entries=entries, cards=cards, vehicles=vehicles,
+                ok=kw.get('ok'), err=kw.get('err')))
+        uses = (env['petrol.tank.use'].sudo().search([('vehicle_id.department_id', '=', dept)], limit=100)
+                if dept and 'petrol.tank.use' in env else env['petrol.tank.use'].sudo().browse())
         return request.render('care_pms.pm_p_fuel', self._base(
             self._menu_project(p, 'fuel'), p.name, project=p, uses=uses))
+
+    @http.route(['/my/pm/p/<int:project_id>/fuel/create'], type='http', auth='user', website=True, methods=['POST'])
+    def pm_create_fuel(self, project_id=None, **kw):
+        p, red = self._proj_or_redirect(project_id)
+        if red:
+            return red
+        env = request.env
+        if 'care.fuel.entry' not in env:
+            return request.redirect('/my/pm/p/%s/fuel?err=1' % project_id)
+        try:
+            method = kw.get('method') or 'card'
+            vals = {'project_id': project_id, 'method': method,
+                    'amount': float(kw.get('amount') or 0),
+                    'liters': float(kw.get('liters') or 0) if kw.get('liters') else 0,
+                    'station': kw.get('station') or False, 'note': kw.get('note') or False}
+            if kw.get('vehicle_id'):
+                vals['vehicle_id'] = int(kw['vehicle_id'])
+            if method == 'card' and kw.get('card_id'):
+                vals['card_id'] = int(kw['card_id'])
+            if kw.get('odometer'):
+                vals['odometer'] = float(kw['odometer'])
+            rec = env['care.fuel.entry'].sudo().create(vals)
+            rec.action_confirm()
+        except Exception:
+            return request.redirect('/my/pm/p/%s/fuel?err=1' % project_id)
+        return request.redirect('/my/pm/p/%s/fuel?ok=1' % project_id)
 
     @http.route(['/my/pm/p/<int:project_id>/team'], type='http', auth='user', website=True)
     def pm_p_team(self, project_id=None, q=None, **kw):
@@ -400,10 +442,63 @@ class PMManagerPortal(CustomerPortal):
             return red
         env = request.env
         sheets = env['care.timesheet'].sudo().search(
-            [('department_id', '=', p.pms_department_id.id)], order='id desc', limit=30) if p.pms_department_id else env['care.timesheet'].sudo().browse()
+            [('department_id', '=', p.pms_department_id.id)], order='date_from desc, id desc', limit=30) if p.pms_department_id else env['care.timesheet'].sudo().browse()
+        u = env.user
+        is_hr = bool(u.has_group('hr.group_hr_user') or u.has_group('base.group_erp_manager') or u.has_group('base.group_system'))
+        new_ts = 'adjusted_days' in env['care.timesheet.line']._fields
         return request.render('care_pms.pm_p_timesheet', self._base(
             self._menu_project(p, 'timesheet'), p.name, project=p, sheets=sheets,
+            is_hr=is_hr, new_ts=new_ts,
             today=fields.Date.today(), ok=kw.get('ok'), err=kw.get('err')))
+
+    @http.route(['/my/pm/p/<int:project_id>/timesheet/<int:tid>/<string:act>'],
+                type='http', auth='user', website=True, methods=['POST'])
+    def pm_timesheet_action(self, project_id=None, tid=None, act=None, **kw):
+        p, red = self._proj_or_redirect(project_id)
+        if red:
+            return red
+        env = request.env
+        u = env.user
+        is_hr = bool(u.has_group('hr.group_hr_user') or u.has_group('base.group_erp_manager') or u.has_group('base.group_system'))
+        ts = env['care.timesheet'].sudo().browse(int(tid))
+        if not ts.exists() or ts.department_id.id != p.pms_department_id.id:
+            return request.redirect('/my/pm/p/%s/timesheet?err=1' % project_id)
+        try:
+            if act == 'submit' and ts.state == 'draft':
+                ts.button_submit()
+            elif act == 'approve_all' and is_hr:
+                ts.button_approve_all()
+            elif act == 'reject_all' and is_hr:
+                ts.button_reject_all()
+            else:
+                return request.redirect('/my/pm/p/%s/timesheet?err=perm' % project_id)
+        except Exception:
+            return request.redirect('/my/pm/p/%s/timesheet?err=1' % project_id)
+        return request.redirect('/my/pm/p/%s/timesheet?ok=1' % project_id)
+
+    @http.route(['/my/pm/p/<int:project_id>/timesheet/line/<int:lid>/<string:act>'],
+                type='http', auth='user', website=True, methods=['POST'])
+    def pm_timesheet_line_action(self, project_id=None, lid=None, act=None, **kw):
+        p, red = self._proj_or_redirect(project_id)
+        if red:
+            return red
+        env = request.env
+        u = env.user
+        if not (u.has_group('hr.group_hr_user') or u.has_group('base.group_erp_manager') or u.has_group('base.group_system')):
+            return request.redirect('/my/pm/p/%s/timesheet?err=perm' % project_id)
+        line = env['care.timesheet.line'].sudo().browse(int(lid))
+        if not line.exists():
+            return request.redirect('/my/pm/p/%s/timesheet?err=1' % project_id)
+        try:
+            if kw.get('adjusted') not in (None, ''):
+                line.write({'adjusted_days': int(kw['adjusted']), 'note': kw.get('note') or line.note})
+            if act == 'approve':
+                line.action_approve_line()
+            elif act == 'reject':
+                line.action_reject_line()
+        except Exception:
+            return request.redirect('/my/pm/p/%s/timesheet?err=1' % project_id)
+        return request.redirect('/my/pm/p/%s/timesheet?ok=1' % project_id)
 
     def _mgr_departments(self):
         return self._pm_projects().mapped('pms_department_id')
@@ -599,3 +694,172 @@ class PMManagerPortal(CustomerPortal):
         except Exception:
             return request.redirect('/my/pm/p/%s/requests?err=1' % project_id)
         return request.redirect('/my/pm/p/%s/requests?ok=1' % project_id)
+
+    # ==================== work suspension (الإيقاف عن العمل) ====================
+    def _can_approve_suspension(self):
+        u = request.env.user
+        return bool(u.has_group('hr.group_hr_user') or u.has_group('base.group_erp_manager')
+                    or u.has_group('base.group_system'))
+
+    @http.route(['/my/pm/p/<int:project_id>/suspension'], type='http', auth='user', website=True)
+    def pm_p_suspension(self, project_id=None, **kw):
+        p, red = self._proj_or_redirect(project_id)
+        if red:
+            return red
+        env = request.env
+        if 'care.suspension.request' not in env:
+            return request.redirect('/my/pm/p/%s' % project_id)
+        emps = (env['hr.employee'].sudo().search([('department_id', '=', p.pms_department_id.id)], limit=400)
+                if p.pms_department_id else env['hr.employee'].sudo().browse())
+        S = env['care.suspension.request'].sudo()
+        return request.render('care_pms.pm_p_suspension', self._base(
+            self._menu_project(p, 'suspension'), p.name, project=p, employees=emps,
+            suspensions=S.search([('project_id', '=', p.id)], limit=100),
+            reasons=S._fields['reason'].selection,
+            can_approve=self._can_approve_suspension(),
+            ok=kw.get('ok'), err=kw.get('err')))
+
+    @http.route(['/my/pm/p/<int:project_id>/suspension/create'],
+                type='http', auth='user', website=True, methods=['POST'])
+    def pm_create_suspension(self, project_id=None, **kw):
+        p, red = self._proj_or_redirect(project_id)
+        if red:
+            return red
+        env = request.env
+        if 'care.suspension.request' not in env or not kw.get('employee_id') or not kw.get('reason'):
+            return request.redirect('/my/pm/p/%s/suspension?err=1' % project_id)
+        try:
+            rec = env['care.suspension.request'].sudo().create({
+                'employee_id': int(kw['employee_id']), 'project_id': project_id,
+                'reason': kw['reason'], 'other_reason': kw.get('other_reason') or False,
+                'effective_date': kw.get('effective_date') or False,
+                'note': kw.get('note') or False})
+            rec.action_submit()   # straight to HR
+        except Exception:
+            return request.redirect('/my/pm/p/%s/suspension?err=1' % project_id)
+        return request.redirect('/my/pm/p/%s/suspension?ok=1' % project_id)
+
+    @http.route(['/my/pm/p/<int:project_id>/suspension/<int:sid>/<string:act>'],
+                type='http', auth='user', website=True, methods=['POST'])
+    def pm_suspension_action(self, project_id=None, sid=None, act=None, **kw):
+        p, red = self._proj_or_redirect(project_id)
+        if red:
+            return red
+        env = request.env
+        rec = env['care.suspension.request'].sudo().browse(int(sid)) if 'care.suspension.request' in env else None
+        if not rec or not rec.exists() or rec.project_id.id != p.id:
+            return request.redirect('/my/pm/p/%s/suspension?err=1' % project_id)
+        if act in ('approve', 'reject') and not self._can_approve_suspension():
+            return request.redirect('/my/pm/p/%s/suspension?err=perm' % project_id)
+        try:
+            {'submit': rec.action_submit, 'approve': rec.action_approve,
+             'reject': rec.action_reject, 'reset': rec.action_reset}.get(act, lambda: None)()
+        except Exception:
+            return request.redirect('/my/pm/p/%s/suspension?err=1' % project_id)
+        return request.redirect('/my/pm/p/%s/suspension?ok=1' % project_id)
+
+    # ==================== request items (طلب الأصناف) ====================
+    def _can_approve_items(self):
+        u = request.env.user
+        return bool(u.has_group('base.group_erp_manager') or u.has_group('base.group_system')
+                    or ('care.item.request' in request.env and u.has_group('care_item_request.group_item_manager')))
+
+    @http.route(['/my/pm/p/<int:project_id>/items'], type='http', auth='user', website=True)
+    def pm_p_items(self, project_id=None, **kw):
+        p, red = self._proj_or_redirect(project_id)
+        if red:
+            return red
+        env = request.env
+        if 'care.item.request' not in env:
+            return request.redirect('/my/pm/p/%s' % project_id)
+        return request.render('care_pms.pm_p_items', self._base(
+            self._menu_project(p, 'items'), p.name, project=p,
+            requests=env['care.item.request'].sudo().search([('project_id', '=', p.id)], limit=100),
+            can_approve=self._can_approve_items(),
+            today=fields.Date.today(), ok=kw.get('ok'), err=kw.get('err')))
+
+    @http.route(['/my/pm/p/<int:project_id>/items/create'], type='http', auth='user', website=True, methods=['POST'])
+    def pm_create_items(self, project_id=None, **kw):
+        p, red = self._proj_or_redirect(project_id)
+        if red:
+            return red
+        env = request.env
+        if 'care.item.request' not in env:
+            return request.redirect('/my/pm/p/%s/items?err=1' % project_id)
+        lines = []
+        for i in range(1, 9):
+            nm = (kw.get('item_%s' % i) or '').strip()
+            qty = kw.get('qty_%s' % i)
+            if nm and qty:
+                try:
+                    lines.append((0, 0, {'name': nm, 'qty': float(qty),
+                                         'uom_name': (kw.get('uom_%s' % i) or 'وحدة')}))
+                except ValueError:
+                    pass
+        if not lines:
+            return request.redirect('/my/pm/p/%s/items?err=empty' % project_id)
+        try:
+            r = env['care.item.request'].sudo().create({
+                'project_id': project_id, 'priority': '1' if kw.get('urgent') else '0',
+                'needed_by': kw.get('needed_by') or False, 'note': kw.get('note') or False,
+                'line_ids': lines})
+            r.action_submit()
+        except Exception:
+            return request.redirect('/my/pm/p/%s/items?err=1' % project_id)
+        return request.redirect('/my/pm/p/%s/items?ok=1' % project_id)
+
+    @http.route(['/my/pm/p/<int:project_id>/items/<int:rid>/<string:act>'], type='http', auth='user', website=True, methods=['POST'])
+    def pm_items_action(self, project_id=None, rid=None, act=None, **kw):
+        p, red = self._proj_or_redirect(project_id)
+        if red:
+            return red
+        env = request.env
+        r = env['care.item.request'].sudo().browse(int(rid)) if 'care.item.request' in env else None
+        if not r or not r.exists() or r.project_id.id != p.id:
+            return request.redirect('/my/pm/p/%s/items?err=1' % project_id)
+        if act in ('approve', 'reject') and not self._can_approve_items():
+            return request.redirect('/my/pm/p/%s/items?err=perm' % project_id)
+        try:
+            {'submit': r.action_submit, 'approve': r.action_approve,
+             'reject': r.action_reject, 'reset': r.action_reset}.get(act, lambda: None)()
+        except Exception:
+            return request.redirect('/my/pm/p/%s/items?err=1' % project_id)
+        return request.redirect('/my/pm/p/%s/items?ok=1' % project_id)
+
+    # ==================== project permits (التصاريح) ====================
+    @http.route(['/my/pm/p/<int:project_id>/permits'], type='http', auth='user', website=True)
+    def pm_p_permits(self, project_id=None, **kw):
+        p, red = self._proj_or_redirect(project_id)
+        if red:
+            return red
+        env = request.env
+        if 'care.project.permit' not in env:
+            return request.redirect('/my/pm/p/%s' % project_id)
+        P = env['care.project.permit'].sudo()
+        return request.render('care_pms.pm_p_permits', self._base(
+            self._menu_project(p, 'permits'), p.name, project=p,
+            permits=P.search([('project_id', '=', p.id)], limit=200),
+            types=P._fields['permit_type'].selection,
+            today=fields.Date.today(), ok=kw.get('ok'), err=kw.get('err')))
+
+    @http.route(['/my/pm/p/<int:project_id>/permits/create'], type='http', auth='user', website=True, methods=['POST'])
+    def pm_create_permit(self, project_id=None, **kw):
+        p, red = self._proj_or_redirect(project_id)
+        if red:
+            return red
+        env = request.env
+        if 'care.project.permit' not in env or not (kw.get('title') or '').strip():
+            return request.redirect('/my/pm/p/%s/permits?err=1' % project_id)
+        try:
+            r = env['care.project.permit'].sudo().create({
+                'project_id': project_id, 'title': kw['title'].strip(),
+                'permit_type': kw.get('permit_type') or 'security',
+                'authority': kw.get('authority') or False,
+                'permit_number': kw.get('permit_number') or False,
+                'issue_date': kw.get('issue_date') or False,
+                'expiry_date': kw.get('expiry_date') or False,
+                'note': kw.get('note') or False})
+            r.action_activate()
+        except Exception:
+            return request.redirect('/my/pm/p/%s/permits?err=1' % project_id)
+        return request.redirect('/my/pm/p/%s/permits?ok=1' % project_id)

@@ -355,7 +355,7 @@ class HospOrder(models.Model):
             return
         try:
             self.env['care.cafm.notification'].sudo().push(
-                users, title, body, ntype='task', action_url='/hosp/order/%s' % self.id)
+                users, title, body, ntype='task', action_url='/hosp/order/%s' % self.id, record=self)
         except Exception:
             pass
 

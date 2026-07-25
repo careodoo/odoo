@@ -14,6 +14,12 @@ TASK_KINDS = [
     ('correspondence', 'Correspondence'),
 ]
 
+# This DB marks a task done via project.task.state (Odoo 17), not a folded stage.
+PMS_DONE_STATES = ('1_done',)
+PMS_CLOSED_STATES = ('1_done', '1_canceled')
+# How long a close-request may sit unanswered before it auto-approves.
+PMS_CLOSE_AUTO_HOURS = 48
+
 
 class ProjectTask(models.Model):
     _inherit = 'project.task'
@@ -25,6 +31,23 @@ class ProjectTask(models.Model):
     task_group_id = fields.Many2one('care.task.group', string='Task Group', index=True)
 
     is_overdue = fields.Boolean(string='Overdue', compute='_compute_is_overdue', store=True, index=True)
+
+    # ----- close-request workflow -----
+    # A task that is ASSIGNED to someone and has a DEADLINE cannot be closed by
+    # the assignee directly; they ask to close it, and the creator (or a manager)
+    # approves — or it auto-approves after PMS_CLOSE_AUTO_HOURS.
+    # NOTE: no tracking=True here — this field is added without a module upgrade
+    # (columns pre-created), so it has no ir.model.fields reflection and mail
+    # tracking would crash. The workflow already posts to chatter via _pms_notify.
+    close_state = fields.Selection(
+        [('none', 'None'), ('requested', 'Close Requested'),
+         ('approved', 'Close Approved'), ('rejected', 'Close Rejected')],
+        string='Close Request', default='none', copy=False, index=True)
+    close_requested_by_id = fields.Many2one('res.users', string='Close Requested By', copy=False)
+    close_requested_on = fields.Datetime(string='Close Requested On', copy=False)
+    close_request_note = fields.Text(string='Close Request Note', copy=False)
+    close_approved_by_id = fields.Many2one('res.users', string='Close Approved By', copy=False)
+    close_auto = fields.Boolean(string='Auto-closed (no response)', copy=False)
 
     # ----- forwarding -----
     forward_to_id = fields.Many2one('res.users', string='Forward To')
@@ -42,11 +65,15 @@ class ProjectTask(models.Model):
         for t in self:
             t.is_forward_recipient = bool(t.forward_to_id and t.forward_to_id.id == uid)
 
-    @api.depends('date_deadline', 'stage_id', 'stage_id.fold')
+    @api.depends('date_deadline', 'stage_id', 'stage_id.fold', 'state')
     def _compute_is_overdue(self):
         now = fields.Datetime.now()
         for t in self:
-            done = bool(t.stage_id and t.stage_id.fold)
+            # "Done" in this DB is the task STATE (1_done / 1_canceled), not a
+            # folded stage — so a closed task must clear its overdue flag and
+            # stop the daily digest. (Fold is kept as a secondary signal.)
+            done = bool((t.state in PMS_CLOSED_STATES)
+                        or (t.stage_id and t.stage_id.fold))
             t.is_overdue = bool(t.date_deadline and t.date_deadline < now and not done)
 
     @api.depends('forward_ids')
@@ -123,6 +150,99 @@ class ProjectTask(models.Model):
             'domain': [('task_id', '=', self.id)],
         }
 
+    # ----- close-request workflow -----
+    def _pms_can_close(self):
+        """Who may close a task directly: the creator, its project manager, a
+        PMS manager/admin, or the superuser. Everyone else (a plain assignee)
+        must go through «request to close»."""
+        self.ensure_one()
+        u = self.env.user
+        if self.env.su or u._is_admin() or u.has_group('care_pms.group_pms_manager'):
+            return True
+        if self.create_uid and self.create_uid.id == u.id:
+            return True
+        if self.project_id.user_id and self.project_id.user_id.id == u.id:
+            return True
+        return False
+
+    def _pms_needs_close_request(self):
+        """The rule only bites tasks that are assigned AND have a deadline."""
+        self.ensure_one()
+        return bool(self.date_deadline and self.user_ids)
+
+    def _pms_close_approvers(self):
+        """Partners who may approve the close: creator + project manager."""
+        self.ensure_one()
+        parts = self.env['res.partner']
+        if self.create_uid and self.create_uid.partner_id:
+            parts |= self.create_uid.partner_id
+        if self.project_id.user_id and self.project_id.user_id.partner_id:
+            parts |= self.project_id.user_id.partner_id
+        return parts
+
+    def action_request_close(self):
+        for task in self:
+            task.write({
+                'close_state': 'requested',
+                'close_requested_by_id': self.env.uid,
+                'close_requested_on': fields.Datetime.now(),
+                'close_auto': False,
+            })
+            task._pms_notify(
+                task._pms_close_approvers(),
+                _('طلب إغلاق تاسك'),
+                _('طلب إغلاق تاسك بانتظار اعتمادك ✅'),
+                _('طلب <b>%s</b> إغلاق التاسك التالي بعد إنجازه. راجعه واعتمد الإغلاق أو ارفضه. '
+                  'إن لم يتم الرد خلال %d ساعة سيُغلق تلقائيًا.')
+                % (self.env.user.name, PMS_CLOSE_AUTO_HOURS),
+                accent='#e08a00')
+        return True
+
+    def action_approve_close(self):
+        for task in self:
+            task.with_context(pms_close_ok=True).write({
+                'state': '1_done',
+                'close_state': 'approved',
+                'close_approved_by_id': self.env.uid,
+            })
+            requester = task.close_requested_by_id
+            if requester and requester.partner_id:
+                task._pms_notify(
+                    requester.partner_id,
+                    _('تم اعتماد إغلاق التاسك'),
+                    _('تم اعتماد إغلاق التاسك ✅'),
+                    _('اعتمد <b>%s</b> إغلاق التاسك الذي طلبت إغلاقه. أصبح الآن مغلقًا.')
+                    % self.env.user.name,
+                    accent='#1a9f6d')
+        return True
+
+    def action_reject_close(self):
+        for task in self:
+            requester = task.close_requested_by_id
+            task.write({'close_state': 'rejected'})
+            if requester and requester.partner_id:
+                task._pms_notify(
+                    requester.partner_id,
+                    _('تم رفض إغلاق التاسك'),
+                    _('تم رفض إغلاق التاسك ✖'),
+                    _('رفض <b>%s</b> طلب إغلاق التاسك. راجع الملاحظات وأكمل العمل عليه.')
+                    % self.env.user.name,
+                    accent='#e2513f')
+        return True
+
+    def write(self, vals):
+        # Enforce the close-request rule: a plain assignee cannot set a deadline
+        # task to a closed state directly — they must request it. The approve
+        # action passes pms_close_ok to bypass this.
+        if (vals.get('state') in PMS_CLOSED_STATES
+                and not self.env.context.get('pms_close_ok') and not self.env.su):
+            for t in self:
+                if t._pms_needs_close_request() and not t._pms_can_close():
+                    raise UserError(_(
+                        'لا يمكنك إغلاق هذا التاسك مباشرةً لأنه موجّه إليك وله موعد استحقاق. '
+                        'اضغط «طلب إغلاق» ليعتمده منشئ التاسك.'))
+        return super().write(vals)
+
     def _pms_email_html(self, title, intro, accent='#2f6df6'):
         """Professional, information-rich CARE-branded HTML for task notifications."""
         self.ensure_one()
@@ -192,6 +312,26 @@ class ProjectTask(models.Model):
                 subtype_xmlid='mail.mt_comment', email_layout_xmlid='mail.mail_notification_light')
         except Exception as e:
             _logger.warning('care_pms notify failed (non-fatal): %s', e)
+        # Also push an in-app notification (mobile inbox + FCM) so every PMS
+        # event reaches the app, not just email.
+        self._pms_push_inapp(partners, subject, intro)
+
+    def _pms_push_inapp(self, partners, title, intro):
+        """Mirror a task notification into the mobile notification inbox."""
+        if 'care.cafm.notification' not in self.env:
+            return
+        try:
+            import re
+            users = self.env['res.users'].sudo().search(
+                [('partner_id', 'in', partners.ids), ('active', '=', True)])
+            if not users:
+                return
+            body = re.sub(r'<[^>]+>', '', intro or '').strip()
+            self.env['care.cafm.notification'].sudo().push(
+                users, title, body, ntype='task', author=self.env.user,
+                action_url='/pms/task/%s' % self.id)
+        except Exception as e:
+            _logger.warning('care_pms in-app push failed (non-fatal): %s', e)
 
     # ----- crons -----
     def _pms_digest_rows(self, tasks, base_url, days=True):
@@ -263,6 +403,29 @@ class ProjectTask(models.Model):
             '<div style="background:#f6f8fc;padding:13px 22px;color:#8a93a8;font-size:11px;text-align:center;">'
             'ملخّص يومي آلي من نظام إدارة المشاريع · CARE — يُرسل مرة واحدة يوميًا</div>'
             '</div>') % (escape(recipient_name or ''), sections, base_url))
+
+    @api.model
+    def cron_pms_autoclose_requests(self):
+        """Auto-approve close-requests left unanswered for PMS_CLOSE_AUTO_HOURS."""
+        from datetime import timedelta
+        cutoff = fields.Datetime.now() - timedelta(hours=PMS_CLOSE_AUTO_HOURS)
+        stale = self.search([('close_state', '=', 'requested'),
+                             ('close_requested_on', '<=', cutoff),
+                             ('state', 'not in', list(PMS_CLOSED_STATES))])
+        for task in stale:
+            task.with_context(pms_close_ok=True).write({
+                'state': '1_done', 'close_state': 'approved', 'close_auto': True})
+            parts = task._pms_close_approvers()
+            if task.close_requested_by_id and task.close_requested_by_id.partner_id:
+                parts |= task.close_requested_by_id.partner_id
+            task._pms_notify(
+                parts,
+                _('إغلاق تلقائي لتاسك'),
+                _('تم إغلاق التاسك تلقائيًا ⏱️'),
+                _('مرّت %d ساعة دون الرد على طلب الإغلاق، فأُغلق التاسك تلقائيًا.')
+                % PMS_CLOSE_AUTO_HOURS,
+                accent='#8a93a8')
+        return True
 
     @api.model
     def cron_pms_escalate_overdue(self):

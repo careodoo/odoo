@@ -178,7 +178,7 @@ class CafmWorkorder(models.Model):
                     user, _('🆕 أمر عمل جديد مُسنَد إليك'),
                     ' — '.join(filter(None, [rec.title or rec.name,
                                              rec.facility_id.name or ''])),
-                    ntype='task', action_url='/workorder/%s' % rec.id)
+                    ntype='task', action_url='/workorder/%s' % rec.id, record=rec)
             except Exception:
                 pass  # never let a push failure block the workflow
 

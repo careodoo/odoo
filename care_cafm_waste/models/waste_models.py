@@ -240,7 +240,7 @@ class WasteTrip(models.Model):
                 self.driver_id, _('🚛 New Waste Trip %s') % (self.sequence or ''),
                 _('Trip %s has been assigned to you — pickup from %s. Open Waste Trips to share your location.')
                 % (self.sequence or '', self.pickup_location_id.name or '—'),
-                ntype='task')
+                ntype='task', record=self)
         except Exception:
             pass
 
@@ -361,7 +361,7 @@ class WasteOrder(models.Model):
             try:
                 self.env['care.cafm.notification'].sudo().push(
                     mgr, _('🗑️ New Waste Transfer Order'), body, ntype='task',
-                    action_url='waste/order/%s' % self.id)
+                    action_url='/waste/order/%s' % self.id, record=self)
             except Exception:
                 pass
         # no driver yet → raise a real To-Do so the assignment can't be missed
@@ -523,7 +523,7 @@ class WasteOrder(models.Model):
             try:
                 self.env['care.cafm.notification'].sudo().push(
                     users, title, tpl % (self.serial or ''), ntype='info',
-                    action_url='/waste/order/%s' % self.id)
+                    action_url='/waste/order/%s' % self.id, record=self)
             except Exception:
                 pass
 
@@ -538,7 +538,7 @@ class WasteOrder(models.Model):
                     self.env['care.cafm.notification'].sudo().push(
                         user, _('Waste Order %s') % (self.serial or ''),
                         _('You have been assigned the role %s on order %s') % (label, self.serial or ''),
-                        ntype='task', action_url='/waste/order/%s' % self.id)
+                        ntype='task', action_url='/waste/order/%s' % self.id, record=self)
                 except Exception:
                     pass
 

@@ -113,7 +113,7 @@ class WaterTank(models.Model):
                     staff,
                     _('🚰 Tank cleaning %s') % (_('Overdue') if late else _('Due soon')),
                     '%s — %s' % (t.name, t.facility_id.name or ''),
-                    ntype='alert' if late else 'warning')
+                    ntype='alert' if late else 'warning', record=t)
             except Exception:
                 pass
         return True
@@ -209,6 +209,6 @@ class TankCleaning(models.Model):
             self.env['care.cafm.notification'].sudo().push(
                 client.user_ids, _('🚰 Tank cleaned and certificate issued'),
                 '%s — certificate %s' % (self.tank_id.name, self.certificate_no or ''),
-                ntype='info')
+                ntype='info', record=self)
         except Exception:
             pass

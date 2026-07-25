@@ -532,9 +532,43 @@
     <template id="pm_p_fuel" name="PM Fuel">
         <t t-call="care_pms.pm_layout">
             <div class="pm-h">المحروقات</div><div class="pm-sub" t-esc="project.name"/>
-            <div class="pm-card"><table><thead><tr><th>السيارة</th><th>الكمية</th><th>المستهلك</th><th>كم/لتر</th><th>العدّاد</th></tr></thead><tbody>
-                <tr t-foreach="uses" t-as="u"><td><a t-attf-href="/my/pm/p/#{project.id}/vehicle/#{u.vehicle_id.id}" style="color:#2f6df6;font-weight:700" t-esc="u.vehicle_id.name or '—'"/></td><td t-esc="u.quantity"/><td t-esc="u.use_quantity"/><td t-esc="u.liter_per_km_rate"/><td t-esc="u.odometer_value"/></tr>
-                <tr t-if="not uses"><td colspan="5" style="text-align:center;color:#8a93a8;padding:16px">لا توجد بيانات محروقات.</td></tr></tbody></table></div>
+            <t t-if="new_fuel">
+                <t t-if="ok"><div class="pm-alert ok">✅ تم تسجيل التعبئة.</div></t>
+                <t t-if="err"><div class="pm-alert bad">تعذّر تسجيل التعبئة.</div></t>
+                <div class="pm-card"><div class="hd b3">⛽ تسجيل تعبئة وقود</div><div class="bd">
+                    <form t-attf-action="/my/pm/p/#{project.id}/fuel/create" method="post">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <select name="method" required="required"><option value="card">بطاقة مسبقة الدفع</option><option value="cash">عهدة نقدية</option></select>
+                        <select name="card_id"><option value="">— بطاقة الوقود —</option>
+                            <t t-foreach="cards" t-as="c"><option t-att-value="c.id"><t t-esc="c.name"/> (<t t-esc="c.balance"/>)</option></t></select>
+                        <select name="vehicle_id"><option value="">— المركبة —</option>
+                            <t t-foreach="vehicles" t-as="v"><option t-att-value="v.id" t-esc="v.name"/></t></select>
+                        <input type="number" step="0.001" name="amount" placeholder="المبلغ *" required="required"/>
+                        <input type="number" step="0.01" name="liters" placeholder="اللترات"/>
+                        <input type="number" step="1" name="odometer" placeholder="قراءة العدّاد"/>
+                        <input type="text" name="station" placeholder="المحطة"/>
+                        <input type="text" name="note" placeholder="ملاحظات"/>
+                        <button class="pm-btn p">حفظ وتأكيد</button></form></div></div>
+                <t t-if="cards">
+                    <div class="pm-card"><div class="hd light">💳 بطاقات الوقود</div>
+                        <table><thead><tr><th>البطاقة</th><th>الجهة</th><th>الرصيد</th><th>الحالة</th></tr></thead><tbody>
+                            <tr t-foreach="cards" t-as="c"><td t-esc="c.name"/><td t-esc="c.provider or '—'"/><td t-esc="c.balance"/>
+                                <td><span t-att-class="c.state=='active' and 'pm-badge b-green' or 'pm-badge b-red'" t-esc="dict(c._fields['state'].selection).get(c.state)"/></td></tr></tbody></table></div>
+                </t>
+                <div class="pm-card"><div class="hd light">⛽ عمليات التعبئة (<t t-esc="len(entries)"/>)</div>
+                    <table><thead><tr><th>المرجع</th><th>التاريخ</th><th>المركبة</th><th>الطريقة</th><th>اللترات</th><th>المبلغ</th><th>الحالة</th></tr></thead><tbody>
+                        <tr t-foreach="entries" t-as="e">
+                            <td t-esc="e.name"/><td t-esc="e.date"/><td t-esc="e.vehicle_id.name or '—'"/>
+                            <td t-esc="dict(e._fields['method'].selection).get(e.method)"/><td t-esc="e.liters"/><td t-esc="e.amount"/>
+                            <td><span t-att-class="e.state=='confirmed' and 'pm-badge b-green' or 'pm-badge b-blue'" t-esc="dict(e._fields['state'].selection).get(e.state)"/>
+                                <a t-attf-href="/report/pdf/care_fuel.report_fuel_entry_doc/#{e.id}" target="_blank" style="margin-right:6px">🖨️</a></td></tr>
+                        <tr t-if="not entries"><td colspan="7" style="text-align:center;color:#8a93a8;padding:16px">لا توجد عمليات تعبئة.</td></tr></tbody></table></div>
+            </t>
+            <t t-else="">
+                <div class="pm-card"><table><thead><tr><th>السيارة</th><th>الكمية</th><th>المستهلك</th><th>كم/لتر</th><th>العدّاد</th></tr></thead><tbody>
+                    <tr t-foreach="uses" t-as="u"><td><a t-attf-href="/my/pm/p/#{project.id}/vehicle/#{u.vehicle_id.id}" style="color:#2f6df6;font-weight:700" t-esc="u.vehicle_id.name or '—'"/></td><td t-esc="u.quantity"/><td t-esc="u.use_quantity"/><td t-esc="u.liter_per_km_rate"/><td t-esc="u.odometer_value"/></tr>
+                    <tr t-if="not uses"><td colspan="5" style="text-align:center;color:#8a93a8;padding:16px">لا توجد بيانات محروقات.</td></tr></tbody></table></div>
+            </t>
         </t>
     </template>
 
@@ -826,15 +860,61 @@
                 </form>
                 <div class="text-muted" style="font-size:12px;margin-top:6px">يجمع النظام أيام حضور كل عامل من البصمة خلال الفترة (لكل عمال المشروع) ثم يُرسل الكشف للاعتماد — تماماً كموديول التايم شيت في الباك-إند.</div>
             </div></div>
+            <t t-if="err=='perm'"><div class="pm-alert bad">هذا الإجراء من صلاحية الموارد البشرية فقط.</div></t>
             <t t-foreach="sheets" t-as="ts">
                 <div class="pm-card"><div class="hd light">
-                    <t t-esc="ts.name"/> · <t t-esc="ts.date_from"/> → <t t-esc="ts.date_to"/> ·
+                    <t t-esc="ts.name"/> ·
+                    <t t-if="new_ts"><t t-esc="ts.period_label"/> · </t>
+                    <t t-esc="ts.date_from"/> → <t t-esc="ts.date_to"/> ·
                     <span t-att-class="ts.state=='approved' and 'pm-badge b-green' or (ts.state=='submit' and 'pm-badge b-amber' or 'pm-badge b-grey')" t-esc="{'draft':'مسودة','submit':'مُرسل للاعتماد','approved':'معتمد'}.get(ts.state, ts.state)"/>
+                    <a t-attf-href="/report/pdf/care_timesheet.report_timesheet_doc/#{ts.id}" target="_blank" class="pm-btn" style="padding:3px 8px;font-size:12px;float:left">🖨️ طباعة (QR)</a>
                 </div>
-                <table><thead><tr><th>العامل</th><th>أيام الحضور (فعلي)</th><th>المطلوب</th><th>الفرق</th></tr></thead><tbody>
-                    <tr t-foreach="ts.line_ids" t-as="l"><td t-esc="l.employee_id.name"/><td style="font-weight:800;color:#12945f" t-esc="l.actual"/><td t-esc="l.count"/><td t-esc="l.diff"/></tr>
-                    <tr t-if="not ts.line_ids"><td colspan="4" style="text-align:center;color:#8a93a8;padding:12px">لا سطور.</td></tr>
-                </tbody></table></div>
+                <t t-if="new_ts">
+                    <table><thead><tr><th>العامل</th><th>البادج</th><th>بصمة</th><th>المعدّل</th><th>المعتمد</th><th>الحالة</th><t t-if="is_hr"><th>إجراء</th></t></tr></thead><tbody>
+                        <tr t-foreach="ts.line_ids" t-as="l">
+                            <td t-esc="l.employee_id.name"/><td t-esc="l.badge or '—'"/>
+                            <td style="font-weight:800;color:#12945f" t-esc="l.actual"/><td t-esc="l.adjusted_days"/>
+                            <td style="font-weight:900" t-esc="l.approved_days"/>
+                            <td><span t-att-class="l.line_state=='approved' and 'pm-badge b-green' or (l.line_state=='rejected' and 'pm-badge b-red' or 'pm-badge b-amber')" t-esc="{'pending':'بانتظار','approved':'معتمد','rejected':'مرفوض'}.get(l.line_state, l.line_state)"/></td>
+                            <t t-if="is_hr">
+                                <td style="white-space:nowrap">
+                                    <t t-if="l.line_state=='pending'">
+                                        <form t-attf-action="/my/pm/p/#{project.id}/timesheet/line/#{l.id}/approve" method="post" style="display:inline">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <input type="number" name="adjusted" t-att-value="l.adjusted_days" style="width:56px" title="المعدّل"/>
+                                            <button class="pm-btn p" style="padding:3px 7px;font-size:12px">✔</button></form>
+                                        <form t-attf-action="/my/pm/p/#{project.id}/timesheet/line/#{l.id}/reject" method="post" style="display:inline">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button class="pm-btn" style="padding:3px 7px;font-size:12px">✖</button></form>
+                                    </t>
+                                </td>
+                            </t>
+                        </tr>
+                        <tr t-if="not ts.line_ids"><td colspan="7" style="text-align:center;color:#8a93a8;padding:12px">لا سطور.</td></tr>
+                    </tbody></table>
+                    <div class="bd" style="display:flex;gap:8px">
+                        <t t-if="ts.state=='draft'">
+                            <form t-attf-action="/my/pm/p/#{project.id}/timesheet/#{ts.id}/submit" method="post">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button class="pm-btn p">تقديم للاعتماد</button></form>
+                        </t>
+                        <t t-if="is_hr and ts.pending_count">
+                            <form t-attf-action="/my/pm/p/#{project.id}/timesheet/#{ts.id}/approve_all" method="post">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button class="pm-btn p" style="background:#12945f">✔ اعتماد الكل</button></form>
+                            <form t-attf-action="/my/pm/p/#{project.id}/timesheet/#{ts.id}/reject_all" method="post">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button class="pm-btn">✖ رفض الكل</button></form>
+                        </t>
+                    </div>
+                </t>
+                <t t-else="">
+                    <table><thead><tr><th>العامل</th><th>أيام الحضور (فعلي)</th><th>المطلوب</th><th>الفرق</th></tr></thead><tbody>
+                        <tr t-foreach="ts.line_ids" t-as="l"><td t-esc="l.employee_id.name"/><td style="font-weight:800;color:#12945f" t-esc="l.actual"/><td t-esc="l.count"/><td t-esc="l.diff"/></tr>
+                        <tr t-if="not ts.line_ids"><td colspan="4" style="text-align:center;color:#8a93a8;padding:12px">لا سطور.</td></tr>
+                    </tbody></table>
+                </t>
+                </div>
             </t>
             <div t-if="not sheets" class="pm-alert" style="background:#eef4ff;border:1px solid #cfe0ff;color:#2a5bd7">لا توجد كشوف تايم شيت بعد — أنشئ واحداً بالأعلى.</div>
         </t>
@@ -891,6 +971,125 @@
                     <tr style="background:#fbfcff"><td style="font-weight:800">إجمالي التكلفة</td><td style="text-align:left;font-weight:900" t-esc="project.pms_total_cost"/></tr>
                     <tr style="background:#effaf3"><td style="font-weight:800;color:#12945f">صافي الهامش</td><td style="text-align:left;font-weight:900;color:#12945f" t-esc="project.pms_margin"/></tr>
                 </tbody></table></div>
+        </t>
+    </template>
+
+    <template id="pm_p_suspension" name="PM Work Suspension">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h">⛔ الإيقاف عن العمل</div><div class="pm-sub" t-esc="project.name"/>
+            <t t-if="ok"><div class="pm-alert ok">✅ تم إرسال طلب الإيقاف إلى الموارد البشرية.</div></t>
+            <t t-if="err=='perm'"><div class="pm-alert bad">الاعتماد من صلاحية الموارد البشرية فقط.</div></t>
+            <t t-if="err and err!='perm'"><div class="pm-alert bad">تعذّر تنفيذ العملية.</div></t>
+            <div class="pm-card"><div class="hd b3">⛔ طلب إيقاف عامل عن العمل</div><div class="bd">
+                <p style="color:#8a93a8;font-size:13px;margin:0 0 10px">يُرسَل الطلب إلى الموارد البشرية لاعتماده. بعد الاعتماد يُصبح العامل «موقوف بطلب» ويُرفع من قائمة المشروع.</p>
+                <form t-attf-action="/my/pm/p/#{project.id}/suspension/create" method="post">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <select name="employee_id" required="required"><option value="">— اختر العامل —</option>
+                        <t t-foreach="employees" t-as="e"><option t-att-value="e.id"><t t-esc="e.name"/><t t-if="e.barcode"> · <t t-esc="e.barcode"/></t></option></t></select>
+                    <select name="reason" required="required"><option value="">— سبب الإيقاف —</option>
+                        <t t-foreach="reasons" t-as="r"><option t-att-value="r[0]" t-esc="r[1]"/></t></select>
+                    <input type="text" name="other_reason" placeholder="سبب آخر (إن اخترت أخرى)"/>
+                    <input type="date" name="effective_date"/>
+                    <input type="text" name="note" placeholder="تفاصيل / ملاحظات"/>
+                    <button class="pm-btn p">إرسال إلى الموارد البشرية</button></form></div></div>
+            <div class="pm-card"><div class="hd light">⛔ طلبات الإيقاف (<t t-esc="len(suspensions)"/>)</div>
+                <table><thead><tr><th>المرجع</th><th>العامل</th><th>السبب</th><th>التاريخ</th><th>بدلات</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>
+                    <tr t-foreach="suspensions" t-as="s">
+                        <td t-esc="s.name"/><td t-esc="s.employee_id.name"/>
+                        <td t-esc="dict(reasons).get(s.reason, s.reason)"/><td t-esc="s.date"/>
+                        <td><t t-if="s.has_allowance"><span class="pm-badge b-blue">نعم</span></t><t t-else=""><span class="pm-badge">لا</span></t></td>
+                        <td><span t-att-class="s.state=='approved' and 'pm-badge b-green' or (s.state=='rejected' and 'pm-badge b-red' or (s.state=='submitted' and 'pm-badge b-blue' or 'pm-badge'))" t-esc="dict(s._fields['state'].selection).get(s.state, s.state)"/></td>
+                        <td style="white-space:nowrap">
+                            <a t-attf-href="/report/pdf/care_suspension.report_suspension_doc/#{s.id}" target="_blank" class="pm-btn" style="padding:4px 8px;font-size:12px">🖨️ طباعة</a>
+                            <t t-if="s.state=='submitted' and can_approve">
+                                <form t-attf-action="/my/pm/p/#{project.id}/suspension/#{s.id}/approve" method="post" style="display:inline">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button class="pm-btn p" style="padding:4px 8px;font-size:12px">✔ اعتماد</button></form>
+                                <form t-attf-action="/my/pm/p/#{project.id}/suspension/#{s.id}/reject" method="post" style="display:inline">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button class="pm-btn" style="padding:4px 8px;font-size:12px">✖ رفض</button></form>
+                            </t>
+                        </td></tr>
+                    <tr t-if="not suspensions"><td colspan="7" style="text-align:center;color:#8a93a8;padding:14px">لا يوجد طلبات إيقاف.</td></tr></tbody></table></div>
+        </t>
+    </template>
+    <template id="pm_p_items" name="PM Request Items">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h">📋 طلب الأصناف</div><div class="pm-sub" t-esc="project.name"/>
+            <t t-if="ok"><div class="pm-alert ok">✅ تم إرسال طلب الأصناف للاعتماد.</div></t>
+            <t t-if="err=='perm'"><div class="pm-alert bad">الاعتماد من صلاحية المشتريات فقط.</div></t>
+            <t t-if="err=='empty'"><div class="pm-alert bad">أضف صنفًا واحدًا على الأقل بكمية.</div></t>
+            <t t-if="err and err not in ('perm','empty')"><div class="pm-alert bad">تعذّر تنفيذ العملية.</div></t>
+            <div class="pm-card"><div class="hd b3">➕ طلب أصناف جديد</div><div class="bd">
+                <form t-attf-action="/my/pm/p/#{project.id}/items/create" method="post">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <table style="width:100%"><thead><tr><th style="text-align:right">الصنف</th><th style="width:70px">الكمية</th><th style="width:90px">الوحدة</th></tr></thead><tbody>
+                        <t t-foreach="[1,2,3,4,5,6]" t-as="i">
+                            <tr>
+                                <td><input type="text" t-att-name="'item_%s' % i" placeholder="اسم الصنف"/></td>
+                                <td><input type="number" step="0.01" t-att-name="'qty_%s' % i"/></td>
+                                <td><input type="text" t-att-name="'uom_%s' % i" value="وحدة"/></td>
+                            </tr>
+                        </t>
+                    </tbody></table>
+                    <div class="row2" style="margin-top:8px">
+                        <div><label style="font-size:12px;color:#8a93a8;font-weight:700">مطلوب بحلول</label><input type="date" name="needed_by"/></div>
+                        <div style="display:flex;align-items:flex-end;gap:6px"><label style="font-size:12px;color:#8a93a8;font-weight:700"><input type="checkbox" name="urgent" value="1"/> عاجل</label></div>
+                    </div>
+                    <input type="text" name="note" placeholder="سبب الطلب / ملاحظات"/>
+                    <button class="pm-btn p">إرسال للاعتماد</button></form></div></div>
+            <t t-foreach="requests" t-as="r">
+                <div class="pm-card"><div class="hd light">
+                    <t t-esc="r.name"/> · <t t-esc="r.request_date"/> · <t t-esc="r.line_count"/> صنف
+                    <t t-if="r.priority=='1'"><span class="pm-badge b-red">عاجل</span></t>
+                    <span t-att-class="r.state=='approved' and 'pm-badge b-green' or (r.state=='rejected' and 'pm-badge b-red' or (r.state=='submitted' and 'pm-badge b-blue' or 'pm-badge'))" t-esc="{'draft':'مسودة','submitted':'بانتظار الاعتماد','approved':'معتمد','rejected':'مرفوض'}.get(r.state, r.state)"/>
+                    <a t-attf-href="/report/pdf/care_item_request.report_item_request_doc/#{r.id}" target="_blank" class="pm-btn" style="padding:3px 8px;font-size:12px;float:left">طباعة</a>
+                </div>
+                <table><thead><tr><th>الصنف</th><th>الكمية</th><th>الوحدة</th></tr></thead><tbody>
+                    <tr t-foreach="r.line_ids" t-as="l"><td t-esc="l.name"/><td style="font-weight:800" t-esc="l.qty"/><td t-esc="l.uom_name"/></tr>
+                </tbody></table>
+                <div class="bd" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                    <t t-if="r.supply_id"><span style="color:#12945f;font-weight:700">توريد: <t t-esc="r.supply_id.name"/></span></t>
+                    <t t-if="r.state=='submitted' and can_approve">
+                        <form t-attf-action="/my/pm/p/#{project.id}/items/#{r.id}/approve" method="post" style="display:inline">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <button class="pm-btn p" style="background:#12945f">اعتماد وإنشاء توريد</button></form>
+                        <form t-attf-action="/my/pm/p/#{project.id}/items/#{r.id}/reject" method="post" style="display:inline">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <button class="pm-btn">رفض</button></form>
+                    </t>
+                </div></div>
+            </t>
+            <div t-if="not requests" class="pm-alert" style="background:#eef4ff;border:1px solid #cfe0ff;color:#2a5bd7">لا توجد طلبات أصناف بعد — أنشئ واحداً بالأعلى.</div>
+        </t>
+    </template>
+    <template id="pm_p_permits" name="PM Permits">
+        <t t-call="care_pms.pm_layout">
+            <div class="pm-h">🛂 التصاريح</div><div class="pm-sub" t-esc="project.name"/>
+            <t t-if="ok"><div class="pm-alert ok">✅ تم حفظ التصريح.</div></t>
+            <t t-if="err"><div class="pm-alert bad">تعذّر تنفيذ العملية.</div></t>
+            <div class="pm-card"><div class="hd b3">➕ تصريح جديد</div><div class="bd">
+                <form t-attf-action="/my/pm/p/#{project.id}/permits/create" method="post">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <input type="text" name="title" placeholder="اسم التصريح *" required="required"/>
+                    <select name="permit_type"><t t-foreach="types" t-as="ty"><option t-att-value="ty[0]" t-esc="ty[1]"/></t></select>
+                    <input type="text" name="authority" placeholder="الجهة المُصدِرة"/>
+                    <input type="text" name="permit_number" placeholder="رقم التصريح"/>
+                    <div class="row2">
+                        <div><label style="font-size:12px;color:#8a93a8;font-weight:700">الإصدار</label><input type="date" name="issue_date"/></div>
+                        <div><label style="font-size:12px;color:#8a93a8;font-weight:700">الانتهاء</label><input type="date" name="expiry_date"/></div>
+                    </div>
+                    <input type="text" name="note" placeholder="ملاحظات"/>
+                    <button class="pm-btn p">حفظ وتفعيل</button></form></div></div>
+            <div class="pm-card"><div class="hd light">🛂 التصاريح (<t t-esc="len(permits)"/>)</div>
+                <table><thead><tr><th>المرجع</th><th>التصريح</th><th>النوع</th><th>الجهة</th><th>الانتهاء</th><th>الصلاحية</th></tr></thead><tbody>
+                    <tr t-foreach="permits" t-as="pm">
+                        <td t-esc="pm.name"/><td t-esc="pm.title"/>
+                        <td t-esc="dict(pm._fields['permit_type'].selection).get(pm.permit_type)"/>
+                        <td t-esc="pm.authority or '—'"/><td t-esc="pm.expiry_date or '—'"/>
+                        <td><span t-att-class="pm.status=='valid' and 'pm-badge b-green' or (pm.status=='expiring' and 'pm-badge b-amber' or (pm.status=='expired' and 'pm-badge b-red' or 'pm-badge'))" t-esc="dict(pm._fields['status'].selection).get(pm.status)"/>
+                            <a t-attf-href="/report/pdf/care_permits.report_permit_doc/#{pm.id}" target="_blank" style="margin-right:6px">🖨️</a></td></tr>
+                    <tr t-if="not permits"><td colspan="6" style="text-align:center;color:#8a93a8;padding:14px">لا توجد تصاريح.</td></tr></tbody></table></div>
         </t>
     </template>
 </odoo>

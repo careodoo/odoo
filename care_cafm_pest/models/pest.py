@@ -178,7 +178,7 @@ class PestProgram(models.Model):
                 users,
                 _('🐜 Pest Control Visit %s') % (_('Overdue') if late else _('Due')),
                 '%s — %s' % (p.name, p.facility_id.name or ''),
-                ntype='alert' if late else 'task')
+                ntype='alert' if late else 'task', record=p)
         return True
 
 
@@ -271,7 +271,7 @@ class PestVisit(models.Model):
             self.env['care.cafm.notification'].sudo().push(
                 users, _('🐜 Pest Control Visit Completed'),
                 '%s — %s stations · %s' % (self.facility_id.name or '', self.stations_checked, lvl),
-                ntype='info')
+                ntype='info', record=self)
         except Exception:
             pass
 

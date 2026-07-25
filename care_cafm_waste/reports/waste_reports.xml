@@ -17,9 +17,16 @@
       <t t-foreach="docs" t-as="o">
         <t t-call="web.external_layout">
           <div class="page">
-            <div style="border-bottom:3px solid #16A34A;padding-bottom:8px;margin-bottom:16px">
-              <h2 style="color:#0E3A5F;margin:0">♻️ تقرير طلب نقل ومعالجة نفايات / Waste Transfer and Treatment — Order</h2>
-              <div style="color:#64748b">الرقم: <strong t-esc="o.serial"/> · الحالة: <span t-field="o.states"/></div>
+            <div style="display:flex;align-items:center;border-bottom:3px solid #16A34A;padding-bottom:8px;margin-bottom:16px">
+              <div style="flex:1">
+                <h2 style="color:#0E3A5F;margin:0">♻️ تقرير طلب نقل ومعالجة نفايات / Waste Transfer and Treatment — Order</h2>
+                <div style="color:#64748b">الرقم: <strong t-esc="o.serial"/> · الحالة: <span t-field="o.states"/></div>
+              </div>
+              <div style="text-align:center;margin-right:12px">
+                <img t-att-src="'/report/barcode/?barcode_type=QR&amp;value=%s&amp;width=200&amp;height=200' % ((o.get_base_url() + '/waste/order/' + str(o.id)))"
+                     style="width:92px;height:92px"/>
+                <div style="font-size:9px;color:#94a3b8">امسح لعرض الرحلة / Scan for trip</div>
+              </div>
             </div>
             <table class="table table-sm">
               <tr><td><strong>العميل / Client</strong></td><td t-esc="o.contact_id.name or ''"/><td><strong>Project</strong></td><td t-esc="o.project_id.name or ''"/></tr>

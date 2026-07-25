@@ -113,7 +113,7 @@ class Pool(models.Model):
             try:
                 self.env['care.cafm.notification'].sudo().push(
                     (users | staff), _('🏊 No reading today'),
-                    '%s — %s' % (p.name, p.facility_id.name or ''), ntype='warning')
+                    '%s — %s' % (p.name, p.facility_id.name or ''), ntype='warning', record=p)
             except Exception:
                 pass
         return True
@@ -195,7 +195,7 @@ class PoolReading(models.Model):
                 try:
                     self.env['care.cafm.notification'].sudo().push(
                         staff, _('🏊 Pool closed — reading out of range'),
-                        '%s: %s' % (r.pool_id.name, r.breaches or ''), ntype='alert')
+                        '%s: %s' % (r.pool_id.name, r.breaches or ''), ntype='alert', record=r)
                 except Exception:
                     pass
 

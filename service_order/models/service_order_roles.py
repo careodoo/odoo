@@ -23,7 +23,7 @@ class ServiceOrderRoles(models.Model):
         body = _('أُسند إليك دور «%s» في الطلب %s') % (role_label, self.serial or '')
         if 'care.cafm.notification' in self.env:
             try:
-                self.env['care.cafm.notification'].sudo().push(user, title, body, ntype='task', author=self.env.user)
+                self.env['care.cafm.notification'].sudo().push(user, title, body, ntype='task', author=self.env.user, record=self)
             except Exception:
                 pass
         try:
@@ -69,7 +69,7 @@ class ServiceOrderRoles(models.Model):
         try:
             self.env['care.cafm.notification'].sudo().push(
                 users, title, body_tpl % (self.serial or ''), ntype='info',
-                action_url='/service_order/%s' % self.id)
+                action_url='/service_order/%s' % self.id, record=self)
         except Exception:
             pass
 

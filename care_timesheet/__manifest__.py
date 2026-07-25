@@ -28,6 +28,7 @@
         'security/ir.model.access.csv',
         'security/rules.xml',
         'data/sequence.xml',
+        'reports/timesheet_report.xml',
         'views/care_timesheet.xml',
         'views/hr_attendance.xml',
     ],

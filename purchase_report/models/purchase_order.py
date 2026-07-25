@@ -77,9 +77,12 @@ class PurchaseInherit(models.Model):
 
     @api.depends('company_id')
     def _generate_qr_code(self):
+        # Use self.env, never the global http `request`: reports render in a
+        # worker/cron/mobile context where `request` is unbound, and touching
+        # `request.env` there raised "object unbound" and 500'd every PO report.
+        base = self.env['ir.config_parameter'].sudo().get_param('web.base.url') or ''
         for rec in self:
-            qr_info = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
-            qr_info += rec.get_portal_url()
+            qr_info = base + rec.get_portal_url()
             rec.qr_url = qr_info
             rec.qr_image = QrCodeGenerator.generate_qr_code(qr_info)
 

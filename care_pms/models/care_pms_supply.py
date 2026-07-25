@@ -19,9 +19,34 @@ class PmsSupply(models.Model):
     received_date = fields.Date(string='Received On', readonly=True)
     receiver_name = fields.Char(string='Received By')
     state = fields.Selection(
-        [('draft', 'Draft'), ('sent', 'In Transit'), ('received', 'Received')],
+        [('draft', 'Draft'), ('sent', 'In Transit'),
+         ('partial', 'Partially Received'), ('received', 'Received'),
+         ('rejected', 'Rejected')],
         string='Status', default='draft', tracking=True)
     line_ids = fields.One2many('care.pms.supply.line', 'supply_id', string='Items')
+    delivery_note = fields.Binary(string='Delivery Voucher', attachment=True)
+    delivery_note_name = fields.Char(string='Delivery Voucher Filename')
+
+    def _recompute_state(self):
+        """Roll the header state up from the per-line receive/reject decisions."""
+        for supply in self:
+            lines = supply.line_ids
+            if not lines:
+                continue
+            done = lines.filtered(lambda l: l.line_state in ('received', 'rejected'))
+            received = lines.filtered(lambda l: l.line_state == 'received')
+            if not done:
+                continue
+            if len(done) < len(lines):
+                supply.state = 'partial'
+            elif received:
+                supply.state = 'received'
+                if not supply.received_date:
+                    supply.received_date = fields.Date.today()
+            else:
+                supply.state = 'rejected'
+            if received and supply.state == 'received':
+                supply._notify_purchasing_received()
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -69,23 +94,29 @@ class PmsSupply(models.Model):
                 body=body, subject=_('وارد مواد جديد: %s') % supply.name,
                 partner_ids=manager.partner_id.ids, message_type='notification',
                 subtype_xmlid='mail.mt_comment', email_layout_xmlid='mail.mail_notification_light')
+            supply._push_inapp(
+                manager.partner_id, _('وارد مواد جديد: %s') % supply.name,
+                _('وصلت مواد إلى مشروع %s بانتظار الاستلام.') % (supply.project_id.name or ''))
+
+    def _push_inapp(self, partners, title, body):
+        """Mirror a supply notification into the mobile notification inbox."""
+        if 'care.cafm.notification' not in self.env or not partners:
+            return
+        try:
+            users = self.env['res.users'].sudo().search(
+                [('partner_id', 'in', partners.ids), ('active', '=', True)])
+            if users:
+                self.env['care.cafm.notification'].sudo().push(
+                    users, title, body, ntype='task', author=self.env.user,
+                    action_url='/pms/project/%s' % self.project_id.id)
+        except Exception:
+            pass
 
     def action_receive(self):
-        Material = self.env['care.pms.material']
-        Receipt = self.env['care.pms.material.receipt']
+        """Receive every still-pending line in full (whole-document shortcut)."""
         for supply in self:
-            for line in supply.line_ids:
-                mat = Material.search([('project_id', '=', supply.project_id.id),
-                                       ('name', '=', line.name)], limit=1)
-                if not mat:
-                    mat = Material.create({
-                        'project_id': supply.project_id.id, 'name': line.name,
-                        'uom_name': line.uom_name or 'وحدة', 'product_id': line.product_id.id,
-                    })
-                Receipt.create({'material_id': mat.id, 'qty': line.qty,
-                                'ref': supply.name, 'date': fields.Date.today()})
-            supply.write({'state': 'received', 'received_date': fields.Date.today()})
-            supply._notify_purchasing_received()
+            for line in supply.line_ids.filtered(lambda l: l.line_state == 'pending'):
+                line.action_receive_line(line.qty)
         return True
 
     def _notify_purchasing_received(self):
@@ -127,6 +158,10 @@ class PmsSupply(models.Model):
                     body=body, subject=_('تأكيد استلام: %s') % supply.name,
                     partner_ids=requester.partner_id.ids, message_type='notification',
                     subtype_xmlid='mail.mt_comment', email_layout_xmlid='mail.mail_notification_light')
+                supply._push_inapp(
+                    requester.partner_id, _('تأكيد استلام: %s') % supply.name,
+                    _('تم استلام مواد الطلب %s في مشروع %s.')
+                    % (req.name or '', supply.project_id.name or ''))
 
     def action_draft(self):
         self.write({'state': 'draft'})
@@ -142,6 +177,11 @@ class PmsSupplyLine(models.Model):
     name = fields.Char(string='Item', required=True)
     uom_name = fields.Char(string='Unit', default='وحدة')
     qty = fields.Float(string='Quantity', required=True)
+    received_qty = fields.Float(string='Received Qty', default=0.0)
+    line_state = fields.Selection(
+        [('pending', 'Pending'), ('received', 'Received'), ('rejected', 'Rejected')],
+        string='Line Status', default='pending', required=True)
+    reject_reason = fields.Char(string='Reject Reason')
 
     @api.onchange('product_id')
     def _onchange_product(self):
@@ -149,6 +189,36 @@ class PmsSupplyLine(models.Model):
             self.name = self.product_id.display_name
             if self.product_id.uom_id:
                 self.uom_name = self.product_id.uom_id.name
+
+    def action_receive_line(self, qty=None):
+        """Receive this single line: post its received qty into project stock."""
+        Material = self.env['care.pms.material']
+        Receipt = self.env['care.pms.material.receipt']
+        for line in self:
+            take = line.qty if qty is None else float(qty)
+            if take <= 0:
+                continue
+            mat = Material.search([('project_id', '=', line.supply_id.project_id.id),
+                                   ('name', '=', line.name)], limit=1)
+            if not mat:
+                mat = Material.create({
+                    'project_id': line.supply_id.project_id.id, 'name': line.name,
+                    'uom_name': line.uom_name or 'وحدة',
+                    'product_id': line.product_id.id,
+                })
+            Receipt.create({'material_id': mat.id, 'qty': take,
+                            'ref': line.supply_id.name, 'date': fields.Date.today()})
+            line.write({'received_qty': take, 'line_state': 'received',
+                        'reject_reason': False})
+            line.supply_id._recompute_state()
+        return True
+
+    def action_reject_line(self, reason=None):
+        for line in self:
+            line.write({'line_state': 'rejected', 'received_qty': 0.0,
+                        'reject_reason': reason or ''})
+            line.supply_id._recompute_state()
+        return True
 
 
 class PurchaseRequestPms(models.Model):
