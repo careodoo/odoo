@@ -1248,6 +1248,105 @@ class SecurityMobileApi(Controller):
         d['viewers_list'] = [{'name': v.user_name, 'joined': str(v.joined_at or '')[11:16]} for v in s.viewer_ids]
         return _ok(d)
 
+    # ==== تسجيل/لقطة ذاتيّ الاستضافة (بديل Cloudflare لبثّ WebRTC) ==========
+    @route(API + '/security/stream/<int:sid>/snapshot', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def stream_snapshot(self, sid, **kw):
+        """رفع لقطة من كاميرا الحارس لتكون صورة البثّ المصغّرة (JPEG base64)."""
+        import base64
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        s = env['care.stream.session'].sudo().browse(sid).exists()
+        if not s:
+            return _err('غير موجود', 404)
+        b = _body() or {}
+        data = b.get('image') or ''
+        if ',' in data:  # data URI
+            data = data.split(',', 1)[1]
+        if not data:
+            return _err('لا صورة', 400)
+        try:
+            s.snapshot = data if isinstance(data, str) else base64.b64encode(data)
+            key = s._ensure_share_key()
+            s.recording_thumbnail = '/stream/thumb/%s?k=%s' % (s.id, key)
+        except Exception as e:
+            return _err('تعذّر حفظ اللقطة: %s' % e, 400)
+        return _ok({'thumbnail': s.recording_thumbnail})
+
+    @route(API + '/security/stream/<int:sid>/recording', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def stream_recording_upload(self, sid, **kw):
+        """رفع تسجيل البثّ المُلتقَط على جهاز الحارس (mp4). يُخزَّن ويُخدَم ذاتياً."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        s = env['care.stream.session'].sudo().browse(sid).exists()
+        if not s:
+            return _err('غير موجود', 404)
+        # الملف يصل عبر multipart (files['file']) أو base64 في الجسم
+        f = request.httprequest.files.get('file') if request.httprequest.files else None
+        dur = kw.get('duration')
+        try:
+            if f:
+                import base64
+                s.recording_file = base64.b64encode(f.read())
+                s.recording_filename = f.filename or ('broadcast-%s.mp4' % s.id)
+            else:
+                b = _body() or {}
+                data = b.get('video') or ''
+                if ',' in data:
+                    data = data.split(',', 1)[1]
+                if not data:
+                    return _err('لا ملف', 400)
+                s.recording_file = data
+                s.recording_filename = b.get('filename') or ('broadcast-%s.mp4' % s.id)
+                dur = dur or b.get('duration')
+            key = s._ensure_share_key()
+            s.recording_url = '/stream/rec/%s?k=%s' % (s.id, key)
+            if dur:
+                s.recording_duration = float(dur)
+        except Exception as e:
+            return _err('تعذّر حفظ التسجيل: %s' % e, 400)
+        return _ok({'recording_url': s.recording_url, 'has_recording': True})
+
+    def _key_ok(self, s, k):
+        return bool(s) and bool(k) and s.share_key and k == s.share_key
+
+    @route('/stream/thumb/<int:sid>', type='http', auth='public', methods=['GET'], csrf=False)
+    def stream_thumb(self, sid, k=None, **kw):
+        """خدمة لقطة البثّ (عامة عبر مفتاح المشاركة)."""
+        import base64
+        s = request.env['care.stream.session'].sudo().browse(sid).exists()
+        if not self._key_ok(s, k) or not s.snapshot:
+            return request.not_found()
+        img = base64.b64decode(s.snapshot)
+        return request.make_response(img, headers=[('Content-Type', 'image/jpeg'),
+                                                    ('Cache-Control', 'public, max-age=86400')])
+
+    @route('/stream/rec/<int:sid>/file', type='http', auth='public', methods=['GET'], csrf=False)
+    def stream_rec_file(self, sid, k=None, **kw):
+        """بثّ ملف التسجيل المخزَّن (mp4) — عام عبر مفتاح المشاركة."""
+        import base64
+        s = request.env['care.stream.session'].sudo().browse(sid).exists()
+        if not self._key_ok(s, k) or not s.recording_file:
+            return request.not_found()
+        data = base64.b64decode(s.recording_file)
+        return request.make_response(data, headers=[
+            ('Content-Type', 'video/mp4'), ('Accept-Ranges', 'bytes'),
+            ('Content-Length', str(len(data))),
+            ('Content-Disposition', "inline; filename=%s" % (s.recording_filename or 'broadcast.mp4'))])
+
+    @route('/stream/rec/<int:sid>', type='http', auth='public', methods=['GET'], csrf=False)
+    def stream_rec_player(self, sid, k=None, **kw):
+        """صفحة مشغّل HTML5 للتسجيل ذاتيّ الاستضافة (تُفتح داخل WebView/المتصفّح)."""
+        s = request.env['care.stream.session'].sudo().browse(sid).exists()
+        if not self._key_ok(s, k) or not s.recording_file:
+            return request.not_found()
+        src = '/stream/rec/%s/file?k=%s' % (s.id, s.share_key)
+        html = ('<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">'
+                '<style>html,body{margin:0;background:#000;height:100%%}video{width:100%%;height:100%%;object-fit:contain}</style>'
+                '</head><body><video controls autoplay playsinline preload="metadata" src="%s"></video></body></html>' % src)
+        return request.make_response(html, headers=[('Content-Type', 'text/html; charset=utf-8')])
+
     # ==== الدردشة الحيّة على البثّ =========================================
     @route(API + '/security/stream/<int:iid>/message', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
     def stream_message_post(self, iid, **kw):

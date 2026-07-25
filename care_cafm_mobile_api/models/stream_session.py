@@ -33,35 +33,56 @@ class StreamSession(models.Model):
     # معرّف Cloudflare Live Input الديناميكي (لحذفه عند الانتهاء)
     cf_input_uid = fields.Char(string='Cloudflare Input UID')
 
-    # التسجيل (VOD) — يُجلب من Cloudflare بعد انتهاء البثّ
+    # التسجيل (VOD) — من Cloudflare (HLS) أو مُسجَّل على جهاز الحارس ومرفوع للخادم
     recording_uid = fields.Char(string='معرّف التسجيل')
-    recording_url = fields.Char(string='رابط إعادة التشغيل (HLS)')
+    recording_url = fields.Char(string='رابط إعادة التشغيل')
     recording_thumbnail = fields.Char(string='الصورة المصغّرة')
     recording_duration = fields.Float(string='مدة التسجيل (ث)')
     has_recording = fields.Boolean(string='له تسجيل', compute='_compute_has_recording', store=True)
     recording_embed = fields.Html(string='مشغّل التسجيل', compute='_compute_recording_embed', sanitize=False)
+    # لقطة/تسجيل ذاتيّ الاستضافة (بديل Cloudflare الذي لا يسجّل بثّ WebRTC)
+    snapshot = fields.Binary(string='لقطة البثّ', attachment=True)
+    recording_file = fields.Binary(string='ملف التسجيل', attachment=True)
+    recording_filename = fields.Char(string='اسم ملف التسجيل')
+    share_key = fields.Char(string='مفتاح المشاركة', copy=False, index=True)
 
-    @api.depends('recording_url')
+    def _ensure_share_key(self):
+        import uuid
+        for s in self:
+            if not s.share_key:
+                s.share_key = uuid.uuid4().hex
+        return self.share_key
+
+    @api.depends('recording_url', 'recording_file')
     def _compute_has_recording(self):
         for s in self:
-            s.has_recording = bool(s.recording_url)
+            s.has_recording = bool(s.recording_url or s.recording_file)
 
-    @api.depends('recording_url')
+    @api.depends('recording_url', 'recording_file', 'snapshot')
     def _compute_recording_embed(self):
-        # مشغّل Cloudflare مضمّن لإعادة التشغيل داخل الباك ايند مباشرةً
+        # مشغّل مضمّن في الباك ايند: Cloudflare (iframe) أو ملف ذاتيّ الاستضافة (video)
         from markupsafe import Markup
         for s in self:
-            if s.recording_url:
+            src = None
+            if s.recording_url and 'cloudflarestream' in (s.recording_url or ''):
                 iframe = s.recording_url.replace('/manifest/video.m3u8', '/iframe')
                 s.recording_embed = Markup(
                     '<div style="position:relative;padding-top:56.25%;background:#000;border-radius:8px;overflow:hidden">'
                     '<iframe src="%s" style="position:absolute;top:0;left:0;width:100%%;height:100%%;border:none" '
-                    'allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture" '
-                    'allowfullscreen="true"></iframe></div>' % iframe)
+                    'allow="autoplay;encrypted-media;picture-in-picture" allowfullscreen="true"></iframe></div>' % iframe)
+                continue
+            if s.recording_file:
+                key = s._ensure_share_key()
+                src = '/stream/rec/%s/file?k=%s' % (s.id, key)
+            elif s.recording_url:
+                src = s.recording_url
+            if src:
+                s.recording_embed = Markup(
+                    '<video controls preload="metadata" style="width:100%%;max-height:70vh;background:#000;border-radius:8px" src="%s"></video>' % src)
             else:
                 s.recording_embed = Markup(
                     '<div style="padding:24px;text-align:center;color:#888;background:#f5f5f5;border-radius:8px">'
-                    'لا يوجد تسجيل متاح بعد — اضغط «جلب التسجيل» بعد انتهاء البثّ.</div>')
+                    'لا يوجد تسجيل — بثّ WebRTC لا يُسجَّل على Cloudflare؛ يُرفَع تسجيل الجهاز تلقائياً عند توفّره.</div>')
 
     def action_fetch_recording(self):
         """زر يدوي لجلب تسجيل البثّ من Cloudflare (VOD)."""
