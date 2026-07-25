@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import 'security_patrols_screen.dart' show PatrolSheetLauncher;
+import 'excel_export.dart';
 
 /// سجل الجولات لكامل مواقع الفريق: خطّ زمني احترافي يُظهر لكل جولة موعدها المجدول
 /// مقابل البدء/الإنجاز الفعلي، ومدّتها، ونسبة إنجاز نقاطها، والحارس المنفّذ، وحالتها.
@@ -56,7 +57,14 @@ class _SecurityPatrolLogScreenState extends State<SecurityPatrolLogScreen> {
       backgroundColor: _bg,
       appBar: AppBar(backgroundColor: const Color(0xFF1E3A5F), foregroundColor: Colors.white,
           title: Text(tr('سجل الجولات', 'Patrol log')),
-          actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh_rounded))]),
+          actions: [
+            IconButton(
+              tooltip: tr('تصدير Excel', 'Export Excel'),
+              onPressed: () => exportExcelFile(context, path: '/cafm/security/patrol_log/export',
+                  fileName: 'patrol-log.xlsx', shareText: tr('سجل الجولات', 'Patrol log')),
+              icon: const Icon(Icons.grid_on_rounded)),
+            IconButton(onPressed: _load, icon: const Icon(Icons.refresh_rounded)),
+          ]),
       body: Column(children: [
         // شريط الإحصاء
         Container(
