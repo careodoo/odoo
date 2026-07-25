@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'i18n.dart';
@@ -595,6 +596,28 @@ class ApiClient {
   Future<List<dynamic>> securityStreamCohosts(int incidentId) async {
     final res = await _handle(await _net.get(_u('/security/stream/$incidentId/cohosts'), headers: await _headers()));
     return List<dynamic>.from((res['data'] as Map)['cohosts'] as List);
+  }
+
+  /// رفع لقطة البثّ (JPEG) لتكون الصورة المصغّرة — يُتجاهَل الفشل بصمت.
+  Future<void> securityStreamUploadSnapshot(int sid, Uint8List jpeg) async {
+    try {
+      await _handle(await _net.post(_u('/security/stream/$sid/snapshot'),
+          headers: await _headers(), body: jsonEncode({'image': base64Encode(jpeg)})));
+    } catch (_) {/* اللقطة تحسين تجميلي — لا تُفشل البثّ */}
+  }
+
+  /// رفع تسجيل البثّ (mp4) المُلتقَط على الجهاز عبر multipart.
+  Future<void> securityStreamUploadRecording(int sid, String filePath, {int? durationSec}) async {
+    final t = await token;
+    final req = http.MultipartRequest('POST', _u('/security/stream/$sid/recording'));
+    if (t != null) req.headers['Authorization'] = 'Bearer $t';
+    req.headers['X-Lang'] = gLang;
+    if (durationSec != null) req.fields['duration'] = '$durationSec';
+    req.files.add(await http.MultipartFile.fromPath('file', filePath));
+    final streamed = await req.send().timeout(const Duration(minutes: 3));
+    if (streamed.statusCode != 200) {
+      throw Exception('فشل رفع التسجيل (${streamed.statusCode})');
+    }
   }
 
   /// سجل البثوث المؤرشفة + تسجيلاتها (فريق أو عميل).

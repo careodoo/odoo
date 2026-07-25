@@ -63,7 +63,7 @@ class _PillState extends State<_Pill> with SingleTickerProviderStateMixin {
     final svc = LiveBroadcast.instance;
     final iid = svc.incidentId, co = svc.cohost;
     final api = context.read<AuthProvider>().api;
-    await svc.end();
+    await svc.end(api: api);
     try {
       if (co) { await api.securityStreamCohostStop(iid); } else { await api.securityStreamStop(iid); }
     } catch (_) {}

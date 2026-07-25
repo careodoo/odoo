@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
 /// عميل WHIP/WHEP للبثّ المباشر داخل التطبيق عبر WebRTC (يتوافق مع Cloudflare
 /// Stream وغيره). لا يعتمد على أي SDK خاص — مجرد تبادل SDP عبر HTTP:
@@ -25,6 +28,23 @@ class WhipBroadcaster {
 
   bool _frontCamera = true;
   bool get isFront => _frontCamera;
+
+  // تسجيل ذاتيّ على الجهاز (Cloudflare لا يسجّل بثّ WebRTC) → يُرفَع بعد التوقّف
+  MediaRecorder? _recorder;
+  String? recordedPath;
+  bool get hasRecording => recordedPath != null && File(recordedPath!).existsSync();
+
+  /// التقاط لقطة (JPEG) من الكاميرا لتكون الصورة المصغّرة للبثّ.
+  Future<Uint8List?> captureFrame() async {
+    try {
+      final track = _local?.getVideoTracks().firstOrNull;
+      if (track == null) return null;
+      final buf = await track.captureFrame();
+      return buf.asUint8List();
+    } catch (_) {
+      return null;
+    }
+  }
 
   /// يهيّئ العرض المحلي ويبدأ النشر إلى [whipUrl]. يرمي استثناءً عند الفشل.
   Future<void> start(String whipUrl) async {
@@ -64,6 +84,33 @@ class WhipBroadcaster {
     }
     _resourceUrl = res.headers['location'];
     await _pc!.setRemoteDescription(RTCSessionDescription(res.body, 'answer'));
+
+    // 5) بدء التسجيل الذاتيّ على الجهاز (يُتجاهَل الفشل حتى لا يُعطّل البثّ)
+    await _startRecording();
+  }
+
+  Future<void> _startRecording() async {
+    try {
+      final vt = _local?.getVideoTracks().firstOrNull;
+      if (vt == null) return;
+      final dir = await getTemporaryDirectory();
+      final path = '${dir.path}/care_broadcast_${DateTime.now().millisecondsSinceEpoch}.mp4';
+      final rec = MediaRecorder();
+      await rec.start(path, videoTrack: vt, audioChannel: RecorderAudioChannel.INPUT);
+      _recorder = rec;
+      recordedPath = path;
+    } catch (_) {
+      _recorder = null;
+      recordedPath = null;
+    }
+  }
+
+  Future<void> _stopRecording() async {
+    try {
+      await _recorder?.stop();
+    } catch (_) {} finally {
+      _recorder = null;
+    }
   }
 
   /// تبديل الكاميرا الأمامية/الخلفية أثناء البثّ.
@@ -83,6 +130,8 @@ class WhipBroadcaster {
   }
 
   Future<void> stop() async {
+    // نوقف التسجيل أولاً (قبل إيقاف المسارات) حتى يُغلَق ملف mp4 سليماً
+    await _stopRecording();
     try {
       if (_resourceUrl != null && _resourceUrl!.startsWith('http')) {
         await http.delete(Uri.parse(_resourceUrl!)).timeout(

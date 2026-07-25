@@ -98,6 +98,13 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
         await bc.start(whip);
         LiveBroadcast.instance.begin(bc, s, _iid, widget.cohost);
         _startTimers();
+        // لقطة مصغّرة للبثّ (Cloudflare لا يسجّل WebRTC) — تُرفَع في الخلفية
+        final sid = s['session_id'] as int?;
+        if (sid != null) {
+          bc.captureFrame().then((png) {
+            if (png != null) api.securityStreamUploadSnapshot(sid, png);
+          });
+        }
       } else {
         // رجوع لوضع RTMP (Larix)
         _webrtc = false;
@@ -152,10 +159,11 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
     );
     if (ok != true) return;
     final iid = _iid;
+    final api = context.read<AuthProvider>().api;
     _elapsed?.cancel(); _pollViewers?.cancel();
-    try { await LiveBroadcast.instance.end(); } catch (_) {}
+    // end(api:) يرفع تسجيل الجهاز للخادم في الخلفية
+    try { await LiveBroadcast.instance.end(api: api); } catch (_) {}
     try {
-      final api = context.read<AuthProvider>().api;
       if (widget.cohost) { await api.securityStreamCohostStop(iid); }
       else { await api.securityStreamStop(iid); }
     } catch (_) {}

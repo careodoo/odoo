@@ -72,9 +72,16 @@ class _StreamArchiveScreenState extends State<StreamArchiveScreen> {
         Text(tr('لا بثوث مؤرشفة بعد', 'No archived broadcasts yet'), style: const TextStyle(color: _grey, fontWeight: FontWeight.w700)),
       ]));
 
+  // يحوّل الرابط النسبي (تسجيل ذاتيّ الاستضافة) إلى مطلق بإضافة أصل الخادم
+  String _abs(String u) {
+    if (u.isEmpty) return u;
+    if (u.startsWith('/')) return context.read<AuthProvider>().api.origin + u;
+    return u;
+  }
+
   Widget _card_(Map b) {
     final rec = b['has_recording'] == true;
-    final thumb = '${b['thumbnail'] ?? ''}';
+    final thumb = _abs('${b['thumbnail'] ?? ''}');
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(color: _card, borderRadius: BorderRadius.circular(16),
@@ -109,7 +116,7 @@ class _StreamArchiveScreenState extends State<StreamArchiveScreen> {
               const Spacer(),
               if (rec) Row(children: [const Icon(Icons.play_arrow_rounded, color: _green, size: 16),
                 Text(tr('تشغيل', 'Play'), style: const TextStyle(color: _green, fontSize: 12, fontWeight: FontWeight.w800))])
-              else Text(tr('قيد المعالجة', 'Processing'), style: const TextStyle(color: _grey, fontSize: 11)),
+              else Text(tr('بلا تسجيل', 'No recording'), style: const TextStyle(color: _grey, fontSize: 11)),
             ]),
           ])),
         ]),
@@ -134,6 +141,16 @@ class _StreamArchiveScreenState extends State<StreamArchiveScreen> {
     Navigator.push(context, MaterialPageRoute(
         builder: (_) => _DetailScreen(sid: (b['session_id'] as num).toInt(), isClient: widget.isClient, brief: b)));
   }
+}
+
+/// يحوّل رابط التسجيل إلى رابط تشغيل صالح: Cloudflare→iframe، وذاتيّ الاستضافة→مطلق.
+String _resolvePlayUrl(BuildContext context, String rec) {
+  var u = rec;
+  if (u.contains('cloudflarestream')) {
+    u = u.replaceFirst('/manifest/video.m3u8', '/iframe');
+  }
+  if (u.startsWith('/')) u = context.read<AuthProvider>().api.origin + u;
+  return u;
 }
 
 /// تفاصيل بثّ مؤرشف: مشغّل التسجيل + بطاقة معلومات + دردشة البثّ + قائمة المشاهدين.
@@ -182,13 +199,13 @@ class _DetailScreenState extends State<_DetailScreen> {
       appBar: AppBar(backgroundColor: const Color(0xFF1E3A5F), foregroundColor: Colors.white,
           title: Text(tr('تفاصيل البثّ', 'Broadcast details'))),
       body: ListView(padding: const EdgeInsets.all(12), children: [
-        // المشغّل أو لوحة «قيد المعالجة»
+        // المشغّل أو لوحة «بلا تسجيل»
         ClipRRect(borderRadius: BorderRadius.circular(16),
           child: AspectRatio(aspectRatio: 16 / 9, child: rec
-              ? _PlayerInline(url: '${_d['recording_url']}'.replaceFirst('/manifest/video.m3u8', '/iframe'))
+              ? _PlayerInline(url: _resolvePlayUrl(context, '${_d['recording_url']}'))
               : Container(color: Colors.black, child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  const Icon(Icons.hourglass_bottom_rounded, color: _grey, size: 40), const SizedBox(height: 8),
-                  Text(tr('التسجيل قيد المعالجة', 'Recording processing'), style: const TextStyle(color: _grey)),
+                  const Icon(Icons.videocam_off_rounded, color: _grey, size: 40), const SizedBox(height: 8),
+                  Text(tr('لا يتوفّر تسجيل لهذا البثّ', 'No recording for this broadcast'), style: const TextStyle(color: _grey)),
                 ]))))),
         const SizedBox(height: 14),
         // بطاقة المعلومات

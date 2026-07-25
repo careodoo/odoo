@@ -35,10 +35,14 @@ class LiveBroadcast {
     StreamForeground.start(iid);
   }
 
-  /// إيقاف البثّ نهائياً وتحرير الموارد.
-  Future<void> end() async {
+  /// إيقاف البثّ نهائياً وتحرير الموارد. مرّر [api] لرفع التسجيل الذاتيّ للخادم.
+  Future<void> end({dynamic api}) async {
+    final sid = session?['session_id'] as int?;
+    final dur = elapsedSeconds;
+    String? recPath;
     try {
       await bc?.stop();
+      recPath = bc?.recordedPath;
     } catch (_) {}
     await StreamForeground.stop();
     bc = null;
@@ -46,5 +50,10 @@ class LiveBroadcast {
     incidentId = 0;
     startEpochMs = 0;
     live.value = false;
+    // رفع تسجيل الجهاز في الخلفية (لا يعطّل إغلاق الشاشة)
+    if (api != null && sid != null && recPath != null) {
+      // ignore: avoid_dynamic_calls
+      api.securityStreamUploadRecording(sid, recPath, durationSec: dur).catchError((_) {});
+    }
   }
 }
