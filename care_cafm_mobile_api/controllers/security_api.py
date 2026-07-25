@@ -811,13 +811,15 @@ class SecurityMobileApi(Controller):
         prem_ids = []
         if g and g.security_employee_id and g.security_employee_id.team_ids:
             prem_ids = g.security_employee_id.team_ids.mapped('premise_id').ids
+        is_mgr = env.user.has_group('base.group_erp_manager') or env.user.has_group('base.group_system')
         if prem_ids and 'premise_id' in P._fields:
             dom = [('premise_id', 'in', prem_ids)]
         elif g:
-            dom = ['|', ('guard_id', '=', g.id),
-                   ('guard_id.security_employee_id.team_ids.premise_id', 'in', prem_ids or [0])]
+            dom = [('guard_id', '=', g.id)]
+        elif is_mgr:
+            dom = []  # مدير النظام فقط: كل السجل
         else:
-            dom = []  # مشرف/مدير: كل السجل
+            return _ok({'items': [], 'stats': {}})  # لا حارس ولا مدير → لا شيء (لا تسريب)
         if status in ('scheduled', 'in_progress', 'completed', 'cancelled'):
             dom = dom + [('state', '=', status)]
         recs = P.search(dom, order='scheduled_start desc, id desc', limit=120)
