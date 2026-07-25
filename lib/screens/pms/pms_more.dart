@@ -1,4 +1,5 @@
 import '../petrol_screen.dart';
+import '../training_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -90,6 +91,8 @@ class PmsMoreScreen extends StatelessWidget {
         _header(tr('أدوات', 'Tools')),
         _tile(context, Icons.local_gas_station_rounded, tr('إدارة الوقود', 'Fuel management'), const Color(0xFFE8873B),
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PetrolScreen()))),
+        _tile(context, Icons.school_rounded, tr('التدريب', 'Training'), const Color(0xFF5B4B8A),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TrainingScreen()))),
 
         // ===== systems =====
         if (systems.length > 1) ...[

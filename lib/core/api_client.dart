@@ -2711,6 +2711,41 @@ class ApiClient {
   Future<Map<String, dynamic>> petrolTransferConfirm(int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/petrol/transfer/$id/confirm'), headers: await _headers())))['data'] as Map);
+
+  // ---- موديول التدريب (training_management) -------------------------------
+  Future<Map<String, dynamic>> trainingOverview() async =>
+      Map<String, dynamic>.from((await _handle(
+              await _net.get(_u('/training/overview'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> trainingOptions() async =>
+      Map<String, dynamic>.from((await _handle(
+              await _net.get(_u('/training/options'), headers: await _headers())))['data'] as Map);
+
+  Future<List<dynamic>> trainingApplications({int? stage, int? employee, String? q}) async {
+    final p = <String>[];
+    if (stage != null) p.add('stage=$stage');
+    if (employee != null) p.add('employee=$employee');
+    if (q != null && q.isNotEmpty) p.add('q=${Uri.encodeQueryComponent(q)}');
+    final qs = p.isEmpty ? '' : '?${p.join('&')}';
+    return List<dynamic>.from((await _handle(
+            await _net.get(_u('/training/applications$qs'), headers: await _headers())))['data']['items'] as List);
+  }
+
+  Future<Map<String, dynamic>> trainingApplication(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+              await _net.get(_u('/training/application/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<List<dynamic>> trainingCourseContents(int courseId) async =>
+      List<dynamic>.from((await _handle(await _net.get(
+              _u('/training/course/$courseId/contents'), headers: await _headers())))['data']['items'] as List);
+
+  Future<Map<String, dynamic>> trainingCreate(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(_u('/training/application/create'),
+              headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<Map<String, dynamic>> trainingCreateTasks(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/training/application/$id/create_tasks'), headers: await _headers())))['data'] as Map);
 }
 
 class ApiException implements Exception {
