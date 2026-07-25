@@ -60,8 +60,11 @@ def _bearer():
     auth = request.httprequest.headers.get('Authorization', '')
     if auth.startswith('Bearer '):
         return auth[7:].strip()
-    # fallback: token query/body for easy testing
-    return request.httprequest.headers.get('X-Api-Token')
+    # fallback: X-Api-Token header, or a ?token= query param — the latter lets
+    # the in-app file/PDF viewer (package:http, no auth header) fetch protected
+    # documents like the supply delivery voucher.
+    return (request.httprequest.headers.get('X-Api-Token')
+            or request.httprequest.args.get('token'))
 
 
 # app short language code → Odoo locale, so translated record values (facility /
@@ -288,7 +291,10 @@ class MobileApi(http.Controller):
         user = env.user
         emp = user.employee_id
         WO = env['care.cafm.workorder']
-        my = WO.search([('employee_id', '=', emp.id)]) if emp else WO.browse()
+        # sudo: a portal worker (converted from internal) may lack model read on
+        # care.cafm.workorder — but seeing their OWN workorders must never 403 the
+        # whole login. Scoped to their employee, so no data leak.
+        my = WO.sudo().search([('employee_id', '=', emp.id)]) if emp else WO.browse()
         # service types the user actually works on → drives which service app opens
         my_types = sorted(set(t for t in my.mapped('service_type') if t)) if my else []
         # sudo: portal/client users can't read the service catalogue directly
@@ -328,7 +334,9 @@ class MobileApi(http.Controller):
             'my_service_types': my_types,
             'services': [_service_dict(s) for s in services],
             'counts': self._my_counts(env, emp),
-            'unread_notifications': env['care.cafm.notification'].search_count(
+            # sudo + scoped to own user_id: some portal users lack model read on
+            # care.cafm.notification, which must never 403 the whole login.
+            'unread_notifications': env['care.cafm.notification'].sudo().search_count(
                 [('user_id', '=', user.id), ('is_read', '=', False)]),
         }
 
@@ -336,7 +344,7 @@ class MobileApi(http.Controller):
         WO = env['care.cafm.workorder']
         if not emp:
             return {'open': 0, 'in_progress': 0, 'done': 0, 'overdue': 0, 'total': 0}
-        mine = WO.search([('employee_id', '=', emp.id)])
+        mine = WO.sudo().search([('employee_id', '=', emp.id)])  # own WOs; portal-safe
         return {
             'total': len(mine),
             'open': len(mine.filtered(lambda w: w.state not in ('done', 'verified', 'cancelled'))),
@@ -796,7 +804,10 @@ class MobileApi(http.Controller):
         state = request.httprequest.args.get('state')
         if state == 'open':
             dom.append(('state', 'not in', ('done', 'verified', 'cancelled')))
-        wos = env['care.cafm.workorder'].search(dom, limit=200)
+        # sudo: the domain already restricts to the caller's OWN work orders, but
+        # a security guard may lack a direct ACL on care.cafm.workorder (→ was a
+        # 403 on the Work Orders screen). Scoping keeps it safe.
+        wos = env['care.cafm.workorder'].sudo().search(dom, limit=200)
         return _ok([_wo_dict(w) for w in wos])
 
     @http.route(API + '/workorders/<int:wid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')

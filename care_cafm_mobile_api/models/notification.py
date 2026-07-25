@@ -20,6 +20,9 @@ class CafmNotification(models.Model):
     is_read = fields.Boolean(string='مقروء', default=False)
     read_date = fields.Datetime(string='تاريخ القراءة')
     action_url = fields.Char(string='رابط/إجراء', help='مسار داخل التطبيق يُفتح عند النقر (اختياري).')
+    res_model = fields.Char(string='نموذج السجل', index=True,
+                            help='موديل السجل المرتبط ليُفتح عند النقر.')
+    res_id = fields.Integer(string='معرّف السجل', index=True)
     batch = fields.Char(string='دفعة الإرسال', index=True,
                         help='معرّف مشترك لكل رسائل نفس البثّ — لعرض المستقبِلين ومَن قرأ.')
 
@@ -28,11 +31,27 @@ class CafmNotification(models.Model):
             'is_read': True, 'read_date': fields.Datetime.now()})
 
     @api.model
-    def push(self, users, title, body=None, ntype='info', author=None, action_url=None, batch=None):
-        """Create a notification row for each user. Returns the created records."""
+    def push(self, users, title, body=None, ntype='info', author=None, action_url=None,
+             batch=None, record=None):
+        """Create a notification row for each user. Returns the created records.
+
+        Pass `record` to link the notification to a source record — the app then
+        opens it on tap (via a generic record viewer). A default `action_url` is
+        also derived for the record kinds that have a dedicated screen."""
+        res_model = res_id = False
+        if record is not None and getattr(record, 'id', False):
+            res_model, res_id = record._name, record.id
+            if not action_url:
+                _paths = {
+                    'project.task': '/pms/task/%s', 'hr.employee': '/pms/employee/%s',
+                    'care.cafm.workorder': '/workorder/%s',
+                }
+                if res_model in _paths:
+                    action_url = _paths[res_model] % res_id
         vals = [{
             'title': title, 'body': body, 'ntype': ntype, 'user_id': u.id,
             'author_id': (author or self.env.user).id, 'action_url': action_url, 'batch': batch,
+            'res_model': res_model, 'res_id': res_id,
         } for u in users]
         recs = self.sudo().create(vals)
         # fan out an OS-level device push (best-effort; no-op if FCM unset)

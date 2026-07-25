@@ -304,11 +304,17 @@ class HospitalityApi(Controller):
         o = env['care.hosp.order'].sudo().browse(oid).exists()
         if not o or o.facility_id.id not in self._facilities(env).ids:
             return _err('الطلب غير موجود', 404)
+        # Kitchen cancelling an order (e.g. item unavailable) rejects it WITH a
+        # reason — the model then notifies the requester (⛔ + reason).
+        reason = (_body() or {}).get('reason') if act in ('reject', 'unavailable') else None
         try:
-            {'accept': o.action_accept, 'preparing': o.action_preparing,
-             'ready': o.action_ready, 'deliver': o.action_deliver,
-             'approve': o.action_approve, 'reject': o.action_reject}.get(
-                act, lambda: (_ for _ in ()).throw(ValueError('إجراء غير معروف')))()
+            if act in ('reject', 'unavailable'):
+                o.action_reject(reason=reason or 'غير متوفر حالياً')
+            else:
+                {'accept': o.action_accept, 'preparing': o.action_preparing,
+                 'ready': o.action_ready, 'deliver': o.action_deliver,
+                 'approve': o.action_approve}.get(
+                    act, lambda: (_ for _ in ()).throw(ValueError('إجراء غير معروف')))()
         except Exception as e:
             return _err(str(getattr(e, 'args', [e])[0] if getattr(e, 'args', None) else e), 422)
         return _ok(self._order(o))
@@ -441,16 +447,33 @@ class HospitalityApi(Controller):
         return _ok({'state': p.state})
 
     # ---- suppliers and the supply catalogue --------------------------------
+    def _client_cpid(self, env):
+        """The client (commercial partner) this caller is scoped to, or None for
+        internal staff/managers who keep the shared company vendor book."""
+        u = env.user
+        if u.has_group('base.group_user'):
+            return None
+        p = u.partner_id
+        return (p.commercial_partner_id.id or p.id) if p else None
+
     @route(API + '/hosp/suppliers', type='http', auth='public', methods=['GET'],
            csrf=False, cors='*')
     def hosp_suppliers(self, **kw):
-        """Who we buy from, and what a purchase line may point at."""
+        """Who we buy from, and what a purchase line may point at.
+
+        A client only ever sees the suppliers registered for THEM — never the
+        shared Odoo vendor register. Internal staff keep the company book.
+        """
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
         P = env['res.partner'].sudo()
-        parts = P.search([('supplier_rank', '>', 0)], limit=200) or \
-            P.search([('is_company', '=', True)], limit=200)
+        cpid = self._client_cpid(env)
+        if cpid:
+            parts = P.search([('hosp_supplier_client_id', '=', cpid)], limit=200)
+        else:
+            parts = P.search([('supplier_rank', '>', 0)], limit=200) or \
+                P.search([('is_company', '=', True)], limit=200)
         S = env['care.hosp.supply'].sudo()
         cat = dict(S._fields['category'].selection)
         uom = dict(S._fields['uom_name'].selection)
@@ -473,12 +496,19 @@ class HospitalityApi(Controller):
         if not name:
             return _err('اسم المورّد مطلوب', 422)
         P = env['res.partner'].sudo()
+        cpid = self._client_cpid(env)
         vals = {'name': name, 'phone': b.get('phone') or False,
                 'email': b.get('email') or False, 'is_company': True}
+        # Stamp the owning client so this supplier stays private to them.
+        if cpid:
+            vals['hosp_supplier_client_id'] = cpid
         if b.get('id'):
             rec = P.browse(int(b['id'])).exists()
             if not rec:
                 return _err('غير موجود', 404)
+            # A client may only edit a supplier they own.
+            if cpid and rec.hosp_supplier_client_id.id != cpid:
+                return _err('غير مصرّح', 403)
             rec.write(vals)
             if not rec.supplier_rank:
                 rec.supplier_rank = 1

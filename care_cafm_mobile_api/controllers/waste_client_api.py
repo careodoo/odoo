@@ -706,7 +706,64 @@ class WasteClientApi(Controller):
             o = env[_wm(env)['order']].sudo().create(vals)
         except Exception as e:
             return _err(str(e), 422)
-        return _ok({'id': o.id, 'serial': o.serial or o.display_name, 'state': o.states})
+        # Return the full trip card so the app can show a congrats dialog + share.
+        return _ok(self._order_share(env, o))
+
+    def _order_share(self, env, o):
+        """A professional, shareable trip card: full details + a QR that leads to
+        the trip record, and a link to the printable report."""
+        from urllib.parse import quote
+        base = env['ir.config_parameter'].sudo().get_param('web.base.url', '').rstrip('/')
+        track_url = '%s/waste/order/%s' % (base, o.id)
+        items = []
+        est = 0.0
+        for l in o.order_line_ids:
+            w = getattr(l, 'weight', 0) or 0
+            tot = round((l.quantity or 0) * w, 2)
+            est += tot
+            items.append({'name': l.item_id.name if l.item_id else '—',
+                          'qty': l.quantity, 'unit_weight': round(w, 3), 'total_weight': tot})
+        total_w = round(o.total_weight, 2) if 'total_weight' in o._fields and o.total_weight else round(est, 2)
+        st_lbl = o.states
+        try:
+            st_lbl = dict(o._fields['states']._description_selection(env)).get(o.states, o.states)
+        except Exception:
+            pass
+        return {
+            'id': o.id, 'serial': o.serial or o.display_name,
+            'state': o.states, 'state_label': st_lbl,
+            'project': o.project_id.name if o.project_id else None,
+            'pickup': o.pickup_location_id.name if o.pickup_location_id else None,
+            'type': o.type_id.name if 'type_id' in o._fields and o.type_id else None,
+            'request_datetime': str(o.request_datetime) if o.request_datetime else None,
+            'notes': o.notes or None,
+            'driver': o.driver_id.name if 'driver_id' in o._fields and o.driver_id else None,
+            'items': items, 'total_weight': total_w,
+            'track_url': track_url,
+            'qr_image_url': '%s/report/barcode/?barcode_type=QR&value=%s&width=360&height=360' % (
+                base, quote(track_url, safe='')),
+            'report_url': _abs('/api/v1/client/waste/order/%s/report' % o.id),
+        }
+
+    @route(API + '/client/waste/order/<int:oid>/report', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def waste_order_report(self, oid, token=None, **kw):
+        env = _auth()
+        if not env:
+            return request.not_found()
+        g = self._guard(env)
+        if g:
+            return request.make_response('لا صلاحية', status=403)
+        o = env[_wm(env)['order']].sudo().browse(int(oid)).exists()
+        if not o or o.project_id.id not in self._projects(env).ids:
+            return request.make_response('غير موجود', status=404)
+        try:
+            pdf, _t = env['ir.actions.report'].sudo()._render_qweb_pdf(
+                'care_cafm_waste.report_waste_order_doc', [o.id])
+        except Exception as e:
+            return request.make_response(str(e), status=500)
+        return request.make_response(pdf, headers=[
+            ('Content-Type', 'application/pdf'),
+            ('Content-Disposition', 'inline; filename="waste-order-%s.pdf"' % oid)])
 
     # ---- form options (pickup locations / types / items) ------------------
     @route(API + '/client/waste/options', type='http', auth='public', methods=['GET'], csrf=False, cors='*')

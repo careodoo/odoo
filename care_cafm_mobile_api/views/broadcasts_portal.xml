@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- بورتال سجل البثّ الأمني: صفحة احترافية داكنة مع مشغّل مضمّن لكل تسجيل -->
+    <template id="portal_broadcasts" name="سجل البثّ الأمني">
+        <t t-call="portal.portal_layout">
+            <t t-set="no_breadcrumbs" t-value="True"/>
+            <div class="o_care_broadcasts">
+                <style>
+                    .o_care_broadcasts{background:#0B1220;margin:-15px -15px 0;padding:24px 18px 60px;min-height:80vh;color:#E6EDF7}
+                    .o_care_broadcasts .cb-head{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+                    .o_care_broadcasts .cb-badge{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#1E3A5F,#0F172A);display:flex;align-items:center;justify-content:center;font-size:24px}
+                    .o_care_broadcasts h2{color:#fff;font-weight:800;margin:0}
+                    .o_care_broadcasts .cb-sub{color:#9CB2CD;font-size:13px}
+                    .o_care_broadcasts .cb-stats{display:flex;gap:12px;margin:18px 0 22px;flex-wrap:wrap}
+                    .o_care_broadcasts .cb-stat{background:#152238;border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:12px 18px;min-width:120px}
+                    .o_care_broadcasts .cb-stat .n{font-size:24px;font-weight:800;color:#4AA8FF}
+                    .o_care_broadcasts .cb-stat .l{font-size:12px;color:#9CB2CD}
+                    .o_care_broadcasts .cb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+                    .o_care_broadcasts .cb-card{background:#152238;border:1px solid rgba(255,255,255,.06);border-radius:16px;overflow:hidden}
+                    .o_care_broadcasts .cb-player{position:relative;padding-top:56.25%;background:#000}
+                    .o_care_broadcasts .cb-player iframe{position:absolute;inset:0;width:100%;height:100%;border:none}
+                    .o_care_broadcasts .cb-noplay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#6b7d94;flex-direction:column;gap:8px;background:#0E1A2E}
+                    .o_care_broadcasts .cb-body{padding:14px}
+                    .o_care_broadcasts .cb-guard{color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;gap:6px}
+                    .o_care_broadcasts .cb-meta{color:#9CB2CD;font-size:12.5px;margin-top:6px;display:flex;flex-wrap:wrap;gap:12px}
+                    .o_care_broadcasts .cb-meta span{display:inline-flex;align-items:center;gap:5px}
+                    .o_care_broadcasts .cb-pill{background:#37C98A;color:#04240f;font-size:11px;font-weight:800;padding:2px 9px;border-radius:20px}
+                    .o_care_broadcasts .cb-empty{text-align:center;padding:70px 0;color:#6b7d94}
+                    .o_care_broadcasts .cb-empty i{font-size:52px;opacity:.5}
+                </style>
+
+                <div class="cb-head">
+                    <div class="cb-badge">🎬</div>
+                    <div>
+                        <h2>سجل البثّ الأمني</h2>
+                        <div class="cb-sub">كل عمليات البثّ المباشر على مواقعك وتسجيلاتها — قابلة لإعادة التشغيل</div>
+                    </div>
+                </div>
+
+                <div class="cb-stats">
+                    <div class="cb-stat"><div class="n"><t t-esc="count"/></div><div class="l">إجمالي البثوث</div></div>
+                    <div class="cb-stat"><div class="n"><t t-esc="rec_count"/></div><div class="l">تسجيلات متاحة</div></div>
+                </div>
+
+                <t t-if="not rows">
+                    <div class="cb-empty">
+                        <i class="fa fa-film"/>
+                        <div>لا توجد بثوث مؤرشفة على مواقعك بعد.</div>
+                    </div>
+                </t>
+
+                <div class="cb-grid" t-if="rows">
+                    <t t-foreach="rows" t-as="r">
+                        <div class="cb-card">
+                            <div class="cb-player">
+                                <t t-if="r['has_rec']">
+                                    <iframe t-att-src="r['iframe']" allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture" allowfullscreen="true"/>
+                                </t>
+                                <t t-else="">
+                                    <div class="cb-noplay">
+                                        <i class="fa fa-clock-o" style="font-size:30px"/>
+                                        <span>التسجيل قيد المعالجة</span>
+                                    </div>
+                                </t>
+                            </div>
+                            <div class="cb-body">
+                                <div class="cb-guard">
+                                    <i class="fa fa-user-circle" style="color:#4AA8FF"/>
+                                    <span t-esc="r['guard']"/>
+                                    <t t-if="r['has_rec']"><span class="cb-pill" style="margin-inline-start:auto">تسجيل</span></t>
+                                </div>
+                                <div class="cb-meta">
+                                    <span><i class="fa fa-map-marker"/> <t t-esc="r['premise']"/></span>
+                                    <span><i class="fa fa-calendar"/> <t t-esc="r['started']"/></span>
+                                    <span><i class="fa fa-clock-o"/> <t t-esc="r['dur']"/></span>
+                                    <span><i class="fa fa-eye"/> <t t-esc="r['peak']"/></span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- إدراج رابط سجل البثّ في قائمة «حسابي» بالبورتال -->
+    <template id="portal_broadcasts_menu" inherit_id="portal.portal_my_home" name="سجل البثّ في حسابي" priority="80">
+        <xpath expr="//div[@id='portal_common_category']" position="inside">
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="title">سجل البثّ الأمني</t>
+                <t t-set="text">تسجيلات البثّ المباشر على مواقعك</t>
+                <t t-set="url" t-value="'/my/security/broadcasts'"/>
+                <t t-set="config_card" t-value="True"/>
+            </t>
+        </xpath>
+    </template>
+</odoo>

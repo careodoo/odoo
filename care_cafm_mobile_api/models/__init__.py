@@ -6,3 +6,11 @@ from . import account_deletion
 from . import orders_report
 from . import chat
 from . import client_service_pref
+from . import res_partner
+from . import account_move
+from . import project_task
+from . import pms_delegation
+from . import saved_filter
+from . import stream_provider
+from . import stream_session
+from . import guard_presence

@@ -122,6 +122,211 @@ class SecurityClientApi(Controller):
             'state': r.state, 'state_label': st.get(r.state, r.state),
         } for r in recs])
 
+    def _incident_guards(self, env, inc):
+        """الحراس المعنيون بالبلاغ لإشعارهم بطلب البث: المُبلِّغ + الحارس
+        المستجيب + مستخدم موقع البلاغ. نعيد res.users."""
+        users = env['res.users'].sudo().browse()
+        try:
+            if getattr(inc, 'reporter_id', False):
+                users |= inc.reporter_id
+            g = getattr(inc, 'guard_id', False)
+            if g and getattr(g, 'user_id', False):
+                users |= g.user_id
+            # مستخدم حساب الموظف خلف الحارس إن وُجد
+            if g:
+                emp = getattr(getattr(g, 'security_employee_id', False), 'employee_id', False)
+                if emp and getattr(emp, 'user_id', False):
+                    users |= emp.user_id
+        except Exception:
+            pass
+        return users
+
+    @route(API + '/client/security/incident/<int:iid>/request_stream', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def sec_incident_request_stream(self, iid, **kw):
+        """العميل يطلب بثاً مباشراً لبلاغ في موقعه → يُشعَر الحارس المعني ليفتح
+        البث. مقيّد بمواقع العميل حتى لا يطلب بثاً لبلاغ ليس له."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        g = self._guard(env)
+        if g:
+            return g
+        pids, cids = self._scope(env)
+        M = self._incident_model(env)
+        if M is None:
+            return _err('غير موجود', 404)
+        inc = M.browse(iid).exists()
+        if not inc or (inc.premise_id and inc.premise_id.id not in (pids or [])):
+            return _err('البلاغ ليس ضمن مواقعك', 404)
+        guards = self._incident_guards(env, inc)
+        if not guards:
+            return _err('لا يوجد حارس معيّن لهذا البلاغ بعد', 404)
+        note = _body(kw).get('note') or ''
+        try:
+            if 'care.cafm.notification' in env:
+                env['care.cafm.notification'].sudo().push(
+                    guards, '🔴 العميل يطلب بثاً مباشراً',
+                    '%s — %s%s' % (inc.premise_id.name or '', inc.name or '',
+                                   (' • %s' % note[:60]) if note else ''),
+                    ntype='alert', action_url='/security/incident/%s' % inc.id)
+            # أثر في المحادثة ليبقى الطلب موثّقاً على السجل
+            try:
+                inc.message_post(body=_(
+                    'طلب العميل %s بثاً مباشراً لهذا البلاغ.') % env.user.name)
+            except Exception:
+                pass
+        except Exception as e:
+            return _err('تعذّر إرسال الطلب: %s' % e, 400)
+        return _ok({'notified': len(guards),
+                    'message': 'أُرسل طلب البث إلى الحارس'})
+
+    @route(API + '/client/security/stream/active', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def sec_stream_active(self, **kw):
+        """البثوث الحيّة على مواقع العميل (لبانر هيدر تطبيق العميل) — الموجَّهة
+        للعميل أو للكل فقط."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.stream.session' not in env or 'security.premise' not in env:
+            return _ok({'items': []})
+        pids, cids = self._scope(env)
+        sess = env['care.stream.session'].sudo().search(
+            [('state', '=', 'live'), ('kind', '=', 'main'),
+             ('incident_id', 'in', self._premise_incident_ids(env, pids)),
+             ('audience', 'in', ('all', 'client'))], order='id desc', limit=20)
+        return _ok({'items': [{
+            'incident_id': s.incident_id, 'session_id': s.id,
+            'guard': s.guard_name, 'premise': s.premise_name,
+            'viewer_count': s.viewer_count,
+            'started_at': str(s.started_at or '')[:19] or None,
+        } for s in sess], 'count': len(sess)})
+
+    def _premise_incident_ids(self, env, pids):
+        """أرقام البلاغات على مواقع العميل (لربط الجلسات بالنطاق)."""
+        M = self._incident_model(env)
+        if M is None or not pids:
+            return [0]
+        return M.search([('premise_id', 'in', pids)]).ids or [0]
+
+    def _archive_dict(self, s):
+        dur = int((s.ended_at - s.started_at).total_seconds()) if (s.started_at and s.ended_at) else 0
+        return {
+            'session_id': s.id, 'incident_id': s.incident_id, 'guard': s.guard_name,
+            'premise': s.premise_name, 'started_at': str(s.started_at or '')[:19] or None,
+            'ended_at': str(s.ended_at or '')[:19] or None, 'duration': dur,
+            'peak_viewers': s.peak_viewers, 'total_viewers': s.total_viewers,
+            'has_recording': s.has_recording, 'recording_url': s.recording_url or None,
+            'thumbnail': s.recording_thumbnail or None,
+        }
+
+    @route(API + '/client/security/stream/archive', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def sec_stream_archive(self, **kw):
+        """سجل بثوث مواقع العميل المنتهية + تسجيلاتها لإعادة التشغيل."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.stream.session' not in env or 'security.premise' not in env:
+            return _ok({'items': []})
+        pids, cids = self._scope(env)
+        sess = env['care.stream.session'].sudo().search(
+            [('state', '=', 'ended'), ('kind', '=', 'main'),
+             ('incident_id', 'in', self._premise_incident_ids(env, pids)),
+             ('audience', 'in', ('all', 'client'))], order='id desc', limit=60)
+        try:
+            sess._fetch_recording()
+        except Exception:
+            pass
+        return _ok({'items': [self._archive_dict(s) for s in sess]})
+
+    @route(API + '/client/security/incident/<int:iid>/watch', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def sec_incident_watch(self, iid, **kw):
+        """العميل يشاهد بثّ بلاغٍ في موقعه — يُسجَّل مشاهداً ويُرجع روابط ومعلومات
+        البثّ. مقيّد بمواقع العميل حتى لا يشاهد بثّ بلاغٍ ليس له."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        g = self._guard(env)
+        if g:
+            return g
+        pids, cids = self._scope(env)
+        M = self._incident_model(env)
+        if M is None:
+            return _err('غير موجود', 404)
+        inc = M.browse(iid).exists()
+        if not inc or (inc.premise_id and inc.premise_id.id not in (pids or [])):
+            return _err('البلاغ ليس ضمن مواقعك', 404)
+        if 'care.stream.session' not in env:
+            return _ok({'live': False, 'incident_id': iid})
+        s = env['care.stream.session'].sudo().search(
+            [('incident_id', '=', iid), ('state', '=', 'live')], order='id desc', limit=1)
+        if not s:
+            return _ok({'live': False, 'incident_id': iid})
+        s._join(env.user)
+        return _ok({
+            'session_id': s.id, 'incident_id': iid, 'live': True, 'role': 'audience',
+            'guard': s.guard_name, 'premise': s.premise_name, 'client': s.client_name,
+            'provider_type': s.provider_id.provider_type if s.provider_id else None,
+            'started_at': str(s.started_at or '')[:19] or None,
+            'viewer_count': s.viewer_count,
+            'latitude': s.latitude or None, 'longitude': s.longitude or None,
+            'whep_url': s.whep_url or None, 'playback_url': s.playback_url or None,
+            'url': s.whep_url or s.playback_url or '',
+        })
+
+    def _client_live_session(self, env, iid):
+        """جلسة بثّ حيّة لبلاغٍ ضمن نطاق العميل (أو None)."""
+        pids, cids = self._scope(env)
+        M = self._incident_model(env)
+        if M is None:
+            return None
+        inc = M.browse(int(iid)).exists()
+        if not inc or (inc.premise_id and inc.premise_id.id not in (pids or [])):
+            return None
+        if 'care.stream.session' not in env:
+            return None
+        return env['care.stream.session'].sudo().search(
+            [('incident_id', '=', int(iid)), ('state', '=', 'live')], order='id desc', limit=1) or None
+
+    @route(API + '/client/security/incident/<int:iid>/message', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def sec_incident_message(self, iid, **kw):
+        """العميل يرسل رسالة دردشة على بثّ بلاغٍ في موقعه."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        s = self._client_live_session(env, iid)
+        if not s:
+            return _err('لا يوجد بثّ مباشر', 404)
+        body = (_body().get('body') or '').strip()
+        if not body:
+            return _err('رسالة فارغة', 400)
+        m = env['care.stream.message'].sudo().create({
+            'session_id': s.id, 'incident_id': iid, 'user_id': env.uid,
+            'user_name': env.user.name, 'body': body[:500], 'kind': 'chat', 'is_client': True,
+        })
+        return _ok({'id': m.id})
+
+    @route(API + '/client/security/incident/<int:iid>/messages', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def sec_incident_messages(self, iid, after=0, **kw):
+        """رسائل دردشة البثّ (للعميل، مقيّدة بنطاقه)."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        s = self._client_live_session(env, iid)
+        if not s:
+            return _ok({'live': False, 'messages': []})
+        dom = [('session_id', '=', s.id)]
+        try:
+            if int(after or 0) > 0:
+                dom.append(('id', '>', int(after)))
+        except Exception:
+            pass
+        msgs = env['care.stream.message'].sudo().search(dom, order='id asc', limit=100)
+        return _ok({'live': True, 'messages': [{
+            'id': m.id, 'name': m.user_name or 'مستخدم', 'body': m.body,
+            'kind': m.kind, 'is_client': m.is_client, 'mine': m.user_id.id == env.uid,
+            'at': str(m.created_at or '')[11:16],
+        } for m in msgs]})
+
     # ---- inspections ------------------------------------------------------
     @route(API + '/client/security/inspections', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def sec_inspections(self, **kw):

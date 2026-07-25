@@ -3,8 +3,10 @@ from . import pms_api
 from . import management_api
 from . import security_api
 from . import supervisor_api
+from . import security_supervisor_api
 from . import client_api
 from . import security_client_api
+from . import security_portal
 from . import agri_client_api
 from . import cleaning_client_api
 from . import facade_client_api
@@ -28,3 +30,5 @@ from . import valet_api
 from . import hospitality_api
 from . import report_api
 from . import svc_api
+from . import payment_api
+from . import my_api

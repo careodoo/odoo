@@ -584,19 +584,25 @@ class ClientApi(Controller):
         Shared by the API and the printed report so the two can never disagree."""
         facs = self._facilities(env)
         empty = {'records': [], 'workers': [], 'totals': {}, 'shifts': [], 'facets': {'employees': [], 'facilities': []}}
-        if 'care.cafm.shift' not in env or not facs:
+        emp_filter = a.get('employee_id')
+        emp_filter = int(emp_filter) if (emp_filter or '').isdigit() else None
+        # Personal view («My» attendance): the caller's OWN records, unrestricted
+        # by facility — a person always sees all their own punches.
+        personal = str(a.get('personal') or '') in ('1', 'true', 'True') and bool(emp_filter)
+        if 'care.cafm.shift' not in env or (not facs and not personal):
             return empty
         now = fields.Datetime.now()
         dstart, dend, period_label = self._range(a)
         fac_filter = a.get('facility_id')
         fac_filter = int(fac_filter) if (fac_filter or '').isdigit() else None
         fac_ids = [fac_filter] if fac_filter and fac_filter in facs.ids else facs.ids
-        emp_filter = a.get('employee_id')
-        emp_filter = int(emp_filter) if (emp_filter or '').isdigit() else None
 
-        dom = [('facility_id', 'in', fac_ids)]
-        if emp_filter:
-            dom.append(('employee_id', '=', emp_filter))
+        if personal:
+            dom = [('employee_id', '=', emp_filter)]
+        else:
+            dom = [('facility_id', 'in', fac_ids)]
+            if emp_filter:
+                dom.append(('employee_id', '=', emp_filter))
         if dstart:
             dom.append(('check_in', '>=', dstart))
         if dend:
@@ -798,6 +804,54 @@ class ClientApi(Controller):
                         'message': 'تم تسجيل الحضور'})
         except Exception as e:
             return _err(str(e) or 'تعذّر تسجيل الحضور', 422)
+
+    # ---- timesheets: departments to choose, then create + submit -----------
+    @route(API + '/client/timesheet/departments', type='http', auth='public',
+           methods=['GET'], csrf=False, cors='*')
+    def client_ts_departments(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        # Departments the caller can act on: their own first, then any they may
+        # read (managers see all; a worker sees their own).
+        deps = env['hr.department'].sudo().search([], limit=300)
+        emp = env.user.employee_id
+        own = emp.department_id.id if emp and emp.department_id else None
+        out = [{'id': d.id, 'name': d.display_name, 'own': d.id == own} for d in deps]
+        out.sort(key=lambda x: (not x['own'], x['name'] or ''))
+        return _ok({'departments': out, 'own_department': own})
+
+    @route(API + '/client/timesheet/create', type='http', auth='public',
+           methods=['POST'], csrf=False, cors='*')
+    def client_timesheet_create(self, **kw):
+        """Create a timesheet for a department + period, pull present-days from
+        biometric attendance, and (optionally) send it for approval — the same
+        two calls the portal makes."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.timesheet' not in env:
+            return _err('نظام كشوف الساعات غير متاح', 404)
+        b = _body() or {}
+        if not (b.get('date_from') and b.get('date_to')):
+            return _err('حدّد الفترة (من/إلى)', 422)
+        dept = int(b['department_id']) if b.get('department_id') else None
+        if not dept:
+            return _err('حدّد القسم', 422)
+        try:
+            ts = env['care.timesheet'].sudo().create({
+                'department_id': dept,
+                'date_from': b['date_from'], 'date_to': b['date_to']})
+            # Generate present-days from attendance but keep it a DRAFT — the
+            # user reviews/adjusts the days, then submits it explicitly.
+            if hasattr(ts, 'button_generate_timesheet'):
+                ts.button_generate_timesheet()
+        except Exception as e:
+            return _err(str(e) or 'تعذّر إنشاء الكشف', 422)
+        return _ok({'id': ts.id, 'name': ts.display_name,
+                    'state': ts.state if 'state' in ts._fields else None,
+                    'lines': len(ts.line_ids) if 'line_ids' in ts._fields else None,
+                    'submitted': False})
 
     # ---- disinfection rounds: list + assign (worker/team + planned time) -----
     @route(API + '/client/disinfect/rounds', type='http', auth='public', methods=['GET'], csrf=False, cors='*')

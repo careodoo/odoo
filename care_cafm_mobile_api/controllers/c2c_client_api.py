@@ -82,10 +82,11 @@ class C2CClientApi(Controller):
             cafm = bool(env['care.cafm.client'].sudo().search_count([('user_ids', 'in', [u.id])]))
         if not cafm and 'care.cafm.facility' in env:
             pids = {p.id}
-            if p.commercial_partner_id:
-                pids.add(p.commercial_partner_id.id)
+            cp = p.sudo().commercial_partner_id   # own partner; portal-safe read
+            if cp:
+                pids.add(cp.id)
                 pids.update(env['res.partner'].sudo().search(
-                    [('commercial_partner_id', '=', p.commercial_partner_id.id)]).ids)
+                    [('commercial_partner_id', '=', cp.id)]).ids)
             cafm = bool(env['care.cafm.facility'].sudo().search_count([('partner_id', 'in', list(pids))]))
         # CAFM WORKERS/STAFF (the field crew) also get the CAFM interface: an
         # employee who is assigned CAFM work orders, or a CAFM/security supervisor.
@@ -113,9 +114,10 @@ class C2CClientApi(Controller):
                           or _hg('purchase.group_purchase_manager')
                           or _hg('stock.group_stock_manager')
                           or _hg('hr.group_hr_manager'))
-        # PMS access: internal project users, or a member/manager/follower of any project
-        pms = False
-        if 'project.project' in env:
+        # PMS access: an explicit "PMS user" flag (lets portal/public users in),
+        # internal project users, or a member/manager/follower of any project.
+        pms = bool(getattr(u, 'pms_app_user', False))
+        if not pms and 'project.project' in env:
             if u.has_group('project.group_project_user') or u.has_group('project.group_project_manager'):
                 pms = True
             else:

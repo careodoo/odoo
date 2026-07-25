@@ -254,6 +254,32 @@ class RecordReport(http.Controller):
         title = spec[1] if spec else (rec._description or model)
         return rec, title, (spec[2] if spec else []), (spec[3] if spec else None)
 
+    @http.route('/api/v1/pms/settlement/<int:sid>/report', type='http', auth='public',
+                methods=['GET'], csrf=False, cors='*')
+    def settlement_report(self, sid, token=None, **kw):
+        """The official cash-custody settlement statement (QWeb) as a PDF."""
+        user = self._user(token)
+        if not user:
+            return request.make_response(_('غير مصرّح'), status=401)
+        env = request.env(user=user.id)
+        s = env['care.pms.petty.settlement'].sudo().browse(int(sid)).exists()
+        if not s:
+            return request.not_found()
+        try:
+            pdf, _t = env['ir.actions.report'].sudo()._render_qweb_pdf(
+                'care_pms.report_petty_cash', [s.id])
+        except Exception:
+            # Fall back to the generic record report if the QWeb one fails.
+            return request.redirect(
+                '/api/v1/report/care_pms_petty_settlement/%s?token=%s' % (sid, token or ''))
+        raw = (s.display_name or 'settlement').replace('/', '-').replace(' ', '_')[:60]
+        ascii_name = raw.encode('ascii', 'ignore').decode().strip('_-') or ('settlement-%s' % sid)
+        return request.make_response(pdf, headers=[
+            ('Content-Type', 'application/pdf'),
+            ('Content-Disposition',
+             "inline; filename=\"%s.pdf\"; filename*=UTF-8''%s" % (ascii_name, urls.url_quote(raw + '.pdf'))),
+        ])
+
     @http.route(['/api/v1/report/<string:code>/<int:rid>',
                  '/api/v1/report/<string:code>/<int:rid>/pdf'],
                 type='http', auth='public', methods=['GET'], csrf=False, cors='*')

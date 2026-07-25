@@ -12,3 +12,15 @@ acc_care_app_settings_mgr,care.app.settings.mgr,model_care_app_settings,base.gro
 access_care_chat_message_user,care.chat.message.user,model_care_chat_message,base.group_user,1,1,1,0
 access_care_chat_message_portal,care.chat.message.portal,model_care_chat_message,base.group_portal,1,1,1,0
 acc_client_service_pref,care.cafm.client.service.pref,model_care_cafm_client_service_pref,base.group_user,1,1,1,1
+access_pms_delegation_user,care.pms.delegation.user,model_care_pms_delegation,base.group_user,1,1,1,1
+access_pms_saved_filter_user,pms.saved.filter.user,model_care_pms_saved_filter,base.group_user,1,1,1,1
+access_care_stream_provider_mgr,care.stream.provider.mgr,model_care_stream_provider,base.group_erp_manager,1,1,1,1
+access_care_stream_provider_user,care.stream.provider.user,model_care_stream_provider,base.group_user,1,0,0,0
+access_care_stream_session_user,care.stream.session.user,model_care_stream_session,base.group_user,1,1,1,0
+access_care_stream_session_mgr,care.stream.session.mgr,model_care_stream_session,base.group_erp_manager,1,1,1,1
+access_care_stream_viewer_user,care.stream.viewer.user,model_care_stream_viewer,base.group_user,1,1,1,0
+access_care_stream_viewer_mgr,care.stream.viewer.mgr,model_care_stream_viewer,base.group_erp_manager,1,1,1,1
+access_care_stream_message_user,care.stream.message.user,model_care_stream_message,base.group_user,1,1,1,0
+access_care_stream_message_mgr,care.stream.message.mgr,model_care_stream_message,base.group_erp_manager,1,1,1,1
+access_care_guard_presence_user,care.guard.presence.user,model_care_guard_presence,base.group_user,1,1,1,0
+access_care_guard_presence_mgr,care.guard.presence.mgr,model_care_guard_presence,base.group_erp_manager,1,1,1,1

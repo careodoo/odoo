@@ -11,6 +11,8 @@ def _notif_dict(n):
         'type': n.ntype, 'is_read': n.is_read,
         'author': n.author_id.name or None,
         'action_url': n.action_url or None,
+        'res_model': n.res_model or None,
+        'res_id': n.res_id or None,
         'date': n.create_date,
     }
 

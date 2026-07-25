@@ -124,14 +124,18 @@ class CafmDevice(models.Model):
             url = _FCM_SEND % creds['project_id']
             headers = {'Authorization': 'Bearer %s' % token, 'Content-Type': 'application/json'}
             payload_data = {k: str(v) for k, v in (data or {}).items()}
+            # إشعارات الطوارئ (alert) تُوجَّه لقناة الاستغاثة بالنغمة المميّزة
+            is_alert = (data or {}).get('ntype') == 'alert'
+            and_notif = {'sound': 'sos_alert', 'channel_id': 'care_sos'} if is_alert else {'sound': 'default'}
+            aps_sound = 'sos_alert.caf' if is_alert else 'default'
             sent, dead = 0, self.browse()
             for dev in devices:
                 msg = {'message': {
                     'token': dev.token,
                     'notification': {'title': title, 'body': body or ''},
                     'data': payload_data,
-                    'android': {'priority': 'high', 'notification': {'sound': 'default'}},
-                    'apns': {'payload': {'aps': {'sound': 'default'}}},
+                    'android': {'priority': 'high', 'notification': and_notif},
+                    'apns': {'payload': {'aps': {'sound': aps_sound}}},
                 }}
                 r = requests.post(url, headers=headers, data=json.dumps(msg), timeout=15)
                 if r.status_code == 200:

@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- شجرة مزوّدات البث -->
+    <record id="view_stream_provider_tree" model="ir.ui.view">
+        <field name="name">care.stream.provider.tree</field>
+        <field name="model">care.stream.provider</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="provider_type"/>
+                <field name="base_url"/>
+                <field name="requires_token"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- استمارة إعداد مزوّد -->
+    <record id="view_stream_provider_form" model="ir.ui.view">
+        <field name="name">care.stream.provider.form</field>
+        <field name="model">care.stream.provider</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="اسم المزوّد"/></h1>
+                    </div>
+                    <group>
+                        <group string="الخدمة">
+                            <field name="provider_type"/>
+                            <field name="active"/>
+                            <field name="requires_token"/>
+                            <field name="base_url"/>
+                        </group>
+                        <group string="بيانات الاعتماد">
+                            <field name="app_id"/>
+                            <field name="api_key" password="True"/>
+                            <field name="api_secret" password="True"/>
+                        </group>
+                    </group>
+                    <group string="قوالب الروابط (RTMP / HLS)">
+                        <field name="ingest_url_template"/>
+                        <field name="playback_url_template"/>
+                    </group>
+                    <group string="قوالب WebRTC (بثّ داخل التطبيق بزمن منخفض)">
+                        <field name="whip_url_template"/>
+                        <field name="whep_url_template"/>
+                    </group>
+                    <group string="Cloudflare API (قناة لكل بثّ — مشاركة متزامنة)">
+                        <field name="dynamic_input"/>
+                        <field name="cf_account_id" invisible="not dynamic_input" required="dynamic_input"/>
+                        <field name="cf_api_token" password="True" invisible="not dynamic_input" required="dynamic_input"/>
+                        <field name="cf_recording" invisible="not dynamic_input"/>
+                    </group>
+                    <group string="ملاحظات">
+                        <field name="notes" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_stream_provider" model="ir.actions.act_window">
+        <field name="name">مزوّدات البث المباشر</field>
+        <field name="res_model">care.stream.provider</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_stream_provider_root" name="البث المباشر" sequence="90"
+              parent="care_cafm.menu_cafm_setup" action="action_stream_provider"/>
+
+    <!-- سجل جلسات البثّ + المشاهدين (للمراقبة والتدقيق) -->
+    <record id="view_stream_session_tree" model="ir.ui.view">
+        <field name="name">care.stream.session.tree</field>
+        <field name="model">care.stream.session</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state=='live'" decoration-muted="state=='ended'">
+                <field name="name"/>
+                <field name="guard_name"/>
+                <field name="premise_name"/>
+                <field name="client_name"/>
+                <field name="viewer_count"/>
+                <field name="peak_viewers"/>
+                <field name="started_at"/>
+                <field name="ended_at"/>
+                <field name="has_recording" widget="boolean_toggle" optional="show"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_stream_session_form" model="ir.ui.view">
+        <field name="name">care.stream.session.form</field>
+        <field name="model">care.stream.session</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_fetch_recording" type="object" string="جلب التسجيل"
+                            class="btn-primary" icon="fa-download"
+                            invisible="state != 'ended'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group string="البثّ">
+                            <field name="state"/>
+                            <field name="guard_name"/>
+                            <field name="premise_name"/>
+                            <field name="client_name"/>
+                            <field name="incident_id"/>
+                            <field name="provider_id"/>
+                        </group>
+                        <group string="الإحصاء والتوقيت">
+                            <field name="viewer_count"/>
+                            <field name="peak_viewers"/>
+                            <field name="total_viewers"/>
+                            <field name="started_at"/>
+                            <field name="ended_at"/>
+                            <field name="latitude"/>
+                            <field name="longitude"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="المشاهدون">
+                            <field name="viewer_ids">
+                                <tree decoration-success="active==True">
+                                    <field name="user_name"/>
+                                    <field name="joined_at"/>
+                                    <field name="left_at"/>
+                                    <field name="active"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="التسجيل وإعادة التشغيل">
+                            <group>
+                                <field name="has_recording"/>
+                                <field name="recording_uid"/>
+                                <field name="recording_duration"/>
+                                <field name="recording_url" widget="url"/>
+                            </group>
+                            <field name="recording_embed" nolabel="1"/>
+                        </page>
+                        <page string="الروابط">
+                            <group>
+                                <field name="whip_url"/>
+                                <field name="whep_url"/>
+                                <field name="playback_url"/>
+                                <field name="ingest_url"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_stream_session_search" model="ir.ui.view">
+        <field name="name">care.stream.session.search</field>
+        <field name="model">care.stream.session</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="guard_name"/>
+                <field name="premise_name"/>
+                <field name="client_name"/>
+                <filter name="live" string="مباشر الآن" domain="[('state','=','live')]"/>
+                <filter name="ended" string="منتهٍ" domain="[('state','=','ended')]"/>
+                <separator/>
+                <filter name="has_rec" string="له تسجيل" domain="[('has_recording','=',True)]"/>
+                <group expand="0" string="تجميع">
+                    <filter name="g_guard" string="الحارس" context="{'group_by':'guard_name'}"/>
+                    <filter name="g_premise" string="الموقع" context="{'group_by':'premise_name'}"/>
+                    <filter name="g_client" string="العميل" context="{'group_by':'client_name'}"/>
+                    <filter name="g_state" string="الحالة" context="{'group_by':'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_stream_session" model="ir.actions.act_window">
+        <field name="name">جلسات البثّ المباشر</field>
+        <field name="res_model">care.stream.session</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_stream_session" name="جلسات البثّ" sequence="91"
+              parent="care_cafm.menu_cafm_setup" action="action_stream_session"/>
+</odoo>

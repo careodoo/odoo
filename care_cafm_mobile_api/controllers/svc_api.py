@@ -121,6 +121,74 @@ def _row(section, rec):
     }
 
 
+_DETAIL_SKIP = {
+    'id', 'display_name', 'create_uid', 'create_date', 'write_uid', 'write_date',
+    '__last_update', 'access_token', 'access_url', 'access_warning', 'sequence',
+    'color', 'facility_id',  # already the section context / title
+    # mail.thread / technical plumbing that means nothing to a reader
+    'has_message', 'website_message_ids', 'rating_ids', 'rating_last_value',
+    'rating_last_feedback', 'rating_count', 'rating_avg', 'rating_percentage_satisfaction',
+    'message_is_follower', 'message_bounce', 'active', 'company_id', 'currency_id',
+}
+_DESC_FIELDS = ('description', 'note', 'notes', 'comment', 'x_description',
+                'details', 'remarks', 'observation', 'observations', 'body')
+
+
+def _fmt_val(rec, name, f, env):
+    """A record field rendered as a plain, human string for the detail sheet."""
+    val = rec[name]
+    t = f.type
+    if t == 'many2one':
+        return val.display_name if val else None
+    if t in ('one2many', 'many2many'):
+        return '، '.join(val.mapped('display_name')[:8]) if val else None
+    if t == 'boolean':
+        return 'نعم' if val else 'لا'
+    if t == 'selection':
+        try:
+            return dict(f._description_selection(env)).get(val, val)
+        except Exception:
+            return val
+    if t in ('date', 'datetime'):
+        return str(val) if val else None
+    if t in ('float', 'monetary'):
+        return None if not val else round(val, 3)
+    if t == 'integer':
+        return None if not val else val
+    if t in ('binary', 'image', 'html'):
+        return None
+    return val or None
+
+
+def _record_details(rec, env):
+    """(full free-text description, [ {label,value} … ]) for one record — so a
+    tap reveals everything the record holds, not just its pills."""
+    fg = rec._fields
+    desc = ''
+    for dn in _DESC_FIELDS:
+        if dn in fg and rec[dn]:
+            desc = rec[dn]
+            break
+    rows = []
+    for name, f in fg.items():
+        if name in _DETAIL_SKIP or name in _DESC_FIELDS:
+            continue
+        if name.startswith(('message_', 'activity_', 'my_activity_', 'rating_', 'website_')):
+            continue
+        if f.type in ('binary', 'image', 'html', 'one2many'):
+            continue
+        try:
+            v = _fmt_val(rec, name, f, env)
+        except Exception:
+            v = None
+        if v in (None, '', False):
+            continue
+        rows.append({'label': f.string or name, 'value': str(v)})
+        if len(rows) >= 30:
+            break
+    return (desc or ''), rows
+
+
 def _field_spec(f, facs, env):
     """A field described well enough for a web form to render it without
     knowing anything about Odoo."""
@@ -237,6 +305,34 @@ class ServiceApi(Controller):
             'add_label_en': _en(create.label) if create else None,
             'fields': fields,
         })
+
+    @route(API + '/client/svc/<string:code>/<string:key>/<int:rid>', type='http',
+           auth='public', methods=['GET'], csrf=False, cors='*')
+    def svc_record(self, code, key, rid, **kw):
+        """One record in full — its free-text description and every readable
+        field — so a tap opens the record, not a report."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        request.update_env(user=env.user.id)
+        reg = REGISTRY().get(code)
+        if not reg:
+            return _err('خدمة غير معروفة', 404)
+        section = next((s for s in reg[2] if s.key == key), None)
+        if not section:
+            return _err('قسم غير معروف', 404)
+        rec = env[section.model].sudo().browse(int(rid)).exists()
+        if not rec:
+            return _err('السجل غير موجود', 404)
+        # A client only ever reads records within their own facilities.
+        facs = _pages()._facilities()
+        if 'facility_id' in rec._fields and facs and rec.facility_id.id not in facs.ids:
+            return _err('غير مصرّح', 403)
+        out = _row(section, rec)
+        desc, details = _record_details(rec, env)
+        out['description'] = desc
+        out['details'] = details
+        return _ok(out)
 
     @route(API + '/client/svc/<string:code>/<string:key>/add', type='http',
            auth='public', methods=['POST'], csrf=False, cors='*')
