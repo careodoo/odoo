@@ -85,6 +85,7 @@
                                     <field name="perm_workorder_create"/>
                                     <field name="perm_workorder_verify"/>
                                     <field name="perm_schedule_manage"/>
+                                    <field name="perm_record_manage"/>
                                 </group>
                                 <group string="الجودة">
                                     <field name="perm_observation_create"/>

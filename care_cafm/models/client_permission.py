@@ -161,17 +161,23 @@ class CafmClientPermissionMixin(models.AbstractModel):
     perm_inventory_policy = fields.Boolean(
         string='ضبط سياسة صرف المواد', compute='_compute_perm_flags', inverse='_inverse_perm_flags',
         help='تحديد المواد المسموح للعمّال صرفها وحدودها.', store=False)
+    perm_record_manage = fields.Boolean(
+        string='إدارة السجلات في كل الأقسام', compute='_compute_perm_flags', inverse='_inverse_perm_flags',
+        help='إضافة وإلغاء أي سجل في أي قسم من أقسام الخدمات، في التطبيق والبورتال.', store=False)
 
     def _compute_perm_flags(self):
         for rec in self:
             granted = rec.granted_codes()
             for code, _l, _h, _d, _g in PERMISSIONS:
-                rec['perm_%s' % code] = code in granted
+                # حصانة ضدّ أي كود بلا حقل perm_ مطابق (يمنع KeyError)
+                if ('perm_%s' % code) in rec._fields:
+                    rec['perm_%s' % code] = code in granted
 
     def _inverse_perm_flags(self):
         for rec in self:
             for code, _l, _h, _d, _g in PERMISSIONS:
-                rec.set_permission(code, bool(rec['perm_%s' % code]))
+                if ('perm_%s' % code) in rec._fields:
+                    rec.set_permission(code, bool(rec['perm_%s' % code]))
 
     def granted_codes(self):
         """Every capability this client currently holds."""
