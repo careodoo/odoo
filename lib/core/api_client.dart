@@ -2746,6 +2746,24 @@ class ApiClient {
   Future<Map<String, dynamic>> trainingCreateTasks(int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/training/application/$id/create_tasks'), headers: await _headers())))['data'] as Map);
+
+  // ---- مراكز التكلفة (cost.center) ----------------------------------------
+  Future<Map<String, dynamic>> costCenterOverview() async =>
+      Map<String, dynamic>.from((await _handle(
+              await _net.get(_u('/costcenter/overview'), headers: await _headers())))['data'] as Map);
+
+  Future<List<dynamic>> costCenterList({String? type, String? q}) async {
+    final p = <String>[];
+    if (type != null) p.add('type=$type');
+    if (q != null && q.isNotEmpty) p.add('q=${Uri.encodeQueryComponent(q)}');
+    final qs = p.isEmpty ? '' : '?${p.join('&')}';
+    return List<dynamic>.from((await _handle(
+            await _net.get(_u('/costcenter/list$qs'), headers: await _headers())))['data']['items'] as List);
+  }
+
+  Future<Map<String, dynamic>> costCenterDetail(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+              await _net.get(_u('/costcenter/$id'), headers: await _headers())))['data'] as Map);
 }
 
 class ApiException implements Exception {
