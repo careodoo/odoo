@@ -331,10 +331,17 @@ class MobileApi(http.Controller):
         # get the inspection console rather than the plain worker screen.
         is_quality = ('care.cafm.team' in env
                       and bool(env['care.cafm.team'].sudo().search_count([('quality_user_id', '=', user.id)])))
-        if not emp or is_cafm_member:
-            role = 'client'
-        elif 'security' in my_types:
+        # حارس أمن: مرتبط بسجل security.guard أو عضو في فريق أمن (security.employee)
+        # حتى قبل إسناد أي أمر عمل له — فمجرّد إضافته لفريق/وردية أمن يجعله «أمن».
+        is_security_staff = bool(
+            ('security.guard' in env and env['security.guard'].sudo().search_count([('user_id', '=', user.id)]))
+            or ('security.employee' in env and env['security.employee'].sudo().search_count([('user_id', '=', user.id)]))
+            or ('security.employee' in env and emp and env['security.employee'].sudo().search_count([('employee_id', '=', emp.id)]))
+        )
+        if is_security_staff or 'security' in my_types:
             role = 'security'
+        elif not emp or is_cafm_member:
+            role = 'client'
         elif my_types:
             role = my_types[0]  # cleaning / agriculture / facade / ...
         else:
