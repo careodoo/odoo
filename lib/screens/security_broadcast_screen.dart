@@ -73,14 +73,25 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
         setState(() { _starting = false; _error = tr('يجب السماح بالكاميرا والميكروفون للبثّ', 'Camera & microphone permission required'); });
         return;
       }
-      // 2) الموقع (اختياري)
+      // 2) الموقع: نطلب الإذن ثم نلتقط الموقع الفعلي (وإلا يتراجع الخادم لإحداثيات
+      //    مرفق الحارس بدل 0.0)
       double? lat, lng;
       try {
-        final p = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.medium,
-            timeLimit: const Duration(seconds: 6));
-        lat = p.latitude; lng = p.longitude;
-      } catch (_) {}
+        var perm = await Geolocator.checkPermission();
+        if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
+        if (perm != LocationPermission.denied && perm != LocationPermission.deniedForever) {
+          final p = await Geolocator.getCurrentPosition(
+              desiredAccuracy: LocationAccuracy.high,
+              timeLimit: const Duration(seconds: 10));
+          lat = p.latitude; lng = p.longitude;
+        } else {
+          final last = await Geolocator.getLastKnownPosition();
+          if (last != null) { lat = last.latitude; lng = last.longitude; }
+        }
+      } catch (_) {
+        try { final last = await Geolocator.getLastKnownPosition();
+          if (last != null) { lat = last.latitude; lng = last.longitude; } } catch (_) {}
+      }
       // 3) إنشاء الجلسة في الباك ايند (بثّ رئيسي أو مشاركة co-host)
       final api = context.read<AuthProvider>().api;
       final s = widget.cohost

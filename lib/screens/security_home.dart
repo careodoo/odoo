@@ -9,6 +9,8 @@ import 'security_incidents_screen.dart';
 import 'security_list_screen.dart';
 import 'security_section_screen.dart';
 import 'security_my_team_screen.dart';
+import 'security_tasks_screen.dart';
+import 'security_patrol_points_screen.dart';
 import 'security_keys_screen.dart';
 import 'security_inspections_screen.dart';
 import 'security_gatepasses_screen.dart';
@@ -163,12 +165,19 @@ class SecurityHome extends StatelessWidget {
                 icon: '👥', label: tr('فريقي', 'My team'), sub: tr('أعضاء فريقي وحالتهم', 'My team members'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityMyTeamScreen()))),
               _secTile(context, '🗓️', tr('الجداول والورديات', 'Schedules'), tr('التعيينات', 'Assignments'), 'schedules'),
-              _secTile(context, '📍', tr('نقاط الدوريات', 'Patrol points'), tr('QR ونوع النقطة', 'QR & type'), 'patrol_points'),
+              _Tile(
+                icon: '📍', label: tr('نقاط الدوريات', 'Patrol points'), sub: tr('حسب المرفق · إحصائيات', 'By facility · stats'),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityPatrolPointsScreen()))),
               _secTile(context, '🧾', tr('سجلّات الدوريات', 'Patrol logs'), tr('المسح والوقت', 'Scans & time'), 'patrol_logs'),
               _Tile(
                 icon: '🔎', label: tr('التفتيشات', 'Inspections'), sub: tr('فحص · إسناد · أمر عمل', 'Check · assign · WO'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityInspectionsScreen()))),
-              _secTile(context, '✅', tr('مهام الأمن', 'Security tasks'), tr('الإسناد والتقدّم', 'Assignee & progress'), 'tasks'),
+              _Tile(
+                icon: '✅', label: tr('مهام الأمن', 'Security tasks'), sub: tr('مهامي · أرشيف · إجراءات', 'My tasks · archive · actions'),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityTasksScreen()))),
+              _Tile(
+                icon: '🔔', label: tr('اختبار الإشعارات', 'Test alerts'), sub: tr('جرّب كل نوع إشعار', 'Try each type'),
+                onTap: () => _testNotifSheet(context)),
             ],
           ),
         ],
@@ -181,6 +190,71 @@ class SecurityHome extends StatelessWidget {
         onTap: () => Navigator.push(c, MaterialPageRoute(
             builder: (_) => SecuritySectionScreen(kind: kind, title: label))),
       );
+
+  /// ورقة اختبار الإشعارات: يرسل الخادم إشعاراً تجريبياً لكل نوع ليتأكد الحارس من
+  /// وصولها (يشمل تنبيهاً إن كان الجهاز غير مسجّل — أي إذن الإشعارات مرفوض).
+  void _testNotifSheet(BuildContext c) {
+    const types = [
+      ('info', '🔔', 'إشعار عام'),
+      ('task', '📋', 'مهمة'),
+      ('patrol', '🚶', 'دورية'),
+      ('point', '📍', 'نقطة تفتيش'),
+      ('incident', '⚠️', 'بلاغ أمني'),
+      ('gatepass', '🚪', 'تصريح'),
+      ('key', '🔑', 'عهدة مفاتيح'),
+      ('stream', '🎥', 'بث مباشر'),
+      ('alert', '🆘', 'استغاثة'),
+      ('message', '💬', 'رسالة'),
+    ];
+    showModalBottomSheet(
+      context: c, backgroundColor: const Color(0xFF152238), isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (sheetCtx) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF34506F), borderRadius: BorderRadius.circular(3))),
+          const SizedBox(height: 14),
+          Text(tr('اختبار الإشعارات', 'Test notifications'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+          const SizedBox(height: 4),
+          Text(tr('اضغط أي نوع ليصلك إشعار تجريبي', 'Tap a type to receive a test alert'),
+              style: const TextStyle(color: Color(0xFF9CB2CD), fontSize: 12)),
+          const SizedBox(height: 14),
+          Wrap(spacing: 9, runSpacing: 9, alignment: WrapAlignment.center, children: [
+            for (final t in types)
+              InkWell(
+                onTap: () => _sendTest(sheetCtx, t.$1),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: 96, padding: const EdgeInsets.symmetric(vertical: 12),
+                  decoration: BoxDecoration(color: const Color(0xFF0F1B2E), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF20344E))),
+                  child: Column(children: [
+                    Text(t.$2, style: const TextStyle(fontSize: 22)),
+                    const SizedBox(height: 5),
+                    Text(t.$3, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                  ]),
+                ),
+              ),
+          ]),
+        ]),
+      ),
+    );
+  }
+
+  Future<void> _sendTest(BuildContext c, String type) async {
+    final messenger = ScaffoldMessenger.of(c);
+    try {
+      final r = await c.read<AuthProvider>().api.securityNotifyTest(type);
+      final hasDevice = r['has_device'] == true;
+      messenger.showSnackBar(SnackBar(
+        backgroundColor: hasDevice ? const Color(0xFF37C98A) : const Color(0xFFF7A23B),
+        content: Text(hasDevice
+            ? tr('أُرسل الإشعار — تحقّق من شريط الإشعارات', 'Sent — check your notification shade')
+            : tr('جهازك غير مسجّل! فعّل إذن الإشعارات وأعد الدخول', 'Device not registered! enable notification permission & re-login')),
+      ));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(backgroundColor: const Color(0xFFE5484D), content: Text('$e')));
+    }
+  }
 
 
 }

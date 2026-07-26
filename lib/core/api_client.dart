@@ -760,10 +760,40 @@ class ApiClient {
     return Map<String, dynamic>.from(res['data'] as Map);
   }
 
-  /// The current guard's own team(s) + fellow members (photo/role/presence).
+  /// The current guard's own team(s) + fellow members (photo/role/presence/
+  /// busy-status/location/full details).
   Future<Map<String, dynamic>> securityMyTeam() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/my_team'), headers: await _headers())))['data'] as Map);
+
+  /// مهامي أنا فقط + أرشيف شهري + إحصائيات ترويسة.
+  Future<Map<String, dynamic>> securityMyTasks({int? year, int? month, String? state}) async {
+    final q = <String>[
+      if (year != null) 'year=$year', if (month != null) 'month=$month',
+      if (state != null && state != 'all') 'state=$state',
+    ].join('&');
+    return Map<String, dynamic>.from((await _handle(await _net.get(
+            _u('/security/my/tasks${q.isEmpty ? '' : '?$q'}'), headers: await _headers())))['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> securityTaskDetail(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/task/$id'), headers: await _headers())))['data'] as Map);
+
+  /// إجراء على مهمة: accept | start | complete.
+  Future<Map<String, dynamic>> securityTaskAction(int id, String action) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(_u('/security/task/$id/action'),
+              headers: await _headers(), body: jsonEncode({'action': action}))))['data'] as Map);
+
+  /// نقاط الدوريات مجمّعة حسب المرفق + إحصائيات + تصنيفات.
+  Future<Map<String, dynamic>> securityPatrolPointsByFacility() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/patrol_points/by_facility'), headers: await _headers())))['data'] as Map);
+
+  /// إشعار تجريبي للمستخدم الحالي (لتأكيد وصول الإشعارات لكل نوع).
+  Future<Map<String, dynamic>> securityNotifyTest(String type) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(_u('/notify/test'),
+              headers: await _headers(), body: jsonEncode({'type': type}))))['data'] as Map);
 
   // ---- أدوات مشرف الأمن (إنشاء/إسناد/إشعار/حالة الفريق) ------------------
   Future<Map<String, dynamic>> securitySupOptions() async =>
@@ -787,10 +817,12 @@ class ApiClient {
               _u('/security/sup/presence'), headers: await _headers())))['data'] as Map);
 
   /// نبضة حالة الحارس (حركة/نبض قلب/سكون) — تُرسَل دورياً.
-  Future<void> securityGuardHeartbeat({bool? moving, int? heartRate, bool? still, int? battery}) async =>
+  Future<void> securityGuardHeartbeat({bool? moving, int? heartRate, bool? still, int? battery,
+      double? lat, double? lng}) async =>
       _handle(await _net.post(_u('/security/guard/heartbeat'), headers: await _headers(), body: jsonEncode({
         if (moving != null) 'moving': moving, if (heartRate != null) 'heart_rate': heartRate,
         if (still != null) 'still': still, if (battery != null) 'battery': battery,
+        if (lat != null) 'lat': lat, if (lng != null) 'lng': lng,
       })));
 
   /// Options for the incident create form (premises/guards/teams/types/severities).
