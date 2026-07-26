@@ -18,6 +18,7 @@
         'views/broadcasts_portal.xml',
         'views/petrol_portal.xml',
         'views/training_portal.xml',
+        'views/security_employee_link.xml',
         'views/notification_views.xml',
         'views/account_deletion_views.xml',
         'reports/orders_report.xml',

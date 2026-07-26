@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- إجراء جماعي: توفير حسابات دخول لأعضاء الأمن المحدّدين -->
+    <record id="action_provision_security_login" model="ir.actions.server">
+        <field name="name">توفير حساب دخول (أمن)</field>
+        <field name="model_id" ref="security_management.model_security_employee"/>
+        <field name="binding_model_id" ref="security_management.model_security_employee"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">records.action_provision_login()</field>
+    </record>
+
+    <!-- زر في فورم عضو الأمن -->
+    <record id="view_security_employee_form_login" model="ir.ui.view">
+        <field name="name">security.employee.form.login</field>
+        <field name="model">security.employee</field>
+        <field name="inherit_id" ref="security_management.view_security_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <field name="user_id" invisible="1"/>
+                <button name="action_provision_login" type="object"
+                        string="إنشاء/ربط حساب دخول" class="btn-primary"
+                        icon="fa-user-plus" invisible="user_id != False"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
