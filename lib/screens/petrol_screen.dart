@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/api_client.dart';
 import '../core/i18n.dart';
+import 'excel_export.dart';
 
 /// موديول البترول/خزّانات الوقود بالكامل: هيدر بإحصائيات غنية + أقسام لكل
 /// المداولات الداخلية (الخزّانات · الشحن Charges · الاستهلاك Uses · التحويل
@@ -97,7 +98,17 @@ class _PetrolScreenState extends State<PetrolScreen> with SingleTickerProviderSt
       appBar: AppBar(
         backgroundColor: _dark, foregroundColor: Colors.white,
         title: Text(tr('إدارة الوقود', 'Fuel management')),
-        actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh_rounded))],
+        actions: [
+          IconButton(
+            tooltip: tr('تصدير Excel', 'Export Excel'),
+            icon: const Icon(Icons.grid_on_rounded),
+            onPressed: () {
+              final kind = ['tanks', 'charges', 'uses', 'transfers'][_tabs.index];
+              exportExcelFile(context, path: '/cafm/petrol/export?kind=$kind',
+                  fileName: 'petrol-$kind.xlsx', shareText: tr('بيانات الوقود', 'Fuel data'));
+            }),
+          IconButton(onPressed: _load, icon: const Icon(Icons.refresh_rounded)),
+        ],
         bottom: TabBar(
           controller: _tabs, isScrollable: true,
           indicatorColor: _amber, labelColor: Colors.white, unselectedLabelColor: Colors.white70,

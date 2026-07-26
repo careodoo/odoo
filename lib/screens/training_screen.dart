@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/api_client.dart';
 import '../core/i18n.dart';
+import 'excel_export.dart';
 
 /// موديول التدريب بالكامل: طلبات التدريب (training.application) مع سطورها
 /// (الدورات/المواضيع/المراكز/القاعات) والمهام والمراحل — هيدر إحصائيات + فلاتر
@@ -65,7 +66,14 @@ class _TrainingScreenState extends State<TrainingScreen> {
       backgroundColor: _bg,
       appBar: AppBar(backgroundColor: _c, foregroundColor: Colors.white,
           title: Text(tr('التدريب', 'Training')),
-          actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh_rounded))]),
+          actions: [
+            IconButton(
+              tooltip: tr('تصدير Excel', 'Export Excel'),
+              icon: const Icon(Icons.grid_on_rounded),
+              onPressed: () => exportExcelFile(context, path: '/cafm/training/export',
+                  fileName: 'training.xlsx', shareText: tr('طلبات التدريب', 'Training requests'))),
+            IconButton(onPressed: _load, icon: const Icon(Icons.refresh_rounded)),
+          ]),
       floatingActionButton: avail ? FloatingActionButton.extended(
         backgroundColor: _c, foregroundColor: Colors.white, onPressed: _createForm,
         icon: const Icon(Icons.add_rounded), label: Text(tr('طلب تدريب', 'New request'), style: const TextStyle(fontWeight: FontWeight.w900))) : null,
