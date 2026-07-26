@@ -104,6 +104,14 @@ class C2CClientApi(Controller):
             if not cafm and (_hg('security_management.group_security_manager')
                              or _hg('base.group_erp_manager')):
                 cafm = True
+            # موظف الأمن (حارس/عضو فريق) واجهته داخل CAFM — نمنحه cafm حتى يفتح
+            # واجهة الأمن لا PMS/C2C، حتى لو لم يُسند له أمر عمل بعد.
+            if not cafm and 'security.guard' in env and env['security.guard'].sudo().search_count([('user_id', '=', u.id)]):
+                cafm = True
+            if not cafm and 'security.employee' in env and (
+                    env['security.employee'].sudo().search_count([('user_id', '=', u.id)])
+                    or (emp and env['security.employee'].sudo().search_count([('employee_id', '=', emp.id)]))):
+                cafm = True
         # Management (back-office) is for real managers/admins — NOT every internal
         # user. A field worker who happens to be an internal user must not see the
         # company back office (quotations, projects, …).
