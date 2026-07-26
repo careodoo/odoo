@@ -348,6 +348,41 @@ class PetrolApi(Controller):
             return _err('تعذّر التحويل: %s' % e, 400)
         return _ok(self._transfer_dict(rec))
 
+    @route('/cafm/petrol/export', type='http', auth='public', methods=['GET'], csrf=False)
+    def petrol_export(self, kind='tanks', **kw):
+        """تصدير بيانات البترول إلى Excel (خزّانات/شحن/استهلاك/تحويلات)."""
+        from odoo import _
+        from .client_api import _xlsx_response, _report_env
+        env = _report_env()
+        if not env:
+            return request.redirect('/web/login')
+        if not self._has(env):
+            return request.not_found()
+        cids = self._cids(env)
+        if kind == 'charges':
+            recs = env['petrol.tank.charge'].sudo().search([('company_id', 'in', cids)], order='id desc', limit=10000)
+            columns = [_('المرجع'), _('الخزّان'), _('التاريخ'), _('الكمية'), _('التكلفة')]
+            rows = [[c.name, c.tank_id.name or '', str(c.charge_date or ''), c.quantity, c.cost] for c in recs]
+            title = _('شحن الوقود')
+        elif kind == 'uses':
+            recs = env['petrol.tank.use'].sudo().search([('company_id', 'in', cids)], order='id desc', limit=10000)
+            columns = [_('المرجع'), _('المركبة'), _('الخزّان'), _('الكمية'), _('العدّاد'), _('ل/كم')]
+            rows = [[u.name, u.vehicle_id.name or '', u.tank_id.name or '', u.quantity, u.odometer_value, round(u.liter_per_km_rate or 0, 3)] for u in recs]
+            title = _('استهلاك الوقود')
+        elif kind == 'transfers':
+            recs = env['petrol.tank.transfer'].sudo().search([('company_id', 'in', cids)], order='id desc', limit=10000)
+            sel = dict(env['petrol.tank.transfer']._fields['state'].selection)
+            columns = [_('من'), _('إلى'), _('الكمية'), _('التاريخ'), _('الحالة')]
+            rows = [[x.from_tank_id.name or '', x.to_tank_id.name or '', x.quantity, str(x.date or ''), sel.get(x.state, x.state)] for x in recs]
+            title = _('تحويلات الوقود')
+        else:
+            recs = env['petrol.tank'].sudo().search([('company_id', 'in', cids)], order='id desc')
+            columns = [_('الخزّان'), _('المرحلة'), _('السعة'), _('الرصيد'), _('نسبة الامتلاء %'), _('المشحون'), _('المستهلك'), _('آخر شحن')]
+            rows = [[t.name, t.stage_id.name or '', t.capacity, t.balance,
+                     round((t.balance / t.capacity * 100) if t.capacity else 0, 1), t.charged, t.used, str(t.last_charge or '')] for t in recs]
+            title = _('خزّانات الوقود')
+        return _xlsx_response(title, columns, rows, 'petrol-%s.xlsx' % kind, [(_('العدد'), len(recs))])
+
     @route(API + '/petrol/transfer/<int:xid>/confirm', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
     def transfer_confirm(self, xid, **kw):
         env = _auth()

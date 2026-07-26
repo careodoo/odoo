@@ -210,6 +210,24 @@ class TrainingApi(Controller):
             return _err('تعذّر إنشاء الطلب: %s' % e, 400)
         return _ok(self._app_dict(rec, full=True))
 
+    @route('/cafm/training/export', type='http', auth='public', methods=['GET'], csrf=False)
+    def training_export(self, **kw):
+        """تصدير طلبات التدريب إلى Excel."""
+        from odoo import _
+        from .client_api import _xlsx_response, _report_env
+        env = _report_env()
+        if not env:
+            return request.redirect('/web/login')
+        if not self._has(env):
+            return request.not_found()
+        recs = env['training.application'].sudo().search([('company_id', 'in', self._cids(env))], order='id desc', limit=10000)
+        columns = [_('الرقم'), _('اسم التدريب'), _('الموظف'), _('المسؤول'), _('المشروع'),
+                   _('المرحلة'), _('من'), _('إلى'), _('الدورات'), _('المهام')]
+        rows = [[a.name, a.training_name or '', a.employee_id.name or '', a.responsible_id.name or '',
+                 a.project_id.name or '', a.stage_id.name or '', str(a.date_start or ''), str(a.date_end or ''),
+                 len(a.line_ids), a.task_count] for a in recs]
+        return _xlsx_response(_('طلبات التدريب'), columns, rows, 'training.xlsx', [(_('العدد'), len(recs))])
+
     @route(API + '/training/application/<int:aid>/create_tasks', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
     def create_tasks(self, aid, **kw):
         env = _auth()
