@@ -88,14 +88,16 @@ class PmsMoreScreen extends StatelessWidget {
             badge: unread,
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()))),
 
-        // ===== أدوات =====
-        _header(tr('أدوات', 'Tools')),
-        _tile(context, Icons.local_gas_station_rounded, tr('إدارة الوقود', 'Fuel management'), const Color(0xFFE8873B),
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PetrolScreen()))),
-        _tile(context, Icons.school_rounded, tr('التدريب', 'Training'), const Color(0xFF5B4B8A),
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TrainingScreen()))),
-        _tile(context, Icons.account_balance_wallet_rounded, tr('مراكز التكلفة', 'Cost centers'), const Color(0xFF0F766E),
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CostCenterScreen()))),
+        // ===== أدوات إدارية (للمخوّلين فقط: مدير/مشرف — لا لمدير عقد عادي) =====
+        if ((p?.isAdmin ?? false) || (p?.isSupervisor ?? false)) ...[
+          _header(tr('أدوات', 'Tools')),
+          _tile(context, Icons.local_gas_station_rounded, tr('إدارة الوقود', 'Fuel management'), const Color(0xFFE8873B),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PetrolScreen()))),
+          _tile(context, Icons.school_rounded, tr('التدريب', 'Training'), const Color(0xFF5B4B8A),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TrainingScreen()))),
+          _tile(context, Icons.account_balance_wallet_rounded, tr('مراكز التكلفة', 'Cost centers'), const Color(0xFF0F766E),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CostCenterScreen()))),
+        ],
 
         // ===== systems =====
         if (systems.length > 1) ...[
