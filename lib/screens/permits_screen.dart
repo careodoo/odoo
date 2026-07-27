@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
+import 'pdf_report_screen.dart';
 
 /// «التصاريح» — شاشة تكيّفية: المُصدِر (عميل/مدير مشروع/مشرف) يُنشئ تصاريح (فردية
 /// أو متعددة الدخول) ويتابعها؛ والحارس يُدخل/يُخرج الأشخاص على كل تصريح. ترويسة
@@ -325,8 +326,15 @@ class _PermitDetailSheetState extends State<_PermitDetailSheet> {
         const SizedBox(height: 10),
         Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFFCBD5E1), borderRadius: BorderRadius.circular(3)))),
         const SizedBox(height: 14),
-        Padding(padding: const EdgeInsets.symmetric(horizontal: 18), child: Row(children: [
+        Padding(padding: const EdgeInsets.fromLTRB(18, 0, 6, 0), child: Row(children: [
           Expanded(child: Text('${d['visitor'] ?? '—'}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: _navy))),
+          IconButton(
+            tooltip: tr('طباعة PDF', 'Print PDF'),
+            icon: const Icon(Icons.print_rounded, color: _navy),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+                path: '/cafm/permit/${widget.id}/card.pdf',
+                title: tr('بطاقة التصريح', 'Permit card'), fileName: 'permit-${widget.id}.pdf'))),
+          ),
           Container(padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
             decoration: BoxDecoration(color: (d['is_multi_entry'] == true ? const Color(0xFF7C3AED) : const Color(0xFF0891B2)).withValues(alpha: 0.14), borderRadius: BorderRadius.circular(8)),
             child: Text(d['is_multi_entry'] == true ? tr('متعدد الدخول', 'Multi-entry') : tr('فردي', 'Single'),
