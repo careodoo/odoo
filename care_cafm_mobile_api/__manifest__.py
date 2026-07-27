@@ -8,7 +8,7 @@
     'category': 'Services/Facility Management',
     'version': '17.0.1.0.0',
     'license': 'LGPL-3',
-    'depends': ['care_cafm', 'care_cafm_security', 'portal'],
+    'depends': ['care_cafm', 'security_management', 'portal'],
     'data': [
         'security/ir.model.access.csv',
         'security/mobile_rules.xml',
@@ -16,6 +16,7 @@
         'views/app_center_views.xml',
         'views/stream_provider_views.xml',
         'views/broadcasts_portal.xml',
+        'views/permits_portal.xml',
         'views/petrol_portal.xml',
         'views/training_portal.xml',
         'views/security_employee_link.xml',

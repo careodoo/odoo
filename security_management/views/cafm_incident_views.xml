@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- جعل اختيار موقع البلاغ من داخل إدارة المرافق: نضيف مرفق CAFM قبل الموقع
+         الأمني، ونقصر قائمة المواقع الأمنية على المجسورة بـ CAFM فقط حتى تختفي
+         السجلات القديمة غير المرتبطة بإدارة المرافق. -->
+    <record id="view_incident_cafm_first_form" model="ir.ui.view">
+        <field name="name">security.incident.report.form.cafm</field>
+        <field name="model">security.incident.report</field>
+        <field name="inherit_id" ref="security_management.view_security_incident_report_form"/>
+        <field name="arch" type="xml">
+            <field name="premise_id" position="before">
+                <field name="cafm_facility_id"
+                       options="{'no_create': True}"
+                       string="الموقع (إدارة المرافق)"/>
+            </field>
+            <field name="premise_id" position="attributes">
+                <attribute name="domain">[('cafm_facility_id', '!=', False)]</attribute>
+                <attribute name="string">الموقع الأمني (تلقائي)</attribute>
+            </field>
+        </field>
+    </record>
+</odoo>

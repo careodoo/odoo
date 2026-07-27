@@ -57,6 +57,26 @@
                     <group><field name="code"/><field name="address"/><field name="active"/></group>
                 </group>
                 <notebook>
+                    <page string="نطاق الوردية (GPS)" name="geofence">
+                        <div class="alert alert-info" role="alert">
+                            حدّد موقع المرفق على الأرض لتمكين الحرّاس من فتح الوردية عند الحضور.
+                            اترك خط العرض/الطول = 0 لتعطيل التحقق الجغرافي لهذا المرفق.
+                        </div>
+                        <group>
+                            <group>
+                                <field name="geo_lat" string="خط العرض (Latitude)"/>
+                                <field name="geo_lng" string="خط الطول (Longitude)"/>
+                                <field name="geo_radius" string="نصف قطر النطاق (متر)"/>
+                            </group>
+                            <group>
+                                <label for="geo_lat" string="تلميح"/>
+                                <div>
+                                    انسخ الإحداثيات من خرائط Google (اضغط مطوّلاً على الموقع)،
+                                    مثال: <code>29.3759, 47.9774</code>. النطاق الافتراضي 200 متر.
+                                </div>
+                            </group>
+                        </group>
+                    </page>
                     <page string="المباني والأدوار والمواقع">
                         <field name="building_ids">
                             <tree editable="bottom"><field name="name"/><field name="floor_count"/></tree>

@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ===== قائمة التصاريح + إصدار (للمُصدِر) ===== -->
+    <template id="portal_permits" name="التصاريح">
+        <t t-call="portal.portal_layout">
+            <t t-set="no_breadcrumbs" t-value="True"/>
+            <div class="o_care_permits">
+                <style>
+                    .o_care_permits{padding:8px 4px 60px}
+                    .o_care_permits .cp-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+                    .o_care_permits .cp-badge{width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#0D9488,#0E3A5F);display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff}
+                    .o_care_permits h3{margin:0;font-weight:800;color:#0E3A5F}
+                    .o_care_permits .cp-sub{color:#64748B;font-size:13px}
+                    .o_care_permits .cp-stats{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+                    .o_care_permits .cp-stat{flex:1;min-width:110px;background:#fff;border:1px solid #e6ebf1;border-radius:14px;padding:12px;text-align:center}
+                    .o_care_permits .cp-stat .n{font-size:22px;font-weight:800}
+                    .o_care_permits .cp-stat .l{font-size:11px;color:#64748B}
+                    .o_care_permits .cp-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+                    .o_care_permits .cp-tab{padding:6px 14px;border-radius:20px;border:1px solid #d7dee7;color:#0E3A5F;text-decoration:none;font-size:13px;font-weight:600}
+                    .o_care_permits .cp-tab.on{background:#0D9488;color:#fff;border-color:#0D9488}
+                    .o_care_permits .cp-card{display:block;background:#fff;border:1px solid #e6ebf1;border-radius:14px;padding:13px;margin-bottom:10px;text-decoration:none;color:inherit}
+                    .o_care_permits .cp-card:hover{border-color:#0D9488}
+                    .o_care_permits .cp-row{display:flex;align-items:center;gap:11px}
+                    .o_care_permits .cp-ic{width:40px;height:40px;border-radius:11px;background:#0E3A5F14;display:flex;align-items:center;justify-content:center;color:#0E3A5F;font-size:19px}
+                    .o_care_permits .cp-name{font-weight:800;color:#1E293B}
+                    .o_care_permits .cp-meta{color:#64748B;font-size:12px}
+                    .o_care_permits .cp-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:8px;font-size:10.5px;font-weight:800;margin-inline-end:6px}
+                    .o_care_permits .cp-form{background:#fff;border:1px solid #e6ebf1;border-radius:16px;padding:16px;margin-bottom:18px}
+                    .o_care_permits .cp-form label{font-size:12.5px;font-weight:700;color:#0E3A5F;display:block;margin:8px 0 3px}
+                    .o_care_permits .cp-form input,.o_care_permits .cp-form select{width:100%;padding:9px 11px;border:1px solid #d7dee7;border-radius:10px}
+                    .o_care_permits .cp-btn{background:#0D9488;color:#fff;border:none;border-radius:11px;padding:11px 18px;font-weight:800;cursor:pointer}
+                    .o_care_permits .cp-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+                    .o_care_permits details.cp-issue summary{cursor:pointer;font-weight:800;color:#0D9488;padding:6px 0}
+                </style>
+
+                <div class="cp-head">
+                    <div class="cp-badge">🚪</div>
+                    <div>
+                        <h3>التصاريح</h3>
+                        <div class="cp-sub">إصدار التصاريح ومتابعة دخول/خروج الأشخاص</div>
+                    </div>
+                </div>
+
+                <div class="cp-stats">
+                    <div class="cp-stat"><div class="n" style="color:#0E3A5F"><t t-esc="stats.get('total',0)"/></div><div class="l">الإجمالي</div></div>
+                    <div class="cp-stat"><div class="n" style="color:#16A34A"><t t-esc="stats.get('active',0)"/></div><div class="l">سارية</div></div>
+                    <div class="cp-stat"><div class="n" style="color:#F59E0B"><t t-esc="stats.get('inside',0)"/></div><div class="l">بالداخل الآن</div></div>
+                    <div class="cp-stat"><div class="n" style="color:#9CA3AF"><t t-esc="stats.get('expired',0)"/></div><div class="l">منتهية</div></div>
+                </div>
+
+                <!-- إصدار تصريح (للمُصدِر فقط) -->
+                <t t-if="can_issue and premises">
+                    <details class="cp-issue cp-form">
+                        <summary>+ إصدار تصريح جديد</summary>
+                        <form action="/my/permits/new" method="post">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <div class="cp-grid2">
+                                <div><label>اسم الزائر *</label><input type="text" name="visitor" required="required"/></div>
+                                <div><label>الهاتف</label><input type="text" name="phone"/></div>
+                            </div>
+                            <label>الموقع *</label>
+                            <select name="premise_id" required="required">
+                                <t t-foreach="premises" t-as="pr"><option t-att-value="pr['id']"><t t-esc="pr['name']"/></option></t>
+                            </select>
+                            <label>الغرض</label><input type="text" name="purpose"/>
+                            <div class="cp-grid2">
+                                <div><label>النوع</label>
+                                    <select name="pass_type"><option value="personal">شخصي</option><option value="vehicle">مركبة</option></select></div>
+                                <div><label>مدة الصلاحية (أيام)</label><input type="number" name="days" value="1" min="1"/></div>
+                            </div>
+                            <label style="display:flex;align-items:center;gap:8px;margin-top:12px">
+                                <input type="checkbox" name="is_multi_entry" value="1" style="width:auto"/> متعدد الدخول (عدّة دخول/خروج خلال المدة)
+                            </label>
+                            <div style="margin-top:14px"><button type="submit" class="cp-btn">إصدار التصريح</button></div>
+                        </form>
+                    </details>
+                </t>
+
+                <!-- فلترة بالحالة -->
+                <div class="cp-tabs">
+                    <t t-foreach="[('all','الكل'),('approved','معتمدة'),('valid','سارية'),('expired','منتهية'),('cancelled','ملغاة')]" t-as="s">
+                        <a t-att-href="'/my/permits?state=%s' % s[0]" t-attf-class="cp-tab #{state == s[0] and 'on' or ''}"><t t-esc="s[1]"/></a>
+                    </t>
+                </div>
+
+                <t t-if="not items">
+                    <div style="text-align:center;padding:60px 0;color:#94a3b8">لا تصاريح.</div>
+                </t>
+                <t t-foreach="items" t-as="p">
+                    <a t-att-href="'/my/permits/%s' % p['id']" class="cp-card">
+                        <div class="cp-row">
+                            <div class="cp-ic"><t t-esc="p['pass_type'] == 'vehicle' and '🚗' or '👤'"/></div>
+                            <div style="flex:1">
+                                <div class="cp-name"><t t-esc="p['visitor'] or '—'"/></div>
+                                <div class="cp-meta"><t t-esc="p['premise'] or ''"/> · <t t-esc="p['name'] or ''"/></div>
+                            </div>
+                            <span class="cp-tag" t-attf-style="background:#16A34A22;color:#16A34A"><t t-esc="p['state_label']"/></span>
+                        </div>
+                        <div style="margin-top:9px">
+                            <span class="cp-tag" t-att-style="p['is_multi_entry'] and 'background:#7C3AED1a;color:#7C3AED' or 'background:#08911a1a;color:#0891B2'">
+                                <t t-esc="p['is_multi_entry'] and 'متعدد الدخول' or 'فردي'"/></span>
+                            <t t-if="p['current_inside']">
+                                <span class="cp-tag" style="background:#F59E0B22;color:#F59E0B">بالداخل: <t t-esc="p['current_inside']"/></span>
+                            </t>
+                            <t t-if="p['valid_until']"><span class="cp-tag" style="background:#47556922;color:#475569">حتى <t t-esc="p['valid_until']"/></span></t>
+                        </div>
+                    </a>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <!-- ===== تفاصيل التصريح + دخول/خروج (للحارس) ===== -->
+    <template id="portal_permit_detail" name="تفاصيل التصريح">
+        <t t-call="portal.portal_layout">
+            <t t-set="no_breadcrumbs" t-value="True"/>
+            <div class="o_care_permits" style="padding:8px 4px 60px">
+                <a href="/my/permits" style="color:#0D9488;text-decoration:none;font-weight:700">‹ التصاريح</a>
+                <div style="background:#fff;border:1px solid #e6ebf1;border-radius:16px;padding:18px;margin-top:12px">
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <h3 style="margin:0;color:#0E3A5F;font-weight:800;flex:1"><t t-esc="p['visitor'] or '—'"/></h3>
+                        <span style="padding:4px 10px;border-radius:8px;font-size:11px;font-weight:800"
+                              t-att-style="p['is_multi_entry'] and 'background:#7C3AED1a;color:#7C3AED' or 'background:#0891B21a;color:#0891B2'">
+                            <t t-esc="p['is_multi_entry'] and 'متعدد الدخول' or 'فردي'"/></span>
+                    </div>
+                    <table style="width:100%;margin-top:12px;font-size:13px" class="table table-sm">
+                        <tr><td style="color:#64748B">الرقم</td><td style="text-align:end;font-weight:600"><t t-esc="p['name']"/></td></tr>
+                        <tr><td style="color:#64748B">الموقع</td><td style="text-align:end;font-weight:600"><t t-esc="p['premise']"/></td></tr>
+                        <tr><td style="color:#64748B">العميل</td><td style="text-align:end;font-weight:600"><t t-esc="p['client']"/></td></tr>
+                        <tr><td style="color:#64748B">الغرض</td><td style="text-align:end;font-weight:600"><t t-esc="p['purpose']"/></td></tr>
+                        <tr><td style="color:#64748B">من</td><td style="text-align:end;font-weight:600"><t t-esc="p['valid_from']"/></td></tr>
+                        <tr><td style="color:#64748B">حتى</td><td style="text-align:end;font-weight:600"><t t-esc="p['valid_until']"/></td></tr>
+                        <tr><td style="color:#64748B">الحالة</td><td style="text-align:end;font-weight:600"><t t-esc="p['state_label']"/></td></tr>
+                        <tr><td style="color:#64748B">بالداخل الآن</td><td style="text-align:end;font-weight:800;color:#F59E0B"><t t-esc="p['current_inside']"/></td></tr>
+                        <tr><td style="color:#64748B">مرّات الدخول</td><td style="text-align:end;font-weight:600"><t t-esc="p['entries_count']"/></td></tr>
+                    </table>
+
+                    <!-- الحارس: تسجيل دخول/خروج -->
+                    <t t-if="p.get('_active')">
+                        <form action="{{ '/my/permits/%s/visit' % p['id'] }}" method="post" style="margin-top:14px">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <label style="font-size:12.5px;font-weight:700;color:#0E3A5F">اسم الشخص / رقم الهوية</label>
+                            <input type="text" name="person" placeholder="الاسم" style="width:100%;padding:9px 11px;border:1px solid #d7dee7;border-radius:10px;margin:4px 0 10px"/>
+                            <div style="display:flex;gap:10px">
+                                <button type="submit" name="direction" value="in" style="flex:1;background:#16A34A;color:#fff;border:none;border-radius:11px;padding:12px;font-weight:800;cursor:pointer">تسجيل دخول</button>
+                                <button type="submit" name="direction" value="out" style="flex:1;background:#EA580C;color:#fff;border:none;border-radius:11px;padding:12px;font-weight:800;cursor:pointer">تسجيل خروج</button>
+                            </div>
+                        </form>
+                    </t>
+                </div>
+
+                <!-- سجلّ الدخول/الخروج -->
+                <t t-if="p.get('logs')">
+                    <h5 style="color:#64748B;margin:18px 0 8px;font-size:13px;font-weight:700">سجلّ الدخول/الخروج</h5>
+                    <t t-foreach="p['logs']" t-as="l">
+                        <div style="display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #eef2f6;border-radius:10px;padding:9px 12px;margin-bottom:7px">
+                            <span t-att-style="l['type']=='check_in' and 'color:#16A34A' or 'color:#EA580C'"><t t-esc="l['type']=='check_in' and '⇥' or '⇤'"/></span>
+                            <div style="flex:1;font-size:12.5px"><t t-esc="l['type_label']"/> <t t-if="l['note']">— <t t-esc="l['note']"/></t></div>
+                            <div style="font-size:10.5px;color:#94a3b8"><t t-esc="l['at']"/></div>
+                        </div>
+                    </t>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <!-- بطاقة «التصاريح» في صفحة حسابي بالبورتال -->
+    <template id="portal_my_home_permits" inherit_id="portal.portal_my_home" name="Permits — Portal Home" priority="60">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="title">التصاريح</t>
+                <t t-set="url" t-value="'/my/permits'"/>
+                <t t-set="placeholder_count" t-value="'permits_count'"/>
+            </t>
+        </xpath>
+    </template>
+</odoo>

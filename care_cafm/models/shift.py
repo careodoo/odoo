@@ -125,14 +125,20 @@ class CafmShift(models.Model):
         return int(r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a)))
 
     @api.model
+    def _candidate_facilities(self, employee):
+        """المرافق التي يُسمح للموظف بفتح وردية عليها. الأساس: مرافق أوامر عمله.
+        وحدات أخرى تُوسّع هذه القائمة (care_cafm_security يضيف مرافق فرق الأمن التي
+        يُربط بها الحارس، لأنه يُربط بفريق لا بأمر عمل)."""
+        WO = self.env['care.cafm.workorder'].sudo()
+        return WO.search([('employee_id', '=', employee.id)]).mapped('facility_id')
+
+    @api.model
     def open_for(self, employee, lat, lng):
         """Open a shift for the employee if within any of their facilities' fence."""
         if self.search_count([('employee_id', '=', employee.id), ('state', '=', 'open')]):
             raise UserError(_('لديك وردية مفتوحة بالفعل.'))
-        # candidate facilities: from the employee's work orders (with coordinates)
-        WO = self.env['care.cafm.workorder'].sudo()
-        facs = WO.search([('employee_id', '=', employee.id)]).mapped('facility_id')
-        facs = facs.filtered(lambda f: f.geo_lat and f.geo_lng)
+        # المرافق المرشّحة (قابلة للتوسعة) — مع إحداثيات مضبوطة فقط
+        facs = self._candidate_facilities(employee).filtered(lambda f: f.geo_lat and f.geo_lng)
         best = None
         for f in facs:
             dist = self._haversine(lat, lng, f.geo_lat, f.geo_lng)

@@ -180,10 +180,8 @@ class SecurityMobileApi(Controller):
             return _err('غير مصرّح', 401)
         if 'security.team' not in env or 'security.employee' not in env:
             return _ok({'teams': [], 'me': None})
-        SE = env['security.employee'].sudo()
-        me = SE.search([('employee_id.user_id', '=', env.uid)], limit=1)
-        Team = env['security.team'].sudo()
-        teams = Team.search(['|', ('member_ids', 'in', me.ids), ('leader_id', 'in', me.ids)]) if me else Team.browse()
+        me = self._my_sec_emp(env)
+        teams = self._guard_teams(env, me) or env['security.team'].sudo().browse()
 
         def _member(se, leader_id):
             hr = se.employee_id
@@ -193,34 +191,324 @@ class SecurityMobileApi(Controller):
                 img = img.decode() if img else None
             except Exception:
                 img = None
+            F = se._fields
+            # سجل الحارس (لقراءة الدوريات/المهام/الموقع الحيّ)
+            guard = env['security.guard'].sudo().search([('security_employee_id', '=', se.id)], limit=1) if 'security.guard' in env else None
+            # حالة الانشغال الآن: وردية مفتوحة / دورية جارية / مهمة جارية
+            on_shift = bool(hr.cafm_on_shift) if (hr and 'cafm_on_shift' in hr._fields) else False
+            on_patrol = False
+            active_task = None
+            if guard:
+                if 'security.patrol' in env:
+                    on_patrol = bool(env['security.patrol'].sudo().search_count(
+                        [('guard_id', '=', guard.id), ('state', '=', 'in_progress')]))
+                if 'security.task' in env:
+                    tk = env['security.task'].sudo().search(
+                        [('assigned_to', '=', guard.id), ('state', '=', 'in_progress')], limit=1)
+                    active_task = tk.name if tk else None
+            # الحضور (نشط/خامل/نائم/غير متصل) + آخر ظهور
+            presence = last_seen = None
+            if hr and hr.user_id and 'care.guard.presence' in env:
+                pr = env['care.guard.presence'].sudo().search([('user_id', '=', hr.user_id.id)], limit=1)
+                if pr:
+                    presence = pr.state
+                    last_seen = str(pr.last_seen or '')[:19] or None
+            # آخر موقع GPS معروف للحارس
+            lat = lng = loc_at = None
+            if guard and 'latitude' in guard._fields:
+                lat = guard.latitude or None
+                lng = guard.longitude or None
+                loc_at = str(getattr(guard, 'last_update', '') or '')[:19] or None
+            # الرتبة (قد تكون Selection أو نصّاً)
+            rank = None
+            if 'security_rank' in F and se.security_rank:
+                fld = F['security_rank']
+                sel = dict(fld.selection) if (getattr(fld, 'selection', None) and not callable(fld.selection)) else {}
+                rank = sel.get(se.security_rank, se.security_rank)
             return {
                 'id': se.id, 'name': se.name,
                 'is_me': se.id == me.id if me else False,
                 'is_leader': se.id == leader_id,
                 'role': se.role_id.name if se.role_id else None,
+                'rank': rank,
                 'badge': se.badge_number or None,
-                'phone': se.phone or None,
+                'phone': se.phone or (hr.work_phone if hr else None) or None,
+                'email': se.email or (hr.work_email if hr else None) or None,
+                'civil_id': (hr.identification_id if (hr and 'identification_id' in hr._fields) else None) or None,
+                'nationality': (hr.country_id.name if (hr and hr.country_id) else None),
+                'job_title': (hr.job_title if hr else None) or None,
+                'license': se.license_number if 'license_number' in F else None,
+                'license_expiry': (str(se.license_expiry) if ('license_expiry' in F and se.license_expiry) else None),
                 'available': bool(se.is_available),
                 'photo_b64': img,
                 'user_id': hr.user_id.id if (hr and hr.user_id) else None,
                 'shift': se.current_shift_id.display_name if se.current_shift_id else None,
+                'on_shift': on_shift,
+                'on_patrol': on_patrol,
+                'active_task': active_task,
+                'busy': bool(on_patrol or active_task),
+                'presence': presence,
+                'last_seen': last_seen,
+                'lat': lat, 'lng': lng, 'loc_at': loc_at,
             }
         out = []
         for t in teams:
-            members = list(t.member_ids)
-            if t.leader_id and t.leader_id not in members:
-                members = [t.leader_id] + members
+            members = list(self._team_members(env, t))
+            mm = [_member(m, t.leader_id.id if t.leader_id else 0) for m in members]
             out.append({
                 'id': t.id, 'name': t.name,
                 'client': t.client_id.name if t.client_id else None,
                 'premise': t.premise_id.name if t.premise_id else None,
                 'shift_type': t.shift_type_id.name if t.shift_type_id else None,
                 'member_count': len(members),
-                'members': [_member(m, t.leader_id.id if t.leader_id else 0) for m in members],
+                'stats': {
+                    'online': sum(1 for x in mm if x['available']),
+                    'on_shift': sum(1 for x in mm if x['on_shift']),
+                    'on_patrol': sum(1 for x in mm if x['on_patrol']),
+                    'busy': sum(1 for x in mm if x['busy']),
+                },
+                'members': mm,
             })
         return _ok({
             'teams': out,
             'me': {'id': me.id, 'name': me.name} if me else None,
+        })
+
+    # ==== سجلاتي (الحارس يرى سجلاته فقط) + أرشيف شهري + إحصائيات =========
+    def _month_bounds(self, year, month):
+        """حدود الشهر [start, next) كنصوص تاريخ."""
+        y, m = int(year), int(month)
+        start = '%04d-%02d-01' % (y, m)
+        ny, nm = (y + 1, 1) if m == 12 else (y, m + 1)
+        return start, '%04d-%02d-01' % (ny, nm)
+
+    def _task_dict(self, env, t, full=False):
+        F = t._fields
+        def lbl(f):
+            return dict(F[f].selection).get(t[f], t[f]) if (f in F and getattr(F[f], 'selection', None) and not callable(F[f].selection)) else (t[f] if f in F else None)
+        d = {
+            'id': t.id, 'name': t.name,
+            'state': t.state if 'state' in F else None,
+            'state_label': lbl('state'),
+            'priority': t.priority if 'priority' in F else None,
+            'priority_label': lbl('priority'),
+            'progress': int(t.progress or 0) if 'progress' in F else 0,
+            'deadline': str(t.deadline or '')[:16] or None if 'deadline' in F else None,
+            'category': t.category_id.name if ('category_id' in F and t.category_id) else None,
+            'type': t.task_type_id.name if ('task_type_id' in F and t.task_type_id) else None,
+            'premise': t.premise_id.name if ('premise_id' in F and t.premise_id) else None,
+            'location': t.location_id.name if ('location_id' in F and t.location_id) else None,
+            'client': t.client_id.name if ('client_id' in F and t.client_id) else None,
+            'assigned_to': t.assigned_to.name if ('assigned_to' in F and t.assigned_to) else None,
+        }
+        # الأزرار المتاحة حسب الحالة
+        st = d['state']
+        d['can_accept'] = st == 'new'
+        d['can_start'] = st == 'accepted'
+        d['can_complete'] = st in ('accepted', 'in_progress')
+        if full:
+            d['description'] = (t.description or '') if 'description' in F else ''
+            d['start_date'] = str(t.start_date or '')[:16] or None if 'start_date' in F else None
+            d['date_completed'] = str(getattr(t, 'date_completed', '') or '')[:16] or None
+            items = t.checklist_item_ids if 'checklist_item_ids' in F else []
+            d['checklist'] = [{
+                'id': it.id, 'name': it.name if 'name' in it._fields else it.display_name,
+                'done': bool(getattr(it, 'is_done', False) or getattr(it, 'done', False)
+                             or (getattr(it, 'state', '') in ('done', 'completed'))),
+            } for it in items]
+            d['subtask_count'] = len(t.subtask_ids) if 'subtask_ids' in F else 0
+        return d
+
+    @route(API + '/security/my/tasks', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def my_tasks(self, year=None, month=None, state=None, **kw):
+        """مهام الحارس الحالي فقط، مع أرشيف شهري وإحصائيات ترويسة (حسب الحالة)."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'security.task' not in env:
+            return _ok({'items': [], 'stats': {}, 'months': [], 'header': {}})
+        T = env['security.task'].sudo()
+        g = self._my_guard(env)
+        base = [('assigned_to', '=', g.id)] if g else [('id', '=', 0)]
+        # الأشهر المتاحة للأرشيف (من كل مهام الحارس)
+        allrecs = T.search(base, order='create_date desc', limit=800)
+        months, seen = [], set()
+        for r in allrecs:
+            dv = r.deadline or r.create_date
+            k = str(dv)[:7] if dv else None
+            if k and k not in seen:
+                seen.add(k); months.append(k)
+        # فلترة بالشهر + الحالة
+        dom = list(base)
+        if year and month:
+            s, e = self._month_bounds(year, month)
+            dom += ['|', '&', ('deadline', '>=', s), ('deadline', '<', e),
+                    '&', ('deadline', '=', False), '&', ('create_date', '>=', s), ('create_date', '<', e)]
+        if state and state != 'all':
+            dom.append(('state', '=', state))
+        recs = T.search(dom, order='deadline desc, create_date desc', limit=200)
+        # إحصائيات الترويسة (على كل مهام الحارس، لا المفلترة)
+        header = {'total': len(allrecs)}
+        for stt in ('new', 'accepted', 'in_progress', 'completed', 'refused', 'forwarded'):
+            header[stt] = T.search_count(base + [('state', '=', stt)])
+        header['open'] = header.get('new', 0) + header.get('accepted', 0) + header.get('in_progress', 0)
+        return _ok({
+            'items': [self._task_dict(env, t) for t in recs],
+            'header': header, 'months': months,
+        })
+
+    @route(API + '/security/task/<int:tid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def my_task_detail(self, tid, **kw):
+        """تفاصيل مهمة (لصاحبها فقط)."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        t = env['security.task'].sudo().browse(tid).exists()
+        if not t or not self._task_is_mine(env, t):
+            return _err('غير موجود', 404)
+        return _ok(self._task_dict(env, t, full=True))
+
+    def _task_is_mine(self, env, t):
+        g = self._my_guard(env)
+        return bool(g and t.assigned_to and t.assigned_to.id == g.id)
+
+    @route(API + '/security/task/<int:tid>/action', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def my_task_action(self, tid, **kw):
+        """قبول/بدء/إنجاز المهمة — للحارس المكلَّف بها فقط."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        t = env['security.task'].sudo().browse(tid).exists()
+        if not t:
+            return _err('غير موجود', 404)
+        if not self._task_is_mine(env, t):
+            return _err('هذه ليست مهمّتك', 403)
+        act = (_body() or {}).get('action')
+        fnmap = {'accept': 'action_accept', 'start': 'action_start_progress', 'complete': 'action_complete'}
+        fn = fnmap.get(act)
+        if not fn or not hasattr(t, fn):
+            return _err('إجراء غير معروف', 400)
+        try:
+            getattr(t, fn)()
+            # تحديث نسبة الإنجاز عند الإكمال
+            if act == 'complete' and 'progress' in t._fields:
+                t.progress = 100
+        except Exception as e:
+            return _err('تعذّر تنفيذ الإجراء: %s' % e, 400)
+        # إشعار من أسند المهمة بتغيّر حالتها
+        try:
+            assigner = t.create_uid
+            if assigner and assigner.id != env.uid and 'care.cafm.notification' in env:
+                labels = {'accept': 'قبِل', 'start': 'بدأ تنفيذ', 'complete': 'أنجز'}
+                env['care.cafm.notification'].sudo().push(
+                    assigner, '📋 تحديث مهمة',
+                    '%s %s المهمة: %s' % (env.user.name, labels.get(act, act), t.name),
+                    ntype='info', action_url='/security/task/%s' % t.id)
+        except Exception:
+            pass
+        return _ok(self._task_dict(env, t, full=True))
+
+    @route(API + '/notify/test', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def notify_test(self, **kw):
+        """إشعار تجريبي للمستخدم الحالي — لتأكيد وصول الإشعارات لكل نوع/أيقونة."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        ntype = (_body() or {}).get('type') or 'info'
+        samples = {
+            'task': ('📋 مهمة جديدة', 'أُسندت إليك مهمة: جولة تفقدية للبوابة الرئيسية', 'info', '/security/my/tasks'),
+            'patrol': ('🚶 دورية مجدولة', 'لديك دورية تبدأ قريباً — اطّلع على نقاطها', 'info', None),
+            'point': ('📍 نقطة تفتيش', 'حان موعد فحص نقطة: البوابة الرئيسية', 'info', None),
+            'incident': ('⚠️ بلاغ أمني', 'بلاغ جديد في موقعك يحتاج متابعة', 'alert', None),
+            'gatepass': ('🚪 تصريح دخول', 'تصريح جديد بانتظار إدخال الأشخاص', 'info', None),
+            'key': ('🔑 عهدة مفاتيح', 'طلب تسليم/استلام مفتاح', 'info', None),
+            'stream': ('🎥 طلب بث مباشر', 'العميل يطلب بثاً مباشراً من موقعك', 'alert', None),
+            'alert': ('🆘 نداء استغاثة', 'حارس بحاجة لمساندة فورية — استجب الآن', 'alert', None),
+            'message': ('💬 رسالة جديدة', 'وصلتك رسالة من زميلك في الفريق', 'info', None),
+            'info': ('🔔 إشعار تجريبي', 'وصلك هذا الإشعار بنجاح ✅ — نظام إشعارات CARE يعمل.', 'info', None),
+        }
+        title, body, nt, url = samples.get(ntype, samples['info'])
+        if 'care.cafm.notification' not in env:
+            return _err('خدمة الإشعارات غير مفعّلة', 404)
+        # تحقّق أن للمستخدم جهازاً مسجّلاً (وإلا لن يصل إشعار OS)
+        has_device = env['care.cafm.device'].sudo().search_count(
+            [('user_id', '=', env.uid), ('active', '=', True)]) if 'care.cafm.device' in env else 0
+        env['care.cafm.notification'].sudo().push(env.user, title, body, ntype=nt, action_url=url)
+        return _ok({'sent': True, 'type': ntype, 'has_device': bool(has_device)})
+
+    # ==== نقاط الدوريات مجمّعة حسب المرفق + إحصائيات + تصنيفات ============
+    @route(API + '/security/patrol_points/by_facility', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def patrol_points_by_facility(self, **kw):
+        """نقاط الدوريات مجمّعة حسب المرفق (عبر جسر المنشأة→CAFM)، مع إحصائيات
+        وتصنيف حسب النوع وحالة الفحص. نطاقها مواقع فِرَق الحارس."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'security.patrol.point' not in env:
+            return _ok({'facilities': [], 'totals': {}})
+        PP = env['security.patrol.point'].sudo()
+        # نطاق مواقع الحارس (منشآت فِرَقه)؛ للمدير كل النقاط
+        teams = self._guard_teams(env)
+        is_mgr = env.user.has_group('base.group_erp_manager') or env.user.has_group('base.group_system')
+        prem_ids = teams.mapped('premise_id').ids if teams else []
+        dom = [('active', '=', True)]
+        if prem_ids:
+            dom.append(('premise_id', 'in', prem_ids))
+        elif not is_mgr:
+            return _ok({'facilities': [], 'totals': {}})
+        points = PP.search(dom, order='premise_id, sequence, name')
+        TYPES = dict(PP._fields['point_type'].selection) if 'point_type' in PP._fields else {}
+        # تجميع حسب المرفق (premise.cafm_facility_id) ثم المنشأة
+        facmap = {}
+        type_tot, status_tot = {}, {}
+        checked_today = 0
+        for p in points:
+            prem = p.premise_id
+            fac = getattr(prem, 'cafm_facility_id', False) if prem else False
+            fkey = fac.id if fac else 0
+            fname = fac.name if fac else (prem.name if prem else 'غير محدّد')
+            b = facmap.setdefault(fkey, {'facility_id': fac.id if fac else None, 'facility': fname,
+                                         'points': [], 'by_type': {}, 'checked_today': 0})
+            ptype = p.point_type if 'point_type' in p._fields else None
+            status = p.last_check_status if 'last_check_status' in p._fields else None
+            last = str(p.last_check_time or '')[:16] or None if 'last_check_time' in p._fields else None
+            nxt = str(p.next_check_time or '')[:16] or None if 'next_check_time' in p._fields else None
+            is_today = False
+            if 'last_check_time' in p._fields and p.last_check_time:
+                is_today = str(p.last_check_time)[:10] == str(fields.Date.context_today(p))
+            if is_today:
+                b['checked_today'] += 1
+                checked_today += 1
+            interval = float(getattr(p, 'check_interval', 0) or 0)
+            b['points'].append({
+                'id': p.id, 'name': p.name, 'code': p.code or None,
+                'type': ptype, 'type_label': TYPES.get(ptype, ptype),
+                'premise': prem.name if prem else None,
+                'floor': p.floor_id.name if ('floor_id' in p._fields and p.floor_id) else None,
+                'unit': p.unit_id.name if ('unit_id' in p._fields and p.unit_id) else None,
+                'has_qr': bool(getattr(p, 'qr_code_text', False)),
+                'last_check': last, 'next_check': nxt, 'last_status': status,
+                # مفحوصة؟ (تُعلَّم بالأخضر)، ومتكرّرة؟ (عدّاد عكسي يُعاد كل فحص)
+                'scanned': bool(getattr(p, 'last_check_time', False)),
+                'recurring': interval > 0,
+                'interval_h': interval,
+                'checked_today': is_today,
+            })
+            b['by_type'][ptype] = b['by_type'].get(ptype, 0) + 1
+            type_tot[ptype] = type_tot.get(ptype, 0) + 1
+            if status:
+                status_tot[status] = status_tot.get(status, 0) + 1
+        facs = sorted(facmap.values(), key=lambda x: (x['facility'] or ''))
+        for f in facs:
+            f['count'] = len(f['points'])
+            f['by_type'] = [{'type': k, 'label': TYPES.get(k, k), 'count': v} for k, v in f['by_type'].items()]
+        return _ok({
+            'facilities': facs,
+            'totals': {
+                'points': len(points), 'facilities': len(facs), 'checked_today': checked_today,
+                'by_type': [{'type': k, 'label': TYPES.get(k, k), 'count': v} for k, v in type_tot.items()],
+                'by_status': [{'status': k, 'count': v} for k, v in status_tot.items()],
+            },
         })
 
     # ==== Key custody =====================================================
@@ -260,6 +548,36 @@ class SecurityMobileApi(Controller):
 
     def _my_sec_emp(self, env):
         return env['security.employee'].sudo().search([('employee_id.user_id', '=', env.uid)], limit=1)
+
+    def _guard_teams(self, env, me=None):
+        """كل فِرَق الحارس الحالي من مصدرَي العضوية معاً حتى لا تختفي البيانات:
+           (أ) العضوية الرسمية security.employee.team_ids / member_ids / leader_id،
+           (ب) طبقة الحرّاس security.guard.security_employee_team_ids — وهي المعبّأة
+               فعلياً عند إضافة الحارس من واجهة الفريق في الباك اند.
+           كثيراً ما يُملأ المصدر (ب) فقط، فتظهر القوائم فارغة إذا قرأنا (أ) وحده."""
+        if 'security.team' not in env:
+            return None
+        Team = env['security.team'].sudo()
+        me = me if me is not None else self._my_sec_emp(env)
+        teams = Team.browse()
+        if me:
+            teams |= Team.search(['|', ('member_ids', 'in', me.ids), ('leader_id', 'in', me.ids)])
+            if 'team_ids' in me._fields:
+                teams |= me.team_ids
+        g = self._my_guard(env)
+        if g and 'security_employee_team_ids' in g._fields:
+            teams |= g.security_employee_team_ids
+        return teams
+
+    def _team_members(self, env, t):
+        """أعضاء الفريق من العضوية الرسمية + طبقة الحرّاس معاً (القائد أولاً، بلا تكرار)."""
+        members = t.leader_id | t.member_ids if t.leader_id else t.member_ids
+        if 'security.guard' in env:
+            G = env['security.guard'].sudo()
+            if 'security_employee_team_ids' in G._fields:
+                guards = G.search([('security_employee_team_ids', 'in', t.ids)])
+                members |= guards.mapped('security_employee_id')
+        return members
 
     @route(API + '/security/keys/board', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def keys_board(self, tab=None, q=None, hub=None, **kw):
@@ -580,13 +898,11 @@ class SecurityMobileApi(Controller):
     def _team_users(self, env, me):
         """res.users of the guard's fellow team members (to notify)."""
         users = env['res.users']
-        if not me or 'security.team' not in env:
+        teams = self._guard_teams(env, me)
+        if not teams:
             return users
-        teams = env['security.team'].sudo().search(
-            ['|', ('member_ids', 'in', me.ids), ('leader_id', 'in', me.ids)])
         for t in teams:
-            members = t.member_ids | (t.leader_id or env['security.employee'])
-            for m in members:
+            for m in self._team_members(env, t):
                 if m.employee_id and m.employee_id.user_id:
                     users |= m.employee_id.user_id
         return users - env.user
@@ -723,17 +1039,27 @@ class SecurityMobileApi(Controller):
 
     # ==== دوريات الحارس (جدولة + حضور بمسح QR/NFC) =======================
     def _my_guard(self, env):
-        """سجل الحارس المرتبط بالمستخدم الحالي."""
-        return env['security.guard'].sudo().search([('user_id', '=', env.uid)], limit=1)
+        """سجل الحارس المرتبط بالمستخدم الحالي — عبر user_id مباشرةً، أو عبر
+        security.employee إن كان user_id غير مضبوط على سجل الحارس (حالة شائعة)."""
+        if 'security.guard' not in env:
+            return None
+        G = env['security.guard'].sudo()
+        g = G.search([('user_id', '=', env.uid)], limit=1)
+        if not g:
+            me = self._my_sec_emp(env)
+            if me:
+                g = G.search([('security_employee_id', '=', me.id)], limit=1)
+        return g
 
     def _my_guard_premise(self, env):
-        """موقع فريق الحارس الحالي (لبثّ جديد بلا بلاغ). يرجع أول منشأة كحلّ أخير."""
-        g = self._my_guard(env)
-        if g and g.security_employee_id and g.security_employee_id.team_ids:
-            prem = g.security_employee_id.team_ids.mapped('premise_id')
+        """موقع فريق الحارس الحالي (لبثّ جديد بلا بلاغ). لا نسقط على منشأة عشوائية
+        لأن ذلك كان يوجّه البثّ لعميل خاطئ — إن لم يكن لفريقه موقع نُرجع None."""
+        teams = self._guard_teams(env)
+        if teams:
+            prem = teams.mapped('premise_id')
             if prem:
                 return prem[0]
-        return env['security.premise'].sudo().search([], limit=1) if 'security.premise' in env else None
+        return None
 
     def _patrol_dict2(self, p, full=False):
         F = p._fields
@@ -825,14 +1151,9 @@ class SecurityMobileApi(Controller):
 
     def _patrol_log_domain(self, env):
         """نطاق سجل الجولات المشترك بين العرض والتصدير."""
-        P = env['security.patrol'].sudo()
         g = self._my_guard(env)
-        prem_ids = []
-        if g and g.security_employee_id and g.security_employee_id.team_ids:
-            prem_ids = g.security_employee_id.team_ids.mapped('premise_id').ids
         is_mgr = env.user.has_group('base.group_erp_manager') or env.user.has_group('base.group_system')
-        if prem_ids and 'premise_id' in P._fields:
-            return [('premise_id', 'in', prem_ids)]
+        # كل حارس يرى جولاته هو فقط؛ المدير/النظام يرى الكل
         if g:
             return [('guard_id', '=', g.id)]
         if is_mgr:
@@ -1045,6 +1366,13 @@ class SecurityMobileApi(Controller):
         audience = b.get('audience') or 'all'
         if audience not in ('all', 'client', 'team'):
             audience = 'all'
+        # الموقع: من جهاز الحارس، وإلا احتياطياً من إحداثيات مرفق موقعه (CAFM)
+        blat = float(b.get('latitude') or 0.0)
+        blng = float(b.get('longitude') or 0.0)
+        if not blat or not blng:
+            fac = getattr(inc.premise_id, 'cafm_facility_id', False) if inc.premise_id else False
+            if fac and getattr(fac, 'geo_lat', 0) and getattr(fac, 'geo_lng', 0):
+                blat, blng = fac.geo_lat, fac.geo_lng
         session = env['care.stream.session'].sudo().create({
             'name': channel, 'incident_id': inc.id,
             'provider_id': prov.id if prov else False,
@@ -1053,7 +1381,7 @@ class SecurityMobileApi(Controller):
             'ingest_url': urls['ingest_url'], 'playback_url': urls['playback_url'],
             'whip_url': urls['whip_url'], 'whep_url': urls['whep_url'],
             'cf_input_uid': cf_uid or False, 'audience': audience,
-            'latitude': float(b.get('latitude') or 0.0), 'longitude': float(b.get('longitude') or 0.0),
+            'latitude': blat, 'longitude': blng,
         }) if 'care.stream.session' in env else None
 
         if 'live_active' in inc._fields:

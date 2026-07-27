@@ -1,7 +1,7 @@
 {
-    'name': 'Security Manager',
+    'name': 'CARE — الأمن (إدارة المرافق)',
     'version': '17.0',
-    'category': 'Services/Security',
+    'category': 'Services/Facility Management',
     'sequence': 10,
     'summary': 'Manage security services, premises, and teams',
     'description': """
@@ -22,8 +22,9 @@ Features:
 * Incident Reporting
 * GPS Tracking for Guards
     """,
-    'author': 'Omar Khaled Ali',
+    'author': 'care-kw',
     'depends': [
+        'care_cafm',
         'base',
         'hr',
         'mail',
@@ -94,6 +95,8 @@ Features:
         "reports/inspection_templates.xml",
         "reports/inspection_reports.xml",
         "views/security_vehicle_views.xml",
+        "views/cafm_bridge_views.xml",
+        "views/cafm_incident_views.xml",
         
         
     ],

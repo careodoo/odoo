@@ -239,9 +239,29 @@ class SecuritySupervisorApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
+        b = _body() or {}
+        # تخزين آخر موقع GPS للحارس على سجل security.guard (ليراه الفريق على الخريطة)
+        try:
+            lat, lng = b.get('lat'), b.get('lng')
+            if lat is not None and lng is not None and 'security.guard' in env:
+                G = env['security.guard'].sudo()
+                g = G.search([('user_id', '=', env.uid)], limit=1)
+                if not g:
+                    se = env['security.employee'].sudo().search(
+                        [('employee_id.user_id', '=', env.uid)], limit=1) if 'security.employee' in env else None
+                    if se:
+                        g = G.search([('security_employee_id', '=', se.id)], limit=1)
+                if g and 'latitude' in g._fields:
+                    vals = {'latitude': float(lat), 'longitude': float(lng)}
+                    if 'last_update' in g._fields:
+                        vals['last_update'] = fields.Datetime.now()
+                    if b.get('battery') is not None and 'battery_level' in g._fields:
+                        vals['battery_level'] = float(b['battery'])
+                    g.write(vals)
+        except Exception:
+            pass
         if 'care.guard.presence' not in env:
             return _ok({'state': 'active'})
-        b = _body() or {}
         rec = env['care.guard.presence'].sudo().heartbeat(
             env.user, moving=b.get('moving'), heart_rate=b.get('heart_rate'),
             still=b.get('still'), battery=b.get('battery'))

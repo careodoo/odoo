@@ -37,3 +37,5 @@ from . import report_api
 from . import svc_api
 from . import payment_api
 from . import my_api
+from . import permits_api
+from . import permits_portal

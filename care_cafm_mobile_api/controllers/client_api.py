@@ -1488,6 +1488,16 @@ class ClientApi(Controller):
         if 'user_member_ids' in teams._fields:
             emps |= teams.mapped('user_member_ids.employee_id')
         emps |= teams.mapped('supervisor_id.employee_id')
+        # حرّاس الأمن على فِرَق مواقع هذا العميل (عبر جسر المنشأة→المرفق) — حتى يمكن
+        # للعميل إسناد أمر عمل لحارس أمنه، لا لعمّال CAFM فقط.
+        if 'security.premise' in env and 'security.team' in env:
+            prem = env['security.premise'].sudo().search([('cafm_facility_id', 'in', facs.ids)])
+            steams = env['security.team'].sudo().search([('premise_id', 'in', prem.ids)])
+            se = steams.mapped('member_ids') | steams.mapped('leader_id')
+            if 'security.guard' in env:
+                guards = env['security.guard'].sudo().search([('security_employee_team_ids', 'in', steams.ids)])
+                se |= guards.mapped('security_employee_id')
+            emps |= se.mapped('employee_id')
         return emps
 
     # ---- team roster with photos + live status ------------------------------

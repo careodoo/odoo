@@ -37,3 +37,5 @@ from . import mail_activity
 from . import mail_activity
 from . import security_attendance
 from . import hr_employee
+from . import cafm_bridge
+from . import cafm_first

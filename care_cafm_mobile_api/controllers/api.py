@@ -338,6 +338,15 @@ class MobileApi(http.Controller):
             or ('security.employee' in env and env['security.employee'].sudo().search_count([('user_id', '=', user.id)]))
             or ('security.employee' in env and emp and env['security.employee'].sudo().search_count([('employee_id', '=', emp.id)]))
         )
+        # مدير مشروع CAFM: مذكور في care.cafm.project.manager_ids/manager_id → يفتح
+        # لوحة مدير المشروع (أيقونات الخدمات/المتابعة + معظم أيقونات العميل + بنر البث)
+        is_project_manager = False
+        pm_facility_ids = []
+        if 'care.cafm.project' in env:
+            projs = env['care.cafm.project'].sudo().search(
+                ['|', ('manager_ids', 'in', [user.id]), ('manager_id', '=', user.id)])
+            is_project_manager = bool(projs)
+            pm_facility_ids = projs.mapped('facility_ids').ids
         if is_security_staff or 'security' in my_types:
             role = 'security'
         elif not emp or is_cafm_member:
@@ -347,6 +356,8 @@ class MobileApi(http.Controller):
         else:
             role = 'worker'
         return {
+            'is_project_manager': is_project_manager,
+            'pm_facility_ids': pm_facility_ids,
             'user': {'id': user.id, 'name': user.name, 'login': user.login,
                      'employee_id': emp.id or None, 'email': user.email or None},
             'role': role,
