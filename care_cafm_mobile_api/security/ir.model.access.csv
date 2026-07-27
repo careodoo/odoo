@@ -33,3 +33,6 @@ access_handover_mgr,handover.mgr,model_care_security_handover,base.group_erp_man
 access_dar_user,dar.user,model_care_security_dar,base.group_user,1,1,1,0
 access_dar_portal,dar.portal,model_care_security_dar,base.group_portal,1,1,1,0
 access_dar_mgr,dar.mgr,model_care_security_dar,base.group_erp_manager,1,1,1,1
+access_gate_entry_user,gate.entry.user,model_care_security_gate_entry,base.group_user,1,1,1,0
+access_gate_entry_portal,gate.entry.portal,model_care_security_gate_entry,base.group_portal,1,1,1,0
+access_gate_entry_mgr,gate.entry.mgr,model_care_security_gate_entry,base.group_erp_manager,1,1,1,1

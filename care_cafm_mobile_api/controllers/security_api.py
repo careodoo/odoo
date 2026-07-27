@@ -917,6 +917,105 @@ class SecurityMobileApi(Controller):
             [('guard_user_id', '=', env.uid)], order='date desc', limit=120)
         return _ok({'items': [self._dar_dict(env, d) for d in recs]})
 
+    # ==== سجل البوابة: زوّار ومركبات (Gate Register) ======================
+    def _gate_dict(self, e):
+        return {
+            'id': e.id, 'name': e.name, 'state': e.state,
+            'type': e.entry_type,
+            'type_label': dict(e._fields['entry_type'].selection).get(e.entry_type, e.entry_type),
+            'person': e.person_name or None, 'id_number': e.id_number or None,
+            'phone': e.phone or None, 'company': e.company or None,
+            'host': e.host_name or None, 'purpose': e.purpose or None,
+            'persons_count': e.persons_count or 1,
+            'plate': e.plate or None, 'vehicle_desc': e.vehicle_desc or None,
+            'in_time': str(e.in_time or '')[:16] or None,
+            'out_time': str(e.out_time or '')[:16] or None,
+            'note': e.note or None,
+            'premise': e.premise_id.name if e.premise_id else None,
+        }
+
+    @route(API + '/security/gate/meta', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def gate_meta(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        types = []
+        if 'care.security.gate.entry' in env:
+            types = [{'v': v, 'l': l} for v, l in
+                     env['care.security.gate.entry']._fields['entry_type'].selection]
+        prem = self._my_guard_premise(env)
+        return _ok({'types': types,
+                    'premise': {'id': prem.id, 'name': prem.name} if prem else None})
+
+    @route(API + '/security/gate/log', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def gate_log(self, tab=None, **kw):
+        """سجل البوابة: بالداخل الآن / دخول اليوم / الكل + إحصائيات ترويسة."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.security.gate.entry' not in env:
+            return _ok({'items': [], 'stats': {}})
+        E = env['care.security.gate.entry'].sudo()
+        day = fields.Date.context_today(E)
+        s = str(day) + ' 00:00:00'
+        dom = []
+        if tab == 'inside':
+            dom = [('state', '=', 'inside')]
+        elif tab == 'today' or not tab:
+            dom = [('in_time', '>=', s)]
+        recs = E.search(dom, order='in_time desc', limit=300)
+        return _ok({
+            'items': [self._gate_dict(e) for e in recs],
+            'stats': {
+                'inside': E.search_count([('state', '=', 'inside')]),
+                'in_today': E.search_count([('in_time', '>=', s)]),
+                'out_today': E.search_count([('out_time', '>=', s)]),
+            },
+        })
+
+    @route(API + '/security/gate/entry', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def gate_entry_create(self, **kw):
+        """تسجيل دخول جديد عند البوابة (زائر/مركبة/توصيل/مقاول)."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.security.gate.entry' not in env:
+            return _err('غير متاح', 404)
+        b = _body() or {}
+        prem = self._my_guard_premise(env)
+        vals = {
+            'guard_user_id': env.uid,
+            'premise_id': (int(b['premise_id']) if b.get('premise_id') else (prem.id if prem else False)),
+            'entry_type': b.get('entry_type') or 'visitor',
+            'person_name': (b.get('person_name') or '').strip() or False,
+            'id_number': (b.get('id_number') or '').strip() or False,
+            'phone': (b.get('phone') or '').strip() or False,
+            'company': (b.get('company') or '').strip() or False,
+            'host_name': (b.get('host_name') or '').strip() or False,
+            'purpose': (b.get('purpose') or '').strip() or False,
+            'persons_count': int(b.get('persons_count') or 1),
+            'plate': (b.get('plate') or '').strip() or False,
+            'vehicle_desc': (b.get('vehicle_desc') or '').strip() or False,
+            'note': (b.get('note') or '').strip() or False,
+        }
+        try:
+            e = env['care.security.gate.entry'].sudo().create(vals)
+        except Exception as ex:
+            return _err('تعذّر التسجيل: %s' % ex, 400)
+        return _ok(self._gate_dict(e))
+
+    @route(API + '/security/gate/<int:eid>/exit', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def gate_entry_exit(self, eid, **kw):
+        """تسجيل خروج (out_time + state=left)."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        e = env['care.security.gate.entry'].sudo().browse(eid).exists()
+        if not e:
+            return _err('غير موجود', 404)
+        e.action_mark_exit()
+        return _ok(self._gate_dict(e))
+
     # ==== Key custody =====================================================
     def _key_full(self, k, with_log=False):
         holder = k.current_holder_id
