@@ -772,10 +772,23 @@ class PMManagerPortal(CustomerPortal):
         env = request.env
         if 'care.item.request' not in env:
             return request.redirect('/my/pm/p/%s' % project_id)
+        # ميزانية الطلبات الشهرية للمشروع (كارت) — عبر طلب مؤقت غير محفوظ
+        budget = {}
+        try:
+            tmp = env['care.item.request'].sudo().new({'project_id': p.id})
+            tmp._compute_cost_center()
+            tmp._compute_budget()
+            if tmp.cost_center_id:
+                budget = {'cost_center': tmp.cost_center_id.name,
+                          'month_budget': round(tmp.month_budget or 0, 3),
+                          'month_used': round(tmp.month_used or 0, 3),
+                          'month_remaining': round(tmp.month_remaining or 0, 3)}
+        except Exception:
+            budget = {}
         return request.render('care_pms.pm_p_items', self._base(
             self._menu_project(p, 'items'), p.name, project=p,
             requests=env['care.item.request'].sudo().search([('project_id', '=', p.id)], limit=100),
-            can_approve=self._can_approve_items(),
+            can_approve=self._can_approve_items(), budget=budget,
             today=fields.Date.today(), ok=kw.get('ok'), err=kw.get('err')))
 
     @http.route(['/my/pm/p/<int:project_id>/items/create'], type='http', auth='user', website=True, methods=['POST'])
@@ -793,7 +806,8 @@ class PMManagerPortal(CustomerPortal):
             if nm and qty:
                 try:
                     lines.append((0, 0, {'name': nm, 'qty': float(qty),
-                                         'uom_name': (kw.get('uom_%s' % i) or 'وحدة')}))
+                                         'uom_name': (kw.get('uom_%s' % i) or 'وحدة'),
+                                         'unit_price': float(kw.get('price_%s' % i) or 0)}))
                 except ValueError:
                     pass
         if not lines:
@@ -803,7 +817,9 @@ class PMManagerPortal(CustomerPortal):
                 'project_id': project_id, 'priority': '1' if kw.get('urgent') else '0',
                 'needed_by': kw.get('needed_by') or False, 'note': kw.get('note') or False,
                 'line_ids': lines})
-            r.action_submit()
+            # حفظ كمسودّة إن طُلب، وإلا إرسال للاعتماد
+            if not kw.get('draft'):
+                r.action_submit()
         except Exception:
             return request.redirect('/my/pm/p/%s/items?err=1' % project_id)
         return request.redirect('/my/pm/p/%s/items?ok=1' % project_id)
@@ -819,6 +835,13 @@ class PMManagerPortal(CustomerPortal):
             return request.redirect('/my/pm/p/%s/items?err=1' % project_id)
         if act in ('approve', 'reject') and not self._can_approve_items():
             return request.redirect('/my/pm/p/%s/items?err=perm' % project_id)
+        if act == 'duplicate':
+            try:
+                r.copy({'state': 'draft', 'name': '/', 'supply_id': False,
+                        'approved_by': False, 'approval_date': False, 'reject_reason': False})
+            except Exception:
+                return request.redirect('/my/pm/p/%s/items?err=1' % project_id)
+            return request.redirect('/my/pm/p/%s/items?ok=1' % project_id)
         try:
             {'submit': r.action_submit, 'approve': r.action_approve,
              'reject': r.action_reject, 'reset': r.action_reset}.get(act, lambda: None)()

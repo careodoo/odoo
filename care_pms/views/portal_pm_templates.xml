@@ -1020,15 +1020,25 @@
             <t t-if="err=='perm'"><div class="pm-alert bad">الاعتماد من صلاحية المشتريات فقط.</div></t>
             <t t-if="err=='empty'"><div class="pm-alert bad">أضف صنفًا واحدًا على الأقل بكمية.</div></t>
             <t t-if="err and err not in ('perm','empty')"><div class="pm-alert bad">تعذّر تنفيذ العملية.</div></t>
+            <!-- بطاقة الميزانية الشهرية للمشروع (من مركز التكلفة) -->
+            <t t-if="budget and budget.get('cost_center')">
+                <div class="pm-card"><div class="hd" style="background:#0e7c5a;color:#fff">💰 ميزانية الطلبات (الشهر) — <t t-esc="budget['cost_center']"/></div>
+                <div class="bd" style="display:flex;gap:16px;flex-wrap:wrap;justify-content:space-around;text-align:center">
+                    <div><div style="font-size:20px;font-weight:900;color:#334">​<t t-esc="budget['month_budget']"/></div><div style="font-size:11px;color:#8a93a8">الميزانية</div></div>
+                    <div><div style="font-size:20px;font-weight:900;color:#f59e0b"><t t-esc="budget['month_used']"/></div><div style="font-size:11px;color:#8a93a8">المصروف</div></div>
+                    <div><div t-att-style="'font-size:20px;font-weight:900;color:' + ('#e11d48' if budget['month_remaining'] &lt;= 0 else '#12945f')"><t t-esc="budget['month_remaining']"/></div><div style="font-size:11px;color:#8a93a8">المتبقّي د.ك</div></div>
+                </div></div>
+            </t>
             <div class="pm-card"><div class="hd b3">➕ طلب أصناف جديد</div><div class="bd">
                 <form t-attf-action="/my/pm/p/#{project.id}/items/create" method="post">
                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                    <table style="width:100%"><thead><tr><th style="text-align:right">الصنف</th><th style="width:70px">الكمية</th><th style="width:90px">الوحدة</th></tr></thead><tbody>
+                    <table style="width:100%"><thead><tr><th style="text-align:right">الصنف</th><th style="width:64px">الكمية</th><th style="width:80px">الوحدة</th><th style="width:80px">السعر</th></tr></thead><tbody>
                         <t t-foreach="[1,2,3,4,5,6]" t-as="i">
                             <tr>
                                 <td><input type="text" t-att-name="'item_%s' % i" placeholder="اسم الصنف"/></td>
                                 <td><input type="number" step="0.01" t-att-name="'qty_%s' % i"/></td>
                                 <td><input type="text" t-att-name="'uom_%s' % i" value="وحدة"/></td>
+                                <td><input type="number" step="0.001" t-att-name="'price_%s' % i" placeholder="0.000"/></td>
                             </tr>
                         </t>
                     </tbody></table>
@@ -1037,7 +1047,10 @@
                         <div style="display:flex;align-items:flex-end;gap:6px"><label style="font-size:12px;color:#8a93a8;font-weight:700"><input type="checkbox" name="urgent" value="1"/> عاجل</label></div>
                     </div>
                     <input type="text" name="note" placeholder="سبب الطلب / ملاحظات"/>
-                    <button class="pm-btn p">إرسال للاعتماد</button></form></div></div>
+                    <div style="display:flex;gap:8px;margin-top:8px">
+                        <button class="pm-btn p">إرسال للاعتماد</button>
+                        <button class="pm-btn" name="draft" value="1" type="submit" style="background:#eef2f7;color:#334">💾 حفظ كمسودّة</button>
+                    </div></form></div></div>
             <t t-foreach="requests" t-as="r">
                 <div class="pm-card"><div class="hd light">
                     <t t-esc="r.name"/> · <t t-esc="r.request_date"/> · <t t-esc="r.line_count"/> صنف
@@ -1045,11 +1058,16 @@
                     <span t-att-class="r.state=='approved' and 'pm-badge b-green' or (r.state=='rejected' and 'pm-badge b-red' or (r.state=='submitted' and 'pm-badge b-blue' or 'pm-badge'))" t-esc="{'draft':'مسودة','submitted':'بانتظار الاعتماد','approved':'معتمد','rejected':'مرفوض'}.get(r.state, r.state)"/>
                     <a t-attf-href="/report/pdf/care_item_request.report_item_request_doc/#{r.id}" target="_blank" class="pm-btn" style="padding:3px 8px;font-size:12px;float:left">طباعة</a>
                 </div>
-                <table><thead><tr><th>الصنف</th><th>الكمية</th><th>الوحدة</th></tr></thead><tbody>
-                    <tr t-foreach="r.line_ids" t-as="l"><td t-esc="l.name"/><td style="font-weight:800" t-esc="l.qty"/><td t-esc="l.uom_name"/></tr>
+                <table><thead><tr><th>الصنف</th><th>الكمية</th><th>الوحدة</th><th>السعر</th><th>الإجمالي</th></tr></thead><tbody>
+                    <tr t-foreach="r.line_ids" t-as="l"><td t-esc="l.name"/><td style="font-weight:800" t-esc="l.qty"/><td t-esc="l.uom_name"/><td t-esc="'%.3f' % (l.unit_price or 0)"/><td style="font-weight:800" t-esc="'%.3f' % (l.subtotal or 0)"/></tr>
+                    <tr t-if="r.estimated_cost"><td colspan="4" style="text-align:left;font-weight:800">إجمالي التكلفة</td><td style="font-weight:900;color:#0e7c5a" t-esc="'%.3f' % r.estimated_cost"/></tr>
                 </tbody></table>
                 <div class="bd" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                    <t t-if="r.cost_center_id"><span style="font-size:12px;color:#8a93a8">مركز التكلفة: <t t-esc="r.cost_center_id.name"/> · المتبقّي <b t-att-style="'color:' + ('#e11d48' if r.over_budget else '#12945f')" t-esc="'%.3f' % (r.month_remaining or 0)"/></span></t>
                     <t t-if="r.supply_id"><span style="color:#12945f;font-weight:700">توريد: <t t-esc="r.supply_id.name"/></span></t>
+                    <form t-attf-action="/my/pm/p/#{project.id}/items/#{r.id}/duplicate" method="post" style="display:inline">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <button class="pm-btn" style="background:#eef2f7;color:#334">📄 نسخ</button></form>
                     <t t-if="r.state=='submitted' and can_approve">
                         <form t-attf-action="/my/pm/p/#{project.id}/items/#{r.id}/approve" method="post" style="display:inline">
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
@@ -1057,6 +1075,11 @@
                         <form t-attf-action="/my/pm/p/#{project.id}/items/#{r.id}/reject" method="post" style="display:inline">
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                             <button class="pm-btn">رفض</button></form>
+                    </t>
+                    <t t-if="r.state=='draft'">
+                        <form t-attf-action="/my/pm/p/#{project.id}/items/#{r.id}/submit" method="post" style="display:inline">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <button class="pm-btn p">إرسال للاعتماد</button></form>
                     </t>
                 </div></div>
             </t>
