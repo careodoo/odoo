@@ -12,6 +12,7 @@ import 'supervisor_home.dart';
 import 'quality_home.dart';
 import 'client_home.dart';
 import 'admin_home.dart';
+import 'project_manager_home.dart';
 import 'service_screen.dart';
 import 'cleaning_audit_screen.dart';
 import 'shift_card.dart';
@@ -32,6 +33,8 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final profile = context.watch<AuthProvider>().profile!;
     if (profile.isAdmin) return const AdminHome();
+    // مدير المشروع: لوحة تجمع إدارة الخدمات/المتابعة + معظم أيقونات العميل + بنر البث
+    if (profile.isProjectManager) return const ProjectManagerHome();
     if (profile.role == 'client') return const ClientHome();
     // a supervisor opens straight onto their board — stats, executive actions,
     // the unassigned backlog and live team load, all on the first screen.
