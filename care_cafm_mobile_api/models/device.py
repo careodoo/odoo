@@ -69,7 +69,16 @@ class CafmDevice(models.Model):
         if dev:
             dev.write(vals)
         else:
-            dev = self.sudo().create(dict(vals, token=token))
+            # سباق تزامن: قد يُنشئ طلبٌ متزامن نفس الرمز بين البحث والإنشاء
+            # (التطبيق يسجّل عند البدء وعند الدخول) → INSERT يخالف قيد الرمز الفريد.
+            # نحمي بـ savepoint ونعيد البحث/التحديث بدل تعطّل المعاملة كاملة.
+            try:
+                with self.env.cr.savepoint():
+                    dev = self.sudo().create(dict(vals, token=token))
+            except Exception:
+                dev = self.sudo().search([('token', '=', token)], limit=1)
+                if dev:
+                    dev.write(vals)
         return dev
 
     # ---- FCM HTTP v1 ------------------------------------------------------
