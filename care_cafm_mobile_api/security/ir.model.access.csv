@@ -27,3 +27,6 @@ access_care_guard_presence_mgr,care.guard.presence.mgr,model_care_guard_presence
 access_post_order_user,post.order.user,model_care_security_post_order,base.group_user,1,0,0,0
 access_post_order_portal,post.order.portal,model_care_security_post_order,base.group_portal,1,0,0,0
 access_post_order_mgr,post.order.mgr,model_care_security_post_order,base.group_erp_manager,1,1,1,1
+access_handover_user,handover.user,model_care_security_handover,base.group_user,1,1,1,0
+access_handover_portal,handover.portal,model_care_security_handover,base.group_portal,1,1,1,0
+access_handover_mgr,handover.mgr,model_care_security_handover,base.group_erp_manager,1,1,1,1

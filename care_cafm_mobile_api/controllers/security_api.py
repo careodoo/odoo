@@ -729,6 +729,88 @@ class SecurityMobileApi(Controller):
         o.action_acknowledge(env.user)
         return _ok({'acknowledged': True, 'ack_count': o.ack_count})
 
+    # ==== تسليم/استلام الوردية (Handover) ================================
+    def _handover_dict(self, env, h):
+        return {
+            'id': h.id, 'name': h.name,
+            'from': h.from_user_id.name if h.from_user_id else None,
+            'to': h.to_user_id.name if h.to_user_id else None,
+            'premise': h.premise_id.name if h.premise_id else None,
+            'date': str(h.date or '')[:16] or None,
+            'situation': h.situation or None, 'pending': h.pending or None,
+            'keys_note': h.keys_note or None, 'incidents_note': h.incidents_note or None,
+            'state': h.state, 'ack_date': str(h.ack_date or '')[:16] or None,
+            'mine_sent': bool(h.from_user_id and h.from_user_id.id == env.uid),
+        }
+
+    @route(API + '/security/handover/options', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def handover_options(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        teams = self._guard_teams(env)
+        members, seen = [], set()
+        for t in (teams or []):
+            for m in self._team_members(env, t):
+                u = m.employee_id.user_id if m.employee_id else None
+                if u and u.id != env.uid and m.id not in seen:
+                    seen.add(m.id)
+                    members.append({'uid': u.id, 'name': m.name})
+        prem = teams.mapped('premise_id') if teams else None
+        return _ok({'recipients': members,
+                    'premises': [{'id': p.id, 'name': p.name} for p in (prem or [])]})
+
+    @route(API + '/security/handovers', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def handovers(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.security.handover' not in env:
+            return _ok({'items': [], 'pending_ack': 0})
+        H = env['care.security.handover'].sudo()
+        recs = H.search(['|', ('from_user_id', '=', env.uid), ('to_user_id', '=', env.uid)],
+                        order='date desc', limit=100)
+        return _ok({
+            'items': [self._handover_dict(env, h) for h in recs],
+            'pending_ack': H.search_count([('to_user_id', '=', env.uid), ('state', '=', 'submitted')]),
+        })
+
+    @route(API + '/security/handover/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def handover_create(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.security.handover' not in env:
+            return _err('غير متاح', 404)
+        b = _body() or {}
+        vals = {
+            'from_user_id': env.uid,
+            'to_user_id': int(b['to_uid']) if b.get('to_uid') else False,
+            'premise_id': int(b['premise_id']) if b.get('premise_id') else False,
+            'situation': b.get('situation') or False, 'pending': b.get('pending') or False,
+            'keys_note': b.get('keys_note') or False, 'incidents_note': b.get('incidents_note') or False,
+        }
+        try:
+            h = env['care.security.handover'].sudo().create(vals)
+            if h.to_user_id and 'care.cafm.notification' in env:
+                env['care.cafm.notification'].sudo().push(
+                    h.to_user_id, '🔄 تسليم وردية',
+                    '%s سلّمك الوردية — راجِع التقرير' % env.user.name, ntype='info')
+        except Exception as e:
+            return _err('تعذّر التسليم: %s' % e, 400)
+        return _ok(self._handover_dict(env, h))
+
+    @route(API + '/security/handover/<int:hid>/ack', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def handover_ack(self, hid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        h = env['care.security.handover'].sudo().browse(hid).exists()
+        if not h:
+            return _err('غير موجود', 404)
+        h.action_acknowledge(env.user)
+        return _ok(self._handover_dict(env, h))
+
     # ==== Key custody =====================================================
     def _key_full(self, k, with_log=False):
         holder = k.current_holder_id
