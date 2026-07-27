@@ -766,6 +766,31 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/my_team'), headers: await _headers())))['data'] as Map);
 
+  /// تسليم/استلام الوردية (Handover).
+  Future<Map<String, dynamic>> securityHandovers() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/handovers'), headers: await _headers())))['data'] as Map);
+  Future<Map<String, dynamic>> securityHandoverOptions() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/handover/options'), headers: await _headers())))['data'] as Map);
+  Future<Map<String, dynamic>> securityHandoverCreate(Map<String, dynamic> b) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(_u('/security/handover/create'),
+              headers: await _headers(), body: jsonEncode(b))))['data'] as Map);
+  Future<Map<String, dynamic>> securityHandoverAck(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/security/handover/$id/ack'), headers: await _headers())))['data'] as Map);
+
+  /// الأوامر الدائمة / تعليمات الموقع (Post Orders) للحارس.
+  Future<Map<String, dynamic>> securityPostOrders({String? category}) async {
+    final q = (category != null && category != 'all') ? '?category=$category' : '';
+    return Map<String, dynamic>.from((await _handle(await _net.get(
+            _u('/security/post_orders$q'), headers: await _headers())))['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> securityPostOrderAck(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/security/post_order/$id/ack'), headers: await _headers())))['data'] as Map);
+
   /// جدول ورديّات الحارس (روستر) + حضور/انصراف.
   Future<Map<String, dynamic>> securityMySchedule() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
