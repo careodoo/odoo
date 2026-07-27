@@ -35,6 +35,11 @@ dependencies:
   flutter_webrtc: ^1.5.2
   flutter_foreground_task: ^10.0.0
 
+# تثبيت jni على 1.0.0: النسخة 1.0.1 كسرت بناء أندرويد في CI
+# (jni/android/build.gradle يستدعي kotlin() غير المتاح) → فشل assembleRelease.
+dependency_overrides:
+  jni: 1.0.0
+
 dev_dependencies:
   flutter_lints: ^4.0.0
   flutter_launcher_icons: ^0.14.1
