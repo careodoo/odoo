@@ -132,4 +132,29 @@
             .pill { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
         }
     }
+
+    /* ===== شريط الأيقونات العلوي ===== */
+    .o_cafm_shortcuts {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+        gap: 10px; margin-bottom: 18px; padding: 14px;
+        background: linear-gradient(135deg, #0f2447 0%, #16305c 55%, #1e3a5f 100%);
+        border-radius: 18px; box-shadow: 0 8px 24px rgba(15, 36, 71, 0.18);
+    }
+    .o_cafm_sc {
+        display: flex; flex-direction: column; align-items: center; gap: 6px;
+        padding: 12px 6px; border-radius: 14px; cursor: pointer; text-align: center;
+        background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.09);
+        transition: transform 0.12s, background 0.12s, border-color 0.12s;
+        &:hover { transform: translateY(-3px); background: rgba(255, 255, 255, 0.14);
+            border-color: rgba(255, 255, 255, 0.28); }
+        .sc_ic { font-size: 26px; line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25)); }
+        .sc_l { font-size: 11.5px; font-weight: 700; color: #e8f0fb;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    }
+
+    /* ===== صفّ مؤشّرات الأمن والتشغيل ===== */
+    .o_cafm_strip2 {
+        background: #fff; border: 1px solid #eef2f7;
+        .s { cursor: pointer; b { color: #0f172a; } }
+    }
 }

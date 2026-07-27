@@ -12,7 +12,8 @@
     </record>
 
     <!-- ===== ROOT (no action → opens the submenu) ===== -->
-    <menuitem id="menu_cafm_root" name="CAFM — إدارة المرافق" sequence="52"/>
+    <menuitem id="menu_cafm_root" name="CAFM — إدارة المرافق" sequence="52"
+              action="action_cafm_dashboard_client"/>
 
     <!-- Dashboards -->
     <menuitem id="menu_cafm_dashboard" name="📊 لوحة القيادة" parent="menu_cafm_root"

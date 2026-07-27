@@ -163,7 +163,56 @@ class CafmWorkorder(models.Model):
                                         'pct': round(100.0 * c / total, 1) if total else 0,
                                         'color': prio_color.get(pv, '#64748b')})
 
+        # ---- شريط الأيقونات العلوي: اختصارات لكل الخدمات والأقسام المهمة ----
+        _sc = [
+            ('🔧', 'أوامر العمل', 'care.cafm.workorder'),
+            ('📥', 'طلبات الخدمة', 'care.cafm.service.request'),
+            ('🏢', 'المرافق', 'care.cafm.facility'),
+            ('📁', 'العملاء', 'care.cafm.client'),
+            ('🗂️', 'المشاريع', 'care.cafm.project'),
+            ('👥', 'فرق الخدمة', 'care.cafm.team'),
+            ('🏗️', 'الأصول', 'care.cafm.asset'),
+            ('🛠️', 'الصيانة الوقائية', 'care.cafm.ppm'),
+            ('⭐', 'الجودة', 'care.cafm.observation'),
+            ('🔩', 'الأعطال', 'care.cafm.maint.fault'),
+            ('🧹', 'النظافة', 'care.cafm.workorder'),
+            ('🛎️', 'الضيافة', 'care.hosp.order'),
+            ('🐜', 'مكافحة الحشرات', 'care.pest.program'),
+            ('🏊', 'المسابح', 'care.pool.pool'),
+            ('🚰', 'خزانات المياه', 'care.tank.tank'),
+            ('🧴', 'التعقيم', 'care.disinfect.round'),
+            ('🚗', 'صف السيارات', 'care.valet.ticket'),
+            ('📦', 'المناولة', 'care.handling.job'),
+            ('🌳', 'الزراعة', 'care.cafm.agri.species'),
+            ('♻️', 'النفايات', 'cafm.waste.trip'),
+            ('🛡️', 'فرق الأمن', 'security.team'),
+            ('👮', 'الحرّاس', 'security.guard'),
+            ('🚨', 'البلاغات الأمنية', 'security.incident.report'),
+            ('📷', 'المسح الميداني', 'care.cafm.scan'),
+        ]
+        shortcuts = [{'icon': i, 'label': l, 'model': m} for (i, l, m) in _sc if m in env]
+
+        # ---- مؤشّرات الأمن والتشغيل الإضافية ----
+        security_kpis = {
+            'guards': _cnt('security.guard', []),
+            'teams': _cnt('security.team', []),
+            'incidents': _cnt('security.incident.report', [('state', 'not in', ('closed', 'resolved'))]),
+            'patrols': _cnt('security.patrol', [('state', '=', 'in_progress')]),
+        }
+        ops_kpis = {
+            'faults': _cnt('care.cafm.maint.fault', []),
+            'waste_trips': _cnt('cafm.waste.trip', []),
+            'hosp': _cnt('care.hosp.order', []),
+            'projects': _cnt('care.cafm.project', []),
+            'scans': _cnt('care.cafm.scan', []),
+            'valet': _cnt('care.valet.ticket', []),
+            'pest': _cnt('care.pest.program', []),
+        }
+
         return {
+            'shortcuts': shortcuts,
+            'security': security_kpis,
+            'ops': ops_kpis,
             'kpis': {
                 'total': total, 'open': open_wo, 'overdue': overdue,
                 'done': done_total, 'unassigned': unassigned, 'sla': sla,

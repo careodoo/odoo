@@ -19,6 +19,16 @@
                     <button class="btn btn-light o_cafm_refresh" t-on-click="() => this.load()">↻ تحديث</button>
                 </div>
 
+                <!-- شريط الأيقونات العلوي: اختصار لكل الخدمات والأقسام المهمة -->
+                <div class="o_cafm_shortcuts" t-if="state.data.shortcuts">
+                    <t t-foreach="state.data.shortcuts" t-as="sc" t-key="sc_index">
+                        <div class="o_cafm_sc" t-on-click="() => this.openModel(sc.model, sc.label)" t-att-title="sc.label">
+                            <div class="sc_ic" t-esc="sc.icon"/>
+                            <div class="sc_l" t-esc="sc.label"/>
+                        </div>
+                    </t>
+                </div>
+
                 <!-- KPI cards -->
                 <div class="o_cafm_kpis">
                     <div class="o_cafm_kpi c-blue" t-on-click="() => this.openWO([['state','in',['new','assigned','in_progress']]], 'أوامر العمل المفتوحة')">
@@ -65,6 +75,18 @@
                     <div class="s" t-on-click="() => this.openModel('care.cafm.ppm','الصيانة الوقائية')"><b t-esc="k.ppm"/><span>خطط وقائية</span></div>
                     <div class="s" t-on-click="() => this.openModel('care.cafm.observation','ملاحظات الجودة')"><b t-esc="k.observations"/><span>ملاحظات جودة</span></div>
                     <div class="s"><b t-esc="k.total"/><span>إجمالي الأوامر</span></div>
+                </div>
+
+                <!-- مؤشّرات الأمن والتشغيل -->
+                <div class="o_cafm_strip o_cafm_strip2" t-if="state.data.security">
+                    <div class="s" t-on-click="() => this.openModel('security.team','فرق الأمن')"><b t-esc="state.data.security.teams"/><span>🛡️ فرق أمن</span></div>
+                    <div class="s" t-on-click="() => this.openModel('security.guard','الحرّاس')"><b t-esc="state.data.security.guards"/><span>👮 حرّاس</span></div>
+                    <div class="s" t-on-click="() => this.openModel('security.incident.report','البلاغات الأمنية')"><b t-esc="state.data.security.incidents"/><span>🚨 بلاغات مفتوحة</span></div>
+                    <div class="s"><b t-esc="state.data.security.patrols"/><span>🚶 دوريات جارية</span></div>
+                    <div class="s" t-on-click="() => this.openModel('care.cafm.maint.fault','الأعطال')"><b t-esc="state.data.ops.faults"/><span>🔩 أعطال</span></div>
+                    <div class="s" t-on-click="() => this.openModel('cafm.waste.trip','النفايات')"><b t-esc="state.data.ops.waste_trips"/><span>♻️ رحلات نفايات</span></div>
+                    <div class="s" t-on-click="() => this.openModel('care.hosp.order','الضيافة')"><b t-esc="state.data.ops.hosp"/><span>🛎️ طلبات ضيافة</span></div>
+                    <div class="s" t-on-click="() => this.openModel('care.cafm.project','المشاريع')"><b t-esc="state.data.ops.projects"/><span>🗂️ مشاريع</span></div>
                 </div>
 
                 <!-- time series (day / month / year) -->
