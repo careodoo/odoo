@@ -593,6 +593,142 @@ class SecurityMobileApi(Controller):
             'certifications': certs, 'skills': skills, 'equipment': equip,
         })
 
+    # ==== جدولي/ورديّاتي (روستر الحارس) ==================================
+    @staticmethod
+    def _hhmm(f):
+        try:
+            f = float(f or 0); h = int(f); m = int(round((f - h) * 60))
+            if m == 60:
+                h += 1; m = 0
+            return '%02d:%02d' % (h % 24, m)
+        except Exception:
+            return None
+
+    def _assign_dict(self, env, a):
+        F = a._fields
+        sh = a.shift_id
+        premise = None
+        try:
+            if sh and 'schedule_id' in sh._fields and sh.schedule_id and getattr(sh.schedule_id, 'premise_id', False):
+                premise = sh.schedule_id.premise_id.name
+            elif sh and getattr(sh, 'premise_id', False):
+                premise = sh.premise_id.name
+        except Exception:
+            premise = None
+        st = a.state if 'state' in F else None
+        return {
+            'id': a.id, 'date': str(a.date)[:10] if a.date else None,
+            'shift': sh.name if sh else None,
+            'type': (a.shift_type_id.name if ('shift_type_id' in F and a.shift_type_id)
+                     else (sh.shift_type_id.name if (sh and 'shift_type_id' in sh._fields and sh.shift_type_id) else None)),
+            'start': self._hhmm(sh.start_time) if (sh and 'start_time' in sh._fields) else None,
+            'end': self._hhmm(sh.end_time) if (sh and 'end_time' in sh._fields) else None,
+            'premise': premise, 'state': st,
+            'state_label': dict(F['state'].selection).get(st, st) if 'state' in F else None,
+            'check_in': str(getattr(a, 'attendance_check_in', '') or '')[:16] or None,
+            'check_out': str(getattr(a, 'attendance_check_out', '') or '')[:16] or None,
+            'worked_hours': round(getattr(a, 'attendance_worked_hours', 0) or 0, 2),
+            'can_checkin': st in ('scheduled', 'confirmed'),
+            'can_checkout': st == 'checked_in',
+        }
+
+    @route(API + '/security/my/schedule', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def my_schedule(self, **kw):
+        """روستر ورديّات الحارس: القادمة والسابقة مع الحضور/الانصراف والساعات."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'security.shift.assignment' not in env:
+            return _ok({'items': [], 'stats': {}})
+        A = env['security.shift.assignment'].sudo()
+        me = self._my_sec_emp(env)
+        g = self._my_guard(env)
+        dom = ['|', ('security_employee_id', '=', me.id if me else 0), ('guard_id', '=', g.id if g else 0)]
+        recs = A.search(dom, order='date desc', limit=150)
+        today = str(fields.Date.today())
+        return _ok({
+            'items': [self._assign_dict(env, a) for a in recs],
+            'stats': {
+                'total': len(recs),
+                'upcoming': A.search_count(dom + [('date', '>=', today)]),
+                'today': A.search_count(dom + [('date', '=', today)]),
+                'missed': A.search_count(dom + [('state', '=', 'missed')]),
+            },
+        })
+
+    @route(API + '/security/shift_assignment/<int:aid>/<action>', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def my_shift_action(self, aid, action, **kw):
+        """حضور/انصراف الحارس على وردية مُسندة له."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        a = env['security.shift.assignment'].sudo().browse(aid).exists()
+        if not a:
+            return _err('غير موجود', 404)
+        me = self._my_sec_emp(env)
+        g = self._my_guard(env)
+        mine = (me and a.security_employee_id and a.security_employee_id.id == me.id) or \
+               (g and a.guard_id and a.guard_id.id == g.id)
+        if not mine:
+            return _err('هذه ليست ورديتك', 403)
+        fn = {'checkin': 'action_check_in', 'checkout': 'action_check_out'}.get(action)
+        if not fn or not hasattr(a, fn):
+            return _err('إجراء غير معروف', 400)
+        try:
+            getattr(a, fn)()
+        except Exception as e:
+            return _err(str(e), 400)
+        return _ok(self._assign_dict(env, a))
+
+    # ==== الأوامر الدائمة / تعليمات الموقع (Post Orders) =================
+    @route(API + '/security/post_orders', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def post_orders(self, category=None, **kw):
+        """الأوامر الدائمة لمواقع الحارس (+ العامة) مع حالة الإقرار بالاطلاع."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.security.post.order' not in env:
+            return _ok({'items': [], 'categories': [], 'unacked': 0})
+        PO = env['care.security.post.order'].sudo()
+        teams = self._guard_teams(env)
+        prem_ids = teams.mapped('premise_id').ids if teams else []
+        dom = ['|', ('premise_id', '=', False), ('premise_id', 'in', prem_ids)]
+        if category and category != 'all':
+            dom = dom + [('category', '=', category)]
+        recs = PO.search(dom)
+        CATS = dict(PO._fields['category'].selection)
+        PRIO = dict(PO._fields['priority'].selection)
+        items = [{
+            'id': o.id, 'name': o.name,
+            'category': o.category, 'category_label': CATS.get(o.category, o.category),
+            'priority': o.priority, 'priority_label': PRIO.get(o.priority, o.priority),
+            'premise': o.premise_id.name if o.premise_id else None,
+            'body': o.body or '',
+            'effective_date': str(o.effective_date) if o.effective_date else None,
+            'acknowledged': env.uid in o.ack_user_ids.ids,
+            'ack_count': o.ack_count,
+        } for o in recs]
+        counts = {}
+        for o in recs:
+            counts[o.category] = counts.get(o.category, 0) + 1
+        return _ok({
+            'items': items,
+            'categories': [{'key': k, 'label': v, 'count': counts.get(k, 0)} for k, v in CATS.items() if counts.get(k)],
+            'unacked': sum(1 for i in items if not i['acknowledged']),
+        })
+
+    @route(API + '/security/post_order/<int:oid>/ack', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def post_order_ack(self, oid, **kw):
+        """إقرار الحارس بالاطلاع على أمر دائم."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        o = env['care.security.post.order'].sudo().browse(oid).exists()
+        if not o:
+            return _err('غير موجود', 404)
+        o.action_acknowledge(env.user)
+        return _ok({'acknowledged': True, 'ack_count': o.ack_count})
+
     # ==== Key custody =====================================================
     def _key_full(self, k, with_log=False):
         holder = k.current_holder_id

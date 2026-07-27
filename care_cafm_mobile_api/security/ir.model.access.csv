@@ -24,3 +24,6 @@ access_care_stream_message_user,care.stream.message.user,model_care_stream_messa
 access_care_stream_message_mgr,care.stream.message.mgr,model_care_stream_message,base.group_erp_manager,1,1,1,1
 access_care_guard_presence_user,care.guard.presence.user,model_care_guard_presence,base.group_user,1,1,1,0
 access_care_guard_presence_mgr,care.guard.presence.mgr,model_care_guard_presence,base.group_erp_manager,1,1,1,1
+access_post_order_user,post.order.user,model_care_security_post_order,base.group_user,1,0,0,0
+access_post_order_portal,post.order.portal,model_care_security_post_order,base.group_portal,1,0,0,0
+access_post_order_mgr,post.order.mgr,model_care_security_post_order,base.group_erp_manager,1,1,1,1
