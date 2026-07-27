@@ -23,6 +23,7 @@
         'views/notification_views.xml',
         'views/account_deletion_views.xml',
         'reports/orders_report.xml',
+        'reports/permit_card.xml',
     ],
     'installable': True,
     'application': True,  # it has its own control centre now

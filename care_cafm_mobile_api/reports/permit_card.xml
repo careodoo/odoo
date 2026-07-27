@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- مقاس بطاقة التصريح (A6 عمودي، بلا ترويسة شركة) -->
+    <record id="paperformat_permit_card" model="report.paperformat">
+        <field name="name">Permit Card A6</field>
+        <field name="format">A6</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">4</field>
+        <field name="margin_bottom">4</field>
+        <field name="margin_left">4</field>
+        <field name="margin_right">4</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">110</field>
+    </record>
+
+    <record id="action_report_permit_card" model="ir.actions.report">
+        <field name="name">بطاقة التصريح (PDF)</field>
+        <field name="model">security.gate.pass</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_cafm_mobile_api.report_permit_card</field>
+        <field name="report_file">care_cafm_mobile_api.report_permit_card</field>
+        <field name="paperformat_id" ref="paperformat_permit_card"/>
+        <field name="binding_model_id" ref="care_cafm_mobile_api.model_security_gate_pass"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_permit_card">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.basic_layout">
+                    <t t-set="multi" t-value="doc.is_multi_entry"/>
+                    <t t-set="stlbl" t-value="dict(doc._fields['state'].selection).get(doc.state, doc.state)"/>
+                    <div class="page" style="font-family:'Tajawal',sans-serif;direction:rtl;padding:0;margin:0;">
+                        <div style="border:2px solid #0E3A5F;border-radius:14px;overflow:hidden;">
+                            <!-- الترويسة (خلفية صلبة + print-color-adjust لأن wkhtmltopdf لا يرسم التدرّجات) -->
+                            <div style="background-color:#0E3A5F;color:#fff;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+                                <div style="font-size:17px;font-weight:800;color:#ffffff;">🚪 تصريح دخول</div>
+                                <div style="font-size:12px;background-color:#0D9488;color:#ffffff;padding:3px 10px;border-radius:20px;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+                                    <t t-esc="multi and 'متعدد الدخول' or 'فردي'"/>
+                                </div>
+                            </div>
+
+                            <div style="padding:12px 14px;">
+                                <!-- الزائر -->
+                                <div style="font-size:20px;font-weight:800;color:#0E3A5F;"><t t-esc="doc.visitor_name or doc.visitor_id.name or '—'"/></div>
+                                <div t-if="doc.visitor_company" style="font-size:12px;color:#64748B;margin-top:2px;"><t t-esc="doc.visitor_company"/></div>
+                                <div t-if="doc.visitor_phone" style="font-size:12px;color:#64748B;">📱 <t t-esc="doc.visitor_phone"/></div>
+
+                                <table style="width:100%;margin-top:10px;font-size:12.5px;border-collapse:collapse;">
+                                    <tr><td style="color:#64748B;padding:3px 0;width:42%;">رقم التصريح</td><td style="font-weight:700;text-align:end;"><t t-esc="doc.name"/></td></tr>
+                                    <tr><td style="color:#64748B;padding:3px 0;">الموقع</td><td style="font-weight:700;text-align:end;"><t t-esc="doc.premise_id.name or ''"/></td></tr>
+                                    <tr><td style="color:#64748B;padding:3px 0;">العميل</td><td style="font-weight:700;text-align:end;"><t t-esc="doc.client_id.name or ''"/></td></tr>
+                                    <tr><td style="color:#64748B;padding:3px 0;">النوع</td><td style="font-weight:700;text-align:end;"><t t-esc="doc.pass_type == 'vehicle' and 'مركبة' or 'شخصي'"/></td></tr>
+                                    <tr t-if="doc.license_plate"><td style="color:#64748B;padding:3px 0;">اللوحة</td><td style="font-weight:700;text-align:end;"><t t-esc="doc.license_plate"/></td></tr>
+                                    <tr><td style="color:#64748B;padding:3px 0;">من</td><td style="font-weight:700;text-align:end;"><t t-esc="doc.valid_from and doc.valid_from.strftime('%Y-%m-%d %H:%M') or ''"/></td></tr>
+                                    <tr><td style="color:#64748B;padding:3px 0;">حتى</td><td style="font-weight:700;text-align:end;"><t t-esc="doc.valid_until and doc.valid_until.strftime('%Y-%m-%d %H:%M') or ''"/></td></tr>
+                                    <tr><td style="color:#64748B;padding:3px 0;">الحالة</td><td style="font-weight:700;text-align:end;color:#16A34A;"><t t-esc="stlbl"/></td></tr>
+                                    <tr t-if="doc.purpose"><td style="color:#64748B;padding:3px 0;">الغرض</td><td style="font-weight:700;text-align:end;"><t t-esc="doc.purpose"/></td></tr>
+                                </table>
+
+                                <!-- QR -->
+                                <div style="text-align:center;margin-top:12px;padding-top:10px;border-top:1px dashed #cbd5e1;">
+                                    <img t-if="doc.qr_code" t-att-src="image_data_uri(doc.qr_code)" style="width:150px;height:150px;"/>
+                                    <img t-elif="doc.qr_code_text" t-att-src="'/report/barcode/?barcode_type=QR&amp;value=%s&amp;width=300&amp;height=300' % doc.qr_code_text" style="width:150px;height:150px;"/>
+                                    <div style="font-size:11px;color:#94a3b8;margin-top:4px;">امسح الرمز عند البوابة · <t t-esc="doc.qr_code_text or doc.barcode or ''"/></div>
+                                </div>
+                            </div>
+
+                            <div style="background-color:#f1f5f9;color:#64748B;font-size:10.5px;text-align:center;padding:6px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+                                تصريح صادر عبر نظام إدارة المرافق CARE
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

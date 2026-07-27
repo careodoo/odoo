@@ -115,7 +115,13 @@
         <t t-call="portal.portal_layout">
             <t t-set="no_breadcrumbs" t-value="True"/>
             <div class="o_care_permits" style="padding:8px 4px 60px">
-                <a href="/my/permits" style="color:#0D9488;text-decoration:none;font-weight:700">‹ التصاريح</a>
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <a href="/my/permits" style="color:#0D9488;text-decoration:none;font-weight:700">‹ التصاريح</a>
+                    <a t-attf-href="/my/permits/#{p['id']}/pdf" target="_blank"
+                       style="background:#0E3A5F;color:#fff;text-decoration:none;font-weight:700;font-size:13px;padding:7px 14px;border-radius:10px;">
+                        🖨️ طباعة PDF
+                    </a>
+                </div>
                 <div style="background:#fff;border:1px solid #e6ebf1;border-radius:16px;padding:18px;margin-top:12px">
                     <div style="display:flex;align-items:center;gap:10px">
                         <h3 style="margin:0;color:#0E3A5F;font-weight:800;flex:1"><t t-esc="p['visitor'] or '—'"/></h3>

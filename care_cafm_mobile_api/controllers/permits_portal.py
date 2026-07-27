@@ -113,6 +113,19 @@ class PermitsPortal(PermitsApi, CustomerPortal):
         d['_active'] = gp.state in ('approved', 'valid')
         return request.render('care_cafm_mobile_api.portal_permit_detail', {'p': d})
 
+    @route(['/my/permits/<int:pid>/pdf'], type='http', auth='user', website=True)
+    def portal_permit_pdf(self, pid, **kw):
+        env = request.env
+        gp = env['security.gate.pass'].sudo().browse(pid).exists() if 'security.gate.pass' in env else None
+        if not gp:
+            return request.redirect('/my/permits')
+        pdf, _ct = env['ir.actions.report'].sudo()._render_qweb_pdf(
+            'care_cafm_mobile_api.report_permit_card', [gp.id])
+        return request.make_response(pdf, headers=[
+            ('Content-Type', 'application/pdf'),
+            ('Content-Disposition', 'inline; filename=permit-%s.pdf' % gp.id),
+        ])
+
     @route(['/my/permits/<int:pid>/visit'], type='http', auth='user', website=True, methods=['POST'], csrf=True)
     def portal_permit_visit(self, pid, **post):
         env = request.env
