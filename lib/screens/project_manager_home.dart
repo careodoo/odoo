@@ -26,6 +26,7 @@ import 'client_activity_screen.dart';
 import 'client_inventory_screen.dart';
 import 'client_assets_screen.dart';
 import 'occupancy_screen.dart';
+import 'permits_screen.dart';
 
 const _navy = Color(0xFF0E3A5F);
 const _teal = Color(0xFF0D9488);
@@ -76,6 +77,7 @@ class _ProjectManagerHomeState extends State<ProjectManagerHome> {
       (Icons.campaign_rounded, tr('إشعار الفريق', 'Notify'), const Color(0xFFEA580C), () => go(const NotifySendScreen())),
       (Icons.forum_rounded, tr('التواصل', 'Messages'), const Color(0xFF0E7490), () => go(const ChatHubScreen())),
       (Icons.qr_code_scanner_rounded, tr('مسح موقع', 'Scan'), const Color(0xFF0891B2), () => go(const ScanScreen())),
+      (Icons.badge_rounded, tr('التصاريح', 'Permits'), const Color(0xFF9333EA), () => go(const PermitsScreen())),
     ];
 
     final clientTools = <(IconData, String, Color, VoidCallback)>[

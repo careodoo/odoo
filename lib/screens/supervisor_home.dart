@@ -17,6 +17,7 @@ import 'client_team_screen.dart';
 import 'requests_screen.dart';
 import 'maintenance_screen.dart';
 import 'scan_screen.dart';
+import 'permits_screen.dart';
 
 const _navy = Color(0xFF0E3A5F);
 const _teal = Color(0xFF0D9488);
@@ -122,6 +123,7 @@ class _SupervisorHomeState extends State<SupervisorHome> {
       (Icons.campaign_rounded, tr('إشعار للفريق', 'Notify the team'), 'Notify team', const Color(0xFFEA580C), () => go(const NotifySendScreen())),
       (Icons.forum_rounded, tr('التواصل', 'Messages'), 'Messages', const Color(0xFF0E7490), () => go(const ChatHubScreen())),
       (Icons.qr_code_scanner_rounded, tr('مسح موقع', 'Scan location'), 'Scan', const Color(0xFF0891B2), () => go(const ScanScreen())),
+      (Icons.badge_rounded, tr('التصاريح', 'Permits'), 'Permits', const Color(0xFF9333EA), () => go(const PermitsScreen())),
     ];
 
     return Scaffold(

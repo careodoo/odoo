@@ -11,6 +11,7 @@ import 'security_section_screen.dart';
 import 'security_my_team_screen.dart';
 import 'security_tasks_screen.dart';
 import 'security_patrol_points_screen.dart';
+import 'permits_screen.dart';
 import 'security_keys_screen.dart';
 import 'security_inspections_screen.dart';
 import 'security_gatepasses_screen.dart';
@@ -155,10 +156,10 @@ class SecurityHome extends StatelessWidget {
                     builder: (_) => const SecurityKeysScreen())),
               ),
               _Tile(
-                icon: '🚪', label: tr('تصاريح البوابة', 'Gate passes'),
-                sub: tr('الزوّار', 'Visitors'),
+                icon: '🚪', label: tr('التصاريح', 'Permits'),
+                sub: tr('إدخال وإخراج الأشخاص', 'People in/out'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(
-                    builder: (_) => const SecurityGatePassesScreen())),
+                    builder: (_) => const PermitsScreen())),
               ),
               _secTile(context, '👮', tr('الحرّاس', 'Guards'), tr('الحالة والموقع', 'Status & location'), 'guards'),
               _Tile(

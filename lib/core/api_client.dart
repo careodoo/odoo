@@ -795,6 +795,30 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.post(_u('/notify/test'),
               headers: await _headers(), body: jsonEncode({'type': type}))))['data'] as Map);
 
+  // ============ التصاريح (Permits / Gate passes) ============
+  Future<Map<String, dynamic>> permitsOptions() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/permits/options'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> permitsMine({String? scope, String? state}) async {
+    final q = [if (scope != null) 'scope=$scope', if (state != null && state != 'all') 'state=$state'].join('&');
+    return Map<String, dynamic>.from((await _handle(await _net.get(
+            _u('/permits/mine${q.isEmpty ? '' : '?$q'}'), headers: await _headers())))['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> permitCreate(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(_u('/permits/create'),
+              headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<Map<String, dynamic>> permitDetail(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/permits/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> permitVisit(int id, String direction, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/permits/$id/${direction == 'in' ? 'entry' : 'exit'}'),
+              headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
   // ---- أدوات مشرف الأمن (إنشاء/إسناد/إشعار/حالة الفريق) ------------------
   Future<Map<String, dynamic>> securitySupOptions() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
