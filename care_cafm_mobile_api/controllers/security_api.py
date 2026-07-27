@@ -811,6 +811,112 @@ class SecurityMobileApi(Controller):
         h.action_acknowledge(env.user)
         return _ok(self._handover_dict(env, h))
 
+    # ==== تقرير النشاط اليومي (DAR) ======================================
+    def _dar_today_counts(self, env, g, day):
+        """تجميع نشاط الحارس ليومٍ واحد من النماذج القائمة (دفاعياً عن اختلاف
+        أسماء الحقول بين إصدارات الموديل)."""
+        s, e = str(day) + ' 00:00:00', str(day) + ' 23:59:59'
+        out = {'patrols': 0, 'incidents': 0, 'tasks': 0, 'visitors': 0}
+        if not g:
+            return out
+        if 'security.patrol' in env:
+            P = env['security.patrol'].sudo()
+            f = P._fields
+            dom = [('guard_id', '=', g.id), ('state', 'in', ('completed', 'done'))]
+            df = 'actual_end_time' if 'actual_end_time' in f else ('end_time' if 'end_time' in f else 'write_date')
+            dom += [(df, '>=', s), (df, '<=', e)]
+            out['patrols'] = P.search_count(dom)
+        if 'security.incident.report' in env:
+            I = env['security.incident.report'].sudo()
+            g_field = 'guard_id' if 'guard_id' in I._fields else None
+            dom = [('create_date', '>=', s), ('create_date', '<=', e)]
+            if g_field:
+                dom = [(g_field, '=', g.id)] + dom
+            out['incidents'] = I.search_count(dom)
+        if 'security.task' in env:
+            T = env['security.task'].sudo()
+            f = T._fields
+            df = 'date_completed' if 'date_completed' in f else 'write_date'
+            out['tasks'] = T.search_count([('assigned_to', '=', g.id), ('state', '=', 'completed'),
+                                           (df, '>=', s), (df, '<=', e)])
+        if 'security.visit.record' in env:
+            out['visitors'] = env['security.visit.record'].sudo().search_count(
+                [('create_date', '>=', s), ('create_date', '<=', e)])
+        return out
+
+    def _dar_dict(self, env, d):
+        return {
+            'id': d.id, 'name': d.name, 'date': str(d.date or '')[:10],
+            'premise': d.premise_id.name if d.premise_id else None,
+            'patrols': d.patrols_count, 'incidents': d.incidents_count,
+            'tasks': d.tasks_count, 'visitors': d.visitors_count,
+            'summary': d.summary or '', 'highlights': d.highlights or '',
+            'notes': d.notes or '', 'state': d.state,
+        }
+
+    @route(API + '/security/dar/today', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def dar_today(self, **kw):
+        """نشاط اليوم مُجمَّعاً تلقائياً + مسودّة/تقرير اليوم إن وُجد."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.security.dar' not in env:
+            return _ok({'counts': {}, 'today': None})
+        g = self._my_guard(env)
+        day = fields.Date.context_today(env['care.security.dar'].sudo())
+        counts = self._dar_today_counts(env, g, day)
+        prem = self._my_guard_premise(env)
+        existing = env['care.security.dar'].sudo().search(
+            [('guard_user_id', '=', env.uid), ('date', '=', day)], limit=1)
+        return _ok({
+            'counts': counts,
+            'premise': {'id': prem.id, 'name': prem.name} if prem else None,
+            'today': self._dar_dict(env, existing) if existing else None,
+        })
+
+    @route(API + '/security/dar/submit', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def dar_submit(self, **kw):
+        """إنشاء/تحديث تقرير اليوم (لقطة أعداد النشاط + سرد الحارس) وإرساله."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.security.dar' not in env:
+            return _err('غير متاح', 404)
+        b = _body() or {}
+        g = self._my_guard(env)
+        D = env['care.security.dar'].sudo()
+        day = fields.Date.context_today(D)
+        counts = self._dar_today_counts(env, g, day)
+        prem = self._my_guard_premise(env)
+        vals = {
+            'summary': b.get('summary') or False, 'highlights': b.get('highlights') or False,
+            'notes': b.get('notes') or False, 'state': 'submitted',
+            'patrols_count': counts['patrols'], 'incidents_count': counts['incidents'],
+            'tasks_count': counts['tasks'], 'visitors_count': counts['visitors'],
+            'premise_id': prem.id if prem else False,
+        }
+        rec = D.search([('guard_user_id', '=', env.uid), ('date', '=', day)], limit=1)
+        try:
+            if rec:
+                rec.write(vals)
+            else:
+                rec = D.create(dict(vals, guard_user_id=env.uid, date=day))
+        except Exception as ex:
+            return _err('تعذّر الحفظ: %s' % ex, 400)
+        return _ok(self._dar_dict(env, rec))
+
+    @route(API + '/security/dars', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def dars(self, **kw):
+        """أرشيف تقارير الحارس اليومية (له فقط)."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.security.dar' not in env:
+            return _ok({'items': []})
+        recs = env['care.security.dar'].sudo().search(
+            [('guard_user_id', '=', env.uid)], order='date desc', limit=120)
+        return _ok({'items': [self._dar_dict(env, d) for d in recs]})
+
     # ==== Key custody =====================================================
     def _key_full(self, k, with_log=False):
         holder = k.current_holder_id
