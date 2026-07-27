@@ -39,11 +39,13 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
   String? _error;
   final _title = TextEditingController();
   final _desc = TextEditingController();
+  int? _projectId;
   int? _facilityId;
   int? _locationId;
   int? _serviceId;
   int? _teamId;
   int? _workerId;
+  DateTime? _requestDt;
   String _priority = '1';
   bool _assign = false;
   bool _submitting = false;
@@ -72,14 +74,23 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
     super.dispose();
   }
 
-  Future<void> _loadOptions() async {
+  Future<void> _loadOptions({int? projectId}) async {
     try {
-      final o = await context.read<AuthProvider>().api.clientWorkorderOptions();
+      final o = await context.read<AuthProvider>().api.clientWorkorderOptions(projectId: projectId);
       if (!mounted) return;
       setState(() {
         _opts = o;
-        final facs = (o['facilities'] as List?) ?? const [];
-        if (facs.isNotEmpty) _facilityId = facs.first['id'] as int;
+        final projects = (o['projects'] as List?) ?? const [];
+        // مدير المشروع: نختار أول مشروع تلقائياً ثم نفلتر الباقي عليه
+        if (projects.isNotEmpty) {
+          _projectId ??= projects.first['id'] as int?;
+        }
+        final facs = _facilitiesForProject(o);
+        // أعد ضبط المرفق إن لم يعد ضمن المشروع المختار
+        if (_facilityId == null || !facs.any((f) => f['id'] == _facilityId)) {
+          _facilityId = facs.isNotEmpty ? facs.first['id'] as int? : null;
+          _locationId = null; _teamId = null;
+        }
         if (widget.presetServiceType != null) {
           final svc = (o['services'] as List?)?.cast<Map>().firstWhere(
               (s) => '${s['type']}' == widget.presetServiceType, orElse: () => const {});
@@ -91,15 +102,41 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
     }
   }
 
+  List<Map> get _projects => (_opts?['projects'] as List?)?.cast<Map>() ?? const [];
+
+  /// المرافق ضمن المشروع المختار (أو كلها إن لم يكن مدير مشروع).
+  List<Map> _facilitiesForProject(Map o) {
+    final facs = (o['facilities'] as List?)?.cast<Map>() ?? const [];
+    if (_projectId == null) return facs;
+    final proj = _projects.firstWhere((p) => p['id'] == _projectId, orElse: () => const {});
+    final ids = ((proj['facility_ids'] as List?) ?? const []).cast<int>().toSet();
+    if (ids.isEmpty) return facs;
+    return facs.where((f) => ids.contains(f['id']) || f['project_id'] == _projectId).toList();
+  }
+
+  List<Map> get _facilities => _facilitiesForProject(_opts ?? const {});
+
   List<Map> get _locations {
-    final facs = (_opts?['facilities'] as List?)?.cast<Map>() ?? const [];
-    final f = facs.firstWhere((x) => x['id'] == _facilityId, orElse: () => const {});
+    final f = _facilities.firstWhere((x) => x['id'] == _facilityId, orElse: () => const {});
     return ((f['locations'] as List?) ?? const []).cast<Map>();
   }
 
   List<Map> get _teams {
     final teams = (_opts?['teams'] as List?)?.cast<Map>() ?? const [];
     return teams.where((t) => _facilityId == null || t['facility_id'] == _facilityId).toList();
+  }
+
+  /// العمّال + حرّاس الأمن ضمن المرفق المختار (لإسناد الأمر مباشرةً).
+  List<Map> get _assignees {
+    final workers = (_opts?['workers'] as List?)?.cast<Map>() ?? const [];
+    final guards = (_opts?['guards'] as List?)?.cast<Map>() ?? const [];
+    final all = [...workers, ...guards];
+    final scoped = _facilityId == null
+        ? all
+        : all.where((w) => w['facility_id'] == null || w['facility_id'] == _facilityId).toList();
+    // إزالة التكرار بالمعرّف
+    final seen = <dynamic>{};
+    return scoped.where((w) => seen.add(w['id'])).toList();
   }
 
   Future<void> _submit() async {
@@ -120,6 +157,8 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
       'location_id': _locationId,
       'priority': _priority,
       'description': _desc.text.trim(),
+      if (_requestDt != null)
+        'request_datetime': '${_requestDt!.year}-${_requestDt!.month.toString().padLeft(2, '0')}-${_requestDt!.day.toString().padLeft(2, '0')} ${_requestDt!.hour.toString().padLeft(2, '0')}:${_requestDt!.minute.toString().padLeft(2, '0')}:00',
       if (_assign && _workerId != null) 'employee_id': _workerId,
       'media': [for (final m in _media) {'name': m.name, 'mimetype': m.mimetype, 'data': m.b64}],
     };
@@ -261,6 +300,24 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
   List<Widget> _form() {
     final services = (_opts!['services'] as List?)?.cast<Map>() ?? const [];
     return [
+      // مدير المشروع لديه أكثر من مشروع → يجب اختيار المشروع أولاً لفلترة الكل
+      if (_projects.isNotEmpty) ...[
+        _label(Icons.workspaces_rounded, tr('المشروع', 'Project')),
+        const SizedBox(height: 8),
+        SearchableField(
+          label: tr('اختر المشروع', 'Choose project'), icon: Icons.workspaces_rounded,
+          value: _projectId, allowClear: false,
+          options: [for (final p in _projects) PickOption(value: p['id'], label: '${p['name']}')],
+          onChanged: (v) {
+            setState(() {
+              _projectId = v as int?;
+              _facilityId = null; _locationId = null; _teamId = null; _workerId = null;
+            });
+            _loadOptions(projectId: _projectId);
+          },
+        ),
+        const SizedBox(height: 16),
+      ],
       _label(Icons.title_rounded, tr('عنوان المهمة', 'Task title')),
       const SizedBox(height: 8),
       _field(_title, tr('مثال: صيانة مكيّف الدور الثاني', 'e.g. Fix 2nd floor AC')),
@@ -269,8 +326,8 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
       const SizedBox(height: 8),
       SearchableField(
         label: tr('المرفق', 'Facility'), icon: Icons.apartment_rounded, value: _facilityId, allowClear: false,
-        options: [for (final f in (_opts!['facilities'] as List).cast<Map>()) PickOption(value: f['id'], label: '${f['name']}')],
-        onChanged: (v) => setState(() { _facilityId = v as int?; _locationId = null; _teamId = null; }),
+        options: [for (final f in _facilities) PickOption(value: f['id'], label: '${f['name']}')],
+        onChanged: (v) => setState(() { _facilityId = v as int?; _locationId = null; _teamId = null; _workerId = null; }),
       ),
       if (_locations.isNotEmpty) ...[
         const SizedBox(height: 10),
@@ -297,6 +354,10 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
       const SizedBox(height: 8),
       Row(children: [for (final e in _prio.entries) Expanded(child: _prioChip(e.key))]),
       const SizedBox(height: 16),
+      _label(Icons.event_rounded, tr('التاريخ والوقت', 'Date & time')),
+      const SizedBox(height: 8),
+      _dateTimeField(),
+      const SizedBox(height: 16),
       // direct assignment
       Container(
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14),
@@ -314,9 +375,10 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
           if (_assign) Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
             child: SearchableField(
-              label: tr('العامل', 'Worker'), icon: Icons.person_rounded, value: _workerId,
-              options: [for (final w in (_opts!['workers'] as List).cast<Map>())
-                PickOption(value: w['id'], label: '${w['name']}', sublabel: w['job'] != null ? '${w['job']}' : null)],
+              label: tr('العامل / حارس الأمن', 'Worker / guard'), icon: Icons.person_rounded, value: _workerId,
+              options: [for (final w in _assignees)
+                PickOption(value: w['id'], label: '${w['name']}',
+                    sublabel: (w['is_guard'] == true ? '🛡️ ' : '') + (w['job'] != null ? '${w['job']}' : ''))],
               onChanged: (v) => setState(() => _workerId = v as int?),
             ),
           ),
@@ -362,6 +424,46 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
           )),
           if (_locationId != null)
             GestureDetector(onTap: () => setState(() => _locationId = null),
+                child: const Icon(Icons.close_rounded, size: 18, color: Colors.grey))
+          else const Icon(Icons.chevron_left_rounded, color: Colors.grey),
+        ]),
+      ),
+    );
+  }
+
+  /// حقل اختيار التاريخ والوقت لأمر العمل.
+  Widget _dateTimeField() {
+    String two(int n) => n.toString().padLeft(2, '0');
+    final label = _requestDt == null
+        ? tr('اختر التاريخ والوقت (افتراضي: الآن)', 'Pick date & time (default: now)')
+        : '${_requestDt!.year}/${two(_requestDt!.month)}/${two(_requestDt!.day)}  ${two(_requestDt!.hour)}:${two(_requestDt!.minute)}';
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () async {
+        final now = DateTime.now();
+        final d = await showDatePicker(
+          context: context, initialDate: _requestDt ?? now,
+          firstDate: now.subtract(const Duration(days: 1)),
+          lastDate: now.add(const Duration(days: 365)),
+        );
+        if (d == null || !mounted) return;
+        final t = await showTimePicker(
+          context: context, initialTime: TimeOfDay.fromDateTime(_requestDt ?? now));
+        if (!mounted) return;
+        setState(() => _requestDt = DateTime(d.year, d.month, d.day, t?.hour ?? now.hour, t?.minute ?? now.minute));
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300)),
+        child: Row(children: [
+          Icon(Icons.schedule_rounded, size: 20, color: _accent),
+          const SizedBox(width: 10),
+          Expanded(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 13, fontWeight: _requestDt != null ? FontWeight.w800 : FontWeight.w500,
+                  color: _requestDt != null ? _navy : Colors.grey.shade500))),
+          if (_requestDt != null)
+            GestureDetector(onTap: () => setState(() => _requestDt = null),
                 child: const Icon(Icons.close_rounded, size: 18, color: Colors.grey))
           else const Icon(Icons.chevron_left_rounded, color: Colors.grey),
         ]),

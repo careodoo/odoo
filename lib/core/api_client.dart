@@ -182,9 +182,11 @@ class ApiClient {
 
   /// Options for the client's "new work order" form (facilities+locations,
   /// services, teams, workers, priorities).
-  Future<Map<String, dynamic>> clientWorkorderOptions() async =>
-      Map<String, dynamic>.from((await _handle(
-              await _net.get(_u('/client/workorder/options'), headers: await _headers())))['data'] as Map);
+  Future<Map<String, dynamic>> clientWorkorderOptions({int? projectId}) async {
+    final q = projectId != null ? '?project_id=$projectId' : '';
+    return Map<String, dynamic>.from((await _handle(
+            await _net.get(_u('/client/workorder/options$q'), headers: await _headers())))['data'] as Map);
+  }
 
   Future<Map<String, dynamic>> clientWorkorderCreate(Map<String, dynamic> body) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(

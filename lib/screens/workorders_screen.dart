@@ -5,6 +5,7 @@ import '../core/i18n.dart';
 import '../core/widgets.dart';
 import '../models/models.dart';
 import 'work_order_detail_screen.dart';
+import 'client_workorder_create.dart';
 
 const _navy = Color(0xFF0E3A5F);
 // ثيم داكن متّسق مع تطبيق الأمن
@@ -87,12 +88,26 @@ class _WorkOrdersScreenState extends State<WorkOrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isPM = context.watch<AuthProvider>().profile?.isProjectManager ?? false;
     return Scaffold(
       backgroundColor: _dbg,
       appBar: AppBar(
         backgroundColor: const Color(0xFF1E3A5F), foregroundColor: Colors.white,
         title: Text(tr('أوامر العمل', 'Work orders'), style: const TextStyle(fontWeight: FontWeight.w900)),
       ),
+      // مدير المشروع يُنشئ أمر عمل جديد (المشروع → المرفق/الحرّاس/الوقت مفلترة)
+      floatingActionButton: isPM
+          ? FloatingActionButton.extended(
+              backgroundColor: const Color(0xFFC0392B),
+              icon: const Icon(Icons.add_task_rounded, color: Colors.white),
+              label: Text(tr('أمر عمل جديد', 'New work order'),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+              onPressed: () async {
+                final ok = await ClientWorkorderCreateSheet.open(context);
+                if (ok == true && mounted) setState(_load);
+              },
+            )
+          : null,
       body: RefreshIndicator(
         color: _navy,
         onRefresh: () async => setState(_load),
