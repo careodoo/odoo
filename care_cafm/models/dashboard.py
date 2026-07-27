@@ -209,10 +209,45 @@ class CafmWorkorder(models.Model):
             'pest': _cnt('care.pest.program', []),
         }
 
+        # ---- مؤشّرات مالية (عبر العقود care.experience + المشتريات) ----
+        financial = {'contracts': 0, 'contract_value': 0, 'insurance': 0, 'po_spend': 0}
+        if 'care.experience' in env:
+            E = env['care.experience'].sudo()
+            contracts = E.search([])
+            financial['contracts'] = len(contracts)
+            if 'contract_amount' in E._fields:
+                financial['contract_value'] = round(sum(contracts.mapped('contract_amount') or [0]), 0)
+            if 'insurance_amount' in E._fields:
+                financial['insurance'] = round(sum(contracts.mapped('insurance_amount') or [0]), 0)
+        if 'purchase.order' in env:
+            po = env['purchase.order'].sudo().search([('state', 'in', ('purchase', 'done'))])
+            financial['po_spend'] = round(sum(po.mapped('amount_total') or [0]), 0)
+
+        # ---- خريطة حرارية للمرافق (حسب الحِمل المفتوح/المتأخر) ----
+        heatmap = []
+        for f in facilities[:40]:
+            fo = WO.search_count([('facility_id', '=', f.id), ('state', 'in', open_states)])
+            fov = WO.search_count([('facility_id', '=', f.id), ('is_overdue', '=', True)])
+            if fov >= 3:
+                lvl, color = 'critical', '#e11d48'
+            elif fov >= 1:
+                lvl, color = 'high', '#f59e0b'
+            elif fo >= 5:
+                lvl, color = 'busy', '#3b82f6'
+            elif fo >= 1:
+                lvl, color = 'active', '#0ea5a4'
+            else:
+                lvl, color = 'clear', '#16a34a'
+            heatmap.append({'id': f.id, 'name': f.name, 'open': fo, 'overdue': fov,
+                            'level': lvl, 'color': color})
+        heatmap.sort(key=lambda d: (-d['overdue'], -d['open']))
+
         return {
             'shortcuts': shortcuts,
             'security': security_kpis,
             'ops': ops_kpis,
+            'financial': financial,
+            'heatmap': heatmap,
             'kpis': {
                 'total': total, 'open': open_wo, 'overdue': overdue,
                 'done': done_total, 'unassigned': unassigned, 'sla': sla,

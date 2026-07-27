@@ -22,6 +22,37 @@ class CafmDashboard extends Component {
         return rows.map((r) => ({ ...r, pct: Math.round((r.value / max) * 100) }));
     }
 
+    // conic-gradient donut من صفوف (label/pct/color)
+    _donut(rows) {
+        let acc = 0;
+        const list = rows || [];
+        const total = list.reduce((s, r) => s + (r.pct || 0), 0) || 100;
+        const parts = list.map((r) => {
+            const start = (acc / total) * 360;
+            acc += r.pct || 0;
+            const end = (acc / total) * 360;
+            return `${r.color} ${start}deg ${end}deg`;
+        });
+        return `conic-gradient(${parts.join(",") || "#e2e8f0 0deg 360deg"})`;
+    }
+    get donutState() {
+        return this._donut(this.state.data && this.state.data.by_state);
+    }
+    get donutService() {
+        return this._donut(((this.state.data && this.state.data.by_service) || []).slice(0, 6));
+    }
+    get serviceLegend() {
+        return ((this.state.data && this.state.data.by_service) || []).slice(0, 6);
+    }
+
+    // تنسيق مبلغ كبير: 1500000 -> 1.5M ، 12000 -> 12K
+    money(v) {
+        const n = Number(v) || 0;
+        if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(n % 1e6 ? 1 : 0) + "M";
+        if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(n % 1e3 ? 1 : 0) + "K";
+        return String(Math.round(n));
+    }
+
     async load() {
         this.state.loading = true;
         try {

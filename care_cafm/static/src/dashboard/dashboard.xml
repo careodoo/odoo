@@ -89,6 +89,26 @@
                     <div class="s" t-on-click="() => this.openModel('care.cafm.project','المشاريع')"><b t-esc="state.data.ops.projects"/><span>🗂️ مشاريع</span></div>
                 </div>
 
+                <!-- مؤشّرات مالية -->
+                <div class="o_cafm_fin" t-if="state.data.financial">
+                    <div class="fin c-emerald" t-on-click="() => this.openModel('care.experience','العقود')">
+                        <div class="ic">📄</div>
+                        <div><div class="v" t-esc="state.data.financial.contracts"/><div class="l">عقود نشطة</div></div>
+                    </div>
+                    <div class="fin c-violet" t-on-click="() => this.openModel('care.experience','قيمة العقود')">
+                        <div class="ic">💰</div>
+                        <div><div class="v"><t t-esc="this.money(state.data.financial.contract_value)"/></div><div class="l">قيمة العقود (د.ك)</div></div>
+                    </div>
+                    <div class="fin c-cyan">
+                        <div class="ic">🛡️</div>
+                        <div><div class="v"><t t-esc="this.money(state.data.financial.insurance)"/></div><div class="l">قيمة التأمينات</div></div>
+                    </div>
+                    <div class="fin c-orange" t-on-click="() => this.openModel('purchase.order','أوامر الشراء')">
+                        <div class="ic">🛒</div>
+                        <div><div class="v"><t t-esc="this.money(state.data.financial.po_spend)"/></div><div class="l">إنفاق المشتريات</div></div>
+                    </div>
+                </div>
+
                 <!-- time series (day / month / year) -->
                 <div class="o_cafm_card o_cafm_trend">
                     <div class="o_cafm_trend_h">
@@ -110,6 +130,64 @@
                 </div>
 
                 <div class="o_cafm_grid">
+                    <!-- donut: الحالة -->
+                    <div class="o_cafm_card o_cafm_donutcard">
+                        <h3>توزيع الحالات</h3>
+                        <div class="o_cafm_donutwrap">
+                            <div class="o_cafm_donut" t-attf-style="background:{{donutState}}">
+                                <div class="hole"><b t-esc="k.total"/><span>إجمالي</span></div>
+                            </div>
+                            <div class="o_cafm_legend">
+                                <t t-foreach="state.data.by_state" t-as="row" t-key="row.key">
+                                    <div class="lg" t-on-click="() => this.openWO([['state','=',row.key]], row.label)">
+                                        <span class="sw" t-attf-style="background:{{row.color}}"/>
+                                        <span class="ln" t-esc="row.label"/><b t-esc="row.count"/>
+                                    </div>
+                                </t>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- donut: الخدمات -->
+                    <div class="o_cafm_card o_cafm_donutcard" t-if="serviceLegend.length">
+                        <h3>توزيع الخدمات</h3>
+                        <div class="o_cafm_donutwrap">
+                            <div class="o_cafm_donut" t-attf-style="background:{{donutService}}">
+                                <div class="hole"><b t-esc="serviceLegend.length"/><span>خدمات</span></div>
+                            </div>
+                            <div class="o_cafm_legend">
+                                <t t-foreach="serviceLegend" t-as="row" t-key="row.id">
+                                    <div class="lg" t-on-click="() => this.openWO([['service_id','=',row.id]], row.label)">
+                                        <span class="sw" t-attf-style="background:{{row.color}}"/>
+                                        <span class="ln" t-esc="row.label"/><b t-esc="row.count"/>
+                                    </div>
+                                </t>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- خريطة حرارية للمرافق -->
+                    <div class="o_cafm_card o_cafm_wide" t-if="state.data.heatmap.length">
+                        <h3>الخريطة الحرارية للمرافق <small class="o_cafm_hint">(حسب الحِمل والتأخير)</small></h3>
+                        <div class="o_cafm_heat">
+                            <t t-foreach="state.data.heatmap" t-as="h" t-key="h.id">
+                                <div class="ht" t-attf-style="background:{{h.color}}"
+                                     t-att-title="h.name + ' · مفتوحة ' + h.open + ' · متأخرة ' + h.overdue"
+                                     t-on-click="() => this.openWO([['facility_id','=',h.id],['state','in',['new','assigned','in_progress']]], h.name)">
+                                    <span class="ht_n" t-esc="h.name"/>
+                                    <span class="ht_v"><t t-esc="h.open"/><small t-if="h.overdue">⏰<t t-esc="h.overdue"/></small></span>
+                                </div>
+                            </t>
+                        </div>
+                        <div class="o_cafm_heatkey">
+                            <span><i style="background:#16a34a"/>خالٍ</span>
+                            <span><i style="background:#0ea5a4"/>نشِط</span>
+                            <span><i style="background:#3b82f6"/>مزدحم</span>
+                            <span><i style="background:#f59e0b"/>متأخر</span>
+                            <span><i style="background:#e11d48"/>حرِج</span>
+                        </div>
+                    </div>
+
                     <!-- by state -->
                     <div class="o_cafm_card">
                         <h3>الأوامر حسب الحالة</h3>
