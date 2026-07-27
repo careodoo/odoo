@@ -511,6 +511,88 @@ class SecurityMobileApi(Controller):
             },
         })
 
+    # ==== الملف المهني للحارس ============================================
+    @route(API + '/security/my/profile', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def my_profile(self, **kw):
+        """ملفّ الحارس المهني: الهوية + إحصائيات الأداء + الشهادات/الرخص (بحالة
+        الانتهاء valid/expiring/expired) + المهارات + المعدّات بعهدته + الرتبة."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        me = self._my_sec_emp(env)
+        g = self._my_guard(env)
+        hr = (me.employee_id if me else None) or env.user.employee_id
+        img = None
+        try:
+            raw = (me.image_1920 if (me and 'image_1920' in me._fields) else None) or (hr.image_256 if hr else None)
+            img = raw.decode() if raw else None
+        except Exception:
+            img = None
+        F = me._fields if me else {}
+
+        def _sel(rec, field):
+            f = rec._fields.get(field)
+            if not f or not rec[field]:
+                return rec[field] if f else None
+            sel = dict(f.selection) if (getattr(f, 'selection', None) and not callable(f.selection)) else {}
+            return sel.get(rec[field], rec[field])
+
+        rank = _sel(me, 'security_rank') if (me and 'security_rank' in F) else None
+        # الشهادات/الرخص
+        cert_recs = (g.certification_ids if (g and 'certification_ids' in g._fields)
+                     else (me.certification_ids if (me and 'certification_ids' in F) else []))
+        certs = [{
+            'id': c.id, 'name': c.name, 'type': _sel(c, 'certification_type'),
+            'authority': getattr(c, 'issuing_authority', None) or None,
+            'number': getattr(c, 'certification_number', None) or None,
+            'issue': str(getattr(c, 'issue_date', '') or '')[:10] or None,
+            'expiry': str(getattr(c, 'expiry_date', '') or '')[:10] or None,
+            'state': getattr(c, 'state', None),
+        } for c in cert_recs]
+        # المهارات
+        skill_recs = (me.skill_ids if (me and 'skill_ids' in F)
+                      else (g.skill_ids if (g and 'skill_ids' in g._fields) else []))
+        skills = [{'id': s.id, 'name': s.name,
+                   'category': _sel(s, 'category'),
+                   'level': getattr(s, 'level_required', None)} for s in skill_recs]
+        # المعدّات بعهدته
+        eq_recs = env['security.equipment'].sudo().search([('assigned_employee_id', '=', me.id)]) \
+            if (me and 'security.equipment' in env) else []
+        if not eq_recs and g and 'equipment_ids' in g._fields:
+            eq_recs = g.equipment_ids
+        equip = [{'id': e.id, 'name': e.name, 'category': _sel(e, 'category'),
+                  'serial': getattr(e, 'serial_number', None) or None,
+                  'expiry': str(getattr(e, 'expiry_date', '') or '')[:10] or None} for e in eq_recs]
+
+        def gi(field):
+            return (g[field] if (g and field in g._fields) else 0) or 0
+        teams = self._guard_teams(env)
+        return _ok({
+            'name': me.name if me else env.user.name,
+            'photo_b64': img, 'rank': rank,
+            'role': me.role_id.name if (me and 'role_id' in F and me.role_id) else None,
+            'is_leader': bool(me.is_team_leader) if (me and 'is_team_leader' in F) else False,
+            'badge': (getattr(me, 'badge_number', None) if me else None) or (getattr(g, 'badge_number', None) if g else None),
+            'phone': (getattr(me, 'phone', None) if me else None) or (hr.work_phone if hr else None),
+            'email': (getattr(me, 'email', None) if me else None) or (hr.work_email if hr else None),
+            'civil_id': (hr.identification_id if (hr and 'identification_id' in hr._fields) else None) or None,
+            'nationality': hr.country_id.name if (hr and hr.country_id) else None,
+            'experience': gi('years_experience'),
+            'license_number': (getattr(g, 'license_number', None) if g else None) or (getattr(me, 'license_number', None) if me else None),
+            'license_expiry': (str(g.license_expiry)[:10] if (g and getattr(g, 'license_expiry', None)) else (str(me.license_expiry)[:10] if (me and getattr(me, 'license_expiry', None)) else None)),
+            'status': getattr(g, 'status', None) if g else None,
+            'teams': teams.mapped('name') if teams else [],
+            'stats': {
+                'shifts': gi('completed_shifts_count'),
+                'tasks': gi('completed_tasks_count') or gi('task_count'),
+                'patrols': gi('patrol_count'),
+                'incidents': gi('incident_reports_count'),
+                'certs_expiring': sum(1 for c in certs if c['state'] in ('expiring', 'expired')),
+                'on_shift': bool(hr.cafm_on_shift) if (hr and 'cafm_on_shift' in hr._fields) else False,
+            },
+            'certifications': certs, 'skills': skills, 'equipment': equip,
+        })
+
     # ==== Key custody =====================================================
     def _key_full(self, k, with_log=False):
         holder = k.current_holder_id
