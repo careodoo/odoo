@@ -5,8 +5,9 @@
 - نوعان: متعدد الدخول وفردي. مبنيّ على security.gate.pass وسجلّ الزيارات."""
 import logging
 from odoo import fields, _
-from odoo.http import Controller, route
+from odoo.http import Controller, route, request
 from .api import _auth, _ok, _err, _body, API
+from .client_api import _report_env
 
 _logger = logging.getLogger(__name__)
 
@@ -234,20 +235,20 @@ class PermitsApi(Controller):
             return _err('غير موجود', 404)
         return _ok(self._dict(env, gp, full=True))
 
-    @route(API + '/permits/<int:pid>/pdf', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
-    def permit_pdf(self, pid, **kw):
-        env = _auth()
-        if not env:
-            return _err('غير مصرّح', 401)
+    # بطاقة PDF عند جذر الأصل بـ ?token= (متوافق مع PdfReportScreen في التطبيق)
+    @route('/cafm/permit/<int:pid>/card.pdf', type='http', auth='public', methods=['GET'], csrf=False)
+    def permit_card_pdf(self, pid, **kw):
+        env = _report_env()
+        if env is None:
+            return request.not_found()
         gp = env['security.gate.pass'].sudo().browse(pid).exists()
         if not gp:
-            return _err('غير موجود', 404)
+            return request.not_found()
         pdf, _ct = env['ir.actions.report'].sudo()._render_qweb_pdf(
             'care_cafm_mobile_api.report_permit_card', [gp.id])
-        from odoo.http import request
         return request.make_response(pdf, headers=[
             ('Content-Type', 'application/pdf'),
-            ('Content-Disposition', 'inline; filename=permit-%s.pdf' % gp.id),
+            ('Content-Disposition', 'inline; filename=permit-%s.pdf' % pid),
         ])
 
     # ================= الحارس: إدخال/إخراج الأشخاص =================
