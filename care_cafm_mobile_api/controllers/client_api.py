@@ -150,6 +150,14 @@ class ClientApi(Controller):
                     [('commercial_partner_id', '=', cp.id)]).ids)
         return list(ids)
 
+    def _pm_projects(self, env):
+        """مشاريع إدارة المرافق التي يديرها المستخدم الحالي (manager_ids/manager_id).
+        كل مدير مشروع قد يكون له أكثر من مشروع — تُستخدم للفلترة على مستوى المشروع."""
+        if 'care.cafm.project' not in env:
+            return None
+        return env['care.cafm.project'].sudo().search(
+            ['|', ('manager_ids', 'in', [env.uid]), ('manager_id', '=', env.uid)])
+
     def _facilities(self, env):
         # managers/admin (and impersonation testing) see every facility;
         # a real client is scoped to the facilities their partner owns.
@@ -162,6 +170,11 @@ class ClientApi(Controller):
             if not facs and env.user.employee_id:
                 facs = env['care.cafm.workorder'].sudo().search(
                     [('employee_id', '=', env.user.employee_id.id)]).mapped('facility_id')
+        # مدير مشروع إدارة المرافق يرى مرافق مشاريعه (وإلا كانت القائمة فارغة له،
+        # وهو سبب عدم ظهور المرافق/الحرّاس في نموذج «أمر عمل جديد» للمدير).
+        pm_projs = self._pm_projects(env)
+        if pm_projs:
+            facs |= pm_projs.mapped('facility_ids')
         # optional: narrow to a single selected project (header selector)
         try:
             pid = request.httprequest.args.get('project_id')
@@ -3388,14 +3401,47 @@ class ClientApi(Controller):
         svc_lbl = dict(env['care.cafm.service']._fields['service_type'].selection)
         teams = env['care.cafm.team'].sudo().search([('facility_id', 'in', facs.ids)]) if 'care.cafm.team' in env else []
         workers = self._client_workers(env, facs)
+        # مشاريع مدير المرافق — تُعرض كقائمة أولى في النموذج، وكل مشروع يحمل
+        # معرّفات مرافقه ليُفلتر النموذج المرافق/الحرّاس/الفِرَق على أساس المشروع.
+        pm_projs = self._pm_projects(env)
+        projects = [{'id': p.id, 'name': p.name, 'facility_ids': p.facility_ids.ids}
+                    for p in (pm_projs or [])]
+        # وسم كل مرفق بمشروعه (أول مشروع يحويه) ليسهل الفلترة في الواجهة
+        fac_proj = {}
+        for p in (pm_projs or []):
+            for fid in p.facility_ids.ids:
+                fac_proj.setdefault(fid, p.id)
+        # حرّاس الأمن ضمن هذه المرافق (لإسناد أمر العمل لحارس) — عبر جسر المنشأة→المرفق
+        guards = []
+        if 'security.premise' in env and 'security.team' in env:
+            prem = env['security.premise'].sudo().search([('cafm_facility_id', 'in', facs.ids)])
+            fac_of_prem = {p.id: p.cafm_facility_id.id for p in prem}
+            steams = env['security.team'].sudo().search([('premise_id', 'in', prem.ids)])
+            seen_g = set()
+            for t in steams:
+                fid = fac_of_prem.get(t.premise_id.id)
+                members = (t.leader_id | t.member_ids)
+                if 'security.guard' in env:
+                    gg = env['security.guard'].sudo().search([('security_employee_team_ids', '=', t.id)])
+                    members |= gg.mapped('security_employee_id')
+                for m in members:
+                    emp = m.employee_id if m.employee_id else None
+                    if emp and emp.id not in seen_g:
+                        seen_g.add(emp.id)
+                        guards.append({'id': emp.id, 'name': emp.name,
+                                       'job': emp.job_title or 'حارس أمن',
+                                       'facility_id': fid, 'is_guard': True})
         return _ok({
-            'facilities': [{'id': f.id, 'name': f.name, 'locations': locs_by_fac.get(f.id, [])} for f in facs],
+            'projects': projects,
+            'facilities': [{'id': f.id, 'name': f.name, 'project_id': fac_proj.get(f.id),
+                            'locations': locs_by_fac.get(f.id, [])} for f in facs],
             'services': [{'id': s.id, 'name': s.name, 'type': s.service_type,
                           'type_label': svc_lbl.get(s.service_type, s.service_type)} for s in services],
             'teams': [{'id': t.id, 'name': t.name, 'facility_id': t.facility_id.id,
                        'service': t.service_id.name or None,
                        'service_id': t.service_id.id or None} for t in teams],
             'workers': [{'id': e.id, 'name': e.name, 'job': e.job_title or None} for e in workers],
+            'guards': guards,
             'priorities': [{'v': '0', 'l': 'منخفضة'}, {'v': '1', 'l': 'عادية'},
                            {'v': '2', 'l': 'عالية'}, {'v': '3', 'l': 'عاجلة'}],
         })
