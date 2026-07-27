@@ -112,6 +112,11 @@ class C2CClientApi(Controller):
                     env['security.employee'].sudo().search_count([('user_id', '=', u.id)])
                     or (emp and env['security.employee'].sudo().search_count([('employee_id', '=', emp.id)]))):
                 cafm = True
+            # مدير عقد/مشروع في إدارة المرافق (care.cafm.project.manager_ids) → يحصل
+            # على واجهة CAFM ولوحة مدير المشروع بأيقونات الخدمات والمتابعة.
+            if not cafm and 'care.cafm.project' in env and env['care.cafm.project'].sudo().search_count(
+                    ['|', ('manager_ids', 'in', [u.id]), ('manager_id', '=', u.id)]):
+                cafm = True
         # Management (back-office) is for real managers/admins — NOT every internal
         # user. A field worker who happens to be an internal user must not see the
         # company back office (quotations, projects, …).

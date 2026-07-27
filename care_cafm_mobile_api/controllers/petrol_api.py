@@ -21,7 +21,9 @@ class PetrolApi(Controller):
 
     # ---- أدوات مساعدة -----------------------------------------------------
     def _has(self, env):
-        return 'petrol.tank' in env
+        # صلاحية حقيقية: إدارة الوقود للمدير/الأدمن فقط
+        return ('petrol.tank' in env) and (
+            env.user.has_group('base.group_erp_manager') or env.user.has_group('base.group_system'))
 
     def _cids(self, env):
         return env.companies.ids or [env.company.id]

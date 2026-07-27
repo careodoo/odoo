@@ -15,7 +15,9 @@ def _d(v):
 class TrainingApi(Controller):
 
     def _has(self, env):
-        return 'training.application' in env
+        # صلاحية حقيقية: التدريب للمدير/الأدمن فقط
+        return ('training.application' in env) and (
+            env.user.has_group('base.group_erp_manager') or env.user.has_group('base.group_system'))
 
     def _cids(self, env):
         return env.companies.ids or [env.company.id]

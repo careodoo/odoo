@@ -10,7 +10,9 @@ from .api import _auth, _ok, _err, API
 class CostCenterApi(Controller):
 
     def _has(self, env):
-        return 'cost.center' in env
+        # صلاحية حقيقية: مراكز التكلفة (مالية) للمدير/الأدمن فقط — لا لكل مستخدم مصادق
+        return ('cost.center' in env) and (
+            env.user.has_group('base.group_erp_manager') or env.user.has_group('base.group_system'))
 
     def _cids(self, env):
         return env.companies.ids or [env.company.id]
