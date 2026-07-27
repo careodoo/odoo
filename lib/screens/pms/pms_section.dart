@@ -410,7 +410,7 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
       builder: (ctx) => (widget.code == 'fuel' && opts['new_fuel'] == true)
           ? _FuelCreateSheet(color: _c, options: opts)
           : widget.code == 'items'
-              ? _ItemRequestCreateSheet(color: _c)
+              ? _ItemRequestCreateSheet(color: _c, projectId: widget.projectId)
               : widget.code == 'manpower'
                   ? _ManpowerCreateSheet(color: _c, options: opts)
                   : widget.code == 'permits'
@@ -3443,7 +3443,8 @@ class _FuelDetailSheetState extends State<_FuelDetailSheet> {
 /// an optional needed-by date, priority and note — sent to procurement.
 class _ItemRequestCreateSheet extends StatefulWidget {
   final Color color;
-  const _ItemRequestCreateSheet({required this.color});
+  final int? projectId;
+  const _ItemRequestCreateSheet({required this.color, this.projectId});
   @override
   State<_ItemRequestCreateSheet> createState() => _ItemRequestCreateSheetState();
 }
@@ -3452,6 +3453,7 @@ class _ItemLine {
   final name = TextEditingController();
   final qty = TextEditingController(text: '1');
   final uom = TextEditingController(text: 'وحدة');
+  final price = TextEditingController();
 }
 
 class _ItemRequestCreateSheetState extends State<_ItemRequestCreateSheet> {
@@ -3459,17 +3461,52 @@ class _ItemRequestCreateSheetState extends State<_ItemRequestCreateSheet> {
   final _note = TextEditingController();
   DateTime? _needed;
   bool _urgent = false;
+  Map<String, dynamic>? _budget;
+
+  @override
+  void initState() {
+    super.initState();
+    for (final l in _lines) { l.qty.addListener(_recalc); l.price.addListener(_recalc); }
+    _loadBudget();
+  }
+
+  Future<void> _loadBudget() async {
+    if (widget.projectId == null) return;
+    try {
+      final b = await context.read<AuthProvider>().api.pmsProjectBudget(widget.projectId!);
+      if (mounted) setState(() => _budget = b);
+    } catch (_) {}
+  }
+
+  void _recalc() => setState(() {});
+
+  double get _total => _lines.fold(0.0, (s, l) =>
+      s + (double.tryParse(l.qty.text.trim()) ?? 0) * (double.tryParse(l.price.text.trim()) ?? 0));
 
   @override
   void dispose() {
-    for (final l in _lines) { l.name.dispose(); l.qty.dispose(); l.uom.dispose(); }
+    for (final l in _lines) { l.name.dispose(); l.qty.dispose(); l.uom.dispose(); l.price.dispose(); }
     _note.dispose();
     super.dispose();
   }
 
   String _fmt(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  String _money(num v) => v.toStringAsFixed(3);
 
   bool get _valid => _lines.any((l) => l.name.text.trim().isNotEmpty && (double.tryParse(l.qty.text.trim()) ?? 0) > 0);
+
+  Map<String, dynamic> _payload(bool submit) => <String, dynamic>{
+    'priority': _urgent ? '1' : '0',
+    if (_needed != null) 'needed_by': _fmt(_needed!),
+    if (_note.text.trim().isNotEmpty) 'note': _note.text.trim(),
+    'submit': submit,
+    'lines': [
+      for (final l in _lines)
+        if (l.name.text.trim().isNotEmpty && (double.tryParse(l.qty.text.trim()) ?? 0) > 0)
+          {'name': l.name.text.trim(), 'qty': double.tryParse(l.qty.text.trim()) ?? 0,
+           'uom': l.uom.text.trim(), 'unit_price': double.tryParse(l.price.text.trim()) ?? 0}
+    ],
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -3479,6 +3516,8 @@ class _ItemRequestCreateSheetState extends State<_ItemRequestCreateSheet> {
         Padding(padding: const EdgeInsets.only(bottom: 10),
             child: Text(tr('طلب أصناف جديد', 'New item request'),
                 style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: widget.color))),
+        // بطاقة الميزانية الشهرية للمشروع (من مركز التكلفة)
+        if (_budget != null && (_budget!['has_budget'] == true)) _budgetCard(),
         // lines
         for (var i = 0; i < _lines.length; i++) Container(
           margin: const EdgeInsets.only(bottom: 8),
@@ -3504,7 +3543,18 @@ class _ItemRequestCreateSheetState extends State<_ItemRequestCreateSheet> {
               const SizedBox(width: 8),
               Expanded(child: TextField(controller: _lines[i].uom,
                   decoration: InputDecoration(labelText: tr('الوحدة', 'Unit'), isDense: true, border: const OutlineInputBorder()))),
+              const SizedBox(width: 8),
+              Expanded(child: TextField(controller: _lines[i].price, keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(labelText: tr('السعر', 'Price'), isDense: true, border: const OutlineInputBorder()))),
             ]),
+            // إجمالي السطر
+            Builder(builder: (_) {
+              final st = (double.tryParse(_lines[i].qty.text.trim()) ?? 0) * (double.tryParse(_lines[i].price.text.trim()) ?? 0);
+              if (st <= 0) return const SizedBox.shrink();
+              return Align(alignment: Alignment.centerLeft, child: Padding(padding: const EdgeInsets.only(top: 4),
+                  child: Text('${tr('الإجمالي', 'Subtotal')}: ${_money(st)}',
+                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: widget.color))));
+            }),
           ]),
         ),
         Align(alignment: Alignment.centerRight, child: TextButton.icon(
@@ -3537,25 +3587,80 @@ class _ItemRequestCreateSheetState extends State<_ItemRequestCreateSheet> {
         TextField(controller: _note, maxLines: 2,
             decoration: InputDecoration(labelText: tr('سبب الطلب / ملاحظات', 'Reason / notes'), isDense: true, border: const OutlineInputBorder())),
         const SizedBox(height: 12),
-        SizedBox(width: double.infinity, child: FilledButton.icon(
-          style: FilledButton.styleFrom(backgroundColor: widget.color, padding: const EdgeInsets.symmetric(vertical: 13)),
-          onPressed: _valid ? () => Navigator.pop(context, <String, dynamic>{
-            'priority': _urgent ? '1' : '0',
-            if (_needed != null) 'needed_by': _fmt(_needed!),
-            if (_note.text.trim().isNotEmpty) 'note': _note.text.trim(),
-            'submit': true,
-            'lines': [
-              for (final l in _lines)
-                if (l.name.text.trim().isNotEmpty && (double.tryParse(l.qty.text.trim()) ?? 0) > 0)
-                  {'name': l.name.text.trim(), 'qty': double.tryParse(l.qty.text.trim()) ?? 0, 'uom': l.uom.text.trim()}
-            ],
-          }) : null,
-          icon: const Icon(Icons.send_rounded, size: 18),
-          label: Text(tr('إرسال للاعتماد', 'Submit'), style: const TextStyle(fontWeight: FontWeight.w800)),
-        )),
+        // إجمالي تكلفة الطلب
+        if (_total > 0) Container(
+          margin: const EdgeInsets.only(bottom: 10), padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(color: widget.color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
+          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text(tr('إجمالي تكلفة الطلب', 'Order total'), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+            Text('${_money(_total)} ${tr('د.ك', 'KWD')}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: widget.color)),
+          ]),
+        ),
+        Row(children: [
+          // حفظ كمسودّة (يرجع لها لاحقاً قبل الإتمام)
+          Expanded(child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(foregroundColor: widget.color, side: BorderSide(color: widget.color),
+                padding: const EdgeInsets.symmetric(vertical: 13)),
+            onPressed: _valid ? () => Navigator.pop(context, _payload(false)) : null,
+            icon: const Icon(Icons.save_rounded, size: 18),
+            label: Text(tr('حفظ كمسودّة', 'Save draft'), style: const TextStyle(fontWeight: FontWeight.w800)),
+          )),
+          const SizedBox(width: 10),
+          Expanded(child: FilledButton.icon(
+            style: FilledButton.styleFrom(backgroundColor: widget.color, padding: const EdgeInsets.symmetric(vertical: 13)),
+            onPressed: _valid ? () => Navigator.pop(context, _payload(true)) : null,
+            icon: const Icon(Icons.send_rounded, size: 18),
+            label: Text(tr('إرسال للاعتماد', 'Submit'), style: const TextStyle(fontWeight: FontWeight.w800)),
+          )),
+        ]),
       ]),
     );
   }
+
+  Widget _budgetCard() {
+    final b = _budget!;
+    final remaining = (b['month_remaining'] as num?)?.toDouble() ?? 0;
+    final budget = (b['month_budget'] as num?)?.toDouble() ?? 0;
+    final used = (b['month_used'] as num?)?.toDouble() ?? 0;
+    final ratio = budget > 0 ? (used / budget).clamp(0.0, 1.0) : 0.0;
+    final low = budget > 0 && remaining <= budget * 0.15;
+    final over = _total > remaining && budget > 0;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12), padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: (over ? const Color(0xFFE11D48) : widget.color).withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: (over ? const Color(0xFFE11D48) : widget.color).withValues(alpha: 0.3)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(Icons.account_balance_wallet_rounded, size: 18, color: over ? const Color(0xFFE11D48) : widget.color),
+          const SizedBox(width: 6),
+          Expanded(child: Text('${b['cost_center'] ?? tr('ميزانية الطلبات', 'Order budget')}',
+              maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5))),
+        ]),
+        const SizedBox(height: 8),
+        ClipRRect(borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(value: ratio, minHeight: 7,
+                backgroundColor: Colors.grey.shade300,
+                valueColor: AlwaysStoppedAnimation(low ? const Color(0xFFE11D48) : widget.color))),
+        const SizedBox(height: 8),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          _bStat(tr('الميزانية', 'Budget'), _money(budget), Colors.grey.shade700),
+          _bStat(tr('المصروف', 'Used'), _money(used), const Color(0xFFF59E0B)),
+          _bStat(tr('المتبقّي', 'Remaining'), _money(remaining), low ? const Color(0xFFE11D48) : const Color(0xFF16A34A)),
+        ]),
+        if (over) Padding(padding: const EdgeInsets.only(top: 8),
+            child: Text('⚠ ${tr('تكلفة الطلب تتجاوز المتبقّي', 'Order exceeds remaining budget')}',
+                style: const TextStyle(color: Color(0xFFE11D48), fontWeight: FontWeight.w800, fontSize: 11.5))),
+      ]),
+    );
+  }
+
+  Widget _bStat(String label, String val, Color c) => Column(children: [
+        Text(val, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: c)),
+        Text(label, style: const TextStyle(fontSize: 10.5, color: Colors.grey)),
+      ]);
 }
 
 /// Item-request detail — lines, status, the created supply link, and the
@@ -3660,11 +3765,40 @@ class _ItemRequestDetailSheetState extends State<_ItemRequestDetailSheet> {
                         decoration: BoxDecoration(color: widget.color.withValues(alpha: 0.15), shape: BoxShape.circle),
                         child: Text('${i + 1}', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: widget.color))),
                     const SizedBox(width: 10),
-                    Expanded(child: Text('${(lines[i] as Map)['name']}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Pms.ink))),
-                    Text('${(lines[i] as Map)['qty']} ${(lines[i] as Map)['uom'] ?? ''}',
-                        style: TextStyle(fontWeight: FontWeight.w900, color: widget.color, fontSize: 13)),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('${(lines[i] as Map)['name']}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Pms.ink)),
+                      if (((lines[i] as Map)['unit_price'] ?? 0) > 0)
+                        Text('${(lines[i] as Map)['qty']} × ${(lines[i] as Map)['unit_price']}',
+                            style: const TextStyle(fontSize: 10.5, color: Pms.slate)),
+                    ])),
+                    Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                      Text('${(lines[i] as Map)['qty']} ${(lines[i] as Map)['uom'] ?? ''}',
+                          style: TextStyle(fontWeight: FontWeight.w900, color: widget.color, fontSize: 13)),
+                      if (((lines[i] as Map)['subtotal'] ?? 0) > 0)
+                        Text('${(lines[i] as Map)['subtotal']}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF16A34A))),
+                    ]),
                   ]),
                 ),
+              // ملخّص التكلفة والميزانية
+              if (((d['estimated_cost'] ?? 0) as num) > 0) Container(
+                margin: const EdgeInsets.only(top: 4), padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: widget.color.withValues(alpha: 0.07), borderRadius: BorderRadius.circular(12)),
+                child: Column(children: [
+                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    Text(tr('إجمالي تكلفة الطلب', 'Order total'), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+                    Text('${d['estimated_cost']} ${d['currency'] ?? 'د.ك'}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: widget.color)),
+                  ]),
+                  if (d['cost_center'] != null) ...[
+                    const Divider(height: 14),
+                    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                      Expanded(child: Text('${d['cost_center']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, color: Pms.slate))),
+                      Text('${tr('المتبقّي', 'Remaining')}: ${d['month_remaining']}',
+                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12,
+                              color: (d['over_budget'] == true) ? const Color(0xFFE11D48) : const Color(0xFF16A34A))),
+                    ]),
+                  ],
+                ]),
+              ),
             ])),
             if (d['note'] != null) Padding(padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
               child: Container(width: double.infinity, padding: const EdgeInsets.all(12),
@@ -3684,6 +3818,21 @@ class _ItemRequestDetailSheetState extends State<_ItemRequestDetailSheet> {
                 icon: const Icon(Icons.print_rounded, size: 18),
                 label: Text(tr('طباعة / مشاركة', 'Print / share'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
               )),
+              // نسخ الطلب كمسودّة جديدة (يفتح تفاصيل النسخة)
+              _btn(tr('نسخ الطلب', 'Duplicate'), Icons.copy_rounded, Colors.grey.shade700, () async {
+                setState(() => _busy = true);
+                try {
+                  final nd = await context.read<AuthProvider>().api.pmsItemRequestAction(widget.requestId, 'duplicate');
+                  if (!mounted) return;
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text('${tr('تم إنشاء نسخة مسودّة', 'Draft copy created')}: ${nd['name'] ?? ''}'),
+                      backgroundColor: const Color(0xFF16A34A)));
+                } catch (e) {
+                  if (mounted) { setState(() => _busy = false);
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: const Color(0xFFE5484D))); }
+                }
+              }, outline: true),
               if (d['can_submit'] == true) _btn(tr('إرسال للاعتماد', 'Submit'), Icons.send_rounded, const Color(0xFF0891B2), () => _act('submit')),
               if (d['can_approve'] == true) _btn(tr('اعتماد وإنشاء توريد', 'Approve → supply'), Icons.verified_rounded, const Color(0xFF16A34A), () => _act('approve')),
               if (d['can_reject'] == true) _btn(tr('رفض', 'Reject'), Icons.close_rounded, const Color(0xFFE11D48), () => _act('reject')),

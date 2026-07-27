@@ -2175,6 +2175,11 @@ class ApiClient {
 
   String pmsItemRequestReportPath(int id) => '/pms/item-request/$id/report';
 
+  /// ميزانية الطلبات الشهرية للمشروع (كارت المتجر: مركز التكلفة + متبقّي الشهر).
+  Future<Map<String, dynamic>> pmsProjectBudget(int projectId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/project/$projectId/budget'), headers: await _headers())))['data'] as Map);
+
   // ---- Manpower Requisition (طلب قوى عاملة) ----
   Future<Map<String, dynamic>> pmsManpower(int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
