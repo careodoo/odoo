@@ -802,6 +802,25 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/dars'), headers: await _headers())))['data'] as Map);
 
+  /// نظرة عامة شخصية للحارس (مؤشّرات يومه في مكان واحد للترويسة).
+  Future<Map<String, dynamic>> securityMyOverview() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/my/overview'), headers: await _headers())))['data'] as Map);
+
+  /// سجل البوابة (زوّار ومركبات): تسجيل دخول/خروج سريع عند البوابة.
+  Future<Map<String, dynamic>> securityGateMeta() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/gate/meta'), headers: await _headers())))['data'] as Map);
+  Future<Map<String, dynamic>> securityGateLog({String tab = 'today'}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/gate/log?tab=$tab'), headers: await _headers())))['data'] as Map);
+  Future<Map<String, dynamic>> securityGateEntry(Map<String, dynamic> b) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(_u('/security/gate/entry'),
+              headers: await _headers(), body: jsonEncode(b))))['data'] as Map);
+  Future<Map<String, dynamic>> securityGateExit(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/security/gate/$id/exit'), headers: await _headers())))['data'] as Map);
+
   /// جدول ورديّات الحارس (روستر) + حضور/انصراف.
   Future<Map<String, dynamic>> securityMySchedule() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

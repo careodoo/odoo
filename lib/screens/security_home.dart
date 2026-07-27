@@ -16,6 +16,7 @@ import 'security_my_schedule_screen.dart';
 import 'security_post_orders_screen.dart';
 import 'security_handover_screen.dart';
 import 'security_dar_screen.dart';
+import 'security_gate_log_screen.dart';
 import 'permits_screen.dart';
 import 'security_keys_screen.dart';
 import 'security_inspections_screen.dart';
@@ -79,6 +80,7 @@ class SecurityHome extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
+          const _MyOverviewHeader(),
           const HeartbeatPinger(),
           const LiveStreamBanner(),
           MyStatsRow(counts: p.counts),
@@ -176,6 +178,9 @@ class SecurityHome extends StatelessWidget {
               _Tile(
                 icon: '📝', label: tr('تقرير النشاط اليومي', 'Daily report'), sub: tr('نشاط اليوم · ملخّص الوردية', "Today's activity · summary"),
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityDarScreen()))),
+              _Tile(
+                icon: '🚧', label: tr('سجل البوابة', 'Gate register'), sub: tr('زوّار ومركبات · دخول/خروج', 'Visitors & vehicles · in/out'),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityGateLogScreen()))),
               _Tile(
                 icon: '🪪', label: tr('ملفي المهني', 'My profile'), sub: tr('شهادات · مهارات · معدّات', 'Certs · skills · gear'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityMyProfileScreen()))),
@@ -277,6 +282,100 @@ class SecurityHome extends StatelessWidget {
   }
 
 
+}
+
+/// ترويسة «نظرتي اليومية» — تجمع مؤشّرات كل ميزات الحارس (مهام/دوريات/أوامر/
+/// تسليم/بوابة/تقرير اليوم) في شريط واحد قابل للمسح السريع مع تنبيهات ملوّنة.
+class _MyOverviewHeader extends StatefulWidget {
+  const _MyOverviewHeader();
+  @override
+  State<_MyOverviewHeader> createState() => _MyOverviewHeaderState();
+}
+
+class _MyOverviewHeaderState extends State<_MyOverviewHeader> {
+  static const _card = Color(0xFF152238);
+  static const _muted = Color(0xFF9CB2CD);
+  static const _green = Color(0xFF37C98A);
+  static const _amber = Color(0xFFF7A23B);
+  static const _blue = Color(0xFF4AA8FF);
+  static const _red = Color(0xFFE5484D);
+
+  Map<String, dynamic>? _o;
+  bool _loading = true;
+
+  @override
+  void initState() { super.initState(); _load(); }
+  Future<void> _load() async {
+    try {
+      final o = await context.read<AuthProvider>().api.securityMyOverview();
+      if (mounted) setState(() { _o = o; _loading = false; });
+    } catch (_) { if (mounted) setState(() => _loading = false); }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading || _o == null) return const SizedBox.shrink();
+    final o = _o!;
+    final darDone = (o['dar_done'] ?? false) as bool;
+    final chips = <Widget>[
+      _kpi('📋', '${o['tasks_open'] ?? 0}', tr('مهام مفتوحة', 'Open tasks'),
+          (o['tasks_open'] ?? 0) > 0 ? _amber : _muted),
+      _kpi('🚶', '${o['patrols_today'] ?? 0}', tr('دوريات اليوم', 'Patrols'), _green),
+      _kpi('📖', '${o['post_orders_unacked'] ?? 0}', tr('أوامر غير مُقرّة', 'Unacked SOP'),
+          (o['post_orders_unacked'] ?? 0) > 0 ? _red : _muted),
+      _kpi('🔄', '${o['handovers_pending'] ?? 0}', tr('تسليم بانتظارك', 'Handovers'),
+          (o['handovers_pending'] ?? 0) > 0 ? _amber : _muted),
+      _kpi('🚧', '${o['gate_inside'] ?? 0}', tr('بالداخل الآن', 'Inside now'), _blue),
+      _kpi(darDone ? '✅' : '📝', darDone ? tr('تمّ', 'Done') : tr('مطلوب', 'Due'),
+          tr('تقرير اليوم', 'Daily report'), darDone ? _green : _amber),
+      if ((o['certs_expiring'] ?? 0) > 0)
+        _kpi('⏰', '${o['certs_expiring']}', tr('شهادات تنتهي', 'Certs expiring'), _red),
+    ];
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+      decoration: BoxDecoration(color: _card, borderRadius: BorderRadius.circular(16)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Text('📊  ', style: TextStyle(fontSize: 14)),
+          Text(tr('نظرتي اليومية', 'My day at a glance'),
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13.5)),
+          const Spacer(),
+          GestureDetector(onTap: () { setState(() => _loading = true); _load(); },
+              child: const Icon(Icons.refresh_rounded, color: _muted, size: 18)),
+        ]),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 74,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: chips.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (_, i) => chips[i],
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _kpi(String emoji, String value, String label, Color c) => Container(
+        width: 96,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: c.withValues(alpha: 0.30)),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+          Row(children: [
+            Text(emoji, style: const TextStyle(fontSize: 14)),
+            const SizedBox(width: 4),
+            Text(value, style: TextStyle(color: c, fontWeight: FontWeight.w900, fontSize: 17)),
+          ]),
+          const SizedBox(height: 3),
+          Text(label, maxLines: 2, overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: _muted, fontSize: 10.5, height: 1.1)),
+        ]),
+      );
 }
 
 class _Tile extends StatelessWidget {
