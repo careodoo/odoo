@@ -39,8 +39,11 @@ class Task(models.Model):
 
     @api.model
     def remind_task(self):
+        # أودو 17: أُزيل حقل project.task.is_closed — المهام المفتوحة = الحالة ليست
+        # منجزة/ملغاة (كان الدومين القديم يُفشل كرون التذكير كل تشغيل).
         tasks = self.env['project.task'].search([
-            ('sms_notified', '=', False), ('is_closed', '=', False), ('date_deadline', '!=', False)
+            ('sms_notified', '=', False), ('state', 'not in', ('1_done', '1_canceled')),
+            ('date_deadline', '!=', False)
         ])
         for rec in tasks:
             if rec.date_deadline.day - date.today().day == 1:
