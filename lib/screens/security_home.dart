@@ -15,6 +15,7 @@ import 'security_my_profile_screen.dart';
 import 'security_my_schedule_screen.dart';
 import 'security_post_orders_screen.dart';
 import 'security_handover_screen.dart';
+import 'security_dar_screen.dart';
 import 'permits_screen.dart';
 import 'security_keys_screen.dart';
 import 'security_inspections_screen.dart';
@@ -172,6 +173,9 @@ class SecurityHome extends StatelessWidget {
               _Tile(
                 icon: '🔄', label: tr('تسليم الوردية', 'Handover'), sub: tr('تسليم/استلام للحارس التالي', 'Hand over to next guard'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityHandoverScreen()))),
+              _Tile(
+                icon: '📝', label: tr('تقرير النشاط اليومي', 'Daily report'), sub: tr('نشاط اليوم · ملخّص الوردية', "Today's activity · summary"),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityDarScreen()))),
               _Tile(
                 icon: '🪪', label: tr('ملفي المهني', 'My profile'), sub: tr('شهادات · مهارات · معدّات', 'Certs · skills · gear'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityMyProfileScreen()))),

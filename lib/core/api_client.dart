@@ -791,6 +791,17 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/security/post_order/$id/ack'), headers: await _headers())))['data'] as Map);
 
+  /// تقرير النشاط اليومي (DAR): نشاط اليوم مُجمَّعاً + مسودّة/تقرير اليوم + الأرشيف.
+  Future<Map<String, dynamic>> securityDarToday() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/dar/today'), headers: await _headers())))['data'] as Map);
+  Future<Map<String, dynamic>> securityDarSubmit(Map<String, dynamic> b) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(_u('/security/dar/submit'),
+              headers: await _headers(), body: jsonEncode(b))))['data'] as Map);
+  Future<Map<String, dynamic>> securityDars() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/dars'), headers: await _headers())))['data'] as Map);
+
   /// جدول ورديّات الحارس (روستر) + حضور/انصراف.
   Future<Map<String, dynamic>> securityMySchedule() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
