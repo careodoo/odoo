@@ -3374,12 +3374,23 @@ class PmsSectionsApi(Controller):
             'supply': r.supply_id.name if r.supply_id else None,
             'supply_id': r.supply_id.id if r.supply_id else None,
             'lines': [{'id': l.id, 'name': l.name, 'qty': l.qty,
-                       'uom': l.uom_name or 'وحدة', 'note': l.note or None} for l in r.line_ids],
+                       'uom': l.uom_name or 'وحدة', 'note': l.note or None,
+                       'unit_price': round(l.unit_price or 0.0, 3),
+                       'subtotal': round(l.subtotal or 0.0, 3)} for l in r.line_ids],
             'total_qty': round(r.total_qty, 1), 'line_count': r.line_count,
+            # التكلفة والميزانية الشهرية
+            'estimated_cost': round(r.estimated_cost or 0.0, 3),
+            'currency': r.currency_id.symbol or r.currency_id.name or 'د.ك' if r.currency_id else 'د.ك',
+            'cost_center': r.cost_center_id.name if r.cost_center_id else None,
+            'month_budget': round(r.month_budget or 0.0, 3),
+            'month_used': round(r.month_used or 0.0, 3),
+            'month_remaining': round(r.month_remaining or 0.0, 3),
+            'over_budget': bool(r.over_budget),
             'can_submit': r.state == 'draft',
             'can_approve': r.state == 'submitted' and self._item_can_approve(env),
             'can_reject': r.state == 'submitted' and self._item_can_approve(env),
             'can_reset': r.state in ('submitted', 'rejected'),
+            'can_duplicate': True,
             'report_url': _abs('/api/v1/pms/item-request/%s/report' % r.id),
         }
 
@@ -3414,6 +3425,7 @@ class PmsSectionsApi(Controller):
                 'needed_by': b.get('needed_by') or False, 'note': b.get('note') or False,
                 'line_ids': [(0, 0, {'name': l['name'].strip(), 'qty': float(l['qty']),
                                      'uom_name': l.get('uom') or 'وحدة',
+                                     'unit_price': float(l.get('unit_price') or 0),
                                      'note': l.get('note') or False}) for l in lines]}
         try:
             r = env['care.item.request'].sudo().create(vals)
@@ -3457,6 +3469,12 @@ class PmsSectionsApi(Controller):
                 r.action_reject()
             elif act == 'reset':
                 r.action_reset()
+            elif act == 'duplicate':
+                # نسخ طلب سابق كمسودّة جديدة قابلة للتعديل
+                new = r.copy({'state': 'draft', 'name': '/', 'supply_id': False,
+                              'approved_by': False, 'approval_date': False,
+                              'reject_reason': False})
+                return _ok(self._item_json(env, new))
             elif act == 'delete':
                 if r.state != 'draft':
                     return _err('لا يمكن حذف طلب بعد الإرسال', 422)
@@ -3467,6 +3485,33 @@ class PmsSectionsApi(Controller):
         except Exception as e:
             return _err(str(e) or 'تعذّر التنفيذ', 422)
         return _ok(self._item_json(env, r))
+
+    @route(API + '/pms/project/<int:pid>/budget', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_project_budget(self, pid, **kw):
+        """ميزانية الطلبات الشهرية للمشروع (كارت المتجر): مركز التكلفة + ميزانية/
+        مصروف/متبقّي الشهر الحالي، لعرضها قبل إنشاء الطلب."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.item.request' not in env:
+            return _err('غير متاح', 404)
+        p = self._writable_project(env, pid)
+        if not p:
+            return _err('لا صلاحية على هذا المشروع', 403)
+        # نستخدم طلباً مؤقتاً (بدون حفظ) لإعادة استخدام منطق الحساب في الموديل
+        tmp = env['care.item.request'].sudo().new({'project_id': p.id})
+        tmp._compute_cost_center()
+        tmp._compute_budget()
+        cc = tmp.cost_center_id
+        return _ok({
+            'project': p.name,
+            'cost_center': cc.name if cc else None,
+            'has_budget': bool(cc),
+            'month_budget': round(tmp.month_budget or 0.0, 3),
+            'month_used': round(tmp.month_used or 0.0, 3),
+            'month_remaining': round(tmp.month_remaining or 0.0, 3),
+            'currency': (cc and 'د.ك') or 'د.ك',
+        })
 
     @route(API + '/pms/item-request/<int:rid>/report', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def pms_item_request_report(self, rid, token=None, **kw):
