@@ -170,6 +170,58 @@ class SecurityMobileApi(Controller):
         })
 
 
+    @route(API + '/security/my/overview', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def my_overview(self, **kw):
+        """نظرة عامة شخصية للحارس ليومه — تجمع مؤشّرات كل الميزات في مكان واحد
+        (مهام مفتوحة/دوريات اليوم/أوامر غير مُقرّة/تسليم بانتظار الاستلام/بالداخل
+        الآن/حالة تقرير اليوم/شهادات تنتهي قريباً) لعرضها كترويسة في الرئيسية."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        g = self._my_guard(env)
+        day = fields.Date.context_today(env['res.users'].sudo())
+        s = str(day) + ' 00:00:00'
+        o = {'tasks_open': 0, 'patrols_today': 0, 'post_orders_unacked': 0,
+             'handovers_pending': 0, 'gate_inside': 0, 'dar_done': False, 'certs_expiring': 0}
+        if g and 'security.task' in env:
+            o['tasks_open'] = env['security.task'].sudo().search_count(
+                [('assigned_to', '=', g.id), ('state', 'in', ('new', 'accepted', 'in_progress'))])
+        if g and 'security.patrol' in env:
+            f = env['security.patrol'].sudo()._fields
+            df = 'actual_end_time' if 'actual_end_time' in f else ('end_time' if 'end_time' in f else 'write_date')
+            o['patrols_today'] = env['security.patrol'].sudo().search_count(
+                [('guard_id', '=', g.id), ('state', 'in', ('completed', 'done')), (df, '>=', s)])
+        if 'care.security.post.order' in env:
+            P = env['care.security.post.order'].sudo()
+            o['post_orders_unacked'] = P.search_count([('ack_user_ids', 'not in', [env.uid])])
+        if 'care.security.handover' in env:
+            o['handovers_pending'] = env['care.security.handover'].sudo().search_count(
+                [('to_user_id', '=', env.uid), ('state', '=', 'submitted')])
+        if 'care.security.gate.entry' in env:
+            o['gate_inside'] = env['care.security.gate.entry'].sudo().search_count([('state', '=', 'inside')])
+        if 'care.security.dar' in env:
+            o['dar_done'] = bool(env['care.security.dar'].sudo().search_count(
+                [('guard_user_id', '=', env.uid), ('date', '=', day), ('state', '=', 'submitted')]))
+        if g and 'security.certification' in env:
+            import datetime as _dt
+            soon = day + _dt.timedelta(days=30)
+            C = env['security.certification'].sudo()
+            cf = C._fields
+            gf = 'guard_id' if 'guard_id' in cf else ('security_employee_id' if 'security_employee_id' in cf else None)
+            ef = 'expiry_date' if 'expiry_date' in cf else ('expiration_date' if 'expiration_date' in cf else None)
+            if gf and ef:
+                dom = [(ef, '>=', str(day)), (ef, '<=', str(soon))]
+                if gf == 'guard_id':
+                    dom = [('guard_id', '=', g.id)] + dom
+                else:
+                    me = self._my_sec_emp(env)
+                    dom = [('security_employee_id', '=', me.id if me else 0)] + dom
+                try:
+                    o['certs_expiring'] = C.search_count(dom)
+                except Exception:
+                    o['certs_expiring'] = 0
+        return _ok(o)
+
     @route(API + '/security/my_team', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def my_team(self, **kw):
         """The teams the current guard belongs to + their fellow members (photo,
