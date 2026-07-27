@@ -7,7 +7,7 @@
     'website': 'https://care-kw.com',
     'license': 'LGPL-3',
     'category': 'Project',
-    'depends': ['care_pms', 'mail'],
+    'depends': ['care_pms', 'mail', 'purchase_limit'],
     'data': [
         'security/item_request_groups.xml',
         'security/ir.model.access.csv',

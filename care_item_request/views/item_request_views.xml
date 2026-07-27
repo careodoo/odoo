@@ -14,6 +14,7 @@
                             invisible="state != 'submitted'" groups="care_item_request.group_item_manager"/>
                     <button name="action_reset" type="object" string="إعادة لمسودة"
                             invisible="state not in ('submitted','rejected')"/>
+                    <button name="action_duplicate" type="object" string="نسخ الطلب" class="btn-secondary"/>
                     <button name="action_print" type="object" string="طباعة" class="btn-secondary"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved"/>
                 </header>
@@ -23,6 +24,7 @@
                         <group>
                             <field name="project_id"/>
                             <field name="department_id" readonly="1"/>
+                            <field name="cost_center_id"/>
                             <field name="requested_by" readonly="1"/>
                         </group>
                         <group>
@@ -31,19 +33,40 @@
                             <field name="priority" widget="radio" options="{'horizontal': true}"/>
                         </group>
                     </group>
+                    <!-- بطاقة الميزانية الشهرية -->
+                    <group string="ميزانية الطلبات (الشهر)" col="4" invisible="not cost_center_id">
+                        <field name="month_budget" widget="monetary"/>
+                        <field name="month_used" widget="monetary"/>
+                        <field name="month_remaining" widget="monetary"
+                               decoration-danger="month_remaining &lt; 0" decoration-success="month_remaining &gt; 0"/>
+                        <field name="over_budget" invisible="1"/>
+                        <field name="currency_id" invisible="1"/>
+                        <div colspan="4" class="alert alert-warning" role="alert" invisible="not over_budget">
+                            ⚠ تكلفة هذا الطلب تتجاوز المتبقّي من ميزانية الشهر.
+                        </div>
+                    </group>
                     <field name="line_ids">
                         <tree editable="bottom">
                             <field name="product_id"/>
                             <field name="name"/>
                             <field name="qty"/>
                             <field name="uom_name"/>
+                            <field name="unit_price"/>
+                            <field name="subtotal" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
                             <field name="note"/>
                         </tree>
                     </field>
                     <group>
-                        <field name="note" placeholder="سبب الطلب / ملاحظات..."/>
-                        <field name="reject_reason" invisible="state != 'rejected'"/>
-                        <field name="supply_id" invisible="not supply_id" readonly="1"/>
+                        <group>
+                            <field name="note" placeholder="سبب الطلب / ملاحظات..."/>
+                            <field name="reject_reason" invisible="state != 'rejected'"/>
+                            <field name="supply_id" invisible="not supply_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="estimated_cost" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
                     </group>
                 </sheet>
                 <div class="oe_chatter">
@@ -66,6 +89,8 @@
                 <field name="requested_by"/>
                 <field name="request_date"/>
                 <field name="line_count" string="أصناف"/>
+                <field name="estimated_cost" widget="monetary" optional="show"/>
+                <field name="currency_id" invisible="1"/>
                 <field name="priority"/>
                 <field name="state" widget="badge"/>
             </tree>
