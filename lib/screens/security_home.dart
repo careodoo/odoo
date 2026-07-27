@@ -11,6 +11,8 @@ import 'security_section_screen.dart';
 import 'security_my_team_screen.dart';
 import 'security_tasks_screen.dart';
 import 'security_patrol_points_screen.dart';
+import 'security_my_profile_screen.dart';
+import 'security_my_schedule_screen.dart';
 import 'permits_screen.dart';
 import 'security_keys_screen.dart';
 import 'security_inspections_screen.dart';
@@ -163,9 +165,14 @@ class SecurityHome extends StatelessWidget {
               ),
               _secTile(context, '👮', tr('الحرّاس', 'Guards'), tr('الحالة والموقع', 'Status & location'), 'guards'),
               _Tile(
+                icon: '🪪', label: tr('ملفي المهني', 'My profile'), sub: tr('شهادات · مهارات · معدّات', 'Certs · skills · gear'),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityMyProfileScreen()))),
+              _Tile(
                 icon: '👥', label: tr('فريقي', 'My team'), sub: tr('أعضاء فريقي وحالتهم', 'My team members'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityMyTeamScreen()))),
-              _secTile(context, '🗓️', tr('الجداول والورديات', 'Schedules'), tr('التعيينات', 'Assignments'), 'schedules'),
+              _Tile(
+                icon: '🗓️', label: tr('جدولي', 'My schedule'), sub: tr('ورديّاتي · حضور/انصراف', 'My shifts · in/out'),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityMyScheduleScreen()))),
               _Tile(
                 icon: '📍', label: tr('نقاط الدوريات', 'Patrol points'), sub: tr('حسب المرفق · إحصائيات', 'By facility · stats'),
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityPatrolPointsScreen()))),

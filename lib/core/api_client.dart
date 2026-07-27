@@ -766,6 +766,20 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/my_team'), headers: await _headers())))['data'] as Map);
 
+  /// جدول ورديّات الحارس (روستر) + حضور/انصراف.
+  Future<Map<String, dynamic>> securityMySchedule() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/my/schedule'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> securityShiftAction(int id, String action) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/security/shift_assignment/$id/$action'), headers: await _headers())))['data'] as Map);
+
+  /// الملف المهني للحارس (هوية + إحصائيات + شهادات/رخص + مهارات + معدّات).
+  Future<Map<String, dynamic>> securityMyProfile() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/my/profile'), headers: await _headers())))['data'] as Map);
+
   /// مهامي أنا فقط + أرشيف شهري + إحصائيات ترويسة.
   Future<Map<String, dynamic>> securityMyTasks({int? year, int? month, String? state}) async {
     final q = <String>[
